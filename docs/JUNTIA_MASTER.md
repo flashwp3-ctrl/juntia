@@ -1,0 +1,734 @@
+# Juntia — Documento maestro del producto
+
+**Versión:** 1.2 (Juntia + metas P0, alcance cerrado) · **Fecha:** 1 de noviembre de 2026 · **Estado:** listo para implementar F0-a; primera implementación pendiente
+
+> **Nombre de producto elegido por los dos fundadores:** **Juntia**. Se utilizará en la interfaz, los documentos y las exploraciones de diseño desde F0-a. No se ha registrado ninguna marca ni comprado ningún dominio; antes de una publicación comercial se revisarán antecedentes marcarios y disponibilidad real. El desarrollo privado **no se bloquea** por esa diligencia. El repositorio/carpeta puede llamarse `juntia`; si ya existe uno llamado `ronda`, se conserva su historial y se cambia la marca sin recrearlo. La investigación de precios sigue separada en `docs/research/` y NO define requisitos del MVP.
+
+## 1. Resumen ejecutivo y contrato de lanzamiento
+
+Juntia es una aplicación web progresiva (PWA) de **finanzas personales y compartidas, mobile-first**, pensada inicialmente para dos personas en Medellín. Debe permitir que cada una registre gastos propios, elija qué comparte, gestione gastos de pareja y grupos, entienda los saldos y pueda liquidarlos sin confundir quién pagó con quién consumió. El producto debe ser excelente desde su **primera versión real**, no un panel básico que se embellezca meses después.
+
+**Propuesta de valor:** «Lo tuyo, lo mío y lo nuestro, claro de un vistazo». La marca elegida es **Juntia**; el eslogan sigue siendo copy editable durante F0.
+
+**Contrato innegociable:** la primera entrega privada que usarán ambos reúne **funcionalidad real + alta calidad de diseño + animaciones con propósito + excelente experiencia móvil y escritorio**. Ninguna de estas cuatro áreas se pospone a una supuesta «fase de pulido». El alcance se recorta eliminando funciones no esenciales, **no bajando el estándar visual**.
+
+| Dimensión | Primera versión privada («MVP-1 premium») | Después, sin bloquearla |
+| --- | --- | --- |
+| Uso real | Auth, espacios privados, pareja, gastos, repartos, balances, liquidaciones, historial y metas personales/compartidas con aportes registrados | Grupos avanzados, OCR, voz, automatizaciones |
+| Presupuestos | **Opcionales**: registrar gastos y ahorrar hacia metas funciona sin presupuesto; crear/ver límites básicos si se desea | Sugerencias basadas en historial, reglas de aporte automático y metas avanzadas |
+| Diseño | Dirección visual propia, sistema de componentes, S1–S4 y la experiencia de metas S5; mobile y desktop excelentes | Landing narrativa, case study, variantes experimentales |
+| Motion | `MOTION.md`, transiciones contextuales, captura, balance, relato de gasto y progreso de metas; reduced motion | Motion decorativo y experimentación de marketing |
+| Confianza | Dinero determinista, privacidad real/RLS, idempotencia, exportación inicial, manejo de errores | Offline completo, integraciones bancarias |
+| Inteligencia | Métricas descriptivas calculadas sin LLM | Gemini/Jev, ofertas, price intelligence y recomendaciones |
+
+**Dos objetivos simultáneos en MVP-1:** (1) tú y tu pareja deben poder usar Juntia diariamente sin necesitar otra app para el flujo básico; (2) ambos deben abrirla y sentir que es un producto diseñado con carácter y detalle, también al usarla en escritorio. La intención de competir en Awwwards/Webby es una **aspiración de calidad de ejecución**, no una garantía de premio.
+
+**Puerta de salida de MVP-1 (release gate):** el uso interno con datos reales está permitido desde P0-1, una vez que los controles de integridad, RLS y recuperación del slice estén verificados; este gate corresponde exclusivamente a declarar el lanzamiento privado completo, no bloquea las pruebas tempranas. Para declarar MVP-1, ambos usuarios, con cuentas y dispositivos distintos, completan el escenario de aceptación de la §4 **incluyendo meta privada y meta compartida** con datos reales, sin fugas ni incoherencias; aprueban estética, legibilidad, interacciones y fluidez en **390 y 1440 px**; todo funciona con movimiento reducido. **No se publica el MVP si solo está «funcional pero feo», ni si es precioso pero calcula mal.**
+
+**Límite del alcance:** el motor de ofertas de supermercados, matching de productos, scraper, Google Search Grounding, Jev, restaurante frecuente, campañas de descuento y alertas automáticas son una línea de producto posterior, documentada en `docs/research/oportunidades.md`; **no entran en las dependencias ni en los criterios de aceptación del MVP-1**.
+
+## 2. Visión, usuarios, principios y límites
+
+### 2.1 Visión
+
+Entender las finanzas propias y compartidas, **lo que gastamos y lo que apartamos para metas**, sin administrar una hoja de cálculo. La pregunta orientadora es «¿cómo vamos este mes: tú, yo y nosotros, y qué estamos construyendo?». La experiencia debe ser tan clara como Tricount para anotar y saldar gastos, y desarrollar una identidad visual propia sin copiarla.
+
+### 2.2 Usuarios
+
+- **Yo:** registro de gastos e ingresos privados, categorías, historial, meta individual y análisis, con o sin presupuestos.
+- **Nosotros:** gastos compartidos de dos personas, quién pagó, quién consumió, saldos, liquidaciones, **meta compartida con aportes atribuibles** y presupuesto conjunto **solo si lo activan**.
+- **Grupo:** motor común extensible a N personas; P0 prioriza pareja de dos, sin bloquear diseño de autorización para grupos más amplios.
+- **Visitante futuro:** demo pública ficticia y case study, sin acceso a datos privados; no bloquea MVP-1.
+
+### 2.3 Principios
+
+1. **Registrar antes de planificar.** La app es plenamente utilizable **sin presupuesto**, también al crear metas; su ausencia nunca equivale a «límite = 0».
+2. **Una misma experiencia hermosa y real.** Diseño, microinteracciones y calidad técnica se entregan junto con las funciones que representan; no hay una fase de cosmética obligatoria post-MVP.
+3. **Mobile-first, desktop-first class.** Diseñar primero el flujo táctil, pero crear composición, densidad y navegación específicas para ordenador; no estirar tarjetas.
+4. **Captura en menos de 10 s** para el caso habitual tras onboarding, sin sacrificar la validación financiera.
+5. **Dimensiones financieras separadas:** gasto, consumo asignado, pagado, deuda y ahorro asignado a metas; nunca confundir ahorro con consumo ni aportes con obligaciones entre integrantes.
+6. **Privacidad por defecto:** un gasto privado nunca se revela a miembros de grupos, tampoco por agregados, errores ni analítica.
+7. **Movimiento semántico:** animación que explica relaciones, cambios y estados. Soporta reduced motion, lectores de pantalla, latencia y fallos.
+8. **Sin culpa:** no mensajes punitivos, rankings de pareja ni alarmas por no crear presupuesto.
+9. **Decisiones verificables:** IA jamás altera cifras oficiales; no inventar precios ni garantizar «te alcanza».
+10. **Sin sobreingeniería:** tests sólidos de dinero/seguridad, smoke E2E de lo esencial y QA visual obligatorio; PRs pequeños.
+
+### 2.4 Exclusiones conscientes del MVP-1
+
+No conexión bancaria, **custodia o transferencia automática de dinero**, compra de inversiones financieras, rentabilidades, OCR, captura por voz, sincronización offline completa, IA, comparación automática de productos, scraping, notificaciones de promociones, campañas Hot Sale, multi-SKU, motor de restaurantes, gamificación y monetización. La instalación como PWA puede prepararse de forma mínima y segura, sin prometer guardado offline.
+
+**DEC-R17 — No presumir liquidez:** sin presupuesto nunca decir «te alcanza»; **con presupuesto tampoco** se deduce saldo de cuenta o capacidad de pago, salvo que exista información específica y suficiente. Presupuesto disponible ≠ dinero bancario disponible.
+
+## 3. Alcance por entregas, no por sueños
+
+El lanzamiento se llama **MVP-1 premium**. Puede tener entregas internas graduales, pero **la primera versión que ambos adoptan debe estar funcional y visualmente aprobada a la vez**. «Fase 0» es una exploración breve, no un proyecto paralelo de meses.
+
+| Clasificación | Alcance | Nota |
+| --- | --- | --- |
+| **F0-a (preparación)** | 3 direcciones **estáticas** del Inicio; cada una a 390/1440 px, misma fixture | Elegir una; sin backend ni clips de motion |
+| **F0-b (fundación visual)** | `DESIGN.md`, `MOTION.md`, app shell mobile/desktop, Expense Flow prototipo y estados con/sin presupuesto | No construir todo el producto con datos ficticios |
+| **MVP-1 / P0 funcional** | Cuentas, privacidad, pareja, invitación, movimientos, repartos 50/50 y personalizados, saldos y liquidaciones | Datos reales, autorización y cálculos correctos |
+| **MVP-1 / P0 planificación** | Gastos sin presupuesto como primera clase; crear/editar/desactivar presupuesto mensual opcional; **metas individuales y compartidas, aportes, retiros propios y uso de fondos vinculado a gasto** | No autogenerar límite ni confundir aportes con gastos |
+| **MVP-1 / P0 visual** | S1–S4 y **S5 Goal Journey** en los flujos reales; dashboard, lista y formularios premium en móvil y escritorio | S5 es compacta y semántica, no una sub-app |
+| **MVP-1 / P0 confianza** | RLS, idempotencia, pruebas de dinero, accesibilidad, error/loading/empty, exportación básica y recuperación | Bloqueante para uso de dinero real |
+| **P1, después del MVP** | Recurrentes, presets, presupuestos sugeridos a partir de historial, **aportes programados y simulaciones avanzadas de metas**, análisis detallado, demo pública/case study | Se prioriza según uso real |
+| **P1/P2 investigación** | Spike controlado de precios **tras cuatro semanas consecutivas de uso estable de MVP-1 por ambos usuarios** | Documento independiente, sin comprometer release |
+| **P2** | OCR, voz, importación CSV, offline robusto, multidivisa, ofertas, Jev, Gemini y notificaciones | Cada funcionalidad por validar |
+
+**Regla única para iniciar el spike de precios:** cuatro semanas consecutivas de uso estable de MVP-1 por ambos usuarios, sin defectos críticos de dinero, privacidad o pérdida de datos. No se exige completar MVP-2 ni MVP-3; esto no bloquea leer y conservar investigación, pero sí iniciar la integración de precios en el producto.
+
+**No entra en F0:** landing pública, modo demo completo, benchmarking formal, Pro/monetización, sistema de precios. La demo interna con fixtures es un medio de QA; la **demo pública navegable** para portafolio puede prepararse tras abrir uso privado y no debe consumir el tiempo del flujo real.
+
+**Regla de recorte cuando haya presión:** quitar una funcionalidad periférica o limitar grupos a pareja, pero preservar las experiencias S1–S5 dentro de los casos básicos, la calidad de datos y la privacidad. Si una animación experimental consume demasiado tiempo, reducir su complejidad sin eliminar su intención visual ni la elegancia del flujo.
+
+## 4. Historias de usuario y pruebas de aceptación
+
+Las historias de dinero son contratos automatizados. Las historias de UX se comprueban en teléfonos y escritorio, no solo con capturas de una UI estática.
+
+| ID | Historia | Resultado verificable |
+| --- | --- | --- |
+| US-01 | Gasto privado, sin presupuesto | A registra COP 45.000 de transporte y solo A puede verlo. Dashboard muestra el gasto y **no** muestra presupuesto cero ni exceso. |
+| US-02 | Cena en pareja | COP 180.000 pagados por A, 50/50: pareja gastó 180.000, A y B consumieron 90.000; B debe 90.000. Liquidación B→A por 90.000 deja deuda cero sin alterar gasto. |
+| US-03 | Distribución personalizada | COP 150.000 al 70/30 deja 105.000/45.000 exactos; suma de asignaciones idéntica a total. |
+| US-04 | Presupuesto opcional activo | Grupo crea presupuesto de restaurantes de 1.000.000 y gasta 1.180.000: 118% y 180.000 de exceso. Al desactivarlo siguen apareciendo gasto e historial, **no** cifras de límite cero. |
+| US-05 | Privacidad RLS | Usuario ajeno no ve transacciones ni agregados privados o grupales, incluso invocando consultas sin filtros de cliente. |
+| US-06 | Cambios y auditoría | Ediciones y anulaciones conservan historial auditado; liquidaciones realizadas no se reescriben en silencio. |
+| US-07 | Sugerencia futura | Un presupuesto sugerido nunca se activa sin confirmación; con poca evidencia se omite la cifra. **No bloquea MVP-1.** |
+| US-08 | Sin doble conteo | Gasto grupal 400.000 al 50/50: 400.000 del grupo, 200.000 asignados a cada persona; nunca se suman vistas solapadas a 800.000. |
+| US-09 | Liquidez | Con o sin presupuesto, «restante del presupuesto» nunca se etiqueta «dinero que tienes» o «te alcanza». |
+| US-10 | Corrección posterior a liquidación | Recalcular saldos si cambia el gasto sin modificar la liquidación confirmada; visualizar saldo invertido si corresponde. |
+| US-11 | Miembros salientes | Si no existe snapshot histórico seguro, no se habilita salida/expulsión desde UI; no se pierden hechos propios silenciosamente. |
+| US-12 | Captura rápida | Tras onboarding, registrar un gasto típico con cantidad/categoría/contexto en mediana <10 s en teléfono real; sin doble envío. |
+| US-13 | Presupuesto ausente | No se obliga a crearlo al registrarse, al registrar gasto, al abrir dashboard ni al invitar a pareja. |
+| US-14 | Transición de contexto | Cambiar Yo/Nosotros actualiza cifras, color/estructura y accesibilidad sin mostrar por un instante datos de otro alcance. |
+| US-15 | Experiencia desktop | A 1440 px hay layout editorial con navegación, jerarquía y densidad propios; la pantalla no es el diseño móvil ampliado. |
+| US-16 | Shared Balance | El usuario comprende quién debe, cuánto y cómo saldar, con visualización elegante que no parece una competencia. |
+| US-17 | Reduced motion | Captura, cambio de contexto, relato de gasto y balance son completamente utilizables sin animaciones expresivas. |
+| US-18 | Meta individual sin presupuesto | A crea una meta privada de 2.000.000 y asigna 250.000; solo A la ve. El progreso muestra 250.000, `gasto_consumo` queda igual, `aporte_a_metas` aumenta 250.000 y no se inventa límite de presupuesto. |
+| US-19 | Meta compartida | A aporta 300.000 y B aporta 200.000 a una meta de pareja. El progreso es 500.000; los aportes son visibles con autor; no crean deuda ni liquidación por defecto y no alteran gastos. |
+| US-20 | Gasto financiado con meta | Se utiliza 500.000 de una meta ya fondeada para una compra de 500.000. La meta baja 500.000, se crea o vincula **un único gasto real** y el indicador `total_destinado_neto` evita volver a considerar esos mismos 500.000 como dinero nuevo. |
+| US-21 | Reserva frente a transferencia | Al reservar 100.000 dentro de la app, se muestra «apartado en Juntia» sin afirmar que cambió el saldo bancario. Si se declara transferencia a otra cuenta, se etiqueta «transferencia declarada», no «verificada por banco». |
+| US-22 | Privacidad y autorización de metas | Un tercero no ve metas privadas ni sus aportes. Un miembro solo lee metas compartidas de grupos donde está autorizado y no puede atribuirse aportes de otra persona. |
+| US-23 | Correcciones y retiro seguro | Un retiro o anulación de aporte no puede dejar la meta con saldo negativo ni modificar el histórico sin auditoría; la operación de gasto financiado y uso de meta es atómica e idempotente. |
+
+**Escenario de aceptación de pareja antes del lanzamiento:** cada uno crea su cuenta, A registra gasto privado, B verifica que no puede verlo, crean pareja, registran 5 gastos compartidos (uno 70/30), realizan una liquidación parcial y otra completa, revisan la actividad mensual, crean una **meta individual y otra compartida**, realizan aportes independientes, registran un gasto financiado desde meta sin doble conteo, crean opcionalmente un presupuesto, lo desactivan y verifican que gastos y metas siguen visibles; completan las mismas tareas en móvil y escritorio. El equipo registra fallos y los corrige antes del lanzamiento.
+
+**Prueba ligera de competencia:** usar Tricount juntos durante unos **20 minutos en un teléfono** para observar fricciones de registro y liquidación; no se exige informe formal ni bloquea F0.
+
+## 5. Dominio y reglas de dinero
+
+### 5.1 Dimensiones financieras que no deben confundirse
+
+| Métrica | Definición | ¿Altera presupuesto? |
+| --- | --- | --- |
+| `group_total` | Suma de gastos activos atribuidos a ese grupo y periodo | Sí: presupuesto del grupo |
+| `personal_consumption` | Gastos privados propios + partes que corresponden al usuario en gastos grupales | Sí: presupuestos personales |
+| `gross_paid` | Total que la persona pagó originalmente por gastos | No: refleja pagos, no consumo |
+| `net_cash_outflow` | Salidas por gastos + liquidaciones enviadas − liquidaciones recibidas; sin fingir saldo bancario | No: indicador de flujo en el sistema |
+| `net_owed` | Saldo del integrante frente al grupo por gasto pagado, partes asignadas y liquidaciones | No |
+| `settlement` | Movimiento de compensación registrado entre integrantes | Nunca: no es un gasto |
+| `goal_contribution` | Aporte registrado a una meta individual o compartida; representa **destinación de dinero**, no gasto de consumo | No; suma al indicador de dinero destinado |
+| `goal_withdrawal` | Reversión/retiro de una asignación, auditado; reduce el saldo de la meta | No; resta del dinero destinado neto |
+| `goal_usage` | Uso de fondos previamente asignados para financiar **un gasto vinculado** | El gasto vinculado sí cuenta; el uso no cuenta dos veces |
+
+**Signo del balance:** saldo positivo = el grupo le debe a la persona; negativo = la persona debe al grupo. La suma de balances de un grupo debe dar cero con moneda homogénea y reglas de redondeo consistentes.
+
+**Ejemplo de referencia:** comida de COP 180.000 pagada por A, reparto 50/50.
+
+| Indicador | Antes | Después de B→A por COP 90.000 |
+| --- | ---: | ---: |
+| Gasto grupal | 180.000 | 180.000 |
+| Consumo A | 90.000 | 90.000 |
+| Consumo B | 90.000 | 90.000 |
+| Pagado originalmente por A | 180.000 | 180.000 |
+| Flujo neto de A dentro del sistema | 180.000 salida | 90.000 salida |
+| Saldo a favor de A | 90.000 | 0 |
+| Deuda de B | 90.000 | 0 |
+
+**Las metas NO alteran `net_owed`** ni generan deudas por diferencias entre aportes. Una meta de pareja suma aportaciones declaradas; no impone un reparto 50/50 de ahorro, salvo que se implemente más adelante un compromiso explícito independiente.
+
+**Fórmula por integrante para un grupo, sin cuentas múltiples:**
+
+`net_owed = sum(pagos_de_gastos) − sum(partes_asignadas) − sum(liquidaciones_recibidas) + sum(liquidaciones_enviadas)`.
+
+Liquidaciones parciales son válidas; el total neto se recalcula en cada cambio. Para P0 **no se permite registrar una liquidación que aumente deliberadamente el sobrepago**, salvo que una corrección posterior produzca un saldo invertido. Las liquidaciones deben asociarse a dos miembros activos del mismo grupo y a una moneda idéntica. Si existe deuda neta entre ambos, el importe de liquidación se limita a la deuda pendiente de la dirección elegida; no se implementa una optimización automática compleja para N personas en P0.
+
+### 5.2 Importes, moneda, periodo y precisión
+
+- Persistir importes como enteros de **unidades menores ISO 4217** (`bigint` en PostgreSQL), nunca `float` ni dinero en números JS de punto flotante. Serializar al frontend en strings decimales cuando corresponda.
+- COP tiene escala ISO de dos decimales; para el ingreso manual P0 de COP se aceptan pesos enteros, se convierten de forma exacta a unidades menores y se muestran sin decimales habituales. No confundir «pesos ingresados» con «centavos almacenados».
+- Cada transacción lleva código de moneda ISO 4217. En P0, gastos de grupo y liquidaciones usan la moneda configurada del grupo; una operación distinta se rechaza, no se convierte silenciosamente.
+- `transaction_date` define el mes presupuestal; `created_at`/`updated_at` son auditoría. El periodo mensual se interpreta según la zona horaria explícita del contexto (inicialmente `America/Bogota`).
+- Un cálculo de redondeo por partes siempre produce suma exacta igual al importe origen. Para porcentajes, aplicar asignación de mayor residuo y desempate estable por identificador de participante (algoritmo versionado), en vez de asumir arbitrariamente que todos los centavos van al pagador.
+- `budget_remaining` existe **solo si hay presupuesto activo**, puede ser negativo y muestra «excedido» en lugar de ocultarlo en cero. Las categorías no asignadas deben contar en el total de gastos del contexto. **Los aportes a metas no son consumo de categorías presupuestales; tienen seguimiento separado.**
+- Usar eventos/estados de anulación auditada, no eliminación silenciosa de movimientos financieros.
+
+### 5.3 DEC-R01 — Presupuestos opcionales y no aditivos
+
+**Presupuesto ausente no es presupuesto cero.** El dominio diferencia expresamente: (a) no existe presupuesto, (b) existe presupuesto activo con límite válido, (c) presupuesto archivado/desactivado. Las consultas no fabrican `limit=0` mediante `COALESCE`; el frontend recibe `budget: null` o un estado tipado equivalente. El límite monetario cero **no se admite** como presupuesto activo en P0, salvo una regla de producto explícita futura.
+
+El registro, historial, resumen por categoría, importes mensuales, balances y liquidaciones funcionan sin presupuesto. El onboarding no pregunta obligatoriamente «¿cuánto quieres gastar?»; ofrece esa opción como secundaria. Sin presupuesto, dashboard y **Spending Story** usan transacciones, tendencias disponibles y categoría, no «restante», «excedido» ni barras vacías fingiendo límites. Con presupuesto activo aparecen consumo, porcentaje, desviación y ritmo.
+
+Existen dos atribuciones paralelas **no aditivas**:
+
+1. **Presupuesto grupal opcional:** consume el importe completo de gastos activos del grupo/periodo/categoría. Nunca incorpora gastos privados.
+2. **Presupuesto personal opcional:** consume gastos privados de la persona y la parte económica asignada a esa persona en gastos grupales de la categoría/periodo.
+
+Ejemplo: mercado grupal 400.000, 50/50. Si existen los tres presupuestos, el grupo consume 400.000; cada persona consume 200.000. No sumar 400.000 + 200.000 + 200.000 como «gasto consolidado». El gasto total real viene de transacciones únicas. Si no existe uno o ninguno de los presupuestos, el consumo y los gastos **siguen existiendo**.
+
+Presupuestos P0: mensuales, por contexto/categoría/moneda/periodo; crear, editar, archivar y consultar histórico. El catálogo canónico evita mapeos ambiguos; categorías custom P1. Ingresos y liquidaciones no cuentan como consumo. La UI etiqueta claramente período, contexto y moneda. El modo sin presupuesto se diseña y prueba tan cuidadosamente como el modo con presupuesto.
+
+**Presupuesto sugerido (posterior, DEC-R01-S):** no activar automáticamente. Con pocas transacciones no proponer importe; con al menos un periodo razonablemente completo se podría mostrar una hipótesis editable con incertidumbre; con varios meses comparar categorías/medianas y gastos extraordinarios. Activación siempre manual y opt-in. El umbral exacto se calibra con datos y UX reales, no con números arbitrarios en P0.
+
+**DEC-R17 — Asequibilidad:** ningún presupuesto, ni siquiera uno holgado, demuestra que alguien disponga del dinero en caja o cuenta. Juntia no dice «te alcanza», «puedes pagarlo» o «es financieramente seguro» sin datos suficientes y una política de inferencia explicitada; en MVP-1 se limita a describir gasto y presupuesto.
+
+### 5.4 Edición, anulaciones, correcciones y devolución
+
+- **Edición:** registrar actor, instante, valor anterior y nuevo en auditoría. Actualizar el estado efectivo del gasto y recalcular partes y balances mediante una operación atómica.
+- **Anulación:** excluir el gasto anulado de agregados actuales; conservar su rastro de auditoría. No borrar liquidaciones previas relacionadas.
+- **Gasto ya liquidado:** si una corrección invierte el balance del grupo, mostrar saldo a favor o deuda revisada; nunca «revertir» una transferencia real sin un nuevo asiento explícito.
+- **Reembolso completo en P0:** puede representarse como anulación **solo si realmente revierte íntegramente el gasto original**; si hubo consumo parcial o devolución parcial, no manipular el gasto con importe negativo arbitrario. Usar modelo explícito de refund vinculado en P1.
+- **Idempotencia:** cliente genera `idempotency_key` única por intención de escritura; servidor impone unicidad por actor/acción/contexto, para evitar duplicados en doble tap o reintentos.
+- **Atomicidad:** creación/edición de gasto y asignaciones se confirman o revierten como una unidad; no se deja un gasto sin reparto válido.
+
+### 5.5 Reglas de participantes y lifecycle
+
+- Un grupo de tipo `couple` admite **máximo dos integrantes activos**; el tipo `group` permite N según política de producto.
+- Un grupo nunca ve movimientos privados, aunque pertenezca a las mismas personas.
+- El creador es `owner`; el rol `member` puede registrar y consultar según permisos. Solo `owner` administra invitaciones, roles y cierre de grupo en P0.
+- Invitaciones: token aleatorio almacenado como hash, caducidad, aceptación autenticada, un solo uso, validación de límite de participantes y protección contra repetición.
+- **Salida/expulsión (ADR-003):** por defecto, revocar inmediatamente el acceso al grupo, sus movimientos, participantes y archivos. Para preservar hechos propios, antes de habilitar la acción se implementa un **resumen histórico mínimo, propiedad del miembro**, con fecha, monto pagado, parte asignada, categoría canónica y saldo final al momento de salir, sin notas ni adjuntos de otras personas. No otorga acceso a los registros activos del grupo. Si el resumen seguro aún no existe, la UI de salida/expulsión queda deshabilitada en P0 y documentada como pendiente; no implementar una revocación que destruya el historial del usuario por accidente.
+- Si al salir hay deuda, solicitar primero resolución o confirmar un proceso explícito de cierre, sin generar liquidaciones ficticias.
+- Los exportes de datos propios y el borrado de cuenta respetan derechos aplicables y retención/auditoría estrictamente necesaria; la política final requiere revisión legal antes de publicación pública.
+
+### 5.6 DEC-G01 a DEC-G06 — Metas individuales y compartidas (P0)
+
+**Objetivo funcional:** permitir reservar o registrar aportes hacia una meta sin convertirlos artificialmente en consumo; mostrar cuánto del dinero del período se destinó a **gastos** y cuánto a **metas**. No es una cuenta bancaria, instrumento de inversión, billetera custodiada ni promesa de rentabilidad. Se usará el término **«aporte a una meta»** o «ahorro destinado», no «inversión financiera» por defecto.
+
+**DEC-G01 — Tipos y alcance.** Una meta (`goal`) tiene propietario **privado** (`owner_user_id`) **XOR** grupo (`group_id`), título, icono/categoría visual, monto objetivo positivo, moneda COP P0, fecha objetivo opcional y estado `active | completed | archived`. Metas privadas solo para su propietario; metas compartidas visibles a integrantes activos autorizados. Las metas funcionan **con presupuesto y sin él** y no tienen obligación de porcentaje de aporte entre integrantes. Para P0 solo pareja de dos en UI, con dominio preparado para grupos N.
+
+**DEC-G02 — Operaciones permitidas.** Crear/editar meta; aportar (`goal_contribution`), consultar aportes por miembro, **retirar o desasignar contribuciones propias no consumidas** con motivo, registrar uso de fondos contra **un gasto real** (`goal_usage` vinculado a `transaction_id`) y archivar cuando el balance esté reconciliado. Todas con actor, timestamp, idempotencia y auditoría. No se crea un banco ni movimientos automáticos. Una modificación no puede forzar saldo negativo; el gasto y su uso de meta se registran de forma atómica. Al retirar recursos compartidos de terceros o pretender utilizar sus aportes, P0 requiere **confirmación explícita del otro miembro** antes de aplicarse; si no está implementada, la operación queda bloqueada, sin vía de autorización implícita.
+
+**DEC-G03 — Reserva declarativa vs transferencia.** Cada aporte indica `funding_mode`: `reserved` (dinero mentalmente apartado **dentro de Juntia**, sin salida bancaria demostrada) o `transferred_declared` (usuario declara haber movido dinero a una cuenta propia, **sin verificación bancaria**). Ambos aumentan el progreso de la meta, pero solo la transferencia puede describirse como movimiento entre cuentas declarado. No inferir saldos bancarios reales o liquidez a partir de la reserva. P0 no rastrea entidades bancarias ni concilia estados externos.
+
+**DEC-G04 — Métricas y anti-doble-conteo.** El uso de una meta compartida se atribuye a los **aportantes cuyos fondos asignados se consumen**, no automáticamente al mismo 50/50 del gasto: cada uso conserva sus `goal_usage_allocations` exactas por integrante, y la suma equivale al uso total. El gasto mantiene su reparto económico independiente. Esta separación hace que el `total_destinado_neto` individual y el grupal concilien sin imputar ahorro de otra persona. Si no existe atribución válida o falta consentimiento sobre aportes ajenos, rechazar la operación. Se muestran en paralelo:
+
+- `gasto_consumo`: compras y servicios reales del periodo, privados más partes asignadas según la vista; **no incluye aportes a metas**.
+- `aporte_a_metas`: nuevas asignaciones en el periodo; en vista grupal se presenta el total y en vista individual solo los aportes propios, **sin sumarlos entre vistas**.
+- `retiro_de_metas`: dinero desasignado durante el periodo, no equivale a ingreso ganado.
+- `gasto_financiado_con_meta`: porción de un gasto real enlazada a fondos antes asignados; el mismo gasto sigue en `gasto_consumo`, pero se identifica como financiado con ahorro previo.
+- **`total_destinado_neto` (métrica de planificación, no saldo bancario)** = `gasto_consumo + aporte_a_metas − retiro_de_metas − gasto_financiado_con_meta`. Esto evita contar dos veces un mismo dinero cuando se ahorra en un periodo y se utiliza después. Puede ser negativo en periodos de liberación neta; explicar el signo y nunca renombrarlo como «total gastado».
+
+Ejemplo A: noviembre, COP 2.000.000 de consumo y COP 500.000 apartados para viaje: **gasto COP 2.000.000, aportes COP 500.000, total destinado neto COP 2.500.000**. Ejemplo B: diciembre, se compra algo por COP 500.000 usando íntegramente aquella meta: **gasto de consumo COP 500.000, gasto financiado con meta COP 500.000 y dinero nuevo destinado neto a ese uso COP 0**. La actividad conserva el gasto como compra real y muestra el uso del ahorro anterior. Si se libera una reserva en vez de comprar, el retiro se presenta como reasignación, no ingreso. La fórmula debe implementarse mediante funciones puras probadas; no mezclar resúmenes de **Yo** y **Nosotros** para fabricar un consolidado duplicado.
+
+**DEC-G05 — Progreso y cierres.** `goal_balance = Σ contributions − Σ withdrawals − Σ usages`, siempre ≥ 0 por meta. `progress = goal_balance / target`, con estado de meta completada configurable (el objetivo alcanzado no implica que se haya comprado nada). Al financiar una compra y disminuir el balance, la actividad conserva el hito de ahorro alcanzado y muestra explícitamente el uso; no ocultar el movimiento histórico. Si una meta se supera, mostrar excedente de manera neutra. No calcular intereses, rendimientos ni valorizaciones sin fuente independiente.
+
+**DEC-G06 — Privacidad, membresía e integridad.** Una aportación privada jamás es visible a la pareja. En metas compartidas, actor y contribuyente deben ser miembros activos, salvo snapshots históricos seguros según ADR-003; el cliente no puede crear aportes a nombre de terceros. Acciones sensibles comprobadas en servidor y RLS; `goal_usage` requiere gasto del mismo contexto, misma moneda, fondos disponibles **por aportante**, distribución de uso reconciliada y confirmaciones requeridas. Auditoría, idempotencia y validación de cantidades son **bloqueantes**. Las contribuciones no cambian `net_owed`, `group_total` ni el consumo de presupuestos.
+
+**Alcance de P0:** metas personal/pareja, importe y fecha opcional, progreso, aportes, retiro propio y compra vinculada a meta, con diseño premium. Fuera de P0: débitos automáticos, banca conectada, metas con rendimientos, inversiones reales, multimoneda, metas condicionales, reglas de contribuciones periódicas, aprobación de N participantes y sugerencias IA.
+
+## 6. Dirección de arte y sistema de motion — parte del MVP
+
+### 6.1 Identidad visual
+
+**Territorio provisional:** *Warm Editorial Finance*: composición editorial premium + precisión financiera + calidez humana. La identidad de **Juntia** parte de juntar, construir y avanzar; arcos, trayectorias, proximidad y conexiones pueden expresar esa idea, sin imponer un logotipo antes de elegir la dirección. Evitar dashboards de tarjetas indistinguibles, exceso de degradados, decoraciones que no enseñan nada y copia de otros productos.
+
+**Principio creativo:** «Expresar sin distraer; informar sin juzgar». La ambición es construir una obra web con criterio de diseño —potencialmente presentable a Awwwards o Webby— y un producto que merezca ser usado, **sin garantizar nominación ni premio**.
+
+**Tipografía candidata:** Instrument Serif para titulares editoriales puntuales, Geist o Manrope para UI, Geist Mono para microetiquetas; revisar licencias. Números tabulares y formato COP de Colombia. Las elecciones finales se cierran tras F0-a.
+
+| Token propuesto | Claro | Uso |
+| --- | --- | --- |
+| `canvas` | `#F7F6F2` | Fondo general |
+| `ink` | `#15241F` | Lectura principal |
+| `surface` | `#FFFFFF` | Contenedores |
+| `primary` | `#356A53` | Acciones, contraste por verificar |
+| `lime-soft` | `#D9E5C7` | Apoyos y progresos |
+| `alert-coral` | `#C86553` | Exceso, nunca solo color |
+| `sand` | `#E6D6BF` | Acentos |
+| `ink-muted` | `#60716A` | Texto secundario, validar AA |
+
+Se diseña un tema oscuro propio por tokens semánticos, no mediante inversión automática de colores. **DESIGN.md** determina tipografía, ritmo de espaciado, componentes, layouts, tokens y ejemplos aprobados. Ninguna skill puede reemplazar esa decisión sin revisión humana.
+
+### 6.1.1 Sistema de iconografía — obligatorio en MVP-1 (DEC-V03)
+
+**Problema que evita:** una interfaz con excelente tipografía y motion puede seguir sintiéndose genérica o incompleta si la navegación, las categorías y los estados quedan sin iconos. La iconografía es una **parte explícita del diseño aprobado**, no un agregado decorativo al finalizar.
+
+**Bibliotecas candidatas gratuitas y compatibles con uso comercial (verificar licencia al instalar):**
+
+| Biblioteca | Licencia | Carácter | Uso sugerido |
+| --- | --- | --- | --- |
+| [Phosphor Icons](https://phosphoricons.com/) / `@phosphor-icons/react` | MIT | Expresiva; familias regular, bold, fill y duotone | **Primera candidata** para la identidad cálida y editorial |
+| [Tabler Icons](https://tabler.io/icons) / `@tabler/icons-react` | MIT | Precisa, extensa, línea consistente | Alternativa si se elige Quiet Precision |
+| [Lucide](https://lucide.dev/) / `lucide-react` | ISC | Sobria y muy integrada con shadcn | Alternativa técnica si se necesita máxima simplicidad |
+| [Iconoir](https://iconoir.com/) / `iconoir-react` | MIT | Delgada y refinada, trazo 1.5px | Alternativa para dirección minimalista |
+
+**Decisión:** F0-a compara **tratamiento iconográfico visible** en cada una de las tres propuestas. F0-b elige **una biblioteca primaria**, documenta el porqué y bloquea su uso consistente en `DESIGN.md`. Phosphor es el valor predeterminado **propuesto**, no una elección impuesta antes de ver las tres direcciones. Evitar mezclar Phosphor, Lucide y Tabler en una misma pantalla por conveniencia. Si shadcn trae iconos Lucide por defecto y se elige Phosphor, se adaptan los componentes para usar el sistema seleccionado. Iconos especiales, ilustraciones SVG propias y logos de marca externa son excepciones documentadas.
+
+**Inventario mínimo obligatorio para el primer MVP:**
+
+- **Navegación:** Inicio, Movimientos, **Metas**, Plan/Presupuestos, Nosotros/Grupo, Perfil y acción principal Agregar; la agrupación final respeta el espacio móvil.
+- **Categorías:** supermercado/mercado, restaurantes, hogar, transporte, salud, entretenimiento, compras, servicios/suscripciones e ingresos. Incluir estado «Otra»; categorías editables utilizan un fallback coherente.
+- **Acciones y estados:** guardar, editar, buscar, filtrar, compartir, dividir, liquidar, **aportar a meta, retirar, progreso, meta completada**, volver, confirmar, advertencia, error, éxito, sincronizando, sin movimientos y sin presupuesto.
+- **Identidad propia:** pictogramas/SVG de autor solo en puntos memorables (empty states, Shared Balance, Spending Story, **Goal Journey** y momentos de onboarding), con lenguaje visual emparentado con arcos y trayectorias; no usar emojis como reemplazo de iconografía del producto.
+
+**Reglas de diseño/implementación:**
+
+1. `DESIGN.md` contiene selección de set, mapa semántico `concepto → icono`, tamaños, pesos, color, estados activos y ejemplos mobile/desktop. Se crea un `AppIcon` o wrapper tipado para impedir variaciones arbitrarias.
+2. Tamaños orientativos: **16 px** para metadatos, **20–24 px** en acciones y navegación, **28–32 px** en momentos destacados. Íconos y textos se alinean en la misma retícula óptica; no reducir la zona táctil: controles de **al menos 44×44 px**.
+3. Navegación principal y acciones críticas muestran **etiquetas textuales**; ningún icono ambiguo sustituye por sí solo «Registrar gasto», «Liquidar» o «Compartir». Todo botón solo-icono lleva nombre accesible (`aria-label` en el control); los SVG decorativos se ocultan a lectores de pantalla.
+4. Iconos de estado nunca comunican éxito, exceso o advertencia solo mediante color. Mantener contraste, grosor y legibilidad en modos claro/oscuro y a 360–430 px.
+5. Las transiciones de iconos pueden usar Motion si tienen semántica (selección, adición, confirmación, cambio de contexto), respetando `MOTION.md` y `prefers-reduced-motion`. Evitar morphs ornamentales continuos.
+6. Importar componentes SVG individuales con tree shaking, sin cargar icon fonts o sets completos; fijar versiones y registrar avisos de licencia en el repositorio cuando correspondan.
+
+**Gate visual:** F0-a enseña iconografía en los seis mockups; F0-b entrega un inventario mínimo renderizado en navegación, categorías y Expense Flow; cada slice de P0 incluye sus iconos y estados **a la vez que su funcionalidad**, no en un supuesto pulido posterior. Se rechaza una pantalla con placeholders de iconos, emojis sustitutos o iconografía inconsistente.
+
+### 6.2 Exploración F0-a — corta y concreta
+
+Tres variaciones **estáticas de la misma pantalla Inicio**, con los **mismos datos**, cada una a **390 px móvil y 1440 px escritorio**:
+
+- **A — Warm Editorial:** titulares expresivos y visualización protagonista.
+- **B — Quiet Precision:** mayor densidad, calma y legibilidad.
+- **C — Bold Utility:** captura directa, cifras más protagonistas y controles claros.
+
+El objetivo es elegir dirección, no construir seis aplicaciones. Una revisión de ambas personas selecciona una y documenta 5–10 reglas en `DESIGN.md`, **incluyendo el tratamiento de iconografía**. **F0-a no incluye motion clips, backend, landing ni benchmark formal**. Las tres variantes usan también **el mismo miniestado de meta** (p. ej., ahorro de viaje), evitando diseñar un dashboard que luego no tenga lugar para una función P0.
+
+### 6.3 Mobile-first y excelente en desktop
+
+**Móvil:** revisar 360, 390 y 430 px, safe areas iOS, teclado virtual, menú inferior, objetivo táctil ≥44×44, acceso continuo a «Agregar», contexto inequívoco, scrolling con gestos naturales y recuperación de errores. Las acciones frecuentes quedan al alcance de una mano donde sea razonable.
+
+**Escritorio:** revisar 1024 y 1440 px y pantallas anchas; sidebar o rail, columnas editoriales asimétricas, panel de detalle contextual, navegación teclado/mouse, hover/focus consistentes, contenido bien limitado y mayor densidad útil. **No** ampliar mecánicamente la UI móvil. La app debe sentirse diseñada para escritorio aunque la lógica móvil sea prioritaria.
+
+**Estados equivalentes en los dos formatos:** sin movimientos, sin grupo, **sin presupuesto**, con presupuesto, **sin metas, con metas, meta completada y retiro rechazado**, exceso, datos extremos, error, loading, latencia, reduced motion, dark, muchos movimientos, textos largos, permisos denegados. Son parte del diseño y de la aceptación.
+
+### 6.4 Experiencias insignia S1–S5 — integradas con datos reales en MVP-1
+
+**S1 — The Context Transition** (nombre de interacción, visualmente asociada a Juntia). Al cambiar Yo ↔ Nosotros, la composición y métricas se transforman con layout compartido, manteniendo continuidad, separación de permisos y títulos claros. Evitar flashes de datos de otro contexto y animar únicamente después de recibir información apropiada.
+
+**S2 — The Expense Flow.** CTA accesible → bottom sheet o modal adaptado a viewport → importe protagonista y controles ergonómicos → selección explícita de contexto/pagador/reparto → guardar con estado pendiente/éxito/error → transición al listado actual. Confirmación discreta y deshacer solo cuando sea seguro; un gesto genera una transacción (idempotencia). Objetivo típico <10 s.
+
+**S3 — The Spending Story** (evolución de Budget Story). **Sin presupuesto:** mostrar gasto acumulado por tiempo, categorías, comparación si hay datos y una historia visual descriptiva; jamás mostrar alerta de exceso, cero ficticio o proyección sin base. **Con presupuesto:** sumar límite, consumido, desviación y ritmo; comunicar sobrepaso con texto, forma y color. El mismo componente adapta su narrativa, no crea una pantalla castigo para quien no planifica.
+
+**S4 — The Shared Balance.** Animación elegante de quién pagó, a quién corresponde consumo y qué saldo queda; una liquidación transforma de manera continua el balance mostrado **sin disminuir el gasto del grupo**. Se evita representar ganadores/perdedores entre pareja; números finales legibles y verificables, no escondidos por partículas.
+
+**S5 — The Goal Journey.** Una meta personal o compartida muestra progreso en una composición editorial cuidada, con iconografía propia, aportes de cada participante y movimiento intencional al registrar un aporte o vincular una compra. **No** se presenta el ahorro como gasto, ni como saldo bancario verificado. Si la meta disminuye por un uso, la visualización explica qué se logró y cómo se utilizó el dinero, sin una animación de «pérdida». Es una interacción compacta dentro de la pantalla de metas; no requiere un nuevo micrositio ni un motor 3D.
+
+**Gate de cada experiencia:** funciona con datos persistidos y estados negativos; se comprueba en 390/1440, teclado y pantalla táctil, reduced motion, errores de red, números largos, carga lenta y refrescos. Un screenshot bonito no basta; guardar/repartir/liquidar debe operar realmente.
+
+### 6.5 MOTION.md obligatorio desde F0-b
+
+`MOTION.md` es un artefacto de primera clase junto a `DESIGN.md`; contiene:
+
+1. Principios de movimiento y jerarquía: feedback, continuidad, emoción y límites.
+2. Tokens: `instant` ~90–140 ms; `standard` ~180–260 ms; `expressive` ~350–550 ms; `spring` por física moderada; `stagger` ~30–55 ms para grupos breves.
+3. Especificación de S1–S5: estados, entrada/salida, gestos, tiempos, interrupciones, errores y fallback sin movimiento.
+4. Presupuesto de rendimiento: preferir transform/opacity; medir en móvil de gama media; no animaciones continuas ni canvas/WebGL en dashboards.
+5. Accesibilidad: `prefers-reduced-motion`, foco preservado, lectura asistida, números finales en DOM, no ocultar validaciones tras efectos.
+6. Rúbrica de QA: fluidez, continuidad, intención, comodidad y coherencia desktop/móvil; clips internos de los flujos **implementados**, no obligación en F0-a.
+
+Motion for React para gestos y layout; CSS para feedback simple; View Transitions solo donde compatibilidad y coordinación con Motion funcionen. React Bits en elementos específicos con licencia revisada. GSAP/Lenis **solo eventualmente para la landing posterior**, no para el gasto diario. Nunca dos librerías compitiendo por un mismo nodo.
+
+### 6.6 Herramientas y criterio de selección
+
+| Herramienta | Uso | Restricción |
+| --- | --- | --- |
+| Tailwind + tokens + shadcn/Radix | Base accesible y personalizable | No conservar aspecto genérico por defecto |
+| Motion for React | S1–S5, gestures/layout/presence | Cada motion debe explicar estado |
+| CSS propio | Hover, focus, transiciones simples | Mantener perceptible en pantallas táctiles |
+| SVG propio/visx/Recharts | Visualizaciones financieras | Texto y alternativa accesibles |
+| React Bits | Efectos acotados, muy personalizados | Revisar licencias; no WebGL continuo en dashboard |
+| Taste Skill v2 | Landing/portfolio posterior | No dirige dashboards internos |
+| Impeccable + emil-design-eng | Dirección/UI y auditoría de motion | Aplicar skills relevantes, no todos siempre |
+
+### 6.7 Criterio subjetivo, pero verificable de aprobación «wow»
+
+Antes de dar por lanzado MVP-1, ambos usuarios prueban en móvil y escritorio las experiencias S1–S5, **incluida la meta compartida**, usando datos reales; cada uno describe por separado qué es claro, qué impresiona y qué estorba. El objetivo es que **ambos digan que se ve y se siente excelente sin sacrificar velocidad**. Feedback humano documentado + fallos concretos corregidos; esto no sustituye a tests financieros ni promete premio.
+
+## 7. Arquitectura y datos
+
+### 7.1 Estrategia técnica
+
+**Monolito modular Next.js/TypeScript**; sin microservicios ni monorepo obligatorio en P0. Separar dominio financiero, acceso a datos, UI y conectores de terceros para permitir evolución sin reescritura.
+
+| Capa | Propuesta |
+| --- | --- |
+| App | Next.js App Router + React compatible + TypeScript strict |
+| Rendering | Server Components donde aporten, client components para experiencias interactivas |
+| UI | Tailwind + tokens propios + shadcn/ui/Radix personalizado |
+| Formularios | React Hook Form + Zod; validación repetida en servidor |
+| Estado | TanStack Query solo para caché cliente pertinente; optimistic UI donde haya rollback claro |
+| Persistencia | Supabase PostgreSQL con RLS y migraciones versionadas |
+| Auth | Supabase Auth, cookies/sesiones seguras |
+| Archivos | Supabase Storage privado (P1) |
+| IA | Adaptadores en servidor con secrets fuera del cliente |
+| PWA | Manifest y estrategia de service worker seleccionada tras prueba con la versión real de Next; no fijar Serwist sin validar bundler |
+| Deploy | Vercel Hobby **solo uso personal no comercial**; revisar plan antes de SaaS |
+| CI | lint, typecheck, unit de dominio, integración RLS, build y pocos E2E smoke |
+
+Verificar compatibilidad exacta de la versión estable de Next, React, Motion y estrategia PWA **durante bootstrap**; registrar versiones fijadas y lockfile. React 19.3 introdujo estabilidad de View Transitions, pero el enrutador y los navegadores deben validarse para cada caso.
+
+### 7.2 Estructura propuesta
+
+```text
+src/
+  app/                    # rutas, layouts, errores y carga
+  features/
+    auth/
+    expenses/
+    groups/
+    budgets/
+    goals/
+    activity/
+    insights/
+    demo/               # P1: demo pública aislada, después de MVP-1
+  domain/
+    money/                # Money, moneda, escala y redondeo
+    transactions/         # reglas por tipo y validación
+    allocations/          # partes y porcentajes
+    balances/             # deuda y liquidaciones
+    budgets/              # atribución y cálculo
+    goals/                # aportes, saldo, uso y cero doble conteo
+  components/
+    ui/                   # primitivos accesibles
+    finance/              # SVG, indicadores y gráficos
+  lib/
+    db/
+    supabase/
+    security/
+    analytics/
+    ai/                 # posterior, no dependencia P0
+  styles/tokens.css
+supabase/
+  migrations/
+  tests/rls/
+docs/
+  adr/
+  research/
+  design/
+```
+
+**Regla de dependencia:** `domain` no importa componentes React ni SDK de IA, Supabase o Vercel. Las operaciones persisten en transacciones del servidor y devuelven objetos normalizados y validados.
+
+### 7.3 Modelo relacional inicial
+
+| Tabla | Propósito | Restricción notable |
+| --- | --- | --- |
+| `profiles` | Preferencias y datos mínimos | Propiedad por `auth.uid()` |
+| `groups` | Tipo, moneda, zona horaria, creador | `couple` ≤ 2 miembros activos |
+| `group_members` | Miembros, rol, fechas y estado | Membresía como autoridad |
+| `group_invitations` | Destino, token hash, caducidad | Aceptación atómica y de un uso |
+| `categories` | Catálogo canónico del sistema P0 | Categorías propias P1 |
+| `transactions` | Gasto/ingreso/liquidación, fecha, autor, moneda | Scope privado **XOR** grupo |
+| `transaction_allocations` | Porción exacta asignada a cada miembro | Total = importe del gasto; cada miembro válido |
+| `budgets` | Límite **opcional** por contexto, categoría, periodo y moneda | Ausencia ≠ cero; una configuración activa por clave |
+| `savings_goals` (P0) | Meta privada XOR grupal, nombre, importe objetivo, moneda, fecha opcional y estado | RLS por dueño o membresía; balance derivado, nunca negativo |
+| `goal_ledger_entries` (P0) | Aporte, retiro propio o uso enlazado a transacción | Registro inmutable/auditado, actor, monto positivo, tipo, funding mode si es aporte, idempotencia; links válidos |
+| `goal_usage_allocations` (P0) | Importe de un uso de meta consumido de aportaciones disponibles por miembro | Suma exacta = uso total, autorización y balance disponible por aportante |
+| `goal_usage_confirmations` (P0) | Aprobación del otro integrante cuando se usan aportes ajenos | No confirmar = no ejecutar uso compartido sensible |
+| `audit_events` | Autor, cambio y entidad, metadata mínima | Sin edición directa desde cliente |
+| `member_history_snapshots` | Resumen histórico mínimo de exintegrante | Solo propietario; sin datos de terceros |
+| `idempotency_records` | Control de repetición por intención | Clave única acorde al actor/acción |
+| `recurring_rules` (P1) | Recurrentes | Instancias sin duplicados |
+| `attachments` (P1) | Recibos privados | Política por transacción y estado de membresía |
+| `ai_insights` (P1) | Resultados estructurados/versionados | Alcance, consentimiento, expiración |
+| `refunds` (P1) | Ajustes parciales vinculados | Nunca reembolso huérfano |
+
+**Contrato por tipo:** en P0 `expense` puede ser privado o de grupo; `income` es privado; `settlement` es solo grupal, entre dos miembros y sin categoría presupuestal. `goal_ledger_entries` pertenecen al motor de metas y NO se insertan como gastos ficticios en `transactions`; `goal_usage` referencia un gasto legítimo existente o creado atómicamente. `payer_user_id` aplica a gastos; `from_user_id/to_user_id` aplica a liquidaciones. Si se utiliza una única tabla con columnas opcionales, CHECK constraints fuerzan combinaciones legales; también es válida la separación física de liquidaciones si reduce ambigüedad. Documentar la decisión antes de migrar.
+
+**Operaciones críticas:** creación de gasto+allocations, aceptación de invitación, corrección+auditoría, liquidación, **aporte/retiro y uso de meta con gasto enlazado** deben ser transacciones atómicas. El cliente no puede suministrar una lista de participantes que no pertenezcan al grupo. Todas las escrituras validan ownership, membresía, tipo, moneda y fecha en servidor/SQL; RLS es última barrera, no sustituto de dominio.
+
+### 7.4 Privacidad, autorización y demo
+
+- RLS en todas las tablas expuestas y buckets privados. `USING` y `WITH CHECK` acordes a propiedad/membresía, no solo `TO authenticated`.
+- No autorizar con `user_metadata` editable; no exponer keys privilegiadas en `NEXT_PUBLIC_*`; minimizar JWT stale claims.
+- Vistas de reporte con `security_invoker` (cuando aplique); evaluar funciones privilegiadas caso por caso, sin `SECURITY DEFINER` por conveniencia.
+- Metas privadas: solo propietario. Metas compartidas: membresía activa + autorización sobre aportes/uso; **no exponer metas privadas vía agregados o actividad compartida**. Un miembro no puede declarar aportes de otro.
+- Nunca filtrar datos de privacidad solo en frontend: probar acceso directo por cliente autenticado de otro usuario.
+- Al abandonar grupo, exmiembros no tienen lectura del grupo ni de sus archivos; solo su snapshot personal seguro si está implementado.
+- Telemetría sin importe, comercio, notas, nombre propio, token o identificadores financieros sensibles; consentimiento/controles documentados.
+- **Demo pública posterior al MVP-1** con fixtures estáticas aisladas de producción, sin credenciales ni datos financieros reales; las fixtures internas de F0 y QA nunca se confunden con persistencia real.
+- Exportación y eliminación de datos con reglas claras; copia de seguridad externa cifrada y restauración de prueba antes del uso real de largo plazo.
+
+### 7.5 Persistencia, PWA y confiabilidad
+
+En P0, la web requiere conexión para guardar movimientos. Se puede cargar una interfaz demo y estados sin red, pero **no** prometer registro offline antes de una cola de sincronización segura.
+
+Para P1 offline: operaciones con clave idempotente; cola local cifrada o protegida en la medida posible; reintentos seguros; orden, conflictos, cierre de sesión y expulsión de grupo explícitos; un gasto capturado sin red permanece «pendiente de sincronización», no se muestra como contabilizado en servidor.
+
+Operación en niveles gratuitos: la suspensión por inactividad de Supabase Free es posible; no usar un «ping semanal» como garantía. Monitorizar avisos, practicar recuperación y considerar un plan superior cuando la app tenga uso relevante. Vercel Hobby no se utiliza para operación comercial. Limitar almacenamiento, adjuntos y consultas desde el principio.
+
+## 8. Insights y oportunidades — futuro desacoplado
+
+### 8.1 Primero datos confiables, no IA
+
+El MVP-1 muestra agregados **deterministas**: gasto registrado por periodo/contexto, categoría, consumido por miembro, saldos netos y estado de presupuesto *cuando exista*. El historial ya es útil sin presupuestos ni sugerencias. En particular, no construir un motor de recomendaciones durante F0 ni durante los flujos críticos de pareja.
+
+### 8.2 Presupuesto sugerido después del uso real
+
+**DEC-R01-S:** con suficiente historial, ofrecer un **borrador voluntario** de presupuesto por categoría basado en datos reales, con periodo, método, intervalos y limitaciones. No autoactivar ni recurrir a LLM para hacer el cálculo oficial. Si hay un solo mes atípico, mostrar cautela o no sugerir importe. Permitir «Ver propuesta», «Editar», «Ahora no» y «No volver a sugerir».
+
+### 8.3 IA posterior, privada y verificable
+
+Gemini, Jev u otros modelos son opcionales. El código calcula cifras; la IA clasifica o explica señales basadas en agregados con consentimiento, sin acceder por defecto al historial privado completo. Resultados estructurados y validados, con fallback sin IA, cuota global y privacidad por contexto. No decir «te alcanza» por un descuento ni porque haya presupuesto restante (DEC-R17).
+
+### 8.4 Price intelligence como línea de investigación separada
+
+**No implementar para MVP-1:** adaptadores de supermercados, scrapers, matching SKU, históricos de precios, Search Grounding, APIs de Mercado Libre, restaurantes, ofertas Hot Sale y notificaciones. Todo vive en `docs/research/oportunidades.md`: hipótesis, cobertura por tienda, fuentes permitidas, permisos legales, riesgos, experimento de 10–20 artículos y arquitectura eventual. **Que una web sea pública o `robots.txt` permita una ruta no equivale a licencia de reutilización comercial.** Priorizar APIs y acuerdos oficiales; evaluar scraper solo si los términos lo permiten.
+
+**Única entrada en roadmap:** «Spike controlado de precios, tras cuatro semanas consecutivas de uso estable de MVP-1 por ambos usuarios». El spike requiere permiso/fuente verificable y no altera métricas financieras centrales.
+
+## 9. Herramientas, skills y gobierno del diseño con Claude Code
+
+**Jerarquía:** Documento maestro v1.1.1 congelado → ADRs/contratos de dinero → `DESIGN.md` y `MOTION.md` aprobados → especificaciones del slice → sugerencias de skills. Un skill no es director de arte del proyecto y no cambia el alcance sin aprobación.
+
+| Herramienta | Función en el ciclo | Uso inicial |
+| --- | --- | --- |
+| Impeccable | Explorar, criticar, documentar y pulir el producto interno | F0-a/F0-b y cada pantalla P0 |
+| emil-design-eng | Evaluar principios de interacción, curvas y animaciones | F0-b y cada S1–S5 |
+| Playwright CLI | Abrir UI real, verificar viewports, revisar screenshots/clips | Durante todo el MVP |
+| web-design-guidelines | A11y, responsive, formularios, foco y navegación | Gate por slice |
+| Supabase/Postgres best practices | Schema, índices, transacciones y RLS | Datos reales |
+| Taste Skill v2 | Diseño editorial de landing/caso de estudio | **Después** del primer uso privado |
+| React Bits | Base seleccionada de microefectos, siempre adaptada | Solo si mejora una interacción concreta |
+
+Usar versiones, comandos y dependencias fijadas tras inspeccionar documentación oficial, no instalar todas las skills permanentemente. Consultar `https://github.com/pbakaus/impeccable`, `https://motion.dev`, `https://github.com/microsoft/playwright-cli`, `https://github.com/vercel-labs/agent-skills`, `https://github.com/supabase/agent-skills`, `https://github.com/Leonxlnx/taste-skill` y `https://github.com/DavidHDev/react-bits` antes de instalación.
+
+**Forma de trabajar sin sobrecarga:** PRs pequeños y demostrables. `CLAUDE.md` breve con enlaces a master, `DESIGN.md`, `MOTION.md` y ADRs. Cada slice debe describir: comportamiento real, reglas de autorización/dinero aplicables, diseño móvil/escritorio, motion/fallback, estados, evidencias. Ningún PR cambia branding/arquitectura en secreto. No convertir el proyecto en una cadena interminable de aprobaciones; revisión humana sólo para decisiones visuales importantes y gates reales.
+
+## 10. Calidad y rendimiento: un MVP confiable y visualmente sobresaliente
+
+### 10.1 Pruebas según riesgo
+
+| Nivel | Qué cubre | Herramienta | Gate |
+| --- | --- | --- | --- |
+| Unitarias dominio | Money, redondeos, splits, saldos, liquidaciones, presupuestos opcionales, **ledger de metas y no doble conteo** | Vitest | **Bloqueante** |
+| Base de datos/seguridad | RLS, invitaciones, idempotencia, escritura atómica, roles, acceso privado, **metas privadas/compartidas y confirmaciones** | SQL/Supabase tests | **Bloqueante** |
+| Componentes | Expense Flow, reparto, presupuesto ausente, Shared Balance, **Goal Journey**, error/loading | RTL selectivo | En flujos críticos |
+| Smoke E2E | Registro privado; pareja + 50/50 + liquidación; **meta individual/compartida con aportes y uso**, presupuesto activado/desactivado | Playwright | Pocos, bloqueantes |
+| Visual y motion | S1–S5 reales, screenshots/clips, reduced motion, dark, móvil y desktop | Navegadores reales | **Bloqueante para cada flujo insignia** |
+
+### 10.2 Metas cuantitativas
+
+**Core Web Vitals:** en el p75 de experiencias reales, **LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1**. Cuando no exista tráfico suficiente, reportar métricas de laboratorio (Lighthouse / Performance panel / dispositivos físicos) como proxy y **no presentarlas como p75 medido**. Evaluar rutas reales de dashboard y captura, no solo landing. Complementar con CPU moderada, 4G, interacción táctil, listas largas y transición entre contextos.
+
+Otros objetivos: mediana de gasto frecuente <10 s tras onboarding, ausencia de scroll horizontal en 360/390/430/1024/1440, contraste WCAG AA verificado, targets táctiles cómodos, teclado funcional, valores financieros exactos y cero fugas de datos en escenarios RLS. Lighthouse 95+ es un objetivo secundario aspiracional, **no reemplaza** las métricas anteriores.
+
+### 10.3 Definición de terminado de cada slice MVP
+
+**No negociable antes de aceptar el slice:**
+
+- [ ] Flujos reales funcionan con persistencia autorizada; no mocks presentados como realidad.
+- [ ] Cálculos y RLS pasan las pruebas correspondientes; lint, typecheck y build sin fallos.
+- [ ] Diseño de alta calidad a **390 y 1440**, más 360/430/1024 y tamaños intermedios sin rupturas.
+- [ ] Iconografía semántica presente en navegación, categorías, acciones y estados; consistente con `DESIGN.md` y accesible, sin placeholders ni emojis sustitutos.
+- [ ] Animación planificada en `MOTION.md` funciona, maneja interrupciones y tiene fallback reduced motion.
+- [ ] Formularios, foco, teclado virtual, error/loading/empty, light/dark si está aprobado y datos largos se ven bien.
+- [ ] No aparece ningún `budget_remaining` o alerta de exceso cuando `budget === null`; **aportes y retiros de metas aparecen separados de gastos, sin falsa liquidez ni sumas duplicadas**.
+- [ ] El responsable visual revisó capturas del producto funcionando y registró observaciones.
+
+**No bloqueantes fuera de alcance:** landing de premios, demos públicas elaboradas, perfección de microefectos decorativos, E2E masivos, OCR, ofertas, IA, scrapers y experimentos de monetización. Un defecto real de accesibilidad, privacidad o usabilidad sí bloquea.
+
+### 10.4 Release gate humano conjunto
+
+Las pruebas internas con gastos reales empiezan desde P0-1, después de verificar autorización, cálculos y recuperación de datos de ese slice. **No requieren S1–S5 terminadas.** El gate que sigue aplica solo a declarar el lanzamiento privado completo: antes de declarar MVP-1, **ambas personas** completan el escenario US-01 a US-04, **US-18 a US-23** y S1–S5 en teléfono y desktop. El criterio de «está genial» debe reflejar una experiencia medible: tareas completadas sin explicación externa, lectura correcta de cifras, percepción de calidad y fluidez, sin fallos críticos. Registrar comentarios por separado y corregir los problemas importantes. No basta una captura de Figma o una demo fake.
+
+## 11. Plan de ejecución — calidad visual y producto real avanzan juntos
+
+**El orden no es «MVP feo → embellecer».** Cada vertical slice añade funcionalidad real y el tratamiento visual que merece; F0 sólo decide dirección y componentes fundacionales. La salida es un **MVP-1 premium** usable y aprobado por los dos. Las etapas siguientes expanden capacidades, no reparan deliberadamente una mala experiencia inicial.
+
+### F0-a — Elegir dirección de arte (muy corto)
+
+- A/B/C en **capturas estáticas** de *Inicio*, las mismas cifras y contexto, a 390 y 1440 px; presupuesto presente y ausente **no** exigen seis diseños: mostrar una variante seleccionada para confirmar ambos estados después de la decisión.
+- Revisar con ambos usuarios y aprobar una dirección. Documentar decisiones en `DESIGN.md` (tokens, tipografía, layout, tono, contrastes objetivo **e iconografía**).
+- **Salida:** una dirección elegida y una página de reglas; no landing, benchmark formal, clips, backend ni animaciones completas. **El mismo resumen de una meta ficticia aparece en las tres propuestas.**
+
+### F0-b — Fundar interfaz y motion (sin retrasar funcionalidad)
+
+- App shell móvil/escritorio con navegación y selector de contexto; fixtures tipadas de Yo/Nosotros **y una meta privada/compartida**. Elegir set de iconos principal y aplicar inventario semántico de §6.1.1.
+- Expense Flow animado y reversible, estados con/sin presupuesto, 390/1440 y reduced motion; definir `MOTION.md`.
+- Construir sólo los primitivos reutilizables, no todo un design system exhaustivo sin casos reales.
+- **Salida:** UI de alto nivel validada y preparada para conectar al primer slice real.
+
+### P0-1 — Cuentas y gastos privados con UI final, no placeholder
+
+- Auth, sesiones seguras, perfiles, migraciones y RLS individual.
+- Money/transactions, gastos e ingresos privados, categorías, calendario, historial y dashboard **sin presupuesto**.
+- Conectar Expense Flow y app shell al servidor; empty/error/loading/móvil/escritorio desde el PR.
+- **Salida interna:** una persona registra, edita y anula movimientos reales y los entiende en una UI premium; pruebas con datos reales permitidas desde este slice tras validar RLS, invariantes y recuperación básica. No esperar P0-4 para obtener feedback.
+
+### P0-2 — Pareja y balances con visualización final
+
+- Pareja (`couple`) de dos miembros, invitación segura, rol y membresía; límites y pruebas RLS.
+- Repartos 50/50, porcentaje e importes; saldos y liquidaciones parciales, auditoría y correcciones.
+- **S1 Context Transition** + **S4 Shared Balance** conectados a datos reales y revisados en móvil y escritorio.
+- **Salida interna:** los dos pueden compartir, comprender y saldar sin usar otra app.
+
+### P0-3 — Presupuestos opcionales, metas y Spending Story real
+
+- Crear/editar/archivar presupuestos personales o grupales; sin presupuesto sigue habiendo gastos, historia, categorías y reportes.
+- **S3 Spending Story** en ambos estados, sin predicción inventada; métricas y filtros por periodo.
+- **Metas P0:** creación de meta individual y compartida, aportes por miembro, retiros propios, vista de progreso y **S5 Goal Journey**, reservas declarativas frente a transferencias declaradas.
+- **Integridad de metas:** compra/uso vinculados de forma atómica, confirmaciones para uso de aportes ajenos y `total_destinado_neto` sin doble conteo; tests de privacidad y límites de saldo.
+- Dividir en PRs cortos: primero esquema/ledger, luego UI/animación, luego enlace compra + regresión. No convertir metas en banca conectada.
+- Completar la exportación y recuperación de alcance global; la protección y recuperación básica de movimientos privados ya se habilitó en P0-1 para pruebas internas.
+- **Salida interna:** gastos con/sin presupuesto **y metas privadas/compartidas** son elegantes, claros y válidos; el usuario entiende gasto vs ahorro destinado.
+
+### P0-4 — Gate privado conjunto «funcional + espectacular»
+
+- Ejecutar tests de dinero y privacidad **incluido ledger de metas**; smoke E2E; revisar S1–S5 con datos reales y reduced motion.
+- Revisar 360/390/430/768/1024/1440, teclado, safe areas, listas largas, modo oscuro según diseño aprobado y estados completos.
+- Verificar CWV con medios disponibles y documentar qué no puede medirse aún en p75 real.
+- **Ambos aprueban** uso diario, legibilidad, rapidez y carácter visual. **Solo aquí se declara MVP-1 lanzado**.
+
+### Después de MVP-1 — Iteración de uso real y portafolio
+
+- Observar uso conjunto real durante varias semanas y arreglar las fricciones que aparezcan.
+- **MVP-2:** recurrentes, presets de captura, estadísticas mejores, sugerencia voluntaria de presupuestos cuando haya historial suficiente, **aportes programados y metas avanzadas**; priorización según evidencia.
+- **MVP-3:** demo pública aislada, landing editorial, PWA más completa, case study de interacción y performance, ampliación a grupos N si la pareja lo necesita.
+- **Tras cuatro semanas consecutivas de uso estable de MVP-1 por ambos usuarios:** spike controlado de fuentes y precios, descrito en `docs/research/oportunidades.md`, sin depender de MVP-2/MVP-3 ni implicar la construcción completa de un motor comercial.
+- **Evolución posterior:** OCR, Gemini/Jev, alertas de supermercado/restaurantes, productos/SKU, multidivisa, offline robusto, integraciones, monetización según demanda.
+
+### Backlog de la primera entrega
+
+| Ticket | Objetivo | Tipo de evidencia |
+| --- | --- | --- |
+| F0-a | Tres direcciones estáticas Inicio 390/1440 **con una meta en la fixture**; selección humana | Capturas comparables + `DESIGN.md` |
+| F0-b | Shell responsive, Expense Flow animado, `MOTION.md` | Interacción demo en móvil y desktop |
+| P0-1a | Auth privada, RLS, modelo Money | SQL + tests de dominio |
+| P0-1b | CRUD privado, actividad, dashboard sin presupuesto | Prueba con datos reales + screenshots |
+| P0-2a | Grupo pareja e invitación | Tests de membresía/RLS |
+| P0-2b | Repartos, liquidaciones y Shared Balance | Tests + vídeo de interacción real |
+| P0-2c | Context Transition con aislamiento de datos | QA móvil/escritorio + a11y |
+| P0-3a | Presupuesto opt-in y modelo de atribución | Tests de existencia/ausencia y cálculo |
+| P0-3b | Spending Story con/sin presupuesto | QA visual y métricas reconciliadas |
+| P0-3c | Modelo y API de metas privadas/compartidas; ledger y RLS | SQL + invariantes + US-18/19/22/23 |
+| P0-3d | UI de metas + S5 Goal Journey; aportes y retiros | QA móvil/escritorio + pruebas reales |
+| P0-3e | Usar meta para financiar gasto + no doble conteo | Test atómico + US-20/21/23 |
+| P0-4 | Beta privada aprobada por ambos | Checklist de release + exportación |
+
+**Regla de avance:** no esperar el «pulido final» para cada pantalla; todo slice integra diseño, motion aplicable y funcionalidad. No pedir una semana de approvals por cada botón, pero sí revisión seria de **S1–S5**. No expandir metas a banca, inversiones ni automatismos en P0.
+
+## 12. Decisiones, riesgos y ADRs
+
+### 12.1 Decisiones vigentes para MVP-1
+
+| ID | Decisión | Vigencia |
+| --- | --- | --- |
+| DEC-R01 | **Presupuesto opcional**; ausencia distinta de cero; registro completo sin crear límite; presupuesto sugerido opt-in después | Desde F0 y esquema P0 |
+| DEC-R17 | **No decir «te alcanza»** por ausencia o existencia de presupuesto sin evidencia de liquidez | Desde toda la UI |
+| DEC-R09 | **Juntia es el nombre elegido del producto** y se usa en UI y documentación; verificar marca y registrar dominio antes de uso público/comercial (no bloquear MVP privado) | Desde F0 |
+| DEC-V01 | Diseño premium y funcionalidad salen **en la misma primera entrega privada** | Gate MVP-1 |
+| DEC-V02 | `DESIGN.md` + `MOTION.md` desde F0-b; experiencias S1–S5 forman parte de P0 | Gate visual |
+| DEC-V03 | Iconografía coherente y accesible como parte del MVP: biblioteca primaria elegida en F0-b e inventario mínimo en §6.1.1 | Gate visual |
+| DEC-V05 | Móvil primero y escritorio expresamente diseñado, ambos aprobados | Gate visual |
+| DEC-V04 | LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1 en p75 real cuando sea medible | Performance |
+| DEC-G01 | Metas personales y compartidas P0 con presupuesto opcional | MVP-1 |
+| DEC-G02 | Aportes no son gastos ni crean deudas; retiro/uso bajo reglas y autorización | Motor financiero |
+| DEC-G03 | Reservado virtual o transferido declarado; nunca saldo bancario verificado | UX + seguridad |
+| DEC-G04 | `total_destinado_neto` explicable y sin doble conteo | Reportes |
+| DEC-G05 | Balance de meta y progreso derivados de ledger auditable | Motor financiero |
+| DEC-G06 | Autorización/RLS/idempotencia para metas y uso de aportes compartidos | Seguridad |
+| DEC-S01 | Ofertas, scraping, Google y Jev están aislados en investigación, **no bloquean** MVP-1 | Roadmap futuro |
+
+### 12.2 ADRs del motor financiero (se mantienen del maestro v1.0)
+
+| ADR | Tema | Resolución |
+| --- | --- | --- |
+| ADR-001 | Contextos | Conversión privado→grupo no es toggle invisible: crear nuevo gasto compartido y anular el previo con flujo auditado |
+| ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo mayor residuo y desempate estable; moneda única por grupo P0 |
+| ADR-003 | Historial de miembros | Acceso grupal revocado; snapshot privado mínimo o bloquear la acción de salida/expulsión hasta existir |
+| ADR-004 | Presupuestos | Grupo = gasto completo; personal = gasto privado + partes; **ambos opcionales, ausencia ≠ cero**, totales no aditivos |
+| ADR-005 | IA | Post-MVP, consentimiento, agregados minimizados, salida validada y fallback sin modelo |
+| ADR-006 | Offline | No prometer sin cola idempotente y conflictos resueltos |
+| ADR-007 | Correcciones | Ajustes auditados recalculan balances; liquidaciones inmutables |
+| ADR-008 | Demo | Pública posterior, exclusivamente fixtures aisladas sin acceso a finanzas reales |
+| ADR-009 | Planes | Uso personal no comercial en hosting Hobby; revisar licencia/plan antes de actividad comercial |
+| ADR-010 | Metas | Ledger auditable separado de consumo; usos enlazados a gasto, sin doble contabilización; confirmación para aportes ajenos |
+
+### 12.3 Riesgos y mitigaciones
+
+| Riesgo | Cómo se manifiesta | Acción |
+| --- | --- | --- |
+| **Proyecto interminable** | Scrapers, IA, OCR y landing desvían el MVP | Gate estricto: investigación no entra en backlog P0 |
+| **MVP funcional, pero genérico** | Se entrega la UI como CRUD convencional | S1–S5, `DESIGN.md`, `MOTION.md` y aprobación visual son P0 |
+| **MVP bello, pero incorrecto** | Dinero, repartos, permisos o liquidaciones fallan | Tests críticos + SQL RLS + scenario real de pareja |
+| **Presupuesto obligatorio encubierto** | Dashboard interpreta `null` como cero | DEC-R01 + US-01/04/13 y tests visuales |
+| **Sensación falsa de liquidez** | Alertas «te alcanza» por presupuesto | DEC-R17 y copy audit |
+| **Experiencia desktop inferior** | Tarjetas móviles estiradas | Composición responsive específica y gate 1440 px |
+| **Motion que bloquea la tarea** | Gestos lentos, layout shift, mareo | Reduced motion, budgets de duración y medición |
+| **Nombre ya utilizado por terceros** | Juntia coincide con nombre encontrado en otra categoría de gestión comunitaria y dominios principales ocupados | Marca Juntia elegida; investigar registro/viabilidad antes de actividad pública o comercial |
+| **Datos privados expuestos** | RLS incorrecta, telemetría con importes | Tests negativos; minimización de datos |
+| **Pérdida de datos** | Errores de persistencia/free tiers | Idempotencia, exportación y recuperación probada |
+| **Metas mal contabilizadas** | Doble conteo, ahorro tratado como gasto o saldo negativo | DEC-G01..G06, ledger, pruebas US-18..23 |
+
+### 12.4 Fuera de la ruta crítica
+
+No impedir MVP-1 por dominio, páginas de marketing, premios, métricas del mercado, precio de Scraping APIs, elección de LLM, proveedores de ofertas, habilidades de Jev, investigación de supermercados o perfeccionamiento de mockups no conectados a flujos reales. **Sí detener operaciones que comprometan seguridad, dinero, integridad, accesibilidad básica o la calidad de S1–S5 y de las metas aprobadas**.
+
+## 13. Cómo arrancar con Claude Code
+
+El primer PR realiza **solo F0-a**; el segundo, F0-b. **No desarrollar toda la app demo antes de implementar la funcionalidad real.** Los tickets posteriores son vertical slices que entregan diseño+motion+comportamiento y avanzan hacia el release privado.
+
+### Prompt de F0-a
+
+> Lee íntegramente `docs/JUNTIA_MASTER.md`, en especial DEC-R01/DEC-R17, §6 y §11. Inspecciona el repositorio antes de editar. Propón **tres direcciones de Inicio** dentro del territorio visual Warm Editorial Finance, usando **los mismos datos** (incluyendo miniestado de meta) y capturas estáticas a 390 y 1440 px. No construyas tres apps ni grabes animaciones; no añadas Supabase, Auth, Gemini, Jev, scraping, landing ni demo pública. Cuida legibilidad financiera, personalidad de autor, **iconografía visible y coherente**, tratamiento sin presupuesto, densidad desktop y viabilidad mobile-first. Usa Impeccable para crítica visual. Entrega las seis capturas verificables, una tabla pequeña de pros/contras y `DESIGN.md` propuesto; **no declares ganadora por tu cuenta**. Reporta solo comandos y validaciones ejecutados realmente.
+
+### Prompt de F0-b (después de selección humana)
+
+> Implementa shell mobile-first **y composición desktop original**, Expense Flow animado, fixtures tipadas y los estados con y sin presupuesto siguiendo `DESIGN.md`, **incluido su sistema de iconos, categorías y estados**; crea `MOTION.md` con tokens, S1–S5 y fallback reduced motion. Verifica 390/1440 y teclado móvil. No conectar aún backend, ni crear landing, demo pública, scrapers, OCR o chat IA. El resultado debe ser un prototipo pequeño que **sirva de base directa para el primer slice real**, no una segunda app descartable.
+
+### Regla para los PRs de producto
+
+Cada PR posterior debe demostrar: **la feature funciona con datos reales y permisos correctos; se ve excelente en móvil y escritorio, con iconografía semántica consistente; el motion relevante tiene sentido y fallback; se probaron invariantes y se adjuntaron capturas reales**. No aceptar un PR solo por tests verdes ni solo por screenshots bonitos. Review humano en las decisiones de dirección e interacciones insignia; el resto avanza sin burocracia excesiva.
+
+## 14. Referencias, trazabilidad y estado
+
+**Fuente de verdad de producto:** este documento v1.2 consolidado (erratas de bootstrap conservadas; metas y marca integradas). Hereda las reglas contables, de privacidad y arquitectura del documento maestro v1.0 y formaliza DEC-R01, DEC-R17, el estándar visual simultáneo y el nuevo roadmap.
+
+**Investigación fuera del plan MVP:** `docs/research/oportunidades.md` (precios, scraping, supermercados, Merchant API/Search Grounding, Jev, restaurantes y campañas); `docs/research/competidores.md` (Tricount, Roonda, SplitRound, Pillelo, Priceo y referencias de diseño). **Las afirmaciones de competidores y proveedores necesitan revalidarse antes de decisiones comerciales**; ninguna es premisa obligatoria de un MVP financiero privado.
+
+**Referencias oficiales para implementación (verificar versión/licencia al usar):**
+
+- Motion: https://motion.dev/
+- Impeccable: https://github.com/pbakaus/impeccable
+- Taste Skill: https://github.com/Leonxlnx/taste-skill
+- React Bits: https://github.com/DavidHDev/react-bits
+- Supabase RLS: https://supabase.com/docs/guides/api/securing-your-api
+- Supabase skills: https://github.com/supabase/agent-skills
+- React View Transitions: https://react.dev/blog/2026/09/09/react-19-3
+- Playwright CLI: https://github.com/microsoft/playwright-cli
+- Web performance: https://web.dev/articles/vitals
+- Vercel Hobby: https://vercel.com/docs/plans/hobby
+- Phosphor Icons: https://github.com/phosphor-icons/react (MIT)
+- Tabler Icons: https://github.com/tabler/tabler-icons (MIT)
+- Lucide: https://lucide.dev/license (ISC)
+- Iconoir: https://iconoir.com/docs/faq (MIT)
+
+### Registro de cambios v1.1 vs v1.0
+
+1. **MVP-1 combina funcionalidad real y experiencia visual premiable** en un único gate privado; se eliminó la idea de «primero funcional, después bonito».
+2. **DEC-R01:** presupuestos opt-in, ausencia ≠ cero; estados con/sin presupuesto especificados en onboarding, consultas, dashboard y visualizaciones.
+3. **DEC-R17:** no afirmar capacidad de compra o liquidez por un límite restante.
+4. **Cuatro interacciones insignia:** Context Transition, Expense Flow, Spending Story (con/sin presupuesto) y Shared Balance; todas parte del MVP-1.
+5. `MOTION.md` es obligatorio junto a `DESIGN.md` desde F0-b.
+6. **F0 dividida en a/b**: tres direcciones estáticas 390/1440 y después shell + Expense Flow; las otras experiencias se integran en slices con persistencia real.
+7. **Rendimiento**: LCP/INP/CLS en p75, con diferenciación entre datos reales y mediciones de laboratorio.
+8. **DEC-R09 (decisión histórica de v1.1, sustituida en v1.2):** nombre provisional sin bloquear MVP privado; ahora el nombre elegido es Juntia, pendiente de verificación marcaria prepublicación.
+9. **IA y ofertas** aisladas en investigación, con un solo spike de precios tras cuatro semanas consecutivas de uso estable de MVP-1.
+10. **Gate de calidad conjunta:** aprobación real por ambos usuarios en móvil y escritorio, sin depender de landing ni caso de estudio.
+
+**Estado:** listo para F0-a. Correcciones finales de bootstrap: DEC-V05 desktop, ventana única de cuatro semanas para el spike, y uso interno permitido desde P0-1 sin aplicar gate de lanzamiento. No iterar documentos por mejoras cosméticas. Este documento no afirma que existan un esquema SQL desplegado, una implementación probada ni un derecho de scraping adquirido.
+
+### Actualización puntual v1.1.1 — iconografía
+
+- Se identificó que v1.1 **no imponía iconografía** de forma explícita. §6.1.1 introduce DEC-V03, biblioteca primaria elegida durante F0-b, inventario mínimo y reglas de accesibilidad.
+- Se incorporó la revisión de iconos a F0-a, F0-b, prompts y definición de terminado. **No amplía el alcance funcional ni retrasa el MVP**, formaliza calidad visual que ya era obligatoria.
+
+
+### Actualización de producto v1.2 — Juntia y metas
+
+- **Nombre elegido:** Juntia (antes Ronda), visible en F0-a, interfaz y documentos. Sin afirmación de exclusividad marcaria, adquisición de dominio ni lanzamiento público. Si el repositorio ya se creó con el nombre `ronda`, renombrar repo **no es requisito** para empezar; evitar borrar historial.
+- **P0-3 amplía planificación:** metas personales y compartidas con aportes reales registrados, retiro permitido, uso de fondos vinculado a gasto y experiencia premium S5.
+- **Contabilidad no duplicada:** gastos de consumo, aportaciones a metas, retiros y gastos financiados con metas se presentan por separado; `total_destinado_neto` expresa planificación, no saldo bancario.
+- **F0-a sigue igual de acotada:** 3 diseños × 2 viewports; añade una meta a las fixtures, no nuevas pantallas ni clips.
+- **IA, scraping, descuentos y automatización de aportes siguen fuera del MVP-1** y en la investigación desacoplada.
