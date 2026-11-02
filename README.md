@@ -2,23 +2,28 @@
 
 **Juntia** es el nombre elegido para la aplicación web de finanzas personales y compartidas. El primer lanzamiento privado debe ser **funcional, seguro, mobile-first y visualmente excepcional también en escritorio**.
 
+## Estado
+
+**Fase actual: P0.** F0-a y F0-b están cerradas. La dirección visual elegida es **I2 · Bosque & Arena** y el sistema de diseño está completo. Todavía **no existe código de aplicación**: crear el scaffold es trabajo de la primera especificación de P0.
+
 ## Archivos
 
-- `docs/JUNTIA_MASTER.md`: fuente de verdad v1.2, que conserva todas las decisiones del maestro v1.1.1 e incorpora metas personales/compartidas P0 (DEC-G01..G06) y nombre Juntia (DEC-R09).
+- `docs/JUNTIA_MASTER.md`: fuente de verdad. Cuerpo v1.2 más la **§15 (v1.3)**, que registra la dirección visual elegida y las decisiones P0 cerradas el 2 de noviembre de 2026 y **prevalece** donde difiera del cuerpo.
+- `docs/design/`: paquete de diseño aprobado, importado desde Claude Design. El documento operativo es `HANDOFF_CLAUDE_CODE.md`; ver `docs/design/README.md` para la procedencia.
+- `docs/adr/`: decisiones de arquitectura. El índice remite al maestro §12.2; ADR-001 y ADR-003 están desarrollados.
 - `AGENTS.md`: contrato compartido para Codex, Claude Code y otros agentes.
 - `CLAUDE.md`: complemento breve de Claude Code; no duplica reglas.
-- `prompts/F0-A.md`: único primer prompt, exactamente 3 direcciones y 6 capturas, incluyendo un estado de meta ficticia.
+- `prompts/archive/`: prompts de fases cerradas, no ejecutables.
 - `docs/research/`: investigación histórica recopilada bajo el nombre de trabajo **Ronda**; es material contextual, no tareas de MVP.
 
-## Primera implementación
+## Cómo empezar
 
-1. Extrae el ZIP dentro de una carpeta `juntia/` (o dentro de la carpeta `ronda/` existente sin crear un segundo repo). Si ya tienes un remoto GitHub, no vuelvas a inicializar Git.
-2. Abre `docs/JUNTIA_MASTER.md` y luego `AGENTS.md`/`CLAUDE.md`.
-3. Verifica `git status`; trabaja en la rama `design/f0-a-direcciones`.
-4. En Claude Code o Codex: «Ejecuta `prompts/F0-A.md` siguiendo `AGENTS.md` y `docs/JUNTIA_MASTER.md`; detente al terminar F0-a».
-5. Evalúa con tu pareja las 6 capturas 390/1440; elijan una dirección antes de F0-b.
+1. Lee `AGENTS.md`, luego `docs/JUNTIA_MASTER.md` (incluida la §15) y después `docs/design/HANDOFF_CLAUDE_CODE.md`.
+2. Verifica `git status` y trabaja en una rama acotada por slice.
+3. El stack está decidido (maestro §7.1 y §15): Next.js App Router, TypeScript strict, Tailwind con tokens propios, shadcn/Radix, Supabase con RLS, Phosphor, Motion for React, Vitest y Playwright. No se vuelve a proponer.
+4. Cada entregable se revisa antes de avanzar al siguiente. No se encadenan fases sin aprobación humana.
 
-No hay código ni base de datos en este paquete: el agente crea el scaffold mínimo en F0-a. No habilitar scraping, IA, banco, OCR, precios ni aportes automatizados ahora.
+No habilitar scraping, IA, banco, OCR, precios, modo offline ni aportes automatizados.
 
 ## Reglas contables de metas
 

@@ -1,6 +1,6 @@
 # Juntia — Documento maestro del producto
 
-**Versión:** 1.2 (Juntia + metas P0, alcance cerrado) · **Fecha:** 1 de noviembre de 2026 · **Estado:** listo para implementar F0-a; primera implementación pendiente
+**Versión:** 1.3 (dirección visual y decisiones P0 cerradas) · **Fecha:** 2 de noviembre de 2026 · **Estado:** F0-a y F0-b cerradas; listo para empezar la implementación de P0. El cuerpo del documento conserva el texto de v1.2; la **§15 (Actualización v1.3)** registra las decisiones posteriores y **prevalece** donde difiera.
 
 > **Nombre de producto elegido por los dos fundadores:** **Juntia**. Se utilizará en la interfaz, los documentos y las exploraciones de diseño desde F0-a. No se ha registrado ninguna marca ni comprado ningún dominio; antes de una publicación comercial se revisarán antecedentes marcarios y disponibilidad real. El desarrollo privado **no se bloquea** por esa diligencia. El repositorio/carpeta puede llamarse `juntia`; si ya existe uno llamado `ronda`, se conserva su historial y se cambia la marca sin recrearlo. La investigación de precios sigue separada en `docs/research/` y NO define requisitos del MVP.
 
@@ -732,3 +732,62 @@ Cada PR posterior debe demostrar: **la feature funciona con datos reales y permi
 - **Contabilidad no duplicada:** gastos de consumo, aportaciones a metas, retiros y gastos financiados con metas se presentan por separado; `total_destinado_neto` expresa planificación, no saldo bancario.
 - **F0-a sigue igual de acotada:** 3 diseños × 2 viewports; añade una meta a las fixtures, no nuevas pantallas ni clips.
 - **IA, scraping, descuentos y automatización de aportes siguen fuera del MVP-1** y en la investigación desacoplada.
+
+## 15. Actualización v1.3 — dirección visual elegida y decisiones P0 cerradas
+
+**Fecha:** 2 de noviembre de 2026. Esta sección **registra** decisiones ya tomadas y aprobadas por los dos fundadores durante la fase de diseño; no introduce decisiones nuevas. Donde contradiga al cuerpo v1.2 del documento, **manda esta sección**.
+
+El paquete de diseño completo está en `docs/design/` (importado desde el proyecto de Claude Design; ver `docs/design/README.md`). El documento operativo es `docs/design/HANDOFF_CLAUDE_CODE.md`.
+
+### 15.1 Fases F0-a y F0-b: cerradas
+
+- **F0-a cerrada.** La exploración visual se hizo en Claude Design y recorrió las direcciones A→J antes de llegar a tres finalistas (I1 Salvia & Durazno, I2 Bosque & Arena, I3 Piedra & Coral). **Dirección elegida: I2 · Bosque & Arena.** Queda sin efecto la tripleta A/B/C de §6.2 (Warm Editorial / Quiet Precision / Bold Utility), que describía una exploración que no es la que se ejecutó.
+- **F0-b cerrada.** El sistema de diseño, los componentes, el motion y las especificaciones responsive están entregados como `docs/design/DESIGN_SYSTEM.md`, `COMPONENT_SPECIFICATIONS.md`, `MOTION_SYSTEM.md` y `RESPONSIVE_SPECIFICATIONS.md`. Estos archivos cumplen el papel que §6.1/§6.5 asignaban a `DESIGN.md` y `MOTION.md`; **no se crearán documentos con esos nombres**.
+- **Fase actual: P0.** Las reglas de `AGENTS.md` y `CLAUDE.md` que congelaban el trabajo en F0-a quedan actualizadas en consecuencia. `prompts/F0-A.md` se conserva en `prompts/archive/` como registro histórico y **no es ejecutable**.
+- **Pendiente real:** no existe todavía ningún scaffold de aplicación en el repositorio. El handoff asume «el repositorio Next.js/React existente»; ese scaffold es trabajo de la primera especificación de P0, no un hecho.
+
+### 15.2 Iconografía (cierra DEC-V03)
+
+Biblioteca primaria elegida: **Phosphor Icons** (`@phosphor-icons/react`, MIT), con wrapper tipado `AppIcon` e imports individuales. Tabler, Lucide e Iconoir quedan descartadas. El mapa semántico `concepto → icono`, los pesos (Regular, Fill, Bold, Duotone) y los tamaños están en `docs/design/DESIGN_SYSTEM.md` §3. El inventario mínimo de §6.1.1 sigue siendo obligatorio.
+
+### 15.3 Navegación (sustituye a §6.1.1)
+
+- **Móvil:** Inicio · Actividad · **+ integrado** (al centro, a ras de la barra, no elevado) · Metas · Plan.
+- **Cuenta:** avatar (`AccountButton`) en el encabezado de Inicio, Actividad, Metas y Plan; perfil al pie de la sidebar en escritorio. Un toque, **sin sexta pestaña y sin menú**. Rutas `/cuenta`, `/cuenta/perfil`, `/cuenta/pareja`, `/cuenta/apariencia`, `/cuenta/privacidad`, `/cuenta/seguridad`.
+- Queda sin efecto la agrupación anterior «Inicio, Movimientos, Metas, Plan, Nosotros, Perfil».
+- **Escritorio:** rail de 76 px desde 1024 y sidebar de 248 px desde 1280.
+
+### 15.4 DEC-G04 — fórmula aprobada
+
+`total_destinado_neto = gasto_consumo + aporte_a_metas − retiro_de_metas − gasto_financiado_con_meta`
+
+Es una **métrica de planificación**, no de consumo ni de liquidez. Se conserva en el dominio como función pura con tests. **Nunca** se rotula «Total gastado», nunca es el número héroe y puede ser negativa (se explica el signo). En la interfaz aparece solo como nota secundaria explicada, dentro de Análisis. La tabla de verificación con el caso de octubre y los casos de retiro y gasto con meta está en `docs/design/HANDOFF_CLAUDE_CODE.md`; los cálculos deben reproducirla fila por fila.
+
+### 15.5 Alcance P0 cerrado
+
+| Tema | Decisión |
+| --- | --- |
+| Grupos | Espacios personales y parejas de **exactamente dos**. Crear grupos de 3 o más no se habilita en MVP-1, pero datos, membresías, permisos y cálculos se modelan para N. Grupos N = P1. |
+| Repartos | 50/50, porcentaje personalizado e importe personalizado. Nunca se asume 50/50. «Porcentaje 55/45» es configurable, no proporcional a ingresos. |
+| Liquidaciones | `net = pagado − corresponde ± liquidaciones`. Parciales permitidas. Sugerencia determinista deudor → acreedor. **Nunca** se crea una transferencia; Juntia solo registra la liquidación declarada. |
+| Presupuestos | Opcionales. Cualquiera de los dos crea, edita o desactiva, con autor, fecha e historial. **Sin segunda aprobación** ni activación automática. Ediciones concurrentes protegidas sin sobrescritura silenciosa. |
+| Autenticación | Supabase Auth con **correo y contraseña**, verificación de correo y recuperación por enlace seguro. Sin Google/Apple, sin magic link independiente, sin passkeys, sin MFA propio. Sin enumeración de cuentas. |
+| Invitaciones | Solo la propietaria invita. Caducidad de **7 días**, token de **un solo uso** guardado como hash, **una invitación activa** por pareja, asociada al correo y aceptable solo por una cuenta verificada con ese correo. Enlace compartido a mano, sin correos propios. |
+| Perfil | Nombre visible editable; correo visible y no editable; avatar con inicial y color del sistema, sin foto. |
+| Preferencias | Solo Claro/Oscuro/Sistema. COP fijo. Sin reparto por defecto, color editable, moneda ni notificaciones. |
+| Exportación | **JSON + CSV** de lo autorizado (nunca privados del otro, tokens ni datos internos). No es restauración. |
+| Mover a Pareja | Una transacción atómica e idempotente anula el gasto privado y crea el compartido, con auditoría; el pagador original se mantiene; nunca hay dos gastos activos. Deshacer solo inmediato y solo si el servidor confirma que no hay dependencias. No existe «mover a Yo» general en P0. |
+| Gasto con meta | El gasto real se registra de inmediato junto con el uso de fondos **propios**. Los fondos del otro integrante se piden por cantidad exacta; mientras está pendiente no se descuentan ni cuentan como financiación, **no vence** y no es una transferencia. Si se rechaza o cancela, el gasto permanece. |
+
+### 15.6 Bloqueos de lanzamiento (no de implementación)
+
+1. **Eliminación de cuenta.** Se comunica en la interfaz como no disponible. Requiere un procedimiento real, verificable y revisado legalmente antes de declarar el lanzamiento privado. Bloquea el lanzamiento, no el desarrollo.
+2. **Confirmación técnica de capacidades de Supabase** para los flujos atómicos, la idempotencia y la RLS de metas.
+
+### 15.7 Umbrales de rendimiento que bloquean la aceptación
+
+CLS = 0 en las cargas con skeleton de las rutas clave · INP < 200 ms al abrir Anotar y al guardar · mediana < 10 s para registrar un gasto habitual en teléfono real tras el onboarding (US-12) · sin scroll horizontal en 360, 390, 430, 1024 y 1440 · objetivos táctiles ≥ 44 px. Lighthouse 95+ sigue siendo aspiracional y **no** reemplaza estos umbrales. **Verificado hasta ahora: nada.** No se ejecutó ninguna medición durante la fase de diseño.
+
+### 15.8 Lo que esta actualización NO cambia
+
+Siguen vigentes sin modificación: DEC-R01 (presupuesto opcional, `null` ≠ cero), DEC-R17 (no afirmar «te alcanza»), DEC-G01..G03 y G05..G06, los ADR-001 a ADR-010 de §12.2, las exclusiones del MVP-1 de §2.4 y §12.4, la arquitectura de §7, el gate humano conjunto de §10.4 y la definición de terminado de §10.3.
