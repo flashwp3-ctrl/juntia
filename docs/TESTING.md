@@ -542,10 +542,11 @@ No se ajusta el presupuesto a la herramienta en silencio.
 
 - [`docs/adr/ADR-011`](adr/ADR-011-estrategia-de-pruebas-y-ci.md) — la decisión, su
   justificación, la tabla completa de ubicación por criterio, la documentación
-  oficial consultada con versiones, y las dos preguntas que siguen abiertas a
-  propósito y deciden los fundadores: **el mecanismo de los tests de RLS** (con
-  recomendación de pgTAP en SQL plano) y **la herramienta para la regla de hex
-  crudos**. Todo lo demás está cerrado.
+  oficial consultada con versiones, y sus dos preguntas abiertas, que ya tienen
+  dueño: **el mecanismo de los tests de RLS** lo cerraron los fundadores con
+  pgTAP en SQL plano y sus dos condiciones (maestro §15.10, decisión 1), y **la
+  herramienta para la regla de hex crudos** la resuelve la especificación 001 al
+  crear el scaffold, como dice el propio ADR. Todo lo demás está cerrado.
 - `docs/JUNTIA_MASTER.md` §7.1, §7.2, §10.1, §10.2, §10.3, §10.4, §15.4, §15.6.3,
   §15.7
 - `docs/design/HANDOFF_CLAUDE_CODE.md` — criterios de aceptación de P0, tabla de
