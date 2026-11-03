@@ -1,6 +1,6 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Alcance:** P0 (MVP-1)
+**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Alcance:** P0 (MVP-1)
 
 ## Contexto
 
@@ -35,12 +35,28 @@ hace que un test valga algo.
 
 ### 1. Principio rector
 
-> Un test E2E solo existe si falla por algo que **ninguna capa inferior** puede
-> detectar. Si pasaría igual con la base de datos mockeada, no es un E2E: es un
-> test de UI mal ubicado.
+> Una prueba E2E se justifica cuando valida una **integración o recorrido
+> observable que las capas inferiores no garantizan en conjunto**. No hace falta
+> que ninguna de sus partes sea detectable por separado.
 
-Una suite de cuarenta y cinco minutos no aparece por mala suerte. Se produce
-probando en el navegador cosas que no necesitan navegador.
+La frase que carga el peso es **«en conjunto»**. Un recorrido puede estar hecho de
+piezas que el dominio, la RLS y la integración de servidor cubren cada una por su
+lado, y seguir siendo un E2E legítimo, porque lo que falla es la costura: la
+navegación entre ellas, el estado de cliente que queda obsoleto, la sesión que se
+pierde al volver de un enlace. Eso no lo garantiza ninguna de esas capas, por bien
+que cada una pase.
+
+Lo que el principio sí excluye es el test de navegador que **reproduce** en la UI
+una comprobación que una capa inferior ya hace entera: la aritmética de un saldo,
+la clasificación de un movimiento, el rechazo de una escritura no autorizada. Esa
+es la ruta por la que una suite acaba durando cuarenta y cinco minutos, y no
+aparece por mala suerte: aparece probando en el navegador cosas que no necesitan
+navegador.
+
+Para un caso concreto, la pregunta útil no es «¿podría probarse más abajo?», sino
+**«¿qué se rompería sin que ninguna capa inferior se entere?»**. Si la respuesta es
+«nada», no es un E2E. Si es un recorrido, una redirección, una sesión o una vista
+que no se refresca, lo es.
 
 Corolario operativo: **los tests derivan de los criterios de aceptación del
 handoff y del maestro, nunca de lo que hace la implementación.** Un test escrito
@@ -55,22 +71,30 @@ documento que es de privacidad y por tanto bloqueante (maestro §15.6).
 | # | Criterio de aceptación | Capa | Herramienta | Por qué no una capa superior |
 | --- | --- | --- | --- | --- |
 | 1 | `total_destinado_neto` reproduce **cada fila** de la tabla de DEC-G04 y nunca se rotula «Total gastado» ni ocupa el número héroe | Dominio puro | Vitest (`test.each`, 7 filas) | Es aritmética de una función pura (§15.4). Un navegador no añade nada y tarda mil veces más. El rótulo y la jerarquía se revisan en la revisión humana del PR, no con un selector |
-| 2 | Un gasto compartido existe una vez: total en Nosotros, parte en Yo; ninguna pantalla, export ni agregado suma Yo + Nosotros | Dominio puro | Vitest | Es una invariante de los agregados. Si falla, falla en la función de agregación; verlo en pantalla solo lo descubre más tarde y más caro |
+| 2 | Un gasto compartido existe una vez: total en Nosotros, parte en Yo; ninguna pantalla, export ni agregado suma Yo + Nosotros | Dominio puro **+ integración** | Vitest · Vitest + Supabase local (exportación autorizada) | La invariante del agregado es de dominio. **Pero la exportación no:** es la costura entre autorización y serialización, y ahí es donde un gasto puede salir dos veces o salir uno que no correspondía. El dominio no ve el serializador y la RLS no ve el archivo |
 | 3 | Los aportes no cambian `gasto_consumo` ni lo consumido de presupuestos; se atribuyen al aportante real | Dominio puro | Vitest | Separación de dimensiones financieras (§5.1, DEC-G02). Es cálculo, no render |
 | 4 | Una liquidación parcial Tomás → Sara 200.000 deja el consumo en 2.840.000 y el saldo en 229.900 | Dominio puro | Vitest | Dos números contra el dataset dorado. No requiere persistencia ni UI |
-| 5 | Un retiro nunca se presenta como ingreso | Dominio puro | Vitest | La clasificación del movimiento es del dominio. El componente la refleja; si el dominio la acierta, el componente no puede inventarla |
+| 5 | Un retiro nunca **se presenta** como ingreso | Dominio puro **+ componente** | Vitest · Vitest + RTL (`ExpenseRow`) | La clasificación es de dominio, pero el criterio dice «se presenta», y eso es presentación: el dominio puede clasificar bien y la fila pintarlo igual con «+», ficha de ingreso y color de ingreso. El componente tiene que afirmar el signo, la forma de la ficha y la etiqueta |
 | 6 | El saldo de la pareja reproduce el caso de octubre incluyendo la liquidación parcial; la sugerencia es única y no crea transferencias | Dominio puro | Vitest (`computeBalance`) | El handoff ya pide `computeBalance(expenses, settlements, members)` como función pura con tests. «No crea transferencias» se prueba por ausencia de efecto en el dominio |
 | 7 | Los datos del caso de octubre reproducen exactamente los totales mostrados en el diseño | Dominio puro | Vitest (fixture dorada) | Es el dataset contra la función. Es el test más barato y el que más protege |
 | 8 | Usar o retirar aportes ajenos sin confirmación del otro integrante queda bloqueado | Base de datos / RLS | SQL sobre Supabase local | Es autorización. Probarlo por la UI prueba que el botón está escondido, no que la escritura está prohibida. El ataque no usa el botón |
 | 9 | No se puede crear un espacio compartido con más de 2 integrantes | Base de datos / RLS | SQL sobre Supabase local | Misma razón: es una restricción del servidor (§15.5). El formulario que no deja añadir un tercero es cortesía, no la regla |
-| 10 | Los movimientos privados nunca se renderizan en el contexto Nosotros, ni en los totales ni en las búsquedas | Base de datos / RLS | SQL sobre Supabase local | Es la garantía de privacidad central del producto (`AGENTS.md` 6). Tiene que ser imposible **leerlos**, no solo imposible verlos pintados |
+| 10 | Los movimientos privados nunca **se renderizan** en el contexto Nosotros, ni en los totales ni en las búsquedas | RLS **+ interfaz** | SQL sobre Supabase local · caso de cambio de contexto en la spec 3 | La RLS es imprescindible y no basta: garantiza que **la base no devuelva la fila**, no que una caché de cliente o un render obsoleto no la siga mostrando después de cambiar de Yo a Nosotros. Es la garantía de privacidad central del producto (`AGENTS.md` 6) y las dos mitades son bloqueantes |
 | 11 | La reclasificación privado → compartido deja un único gasto activo y un registro de auditoría | Integración de servidor | Vitest + Supabase local, sin navegador | ADR-001 exige transacción única, idempotencia y auditoría. Eso se verifica llamando a la operación y mirando la base, incluida la concurrencia. El navegador no puede provocar la carrera de forma fiable |
 | 12 | Un gasto con meta crea un único gasto real; las asignaciones por aportante suman el uso y son independientes del reparto; la meta nunca queda negativa | Integración de servidor | Vitest + Supabase local, sin navegador | §15.6.3 puntos 5 y 6: dos transacciones atómicas e idempotentes distintas. Es comportamiento de servidor bajo concurrencia y reintento |
 | 13 | Una edición concurrente de presupuesto no se pierde en silencio **[V]** | Integración de servidor | Vitest + Supabase local, sin navegador | Hacen falta dos escritores simultáneos. Dos navegadores coordinados para eso son lentos, frágiles y no prueban nada que dos clientes no prueben mejor |
 | 14 | Mediana < 10 s para anotar un gasto habitual tras el onboarding (US-12, §15.7) | E2E real | Playwright | Es un criterio sobre la experiencia completa: render, teclado, red y persistencia. Ninguna capa inferior lo puede medir |
 | 15 | Mi cuenta: navegación, perfil, pareja, apariencia, privacidad, sesión y acceso (05·9) | E2E real | Playwright | Es navegación entre rutas reales con sesión real. Es exactamente lo que un E2E debe cubrir |
-| 16 | Los dos temas pasan axe sin violaciones serias en Inicio, Actividad, Anotar, Balance y Meta | E2E barato por ruta | Playwright + axe (5 rutas × 2 temas) | Necesita un árbol de accesibilidad real, pero no un flujo: se visita la ruta y se pasa axe. Es barato por ruta y no debe convertirse en un recorrido |
+| 16 | Los dos temas pasan axe sin violaciones serias en Inicio, Actividad, Anotar, Balance y Meta | E2E barato por ruta | Playwright + axe. **En el PR: las rutas que el PR toca.** La matriz completa de 5 rutas × 2 temas, en el nocturno | Necesita un árbol de accesibilidad real, pero no un flujo: se visita la ruta y se pasa axe. La accesibilidad es criterio de aceptación **de cada slice** (§10.3), así que dejarla entera para el nocturno permitiría mergear un slice con una ruta inaccesible. Correr solo lo tocado mantiene el coste proporcional |
 | 17 | Todos los momentos de motion respetan `prefers-reduced-motion` | E2E barato por ruta | Playwright (`use: { reducedMotion: 'reduce' }`) | Es una emulación de media feature del navegador. Además se ejercita de continuo por la regla dura nº 3, no solo en su test |
+
+**Un criterio puede necesitar dos capas, y cuatro las necesitan** (filas 2, 5, 10 y
+16). No es una concesión al tope: es el principio rector aplicado al revés. Cuando
+el criterio habla de lo que el usuario **ve** («se presenta», «se renderizan»), la
+capa que calcula bien no demuestra el criterio, y cuando habla de un **artefacto**
+que sale del sistema (la exportación), ni el dominio ni la RLS lo ven entero. En
+los cuatro casos **las dos mitades son bloqueantes**; ninguna es opcional ni
+«reforzada por» la otra.
 
 **El criterio «Anotar registra privado o compartido desde un solo flujo»** se parte
 en dos mitades que viven en capas distintas: la mitad auditable (reclasificación
@@ -92,65 +116,138 @@ rector en algo que se puede incumplir visiblemente.
 **El reparto concreto son cinco specs.** Las cuatro familias de smoke que nombra
 §10.1, más US-12 y Mi cuenta, caben exactamente ahí:
 
-| # | Spec | §10.1 / criterio | ¿PR? |
+| # | Spec | §10.1 / criterio | Área que cubre |
 | --- | --- | --- | --- |
-| 1 | Acceso y Mi cuenta | Mi cuenta 05·9 (fila 15) | Sí |
-| 2 | Anotar gasto, cronometrado (US-12) | «Registro privado» + mediana < 10 s (fila 14, §15.7) | Sí |
-| 3 | Pareja 50/50 y liquidación | «pareja + 50/50 + liquidación» | Sí |
-| 4 | Meta con aportes y uso | «meta individual/compartida con aportes y uso» | Nocturno |
-| 5 | Presupuesto activado/desactivado | «presupuesto activado/desactivado» | Nocturno |
+| 1 | Acceso y Mi cuenta | Mi cuenta 05·9 (fila 15) | auth, cuenta, pareja, invitaciones |
+| 2 | Anotar gasto, cronometrado (US-12) | «Registro privado» + mediana < 10 s (fila 14, §15.7) | gastos, anotar |
+| 3 | Pareja 50/50 y liquidación | «pareja + 50/50 + liquidación» | repartos, balance, liquidaciones, contexto |
+| 4 | Meta con aportes y uso | «meta individual/compartida con aportes y uso» | metas |
+| 5 | Presupuesto activado/desactivado | «presupuesto activado/desactivado» | presupuestos |
 
-**Tres corren en cada PR (1, 2 y 3); las cinco corren en el nocturno.** Queda una
-sexta plaza libre dentro del tope de 4–6; gastarla exige la misma justificación
-que cualquier otra spec.
+Queda una sexta plaza libre dentro del tope de 4–6; gastarla exige la misma
+justificación que cualquier otra spec.
+
+#### Qué specs corre un PR
+
+**Regla: el humo de un PR son las specs 1, 2 y 3, más la spec del área que el PR
+toca.** Un PR de metas corre 1, 2, 3 y 4. Uno de presupuestos corre 1, 2, 3 y 5.
+Uno que no toca ninguna de esas dos áreas corre las tres de base. **El nocturno
+corre siempre las cinco.**
+
+No es una optimización: es lo que impide mergear un slice sin su E2E. §10.1 marca
+el smoke como bloqueante, y un slice de metas que mergea sin haber ejecutado nunca
+el recorrido de aportes y uso no ha pasado ese gate, por mucho que el nocturno lo
+ejecute después — después es cuando ya está en `main`.
+
+La columna «área» de la tabla es lo que decide. Si un PR toca dos áreas, corre las
+dos specs; si quien lo escribe duda de qué área toca, corre las cinco.
+
+#### Matriz de escenarios: dónde vive cada recorrido
+
+Cinco nombres de archivo no son cobertura. Esta matriz es la que demuestra que los
+recorridos que cruzan límites de seguridad o de navegación están verificados, y en
+qué capa lo está cada parte. **No amplía el tope:** los cinco recorridos caben como
+casos dentro de las cinco specs ya listadas.
+
+| Recorrido | Riesgo que las capas inferiores no cubren en conjunto | Dónde se verifica |
+| --- | --- | --- |
+| Abrir invitación → iniciar sesión → volver → aceptar | Pérdida del contexto de navegación, de la redirección o de la sesión. El handoff lo pide explícito: «Sin sesión: guardar la intención, autenticar, volver y revalidar token, correo, caducidad, membresía y disponibilidad». La validación del token es de servidor; **que la intención sobreviva al rodeo por el login no lo es** | Caso en la **spec 1**; validación de token, caducidad y un solo uso en integración de servidor |
+| Cambiar Yo/Nosotros | Estado de cliente obsoleto o exposición visual de lo privado después del cambio. La RLS impide que la base devuelva la fila; no impide que una caché la siga pintando | Caso en la **spec 3** (es la mitad de interfaz de la fila 10); la mitad de autorización, en RLS |
+| Mover a Pareja | Que la vista cambie y los balances se actualicen tras una operación que mueve el gasto de un contexto a otro. La atomicidad y la auditoría ya están abajo (fila 11); lo que no está es que la pantalla refleje el resultado | Caso en la **spec 3**; atomicidad, idempotencia y auditoría en integración de servidor |
+| Solicitar financiación ajena → aprobar o rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas. Un solo cliente no puede demostrar que lo que Sara pide aparece y se resuelve en la vista de Tomás | Caso en la **spec 4**, con dos contextos de navegador; revalidación de permisos, saldos y meta ≥ 0 en integración (fila 12) |
+| Exportar datos | Autorización, archivo realmente descargado y experiencia. Que el servidor filtre bien no demuestra que el archivo llegue, ni que contenga lo que dice | **Mayormente en integración** (fila 2: exportación autorizada, sin privados del otro, sin tokens, sin duplicados); la descarga en sí, como caso ligero donde ya haya sesión |
+
+Dos consecuencias que conviene no perder de vista. La primera: la spec 4 necesita
+**dos contextos de navegador autenticados a la vez**, lo que la ata a la regla dura
+nº 2 (estados por worker **y por rol**) y no al patrón de sesión única. La segunda:
+la exportación es el único recorrido de la matriz cuyo peso está abajo y no en el
+navegador, y así debe quedarse; un E2E que verifique el contenido del CSV es un
+test de serialización disfrazado.
 
 ### 4. Presupuestos de tiempo
 
-Son **objetivos razonados y todavía no medidos**: no existe scaffold ni suite, de
-modo que hoy ninguna de estas cifras es una medida. **En cuanto exista CI pasan a
-ser contractuales**, y entonces **superar el presupuesto del humo falla el build**.
-La transición ocurre con el primer pipeline que la especificación 001 ponga en
-verde; a partir de ahí ya no son objetivos, son el contrato.
+Hay **dos magnitudes distintas** y confundirlas vuelve el contrato inaplicable. Un
+comando local no paga `npm ci`; un job de CI lo paga siempre. Van en dos tablas.
 
-| Suite | Presupuesto |
+#### Presupuestos de comando — ejecución local pura
+
+Miden **solo la ejecución del comando**, en una máquina con las dependencias ya
+instaladas y, donde haga falta, Supabase ya arrancado.
+
+| Comando | Presupuesto |
 | --- | --- |
-| `verify` (lint + typecheck + unit + RLS) | **< 90 s** |
+| `verify` (lint + typecheck + unit de dominio + componentes + SQL/RLS) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
 | Tests SQL / RLS | **< 60 s** |
+
+#### Presupuestos de job de CI
+
+Miden **el job completo**: checkout, `npm ci`, instalación del navegador, arranque
+de servicios y ejecución. Es la lectura honesta, porque es la que espera quien
+mira el PR y ve cuánto tarda en ponerse verde.
+
+| Job | Presupuesto |
+| --- | --- |
 | E2E de humo en PR | **< 3 min** |
-| **Gate de PR completo** | **< 6 min** |
+| **Gate de PR completo** (el más lento de los jobs en paralelo) | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
-Sin esa consecuencia, cada PR añade veinte segundos que nadie nota y en seis meses
-la suite vuelve a durar cuarenta y cinco minutos sin que nadie lo haya decidido.
+La frase «mide el job» aplica **solo a esta segunda tabla**.
 
-**Cada presupuesto mide el job completo, no solo los tests**: checkout, `npm ci`,
-instalación del navegador, arranque del servidor y ejecución. Es la lectura
-honesta, porque es la que espera quien mira el PR.
+#### Cuándo empiezan a bloquear
 
-Eso obliga a una mitigación concreta en el humo: **instalar solo Chromium**, con
-`npx playwright install --with-deps chromium`, nunca los tres navegadores. Y
-conviene dejarlo escrito para quien venga después: **no cachear los binarios del
-navegador es una decisión de la documentación oficial de Playwright, no un olvido
-nuestro** («Caching browser binaries is not recommended, since the amount of time
-it takes to restore the cache is comparable to the time it takes to download the
-binaries»). Quien quiera «arreglarlo» añadiendo un `actions/cache` está
-reintroduciendo un coste, no quitándolo.
+Hoy son **objetivos razonados y todavía no medidos**: no existe scaffold ni suite.
+**El hito a partir del cual bloquean es la entrega de la suite y el CI por la
+especificación 001**, no «el primer pipeline en verde». Hasta ese momento el job
+**mide, reporta y avisa** su duración contra el presupuesto, sin fallar.
+
+A partir de ese hito, **superar el presupuesto del humo falla el build**. Sin esa
+consecuencia, cada PR añade veinte segundos que nadie nota y en seis meses la
+suite vuelve a durar cuarenta y cinco minutos sin que nadie lo haya decidido.
+
+#### Cláusula anticliquet
+
+> **Si la línea base medida supera el techo, el hallazgo es la suite, no el
+> techo.** El techo solo se mueve por decisión documentada de los fundadores, nunca
+> automáticamente por una medición.
+
+Esta cláusula es el ADR entero en tres líneas. Sin ella, «ya ajustaremos el umbral
+cuando tengamos la línea base» es permiso para que el número siga a la deriva en
+vez de contenerla, y el presupuesto deja de ser un contrato para volverse un
+registro de lo que la suite ya tarda. Una medición es un dato sobre la suite; no es
+un argumento sobre cuánto debería tardar.
+
+#### Mitigación en el humo
+
+**Instalar solo Chromium**: `npx playwright install --with-deps chromium`, nunca
+los tres navegadores.
+
+Y conviene dejarlo escrito para quien venga después: **no cachear los binarios del
+navegador es una decisión, y la toma la documentación oficial de Playwright**, que
+lo **desaconseja** — «Caching browser binaries is not recommended, since the amount
+of time it takes to restore the cache is comparable to the time it takes to
+download the binaries». La misma página **explica cómo hacerlo si aun así se
+decide** (cachear esos directorios «against a hash of the Playwright version»), de
+modo que el mecanismo existe y está documentado; lo que no hay es una recomendación
+a favor. Quien quiera «arreglarlo» con un `actions/cache` está cambiando una
+descarga por una restauración de coste comparable, no quitando trabajo.
 
 ### 5. CI en dos niveles
 
 **Nivel 1 — cada push a un PR.** Jobs en paralelo:
 
 1. lint + typecheck + build
-2. Vitest, dominio completo
+2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
+   que `verify` ejecuta en local, sin los tests SQL/RLS, que van en su propio job
 3. Supabase local en contenedor, con migraciones aplicadas y tests SQL de RLS
-4. E2E de humo: **las specs 1, 2 y 3 de la tabla anterior, solo Chromium**,
-   instalado con `npx playwright install --with-deps chromium`
+4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
+   Chromium, instalado con `npx playwright install --with-deps chromium`
+5. **axe sobre las rutas que el PR toca**, en los dos temas
 
 **Nivel 2 — al mergear a `main` y de noche:**
 
 1. E2E completo: **las cinco specs**, en **Chromium + WebKit**
-2. axe en 5 rutas × 2 temas
+2. axe en la matriz completa: 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
 
@@ -168,7 +265,24 @@ La descripción operativa está en `docs/TESTING.md`.
    workers. Se resuelve en la siembra, no bajando los workers. Con parejas
    aisladas, varios workers son seguros; cuántos caben lo mide la especificación
    001.
-2. **Autenticar una vez** y reutilizar `storageState` en todos los proyectos.
+2. **Un `storageState` por worker y por rol**, no uno solo para toda la suite.
+   Cada worker autentica **a Sara y a Tomás sobre su propia pareja**, reutiliza
+   esos dos estados dentro del worker y **no los comparte nunca con otro worker**.
+   La documentación de Playwright **distingue explícitamente los dos casos** y lo
+   hace exactamente sobre este criterio. Cuenta compartida: «This is the
+   **recommended** approach for tests **without server-side state**», y su «When
+   not to use» dice «Your tests modify server-side state. … In this case, tests
+   must use different accounts». Cuenta por worker, bajo el epígrafe «Moderate: one
+   account per parallel worker»: «This is the **recommended** approach for tests
+   that **modify server-side state**». **Los tests de Juntia mutan estado de
+   servidor en casi todos los casos** —anotan gastos, liquidan, aportan a metas,
+   aceptan invitaciones—, así que el caso que nos corresponde es el segundo, y la
+   sesión única del patrón básico queda descartada por la misma documentación que
+   la recomienda para otros proyectos. El mecanismo documentado es un fixture de
+   **scope `worker`** que sobreescribe `storageState` y se diferencia con
+   `test.info().parallelIndex`. Dos roles porque la pareja es de exactamente dos
+   (§15.5) y hay recorridos que necesitan ambas sesiones a la vez: la confirmación
+   de fondos ajenos de la spec 4 no se puede montar con una sola.
 3. **`prefers-reduced-motion: reduce` por defecto** en el contexto de Playwright:
    es más rápido, es mucho menos frágil frente a los springs y las View
    Transitions, y ejercita de continuo un criterio de aceptación. **Un** test corre
@@ -213,10 +327,19 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
   maqueta: pasan a ser el dataset dorado de la suite. La primera especificación de
   ingeniería los produce con esa doble función explícita.
 - Hace falta un `verify` único y rápido. Un agente que implementa no debe tener que
-  elegir qué ejecutar.
+  elegir qué ejecutar. **Su contenido es exactamente uno, y se enuncia igual en los
+  dos documentos:** lint + typecheck + unit de dominio + componentes (RTL
+  selectivo) + tests SQL/RLS. En CI ese contenido se parte en dos jobs paralelos
+  —Vitest por un lado, SQL/RLS por otro— y eso no cambia qué se ejecuta, solo
+  dónde.
 - Hace falta infraestructura de siembra por base de datos (`seedCouple()` y
-  equivalentes) **antes** del primer E2E. Esto es trabajo real de la especificación
-  001, no un detalle.
+  equivalentes) **antes** del primer E2E, y con **dos roles autenticados por
+  worker**, no uno. Esto es trabajo real de la especificación 001, no un detalle: la
+  spec 4 no se puede escribir sin ello.
+- Correr axe sobre las rutas tocadas en cada PR obliga a que exista un **mapa de
+  ruta tocada** —qué rutas afecta un cambio— que hoy no existe. Mientras no lo
+  haya, la lectura conservadora es correr axe sobre las cinco rutas también en el
+  PR y medir si cabe; lo barato es visitar la ruta, no el recorrido.
 - El tope de 4 a 6 specs hace que la cobertura de UI dependa de la revisión humana
   del PR y de la fila «Componentes · RTL selectivo» de §10.1, que **sigue vigente**
   y corre dentro del job de Vitest como proyecto aparte. Este ADR no la sustituye.
@@ -242,8 +365,9 @@ no se instaló ninguna herramienta durante la redacción de este ADR.
 2. **Que el gate de PR completo cabe en 6 minutos** medido como job, una vez
    contados el arranque de Supabase en contenedor y
    `npx playwright install --with-deps chromium`.
-3. **Cuántos workers caben** con parejas aisladas por worker, y si 3 specs de humo
-   entran en 3 minutos con ese número.
+3. **Cuántos workers caben** con parejas aisladas y dos roles por worker, y si el
+   humo de un PR —tres o cuatro specs según el área— entra en 3 minutos de job con
+   ese número.
 4. **La elección de mecanismo para los tests de RLS** (pregunta abierta 1).
 5. **El nombre y la configuración exactos de la regla de lint de hex crudos.** No se
    verificó ninguna implementación concreta.
@@ -298,6 +422,18 @@ soportados**, no para elegir el stack, que está congelado en §7.1.
   test de setup guarda con `await page.context().storageState({ path: authFile })`.
   `globalSetup` se documenta como «Option 2», con la advertencia «Beware that
   `globalSetup` and `globalTeardown` lack some features».
+- **Cuenta compartida frente a cuenta por worker.** La página de autenticación
+  separa «Basic: shared account in all tests» de «Moderate: one account per
+  parallel worker», y el criterio que las separa es la mutación de estado de
+  servidor. Compartida: «the **recommended** approach for tests **without
+  server-side state**», y «When not to use: Your tests modify server-side state. …
+  In this case, tests must use different accounts». Por worker: «the
+  **recommended** approach for tests that **modify server-side state**». El
+  mecanismo del ejemplo es un fixture de scope `worker` que sobreescribe
+  `storageState`, diferenciado con `test.info().parallelIndex` y guardado en
+  `<outputDir>/.auth/<parallelIndex>.json`. La documentación **no exige** que las
+  cuentas estén pre-creadas: sus comentarios admiten crearlas («Acquire a unique
+  account, for example create a new one») o tomarlas de una lista existente.
 - `fullyParallel`: existe en `testConfig` y en `testProject`. Por defecto «test
   files are run in parallel; tests in a single file are run in order, in the same
   worker process». **El valor por defecto de `fullyParallel` no está indicado** en
@@ -326,9 +462,13 @@ soportados**, no para elegir el stack, que está congelado en §7.1.
   --with-deps` para un solo navegador. **Caché de navegadores:** texto literal de la
   página de CI: «Caching browser binaries is not recommended, since the amount of
   time it takes to restore the cache is comparable to the time it takes to download
-  the binaries». Es decir, **no hay acción oficial recomendada para cachear
-  navegadores de Playwright: la documentación desaconseja hacerlo.**
-  La misma página recomienda `workers: process.env.CI ? 1 : undefined`.
+  the binaries». Es decir, **cachear navegadores está desaconsejado por la
+  documentación oficial** — no que sea imposible ni que falte el mecanismo: la
+  misma página explica cómo hacerlo si aun así se decide, cacheando esos
+  directorios «against a hash of the Playwright version». Lo que no existe es una
+  acción oficial recomendada para ello.
+  La misma página recomienda `workers: process.env.CI ? 1 : undefined`, que es el
+  scaffold por defecto y no un mandato (ver regla dura nº 1).
 
 **Supabase CLI** (https://supabase.com/docs). Ninguna página consultada indica una
 versión concreta del CLI.
@@ -399,9 +539,22 @@ podemos leer y mantener. C queda reservado para el caso en que haga falta verifi
 que PostgREST no amplía lo que la política permite; sería un par de tests, no la
 suite.
 
-Si se elige A, hay que **resolver primero cuál de las dos formas del claim usa
-nuestra versión del stack**, ejecutándola; la documentación de Supabase no lo
-aclara. Decide un humano.
+**La revisión independiente acepta la opción A como propuesta para los fundadores**,
+con dos condiciones que forman parte de la recomendación y no son opcionales:
+
+1. **Validar el claim ejecutándolo.** Hay que resolver cuál de las dos formas usa
+   nuestra versión del stack —`set local request.jwt.claim.sub` (página de RLS) o
+   `set local "request.jwt.claims"` (página de overview)—, porque la documentación
+   de Supabase usa ambas y no las reconcilia. Un test de RLS que fija un claim que
+   el stack ignora **pasa igual**, y entonces la suite afirma una seguridad que no
+   existe. Es el peor fallo posible en esta capa, porque es silencioso.
+2. **Una prueba de extremo a extremo con el cliente real** cuando se implemente la
+   RLS: al menos un caso que compruebe, a través de `supabase-js` y no solo en SQL,
+   que la política se aplica por la ruta que usa la aplicación. SQL prueba la
+   política; esa prueba comprueba que PostgREST no amplía lo que la política
+   permite. No es la suite, son uno o dos casos.
+
+La decisión sigue siendo de los fundadores.
 
 ### 2. Herramienta para la regla de lint de colores hex crudos
 

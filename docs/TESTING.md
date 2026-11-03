@@ -10,17 +10,22 @@ plan acordado, no una práctica vigente.
 > describen lo que la primera especificación de ingeniería de P0 debe crear.
 >
 > Los presupuestos de tiempo son **objetivos razonados y todavía no medidos**.
-> **En cuanto exista CI pasan a ser contractuales** y superar el presupuesto del
-> humo falla el build (§9). La transición ocurre con el primer pipeline en verde
-> de la especificación 001: antes de eso son objetivos, después son el contrato.
+> **Pasan a bloquear cuando la especificación 001 entregue la suite y el CI**;
+> hasta ese hito el job mide, reporta y avisa, sin fallar. Después, superar el
+> presupuesto del humo falla el build (§9).
 
 ---
 
 ## 1. El principio, en una frase
 
-**Un test E2E solo existe si falla por algo que ninguna capa inferior puede
-detectar.** Si pasaría igual con la base de datos mockeada, no es un E2E: es un
-test de UI mal ubicado.
+**Una prueba E2E se justifica cuando valida una integración o recorrido observable
+que las capas inferiores no garantizan en conjunto.** No hace falta que ninguna de
+sus partes sea detectable por separado: basta con que la costura entre ellas
+—navegación, sesión, estado de cliente— no esté garantizada por ninguna.
+
+Lo que no es un E2E: reproducir en el navegador una comprobación que una capa
+inferior ya hace entera. La pregunta práctica es **«¿qué se rompería sin que
+ninguna capa inferior se entere?»**. Si la respuesta es «nada», bájalo de capa.
 
 Y el corolario, que importa más: **los tests derivan de los criterios de
 aceptación, nunca de lo que hace la implementación.** Un test escrito mirando el
@@ -30,16 +35,25 @@ código afirma el bug además de la función.
 
 ## 2. Comandos
 
+**`verify` ejecuta exactamente esto, aquí y en CI:** lint + typecheck + unit de
+dominio + **componentes (RTL selectivo)** + tests SQL/RLS. Los componentes están
+dentro. Es el mismo enunciado que usa el ADR, palabra por palabra, para que no haya
+dos definiciones circulando.
+
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
-| `npm run verify` | lint + typecheck + unit de dominio + tests SQL/RLS. **El comando por defecto.** | **< 90 s** |
-| `npm run test:unit` | Vitest, proyecto `domain`, suite completa | **< 15 s** |
+| `npm run verify` | lint + typecheck + unit de dominio + componentes + tests SQL/RLS. **El comando por defecto.** | **< 90 s** (comando) |
+| `npm run test:unit` | Vitest, proyecto `domain`, suite completa | **< 15 s** (comando) |
 | `npm run test:unit -- --changed` | Solo lo afectado por los cambios. Para el bucle local | — |
-| `npm run test:components` | Vitest, proyecto `components` (RTL selectivo, §10.1) | incluido en `verify` |
-| `npm run test:db` | `supabase test db` contra Supabase local | **< 60 s** |
-| `npm run test:e2e:smoke` | Playwright, 3 specs, solo Chromium | **< 3 min** |
-| `npm run test:e2e` | Playwright, suite completa, Chromium + WebKit | nivel 2 |
-| `npm run test:a11y` | axe en 5 rutas × 2 temas | nivel 2 |
+| `npm run test:components` | Vitest, proyecto `components` (RTL selectivo, §10.1) | sin presupuesto propio; dentro de `verify` |
+| `npm run test:db` | `supabase test db` contra Supabase local | **< 60 s** (comando) |
+| `npm run test:e2e:smoke` | Playwright, specs de humo del PR, solo Chromium | **< 3 min** (job de CI) |
+| `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
+| `npm run test:a11y` | axe; en el PR, rutas tocadas; en el nocturno, 5 rutas × 2 temas | PR y nivel 2 |
+
+**«Comando» y «job de CI» no miden lo mismo** — ver §9. Un presupuesto de comando
+mide solo la ejecución, con las dependencias ya instaladas; uno de job incluye
+`npm ci`, la instalación del navegador y el arranque de servicios.
 
 Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
@@ -49,20 +63,23 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
 ### Nivel 1 — cada push a un PR
 
-Cuatro jobs **en paralelo**:
+Jobs **en paralelo**:
 
 1. lint + typecheck + build
-2. Vitest: dominio completo **y componentes (RTL selectivo)**
+2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
+   que `verify` ejecuta en local, menos los tests SQL/RLS, que van en el job 3
 3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
-4. E2E de humo: **specs 1, 2 y 3, solo Chromium**
+4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
+   Chromium
+5. **axe sobre las rutas que el PR toca**, en los dos temas
 
-**Gate de PR completo: < 6 min, medido como job. Superar el presupuesto del humo
-falla el build.**
+**Gate de PR completo: < 6 min, medido como job de CI. Superar el presupuesto del
+humo falla el build** (a partir del hito de §9).
 
 ### Nivel 2 — al mergear a `main` y de noche
 
 1. E2E completo: **las cinco specs**, Chromium + WebKit
-2. axe en 5 rutas × 2 temas
+2. axe en la matriz completa: 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
 
@@ -92,33 +109,74 @@ utilizable:
 | Aritmética de dinero, agregados, saldos, DEC-G04, clasificación de movimientos | **Vitest, dominio puro** | ms |
 | Quién puede leer o escribir qué | **SQL / RLS sobre Supabase local** | s |
 | Atomicidad, idempotencia, concurrencia, auditoría | **Integración de servidor, sin navegador** | s |
+| Cómo **se presenta** un dato: signo, forma de la ficha, etiqueta, color | **Vitest + RTL**, proyecto `components` | ms |
+| Un artefacto que **sale** del sistema: exportación JSON/CSV | **Integración de servidor** | s |
 | El recorrido completo de una persona por rutas reales con sesión real | **E2E** | min |
 | Que una ruta no tiene violaciones de accesibilidad | **E2E barato por ruta** (visitar + axe) | s por ruta |
 
-Dos preguntas que resuelven casi todos los casos dudosos:
+Tres preguntas que resuelven casi todos los casos dudosos:
 
-1. **¿Pasaría igual con la base de datos mockeada?** Si sí, no es un E2E.
+1. **¿Qué se rompería sin que ninguna capa inferior se entere?** Si la respuesta es
+   «nada», no es un E2E. Si es un recorrido, una redirección, una sesión o una
+   vista que no se refresca, lo es.
 2. **¿El ataque usa el botón?** Si no, es un test de RLS, no de UI. Un test que
    comprueba que el botón está escondido no comprueba que la escritura está
    prohibida.
+3. **¿El criterio dice «se presenta» o «se renderiza»?** Entonces no basta con el
+   dominio, por mucho que el dominio acierte: hace falta afirmar lo que se pinta.
+
+**Un criterio puede necesitar dos capas**, y cuatro las necesitan (ADR-011 §2,
+filas 2, 5, 10 y 16). Cuando eso pasa, **las dos mitades son bloqueantes**;
+ninguna «refuerza» a la otra.
 
 ### Tope de specs E2E
 
 **4 a 6 para TODO P0.** No por slice: en total. Y ya están nombradas:
 
-| # | Spec | ¿Corre en PR? |
+| # | Spec | Área que cubre |
 | --- | --- | --- |
-| 1 | Acceso y Mi cuenta | **Sí** |
-| 2 | Anotar gasto, cronometrado (US-12) | **Sí** |
-| 3 | Pareja 50/50 y liquidación | **Sí** |
-| 4 | Meta con aportes y uso | Nocturno |
-| 5 | Presupuesto activado/desactivado | Nocturno |
+| 1 | Acceso y Mi cuenta | auth, cuenta, pareja, invitaciones |
+| 2 | Anotar gasto, cronometrado (US-12) | gastos, anotar |
+| 3 | Pareja 50/50 y liquidación | repartos, balance, liquidaciones, contexto |
+| 4 | Meta con aportes y uso | metas |
+| 5 | Presupuesto activado/desactivado | presupuestos |
 
 Las cuatro familias de smoke de §10.1 más US-12 y Mi cuenta caben en esas cinco.
 Queda **una sexta plaza libre** dentro del tope.
 
 **Cada especificación de slice declara cuántas añade, con un máximo de 2.** Si
 crees necesitar más, **detente y plantéalo**. No las añadas y lo menciones después.
+
+### Qué specs corre tu PR
+
+**Las specs 1, 2 y 3, más la spec del área que tu PR toca.**
+
+- PR de metas → 1, 2, 3 y **4**
+- PR de presupuestos → 1, 2, 3 y **5**
+- PR que no toca ninguna de esas dos áreas → 1, 2 y 3
+- ¿Dudas de qué área tocas? → corre las cinco
+
+El nocturno corre siempre las cinco. Esta regla existe por un motivo concreto: sin
+ella se puede mergear un slice de metas sin haber ejecutado nunca el recorrido de
+aportes y uso, y §10.1 marca ese smoke como **bloqueante**. Que el nocturno lo
+ejecute después no sirve: después ya está en `main`.
+
+### Matriz de recorridos
+
+Cinco nombres de archivo no son cobertura. Los cinco recorridos que cruzan límites
+de seguridad o de navegación viven **como casos dentro de esas cinco specs** — no
+se crean specs nuevas para ellos:
+
+| Recorrido | Qué no cubren las capas inferiores en conjunto | Dónde vive |
+| --- | --- | --- |
+| Invitación → login → volver → aceptar | Que la intención sobreviva al rodeo por el login; redirección y sesión | Caso en la **spec 1** |
+| Cambiar Yo/Nosotros | Caché de cliente o render obsoleto que sigue mostrando lo privado | Caso en la **spec 3** |
+| Mover a Pareja | Que la vista cambie y los balances se actualicen tras la operación | Caso en la **spec 3** |
+| Financiación ajena → aprobar/rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas | Caso en la **spec 4**, con dos contextos |
+| Exportar datos | Autorización + archivo realmente descargado | **Mayormente integración**; la descarga, como caso ligero |
+
+La spec 4 necesita dos contextos autenticados a la vez: de ahí la regla 2, estados
+**por worker y por rol**.
 
 ### Y la capa de componentes
 
@@ -141,10 +199,23 @@ presupuesto, el problema no es el presupuesto: es que hay un test por componente
    workers se pisen los datos. Eso se arregla en la siembra, no bajando los
    workers. Con parejas aisladas, varios workers son seguros; cuántos caben lo mide
    la 001.
-2. **Autenticar una vez** y reutilizar `storageState`. La documentación de
-   Playwright recomienda hacerlo con un **proyecto `setup` y `dependencies`**, no
-   con `globalSetup` («This is the recommended approach, as it integrates better
-   with the Playwright test runner»). `playwright/.auth` va en `.gitignore`.
+2. **Un `storageState` por worker y por rol**, nunca uno solo para toda la suite.
+   Cada worker autentica a **Sara y a Tomás sobre su propia pareja**, reutiliza
+   esos dos estados dentro del worker y no los comparte con ningún otro. El
+   mecanismo documentado por Playwright es un fixture de **scope `worker`** que
+   sobreescribe `storageState`, diferenciado con `test.info().parallelIndex`.
+   `playwright/.auth` va en `.gitignore`.
+   **Por qué no una sesión compartida:** la documentación de Playwright separa los
+   dos casos exactamente por esto. Cuenta compartida es «the recommended approach
+   for tests **without server-side state**», y su «When not to use» dice «Your
+   tests modify server-side state … tests must use different accounts». Cuenta por
+   worker es «the recommended approach for tests that **modify server-side
+   state**». Los tests de Juntia mutan estado de servidor casi siempre: anotan
+   gastos, liquidan, aportan a metas, aceptan invitaciones. Una sesión única
+   contradiría además la regla 1, que exige una pareja aislada por worker.
+   Dos roles, y no uno, porque la pareja es de exactamente dos y hay recorridos que
+   necesitan ambas sesiones a la vez — la confirmación de fondos ajenos de la spec
+   4 no se puede montar con una sola.
 3. **`reducedMotion: 'reduce'` por defecto** en el contexto de Playwright. Es más
    rápido, es mucho menos frágil frente a los springs y las View Transitions, y
    ejercita de continuo un criterio de aceptación. **Un** test corre con motion
@@ -153,7 +224,8 @@ presupuesto, el problema no es el presupuesto: es que hay un test por componente
    reintentan solas. Se impone con una **regla de ESLint**, no con buena voluntad.
 5. **Retries 0 en local, 1 en CI.** Un test que necesita el segundo intento **dos
    veces** se saca a cuarentena y se arregla (§8).
-6. **Un solo navegador en los PRs.** WebKit solo en el nocturno.
+6. **Un solo navegador en los PRs:** Chromium, instalado con
+   `npx playwright install --with-deps chromium`. WebKit solo en el nocturno.
 7. **Nada de colores hex crudos** fuera de `styles/tokens.css`. Regla de lint.
 
 ---
@@ -307,32 +379,63 @@ no se toca.
 
 ## 9. Los presupuestos son un contrato
 
-| Suite | Presupuesto |
+Son **dos magnitudes distintas** y no se comparan entre sí.
+
+### Presupuestos de comando — ejecución local pura
+
+Con las dependencias ya instaladas y, si hace falta, Supabase ya arrancado. **No
+incluyen `npm ci`.**
+
+| Comando | Presupuesto |
 | --- | --- |
-| `verify` | **< 90 s** |
+| `verify` (lint + typecheck + dominio + componentes + SQL/RLS) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
 | Tests SQL / RLS | **< 60 s** |
+
+### Presupuestos de job de CI
+
+Incluyen **todo**: checkout, `npm ci`, instalación del navegador, arranque de
+servicios y ejecución. Es lo que tarda el check en ponerse verde.
+
+| Job | Presupuesto |
+| --- | --- |
 | E2E de humo en PR | **< 3 min** |
-| **Gate de PR completo** | **< 6 min** |
+| **Gate de PR completo** (el más lento de los jobs en paralelo) | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
-Hoy son **objetivos razonados y todavía no medidos**, porque no hay suite.
-**En cuanto exista CI son contractuales, y superar el presupuesto del humo falla el
-build.** No hay un periodo de gracia después de eso.
+«Mide el job» aplica **solo a esta segunda tabla**.
 
-**Cada presupuesto mide el job completo**, no solo los tests: checkout, `npm ci`,
-instalación del navegador, arranque del servidor y ejecución. Es la lectura
-honesta, porque es la que espera quien está mirando el PR.
+### Cuándo empiezan a bloquear
 
-Dos consecuencias prácticas:
+Hoy son **objetivos razonados y todavía no medidos**, porque no hay suite. **El
+hito es la entrega de la suite y el CI por la especificación 001**, no el primer
+pipeline en verde. Hasta ese momento el job **mide, reporta y avisa** su duración
+contra el presupuesto, sin fallar. Después, **superar el presupuesto del humo falla
+el build**, sin periodo de gracia.
+
+### Cláusula anticliquet
+
+> **Si la línea base medida supera el techo, el hallazgo es la suite, no el
+> techo.** El techo solo se mueve por decisión documentada de los fundadores, nunca
+> automáticamente por una medición.
+
+Sin esta cláusula, «ya ajustaremos el umbral cuando tengamos la línea base» es
+permiso para que el número siga a la deriva en vez de contenerla. Una medición es
+un dato sobre lo que la suite tarda; no es un argumento sobre lo que debería
+tardar.
+
+### Dos consecuencias prácticas
 
 - **Instala solo Chromium** en el humo: `npx playwright install --with-deps
   chromium`. Nunca los tres navegadores.
-- **No cachees los binarios del navegador.** Eso **no es un olvido nuestro: es lo
-  que dice la documentación oficial de Playwright** — «Caching browser binaries is
-  not recommended, since the amount of time it takes to restore the cache is
-  comparable to the time it takes to download the binaries». Si alguien añade un
-  `actions/cache` para «arreglarlo», está reintroduciendo un coste, no quitándolo.
+- **No cachees los binarios del navegador.** No es un olvido nuestro: **la
+  documentación oficial de Playwright lo desaconseja** — «Caching browser binaries
+  is not recommended, since the amount of time it takes to restore the cache is
+  comparable to the time it takes to download the binaries». El mecanismo existe y
+  la misma página explica cómo hacerlo si aun así se decide (cachear esos
+  directorios contra un hash de la versión de Playwright); lo que no hay es una
+  recomendación a favor. Añadir un `actions/cache` cambia una descarga por una
+  restauración de coste comparable: no quita trabajo.
 
 Y la regla de fondo: si una herramienta impide cumplir un presupuesto, **se dice**.
 No se ajusta el presupuesto a la herramienta en silencio.
