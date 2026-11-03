@@ -1,0 +1,49 @@
+light /interno/primitivos 390px: área táctil Segmented «Yo» 38.91×44, esquinas de 44 fuera
+light /interno/primitivos 390px: área táctil Button sm solo ícono 41×44, esquinas de 44 fuera
+light /interno/primitivos 1440px: área táctil Segmented «Yo» 38.91×44, esquinas de 44 fuera
+light /interno/primitivos 1440px: área táctil Button sm solo ícono 41×44, esquinas de 44 fuera
+dark /interno/primitivos 390px: área táctil Segmented «Yo» 38.91×44, esquinas de 44 fuera
+dark /interno/primitivos 390px: área táctil Button sm solo ícono 41×44, esquinas de 44 fuera
+dark /interno/primitivos 1440px: área táctil Segmented «Yo» 38.91×44, esquinas de 44 fuera
+dark /interno/primitivos 1440px: área táctil Button sm solo ícono 41×44, esquinas de 44 fuera
+    Error: Segmented «Yo»: ancho clicable
+    Received:    38.91
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Segmented «Yo»: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Button sm solo ícono: ancho clicable
+    Received:    41
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Button sm solo ícono: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Segmented «Yo»: ancho clicable
+    Received:    38.91
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Segmented «Yo»: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Button sm solo ícono: ancho clicable
+    Received:    41
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Button sm solo ícono: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Segmented «Yo»: ancho clicable
+    Received:    38.91
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Segmented «Yo»: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Button sm solo ícono: ancho clicable
+    Received:    41
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Button sm solo ícono: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Segmented «Yo»: ancho clicable
+    Received:    38.91
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Segmented «Yo»: las esquinas de 44 × 44 caen en el control
+    Received: false
+    Error: Button sm solo ícono: ancho clicable
+    Received:    41
+      101 |             console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+    Error: Button sm solo ícono: las esquinas de 44 × 44 caen en el control
+    Received: false
+  4 failed

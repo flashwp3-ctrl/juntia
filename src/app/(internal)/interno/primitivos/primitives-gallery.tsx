@@ -132,6 +132,8 @@ export function PrimitivesGallery({ theme }: { theme: "light" | "dark" }) {
                 {(["sm", "md", "lg"] as const).map((size) => (
                   <Button key={size} size={size} variant="secondary" icon="plus">{t.buttonSizes[size]}</Button>
                 ))}
+                {/* Solo ícono en sm: el caso más estrecho para medir el área táctil de 44 × 44 (F17-2). */}
+                <Button size="sm" variant="secondary" icon="plus" label={t.actions.add} data-touch-probe="" />
               </div>
             </div>
           </div>

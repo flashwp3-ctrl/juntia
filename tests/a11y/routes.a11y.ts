@@ -39,6 +39,26 @@ async function pressFrames(page: Page) {
   }), FRAMES);
 }
 
+// F17-2 / FR-037: área clicable real ≥ 44 × 44. Combina la caja del elemento con su ::after posicionado y
+// comprueba con elementFromPoint que las cuatro esquinas de un cuadrado de 44 centrado caen en el mismo control.
+async function touchArea(page: Page, selector: string) {
+  return page.locator(selector).first().evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const after = getComputedStyle(element, "::after");
+    const extended = after.content !== "none" && after.position === "absolute";
+    const px = (value: string) => (extended && value.endsWith("px") ? parseFloat(value) : 0);
+    const width = Math.max(box.width, box.width - px(after.left) - px(after.right));
+    const height = Math.max(box.height, box.height - px(after.top) - px(after.bottom));
+    const cx = box.left + box.width / 2;
+    const cy = box.top + box.height / 2;
+    const corners = [[-21.5, -21.5], [21.5, -21.5], [-21.5, 21.5], [21.5, 21.5]].map(([dx, dy]) => {
+      const hit = document.elementFromPoint(cx + dx, cy + dy);
+      return Boolean(hit && (hit === element || element.contains(hit)));
+    });
+    return { width: Math.round(width * 100) / 100, height: Math.round(height * 100) / 100, corners: corners.every(Boolean) };
+  });
+}
+
 for (const colorScheme of ["light", "dark"] as const) {
   for (const width of [390, 1440]) {
     for (const route of routes) {
@@ -74,6 +94,15 @@ for (const colorScheme of ["light", "dark"] as const) {
           const rects = await pressFrames(page);
           await page.mouse.up();
           expect.soft(new Set(rects).size, "rectángulos distintos de Button al presionar").toBe(1);
+          // F17-2: etiquetas cortas. «Yo» del Segmented y un Button sm de solo ícono.
+          for (const [name, selector] of [["Segmented «Yo»", `[data-theme="light"] [role="radio"]:text-is("${copy.context.me}")`], ["Button sm solo ícono", '[data-theme="light"] [data-touch-probe]']] as const) {
+            await page.locator(selector).first().scrollIntoViewIfNeeded();
+            const area = await touchArea(page, selector);
+            console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+            expect.soft(area.width, `${name}: ancho clicable`).toBeGreaterThanOrEqual(44);
+            expect.soft(area.height, `${name}: alto clicable`).toBeGreaterThanOrEqual(44);
+            expect.soft(area.corners, `${name}: las esquinas de 44 × 44 caen en el control`).toBe(true);
+          }
           console.log(`${colorScheme} ${route} ${width}px: skeleton ${skeleton.animations} animaciones, opacidad ${[...new Set(skeleton.opacities)].join(",")}; button ${rects[0]} en ${rects.length} cuadros`);
         }
       });

@@ -34,10 +34,13 @@ type ButtonProps = Omit<ComponentPropsWithRef<"button">, "disabled" | "children"
   loading?: boolean;
   /** Etiqueta en gerundio del catálogo mientras carga («Guardando…»). */
   loadingLabel?: string;
-  children: ReactNode;
-};
+} & (
+  | { children: ReactNode; label?: never }
+  // Botón de solo ícono: el nombre accesible sale del catálogo (§Button, A11y).
+  | { children?: never; label: string; icon: AppIconName }
+);
 
-export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, className = "", onClick, type = "button", ...rest }: ButtonProps) {
+export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", ...rest }: ButtonProps) {
   const reduced = useReducedMotion();
   const inert = disabled || loading;
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -49,6 +52,7 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
       {...rest}
       type={type}
       data-variant={variant}
+      aria-label={label}
       aria-disabled={inert || undefined}
       aria-busy={loading || undefined}
       onClick={handleClick}
