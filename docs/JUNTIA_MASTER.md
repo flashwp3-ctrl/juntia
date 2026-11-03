@@ -809,10 +809,11 @@ Bloqueante según §10.1 y §10.3. No se acepta el slice sin la prueba ejecutada
 2. Idempotencia de las escrituras que mueven dinero.
 3. `goal_usage_confirmations`: bloqueo sin consentimiento y revalidación al confirmar.
 4. RLS de metas privadas y compartidas.
-5. Atomicidad de gasto + `goal_usage` + asignaciones.
-6. Protección de ediciones concurrentes de presupuesto, sin sobrescritura silenciosa.
+5. **Registro inicial del gasto con meta.** El gasto real, el uso de **fondos propios** y sus asignaciones se escriben en **una sola operación atómica e idempotente**. No espera ninguna aprobación.
+6. **Autorización posterior de fondos ajenos.** El uso de fondos del otro integrante se registra en una **transacción separada**, atómica e idempotente, que vincula la financiación al gasto **ya existente**, revalidando permisos, saldos y estado de la meta. La meta nunca queda negativa. Si se rechaza o cancela, el gasto permanece. Mientras la solicitud está pendiente, esos fondos **no se descuentan ni cuentan como financiación**.
+7. Protección de ediciones concurrentes de presupuesto, sin sobrescritura silenciosa.
 
-La **confirmación técnica de capacidades de Supabase** que antes figuraba como bloqueo de lanzamiento se reparte entre 15.6.2 (lo que es investigación) y 15.6.3 (lo que es verificación de seguridad o atomicidad); no es un pendiente de lanzamiento.
+La **confirmación técnica de capacidades de Supabase** que antes figuraba como bloqueo de lanzamiento no es un pendiente de lanzamiento ni una investigación abierta: sus tres partes —flujos atómicos, idempotencia y RLS de metas— se corresponden una a una con los puntos 1 a 6 de **15.6.3** y se resuelven ejecutando esas verificaciones. No queda nada de ella en 15.6.2, que recoge solo dependencias de presentación e interacción.
 
 ### 15.7 Umbrales de rendimiento que bloquean la aceptación
 
@@ -834,32 +835,45 @@ Aprobar la dirección I2 · Bosque & Arena **no** convirtió los `[P]` en decisi
 
 #### Inventario completo de [P]
 
-Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y columna `P` de la tabla de trazabilidad del handoff). «Afecta al alcance» = su resolución cambia qué construye una especificación de P0.
+Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y columna `P` de la tabla de trazabilidad del handoff). Se clasifica cada propuesta en **dos ejes distintos**:
 
-| Elemento | Archivo | Por qué está marcado como propuesta | ¿Afecta al alcance de una spec de P0? |
-| --- | --- | --- | --- |
-| SharedBalance / «Balance pagó vs. corresponde» | COMPONENT_SPECIFICATIONS.md §SharedBalance · HANDOFF_CLAUDE_CODE.md, tabla | La codificación de la barra (pagó vs. corresponde, tramos de liquidado y recibido) se propuso en esta fase y no se validó con los dos usuarios. | **Sí** — P0-2 |
-| GoalStack / «Pila tipo Wallet» | COMPONENT_SPECIFICATIONS.md §GoalStack · HANDOFF_CLAUDE_CODE.md, tabla | El patrón de pila con gestos es una propuesta de presentación; existe la alternativa de lista. Depende además del rendimiento (15.6.2). | **Sí** — P0-3 |
-| ChangePreview | COMPONENT_SPECIFICATIONS.md §ChangePreview | Componente propuesto para previsualizar cifras antes/después; no está exigido por ninguna historia del maestro. | **Sí** — P0-2 / P0-3 |
-| FundingLedger (reparto ≠ fondos) | COMPONENT_SPECIFICATIONS.md §FundingLedger | Separar «reparto del gasto» de «fondos de la meta» en dos bloques es una propuesta de UI sobre reglas aprobadas (DEC-G01..G06). | **Sí** — P0-3 |
-| ConfirmationBadge y solicitud pendiente | COMPONENT_SPECIFICATIONS.md §ConfirmationBadge | Los estados y su redacción se propusieron aquí; la regla de fondo (no vence, no es transferencia) sí está aprobada en §15.5. | **Sí** — P0-3 |
-| PlanningNote (destinado neto) | COMPONENT_SPECIFICATIONS.md §PlanningNote | Forma concreta de presentar DEC-G04 como nota secundaria. La fórmula es [A] (§15.4); su presentación es propuesta. | **Sí** — P0-3 |
-| Sección Cuenta completa: AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, CoupleStatus, SensitiveActionConfirmation, LimitNote | COMPONENT_SPECIFICATIONS.md §Cuenta | La sección entera se marcó propuesta. La **navegación** a Cuenta sí está aprobada (§15.3); la anatomía de sus siete componentes no. | **Sí** — P0-1 (perfil, apariencia) y P0-2 (pareja) |
-| Persistencia del tema (`profiles` + cookie) | COMPONENT_SPECIFICATIONS.md §ThemeSelector | Marcada `[P][V]`: mecanismo propuesto **y** sin validar. | **Sí** — P0-1 |
-| Anotar gasto (flujo E1–E5) | COMPONENT_SPECIFICATIONS.md §Anotar gasto (flujo) | El guion de cinco estados es propuesta; el maestro §11 solo exige un Expense Flow animado y reversible. | **Sí** — F0-b pendiente y P0-1 |
-| Teclado nativo para el monto (`inputmode="numeric"`) | COMPONENT_SPECIFICATIONS.md §Anotar gasto · HANDOFF_CLAUDE_CODE.md, tabla | Elección de entrada propuesta; depende del comportamiento real en Android (15.6.2). | **Sí** — P0-1 |
-| Teclado propio descartado | HANDOFF_CLAUDE_CODE.md §Accesibilidad | El descarte es una propuesta, no una decisión registrada en el maestro. Es la cara opuesta del punto anterior. | **Sí** — P0-1 |
-| Personas configurables, escalables a N (+ patrón) | DESIGN_SYSTEM.md §1.2 · HANDOFF_CLAUDE_CODE.md, tabla | Tokens `person.1–6` y patrón de tramo pensados para N, cuando P0 es pareja de exactamente dos (§15.5). | No — se puede implementar P0 con `person.1–2` sin cerrar la propuesta |
-| Sara lila → petróleo; Hogar lavanda → azul tenue; superficie oscura #1C1F20 → #191C1F | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Cambios de paleta propuestos respecto a I2 y al maestro. | No — cambio de valores de token, no de alcance |
-| Gasto, ingreso y liquidación en tinta | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Propuesta de codificación cromática para evitar que ahorro e ingreso compartan verde. | No — cambio de valores de token, no de alcance |
-| Cuenta reutiliza los fondos de categoría para sus fichas de ícono | DESIGN_SYSTEM.md §4 | Reutilización propuesta; no crea tokens nuevos. | No |
-| Stack de UI sugerido (Phosphor + `AppIcon`, Motion for React, `next/font`) | HANDOFF_CLAUDE_CODE.md §Stack de UI sugerido | Marcado propuesta en el handoff, pero **Phosphor con `AppIcon` ya está cerrado** por §15.2 y el stack por §7.1/§15. Prevalece el maestro: aquí `[P]` no reabre nada. | No |
-| Texto ampliado hasta 200% | HANDOFF_CLAUDE_CODE.md §Accesibilidad | Comportamiento responsive propuesto (filas a 2 líneas, segmentados apilados, importes con clamp). | No — refinamiento sobre un requisito de accesibilidad ya obligatorio |
+- **¿Afecta al alcance?** — ¿determina qué funcionalidad o componente debe construir una especificación?
+- **¿Requiere aprobación antes de implementar?** — ¿es una elección todavía marcada como propuesta que nadie ha aprobado?
 
-**Total: 17 elementos distintos**, de los cuales **11 afectan al alcance de alguna especificación de P0** y necesitan gate humano antes de implementarse.
+> «No» en la columna de alcance significa únicamente que la propuesta no cambia las fronteras funcionales de una especificación. **No significa aprobación automática.** Una propuesta visual debe estar respaldada por una decisión aprobada, o resolverse por revisión humana, antes de su implementación definitiva. Cuando el maestro ya cerró la elección —como Phosphor en §15.2— no requiere otra aprobación aunque el documento importado conserve `[P]`.
+
+**El mecanismo es ligero.** Una propuesta **visual** se aprueba **viendo la pantalla construida** en la revisión del PR del slice: no necesita ADR ni un gate propio. Solo van a ADR las propuestas significativas o difíciles de revertir (`AGENTS.md` punto 17). **No hay 17 ADR ni 17 gates**; hay una revisión humana por slice que cubre los `[P]` que ese slice toca.
+
+| Elemento | Archivo | Por qué está marcado como propuesta | ¿Afecta al alcance? | ¿Requiere aprobación antes de implementar? |
+| --- | --- | --- | --- | --- |
+| SharedBalance / «Balance pagó vs. corresponde» | COMPONENT_SPECIFICATIONS.md §SharedBalance · HANDOFF_CLAUDE_CODE.md, tabla | La codificación de la barra (pagó vs. corresponde, tramos de liquidado y recibido) se propuso en esta fase y no se validó con los dos usuarios. | **Sí** — P0-2 | **Sí** — al revisar la pantalla de Balance |
+| GoalStack / «Pila tipo Wallet» | COMPONENT_SPECIFICATIONS.md §GoalStack · HANDOFF_CLAUDE_CODE.md, tabla | El patrón de pila con gestos es una propuesta de presentación; existe la alternativa de lista. Depende además del rendimiento (15.6.2). | **Sí** — P0-3 | **Sí** — pila vs. lista es una elección de producto |
+| ChangePreview | COMPONENT_SPECIFICATIONS.md §ChangePreview | Componente propuesto para previsualizar cifras antes/después; no está exigido por ninguna historia del maestro. | **Sí** — P0-2 / P0-3 | **Sí** — decide si el componente existe |
+| FundingLedger (reparto ≠ fondos) | COMPONENT_SPECIFICATIONS.md §FundingLedger | Separar «reparto del gasto» de «fondos de la meta» en dos bloques es una propuesta de UI sobre reglas aprobadas (DEC-G01..G06). | **Sí** — P0-3 | **Sí** — al revisar la pantalla |
+| ConfirmationBadge y solicitud pendiente | COMPONENT_SPECIFICATIONS.md §ConfirmationBadge | Los estados y su redacción se propusieron aquí; la regla de fondo (no vence, no es transferencia) sí está aprobada en §15.5. | **Sí** — P0-3 | **Sí** — redacción de estados de dinero |
+| PlanningNote (destinado neto) | COMPONENT_SPECIFICATIONS.md §PlanningNote | Forma concreta de presentar DEC-G04 como nota secundaria. La fórmula es [A] (§15.4); su presentación es propuesta. | **Sí** — P0-3 | **Sí** — DEC-G04 es sensible (§15.4) |
+| Sección Cuenta completa: AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, CoupleStatus, SensitiveActionConfirmation, LimitNote | COMPONENT_SPECIFICATIONS.md §Cuenta | La sección entera se marcó propuesta. La **navegación** a Cuenta sí está aprobada (§15.3); la anatomía de sus siete componentes no. | **Sí** — P0-1 (perfil, apariencia) y P0-2 (pareja) | **Sí** — al revisar las pantallas de Cuenta |
+| Persistencia del tema (`profiles` + cookie) | COMPONENT_SPECIFICATIONS.md §ThemeSelector | Marcada `[P][V]`: mecanismo propuesto **y** sin validar. | **Sí** — P0-1 | **Sí** — y además hay que ejecutar el `[V]` |
+| Anotar gasto (flujo E1–E5) | COMPONENT_SPECIFICATIONS.md §Anotar gasto (flujo) | El guion de cinco estados es propuesta; el maestro §11 solo exige un Expense Flow animado y reversible. | **Sí** — F0-b pendiente y P0-1 | **Sí** — es el flujo central del producto |
+| Teclado nativo para el monto (`inputmode="numeric"`) | COMPONENT_SPECIFICATIONS.md §Anotar gasto · HANDOFF_CLAUDE_CODE.md, tabla | Elección de entrada propuesta; depende del comportamiento real en Android (15.6.2). | **Sí** — P0-1 | **Sí** — junto con la fila siguiente |
+| Teclado propio descartado | HANDOFF_CLAUDE_CODE.md §Accesibilidad | El descarte es una propuesta, no una decisión registrada en el maestro. Es la cara opuesta del punto anterior. | **Sí** — P0-1 | **Sí** — se aprueba junto con la fila anterior |
+| Personas configurables, escalables a N (+ patrón) | DESIGN_SYSTEM.md §1.2 · HANDOFF_CLAUDE_CODE.md, tabla | Tokens `person.1–6` y patrón de tramo pensados para N, cuando P0 es pareja de exactamente dos (§15.5). | No — P0 se implementa con `person.1–2` | **Sí** — el patrón de tramo y `person.3–6` no están aprobados; en P0 simplemente no se usan |
+| Sara lila → petróleo; Hogar lavanda → azul tenue; superficie oscura #1C1F20 → #191C1F | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Cambios de paleta propuestos respecto a I2 y al maestro. | No — cambia valores de token, no fronteras funcionales | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; se aprueba viendo la pantalla |
+| Gasto, ingreso y liquidación en tinta | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Propuesta de codificación cromática para evitar que ahorro e ingreso compartan verde. | No — cambia valores de token, no fronteras funcionales | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; afecta a cómo se lee el dinero |
+| Cuenta reutiliza los fondos de categoría para sus fichas de ícono | DESIGN_SYSTEM.md §4 | Reutilización propuesta; no crea tokens nuevos. | No | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; se aprueba viendo la pantalla |
+| Stack de UI sugerido (Phosphor + `AppIcon`, Motion for React, `next/font`) | HANDOFF_CLAUDE_CODE.md §Stack de UI sugerido | Marcado propuesta en el handoff, pero **Phosphor con `AppIcon` ya está cerrado** por §15.2 y el stack por §7.1/§15. Prevalece el maestro: aquí `[P]` no reabre nada. | No | **No** — el maestro ya cerró la elección (§15.2, §7.1) |
+| Texto ampliado hasta 200% | HANDOFF_CLAUDE_CODE.md §Accesibilidad | Comportamiento responsive propuesto (filas a 2 líneas, segmentados apilados, importes con clamp). | No — refinamiento de un requisito ya obligatorio | **No** — el requisito (200% sin pérdida) ya es obligatorio; la técnica se valida probándola, no aprobándola |
+
+**Total: 17 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **15 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cuatro elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta y el patrón de personas— son el motivo de que los dos ejes estén separados.
 
 **Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 23 líneas: 17 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 4 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. 17 marcas = 17 elementos de la tabla.
 
 #### Cómo se cierra un [P]
 
-Quien redacte la especificación de un slice lista los `[P]` que toca y los lleva a revisión humana **antes** de implementarlos. Si la resolución es significativa o difícil de revertir, va a un ADR en `docs/adr/` (AGENTS.md punto 17). Un `[P]` no se cierra dentro de un PR de código.
+Quien redacte la especificación de un slice lista los `[P]` que toca y su clasificación en los dos ejes.
+
+- Un `[P]` que **afecta al alcance** se resuelve **antes** de escribir la especificación: determina qué se construye.
+- Un `[P]` que solo **requiere aprobación** se resuelve **en la revisión del PR del slice**, viendo la pantalla construida. No necesita ADR ni gate previo.
+- Solo va a un ADR en `docs/adr/` la resolución significativa o difícil de revertir (`AGENTS.md` punto 17).
+
+Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo apruebe explícitamente en la revisión.

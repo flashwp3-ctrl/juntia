@@ -156,11 +156,11 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 | Balance pagó vs. corresponde | `color.goal.pace (marca), person.*` | SharedBalance | P |
 | Teclado nativo para el monto | `—` | AmountInput | P |
 | Gasto y apartado separados (DEC-G04) | `—` | HomeHero, MonthSummary, Análisis | A |
-| Tema Light/Dark/System | `[data-theme] + script en <head>` | ThemeProvider, Settings | A |
+| Tema Light/Dark/System | `[data-theme] + script en <head>` | ThemeProvider, ThemeSelector | A |
 | Cuenta desde el avatar, sin sexta pestaña | `person.*, focus.ring` | AccountButton, Sidebar | A |
 | Limitaciones explicadas con texto, sin controles | `surface.sunken` | LimitNote | A |
 | + integrado y pestaña «Actividad» | `action.primary` | AppShell (tabbar) | A |
-| P0 pareja de dos; grupos N = P1 | `person.1–2` en P0 | SharedBalance, Settings | A |
+| P0 pareja de dos; grupos N = P1 | `person.1–2` en P0 | SharedBalance, CoupleStatus | A |
 | Presupuesto sin doble aceptación | `—` | BudgetIndicator, Plan | A |
 
 A = aprobado · P = propuesta de refinamiento · V = pendiente de validación técnica.

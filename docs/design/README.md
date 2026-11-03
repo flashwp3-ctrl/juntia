@@ -9,8 +9,9 @@ Estos seis documentos se produjeron en el proyecto de Claude Design
 (`https://claude.ai/design/p/caabf357-a0df-4048-886f-8c46c8979c5a`)
 y se importaron aquí para que el repositorio sea autosuficiente y ningún agente
 dependa de un servicio externo para leerlos. **Cinco de los seis están intactos;
-el sexto tiene dos líneas corregidas** por la reubicación de carpetas: ver el
-**Log de cambios** más abajo.
+el sexto, `HANDOFF_CLAUDE_CODE.md`, tiene cuatro líneas corregidas**: dos por la
+reubicación de carpetas y dos por una corrección sustantiva aprobada en revisión.
+Ver el **Log de cambios** más abajo.
 
 ## Qué hay aquí
 
@@ -23,15 +24,20 @@ el sexto tiene dos líneas corregidas** por la reubicación de carpetas: ver el
 | `RESPONSIVE_SPECIFICATIONS.md` | Breakpoints 360/390/768/1024/1280/1440 y reglas por patrón. |
 | `BRAND_FOUNDATION.md` | Esencia, personalidad, voz, microcopy y reglas de fotografía de metas. |
 
-## Principio para editar estos documentos
+## Política de edición de estos documentos
 
-Los seis documentos son **fuente aprobada**.
+Los seis documentos son **fuente aprobada**. Eso no los congela: los corrige un
+proceso, no una prohibición.
 
-- **Permitido:** correcciones forzadas por la reubicación en este repositorio
-  (rutas que apuntaban a otra estructura de carpetas). No cambian el significado.
-- **Prohibido:** correcciones de sustancia —nombres de componentes, decisiones,
-  valores, redacción—. Esas se registran en **Erratas conocidas**, nunca
-  editando el artefacto aprobado.
+- **Corrección de reubicación** —rutas rotas por la estructura de carpetas de
+  este repositorio—. Se aplica directamente y se registra en el **Log de
+  cambios**. No cambia el significado de nada.
+- **Corrección sustantiva** —nombres, valores, decisiones, redacción—.
+  **Permitida mediante revisión humana y PR**, registrada en el Log de cambios
+  indicando quién la aprobó. **No se aplica dentro de un PR de código.**
+- **La procedencia la preserva git**, no una prohibición. La importación
+  prístina de los seis documentos está en el commit `f2150de`; cualquier
+  edición posterior es visible en el historial.
 
 Toda edición a un archivo importado queda registrada en el **Log de cambios**.
 
@@ -43,29 +49,39 @@ diseño; en este repositorio viven todos en `docs/design/`. Esas rutas se
 corrigieron a nombre pelado (ver el Log de cambios) y la cita del maestro se
 corrigió a `../JUNTIA_MASTER.md`. Los demás documentos ya se citaban entre sí
 con nombre pelado, que resuelve bien dentro de `docs/design/`, y **no se
-tocaron**.
+tocaron**. Esas dos son las únicas correcciones de reubicación del paquete; las
+otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 
 ## Log de cambios respecto al paquete importado
 
 | Archivo | Líneas | Cambio | Motivo |
 | --- | --- | --- | --- |
 | `HANDOFF_CLAUDE_CODE.md` | 5 | `JUNTIA_MASTER.md` → `../JUNTIA_MASTER.md` | Reubicación: el maestro vive un directorio por encima. Ruta rota en este repositorio. |
-| `HANDOFF_CLAUDE_CODE.md` | 6 | `docs/DESIGN_SYSTEM.md`, `docs/COMPONENT_SPECIFICATIONS.md`, `docs/MOTION_SYSTEM.md`, `docs/RESPONSIVE_SPECIFICATIONS.md`, `docs/BRAND_FOUNDATION.md` → mismos nombres sin el prefijo `docs/` | Reubicación: los cinco viven en el mismo directorio que el handoff. Rutas rotas en este repositorio. |
+| `HANDOFF_CLAUDE_CODE.md` | 6 | `docs/DESIGN_SYSTEM.md`, `docs/COMPONENT_SPECIFICATIONS.md`, `docs/MOTION_SYSTEM.md`, `docs/RESPONSIVE_SPECIFICATIONS.md`, `docs/BRAND_FOUNDATION.md` → mismos nombres sin el prefijo `docs/` | **Reubicación.** Los cinco viven en el mismo directorio que el handoff. Rutas rotas en este repositorio. |
+| `HANDOFF_CLAUDE_CODE.md` | 159 | `ThemeProvider, Settings` → `ThemeProvider, ThemeSelector` | **Corrección sustantiva aprobada por revisión independiente del PR #1.** No existe ningún componente `Settings` en el paquete: la estructura aprobada es «Mi cuenta», rutas `/cuenta/*` (maestro §15.3), y el componente del tema es `ThemeSelector` (`COMPONENT_SPECIFICATIONS.md` §Cuenta). Error de trazabilidad, no decisión artística. |
+| `HANDOFF_CLAUDE_CODE.md` | 163 | `SharedBalance, Settings` → `SharedBalance, CoupleStatus` | **Corrección sustantiva aprobada por revisión independiente del PR #1.** El estado de la pareja lo presenta `CoupleStatus` (`COMPONENT_SPECIFICATIONS.md` §Cuenta), no un componente `Settings` inexistente. |
 
 **Los otros cinco documentos siguen intactos**, byte a byte respecto a la
 importación: `BRAND_FOUNDATION.md` (3981 B), `COMPONENT_SPECIFICATIONS.md`
 (21146 B), `DESIGN_SYSTEM.md` (15066 B), `MOTION_SYSTEM.md` (13000 B) y
-`RESPONSIVE_SPECIFICATIONS.md` (4270 B). Ninguna edición de este log cambia el
-significado de una decisión.
+`RESPONSIVE_SPECIFICATIONS.md` (4270 B).
+
+`HANDOFF_CLAUDE_CODE.md` pasó de **21666 B** (importación) a **21653 B**:
+−22 B por las dos rutas de las líneas 5 y 6, +9 B por las dos sustituciones de
+`Settings` (líneas 159 y 163). Ninguna de las cuatro cambia una decisión de
+diseño; las dos primeras son reubicación y las dos segundas corrigen un nombre
+de componente que nunca existió.
 
 ## Erratas conocidas
 
-Discrepancias de sustancia detectadas en el paquete aprobado. **No se corrigen
-editando el artefacto**: se registran aquí y manda el nombre vigente.
+Registro **temporal** de una discrepancia detectada en el paquete **mientras no
+se haya corregido**. Una errata nunca es una segunda fuente normativa: en cuanto
+la corrección se aprueba, la entrada sale de aquí y pasa al **Log de cambios**.
 
-| Dónde | Dice | Nombre vigente | Nota |
-| --- | --- | --- | --- |
-| `HANDOFF_CLAUDE_CODE.md` líneas 159 y 163, tabla de trazabilidad | `Settings` como componente (filas «Tema Light/Dark/System» y «P0 pareja de dos; grupos N = P1») | La estructura aprobada es **«Mi cuenta»**, rutas `/cuenta/*` (maestro §15.3), con los componentes `ThemeSelector`, `CoupleStatus` y `AccountMenuItem` (`COMPONENT_SPECIFICATIONS.md` §Cuenta). | No existe ningún componente `Settings` en el paquete. Al implementar, leer `Settings` como el componente de Cuenta que corresponda. |
+**No hay erratas pendientes.** La única que hubo —`Settings` como nombre de
+componente en las líneas 159 y 163 del handoff— se corrigió en el artefacto tras
+la segunda revisión independiente del PR #1 y está registrada en el Log de
+cambios.
 
 ## Referencias visuales originales
 
@@ -83,15 +99,25 @@ a un repositorio que todavía no tiene scaffold de aplicación.
 Claude Design abre ese proyecto directamente. Quien no lo tenga depende de las
 capturas.
 
-### Capturas que necesitará la primera especificación
+### Capturas de referencia visual
 
 Requisito documentado aquí; **las capturas todavía no existen y generarlas es
 tarea aparte**. Cuando se produzcan, viven en `docs/design/screenshots/`.
 
-Mínimo exigible: las cinco rutas nombradas en los criterios de aceptación de
-`HANDOFF_CLAUDE_CODE.md` —**Inicio, Actividad, Anotar, Balance y Meta**—, con
-**Inicio en sus dos contextos (Yo y Nosotros)**, cada una a **390 y 1440 px** y
-en **claro y oscuro**. Son 6 vistas × 2 anchos × 2 temas = **24 capturas**.
+**Objetivo global: 24 capturas.** Las cinco rutas nombradas en los criterios de
+aceptación de `HANDOFF_CLAUDE_CODE.md` —**Inicio, Actividad, Anotar, Balance y
+Meta**—, con **Inicio en sus dos contextos (Yo y Nosotros)**, cada una a **390 y
+1440 px** y en **claro y oscuro**: 6 vistas × 2 anchos × 2 temas.
+
+**Regla de exigibilidad: por slice, no por adelantado.** Se exigen las capturas
+de una pantalla o patrón **antes de implementarlo**, no las 24 antes de empezar.
+Un slice que no toca Balance ni Metas no se bloquea por no tener sus capturas.
+
+**Lo que necesita la especificación 001 (Frontend Foundation):** las capturas
+del **AppShell y la navegación con sus estados** —tabbar móvil con `+`
+integrado, rail de 1024 y sidebar de 1280, pestaña activa, selector de contexto
+Yo/Nosotros— en los anchos y temas pertinentes. No necesita las de Balance ni
+las de Meta, porque no las implementa.
 
 ## Jerarquía
 
