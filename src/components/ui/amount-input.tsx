@@ -1,10 +1,12 @@
 "use client";
 // FR-014, FR-013; COMPONENT_SPECIFICATIONS.md §Input (Monto); data-model.md «AmountValue».
 // Entrega pesos enteros (`number | null`); no es Money ni decide si 0 es válido: eso es de domain/money, con el slice que trae el dominio de dinero.
-import { useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
+import { copy } from "@/lib/copy/es";
 import { Input, type InputProps } from "./input";
 
-const MAX_DIGITS = 9; // 999.999.999
+const MAX_DIGITS = 9;
+const MAX_VALUE = 999_999_999;
 const formatter = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
 
 // Cadena de 0 a 9 dígitos, sin ceros a la izquierda salvo el propio 0.
@@ -17,8 +19,16 @@ function format(digits: string): string {
 function toValue(digits: string): number | null {
   return digits === "" ? null : Number(digits); // entero exacto: nunca supera 2^53
 }
+// F17-4: solo un entero entre 0 y 999.999.999 es un importe que el campo puede mostrar.
+function isAmount(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value <= MAX_VALUE;
+}
+// Un valor externo fuera de rango nunca se reformatea como otro importe: el campo queda vacío.
 function fromValue(value: number | null | undefined): string {
-  return value == null ? "" : normalize(String(Math.trunc(Math.abs(value)))).slice(0, MAX_DIGITS);
+  return value == null || !isAmount(value) ? "" : String(value);
+}
+function outOfRange(value: number | null | undefined): boolean {
+  return value != null && !isAmount(value);
 }
 
 type AmountInputProps = Omit<InputProps, "value" | "defaultValue" | "onChange" | "type" | "inputMode" | "prefix"> & {
@@ -27,9 +37,19 @@ type AmountInputProps = Omit<InputProps, "value" | "defaultValue" | "onChange" |
   onValueChange?: (value: number | null) => void;
 };
 
-export function AmountInput({ value, defaultValue = null, onValueChange, fieldClassName = "", inputClassName = "", ...rest }: AmountInputProps) {
+export function AmountInput({ value, defaultValue = null, onValueChange, error, fieldClassName = "", inputClassName = "", ...rest }: AmountInputProps) {
   const [ownDigits, setOwnDigits] = useState(() => fromValue(defaultValue));
-  const digits = value !== undefined ? fromValue(value) : ownDigits;
+  // Sin control externo, el aviso de un defaultValue fuera de rango dura hasta que la persona escribe.
+  const [defaultInvalid, setDefaultInvalid] = useState(() => outOfRange(defaultValue));
+  const controlled = value !== undefined;
+  const digits = controlled ? fromValue(value) : ownDigits;
+  const invalidExternal = controlled ? outOfRange(value) : defaultInvalid;
+  const rejected = controlled ? value : defaultValue;
+  useEffect(() => {
+    if (invalidExternal && process.env.NODE_ENV !== "production") {
+      console.warn(`AmountInput: ${String(rejected)} no es un entero entre 0 y ${MAX_VALUE}; el campo se muestra vacío e inválido.`);
+    }
+  }, [invalidExternal, rejected]);
   const ref = useRef<HTMLInputElement>(null);
   // Dígitos a la derecha del cursor, para conservar su lugar cuando la máscara añade o quita puntos.
   const caretFromEnd = useRef<number | null>(null);
@@ -56,7 +76,7 @@ export function AmountInput({ value, defaultValue = null, onValueChange, fieldCl
     if (next.length > MAX_DIGITS) { event.target.value = format(digits); return; }
     const caret = event.target.selectionEnd ?? raw.length;
     caretFromEnd.current = raw.slice(caret).replace(/\D/g, "").length;
-    if (value === undefined) setOwnDigits(next);
+    if (!controlled) { setOwnDigits(next); setDefaultInvalid(false); }
     onValueChange?.(toValue(next));
   };
 
@@ -64,6 +84,7 @@ export function AmountInput({ value, defaultValue = null, onValueChange, fieldCl
   return (
     <Input
       {...rest}
+      error={error ?? (invalidExternal ? copy.primitives.amountError : undefined)}
       ref={ref}
       type="text"
       inputMode="numeric"
