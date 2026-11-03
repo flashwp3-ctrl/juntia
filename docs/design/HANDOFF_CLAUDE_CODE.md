@@ -2,8 +2,8 @@
 Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implementa nada:** esta especificación se usa después de la aprobación.
 
 ## Fuentes de verdad
-- Producto: `JUNTIA_MASTER.md` (prevalece sobre este paquete ante cualquier conflicto).
-- Tokens: `docs/DESIGN_SYSTEM.md` · Componentes: `docs/COMPONENT_SPECIFICATIONS.md` · Motion: `docs/MOTION_SYSTEM.md` · Responsive: `docs/RESPONSIVE_SPECIFICATIONS.md` · Marca: `docs/BRAND_FOUNDATION.md`.
+- Producto: `../JUNTIA_MASTER.md` (prevalece sobre este paquete ante cualquier conflicto).
+- Tokens: `DESIGN_SYSTEM.md` · Componentes: `COMPONENT_SPECIFICATIONS.md` · Motion: `MOTION_SYSTEM.md` · Responsive: `RESPONSIVE_SPECIFICATIONS.md` · Marca: `BRAND_FOUNDATION.md`.
 - Visual: `Juntia DS v1 - 01…05` y `03b Prototipo Motion`. Pantallas de meta inmersiva: `Juntia I2 - Bosque Arena` (I2·4).
 
 ## Alcance

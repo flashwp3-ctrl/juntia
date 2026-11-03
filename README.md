@@ -4,7 +4,10 @@
 
 ## Estado
 
-**Fase actual: P0.** F0-a y F0-b están cerradas. La dirección visual elegida es **I2 · Bosque & Arena** y el sistema de diseño está completo. Todavía **no existe código de aplicación**: crear el scaffold es trabajo de la primera especificación de P0.
+**Fase actual: P0.** F0-a cerrada; **F0-b cerrada en especificación, pendiente en implementación.**
+
+- **Cerrado:** la exploración visual y la especificación de diseño. La dirección **I2 · Bosque & Arena está elegida en firme y no se reabre.** El sistema de diseño, los componentes, el motion y el responsive están especificados.
+- **Pendiente:** los entregables ejecutables que el maestro §11 asigna a F0-b —app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible, fixtures tipadas y primitivos reutilizables—. Todavía **no existe código de aplicación**: los produce y verifica la primera especificación de ingeniería de P0.
 
 ## Archivos
 
