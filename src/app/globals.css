@@ -80,3 +80,6 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   body { transition: background-color var(--duration-quick), color var(--duration-quick); }
 }
+
+/* Control negativo temporal de T023; se retira con git revert. */
+.ci-negative-control { color: #123456; }
