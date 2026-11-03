@@ -1,6 +1,6 @@
 # ADR-012 — Adopción parcial de GitHub Spec Kit
 
-**Estado:** Propuesto · **Origen:** preflight de ingeniería y ensayo en un clon desechable, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
+**Estado:** Propuesto · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
 
 ## Contexto
 
@@ -30,18 +30,14 @@ releases, `CHANGELOG.md` y las páginas `installation`, `upgrade`,
 `reference/core`, `integrations/claude` e `integrations/codex` de
 `github.github.io/spec-kit`.
 
-**Ensayo real**, el 3 de noviembre de 2026, en un clon local desechable fuera
-del repositorio (scratchpad), con la versión fijada y sin tocar la instalación
-global:
+**Dos ensayos reales**, el 3 de noviembre de 2026, cada uno en un clon local
+desechable fuera del repositorio (scratchpad), con la versión fijada mediante
+`uvx` y sin tocar la instalación global. Los dos clones se borraron al
+terminar.
 
-```
-uvx --from git+https://github.com/github/spec-kit.git@v1.2.6 specify init --here --integration claude --integration-options="--no-model-invocation --events false"
-uvx --from git+https://github.com/github/spec-kit.git@v1.2.6 specify integration install codex --integration-options="--events false"
-```
-
-Se tomó el hash de todos los archivos del clon antes y después de cada paso
-(incluido `.claude/settings.local.json`, que no se versiona y se copió a mano
-para comprobarlo). El clon se borró al terminar.
+**Ensayo 1 — qué toca `init`.** Claude y después Codex, scripts `ps`, con el
+hash de todos los archivos antes y después de cada paso (incluido
+`.claude/settings.local.json`, que no se versiona y se copió a mano):
 
 | Paso | Creados | Modificados | Borrados |
 | --- | --- | --- | --- |
@@ -54,10 +50,26 @@ para comprobarlo). El clon se borró al terminar.
 `.codex/hooks.json` y las skills de Impeccable y Playwright CLI. Con
 `--events false` no se crearon `.claude/settings.json` ni `.codex/config.toml`.
 No se creó ninguna rama: sin la extensión `git`, Spec Kit resuelve la feature
-por `.specify/feature.json`, no por la rama.
+por `.specify/feature.json` o `SPECIFY_FEATURE_DIRECTORY`, no por la rama.
 
-El ensayo dejó además **cinco hallazgos** que esta decisión resuelve uno a uno
-(Decisión §3).
+**Ensayo 2 — verificaciones acotadas.** Solo Claude, scripts `sh`:
+
+```
+uvx --from git+https://github.com/github/spec-kit.git@v1.2.6 specify init --here --integration claude --script sh --integration-options="--no-model-invocation --events false"
+```
+
+| # | Qué se comprobó | Resultado |
+| --- | --- | --- |
+| V1 | Los scripts `sh` se ejecutan en Windows con Git Bash (5.2.15, MINGW64), invocados por ruta tal como los escriben las skills | `resolve-template.sh spec-template --json` (el que usa `speckit-specify`), `setup-plan.sh --json` y `check-prerequisites.sh --json --paths-only` devuelven JSON válido con **exit 0**. Los scripts quedan en git con modo `100644`, sin bit de ejecución |
+| V2 | Qué depende de `.specify/workflows/` | El grep de `workflows/`, `workflow.yml`, `workflow-registry` y `workflow run` sobre `.claude/skills/speckit-*`, `.specify/scripts` y `.specify/templates` **no encuentra nada**. Después de borrar `.specify/workflows/`, `resolve-template.sh`, `check-prerequisites.sh` y `setup-tasks.sh` siguen terminando con exit 0 |
+| V4 | Plantillas en `.specify/templates/overrides/` | `plan-template.md` y `tasks-template.md` modificados ahí **se resuelven por encima del core**: `resolve-template.sh` devuelve el override, `setup-plan.sh` copia el override a `plan.md` y `setup-tasks.sh` apunta `TASKS_TEMPLATE` al override. Los overrides **no están en los manifiestos** de Spec Kit. Un `specify integration upgrade claude` **sin `--force`** terminó con exit 0 y dejó intactos, con el mismo hash, los overrides y la `SKILL.md`, que conserva `disable-model-invocation: true`. Tampoco creó `.claude/settings.json` |
+| V4 | Overrides de **comandos** | Un `specify.md` con marca en `.specify/templates/overrides/` y en `overrides/commands/` **no llega** a `.claude/skills/speckit-specify/SKILL.md`, ni antes ni después del upgrade. Las skills se materializan al instalar y quedan fijas; según el código, solo los *presets* registran overrides de comandos |
+| F7-1 | Dónde aparece `[P]` | `speckit-tasks` SKILL.md líneas 159, 171, 172 y 192 (*«[P] marker: Include ONLY if task is parallelizable»*). `speckit-implement` SKILL.md líneas 152, 157 y 172 (*«parallel tasks [P] can run together»*). `tasks-template.md` líneas 18, 54, 67, 68, 87, 88, 92, 93, 111, 112, 116, 133, 134, 138, 154, 157, 190, 191, 193, 194 y 246 |
+
+F7-1 resuelve una duda del primer borrador: **las skills interpretan `[P]` de
+forma literal**. Cambiar la marca solo en la plantilla rompería la detección de
+paralelismo de `speckit-implement`, y cambiarla en las skills no es posible sin
+un preset, porque las `SKILL.md` quedan fijas al instalar.
 
 ## Decisión
 
@@ -68,21 +80,25 @@ jerarquía del repositorio.
 ### 1. Qué se adopta y cómo se instala
 
 1. **Versión fijada: v1.2.6.** Nunca `main` ni una build de desarrollo. Se
-   ejecuta con `uvx --from git+https://github.com/github/spec-kit.git@v1.2.6`;
-   cambiar de versión es un PR propio, no un efecto secundario de otro.
-2. **Integraciones:** `--integration claude` en `init` y después
-   `specify integration install codex`. Claude queda como integración por
-   defecto.
-3. **`--events false` en las dos.** Spec Kit no escribe hooks en
-   `.claude/settings.json` ni en `.codex/config.toml`. Los únicos hooks del
-   repositorio siguen siendo los de Impeccable.
-4. **`--no-model-invocation` en Claude.** Las skills `speckit-*` solo se
-   ejecutan cuando una persona las invoca.
+   ejecuta con `uvx --from git+https://github.com/github/spec-kit.git@v1.2.6`.
+   Cambiar de versión es un PR propio, no un efecto secundario de otro.
+2. **Solo la integración Claude**: `--integration claude`. Codex se difiere
+   (Decisión §3.3).
+3. **`--events false`.** Spec Kit no escribe hooks en `.claude/settings.json`.
+   Los únicos hooks del repositorio siguen siendo los de Impeccable.
+4. **`--no-model-invocation`.** Las skills `speckit-*` solo se ejecutan cuando
+   una persona las invoca.
 5. **Sin las extensiones `git` ni `agent-context`.** La primera crearía ramas
    numeradas que compiten con la convención de `CONVENTIONS.md` B.4. La
    segunda inyectaría un bloque gestionado en `CLAUDE.md` y `AGENTS.md`, que
    son contratos revisados a mano.
 6. **Variante de scripts: `sh`** (Decisión §3.5).
+7. **`specify init --here --force` queda prohibido en uso normal.** La
+   documentación avisa de que ese camino *«does not use the same
+   per-integration manifest checks before overwriting files»*. Solo se admite
+   para una **recuperación controlada**: en un PR propio, con el árbol limpio,
+   y revisando el diff completo antes de hacer commit. Las actualizaciones de
+   versión usan `specify integration upgrade claude` sin `--force` (V4).
 
 ### 2. Lugar en la jerarquía
 
@@ -95,17 +111,22 @@ aplican.
 `.specify/memory/constitution.md` **no es autoridad**. Es un puntero
 (Decisión §3.4).
 
-**Dónde vive una decisión que surge mientras se escribe una spec:**
+**Dónde vive lo que aparece mientras se escribe una spec.** La tabla aplica
+reglas que ya existen (`AGENTS.md` 17, maestro §15.9, `docs/design/README.md`);
+no crea un procedimiento nuevo.
 
 | Si lo que aparece es… | Va a… | Y la spec… |
 | --- | --- | --- |
+| Un cambio local, reversible y no significativo que respeta los contratos aprobados (nombre de un archivo interno, orden de tareas, una utilidad privada) | `plan.md`, como decisión del plan | Lo registra y sigue |
 | Una decisión significativa o difícil de revertir | Un ADR nuevo en `docs/adr/`, revisado **antes** de seguir | Lo cita y no avanza a la fase siguiente hasta que el ADR se acepte |
+| Un conflicto entre maestro, ADR, paquete de diseño o convenciones | **Se detiene**, aplica la jerarquía de `AGENTS.md` §2 y la reconciliación se hace por PR documental | No avanza hasta que el PR de reconciliación se mergee |
 | Un `[P]` que afecta al alcance | Aprobación humana antes de cerrar la spec (maestro §15.9) | Registra la resolución y quién la aprobó |
 | Un `[P]` que solo requiere aprobación | La revisión del PR del slice, viendo la pantalla (§15.9) | Lo lista como pendiente de esa revisión |
-| Un `[V]` | Se ejecuta en el slice y se pega la salida real | Lo lista; nunca lo marca resuelto sin salida |
+| Un `[V]` **que decide cómo se construye** (por ejemplo, si el script de tema bloqueante funciona con App Router) | Se ejecuta **antes de cerrar el plan** y se pega la salida | El plan no se cierra sin esa salida |
+| Un `[V]` **que comprueba lo construido** (contraste, rendimiento, axe) | Se ejecuta durante la implementación y la salida va al PR del slice | Lo lista; nunca lo marca resuelto sin salida |
 | Una discrepancia entre documentos de `docs/design/` | «Erratas conocidas» de `docs/design/README.md` | La cita y espera su resolución |
 
-### 3. Los cinco hallazgos del ensayo
+### 3. Hallazgos de los ensayos
 
 #### 3.1 El workflow incluido solo tiene dos gates — **se retira**
 
@@ -122,56 +143,59 @@ documentación** revisado por una persona:
 3. PR con `tasks.md` → merge = gate Tasks → Implement.
 4. PRs de implementación, uno por slice (`AGENTS.md` 15).
 
-Un gate en un YAML se puede aprobar desde la terminal de quien ejecuta el
-workflow; un merge deja rastro, autor y revisión. El PR de inicialización borra
-`.specify/workflows/speckit/` y su entrada de
-`.specify/workflows/workflow-registry.json`, y nadie ejecuta ese workflow.
-Retirarlo no rompe nada: las skills `speckit-*`
-funcionan sin el workflow.
+El PR de inicialización borra `.specify/workflows/` entero y nadie ejecuta ese
+workflow. **Retirarlo es seguro con la condición verificada en V2:** ninguna
+skill `speckit-*`, ningún script y ninguna plantilla lo referencian, y los
+scripts siguen funcionando sin él. Si una versión futura de Spec Kit
+introdujera una referencia, el grep de V2 se repite en el PR que suba la
+versión.
 
-#### 3.2 Colisión de `[P]` — **la plantilla usa `[par]`**
+#### 3.2 `[P]` — **se conserva como «paralelizable», solo dentro de `specs/*/tasks.md`**
 
-En `.specify/templates/tasks-template.md`, `[P]` significa «se puede ejecutar
-en paralelo (archivos distintos, sin dependencias)». En Juntia, `[P]` significa
-**propuesta pendiente de aprobación** (maestro §15.9), y aparece en los mismos
-documentos que una tarea citaría. Una tarea marcada `[P]` se leería como «esto
-no está aprobado».
+En la plantilla y en las skills de tasks, `[P]` significa «se puede ejecutar en
+paralelo». En Juntia, `[P]` significa **propuesta pendiente de aprobación**
+(maestro §15.9). F7-1 demuestra que `speckit-tasks` y `speckit-implement`
+buscan `[P]` literal, y que sus `SKILL.md` no se pueden cambiar sin un preset.
+Sustituir la marca rompería el paralelismo; conservarla obliga a acotarla.
 
-La plantilla de tasks sustituye la marca por **`[par]`**. Se elige porque:
+**Regla:**
 
-- no colisiona con `[A]`, `[P]` ni `[V]`, ni con ninguna otra marca del
-  repositorio;
-- es una abreviatura legible sin leyenda;
-- tiene más de una letra, así que no invita a pensar que pertenece a la misma
-  familia que las marcas del paquete de diseño.
+- **Dentro de `specs/*/tasks.md`**, y solo ahí, `[P]` significa paralelizable.
+  El override de `tasks-template.md` (Decisión §4) abre el archivo con esta
+  leyenda:
 
-La leyenda de la plantilla se reescribe para decir que `[par]` es
-paralelizable y que `[A]`, `[P]` y `[V]` conservan el significado de §15.9.
+  > En este archivo, `[P]` significa **paralelizable** (archivos distintos, sin
+  > dependencias). **No** es la marca de propuesta del paquete de diseño. Una
+  > tarea que implementa algo propuesto lo dice en palabras —«propuesta
+  > §15.9»— y nunca con la etiqueta suelta.
 
-#### 3.3 Autoinvocación en Codex — **regla escrita, más débil que en Claude**
+- **En cualquier otro archivo** —`spec.md`, `plan.md`, el maestro, el paquete
+  de diseño, ADR, PRs— `[P]` sigue significando **propuesta** (§15.9).
+- **Una tarea que implementa algo propuesto** lo nombra en palabras:
+  «implementa la sección Cuenta (propuesta §15.9, aprobada en …)». Nunca escribe
+  `[P]` para eso, porque dentro de `tasks.md` esa etiqueta ya significa otra
+  cosa.
 
-En el ensayo, las 10 skills de `.claude/skills/speckit-*` llevan
+#### 3.3 Autoinvocación en Codex — **Codex se difiere**
+
+En el ensayo 1, las 10 skills de `.claude/skills/speckit-*` llevan
 `disable-model-invocation: true`. Las 10 de `.agents/skills/speckit-*` **no lo
 llevan**: `--no-model-invocation` es una opción exclusiva de la integración de
-Claude. Codex puede, en principio, decidir por su cuenta ejecutar
-`speckit-implement` o cualquier otra.
+Claude, y no hay configuración que lo bloquee en Codex. Una regla escrita en
+`AGENTS.md` sería más débil, porque el modelo puede incumplirla.
 
-No hay mecanismo de configuración que lo impida. Lo sustituye **una regla
-escrita en `AGENTS.md`**, que es el contrato que Codex lee:
+**La primera instalación es solo Claude.** Eso no excluye a Codex del proyecto:
 
-> Las skills `speckit-*` solo se ejecutan cuando una persona lo pide
-> explícitamente, nombrando la skill. Un agente nunca encadena una fase con la
-> siguiente por iniciativa propia, ni ejecuta `speckit-implement` sin que el PR
-> de `tasks.md` esté mergeado. `speckit-constitution` y `speckit-taskstoissues`
-> no se ejecutan nunca.
+- **Codex puede implementar** a partir de un `tasks.md` mergeado, como
+  implementa a partir de cualquier especificación del repositorio. `specs/`
+  son Markdown y Codex los lee como cualquier otro documento.
+- **Lo que Codex no hace es generar artefactos de Spec Kit**: no escribe
+  `spec.md`, `plan.md` ni `tasks.md` con las skills `speckit-*`, porque no las
+  tiene instaladas.
 
-**Esta protección es más débil que la de Claude** y se dice así: en Claude es
-una propiedad de la configuración; en Codex es una instrucción que el modelo
-puede incumplir. La red de seguridad real es la misma para los dos: ninguna
-fase avanza sin el merge del PR anterior (Decisión §3.1), y un `speckit-implement`
-ejecutado antes de tiempo produce un diff que la revisión del PR rechaza.
-
-La regla se añade a `AGENTS.md` en el PR de inicialización, no en este.
+Codex se incorpora más adelante, **con un ADR nuevo o una enmienda a este**,
+que aporte una **protección de fases verificable** —algo que se pueda
+comprobar ejecutándolo, no solo una instrucción escrita—.
 
 #### 3.4 Constitución por defecto — **se sustituye entera por un puntero**
 
@@ -197,9 +221,11 @@ está la autoridad.
 2. **Qué documento resuelve qué:** `AGENTS.md` §2b.
 3. **Una spec, un plan o unas tasks no deciden.** Una decisión nueva,
    significativa o difícil de revertir va a un ADR en `docs/adr/` antes de
-   seguir.
+   seguir. Un conflicto entre documentos superiores detiene el trabajo hasta
+   reconciliarlo por PR.
 4. **Marcas del paquete de diseño:** `[A]`, `[P]` y `[V]` se interpretan según
-   el maestro §15.9. En las tasks, `[par]` significa paralelizable.
+   el maestro §15.9. **Única excepción:** dentro de `specs/*/tasks.md`, `[P]`
+   significa paralelizable.
 5. **Pruebas:** `docs/TESTING.md` y ADR-011.
 6. **Gates:** ninguna fase avanza sin el merge del PR de la anterior (ADR-012).
 
@@ -207,83 +233,156 @@ Si este archivo y cualquiera de esos documentos dicen cosas distintas, este
 archivo está mal.
 ```
 
-`speckit-constitution` no se ejecuta nunca (Decisión §3.3): reescribiría este
-puntero con principios generados.
+**Cómo se protege:**
 
-#### 3.5 Scripts en PowerShell — **se usa `sh`**
+- La constitución **solo se modifica en un PR documental dedicado** a ella. No
+  cambia como efecto secundario de un PR de spec, de plan ni de código.
+- `speckit-constitution` no se ejecuta nunca: reescribiría el puntero con
+  principios generados.
+- **El PR de inicialización comprueba** que `constitution.md` contiene
+  exactamente el texto aprobado aquí, y lo demuestra en su descripción.
 
-En Windows, `init` elige `ps` por defecto. Las tres plataformas donde corren
-los scripts son distintas:
+**Condición adicional del PR de inicialización.** Debe **demostrar**, con una
+ejecución real pegada en el PR y no por lectura de las skills, que
+`speckit-specify` y `speckit-plan`:
+
+1. leen las fuentes superiores a las que remite el puntero, y
+2. **se detienen** ante un `[P]` que afecta al alcance sin aprobar o ante una
+   decisión pendiente, en lugar de resolverlos ellas mismas.
+
+Si no se puede demostrar, el PR de inicialización no se mergea y esta decisión
+se revisa.
+
+#### 3.5 Scripts — **se usa `sh`**
+
+En Windows, `init` elige `ps` por defecto. Los entornos donde corren los
+scripts son distintos:
 
 | Entorno | `ps` | `sh` | `py` |
 | --- | --- | --- | --- |
-| Windows local (Claude Code) | Nativo | Git Bash, que Claude Code en Windows ya usa como shell | Requiere `python` en el `PATH`. uv gestiona su propio Python y no lo garantiza; en Windows `python` puede ser el alias de la tienda |
-| Codex (Linux o macOS) | Requiere `pwsh`, que no suele estar | Nativo | Requiere Python en la imagen |
+| Windows local (Claude Code) | Nativo | Git Bash, que Claude Code en Windows ya usa como shell. **Verificado en V1** | Requiere `python` en el `PATH`. uv gestiona su propio Python y no lo garantiza; en Windows `python` puede ser el alias de la tienda |
+| Codex (Linux o macOS), cuando se incorpore | Requiere `pwsh`, que no suele estar | Nativo | Requiere Python en la imagen |
 | CI en Linux | Requiere instalar `pwsh` | Nativo | Requiere un paso `setup-python` |
 
-**Se elige `sh`:** es la única variante nativa en dos de los tres entornos y
-disponible en el tercero sin instalar nada, porque Git para Windows ya trae
-Bash. `py` parece neutral, pero añade una dependencia de `PATH` que falla
-justo en Windows.
+**Se elige `sh`:** es la única variante nativa en Linux y macOS y disponible en
+Windows sin instalar nada, porque Git para Windows ya trae Bash. `py` parece
+neutral, pero añade una dependencia de `PATH` que falla justo en Windows.
 
-### 4. Ajustes a las plantillas
+**Bit de ejecución.** V1 muestra que los scripts entran en git con modo
+`100644`. Las skills los invocan por ruta (`.specify/scripts/bash/…sh`), y eso
+funciona en Git Bash, pero en Linux daría *permission denied*. El PR de
+inicialización los registra como ejecutables
+(`git update-index --chmod=+x .specify/scripts/bash/*.sh`).
 
-| Plantilla | Cambio |
+### 4. Ajustes a las plantillas — **como overrides, sin coste de `--force`**
+
+Los ajustes viven en `.specify/templates/overrides/`, **no** editando las
+plantillas core. V4 confirmó que se resuelven por encima del core, que no están
+en los manifiestos y que sobreviven a `specify integration upgrade` sin
+`--force`.
+
+| Override | Cambio respecto al core |
 | --- | --- |
-| `plan-template.md` | La sección «Constitution Check» (*«GATE: Must pass before Phase 0 research»*) pasa a ser una **comprobación de jerarquía**: los `[P]` que el slice toca, con su clasificación en los dos ejes de §15.9; los `[V]` que toca; los ADR que necesita y su estado; las erratas pendientes que lo afectan. Si alguno bloquea, el plan no se cierra |
-| `tasks-template.md` | La marca `[P]` pasa a `[par]` (Decisión §3.2). Los ejemplos de «contract test por endpoint» se sustituyen por la ubicación por capas de `docs/TESTING.md` §4: cada criterio va en la capa más baja que puede detectar su fallo, y la plantilla pide declarar cuántas specs E2E añade el slice (máximo 2) |
+| `overrides/plan-template.md` | La sección «Constitution Check» (*«GATE: Must pass before Phase 0 research»*) pasa a ser una **comprobación de jerarquía**: los `[P]` que el slice toca, con su clasificación en los dos ejes de §15.9; los `[V]` que toca, separados según la tabla de §2 (los que bloquean el plan y los que se verifican al implementar); los ADR que necesita y su estado; las erratas pendientes que lo afectan; los conflictos entre documentos superiores. Si alguno bloquea, el plan no se cierra |
+| `overrides/tasks-template.md` | La leyenda de `[P]` de la Decisión §3.2. Los ejemplos de «contract test por endpoint» se sustituyen por la ubicación por capas de `docs/TESTING.md` §4: cada criterio va en la capa más baja que puede detectar su fallo, y la plantilla pide declarar cuántas specs E2E añade el slice (máximo 2) |
 
-**Coste, dicho con claridad.** Según la documentación de upgrade,
-`specify integration upgrade <key>` *«blocks when manifest-tracked integration
-files were modified locally, unless you pass `--force`»*, y las plantillas
-compartidas solo se refrescan *«when they are unchanged from the previous
-managed copy»*. Es decir: una vez modificadas, **cada actualización de Spec
-Kit exige `--force` y vuelve a pisar los ajustes**, que hay que reaplicar a
-mano y revisar en el diff. Se acepta porque actualizar es un PR deliberado
-(Decisión §1.1), no algo que ocurra solo. Los *presets* de Spec Kit podrían
-evitar ese coste; no se verificaron y quedan como pendiente.
+**Desaparece el coste de `--force`** que tenía el primer borrador de este ADR:
+las plantillas core no se tocan y `integration upgrade` no se bloquea.
+
+**Queda un coste distinto, y se dice:** un override es una copia completa de la
+plantilla. Si una versión nueva de Spec Kit mejora el core, el override **no lo
+hereda**. El PR que sube la versión compara el core nuevo con el anterior y
+decide si traslada el cambio a los overrides.
+
+**Lo que los overrides no cubren:** el texto de las skills. V4 confirmó que las
+`SKILL.md` se materializan al instalar y que un override de comando en
+`overrides/` no llega a ellas. Esta decisión no necesita cambiar ninguna skill;
+si algún día hiciera falta, el camino serían los *presets*, que no se han
+verificado y no forman parte de esta decisión.
+
+### 5. Los gates dependen hoy de la disciplina
+
+**`main` no tiene protección de rama.** El 3 de noviembre de 2026,
+`gh api repos/juntia-labs/juntia/branches/main/protection` y
+`…/rulesets` devuelven **HTTP 403**: *«Upgrade to GitHub Pro or make this
+repository public to enable this feature»*. El plan actual de la organización
+no lo permite.
+
+Consecuencia: **«gate = merge» depende hoy de la disciplina**, para Claude y
+para cualquier agente o persona. Nada en el servidor impide un `git push` a
+`main` que salte la revisión de un PR de spec, de plan o de tasks.
+
+**Mitigación local, que se propone para el PR de inicialización:**
+
+1. **Regla de denegación en `.claude/settings.json`** (versionado) para
+   `git push` a `main`: Claude Code rechaza el comando antes de ejecutarlo.
+2. **Un hook `pre-push` de git** que rechaza empujar a `main`, para cualquier
+   agente o persona que use el repositorio con los hooks instalados.
+
+**Las dos son más débiles que una protección de servidor**, y se dice así: la
+regla de Claude solo protege las sesiones de Claude Code que usan ese archivo;
+el hook se instala por clon, se puede desactivar con `--no-verify` y no existe
+en un clon nuevo hasta que alguien lo instala. Reducen el error accidental; no
+impiden una omisión deliberada.
+
+**Activar GitHub Team** —que daría protección de rama real— **es una decisión
+de los fundadores**, no de este ADR, porque tiene coste económico.
 
 ## Consecuencias
 
 - La especificación 001 se escribe ya con este formato, en `specs/001-…/`, y es
   la primera prueba real de la decisión.
 - El PR de inicialización —separado de este y posterior a su aceptación—
-  contiene: el resultado de `init` y de `integration install codex` con las
-  opciones de la Decisión §1; el borrado del workflow; el puntero de la
-  Decisión §3.4; los ajustes de plantillas de la Decisión §4; dos filas nuevas
-  en `AGENTS.md` §2b (`specs/` y `.specify/memory/constitution.md`) y la regla
-  de la Decisión §3.3. Ese PR toca `AGENTS.md`; este no.
-- Hay una regla que en Codex depende de que el modelo la obedezca. Si se
-  incumple, lo detecta la revisión del PR, no la configuración.
-- Cada actualización de Spec Kit cuesta un `--force` y una reaplicación de los
-  ajustes revisada en el diff.
+  contiene:
+  - el resultado de `init` con las opciones de la Decisión §1;
+  - el borrado de `.specify/workflows/`;
+  - el puntero de la Decisión §3.4, con la comprobación de que coincide con el
+    texto aprobado;
+  - los dos overrides de la Decisión §4;
+  - los scripts `sh` marcados como ejecutables;
+  - la regla de denegación y el hook `pre-push` de la Decisión §5;
+  - dos filas nuevas en `AGENTS.md` §2b (`specs/` y
+    `.specify/memory/constitution.md`);
+  - la demostración de la Decisión §3.4: `speckit-specify` y `speckit-plan`
+    leen las fuentes superiores y se detienen ante un `[P]` bloqueante o una
+    decisión pendiente.
+
+  Ese PR toca `AGENTS.md`; este no.
+- Codex sigue pudiendo implementar desde un `tasks.md` mergeado, pero no
+  genera artefactos de Spec Kit hasta que un ADR aporte una protección de fases
+  verificable.
+- Los gates descansan en la disciplina mientras `main` no tenga protección de
+  servidor; la mitigación local reduce el error accidental, no lo impide.
+- Cada actualización de Spec Kit es un PR propio: `integration upgrade` sin
+  `--force`, repetir el grep de V2 y comparar el core nuevo con los overrides.
 - Si Spec Kit deja de mantenerse o cambia de forma incompatible, la salida es
-  barata: `specs/` son Markdown y siguen siendo legibles sin la herramienta;
-  se borran `.specify/` y las carpetas `speckit-*` y se conserva el resto.
-- **Ningún hallazgo invierte la recomendación.** El más débil es el 3.3, y lo
-  compensa que el gate real está en los merges, no en la herramienta.
+  barata: `specs/` son Markdown y siguen siendo legibles sin la herramienta; se
+  borran `.specify/` y `.claude/skills/speckit-*` y se conserva el resto.
+- **Ningún hallazgo invierte la recomendación.** F7-1 invirtió una decisión
+  concreta del primer borrador —sustituir `[P]` por `[par]`—, no la adopción.
 
 ## Verificación pendiente [V]
 
-1. **Que la variante `sh` se ejecuta bien desde las skills** en Claude Code
-   sobre Windows (Git Bash) y en Codex. El ensayo solo generó `ps`.
-2. **Que borrar `.specify/workflows/speckit/` no rompe** ninguna skill ni
-   `specify integration upgrade`.
-3. **Que `[par]` sobrevive** a la lógica de `speckit-tasks` e
-   `speckit-implement`, que podrían buscar la cadena `[P]` literal para decidir
-   el paralelismo.
-4. **Si los presets** (`--preset`, `.presetignore`) permiten llevar los ajustes
-   de plantillas sin que `integration upgrade` exija `--force`.
-5. **El comportamiento de `init --here --force`** sobre un repositorio que ya
-   tenga Spec Kit: la documentación avisa de que ese camino *«does not use the
-   same per-integration manifest checks before overwriting files»*. El ensayo
-   no usó `--force`.
+Del primer borrador, **V1, V2 y V4 se ejecutaron** (resultados en
+«Contexto»), **V3 desaparece** porque `[P]` se conserva, y **V5 no se ensaya**:
+`init --here --force` queda prohibido en uso normal (Decisión §1.7).
+
+Queda pendiente:
+
+1. **La demostración de la Decisión §3.4** —que `speckit-specify` y
+   `speckit-plan` leen las fuentes superiores y se detienen ante un `[P]`
+   bloqueante o una decisión pendiente—. Es condición del PR de
+   inicialización.
+2. **Los scripts `sh` en Linux** con el bit de ejecución fijado. V1 se ejecutó
+   solo en Windows; hace falta cuando Codex o un job de CI los usen.
 
 ## Dependencias
 
-- **ADR-011 sigue en estado Propuesto**, y su enmienda está en revisión en el
-  PR #6. La Decisión §4 remite a `docs/TESTING.md` §4 y al tope de specs E2E de
-  ADR-011; si ADR-011 cambia, la plantilla de tasks se ajusta en consecuencia.
+- **El PR #6 está mergeado.** Las referencias a specs E2E de este ADR usan la
+  nomenclatura «spec E2E n» que ese PR introdujo.
+- **ADR-011 sigue en estado Propuesto** hasta que lo aprueben los fundadores.
+  La Decisión §4 remite a `docs/TESTING.md` §4 y al tope de specs E2E de
+  ADR-011; si ADR-011 cambia, el override de tasks se ajusta en consecuencia.
 
 ## Referencias
 
@@ -291,6 +390,7 @@ evitar ese coste; no se verificaron y quedan como pendiente.
 - `docs/JUNTIA_MASTER.md` §15.1 y §15.9
 - `docs/CONVENTIONS.md` B.4
 - `docs/TESTING.md` §4
+- `docs/design/README.md` — «Erratas conocidas»
 - `docs/adr/ADR-011-estrategia-de-pruebas-y-ci.md`
 - Spec Kit v1.2.6: https://github.com/github/spec-kit ·
   https://github.github.io/spec-kit/upgrade.html ·
