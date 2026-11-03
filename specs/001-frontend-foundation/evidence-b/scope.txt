@@ -1,0 +1,12 @@
+$ git grep -nE "412\.900|2\.840\.000|429\.900|3\.740\.000|229\.900|900\.000" -- src tests
+(vacío)
+$ git grep -nE "P0-[0-9]" -- src tests
+src/domain/README.md:4:de datos, persona y moneda llegan con P0-1 (maestro §15.10).
+$ git grep -nE "person-?[3-6]" -- src tests
+(vacío)
+$ git grep -nE "lucide|tabler|iconoir" -- src tests
+(vacío)
+$ git grep -nE "Carulla|Sara|Tomás" -- src tests
+(vacío)
+$ git grep -nE '#[0-9a-fA-F]{3,8}\b' -- src ':!src/styles/tokens.css'
+(vacío)
