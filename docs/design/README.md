@@ -78,10 +78,22 @@ Registro **temporal** de una discrepancia detectada en el paquete **mientras no
 se haya corregido**. Una errata nunca es una segunda fuente normativa: en cuanto
 la corrección se aprueba, la entrada sale de aquí y pasa al **Log de cambios**.
 
-**No hay erratas pendientes.** La única que hubo —`Settings` como nombre de
-componente en las líneas 159 y 163 del handoff— se corrigió en el artefacto tras
-la segunda revisión independiente del PR #1 y está registrada en el Log de
-cambios.
+La primera que hubo —`Settings` como nombre de componente en las líneas 159 y
+163 del handoff— se corrigió en el artefacto tras la segunda revisión
+independiente del PR #1 y está registrada en el Log de cambios.
+
+**Pendientes — dos, detectadas al capturar el AppShell (PR #5).** Las dos
+enfrentan al comp aprobado con la especificación aprobada en el rail de 1024,
+que es lo que construye la especificación 001. **No son corregibles por
+transcripción**: no hay un texto mal copiado, hay dos fuentes aprobadas que
+dicen cosas distintas. Resolverlas es una **decisión de producto con gate
+humano**, que la 001 debe cerrar **antes** de implementar el rail. Ninguna de las
+dos fuentes se ha corregido.
+
+| Dónde | La especificación dice | El comp dibuja | Qué hay que decidir |
+| --- | --- | --- | --- |
+| `RESPONSIVE_SPECIFICATIONS.md` línea 16 (Contexto Yo/Nosotros) | En `lg`, «el primer ítem del rail abre un popover con el segmentado» | El primer ítem del rail es el wordmark «J». El popover no está dibujado en ningún estado (`Juntia DS v1 - 04 Pantallas`, 04·9) | Cómo se cambia de contexto a 1024: popover desde el rail —y entonces falta diseñarlo— u otro mecanismo |
+| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino** en el rail, entre Plan y el `+`, con icono de balanza —presumiblemente Balance— (`appshell-1024-rail-light.png`, 04·9) | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo y añadirlo al mapa— o si el icono sobra en el comp |
 
 ## Referencias visuales originales
 
@@ -101,8 +113,12 @@ capturas.
 
 ### Capturas de referencia visual
 
-Requisito documentado aquí; **las capturas todavía no existen y generarlas es
-tarea aparte**. Cuando se produzcan, viven en `docs/design/screenshots/`.
+Las capturas viven en [`screenshots/`](screenshots/), con su propio
+[`README.md`](screenshots/README.md) que registra de qué archivo y sección del
+comp salió cada una, el enlace al comp y la fecha de captura. **Son referencia
+visual, no fuente de medidas:** los números viven en
+`COMPONENT_SPECIFICATIONS.md`, `RESPONSIVE_SPECIFICATIONS.md` y
+`DESIGN_SYSTEM.md`.
 
 **Objetivo global: 24 capturas.** Las cinco rutas nombradas en los criterios de
 aceptación de `HANDOFF_CLAUDE_CODE.md` —**Inicio, Actividad, Anotar, Balance y
@@ -118,6 +134,24 @@ del **AppShell y la navegación con sus estados** —tabbar móvil con `+`
 integrado, rail de 1024 y sidebar de 1280, pestaña activa, selector de contexto
 Yo/Nosotros— en los anchos y temas pertinentes. No necesita las de Balance ni
 las de Meta, porque no las implementa.
+
+**Estado: lo de la 001 ya está.** Ocho archivos en [`screenshots/`](screenshots/):
+tabbar de 390 en claro y oscuro, rail de 1024, sidebar de 1440 en claro y
+oscuro, pestaña activa contra una inactiva, y el segmentado Yo/Nosotros en
+móvil y en escritorio (dos archivos, porque en el comp están en sitios
+distantes). **Dos cosas no se capturaron porque el comp no las dibuja:** el
+rail de 1024 en oscuro y el popover del segmentado en el rail. Están
+registradas en el README de esa carpeta.
+
+Tres de esos ocho archivos son pantallas completas y no solo recortes de
+navegación: el rail de 1024 y los dos sidebars de 1440 muestran **Inicio en
+contexto Nosotros** de borde a borde. Con eso, del objetivo global de 24 quedan
+cubiertas las dos de **Inicio · Nosotros · 1440** (claro y oscuro).
+
+**Siguen pendientes las otras 22:** Inicio a 390 en ambos contextos, Inicio ·
+Yo a 1440, y Actividad, Anotar, Balance y Meta en los dos anchos y los dos
+temas. No se pretende cubrirlas de una vez. Un slice que toque alguna de esas
+pantallas pide las suyas antes de implementarla.
 
 ## Jerarquía
 
