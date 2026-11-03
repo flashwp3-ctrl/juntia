@@ -50,8 +50,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Install, build once, install Chromium and check routes and theme script
-        run: node scripts/ci.mjs run ci build chromium test:a11y check:theme-script
+      - name: Install, build once, install Chromium, check routes, internal surface and theme script
+        run: node scripts/ci.mjs run ci build chromium test:a11y check:internal-surface check:theme-script
       - name: Publish timings
         if: always()
         env:

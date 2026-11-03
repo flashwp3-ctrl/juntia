@@ -27,7 +27,7 @@ if (mode === "run") {
   const duration = (Date.now() - Number(process.env.JOB_STARTED_MS)) / 1000;
   lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < 360 s |`);
   if (duration >= 360) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < 360 s`);
-  if (process.env.GITHUB_JOB === "lint-typecheck-build") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | NO APLICABLE — lo incorpora P0-1 |", "| 4 · E2E de humo | NO APLICABLE — la primera spec E2E nace en P0-1 |", "| Superficie interna (FR-052, FR-053) | NO APLICABLE — la incorpora la 001 en su PR B |");
+  if (process.env.GITHUB_JOB === "lint-typecheck-build") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | NO APLICABLE — lo incorpora P0-1 |", "| 4 · E2E de humo | NO APLICABLE — la primera spec E2E nace en P0-1 |");
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
   console.log(lines.join("\n"));
 } else {
