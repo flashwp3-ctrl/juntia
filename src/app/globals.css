@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-category-market-bg: var(--category-market-bg);
+  --color-category-market-fg: var(--category-market-fg);
+  --color-category-restaurants-bg: var(--category-restaurants-bg);
+  --color-category-restaurants-fg: var(--category-restaurants-fg);
+  --color-category-home-bg: var(--category-home-bg);
+  --color-category-home-fg: var(--category-home-fg);
+  --color-category-transport-bg: var(--category-transport-bg);
+  --color-category-transport-fg: var(--category-transport-fg);
+  --color-category-health-bg: var(--category-health-bg);
+  --color-category-health-fg: var(--category-health-fg);
+  --color-category-entertainment-bg: var(--category-entertainment-bg);
+  --color-category-entertainment-fg: var(--category-entertainment-fg);
+  --color-category-shopping-bg: var(--category-shopping-bg);
+  --color-category-shopping-fg: var(--category-shopping-fg);
+  --color-category-services-bg: var(--category-services-bg);
+  --color-category-services-fg: var(--category-services-fg);
+  --color-category-income-bg: var(--category-income-bg);
+  --color-category-income-fg: var(--category-income-fg);
+  --color-category-other-bg: var(--category-other-bg);
+  --color-category-other-fg: var(--category-other-fg);
+  --font-sans: var(--font-geist);
+  --font-serif: var(--font-instrument-serif);
+  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--color-surface-canvas);
+  --color-raised: var(--color-surface-raised);
+  --color-sunken: var(--color-surface-sunken);
+  --color-overlay: var(--color-surface-overlay);
+  --color-inverse: var(--color-surface-inverse);
+  --color-ink: var(--color-text-primary);
+  --color-ink-secondary: var(--color-text-secondary);
+  --color-on-action: var(--color-text-onAction);
+  --color-primary: var(--color-action-primary);
+  --color-primary-hover: var(--color-action-primaryHover);
+  --color-primary-pressed: var(--color-action-primaryPressed);
+  --color-border: var(--color-border-subtle);
+  --color-border-emphasis: var(--color-border-strong);
+  --color-focus: var(--color-focus-ring);
+  --color-expense: var(--color-finance-expense);
+  --color-income: var(--color-finance-income);
+  --color-saving: var(--color-finance-saving);
+  --color-saving-subtle: var(--color-finance-savingSubtle);
+  --color-settlement: var(--color-finance-settlement);
+  --color-goal-track: var(--color-goal-track);
+  --color-goal-pace: var(--color-goal-pace);
+  --color-goal-projection: var(--color-goal-projection);
+  --color-pending: var(--color-status-pending);
+  --color-danger: var(--color-status-danger);
+  --color-danger-subtle: var(--color-status-dangerSubtle);
+  --color-warning: var(--color-status-warning);
+  --color-warning-subtle: var(--color-status-warningSubtle);
+  --color-success: var(--color-status-success);
+  --color-skeleton: var(--skel);
+  --color-person-1: var(--person-1);
+  --color-person-2: var(--person-2);
+  --shadow-raised: var(--elevation-raised);
+  --shadow-float: var(--elevation-float);
+  --shadow-overlay: var(--elevation-overlay);
+  --shadow-sheet: var(--elevation-sheet);
+  --radius-control-xs: var(--radius-xs);
+  --radius-control-sm: var(--radius-sm);
+  --radius-control-md: var(--radius-md);
+  --radius-control-lg: var(--radius-lg);
+  --radius-control-xl: var(--radius-xl);
+  --radius-control-2xl: var(--radius-2xl);
+  --radius-control-3xl: var(--radius-3xl);
+}
+
+html { font-variant-numeric: tabular-nums; }
+body {
+  min-height: 100dvh;
+  background-color: var(--color-surface-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-geist), sans-serif;
+}
+:focus-visible { outline: var(--border-focus) solid var(--color-focus-ring); outline-offset: var(--focus-offset); }
+@media (prefers-reduced-motion: no-preference) {
+  body { transition: background-color var(--duration-quick), color var(--duration-quick); }
+}

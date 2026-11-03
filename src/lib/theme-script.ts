@@ -1,0 +1,2 @@
+// Research R2.1: bloqueante antes del body, sin almacenamiento para el tema.
+export const themeScript = '(function(){var d=document.documentElement;var m=window.matchMedia("(prefers-color-scheme: dark)");function a(){d.setAttribute("data-theme",m.matches?"dark":"light")}a();if(m.addEventListener){m.addEventListener("change",a)}try{var c=window.localStorage.getItem("juntia:context");if(c==="me"||c==="us"){d.setAttribute("data-context",c)}}catch(e){}})();';
