@@ -33,7 +33,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 
 ## Input
 - **Anatomía:** label (12/500 soft) · campo 46–48 px radio 14 `surface.sunken` con sombra interior · ícono final opcional · ayuda o error. El placeholder y el prefijo «$» del monto van en `linen.800` en claro (7,32:1 sobre sunken) y en `text.secondary` en oscuro (5,59:1).
-- **Estados:** focus anillo 2 px `focus.ring` (sin cambiar el tamaño) · error borde 1.5 `status.danger` + ícono warning-circle + mensaje que dice cómo corregir · disabled fondo canvas + borde punteado.
+- **Estados:** focus anillo 2 px `focus.ring` (sin cambiar el tamaño) · error borde 1.5 `status.danger` + ícono warning-circle + mensaje que dice cómo corregir, con el texto en `coral.700` en claro y `status.danger` en oscuro · disabled fondo canvas + borde punteado.
 - **Monto:** `inputmode="numeric"`, máscara COP con puntos de miles, sin decimales, `aria-describedby` hacia la ayuda. Valor máximo 999.999.999; los importes largos reducen el tamaño con `clamp`, sin cortar el texto.
 - **A11y:** el error se anuncia con `aria-live="polite"` y se enlaza con `aria-invalid` y `aria-errormessage`.
 
