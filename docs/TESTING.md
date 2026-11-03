@@ -10,7 +10,9 @@ plan acordado, no una práctica vigente.
 
 > **Nada de lo que hay aquí se ha ejecutado todavía.** No existe scaffold de
 > aplicación (maestro §15.1), no hay `package.json` y no hay suite. Los comandos
-> describen lo que la primera especificación de ingeniería de P0 debe crear.
+> describen el destino. Cada uno lo crea la especificación que trae lo que
+> controla: la 001 crea los que no dependen de Supabase ni de auth, y P0-1 el
+> resto (§3, «Arranque progresivo de `verify` y del CI»).
 >
 > Los presupuestos de tiempo son **objetivos razonados y todavía no medidos**.
 > **Pasan a bloquear cuando existan tres de las cinco specs E2E y el dominio
@@ -43,6 +45,11 @@ código afirma el bug además de la función.
 dominio + **componentes (RTL selectivo)** + tests SQL/RLS. Los componentes están
 dentro. Es el mismo enunciado que usa el ADR, palabra por palabra, para que no haya
 dos definiciones circulando.
+
+**Esa definición es el destino, no el primer día.** La especificación 001 no tiene
+Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cada
+control entra con la especificación que trae lo que controla, y mientras tanto se
+declara **no aplicable**: ver «Arranque progresivo de `verify` y del CI» en §3.
 
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
@@ -79,6 +86,35 @@ Jobs **en paralelo**:
 
 **Gate de PR completo: < 6 min, medido como job de CI. Superar el presupuesto del
 humo falla el build** (a partir del hito de §9).
+
+#### Arranque progresivo de `verify` y del CI
+
+Igual que las specs E2E, los controles de `verify` y los jobs del CI **entran con
+la especificación que trae lo que controlan**. Ninguna especificación construye
+infraestructura antes de tiempo para que `verify` «pase completo».
+
+| Control | Entra con | Antes de eso |
+| --- | --- | --- |
+| lint + typecheck + build (job 1) | 001 | — |
+| Vitest, proyectos `domain` y `components` (job 2) | 001, que crea los dos proyectos y corre lo que haya | — |
+| axe sobre las rutas implementadas, en los dos temas (job 5) | 001 | — |
+| Reduced motion por defecto en Playwright | 001 | — |
+| Supabase local, migraciones y tests SQL/RLS (job 3, `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
+| E2E de humo (job 4) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
+| Siembra por base de datos (`seedCouple()`, `storageState` por worker y rol) | P0-1 | **No aplicable** |
+
+Tres reglas, sin excepción:
+
+1. **Un control no aplicable se declara como tal**, en la salida de `verify` y en
+   el resumen del CI, con la especificación que lo incorpora. **Nunca aparece
+   como pasado y nunca se omite en silencio.** «Verde» con un control que no corrió
+   es exactamente afirmar una seguridad que no existe.
+2. **No se adelanta infraestructura.** La 001 no levanta Supabase, no escribe
+   migraciones vacías ni tests SQL de relleno para completar `verify`.
+3. **El contrapositivo, como en las specs E2E:** P0-1 **no mergea** sin incorporar
+   el job 3, las migraciones y la siembra. Si existe una tabla con datos de
+   usuario y no hay tests de RLS que la cubran, no es que el arranque siga en
+   curso: es que un PR mergeó sin cumplir la regla.
 
 #### Qué rutas pasa axe en un PR
 

@@ -303,6 +303,20 @@ El workflow no se escribe en este ADR. Lo implementa la especificación 001 junt
 al scaffold, porque un workflow que no ejecuta nada es ruido que además falla.
 La descripción operativa está en `docs/TESTING.md`.
 
+**Arranque progresivo de `verify` y del CI** (enmienda del 3 de noviembre, tras
+la revisión del PR #6). La definición de `verify` y la lista del nivel 1 son el
+destino, no el primer día. Cada control entra con la especificación que trae lo
+que controla: la 001 crea el workflow con los **jobs 1, 2 y 5** (lint, typecheck
+y build; Vitest de dominio y componentes; axe sobre las rutas implementadas);
+**P0-1 incorpora obligatoriamente el job 3** (Supabase local, migraciones y
+SQL/RLS), la siembra por base de datos y, con la primera spec E2E, el **job 4**.
+
+Un control todavía no aplicable **se declara no aplicable**, con la especificación
+que lo incorpora; nunca aparece como pasado ni se omite en silencio. Ninguna
+especificación adelanta infraestructura para que `verify` «pase completo». Y el
+contrapositivo: P0-1 no mergea sin el job 3. La tabla completa está en
+`docs/TESTING.md` §3.
+
 ### 6. Siete reglas duras
 
 1. **Sembrar estado por base de datos o API, nunca por la interfaz.** Un helper
