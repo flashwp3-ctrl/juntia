@@ -2,7 +2,8 @@
 
 1. Lee **primero** `AGENTS.md`: son las reglas compartidas con Codex.
 2. Lee completo `docs/JUNTIA_MASTER.md`; es la fuente de verdad congelada.
-3. Jerarquía: maestro (§15 v1.3 prevalece sobre el cuerpo v1.2) > ADRs de `docs/adr/` y contratos de dinero/privacidad > paquete aprobado en `docs/design/` > ticket actual > sugerencias de skills.
+3. Jerarquía: maestro (§15 v1.3 prevalece sobre el cuerpo v1.2) > ADRs de `docs/adr/` y contratos de dinero/privacidad > paquete aprobado en `docs/design/` y convenciones de `docs/CONVENTIONS.md` > ticket actual > sugerencias de skills.
+3a. **Qué documento resuelve qué: `AGENTS.md` §2b.** No lo duplico aquí. En corto: nombres y copy → `docs/CONVENTIONS.md` y `docs/GLOSSARY.md`; pruebas y CI → `docs/TESTING.md`; pantallas → `docs/design/`.
 4. **Fase actual: P0.** F0-a cerrada; **F0-b cerrada en especificación, pendiente en implementación** (maestro §15.1): el diseño está especificado, pero el app shell, el Expense Flow, las fixtures tipadas y los primitivos que §11 asigna a F0-b todavía no existen y los produce la primera especificación de ingeniería. Dirección elegida: **I2 Bosque & Arena**. Lee `docs/design/HANDOFF_CLAUDE_CODE.md` antes de implementar: es el documento operativo. No existe scaffold de aplicación todavía.
 5. La primera entrega real será funcional **y** visualmente extraordinaria; 390 y 1440 px son obligatorios.
 6. Iconografía Phosphor con wrapper `AppIcon` (DEC-V03), presupuesto opcional (DEC-R01), metas privadas/compartidas P0 (DEC-G01..G06). No tratar ahorro como gasto ni afirmar «te alcanza» (DEC-R17). `total_destinado_neto` nunca se rotula «Total gastado» ni es el número héroe (DEC-G04, maestro §15.4).
