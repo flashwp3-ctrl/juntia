@@ -88,13 +88,17 @@ documento que es de privacidad y por tanto bloqueante (maestro §15.6).
 | 16 | Los dos temas pasan axe sin violaciones serias en Inicio, Actividad, Anotar, Balance y Meta | E2E barato por ruta | Playwright + axe. **En el PR: las rutas que el PR toca.** La matriz completa de 5 rutas × 2 temas, en el nocturno | Necesita un árbol de accesibilidad real, pero no un flujo: se visita la ruta y se pasa axe. La accesibilidad es criterio de aceptación **de cada slice** (§10.3), así que dejarla entera para el nocturno permitiría mergear un slice con una ruta inaccesible. Correr solo lo tocado mantiene el coste proporcional |
 | 17 | Todos los momentos de motion respetan `prefers-reduced-motion` | E2E barato por ruta | Playwright (`use: { reducedMotion: 'reduce' }`) | Es una emulación de media feature del navegador. Además se ejercita de continuo por la regla dura nº 3, no solo en su test |
 
-**Un criterio puede necesitar dos capas, y cuatro las necesitan** (filas 2, 5, 10 y
-16). No es una concesión al tope: es el principio rector aplicado al revés. Cuando
+**Un criterio puede necesitar dos capas, y tres las necesitan** (filas 2, 5 y 10).
+No es una concesión al tope: es el principio rector aplicado al revés. Cuando
 el criterio habla de lo que el usuario **ve** («se presenta», «se renderizan»), la
 capa que calcula bien no demuestra el criterio, y cuando habla de un **artefacto**
 que sale del sistema (la exportación), ni el dominio ni la RLS lo ven entero. En
-los cuatro casos **las dos mitades son bloqueantes**; ninguna es opcional ni
+los tres casos **las dos mitades son bloqueantes**; ninguna es opcional ni
 «reforzada por» la otra.
+
+La fila 16 (axe) **no es uno de esos casos** y no entra en la cuenta: es una sola
+técnica en una sola capa, ejecutada en **dos momentos de CI** —las rutas tocadas
+en el PR, la matriz completa en el nocturno—. Dos momentos no son dos capas.
 
 **El criterio «Anotar registra privado o compartido desde un solo flujo»** se parte
 en dos mitades que viven en capas distintas: la mitad auditable (reclasificación
@@ -142,6 +146,28 @@ ejecute después — después es cuando ya está en `main`.
 La columna «área» de la tabla es lo que decide. Si un PR toca dos áreas, corre las
 dos specs; si quien lo escribe duda de qué área toca, corre las cinco.
 
+#### Arranque progresivo
+
+Al principio esas specs no existen. La especificación 001 construye el AppShell, y
+en ese momento no hay todavía recorrido de pareja ni de liquidación: la spec 3 no
+puede escribirse porque no hay nada que recorra. La regla anterior, leída al pie
+de la letra, bloquearía el primer PR del proyecto.
+
+> **Un PR ejecuta todas las specs aplicables que ya existan. Y una funcionalidad
+> no se mergea sin añadir y ejecutar su E2E obligatoria.**
+
+Las dos mitades importan, y la segunda es la que no admite lectura flexible. **Lo
+que arranca progresivamente es qué specs existen, no la obligación.** Una
+funcionalidad sin su E2E no mergea: no «todavía no», no «se añade en el siguiente
+PR», no «de momento corremos las que hay». El PR que trae el recorrido de pareja
+es el PR que trae la spec 3.
+
+Dicho de otro modo, esto no es una excepción temporal ni una rampa: es el orden
+natural de las cosas. **La spec nace con la funcionalidad que prueba**, y por eso
+la lista de cinco se completa sola a medida que P0 avanza. Si en algún momento
+existe una funcionalidad de P0 sin su spec, no es que el arranque siga en curso:
+es que un PR mergeó sin cumplir la regla.
+
 #### Matriz de escenarios: dónde vive cada recorrido
 
 Cinco nombres de archivo no son cobertura. Esta matriz es la que demuestra que los
@@ -155,14 +181,16 @@ casos dentro de las cinco specs ya listadas.
 | Cambiar Yo/Nosotros | Estado de cliente obsoleto o exposición visual de lo privado después del cambio. La RLS impide que la base devuelva la fila; no impide que una caché la siga pintando | Caso en la **spec 3** (es la mitad de interfaz de la fila 10); la mitad de autorización, en RLS |
 | Mover a Pareja | Que la vista cambie y los balances se actualicen tras una operación que mueve el gasto de un contexto a otro. La atomicidad y la auditoría ya están abajo (fila 11); lo que no está es que la pantalla refleje el resultado | Caso en la **spec 3**; atomicidad, idempotencia y auditoría en integración de servidor |
 | Solicitar financiación ajena → aprobar o rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas. Un solo cliente no puede demostrar que lo que Sara pide aparece y se resuelve en la vista de Tomás | Caso en la **spec 4**, con dos contextos de navegador; revalidación de permisos, saldos y meta ≥ 0 en integración (fila 12) |
-| Exportar datos | Autorización, archivo realmente descargado y experiencia. Que el servidor filtre bien no demuestra que el archivo llegue, ni que contenga lo que dice | **Mayormente en integración** (fila 2: exportación autorizada, sin privados del otro, sin tokens, sin duplicados); la descarga en sí, como caso ligero donde ya haya sesión |
+| Exportar datos | Autorización, archivo realmente descargado y experiencia. Que el servidor filtre bien no demuestra que el archivo llegue, ni que contenga lo que dice | **Integración** para el contenido y la autorización (fila 2: sin privados del otro, sin tokens, sin duplicados) · **la descarga, como caso de la spec 1**, porque Exportar vive en «Privacidad y datos», dentro de Mi cuenta |
 
-Dos consecuencias que conviene no perder de vista. La primera: la spec 4 necesita
-**dos contextos de navegador autenticados a la vez**, lo que la ata a la regla dura
-nº 2 (estados por worker **y por rol**) y no al patrón de sesión única. La segunda:
-la exportación es el único recorrido de la matriz cuyo peso está abajo y no en el
-navegador, y así debe quedarse; un E2E que verifique el contenido del CSV es un
-test de serialización disfrazado.
+Los cinco recorridos tienen spec asignada; ninguno queda en «algún sitio donde haya
+sesión». Dos consecuencias que conviene no perder de vista. La primera: la spec 4
+necesita **dos contextos de navegador autenticados a la vez**, lo que la ata a la
+regla dura nº 2 (estados por worker **y por rol**) y no al patrón de sesión única.
+La segunda: la exportación es el único recorrido cuyo peso está abajo y no en el
+navegador, y así debe quedarse. Su caso en la spec 1 comprueba que **el archivo
+llega**, no lo que lleva dentro; un E2E que verifique el contenido del CSV es un
+test de serialización disfrazado, y ese contenido ya es la fila 2.
 
 ### 4. Presupuestos de tiempo
 
@@ -197,11 +225,22 @@ La frase «mide el job» aplica **solo a esta segunda tabla**.
 #### Cuándo empiezan a bloquear
 
 Hoy son **objetivos razonados y todavía no medidos**: no existe scaffold ni suite.
-**El hito a partir del cual bloquean es la entrega de la suite y el CI por la
-especificación 001**, no «el primer pipeline en verde». Hasta ese momento el job
-**mide, reporta y avisa** su duración contra el presupuesto, sin fallar.
 
-A partir de ese hito, **superar el presupuesto del humo falla el build**. Sin esa
+> **Los presupuestos pasan a bloquear cuando existan tres de las cinco specs E2E y
+> el dominio cubra DEC-G04 y balances.** Coincide con el cierre de P0-2. Hasta
+> entonces el job **mide, reporta y avisa** su duración contra el presupuesto, sin
+> fallar.
+
+El hito tiene un número a propósito, y no es «la entrega de la 001» ni «cuando la
+suite sea representativa». La 001 es la fundación del frontend: **su suite es
+pequeña por construcción**, y fijar los techos contra ella sería medirlos contra
+una suite que es rápida solo porque está casi vacía. Pero «representativa» tampoco
+vale: un hito indefinido no llega nunca, y entonces el presupuesto deja de ser un
+contrato por la puerta de atrás, sin que nadie haya decidido abandonarlo. Tres
+specs y el dominio con DEC-G04 y balances es comprobable mirando el repositorio,
+que es la única clase de hito que se cumple.
+
+A partir de ahí, **superar el presupuesto del humo falla el build**. Sin esa
 consecuencia, cada PR añade veinte segundos que nadie nota y en seis meses la
 suite vuelve a durar cuarenta y cinco minutos sin que nadie lo haya decidido.
 
@@ -211,11 +250,15 @@ suite vuelve a durar cuarenta y cinco minutos sin que nadie lo haya decidido.
 > techo.** El techo solo se mueve por decisión documentada de los fundadores, nunca
 > automáticamente por una medición.
 
-Esta cláusula es el ADR entero en tres líneas. Sin ella, «ya ajustaremos el umbral
-cuando tengamos la línea base» es permiso para que el número siga a la deriva en
-vez de contenerla, y el presupuesto deja de ser un contrato para volverse un
-registro de lo que la suite ya tarda. Una medición es un dato sobre la suite; no es
-un argumento sobre cuánto debería tardar.
+**Esta cláusula aplica desde el primer día, no desde el hito de bloqueo.** Que el
+job todavía no falle no autoriza a subir un techo: mientras solo mide, lo que
+reporta es cuánto le falta a la suite, no cuánto le sobra al presupuesto.
+
+Es el ADR entero en tres líneas. Sin ella, «ya ajustaremos el umbral cuando
+tengamos la línea base» es permiso para que el número siga a la deriva en vez de
+contenerla, y el presupuesto deja de ser un contrato para volverse un registro de
+lo que la suite ya tarda. Una medición es un dato sobre la suite; no es un
+argumento sobre cuánto debería tardar.
 
 #### Mitigación en el humo
 
@@ -242,7 +285,8 @@ descarga por una restauración de coste comparable, no quitando trabajo.
 3. Supabase local en contenedor, con migraciones aplicadas y tests SQL de RLS
 4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
    Chromium, instalado con `npx playwright install --with-deps chromium`
-5. **axe sobre las rutas que el PR toca**, en los dos temas
+5. **axe en los dos temas**: sobre las rutas que el PR toca y, mientras no exista
+   el mapa de ruta tocada, sobre todas las rutas ya implementadas
 
 **Nivel 2 — al mergear a `main` y de noche:**
 
@@ -338,8 +382,11 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
   spec 4 no se puede escribir sin ello.
 - Correr axe sobre las rutas tocadas en cada PR obliga a que exista un **mapa de
   ruta tocada** —qué rutas afecta un cambio— que hoy no existe. Mientras no lo
-  haya, la lectura conservadora es correr axe sobre las cinco rutas también en el
-  PR y medir si cabe; lo barato es visitar la ruta, no el recorrido.
+  haya, la lectura conservadora es correr axe sobre **todas las rutas ya
+  implementadas**, en los dos temas, también en el PR, y medir si cabe; lo barato
+  es visitar la ruta, no el recorrido. **Una ruta que aún no existe nunca cuenta
+  como verificada:** el fallback es «corremos las que hay», no «damos por buenas
+  las cinco», y cada ruta entra en la comprobación con el PR que la crea.
 - El tope de 4 a 6 specs hace que la cobertura de UI dependa de la revisión humana
   del PR y de la fila «Componentes · RTL selectivo» de §10.1, que **sigue vigente**
   y corre dentro del job de Vitest como proyecto aparte. Este ADR no la sustituye.
@@ -568,15 +615,15 @@ Lo resuelve la especificación 001 al crear el scaffold.
 Se registran aquí, ya resueltas, para que no se reabran por costumbre. El detalle
 vive en la parte de la «Decisión» que cada una toca; esta tabla es solo el índice.
 
-**Es un índice, así que se actualiza cuando cambia lo que indexa.** Tres de estas
-cuatro resoluciones fueron refinadas después por la revisión independiente, y la
-columna «Resolución» refleja el estado vigente, no el de la ronda en que se
-cerraron. Un índice que describe mal lo que indexa hace justo el daño que venía a
-evitar.
+**Es un índice, así que se actualiza cuando cambia lo que indexa.** Varias de estas
+resoluciones fueron refinadas por las rondas de revisión posteriores, y la columna
+dice el **estado vigente**, no el de la ronda en que cada una se cerró. Quien
+cambie una decisión de la sección «Decisión» revisa esta tabla en el mismo commit:
+un índice que describe mal lo que indexa hace justo el daño que venía a evitar.
 
 | Pregunta | Resolución vigente | Dónde está escrita |
 | --- | --- | --- |
-| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. **Un PR corre las specs 1, 2 y 3 más la spec del área que toca**, según la columna «Área que cubre»; el nocturno corre siempre las cinco | Decisión §3, «Qué specs corre un PR» |
+| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. **Un PR corre las specs 1, 2 y 3 más la spec del área que toca**, según la columna «Área que cubre»; el nocturno corre siempre las cinco. **Mientras una spec aún no exista, se corren todas las aplicables que ya existan, y ninguna funcionalidad mergea sin añadir y ejecutar su E2E** | Decisión §3, «Qué specs corre un PR» y «Arranque progresivo» |
 | ¿El presupuesto del humo mide el job o solo los tests? | El **job** completo — y solo los presupuestos de job: los de comando (`verify`, dominio, SQL/RLS) miden la ejecución sin `npm ci`, en **tabla aparte**. Mitigación: instalar solo Chromium. Cachear navegadores está **desaconsejado** por la documentación oficial de Playwright; el mecanismo existe, la recomendación a favor no | Decisión §4, las dos tablas |
 | ¿Se acepta `workers: 1` en CI? | No como dado: es el scaffold por defecto de Playwright. El riesgo real es la colisión de datos entre workers, y se resuelve en la siembra — **una pareja aislada por worker y un `storageState` por worker y por rol**, que es lo que la documentación de Playwright recomienda cuando los tests mutan estado de servidor | Decisión §6, reglas 1 **y 2** |
 | ¿Qué presupuesto de tiempo lleva la capa RTL de §10.1? | Ninguno propio: corre dentro del job de Vitest y cabe en los < 90 s de `verify`, que **la incluye en su definición**, «selectivo» y «en flujos críticos» | Consecuencias; definición de `verify` en Decisión §4 |

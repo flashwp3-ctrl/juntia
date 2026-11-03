@@ -10,9 +10,10 @@ plan acordado, no una práctica vigente.
 > describen lo que la primera especificación de ingeniería de P0 debe crear.
 >
 > Los presupuestos de tiempo son **objetivos razonados y todavía no medidos**.
-> **Pasan a bloquear cuando la especificación 001 entregue la suite y el CI**;
-> hasta ese hito el job mide, reporta y avisa, sin fallar. Después, superar el
-> presupuesto del humo falla el build (§9).
+> **Pasan a bloquear cuando existan tres de las cinco specs E2E y el dominio
+> cubra DEC-G04 y balances** — el cierre de P0-2. Hasta ese hito el job mide,
+> reporta y avisa, sin fallar; después, superar el presupuesto del humo falla el
+> build (§9). La cláusula anticliquet, en cambio, aplica desde hoy.
 
 ---
 
@@ -49,7 +50,7 @@ dos definiciones circulando.
 | `npm run test:db` | `supabase test db` contra Supabase local | **< 60 s** (comando) |
 | `npm run test:e2e:smoke` | Playwright, specs de humo del PR, solo Chromium | **< 3 min** (job de CI) |
 | `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
-| `npm run test:a11y` | axe; en el PR, rutas tocadas; en el nocturno, 5 rutas × 2 temas | PR y nivel 2 |
+| `npm run test:a11y` | axe sobre las rutas **ya implementadas**, en los dos temas (§3) | PR y nivel 2 |
 
 **«Comando» y «job de CI» no miden lo mismo** — ver §9. Un presupuesto de comando
 mide solo la ejecución, con las dependencias ya instaladas; uno de job incluye
@@ -71,10 +72,25 @@ Jobs **en paralelo**:
 3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
 4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
    Chromium
-5. **axe sobre las rutas que el PR toca**, en los dos temas
+5. **axe en los dos temas** — ver la regla justo debajo
 
 **Gate de PR completo: < 6 min, medido como job de CI. Superar el presupuesto del
 humo falla el build** (a partir del hito de §9).
+
+#### Qué rutas pasa axe en un PR
+
+La intención es correr axe **sobre las rutas que el PR toca**. Eso necesita un
+mapa de ruta tocada —qué rutas afecta un cambio— y **ese mapa todavía no existe**.
+
+> **Mientras no exista: axe corre sobre todas las rutas ya implementadas**, en los
+> dos temas. Si todavía no hay ninguna implementada, no corre nada y no hay nada
+> que declarar.
+
+Y la parte que no se puede malinterpretar: **una ruta futura nunca cuenta como
+verificada**. El fallback no es «damos por buenas las cinco»; es «corremos las que
+hay». De las cinco rutas de la matriz, el PR solo puede afirmar las que existen, y
+cada ruta nueva entra en la comprobación con el PR que la crea. El nocturno corre
+la matriz completa de las rutas implementadas, por la misma razón.
 
 ### Nivel 2 — al mergear a `main` y de noche
 
@@ -125,9 +141,10 @@ Tres preguntas que resuelven casi todos los casos dudosos:
 3. **¿El criterio dice «se presenta» o «se renderiza»?** Entonces no basta con el
    dominio, por mucho que el dominio acierte: hace falta afirmar lo que se pinta.
 
-**Un criterio puede necesitar dos capas**, y cuatro las necesitan (ADR-011 §2,
-filas 2, 5, 10 y 16). Cuando eso pasa, **las dos mitades son bloqueantes**;
-ninguna «refuerza» a la otra.
+**Un criterio puede necesitar dos capas**, y tres las necesitan (ADR-011 §2, filas
+2, 5 y 10). Cuando eso pasa, **las dos mitades son bloqueantes**; ninguna
+«refuerza» a la otra. La fila 16 (axe) no cuenta aquí: es una sola técnica en dos
+momentos de CI, no en dos capas.
 
 ### Tope de specs E2E
 
@@ -161,6 +178,24 @@ ella se puede mergear un slice de metas sin haber ejecutado nunca el recorrido d
 aportes y uso, y §10.1 marca ese smoke como **bloqueante**. Que el nocturno lo
 ejecute después no sirve: después ya está en `main`.
 
+#### Mientras las specs todavía no existen
+
+Al principio no están las cinco. Cuando la 001 construye el AppShell no hay
+recorrido de pareja ni de liquidación, así que la spec 3 no puede existir.
+
+> **Corre todas las specs aplicables que ya existan. Y no mergees una
+> funcionalidad sin añadir y ejecutar su E2E obligatoria.**
+
+**Lo que arranca progresivamente es qué specs existen, no la obligación.** No hay
+«todavía no», ni «la añado en el siguiente PR», ni «de momento corro las que hay»
+para una funcionalidad que estás entregando. El PR que trae el recorrido de pareja
+es el PR que trae la spec 3.
+
+No es una excepción temporal: **la spec nace con la funcionalidad que prueba**, y
+por eso la lista se completa sola según avanza P0. Si existe una funcionalidad de
+P0 sin su spec, no es que el arranque siga en curso: es que un PR mergeó sin
+cumplir la regla.
+
 ### Matriz de recorridos
 
 Cinco nombres de archivo no son cobertura. Los cinco recorridos que cruzan límites
@@ -173,10 +208,15 @@ se crean specs nuevas para ellos:
 | Cambiar Yo/Nosotros | Caché de cliente o render obsoleto que sigue mostrando lo privado | Caso en la **spec 3** |
 | Mover a Pareja | Que la vista cambie y los balances se actualicen tras la operación | Caso en la **spec 3** |
 | Financiación ajena → aprobar/rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas | Caso en la **spec 4**, con dos contextos |
-| Exportar datos | Autorización + archivo realmente descargado | **Mayormente integración**; la descarga, como caso ligero |
+| Exportar datos | Autorización + archivo realmente descargado | Contenido y autorización en **integración**; la descarga, caso en la **spec 1** (Exportar vive en «Privacidad y datos») |
 
-La spec 4 necesita dos contextos autenticados a la vez: de ahí la regla 2, estados
-**por worker y por rol**.
+Los cinco tienen spec asignada; ninguno queda «en algún sitio donde haya sesión».
+
+Dos cosas que se siguen de la tabla. La spec 4 necesita dos contextos autenticados
+a la vez: de ahí la regla 2, estados **por worker y por rol**. Y el caso de
+exportación de la spec 1 comprueba que **el archivo llega**, no lo que lleva
+dentro: el contenido es la fila 2 de la tabla de ubicación, y un E2E que abra el
+CSV es un test de serialización disfrazado.
 
 ### Y la capa de componentes
 
@@ -407,17 +447,29 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 
 ### Cuándo empiezan a bloquear
 
-Hoy son **objetivos razonados y todavía no medidos**, porque no hay suite. **El
-hito es la entrega de la suite y el CI por la especificación 001**, no el primer
-pipeline en verde. Hasta ese momento el job **mide, reporta y avisa** su duración
-contra el presupuesto, sin fallar. Después, **superar el presupuesto del humo falla
-el build**, sin periodo de gracia.
+Hoy son **objetivos razonados y todavía no medidos**, porque no hay suite.
+
+> **Bloquean cuando existan tres de las cinco specs E2E y el dominio cubra
+> DEC-G04 y balances.** Coincide con el cierre de P0-2. Hasta entonces el job
+> **mide, reporta y avisa** su duración, sin fallar.
+
+El hito es un número y no una descripción a propósito. «Cuando la 001 entregue la
+suite» fijaría los techos contra una suite pequeña por construcción, rápida solo
+porque está casi vacía. «Cuando la suite sea representativa» no llega nunca, y el
+presupuesto deja de ser contrato sin que nadie lo decida. Tres specs y el dominio
+con DEC-G04 y balances se comprueba mirando el repositorio.
+
+Pasado el hito, **superar el presupuesto del humo falla el build**, sin periodo de
+gracia.
 
 ### Cláusula anticliquet
 
 > **Si la línea base medida supera el techo, el hallazgo es la suite, no el
 > techo.** El techo solo se mueve por decisión documentada de los fundadores, nunca
 > automáticamente por una medición.
+
+**Aplica desde hoy, no desde el hito de bloqueo.** Que el job todavía no falle no
+autoriza a subir un techo.
 
 Sin esta cláusula, «ya ajustaremos el umbral cuando tengamos la línea base» es
 permiso para que el número siga a la deriva en vez de contenerla. Una medición es
