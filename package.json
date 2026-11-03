@@ -15,6 +15,7 @@
     "test:unit": "vitest run --project domain --passWithNoTests",
     "test:components": "vitest run --project components",
     "test:a11y": "playwright test --project a11y",
+    "check:internal-surface": "node scripts/check-internal-surface.mjs",
     "check:theme-script": "node scripts/check-theme-script.mjs",
     "verify": "node scripts/verify.mjs"
   },
