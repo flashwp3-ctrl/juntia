@@ -1,0 +1,1033 @@
+vitest	Set up job	﻿2026-11-03T20:48:11.8673412Z Current runner version: '2.338.2'
+vitest	Set up job	2026-11-03T20:48:11.8711367Z ##[group]Runner Image Provisioner
+vitest	Set up job	2026-11-03T20:48:11.8712953Z Hosted Compute Agent
+vitest	Set up job	2026-11-03T20:48:11.8713953Z Version: 20261028.624
+vitest	Set up job	2026-11-03T20:48:11.8714986Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+vitest	Set up job	2026-11-03T20:48:11.8716467Z Build Date: 2026-10-28T21:51:42Z
+vitest	Set up job	2026-11-03T20:48:11.8717882Z Worker ID: {e675f457-2c4a-4a6d-8dba-93e2e2b1216c}
+vitest	Set up job	2026-11-03T20:48:11.8719369Z Region: westus2
+vitest	Set up job	2026-11-03T20:48:11.8720377Z Cloud: Azure
+vitest	Set up job	2026-11-03T20:48:11.8721246Z ##[endgroup]
+vitest	Set up job	2026-11-03T20:48:11.8724129Z ##[group]Operating System
+vitest	Set up job	2026-11-03T20:48:11.8725262Z Ubuntu
+vitest	Set up job	2026-11-03T20:48:11.8726337Z 26.04.1
+vitest	Set up job	2026-11-03T20:48:11.8727264Z LTS
+vitest	Set up job	2026-11-03T20:48:11.8728584Z ##[endgroup]
+vitest	Set up job	2026-11-03T20:48:11.8729634Z ##[group]Runner Image
+vitest	Set up job	2026-11-03T20:48:11.8730684Z Image: ubuntu-26.04
+vitest	Set up job	2026-11-03T20:48:11.8731759Z Version: 20261101.186.1
+vitest	Set up job	2026-11-03T20:48:11.8733710Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261101.186/images/ubuntu/Ubuntu2604-Readme.md
+vitest	Set up job	2026-11-03T20:48:11.8736874Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261101.186
+vitest	Set up job	2026-11-03T20:48:11.8738847Z ##[endgroup]
+vitest	Set up job	2026-11-03T20:48:11.8740873Z ##[group]GITHUB_TOKEN Permissions
+vitest	Set up job	2026-11-03T20:48:11.8743773Z Contents: read
+vitest	Set up job	2026-11-03T20:48:11.8744845Z Metadata: read
+vitest	Set up job	2026-11-03T20:48:11.8745801Z ##[endgroup]
+vitest	Set up job	2026-11-03T20:48:11.8749198Z Secret source: Actions
+vitest	Set up job	2026-11-03T20:48:11.8750885Z Cache mode: write
+vitest	Set up job	2026-11-03T20:48:11.8752076Z Prepare workflow directory
+vitest	Set up job	2026-11-03T20:48:11.9420841Z Prepare all required actions
+vitest	Set up job	2026-11-03T20:48:11.9494298Z Getting action download info
+vitest	Set up job	2026-11-03T20:48:12.3204162Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+vitest	Set up job	2026-11-03T20:48:12.4533998Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+vitest	Set up job	2026-11-03T20:48:12.6573967Z Complete job name: vitest
+vitest	Start job clock	﻿2026-11-03T20:48:12.7337077Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+vitest	Start job clock	2026-11-03T20:48:12.7338197Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+vitest	Start job clock	2026-11-03T20:48:12.7390248Z shell: /usr/bin/bash -e {0}
+vitest	Start job clock	2026-11-03T20:48:12.7391066Z ##[endgroup]
+vitest	Run actions/checkout@v7	﻿2026-11-03T20:48:12.7802970Z ##[group]Run actions/checkout@v7
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7803575Z with:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7804023Z   repository: juntia-labs/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7808165Z   token: ***
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7808605Z   ssh-strict: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7809053Z   ssh-user: git
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7809504Z   persist-credentials: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7809993Z   clean: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7810440Z   sparse-checkout-cone-mode: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7810965Z   fetch-depth: 1
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7811398Z   fetch-tags: false
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7811851Z   show-progress: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7812315Z   lfs: false
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7812719Z   submodules: false
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7813173Z   set-safe-directory: true
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7813684Z   allow-unsafe-pr-checkout: false
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7814250Z env:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7814649Z   JOB_STARTED_MS: 1793738892755
+vitest	Run actions/checkout@v7	2026-11-03T20:48:12.7815138Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0743688Z Syncing repository: juntia-labs/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0746936Z ##[group]Getting Git version info
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0754840Z Working directory is '/home/runner/work/juntia/juntia'
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0758140Z [command]/usr/bin/git version
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0762718Z git version 2.56.0
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0793413Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0800757Z Temporarily overriding HOME='/home/runner/work/_temp/c2f405e8-1bb3-43e8-bd01-4bc0d7fdc9d5' before making global git config changes
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0804037Z Adding repository directory to the temporary git global config as a safe directory
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0810034Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0929779Z Deleting the contents of '/home/runner/work/juntia/juntia'
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0932723Z ##[group]Determining repository object format
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0934665Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0936216Z ##[group]Initializing the repository
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.0937936Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1056210Z hint: Using 'master' as the name for the initial branch. This default branch name
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1062750Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1065551Z hint: to use in all of your new repositories, which will suppress this warning,
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1067515Z hint: call:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1068639Z hint:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1070364Z hint: 	git config --global init.defaultBranch <name>
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1071643Z hint:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1073245Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1101649Z hint: 'development'. The just-created branch can be renamed via this command:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1103271Z hint:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1104258Z hint: 	git branch -m <name>
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1105375Z hint:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1106658Z hint: Disable this message with "git config set advice.defaultBranchName false"
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1109045Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1113300Z [command]/usr/bin/git remote add origin https://github.com/juntia-labs/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1318376Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1320307Z ##[group]Disabling automatic garbage collection
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1321797Z [command]/usr/bin/git config --local gc.auto 0
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1324995Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.1326755Z ##[group]Setting up auth
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2333838Z Removing SSH command configuration
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2343065Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2361028Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2393818Z Removing HTTP extra header
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2414751Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2446016Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2740020Z Removing includeIf entries pointing to credentials config files
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2742156Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.2776813Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3085511Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3130332Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3167196Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3211044Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3254312Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3292244Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3294270Z ##[group]Fetching the repository
+vitest	Run actions/checkout@v7	2026-11-03T20:48:13.3300242Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4737220ae076648bce8a6275d98458c647c568a0:refs/remotes/pull/15/merge
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2096255Z From https://github.com/juntia-labs/juntia
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2097401Z  * [new ref]         4737220ae076648bce8a6275d98458c647c568a0 -> pull/15/merge
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2109483Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2110348Z ##[group]Determining the checkout info
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2111250Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2113316Z [command]/usr/bin/git sparse-checkout disable
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2169245Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2203419Z ##[group]Checking out the ref
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.2207361Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4725752Z Note: switching to 'refs/remotes/pull/15/merge'.
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4726981Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4727882Z You are in 'detached HEAD' state. You can look around, make experimental
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4729314Z changes and commit them, and you can discard any commits you make in this
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4730651Z state without impacting any branches by switching back to a branch.
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4848104Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4853609Z If you want to create a new branch to retain commits you create, you may
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4854925Z do so (now or later) by using -c with the switch command. Example:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4855727Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4856176Z   git switch -c <new-branch-name>
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4856812Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4857268Z Or undo this operation with:
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4858229Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4858693Z   git switch -
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4859403Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4860140Z Turn off this advice by setting config variable advice.detachedHead to false
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4861102Z 
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4862099Z HEAD is now at 4737220 Merge c1d433e52487b6c7040ac377d5540a406c57b179 into 668e38c83b1364dbf39917e61040d2dadc2f7999
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4865241Z ##[endgroup]
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4867460Z [command]/usr/bin/git log -1 --format=%H
+vitest	Run actions/checkout@v7	2026-11-03T20:48:22.4868703Z 4737220ae076648bce8a6275d98458c647c568a0
+vitest	Run actions/setup-node@v7	﻿2026-11-03T20:48:22.5157847Z ##[group]Run actions/setup-node@v7
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5158254Z with:
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5158529Z   node-version: 24
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5158793Z   cache: npm
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5159048Z   check-latest: false
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5161883Z   token: ***
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5162166Z   package-manager-cache: true
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5162498Z env:
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5162746Z   JOB_STARTED_MS: 1793738892755
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.5163038Z ##[endgroup]
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:22.6552864Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:23.2884565Z ##[group]Environment details
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:24.8936354Z node: v24.22.2
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:24.8941818Z npm: 11.19.1
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:24.8942630Z yarn: 1.22.22
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:24.8949729Z ##[endgroup]
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:24.9027310Z [command]/opt/hostedtoolcache/node/24.22.2/x64/bin/npm config get cache
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:25.1608961Z /home/runner/.npm
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:25.4348568Z Cache hit for: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:26.7215717Z Received 25165824 of 215148939 (11.7%), 24.0 MBs/sec
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:27.7191334Z Received 134217728 of 215148939 (62.4%), 64.0 MBs/sec
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:28.3288884Z Received 215148939 of 215148939 (100.0%), 78.6 MBs/sec
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:28.3289631Z Cache Size: ~205 MB (215148939 B)
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:28.3339261Z [command]/usr/bin/tar -xf /home/runner/work/_temp/89b5ece2-9da2-4c5d-9937-3ac31b714294/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:29.1368717Z Cache restored successfully
+vitest	Run actions/setup-node@v7	2026-11-03T20:48:29.1495295Z Cache restored from key: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+vitest	Install and test domain and components	﻿2026-11-03T20:48:29.1938020Z ##[group]Run node scripts/ci.mjs run ci test:unit test:components
+vitest	Install and test domain and components	2026-11-03T20:48:29.1939139Z [36;1mnode scripts/ci.mjs run ci test:unit test:components[0m
+vitest	Install and test domain and components	2026-11-03T20:48:29.2044696Z shell: /usr/bin/bash -e {0}
+vitest	Install and test domain and components	2026-11-03T20:48:29.2045113Z env:
+vitest	Install and test domain and components	2026-11-03T20:48:29.2045426Z   JOB_STARTED_MS: 1793738892755
+vitest	Install and test domain and components	2026-11-03T20:48:29.2045821Z ##[endgroup]
+vitest	Install and test domain and components	2026-11-03T20:49:13.8417510Z 
+vitest	Install and test domain and components	2026-11-03T20:49:13.8425659Z added 478 packages, and audited 485 packages in 44s
+vitest	Install and test domain and components	2026-11-03T20:49:13.8426156Z 
+vitest	Install and test domain and components	2026-11-03T20:49:13.8426513Z 166 packages are looking for funding
+vitest	Install and test domain and components	2026-11-03T20:49:13.8427043Z   run `npm fund` for details
+vitest	Install and test domain and components	2026-11-03T20:49:13.8427332Z 
+vitest	Install and test domain and components	2026-11-03T20:49:13.8427859Z 16 moderate severity vulnerabilities
+vitest	Install and test domain and components	2026-11-03T20:49:13.8428204Z 
+vitest	Install and test domain and components	2026-11-03T20:49:13.8428613Z To address all issues (including breaking changes), run:
+vitest	Install and test domain and components	2026-11-03T20:49:13.8429296Z   npm audit fix --force
+vitest	Install and test domain and components	2026-11-03T20:49:13.8429567Z 
+vitest	Install and test domain and components	2026-11-03T20:49:13.8429786Z Run `npm audit` for details.
+vitest	Install and test domain and components	2026-11-03T20:49:13.8459366Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+vitest	Install and test domain and components	2026-11-03T20:49:14.5614965Z [2mprojects: [22m[33mdomain[39m
+vitest	Install and test domain and components	2026-11-03T20:49:14.5615845Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5616160Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5628515Z > juntia@0.1.0 test:unit
+vitest	Install and test domain and components	2026-11-03T20:49:14.5629590Z [30m[45m domain [49m[39m 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5630274Z > vitest run --project domain --passWithNoTests
+vitest	Install and test domain and components	2026-11-03T20:49:14.5630926Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5630963Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5631677Z [2minclude: [22m[33msrc/domain/**/*.test.ts[39m
+vitest	Install and test domain and components	2026-11-03T20:49:14.5632099Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5632961Z [2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/.git/**[39m
+vitest	Install and test domain and components	2026-11-03T20:49:14.5634202Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+vitest	Install and test domain and components	2026-11-03T20:49:14.5635046Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5635065Z 
+vitest	Install and test domain and components	2026-11-03T20:49:14.5635819Z No test files found, exiting with code 0
+vitest	Install and test domain and components	2026-11-03T20:49:14.5636420Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7138821Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7139891Z > juntia@0.1.0 test:components
+vitest	Install and test domain and components	2026-11-03T20:49:17.7140821Z > vitest run --project components
+vitest	Install and test domain and components	2026-11-03T20:49:17.7141485Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7141759Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7142891Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7143670Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7144819Z  [32m✓[39m [30m[45m components [49m[39m src/lib/theme-script.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7146859Z  [32m✓[39m [30m[45m components [49m[39m tests/lint-rules.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1635[2mms[22m[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7148581Z    [32m✓[39m reglas de lint propias (T012) [2m(5)[22m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7149946Z      [33m[2m✓[22m[39m marca las líneas exactas de hex.tsx y permite las anclas[33m 1549[2mms[22m[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7151975Z  [32m✓[39m [30m[45m components [49m[39m src/styles/tokens.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7153017Z 
+vitest	Install and test domain and components	2026-11-03T20:49:17.7153801Z [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7155144Z [2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7156281Z [2m   Start at [22m 20:49:15
+vitest	Install and test domain and components	2026-11-03T20:49:17.7157967Z [2m   Duration [22m 2.53s[2m (tests 77%, setup 14%, import 6%, transform 2%, worker 1%)[22m
+vitest	Install and test domain and components	2026-11-03T20:49:17.7158885Z 
+vitest	Publish timings	﻿2026-11-03T20:49:17.7270233Z ##[group]Run node scripts/ci.mjs summary
+vitest	Publish timings	2026-11-03T20:49:17.7270593Z [36;1mnode scripts/ci.mjs summary[0m
+vitest	Publish timings	2026-11-03T20:49:17.7322145Z shell: /usr/bin/bash -e {0}
+vitest	Publish timings	2026-11-03T20:49:17.7322406Z env:
+vitest	Publish timings	2026-11-03T20:49:17.7322598Z   JOB_STARTED_MS: 1793738892755
+vitest	Publish timings	2026-11-03T20:49:17.7322839Z   JOB_STATUS: success
+vitest	Publish timings	2026-11-03T20:49:17.7323058Z ##[endgroup]
+vitest	Publish timings	2026-11-03T20:49:17.7686991Z | Control | Estado | Duración | Presupuesto |
+vitest	Publish timings	2026-11-03T20:49:17.7687878Z | --- | --- | --- | --- |
+vitest	Publish timings	2026-11-03T20:49:17.7688466Z | ci | pasó | 44.60 s | — |
+vitest	Publish timings	2026-11-03T20:49:17.7689386Z | test:unit | 0 pruebas — la 001 no tiene dominio financiero | 0.72 s | < 15 s |
+vitest	Publish timings	2026-11-03T20:49:17.7690513Z | test:components | pasó | 3.15 s | — |
+vitest	Publish timings	2026-11-03T20:49:17.7691033Z | Job vitest (incluye instalación) | success | 65.01 s | < 360 s |
+vitest	Post Run actions/setup-node@v7	﻿2026-11-03T20:49:17.7904523Z Post job cleanup.
+vitest	Post Run actions/setup-node@v7	2026-11-03T20:49:17.9103434Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51, not saving cache.
+vitest	Post Run actions/checkout@v7	﻿2026-11-03T20:49:17.9271014Z Post job cleanup.
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0345420Z [command]/usr/bin/git version
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0449818Z git version 2.56.0
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0582009Z Temporarily overriding HOME='/home/runner/work/_temp/ac7fd525-c2a7-4de3-8734-9bbcdc409950' before making global git config changes
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0618542Z Adding repository directory to the temporary git global config as a safe directory
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0619834Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0710680Z Removing SSH command configuration
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0723340Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.0772339Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1295186Z Removing HTTP extra header
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1309470Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1359661Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1740368Z Removing includeIf entries pointing to credentials config files
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1741700Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1768661Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1776586Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1787863Z includeif.gitdir:/github/workspace/.git.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1789021Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1798793Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1808797Z /home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1827248Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-654e4422\-f61c\-40b6\-9d71\-9052448bdd0b\.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1884152Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1902409Z /home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1913775Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-654e4422\-f61c\-40b6\-9d71\-9052448bdd0b\.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1950224Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1976426Z /github/runner_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.1995482Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-654e4422\-f61c\-40b6\-9d71\-9052448bdd0b\.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.2024038Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.2051260Z /github/runner_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.2061053Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-654e4422\-f61c\-40b6\-9d71\-9052448bdd0b\.config
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.2101210Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+vitest	Post Run actions/checkout@v7	2026-11-03T20:49:18.2392148Z Removing credentials config '/home/runner/work/_temp/git-credentials-654e4422-f61c-40b6-9d71-9052448bdd0b.config'
+vitest	Complete job	﻿2026-11-03T20:49:18.2578159Z Cleaning up orphan processes
+lint-typecheck-build	Set up job	﻿2026-11-03T20:48:10.0863584Z Current runner version: '2.338.2'
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0880045Z ##[group]Runner Image Provisioner
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0880672Z Hosted Compute Agent
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0881013Z Version: 20261028.624
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0881403Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0881861Z Build Date: 2026-10-28T21:51:42Z
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0882251Z Worker ID: {440ab7bc-4ba3-4222-9288-709ef8e0bc24}
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0882682Z Region: centralus
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0883005Z Cloud: Azure
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0883317Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0884090Z ##[group]Operating System
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0884464Z Ubuntu
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0884806Z 26.04.1
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0885105Z LTS
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0885394Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0885794Z ##[group]Runner Image
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0886145Z Image: ubuntu-26.04
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0886500Z Version: 20261101.186.1
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0887097Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261101.186/images/ubuntu/Ubuntu2604-Readme.md
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0888326Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261101.186
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0888859Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0889533Z ##[group]GITHUB_TOKEN Permissions
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0890682Z Contents: read
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0891085Z Metadata: read
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0891419Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0892611Z Secret source: Actions
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0893195Z Cache mode: write
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.0893695Z Prepare workflow directory
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.1110633Z Prepare all required actions
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.1146900Z Getting action download info
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.3134004Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.4182726Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+lint-typecheck-build	Set up job	2026-11-03T20:48:10.6163309Z Complete job name: lint-typecheck-build
+lint-typecheck-build	Start job clock	﻿2026-11-03T20:48:10.6582881Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+lint-typecheck-build	Start job clock	2026-11-03T20:48:10.6583410Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+lint-typecheck-build	Start job clock	2026-11-03T20:48:10.6624930Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Start job clock	2026-11-03T20:48:10.6625331Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	﻿2026-11-03T20:48:10.6896520Z ##[group]Run actions/checkout@v7
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6896848Z with:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6897100Z   repository: juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6899188Z   token: ***
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6899418Z   ssh-strict: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6899653Z   ssh-user: git
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6899894Z   persist-credentials: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6900159Z   clean: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6900404Z   sparse-checkout-cone-mode: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6900680Z   fetch-depth: 1
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6900915Z   fetch-tags: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6901161Z   show-progress: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6901410Z   lfs: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6901637Z   submodules: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6901885Z   set-safe-directory: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6902164Z   allow-unsafe-pr-checkout: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6902451Z env:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6902676Z   JOB_STARTED_MS: 1793738890673
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.6902942Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9420653Z Syncing repository: juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9422460Z ##[group]Getting Git version info
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9423221Z Working directory is '/home/runner/work/juntia/juntia'
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9424219Z [command]/usr/bin/git version
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9458624Z git version 2.56.0
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9470323Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9481189Z Temporarily overriding HOME='/home/runner/work/_temp/855c0bf7-8f5e-4276-9416-01c014fcc1f2' before making global git config changes
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9484295Z Adding repository directory to the temporary git global config as a safe directory
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9488726Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9652810Z Deleting the contents of '/home/runner/work/juntia/juntia'
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9654823Z ##[group]Determining repository object format
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9656980Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9660057Z ##[group]Initializing the repository
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9660811Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9710526Z hint: Using 'master' as the name for the initial branch. This default branch name
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9712407Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9713863Z hint: to use in all of your new repositories, which will suppress this warning,
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9716492Z hint: call:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9716982Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9717722Z hint: 	git config --global init.defaultBranch <name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9718525Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9730061Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9731083Z hint: 'development'. The just-created branch can be renamed via this command:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9731887Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9732400Z hint: 	git branch -m <name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9732921Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9733557Z hint: Disable this message with "git config set advice.defaultBranchName false"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9735134Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9737838Z [command]/usr/bin/git remote add origin https://github.com/juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9783848Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9784605Z ##[group]Disabling automatic garbage collection
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9793822Z [command]/usr/bin/git config --local gc.auto 0
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9965199Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9989079Z ##[group]Setting up auth
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9990650Z Removing SSH command configuration
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9991604Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:10.9996468Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0358932Z Removing HTTP extra header
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0360213Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0364912Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0572595Z Removing includeIf entries pointing to credentials config files
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0573951Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0601500Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0902587Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0905494Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0913319Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0946685Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0973281Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.0999162Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.1000079Z ##[group]Fetching the repository
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:11.1003769Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4737220ae076648bce8a6275d98458c647c568a0:refs/remotes/pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8415465Z From https://github.com/juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8416474Z  * [new ref]         4737220ae076648bce8a6275d98458c647c568a0 -> pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8418672Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8419228Z ##[group]Determining the checkout info
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8419792Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8420225Z [command]/usr/bin/git sparse-checkout disable
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8461979Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8487427Z ##[group]Checking out the ref
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:19.8489352Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0377659Z Note: switching to 'refs/remotes/pull/15/merge'.
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0378728Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0379098Z You are in 'detached HEAD' state. You can look around, make experimental
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0379814Z changes and commit them, and you can discard any commits you make in this
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0380537Z state without impacting any branches by switching back to a branch.
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0380984Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0381371Z If you want to create a new branch to retain commits you create, you may
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0381962Z do so (now or later) by using -c with the switch command. Example:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0382365Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0382611Z   git switch -c <new-branch-name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0382952Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0478443Z Or undo this operation with:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0490703Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0491138Z   git switch -
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0492104Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0492633Z Turn off this advice by setting config variable advice.detachedHead to false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0493076Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0493562Z HEAD is now at 4737220 Merge c1d433e52487b6c7040ac377d5540a406c57b179 into 668e38c83b1364dbf39917e61040d2dadc2f7999
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0495320Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0496395Z [command]/usr/bin/git log -1 --format=%H
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:48:20.0496938Z 4737220ae076648bce8a6275d98458c647c568a0
+lint-typecheck-build	Run actions/setup-node@v7	﻿2026-11-03T20:48:20.0692754Z ##[group]Run actions/setup-node@v7
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0692954Z with:
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0693104Z   node-version: 24
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0693249Z   cache: npm
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0693392Z   check-latest: false
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0694577Z   token: ***
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0694727Z   package-manager-cache: true
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0694916Z env:
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0695054Z   JOB_STARTED_MS: 1793738890673
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.0695215Z ##[endgroup]
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.1546450Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.2269129Z ##[group]Environment details
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5139035Z node: v24.22.2
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5139790Z npm: 11.19.1
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5140340Z yarn: 1.22.22
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5141116Z ##[endgroup]
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5158825Z [command]/opt/hostedtoolcache/node/24.22.2/x64/bin/npm config get cache
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.5895332Z /home/runner/.npm
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:20.7742997Z Cache hit for: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:21.9528997Z Received 109051904 of 215148939 (50.7%), 103.9 MBs/sec
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:22.7038695Z Received 215148939 of 215148939 (100.0%), 116.8 MBs/sec
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:22.7039404Z Cache Size: ~205 MB (215148939 B)
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:22.7058817Z [command]/usr/bin/tar -xf /home/runner/work/_temp/0930eed2-7107-46b5-9d70-508b5545241c/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:23.0447582Z Cache restored successfully
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:48:23.0539514Z Cache restored from key: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+lint-typecheck-build	Install, lint, typecheck and build	﻿2026-11-03T20:48:23.0841608Z ##[group]Run node scripts/ci.mjs run ci lint typecheck build
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:23.0841876Z [36;1mnode scripts/ci.mjs run ci lint typecheck build[0m
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:23.0890761Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:23.0890922Z env:
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:23.0891047Z   JOB_STARTED_MS: 1793738890673
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:23.0891190Z ##[endgroup]
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8577184Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8584682Z added 478 packages, and audited 485 packages in 7s
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8587803Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8597395Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8598675Z 166 packages are looking for funding
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8599066Z   run `npm fund` for details
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8599335Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8599580Z 16 moderate severity vulnerabilities
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8599846Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8600154Z To address all issues (including breaking changes), run:
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8600576Z   npm audit fix --force
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8600909Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:30.8601131Z Run `npm audit` for details.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:32.6287865Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:32.6289094Z > juntia@0.1.0 lint
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:32.6289568Z > eslint .
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:32.6289867Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:34.4618554Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:34.4619643Z > juntia@0.1.0 typecheck
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:34.4628598Z > tsc --noEmit
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:34.4629135Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9510852Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9529527Z > juntia@0.1.0 build
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9546026Z > next build
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9546364Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9546939Z ▲ Next.js 16.4.4 (Turbopack)
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9547402Z ✓ Running next.config.ts took 52ms
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9549243Z ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9549702Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9550053Z This information is used to shape Next.js' roadmap and prioritize features.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9550528Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9550869Z https://nextjs.org/telemetry
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9550972Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9550978Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9551072Z   Creating an optimized production build ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9551291Z ✓ Compiled successfully in 3.2s
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9551448Z   Running TypeScript ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9551614Z   Finished TypeScript in 1974ms ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9551795Z   Collecting page data using 1 worker ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552034Z   Generating static pages using 1 worker (0/3) ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552302Z ✓ Generating static pages using 1 worker (3/3) in 68ms
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552517Z   Finalizing page optimization ...
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552620Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552674Z Route (app)
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552807Z ┌ ○ /
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9552938Z └ ○ /_not-found
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9553020Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9553024Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9553133Z ○  (Static)  prerendered as static content
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:48:40.9553254Z 
+lint-typecheck-build	Publish timings and non-applicable controls	﻿2026-11-03T20:48:40.9622547Z ##[group]Run node scripts/ci.mjs summary
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9622757Z [36;1mnode scripts/ci.mjs summary[0m
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9663877Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9664029Z env:
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9664155Z   JOB_STARTED_MS: 1793738890673
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9664299Z   JOB_STATUS: success
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9664429Z ##[endgroup]
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9920101Z | Control | Estado | Duración | Presupuesto |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9920650Z | --- | --- | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9921251Z | ci | pasó | 7.75 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9921709Z | lint | pasó | 1.77 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9922246Z | typecheck | pasó | 1.83 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9922745Z | build | pasó | 6.49 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9923416Z | Job lint-typecheck-build (incluye instalación) | success | 30.32 s | < 360 s |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9923892Z 
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9924161Z | Control | Estado |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9924533Z | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9925538Z | 3 · Supabase local, migraciones y SQL/RLS | NO APLICABLE — lo incorpora P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9926325Z | 4 · E2E de humo | NO APLICABLE — la primera spec E2E nace en P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9927083Z | Superficie interna (FR-052, FR-053) | NO APLICABLE — la incorpora la 001 en su PR B |
+lint-typecheck-build	Post Run actions/setup-node@v7	﻿2026-11-03T20:48:41.0070697Z Post job cleanup.
+lint-typecheck-build	Post Run actions/setup-node@v7	2026-11-03T20:48:41.0797732Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51, not saving cache.
+lint-typecheck-build	Post Run actions/checkout@v7	﻿2026-11-03T20:48:41.0913464Z Post job cleanup.
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1519166Z [command]/usr/bin/git version
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1553160Z git version 2.56.0
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1595667Z Temporarily overriding HOME='/home/runner/work/_temp/5d7f519a-f4d6-4fc3-9f86-afadb37b9a7c' before making global git config changes
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1596708Z Adding repository directory to the temporary git global config as a safe directory
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1597519Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1642663Z Removing SSH command configuration
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1643327Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1718217Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1997511Z Removing HTTP extra header
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.1998354Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2060465Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2370401Z Removing includeIf entries pointing to credentials config files
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2376852Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2398909Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2399413Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2399911Z includeif.gitdir:/github/workspace/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2400440Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2405676Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2426646Z /home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2440382Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-4264fed3\-7d3b\-4d8c\-ab31\-5ad69e4191b4\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2471109Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2492605Z /home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2499608Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-4264fed3\-7d3b\-4d8c\-ab31\-5ad69e4191b4\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2526601Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2546879Z /github/runner_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2552718Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-4264fed3\-7d3b\-4d8c\-ab31\-5ad69e4191b4\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2580188Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2601176Z /github/runner_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2604956Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-4264fed3\-7d3b\-4d8c\-ab31\-5ad69e4191b4\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2633430Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:48:41.2842452Z Removing credentials config '/home/runner/work/_temp/git-credentials-4264fed3-7d3b-4d8c-ab31-5ad69e4191b4.config'
+lint-typecheck-build	Complete job	﻿2026-11-03T20:48:41.2960103Z Cleaning up orphan processes
+a11y	Set up job	﻿2026-11-03T20:48:14.3367604Z Current runner version: '2.338.2'
+a11y	Set up job	2026-11-03T20:48:14.3392693Z ##[group]Runner Image Provisioner
+a11y	Set up job	2026-11-03T20:48:14.3393674Z Hosted Compute Agent
+a11y	Set up job	2026-11-03T20:48:14.3394241Z Version: 20261021.618
+a11y	Set up job	2026-11-03T20:48:14.3394823Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+a11y	Set up job	2026-11-03T20:48:14.3395636Z Build Date: 2026-10-21T00:45:21Z
+a11y	Set up job	2026-11-03T20:48:14.3396303Z Worker ID: {bd1de3ec-2cc8-4704-bd57-98ae24e119f0}
+a11y	Set up job	2026-11-03T20:48:14.3397017Z Region: southcentralus
+a11y	Set up job	2026-11-03T20:48:14.3397572Z Cloud: Azure
+a11y	Set up job	2026-11-03T20:48:14.3398082Z ##[endgroup]
+a11y	Set up job	2026-11-03T20:48:14.3399383Z ##[group]Operating System
+a11y	Set up job	2026-11-03T20:48:14.3399972Z Ubuntu
+a11y	Set up job	2026-11-03T20:48:14.3400520Z 26.04.1
+a11y	Set up job	2026-11-03T20:48:14.3401027Z LTS
+a11y	Set up job	2026-11-03T20:48:14.3401527Z ##[endgroup]
+a11y	Set up job	2026-11-03T20:48:14.3402606Z ##[group]Runner Image
+a11y	Set up job	2026-11-03T20:48:14.3403260Z Image: ubuntu-26.04
+a11y	Set up job	2026-11-03T20:48:14.3403825Z Version: 20261025.179.1
+a11y	Set up job	2026-11-03T20:48:14.3404864Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261025.179/images/ubuntu/Ubuntu2604-Readme.md
+a11y	Set up job	2026-11-03T20:48:14.3406583Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261025.179
+a11y	Set up job	2026-11-03T20:48:14.3407505Z ##[endgroup]
+a11y	Set up job	2026-11-03T20:48:14.3408579Z ##[group]GITHUB_TOKEN Permissions
+a11y	Set up job	2026-11-03T20:48:14.3410714Z Contents: read
+a11y	Set up job	2026-11-03T20:48:14.3411312Z Metadata: read
+a11y	Set up job	2026-11-03T20:48:14.3412091Z ##[endgroup]
+a11y	Set up job	2026-11-03T20:48:14.3414243Z Secret source: Actions
+a11y	Set up job	2026-11-03T20:48:14.3415169Z Cache mode: write
+a11y	Set up job	2026-11-03T20:48:14.3415844Z Prepare workflow directory
+a11y	Set up job	2026-11-03T20:48:14.3769525Z Prepare all required actions
+a11y	Set up job	2026-11-03T20:48:14.3817541Z Getting action download info
+a11y	Set up job	2026-11-03T20:48:14.6790426Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+a11y	Set up job	2026-11-03T20:48:14.7994525Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+a11y	Set up job	2026-11-03T20:48:15.0428253Z Complete job name: a11y
+a11y	Start job clock	﻿2026-11-03T20:48:15.1115077Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+a11y	Start job clock	2026-11-03T20:48:15.1116205Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+a11y	Start job clock	2026-11-03T20:48:15.1139967Z shell: /usr/bin/bash -e {0}
+a11y	Start job clock	2026-11-03T20:48:15.1140868Z ##[endgroup]
+a11y	Run actions/checkout@v7	﻿2026-11-03T20:48:15.1553114Z ##[group]Run actions/checkout@v7
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1553866Z with:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1554501Z   repository: juntia-labs/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1558579Z   token: ***
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1559083Z   ssh-strict: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1559658Z   ssh-user: git
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1560227Z   persist-credentials: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1560823Z   clean: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1561384Z   sparse-checkout-cone-mode: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1562266Z   fetch-depth: 1
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1562845Z   fetch-tags: false
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1563372Z   show-progress: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1563906Z   lfs: false
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1564445Z   submodules: false
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1564990Z   set-safe-directory: true
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1565639Z   allow-unsafe-pr-checkout: false
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1566258Z env:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1566755Z   JOB_STARTED_MS: 1793738895127
+a11y	Run actions/checkout@v7	2026-11-03T20:48:15.1567373Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8045686Z Syncing repository: juntia-labs/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8048836Z ##[group]Getting Git version info
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8050090Z Working directory is '/home/runner/work/juntia/juntia'
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8051511Z [command]/usr/bin/git version
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8052604Z git version 2.56.0
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8055147Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8061609Z Temporarily overriding HOME='/home/runner/work/_temp/41aa291f-97b8-4f06-a34a-ee67e45fa7bb' before making global git config changes
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8063310Z Adding repository directory to the temporary git global config as a safe directory
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8064540Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8154502Z Deleting the contents of '/home/runner/work/juntia/juntia'
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8156923Z ##[group]Determining repository object format
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8158235Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8159380Z ##[group]Initializing the repository
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8160552Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8278713Z hint: Using 'master' as the name for the initial branch. This default branch name
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8280168Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8281290Z hint: to use in all of your new repositories, which will suppress this warning,
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8283211Z hint: call:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8283853Z hint:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8285199Z hint: 	git config --global init.defaultBranch <name>
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8294925Z hint:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8295979Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8297109Z hint: 'development'. The just-created branch can be renamed via this command:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8298064Z hint:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8298661Z hint: 	git branch -m <name>
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8299229Z hint:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8299996Z hint: Disable this message with "git config set advice.defaultBranchName false"
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8318165Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8322579Z [command]/usr/bin/git remote add origin https://github.com/juntia-labs/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8390412Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8391692Z ##[group]Disabling automatic garbage collection
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8393549Z [command]/usr/bin/git config --local gc.auto 0
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8454241Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8455419Z ##[group]Setting up auth
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8456578Z Removing SSH command configuration
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8458863Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.8508182Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9094763Z Removing HTTP extra header
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9097840Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9120641Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9374351Z Removing includeIf entries pointing to credentials config files
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9375280Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9399483Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9616708Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9650875Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9681393Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9716342Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9745911Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9776926Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9778179Z ##[group]Fetching the repository
+a11y	Run actions/checkout@v7	2026-11-03T20:48:16.9783862Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4737220ae076648bce8a6275d98458c647c568a0:refs/remotes/pull/15/merge
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7582865Z From https://github.com/juntia-labs/juntia
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7584445Z  * [new ref]         4737220ae076648bce8a6275d98458c647c568a0 -> pull/15/merge
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7587327Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7588403Z ##[group]Determining the checkout info
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7592399Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7593964Z [command]/usr/bin/git sparse-checkout disable
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7648539Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7681317Z ##[group]Checking out the ref
+a11y	Run actions/checkout@v7	2026-11-03T20:48:27.7685055Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0558318Z Note: switching to 'refs/remotes/pull/15/merge'.
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0559109Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0571702Z You are in 'detached HEAD' state. You can look around, make experimental
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0581154Z changes and commit them, and you can discard any commits you make in this
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0582679Z state without impacting any branches by switching back to a branch.
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0589293Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0590413Z If you want to create a new branch to retain commits you create, you may
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0591634Z do so (now or later) by using -c with the switch command. Example:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0596068Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0596573Z   git switch -c <new-branch-name>
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0600742Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0603412Z Or undo this operation with:
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0603952Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0604298Z   git switch -
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0605744Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0614262Z Turn off this advice by setting config variable advice.detachedHead to false
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0615081Z 
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0616233Z HEAD is now at 4737220 Merge c1d433e52487b6c7040ac377d5540a406c57b179 into 668e38c83b1364dbf39917e61040d2dadc2f7999
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0627948Z ##[endgroup]
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0632740Z [command]/usr/bin/git log -1 --format=%H
+a11y	Run actions/checkout@v7	2026-11-03T20:48:28.0680197Z 4737220ae076648bce8a6275d98458c647c568a0
+a11y	Run actions/setup-node@v7	﻿2026-11-03T20:48:28.0898543Z ##[group]Run actions/setup-node@v7
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0898954Z with:
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0899304Z   node-version: 24
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0899615Z   cache: npm
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0899941Z   check-latest: false
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0902606Z   token: ***
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0902961Z   package-manager-cache: true
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0903345Z env:
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0903631Z   JOB_STARTED_MS: 1793738895127
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.0903977Z ##[endgroup]
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.2194060Z Found in cache @ /opt/hostedtoolcache/node/24.22.1/x64
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.3036252Z ##[group]Environment details
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.7498960Z node: v24.22.1
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.7499909Z npm: 11.19.1
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.7500718Z yarn: 1.22.22
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.7502693Z ##[endgroup]
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.7518783Z [command]/opt/hostedtoolcache/node/24.22.1/x64/bin/npm config get cache
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:28.8678734Z /home/runner/.npm
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:29.0518306Z Cache hit for: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:30.2813963Z Received 109051904 of 215148939 (50.7%), 103.9 MBs/sec
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:30.9646935Z Received 215148939 of 215148939 (100.0%), 121.1 MBs/sec
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:30.9653286Z Cache Size: ~205 MB (215148939 B)
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:30.9684004Z [command]/usr/bin/tar -xf /home/runner/work/_temp/b3927205-e90a-4f3e-8419-ff3c4709d299/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:31.3030457Z Cache restored successfully
+a11y	Run actions/setup-node@v7	2026-11-03T20:48:31.3103604Z Cache restored from key: node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51
+a11y	Install, build once, install Chromium and check routes and theme script	﻿2026-11-03T20:48:31.3331085Z ##[group]Run node scripts/ci.mjs run ci build chromium test:a11y check:theme-script
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:31.3332511Z [36;1mnode scripts/ci.mjs run ci build chromium test:a11y check:theme-script[0m
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:31.3362730Z shell: /usr/bin/bash -e {0}
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:31.3363120Z env:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:31.3363601Z   JOB_STARTED_MS: 1793738895127
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:31.3364009Z ##[endgroup]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7212888Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7231073Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7232534Z added 478 packages, and audited 485 packages in 13s
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7232974Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7233279Z 166 packages are looking for funding
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7233891Z   run `npm fund` for details
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7234204Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7234511Z 16 moderate severity vulnerabilities
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7234768Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7235110Z To address all issues (including breaking changes), run:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7235848Z   npm audit fix --force
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7236083Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:44.7236362Z Run `npm audit` for details.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9443805Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9463853Z > juntia@0.1.0 build
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9473156Z > next build
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9473854Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9476071Z ▲ Next.js 16.4.4 (Turbopack)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9477159Z ✓ Running next.config.ts took 61ms
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9478961Z ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9500289Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9501732Z This information is used to shape Next.js' roadmap and prioritize features.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9513155Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9514668Z https://nextjs.org/telemetry
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9529101Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9529378Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9530102Z   Creating an optimized production build ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9531326Z ✓ Compiled successfully in 4.8s
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9536011Z   Running TypeScript ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9536790Z   Finished TypeScript in 3.4s ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9537565Z   Collecting page data using 1 worker ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9538286Z   Generating static pages using 1 worker (0/3) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9539454Z ✓ Generating static pages using 1 worker (3/3) in 114ms
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9540349Z   Finalizing page optimization ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9544812Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9549476Z Route (app)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9551723Z ┌ ○ /
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9552773Z └ ○ /_not-found
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9592883Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9593060Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9597232Z ○  (Static)  prerendered as static content
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:48:54.9604562Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0590417Z Installing dependencies...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0592012Z Switching to root user to install dependencies...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0593162Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0594408Z Get:6 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease [3964 B]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0595609Z Hit:2 http://azure.archive.ubuntu.com/ubuntu resolute InRelease
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0596613Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0597890Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute-backports InRelease [137 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0599129Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0600646Z Get:7 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main amd64 Packages [131 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0602263Z Get:8 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main arm64 Packages [120 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0603021Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0603949Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main amd64v3 Packages [804 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0605739Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [184 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0607224Z Get:11 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe amd64v3 Packages [375 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0608542Z Get:12 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [118 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0609765Z Get:13 http://azure.archive.ubuntu.com/ubuntu resolute-updates/restricted amd64v3 Packages [543 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0611074Z Get:14 http://azure.archive.ubuntu.com/ubuntu resolute-updates/restricted Translation-en [112 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0613043Z Get:15 http://azure.archive.ubuntu.com/ubuntu resolute-security/main amd64v3 Packages [654 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0614348Z Get:16 http://azure.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [147 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0615566Z Get:17 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe amd64v3 Packages [207 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0616836Z Get:18 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [68.2 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0618212Z Get:19 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted amd64v3 Packages [529 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0619523Z Get:20 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [108 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0620531Z Fetched 4515 kB in 1s (8431 kB/s)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0621236Z Reading package lists...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0622062Z Reading package lists...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0622718Z Running kernel seems to be up-to-date.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0623333Z Building dependency tree...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0623909Z Reading state information...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0624770Z libasound2t64 is already the newest version (1.2.15.3-1ubuntu1.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0625549Z libasound2t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0626427Z libatk-bridge2.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0627367Z libatk-bridge2.0-0t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0628322Z libatk1.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0629192Z libatk1.0-0t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0630022Z libatspi2.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0630780Z libatspi2.0-0t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0631592Z libcairo2 is already the newest version (1.18.4-3).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0633860Z libcairo2 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0634748Z libcups2t64 is already the newest version (2.4.16-1ubuntu1.3).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0635705Z libcups2t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0636567Z libdbus-1-3 is already the newest version (1.16.2-2ubuntu4).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0637358Z libdbus-1-3 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0638200Z libdrm2 is already the newest version (2.4.131-1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0638905Z libdrm2 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0639771Z libgbm1 is already the newest version (26.0.8-1ubuntu0.3).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0640599Z libgbm1 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0641516Z libglib2.0-0t64 is already the newest version (2.88.0-1ubuntu0.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0642603Z libglib2.0-0t64 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0643531Z libnspr4 is already the newest version (2:4.38.2-1ubuntu1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0644345Z libnspr4 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0645191Z libnss3 is already the newest version (2:3.120-1ubuntu2.2).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0646053Z libnss3 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0646872Z libpango-1.0-0 is already the newest version (1.57.0-1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0647804Z libpango-1.0-0 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0648672Z libx11-6 is already the newest version (2:1.8.13-1ubuntu0.1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0649614Z libx11-6 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0650443Z libxcb1 is already the newest version (1.17.0-2ubuntu1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0651553Z libxcb1 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0652745Z libxcomposite1 is already the newest version (1:0.4.6-1build1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0653806Z libxcomposite1 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0654635Z libxdamage1 is already the newest version (1:1.1.7-1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0655505Z libxdamage1 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0656221Z libxext6 is already the newest version (2:1.3.4-1build3).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0656942Z libxext6 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0657723Z libxfixes3 is already the newest version (1:6.0.0-2build2).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0658668Z libxfixes3 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0659482Z libxkbcommon0 is already the newest version (1.13.1-1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0660191Z libxkbcommon0 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0661020Z libxrandr2 is already the newest version (2:1.5.4-1build1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0662520Z libxrandr2 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0662946Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0663481Z xvfb is already the newest version (2:21.1.22-1ubuntu1.3).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0664486Z fonts-noto-color-emoji is already the newest version (2.051-1build1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0665535Z libfontconfig1 is already the newest version (2.17.1-3ubuntu1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0666473Z libfontconfig1 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0667497Z libfreetype6 is already the newest version (2.14.2+dfsg-1ubuntu0.2).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0668377Z libfreetype6 set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0669355Z fonts-liberation is already the newest version (1:2.1.5-3build1).
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0670287Z fonts-liberation set to manually installed.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0670980Z Solving dependencies...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0672000Z The following additional packages will be installed:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0672791Z   xfonts-encodings xfonts-utils
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0673424Z Recommended packages:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0674196Z   fonts-ipafont-mincho fonts-tlwg-loma
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0674995Z The following NEW packages will be installed:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0675977Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0677095Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0677945Z   xfonts-utils
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0678798Z 0 upgraded, 9 newly installed, 0 to remove and 25 not upgraded.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0679738Z Need to get 21.9 MB of archives.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0680626Z After this operation, 80.2 MB of additional disk space will be used.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0681708Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0682696Z Restarting services...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0683812Z Get:2 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-ipafont-gothic all 00303-23ubuntu1 [3703 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0685287Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 fonts-freefont-ttf all 20211204+svn4273-4build1 [5656 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0686644Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-tlwg-loma-otf all 1:0.7.3-1build1 [106 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0688200Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-unifont all 1:16.0.04-1build1 [3169 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0689717Z Get:6 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-wqy-zenhei all 0.9.45-8build1 [7863 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0691164Z Get:7 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-encodings all 1:1.0.5-0ubuntu3 [576 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0692889Z Get:8 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-utils amd64 1:7.7+7build1 [97.3 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0694381Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-cyrillic all 1:1.0.5+nmu1build1 [384 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0696112Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-scalable all 1:1.0.3-1.3build1 [304 kB]
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0697249Z Fetched 21.9 MB in 1s (43.7 MB/s)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0698326Z Selecting previously unselected package fonts-ipafont-gothic.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0699232Z (Reading database ... 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0700009Z (Reading database ... 5%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0700630Z (Reading database ... 10%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0701266Z (Reading database ... 15%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0702063Z (Reading database ... 20%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0702670Z (Reading database ... 25%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0703341Z (Reading database ... 30%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0704024Z (Reading database ... 35%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0704735Z (Reading database ... 40%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0705384Z (Reading database ... 45%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0706050Z (Reading database ... 50%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0706724Z (Reading database ... 55%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0707316Z (Reading database ... 60%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0707897Z (Reading database ... 65%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0708582Z (Reading database ... 70%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0709252Z (Reading database ... 75%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0709904Z (Reading database ... 80%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0710578Z (Reading database ... 85%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0711200Z (Reading database ... 90%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0712027Z (Reading database ... 95%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0712723Z (Reading database ... 100%
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0713647Z (Reading database ... 212715 files and directories currently installed.)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0714753Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-23ubuntu1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0715790Z Unpacking fonts-ipafont-gothic (00303-23ubuntu1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0716669Z Selecting previously unselected package fonts-freefont-ttf.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0717717Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0718297Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-4build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0720029Z Unpacking fonts-freefont-ttf (20211204+svn4273-4build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0721590Z Selecting previously unselected package fonts-tlwg-loma-otf.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0722935Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0723985Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0724967Z Selecting previously unselected package fonts-unifont.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0725991Z Preparing to unpack .../3-fonts-unifont_1%3a16.0.04-1build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0726973Z Unpacking fonts-unifont (1:16.0.04-1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0728097Z Selecting previously unselected package fonts-wqy-zenhei.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0729157Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0730201Z Unpacking fonts-wqy-zenhei (0.9.45-8build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0731186Z Selecting previously unselected package xfonts-encodings.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0732585Z Preparing to unpack .../5-xfonts-encodings_1%3a1.0.5-0ubuntu3_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0733624Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu3) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0734482Z Selecting previously unselected package xfonts-utils.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0735450Z Preparing to unpack .../6-xfonts-utils_1%3a7.7+7build1_amd64v3.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0736461Z Unpacking xfonts-utils (1:7.7+7build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0739619Z Selecting previously unselected package xfonts-cyrillic.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0740690Z Preparing to unpack .../7-xfonts-cyrillic_1%3a1.0.5+nmu1build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0741974Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0742641Z Service restarts being deferred:
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0743434Z Selecting previously unselected package xfonts-scalable.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0744524Z Preparing to unpack .../8-xfonts-scalable_1%3a1.0.3-1.3build1_all.deb ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0745397Z Unpacking xfonts-scalable (1:1.0.3-1.3build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0746291Z Setting up fonts-wqy-zenhei (0.9.45-8build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0747257Z Setting up fonts-freefont-ttf (20211204+svn4273-4build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0748235Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0749211Z Setting up xfonts-encodings (1:1.0.5-0ubuntu3) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0750295Z Setting up fonts-ipafont-gothic (00303-23ubuntu1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0752249Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0753892Z  systemctl restart hosted-compute-agent.service
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0754829Z Setting up fonts-unifont (1:16.0.04-1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0755747Z Setting up xfonts-utils (1:7.7+7build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0756623Z Setting up xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0757471Z Setting up xfonts-scalable (1:1.0.3-1.3build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0758399Z Processing triggers for man-db (2.13.1-1build1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0759319Z Not building database; man-db/auto-update is not 'true'.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0760252Z Processing triggers for fontconfig (2.17.1-3ubuntu1) ...
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0762018Z Downloading Chrome for Testing 156.0.8078.4 (playwright chromium v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-linux64.zip
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0762891Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0763488Z |                                                                                |   0% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0764949Z |■■■■■■■■                                                                        |  10% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0766091Z |■■■■■■■■■■■■■■■■                                                                |  20% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0767279Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0768353Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0769446Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0770593Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0771708Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0773048Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0774191Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0775249Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 191.1 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0776675Z Chrome for Testing 156.0.8078.4 (playwright chromium v1248) downloaded to /home/runner/.cache/ms-playwright/chromium-1248
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0777642Z No containers need to be restarted.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0778964Z Downloading FFmpeg (playwright ffmpeg v1013) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1013/ffmpeg-linux.zip
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0780350Z |                                                                                |   0% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0781455Z |■■■■■■■■                                                                        |  10% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0782895Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0783828Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0785298Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0786467Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0787537Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0788632Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0789756Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0791213Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0792993Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.2 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0793614Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0794560Z FFmpeg (playwright ffmpeg v1013) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1013
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0796893Z Downloading Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-headless-shell-linux64.zip
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0798857Z |                                                                                |   0% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0800254Z |■■■■■■■■                                                                        |  10% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0801650Z |■■■■■■■■■■■■■■■■                                                                |  20% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0803254Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0804626Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0806101Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0812804Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0814185Z No user sessions are running outdated binaries.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0815675Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0817151Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0818549Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0820133Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 120 MiB
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0822060Z Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1248
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0832239Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:14.0832936Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0728604Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0732039Z > juntia@0.1.0 test:a11y
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0732959Z > playwright test --project a11y
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0733593Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0734991Z GitCommitInfo: timeout of 3000ms exceeded while running "git fetch origin 668e38c83b1364dbf39917e61040d2dadc2f7999 --no-auto-maintenance --no-auto-gc --no-tags --no-recurse-submodules --depth=1"
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0736416Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0736826Z Running 4 tests using 1 worker
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0738018Z light / 390px: 1 violaciones, 0 serias o críticas
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0738959Z ·light / 1440px: 1 violaciones, 0 serias o críticas
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0739867Z ·dark / 390px: 1 violaciones, 0 serias o críticas
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0740765Z ·dark / 1440px: 1 violaciones, 0 serias o críticas
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0741415Z ·
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.0742606Z   4 passed (7.3s)
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7760825Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7762262Z > juntia@0.1.0 check:theme-script
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7763280Z > node scripts/check-theme-script.mjs
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7763808Z 
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7764570Z OK · / responde 200
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7765265Z OK · head precede a body
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7766060Z OK · script de tema inline dentro de head
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7767025Z OK · script sin src, async ni defer
+a11y	Install, build once, install Chromium and check routes and theme script	2026-11-03T20:49:22.7767970Z OK · html sin data-theme fijado por el servidor
+a11y	Publish timings	﻿2026-11-03T20:49:22.7859897Z ##[group]Run node scripts/ci.mjs summary
+a11y	Publish timings	2026-11-03T20:49:22.7860728Z [36;1mnode scripts/ci.mjs summary[0m
+a11y	Publish timings	2026-11-03T20:49:22.7881030Z shell: /usr/bin/bash -e {0}
+a11y	Publish timings	2026-11-03T20:49:22.7881522Z env:
+a11y	Publish timings	2026-11-03T20:49:22.7882020Z   JOB_STARTED_MS: 1793738895127
+a11y	Publish timings	2026-11-03T20:49:22.7882444Z   JOB_STATUS: success
+a11y	Publish timings	2026-11-03T20:49:22.7882766Z ##[endgroup]
+a11y	Publish timings	2026-11-03T20:49:22.8241080Z | Control | Estado | Duración | Presupuesto |
+a11y	Publish timings	2026-11-03T20:49:22.8242531Z | --- | --- | --- | --- |
+a11y	Publish timings	2026-11-03T20:49:22.8243474Z | ci | pasó | 13.35 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8244415Z | build | pasó | 10.22 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8245388Z | chromium | pasó | 19.11 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8246501Z | test:a11y | pasó | 8.01 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8247547Z | check:theme-script | pasó | 0.70 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8248772Z | Job a11y (incluye instalación) | success | 67.69 s | < 360 s |
+a11y	Post Run actions/setup-node@v7	﻿2026-11-03T20:49:22.8401019Z Post job cleanup.
+a11y	Post Run actions/setup-node@v7	2026-11-03T20:49:22.9535895Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-65d33f5d2130921344c4b2d11a80c8ac1e893c02fd4359ea1a4d0947348aec51, not saving cache.
+a11y	Post Run actions/checkout@v7	﻿2026-11-03T20:49:22.9914640Z Post job cleanup.
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.0820157Z [command]/usr/bin/git version
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.0902743Z git version 2.56.0
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.0959813Z Temporarily overriding HOME='/home/runner/work/_temp/92913583-5304-4f37-8c6c-5bae1e90b146' before making global git config changes
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.0965247Z Adding repository directory to the temporary git global config as a safe directory
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.0966416Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1045774Z Removing SSH command configuration
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1046691Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1113072Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1492145Z Removing HTTP extra header
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1518958Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1538140Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.1993654Z Removing includeIf entries pointing to credentials config files
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2009160Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2062773Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2063761Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2082639Z includeif.gitdir:/github/workspace/.git.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2087798Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2142960Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2154293Z /home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2163510Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-5fa9d4b5\-9224\-41be\-9275\-b2b649d61a58\.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2186985Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2219901Z /home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2232972Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-5fa9d4b5\-9224\-41be\-9275\-b2b649d61a58\.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2288546Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2312643Z /github/runner_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2333068Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-5fa9d4b5\-9224\-41be\-9275\-b2b649d61a58\.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2383365Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2403313Z /github/runner_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2433653Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-5fa9d4b5\-9224\-41be\-9275\-b2b649d61a58\.config
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2458975Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+a11y	Post Run actions/checkout@v7	2026-11-03T20:49:23.2794376Z Removing credentials config '/home/runner/work/_temp/git-credentials-5fa9d4b5-9224-41be-9275-b2b649d61a58.config'
+a11y	Complete job	﻿2026-11-03T20:49:23.2978864Z Cleaning up orphan processes

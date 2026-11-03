@@ -1,0 +1,26 @@
+vitest	Publish timings	2026-11-03T20:49:17.7686991Z | Control | Estado | Duración | Presupuesto |
+vitest	Publish timings	2026-11-03T20:49:17.7687878Z | --- | --- | --- | --- |
+vitest	Publish timings	2026-11-03T20:49:17.7688466Z | ci | pasó | 44.60 s | — |
+vitest	Publish timings	2026-11-03T20:49:17.7689386Z | test:unit | 0 pruebas — la 001 no tiene dominio financiero | 0.72 s | < 15 s |
+vitest	Publish timings	2026-11-03T20:49:17.7690513Z | test:components | pasó | 3.15 s | — |
+vitest	Publish timings	2026-11-03T20:49:17.7691033Z | Job vitest (incluye instalación) | success | 65.01 s | < 360 s |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9920101Z | Control | Estado | Duración | Presupuesto |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9920650Z | --- | --- | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9921251Z | ci | pasó | 7.75 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9921709Z | lint | pasó | 1.77 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9922246Z | typecheck | pasó | 1.83 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9922745Z | build | pasó | 6.49 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9923416Z | Job lint-typecheck-build (incluye instalación) | success | 30.32 s | < 360 s |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9924161Z | Control | Estado |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9924533Z | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9925538Z | 3 · Supabase local, migraciones y SQL/RLS | NO APLICABLE — lo incorpora P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9926325Z | 4 · E2E de humo | NO APLICABLE — la primera spec E2E nace en P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:48:40.9927083Z | Superficie interna (FR-052, FR-053) | NO APLICABLE — la incorpora la 001 en su PR B |
+a11y	Publish timings	2026-11-03T20:49:22.8241080Z | Control | Estado | Duración | Presupuesto |
+a11y	Publish timings	2026-11-03T20:49:22.8242531Z | --- | --- | --- | --- |
+a11y	Publish timings	2026-11-03T20:49:22.8243474Z | ci | pasó | 13.35 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8244415Z | build | pasó | 10.22 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8245388Z | chromium | pasó | 19.11 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8246501Z | test:a11y | pasó | 8.01 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8247547Z | check:theme-script | pasó | 0.70 s | — |
+a11y	Publish timings	2026-11-03T20:49:22.8248772Z | Job a11y (incluye instalación) | success | 67.69 s | < 360 s |
