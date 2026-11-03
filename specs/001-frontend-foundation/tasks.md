@@ -27,7 +27,7 @@ generado la skill (ADR-012 §4). La auditoría de este archivo está en el
 
 **Specs E2E que añade este slice (obligatorio)**: **0** (FR-047; spec, «Specs E2E que añade la 001»; ADR-011: «la especificación 001 no tiene ninguna spec E2E»). La comprobación de axe por ruta es un E2E barato por ruta y no cuenta como spec E2E. `tests/e2e/` **no se crea**.
 
-**Organization**: el orden de las fases sigue las dependencias del plan —scaffold, tokens y CI base; primitivos; shell, comportamiento provisional y axe; superficie interna— y se reparte en los cuatro PR de «Estrategia de implementación» y cada tarea de una historia lleva su etiqueta `[USn]`. El orden no coincide con la prioridad de las historias porque el AppShell (US1, P1) no se puede construir sin los tokens (US5) y los primitivos (US6). Ver «Dependencias».
+**Organization**: el orden de las fases sigue las dependencias del plan —scaffold, tokens y CI base (fases 1–4); primitivos y superficie interna (fases 5–6); shell, comportamiento provisional y axe de las rutas de producto (fases 7–9); verificación (fase 10)— y se reparte en los cuatro PR de «Estrategia de implementación» y cada tarea de una historia lleva su etiqueta `[USn]`. El orden no coincide con la prioridad de las historias porque el AppShell (US1, P1) no se puede construir sin los tokens (US5) y los primitivos (US6). Ver «Dependencias».
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -93,7 +93,7 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 ### Grupo 1C (después del grupo 1B)
 
 - [ ] T006 Crear `src/app/layout.tsx` mínimo (`<html lang="es-CO">`, `<body>{children}</body>`) y `src/app/(app)/page.tsx`, que solo devuelve `<main id="contenido" />` sin texto
-  - Cumple: FR-001. Fase 3 completa el layout y la fase 5 la página.
+  - Cumple: FR-001. La fase 3 completa el layout y la fase 7 la página.
   - Terminado cuando: `npm run build` y `npx tsc --noEmit` terminan con exit 0 y la tabla de rutas del build muestra `○ /`.
 
 **Checkpoint**: `npm ci && npm run build && npx tsc --noEmit` en verde. Comienza el punto de control **A** (PR A; ver «Estrategia de implementación»).
@@ -257,7 +257,7 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 **Goal**: los nueve primitivos del paso 2 del handoff y la base accesible de BottomSheet y Modal, según [contracts/primitives.md](contracts/primitives.md).
 
-**Independent Test**: las pruebas de componentes de AmountInput pasan; la revisión humana ve cada primitivo en sus estados y en los dos temas en la superficie interna (fase 7).
+**Independent Test**: las pruebas de componentes de AmountInput pasan; la revisión humana ve cada primitivo en sus estados y en los dos temas en la superficie interna (fase 6, mismo PR B).
 
 Archivos en `src/components/ui/`. Anatomía, tamaños y tokens: `docs/design/COMPONENT_SPECIFICATIONS.md`; la tabla de [primitives.md](contracts/primitives.md) es lo que P0-1 puede dar por hecho. Los nombres de props los fija la implementación y no pueden contradecir esa tabla.
 
@@ -293,7 +293,7 @@ Archivos en `src/components/ui/`. Anatomía, tamaños y tokens: `docs/design/COM
 - [ ] T028 [P] [US6] Crear `src/components/ui/segmented.tsx`: riel, perilla y etiqueta; prop de rol `radiogroup` o `tablist`; foco itinerante y flechas ←/→ escritos a mano (sin `@radix-ui/react-radio-group` ni `react-tabs`, research R1.4); perilla con `motion` `layoutId` y el spring `snappy` de `src/lib/motion/tokens.ts`; con `useReducedMotion()`, `duration: 0`; **no anima al montar**
   - Claude Design: `Juntia DS v1 - 02 Componentes.dc.html`, secciones 02·1 Galería · Claro y 02·2 Galería · Oscuro, Segmented; y `Juntia DS v1 - 04 Pantallas.dc.html`, 04·1 (encabezado de 390) y 04·7 (sidebar de 1440) para el selector Yo/Nosotros.
   - Cumple: FR-015, FR-040 (Clarifications, Q2).
-  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento con teclado se prueba en T042.
+  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento con teclado se prueba en T042, en el PR C; en B lo cubre la revisión en la superficie interna (T038).
 
 ### Grupo 5B (después de T025)
 
@@ -329,12 +329,12 @@ Archivos en `src/components/ui/`. Anatomía, tamaños y tokens: `docs/design/COM
   - Claude Design: `Juntia DS v1 - 02 Componentes.dc.html`, secciones 02·1 Galería · Claro y 02·2 Galería · Oscuro, BottomSheet; y `Juntia DS v1 - 04 Pantallas.dc.html`, la hoja de Anotar a 390 (solo la base: sin paradas ni arrastre).
   - **No** incluye paradas `peek`/`full`, arrastre ni confirmación de descarte (FR-031a).
   - Cumple: FR-031a, FR-041.
-  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento se prueba en T049.
+  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento se prueba en T049, en el PR C; en B no tiene consumidor.
 
 - [ ] T035 [P] [US6] Crear `src/components/ui/modal.tsx` sobre `@radix-ui/react-dialog`: las mismas garantías que T034, como diálogo centrado de 520 px con scrim, aparición con escala .98 → 1 y solo opacidad con movimiento reducido; `role="dialog"`, nunca `alertdialog` en la 001
   - Claude Design: `Juntia DS v1 - 02 Componentes.dc.html`, secciones 02·1 Galería · Claro y 02·2 Galería · Oscuro, Modal; y `Juntia DS v1 - 04 Pantallas.dc.html`, el diálogo de Anotar de 520 px en escritorio (solo la base).
   - Cumple: FR-031, FR-031a.
-  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento se prueba en T049.
+  - Terminado cuando: `npx tsc --noEmit` y `npm run lint` terminan con exit 0. El comportamiento se prueba en T049, en el PR C; en B no tiene consumidor.
 
 **Checkpoint**: `npx vitest run --project components` en verde. Sigue el PR B con la fase 6 (superficie interna).
 
@@ -371,7 +371,7 @@ Archivos en `src/components/ui/`. Anatomía, tamaños y tokens: `docs/design/COM
   - Muestra los nueve primitivos del paso 2 —AppIcon (cuatro pesos), Avatar (`person.1` y `person.2`), CategoryIcon (cuatro tamaños, diez categorías, tres formas, seleccionado), Badge (cinco estados), Button (cuatro variantes, tres tamaños, disabled y loading), Input (normal, con ayuda, con error, disabled), AmountInput (vacío, con 999.999.999, con error, importe largo), Segmented (`radiogroup` y `tablist`), Skeleton— en los dos temas **lado a lado**, anidando `data-theme="light"` y `data-theme="dark"`.
   - Valores solo de `COMPONENT_SPECIFICATIONS.md`; nunca el caso de octubre ni la tabla de DEC-G04; ningún valor presentado como dato financiero de una persona; no usa los tokens `finance.*` (FR-050).
   - Cumple: FR-017, FR-049, FR-050; US-6, escenario 7.
-  - Terminado cuando: `npm run build` lista `ƒ /interno/primitivos` y `○` para las seis rutas de producto; `npm run dev` muestra la superficie en `http://localhost:3000/interno/primitivos`; `git grep -nE "412\.900|2\.840\.000|429\.900|3\.740\.000|229\.900|900\.000" -- src` no devuelve nada.
+  - Terminado cuando: `npm run build` lista `ƒ /interno/primitivos` y `○ /`, las dos rutas que existen en B (las seis de producto se comprueban en D, T063); `npm run dev` muestra la superficie en `http://localhost:3000/interno/primitivos`; `git grep -nE "412\.900|2\.840\.000|429\.900|3\.740\.000|229\.900|900\.000" -- src` no devuelve nada.
 
 - [ ] T039 [US6] Crear `scripts/check-internal-surface.mjs`: sobre el build ya hecho, arranca `next start` en un puerto libre con cada entorno de la tabla de [contracts/ci.md](contracts/ci.md) y pide `/interno/primitivos` con la cabecera `Host` de cada fila; URLs de prueba ficticias fijadas en el script (nunca dominios reales); imprime una fila por caso con el código obtenido y el esperado; termina con exit 1 si alguno difiere
   - Claude Design: no necesita el comp: la superficie muestra primitivos ya construidos.
@@ -862,7 +862,7 @@ Adelantar infraestructura de P0-1 (Supabase, migraciones, siembra, `test:db`, `t
 | B6 | T050 | `src/app/(app)/product-routes.test.tsx` | Componente (RTL) | FR-028, FR-029; SC-004; US-2.1, 2.3 | El criterio dice «visible y accesible»: es lo que se pinta, y RTL lo lee sin navegador (`docs/TESTING.md` §4, pregunta 3) | Una cifra o un «Al día» en el contenido o en un nombre accesible, y una ruta sin el aviso de versión base. axe no mira ninguna de las dos. Lo nombra FR-045 («la ausencia de cifras en las rutas»); el aviso es una aserción más en la misma pasada, no una prueba nueva |
 | B7 | T036 | `src/lib/internal-surface.test.ts` | Unidad de funciones puras | FR-049, FR-053 | La decisión de la compuerta es una tabla de entradas y salidas; no necesita la página | Todas las combinaciones de entorno y host, incluidas las que el HTTP no reproduce (Vercel sin variables de sistema) |
 | B8 | T039 | `scripts/check-internal-surface.mjs` | HTTP real contra el build | FR-053; SC-002 | Es la capa más baja que ve la **página servida**: el fallo que encontró research R4 (la ruta prerenderizada congelaba el 404 o el 200) no existe en las funciones puras | Que la página no llame a la compuerta, o que se prerenderice. B7 no lo ve |
-| B9 | T021 (PR A), T040 (PR B) y T060 (PR C) | `tests/a11y/routes.a11y.ts` | E2E barato por ruta (visitar + axe + movimiento reducido); **no** es spec E2E. Nace en A con `/`; B le añade la superficie interna y el movimiento reducido de Skeleton y Button; C, las rutas de producto y el de la perilla y el aviso de Anotar | FR-012, FR-016, FR-040, FR-043, FR-051, FR-052; SC-002, SC-010; ADR-011 §2, filas 16 y 17 | axe necesita un árbol de accesibilidad real (fila 16). El movimiento reducido es una emulación de media feature del navegador y ADR-011 lo pone en esta capa (fila 17); jsdom no tiene layout ni cuadros que medir | Violaciones de axe por ruta y tema, y que la superficie interna se visitó de verdad (FR-052). Que cada ruta responde 200, para que axe sobre un 404 no cuente como verificada. Y que, con la emulación, no hay transición de color de tema, la perilla salta sin posiciones intermedias, el aviso aparece sin desplazarse ni escalar, el pulso de Skeleton es estático y la pulsación de Button no desplaza |---
+| B9 | T021 (PR A), T040 (PR B) y T060 (PR C) | `tests/a11y/routes.a11y.ts` | E2E barato por ruta (visitar + axe + movimiento reducido); **no** es spec E2E. Nace en A con `/`; B le añade la superficie interna y el movimiento reducido de Skeleton y Button; C, las rutas de producto y el de la perilla y el aviso de Anotar | FR-012, FR-016, FR-040, FR-043, FR-051, FR-052; SC-002, SC-010; ADR-011 §2, filas 16 y 17 | axe necesita un árbol de accesibilidad real (fila 16). El movimiento reducido es una emulación de media feature del navegador y ADR-011 lo pone en esta capa (fila 17); jsdom no tiene layout ni cuadros que medir | Violaciones de axe por ruta y tema, y que la superficie interna se visitó de verdad (FR-052). Que cada ruta responde 200, para que axe sobre un 404 no cuente como verificada. Y que, con la emulación, no hay transición de color de tema, la perilla salta sin posiciones intermedias, el aviso aparece sin desplazarse ni escalar, el pulso de Skeleton es estático y la pulsación de Button no desplaza |
 | B17 | T015 | `src/lib/theme-script.test.ts` | Unidad sin DOM, ejecutando la cadena del script | FR-005, FR-026; SC-006 | La lógica del script es una función de su entorno (`matchMedia`, `localStorage`); se ejecuta con dobles mínimos, sin navegador | Que el script deje de fijar `data-theme` o `data-context`, o que lance sin almacenamiento. axe no lo ve: el respaldo CSS pinta el tema del sistema igual |
 | B18 | T022 | `scripts/check-theme-script.mjs` | HTTP real contra el build | FR-005; SC-006 | Es la capa más baja que ve el HTML servido: el root layout importa `next/font` y no se renderiza fuera de Next | Que el script salga de `<head>`, pase a `async`/`defer` o a `next/script`, o que `<html>` traiga un tema fijado por el servidor. B17 no lo ve |
 
