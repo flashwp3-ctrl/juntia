@@ -1,6 +1,6 @@
 # ADR-012 — Adopción parcial de GitHub Spec Kit
 
-**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Enmienda:** §3.4, decisión de los fundadores tras las dos demostraciones del PR #9, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
 
 ## Contexto
 
@@ -253,6 +253,28 @@ ejecución real pegada en el PR y no por lectura de las skills, que
 Si no se puede demostrar, el PR de inicialización no se mergea y esta decisión
 se revisa.
 
+**Enmienda del 3 de noviembre de 2026** (decisión de los fundadores, tomada
+después de las dos demostraciones del PR de inicialización, PR #9). **Esta
+enmienda relaja la condición de merge original**, que exigía demostrar
+`speckit-specify` y `speckit-plan` antes de mergear el PR de inicialización:
+
+- **`speckit-specify`: cumplida.** Se ejecutó en dos sesiones limpias, cada
+  una con un escenario distinto y sin saber qué resultado se esperaba. El
+  primer escenario pedía la anatomía de `AccountButton`, que es `[P]` en
+  §15.9 y está diferida por §15.10, decisión 8. El segundo pedía persistir en
+  el servidor el contexto Yo/Nosotros, algo sin alcance asignado, que depende
+  del `[P][V]` de persistencia de preferencias y del ADR de acceso a datos
+  pendiente. Las dos sesiones leyeron la constitución y las fuentes a las que
+  apunta, **se detuvieron antes de escribir la spec**, citaron las fuentes
+  correctas y no crearon ningún archivo.
+- **`speckit-plan`: se traslada a la fase de plan de la especificación 001.**
+  No se puede demostrar con un escenario inventado. Para llegar al plan,
+  `specify` tiene que escribir la spec, y solo lo hace cuando el alcance está
+  aprobado. El primer alcance aprobado es la 001 real. **Condición:** el
+  `plan.md` de la 001 tiene que mostrar ejecutada su comprobación de jerarquía,
+  con los `[P]`, `[V]`, ADR y erratas que toca y el estado de cada uno. Si no
+  la ejecuta, esta decisión se revisa **antes** de pasar a tasks.
+
 #### 3.5 Scripts — **se usa `sh`**
 
 En Windows, `init` elige `ps` por defecto. Los entornos donde corren los
@@ -375,7 +397,9 @@ de los fundadores**, no de este ADR, porque tiene coste económico. **Decidida e
     `.specify/memory/constitution.md`);
   - la demostración de la Decisión §3.4: `speckit-specify` y `speckit-plan`
     leen las fuentes superiores y se detienen ante un `[P]` bloqueante o una
-    decisión pendiente.
+    decisión pendiente. Tras la enmienda del 3 de noviembre de 2026 (§3.4),
+    ese PR solo contiene la demostración de `speckit-specify`; la de
+    `speckit-plan` pasa al plan de la 001.
 
   Ese PR toca `AGENTS.md`; este no.
 - Codex sigue pudiendo implementar desde un `tasks.md` mergeado, pero no
@@ -399,10 +423,15 @@ Del primer borrador, **V1, V2 y V4 se ejecutaron** (resultados en
 
 Queda pendiente:
 
-1. **La demostración de la Decisión §3.4** —que `speckit-specify` y
-   `speckit-plan` leen las fuentes superiores y se detienen ante un `[P]`
-   bloqueante o una decisión pendiente—. Es condición del PR de
-   inicialización.
+1. **La demostración de `speckit-plan`** (Decisión §3.4): que lee las fuentes
+   superiores y se detiene ante un `[P]` bloqueante o una decisión pendiente.
+   La de `speckit-specify` **está cumplida**: dos sesiones limpias y dos
+   escenarios en el PR de inicialización (enmienda del 3 de noviembre de 2026,
+   §3.4). La de `speckit-plan` se traslada a la fase de plan de la
+   especificación 001: su `plan.md` tiene que mostrar ejecutada la
+   comprobación de jerarquía. Si no, esta decisión se revisa antes de pasar a
+   tasks. **Esto relaja la condición original**, que la exigía antes de
+   mergear el PR de inicialización.
 2. **Los scripts `sh` en Linux** con el bit de ejecución fijado. V1 se ejecutó
    solo en Windows; hace falta cuando Codex o un job de CI los usen.
 3. **La auditoría del primer `tasks.md`** contra la matriz de capas (Decisión
