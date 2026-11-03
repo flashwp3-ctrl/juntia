@@ -28,3 +28,9 @@ test-results/
 Thumbs.db
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+/node_modules/
+/.next/
+/test-results/
+/playwright-report/
+*.tsbuildinfo
