@@ -10,11 +10,14 @@ import { copy } from "../../src/lib/copy/es";
 const INTERNAL = "/interno/primitivos";
 const routes: readonly string[] = ["/", INTERNAL];
 const FRAMES = 10;
+// F17-R2: cada pasada mide el panel de su propio tema. El selector apunta a la sección del panel, no a <html>,
+// que también lleva data-theme por el script de tema.
+const panel = (colorScheme: "light" | "dark") => `section[data-theme="${colorScheme}"]`;
 
 // Registra un valor en 10 cuadros seguidos con requestAnimationFrame, dentro de un único evaluate (sin esperas fijas).
-async function skeletonFrames(page: Page) {
-  return page.evaluate((frames) => new Promise<{ animations: number; opacities: string[] }>((resolve) => {
-    const block = document.querySelector<HTMLElement>("[data-skeleton]")!;
+async function skeletonFrames(page: Page, scope: string) {
+  return page.evaluate(([frames, root]) => new Promise<{ animations: number; opacities: string[] }>((resolve) => {
+    const block = document.querySelector<HTMLElement>(`${root} [data-skeleton]`)!;
     const opacities: string[] = [];
     const tick = () => {
       opacities.push(getComputedStyle(block).opacity);
@@ -22,12 +25,12 @@ async function skeletonFrames(page: Page) {
       else resolve({ animations: block.getAnimations().length, opacities });
     };
     requestAnimationFrame(tick);
-  }), FRAMES);
+  }), [FRAMES, scope] as const);
 }
 
-async function pressFrames(page: Page) {
-  return page.evaluate((frames) => new Promise<string[]>((resolve) => {
-    const button = document.querySelector<HTMLElement>('[data-theme="light"] button[data-variant="primary"]:not([aria-disabled])')!;
+async function pressFrames(page: Page, scope: string) {
+  return page.evaluate(([frames, root]) => new Promise<string[]>((resolve) => {
+    const button = document.querySelector<HTMLElement>(`${root} button[data-variant="primary"]:not([aria-disabled])`)!;
     const rects: string[] = [];
     const tick = () => {
       const { top, height } = button.getBoundingClientRect();
@@ -36,7 +39,7 @@ async function pressFrames(page: Page) {
       else resolve(rects);
     };
     requestAnimationFrame(tick);
-  }), FRAMES);
+  }), [FRAMES, scope] as const);
 }
 
 // F17-2 / FR-037: área clicable real ≥ 44 × 44. Combina la caja del elemento con su ::after posicionado y
@@ -83,23 +86,24 @@ for (const colorScheme of ["light", "dark"] as const) {
 
         if (route === INTERNAL) {
           // Skeleton: sin animaciones y con la misma opacidad en cada cuadro.
-          const skeleton = await skeletonFrames(page);
+          const scope = panel(colorScheme);
+          const skeleton = await skeletonFrames(page, scope);
           expect.soft(skeleton.animations, "animaciones de Skeleton").toBe(0);
           expect.soft(new Set(skeleton.opacities).size, "opacidades distintas de Skeleton").toBe(1);
           // Button primary: con el puntero abajo, su rectángulo no cambia entre cuadros.
-          const button = page.locator('[data-theme="light"] button[data-variant="primary"]:not([aria-disabled])').first();
+          const button = page.locator(`${scope} button[data-variant="primary"]:not([aria-disabled])`).first();
           await button.scrollIntoViewIfNeeded();
           const before = await button.boundingBox();
           await page.mouse.move(before!.x + before!.width / 2, before!.y + before!.height / 2);
           await page.mouse.down();
-          const rects = await pressFrames(page);
+          const rects = await pressFrames(page, scope);
           await page.mouse.up();
           expect.soft(new Set(rects).size, "rectángulos distintos de Button al presionar").toBe(1);
           // F17-2: etiquetas cortas. «Yo» del Segmented y un Button sm de solo ícono.
-          for (const [name, selector] of [["Segmented «Yo»", `[data-theme="light"] [role="radio"]:text-is("${copy.context.me}")`], ["Button sm solo ícono", '[data-theme="light"] [data-touch-probe]']] as const) {
+          for (const [name, selector] of [["Segmented «Yo»", `${scope} [role="radio"]:text-is("${copy.context.me}")`], ["Button sm solo ícono", `${scope} [data-touch-probe]`]] as const) {
             await page.locator(selector).first().scrollIntoViewIfNeeded();
             const area = await touchArea(page, selector);
-            console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
+            console.log(`${colorScheme} ${route} ${width}px: área táctil ${name} [${scope}] ${area.width}×${area.height}, esquinas de 44 ${area.corners ? "dentro" : "fuera"}`);
             expect.soft(area.width, `${name}: ancho clicable`).toBeGreaterThanOrEqual(44);
             expect.soft(area.height, `${name}: alto clicable`).toBeGreaterThanOrEqual(44);
             expect.soft(area.corners, `${name}: las esquinas de 44 × 44 caen en el control`).toBe(true);
