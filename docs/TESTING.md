@@ -7,8 +7,12 @@ plan acordado, no una práctica vigente.
 
 > **Nada de lo que hay aquí se ha ejecutado todavía.** No existe scaffold de
 > aplicación (maestro §15.1), no hay `package.json` y no hay suite. Los comandos
-> describen lo que la primera especificación de ingeniería de P0 debe crear. Los
-> presupuestos de tiempo son objetivos razonados, no medidas.
+> describen lo que la primera especificación de ingeniería de P0 debe crear.
+>
+> Los presupuestos de tiempo son **objetivos razonados y todavía no medidos**.
+> **En cuanto exista CI pasan a ser contractuales** y superar el presupuesto del
+> humo falla el build (§9). La transición ocurre con el primer pipeline en verde
+> de la especificación 001: antes de eso son objetivos, después son el contrato.
 
 ---
 
@@ -48,15 +52,16 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 Cuatro jobs **en paralelo**:
 
 1. lint + typecheck + build
-2. Vitest, dominio completo
+2. Vitest: dominio completo **y componentes (RTL selectivo)**
 3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
-4. E2E de humo: **3 specs, solo Chromium**
+4. E2E de humo: **specs 1, 2 y 3, solo Chromium**
 
-**Gate de PR completo: < 6 min. Superar el presupuesto del humo falla el build.**
+**Gate de PR completo: < 6 min, medido como job. Superar el presupuesto del humo
+falla el build.**
 
 ### Nivel 2 — al mergear a `main` y de noche
 
-1. E2E completo: Chromium + WebKit
+1. E2E completo: **las cinco specs**, Chromium + WebKit
 2. axe en 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
@@ -99,10 +104,29 @@ Dos preguntas que resuelven casi todos los casos dudosos:
 
 ### Tope de specs E2E
 
-**4 a 6 para TODO P0.** No por slice: en total.
+**4 a 6 para TODO P0.** No por slice: en total. Y ya están nombradas:
+
+| # | Spec | ¿Corre en PR? |
+| --- | --- | --- |
+| 1 | Acceso y Mi cuenta | **Sí** |
+| 2 | Anotar gasto, cronometrado (US-12) | **Sí** |
+| 3 | Pareja 50/50 y liquidación | **Sí** |
+| 4 | Meta con aportes y uso | Nocturno |
+| 5 | Presupuesto activado/desactivado | Nocturno |
+
+Las cuatro familias de smoke de §10.1 más US-12 y Mi cuenta caben en esas cinco.
+Queda **una sexta plaza libre** dentro del tope.
 
 **Cada especificación de slice declara cuántas añade, con un máximo de 2.** Si
 crees necesitar más, **detente y plantéalo**. No las añadas y lo menciones después.
+
+### Y la capa de componentes
+
+La fila «Componentes · RTL selectivo» de §10.1 sigue vigente y corre como proyecto
+aparte dentro del job de Vitest. **No tiene presupuesto de tiempo propio: cabe
+dentro de los < 90 s de `verify`.** Las dos palabras del maestro son el límite:
+*selectivo* y *en flujos críticos*. Si esa capa empieza a necesitar su propio
+presupuesto, el problema no es el presupuesto: es que hay un test por componente.
 
 ---
 
@@ -111,6 +135,12 @@ crees necesitar más, **detente y plantéalo**. No las añadas y lo menciones de
 1. **Sembrar estado por base de datos o API, nunca por la interfaz.** Un helper
    tipo `seedCouple()` inserta directo y devuelve el `storageState`. Ningún test
    crea su pareja haciendo clic en el formulario de invitación.
+   **Cada worker siembra su propia pareja aislada.** De ahí sale la respuesta al
+   paralelismo: `workers: 1` es el scaffold por defecto de Playwright, no un
+   mandato, y lo que de verdad rompe al paralelizar no es el navegador sino que dos
+   workers se pisen los datos. Eso se arregla en la siembra, no bajando los
+   workers. Con parejas aisladas, varios workers son seguros; cuántos caben lo mide
+   la 001.
 2. **Autenticar una vez** y reutilizar `storageState`. La documentación de
    Playwright recomienda hacerlo con un **proyecto `setup` y `dependencies`**, no
    con `globalSetup` («This is the recommended approach, as it integrates better
@@ -286,21 +316,26 @@ no se toca.
 | **Gate de PR completo** | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
-**Superar el presupuesto del humo falla el build.**
+Hoy son **objetivos razonados y todavía no medidos**, porque no hay suite.
+**En cuanto exista CI son contractuales, y superar el presupuesto del humo falla el
+build.** No hay un periodo de gracia después de eso.
 
-Si una herramienta impide cumplir un presupuesto, **se dice**. No se ajusta el
-presupuesto a la herramienta en silencio. Dos tensiones ya conocidas y sin medir:
+**Cada presupuesto mide el job completo**, no solo los tests: checkout, `npm ci`,
+instalación del navegador, arranque del servidor y ejecución. Es la lectura
+honesta, porque es la que espera quien está mirando el PR.
 
-- Playwright **desaconseja cachear los binarios del navegador** («Caching browser
-  binaries is not recommended, since the amount of time it takes to restore the
-  cache is comparable to the time it takes to download the binaries»), así que
-  `npx playwright install chromium --with-deps` se paga en cada run. Falta decidir
-  si el presupuesto de 3 minutos mide el job o solo los tests.
-- Playwright recomienda `workers: 1` en CI. El presupuesto supone algo de
-  paralelismo. Hay que medirlo.
+Dos consecuencias prácticas:
 
-Ambas son preguntas abiertas del ADR-011 y las resuelve la especificación 001 con
-números reales.
+- **Instala solo Chromium** en el humo: `npx playwright install --with-deps
+  chromium`. Nunca los tres navegadores.
+- **No cachees los binarios del navegador.** Eso **no es un olvido nuestro: es lo
+  que dice la documentación oficial de Playwright** — «Caching browser binaries is
+  not recommended, since the amount of time it takes to restore the cache is
+  comparable to the time it takes to download the binaries». Si alguien añade un
+  `actions/cache` para «arreglarlo», está reintroduciendo un coste, no quitándolo.
+
+Y la regla de fondo: si una herramienta impide cumplir un presupuesto, **se dice**.
+No se ajusta el presupuesto a la herramienta en silencio.
 
 ---
 
@@ -308,8 +343,10 @@ números reales.
 
 - [`docs/adr/ADR-011`](adr/ADR-011-estrategia-de-pruebas-y-ci.md) — la decisión, su
   justificación, la tabla completa de ubicación por criterio, la documentación
-  oficial consultada con versiones, y las preguntas abiertas (entre ellas el
-  mecanismo de los tests de RLS, que **no está cerrado**).
+  oficial consultada con versiones, y las dos preguntas que siguen abiertas a
+  propósito y deciden los fundadores: **el mecanismo de los tests de RLS** (con
+  recomendación de pgTAP en SQL plano) y **la herramienta para la regla de hex
+  crudos**. Todo lo demás está cerrado.
 - `docs/JUNTIA_MASTER.md` §7.1, §7.2, §10.1, §10.2, §10.3, §10.4, §15.4, §15.6.3,
   §15.7
 - `docs/design/HANDOFF_CLAUDE_CODE.md` — criterios de aceptación de P0, tabla de

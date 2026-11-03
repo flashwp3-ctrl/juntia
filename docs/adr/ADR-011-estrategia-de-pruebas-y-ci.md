@@ -89,9 +89,28 @@ menciona después.
 El tope no es una preferencia estética. Es el mecanismo que convierte el principio
 rector en algo que se puede incumplir visiblemente.
 
+**El reparto concreto son cinco specs.** Las cuatro familias de smoke que nombra
+§10.1, más US-12 y Mi cuenta, caben exactamente ahí:
+
+| # | Spec | §10.1 / criterio | ¿PR? |
+| --- | --- | --- | --- |
+| 1 | Acceso y Mi cuenta | Mi cuenta 05·9 (fila 15) | Sí |
+| 2 | Anotar gasto, cronometrado (US-12) | «Registro privado» + mediana < 10 s (fila 14, §15.7) | Sí |
+| 3 | Pareja 50/50 y liquidación | «pareja + 50/50 + liquidación» | Sí |
+| 4 | Meta con aportes y uso | «meta individual/compartida con aportes y uso» | Nocturno |
+| 5 | Presupuesto activado/desactivado | «presupuesto activado/desactivado» | Nocturno |
+
+**Tres corren en cada PR (1, 2 y 3); las cinco corren en el nocturno.** Queda una
+sexta plaza libre dentro del tope de 4–6; gastarla exige la misma justificación
+que cualquier otra spec.
+
 ### 4. Presupuestos de tiempo
 
-Son un **contrato**, no una aspiración.
+Son **objetivos razonados y todavía no medidos**: no existe scaffold ni suite, de
+modo que hoy ninguna de estas cifras es una medida. **En cuanto exista CI pasan a
+ser contractuales**, y entonces **superar el presupuesto del humo falla el build**.
+La transición ocurre con el primer pipeline que la especificación 001 ponga en
+verde; a partir de ahí ya no son objetivos, son el contrato.
 
 | Suite | Presupuesto |
 | --- | --- |
@@ -102,9 +121,21 @@ Son un **contrato**, no una aspiración.
 | **Gate de PR completo** | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
-**Superar el presupuesto del humo falla el build.** Sin esa consecuencia, cada PR
-añade veinte segundos que nadie nota y en seis meses la suite vuelve a durar
-cuarenta y cinco minutos sin que nadie lo haya decidido.
+Sin esa consecuencia, cada PR añade veinte segundos que nadie nota y en seis meses
+la suite vuelve a durar cuarenta y cinco minutos sin que nadie lo haya decidido.
+
+**Cada presupuesto mide el job completo, no solo los tests**: checkout, `npm ci`,
+instalación del navegador, arranque del servidor y ejecución. Es la lectura
+honesta, porque es la que espera quien mira el PR.
+
+Eso obliga a una mitigación concreta en el humo: **instalar solo Chromium**, con
+`npx playwright install --with-deps chromium`, nunca los tres navegadores. Y
+conviene dejarlo escrito para quien venga después: **no cachear los binarios del
+navegador es una decisión de la documentación oficial de Playwright, no un olvido
+nuestro** («Caching browser binaries is not recommended, since the amount of time
+it takes to restore the cache is comparable to the time it takes to download the
+binaries»). Quien quiera «arreglarlo» añadiendo un `actions/cache` está
+reintroduciendo un coste, no quitándolo.
 
 ### 5. CI en dos niveles
 
@@ -113,11 +144,12 @@ cuarenta y cinco minutos sin que nadie lo haya decidido.
 1. lint + typecheck + build
 2. Vitest, dominio completo
 3. Supabase local en contenedor, con migraciones aplicadas y tests SQL de RLS
-4. E2E de humo: **3 specs, solo Chromium**
+4. E2E de humo: **las specs 1, 2 y 3 de la tabla anterior, solo Chromium**,
+   instalado con `npx playwright install --with-deps chromium`
 
 **Nivel 2 — al mergear a `main` y de noche:**
 
-1. E2E completo en **Chromium + WebKit**
+1. E2E completo: **las cinco specs**, en **Chromium + WebKit**
 2. axe en 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
@@ -129,7 +161,13 @@ La descripción operativa está en `docs/TESTING.md`.
 ### 6. Siete reglas duras
 
 1. **Sembrar estado por base de datos o API, nunca por la interfaz.** Un helper
-   tipo `seedCouple()` inserta directo y devuelve el `storageState`.
+   tipo `seedCouple()` inserta directo y devuelve el `storageState`. **Cada worker
+   siembra su propia pareja aislada**, y de ahí sale la respuesta al paralelismo:
+   `workers: 1` es el scaffold por defecto de Playwright, no un mandato, y el
+   riesgo real de paralelizar no es el navegador sino la colisión de datos entre
+   workers. Se resuelve en la siembra, no bajando los workers. Con parejas
+   aisladas, varios workers son seguros; cuántos caben lo mide la especificación
+   001.
 2. **Autenticar una vez** y reutilizar `storageState` en todos los proyectos.
 3. **`prefers-reduced-motion: reduce` por defecto** en el contexto de Playwright:
    es más rápido, es mucho menos frágil frente a los springs y las View
@@ -182,6 +220,11 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
 - El tope de 4 a 6 specs hace que la cobertura de UI dependa de la revisión humana
   del PR y de la fila «Componentes · RTL selectivo» de §10.1, que **sigue vigente**
   y corre dentro del job de Vitest como proyecto aparte. Este ADR no la sustituye.
+  **Esa capa no lleva presupuesto de tiempo propio:** cabe dentro de los < 90 s de
+  `verify`. Es la consecuencia de tomarse en serio las dos palabras del maestro,
+  «selectivo» y «en flujos críticos». Una capa de componentes que necesita un
+  presupuesto aparte ya dejó de ser selectiva, y eso es señal de que hay un test
+  por componente, no cobertura de los flujos críticos.
 - Los presupuestos de tiempo son observables, así que hay que medirlos y
   publicarlos en cada run; un presupuesto que nadie mide no es un contrato.
 - Un presupuesto que falla el build puede bloquear un PR por motivos de
@@ -193,14 +236,14 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
 Nada de lo siguiente se ha ejecutado. No existe scaffold, no hay `package.json` y
 no se instaló ninguna herramienta durante la redacción de este ADR.
 
-1. **Todos los presupuestos de tiempo.** Son objetivos razonados, no medidas. Se
-   confirman o se renegocian con la primera suite real de la especificación 001.
-2. **Que el gate de PR completo cabe en 6 minutos** una vez contados el arranque de
-   Supabase en contenedor y la instalación de Chromium. La documentación de
-   Playwright desaconseja cachear los binarios del navegador (ver Referencias), de
-   modo que el coste de instalación se paga en cada run y hay que medirlo.
-3. **Que 3 specs de humo caben en 3 minutos** con la recomendación de Playwright de
-   `workers: 1` en CI.
+1. **Todos los presupuestos de tiempo.** Son objetivos razonados y todavía no
+   medidos. Se confirman o se renegocian con la primera suite real de la
+   especificación 001, y con ella pasan a ser contractuales.
+2. **Que el gate de PR completo cabe en 6 minutos** medido como job, una vez
+   contados el arranque de Supabase en contenedor y
+   `npx playwright install --with-deps chromium`.
+3. **Cuántos workers caben** con parejas aisladas por worker, y si 3 specs de humo
+   entran en 3 minutos con ese número.
 4. **La elección de mecanismo para los tests de RLS** (pregunta abierta 1).
 5. **El nombre y la configuración exactos de la regla de lint de hex crudos.** No se
    verificó ninguna implementación concreta.
@@ -337,7 +380,7 @@ versión concreta del CLI.
 
 ## Preguntas abiertas
 
-### 1. Mecanismo para los tests de RLS — **única pieza genuinamente abierta**
+### 1. Mecanismo para los tests de RLS — **la pieza genuinamente abierta**
 
 Hay tres caminos documentados y la decisión no se cierra aquí.
 
@@ -360,41 +403,21 @@ Si se elige A, hay que **resolver primero cuál de las dos formas del claim usa
 nuestra versión del stack**, ejecutándola; la documentación de Supabase no lo
 aclara. Decide un humano.
 
-### 2. ¿Qué mide exactamente el presupuesto del humo?
-
-«< 3 min» puede ser el tiempo de los tests o el del job completo (checkout, `npm
-ci`, `npx playwright install chromium --with-deps`, arranque del servidor). Como la
-documentación de Playwright **desaconseja cachear los binarios**, la instalación se
-paga en cada run y la diferencia entre ambas lecturas no es pequeña. Este ADR no lo
-decide; hay que medirlo en la especificación 001 y fijar la lectura.
-
-### 3. Tres specs de humo con `workers: 1`
-
-Playwright recomienda `workers: 1` en CI por estabilidad. El presupuesto de 3
-minutos supone implícitamente algo de paralelismo. Medir y, si no cabe, decir cuál
-de las dos cosas cede: nunca ajustar el presupuesto a la herramienta en silencio.
-
-### 4. Correspondencia entre el tope de 4–6 specs y la lista de humo de §10.1
-
-§10.1 nombra cuatro familias de smoke E2E (registro privado; pareja + 50/50 +
-liquidación; meta individual/compartida con aportes y uso; presupuesto
-activado/desactivado) y este ADR fija 3 specs de humo en el nivel 1 y 4–6 en total
-para P0. La lectura que proponemos es que las cuatro familias viven dentro de las
-4–6 specs y que solo un subconjunto de 3 corre en cada PR, quedando el resto para
-el nivel 2. **No se da por resuelta:** el reparto concreto lo fija la especificación
-que cree cada spec, y si las cuatro familias más las filas 14 y 15 de la tabla no
-caben en 6, hay que decirlo y no estirar el tope en silencio.
-
-### 5. La fila «Componentes · RTL selectivo» de §10.1
-
-Sigue vigente y este ADR no la ubica en la tabla, porque la tabla clasifica
-criterios de aceptación del handoff y esa fila es una capa, no un criterio. Corre
-como un proyecto aparte dentro del job de Vitest. Queda por fijar su presupuesto de
-tiempo propio, que hoy está absorbido en los < 90 s de `verify`.
-
-### 6. Regla de lint de colores hex crudos
+### 2. Herramienta para la regla de lint de colores hex crudos
 
 Está decidida como regla (nº 7); no está decidida su implementación. No se verificó
 ninguna. Candidatos razonables: `no-restricted-syntax` de ESLint sobre literales de
 plantilla, o Stylelint con `color-no-hex` limitado a todo menos `styles/tokens.css`.
 Lo resuelve la especificación 001 al crear el scaffold.
+
+## Preguntas cerradas por el gestor
+
+Se registran aquí, ya resueltas, para que no se reabran por costumbre. El detalle
+vive en la parte de la «Decisión» que cada una toca; esta tabla es solo el índice.
+
+| Pregunta | Resolución | Dónde está escrita |
+| --- | --- | --- |
+| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. Las tres primeras corren por PR; las cinco en el nocturno | Decisión §3 |
+| ¿El presupuesto del humo mide el job o solo los tests? | El **job** completo. Mitigación: instalar solo Chromium. No cachear navegadores es decisión de la documentación oficial de Playwright, no un olvido | Decisión §4 |
+| ¿Se acepta `workers: 1` en CI? | No como dado: es el scaffold por defecto de Playwright. El riesgo real es la colisión de datos entre workers, y se resuelve sembrando una pareja aislada por worker | Decisión §6, regla 1 |
+| ¿Qué presupuesto de tiempo lleva la capa RTL de §10.1? | Ninguno propio: corre dentro del job de Vitest y cabe en los < 90 s de `verify`, «selectivo» y «en flujos críticos» | Consecuencias |
