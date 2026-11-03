@@ -1,0 +1,73 @@
+"use client";
+// FR-015, FR-040; COMPONENT_SPECIFICATIONS.md §Tabs / Segmented; MOTION_SYSTEM.md §1 (perilla, spring snappy).
+// Foco itinerante y flechas ←/→ a mano (research R1.4: sin librerías de radio ni de tabs).
+import { motion, useReducedMotion } from "motion/react";
+import { useId, useRef, type KeyboardEvent } from "react";
+import { snappy } from "@/lib/motion/tokens";
+
+export type SegmentedOption<T extends string> = { value: T; label: string };
+
+type SegmentedProps<T extends string> = {
+  /** `radiogroup` para elegir un valor (Yo/Nosotros, reparto); `tablist` cuando cambia un panel. */
+  role: "radiogroup" | "tablist";
+  label: string;
+  options: readonly SegmentedOption<T>[];
+  value: T;
+  onValueChange: (value: T) => void;
+  /** Ocupa todo el ancho con segmentos iguales. */
+  stretch?: boolean;
+};
+
+export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false }: SegmentedProps<T>) {
+  const reduced = useReducedMotion();
+  const knobId = `${useId()}-knob`;
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const itemRole = role === "radiogroup" ? "radio" : "tab";
+
+  const move = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = options.length - 1;
+    const next = { ArrowRight: index === last ? 0 : index + 1, ArrowLeft: index === 0 ? last : index - 1, Home: 0, End: last }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    refs.current[next]?.focus();
+    onValueChange(options[next].value);
+  };
+
+  return (
+    <div
+      role={role}
+      aria-label={label}
+      className={`${stretch ? "flex" : "inline-flex"} rounded-[var(--radius-md)] bg-sunken p-[3px] shadow-[var(--comp-field-inset)]`}
+    >
+      {options.map((option, index) => {
+        const selected = option.value === value;
+        return (
+          <button
+            key={option.value}
+            ref={(node) => { refs.current[index] = node; }}
+            type="button"
+            role={itemRole}
+            aria-checked={role === "radiogroup" ? selected : undefined}
+            aria-selected={role === "tablist" ? selected : undefined}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onValueChange(option.value)}
+            onKeyDown={(event) => move(event, index)}
+            className={`relative isolate inline-flex min-h-[38px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} ${selected ? "text-ink" : "text-ink-secondary"} after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}
+          >
+            {selected ? (
+              // Perilla compartida: se desliza entre segmentos; con movimiento reducido salta (duración 0). No anima al montar.
+              <motion.span
+                layoutId={knobId}
+                initial={false}
+                transition={reduced ? { duration: 0 } : snappy}
+                data-segmented-knob=""
+                className="absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised"
+              />
+            ) : null}
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
