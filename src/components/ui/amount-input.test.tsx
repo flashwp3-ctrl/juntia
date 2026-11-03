@@ -93,4 +93,24 @@ describe("AmountInput (T024)", () => {
     const texts = ids.map((id) => document.getElementById(id)?.textContent);
     expect(texts).toContain(copy.primitives.amountHelp);
   });
+
+  // F17-4 (revisión adversarial del PR #17): un value o defaultValue que no sea un entero entre 0 y 999.999.999
+  // nunca se reformatea como otro importe: el campo queda vacío e inválido, sin llamar a onValueChange.
+  describe.each([
+    ["mil millones", 1_000_000_000],
+    ["negativo", -1200],
+    ["con decimales", 12.5],
+  ])("valor externo fuera de rango (%s)", (_case, outOfRange) => {
+    it.each(["value", "defaultValue"] as const)("por %s: vacío, inválido y con aviso de desarrollo", (prop) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { field, onValueChange } = setup({ [prop]: outOfRange });
+      expect(field).toHaveProperty("value", "");
+      expect(field.getAttribute("aria-invalid")).toBe("true");
+      const message = document.getElementById(field.getAttribute("aria-errormessage") ?? "");
+      expect(message?.textContent).toContain(copy.primitives.amountError);
+      expect(onValueChange).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+  });
 });
