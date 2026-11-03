@@ -568,9 +568,15 @@ Lo resuelve la especificación 001 al crear el scaffold.
 Se registran aquí, ya resueltas, para que no se reabran por costumbre. El detalle
 vive en la parte de la «Decisión» que cada una toca; esta tabla es solo el índice.
 
-| Pregunta | Resolución | Dónde está escrita |
+**Es un índice, así que se actualiza cuando cambia lo que indexa.** Tres de estas
+cuatro resoluciones fueron refinadas después por la revisión independiente, y la
+columna «Resolución» refleja el estado vigente, no el de la ronda en que se
+cerraron. Un índice que describe mal lo que indexa hace justo el daño que venía a
+evitar.
+
+| Pregunta | Resolución vigente | Dónde está escrita |
 | --- | --- | --- |
-| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. Las tres primeras corren por PR; las cinco en el nocturno | Decisión §3 |
-| ¿El presupuesto del humo mide el job o solo los tests? | El **job** completo. Mitigación: instalar solo Chromium. No cachear navegadores es decisión de la documentación oficial de Playwright, no un olvido | Decisión §4 |
-| ¿Se acepta `workers: 1` en CI? | No como dado: es el scaffold por defecto de Playwright. El riesgo real es la colisión de datos entre workers, y se resuelve sembrando una pareja aislada por worker | Decisión §6, regla 1 |
-| ¿Qué presupuesto de tiempo lleva la capa RTL de §10.1? | Ninguno propio: corre dentro del job de Vitest y cabe en los < 90 s de `verify`, «selectivo» y «en flujos críticos» | Consecuencias |
+| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. **Un PR corre las specs 1, 2 y 3 más la spec del área que toca**, según la columna «Área que cubre»; el nocturno corre siempre las cinco | Decisión §3, «Qué specs corre un PR» |
+| ¿El presupuesto del humo mide el job o solo los tests? | El **job** completo — y solo los presupuestos de job: los de comando (`verify`, dominio, SQL/RLS) miden la ejecución sin `npm ci`, en **tabla aparte**. Mitigación: instalar solo Chromium. Cachear navegadores está **desaconsejado** por la documentación oficial de Playwright; el mecanismo existe, la recomendación a favor no | Decisión §4, las dos tablas |
+| ¿Se acepta `workers: 1` en CI? | No como dado: es el scaffold por defecto de Playwright. El riesgo real es la colisión de datos entre workers, y se resuelve en la siembra — **una pareja aislada por worker y un `storageState` por worker y por rol**, que es lo que la documentación de Playwright recomienda cuando los tests mutan estado de servidor | Decisión §6, reglas 1 **y 2** |
+| ¿Qué presupuesto de tiempo lleva la capa RTL de §10.1? | Ninguno propio: corre dentro del job de Vitest y cabe en los < 90 s de `verify`, que **la incluye en su definición**, «selectivo» y «en flujos críticos» | Consecuencias; definición de `verify` en Decisión §4 |
