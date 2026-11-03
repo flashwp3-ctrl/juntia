@@ -1,4 +1,4 @@
-/* DESIGN_SYSTEM.md §1–§2 y COMPONENT_SPECIFICATIONS.md §Button, §Skeleton. */
+/* DESIGN_SYSTEM.md §1–§2 y COMPONENT_SPECIFICATIONS.md §Button, §Input, §Segmented, §Badge, §BottomSheet, §Skeleton. */
 :root {
   --forest-50: #EDF3EE;
   --forest-100: #D9E5DC;
@@ -255,6 +255,11 @@
   --comp-button-primary-fg: var(--color-text-onAction);
   --comp-button-primary-edge: 0 3px 0 var(--forest-900);
   --comp-button-primary-highlight: inset 0 1px 0 rgba(255,255,255,.18);
+  --comp-field-inset: inset 0 1px 2px rgba(26,28,26,.09);
+  --comp-segmented-knob-bg: var(--color-surface-overlay);
+  --comp-badge-pending-bg: var(--color-surface-raised);
+  --comp-avatar-fg: var(--color-text-primary);
+  --comp-scrim: rgba(18,20,22,.38);
 }
 
 [data-theme="dark"] {
@@ -318,6 +323,11 @@
   --comp-button-primary-fg: var(--color-text-onAction);
   --comp-button-primary-edge: 0 3px 0 #22402F;
   --comp-button-primary-highlight: inset 0 1px 0 rgba(255,255,255,.18);
+  --comp-field-inset: inset 0 1px 2px rgba(0,0,0,.5);
+  --comp-segmented-knob-bg: var(--charcoal-600);
+  --comp-badge-pending-bg: var(--color-surface-sunken);
+  --comp-avatar-fg: var(--color-surface-canvas);
+  --comp-scrim: rgba(18,20,22,.62);
 }
 
 /* Sin JavaScript, el tema sigue al sistema. Paridad comprobada por T014. */
@@ -383,5 +393,10 @@
     --comp-button-primary-fg: var(--color-text-onAction);
     --comp-button-primary-edge: 0 3px 0 #22402F;
     --comp-button-primary-highlight: inset 0 1px 0 rgba(255,255,255,.18);
+    --comp-field-inset: inset 0 1px 2px rgba(0,0,0,.5);
+    --comp-segmented-knob-bg: var(--charcoal-600);
+    --comp-badge-pending-bg: var(--color-surface-sunken);
+    --comp-avatar-fg: var(--color-surface-canvas);
+    --comp-scrim: rgba(18,20,22,.62);
   }
 }

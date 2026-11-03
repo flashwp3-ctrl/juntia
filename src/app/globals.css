@@ -80,3 +80,13 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   body { transition: background-color var(--duration-quick), color var(--duration-quick); }
 }
+
+/* COMPONENT_SPECIFICATIONS.md §Skeleton: pulso de opacidad 1 → .55 cada 1,6 s. Solo se usa con motion-safe. */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+/* COMPONENT_SPECIFICATIONS.md §Button: circle-notch a 0,8 s por vuelta. Solo se usa con motion-safe. */
+@keyframes button-spin {
+  to { transform: rotate(360deg); }
+}
