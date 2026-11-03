@@ -1,0 +1,25 @@
+
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia/.claude/worktrees/001-b-primitives-a6aa4e
+
+ ❯ |components| src/lib/internal-surface.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |components| src/lib/internal-surface.test.ts [ src/lib/internal-surface.test.ts ]
+Error: Cannot find module './internal-surface' imported from C:/Users/aleja/Documents/PP/Juntia/.claude/worktrees/001-b-primitives-a6aa4e/src/lib/internal-surface.test.ts
+ ❯ src/lib/internal-surface.test.ts:7:1
+      5| // Tabla de data-model.md, «InternalSurfaceGate». URLs ficticias de pr…
+      6| import { describe, expect, it } from "vitest";
+      7| import { isAllowedInternalHost, isInternalSurfaceEnabled } from "./int…
+       | ^
+      8|
+      9| const urls = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  17:29:49
+   Duration  844ms (setup 87%, transform 10%, worker 2%)
+
