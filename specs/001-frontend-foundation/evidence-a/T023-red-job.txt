@@ -1,0 +1,238 @@
+lint-typecheck-build	Set up job	﻿2026-11-03T20:41:19.0371593Z Current runner version: '2.338.2'
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0412078Z ##[group]Runner Image Provisioner
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0413998Z Hosted Compute Agent
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0415080Z Version: 20261021.618
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0416201Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0417432Z Build Date: 2026-10-21T00:45:21Z
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0418642Z Worker ID: {97b70046-f99e-46f0-a506-839661967e66}
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0419861Z Region: centralus
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0420837Z Cloud: Azure
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0421905Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0424762Z ##[group]Operating System
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0425816Z Ubuntu
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0426584Z 26.04.1
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0427361Z LTS
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0428299Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0429160Z ##[group]Runner Image
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0430158Z Image: ubuntu-26.04
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0431145Z Version: 20261025.179.1
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0433181Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261025.179/images/ubuntu/Ubuntu2604-Readme.md
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0436344Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261025.179
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0438066Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0440071Z ##[group]GITHUB_TOKEN Permissions
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0443696Z Contents: read
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0444729Z Metadata: read
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0445611Z ##[endgroup]
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0448914Z Secret source: Actions
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0450499Z Cache mode: write
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.0452232Z Prepare workflow directory
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.1344636Z Prepare all required actions
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.1467089Z Getting action download info
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.4217030Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.5328734Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+lint-typecheck-build	Set up job	2026-11-03T20:41:19.7100694Z Complete job name: lint-typecheck-build
+lint-typecheck-build	Start job clock	﻿2026-11-03T20:41:19.7881890Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+lint-typecheck-build	Start job clock	2026-11-03T20:41:19.7883194Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+lint-typecheck-build	Start job clock	2026-11-03T20:41:19.7919319Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Start job clock	2026-11-03T20:41:19.7920229Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	﻿2026-11-03T20:41:19.8379822Z ##[group]Run actions/checkout@v7
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8380449Z with:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8380892Z   repository: juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8384986Z   token: ***
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8385446Z   ssh-strict: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8385898Z   ssh-user: git
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8386355Z   persist-credentials: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8386864Z   clean: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8387320Z   sparse-checkout-cone-mode: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8387853Z   fetch-depth: 1
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8388296Z   fetch-tags: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8388742Z   show-progress: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8389202Z   lfs: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8389621Z   submodules: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8390084Z   set-safe-directory: true
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8390602Z   allow-unsafe-pr-checkout: false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8391177Z env:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8391584Z   JOB_STARTED_MS: 1793738479807
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:19.8392079Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1937546Z Syncing repository: juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1940548Z ##[group]Getting Git version info
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1942170Z Working directory is '/home/runner/work/juntia/juntia'
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1952313Z [command]/usr/bin/git version
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1953981Z git version 2.56.0
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1958071Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1965986Z Temporarily overriding HOME='/home/runner/work/_temp/a959f4b5-eb6d-4598-b2aa-ab45f2d8ba94' before making global git config changes
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1969061Z Adding repository directory to the temporary git global config as a safe directory
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1971784Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1979600Z Deleting the contents of '/home/runner/work/juntia/juntia'
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1990711Z ##[group]Determining repository object format
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1994697Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1996328Z ##[group]Initializing the repository
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.1997878Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3207165Z hint: Using 'master' as the name for the initial branch. This default branch name
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3213539Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3217802Z hint: to use in all of your new repositories, which will suppress this warning,
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3219519Z hint: call:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3252577Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3254243Z hint: 	git config --global init.defaultBranch <name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3255828Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3257354Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3259458Z hint: 'development'. The just-created branch can be renamed via this command:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3261171Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3262227Z hint: 	git branch -m <name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3263759Z hint:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3265194Z hint: Disable this message with "git config set advice.defaultBranchName false"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3267530Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3271385Z [command]/usr/bin/git remote add origin https://github.com/juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3275052Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3276038Z ##[group]Disabling automatic garbage collection
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3276856Z [command]/usr/bin/git config --local gc.auto 0
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3278394Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3279359Z ##[group]Setting up auth
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3279998Z Removing SSH command configuration
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3280895Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3283873Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3534093Z Removing HTTP extra header
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3544022Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3594738Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3895373Z Removing includeIf entries pointing to credentials config files
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3899728Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.3940283Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4355799Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4363137Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4370051Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4404839Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4440650Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4474230Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4476242Z ##[group]Fetching the repository
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:20.4483151Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +022214bef91e709fc8f2b350cdb9a3b80abee2de:refs/remotes/pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8707742Z From https://github.com/juntia-labs/juntia
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8714119Z  * [new ref]         022214bef91e709fc8f2b350cdb9a3b80abee2de -> pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8718221Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8719391Z ##[group]Determining the checkout info
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8720670Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8723553Z [command]/usr/bin/git sparse-checkout disable
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8784401Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8820241Z ##[group]Checking out the ref
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:29.8833796Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1399913Z Note: switching to 'refs/remotes/pull/15/merge'.
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1422244Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1423502Z You are in 'detached HEAD' state. You can look around, make experimental
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1443534Z changes and commit them, and you can discard any commits you make in this
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1444745Z state without impacting any branches by switching back to a branch.
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1445352Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1545326Z If you want to create a new branch to retain commits you create, you may
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1546651Z do so (now or later) by using -c with the switch command. Example:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1547258Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1547554Z   git switch -c <new-branch-name>
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1548015Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1548314Z Or undo this operation with:
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1548639Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1548835Z   git switch -
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1549112Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1549566Z Turn off this advice by setting config variable advice.detachedHead to false
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1550178Z 
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1550823Z HEAD is now at 022214b Merge 2df8857be946d5f31c41932b716d00481a91ee17 into 668e38c83b1364dbf39917e61040d2dadc2f7999
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1557177Z ##[endgroup]
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1559704Z [command]/usr/bin/git log -1 --format=%H
+lint-typecheck-build	Run actions/checkout@v7	2026-11-03T20:41:30.1589469Z 022214bef91e709fc8f2b350cdb9a3b80abee2de
+lint-typecheck-build	Run actions/setup-node@v7	﻿2026-11-03T20:41:30.1901622Z ##[group]Run actions/setup-node@v7
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1902039Z with:
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1902310Z   node-version: 24
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1902583Z   cache: npm
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1903187Z   check-latest: false
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1906079Z   token: ***
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1906367Z   package-manager-cache: true
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1906716Z env:
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1906965Z   JOB_STARTED_MS: 1793738479807
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.1907265Z ##[endgroup]
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.3330361Z Found in cache @ /opt/hostedtoolcache/node/24.22.1/x64
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.4730967Z ##[group]Environment details
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.9847431Z node: v24.22.1
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.9849009Z npm: 11.19.1
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.9849842Z yarn: 1.22.22
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.9851240Z ##[endgroup]
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:30.9873697Z [command]/opt/hostedtoolcache/node/24.22.1/x64/bin/npm config get cache
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:31.1214581Z /home/runner/.npm
+lint-typecheck-build	Run actions/setup-node@v7	2026-11-03T20:41:31.3409929Z npm cache is not found
+lint-typecheck-build	Install, lint, typecheck and build	﻿2026-11-03T20:41:31.3580656Z ##[group]Run node scripts/ci.mjs run ci lint typecheck build
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:41:31.3581249Z [36;1mnode scripts/ci.mjs run ci lint typecheck build[0m
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:41:31.3623670Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:41:31.3624022Z env:
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:41:31.3624298Z   JOB_STARTED_MS: 1793738479807
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:41:31.3624651Z ##[endgroup]
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:03.5550977Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:42.9617204Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:42.9618502Z added 478 packages, and audited 485 packages in 1m
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:42.9636267Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:42.9638323Z 166 packages are looking for funding
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:42.9639303Z   run `npm fund` for details
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1989419Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1990563Z 16 moderate severity vulnerabilities
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1992349Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1993524Z To address all issues (including breaking changes), run:
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1994514Z   npm audit fix --force
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1995173Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.1995675Z Run `npm audit` for details.
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.3877971Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.3879033Z > juntia@0.1.0 lint
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.3879939Z > eslint .
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:43.3880422Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6197834Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6199607Z /home/runner/work/juntia/juntia/src/app/globals.css
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6245465Z ##[error]  85:31  error  ADR-011 §6, regla 7: usa un token semántico; los hex solo van en src/styles/tokens.css  no-restricted-syntax
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6259249Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6259846Z ✖ 1 problem (1 error, 0 warnings)
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6260213Z 
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6676121Z Falló lint
+lint-typecheck-build	Install, lint, typecheck and build	2026-11-03T20:42:45.6735382Z ##[error]Process completed with exit code 1.
+lint-typecheck-build	Publish timings and non-applicable controls	﻿2026-11-03T20:42:45.6799044Z ##[group]Run node scripts/ci.mjs summary
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6799496Z [36;1mnode scripts/ci.mjs summary[0m
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6830692Z shell: /usr/bin/bash -e {0}
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6830986Z env:
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6831214Z   JOB_STARTED_MS: 1793738479807
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6831501Z   JOB_STATUS: failure
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.6831753Z ##[endgroup]
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7195076Z | Control | Estado | Duración | Presupuesto |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7196188Z | --- | --- | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7197327Z | ci | pasó | 71.88 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7198275Z | lint | falló | 2.39 s | — |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7199618Z | Job lint-typecheck-build (incluye instalación) | failure | 85.91 s | < 360 s |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7200571Z 
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7201019Z | Control | Estado |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7201733Z | --- | --- |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7203279Z | 3 · Supabase local, migraciones y SQL/RLS | NO APLICABLE — lo incorpora P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7205069Z | 4 · E2E de humo | NO APLICABLE — la primera spec E2E nace en P0-1 |
+lint-typecheck-build	Publish timings and non-applicable controls	2026-11-03T20:42:45.7206832Z | Superficie interna (FR-052, FR-053) | NO APLICABLE — la incorpora la 001 en su PR B |
+lint-typecheck-build	Post Run actions/checkout@v7	﻿2026-11-03T20:42:45.7453612Z Post job cleanup.
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8584260Z [command]/usr/bin/git version
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8672677Z git version 2.56.0
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8728686Z Temporarily overriding HOME='/home/runner/work/_temp/95285bdb-0146-478a-815d-bddce8d128db' before making global git config changes
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8732968Z Adding repository directory to the temporary git global config as a safe directory
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8736176Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8821000Z Removing SSH command configuration
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8822263Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.8904653Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9383712Z Removing HTTP extra header
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9423474Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9509420Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9935118Z Removing includeIf entries pointing to credentials config files
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9939208Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9965286Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9966891Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:45.9993651Z includeif.gitdir:/github/workspace/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0009716Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0060717Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0075037Z /home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0128984Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-e4ebbe70\-3aca\-4ef4\-93f0\-c8929b17bcb1\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0192366Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0268029Z /home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0364984Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-e4ebbe70\-3aca\-4ef4\-93f0\-c8929b17bcb1\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0411313Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0424250Z /github/runner_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0437274Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-e4ebbe70\-3aca\-4ef4\-93f0\-c8929b17bcb1\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0512186Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0558650Z /github/runner_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0576294Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-e4ebbe70\-3aca\-4ef4\-93f0\-c8929b17bcb1\.config
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.0642384Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lint-typecheck-build	Post Run actions/checkout@v7	2026-11-03T20:42:46.1114165Z Removing credentials config '/home/runner/work/_temp/git-credentials-e4ebbe70-3aca-4ef4-93f0-c8929b17bcb1.config'
+lint-typecheck-build	Complete job	﻿2026-11-03T20:42:46.1344880Z Cleaning up orphan processes

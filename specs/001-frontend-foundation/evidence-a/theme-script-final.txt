@@ -1,0 +1,9 @@
+
+> juntia@0.1.0 check:theme-script
+> node scripts/check-theme-script.mjs
+
+OK · / responde 200
+OK · head precede a body
+OK · script de tema inline dentro de head
+OK · script sin src, async ni defer
+OK · html sin data-theme fijado por el servidor

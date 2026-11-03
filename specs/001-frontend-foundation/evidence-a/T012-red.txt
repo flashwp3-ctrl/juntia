@@ -1,0 +1,68 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+ ❯ |components| tests/lint-rules.test.ts (5 tests | 5 failed) 20ms
+   ❯ reglas de lint propias (T012) (5)
+     × marca las líneas exactas de hex.tsx y permite las anclas 14ms
+     × marca las líneas exactas de hex.css y permite las anclas 1ms
+     × marca las líneas exactas de wait.a11y.ts y permite las anclas 1ms
+     × permite los colores en tokens.css 2ms
+     × impide importar la interfaz desde domain 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |components| tests/lint-rules.test.ts > reglas de lint propias (T012) > marca las líneas exactas de hex.tsx y permite las anclas
+ FAIL  |components| tests/lint-rules.test.ts > reglas de lint propias (T012) > marca las líneas exactas de hex.css y permite las anclas
+ FAIL  |components| tests/lint-rules.test.ts > reglas de lint propias (T012) > marca las líneas exactas de wait.a11y.ts y permite las anclas
+Error: Could not find config file.
+ ❯ assertConfigurationExists node_modules/eslint/lib/config/config-loader.js:80:17
+ ❯ LegacyConfigLoader.loadConfigArrayForFile node_modules/eslint/lib/config/config-loader.js:414:3
+ ❯ findFiles node_modules/eslint/lib/eslint/eslint-helpers.js:635:25
+ ❯ ESLint.lintFiles node_modules/eslint/lib/eslint/eslint.js:1014:21
+ ❯ tests/lint-rules.test.ts:18:22
+     16|     ["wait.a11y.ts", [5, 6]],
+     17|   ] as const)("marca las líneas exactas de %s y permite las anclas", a…
+     18|     const [result] = await eslint.lintFiles(`tests/lint-fixtures/${nam…
+       |                      ^
+     19|     expect(restrictedLines(result.messages)).toEqual(lines);
+     20|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |components| tests/lint-rules.test.ts > reglas de lint propias (T012) > permite los colores en tokens.css
+Error: Could not find config file.
+ ❯ assertConfigurationExists node_modules/eslint/lib/config/config-loader.js:80:17
+ ❯ LegacyConfigLoader.loadConfigArrayForFile node_modules/eslint/lib/config/config-loader.js:414:3
+ ❯ ESLint.lintText node_modules/eslint/lib/eslint/eslint.js:1139:4
+ ❯ tests/lint-rules.test.ts:22:22
+     20|   });
+     21|   it("permite los colores en tokens.css", async () => {
+     22|     const [result] = await eslint.lintText(await fixture("hex.css"), {…
+       |                      ^
+     23|     expect(result.errorCount).toBe(0);
+     24|     expect(result.warningCount).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |components| tests/lint-rules.test.ts > reglas de lint propias (T012) > impide importar la interfaz desde domain
+Error: Could not find config file.
+ ❯ assertConfigurationExists node_modules/eslint/lib/config/config-loader.js:80:17
+ ❯ LegacyConfigLoader.loadConfigArrayForFile node_modules/eslint/lib/config/config-loader.js:414:3
+ ❯ ESLint.lintText node_modules/eslint/lib/eslint/eslint.js:1139:4
+ ❯ tests/lint-rules.test.ts:27:22
+     25|   });
+     26|   it("impide importar la interfaz desde domain", async () => {
+     27|     const [result] = await eslint.lintText(await fixture("domain-impor…
+       |                      ^
+     28|     expect(result.messages.filter(({ ruleId }) => ruleId === "no-restr…
+     29|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  15:26:12
+   Duration  901ms (setup 47%, import 40%, transform 9%, tests 3%, worker 1%)
+
+Exit: 1

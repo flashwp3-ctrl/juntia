@@ -1,0 +1,12 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+No test files found, exiting with code 0
+
+projects: components
+
+|components| 
+
+include: src/**/*.test.{ts,tsx}, tests/**/*.test.ts
+exclude:  src/domain/**
+

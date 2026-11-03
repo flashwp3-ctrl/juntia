@@ -1,0 +1,25 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+ ❯ |components| src/lib/theme-script.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |components| src/lib/theme-script.test.ts [ src/lib/theme-script.test.ts ]
+Error: Cannot find module './theme-script' imported from C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia/src/lib/theme-script.test.ts
+ ❯ src/lib/theme-script.test.ts:4:1
+      2| // T015 / FR-005, FR-026: tema antes de pintar, cambio del sistema y c…
+      3| import { describe, expect, it } from "vitest";
+      4| import { themeScript } from "./theme-script";
+       | ^
+      5|
+      6| function run(matches: boolean, context: string | null = null, blocked …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:27:30
+   Duration  454ms (setup 90%, transform 6%, worker 4%)
+

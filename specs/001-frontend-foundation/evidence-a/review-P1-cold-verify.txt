@@ -1,0 +1,57 @@
+[cache] cleared results cache at C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json
+[cache] cleared fs module cache at C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia/node_modules/.vitest-cache
+ESLint: sin caché persistida en .eslintcache (el lint no usa --cache).
+ESLint: sin caché persistida en node_modules/.cache/eslint (el lint no usa --cache).
+
+> juntia@0.1.0 verify
+> node scripts/verify.mjs
+
+
+> juntia@0.1.0 lint
+> eslint .
+
+
+> juntia@0.1.0 typecheck
+> tsc --noEmit
+
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain --passWithNoTests
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+No test files found, exiting with code 0
+
+projects: domain
+
+|domain| 
+
+include: src/domain/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+
+
+> juntia@0.1.0 test:components
+> vitest run --project components
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  16:10:24
+   Duration  10.40s (tests 73%, setup 18%, import 6%, transform 3%)
+
+verify · 001
+┌─────────┬──────────────────┬──────────────────────────────────────────────────┬───────────┬─────────────┬───────┐
+│ (index) │ control          │ resultado                                        │ duración  │ presupuesto │ aviso │
+├─────────┼──────────────────┼──────────────────────────────────────────────────┼───────────┼─────────────┼───────┤
+│ 0       │ 'lint'           │ 'pasó'                                           │ '11.45 s' │ '—'         │ ''    │
+│ 1       │ 'typecheck'      │ 'pasó'                                           │ '5.10 s'  │ '—'         │ ''    │
+│ 2       │ 'unit (domain)'  │ '0 pruebas — la 001 no tiene dominio financiero' │ '2.57 s'  │ '< 15 s'    │ ''    │
+│ 3       │ 'components'     │ 'pasó'                                           │ '12.30 s' │ '—'         │ ''    │
+│ 4       │ 'SQL/RLS'        │ 'NO APLICABLE — lo incorpora P0-1'               │ '—'       │ '< 60 s'    │ ''    │
+│ 5       │ 'verify (total)' │ 'pasó'                                           │ '31.42 s' │ '< 90 s'    │ ''    │
+└─────────┴──────────────────┴──────────────────────────────────────────────────┴───────────┴─────────────┴───────┘
+Exit de verify: 0

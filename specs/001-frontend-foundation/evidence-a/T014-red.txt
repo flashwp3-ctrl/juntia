@@ -1,0 +1,26 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+ ❯ |components| src/styles/tokens.test.ts (1 test | 1 failed) 8ms
+   × mantiene el respaldo sin JavaScript idéntico al tema oscuro 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |components| src/styles/tokens.test.ts > mantiene el respaldo sin JavaScript idéntico al tema oscuro
+Error: ENOENT: no such file or directory, open 'C:\Users\aleja\.codex\worktrees\001-a-scaffold\Juntia\src\styles\tokens.css'
+ ❯ src/styles/tokens.test.ts:7:15
+      5|
+      6| it("mantiene el respaldo sin JavaScript idéntico al tema oscuro", () =…
+      7|   const css = readFileSync("src/styles/tokens.css", "utf8");
+       |               ^
+      8|   const dark = css.match(/\[data-theme="dark"\]\s*\{([^}]+)\}/)?.[1];
+      9|   const fallback = css.match(/@media\s*\(prefers-color-scheme:\s*dark\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:27:28
+   Duration  455ms (setup 75%, transform 18%, tests 3%, worker 2%, import 2%)
+

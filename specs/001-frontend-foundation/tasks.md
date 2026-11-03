@@ -66,7 +66,7 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 ### Grupo 1A
 
-- [ ] T001 Crear `package.json` y `package-lock.json` en la raíz con las versiones exactas de research R1
+- [x] T001 Crear `package.json` y `package-lock.json` en la raíz con las versiones exactas de research R1
   - Contenido: `"private": true`; `"packageManager": "npm@11.1.0"`; `"engines": { "node": ">=24 <25" }`. Dependencias: `next` 16.4.4, `react` y `react-dom` 19.3.1, `motion` 14.9.0, `@phosphor-icons/react` 2.1.10, `@radix-ui/react-dialog` 1.3.1, `server-only` 0.0.1. Desarrollo: `typescript` 6.0.3, `tailwindcss` y `@tailwindcss/postcss` 4.3.4, `eslint` 9.39.5, `eslint-config-next` 16.4.4, `@eslint/css` 1.4.0, `vitest` 5.1.0, `vite` 8.3.5, `jsdom` 30.1.3, `@testing-library/react` 16.3.3, `@testing-library/dom` 10.4.2, `@testing-library/user-event` 14.6.8, `@playwright/test` 1.64.1, `@axe-core/playwright` 4.14.0, `@types/node` 24.19.2, `@types/react` y `@types/react-dom` 19.3.0.
   - Scripts, según [contracts/ci.md](contracts/ci.md): `dev`, `build`, `start` (Next); `lint` = `eslint .`; `typecheck` = `tsc --noEmit`; `test:unit` = `vitest run --project domain --passWithNoTests`; `test:components` = `vitest run --project components`; `test:a11y` = `playwright test --project a11y`; `check:internal-surface` = `node scripts/check-internal-surface.mjs`; `check:theme-script` = `node scripts/check-theme-script.mjs` (añadido en la revisión del gate de tasks, T022; no está en la tabla de [contracts/ci.md](contracts/ci.md)); `verify` = `node scripts/verify.mjs`. **No** se crean `test:db` ni `test:e2e*` (`docs/TESTING.md` §3, regla 2).
   - Cumple: FR-001, FR-002.
@@ -74,25 +74,25 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 ### Grupo 1B (después de T001)
 
-- [ ] T002 [P] Crear `tsconfig.json` con `"strict": true`, `"jsx": "react-jsx"`, `"moduleResolution": "bundler"`, el plugin `next` y el alias `"@/*": ["./src/*"]`
+- [x] T002 [P] Crear `tsconfig.json` con `"strict": true`, `"jsx": "react-jsx"`, `"moduleResolution": "bundler"`, el plugin `next` y el alias `"@/*": ["./src/*"]`
   - Cumple: FR-001 (TypeScript `strict`, maestro §7.1). El alias `@/` lo usa la regla de dependencia de `domain` (T013).
   - Terminado cuando: `npx tsc --noEmit` termina con exit 0 después de T006.
 
-- [ ] T003 Crear `next.config.ts` (sin opciones experimentales) y `postcss.config.mjs` con el plugin `@tailwindcss/postcss`, exportando una constante con nombre y no un objeto anónimo
+- [x] T003 Crear `next.config.ts` (sin opciones experimentales) y `postcss.config.mjs` con el plugin `@tailwindcss/postcss`, exportando una constante con nombre y no un objeto anónimo
   - Cumple: FR-001. El export con nombre evita el aviso `import/no-anonymous-default-export` que vio research R3.
   - Terminado cuando: `npm run build` termina con exit 0 después de T006.
 
-- [ ] T004 [P] Añadir a `.gitignore` de la raíz, sin borrar ninguna línea existente: `/node_modules/`, `/.next/`, `/test-results/`, `/playwright-report/`, `*.tsbuildinfo`
+- [x] T004 [P] Añadir a `.gitignore` de la raíz, sin borrar ninguna línea existente: `/node_modules/`, `/.next/`, `/test-results/`, `/playwright-report/`, `*.tsbuildinfo`
   - Cumple: FR-001.
   - Terminado cuando: `git check-ignore node_modules .next test-results playwright-report` imprime las cuatro rutas y `git diff .gitignore` solo muestra líneas añadidas.
 
-- [ ] T005 [P] Crear `src/domain/README.md`: la capa de dominio existe vacía de reglas financieras; enuncia la regla de dependencia del maestro §7.2 (no importa `react`, `react-dom`, `next`, `motion`, `@phosphor-icons/*`, `@radix-ui/*`, `@supabase/*` ni `@/components/*`) y que los tipos de dinero, contexto de datos, persona y moneda son de P0-1
+- [x] T005 [P] Crear `src/domain/README.md`: la capa de dominio existe vacía de reglas financieras; enuncia la regla de dependencia del maestro §7.2 (no importa `react`, `react-dom`, `next`, `motion`, `@phosphor-icons/*`, `@radix-ui/*`, `@supabase/*` ni `@/components/*`) y que los tipos de dinero, contexto de datos, persona y moneda son de P0-1
   - Cumple: FR-003.
   - Terminado cuando: `ls src/domain` muestra solo `README.md`.
 
 ### Grupo 1C (después del grupo 1B)
 
-- [ ] T006 Crear `src/app/layout.tsx` mínimo (`<html lang="es-CO">`, `<body>{children}</body>`) y `src/app/(app)/page.tsx`, que solo devuelve `<main id="contenido" />` sin texto
+- [x] T006 Crear `src/app/layout.tsx` mínimo (`<html lang="es-CO">`, `<body>{children}</body>`) y `src/app/(app)/page.tsx`, que solo devuelve `<main id="contenido" />` sin texto
   - Cumple: FR-001. La fase 3 completa el layout y la fase 7 la página.
   - Terminado cuando: `npm run build` y `npx tsc --noEmit` terminan con exit 0 y la tabla de rutas del build muestra `○ /`.
 
@@ -108,17 +108,17 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 ### Grupo 2A
 
-- [ ] T007 [P] Crear `vitest.config.mts` con `test.projects` (no `vitest.workspace.ts`): proyecto `domain` (`environment: 'node'`, `include: ['src/domain/**/*.test.ts']`) y proyecto `components` (`environment: 'jsdom'`, `include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts']`, `exclude` de `src/domain/**`, `setupFiles: ['./vitest.setup.ts']`); y `vitest.setup.ts` con `afterEach(() => cleanup())` de RTL
+- [x] T007 [P] Crear `vitest.config.mts` con `test.projects` (no `vitest.workspace.ts`): proyecto `domain` (`environment: 'node'`, `include: ['src/domain/**/*.test.ts']`) y proyecto `components` (`environment: 'jsdom'`, `include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts']`, `exclude` de `src/domain/**`, `setupFiles: ['./vitest.setup.ts']`); y `vitest.setup.ts` con `afterEach(() => cleanup())` de RTL
   - Las pruebas sin DOM del proyecto `components` (T012, T014, T036) declaran `// @vitest-environment node` en su primera línea. Sin `@vitejs/plugin-react` (research R1.2). El alias `@/` se resuelve igual que en `tsconfig.json`.
   - Cumple: FR-042, FR-045 (los dos proyectos de `docs/TESTING.md` §2; research R1.2 y R7).
   - Terminado cuando: `npm run test:unit` termina con exit 0 sin pruebas y `npx vitest run --project components --passWithNoTests` termina con exit 0.
 
-- [ ] T008 [P] Crear `playwright.config.ts` con un único proyecto `a11y`: `testDir: 'tests/a11y'`, `testMatch: '**/*.a11y.ts'`, solo Chromium (`devices['Desktop Chrome']`), `use: { reducedMotion: 'reduce', baseURL: 'http://localhost:3000' }`, `retries: process.env.CI ? 1 : 0`, y `webServer: { command: 'npm run start', url: 'http://localhost:3000', env: { JUNTIA_INTERNAL_SURFACE: '1' }, reuseExistingServer: !process.env.CI }`
+- [x] T008 [P] Crear `playwright.config.ts` con un único proyecto `a11y`: `testDir: 'tests/a11y'`, `testMatch: '**/*.a11y.ts'`, solo Chromium (`devices['Desktop Chrome']`), `use: { reducedMotion: 'reduce', baseURL: 'http://localhost:3000' }`, `retries: process.env.CI ? 1 : 0`, y `webServer: { command: 'npm run start', url: 'http://localhost:3000', env: { JUNTIA_INTERNAL_SURFACE: '1' }, reuseExistingServer: !process.env.CI }`
   - El `webServer` sirve el build ya hecho; no compila. No se configura ningún otro navegador ni proyecto.
   - Cumple: FR-044 (ADR-011 §6, reglas 3, 5 y 6), FR-043.
   - Terminado cuando: `npx tsc --noEmit` termina con exit 0 y `npx playwright --version` imprime `Version 1.64.1`. La ejecución real se comprueba en T021.
 
-- [ ] T009 [P] Crear los fixtures de lint en `tests/lint-fixtures/`: `hex.tsx`, `hex.css`, `wait.a11y.ts` y `domain-import.ts`
+- [x] T009 [P] Crear los fixtures de lint en `tests/lint-fixtures/`: `hex.tsx`, `hex.css`, `wait.a11y.ts` y `domain-import.ts`
   - `hex.tsx`: hex en la línea 2 (plantilla ``const tone = `color: #1a1c1a` ``) y dos en la línea 4 (`style={{ color: "#FF0000" }}` y `className="bg-[#123456]"`), más un `href="#contenido"` que **no** debe marcarse.
   - `hex.css`: hex en la línea 4 y en la línea 8, uno de ellos dentro de `@theme inline { --color-bad: #2d4b3d; }`, más un selector `#contenido` que **no** debe marcarse.
   - `wait.a11y.ts`: `page.waitForTimeout(…)` en la línea 5 y `setTimeout(…)` en la línea 6.
@@ -127,27 +127,27 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
   - Cumple: FR-006, FR-044, FR-003.
   - Terminado cuando: existen los cuatro archivos con los fallos en las líneas indicadas (las comprueba T010).
 
-- [ ] T010 Crear `src/lib/copy/es.ts`: catálogo `as const` con las secciones de [data-model.md](data-model.md) («CopyCatalog»): `shell`, `nav`, `context`, `annotate`, `empty`, `balance`, `account`, `states`, `primitives`, `internal`; los textos con parámetros son funciones tipadas (por ejemplo `context.announce(label)` → «Ahora ves: {contexto}»)
+- [x] T010 Crear `src/lib/copy/es.ts`: catálogo `as const` con las secciones de [data-model.md](data-model.md) («CopyCatalog»): `shell`, `nav`, `context`, `annotate`, `empty`, `balance`, `account`, `states`, `primitives`, `internal`; los textos con parámetros son funciones tipadas (por ejemplo `context.announce(label)` → «Ahora ves: {contexto}»)
   - Redacción provisional según `docs/design/BRAND_FOUNDATION.md` §4: tuteo, frases cortas, es-CO, sin emojis ni exclamaciones. Usa «Yo», «Nosotros» y «Mi cuenta» de `docs/GLOSSARY.md`; ninguna palabra de su §9. El aviso de Anotar dice que registrar gastos llega con la próxima versión; Balance, que aparece cuando exista la pareja; `/cuenta`, que la cuenta llega con el inicio de sesión. **Ningún texto nombra «P0-1», «P0-2» ni otra fase, ni promete fechas** (FR-034). La redacción final se revisa en el PR (spec, supuesto «El copy final se revisa en el PR»).
   - El botón de cierre del aviso es un texto («Cerrar», sección `annotate`): el mapa semántico de `DESIGN_SYSTEM.md` §3 no tiene ícono de cierre y la tarea no lo elige.
   - Cumple: FR-034, FR-035, FR-036.
   - Terminado cuando: `npx tsc --noEmit` termina con exit 0; `git grep -nE "P0-[0-9]|Total gastado|Depositad|Invertir|está en deuda|excedido|Proporcional|Transferencia verificada" -- src/lib/copy` no devuelve nada; y un uso de prueba de una clave inexistente (`copy.nav.noExiste`) en un archivo temporal hace fallar `tsc` (se borra el archivo después y se pega la salida en el PR).
 
-- [ ] T011 [P] Crear `src/lib/motion/tokens.ts` con los springs y duraciones de `docs/design/MOTION_SYSTEM.md` que usa la 001: `snappy` (perilla del Segmented, pulsación de Button), `sheet` (aparición de la hoja), la escala .98 → 1 del diálogo y los 180 ms de la transición de color de tema
+- [x] T011 [P] Crear `src/lib/motion/tokens.ts` con los springs y duraciones de `docs/design/MOTION_SYSTEM.md` que usa la 001: `snappy` (perilla del Segmented, pulsación de Button), `sheet` (aparición de la hoja), la escala .98 → 1 del diálogo y los 180 ms de la transición de color de tema
   - Solo constantes; sin React. Los valores se copian del documento, no se inventan.
   - Cumple: FR-015, FR-040 (handoff, orden de implementación, paso 6).
   - Terminado cuando: `npx tsc --noEmit` termina con exit 0 y cada constante lleva comentario con la sección de `MOTION_SYSTEM.md` de la que sale.
 
 ### Grupo 2B (después de T007 y T009)
 
-- [ ] T012 Escribir `tests/lint-rules.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: lint, probada con la API de ESLint**
+- [x] T012 Escribir `tests/lint-rules.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: lint, probada con la API de ESLint**
   - Usa `new ESLint({ ignore: false })` y afirma **las líneas exactas** que marca cada regla propia: `[2, 4, 4]` en `hex.tsx`, `[4, 8]` en `hex.css`, `[5, 6]` en `wait.a11y.ts`. Afirma que `href="#contenido"` y `#contenido` no se marcan. Con `lintText(source, { filePath: 'src/styles/tokens.css' })` afirma que un hex en `tokens.css` queda exento. Con `lintText(<contenido de domain-import.ts>, { filePath: 'src/domain/fixture.ts' })` afirma que los dos `import` se marcan por la regla de dependencia.
   - Cumple: FR-006, FR-044, FR-003; US-7, escenario 3.
   - Terminado cuando: `npx vitest run tests/lint-rules.test.ts` **falla** porque las reglas todavía no existen (se pega la salida del fallo en el PR).
 
 ### Grupo 2C (después de T012)
 
-- [ ] T013 Crear `eslint.config.mjs` sobre `eslint-config-next/core-web-vitals` y `eslint-config-next/typescript`, con `globalIgnores(['.next/**', 'node_modules/**', 'tests/lint-fixtures/**', 'next-env.d.ts'])` y las tres reglas propias de research R3 y R7
+- [x] T013 Crear `eslint.config.mjs` sobre `eslint-config-next/core-web-vitals` y `eslint-config-next/typescript`, con `globalIgnores(['.next/**', 'node_modules/**', 'tests/lint-fixtures/**', 'next-env.d.ts'])` y las tres reglas propias de research R3 y R7
   - Hex crudo con `no-restricted-syntax` (selectores `Literal` y `TemplateElement` con la expresión `HEX` de R3) en `**/*.{js,jsx,mjs,cjs,ts,tsx}`; en `**/*.css` salvo `src/styles/tokens.css`, con `@eslint/css` (`language: 'css/css'`, `languageOptions: { tolerant: true }`) y los selectores `Hash` y `Raw`.
   - Esperas fijas en `tests/**/*.ts`: `CallExpression[callee.property.name='waitForTimeout']` y `CallExpression[callee.name='setTimeout']`, además de las dos de hex.
   - Dependencia de `domain`: `no-restricted-imports` en `src/domain/**` contra `react`, `react-dom`, `next`, `motion`, `@phosphor-icons/*`, `@radix-ui/*`, `@supabase/*` y `@/components/*`.
@@ -167,12 +167,12 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 ### Tests for User Story 5 — por capas (`docs/TESTING.md` §4) ⚠️
 
-- [ ] T014 [US5] Escribir `src/styles/tokens.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: unidad sin DOM sobre el texto de `tokens.css`**
+- [x] T014 [US5] Escribir `src/styles/tokens.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: unidad sin DOM sobre el texto de `tokens.css`**
   - Lee `src/styles/tokens.css` y afirma que el bloque `@media (prefers-color-scheme: dark) { :root:not([data-theme]) { … } }` declara **exactamente las mismas propiedades con los mismos valores** que `[data-theme="dark"]`, sin propiedades de más ni de menos.
   - Cumple: FR-005 (caso límite «Script de tema sin almacenamiento ni JavaScript tardío»; research R2, punto 4).
   - Terminado cuando: `npx vitest run src/styles/tokens.test.ts` **falla** porque `tokens.css` no existe (salida pegada en el PR).
 
-- [ ] T015 [US5] Escribir `src/lib/theme-script.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: unidad sin DOM, ejecutando la cadena del script**
+- [x] T015 [US5] Escribir `src/lib/theme-script.test.ts` (`// @vitest-environment node`, proyecto `components`) — **capa: unidad sin DOM, ejecutando la cadena del script**
   - Importa la cadena de `src/lib/theme-script.ts` y la ejecuta con `new Function` sobre dobles mínimos: `document.documentElement` con `setAttribute`/`getAttribute`, `window.matchMedia` que devuelve `{ matches, addEventListener }` y `window.localStorage`. Afirma: con `matches: true` pone `data-theme="dark"` y con `false`, `"light"`; al disparar el `change` registrado, el atributo cambia; con `juntia:context` = `"us"` pone `data-context="us"`; con un valor ilegible no pone `data-context`; con `getItem` lanzando `SecurityError` no lanza y el tema se aplica igual.
   - **Por qué esta capa:** el respaldo CSS pinta el tema del sistema aunque el script falle, así que axe en oscuro no ve una regresión del script. La lógica del script es la capa más baja que detecta que deja de fijar el atributo. Dónde queda el script en el documento no lo ve esta prueba: lo comprueba T022 sobre el HTML servido, porque el root layout importa `next/font` y no se renderiza fuera de Next.
   - Cumple: FR-005, FR-026; SC-006.
@@ -182,7 +182,7 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 #### Grupo 3A (después de T014 y T015)
 
-- [ ] T016 [US5] Crear `src/styles/tokens.css`, el **único** archivo con hex del repositorio
+- [x] T016 [US5] Crear `src/styles/tokens.css`, el **único** archivo con hex del repositorio
   - Primitivos de `docs/design/DESIGN_SYSTEM.md` §1 y semánticos de §2 como variables CSS, en `:root, [data-theme="light"]` (claro) y `[data-theme="dark"]` (oscuro), más el bloque de respaldo sin JavaScript con los mismos valores que el oscuro. `color-scheme: light` / `dark` en cada bloque. Categorías (las diez de §1.3), elevación, radios, espacio, breakpoints, capas, `focus.ring`, `skel` y los tokens `comp.button.*` de `COMPONENT_SPECIFICATIONS.md` §Button.
   - Personas: **solo** `person.1` y `person.2` (maestro §15.9, fila «Personas»). Los tokens `finance.*` entran, aunque ninguna pantalla de la 001 los usa.
   - Incluye los valores de paleta ya codificados en `DESIGN_SYSTEM.md` §4 (Sara petróleo, Hogar azul tenue, superficie oscura `#191C1F`), que son **propuesta §15.9 pendiente de aprobación** en la revisión del PR viendo la pantalla (plan, comprobación de jerarquía).
@@ -190,20 +190,20 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
   - Cumple: FR-004, FR-005, FR-006.
   - Terminado cuando: `npx vitest run src/styles/tokens.test.ts` pasa; `git grep -nE "person-?[3-6]" -- src/styles/tokens.css` no devuelve nada; `npm run lint` termina con exit 0.
 
-- [ ] T017 [P] [US5] Crear `src/lib/theme-script.ts`, que exporta el script bloqueante como cadena, con el comportamiento exacto de research R2.1, línea 24: pone `data-theme="light" | "dark"` según `matchMedia('(prefers-color-scheme: dark)')`, escucha su evento `change` y actualiza el atributo, y lee `localStorage['juntia:context']` dentro de `try/catch` para poner `data-context` solo si vale `"me"` o `"us"`
+- [x] T017 [P] [US5] Crear `src/lib/theme-script.ts`, que exporta el script bloqueante como cadena, con el comportamiento exacto de research R2.1, línea 24: pone `data-theme="light" | "dark"` según `matchMedia('(prefers-color-scheme: dark)')`, escucha su evento `change` y actualiza el atributo, y lee `localStorage['juntia:context']` dentro de `try/catch` para poner `data-context` solo si vale `"me"` o `"us"`
   - No lee cookie ni perfil (FR-005; plan, fila «Persistencia del tema»).
   - Cumple: FR-005, FR-026 (research R2, R5).
   - Terminado cuando: `npx vitest run src/lib/theme-script.test.ts` pasa, y `npx tsc --noEmit` y `npm run lint` terminan con exit 0.
 
 #### Grupo 3B (después de T016)
 
-- [ ] T018 [US5] Crear `src/app/globals.css`: `@import "tailwindcss"`, importa `../styles/tokens.css`, mapea los tokens a Tailwind con `@theme inline` hacia `var(--…)` (sin hex), aplica `font-variant-numeric: tabular-nums` global y la transición de color de 180 ms **solo** dentro de `@media (prefers-reduced-motion: no-preference)`
+- [x] T018 [US5] Crear `src/app/globals.css`: `@import "tailwindcss"`, importa `../styles/tokens.css`, mapea los tokens a Tailwind con `@theme inline` hacia `var(--…)` (sin hex), aplica `font-variant-numeric: tabular-nums` global y la transición de color de 180 ms **solo** dentro de `@media (prefers-reduced-motion: no-preference)`
   - Cumple: FR-004, FR-007, FR-040; US-5, escenario 2.
   - Terminado cuando: `npm run lint` termina con exit 0 (la regla de hex cubre este archivo) y `npm run build` termina con exit 0.
 
 #### Grupo 3C (después de T017 y T018)
 
-- [ ] T019 [US5] Completar `src/app/layout.tsx`: `<html lang="es-CO" suppressHydrationWarning>`; dentro de `<head>`, un `<script dangerouslySetInnerHTML={{ __html: themeScript }} />` sin `async` ni `defer` (no `next/script`); importa `./globals.css`; fuentes con `next/font/google` como variables CSS —Instrument Serif 400 normal e itálica, Geist 400–600, Geist Mono 500—; sin `<meta name="theme-color">`
+- [x] T019 [US5] Completar `src/app/layout.tsx`: `<html lang="es-CO" suppressHydrationWarning>`; dentro de `<head>`, un `<script dangerouslySetInnerHTML={{ __html: themeScript }} />` sin `async` ni `defer` (no `next/script`); importa `./globals.css`; fuentes con `next/font/google` como variables CSS —Instrument Serif 400 normal e itálica, Geist 400–600, Geist Mono 500—; sin `<meta name="theme-color">`
   - Serif solo para titulares; nunca en tablas ni formularios (FR-007).
   - Cumple: FR-005, FR-007 (research R2, puntos 1–6).
   - Terminado cuando: `npm run build` termina con exit 0; con `npm run start` en marcha, `curl -s http://localhost:3000/ | sed 's/></>\n</g' | grep -n -E '^<(head|/head|body|script)'` muestra el script de tema dentro de `<head>`, sin `async`, antes de `</head>` y de `<body>` (mismo comando que research R2.1); en `npm run dev` la consola del navegador no muestra errores de hidratación en claro ni en oscuro.
@@ -220,13 +220,13 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
 
 #### Grupo 4A (en serie: T020 → T021 → T022 → T023)
 
-- [ ] T020 [US7] Crear `scripts/verify.mjs`: ejecuta en orden `npm run lint`, `npm run typecheck`, `npm run test:unit` y `npm run test:components`; se detiene en el primer fallo con su código de salida; mide cada uno e imprime al final la tabla de [contracts/ci.md](contracts/ci.md) («Salida de `verify`»)
+- [x] T020 [US7] Crear `scripts/verify.mjs`: ejecuta en orden `npm run lint`, `npm run typecheck`, `npm run test:unit` y `npm run test:components`; se detiene en el primer fallo con su código de salida; mide cada uno e imprime al final la tabla de [contracts/ci.md](contracts/ci.md) («Salida de `verify`»)
   - Fila `unit (domain)`: «0 pruebas — la 001 no tiene dominio financiero» cuando Vitest no encuentra pruebas, nunca «pasó». Fila `SQL/RLS`: «NO APLICABLE — lo incorpora P0-1», con presupuesto `< 60 s`. Presupuestos `< 15 s` (domain) y `< 90 s` (total). Si un tiempo supera su presupuesto, la fila dice «SUPERA EL PRESUPUESTO (aviso)» y **el código de salida no cambia por eso** (ADR-011 §4; cláusula anticliquet).
   - Node puro, igual en Windows y en Linux.
   - Cumple: FR-042, FR-046; SC-009; US-7, escenarios 2 y 4.
   - Terminado cuando: `npm run verify` termina con exit 0 e imprime la tabla con las seis filas; con un error de tipo introducido a propósito, termina con exit distinto de 0 en `typecheck` (las dos salidas se pegan en el PR y el error se revierte).
 
-- [ ] T021 [US7] Crear `tests/a11y/routes.a11y.ts` — **capa: E2E barato por ruta (visitar + axe), no es una spec E2E**
+- [x] T021 [US7] Crear `tests/a11y/routes.a11y.ts` — **capa: E2E barato por ruta (visitar + axe), no es una spec E2E**
   - Las rutas a visitar están en una lista tipada al principio del archivo; **en A solo contiene `/`**, y cada PR posterior la amplía con las rutas que crea (B: T040; C: T060), porque cada ruta entra en la comprobación con el PR que la crea (`docs/TESTING.md` §3).
   - Con `@axe-core/playwright`, para cada tema (`page.emulateMedia({ colorScheme: 'light' | 'dark' })`) y en los dos anchos obligatorios, 390 y 1440 px (`CLAUDE.md` 5): afirma que cada respuesta es **200** (una ruta que no existe nunca cuenta como verificada) y falla si hay violaciones `serious` o `critical`; imprime una línea por ruta, tema y ancho con el número de violaciones (forma de research R7).
   - **Movimiento reducido (ADR-011 §2, fila 17)**, con la emulación `reducedMotion: 'reduce'` del proyecto (T008), en cada ruta de la lista: `getComputedStyle(document.body).transitionDuration` es `0s` en todas sus entradas (la transición de color de tema de 180 ms solo existe sin movimiento reducido, T018).
@@ -234,13 +234,13 @@ No son decisiones: son lecturas necesarias para que una tarea se pueda ejecutar 
   - Cumple: FR-040, FR-043; SC-002, SC-010; ADR-011 §2, filas 16 y 17.
   - Terminado cuando: `npm run build && npm run test:a11y` termina con exit 0 con las 4 combinaciones de tema y ancho para `/`; **míralo fallar**: con `reducedMotion: 'no-preference'` puesto temporalmente en `playwright.config.ts`, la aserción de la transición de tema falla; se pegan las dos salidas y se restaura la configuración.
 
-- [ ] T022 [US5] Crear `scripts/check-theme-script.mjs` — **capa: HTTP real contra el build**, la más baja que ve dónde queda el script en el documento servido
+- [x] T022 [US5] Crear `scripts/check-theme-script.mjs` — **capa: HTTP real contra el build**, la más baja que ve dónde queda el script en el documento servido
   - Sobre el build ya hecho, arranca `next start` en un puerto libre, pide `/` y comprueba en el HTML recibido: hay un `<script>` inline **dentro de `<head>`**, sin `src`, `async` ni `defer`, antes de `</head>` y de `<body>`; su contenido es el de `src/lib/theme-script.ts` (compara un fragmento distintivo, como `prefers-color-scheme` junto a `data-theme`); `<html>` no trae `data-theme` del servidor. Imprime una fila por comprobación y termina con exit 1 si alguna falla. Node puro, igual en Windows y en Linux.
   - Complementa a T015, no la repite: T015 ve la lógica del script y no su posición; esta ve la posición y no la lógica. El primer cuadro real sigue siendo la medición del PR (T065).
   - Cumple: FR-005; SC-006.
   - Terminado cuando: `npm run build && npm run check:theme-script` termina con exit 0; **míralo fallar**: con `async` añadido temporalmente al `<script>` de `src/app/layout.tsx`, recompilado, el script termina con exit 1; se pegan las dos salidas y se revierte el cambio.
 
-- [ ] T023 [US7] Crear `.github/workflows/ci.yml` según [contracts/ci.md](contracts/ci.md), **con los jobs 1, 2 y 5**
+- [x] T023 [US7] Crear `.github/workflows/ci.yml` según [contracts/ci.md](contracts/ci.md), **con los jobs 1, 2 y 5**
   - Disparo `pull_request`; `permissions: contents: read`; `actions/checkout@v7` y `actions/setup-node@v7` con `node-version: 24` y `cache: npm`.
   - Tres jobs **en paralelo**, cada uno con `npm ci`: `lint-typecheck-build` (`npm run lint`, `npm run typecheck`, `npm run build`); `vitest` (`npm run test:unit`, `npm run test:components`); `a11y` (`npm run build` una sola vez y sin variables, `npx playwright install --with-deps chromium`, `npm run test:a11y` y `npm run check:theme-script`). El job 5 corre sobre las rutas que existan en cada PR: en A, solo `/` (`docs/TESTING.md` §3).
   - **Sin caché de navegadores** (ADR-011 §4, «Mitigación en el humo»).

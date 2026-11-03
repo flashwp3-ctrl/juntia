@@ -1,0 +1,104 @@
+
+> juntia@0.1.0 test:a11y
+> playwright test --project a11y
+
+[WebServer] (node:24184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:8856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+light / 390px: 1 violaciones, 0 serias o críticas
+  x  1 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 390px (985ms)
+(node:20220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+light / 1440px: 1 violaciones, 0 serias o críticas
+  x  2 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 1440px (741ms)
+(node:31972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+dark / 390px: 1 violaciones, 0 serias o críticas
+  x  3 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 390px (776ms)
+(node:18952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+dark / 1440px: 1 violaciones, 0 serias o críticas
+  x  4 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 1440px (708ms)
+
+
+  1) [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 390px ──────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      18 |         expect(blocking).toEqual([]);
+      19 |         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
+    > 20 |         expect(durations.every((value) => value === "0s")).toBe(true);
+         |                                                            ^
+      21 |       });
+      22 |     }
+      23 |   }
+        at C:\Users\aleja\.codex\worktrees\001-a-scaffold\Juntia\tests\a11y\routes.a11y.ts:20:60
+
+    Error Context: test-results\routes.a11y.ts--·-light-·-390px-a11y\error-context.md
+
+  2) [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 1440px ─────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      18 |         expect(blocking).toEqual([]);
+      19 |         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
+    > 20 |         expect(durations.every((value) => value === "0s")).toBe(true);
+         |                                                            ^
+      21 |       });
+      22 |     }
+      23 |   }
+        at C:\Users\aleja\.codex\worktrees\001-a-scaffold\Juntia\tests\a11y\routes.a11y.ts:20:60
+
+    Error Context: test-results\routes.a11y.ts--·-light-·-1440px-a11y\error-context.md
+
+  3) [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 390px ───────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      18 |         expect(blocking).toEqual([]);
+      19 |         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
+    > 20 |         expect(durations.every((value) => value === "0s")).toBe(true);
+         |                                                            ^
+      21 |       });
+      22 |     }
+      23 |   }
+        at C:\Users\aleja\.codex\worktrees\001-a-scaffold\Juntia\tests\a11y\routes.a11y.ts:20:60
+
+    Error Context: test-results\routes.a11y.ts--·-dark-·-390px-a11y\error-context.md
+
+  4) [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 1440px ──────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      18 |         expect(blocking).toEqual([]);
+      19 |         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
+    > 20 |         expect(durations.every((value) => value === "0s")).toBe(true);
+         |                                                            ^
+      21 |       });
+      22 |     }
+      23 |   }
+        at C:\Users\aleja\.codex\worktrees\001-a-scaffold\Juntia\tests\a11y\routes.a11y.ts:20:60
+
+    Error Context: test-results\routes.a11y.ts--·-dark-·-1440px-a11y\error-context.md
+
+  4 failed
+    [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 390px ───────────────────────────────────
+    [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 1440px ──────────────────────────────────
+    [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 390px ────────────────────────────────────
+    [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 1440px ───────────────────────────────────

@@ -1,0 +1,23 @@
+
+> juntia@0.1.0 verify
+> node scripts/verify.mjs
+
+
+> juntia@0.1.0 lint
+> eslint .
+
+
+> juntia@0.1.0 typecheck
+> tsc --noEmit
+
+src/lib/typecheck-control.ts(1,7): error TS2322: Type 'number' is not assignable to type 'string'.
+Falló typecheck
+verify · 001
+┌─────────┬──────────────────┬────────────────────────────────────┬──────────┬─────────────┬───────┐
+│ (index) │ control          │ resultado                          │ duración │ presupuesto │ aviso │
+├─────────┼──────────────────┼────────────────────────────────────┼──────────┼─────────────┼───────┤
+│ 0       │ 'lint'           │ 'pasó'                             │ '3.40 s' │ '—'         │ ''    │
+│ 1       │ 'typecheck'      │ 'falló'                            │ '2.26 s' │ '—'         │ ''    │
+│ 2       │ 'SQL/RLS'        │ 'NO APLICABLE — lo incorpora P0-1' │ '—'      │ '< 60 s'    │ ''    │
+│ 3       │ 'verify (total)' │ 'falló'                            │ '5.67 s' │ '< 90 s'    │ ''    │
+└─────────┴──────────────────┴────────────────────────────────────┴──────────┴─────────────┴───────┘

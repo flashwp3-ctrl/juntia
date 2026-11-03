@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:28:25
+   Duration  2.96s (tests 86%, setup 7%, import 6%, transform 1%)
+
