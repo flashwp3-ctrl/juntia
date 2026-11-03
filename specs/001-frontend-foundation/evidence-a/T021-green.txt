@@ -1,0 +1,21 @@
+
+> juntia@0.1.0 test:a11y
+> playwright test --project a11y
+
+[WebServer] (node:2612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:16244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+light / 390px: 1 violaciones, 0 serias o críticas
+  ok 1 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 390px (661ms)
+light / 1440px: 1 violaciones, 0 serias o críticas
+  ok 2 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · light · 1440px (656ms)
+dark / 390px: 1 violaciones, 0 serias o críticas
+  ok 3 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 390px (570ms)
+dark / 1440px: 1 violaciones, 0 serias o críticas
+  ok 4 [a11y] › tests\a11y\routes.a11y.ts:10:11 › / · dark · 1440px (533ms)
+
+  4 passed (5.0s)

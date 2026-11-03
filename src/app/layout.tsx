@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { themeScript } from "@/lib/theme-script";
 import "./globals.css";
+import { copy } from "@/lib/copy/es";
+export const metadata = { title: copy.shell.brand };
 
 const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument-serif" });
 const sans = Geist({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-geist" });
@@ -14,3 +16,4 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
+

@@ -1,0 +1,59 @@
+name: Frontend foundation
+on: pull_request
+permissions:
+  contents: read
+
+jobs:
+  lint-typecheck-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install, lint, typecheck and build
+        run: node scripts/ci.mjs run ci lint typecheck build
+      - name: Publish timings and non-applicable controls
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
+
+  vitest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install and test domain and components
+        run: node scripts/ci.mjs run ci test:unit test:components
+      - name: Publish timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
+
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install, build once, install Chromium and check routes and theme script
+        run: node scripts/ci.mjs run ci build chromium test:a11y check:theme-script
+      - name: Publish timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
