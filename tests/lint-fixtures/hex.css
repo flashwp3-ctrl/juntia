@@ -1,0 +1,9 @@
+/* Casos de la regla 7 de ADR-011; el selector no es un color. */
+#contenido {
+  display: block;
+  color: #123456;
+}
+@theme inline {
+  /* CSSTree conserva las propiedades personalizadas como Raw. */
+  --color-bad: #2d4b3d;
+}

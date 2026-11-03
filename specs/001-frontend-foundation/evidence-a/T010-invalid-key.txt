@@ -1,0 +1,1 @@
+copy-typecheck-control.ts(2,10): error TS2339: Property 'noExiste' does not exist on type '{ readonly home: "Inicio"; readonly activity: "Actividad"; readonly goals: "Metas"; readonly plan: "Plan"; readonly balance: "Balance"; readonly account: "Mi cuenta"; readonly annotate: "Anotar"; readonly shortcut: "N"; }'.

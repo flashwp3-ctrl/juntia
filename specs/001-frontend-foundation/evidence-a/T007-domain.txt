@@ -1,0 +1,16 @@
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain --passWithNoTests
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-a-scaffold/Juntia
+
+No test files found, exiting with code 0
+
+projects: domain
+
+|domain| 
+
+include: src/domain/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+
