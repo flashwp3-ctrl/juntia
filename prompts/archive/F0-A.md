@@ -1,3 +1,5 @@
+> **Archivado.** Fase F0-a cerrada el 2 de noviembre de 2026; la dirección elegida fue **I2 Bosque & Arena**. Este prompt no es ejecutable. Ver `docs/JUNTIA_MASTER.md` §15.1 y `docs/design/`.
+
 # Prompt de inicio — F0-a (Claude Code o Codex)
 
 Lee antes de actuar, **en este orden**, `AGENTS.md`, `CLAUDE.md` (si estás en Claude Code), `docs/JUNTIA_MASTER.md` completo y `docs/research/competidores.md` solo como inspiración no normativa. Inspecciona el estado de la carpeta y del repositorio (`git status`) antes de modificar archivos.
