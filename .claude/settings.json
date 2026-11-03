@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push origin main)",
+      "Bash(git push origin main *)",
+      "Bash(git push * origin main)",
+      "Bash(git push * origin main *)",
+      "Bash(git push origin +main*)",
+      "Bash(git push * origin +main*)",
+      "Bash(git push origin HEAD:main)",
+      "Bash(git push origin HEAD:main *)",
+      "Bash(git push * origin HEAD:main)",
+      "Bash(git push * origin HEAD:main *)",
+      "Bash(git push origin *:main)",
+      "Bash(git push origin *:main *)",
+      "Bash(git push * origin *:main)",
+      "Bash(git push * origin *:main *)",
+      "Bash(git push *refs/heads/main*)",
+      "PowerShell(git push origin main)",
+      "PowerShell(git push origin main *)",
+      "PowerShell(git push * origin main)",
+      "PowerShell(git push * origin main *)",
+      "PowerShell(git push origin +main*)",
+      "PowerShell(git push * origin +main*)",
+      "PowerShell(git push origin HEAD:main)",
+      "PowerShell(git push origin HEAD:main *)",
+      "PowerShell(git push * origin HEAD:main)",
+      "PowerShell(git push * origin HEAD:main *)",
+      "PowerShell(git push origin *:main)",
+      "PowerShell(git push origin *:main *)",
+      "PowerShell(git push * origin *:main)",
+      "PowerShell(git push * origin *:main *)",
+      "PowerShell(git push *refs/heads/main*)"
+    ]
+  }
+}

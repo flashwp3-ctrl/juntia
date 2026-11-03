@@ -31,9 +31,9 @@ necesita: AppShell y navegación. Nada más.
 | --- | --- | --- | --- |
 | `appshell-390-light.png` | Tabbar móvil completo en claro: Inicio · Actividad · `+` · Metas · Plan, con etiquetas, sobre el fondo de la pantalla. | **04·1 · Inicio y movimientos**, primera pantalla de 390 | 390×132 @3× |
 | `appshell-390-dark.png` | El mismo tabbar en tema oscuro. | **04·5 · Oscuro**, primera pantalla de 390 | 390×132 @3× |
-| `appshell-1024-rail-light.png` | Pantalla completa de 1024 con el rail lateral de 76 px: wordmark, los destinos, el botón de Anotar en bosque y el avatar de Mi cuenta al pie. **⚠ Muestra un quinto destino (icono de balanza, entre Plan y el `+`) que no está en la navegación aprobada: no lo implementes por copiarlo.** Ver Erratas conocidas en `../README.md`. | **04·9 · Responsive · de 360 a 1280**, bloque «1024 · LG · RAIL DE 76 PX» | 1024×982 @1× |
-| `appshell-1440-sidebar-light.png` | Pantalla completa de 1440 con el sidebar de 248 px: wordmark, segmentado de contexto, destinos, bloque Anotar gasto con el atajo `N`, perfil al pie. **⚠ Muestra un quinto destino rotulado «Balance» que no está en la navegación aprobada: no lo implementes por copiarlo.** Ver Erratas conocidas en `../README.md`. | **04·7 · Escritorio · 1440**, primer marco | 1440×1040 @1× |
-| `appshell-1440-sidebar-dark.png` | El mismo sidebar de 1440 en tema oscuro, con el mismo quinto destino «Balance» (ver la advertencia de la fila anterior). | **04·8 · Escritorio · Oscuro**, primer marco | 1440×1040 @1× |
+| `appshell-1024-rail-light.png` | Pantalla completa de 1024 con el rail lateral de 76 px: wordmark, los destinos, el botón de Anotar en bosque y el avatar de Mi cuenta al pie. Muestra el quinto destino de escritorio, **Balance** (icono de balanza, entre Plan y el `+`), **aprobado por los fundadores el 3 de noviembre** (maestro §15.10, decisión 4). El primer ítem del rail es el wordmark: a 1024 el selector Yo/Nosotros no va en el rail sino arriba a la derecha del contenido (decisión 5), y eso esta captura no lo muestra. | **04·9 · Responsive · de 360 a 1280**, bloque «1024 · LG · RAIL DE 76 PX» | 1024×982 @1× |
+| `appshell-1440-sidebar-light.png` | Pantalla completa de 1440 con el sidebar de 248 px: wordmark, segmentado de contexto, destinos, bloque Anotar gasto con el atajo `N`, perfil al pie. Muestra el quinto destino **Balance**, aprobado por los fundadores el 3 de noviembre (maestro §15.10, decisión 4). Al pie, solo el perfil: el tema vive en Mi cuenta › Apariencia (decisión 6). | **04·7 · Escritorio · 1440**, primer marco | 1440×1040 @1× |
+| `appshell-1440-sidebar-dark.png` | El mismo sidebar de 1440 en tema oscuro, con el mismo quinto destino «Balance», aprobado (ver la fila anterior). | **04·8 · Escritorio · Oscuro**, primer marco | 1440×1040 @1× |
 | `appshell-tab-activa.png` | Recorte del tabbar móvil con Inicio activo (icono Fill sobre ficha) junto a Actividad inactivo (icono Regular, sin ficha). | **04·1**, mismo tabbar que `appshell-390-light` | 174×82 @4× |
 | `appshell-contexto-yo-nosotros-390.png` | El segmentado Yo/Nosotros en el encabezado móvil, con **Yo** activo. | **04·1**, encabezado de la primera pantalla de 390 | 390×74 @4× |
 | `appshell-contexto-yo-nosotros-1440.png` | El segmentado Yo/Nosotros dentro del sidebar de escritorio, con **Nosotros** activo, bajo el wordmark. | **04·7**, cabecera del sidebar del primer marco | 248×136 @4× |
@@ -76,8 +76,9 @@ implementa.
   04·9 es claro de extremo a extremo y los bloques oscuros (04·5, 04·8) solo
   cubren 390 y 1440. La 001 no lo pedía.
 - **Popover del segmentado en el rail de 1024.**
-  `RESPONSIVE_SPECIFICATIONS.md` dice que en `lg` el primer ítem del rail abre
+  `RESPONSIVE_SPECIFICATIONS.md` decía, hasta el 3 de noviembre, que en `lg` el primer ítem del rail abría
   un popover con el segmentado; en el comp ese primer ítem es el wordmark «J» y
-  el popover no está dibujado en ningún estado. Implementarlo exige leer la
-  especificación, no esta carpeta. Registrada como errata pendiente de decisión
-  en `../README.md` §«Erratas conocidas».
+  el popover no está dibujado en ningún estado. **Ya no se implementa:** los
+  fundadores decidieron que a 1024 el selector va arriba a la derecha del
+  contenido, como en móvil y tablet (maestro §15.10, decisión 5), y la línea 16
+  de la especificación se corrigió en consecuencia.

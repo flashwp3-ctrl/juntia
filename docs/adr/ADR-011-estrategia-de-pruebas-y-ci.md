@@ -1,6 +1,6 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
 
 > **Terminología.** En este ADR, «spec E2E *n*» es siempre una spec de Playwright
 > de la tabla de §3. Una **especificación** (001, 002…) es un slice de producto.
@@ -386,8 +386,11 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
   ni SDK de Vercel. Si se incumple, el dominio deja de ser testeable en
   milisegundos y toda esta estrategia se cae.
 - Los **fixtures tipados** que §15.1 asigna a F0-b dejan de ser material de
-  maqueta: pasan a ser el dataset dorado de la suite. La primera especificación de
-  ingeniería los produce con esa doble función explícita.
+  maqueta: pasan a ser el dataset dorado de la suite. **No los produce la 001**,
+  que no tiene dominio financiero: crecen por slice —P0-1, P0-2, P0-3—, con
+  responsable, fase y reglas en el maestro §15.10, «Dataset dorado». (Enmienda del
+  3 de noviembre: la versión anterior se los asignaba a la primera especificación
+  de ingeniería.)
 - Hace falta un `verify` único y rápido. Un agente que implementa no debe tener que
   elegir qué ejecutar. **Su contenido es exactamente uno, y se enuncia igual en los
   dos documentos:** lint + typecheck + unit de dominio + componentes (RTL
@@ -592,9 +595,9 @@ versión concreta del CLI.
 
 ## Preguntas abiertas
 
-### 1. Mecanismo para los tests de RLS — **la pieza genuinamente abierta**
+### 1. Mecanismo para los tests de RLS — **cerrada: pgTAP en SQL plano**
 
-Hay tres caminos documentados y la decisión no se cierra aquí.
+**Cerrada por los fundadores el 3 de noviembre de 2026** (maestro §15.10, decisión 1): se adopta la recomendación, **pgTAP en SQL plano**, con sus dos condiciones —verificar qué forma del claim usa la versión de Supabase del stack antes de escribir el primer test, y una prueba de extremo a extremo con el cliente real cuando se implemente RLS—. Se conserva el análisis que llevó a la decisión:
 
 | Opción | Qué es | A favor | En contra |
 | --- | --- | --- | --- |

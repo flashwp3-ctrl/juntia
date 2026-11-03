@@ -8,10 +8,10 @@ Estos seis documentos se produjeron en el proyecto de Claude Design
 «Juntia: Responsive design y design system»
 (`https://claude.ai/design/p/caabf357-a0df-4048-886f-8c46c8979c5a`)
 y se importaron aquí para que el repositorio sea autosuficiente y ningún agente
-dependa de un servicio externo para leerlos. **Cinco de los seis están intactos;
-el sexto, `HANDOFF_CLAUDE_CODE.md`, tiene cuatro líneas corregidas**: dos por la
-reubicación de carpetas y dos por una corrección sustantiva aprobada en revisión.
-Ver el **Log de cambios** más abajo.
+dependa de un servicio externo para leerlos. **Dos de los seis siguen intactos**:
+`BRAND_FOUNDATION.md` y `MOTION_SYSTEM.md`. Los otros cuatro tienen líneas
+corregidas —por reubicación, en revisión o por decisión de los fundadores— y
+cada una está en el **Log de cambios** más abajo.
 
 ## Qué hay aquí
 
@@ -60,17 +60,22 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 | `HANDOFF_CLAUDE_CODE.md` | 6 | `docs/DESIGN_SYSTEM.md`, `docs/COMPONENT_SPECIFICATIONS.md`, `docs/MOTION_SYSTEM.md`, `docs/RESPONSIVE_SPECIFICATIONS.md`, `docs/BRAND_FOUNDATION.md` → mismos nombres sin el prefijo `docs/` | **Reubicación.** Los cinco viven en el mismo directorio que el handoff. Rutas rotas en este repositorio. |
 | `HANDOFF_CLAUDE_CODE.md` | 159 | `ThemeProvider, Settings` → `ThemeProvider, ThemeSelector` | **Corrección sustantiva aprobada por revisión independiente del PR #1.** No existe ningún componente `Settings` en el paquete: la estructura aprobada es «Mi cuenta», rutas `/cuenta/*` (maestro §15.3), y el componente del tema es `ThemeSelector` (`COMPONENT_SPECIFICATIONS.md` §Cuenta). Error de trazabilidad, no decisión artística. |
 | `HANDOFF_CLAUDE_CODE.md` | 163 | `SharedBalance, Settings` → `SharedBalance, CoupleStatus` | **Corrección sustantiva aprobada por revisión independiente del PR #1.** El estado de la pareja lo presenta `CoupleStatus` (`COMPONENT_SPECIFICATIONS.md` §Cuenta), no un componente `Settings` inexistente. |
+| `RESPONSIVE_SPECIFICATIONS.md` | 16 | «en lg, el primer ítem del rail abre un popover con el segmentado» → el selector va «arriba a la derecha del contenido en móvil, tablet y lg» | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 5). Resuelve la errata del popover: el comp nunca lo dibujó y ponía el wordmark en ese sitio. |
+| `COMPONENT_SPECIFICATIONS.md` | 94 | «Escritorio (≥ 1024): sidebar» → «Escritorio (≥ 1280): sidebar», con «Entre 1024 y 1279: rail de 76 px» | **Corrección determinada** por la jerarquía: manda el maestro §15.3. No requería decisión. |
+| `COMPONENT_SPECIFICATIONS.md` | 94 | «perfil y tema abajo» → «perfil abajo» | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 6). El tema vive solo en Mi cuenta › Apariencia, como dibuja el comp. |
+| `COMPONENT_SPECIFICATIONS.md` | 94 | Destinos sin enumerar → «(Inicio, Actividad, Metas, Plan, Balance)» | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 4). Balance es destino propio en escritorio, como dibuja el comp en el rail y en el sidebar. |
+| `DESIGN_SYSTEM.md` | 205 | Mapa semántico de navegación: se añade `Balance=` `scales` (solo escritorio) | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 4). El icono es el que dibuja el comp; el nombre `scales` de Phosphor se confirma al implementar el rail en la 001 **[V]**. |
 
-**Los otros cinco documentos siguen intactos**, byte a byte respecto a la
-importación: `BRAND_FOUNDATION.md` (3981 B), `COMPONENT_SPECIFICATIONS.md`
-(21146 B), `DESIGN_SYSTEM.md` (15066 B), `MOTION_SYSTEM.md` (13000 B) y
-`RESPONSIVE_SPECIFICATIONS.md` (4270 B).
+**Intactos byte a byte** respecto a la importación: `BRAND_FOUNDATION.md`
+(3981 B) y `MOTION_SYSTEM.md` (13000 B).
 
-`HANDOFF_CLAUDE_CODE.md` pasó de **21666 B** (importación) a **21653 B**:
-−22 B por las dos rutas de las líneas 5 y 6, +9 B por las dos sustituciones de
-`Settings` (líneas 159 y 163). Ninguna de las cuatro cambia una decisión de
-diseño; las dos primeras son reubicación y las dos segundas corrigen un nombre
-de componente que nunca existió.
+**Cambiados**, todos por las filas de arriba:
+
+- `HANDOFF_CLAUDE_CODE.md`: 21666 B → **21653 B** (−22 B por las rutas de las
+  líneas 5 y 6, +9 B por las dos sustituciones de `Settings`).
+- `RESPONSIVE_SPECIFICATIONS.md`: 4270 B → **4221 B** (línea 16).
+- `COMPONENT_SPECIFICATIONS.md`: 21146 B → **21256 B** (línea 94).
+- `DESIGN_SYSTEM.md`: 15066 B → **15102 B** (línea 205).
 
 ## Erratas conocidas
 
@@ -78,28 +83,12 @@ Registro **temporal** de una discrepancia detectada en el paquete **mientras no
 se haya corregido**. Una errata nunca es una segunda fuente normativa: en cuanto
 la corrección se aprueba, la entrada sale de aquí y pasa al **Log de cambios**.
 
-La primera que hubo —`Settings` como nombre de componente en las líneas 159 y
-163 del handoff— se corrigió en el artefacto tras la segunda revisión
-independiente del PR #1 y está registrada en el Log de cambios.
-
-**Pendientes — cuatro, detectadas al capturar el AppShell (PR #5) y en el
-preflight de Spec Kit.** Todas enfrentan dos fuentes aprobadas en la navegación de
-escritorio, que es lo que construye la especificación 001. Ninguna de las fuentes
-se ha corregido todavía. Son de **dos tipos distintos**, y no se esperan entre sí:
-
-- **Decisión de producto con gate humano** — las tres primeras. No hay un texto
-  mal copiado: hay dos fuentes que dicen cosas distintas y elegir es una decisión.
-  La 001 debe cerrarlas **antes** de implementar el rail y el sidebar.
-- **Corrección determinada** — la cuarta. La jerarquía ya la resuelve; no hay nada
-  que decidir. Solo falta el PR que corrija el artefacto, y puede hacerse en
-  cualquier momento sin esperar a las otras.
-
-| Dónde | La especificación dice | El comp dibuja | Qué hay que decidir |
-| --- | --- | --- | --- |
-| `RESPONSIVE_SPECIFICATIONS.md` línea 16 (Contexto Yo/Nosotros) | En `lg`, «el primer ítem del rail abre un popover con el segmentado» | El primer ítem del rail es el wordmark «J». El popover no está dibujado en ningún estado (`Juntia DS v1 - 04 Pantallas`, 04·9) | Cómo se cambia de contexto a 1024: popover desde el rail —y entonces falta diseñarlo— u otro mecanismo |
-| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino, rotulado «Balance»**, con icono de balanza, en **los dos** layouts de escritorio: en el rail de 1024, entre Plan y el `+` (`appshell-1024-rail-light.png`, 04·9), y en el sidebar de 1440, después de Plan (`appshell-1440-sidebar-light.png`, 04·7). Que aparezca igual en dos breakpoints sugiere una decisión de diseño que no llegó a la especificación, no un icono suelto | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo, añadirlo al mapa semántico y al maestro §15.3— o si sobra en el comp y Balance se queda como módulo de Inicio |
-| `COMPONENT_SPECIFICATIONS.md` línea 94 (AppShell / Navigation, «Escritorio») — **decisión** | «perfil **y tema** abajo» | Al pie del sidebar de 1440 solo está el perfil («Sara · Mi cuenta · con Tomás»), **sin control de tema**, en claro y en oscuro (04·7, 04·8). El tema vive en `/cuenta/apariencia` (handoff, «Mi cuenta») | Si el sidebar lleva un acceso al tema al pie o si el tema solo vive en Cuenta |
-| `COMPONENT_SPECIFICATIONS.md` línea 94 (AppShell / Navigation, «Escritorio») — **corrección determinada** | «Escritorio (≥ 1024): sidebar de 248 px» | Rail de 76 px a 1024 (04·9) y sidebar desde 1280 | **Nada que decidir.** Manda el maestro §15.3: rail desde 1024, sidebar desde 1280. Pendiente solo del PR que corrija la línea 94 y lo registre en el Log de cambios. Quien implemente el AppShell sigue el maestro, no la línea 94 |
+**No hay erratas pendientes.** Hubo cinco y todas pasaron al Log de cambios:
+`Settings` en el handoff, corregido tras la revisión del PR #1; y las cuatro de la
+navegación de escritorio detectadas al capturar el AppShell (PR #5) y en el
+preflight de Spec Kit —popover de contexto, quinto destino Balance, tema en el
+sidebar y umbral del sidebar—, resueltas por los fundadores el 3 de noviembre de
+2026 (maestro §15.10) salvo el umbral, que era una corrección determinada.
 
 ## Referencias visuales originales
 
@@ -147,7 +136,9 @@ oscuro, pestaña activa contra una inactiva, y el segmentado Yo/Nosotros en
 móvil y en escritorio (dos archivos, porque en el comp están en sitios
 distantes). **Dos cosas no se capturaron porque el comp no las dibuja:** el
 rail de 1024 en oscuro y el popover del segmentado en el rail. Están
-registradas en el README de esa carpeta.
+registradas en el README de esa carpeta. El popover ya no hace falta: los
+fundadores decidieron que a 1024 el selector va arriba a la derecha del
+contenido (maestro §15.10, decisión 5).
 
 Tres de esos ocho archivos son pantallas completas y no solo recortes de
 navegación: el rail de 1024 y los dos sidebars de 1440 muestran **Inicio en
