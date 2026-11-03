@@ -37,25 +37,39 @@ npx playwright install --with-deps chromium
 npm run test:a11y
 ```
 
-`test:a11y` compila y sirve con `JUNTIA_INTERNAL_SURFACE=1`. Esperado: cada ruta
+`test:a11y` sirve ese build con `JUNTIA_INTERNAL_SURFACE=1`. Esperado: cada ruta
 de [contracts/routes.md](contracts/routes.md), la URL inexistente y
 `/interno/primitivos`, en claro y oscuro, con cero violaciones serias o críticas,
 y la comprobación de que la superficie interna se encontró (FR-052).
 
 ## 4. La superficie interna no sale en producción (FR-053)
 
-La prueba de Vitest de la página interna con `VERCEL_ENV=production` corre dentro
-de `verify`. Comprobación adicional en bash, para pegar en el PR:
+Dentro de `verify` corren las pruebas de las dos funciones puras (entorno y host);
+ningún test importa la página, que usa `server-only`. La página se comprueba por
+HTTP sobre el build del paso 3, en los dos casos que exige FR-053:
 
 ```bash
-VERCEL=1 VERCEL_ENV=production npm run build && npx next start -p 3100
+npm run check:internal-surface
 ```
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3100/interno/primitivos
-```
+Esperado (tabla completa en [contracts/ci.md](contracts/ci.md)):
 
-Esperado: `404`. Con `VERCEL_ENV=preview`, `200`.
+- build servido con `VERCEL_ENV=production` → **404**, con cualquier host;
+- build servido como preview y pedido con el **host de producción** (un alias) → **404**;
+- el mismo preview pedido por su URL de despliegue o de rama → 200.
+
+Pegar la salida en el PR. La comprobación sobre un preview real de Vercel es un
+`[V]` del PR de implementación (plan, comprobación de jerarquía).
+
+### Restricción operativa
+
+**El dominio de producción nunca se asigna con `vercel alias` a un preview.** Se
+publica con `vercel promote`, con «Promote to Production» en el panel o
+desplegando en producción. La propia documentación de Vercel dice que `vercel
+alias` «is not the recommended way to promote production deployments». Si alguien
+lo hiciera, la segunda barrera devuelve 404 en la ruta interna, pero el resto del
+preview quedaría publicado en el dominio real: la restricción sigue siendo
+necesaria (research R4).
 
 ## 5. Recorrido manual (revisión humana del PR)
 
@@ -81,7 +95,7 @@ Con `npm run dev` y el navegador:
 
 ## 6. Evidencia que lleva el PR
 
-- Salidas reales de `verify`, `build` y `test:a11y`, y la del paso 4.
+- Salidas reales de `verify`, `build`, `test:a11y` y `check:internal-surface`.
 - Capturas a 390 y 1440 en claro y oscuro de cada ruta y de la superficie
   interna, para aprobar viendo la pantalla los `[P]` de paleta (plan, comprobación
   de jerarquía).

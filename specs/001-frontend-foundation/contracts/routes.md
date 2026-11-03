@@ -20,16 +20,22 @@ mensaje técnico crudo (`docs/CONVENTIONS.md` B.1).
 
 ## Disponibilidad de `/interno/primitivos` por destino
 
-Mecanismo en research R4.
+Mecanismo en research R4. La ruta se evalúa **por petición** (`ƒ`, nunca
+prerenderizada): el entorno y el host se leen en cada visita, así que un mismo
+build se comporta según dónde se sirve.
 
-| Destino | Señal | HTTP | Contenido |
-| --- | --- | --- | --- |
-| Desarrollo local (`next dev`) | `NODE_ENV=development` | 200 | Superficie identificada como interna |
-| Local con build de producción (capturas del PR) | `JUNTIA_INTERNAL_SURFACE=1` al compilar | 200 | Ídem |
-| CI, job 5 | `JUNTIA_INTERNAL_SURFACE=1` al compilar | 200 | Ídem; axe en los dos temas; el job falla si no encuentra el encabezado (FR-052) |
-| Preview de Vercel | `VERCEL_ENV=preview` | 200 | Ídem |
-| Producción de Vercel | `VERCEL_ENV=production` | **404** | Estado de «no encontrado» del shell |
-| Build sin ninguna señal | — | **404** | Ídem (cerrado por defecto) |
+| Destino | Señal de entorno | Host aceptado | HTTP | Contenido |
+| --- | --- | --- | --- | --- |
+| Desarrollo local (`next dev`) | `NODE_ENV=development` | Cualquiera | 200 | Superficie identificada como interna |
+| Local con build de producción (capturas del PR) | `JUNTIA_INTERNAL_SURFACE=1` al arrancar `next start` | Cualquiera | 200 | Ídem |
+| CI, job 5 | `JUNTIA_INTERNAL_SURFACE=1` al arrancar `next start` | Cualquiera | 200 | Ídem; axe en los dos temas; el job falla si no encuentra el encabezado (FR-052) |
+| Preview de Vercel, por su URL | `VERCEL_ENV=preview` | `VERCEL_URL` o `VERCEL_BRANCH_URL` | 200 | Ídem |
+| Preview de Vercel por un alias, **incluido el dominio de producción** | `VERCEL_ENV=preview` | Ningún otro | **404** | Estado de «no encontrado» del shell |
+| Producción de Vercel | `VERCEL_ENV=production` | — | **404** | Ídem |
+| Despliegue sin ninguna señal | — | — | **404** | Ídem (cerrado por defecto) |
 
 Siempre: sin enlaces desde la navegación, `robots: noindex, nofollow`, la página
-importa `server-only`.
+importa `server-only` (y por eso ningún test de Vitest la importa).
+
+**Restricción operativa:** el dominio de producción nunca se asigna con `vercel
+alias` a un preview (research R4).

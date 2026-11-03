@@ -30,8 +30,10 @@ Enfoque técnico, con lo verificado en [research.md](research.md):
   sistema, sin errores de hidratación (R2).
 - **ESLint con `no-restricted-syntax`** para hex crudos en TS, TSX y CSS, y para
   esperas fijas en pruebas de navegador (R3).
-- **Superficie interna en `/interno/primitivos`**, cerrada por defecto y abierta
-  solo con una señal positiva de destino; en producción de Vercel, 404 (R4).
+- **Superficie interna en `/interno/primitivos`**, evaluada por petición y con dos
+  barreras: una señal positiva de destino (en producción de Vercel, 404) y, en un
+  preview, solo las URL generadas del propio despliegue, de modo que un alias al
+  dominio de producción también da 404 (R4).
 - **CI con los jobs 1, 2 y 5** de ADR-011, presupuestos que solo avisan y los jobs
   3 y 4 declarados no aplicables. **Cero specs E2E.**
 
@@ -115,7 +117,7 @@ Separadas según ADR-012 §2.
 | Presupuestos de tiempo, ADR-011 `[V]` 1 | Comprueba lo construido | Pendiente: primera medición real; avisa, no bloquea | No |
 | `vitest --changed` para el bucle local, ADR-011 `[V]` 6 | Comprueba lo construido | Pendiente | No |
 | Licencias de Instrument Serif, Geist y Geist Mono, maestro §6.1 y supuesto «Fuentes» | Comprueba lo construido | Pendiente: se verifica al instalarlas | No |
-| Superficie interna en un preview real de Vercel, FR-049 | Comprueba lo construido | Pendiente: no existe proyecto de Vercel (R4, «Lo que esto no prueba») | No |
+| Superficie interna en un preview real de Vercel, FR-049 y FR-053 | Comprueba lo construido | Pendiente: no existe proyecto de Vercel (R4, «Lo que esto no prueba»). Se comprueba que la URL de despliegue y la de rama dan 200 y que un alias da 404, y si `VERCEL_URL` coincide con el host bajo Deployment Protection | No |
 
 No los toca la 001: altura del teclado nativo y teclados de terceros en Android
 (P0-1, decisión 11), workers con parejas aisladas y forma del claim de RLS
@@ -146,7 +148,7 @@ contratos. Ver «Puntos para el revisor».
 | --- | --- | --- | --- | --- |
 | Personas: «color + patrón + inicial» [A] frente a «el patrón no está aprobado y en P0 no se usa» | Handoff §Accesibilidad / maestro §15.9 | Manda el maestro: Avatar sin patrón (FR-009). Registrado ya en la spec | No hace falta: el maestro ya lo resuelve | No |
 | «Cambiar el contexto dispara la Context Transition» frente a «sin animación» | `COMPONENT_SPECIFICATIONS.md` §Tabs / decisión 10 | Manda el maestro; los fundadores precisaron en Clarify Q2 que la perilla se desliza y el contenido no. Registrado ya en la spec | No hace falta | No |
-| **Nuevo.** `docs/TESTING.md` §10 dice que la herramienta de la regla de hex y el mecanismo de RLS «siguen abiertas a propósito y deciden los fundadores»; ADR-011 dice que RLS está cerrada (decisión 1) y que la herramienta «la resuelve la especificación 001» | `docs/TESTING.md` / ADR-011 | Manda ADR-011, y `docs/TESTING.md` lo dice de sí mismo («ante un conflicto manda la decisión de la que derivan»). El plan propone la herramienta (R3) y **la aprueba quien mergee este PR**, así que se cumplen las dos lecturas | **Por abrir**: un PR documental que actualice `docs/TESTING.md` §10. No se toca aquí: este PR es del plan | No: el texto es obsoleto, no contradice una decisión vigente |
+| `docs/TESTING.md` §10 decía que la herramienta de la regla de hex y el mecanismo de RLS «siguen abiertas a propósito y deciden los fundadores»; ADR-011 dice que RLS está cerrada (decisión 1) y que la herramienta «la resuelve la especificación 001» | `docs/TESTING.md` / ADR-011 | Manda ADR-011, y `docs/TESTING.md` lo dice de sí mismo («ante un conflicto manda la decisión de la que derivan»). El plan propone la herramienta (R3) y la aprueba quien mergee este PR | **Resuelto**: PR #13, mergeado en `main` como `8166192` | No |
 | **Nuevo, lectura.** `docs/CONVENTIONS.md` A.1 pide carpetas en inglés; el maestro §15.3 da rutas en español (`/cuenta/*`) | `docs/CONVENTIONS.md` / maestro | `docs/CONVENTIONS.md` se subordina a sí mismo: «donde el maestro … ya den un identificador, manda ese identificador». Las rutas que el maestro no nombra siguen su precedente (R6) | No hace falta | No |
 
 **Resultado del gate (antes de la Fase 0)**: **PASA.** Ningún `[P]` con alcance
@@ -208,7 +210,7 @@ src/
 │   │   ├── balance/page.tsx          # «todavía no disponible»
 │   │   └── cuenta/page.tsx           # «la cuenta llega con el inicio de sesión»
 │   └── (internal)/
-│       └── interno/primitivos/page.tsx   # server-only; notFound() según la compuerta
+│       └── interno/primitivos/page.tsx   # server-only; connection(); notFound() según entorno y host
 ├── components/
 │   ├── ui/                           # Primitivos del paso 2 + base de diálogo
 │   │   ├── app-icon.tsx
@@ -229,13 +231,17 @@ src/
 │   ├── motion/tokens.ts              # Springs y duraciones de MOTION_SYSTEM (handoff paso 6)
 │   ├── theme-script.ts               # Script bloqueante (R2)
 │   ├── context-preference.ts         # Lectura y escritura de juntia:context (R5)
-│   └── internal-surface.ts           # Compuerta de FR-049 (R4)
+│   └── internal-surface.ts           # Funciones puras de FR-049: entorno y host (R4); sin server-only
 └── styles/
     └── tokens.css                    # ÚNICO archivo con hex
 tests/
 ├── a11y/routes.a11y.ts               # Job 5: rutas × temas + no encontrado + superficie interna
-└── lint-fixtures/                    # Un caso que debe fallar por regla propia
+├── lint-fixtures/                    # Un caso que debe fallar por regla propia; ignorado por eslint.config
+└── lint-rules.test.ts                # Vitest + API de ESLint sobre los fixtures (F12-2)
 ```
+
+Además, `scripts/check-internal-surface.mjs`: la comprobación HTTP de FR-053
+(contracts/ci.md).
 
 Las pruebas de Vitest van junto a lo que prueban (`*.test.ts`, `*.test.tsx`).
 
@@ -326,8 +332,12 @@ construcción:
 
 ### Superficie interna (FR-049 a FR-053)
 
-Según R4: `/interno/primitivos`, compuerta `isInternalSurfaceEnabled`, `notFound()`
-si está cerrada, `server-only`, `robots` sin indexar. Contenido según FR-050:
+Según R4: `/interno/primitivos`, evaluada por petición con `await connection()`;
+`notFound()` si `isInternalSurfaceEnabled(process.env)` está cerrada o si
+`isAllowedInternalHost(host, process.env)` rechaza el host; `server-only`; `robots`
+sin indexar. Las dos funciones viven en `src/lib/internal-surface.ts`, que no
+importa `server-only`, para que Vitest las pruebe sin tocar la página (F12-3).
+Contenido según FR-050:
 cada primitivo en sus estados, los dos temas lado a lado, valores sacados de
 `COMPONENT_SPECIFICATIONS.md` (por ejemplo 999.999.999 en AmountInput) y un
 encabezado y una nota visibles que los identifican como valores de prueba. Nunca
@@ -339,11 +349,12 @@ Cada criterio en la capa más baja que detecta su fallo (`docs/TESTING.md` §4).
 
 | Qué se comprueba | Capa | Dónde | Requisitos |
 | --- | --- | --- | --- |
-| Hex crudo fuera de `tokens.css`; esperas fijas en pruebas de navegador | Lint | `eslint.config.mjs` + `tests/lint-fixtures/` | FR-006, FR-044, US-7.3 |
+| Hex crudo fuera de `tokens.css`; esperas fijas en pruebas de navegador | Lint | `eslint.config.mjs` (los fixtures, ignorados en la configuración) | FR-006, FR-044, US-7.3 |
 | `domain` no importa interfaz ni SDK | Lint (`no-restricted-imports`) | `eslint.config.mjs` | FR-003 |
-| Los fixtures de lint siguen fallando (que nadie desactive una regla sin que se note) | Vitest `components`, sin DOM, con la API de ESLint | `tests/lint-fixtures/lint-rules.test.ts` | FR-006, FR-044 |
+| Las reglas propias siguen marcando las líneas exactas de cada fixture | Vitest `components`, entorno `node`, `new ESLint({ ignore: false })` | `tests/lint-rules.test.ts` | FR-006, FR-044 |
 | Respaldo sin JS idéntico al bloque oscuro | Vitest `components`, sin DOM | `src/styles/tokens.test.ts` | FR-005, caso límite sin JS |
-| Compuerta por destino; la página interna llama `notFound()` con `VERCEL_ENV=production` | Vitest `components` | `src/lib/internal-surface.test.ts`, `src/app/(internal)/…/page.test.tsx` | FR-049, **FR-053** |
+| Compuerta por destino y por host, como funciones puras | Vitest `components`, sin importar la página | `src/lib/internal-surface.test.ts` | FR-049, FR-053 |
+| La página servida: producción → 404; preview por su URL → 200; preview por el host de producción → 404 | HTTP real contra el build (`next start` + `fetch` con `Host`) | `scripts/check-internal-surface.mjs`, job 5 | **FR-053**, F12-1 |
 | AmountInput: formato, tope, pegado, vacío ≠ 0, error accesible | RTL | `amount-input.test.tsx` | FR-014, US-6.1–6.3 |
 | Selector: cambio con clic y flechas, recuerdo, almacenamiento bloqueado, anuncio | RTL | `context-selector.test.tsx` | FR-025–FR-027, US-4 |
 | Anotar: aviso sin campos, `N` (y no en un campo ni con el aviso abierto), Escape, cierre, foco atrapado y devuelto | RTL | `annotate-notice.test.tsx` | FR-031, US-3 |
@@ -351,6 +362,10 @@ Cada criterio en la capa más baja que detecta su fallo (`docs/TESTING.md` §4).
 | Cero violaciones serias o críticas en cada ruta, los dos temas; superficie interna encontrada | E2E barato por ruta (axe) | `tests/a11y/routes.a11y.ts` | FR-043, FR-051, FR-052, SC-002 |
 | Primer cuadro en el tema del sistema, sin destello, CLS = 0 | Medición del PR (no suite) | El arnés de R2 se reutiliza a mano en el PR | SC-006 |
 | Composición a 360–1440, motion, contraste, legibilidad del aviso, copy | Revisión humana del PR | Capturas 390 y 1440 × 2 temas | SC-001, SC-008, ADR-011 §7 |
+
+**Ningún test de Vitest importa un módulo con `server-only`** (F12-3): fuera de la
+resolución de Next ese paquete lanza una excepción al importarse. La página interna
+y cualquier otra que lo use se comprueban por HTTP.
 
 No se escribe un test por primitivo: Badge, Avatar, CategoryIcon, Skeleton y
 Button se comprueban con axe en la superficie interna y en la revisión humana; RTL
@@ -380,9 +395,14 @@ Repasada contra research.md, data-model.md y contracts/.
 | ¿Añade dependencias fuera de §7.1 o que la 001 no usa? | No: `server-only` es del propio ecosistema de Next; `@eslint/css` es el lenguaje CSS oficial de ESLint, herramienta de desarrollo que sustituye a Stylelint |
 | ¿Añade specs E2E? | No, cero |
 | ¿Adelanta infraestructura de P0-1 (Supabase, migraciones, siembra)? | No; los jobs 3 y 4 se declaran no aplicables |
-| Conflictos nuevos | El de `docs/TESTING.md` §10, no bloqueante, con PR documental por abrir |
+| Conflictos nuevos | Ninguno. El de `docs/TESTING.md` §10 quedó resuelto por el PR #13 (`8166192`) |
+| **Revisión del PR #12.** ¿La defensa por host (F12-1) cambia el alcance o toca un `[P]`? | No. Aplica FR-049 y FR-053 tal como están; no añade rutas ni contenido. Solo `/interno/primitivos` pasa a evaluarse por petición; las rutas de producto siguen prerenderizadas y los umbrales de §15.7, que miden rutas de producto, no cambian (research R4) |
+| ¿Introduce dependencias o variables nuevas? | No dependencias. Usa variables de sistema documentadas por Vercel (`VERCEL_URL`, `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`); no hace falta una variable propia de hosts |
+| ¿Es una decisión significativa o difícil de revertir? | No: es código de la 001 y una restricción operativa que ya recomienda la documentación de Vercel. No necesita ADR |
+| ¿Algún test importa `server-only` o reproduce en navegador lo que cubre una capa inferior? | No (F12-3). La comprobación HTTP de FR-053 no es una spec E2E: no recorre nada, pide una URL |
+| ¿El lint normal puede romperse por los fixtures? | No: la exclusión está en la configuración (F12-2) |
 
-**Resultado del gate (después del diseño)**: **PASA.**
+**Resultado del gate (después del diseño y de la revisión del PR #12)**: **PASA.**
 
 ## Puntos para el revisor
 
@@ -402,8 +422,12 @@ un preview real de Vercel queda como `[V]` del PR de implementación.
    precedente de `/cuenta` (R6).
 3. **Nombre `/interno/primitivos`** y la bandera `JUNTIA_INTERNAL_SURFACE` (R4).
 4. **Sin CLI de shadcn/ui ni Vaul**; Segmented escrito a mano (R1.4).
-5. **`docs/TESTING.md` §10 está desactualizado** respecto a ADR-011 y a la
-   decisión 1: necesita un PR documental aparte.
+5. **`docs/TESTING.md` §10 estaba desactualizado** respecto a ADR-011 y a la
+   decisión 1. Resuelto por el PR #13 (`8166192`).
+6. **Restricción operativa (F12-1): el dominio de producción nunca se asigna con
+   `vercel alias` a un preview.** Se publica con `vercel promote`, con «Promote to
+   Production» o desplegando en producción. La segunda barrera de R4 evita que
+   incumplirla exponga la superficie, pero no la autoriza.
 
 ## Complexity Tracking
 

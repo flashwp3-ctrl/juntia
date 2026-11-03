@@ -85,7 +85,11 @@ en P0-1 (FR-014, maestro §5.2). El primitivo no decide si `0` es válido.
 
 ## InternalSurfaceGate — disponibilidad de la superficie interna
 
-Función pura `isInternalSurfaceEnabled(env)` (research R4).
+Dos funciones puras en `src/lib/internal-surface.ts`, que no importa
+`server-only` (research R4). La página las llama en cada petición y responde
+`notFound()` si cualquiera de las dos dice `false`.
+
+`isInternalSurfaceEnabled(env)` — destino de despliegue:
 
 | Entrada | Resultado |
 | --- | --- |
@@ -94,6 +98,18 @@ Función pura `isInternalSurfaceEnabled(env)` (research R4).
 | `NODE_ENV === "development"` | `true` |
 | `JUNTIA_INTERNAL_SURFACE === "1"` | `true` |
 | cualquier otro caso | `false` |
+
+`isAllowedInternalHost(host, env)` — host de la petición:
+
+| Entrada | Resultado |
+| --- | --- |
+| `VERCEL_ENV !== "preview"` | `true` (la primera función ya decidió) |
+| Host vacío o ausente | `false` |
+| Host = `VERCEL_PROJECT_PRODUCTION_URL` | `false` |
+| Host = `VERCEL_URL` o `VERCEL_BRANCH_URL` | `true` |
+| Cualquier otro host (un alias) | `false` |
+
+El host se compara en minúsculas, sin puerto ni punto final.
 
 ## CopyCatalog — catálogo de copy
 

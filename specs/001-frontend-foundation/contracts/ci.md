@@ -7,11 +7,12 @@ Aplica ADR-011 §4–§6 y `docs/TESTING.md` §2–§3 con el arranque progresiv
 
 | Script | Qué ejecuta |
 | --- | --- |
-| `lint` | `eslint .` (incluye CSS con `@eslint/css`) |
+| `lint` | `eslint .` (incluye CSS con `@eslint/css`). Sin banderas: los fixtures se excluyen en la configuración |
 | `typecheck` | `tsc --noEmit` |
 | `test:unit` | `vitest run --project domain --passWithNoTests` |
-| `test:components` | `vitest run --project components` |
-| `test:a11y` | `playwright test --project a11y`. El `webServer` de `playwright.config.ts` ejecuta `npm run build && npm run start` con `env: { JUNTIA_INTERNAL_SURFACE: "1" }`, que funciona igual en Windows y en Linux |
+| `test:components` | `vitest run --project components`. Incluye `tests/lint-rules.test.ts`, que lintea los fixtures a propósito |
+| `test:a11y` | `playwright test --project a11y`. El `webServer` de `playwright.config.ts` ejecuta `npm run start` con `env: { JUNTIA_INTERNAL_SURFACE: "1" }` sobre el build ya hecho, que funciona igual en Windows y en Linux |
+| `check:internal-surface` | `node scripts/check-internal-surface.mjs` (FR-053): sobre el build ya hecho, arranca `next start` con el entorno de producción y con el de un preview, y pide `/interno/primitivos` con distintos `Host` |
 | `verify` | `node scripts/verify.mjs` |
 | `build`, `start`, `dev` | Next |
 
@@ -50,7 +51,22 @@ por una medición.
 | --- | --- | --- |
 | 1 · `lint-typecheck-build` | `npm run lint`, `npm run typecheck`, `npm run build` | Gate de PR < 6 min |
 | 2 · `vitest` | `npm run test:unit`, `npm run test:components` | Gate de PR < 6 min |
-| 5 · `a11y` | `npx playwright install --with-deps chromium`; `npm run test:a11y`, que compila con `JUNTIA_INTERNAL_SURFACE=1` y prueba contra `next start` | Gate de PR < 6 min |
+| 5 · `a11y` | `npm run build` (una sola vez, sin variables: la ruta interna lee el entorno al servir); `npx playwright install --with-deps chromium`; `npm run test:a11y`; `npm run check:internal-surface` | Gate de PR < 6 min |
+
+`check:internal-surface` falla el job si alguna respuesta no es la esperada:
+
+| `next start` con | `Host` de la petición | Esperado |
+| --- | --- | --- |
+| `VERCEL=1 VERCEL_ENV=production` + URLs de prueba | dominio de producción de prueba | 404 |
+| `VERCEL=1 VERCEL_ENV=production` + URLs de prueba | URL de despliegue de prueba | 404 |
+| `VERCEL=1 VERCEL_ENV=preview` + URLs de prueba | URL de despliegue de prueba | 200 |
+| `VERCEL=1 VERCEL_ENV=preview` + URLs de prueba | URL de rama de prueba | 200 |
+| `VERCEL=1 VERCEL_ENV=preview` + URLs de prueba | dominio de producción de prueba (alias) | 404 |
+| ninguna variable | `localhost` | 404 |
+
+Las «URLs de prueba» son valores ficticios de `VERCEL_URL`, `VERCEL_BRANCH_URL` y
+`VERCEL_PROJECT_PRODUCTION_URL` fijados en el script; nunca los dominios reales.
+El caso `JUNTIA_INTERNAL_SURFACE=1` → 200 ya lo cubre `test:a11y` (FR-052).
 
 - Cada job guarda la hora de inicio en su primer paso y, en un último paso con
   `if: always()`, escribe en `$GITHUB_STEP_SUMMARY` su duración y la de cada
@@ -79,3 +95,8 @@ En `eslint.config.mjs`, sobre `eslint-config-next/core-web-vitals` y
 | Hex crudo | `**/*.{js,jsx,mjs,cjs,ts,tsx}`; `**/*.css` salvo `src/styles/tokens.css` | Literales, plantillas, valores CSS y valores de `--propiedades` con `#rgb`, `#rgba`, `#rrggbb` o `#rrggbbaa` |
 | Espera fija | `tests/**/*.ts` | `*.waitForTimeout(...)` y `setTimeout(...)` |
 | Dependencia de `domain` | `src/domain/**` | Importar `react`, `react-dom`, `next`, `motion`, `@phosphor-icons/*`, `@radix-ui/*`, `@supabase/*` o `@/components/*` |
+
+`tests/lint-fixtures/**` está en `globalIgnores`: `eslint .` nunca los ve, y una
+bandera olvidada no puede romper el job 1. `tests/lint-rules.test.ts` los lintea
+con `new ESLint({ ignore: false })` en entorno `node` y afirma las líneas exactas
+que cada regla debe marcar (research R3).

@@ -395,6 +395,39 @@ $ npx eslint . --ignore-pattern "tests/lint-fixtures/**"
 EXIT=0
 ```
 
+### Los fixtures, fuera del lint normal y dentro de su prueba (revisión del PR #12, F12-2)
+
+El ensayo anterior excluía los fixtures con `--ignore-pattern` en la línea de
+comandos. Eso rompería el job 1, que ejecuta `eslint .`, en cuanto alguien olvide
+la bandera. **Decisión:** la exclusión va en la configuración, con
+`globalIgnores([…, "tests/lint-fixtures/**"])`, y las reglas se prueban en
+**Vitest con la API de ESLint** (`new ESLint({ ignore: false })`, entorno `node`),
+en `tests/lint-rules.test.ts`, dentro del proyecto `components`. Así la prueba de
+regresión corre en `verify` y en el job 2, sin un comando aparte que alguien pueda
+dejar de ejecutar.
+
+```
+$ npx eslint .
+…\postcss.config.mjs
+  1:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+✖ 1 problem (0 errors, 1 warning)
+EXIT=0
+
+$ npx vitest run --project components --reporter=verbose
+ ✓ |components| tests/lint-rules.test.ts > reglas propias de lint > hex crudo en TSX 4385ms
+ ✓ |components| tests/lint-rules.test.ts > reglas propias de lint > hex crudo en CSS, también en --propiedades 12ms
+ ✓ |components| tests/lint-rules.test.ts > reglas propias de lint > esperas fijas en pruebas de navegador 44ms
+ ✓ |components| tests/lint-rules.test.ts > reglas propias de lint > tokens.css queda exento 3ms
+ …
+      Tests  20 passed (20)
+EXIT=0
+```
+
+Cada prueba afirma las líneas exactas que deben fallar (`[2, 4, 4]` en TSX,
+`[4, 8]` en CSS, `[5, 6]` en esperas fijas), no solo «hay errores»: si alguien
+afloja una regla, la lista cambia. La primera prueba tarda unos 4 s porque carga
+la configuración de `eslint-config-next`; cabe en el presupuesto de `verify`.
+
 Lo que **no** marca, a propósito, y se comprobó en los mismos archivos:
 `href="#contenido"` en TSX y el selector `#contenido` en CSS (un id no es un
 color: `o` y `n` no son hexadecimales). `tokens.css` queda exento por
@@ -404,8 +437,8 @@ Límite conocido, aceptado: un ancla cuyo id sea solo hexadecimal de 3, 4, 6 u 8
 letras (`#add`, `#bead`) se marcaría. Se evita no usando esos ids.
 
 **Resultado del `[V]`: verificado.** Las dos reglas fallan cuando deben y pasan en
-código limpio. Las regresiones de las reglas se prueban en la implementación con
-fixtures de lint (R7).
+código limpio. Las regresiones de las reglas se prueban con la prueba de Vitest de
+arriba (R7).
 
 ---
 
@@ -414,7 +447,7 @@ fixtures de lint (R7).
 **Fuente.** FR-049 («el plan solo elige el mecanismo» y propone el nombre),
 FR-053, supuesto «Destinos de despliegue»; maestro §7.1 (Vercel Hobby).
 
-### ¿Se distinguen un preview y producción en Vercel? Sí
+### ¿Se distinguen un preview y producción en Vercel? Sí, con una excepción
 
 Documentación oficial de Vercel, consultada el 3 de noviembre de 2026:
 
@@ -423,34 +456,91 @@ Documentación oficial de Vercel, consultada el 3 de noviembre de 2026:
   be either production, preview, or development». `VERCEL=1` es «an indicator to
   show that system environment variables have been exposed», y la exposición se
   controla con la casilla «Enable access to System Environment Variables».
-- *Promoting deployments*: promover un preview a producción es «a complete
-  rebuild», y «You cannot use your preview environment variables in a production
-  deployment». Instant Rollback reasigna dominios a un despliegue **que ya sirvió
-  producción**, y promover un *staged production build* tampoco reconstruye, pero
-  ese build ya es de producción.
+- *Promoting deployments*: promover un preview a producción desde el panel es «a
+  complete rebuild», y «You cannot use your preview environment variables in a
+  production deployment». *CLI · vercel promote*: promover un preview «will result
+  in a new production deployment». Instant Rollback reasigna dominios a un
+  despliegue **que ya sirvió producción**, y promover un *staged production build*
+  no reconstruye, pero ese build ya es de producción.
 
-Conclusión: **todo lo que sirve el dominio de producción se compiló con
-`VERCEL_ENV=production`.** El supuesto de la spec se cumple; no hay que detenerse.
+**La excepción (revisión del PR #12, F12-1).** `vercel alias` asigna un dominio a
+un despliegue que ya existe. *CLI · vercel alias*: «In general, the command allows
+for assigning custom domains to any deployment», y añade que `vercel alias` «is
+not the recommended way to promote production deployments to specific domains».
+Nada impide, por tanto, apuntar el dominio de producción a un **preview**, que se
+compiló con `VERCEL_ENV=preview`. La versión anterior de esta sección afirmaba
+que todo lo que sirve el dominio de producción se compiló con
+`VERCEL_ENV=production`: **era falso**. Con la ruta prerenderizada y solo la
+compuerta por entorno, ese preview serviría la superficie en el dominio real.
 
-### Decisión: compuerta cerrada por defecto
+Conclusión: preview y producción se distinguen por `VERCEL_ENV` en todos los
+caminos de despliegue salvo un alias manual; ese camino se cubre con una segunda
+barrera por host y con una restricción operativa. El supuesto de la spec se
+cumple con esa defensa; no hay que detenerse.
+
+### Decisión: dos barreras, por petición
+
+La ruta deja de prerenderizarse: `await connection()` (de `next/server`) al
+principio de la página obliga a evaluar el entorno y el host en cada visita.
 
 ```ts
 // src/lib/internal-surface.ts
+// Primera barrera: destino de despliegue. Cerrada por defecto.
 export function isInternalSurfaceEnabled(env: Env): boolean {
   if (env.VERCEL_ENV === "production") return false;                       // nunca, ni con la bandera
   if (env.VERCEL_ENV === "preview" || env.VERCEL_ENV === "development") return true;
   if (env.NODE_ENV === "development") return true;                         // `next dev`: nunca es un despliegue
   return env.JUNTIA_INTERNAL_SURFACE === "1";                              // CI y capturas locales, explícito
 }
+
+// Segunda barrera: en un preview, solo en las URL generadas del propio despliegue o de su rama.
+export function isAllowedInternalHost(host: string | null | undefined, env: Env): boolean {
+  if (env.VERCEL_ENV !== "preview") return true;
+  const h = normalizeHost(host);                                           // minúsculas, sin puerto ni punto final
+  if (!h) return false;
+  if (h === normalizeHost(env.VERCEL_PROJECT_PRODUCTION_URL)) return false;
+  return [env.VERCEL_URL, env.VERCEL_BRANCH_URL].map(normalizeHost).filter(Boolean).includes(h);
+}
+
+// src/app/(internal)/interno/primitivos/page.tsx
+await connection();
+if (!isInternalSurfaceEnabled(process.env)) notFound();
+if (!isAllowedInternalHost((await headers()).get("host"), process.env)) notFound();
 ```
 
-| Destino (FR-049) | Qué la habilita | Resultado |
-| --- | --- | --- |
-| Desarrollo local | `next dev` (`NODE_ENV=development`) | Disponible |
-| CI (job 5) | `JUNTIA_INTERNAL_SURFACE=1` en el job | Disponible y auditada |
-| Preview de Vercel | `VERCEL_ENV=preview` | Disponible e identificada |
-| Producción de Vercel | `VERCEL_ENV=production` | `notFound()` → 404 |
-| Cualquier build sin señal (incluido Vercel con las variables de sistema desactivadas) | nada | 404: **falla cerrada** |
+**Por qué una lista de permitidos y no una de prohibidos.** La propuesta de la
+revisión era negar el host de producción con `VERCEL_PROJECT_PRODUCTION_URL` o con
+una variable propia. La documentación muestra que esa variable guarda **un solo**
+dominio: «We select the shortest production custom domain, or vercel.app domain if
+no custom domain is available. Note, that this is always set, even in preview
+deployments». Un proyecto con `juntia.example` y `www.juntia.example` dejaría
+fuera el segundo, y una variable propia depende de que alguien la mantenga al día
+y de que exista antes de compilar cada preview. En cambio, las URL que Vercel
+genera para un preview las conoce el propio despliegue, en build y en ejecución:
+
+- `VERCEL_URL`: «The domain name of the generated deployment URL. Example:
+  \*.vercel.app».
+- `VERCEL_BRANCH_URL`: «The domain name of the generated Git branch URL. Example:
+  \*-git-\*.vercel.app».
+
+Y la petición dice por qué dominio entró la persona (*Request headers*): `host`
+«represents the domain name as it was accessed by the client. If the deployment
+has been assigned to a preview URL or production domain and the client visits the
+domain URL, it contains the custom domain instead of the underlying deployment
+URL»; `x-forwarded-host` «is identical to the `host` header». Así, **cualquier
+alias** sobre un preview —el de producción, el `www` o cualquier otro— da 404 sin
+que nadie tenga que enumerar los dominios. Negar además
+`VERCEL_PROJECT_PRODUCTION_URL` es redundante y se deja como cinturón. No hace
+falta una variable propia.
+
+| Destino (FR-049) | Primera barrera | Segunda barrera | Resultado |
+| --- | --- | --- | --- |
+| Desarrollo local | `next dev` (`NODE_ENV=development`) | No aplica fuera de un preview | Disponible |
+| CI (job 5) | `JUNTIA_INTERNAL_SURFACE=1` al arrancar `next start` | No aplica | Disponible y auditada |
+| Preview de Vercel, por su URL de despliegue o de rama | `VERCEL_ENV=preview` | Host = `VERCEL_URL` o `VERCEL_BRANCH_URL` | Disponible e identificada |
+| Preview de Vercel servido por un alias, **incluido el dominio de producción** | `VERCEL_ENV=preview` | Host distinto | **404** |
+| Producción de Vercel | `VERCEL_ENV=production` | — | **404** |
+| Cualquier despliegue sin señal (incluido Vercel con las variables de sistema desactivadas) | nada | — | **404**: falla cerrada |
 
 **Por qué cerrada por defecto.** La primera versión del ensayo abría todo lo que
 no tuviera `VERCEL=1`. La documentación muestra que `VERCEL` depende de una
@@ -459,6 +549,12 @@ dos variables y la superficie quedaría expuesta. La versión final exige una se
 positiva. `NODE_ENV` no decide la exclusión —eso prohíbe la Precisión F11-1—; solo
 reconoce el servidor de desarrollo como uno de los destinos que abren.
 
+**Restricción operativa.** El dominio de producción **nunca** se asigna con
+`vercel alias` a un preview: se publica con `vercel promote`, con «Promote to
+Production» o desplegando en producción. Va en `quickstart.md` y en los «Puntos
+para el revisor» del plan. La segunda barrera existe para que incumplirla no
+exponga la superficie, no para autorizarlo.
+
 **Nombre de la ruta: `/interno/primitivos`.** Coherente con las rutas de producto
 en español que fija el maestro §15.3 (`/cuenta/*`); «interno» identifica la
 superficie en la propia URL; «primitivos» es el término del handoff, paso 2. La
@@ -466,33 +562,96 @@ página lleva `robots: { index: false, follow: false }` e importa `server-only`.
 
 ### Salida
 
+Funciones puras, probadas sin importar la página (F12-3):
+
 ```
-$ npx vitest run --project components src/lib/internal-surface.test.ts
- ✓ … isInternalSurfaceEnabled > next dev local
- ✓ … isInternalSurfaceEnabled > next start local sin bandera
- ✓ … isInternalSurfaceEnabled > next start con bandera (CI, capturas)
- ✓ … isInternalSurfaceEnabled > preview de Vercel
- ✓ … isInternalSurfaceEnabled > producción de Vercel
- ✓ … isInternalSurfaceEnabled > producción con la bandera puesta por error
- ✓ … isInternalSurfaceEnabled > Vercel sin variables de sistema expuestas
-      Tests  7 passed (7)
-
-$ build+start con VERCEL=1 VERCEL_ENV=production; curl /interno/primitivos → 404
-$ build+start con VERCEL=1 VERCEL_ENV=preview; curl /interno/primitivos → 200
-$ build+start con JUNTIA_INTERNAL_SURFACE=1; curl /interno/primitivos → 200
-$ build+start con (ninguna); curl /interno/primitivos → 404
+$ npx vitest run --project components --reporter=verbose
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > next dev local
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > next start local sin bandera
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > next start con bandera (CI, capturas)
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > preview de Vercel
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > producción de Vercel
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > producción con la bandera puesta por error
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled > Vercel sin variables de sistema expuestas
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview por su URL de despliegue
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview por su URL de rama, con puerto y mayúsculas
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview con alias al dominio de producción
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview con alias a otro dominio de producción (www)
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview sin cabecera host
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > preview sin variables de URL
+ ✓ |components| src/lib/internal-host.test.ts > isAllowedInternalHost > fuera de Vercel (local, CI)
 ```
 
-En los cuatro builds, `/` respondió 200. La ruta se prerenderiza en el build
-(`○ /interno/primitivos`): la variable tiene que estar **al compilar**. Si el job
-5 la olvidara, la ruta daría 404 y la comprobación de FR-052 fallaría en voz alta,
-no en silencio.
+Primer intento con `headers()` pero sin `connection()`: la ruta **seguía
+prerenderizándose** (`○ /interno/primitivos`), porque con la compuerta cerrada al
+compilar el `notFound()` llegaba antes de leer las cabeceras y Next congelaba el
+404; con la bandera puesta al compilar habría congelado el 200. Con
+`connection()`:
 
-**Lo que esto no prueba.** No existe todavía un proyecto de Vercel para la 001 y
-no se creó ninguno: crear o enlazar el proyecto no está en el alcance de la spec.
-Lo ejecutado reproduce las variables que Vercel documenta. La comprobación sobre
-un preview real queda para cuando exista el proyecto; si el PR de implementación
-lo crea, la incluye.
+```
+$ npm run build   (sin variables de entorno)
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /control
+├ ƒ /interno/primitivos
+└ ○ /sin-suppress
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Ese único build, servido con el entorno de cada destino (`URLs` =
+`VERCEL_URL=juntia-abc123-juntia-labs.vercel.app
+VERCEL_BRANCH_URL=juntia-git-feat-x-juntia-labs.vercel.app
+VERCEL_PROJECT_PRODUCTION_URL=juntia.example`):
+
+```
+=== next start con: VERCEL=1 VERCEL_ENV=production + URLs
+$ curl -H "Host: juntia.example" /interno/primitivos → 404
+$ curl -H "Host: juntia-abc123-juntia-labs.vercel.app" /interno/primitivos → 404
+$ curl / → 200
+=== next start con: VERCEL=1 VERCEL_ENV=preview + URLs (alias al dominio de producción)
+$ curl -H "Host: juntia.example" /interno/primitivos → 404
+$ curl -H "Host: www.juntia.example" /interno/primitivos → 404
+$ curl -H "Host: juntia-abc123-juntia-labs.vercel.app" /interno/primitivos → 200
+$ curl -H "Host: juntia-git-feat-x-juntia-labs.vercel.app" /interno/primitivos → 200
+$ curl / → 200
+=== next start con: JUNTIA_INTERNAL_SURFACE=1 (CI)
+$ curl -H "Host: localhost:3100" /interno/primitivos → 200
+$ curl / → 200
+=== next start con: ninguna
+$ curl -H "Host: localhost:3100" /interno/primitivos → 404
+$ curl / → 200
+
+$ JUNTIA_INTERNAL_SURFACE=1 next start (mismo build) ; BASE_URL=http://localhost:3100 npx playwright test --project=a11y
+light /: 0 violaciones, 0 serias o críticas
+light /interno/primitivos: 0 violaciones, 0 serias o críticas
+dark /: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos: 0 violaciones, 0 serias o críticas
+  4 passed (4.6s)
+```
+
+**Efecto en las rutas de producto y en §15.7: ninguno.** Solo
+`/interno/primitivos` pasa a `ƒ`; `/` y el resto siguen `○`, prerenderizadas. La
+ruta interna no existe en producción y no entra en los umbrales, que miden rutas
+de producto. Y como el entorno se lee al servir, **un solo build cubre todos los
+destinos**: la comprobación de FR-053 no necesita compilar dos veces.
+
+**Lo que esto no prueba.**
+
+- No existe todavía un proyecto de Vercel y no se creó ninguno. Lo ejecutado
+  reproduce las variables y la cabecera `host` que Vercel documenta. **La
+  comprobación sobre un preview real queda como `[V]` del PR de implementación**:
+  la URL de despliegue y la de rama dan 200, y un alias da 404.
+- *System environment variables* advierte que `VERCEL_URL` «cannot be used in
+  conjunction with Standard Deployment Protection», sin decir si eso afecta a leer
+  la variable en el servidor. Si en el preview real no coincide con el host, la
+  URL de despliegue da 404 (falla cerrada) y la de rama sigue sirviendo; se
+  registra en ese `[V]`.
+- La documentación de `vercel alias` no dice si asignar un alias recompila el
+  despliegue, y la de `vercel promote` no dice si un preview promovido se
+  recompila. Ninguna de las dos lecturas abre la superficie: o el despliegue tiene
+  `VERCEL_ENV=production`, o es un preview servido por un host que no es el suyo.
 
 ---
 
@@ -562,18 +721,29 @@ ruta, enviaría la preferencia al servidor sin necesidad y contradice el supuest
 - **Lint** (la capa más baja): hex crudo, esperas fijas y **regla de dependencia
   de `domain`** (`no-restricted-imports` en `src/domain/**` contra `react`,
   `react-dom`, `next`, `motion`, `@phosphor-icons/*`, `@radix-ui/*`,
-  `@supabase/*` y `@/components/*`; §7.2, FR-003). Fixtures de lint con un caso que
-  debe fallar por regla, ejecutados por un test que espera errores.
+  `@supabase/*` y `@/components/*`; §7.2, FR-003). Los fixtures con un caso que
+  debe fallar por regla están en `tests/lint-fixtures/`, que la configuración
+  ignora; `tests/lint-rules.test.ts` los lintea a propósito con la API de ESLint
+  (R3, F12-2).
 - **Vitest `domain`** (`environment: 'node'`): sin pruebas en la 001, porque no
   hay reglas de dominio (FR-003). Se ejecuta con `--passWithNoTests` y `verify` lo
   imprime como «0 pruebas — la 001 no tiene dominio financiero», **no** como
   «pasado».
 - **Vitest `components`** (`jsdom`, RTL selectivo): AmountInput, selector,
   Anotar, ausencia de cifras en rutas de producto (FR-045); más las comprobaciones
-  sin DOM que no son de dominio: la compuerta de R4, la paridad del respaldo de
-  tokens de R2 y la página interna con `VERCEL_ENV=production` (FR-053). No se
-  crea un tercer proyecto: `docs/TESTING.md` define dos.
-- **Playwright, proyecto `a11y`** (job 5): build de producción con
+  sin DOM que no son de dominio: las dos funciones puras de R4, la paridad del
+  respaldo de tokens de R2 y la prueba de las reglas de lint. No se crea un tercer
+  proyecto: `docs/TESTING.md` define dos.
+- **Ningún test de Vitest importa un módulo con `server-only`** (F12-3). Fuera de
+  la resolución de Next, ese paquete lanza una excepción al importarse. Por eso la
+  página interna no se prueba en Vitest: su lógica vive en las dos funciones
+  puras, y la página se comprueba por HTTP real contra el build.
+- **Comprobación HTTP de FR-053** (job 5, `scripts/check-internal-surface.mjs`):
+  con el build del job, arranca `next start` con el entorno de producción y con
+  el de un preview, y pide la ruta con distintos `Host`: producción → 404;
+  preview por su URL → 200; preview por el host de producción → 404. Es la capa
+  más baja que ve la página real servida.
+- **Playwright, proyecto `a11y`** (job 5): build de producción servido con
   `JUNTIA_INTERNAL_SURFACE=1`, `reducedMotion: 'reduce'`, solo Chromium, retries 0
   local y 1 en CI. Visita cada ruta implementada en los dos temas, más una URL
   inexistente para el estado de «no encontrado» y la superficie interna con su
