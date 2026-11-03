@@ -78,10 +78,22 @@ Registro **temporal** de una discrepancia detectada en el paquete **mientras no
 se haya corregido**. Una errata nunca es una segunda fuente normativa: en cuanto
 la corrección se aprueba, la entrada sale de aquí y pasa al **Log de cambios**.
 
-**No hay erratas pendientes.** La única que hubo —`Settings` como nombre de
-componente en las líneas 159 y 163 del handoff— se corrigió en el artefacto tras
-la segunda revisión independiente del PR #1 y está registrada en el Log de
-cambios.
+La primera que hubo —`Settings` como nombre de componente en las líneas 159 y
+163 del handoff— se corrigió en el artefacto tras la segunda revisión
+independiente del PR #1 y está registrada en el Log de cambios.
+
+**Pendientes — dos, detectadas al capturar el AppShell (PR #5).** Las dos
+enfrentan al comp aprobado con la especificación aprobada en el rail de 1024,
+que es lo que construye la especificación 001. **No son corregibles por
+transcripción**: no hay un texto mal copiado, hay dos fuentes aprobadas que
+dicen cosas distintas. Resolverlas es una **decisión de producto con gate
+humano**, que la 001 debe cerrar **antes** de implementar el rail. Ninguna de las
+dos fuentes se ha corregido.
+
+| Dónde | La especificación dice | El comp dibuja | Qué hay que decidir |
+| --- | --- | --- | --- |
+| `RESPONSIVE_SPECIFICATIONS.md` línea 16 (Contexto Yo/Nosotros) | En `lg`, «el primer ítem del rail abre un popover con el segmentado» | El primer ítem del rail es el wordmark «J». El popover no está dibujado en ningún estado (`Juntia DS v1 - 04 Pantallas`, 04·9) | Cómo se cambia de contexto a 1024: popover desde el rail —y entonces falta diseñarlo— u otro mecanismo |
+| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino** en el rail, entre Plan y el `+`, con icono de balanza —presumiblemente Balance— (`appshell-1024-rail-light.png`, 04·9) | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo y añadirlo al mapa— o si el icono sobra en el comp |
 
 ## Referencias visuales originales
 

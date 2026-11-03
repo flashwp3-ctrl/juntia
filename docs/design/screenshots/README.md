@@ -31,7 +31,7 @@ necesita: AppShell y navegación. Nada más.
 | --- | --- | --- | --- |
 | `appshell-390-light.png` | Tabbar móvil completo en claro: Inicio · Actividad · `+` · Metas · Plan, con etiquetas, sobre el fondo de la pantalla. | **04·1 · Inicio y movimientos**, primera pantalla de 390 | 390×132 @3× |
 | `appshell-390-dark.png` | El mismo tabbar en tema oscuro. | **04·5 · Oscuro**, primera pantalla de 390 | 390×132 @3× |
-| `appshell-1024-rail-light.png` | Pantalla completa de 1024 con el rail lateral de 76 px: wordmark, los cinco destinos, el botón de Anotar en bosque y el avatar de Mi cuenta al pie. | **04·9 · Responsive · de 360 a 1280**, bloque «1024 · LG · RAIL DE 76 PX» | 1024×982 @1× |
+| `appshell-1024-rail-light.png` | Pantalla completa de 1024 con el rail lateral de 76 px: wordmark, los destinos, el botón de Anotar en bosque y el avatar de Mi cuenta al pie. **⚠ Muestra un quinto destino (icono de balanza, entre Plan y el `+`) que no está en la navegación aprobada: no lo implementes por copiarlo.** Ver Erratas conocidas en `../README.md`. | **04·9 · Responsive · de 360 a 1280**, bloque «1024 · LG · RAIL DE 76 PX» | 1024×982 @1× |
 | `appshell-1440-sidebar-light.png` | Pantalla completa de 1440 con el sidebar de 248 px: wordmark, segmentado de contexto, cinco destinos, bloque Anotar gasto con el atajo `N`, perfil al pie. | **04·7 · Escritorio · 1440**, primer marco | 1440×1040 @1× |
 | `appshell-1440-sidebar-dark.png` | El mismo sidebar de 1440 en tema oscuro. | **04·8 · Escritorio · Oscuro**, primer marco | 1440×1040 @1× |
 | `appshell-tab-activa.png` | Recorte del tabbar móvil con Inicio activo (icono Fill sobre ficha) junto a Actividad inactivo (icono Regular, sin ficha). | **04·1**, mismo tabbar que `appshell-390-light` | 174×82 @4× |
@@ -79,4 +79,5 @@ implementa.
   `RESPONSIVE_SPECIFICATIONS.md` dice que en `lg` el primer ítem del rail abre
   un popover con el segmentado; en el comp ese primer ítem es el wordmark «J» y
   el popover no está dibujado en ningún estado. Implementarlo exige leer la
-  especificación, no esta carpeta.
+  especificación, no esta carpeta. Registrada como errata pendiente de decisión
+  en `../README.md` §«Erratas conocidas».
