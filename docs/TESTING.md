@@ -3,7 +3,7 @@
 Documento operativo. La decisión y su justificación están en
 [`docs/adr/ADR-011`](adr/ADR-011-estrategia-de-pruebas-y-ci.md), que está en estado
 **Aceptado** por los fundadores el 3 de noviembre de 2026 (maestro §15.10). Lo que
-describe aquí es la práctica vigente; lo que todavía no se ha medido sigue marcado como objetivo.
+describe aquí es un **contrato aprobado, pendiente de implementación**: todavía no hay scaffold ni suite ejecutada, y lo no medido sigue marcado como objetivo.
 
 **Terminología:** «spec E2E *n*» es una spec de Playwright de la tabla de §4. Una
 **especificación** (001, 002…) es un slice de producto. No se confunden.
@@ -382,7 +382,11 @@ igual de malo.
 Los datos de `docs/design/COMPONENT_SPECIFICATIONS.md` tienen totales verificados a
 mano: consumo 2.840.000, aportes 900.000, saldo Sara +429.900 / Tomás −429.900,
 arriendo 55/45. Son **el dataset dorado de la suite**, no decoración de las
-pantallas. Los fixtures tipados que §15.1 asigna a F0-b sirven a las dos cosas.
+pantallas. Viven en un único módulo tipado del dominio que **crece por slice**:
+P0-1 aporta los tipos y los privados de Sara, P0-2 los gastos compartidos, el saldo
+y la liquidación parcial, y P0-3 los aportes, la meta Japón y las filas de
+DEC-G04. La 001 no aporta ninguna parte. Responsables, fases y reglas: maestro
+§15.10, «Dataset dorado».
 
 Si un cálculo no reproduce esos números **exactos**, el cálculo está mal. No el
 fixture.

@@ -745,7 +745,7 @@ El paquete de diseño completo está en `docs/design/` (importado desde el proye
 
 - **F0-a cerrada.** La exploración visual se hizo en Claude Design y recorrió las direcciones A→J antes de llegar a tres finalistas (I1 Salvia & Durazno, I2 Bosque & Arena, I3 Piedra & Coral). **Dirección elegida: I2 · Bosque & Arena.** Queda sin efecto la tripleta A/B/C de §6.2 (Warm Editorial / Quiet Precision / Bold Utility), que describía una exploración que no es la que se ejecutó.
 - **F0-b cerrada en especificación.** El sistema de diseño, los componentes, el motion y las especificaciones responsive están entregados como `docs/design/DESIGN_SYSTEM.md`, `COMPONENT_SPECIFICATIONS.md`, `MOTION_SYSTEM.md` y `RESPONSIVE_SPECIFICATIONS.md`. Estos archivos cumplen el papel que §6.1/§6.5 asignaban a `DESIGN.md` y `MOTION.md`; **no se crearán documentos con esos nombres**. La dirección **I2 · Bosque & Arena está elegida en firme y no se reabre.**
-- **F0-b pendiente en implementación.** Los entregables **ejecutables** que §11 asigna a F0-b **no existen**: app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible con estados con/sin presupuesto, fixtures tipadas de Yo/Nosotros y de una meta privada/compartida, y los primitivos reutilizables. Se reparten entre dos especificaciones (decisión de los fundadores del 3 de noviembre de 2026, §15.10): la **001** produce el app shell con navegación y selector de contexto y los primitivos; la especificación de **P0-1** produce el Expense Flow, ya conectado al servidor. Las fixtures tipadas dejan de ser un entregable de interfaz —con estados vacíos diseñados la 001 no las necesita— y entran como datos de prueba con el dominio que las usa. F0-b se cierra cuando la 001 y la especificación de P0-1 estén aceptadas.
+- **F0-b pendiente en implementación.** Los entregables **ejecutables** que §11 asigna a F0-b **no existen**: app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible con estados con/sin presupuesto, fixtures tipadas de Yo/Nosotros y de una meta privada/compartida, y los primitivos reutilizables. Se reparten entre dos especificaciones (decisión de los fundadores del 3 de noviembre de 2026, §15.10): la **001** produce el app shell con navegación y selector de contexto y los primitivos; la especificación de **P0-1** produce el Expense Flow, ya conectado al servidor. Las fixtures tipadas dejan de ser un entregable de **interfaz** —la 001 muestra estados vacíos diseñados—, pero **siguen siendo obligatorias** como dataset dorado de pruebas, con responsable y fase por slice en §15.10 («Dataset dorado»). F0-b se cierra cuando la 001 y la especificación de P0-1 estén aceptadas.
 - **Fase actual: P0.** Las reglas de `AGENTS.md` y `CLAUDE.md` que congelaban el trabajo en F0-a quedan actualizadas en consecuencia. `prompts/F0-A.md` se conserva en `prompts/archive/` como registro histórico y **no es ejecutable**.
 - **Pendiente real:** no existe todavía ningún scaffold de aplicación en el repositorio. El handoff asume «el repositorio Next.js/React existente»; ese scaffold es trabajo de la primera especificación de P0, no un hecho.
 
@@ -897,5 +897,36 @@ Tomadas por los dos fundadores en la hoja de decisiones previa a la especificaci
 | 8 | Mi cuenta en la 001 | **Acceso mínimo a `/cuenta`** | La anatomía de `AccountButton` sigue siendo `[P]` (§15.9) y se aprueba con P0-1, cuando haya una persona con sesión |
 | 9 | Rutas sin datos en la 001 | **Estados vacíos diseñados** | Actividad, Metas y Plan muestran su estado vacío real. Nada de datos de ejemplo en la navegación |
 | 10 | Selector Yo/Nosotros en la 001 | **Funciona y recuerda el contexto, sin animación** | La transición S1 llega con los datos de pareja, en P0-2 |
+
+#### Dataset dorado: quién lo produce y cuándo
+
+El caso de octubre de `docs/design/COMPONENT_SPECIFICATIONS.md` y la tabla de DEC-G04 de `docs/design/HANDOFF_CLAUDE_CODE.md` son el **dataset dorado** de la suite (ADR-011). Retirarlo de las pantallas de la 001 no lo hace opcional. Vive en **un único módulo tipado del dominio**, que crece por slice:
+
+| Parte del dataset | La produce | Con qué pruebas |
+| --- | --- | --- |
+| Tipos del dataset —contexto Yo/Nosotros, persona, moneda COP— y los movimientos **privados** de Sara, que suman exactamente 412.900 | Especificación de **P0-1** | Dinero, categorías y consumo privado |
+| Los seis gastos compartidos de octubre con sus repartos (55/45 y 50/50), el saldo Sara +429.900 / Tomás −429.900 y la liquidación parcial de 200.000 | Especificación de **P0-2** | Repartos, `computeBalance`, liquidaciones, el «gasto existe una vez» |
+| Aportes de Sara 500.000 y Tomás 400.000, meta Japón y las siete filas de DEC-G04 | Especificación de **P0-3** | Ledger de metas, no doble conteo, `total_destinado_neto` |
+
+Reglas:
+
+1. **Los valores se copian de los documentos de diseño, nunca se recalculan.** Si un cálculo no los reproduce, el cálculo está mal.
+2. Donde el diseño solo da un total —los 412.900 privados de Sara—, la especificación que lo usa define las filas, que deben sumar **exactamente** ese total y se marcan como completadas por el slice.
+3. **La 001 no produce ninguna parte:** no tiene dominio financiero. Al cierre de F0-b —la 001 y P0-1 aceptadas— existe el módulo con sus tipos y la parte de P0-1. Las partes de P0-2 y P0-3 son el resto de aquel entregable de F0-b, transferido explícitamente a esos slices.
+4. Como en el arranque progresivo de ADR-011: un slice de la tabla **no mergea** sin añadir su parte y las pruebas que la consumen.
+
+#### Comportamiento provisional en la 001
+
+La 001 no tiene servidor, cuentas ni datos. Aplicar las decisiones 4, 6, 8, 9 y 10 sin inventar comportamiento exige una regla: **lo que todavía no existe dice que no existe**. Nunca se presenta como si una consulta real hubiera devuelto vacío o cero. Es la misma regla que impide presentar datos simulados como reales (§10.3).
+
+- **Aviso de versión base en el shell.** Mientras no haya persistencia, el AppShell muestra un aviso visible de que esta versión todavía no guarda datos. Desaparece cuando P0-1 conecta el servidor. Con él, los estados vacíos de la decisión 9 se leen como diseño y no como resultado de una consulta.
+- **Ninguna afirmación financiera sin datos.** Ninguna pantalla muestra «$0», «Al día», «le debe», totales, barras de presupuesto ni progreso de metas. Un estado vacío neutral («Todavía no hay movimientos») está permitido; una cifra, no.
+- **Anotar** sigue visible y operable, también con el atajo `N`, porque es la acción protagonista del shell. Al activarlo abre un aviso explícito de que registrar gastos llega con P0-1, **sin campos que aparenten guardar**.
+- **Balance** (escritorio, decisión 4): su ruta existe y muestra un estado de «todavía no disponible» que explica que el balance aparece cuando exista la pareja (P0-2). Nunca «Al día» ni una cifra.
+- **Mi cuenta** (decisión 8): el acceso mínimo lleva a `/cuenta`, que dice que la cuenta llega con el inicio de sesión (P0-1).
+- **Tema** (decisión 6): en la 001 sigue al sistema (`prefers-color-scheme`), con el script bloqueante y los dos temas completos. No hay selector manual hasta que exista Mi cuenta › Apariencia, prevista con P0-1. El tema oscuro de la 001 se verifica emulando el esquema de color del sistema.
+- **Selector Yo/Nosotros** (decisión 10): cambia y recuerda el contexto; el contenido no varía porque no hay datos.
+
+La especificación 001 diseña el aspecto y el copy de cada uno de estos estados con el paquete de diseño. Lo que no puede hacer es sustituirlos por datos de ejemplo.
 
 **Pendiente, no decidido aquí:** el mecanismo de acceso a datos —ORM o `supabase-js` con funciones de Postgres para las escrituras atómicas— necesita su propio ADR antes de P0-1. No afecta a la 001, que no tiene base de datos.

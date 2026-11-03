@@ -76,7 +76,7 @@ implementa.
   04·9 es claro de extremo a extremo y los bloques oscuros (04·5, 04·8) solo
   cubren 390 y 1440. La 001 no lo pedía.
 - **Popover del segmentado en el rail de 1024.**
-  `RESPONSIVE_SPECIFICATIONS.md` dice que en `lg` el primer ítem del rail abre
+  `RESPONSIVE_SPECIFICATIONS.md` decía, hasta el 3 de noviembre, que en `lg` el primer ítem del rail abría
   un popover con el segmentado; en el comp ese primer ítem es el wordmark «J» y
   el popover no está dibujado en ningún estado. **Ya no se implementa:** los
   fundadores decidieron que a 1024 el selector va arriba a la derecha del

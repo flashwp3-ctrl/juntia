@@ -386,8 +386,11 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
   ni SDK de Vercel. Si se incumple, el dominio deja de ser testeable en
   milisegundos y toda esta estrategia se cae.
 - Los **fixtures tipados** que §15.1 asigna a F0-b dejan de ser material de
-  maqueta: pasan a ser el dataset dorado de la suite. La primera especificación de
-  ingeniería los produce con esa doble función explícita.
+  maqueta: pasan a ser el dataset dorado de la suite. **No los produce la 001**,
+  que no tiene dominio financiero: crecen por slice —P0-1, P0-2, P0-3—, con
+  responsable, fase y reglas en el maestro §15.10, «Dataset dorado». (Enmienda del
+  3 de noviembre: la versión anterior se los asignaba a la primera especificación
+  de ingeniería.)
 - Hace falta un `verify` único y rápido. Un agente que implementa no debe tener que
   elegir qué ejecutar. **Su contenido es exactamente uno, y se enuncia igual en los
   dos documentos:** lint + typecheck + unit de dominio + componentes (RTL
