@@ -7,3 +7,4 @@ OK · head precede a body
 OK · script de tema inline dentro de head
 OK · script sin src, async ni defer
 OK · html sin data-theme fijado por el servidor
+exit=0

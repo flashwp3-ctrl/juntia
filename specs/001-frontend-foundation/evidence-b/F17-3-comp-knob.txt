@@ -1,0 +1,21 @@
+# F17-3 · perilla del Segmented en el comp
+# Fuente: proyecto de Claude Design caabf357-a0df-4048-886f-8c46c8979c5a, «Juntia DS v1 - 02 Componentes.dc.html»,
+# bloque «TABS · SEGMENTED Y SUBRAYADO». Extracto literal de las etiquetas del segmento seleccionado (decodificado de entidades HTML).
+
+## 02·1 Galería · Claro (línea 25 del archivo)
+<span role="tablist" style="display:flex;padding:3px;border-radius:14px;background:#E7DFD0;box-shadow:inset 0 1px 2px rgba(26,28,26,.09);font:600 13px 'Geist',sans-serif">
+<span style="padding:8px 12px;border-radius:11px;display:flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap;background:#FCFAF5;color:#1A1C1A;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 2px 0 rgba(26,28,26,.09)">Nosotros</span>
+<span role="tablist" style="display:flex;padding:3px;border-radius:14px;background:#E7DFD0;box-shadow:inset 0 1px 2px rgba(26,28,26,.09);font:600 13px 'Geist',sans-serif">
+<span style="flex:1;padding:8px 12px;border-radius:11px;display:flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap;background:#FCFAF5;color:#1A1C1A;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 2px 0 rgba(26,28,26,.09)">Porcentaje</span>
+
+## 02·2 Galería · Oscuro (línea 31 del archivo)
+<span role="tablist" style="display:flex;padding:3px;border-radius:14px;background:#22262A;box-shadow:inset 0 1px 2px rgba(0,0,0,.5);font:600 13px 'Geist',sans-serif">
+<span style="padding:8px 12px;border-radius:11px;display:flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap;background:#3A4045;color:#F3EFE7;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 0 #2C3135">Nosotros</span>
+<span role="tablist" style="display:flex;padding:3px;border-radius:14px;background:#22262A;box-shadow:inset 0 1px 2px rgba(0,0,0,.5);font:600 13px 'Geist',sans-serif">
+<span style="flex:1;padding:8px 12px;border-radius:11px;display:flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap;background:#3A4045;color:#F3EFE7;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 0 #2C3135">Porcentaje</span>
+
+## Lectura
+- Claro: perilla #FCFAF5 = linen-50 = color.surface.overlay (claro). No es surface.raised (#EEE7DA).
+- Oscuro: perilla #3A4045 = charcoal-600 = color.border.strong (oscuro). No es surface.raised (#191C1F).
+- Riel en los dos: #E7DFD0 / #22262A = surface.sunken.
+- Sombra de la perilla: en claro coincide con elevation.raised; en oscuro el comp dibuja `0 2px 0 #2C3135` y elevation.raised oscuro es `0 0 0 1px #2C3135` (la implementación usa elevation.raised).
