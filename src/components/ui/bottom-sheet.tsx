@@ -1,7 +1,7 @@
 "use client";
 // FR-031a, FR-041; COMPONENT_SPECIFICATIONS.md §BottomSheet. Solo la base accesible que necesita el aviso de Anotar:
 // foco atrapado, Escape, control de cierre, retorno del foco y safe area. Sin paradas peek/full, sin arrastre y sin
-// confirmación de descarte: P0-1 las añade sobre esta base.
+// confirmación de descarte: las añade el Expense Flow sobre esta base.
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";

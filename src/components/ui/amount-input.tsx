@@ -1,6 +1,6 @@
 "use client";
 // FR-014, FR-013; COMPONENT_SPECIFICATIONS.md §Input (Monto); data-model.md «AmountValue».
-// Entrega pesos enteros (`number | null`); no es Money ni decide si 0 es válido: eso es de domain/money en P0-1.
+// Entrega pesos enteros (`number | null`); no es Money ni decide si 0 es válido: eso es de domain/money, con el slice que trae el dominio de dinero.
 import { useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { Input, type InputProps } from "./input";
 
