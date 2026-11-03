@@ -44,6 +44,8 @@ type ButtonProps = Omit<ComponentPropsWithRef<"button">, "disabled" | "children"
 export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", ...rest }: ButtonProps) {
   const reduced = useReducedMotion();
   const inert = disabled || loading;
+  // F17-R1: en danger, el texto va en --comp-danger-text-fg y los íconos en status.danger (4,28:1 sobre dangerSubtle ≥ 3:1).
+  const iconTone = variant === "danger" && !disabled ? "text-danger" : "";
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     if (inert) { event.preventDefault(); return; }
     onClick?.(event);
@@ -65,11 +67,11 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
       {/* Las dos caras ocupan la misma celda: el ancho es el mismo en reposo y en carga, sin salto de layout. */}
       <span className="grid">
         <span className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "invisible" : ""}`}>
-          {icon ? <AppIcon name={icon} weight="bold" size={17} /> : null}
+          {icon ? <AppIcon name={icon} weight="bold" size={17} className={iconTone} /> : null}
           {children}
         </span>
         <span className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "" : "invisible"}`}>
-          <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
+          <AppIcon name="circle-notch" weight="bold" size={17} className={`${iconTone} motion-safe:animate-[button-spin_0.8s_linear_infinite]`} />
           {loadingLabel ?? children}
         </span>
       </span>

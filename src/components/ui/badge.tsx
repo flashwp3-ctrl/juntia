@@ -13,13 +13,18 @@ const statuses = {
   private: { icon: "lock-simple", text: copy.primitives.private, tone: "bg-sunken text-ink" },
 } as const satisfies Record<string, { icon: AppIconName; text: string; tone: string }>;
 
+// F17-R1: el texto de EXCEDIDO va en --comp-danger-text-fg; su ícono, como bordes e íconos de peligro, en
+// status.danger (4,28:1 sobre dangerSubtle, ≥ 3:1).
+const iconTones: Partial<Record<keyof typeof statuses, string>> = { exceeded: "text-danger" };
+
 export type BadgeStatus = keyof typeof statuses;
 
 export function Badge({ status }: { status: BadgeStatus }) {
   const { icon, text, tone } = statuses[status];
+  const iconTone = iconTones[status] ?? "";
   return (
     <span className={`${tone} inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[11px] font-semibold leading-none tracking-[.06em] whitespace-nowrap`}>
-      <AppIcon name={icon} weight="bold" size={12} />
+      <AppIcon name={icon} weight="bold" size={12} className={iconTone} />
       {text}
     </span>
   );
