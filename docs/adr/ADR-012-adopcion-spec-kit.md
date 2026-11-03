@@ -296,9 +296,39 @@ decide si traslada el cambio a los overrides.
 
 **Lo que los overrides no cubren:** el texto de las skills. V4 confirmó que las
 `SKILL.md` se materializan al instalar y que un override de comando en
-`overrides/` no llega a ellas. Esta decisión no necesita cambiar ninguna skill;
-si algún día hiciera falta, el camino serían los *presets*, que no se han
-verificado y no forman parte de esta decisión.
+`overrides/` no llega a ellas.
+
+**Y eso deja una discrepancia conocida, que se registra en vez de negarla**
+(F7-4, tercera revisión del PR #7). `speckit-tasks/SKILL.md` conserva la
+heurística genérica de Spec Kit: **cuando se piden pruebas, cada contrato de
+interfaz genera una tarea de contract testing antes de la implementación**
+(línea 192 en v1.2.6, igual que `templates/commands/tasks.md` del core). En
+Juntia las pruebas son parte obligatoria de casi todos los slices, así que esa
+condición se cumplirá casi siempre. El override de `tasks-template.md` pide lo
+contrario —cada criterio en la capa más baja que puede detectar su fallo, según
+`docs/TESTING.md` §4— y no modifica la skill. El generador recibirá **dos
+instrucciones opuestas** sobre los tests.
+
+El tratamiento, sin presets ni skills modificadas en este ADR:
+
+1. **Prevalecen ADR-011 y `docs/TESTING.md`** sobre la heurística genérica de
+   generación de tests de Spec Kit. Una tarea de test que contradiga la matriz
+   de capas está mal, aunque la haya generado la skill.
+2. **El primer `tasks.md` generado se audita** contra los criterios de
+   aceptación del slice y contra la matriz de capas de `docs/TESTING.md` §4
+   **antes de aprobar su PR**: cada tarea de test se justifica por su capa, y
+   las redundantes —un contract test por endpoint donde basta un test de
+   dominio, o una prueba duplicada en dos capas sin que la segunda detecte nada
+   nuevo— se eliminan antes del merge. Los `tasks.md` siguientes pasan la misma
+   comprobación en su gate.
+3. **Si el generador produce sistemáticamente tareas de test incompatibles**,
+   se detiene la fase de tasks y se evalúa un preset o un mecanismo equivalente,
+   **verificado con un ensayo** antes de adoptarlo. «Sistemáticamente» quiere
+   decir que la auditoría tiene que retirar tareas de test en dos `tasks.md`
+   seguidos.
+
+Este ADR **no** implementa presets ni modifica ninguna skill: el mecanismo es la
+auditoría en el gate, no una personalización prematura.
 
 ### 5. Los gates dependen hoy de la disciplina
 
@@ -375,6 +405,9 @@ Queda pendiente:
    inicialización.
 2. **Los scripts `sh` en Linux** con el bit de ejecución fijado. V1 se ejecutó
    solo en Windows; hace falta cuando Codex o un job de CI los usen.
+3. **La auditoría del primer `tasks.md`** contra la matriz de capas (Decisión
+   §4, F7-4). No es del PR de inicialización: es condición del PR que entregue
+   el primer `tasks.md`, y su resultado decide si hace falta un preset.
 
 ## Dependencias
 
