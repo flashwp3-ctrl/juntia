@@ -65,6 +65,8 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 | `COMPONENT_SPECIFICATIONS.md` | 94 | «perfil y tema abajo» → «perfil abajo» | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 6). El tema vive solo en Mi cuenta › Apariencia, como dibuja el comp. |
 | `COMPONENT_SPECIFICATIONS.md` | 94 | Destinos sin enumerar → «(Inicio, Actividad, Metas, Plan, Balance)» | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 4). Balance es destino propio en escritorio, como dibuja el comp en el rail y en el sidebar. |
 | `DESIGN_SYSTEM.md` | 205 | Mapa semántico de navegación: se añade `Balance=` `scales` (solo escritorio) | **Decisión de los fundadores, 3 de noviembre de 2026** (maestro §15.10, decisión 4). El icono es el que dibuja el comp; el nombre `scales` de Phosphor se confirma al implementar el rail en la 001 **[V]**. |
+| `COMPONENT_SPECIFICATIONS.md` | 27, 168 | Texto de `danger` sobre `dangerSubtle` (Button `danger`, badge EXCEDIDO): `status.danger` → `coral.700` | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste).** En claro, `status.danger` #B4452F sobre `dangerSubtle` #F8DED6 mide **4,28:1** y no cumple el [A] de `HANDOFF_CLAUDE_CODE.md` §Accesibilidad («todos los pares ≥ 4,5:1»). El primitivo existente `coral.700` #9C3A26 mide **5,39:1**. No se crea ningún color; el oscuro no cambia. Lo detectó axe en el PR B de la 001. |
+| `COMPONENT_SPECIFICATIONS.md` | 41, 168 | Etiqueta del Segmented y texto del badge PRIVADO sobre `surface.sunken`: se fija `text.primary` | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste).** El comp pintaba ese texto con `text.secondary` #6C665B, que sobre `sunken` #E7DFD0 mide **4,30:1**; los documentos no fijaban el color. `text.primary` mide **12,95:1**. El 5,1:1 de `text.secondary` en `DESIGN_SYSTEM.md` está calculado sobre `canvas`, no sobre `sunken`. El estado `disabled` del Button (`sunken` + `text.secondary`) no cambia: WCAG 1.4.3 exime a los controles inactivos. |
 
 **Intactos byte a byte** respecto a la importación: `BRAND_FOUNDATION.md`
 (3981 B) y `MOTION_SYSTEM.md` (13000 B).
@@ -74,7 +76,8 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 - `HANDOFF_CLAUDE_CODE.md`: 21666 B → **21653 B** (−22 B por las rutas de las
   líneas 5 y 6, +9 B por las dos sustituciones de `Settings`).
 - `RESPONSIVE_SPECIFICATIONS.md`: 4270 B → **4221 B** (línea 16).
-- `COMPONENT_SPECIFICATIONS.md`: 21146 B → **21256 B** (línea 94).
+- `COMPONENT_SPECIFICATIONS.md`: 21146 B → 21256 B (línea 94) → **21370 B**
+  (líneas 27, 41 y 168, errata de contraste).
 - `DESIGN_SYSTEM.md`: 15066 B → **15102 B** (línea 205).
 
 ## Erratas conocidas
@@ -83,12 +86,14 @@ Registro **temporal** de una discrepancia detectada en el paquete **mientras no
 se haya corregido**. Una errata nunca es una segunda fuente normativa: en cuanto
 la corrección se aprueba, la entrada sale de aquí y pasa al **Log de cambios**.
 
-**No hay erratas pendientes.** Hubo cinco y todas pasaron al Log de cambios:
-`Settings` en el handoff, corregido tras la revisión del PR #1; y las cuatro de la
+**No hay erratas pendientes.** Hubo siete y todas pasaron al Log de cambios:
+`Settings` en el handoff, corregido tras la revisión del PR #1; las cuatro de la
 navegación de escritorio detectadas al capturar el AppShell (PR #5) y en el
 preflight de Spec Kit —popover de contexto, quinto destino Balance, tema en el
 sidebar y umbral del sidebar—, resueltas por los fundadores el 3 de noviembre de
-2026 (maestro §15.10) salvo el umbral, que era una corrección determinada.
+2026 (maestro §15.10) salvo el umbral, que era una corrección determinada; y las
+dos de contraste del tema claro que detectó axe en el PR B de la 001, resueltas
+por los fundadores el mismo día.
 
 ## Referencias visuales originales
 

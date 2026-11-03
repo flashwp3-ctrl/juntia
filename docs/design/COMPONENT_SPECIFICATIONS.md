@@ -24,7 +24,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 
 ## Button
 - **Anatomía:** contenedor · ícono opcional (Phosphor Bold 17) · etiqueta (label.m; en tamaño lg 16/600).
-- **Variantes:** `primary` (bosque lleno, una sola por vista) · `secondary` (pieza raised) · `ghost` (borde 1.5 subtle) · `danger` (fondo dangerSubtle + texto danger).
+- **Variantes:** `primary` (bosque lleno, una sola por vista) · `secondary` (pieza raised) · `ghost` (borde 1.5 subtle) · `danger` (fondo dangerSubtle + texto `coral.700`, 5,39:1).
 - **Tamaños:** sm 36 / radio 12 · md 44 / radio 14 · lg 52–56 / radio 18. Área táctil mínima 44.
 - **Estados:** hover `action.primaryHover` · pressed `action.primaryPressed` + translateY(2px) y la sombra de canto baja a 0 · focus anillo 2 px `focus.ring` con offset 2 · disabled `surface.sunken` + `text.secondary`, sin sombra, con `aria-disabled` · loading: ícono circle-notch girando a 0,8 s/vuelta, etiqueta en gerundio y ancho fijo (sin salto de layout).
 - **Tokens:** `comp.button.primary.bg` → action.primary · `.fg` → text.onAction · `.edge` → `0 3px 0 forest.900` (oscuro `#22402F`) · `.highlight` → `inset 0 1px 0 rgba(255,255,255,.18)`.
@@ -38,7 +38,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - **A11y:** el error se anuncia con `aria-live="polite"` y se enlaza con `aria-invalid` y `aria-errormessage`.
 
 ## Tabs / Segmented
-- **Segmented** (Yo/Nosotros, reparto): riel sunken radio 14 · perilla raised radio 11 · etiqueta 13/600. `role="tablist"` o radiogroup según el caso, con flechas de teclado. La perilla se desliza con un layout animation spring `snappy`.
+- **Segmented** (Yo/Nosotros, reparto): riel sunken radio 14 · perilla raised radio 11 · etiqueta 13/600 en `text.primary` (12,95:1 sobre sunken). `role="tablist"` o radiogroup según el caso, con flechas de teclado. La perilla se desliza con un layout animation spring `snappy`.
 - **Subrayado** (filtros de lista): 14/600 · indicador de 2 px en tinta.
 - **Contexto Yo/Nosotros:** siempre visible arriba en móvil y en el sidebar en escritorio. Cambiarlo dispara el motion «Context Transition».
 
@@ -165,7 +165,7 @@ Nota informativa en `surface.sunken`, radio 16, ícono info + título 14/600 + t
 - **Exportar:** hoja con radiogroup JSON/CSV, qué incluye y qué no, estados preparando, listo (Descargar) y error (no se descargó nada). Aclara que no sirve para restaurar.
 
 ## Badge de estado
-POR SALDAR (neutro, borde punteado, clock) · LIQUIDADO (savingSubtle, check-circle) · EXCEDIDO (danger) · CERCA DEL LÍMITE (warning) · PRIVADO (sunken, lock). Siempre ícono + texto, 11/600, tracking .06em.
+POR SALDAR (neutro, borde punteado, clock) · LIQUIDADO (savingSubtle, check-circle) · EXCEDIDO (danger, texto `coral.700` sobre dangerSubtle) · CERCA DEL LÍMITE (warning) · PRIVADO (sunken, texto `text.primary`, lock). Siempre ícono + texto, 11/600, tracking .06em.
 
 ## Anotar gasto (flujo)  [P]
 1. **E1 · Monto + categoría:** la hoja abre con foco en el monto y teclado nativo. Muestra las 5 categorías recientes y un resumen editable (fecha, pagador, reparto), con Guardar habilitado al tener monto + categoría.
