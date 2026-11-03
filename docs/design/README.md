@@ -82,18 +82,24 @@ La primera que hubo —`Settings` como nombre de componente en las líneas 159 y
 163 del handoff— se corrigió en el artefacto tras la segunda revisión
 independiente del PR #1 y está registrada en el Log de cambios.
 
-**Pendientes — dos, detectadas al capturar el AppShell (PR #5).** Las dos
-enfrentan al comp aprobado con la especificación aprobada en el rail de 1024,
-que es lo que construye la especificación 001. **No son corregibles por
-transcripción**: no hay un texto mal copiado, hay dos fuentes aprobadas que
-dicen cosas distintas. Resolverlas es una **decisión de producto con gate
-humano**, que la 001 debe cerrar **antes** de implementar el rail. Ninguna de las
-dos fuentes se ha corregido.
+**Pendientes — cuatro, detectadas al capturar el AppShell (PR #5) y en el
+preflight de Spec Kit.** Todas enfrentan dos fuentes aprobadas en la navegación de
+escritorio, que es lo que construye la especificación 001. Ninguna de las fuentes
+se ha corregido todavía. Son de **dos tipos distintos**, y no se esperan entre sí:
+
+- **Decisión de producto con gate humano** — las tres primeras. No hay un texto
+  mal copiado: hay dos fuentes que dicen cosas distintas y elegir es una decisión.
+  La 001 debe cerrarlas **antes** de implementar el rail y el sidebar.
+- **Corrección determinada** — la cuarta. La jerarquía ya la resuelve; no hay nada
+  que decidir. Solo falta el PR que corrija el artefacto, y puede hacerse en
+  cualquier momento sin esperar a las otras.
 
 | Dónde | La especificación dice | El comp dibuja | Qué hay que decidir |
 | --- | --- | --- | --- |
 | `RESPONSIVE_SPECIFICATIONS.md` línea 16 (Contexto Yo/Nosotros) | En `lg`, «el primer ítem del rail abre un popover con el segmentado» | El primer ítem del rail es el wordmark «J». El popover no está dibujado en ningún estado (`Juntia DS v1 - 04 Pantallas`, 04·9) | Cómo se cambia de contexto a 1024: popover desde el rail —y entonces falta diseñarlo— u otro mecanismo |
-| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino** en el rail, entre Plan y el `+`, con icono de balanza —presumiblemente Balance— (`appshell-1024-rail-light.png`, 04·9) | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo y añadirlo al mapa— o si el icono sobra en el comp |
+| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino, rotulado «Balance»**, con icono de balanza, en **los dos** layouts de escritorio: en el rail de 1024, entre Plan y el `+` (`appshell-1024-rail-light.png`, 04·9), y en el sidebar de 1440, después de Plan (`appshell-1440-sidebar-light.png`, 04·7). Que aparezca igual en dos breakpoints sugiere una decisión de diseño que no llegó a la especificación, no un icono suelto | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo, añadirlo al mapa semántico y al maestro §15.3— o si sobra en el comp y Balance se queda como módulo de Inicio |
+| `COMPONENT_SPECIFICATIONS.md` línea 94 (AppShell / Navigation, «Escritorio») — **decisión** | «perfil **y tema** abajo» | Al pie del sidebar de 1440 solo está el perfil («Sara · Mi cuenta · con Tomás»), **sin control de tema**, en claro y en oscuro (04·7, 04·8). El tema vive en `/cuenta/apariencia` (handoff, «Mi cuenta») | Si el sidebar lleva un acceso al tema al pie o si el tema solo vive en Cuenta |
+| `COMPONENT_SPECIFICATIONS.md` línea 94 (AppShell / Navigation, «Escritorio») — **corrección determinada** | «Escritorio (≥ 1024): sidebar de 248 px» | Rail de 76 px a 1024 (04·9) y sidebar desde 1280 | **Nada que decidir.** Manda el maestro §15.3: rail desde 1024, sidebar desde 1280. Pendiente solo del PR que corrija la línea 94 y lo registre en el Log de cambios. Quien implemente el AppShell sigue el maestro, no la línea 94 |
 
 ## Referencias visuales originales
 

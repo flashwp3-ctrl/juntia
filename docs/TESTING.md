@@ -5,9 +5,14 @@ Documento operativo. La decisión y su justificación están en
 **Propuesto**: hasta que los fundadores lo aprueben, este documento describe el
 plan acordado, no una práctica vigente.
 
+**Terminología:** «spec E2E *n*» es una spec de Playwright de la tabla de §4. Una
+**especificación** (001, 002…) es un slice de producto. No se confunden.
+
 > **Nada de lo que hay aquí se ha ejecutado todavía.** No existe scaffold de
 > aplicación (maestro §15.1), no hay `package.json` y no hay suite. Los comandos
-> describen lo que la primera especificación de ingeniería de P0 debe crear.
+> describen el destino. Cada uno lo crea la especificación que trae lo que
+> controla: la 001 crea los que no dependen de Supabase ni de auth, y P0-1 el
+> resto (§3, «Arranque progresivo de `verify` y del CI»).
 >
 > Los presupuestos de tiempo son **objetivos razonados y todavía no medidos**.
 > **Pasan a bloquear cuando existan tres de las cinco specs E2E y el dominio
@@ -41,6 +46,11 @@ dominio + **componentes (RTL selectivo)** + tests SQL/RLS. Los componentes está
 dentro. Es el mismo enunciado que usa el ADR, palabra por palabra, para que no haya
 dos definiciones circulando.
 
+**Esa definición es el destino, no el primer día.** La especificación 001 no tiene
+Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cada
+control entra con la especificación que trae lo que controla, y mientras tanto se
+declara **no aplicable**: ver «Arranque progresivo de `verify` y del CI» en §3.
+
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
 | `npm run verify` | lint + typecheck + unit de dominio + componentes + tests SQL/RLS. **El comando por defecto.** | **< 90 s** (comando) |
@@ -70,12 +80,41 @@ Jobs **en paralelo**:
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
    que `verify` ejecuta en local, menos los tests SQL/RLS, que van en el job 3
 3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
-4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
+4. E2E de humo: **las specs E2E 1, 2 y 3, más la spec E2E del área que el PR toca**, solo
    Chromium
 5. **axe en los dos temas** — ver la regla justo debajo
 
 **Gate de PR completo: < 6 min, medido como job de CI. Superar el presupuesto del
 humo falla el build** (a partir del hito de §9).
+
+#### Arranque progresivo de `verify` y del CI
+
+Igual que las specs E2E, los controles de `verify` y los jobs del CI **entran con
+la especificación que trae lo que controlan**. Ninguna especificación construye
+infraestructura antes de tiempo para que `verify` «pase completo».
+
+| Control | Entra con | Antes de eso |
+| --- | --- | --- |
+| lint + typecheck + build (job 1) | 001 | — |
+| Vitest, proyectos `domain` y `components` (job 2) | 001, que crea los dos proyectos y corre lo que haya | — |
+| axe sobre las rutas implementadas, en los dos temas (job 5) | 001 | — |
+| Reduced motion por defecto en Playwright | 001 | — |
+| Supabase local, migraciones y tests SQL/RLS (job 3, `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
+| E2E de humo (job 4) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
+| Siembra por base de datos (`seedCouple()`, `storageState` por worker y rol) | P0-1 | **No aplicable** |
+
+Tres reglas, sin excepción:
+
+1. **Un control no aplicable se declara como tal**, en la salida de `verify` y en
+   el resumen del CI, con la especificación que lo incorpora. **Nunca aparece
+   como pasado y nunca se omite en silencio.** «Verde» con un control que no corrió
+   es exactamente afirmar una seguridad que no existe.
+2. **No se adelanta infraestructura.** La 001 no levanta Supabase, no escribe
+   migraciones vacías ni tests SQL de relleno para completar `verify`.
+3. **El contrapositivo, como en las specs E2E:** P0-1 **no mergea** sin incorporar
+   el job 3, las migraciones y la siembra. Si existe una tabla con datos de
+   usuario y no hay tests de RLS que la cubran, no es que el arranque siga en
+   curso: es que un PR mergeó sin cumplir la regla.
 
 #### Qué rutas pasa axe en un PR
 
@@ -166,7 +205,7 @@ crees necesitar más, **detente y plantéalo**. No las añadas y lo menciones de
 
 ### Qué specs corre tu PR
 
-**Las specs 1, 2 y 3, más la spec del área que tu PR toca.**
+**Las specs E2E 1, 2 y 3, más la spec E2E del área que tu PR toca.**
 
 - PR de metas → 1, 2, 3 y **4**
 - PR de presupuestos → 1, 2, 3 y **5**
@@ -181,7 +220,7 @@ ejecute después no sirve: después ya está en `main`.
 #### Mientras las specs todavía no existen
 
 Al principio no están las cinco. Cuando la 001 construye el AppShell no hay
-recorrido de pareja ni de liquidación, así que la spec 3 no puede existir.
+recorrido de pareja ni de liquidación, así que la spec E2E 3 no puede existir.
 
 > **Corre todas las specs aplicables que ya existan. Y no mergees una
 > funcionalidad sin añadir y ejecutar su E2E obligatoria.**
@@ -189,7 +228,7 @@ recorrido de pareja ni de liquidación, así que la spec 3 no puede existir.
 **Lo que arranca progresivamente es qué specs existen, no la obligación.** No hay
 «todavía no», ni «la añado en el siguiente PR», ni «de momento corro las que hay»
 para una funcionalidad que estás entregando. El PR que trae el recorrido de pareja
-es el PR que trae la spec 3.
+es el PR que trae la spec E2E 3.
 
 No es una excepción temporal: **la spec nace con la funcionalidad que prueba**, y
 por eso la lista se completa sola según avanza P0. Si existe una funcionalidad de
@@ -204,17 +243,17 @@ se crean specs nuevas para ellos:
 
 | Recorrido | Qué no cubren las capas inferiores en conjunto | Dónde vive |
 | --- | --- | --- |
-| Invitación → login → volver → aceptar | Que la intención sobreviva al rodeo por el login; redirección y sesión | Caso en la **spec 1** |
-| Cambiar Yo/Nosotros | Caché de cliente o render obsoleto que sigue mostrando lo privado | Caso en la **spec 3** |
-| Mover a Pareja | Que la vista cambie y los balances se actualicen tras la operación | Caso en la **spec 3** |
-| Financiación ajena → aprobar/rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas | Caso en la **spec 4**, con dos contextos |
-| Exportar datos | Autorización + archivo realmente descargado | Contenido y autorización en **integración**; la descarga, caso en la **spec 1** (Exportar vive en «Privacidad y datos») |
+| Invitación → login → volver → aceptar | Que la intención sobreviva al rodeo por el login; redirección y sesión | Caso en la **spec E2E 1** |
+| Cambiar Yo/Nosotros | Caché de cliente o render obsoleto que sigue mostrando lo privado | Caso en la **spec E2E 3** |
+| Mover a Pareja | Que la vista cambie y los balances se actualicen tras la operación | Caso en la **spec E2E 3** |
+| Financiación ajena → aprobar/rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas | Caso en la **spec E2E 4**, con dos contextos |
+| Exportar datos | Autorización + archivo realmente descargado | Contenido y autorización en **integración**; la descarga, caso en la **spec E2E 1** (Exportar vive en «Privacidad y datos») |
 
 Los cinco tienen spec asignada; ninguno queda «en algún sitio donde haya sesión».
 
-Dos cosas que se siguen de la tabla. La spec 4 necesita dos contextos autenticados
+Dos cosas que se siguen de la tabla. La spec E2E 4 necesita dos contextos autenticados
 a la vez: de ahí la regla 2, estados **por worker y por rol**. Y el caso de
-exportación de la spec 1 comprueba que **el archivo llega**, no lo que lleva
+exportación de la spec E2E 1 comprueba que **el archivo llega**, no lo que lleva
 dentro: el contenido es la fila 2 de la tabla de ubicación, y un E2E que abra el
 CSV es un test de serialización disfrazado.
 
@@ -238,7 +277,8 @@ presupuesto, el problema no es el presupuesto: es que hay un test por componente
    mandato, y lo que de verdad rompe al paralelizar no es el navegador sino que dos
    workers se pisen los datos. Eso se arregla en la siembra, no bajando los
    workers. Con parejas aisladas, varios workers son seguros; cuántos caben lo mide
-   la 001.
+   la primera especificación con autenticación (P0-1), que es la que construye la
+   siembra. La 001 no tiene auth ni base de datos.
 2. **Un `storageState` por worker y por rol**, nunca uno solo para toda la suite.
    Cada worker autentica a **Sara y a Tomás sobre su propia pareja**, reutiliza
    esos dos estados dentro del worker y no los comparte con ningún otro. El
