@@ -1,0 +1,19 @@
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia/.claude/worktrees/001-b-primitives-a6aa4e
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > next dev local 2ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > next start local sin bandera 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > next start con bandera (CI, capturas) 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > preview de Vercel 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > producción de Vercel 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > producción con la bandera puesta por error 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > Vercel sin variables de sistema expuestas 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview por su VERCEL_URL 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview por su VERCEL_BRANCH_URL con puerto y mayúsculas 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview con alias al dominio de producción 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview con alias a otro dominio (www) 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview sin cabecera host 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > preview sin variables de URL 0ms
+ ✓ |components| src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > fuera de un preview 0ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  17:30:18
+   Duration  533ms (setup 75%, transform 16%, worker 3%, import 3%, tests 2%)
