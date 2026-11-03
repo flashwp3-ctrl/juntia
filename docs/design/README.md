@@ -101,8 +101,12 @@ capturas.
 
 ### Capturas de referencia visual
 
-Requisito documentado aquí; **las capturas todavía no existen y generarlas es
-tarea aparte**. Cuando se produzcan, viven en `docs/design/screenshots/`.
+Las capturas viven en [`screenshots/`](screenshots/), con su propio
+[`README.md`](screenshots/README.md) que registra de qué archivo y sección del
+comp salió cada una, el enlace al comp y la fecha de captura. **Son referencia
+visual, no fuente de medidas:** los números viven en
+`COMPONENT_SPECIFICATIONS.md`, `RESPONSIVE_SPECIFICATIONS.md` y
+`DESIGN_SYSTEM.md`.
 
 **Objetivo global: 24 capturas.** Las cinco rutas nombradas en los criterios de
 aceptación de `HANDOFF_CLAUDE_CODE.md` —**Inicio, Actividad, Anotar, Balance y
@@ -118,6 +122,24 @@ del **AppShell y la navegación con sus estados** —tabbar móvil con `+`
 integrado, rail de 1024 y sidebar de 1280, pestaña activa, selector de contexto
 Yo/Nosotros— en los anchos y temas pertinentes. No necesita las de Balance ni
 las de Meta, porque no las implementa.
+
+**Estado: lo de la 001 ya está.** Ocho archivos en [`screenshots/`](screenshots/):
+tabbar de 390 en claro y oscuro, rail de 1024, sidebar de 1440 en claro y
+oscuro, pestaña activa contra una inactiva, y el segmentado Yo/Nosotros en
+móvil y en escritorio (dos archivos, porque en el comp están en sitios
+distantes). **Dos cosas no se capturaron porque el comp no las dibuja:** el
+rail de 1024 en oscuro y el popover del segmentado en el rail. Están
+registradas en el README de esa carpeta.
+
+Tres de esos ocho archivos son pantallas completas y no solo recortes de
+navegación: el rail de 1024 y los dos sidebars de 1440 muestran **Inicio en
+contexto Nosotros** de borde a borde. Con eso, del objetivo global de 24 quedan
+cubiertas las dos de **Inicio · Nosotros · 1440** (claro y oscuro).
+
+**Siguen pendientes las otras 22:** Inicio a 390 en ambos contextos, Inicio ·
+Yo a 1440, y Actividad, Anotar, Balance y Meta en los dos anchos y los dos
+temas. No se pretende cubrirlas de una vez. Un slice que toque alguna de esas
+pantallas pide las suyas antes de implementarla.
 
 ## Jerarquía
 
