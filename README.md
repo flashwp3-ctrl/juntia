@@ -7,7 +7,8 @@
 **Fase actual: P0.** F0-a cerrada; **F0-b cerrada en especificación, pendiente en implementación.**
 
 - **Cerrado:** la exploración visual y la especificación de diseño. La dirección **I2 · Bosque & Arena está elegida en firme y no se reabre.** El sistema de diseño, los componentes, el motion y el responsive están especificados.
-- **Pendiente:** los entregables ejecutables que el maestro §11 asigna a F0-b —app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible, fixtures tipadas y primitivos reutilizables—. Todavía **no existe código de aplicación**: los produce y verifica la primera especificación de ingeniería de P0.
+- **Pendiente:** los entregables ejecutables que el maestro §11 asigna a F0-b. Los reparte el maestro §15.10: la especificación **001** produce el app shell con navegación y selector de contexto y los primitivos; la de **P0-1**, el Expense Flow conectado al servidor. Todavía **no existe código de aplicación**.
+- **Decidido el 3 de noviembre de 2026:** ADR-011 y ADR-012 aceptados, la navegación de escritorio y el alcance de la 001. Todo en el maestro §15.10.
 
 ## Archivos
 
@@ -25,7 +26,7 @@
 ## Cómo empezar
 
 1. Lee `AGENTS.md`, luego `docs/JUNTIA_MASTER.md` (incluida la §15) y después `docs/design/HANDOFF_CLAUDE_CODE.md`.
-2. Verifica `git status` y trabaja en una rama acotada por slice.
+2. En un clon nuevo, activa el hook que bloquea empujar a `main`: `git config core.hooksPath .githooks`. Después verifica `git status` y trabaja en una rama acotada por slice. `main` solo cambia por merge de un PR revisado.
 3. El stack está decidido (maestro §7.1 y §15): Next.js App Router, TypeScript strict, Tailwind con tokens propios, shadcn/Radix, Supabase con RLS, Phosphor, Motion for React, Vitest y Playwright. No se vuelve a proponer.
 4. Cada entregable se revisa antes de avanzar al siguiente. No se encadenan fases sin aprobación humana.
 

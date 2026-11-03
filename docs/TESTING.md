@@ -2,8 +2,8 @@
 
 Documento operativo. La decisión y su justificación están en
 [`docs/adr/ADR-011`](adr/ADR-011-estrategia-de-pruebas-y-ci.md), que está en estado
-**Propuesto**: hasta que los fundadores lo aprueben, este documento describe el
-plan acordado, no una práctica vigente.
+**Aceptado** por los fundadores el 3 de noviembre de 2026 (maestro §15.10). Lo que
+describe aquí es la práctica vigente; lo que todavía no se ha medido sigue marcado como objetivo.
 
 **Terminología:** «spec E2E *n*» es una spec de Playwright de la tabla de §4. Una
 **especificación** (001, 002…) es un slice de producto. No se confunden.

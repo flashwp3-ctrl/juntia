@@ -1,6 +1,6 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
 
 > **Terminología.** En este ADR, «spec E2E *n*» es siempre una spec de Playwright
 > de la tabla de §3. Una **especificación** (001, 002…) es un slice de producto.
@@ -592,9 +592,9 @@ versión concreta del CLI.
 
 ## Preguntas abiertas
 
-### 1. Mecanismo para los tests de RLS — **la pieza genuinamente abierta**
+### 1. Mecanismo para los tests de RLS — **cerrada: pgTAP en SQL plano**
 
-Hay tres caminos documentados y la decisión no se cierra aquí.
+**Cerrada por los fundadores el 3 de noviembre de 2026** (maestro §15.10, decisión 1): se adopta la recomendación, **pgTAP en SQL plano**, con sus dos condiciones —verificar qué forma del claim usa la versión de Supabase del stack antes de escribir el primer test, y una prueba de extremo a extremo con el cliente real cuando se implemente RLS—. Se conserva el análisis que llevó a la decisión:
 
 | Opción | Qué es | A favor | En contra |
 | --- | --- | --- | --- |

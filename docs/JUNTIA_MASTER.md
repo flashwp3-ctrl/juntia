@@ -745,7 +745,7 @@ El paquete de diseño completo está en `docs/design/` (importado desde el proye
 
 - **F0-a cerrada.** La exploración visual se hizo en Claude Design y recorrió las direcciones A→J antes de llegar a tres finalistas (I1 Salvia & Durazno, I2 Bosque & Arena, I3 Piedra & Coral). **Dirección elegida: I2 · Bosque & Arena.** Queda sin efecto la tripleta A/B/C de §6.2 (Warm Editorial / Quiet Precision / Bold Utility), que describía una exploración que no es la que se ejecutó.
 - **F0-b cerrada en especificación.** El sistema de diseño, los componentes, el motion y las especificaciones responsive están entregados como `docs/design/DESIGN_SYSTEM.md`, `COMPONENT_SPECIFICATIONS.md`, `MOTION_SYSTEM.md` y `RESPONSIVE_SPECIFICATIONS.md`. Estos archivos cumplen el papel que §6.1/§6.5 asignaban a `DESIGN.md` y `MOTION.md`; **no se crearán documentos con esos nombres**. La dirección **I2 · Bosque & Arena está elegida en firme y no se reabre.**
-- **F0-b pendiente en implementación.** Los entregables **ejecutables** que §11 asigna a F0-b **no existen**: app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible con estados con/sin presupuesto, fixtures tipadas de Yo/Nosotros y de una meta privada/compartida, y los primitivos reutilizables. Los produce y verifica la primera especificación de ingeniería de P0; hasta entonces F0-b no está cerrada como fase.
+- **F0-b pendiente en implementación.** Los entregables **ejecutables** que §11 asigna a F0-b **no existen**: app shell móvil/escritorio con navegación y selector de contexto, Expense Flow animado y reversible con estados con/sin presupuesto, fixtures tipadas de Yo/Nosotros y de una meta privada/compartida, y los primitivos reutilizables. Se reparten entre dos especificaciones (decisión de los fundadores del 3 de noviembre de 2026, §15.10): la **001** produce el app shell con navegación y selector de contexto y los primitivos; la especificación de **P0-1** produce el Expense Flow, ya conectado al servidor. Las fixtures tipadas dejan de ser un entregable de interfaz —con estados vacíos diseñados la 001 no las necesita— y entran como datos de prueba con el dominio que las usa. F0-b se cierra cuando la 001 y la especificación de P0-1 estén aceptadas.
 - **Fase actual: P0.** Las reglas de `AGENTS.md` y `CLAUDE.md` que congelaban el trabajo en F0-a quedan actualizadas en consecuencia. `prompts/F0-A.md` se conserva en `prompts/archive/` como registro histórico y **no es ejecutable**.
 - **Pendiente real:** no existe todavía ningún scaffold de aplicación en el repositorio. El handoff asume «el repositorio Next.js/React existente»; ese scaffold es trabajo de la primera especificación de P0, no un hecho.
 
@@ -759,6 +759,9 @@ Biblioteca primaria elegida: **Phosphor Icons** (`@phosphor-icons/react`, MIT), 
 - **Cuenta:** avatar (`AccountButton`) en el encabezado de Inicio, Actividad, Metas y Plan; perfil al pie de la sidebar en escritorio. Un toque, **sin sexta pestaña y sin menú**. Rutas `/cuenta`, `/cuenta/perfil`, `/cuenta/pareja`, `/cuenta/apariencia`, `/cuenta/privacidad`, `/cuenta/seguridad`.
 - Queda sin efecto la agrupación anterior «Inicio, Movimientos, Metas, Plan, Nosotros, Perfil».
 - **Escritorio:** rail de 76 px desde 1024 y sidebar de 248 px desde 1280.
+- **Destinos de escritorio** (decisión del 3 de noviembre, §15.10): Inicio · Actividad · Metas · Plan · **Balance**, más Anotar. Balance es destino **solo en escritorio**, en el rail y en el sidebar; en móvil la barra no cambia y el balance completo se abre desde Inicio. Desde 1024 el Shared Balance sigue siendo además un módulo de Inicio.
+- **Selector Yo/Nosotros:** dentro del sidebar desde 1280; **a 1024, arriba a la derecha del contenido**, igual que en móvil y tablet. No hay popover desde el rail.
+- **Tema:** solo en Mi cuenta › Apariencia. El sidebar no lleva control de tema.
 
 ### 15.4 DEC-G04 — fórmula aprobada
 
@@ -877,3 +880,22 @@ Quien redacte la especificación de un slice lista los `[P]` que toca y su clasi
 - Solo va a un ADR en `docs/adr/` la resolución significativa o difícil de revertir (`AGENTS.md` punto 17).
 
 Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo apruebe explícitamente en la revisión.
+
+### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
+
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 1 | ADR-011, pruebas y CI | **Aprobado, con pgTAP** | ADR-011 pasa a Aceptado. Las pruebas de RLS se escriben en SQL plano con pgTAP, después de verificar qué forma del claim usa la versión de Supabase del stack (su pregunta abierta 1 queda cerrada con esa condición) |
+| 2 | ADR-012, Spec Kit en parte | **Aprobado** | ADR-012 pasa a Aceptado. Sigue el PR de inicialización con las condiciones del propio ADR |
+| 3 | Protección de `main` | **Protección local ahora; plan de pago de GitHub antes de datos reales** | Regla de denegación en `.claude/settings.json` y hook `pre-push` versionado. Más débiles que una protección de servidor (ADR-012 §5). El plan de pago se decide antes del primer dato financiero real |
+| 4 | Balance en escritorio | **Destino propio** | §15.3: quinto destino solo en escritorio. Se añade al mapa semántico de iconos |
+| 5 | Contexto a 1024 | **Selector arriba a la derecha del contenido** | §15.3. Sin popover desde el rail |
+| 6 | Tema en el sidebar | **Solo en Mi cuenta › Apariencia** | §15.3. El sidebar no lleva control de tema |
+| 7 | Expense Flow | **En la especificación de P0-1, conectado al servidor** | §15.1: F0-b se reparte entre la 001 y P0-1 |
+| 8 | Mi cuenta en la 001 | **Acceso mínimo a `/cuenta`** | La anatomía de `AccountButton` sigue siendo `[P]` (§15.9) y se aprueba con P0-1, cuando haya una persona con sesión |
+| 9 | Rutas sin datos en la 001 | **Estados vacíos diseñados** | Actividad, Metas y Plan muestran su estado vacío real. Nada de datos de ejemplo en la navegación |
+| 10 | Selector Yo/Nosotros en la 001 | **Funciona y recuerda el contexto, sin animación** | La transición S1 llega con los datos de pareja, en P0-2 |
+
+**Pendiente, no decidido aquí:** el mecanismo de acceso a datos —ORM o `supabase-js` con funciones de Postgres para las escrituras atómicas— necesita su propio ADR antes de P0-1. No afecta a la 001, que no tiene base de datos.

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Rechaza empujar a main. main solo cambia por merge de un PR revisado
+# (ADR-012 §5, maestro §15.10 decisión 3). Es una protección local: se puede
+# saltar con --no-verify y solo existe en los clones que activan
+# `git config core.hooksPath .githooks`. No sustituye a una protección de rama
+# en el servidor.
+protected="refs/heads/main"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "$protected" ]; then
+    echo "pre-push: empujar a main está bloqueado en Juntia." >&2
+    echo "pre-push: main solo cambia por merge de un PR revisado (ADR-012 §5)." >&2
+    echo "pre-push: empuja tu rama y abre un PR." >&2
+    exit 1
+  fi
+done
+exit 0

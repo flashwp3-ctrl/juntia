@@ -1,6 +1,6 @@
 # ADR-012 — Adopción parcial de GitHub Spec Kit
 
-**Estado:** Propuesto · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
 
 ## Contexto
 
@@ -356,7 +356,7 @@ en un clon nuevo hasta que alguien lo instala. Reducen el error accidental; no
 impiden una omisión deliberada.
 
 **Activar GitHub Team** —que daría protección de rama real— **es una decisión
-de los fundadores**, no de este ADR, porque tiene coste económico.
+de los fundadores**, no de este ADR, porque tiene coste económico. **Decidida el 3 de noviembre de 2026** (maestro §15.10, decisión 3): protección local ahora; plan de pago antes del primer dato financiero real.
 
 ## Consecuencias
 
@@ -413,7 +413,7 @@ Queda pendiente:
 
 - **El PR #6 está mergeado.** Las referencias a specs E2E de este ADR usan la
   nomenclatura «spec E2E n» que ese PR introdujo.
-- **ADR-011 sigue en estado Propuesto** hasta que lo aprueben los fundadores.
+- **ADR-011 está Aceptado** (fundadores, 3 de noviembre de 2026).
   La Decisión §4 remite a `docs/TESTING.md` §4 y al tope de specs E2E de
   ADR-011; si ADR-011 cambia, el override de tasks se ajusta en consecuencia.
 

@@ -13,7 +13,7 @@ Enfoque mobile-first: el diseño base es de 390 px y los breakpoints se aplican 
 | 2xl | 1440 | Sidebar de 248 px | Máximo 1440, margen 40 | Héroe 52–58 px, foto de meta de 470 px de alto. Detalle de 400 px fijo a la derecha en Actividad. |
 
 ## Reglas por patrón
-- **Contexto Yo/Nosotros:** arriba a la derecha en móvil y tablet; dentro del sidebar en xl y 2xl; en lg, el primer ítem del rail abre un popover con el segmentado.
+- **Contexto Yo/Nosotros:** arriba a la derecha del contenido en móvil, tablet y lg; dentro del sidebar en xl y 2xl.
 - **Anotar gasto:** botón central de la barra en móvil y tablet; botón al final del rail en lg; bloque bosque en el sidebar en xl y 2xl, con el atajo `N` visible. Siempre a un toque.
 - **Sheets y diálogos:** bottom sheet con dos paradas por debajo de md; desde md, diálogo centrado de 520 px con scrim, foco atrapado y Escape para cerrar. La meta inmersiva nunca es un diálogo: es una ruta.
 - **Metas:** pila apilada hasta md; desde lg, la pila se abre en abanico (la tarjeta trasera girada 4°) y aparece «+» para crear una meta. La meta inmersiva usa la foto a pantalla completa y la hoja en móvil; desde lg, la foto ocupa 820 px y el panel de información va a la derecha (I2·4).
