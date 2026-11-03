@@ -84,7 +84,9 @@ export function AmountInput({ value, defaultValue = null, onValueChange, error, 
   return (
     <Input
       {...rest}
-      error={error ?? (invalidExternal ? copy.primitives.amountError : undefined)}
+      // Un valor externo fuera de rango prevalece sobre un error vacío (F17-R3): se usa el error recibido si trae
+      // texto y, si no, el mensaje del catálogo.
+      error={error || (invalidExternal ? copy.primitives.amountError : undefined)}
       ref={ref}
       type="text"
       inputMode="numeric"
