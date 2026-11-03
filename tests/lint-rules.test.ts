@@ -42,3 +42,14 @@ describe("reglas de lint propias (T012)", () => {
     );
   }, 30_000);
 });
+// F15-3/F15-4: solo especificadores estáticos; cada forma conserva su frontera.
+it("vigila todas las formas de importación y rechaza especificadores dinámicos", async () => {
+  const [result] = await eslint.lintText(await fixture("domain-import-forms.ts"), { filePath: "src/domain/forms.ts" });
+  const messages = result.messages.filter(({ ruleId }) => ruleId === "juntia/domain-imports");
+  const outside = [1, 3, 5, 7, 9, 11, 13];
+  const dynamic = [16, 17, 18, 19, 20, 21, 22, 23];
+  expect(messages.map(({ line, messageId }) => [line, messageId])).toEqual(
+    [...outside.map((line) => [line, "outside"]), ...dynamic.map((line) => [line, "dynamic"])],
+  );
+  expect(messages.filter(({ messageId }) => messageId === "dynamic").every(({ message }) => message === "domain solo admite especificadores literales estáticos")).toBe(true);
+}, 30_000);

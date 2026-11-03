@@ -16,12 +16,18 @@ const domainImports = {
   meta: {
     type: "problem",
     schema: [],
-    messages: { outside: "FR-003 / maestro §7.2: domain solo puede importar archivos de domain o módulos integrados de Node ({{source}})." },
+    messages: { dynamic: "domain solo admite especificadores literales estáticos", outside: "FR-003 / maestro §7.2: domain solo puede importar archivos de domain o módulos integrados de Node ({{source}})." },
   },
   create(context) {
-    function check(source) {
-      if (typeof source?.value !== "string" || isBuiltin(source.value)) return;
-      const specifier = source.value;
+    function check(source, owner) {
+      if (!source && !owner) return;
+      const specifier = source?.type === "TemplateLiteral" && source.expressions.length === 0
+        ? source.quasis[0].value.cooked : source?.value;
+      if (typeof specifier !== "string") {
+        context.report({ node: source ?? owner, messageId: "dynamic" });
+        return;
+      }
+      if (isBuiltin(specifier)) return;
       let target = resolveTypeScript(specifier, context.filename, resolverOptions).path;
       // El plugin import/no-restricted-paths omite los destinos inexistentes.
       // La regla local normaliza los del scaffold incompleto para impedir escapes con ../ o alias.
@@ -42,7 +48,10 @@ const domainImports = {
       ExportAllDeclaration: (node) => check(node.source),
       ImportExpression: (node) => check(node.source),
       CallExpression(node) {
-        if (node.callee.type === "Identifier" && node.callee.name === "require") check(node.arguments[0]);
+        if (node.callee.type === "Identifier" && node.callee.name === "require") {
+          if (node.arguments.length !== 1) context.report({ node, messageId: "dynamic" });
+          else check(node.arguments[0], node);
+        }
       },
       TSImportEqualsDeclaration(node) {
         if (node.moduleReference.type === "TSExternalModuleReference") check(node.moduleReference.expression);
