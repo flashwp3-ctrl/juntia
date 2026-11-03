@@ -38,7 +38,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - **A11y:** el error se anuncia con `aria-live="polite"` y se enlaza con `aria-invalid` y `aria-errormessage`.
 
 ## Tabs / Segmented
-- **Segmented** (Yo/Nosotros, reparto): riel sunken radio 14 · perilla raised radio 11 · etiqueta 13/600 en `text.primary` (12,95:1 sobre sunken). `role="tablist"` o radiogroup según el caso, con flechas de teclado. La perilla se desliza con un layout animation spring `snappy`.
+- **Segmented** (Yo/Nosotros, reparto): riel sunken radio 14 · perilla radio 11 con elevación `elevation.raised` y fondo `surface.overlay` en claro y `charcoal.600` en oscuro · etiqueta 13/600 en `text.primary` (12,95:1 sobre sunken). `role="tablist"` o radiogroup según el caso, con flechas de teclado. La perilla se desliza con un layout animation spring `snappy`.
 - **Subrayado** (filtros de lista): 14/600 · indicador de 2 px en tinta.
 - **Contexto Yo/Nosotros:** siempre visible arriba en móvil y en el sidebar en escritorio. Cambiarlo dispara el motion «Context Transition».
 
