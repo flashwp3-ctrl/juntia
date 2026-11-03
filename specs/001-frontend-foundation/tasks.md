@@ -695,7 +695,7 @@ Todas son del PR D y empiezan cuando termina la fase 9. Cada PR anterior lleva y
 | 6 · US1 + US4 shell y selector | C | Fase 5 | Fase 7 |
 | 7 · US2 + US3 provisional y Anotar | C | Fase 6 | Fases 8 y 9 |
 | 8 · US7 axe por ruta y job 5 | C | Fases 4 y 7 (las rutas que audita) | Fase 9 |
-| 9 · US6 superficie interna | D | Fases 5, 7 y 8 (ver «C y D») | Fase 10 |
+| 9 · US6 superficie interna | D | Fases 5, 7 y 8 (ver «Orden de los PR») | Fase 10 |
 | 10 · Verificación y evidencia | D | Fase 9 | El merge del PR D |
 
 ### User Story Dependencies
@@ -791,16 +791,15 @@ Resolución del gestor del 3 de noviembre de 2026, que aplica ADR-011 §5 sin en
 
 La superficie interna entra en la comprobación con el PR que la crea, así que FR-052 no se debilita: desde D, el job 5 falla si no la visita.
 
-### C y D: en serie, no en paralelo
+### Orden de los PR: secuencial
 
-El gestor pidió declarar C y D en paralelo una vez mergeado B, **salvo que D siguiera necesitando algo de C**. Lo necesita, así que **C → D quedan en serie**:
+**Los cuatro PR van en serie, A → B → C → D** (decisión de los fundadores del 3 de noviembre de 2026). Cada uno parte de `main` actualizado después del merge del anterior; ninguno se empieza antes de ese merge.
 
-- **T059** edita `tests/a11y/routes.a11y.ts`, que crea C (T052).
-- **T060** edita el job 5 de `.github/workflows/ci.yml`, que crea C (T054).
-- La superficie cerrada responde con el estado de «no encontrado» del shell, que crea C (T051). Sin C, el 404 sería el de Next, no el diseñado que pide FR-049.
-- La evidencia final de D mide y captura las rutas de producto de C: umbrales de §15.7 (T067), recorrido manual (T074) y capturas (T075).
+Lo que cada PR toma del anterior, ya en `main`:
 
-Separarlos exigiría que D creara su propio archivo de axe y su propio job, que no están en el plan ni en `contracts/ci.md`. Eso es decisión del gestor, no de este archivo. **Orden de merge: A → B → C → D.**
+- **B** usa los tokens, el catálogo de copy, los tokens de motion y las herramientas de A.
+- **C** usa los primitivos de B y amplía el workflow de A con el job 5 (T054).
+- **D** amplía la prueba de axe (T059 sobre T052) y el job 5 (T060 sobre T054) de C; la superficie cerrada responde con el «no encontrado» de C (T051); y su evidencia final mide y captura las rutas de C (T067, T074, T075).
 
 ### Qué no se hace en ningún punto
 
