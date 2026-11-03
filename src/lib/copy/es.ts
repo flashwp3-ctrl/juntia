@@ -42,7 +42,7 @@ export const copy = {
     variants: { primary: "primary", secondary: "secondary", ghost: "ghost", danger: "danger" },
     states: { normal: "Normal", disabled: "Disabled", loading: "Carga" },
     actions: { primary: "Guardar", secondary: "Editar", ghost: "Cancelar", danger: "Eliminar", primaryLoading: "Guardando…", secondaryLoading: "Editando…", ghostLoading: "Cancelando…", dangerLoading: "Eliminando…" },
-    input: { label: "Descripción", help: "Así lo reconoces en la lista.", error: "Escribe al menos dos letras para la descripción.", disabled: "Pagó", disabledValue: "Persona 1" },
+    input: { label: "Descripción", placeholder: "Escribe cómo lo reconoces", help: "Así lo reconoces en la lista.", error: "Escribe al menos dos letras para la descripción.", disabled: "Pagó", disabledValue: "Persona 1" },
     amount: { empty: "Vacío", max: "Tope 999.999.999", error: "Con error", long: "Importe largo en espacio angosto" },
     segmented: { radiogroup: "radiogroup · contexto", tablist: "tablist · reparto", split: "Reparto", even: "50/50", percent: "Porcentaje", fixed: "Importe" },
     skeleton: { row: "Filas de 60 con ficha de 40", card: "Tarjeta de meta de 228" },

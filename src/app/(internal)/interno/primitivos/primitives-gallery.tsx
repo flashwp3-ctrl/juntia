@@ -137,7 +137,7 @@ export function PrimitivesGallery({ theme }: { theme: "light" | "dark" }) {
         </Card>
 
         <Card title={t.sections.input} hint={t.hints.input} surface="overlay">
-          <Input label={t.input.label} />
+          <Input label={t.input.label} placeholder={t.input.placeholder} />
           <Input label={t.input.label} help={t.input.help} />
           <Input label={t.input.label} error={t.input.error} />
           <Input label={t.input.disabled} defaultValue={t.input.disabledValue} disabled />

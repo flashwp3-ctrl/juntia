@@ -70,7 +70,7 @@ export function AmountInput({ value, defaultValue = null, onValueChange, fieldCl
       autoComplete="off"
       value={shown}
       onChange={handleChange}
-      prefix={<span aria-hidden="true" className="shrink-0 text-[length:var(--money-m-size)] font-semibold text-ink-secondary">$</span>}
+      prefix={<span aria-hidden="true" className="shrink-0 text-[length:var(--money-m-size)] font-semibold text-[var(--comp-field-muted-fg)]">$</span>}
       // Importes largos: el tamaño baja con clamp hasta 28 px según el ancho disponible, sin cortar.
       fieldClassName={`@container min-h-16 py-2 ${fieldClassName}`}
       inputClassName={`text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] ${inputClassName}`}

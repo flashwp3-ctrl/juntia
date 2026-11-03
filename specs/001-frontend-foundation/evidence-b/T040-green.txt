@@ -10,4 +10,4 @@ dark /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.3
 dark / 1440px: 1 violaciones, 0 serias o críticas
 dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
 dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
-  8 passed (21.7s)
+  8 passed (18.4s)

@@ -43,7 +43,7 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
           aria-invalid={invalid || undefined}
           aria-errormessage={invalid ? errorId : undefined}
           aria-describedby={[showHelp ? helpId : null, invalid ? errorId : null].filter(Boolean).join(" ") || undefined}
-          className={`min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-ink-secondary focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
+          className={`min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
         />
         {endIcon ? <AppIcon name={endIcon} size={20} className="shrink-0 text-ink-secondary" /> : null}
       </div>
