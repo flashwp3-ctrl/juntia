@@ -21,9 +21,9 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 
 | Término (español) | Identificador | Fuente | String de interfaz | Precisión |
 | --- | --- | --- | --- | --- |
-| Contexto personal | scope `private` · `owner_user_id` | §7.3 «Scope privado **XOR** grupo»; DEC-G01 | «Yo» | Los movimientos privados **nunca** se renderizan en el contexto Nosotros, ni en totales ni en búsquedas (handoff, reglas de UI). |
-| Contexto compartido | scope `group` · `group_id` | §7.3; DEC-G01 | «Nosotros» | Un grupo nunca ve movimientos privados, aunque sean de las mismas personas (§5.5). |
-| Tipo de contexto | `scope: 'private' \| 'group'` **[propuesta]** | Los dos valores salen de §7.3; el nombre del tipo no está escrito | — | Propuesta de nombre de tipo, no de semántica. |
+| Contexto personal | `owner_user_id` · literal `'private'` **[propuesta]** | §7.3 «Scope privado **XOR** grupo»; DEC-G01. El eje está decidido; **el literal no** | «Yo» | Los movimientos privados **nunca** se renderizan en el contexto Nosotros, ni en totales ni en búsquedas (handoff, reglas de UI). |
+| Contexto compartido | `group_id` · literal `'group'` **[propuesta]** | §7.3; DEC-G01. El eje está decidido; **el literal no** | «Nosotros» | Un grupo nunca ve movimientos privados, aunque sean de las mismas personas (§5.5). |
+| Tipo de contexto | `scope: 'private' \| 'group'` **[propuesta]** | §7.3 y DEC-G01 definen el eje privado **XOR** grupo; **no congelan ni el nombre del tipo ni sus literales** | — | **Propuesta completa: nombre del tipo y valores.** La semántica no se discute; el nivel de autoridad del nombre sí. Mientras no se apruebe, `'private'` y `'group'` son marcadores de lectura, no identificadores vigentes. |
 | Grupo | `groups` | §7.3 | — | `couple` admite **máximo dos** integrantes activos; `group` N es P1 (§5.5, §15.5). |
 | Pareja | `groups` con tipo `couple` | §5.5, §7.3 | «Pareja» · `CoupleStatus` | Exactamente dos en P0. El dominio se modela para N, la UI no lo habilita (§15.5). |
 | Integrante | `group_members` | §7.3 | «Integrante» | La membresía es la autoridad, no una lista enviada por el cliente (§7.3). |
@@ -190,15 +190,24 @@ pareja.
 
 ## 10. Identificadores propuestos
 
-Tres filas de este glosario llevan **[propuesta]** porque los documentos
+**Tres identificadores** de este glosario son propuestas, porque los documentos
 aprobados describen el concepto pero no lo nombran. Los aprueba la primera
-especificación que los necesite; hasta entonces no son autoridad.
+especificación que los necesite; hasta entonces **no son autoridad**.
+
+La marca **[propuesta]** aparece en **cinco filas**: las tres de la tabla de
+abajo y, además, «Contexto personal» y «Contexto compartido», porque usan los
+literales del tipo propuesto.
 
 | Propuesta | Concepto que nombra | Dónde está descrito sin nombre |
 | --- | --- | --- |
-| `scope: 'private' \| 'group'` | El tipo del eje privado/compartido | §7.3 «Scope privado **XOR** grupo»; DEC-G01 `owner_user_id` XOR `group_id` |
+| `scope: 'private' \| 'group'` **y sus dos literales** | El tipo del eje privado/compartido y los valores que lo nombran | §7.3 «Scope privado **XOR** grupo» y DEC-G01 (`owner_user_id` XOR `group_id`) definen el eje, **no los literales** |
 | `voided` | El estado de un movimiento anulado | §5.4 «Anulación: excluir el gasto anulado de agregados actuales; conservar su rastro de auditoría» |
 | `reclassifyToShared()` | La operación «Mover a Pareja» | §15.5, handoff §Flujos, ADR-001 |
+
+La propuesta del tipo **incluye sus dos literales**: donde las filas de las
+secciones 1 y 2 escriben `'private'` o `'group'`, lo hacen como marcador de lectura
+y no como identificador vigente. Lo que está decidido es el eje privado **XOR**
+grupo y sus columnas (`owner_user_id`, `group_id`), no cómo se escriben los valores.
 
 Todo lo demás de este glosario **ya estaba escrito** en el maestro o en el
 paquete de diseño.
