@@ -20,7 +20,8 @@ const badgeStatuses: readonly BadgeStatus[] = ["pending", "settled", "exceeded",
 const buttonVariants: readonly ButtonVariant[] = ["primary", "secondary", "ghost", "danger"];
 const categoryKeys = Object.keys(categories) as Category[];
 
-// Los campos se muestran sobre surface.overlay, la superficie de las hojas y diálogos donde viven (§BottomSheet, §Modal).
+// Input va sobre surface.raised y AmountInput sobre surface.overlay (hojas y diálogos): axe audita el error y el
+// placeholder sobre las dos superficies (F17-1).
 function Card({ title, hint, wide = false, surface = "raised", children }: { title: string; hint: string; wide?: boolean; surface?: "raised" | "overlay"; children: ReactNode }) {
   const look = surface === "overlay" ? "bg-overlay shadow-raised" : "bg-raised shadow-raised";
   return (
@@ -136,7 +137,7 @@ export function PrimitivesGallery({ theme }: { theme: "light" | "dark" }) {
           </div>
         </Card>
 
-        <Card title={t.sections.input} hint={t.hints.input} surface="overlay">
+        <Card title={t.sections.input} hint={t.hints.input}>
           <Input label={t.input.label} placeholder={t.input.placeholder} />
           <Input label={t.input.label} help={t.input.help} />
           <Input label={t.input.label} error={t.input.error} />

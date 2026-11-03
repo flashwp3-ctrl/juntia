@@ -55,8 +55,8 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
       {/* La región existe siempre para que el lector anuncie el error cuando aparece. */}
       <div aria-live="polite" className="empty:hidden">
         {invalid ? (
-          <p id={errorId} className="flex items-center gap-[5px] text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-danger">
-            <AppIcon name="warning-circle" weight="bold" size={14} className="shrink-0" />
+          <p id={errorId} className="flex items-center gap-[5px] text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-[var(--comp-danger-text-fg)]">
+            <AppIcon name="warning-circle" weight="bold" size={14} className="shrink-0 text-danger" />
             {error}
           </p>
         ) : null}

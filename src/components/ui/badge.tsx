@@ -7,7 +7,7 @@ const statuses = {
   pending: { icon: "clock", text: copy.primitives.pending, tone: "bg-[var(--comp-badge-pending-bg)] text-pending border-[length:var(--border-strong)] border-dashed border-border-emphasis" },
   // Liquidado: check + texto en tinta (DESIGN_SYSTEM.md §2.1, regla 5); el verde de texto es solo ahorro (regla 2).
   settled: { icon: "check-circle", text: copy.primitives.settled, tone: "bg-saving-subtle text-ink" },
-  exceeded: { icon: "warning-circle", text: copy.primitives.exceeded, tone: "bg-danger-subtle text-[var(--comp-on-danger-subtle-fg)]" },
+  exceeded: { icon: "warning-circle", text: copy.primitives.exceeded, tone: "bg-danger-subtle text-[var(--comp-danger-text-fg)]" },
   nearLimit: { icon: "warning", text: copy.primitives.nearLimit, tone: "bg-warning-subtle text-warning" },
   // Errata de contraste (fundadores, 3 nov 2026): tinta sobre sunken, 12,95:1; text.secondary daba 4,30.
   private: { icon: "lock-simple", text: copy.primitives.private, tone: "bg-sunken text-ink" },
