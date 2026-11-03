@@ -14,7 +14,7 @@ const variants: Record<ButtonVariant, string> = {
     "bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed active:shadow-[var(--comp-button-primary-highlight)]",
   secondary: "bg-raised text-ink shadow-raised",
   ghost: "bg-transparent text-ink border-[length:var(--border-strong)] border-border",
-  danger: "bg-danger-subtle text-danger",
+  danger: "bg-danger-subtle text-[var(--comp-on-danger-subtle-fg)]",
 };
 
 // sm 36 / radio 12 · md 44 / radio 14 · lg 52 / radio 18. En sm, el área táctil se extiende a 44 con un pseudoelemento.

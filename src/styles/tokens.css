@@ -260,6 +260,7 @@
   --comp-badge-pending-bg: var(--color-surface-raised);
   --comp-avatar-fg: var(--color-text-primary);
   --comp-scrim: rgba(18,20,22,.38);
+  --comp-on-danger-subtle-fg: var(--coral-700); /* errata de contraste, decisión de los fundadores del 3 nov 2026: 5,39:1 */
 }
 
 [data-theme="dark"] {
@@ -328,6 +329,7 @@
   --comp-badge-pending-bg: var(--color-surface-sunken);
   --comp-avatar-fg: var(--color-surface-canvas);
   --comp-scrim: rgba(18,20,22,.62);
+  --comp-on-danger-subtle-fg: var(--color-status-danger);
 }
 
 /* Sin JavaScript, el tema sigue al sistema. Paridad comprobada por T014. */
@@ -398,5 +400,6 @@
     --comp-badge-pending-bg: var(--color-surface-sunken);
     --comp-avatar-fg: var(--color-surface-canvas);
     --comp-scrim: rgba(18,20,22,.62);
+    --comp-on-danger-subtle-fg: var(--color-status-danger);
   }
 }
