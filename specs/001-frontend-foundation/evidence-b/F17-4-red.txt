@@ -1,0 +1,32 @@
+       × por value: vacío, inválido y con aviso de desarrollo 9ms
+       × por defaultValue: vacío, inválido y con aviso de desarrollo 6ms
+       × por value: vacío, inválido y con aviso de desarrollo 4ms
+       × por defaultValue: vacío, inválido y con aviso de desarrollo 3ms
+       × por value: vacío, inválido y con aviso de desarrollo 4ms
+       × por defaultValue: vacío, inválido y con aviso de desarrollo 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por defaultValue: vacío, inválido y con aviso de desarrollo
+- Expected
++ Received
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por defaultValue: vacío, inválido y con aviso de desarrollo
+- Expected
++ Received
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por defaultValue: vacío, inválido y con aviso de desarrollo
+- Expected
++ Received
+      Tests  6 failed | 9 passed (15)
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por defaultValue: vacío, inválido y con aviso de desarrollo
+AssertionError: expected <input inputmode="numeric" …(7)></input> to have property "value" with value ''
++ 100.000.000
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por defaultValue: vacío, inválido y con aviso de desarrollo
+AssertionError: expected <input inputmode="numeric" …(7)></input> to have property "value" with value ''
++ 1.200
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por value: vacío, inválido y con aviso de desarrollo
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por defaultValue: vacío, inválido y con aviso de desarrollo
+AssertionError: expected <input inputmode="numeric" …(7)></input> to have property "value" with value ''
++ 12

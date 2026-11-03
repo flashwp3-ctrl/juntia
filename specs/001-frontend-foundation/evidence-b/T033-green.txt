@@ -1,0 +1,14 @@
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia/.claude/worktrees/001-b-primitives-a6aa4e
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > abre el teclado numérico nativo 261ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > formatea con puntos de miles de es-CO y sin decimales 143ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > no acepta un décimo dígito: el tope es 999.999.999 204ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar conserva solo los dígitos 110ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar sin dígitos el valor no cambia 112ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > vacío entrega null y 0 entrega 0: vacío no es cero 92ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > entrega pesos enteros, nunca unidades menores ni decimales 94ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error: aria-invalid, aria-errormessage hacia un mensaje en región polite e ícono oculto 21ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > enlaza la ayuda con aria-describedby 18ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  17:42:35
+   Duration  4.32s (environment 51%, tests 27%, setup 9%, import 9%, transform 5%)

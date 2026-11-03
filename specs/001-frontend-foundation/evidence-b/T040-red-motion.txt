@@ -1,0 +1,60 @@
+# playwright.config.ts temporal: reducedMotion no-preference
+-  use: { reducedMotion: "reduce", baseURL: "http://localhost:3000" },
++  use: { reducedMotion: "no-preference", baseURL: "http://localhost:3000" },
+light /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+  x  1 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 390px (3.8s)
+light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+  x  2 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 1440px (3.4s)
+dark /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+  x  3 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 390px (3.0s)
+dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+  x  4 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 1440px (3.1s)
+    Error: transición de tema
+    Expected: true
+    Received: false
+    Error: animaciones de Skeleton
+    Expected: 0
+    Received: 1
+    Error: opacidades distintas de Skeleton
+    Expected: 1
+    Received: 10
+    Error: rectángulos distintos de Button al presionar
+    Expected: 1
+    Received: 9
+    Error: transición de tema
+    Expected: true
+    Received: false
+    Error: animaciones de Skeleton
+    Expected: 0
+    Received: 1
+    Error: opacidades distintas de Skeleton
+    Expected: 1
+    Received: 10
+    Error: rectángulos distintos de Button al presionar
+    Expected: 1
+    Received: 10
+    Error: transición de tema
+    Expected: true
+    Received: false
+    Error: animaciones de Skeleton
+    Expected: 0
+    Received: 1
+    Error: opacidades distintas de Skeleton
+    Expected: 1
+    Received: 10
+    Error: rectángulos distintos de Button al presionar
+    Expected: 1
+    Received: 10
+    Error: transición de tema
+    Expected: true
+    Received: false
+    Error: animaciones de Skeleton
+    Expected: 0
+    Received: 1
+    Error: opacidades distintas de Skeleton
+    Expected: 1
+    Received: 10
+    Error: rectángulos distintos de Button al presionar
+    Expected: 1
+    Received: 10
+  4 failed

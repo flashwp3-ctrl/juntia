@@ -1,0 +1,4 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error vacío, un valor fuera de rango sigue inválido con el mensaje del catálogo
+AssertionError: expected null to be 'true' // Object.is equality
+      Tests  1 failed | 15 passed (16)

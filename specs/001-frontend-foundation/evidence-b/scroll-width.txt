@@ -1,0 +1,4 @@
+light 390 scrollWidth/clientWidth 390/390
+light 1440 scrollWidth/clientWidth 1440/1440
+dark 390 scrollWidth/clientWidth 390/390
+dark 1440 scrollWidth/clientWidth 1440/1440

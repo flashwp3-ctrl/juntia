@@ -1,0 +1,21 @@
+# playwright.config.ts temporal: webServer sin JUNTIA_INTERNAL_SURFACE
+-  webServer: { command: "npm run start", url: "http://localhost:3000", env: { JUNTIA_INTERNAL_SURFACE: "1" }, reuseExistingServer: !process.env.CI },
++  webServer: { command: "npm run start", url: "http://localhost:3000", reuseExistingServer: !process.env.CI },
+light / 390px: 1 violaciones, 0 serias o críticas
+  x  2 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 390px (449ms)
+light / 1440px: 1 violaciones, 0 serias o críticas
+  x  4 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 1440px (347ms)
+dark / 390px: 1 violaciones, 0 serias o críticas
+  x  6 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 390px (399ms)
+dark / 1440px: 1 violaciones, 0 serias o críticas
+  x  8 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 1440px (373ms)
+    Expected: 200
+    Received: 404
+    Expected: 200
+    Received: 404
+    Expected: 200
+    Received: 404
+    Expected: 200
+    Received: 404
+  4 failed
+  4 passed (12.3s)

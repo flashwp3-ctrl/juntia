@@ -1,0 +1,4 @@
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /interno/primitivos
