@@ -1,0 +1,8 @@
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /interno/primitivos
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
