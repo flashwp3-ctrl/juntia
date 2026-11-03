@@ -16,6 +16,7 @@ describe("reglas de lint propias (T012)", () => {
     ["hex.tsx", [2, 4, 4]],
     ["hex.css", [4, 8]],
     ["wait.a11y.ts", [5, 6]],
+    ["wait.a11y.tsx", [2]],
   ] as const)("marca las líneas exactas de %s y permite las anclas", async (name, lines) => {
     const [result] = await eslint.lintFiles(`tests/lint-fixtures/${name}`);
     expect(restrictedLines(result.messages)).toEqual(lines);
@@ -29,4 +30,15 @@ describe("reglas de lint propias (T012)", () => {
     const [result] = await eslint.lintText(await fixture("domain-import.ts"), { filePath: "src/domain/fixture.ts" });
     expect(result.messages.filter(({ ruleId }) => ruleId === "no-restricted-imports").map(({ line }) => line)).toEqual([1, 2]);
   });
+  // F15-1 / FR-003: domain solo importa archivos de domain o módulos integrados de Node.
+  it.each([
+    ["domain-paths.ts", "src/domain/fixture.ts", [1, 2, 3, 7, 8]],
+    ["domain-nested-paths.ts", "src/domain/nested/fixture.ts", [1, 2]],
+  ] as const)("resuelve la frontera de %s y permite imports internos y de Node", async (name, filePath, lines) => {
+    const [result] = await eslint.lintText(await fixture(name), { filePath });
+    const failures = result.messages.filter(({ severity }) => severity === 2);
+    expect(failures.map(({ ruleId, line }) => ({ ruleId, line }))).toEqual(
+      lines.map((line) => ({ ruleId: "juntia/domain-imports", line })),
+    );
+  }, 30_000);
 });

@@ -1,0 +1,4 @@
+{"source":"@/app/layout","found":true,"path":"C:\\Users\\aleja\\.codex\\worktrees\\001-a-scaffold\\Juntia\\src\\app\\layout.tsx"}
+{"source":"@/lib/copy/es","found":true,"path":"C:\\Users\\aleja\\.codex\\worktrees\\001-a-scaffold\\Juntia\\src\\lib\\copy\\es.ts"}
+{"source":"@/domain/README.md","found":true,"path":"C:\\Users\\aleja\\.codex\\worktrees\\001-a-scaffold\\Juntia\\src\\domain\\README.md"}
+{"source":"../components/ui/button","found":false}
