@@ -17,9 +17,10 @@ const variants: Record<ButtonVariant, string> = {
   danger: "bg-danger-subtle text-[var(--comp-danger-text-fg)]",
 };
 
-// sm 36 / radio 12 · md 44 / radio 14 · lg 52 / radio 18. En sm, el área táctil se extiende a 44 con un pseudoelemento.
+// sm 36 / radio 12 · md 44 / radio 14 · lg 52 / radio 18. En sm, un pseudoelemento centrado lleva el área táctil
+// a 44 × 44 en los dos ejes sin cambiar la geometría visible (F17-2): solo crece hacia fuera cuando el botón es menor.
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-9 rounded-[12px] px-3 text-[length:var(--label-m-size)] after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']",
+  sm: "h-9 rounded-[12px] px-3 text-[length:var(--label-m-size)] after:absolute after:top-[min(0px,calc((100%_-_44px)/2))] after:bottom-[min(0px,calc((100%_-_44px)/2))] after:left-[min(0px,calc((100%_-_44px)/2))] after:right-[min(0px,calc((100%_-_44px)/2))] after:content-['']",
   md: "h-11 rounded-[var(--radius-md)] px-[14px] text-[length:var(--label-m-size)]",
   lg: "h-[52px] rounded-[var(--radius-lg)] px-5 text-base",
 };

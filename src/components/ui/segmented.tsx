@@ -43,6 +43,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
         const selected = option.value === value;
         return (
           // Errata de contraste (fundadores, 3 nov 2026): etiqueta en tinta en todos los segmentos; la perilla marca la selección.
+          // Área táctil (F17-2): 44 de ancho mínimo; el alto llega a 44 con el ::after sobre el padding del riel.
           <button
             key={option.value}
             ref={(node) => { refs.current[index] = node; }}
@@ -53,7 +54,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
             tabIndex={selected ? 0 : -1}
             onClick={() => onValueChange(option.value)}
             onKeyDown={(event) => move(event, index)}
-            className={`relative isolate inline-flex min-h-[38px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} text-ink after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}
+            className={`relative isolate inline-flex min-h-[38px] min-w-[44px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} text-ink after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}
           >
             {selected ? (
               // Perilla compartida: se desliza entre segmentos; con movimiento reducido salta (duración 0). No anima al montar.

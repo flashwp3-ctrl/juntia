@@ -51,7 +51,8 @@ async function touchArea(page: Page, selector: string) {
     const height = Math.max(box.height, box.height - px(after.top) - px(after.bottom));
     const cx = box.left + box.width / 2;
     const cy = box.top + box.height / 2;
-    const corners = [[-21.5, -21.5], [21.5, -21.5], [-21.5, 21.5], [21.5, 21.5]].map(([dx, dy]) => {
+    // ±21 px: dentro del cuadrado de 44 y fuera del medio píxel que comparten dos segmentos contiguos.
+    const corners = [[-21, -21], [21, -21], [-21, 21], [21, 21]].map(([dx, dy]) => {
       const hit = document.elementFromPoint(cx + dx, cy + dy);
       return Boolean(hit && (hit === element || element.contains(hit)));
     });
