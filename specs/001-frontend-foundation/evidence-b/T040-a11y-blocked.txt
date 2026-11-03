@@ -1,0 +1,18 @@
+light / 390px: 1 violaciones, 0 serias o críticas
+light /interno/primitivos 390px: 1 violaciones, 1 serias o críticas
+  x  2 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 390px (3.3s)
+light / 1440px: 1 violaciones, 0 serias o críticas
+light /interno/primitivos 1440px: 1 violaciones, 1 serias o críticas
+  x  4 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · light · 1440px (3.6s)
+dark / 390px: 1 violaciones, 0 serias o críticas
+dark /interno/primitivos 390px: 1 violaciones, 1 serias o críticas
+  x  6 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 390px (3.8s)
+dark / 1440px: 1 violaciones, 0 serias o críticas
+dark /interno/primitivos 1440px: 1 violaciones, 1 serias o críticas
+  x  8 [a11y] › tests\a11y\routes.a11y.ts:45:11 › /interno/primitivos · dark · 1440px (4.5s)
+      57 |         console.log(`${colorScheme} ${route} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+      57 |         console.log(`${colorScheme} ${route} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+      57 |         console.log(`${colorScheme} ${route} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+      57 |         console.log(`${colorScheme} ${route} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+  4 failed
+  4 passed (27.1s)
