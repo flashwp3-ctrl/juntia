@@ -13,7 +13,10 @@
 
 - `docs/JUNTIA_MASTER.md`: fuente de verdad. Cuerpo v1.2 más la **§15 (v1.3)**, que registra la dirección visual elegida y las decisiones P0 cerradas el 2 de noviembre de 2026 y **prevalece** donde difiera del cuerpo.
 - `docs/design/`: paquete de diseño aprobado, importado desde Claude Design. El documento operativo es `HANDOFF_CLAUDE_CODE.md`; ver `docs/design/README.md` para la procedencia.
-- `docs/adr/`: decisiones de arquitectura. El índice remite al maestro §12.2; ADR-001 y ADR-003 están desarrollados.
+- `docs/adr/`: decisiones de arquitectura. El índice remite al maestro §12.2; ADR-001, ADR-003 y ADR-011 están desarrollados.
+- `docs/CONVENTIONS.md`: idioma por capa, la excepción de las cinco métricas DEC-G04, el módulo de copy y las convenciones de git. El Bloque A deriva del maestro; el Bloque B son decisiones nuevas aprobadas en revisión.
+- `docs/GLOSSARY.md`: término de negocio → identificador → string de interfaz, con las precisiones que el producto no puede perder (un aporte no es una transferencia, un retiro no es un ingreso).
+- `docs/TESTING.md`: documento operativo de ADR-011. Comandos, presupuestos de tiempo, las siete reglas duras y el reparto de responsabilidades entre agente, CI y revisión humana.
 - `AGENTS.md`: contrato compartido para Codex, Claude Code y otros agentes.
 - `CLAUDE.md`: complemento breve de Claude Code; no duplica reglas.
 - `prompts/archive/`: prompts de fases cerradas, no ejecutables.
