@@ -113,4 +113,14 @@ describe("AmountInput (T024)", () => {
       warn.mockRestore();
     });
   });
+
+  // F17-R3: un error vacío no anula el estado inválido de un valor externo fuera de rango.
+  it("con error vacío, un valor fuera de rango sigue inválido con el mensaje del catálogo", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { field } = setup({ value: 1_000_000_000, error: "" });
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    const message = document.getElementById(field.getAttribute("aria-errormessage") ?? "");
+    expect(message?.textContent).toContain(copy.primitives.amountError);
+    warn.mockRestore();
+  });
 });
