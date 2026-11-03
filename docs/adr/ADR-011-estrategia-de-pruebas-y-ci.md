@@ -1,6 +1,10 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Alcance:** P0 (MVP-1)
+**Estado:** Propuesto · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
+
+> **Terminología.** En este ADR, «spec E2E *n*» es siempre una spec de Playwright
+> de la tabla de §3. Una **especificación** (001, 002…) es un slice de producto.
+> Son cosas distintas: la especificación 001 no tiene ninguna spec E2E.
 
 ## Contexto
 
@@ -79,7 +83,7 @@ documento que es de privacidad y por tanto bloqueante (maestro §15.6).
 | 7 | Los datos del caso de octubre reproducen exactamente los totales mostrados en el diseño | Dominio puro | Vitest (fixture dorada) | Es el dataset contra la función. Es el test más barato y el que más protege |
 | 8 | Usar o retirar aportes ajenos sin confirmación del otro integrante queda bloqueado | Base de datos / RLS | SQL sobre Supabase local | Es autorización. Probarlo por la UI prueba que el botón está escondido, no que la escritura está prohibida. El ataque no usa el botón |
 | 9 | No se puede crear un espacio compartido con más de 2 integrantes | Base de datos / RLS | SQL sobre Supabase local | Misma razón: es una restricción del servidor (§15.5). El formulario que no deja añadir un tercero es cortesía, no la regla |
-| 10 | Los movimientos privados nunca **se renderizan** en el contexto Nosotros, ni en los totales ni en las búsquedas | RLS **+ interfaz** | SQL sobre Supabase local · caso de cambio de contexto en la spec 3 | La RLS es imprescindible y no basta: garantiza que **la base no devuelva la fila**, no que una caché de cliente o un render obsoleto no la siga mostrando después de cambiar de Yo a Nosotros. Es la garantía de privacidad central del producto (`AGENTS.md` 6) y las dos mitades son bloqueantes |
+| 10 | Los movimientos privados nunca **se renderizan** en el contexto Nosotros, ni en los totales ni en las búsquedas | RLS **+ interfaz** | SQL sobre Supabase local · caso de cambio de contexto en la spec E2E 3 | La RLS es imprescindible y no basta: garantiza que **la base no devuelva la fila**, no que una caché de cliente o un render obsoleto no la siga mostrando después de cambiar de Yo a Nosotros. Es la garantía de privacidad central del producto (`AGENTS.md` 6) y las dos mitades son bloqueantes |
 | 11 | La reclasificación privado → compartido deja un único gasto activo y un registro de auditoría | Integración de servidor | Vitest + Supabase local, sin navegador | ADR-001 exige transacción única, idempotencia y auditoría. Eso se verifica llamando a la operación y mirando la base, incluida la concurrencia. El navegador no puede provocar la carrera de forma fiable |
 | 12 | Un gasto con meta crea un único gasto real; las asignaciones por aportante suman el uso y son independientes del reparto; la meta nunca queda negativa | Integración de servidor | Vitest + Supabase local, sin navegador | §15.6.3 puntos 5 y 6: dos transacciones atómicas e idempotentes distintas. Es comportamiento de servidor bajo concurrencia y reintento |
 | 13 | Una edición concurrente de presupuesto no se pierde en silencio **[V]** | Integración de servidor | Vitest + Supabase local, sin navegador | Hacen falta dos escritores simultáneos. Dos navegadores coordinados para eso son lentos, frágiles y no prueban nada que dos clientes no prueben mejor |
@@ -133,7 +137,7 @@ justificación que cualquier otra spec.
 
 #### Qué specs corre un PR
 
-**Regla: el humo de un PR son las specs 1, 2 y 3, más la spec del área que el PR
+**Regla: el humo de un PR son las specs E2E 1, 2 y 3, más la spec E2E del área que el PR
 toca.** Un PR de metas corre 1, 2, 3 y 4. Uno de presupuestos corre 1, 2, 3 y 5.
 Uno que no toca ninguna de esas dos áreas corre las tres de base. **El nocturno
 corre siempre las cinco.**
@@ -149,7 +153,7 @@ dos specs; si quien lo escribe duda de qué área toca, corre las cinco.
 #### Arranque progresivo
 
 Al principio esas specs no existen. La especificación 001 construye el AppShell, y
-en ese momento no hay todavía recorrido de pareja ni de liquidación: la spec 3 no
+en ese momento no hay todavía recorrido de pareja ni de liquidación: la spec E2E 3 no
 puede escribirse porque no hay nada que recorra. La regla anterior, leída al pie
 de la letra, bloquearía el primer PR del proyecto.
 
@@ -160,7 +164,7 @@ Las dos mitades importan, y la segunda es la que no admite lectura flexible. **L
 que arranca progresivamente es qué specs existen, no la obligación.** Una
 funcionalidad sin su E2E no mergea: no «todavía no», no «se añade en el siguiente
 PR», no «de momento corremos las que hay». El PR que trae el recorrido de pareja
-es el PR que trae la spec 3.
+es el PR que trae la spec E2E 3.
 
 Dicho de otro modo, esto no es una excepción temporal ni una rampa: es el orden
 natural de las cosas. **La spec nace con la funcionalidad que prueba**, y por eso
@@ -177,18 +181,18 @@ casos dentro de las cinco specs ya listadas.
 
 | Recorrido | Riesgo que las capas inferiores no cubren en conjunto | Dónde se verifica |
 | --- | --- | --- |
-| Abrir invitación → iniciar sesión → volver → aceptar | Pérdida del contexto de navegación, de la redirección o de la sesión. El handoff lo pide explícito: «Sin sesión: guardar la intención, autenticar, volver y revalidar token, correo, caducidad, membresía y disponibilidad». La validación del token es de servidor; **que la intención sobreviva al rodeo por el login no lo es** | Caso en la **spec 1**; validación de token, caducidad y un solo uso en integración de servidor |
-| Cambiar Yo/Nosotros | Estado de cliente obsoleto o exposición visual de lo privado después del cambio. La RLS impide que la base devuelva la fila; no impide que una caché la siga pintando | Caso en la **spec 3** (es la mitad de interfaz de la fila 10); la mitad de autorización, en RLS |
-| Mover a Pareja | Que la vista cambie y los balances se actualicen tras una operación que mueve el gasto de un contexto a otro. La atomicidad y la auditoría ya están abajo (fila 11); lo que no está es que la pantalla refleje el resultado | Caso en la **spec 3**; atomicidad, idempotencia y auditoría en integración de servidor |
-| Solicitar financiación ajena → aprobar o rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas. Un solo cliente no puede demostrar que lo que Sara pide aparece y se resuelve en la vista de Tomás | Caso en la **spec 4**, con dos contextos de navegador; revalidación de permisos, saldos y meta ≥ 0 en integración (fila 12) |
-| Exportar datos | Autorización, archivo realmente descargado y experiencia. Que el servidor filtre bien no demuestra que el archivo llegue, ni que contenga lo que dice | **Integración** para el contenido y la autorización (fila 2: sin privados del otro, sin tokens, sin duplicados) · **la descarga, como caso de la spec 1**, porque Exportar vive en «Privacidad y datos», dentro de Mi cuenta |
+| Abrir invitación → iniciar sesión → volver → aceptar | Pérdida del contexto de navegación, de la redirección o de la sesión. El handoff lo pide explícito: «Sin sesión: guardar la intención, autenticar, volver y revalidar token, correo, caducidad, membresía y disponibilidad». La validación del token es de servidor; **que la intención sobreviva al rodeo por el login no lo es** | Caso en la **spec E2E 1**; validación de token, caducidad y un solo uso en integración de servidor |
+| Cambiar Yo/Nosotros | Estado de cliente obsoleto o exposición visual de lo privado después del cambio. La RLS impide que la base devuelva la fila; no impide que una caché la siga pintando | Caso en la **spec E2E 3** (es la mitad de interfaz de la fila 10); la mitad de autorización, en RLS |
+| Mover a Pareja | Que la vista cambie y los balances se actualicen tras una operación que mueve el gasto de un contexto a otro. La atomicidad y la auditoría ya están abajo (fila 11); lo que no está es que la pantalla refleje el resultado | Caso en la **spec E2E 3**; atomicidad, idempotencia y auditoría en integración de servidor |
+| Solicitar financiación ajena → aprobar o rechazar | Coordinación entre **dos sesiones** y actualización de estados en ambas. Un solo cliente no puede demostrar que lo que Sara pide aparece y se resuelve en la vista de Tomás | Caso en la **spec E2E 4**, con dos contextos de navegador; revalidación de permisos, saldos y meta ≥ 0 en integración (fila 12) |
+| Exportar datos | Autorización, archivo realmente descargado y experiencia. Que el servidor filtre bien no demuestra que el archivo llegue, ni que contenga lo que dice | **Integración** para el contenido y la autorización (fila 2: sin privados del otro, sin tokens, sin duplicados) · **la descarga, como caso de la spec E2E 1**, porque Exportar vive en «Privacidad y datos», dentro de Mi cuenta |
 
 Los cinco recorridos tienen spec asignada; ninguno queda en «algún sitio donde haya
-sesión». Dos consecuencias que conviene no perder de vista. La primera: la spec 4
+sesión». Dos consecuencias que conviene no perder de vista. La primera: la spec E2E 4
 necesita **dos contextos de navegador autenticados a la vez**, lo que la ata a la
 regla dura nº 2 (estados por worker **y por rol**) y no al patrón de sesión única.
 La segunda: la exportación es el único recorrido cuyo peso está abajo y no en el
-navegador, y así debe quedarse. Su caso en la spec 1 comprueba que **el archivo
+navegador, y así debe quedarse. Su caso en la spec E2E 1 comprueba que **el archivo
 llega**, no lo que lleva dentro; un E2E que verifique el contenido del CSV es un
 test de serialización disfrazado, y ese contenido ya es la fila 2.
 
@@ -283,7 +287,7 @@ descarga por una restauración de coste comparable, no quitando trabajo.
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
    que `verify` ejecuta en local, sin los tests SQL/RLS, que van en su propio job
 3. Supabase local en contenedor, con migraciones aplicadas y tests SQL de RLS
-4. E2E de humo: **las specs 1, 2 y 3, más la spec del área que el PR toca**, solo
+4. E2E de humo: **las specs E2E 1, 2 y 3, más la spec E2E del área que el PR toca**, solo
    Chromium, instalado con `npx playwright install --with-deps chromium`
 5. **axe en los dos temas**: sobre las rutas que el PR toca y, mientras no exista
    el mapa de ruta tocada, sobre todas las rutas ya implementadas
@@ -326,7 +330,7 @@ La descripción operativa está en `docs/TESTING.md`.
    **scope `worker`** que sobreescribe `storageState` y se diferencia con
    `test.info().parallelIndex`. Dos roles porque la pareja es de exactamente dos
    (§15.5) y hay recorridos que necesitan ambas sesiones a la vez: la confirmación
-   de fondos ajenos de la spec 4 no se puede montar con una sola.
+   de fondos ajenos de la spec E2E 4 no se puede montar con una sola.
 3. **`prefers-reduced-motion: reduce` por defecto** en el contexto de Playwright:
    es más rápido, es mucho menos frágil frente a los springs y las View
    Transitions, y ejercita de continuo un criterio de aceptación. **Un** test corre
@@ -378,8 +382,11 @@ jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
   dónde.
 - Hace falta infraestructura de siembra por base de datos (`seedCouple()` y
   equivalentes) **antes** del primer E2E, y con **dos roles autenticados por
-  worker**, no uno. Esto es trabajo real de la especificación 001, no un detalle: la
-  spec 4 no se puede escribir sin ello.
+  worker**, no uno. Esto es trabajo real de la **primera especificación que
+  introduzca autenticación y Supabase** —la de P0-1—, no un detalle: la spec E2E 4
+  no se puede escribir sin ello. **La especificación 001 no puede construirla**:
+  no tiene auth ni base de datos. (Enmienda del 3 de noviembre: la versión
+  anterior se la asignaba a la 001.)
 - Correr axe sobre las rutas tocadas en cada PR obliga a que exista un **mapa de
   ruta tocada** —qué rutas afecta un cambio— que hoy no existe. Mientras no lo
   haya, la lectura conservadora es correr axe sobre **todas las rutas ya
@@ -407,8 +414,12 @@ Nada de lo siguiente se ha ejecutado. No existe scaffold, no hay `package.json` 
 no se instaló ninguna herramienta durante la redacción de este ADR.
 
 1. **Todos los presupuestos de tiempo.** Son objetivos razonados y todavía no
-   medidos. Se confirman o se renegocian con la primera suite real de la
-   especificación 001, y con ella pasan a ser contractuales.
+   medidos. Se **empiezan a medir** con la primera suite real de la
+   especificación 001, y pasan a ser **contractuales en el hito de §4**: tres de
+   las cinco specs E2E y el dominio cubriendo DEC-G04 y balances. Si una medición
+   supera un techo, aplica la cláusula anticliquet: el hallazgo es la suite, no
+   el techo. (Enmienda del 3 de noviembre: la versión anterior decía que pasaban
+   a ser contractuales con la suite de la 001, lo que contradecía el hito.)
 2. **Que el gate de PR completo cabe en 6 minutos** medido como job, una vez
    contados el arranque de Supabase en contenedor y
    `npx playwright install --with-deps chromium`.
@@ -623,7 +634,7 @@ un índice que describe mal lo que indexa hace justo el daño que venía a evita
 
 | Pregunta | Resolución vigente | Dónde está escrita |
 | --- | --- | --- |
-| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. **Un PR corre las specs 1, 2 y 3 más la spec del área que toca**, según la columna «Área que cubre»; el nocturno corre siempre las cinco. **Mientras una spec aún no exista, se corren todas las aplicables que ya existan, y ninguna funcionalidad mergea sin añadir y ejecutar su E2E** | Decisión §3, «Qué specs corre un PR» y «Arranque progresivo» |
+| ¿Cómo se reparten el tope de 4–6 specs y las cuatro familias de §10.1? | Cinco specs nombradas: acceso y Mi cuenta · anotar cronometrado (US-12) · pareja 50/50 y liquidación · meta con aportes y uso · presupuesto on/off. **Un PR corre las specs E2E 1, 2 y 3 más la spec E2E del área que toca**, según la columna «Área que cubre»; el nocturno corre siempre las cinco. **Mientras una spec aún no exista, se corren todas las aplicables que ya existan, y ninguna funcionalidad mergea sin añadir y ejecutar su E2E** | Decisión §3, «Qué specs corre un PR» y «Arranque progresivo» |
 | ¿El presupuesto del humo mide el job o solo los tests? | El **job** completo — y solo los presupuestos de job: los de comando (`verify`, dominio, SQL/RLS) miden la ejecución sin `npm ci`, en **tabla aparte**. Mitigación: instalar solo Chromium. Cachear navegadores está **desaconsejado** por la documentación oficial de Playwright; el mecanismo existe, la recomendación a favor no | Decisión §4, las dos tablas |
 | ¿Se acepta `workers: 1` en CI? | No como dado: es el scaffold por defecto de Playwright. El riesgo real es la colisión de datos entre workers, y se resuelve en la siembra — **una pareja aislada por worker y un `storageState` por worker y por rol**, que es lo que la documentación de Playwright recomienda cuando los tests mutan estado de servidor | Decisión §6, reglas 1 **y 2** |
 | ¿Qué presupuesto de tiempo lleva la capa RTL de §10.1? | Ninguno propio: corre dentro del job de Vitest y cabe en los < 90 s de `verify`, que **la incluye en su definición**, «selectivo» y «en flujos críticos» | Consecuencias; definición de `verify` en Decisión §4 |

@@ -82,18 +82,19 @@ La primera que hubo —`Settings` como nombre de componente en las líneas 159 y
 163 del handoff— se corrigió en el artefacto tras la segunda revisión
 independiente del PR #1 y está registrada en el Log de cambios.
 
-**Pendientes — dos, detectadas al capturar el AppShell (PR #5).** Las dos
-enfrentan al comp aprobado con la especificación aprobada en el rail de 1024,
-que es lo que construye la especificación 001. **No son corregibles por
-transcripción**: no hay un texto mal copiado, hay dos fuentes aprobadas que
-dicen cosas distintas. Resolverlas es una **decisión de producto con gate
-humano**, que la 001 debe cerrar **antes** de implementar el rail. Ninguna de las
-dos fuentes se ha corregido.
+**Pendientes — tres, detectadas al capturar el AppShell (PR #5) y en el
+preflight de Spec Kit.** Las tres enfrentan dos fuentes aprobadas en la
+navegación de escritorio, que es lo que construye la especificación 001. **No son
+corregibles por transcripción**: no hay un texto mal copiado, hay dos fuentes
+aprobadas que dicen cosas distintas. Resolverlas es una **decisión de producto
+con gate humano**, que la 001 debe cerrar **antes** de implementar el rail y el
+sidebar. Ninguna de las fuentes se ha corregido.
 
 | Dónde | La especificación dice | El comp dibuja | Qué hay que decidir |
 | --- | --- | --- | --- |
 | `RESPONSIVE_SPECIFICATIONS.md` línea 16 (Contexto Yo/Nosotros) | En `lg`, «el primer ítem del rail abre un popover con el segmentado» | El primer ítem del rail es el wordmark «J». El popover no está dibujado en ningún estado (`Juntia DS v1 - 04 Pantallas`, 04·9) | Cómo se cambia de contexto a 1024: popover desde el rail —y entonces falta diseñarlo— u otro mecanismo |
-| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino** en el rail, entre Plan y el `+`, con icono de balanza —presumiblemente Balance— (`appshell-1024-rail-light.png`, 04·9) | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo y añadirlo al mapa— o si el icono sobra en el comp |
+| Maestro §15.3 y `DESIGN_SYSTEM.md` línea 205 (mapa semántico) | Navegación: Inicio · Actividad · `+` · Metas · Plan. Ningún icono de balanza en el mapa de navegación. `RESPONSIVE_SPECIFICATIONS.md` añade que desde `lg` el Shared Balance es «un módulo en Inicio», no un destino | Un **quinto destino, rotulado «Balance»**, con icono de balanza, en **los dos** layouts de escritorio: en el rail de 1024, entre Plan y el `+` (`appshell-1024-rail-light.png`, 04·9), y en el sidebar de 1440, después de Plan (`appshell-1440-sidebar-light.png`, 04·7). Que aparezca igual en dos breakpoints sugiere una decisión de diseño que no llegó a la especificación, no un icono suelto | Si Balance es destino propio en escritorio —y entonces hay que aprobarlo, añadirlo al mapa semántico y al maestro §15.3— o si sobra en el comp y Balance se queda como módulo de Inicio |
+| `COMPONENT_SPECIFICATIONS.md` línea 94 (AppShell / Navigation, «Escritorio») | «Escritorio (≥ 1024): sidebar de 248 px» y «perfil **y tema** abajo» | Sidebar solo desde 1280: a 1024 hay rail de 76 px (04·9), como dice el maestro §15.3. Al pie del sidebar de 1440 solo está el perfil («Sara · Mi cuenta · con Tomás»), **sin control de tema** (04·7). El tema vive en `/cuenta/apariencia` (handoff, «Mi cuenta») | El umbral **no se decide**: manda el maestro §15.3 (rail desde 1024, sidebar desde 1280) y la línea 94 se corregirá por PR. **Sí se decide** si el sidebar lleva un acceso al tema al pie o si el tema solo vive en Cuenta |
 
 ## Referencias visuales originales
 
