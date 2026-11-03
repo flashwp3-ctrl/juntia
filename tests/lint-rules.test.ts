@@ -10,6 +10,8 @@ const restrictedLines = (messages: { ruleId: string | null; line: number }[]) =>
   messages.filter(({ ruleId }) => ruleId === "no-restricted-syntax").map(({ line }) => line);
 
 describe("reglas de lint propias (T012)", () => {
+  // En Windows, iniciar ESLint en frío puede superar los 5 s de Vitest.
+  // Los 30 s solo aplican a estos fixtures; no cambian el timeout global ni el presupuesto de verify.
   it.each([
     ["hex.tsx", [2, 4, 4]],
     ["hex.css", [4, 8]],
@@ -17,7 +19,7 @@ describe("reglas de lint propias (T012)", () => {
   ] as const)("marca las líneas exactas de %s y permite las anclas", async (name, lines) => {
     const [result] = await eslint.lintFiles(`tests/lint-fixtures/${name}`);
     expect(restrictedLines(result.messages)).toEqual(lines);
-  });
+  }, 30_000);
   it("permite los colores en tokens.css", async () => {
     const [result] = await eslint.lintText(await fixture("hex.css"), { filePath: "src/styles/tokens.css" });
     expect(result.errorCount).toBe(0);
