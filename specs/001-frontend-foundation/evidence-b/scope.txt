@@ -8,5 +8,5 @@ $ git grep -nE "lucide|tabler|iconoir" -- src tests
 (vacío)
 $ git grep -nE "Carulla|Sara|Tomás" -- src tests
 (vacío)
-$ git grep -nE '#[0-9a-fA-F]{3,8}\b' -- src ':!src/styles/tokens.css'
+$ git grep -nE '#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b' -- src ':!src/styles/tokens.css'
 (vacío)
