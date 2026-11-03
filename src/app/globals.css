@@ -44,9 +44,9 @@
   --color-saving: var(--color-finance-saving);
   --color-saving-subtle: var(--color-finance-savingSubtle);
   --color-settlement: var(--color-finance-settlement);
-  --color-goal-track: var(--color-goal-track);
-  --color-goal-pace: var(--color-goal-pace);
-  --color-goal-projection: var(--color-goal-projection);
+  --color-track: var(--color-goal-track);
+  --color-pace: var(--color-goal-pace);
+  --color-projection: var(--color-goal-projection);
   --color-pending: var(--color-status-pending);
   --color-danger: var(--color-status-danger);
   --color-danger-subtle: var(--color-status-dangerSubtle);

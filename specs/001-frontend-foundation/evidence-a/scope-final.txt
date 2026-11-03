@@ -1,0 +1,8 @@
+git grep -nE P0-[0-9]|Total gastado|Depositad|Invertir|está en deuda|excedido|Proporcional|Transferencia verificada -- src/lib/copy
+Sin coincidencias (exit 1)
+git grep -nE person-?[3-6] -- src/styles/tokens.css
+Sin coincidencias (exit 1)
+git grep -nE 412\.900|2\.840\.000|429\.900|3\.740\.000|229\.900|900\.000 -- src tests
+Sin coincidencias (exit 1)
+src/domain: [ 'README.md' ]
+tests/e2e existe: false

@@ -11,16 +11,19 @@ if (mode === "run") {
   for (const command of commands) {
     const start = Date.now();
     const args = command === "ci" ? ["ci"] : command === "chromium" ? ["exec", "--", "playwright", "install", "--with-deps", "chromium"] : ["run", command];
-    const result = spawnSync("npm", args, { stdio: "inherit", shell: process.platform === "win32" });
+    const result = spawnSync("npm", args, { encoding: "utf8", shell: process.platform === "win32" });
+    process.stdout.write(result.stdout ?? "");
+    process.stderr.write(result.stderr ?? "");
     const seconds = (Date.now() - start) / 1000;
-    appendFileSync(timingFile, JSON.stringify({ command, seconds, status: result.status ?? 1 }) + "\n");
+    const emptyDomain = command === "test:unit" && /No test files found/.test((result.stdout ?? "") + (result.stderr ?? ""));
+    appendFileSync(timingFile, JSON.stringify({ command, seconds, status: result.status ?? 1, emptyDomain }) + "\n");
     if (budgets[command] && seconds >= budgets[command]) console.log(`::warning::${command}: ${seconds.toFixed(2)} s; presupuesto < ${budgets[command]} s`);
     if (result.error || result.status !== 0) { console.error(result.error?.message ?? `Falló ${command}`); process.exitCode = result.status || 1; break; }
   }
 } else if (mode === "summary") {
   const rows = existsSync(timingFile) ? readFileSync(timingFile, "utf8").trim().split("\n").filter(Boolean).map((line) => JSON.parse(line)) : [];
   const lines = ["| Control | Estado | Duración | Presupuesto |", "| --- | --- | --- | --- |"];
-  for (const row of rows) lines.push(`| ${row.command} | ${row.status === 0 ? "pasó" : "falló"} | ${row.seconds.toFixed(2)} s | ${budgets[row.command] ? `< ${budgets[row.command]} s` : "—"} |`);
+  for (const row of rows) lines.push(`| ${row.command} | ${row.status !== 0 ? "falló" : row.emptyDomain ? "0 pruebas — la 001 no tiene dominio financiero" : "pasó"} | ${row.seconds.toFixed(2)} s | ${budgets[row.command] ? `< ${budgets[row.command]} s` : "—"} |`);
   const duration = (Date.now() - Number(process.env.JOB_STARTED_MS)) / 1000;
   lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < 360 s |`);
   if (duration >= 360) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < 360 s`);

@@ -10,9 +10,9 @@ const mono = Geist_Mono({ subsets: ["latin"], weight: "500", variable: "--font-g
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-CO" suppressHydrationWarning>
+    <html lang="es-CO" suppressHydrationWarning className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
-      <body className={`${serif.variable} ${sans.variable} ${mono.variable} bg-canvas text-ink font-sans`}>{children}</body>
+      <body className="bg-canvas text-ink font-sans">{children}</body>
     </html>
   );
 }

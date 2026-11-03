@@ -36,17 +36,17 @@ exclude:  **/node_modules/**, **/.git/**
 
  Test Files  3 passed (3)
       Tests  14 passed (14)
-   Start at  15:36:28
-   Duration  4.39s (tests 71%, setup 21%, import 6%, transform 1%, worker 1%)
+   Start at  15:44:49
+   Duration  2.64s (tests 60%, setup 30%, import 7%, transform 2%, worker 1%)
 
 verify · 001
 ┌─────────┬──────────────────┬──────────────────────────────────────────────────┬───────────┬─────────────┬───────┐
 │ (index) │ control          │ resultado                                        │ duración  │ presupuesto │ aviso │
 ├─────────┼──────────────────┼──────────────────────────────────────────────────┼───────────┼─────────────┼───────┤
-│ 0       │ 'lint'           │ 'pasó'                                           │ '3.64 s'  │ '—'         │ ''    │
-│ 1       │ 'typecheck'      │ 'pasó'                                           │ '2.08 s'  │ '—'         │ ''    │
-│ 2       │ 'unit (domain)'  │ '0 pruebas — la 001 no tiene dominio financiero' │ '0.91 s'  │ '< 15 s'    │ ''    │
-│ 3       │ 'components'     │ 'pasó'                                           │ '5.62 s'  │ '—'         │ ''    │
+│ 0       │ 'lint'           │ 'pasó'                                           │ '3.78 s'  │ '—'         │ ''    │
+│ 1       │ 'typecheck'      │ 'pasó'                                           │ '2.29 s'  │ '—'         │ ''    │
+│ 2       │ 'unit (domain)'  │ '0 pruebas — la 001 no tiene dominio financiero' │ '0.97 s'  │ '< 15 s'    │ ''    │
+│ 3       │ 'components'     │ 'pasó'                                           │ '3.48 s'  │ '—'         │ ''    │
 │ 4       │ 'SQL/RLS'        │ 'NO APLICABLE — lo incorpora P0-1'               │ '—'       │ '< 60 s'    │ ''    │
-│ 5       │ 'verify (total)' │ 'pasó'                                           │ '12.25 s' │ '< 90 s'    │ ''    │
+│ 5       │ 'verify (total)' │ 'pasó'                                           │ '10.53 s' │ '< 90 s'    │ ''    │
 └─────────┴──────────────────┴──────────────────────────────────────────────────┴───────────┴─────────────┴───────┘
