@@ -858,8 +858,8 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 | Sección Cuenta completa: AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, CoupleStatus, SensitiveActionConfirmation, LimitNote | COMPONENT_SPECIFICATIONS.md §Cuenta | La sección entera se marcó propuesta. La **navegación** a Cuenta sí está aprobada (§15.3); la anatomía de sus siete componentes no. | **Sí** — P0-1 (perfil, apariencia) y P0-2 (pareja) | **Sí** — al revisar las pantallas de Cuenta |
 | Persistencia del tema (`profiles` + cookie) | COMPONENT_SPECIFICATIONS.md §ThemeSelector | Marcada `[P][V]`: mecanismo propuesto **y** sin validar. | **Sí** — P0-1 | **Sí** — y además hay que ejecutar el `[V]` |
 | Anotar gasto (flujo E1–E5) | COMPONENT_SPECIFICATIONS.md §Anotar gasto (flujo) | El guion de cinco estados es propuesta; el maestro §11 solo exige un Expense Flow animado y reversible. | **Sí** — F0-b pendiente y P0-1 | **Sí** — es el flujo central del producto |
-| Teclado nativo para el monto (`inputmode="numeric"`) | COMPONENT_SPECIFICATIONS.md §Anotar gasto · HANDOFF_CLAUDE_CODE.md, tabla | Elección de entrada propuesta; depende del comportamiento real en Android (15.6.2). | **Sí** — P0-1 | **Sí** — junto con la fila siguiente |
-| Teclado propio descartado | HANDOFF_CLAUDE_CODE.md §Accesibilidad | El descarte es una propuesta, no una decisión registrada en el maestro. Es la cara opuesta del punto anterior. | **Sí** — P0-1 | **Sí** — se aprueba junto con la fila anterior |
+| Teclado nativo para el monto (`inputmode="numeric"`) | COMPONENT_SPECIFICATIONS.md §Anotar gasto · HANDOFF_CLAUDE_CODE.md, tabla | Elección de entrada propuesta; depende del comportamiento real en Android (15.6.2). | **Sí** — P0-1 | **Sí** — junto con la fila siguiente. **Aprobado** el 3 de noviembre de 2026 (§15.10, decisión 11) |
+| Teclado propio descartado | HANDOFF_CLAUDE_CODE.md §Accesibilidad | El descarte es una propuesta, no una decisión registrada en el maestro. Es la cara opuesta del punto anterior. | **Sí** — P0-1 | **Sí** — se aprueba junto con la fila anterior. **Aprobado** el 3 de noviembre de 2026 (§15.10, decisión 11) |
 | Personas configurables, escalables a N (+ patrón) | DESIGN_SYSTEM.md §1.2 · HANDOFF_CLAUDE_CODE.md, tabla | Tokens `person.1–6` y patrón de tramo pensados para N, cuando P0 es pareja de exactamente dos (§15.5). | No — P0 se implementa con `person.1–2` | **Sí** — el patrón de tramo y `person.3–6` no están aprobados; en P0 simplemente no se usan |
 | Sara lila → petróleo; Hogar lavanda → azul tenue; superficie oscura #1C1F20 → #191C1F | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Cambios de paleta propuestos respecto a I2 y al maestro. | No — cambia valores de token, no fronteras funcionales | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; se aprueba viendo la pantalla |
 | Gasto, ingreso y liquidación en tinta | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Propuesta de codificación cromática para evitar que ahorro e ingreso compartan verde. | No — cambia valores de token, no fronteras funcionales | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; afecta a cómo se lee el dinero |
@@ -868,6 +868,8 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 | Texto ampliado hasta 200% | HANDOFF_CLAUDE_CODE.md §Accesibilidad | Comportamiento responsive propuesto (filas a 2 líneas, segmentados apilados, importes con clamp). | No — refinamiento de un requisito ya obligatorio | **No** — el requisito (200% sin pérdida) ya es obligatorio; la técnica se valida probándola, no aprobándola |
 
 **Total: 17 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **15 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cuatro elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta y el patrón de personas— son el motivo de que los dos ejes estén separados.
+
+**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
 
 **Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 23 líneas: 17 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 4 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. 17 marcas = 17 elementos de la tabla.
 
@@ -883,7 +885,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. La decisión 11 se tomó después, por separado, y se registra debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -897,6 +899,19 @@ Tomadas por los dos fundadores en la hoja de decisiones previa a la especificaci
 | 8 | Mi cuenta en la 001 | **Acceso mínimo a `/cuenta`** | La anatomía de `AccountButton` sigue siendo `[P]` (§15.9) y se aprueba con P0-1, cuando haya una persona con sesión |
 | 9 | Rutas sin datos en la 001 | **Estados vacíos diseñados** | Actividad, Metas y Plan muestran su estado vacío real. Nada de datos de ejemplo en la navegación |
 | 10 | Selector Yo/Nosotros en la 001 | **Funciona y recuerda el contexto, sin animación** | La transición S1 llega con los datos de pareja, en P0-2 |
+
+#### Decisión 11: teclado del monto
+
+Tomada por los fundadores el mismo día, antes de lanzar la especificación 001, y comunicada al gestor en conversación, sin hoja de decisiones. `AmountInput` es uno de los primitivos que el handoff asigna a la 001, y dependía de dos `[P]` que afectan al alcance (§15.9). El gestor recomendó mover `AmountInput` a P0-1. **Los fundadores eligieron mantenerlo en la 001.**
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 11 | Teclado del monto | **Teclado nativo (`inputmode="numeric"`); teclado propio descartado** | Se cierran las dos filas del teclado en §15.9. `AmountInput` se construye en la 001 como primitivo, según `docs/design/COMPONENT_SPECIFICATIONS.md` §Input (Monto) |
+
+Lo que esta decisión **no** cierra:
+
+- **El comportamiento en Android con teclados de terceros** sigue siendo la dependencia técnica 3 de §15.6.2. Se investiga dentro de P0-1, con la hoja de Anotar real, junto con la verificación `[V]` de la altura del teclado (`visualViewport`) de `docs/design/RESPONSIVE_SPECIFICATIONS.md`. Si el resultado obliga a cambiar la entrada, el cambio vuelve a los fundadores.
+- **El uso de `AmountInput` en la 001.** Anotar sigue abriendo solo el aviso de que el registro llega con P0-1, sin campos que aparenten guardar (bloque siguiente). La especificación 001 decide cómo se verifica un primitivo que el shell todavía no muestra, en la capa más baja que detecte el fallo (ADR-011).
 
 #### Dataset dorado: quién lo produce y cuándo
 
