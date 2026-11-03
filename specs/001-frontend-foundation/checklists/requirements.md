@@ -51,6 +51,15 @@
   muestra valores de componente, pero no es una ruta de producto (no existe en
   producción ni se enlaza), así que no contradice la regla de §15.10 «Ninguna
   afirmación financiera sin datos».
+- **Validación, iteración 3 (revisión del PR #11).** F11-1: disponibilidad de la
+  superficie interna por destino de despliegue (FR-049) y dos criterios nuevos
+  (FR-052, FR-053). F11-2: las afirmaciones absolutas sobre cifras quedan
+  limitadas a las rutas de producto (US-2, SC-004) y FR-050 rige el contenido de
+  la superficie. F11-3: precisión bajo Q1, FR-031 con «reutiliza la base y
+  añade» y semántica `dialog`. Revisado con grep cada «cualquier ruta», «todas
+  las rutas» y «cada ruta»: los de tema, axe, scroll horizontal y CLS siguen
+  aplicando también a la superficie interna, a propósito. Todos los ítems pasan;
+  cero marcas `[NEEDS CLARIFICATION]`; Q1–Q3 sin cambios.
 - **Comprobaciones de jerarquía hechas al escribir:** ningún `[P]` con alcance
   «Sí» queda sin resolución de los fundadores; ninguna errata pendiente; ningún
   conflicto bloqueante; la 001 no produce dataset dorado; cero specs E2E.

@@ -42,8 +42,10 @@ las aplica; no las toma.
 ### Session 2026-11-03
 
 - Q: ¿Qué contenedor presenta el aviso de Anotar (FR-031)? → A: El contenedor real de Anotar: hoja inferior en móvil y diálogo de 520 px desde 768 px. Se construye una sola vez para que P0-1 solo cambie el contenido. BottomSheet y Modal entran en la 001 **únicamente** en la medida en que el aviso los necesita: foco atrapado, Escape, control de cierre, retorno del foco, safe area y movimiento reducido. El aviso sigue sin campos.
+  - *Precisión (revisión del PR #11, F11-3):* «solo cambie el contenido» se lee como «P0-1 reutiliza la base accesible del contenedor y le añade las capacidades que necesita el Expense Flow real». La 001 no construye las paradas `peek`/`full`, el arrastre ni la confirmación de cambios sin guardar (FR-031a).
 - Q: ¿«Sin animación» (decisión 10) incluye el deslizamiento de la perilla del Segmented? → A: No. La perilla se desliza como respuesta propia del control, con el spring de `COMPONENT_SPECIFICATIONS.md` §Tabs / Segmented; con movimiento reducido salta sin desplazarse (`MOTION_SYSTEM.md` §1). No hay transición de contenido S1: ni salida y entrada, ni contador, ni crossfade del titular. S1 llega con P0-2, como dice la consecuencia de la decisión 10.
 - Q: ¿Dónde se revisan visualmente los primitivos que el shell no muestra (US-6)? → A: En una superficie interna de revisión: una ruta sin ningún enlace desde la navegación, que devuelve el estado de «no encontrado» en el build de producción. Muestra cada primitivo en sus estados y en los dos temas, solo con valores de las especificaciones de componente, nunca con el caso de octubre ni con la tabla de DEC-G04. Pasa axe en el job 5 como cualquier ruta implementada, sirve para las capturas a 390 y 1440 del PR de implementación y no cuenta como spec E2E. El nombre de la ruta lo propone el plan.
+  - *Precisión (revisión del PR #11, F11-1):* «build de producción» se lee como **despliegue de producción**, no como modo de compilación: CI y los previews también compilan para producción. La política por destino de despliegue está en FR-049.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -90,15 +92,16 @@ cuenta llega con el inicio de sesión.
 del maestro §15.10. Mostrar un «$0» o un «Al día» sin datos sería presentar algo
 simulado como real, que §10.3 prohíbe.
 
-**Independent Test**: recorrer todas las rutas implementadas en los dos temas y
+**Independent Test**: recorrer todas las rutas de producto en los dos temas y
 comprobar que el aviso de versión base está visible y que no aparece ninguna
-cifra, porcentaje, saldo, estado financiero ni progreso.
+cifra, porcentaje, saldo, estado financiero ni progreso. La superficie interna de
+revisión no es una ruta de producto y se rige por FR-050.
 
 **Acceptance Scenarios**:
 
-1. **Given** cualquier ruta del shell, **When** se muestra, **Then** el aviso de que esta versión todavía no guarda datos está visible (§15.10, «Aviso de versión base»).
+1. **Given** cualquier ruta de producto, **When** se muestra, **Then** el aviso de que esta versión todavía no guarda datos está visible (§15.10, «Aviso de versión base»).
 2. **Given** Inicio, Actividad, Metas o Plan, **When** se muestran, **Then** cada uno presenta su estado vacío diseñado —ícono Duotone en ficha y texto útil, sin ilustraciones de stock (handoff §Auditoría anti-slop)— y ningún dato de ejemplo (decisión 9).
-3. **Given** cualquier ruta, **When** se inspecciona su contenido visible y accesible, **Then** no hay «$0», importes, «Al día», «le debe», totales, porcentajes, barras de presupuesto ni progreso de metas (§15.10, «Ninguna afirmación financiera sin datos»).
+3. **Given** cualquier ruta de producto, **When** se inspecciona su contenido visible y accesible, **Then** no hay «$0», importes, «Al día», «le debe», totales, porcentajes, barras de presupuesto ni progreso de metas (§15.10, «Ninguna afirmación financiera sin datos»).
 4. **Given** un ancho de 1024 px o más, **When** la persona abre Balance, **Then** ve un estado de «todavía no disponible» que explica que el balance aparece cuando exista la pareja, nunca «Al día» ni una cifra (§15.10, decisión 4).
 5. **Given** cualquier ancho, **When** la persona activa el acceso a Mi cuenta, **Then** llega a `/cuenta`, que dice que la cuenta llega con el inicio de sesión (§15.10, decisión 8).
 
@@ -120,7 +123,7 @@ el retorno del foco al disparador.
 
 **Acceptance Scenarios**:
 
-1. **Given** cualquier ruta del shell, **When** la persona activa Anotar con toque, clic o teclado, **Then** se abre un aviso explícito de que registrar gastos todavía no está disponible y llega con la próxima versión, sin campos de monto, categoría ni botón de guardar (§15.10, «Anotar»).
+1. **Given** cualquier ruta de producto, **When** la persona activa Anotar con toque, clic o teclado, **Then** se abre un aviso explícito de que registrar gastos todavía no está disponible y llega con la próxima versión, sin campos de monto, categoría ni botón de guardar (§15.10, «Anotar»).
 2. **Given** el foco fuera de un campo de texto, **When** la persona pulsa `N`, **Then** se abre el mismo aviso (§15.10; handoff §Accesibilidad, «atajo N para Anotar»).
 3. **Given** el aviso abierto, **When** la persona pulsa Escape o activa el control de cierre, **Then** el aviso se cierra y el foco vuelve al disparador (handoff §Accesibilidad; `MOTION_SYSTEM.md` §2, Teclado).
 4. **Given** el aviso abierto, **When** se navega con Tab, **Then** el foco no sale del aviso hasta cerrarlo (`COMPONENT_SPECIFICATIONS.md` §BottomSheet y §Modal, foco atrapado).
@@ -172,7 +175,7 @@ la app abierta.
 1. **Given** el sistema en oscuro, **When** se carga cualquier ruta, **Then** el primer pintado ya usa el tema oscuro, sin destello del tema claro (`DESIGN_SYSTEM.md` §convención; `MOTION_SYSTEM.md`, Reglas técnicas; §15.10, «Tema»).
 2. **Given** la app abierta, **When** cambia la preferencia del sistema, **Then** la app pasa al otro tema con la transición de color de 180 ms, o instantáneamente con movimiento reducido (`MOTION_SYSTEM.md`, Reglas técnicas).
 3. **Given** cualquier ancho y ruta, **When** se revisa en los dos temas, **Then** el oscuro tiene composición propia por tokens semánticos y no es una inversión de colores (maestro §6.1; handoff §Trazabilidad, «Oscuro cercano al negro» [A]).
-4. **Given** el sidebar o cualquier ruta, **When** se busca un control de tema, **Then** no existe (decisión 6).
+4. **Given** el sidebar o cualquier ruta de producto, **When** se busca un control de tema, **Then** no existe (decisión 6). La superficie interna puede presentar los dos temas a la vez para revisar los primitivos; eso no es un selector de tema del producto.
 
 ---
 
@@ -200,7 +203,7 @@ la superficie interna de revisión (Clarifications, Q3; FR-049).
 4. **Given** un Button en estado cargando, **When** se muestra, **Then** conserva su ancho, muestra el indicador giratorio y la etiqueta en gerundio, sin salto de layout (`COMPONENT_SPECIFICATIONS.md` §Button).
 5. **Given** un Segmented, **When** se opera con teclado, **Then** las flechas cambian la opción y el rol accesible corresponde al uso (`COMPONENT_SPECIFICATIONS.md` §Tabs / Segmented).
 6. **Given** un ícono decorativo, **When** se renderiza, **Then** está oculto a lectores de pantalla; un botón de solo ícono tiene nombre accesible (`DESIGN_SYSTEM.md` §3).
-7. **Given** un build de desarrollo o de revisión, **When** se abre la superficie interna de revisión, **Then** muestra cada primitivo en sus estados y en los dos temas; **Given** el build de producción, **Then** esa ruta devuelve el estado de «no encontrado» (Clarifications, Q3).
+7. **Given** desarrollo local, el entorno de CI o un preview de revisión, **When** se abre la superficie interna de revisión, **Then** muestra cada primitivo en sus estados y en los dos temas, identificada como interna; **Given** el despliegue de producción, **Then** esa ruta responde con el estado de «no encontrado» (Clarifications, Q3; FR-049).
 
 ---
 
@@ -274,7 +277,7 @@ aplicables.
 - **FR-014**: El sistema MUST proveer `AmountInput` con teclado numérico nativo, máscara COP con puntos de miles, sin decimales, máximo 999.999.999, ayuda enlazada, error accesible y reducción de tamaño sin corte (`COMPONENT_SPECIFICATIONS.md` §Input, Monto; decisión 11). Entrega el valor en **pesos enteros, sin aritmética de punto flotante y sin convertirlo a unidades menores**: esa conversión es de `domain/money`, en P0-1 (maestro §5.2).
 - **FR-015**: El sistema MUST proveer `Segmented` con riel, perilla y etiqueta, rol accesible según el uso y flechas de teclado. La perilla se desliza con el spring `snappy` y, con movimiento reducido, salta sin desplazarse (`COMPONENT_SPECIFICATIONS.md` §Tabs / Segmented; `MOTION_SYSTEM.md` §1; Clarifications, Q2).
 - **FR-016**: El sistema MUST proveer `Skeleton` que replica la geometría del contenido final, con pulso de opacidad sin shimmer, estático con movimiento reducido, contenedor `aria-busy` y texto oculto de carga; solo aparece si la carga supera 300 ms (`COMPONENT_SPECIFICATIONS.md` §Skeleton; `MOTION_SYSTEM.md` §6).
-- **FR-017**: Ningún primitivo MUST presentar datos financieros de ejemplo en una ruta de la app; la única excepción es la superficie interna de revisión (FR-049), que no existe en producción. Las pruebas de componentes y esa superficie usan valores de las especificaciones de componente (por ejemplo, el límite 999.999.999), **no** el caso de octubre ni la tabla de DEC-G04, que pertenecen al dataset dorado de P0-1 a P0-3 (§15.10, regla 3).
+- **FR-017**: Ningún primitivo MUST presentar datos financieros de ejemplo en una ruta de la app; la única excepción es la superficie interna de revisión (FR-049), que no está disponible en el despliegue de producción y se rige por FR-050. Las pruebas de componentes y esa superficie usan valores de las especificaciones de componente (por ejemplo, el límite 999.999.999), **no** el caso de octubre ni la tabla de DEC-G04, que pertenecen al dataset dorado de P0-1 a P0-3 (§15.10, regla 3).
 
 #### AppShell y navegación
 
@@ -295,10 +298,10 @@ aplicables.
 #### Comportamiento provisional (§15.10)
 
 - **FR-028**: El AppShell MUST mostrar en todas sus rutas un aviso visible de que esta versión todavía no guarda datos, que no se puede descartar y que desaparece cuando P0-1 conecte el servidor (§15.10, «Aviso de versión base»).
-- **FR-029**: Ninguna ruta de producto MUST mostrar «$0», importes, «Al día», «le debe», totales, porcentajes, barras de presupuesto ni progreso de metas. Los estados vacíos neutrales están permitidos; las cifras, no (§15.10, «Ninguna afirmación financiera sin datos»). La superficie interna de revisión (FR-049) no es una ruta de producto: no existe en producción, no se enlaza y se identifica como interna.
+- **FR-029**: Ninguna ruta de producto MUST mostrar «$0», importes, «Al día», «le debe», totales, porcentajes, barras de presupuesto ni progreso de metas. Los estados vacíos neutrales están permitidos; las cifras, no (§15.10, «Ninguna afirmación financiera sin datos»). La superficie interna de revisión (FR-049) no es una ruta de producto: no está disponible en el despliegue de producción, no se enlaza y se identifica como interna; su contenido se rige por FR-050.
 - **FR-030**: Inicio, Actividad, Metas y Plan MUST mostrar un estado vacío diseñado —ícono Duotone en ficha y texto útil— y ningún dato de ejemplo (decisión 9; handoff §Auditoría anti-slop). Los estados vacíos no ofrecen controles que aparenten funcionar, como «Crear meta» o «Crear presupuesto». El de Plan no sugiere que el presupuesto sea obligatorio (DEC-R01; US-13).
-- **FR-031**: Anotar MUST abrir un aviso explícito de que registrar gastos llega con la próxima versión, sin campos que aparenten guardar; se abre también con `N`, se cierra con Escape y con un control de cierre, atrapa el foco y lo devuelve al disparador (§15.10, «Anotar»; handoff §Accesibilidad). El aviso se presenta en **el contenedor real de Anotar**: hoja inferior por debajo de 768 px y diálogo centrado de 520 px desde 768 px, construido una sola vez para que P0-1 solo cambie su contenido (Clarifications, Q1; `RESPONSIVE_SPECIFICATIONS.md`, Sheets y diálogos).
-- **FR-031a**: BottomSheet y Modal MUST entrar en la 001 **solo** en lo que el aviso necesita: foco atrapado, Escape, control de cierre, retorno del foco al disparador, safe area y alternativa de movimiento reducido (Clarifications, Q1; `COMPONENT_SPECIFICATIONS.md` §BottomSheet y §Modal). Quedan fuera las paradas `peek`/`full`, el arrastre desde el asa o el contenido y la confirmación de cambios sin guardar, porque el aviso no tiene campos; llegan con P0-1.
+- **FR-031**: Anotar MUST abrir un aviso explícito de que registrar gastos llega con la próxima versión, sin campos que aparenten guardar; se abre también con `N`, se cierra con Escape y con un control de cierre, atrapa el foco y lo devuelve al disparador (§15.10, «Anotar»; handoff §Accesibilidad). El aviso se presenta en **el contenedor real de Anotar**: hoja inferior por debajo de 768 px y diálogo centrado de 520 px desde 768 px, con semántica de **diálogo accesible** (`dialog`), no de `alertdialog`, porque no confirma ninguna acción destructiva. P0-1 reutiliza la base accesible de este contenedor y le añade las capacidades que necesita el Expense Flow real (FR-031a) (Clarifications, Q1 y su precisión; `RESPONSIVE_SPECIFICATIONS.md`, Sheets y diálogos).
+- **FR-031a**: BottomSheet y Modal MUST entrar en la 001 **solo** en lo que el aviso necesita: foco atrapado, Escape, control de cierre, retorno del foco al disparador, safe area y alternativa de movimiento reducido (Clarifications, Q1; `COMPONENT_SPECIFICATIONS.md` §BottomSheet y §Modal). Quedan fuera las paradas `peek`/`full`, el arrastre desde el asa o el contenido y la confirmación de cambios sin guardar, porque el aviso no tiene campos; P0-1 las añade sobre esta base.
 - **FR-032**: La ruta de Balance MUST existir y mostrar un estado de «todavía no disponible» que explica que el balance aparece cuando exista la pareja; nunca «Al día» ni una cifra (§15.10, decisión 4). No usa `SharedBalance`, que es propuesta de P0-2 (§15.9).
 - **FR-033**: `/cuenta` MUST existir y decir que la cuenta llega con el inicio de sesión (§15.10, decisión 8). En móvil es una pantalla apilada sin barra inferior y con control «Volver» (`caret-left`); en escritorio vive dentro del shell con el acceso a Mi cuenta marcado como actual (`RESPONSIVE_SPECIFICATIONS.md` §Cuenta; `COMPONENT_SPECIFICATIONS.md` §AppShell). No implementa ningún componente de la sección Cuenta (§15.9).
 - **FR-034**: Ningún aviso provisional MUST nombrar fases internas («P0-1», «P0-2») en la interfaz ni prometer fechas; dice qué no está disponible todavía y qué lo trae (la próxima versión, el inicio de sesión, la pareja) (`BRAND_FOUNDATION.md` §4).
@@ -327,9 +330,20 @@ aplicables.
 
 #### Superficie interna de revisión
 
-- **FR-049**: El sistema MUST tener una superficie interna de revisión de los primitivos: una ruta sin ningún enlace desde la navegación, que en el build de producción devuelve el estado de «no encontrado». Muestra cada primitivo del paso 2 en sus estados y en los dos temas, y se identifica como superficie interna, no como pantalla de producto. El nombre de la ruta lo propone el plan (Clarifications, Q3).
-- **FR-050**: La superficie interna MUST usar solo valores de las especificaciones de componente (por ejemplo, el límite 999.999.999 de AmountInput o los textos de los estados de Badge), **nunca** el caso de octubre ni la tabla de DEC-G04 (§15.10, regla 3; Clarifications, Q3).
+- **FR-049**: El sistema MUST tener una superficie interna de revisión de los primitivos: una ruta sin ningún enlace desde la navegación, que muestra cada primitivo del paso 2 en sus estados y en los dos temas y se identifica como superficie interna, no como pantalla de producto. Su disponibilidad se define **por destino de despliegue, no por modo de compilación**, porque CI y los previews también compilan para producción (Clarifications, Q3 y su precisión):
+
+  | Destino | Superficie interna |
+  | --- | --- |
+  | Desarrollo local | Disponible |
+  | Entorno controlado de CI | Disponible y auditada por axe (FR-051) |
+  | Preview de revisión | Disponible e identificada como interna |
+  | Despliegue de producción, el que usan los fundadores con datos reales | No disponible: responde con el estado de «no encontrado» |
+
+  La política la fija esta spec; **el plan solo elige el mecanismo** (variable de entorno, configuración del despliegue o equivalente). El nombre de la ruta también lo propone el plan.
+- **FR-050**: La superficie interna MUST usar solo valores de prueba sacados de las especificaciones de componente (por ejemplo, el límite 999.999.999 de AmountInput o los textos de los estados de Badge), **identificados como valores de prueba** y **nunca presentados como datos financieros de una persona**, tanto en el contenido visible como en el accesible. Nunca usa el caso de octubre ni la tabla de DEC-G04 (§15.10, regla 3; Clarifications, Q3).
 - **FR-051**: La superficie interna MUST pasar axe en el job 5 como cualquier ruta implementada y servir para las capturas a 390 y 1440 del PR de implementación. No cuenta como spec E2E (Clarifications, Q3; ADR-011 §3).
+- **FR-052**: El job 5 MUST comprobar que de verdad visitó la superficie interna y fallar si no la encuentra; nunca la omite en silencio (`docs/TESTING.md` §3, regla 1).
+- **FR-053**: Una comprobación MUST demostrar que el build destinado al despliegue de producción no expone la superficie interna. El plan elige la capa, la más baja que detecte el fallo (ADR-011 §1; `docs/TESTING.md` §4).
 
 #### Fuera de alcance (explícito)
 
@@ -350,9 +364,9 @@ estado de interfaz:
 ### Measurable Outcomes
 
 - **SC-001**: A 360, 390, 430, 768, 1024, 1280 y 1440 px, en los dos temas, cada ruta implementada se ve sin scroll horizontal y sin solapamientos; las capturas de 390 y 1440 en los dos temas se adjuntan al PR y las aprueban los dos fundadores (§15.7; ADR-011 §7).
-- **SC-002**: Cero violaciones serias o críticas de axe en todas las rutas implementadas, en los dos temas, con la salida real pegada en el PR (ADR-011, fila 16).
+- **SC-002**: Cero violaciones serias o críticas de axe en todas las rutas implementadas, en los dos temas, incluida la superficie interna con su visita comprobada (FR-052); y el build destinado a producción no la expone (FR-053), con la salida real pegada en el PR (ADR-011, fila 16).
 - **SC-003**: El 100 % de los objetivos táctiles miden al menos 44×44 px (§15.7).
-- **SC-004**: Cero cifras financieras, saldos, porcentajes o estados financieros visibles o accesibles en cualquier ruta, comprobado por pruebas de componentes y por la revisión del PR (§15.10).
+- **SC-004**: Cero cifras financieras, saldos, porcentajes o estados financieros visibles o accesibles en cualquier ruta de producto; la superficie interna solo muestra valores de prueba identificados como tales (FR-050). Comprobado por pruebas de componentes y por la revisión del PR (§15.10).
 - **SC-005**: El aviso de Anotar responde en menos de 200 ms de INP al activarse, medido en laboratorio y reportado como tal, no como p75 real (§15.7; maestro §10.2).
 - **SC-006**: CLS = 0 y ningún cuadro con el tema contrario al del sistema en la carga de cada ruta, con red lenta emulada (§15.7; `DESIGN_SYSTEM.md`).
 - **SC-007**: El contexto elegido se conserva en el 100 % de las recargas y navegaciones del mismo dispositivo con almacenamiento disponible.
@@ -367,6 +381,7 @@ estado de interfaz:
 - **El aviso de versión base no se puede descartar.** §15.10 pide que sea visible mientras no haya persistencia; descartarlo lo haría invisible. Su forma no usa `LimitNote`, que pertenece a la sección Cuenta, propuesta sin aprobar (§15.9); se compone con primitivos aprobados.
 - **El selector aparece en los destinos principales y en Balance.** En `/cuenta` móvil, que es una pantalla apilada, no aparece; desde 1280 el sidebar lo muestra siempre.
 - **Balance por URL en móvil** muestra el mismo estado provisional; no se enlaza desde ningún sitio en móvil, porque el módulo de Inicio que lo abre llega con P0-2.
+- **Destinos de despliegue.** Existen al menos cuatro: desarrollo local, CI, previews de revisión y producción. Si el plan descubre que un preview y producción no se pueden distinguir con el despliegue elegido, se detiene y lo reporta, porque FR-049 depende de esa distinción.
 - **Estados de «no encontrado» y de error** dentro del shell entran en la 001 como estados mínimos, porque la app ya tiene rutas (maestro §6.3; `AGENTS.md` 11).
 - **El copy final se revisa en el PR.** El maestro §15.10 encarga a esta especificación el aspecto y el copy de los estados provisionales; la spec fija qué dice cada uno y el PR revisa la redacción en el módulo de copy.
 - **Fuentes**: Instrument Serif, Geist y Geist Mono tienen licencia compatible; se verifica al instalarlas (maestro §6.1).
@@ -388,7 +403,7 @@ implementa algo relacionado o que debe evitarlo a propósito.
 | Teclado propio descartado | **Sí** — P0-1 | **Sí** | **Aprobado** con la fila anterior (decisión 11) |
 | Personas configurables, escalables a N (+ patrón) | No — P0 usa `person.1–2` | **Sí** — `person.3–6` y el patrón de tramo | La 001 define solo `person.1–2` y Avatar sin patrón (FR-004, FR-009). Nada que aprobar en la 001 |
 | Sara lila → petróleo; Hogar lavanda → azul tenue; superficie oscura #1C1F20 → #191C1F | No | **Sí** — se aprueba viendo la pantalla | Los tres valores entran en los tokens. La superficie oscura se ve en el shell, y `person.1` (Avatar) y la ficha Hogar (CategoryIcon) se ven en la superficie interna de revisión (FR-049): **los tres se pueden aprobar viéndolos en la revisión del PR de implementación de la 001** (Clarifications, Q3) |
-| Gasto, ingreso y liquidación en tinta | No | **Sí** — se aprueba viendo la pantalla | Los tokens `finance.*` entran, pero ninguna ruta muestra movimientos: la aprobación pasa al primer slice que los muestre (P0-1) |
+| Gasto, ingreso y liquidación en tinta | No | **Sí** — se aprueba viendo la pantalla | Los tokens `finance.*` entran, pero ni las rutas de producto ni la superficie interna muestran movimientos (`ExpenseRow` es del paso 3): la aprobación pasa al primer slice que los muestre (P0-1) |
 | Cuenta reutiliza los fondos de categoría | No | **Sí** | No se toca: la 001 no construye las pantallas de Cuenta |
 | Stack de UI sugerido (Phosphor + `AppIcon`, Motion for React, `next/font`) | No | **No** — cerrado por §15.2 y §7.1 | Elección cerrada. La 001 instala solo lo que usa (FR-002) |
 | Texto ampliado hasta 200 % | No | **No** — requisito ya obligatorio | Se aplica y se prueba (FR-039) |
