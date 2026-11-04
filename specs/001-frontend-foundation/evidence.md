@@ -1,0 +1,1028 @@
+# 001 · PR D · Evidencia de verificación y cierre
+
+Base: `a3216c0e343ca7cd02cb22d04659d0f90174a581`. Fecha: 2026-11-03 (America/Bogota).
+
+Las salidas previas A/B/C son antecedentes; las de D se ejecutan de nuevo. Cero specs E2E añadidas. La aceptación visual y de dispositivos corresponde a los fundadores.
+
+## T061 · Registro de evidencia
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Registro creado con las 18 secciones T061–T078.
+
+## T062 · Instalación limpia y verify
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Instalación limpia en el worktree D, inicialmente sin `node_modules`. Comandos: `npm ci` y `npm run verify`. Ambos exit 0. La auditoría de npm informa 16 vulnerabilidades moderadas; no se cambian versiones ni se ejecuta audit fix en este PR.
+
+```text
+npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 472 packages, and audited 479 packages in 1m
+
+162 packages are looking for funding
+  run `npm fund` for details
+
+16 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+```
+
+```text
+> juntia@0.1.0 verify
+> node scripts/verify.mjs
+
+
+> juntia@0.1.0 lint
+> eslint .
+
+
+> juntia@0.1.0 typecheck
+> tsc --noEmit
+
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain --passWithNoTests
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+No test files found, exiting with code 0
+
+projects: domain
+
+|domain|
+
+include: src/domain/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+
+
+> juntia@0.1.0 test:components
+> vitest run --project components
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+
+ Test Files  9 passed (9)
+      Tests  85 passed (85)
+   Start at  20:21:22
+   Duration  12.02s (tests 29%, import 28%, environment 28%, setup 11%, transform 4%)
+
+verify · 001
+┌─────────┬──────────────────┬──────────────────────────────────────────────────┬───────────┬─────────────┬───────┐
+│ (index) │ control          │ resultado                                        │ duración  │ presupuesto │ aviso │
+├─────────┼──────────────────┼──────────────────────────────────────────────────┼───────────┼─────────────┼───────┤
+│ 0       │ 'lint'           │ 'pasó'                                           │ '19.11 s' │ '—'         │ ''    │
+│ 1       │ 'typecheck'      │ 'pasó'                                           │ '6.17 s'  │ '—'         │ ''    │
+│ 2       │ 'unit (domain)'  │ '0 pruebas — la 001 no tiene dominio financiero' │ '1.43 s'  │ '< 15 s'    │ ''    │
+│ 3       │ 'components'     │ 'pasó'                                           │ '13.33 s' │ '—'         │ ''    │
+│ 4       │ 'SQL/RLS'        │ 'NO APLICABLE — lo incorpora P0-1'               │ '—'       │ '< 60 s'    │ ''    │
+│ 5       │ 'verify (total)' │ 'pasó'                                           │ '40.05 s' │ '< 90 s'    │ ''    │
+└─────────┴──────────────────┴──────────────────────────────────────────────────┴───────────┴─────────────┴───────┘
+```
+
+Presupuestos: verify 40,05 s < 90 s; domain 1,43 s < 15 s, con 0 pruebas. SQL/RLS no aplicable. Instalación fuera del presupuesto local.
+
+## T063 · Build, axe y comprobaciones HTTP
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Comando: `npm run build`, exit 0.
+
+```text
+> juntia@0.1.0 build
+> next build
+
+▲ Next.js 16.4.4 (Turbopack)
+✓ Running next.config.ts took 173ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.7s
+  Running TypeScript ...
+  Finished TypeScript in 11.3s ...
+  Collecting page data using 10 workers ...
+  Generating static pages using 10 workers (0/9) ...
+  Generating static pages using 10 workers (2/9)
+  Generating static pages using 10 workers (4/9)
+  Generating static pages using 10 workers (6/9)
+✓ Generating static pages using 10 workers (9/9) in 1267ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /actividad
+├ ○ /balance
+├ ○ /cuenta
+├ ƒ /interno/primitivos
+├ ○ /metas
+└ ○ /plan
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Comando: `npm run test:a11y`, exit 0.
+
+```text
+> juntia@0.1.0 test:a11y
+> playwright test --project a11y
+
+[WebServer] (node:820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 36 tests using 1 worker
+
+(node:22904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+light / 390px: 0 violaciones, 0 serias o críticas
+light / 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  1 [a11y] › tests\a11y\routes.a11y.ts:111:11 › / · light · 390px (2.5s)
+light /actividad 390px: 0 violaciones, 0 serias o críticas
+light /actividad 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  2 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /actividad · light · 390px (2.1s)
+light /metas 390px: 0 violaciones, 0 serias o críticas
+light /metas 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  3 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /metas · light · 390px (2.1s)
+light /plan 390px: 0 violaciones, 0 serias o críticas
+light /plan 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  4 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /plan · light · 390px (2.1s)
+light /balance 390px: 0 violaciones, 0 serias o críticas
+light /balance 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  5 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /balance · light · 390px (1.9s)
+light /cuenta 390px: 0 violaciones, 0 serias o críticas
+light /cuenta 390px: sin selector en este ancho
+light /cuenta 390px: sin disparador visible de Anotar
+  ok  6 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /cuenta · light · 390px (1.4s)
+light /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.36/44.00 en 10 cuadros
+  ok  7 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /interno/primitivos · light · 390px (4.4s)
+light /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+  ok  8 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 390px (1.4s)
+light / 1440px: 0 violaciones, 0 serias o críticas
+light / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok  9 [a11y] › tests\a11y\routes.a11y.ts:111:11 › / · light · 1440px (2.2s)
+light /actividad 1440px: 0 violaciones, 0 serias o críticas
+light /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 10 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /actividad · light · 1440px (1.9s)
+light /metas 1440px: 0 violaciones, 0 serias o críticas
+light /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 11 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /metas · light · 1440px (2.0s)
+light /plan 1440px: 0 violaciones, 0 serias o críticas
+light /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 12 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /plan · light · 1440px (1.9s)
+light /balance 1440px: 0 violaciones, 0 serias o críticas
+light /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 13 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /balance · light · 1440px (2.0s)
+light /cuenta 1440px: 0 violaciones, 0 serias o críticas
+light /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 14 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /cuenta · light · 1440px (2.0s)
+light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+  ok 15 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /interno/primitivos · light · 1440px (4.5s)
+light /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+  ok 16 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 1440px (1.7s)
+dark / 390px: 0 violaciones, 0 serias o críticas
+dark / 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 17 [a11y] › tests\a11y\routes.a11y.ts:111:11 › / · dark · 390px (2.1s)
+dark /actividad 390px: 0 violaciones, 0 serias o críticas
+dark /actividad 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 18 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /actividad · dark · 390px (2.3s)
+dark /metas 390px: 0 violaciones, 0 serias o críticas
+dark /metas 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 19 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /metas · dark · 390px (2.0s)
+dark /plan 390px: 0 violaciones, 0 serias o críticas
+dark /plan 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 20 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /plan · dark · 390px (2.2s)
+dark /balance 390px: 0 violaciones, 0 serias o críticas
+dark /balance 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 21 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /balance · dark · 390px (2.2s)
+dark /cuenta 390px: 0 violaciones, 0 serias o críticas
+dark /cuenta 390px: sin selector en este ancho
+dark /cuenta 390px: sin disparador visible de Anotar
+  ok 22 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /cuenta · dark · 390px (1.4s)
+dark /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 427.72/44.00 en 10 cuadros
+  ok 23 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /interno/primitivos · dark · 390px (3.8s)
+dark /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+  ok 24 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 390px (1.3s)
+dark / 1440px: 0 violaciones, 0 serias o críticas
+dark / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 25 [a11y] › tests\a11y\routes.a11y.ts:111:11 › / · dark · 1440px (1.9s)
+dark /actividad 1440px: 0 violaciones, 0 serias o críticas
+dark /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 26 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /actividad · dark · 1440px (1.9s)
+dark /metas 1440px: 0 violaciones, 0 serias o críticas
+dark /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 27 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /metas · dark · 1440px (1.9s)
+dark /plan 1440px: 0 violaciones, 0 serias o críticas
+dark /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 28 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /plan · dark · 1440px (1.8s)
+dark /balance 1440px: 0 violaciones, 0 serias o críticas
+dark /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 29 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /balance · dark · 1440px (2.3s)
+dark /cuenta 1440px: 0 violaciones, 0 serias o críticas
+dark /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 30 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /cuenta · dark · 1440px (1.9s)
+dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+  ok 31 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /interno/primitivos · dark · 1440px (3.8s)
+dark /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+  ok 32 [a11y] › tests\a11y\routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 1440px (1.3s)
+light /cuenta 390px: disparadores de Anotar visibles 0
+  ok 33 [a11y] › tests\a11y\routes.a11y.ts:195:9 › /cuenta · light · 390px: barra oculta (pantalla apilada) (425ms)
+light /cuenta 768px: disparadores de Anotar visibles 1
+  ok 34 [a11y] › tests\a11y\routes.a11y.ts:195:9 › /cuenta · light · 768px: barra visible con Anotar (789ms)
+dark /cuenta 390px: disparadores de Anotar visibles 0
+  ok 35 [a11y] › tests\a11y\routes.a11y.ts:195:9 › /cuenta · dark · 390px: barra oculta (pantalla apilada) (423ms)
+dark /cuenta 768px: disparadores de Anotar visibles 1
+  ok 36 [a11y] › tests\a11y\routes.a11y.ts:195:9 › /cuenta · dark · 768px: barra visible con Anotar (762ms)
+
+  36 passed (1.3m)
+```
+
+Comando: `npm run check:internal-surface`, exit 0.
+
+```text
+> juntia@0.1.0 check:internal-surface
+> node scripts/check-internal-surface.mjs
+
+check:internal-surface · /interno/primitivos
+┌─────────┬───────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┬──────────┬──────────┬───────────┐
+│ (index) │ destino                                           │ host                                                        │ obtenido │ esperado │ resultado │
+├─────────┼───────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┼──────────┼──────────┼───────────┤
+│ 0       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'dominio de producción (juntia-produccion.example)'         │ 404      │ 404      │ 'OK'      │
+│ 1       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 404      │ 404      │ 'OK'      │
+│ 2       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 200      │ 200      │ 'OK'      │
+│ 3       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de rama (juntia-git-rama-prueba-equipo.vercel.app)'    │ 200      │ 200      │ 'OK'      │
+│ 4       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'dominio de producción (alias) (juntia-produccion.example)' │ 404      │ 404      │ 'OK'      │
+│ 5       │ 'ninguna variable'                                │ 'localhost (localhost)'                                     │ 404      │ 404      │ 'OK'      │
+└─────────┴───────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┴──────────┴──────────┴───────────┘
+```
+
+Comando: `npm run check:theme-script`, exit 0.
+
+```text
+> juntia@0.1.0 check:theme-script
+> node scripts/check-theme-script.mjs
+
+OK · / responde 200
+OK · head precede a body
+OK · script de tema inline dentro de head
+OK · script sin src, async ni defer
+OK · html sin data-theme fijado por el servidor
+```
+
+Seis rutas de producto `○`, interna `ƒ`; no se crean subrutas de cuenta. Axe: 36 casos, cero violaciones; movimiento reducido incluido.
+
+## T064 · Vitest --changed
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Procedimiento: añadir un comentario temporal a `src/components/ui/amount-input.tsx`, ejecutar `npx vitest run --changed --reporter=verbose` y restaurar los bytes originales con `finally`. `git diff --exit-code -- src/components/ui/amount-input.tsx` termina sin salida y exit 0.
+
+```text
+RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > abre el teclado numérico nativo 456ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > formatea con puntos de miles de es-CO y sin decimales 189ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > no acepta un décimo dígito: el tope es 999.999.999 190ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar conserva solo los dígitos 61ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar sin dígitos el valor no cambia 97ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > vacío entrega null y 0 entrega 0: vacío no es cero 89ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > entrega pesos enteros, nunca unidades menores ni decimales 95ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error: aria-invalid, aria-errormessage hacia un mensaje en región polite e ícono oculto 30ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > enlaza la ayuda con aria-describedby 23ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por value: vacío, inválido y con aviso de desarrollo 18ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por defaultValue: vacío, inválido y con aviso de desarrollo 13ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por value: vacío, inválido y con aviso de desarrollo 20ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por defaultValue: vacío, inválido y con aviso de desarrollo 23ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por value: vacío, inválido y con aviso de desarrollo 21ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por defaultValue: vacío, inválido y con aviso de desarrollo 16ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error vacío, un valor fuera de rango sigue inválido con el mensaje del catálogo 15ms
+
+ Test Files  1 passed (1)
+   Affected  1 of 9 test files (related to 9 changed files)
+      Tests  16 passed (16)
+   Start at  20:24:22
+   Duration  4.48s (environment 45%, tests 32%, setup 11%, import 10%, transform 1%)
+```
+
+## T065 · Umbrales de rendimiento
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Procedimiento: build de T063 servido por `JUNTIA_INTERNAL_SURFACE=1 npm run start`. Arnés desechable en `%TEMP%/juntia-001-d/measure-v2.cjs`, ejecutado con `node`; no se añade a `tests/`. Chromium, contextos nuevos, caché deshabilitada, CPU 6×, 400 kbit/s, latencia 400 ms. `Page.startScreencast` PNG y `PerformanceObserver(layout-shift)` desde initScript.
+
+**Hallazgo D-01: no cumple CLS = 0.** Las 12 cargas tienen CLS positivo: 0.00008378615461070229–0.0002777967355077034. Las fuentes registradas son los textos centrados al cambiar la fuente; se remite a Claude Code por composición del shell (T077). No se redondea a cero ni se cambia el umbral.
+
+La primera pasada muestreó la esquina inferior izquierda de R2: la sombra de la barra altera el RGB claro a 243,239,231. La segunda añade esquina superior izquierda de lienzo para evitar confundir sombra con otro tema. No se detectó un cuadro del tema contrario en las 12 cargas. El control negativo transforma solo la respuesta del navegador para poner tema claro y diferir el oscuro hasta después de load/dos RAF: detectó 247,243,235 con sistema oscuro; no modifica el producto.
+
+Scroll: 70 combinaciones, 0 fallos. INP de laboratorio: 112 ms a 390 y 48 ms a 1440; < 200 ms. No representa p75 de usuarios reales.
+
+**Hallazgo D-02:** Input/AmountInput en la superficie interna tienen cajas interactivas de 22,5 y 19 px, aunque el marco visual mide 48/64. Falta confirmar el hit testing en T067. Los botones, enlaces visibles y segmentados cumplen 44×44; barra: 54 px (rango requerido 46–56). El enlace «Ir al contenido» está recortado hasta recibir foco: se excluye del inventario táctil visible y se mide con teclado en T067. Los disabled no representan una acción disponible.
+
+Salida real compactada a campos de resultado; originales con cada área y fuente en [T065-measurements-v2.txt](evidence/T065-measurements-v2.txt):
+
+```jsonl
+{"kind":"FIRST_FRAME","route":"/","theme":"light","timeOrigin":1793755563721.1,"firstPaint":2260,"cls":0.0001068768271412108,"atBody":"light","shifts":[{"value":0.0001068768271412108,"time":3096.6999999284744,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Este será el lugar para ver tus movimientos.</p>","previous":{"x":41.75,"y":352.46875,"width":306.484375,"height":22.5,"top":352.46875,"right":348.234375,"bottom":374.96875,"left":41.75},"current":{"x":45.96875,"y":352.46875,"width":298.046875,"height":22.5,"top":352.46875,"right":344.015625,"bottom":374.96875,"left":45.96875}}]}],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/actividad","theme":"light","timeOrigin":1793755572574.3,"firstPaint":2352,"cls":0.00008378615461070229,"atBody":"light","shifts":[{"value":0.00008378615461070229,"time":3197.100000023842,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Aquí podrás revisar lo que registres.</p>","previous":{"x":67.8125,"y":352.46875,"width":254,"height":22.5,"top":352.46875,"right":321.8125,"bottom":374.96875,"left":67.8125},"current":{"x":72.796875,"y":352.46875,"width":244.40625,"height":22.5,"top":352.46875,"right":317.203125,"bottom":374.96875,"left":72.796875}}]}],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/metas","theme":"light","timeOrigin":1793755582889.6,"firstPaint":2344,"cls":0.00009587480081785087,"atBody":"light","shifts":[{"value":0.00009587480081785087,"time":2922.399999976158,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Aquí podrás seguir lo que quieres construir.</p>","previous":{"x":42.484375,"y":352.46875,"width":305,"height":22.5,"top":352.46875,"right":347.484375,"bottom":374.96875,"left":42.484375},"current":{"x":47.28125,"y":352.46875,"width":295.4375,"height":22.5,"top":352.46875,"right":342.71875,"bottom":374.96875,"left":47.28125}}]}],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/plan","theme":"light","timeOrigin":1793755592810.5,"firstPaint":2236,"cls":0.0002777967355077034,"atBody":"light","shifts":[],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/balance","theme":"light","timeOrigin":1793755601068.7,"firstPaint":2560,"cls":0.00014927682499586768,"atBody":"light","shifts":[{"value":0.000019896617499434148,"time":2621.9000000953674,"sources":[{"node":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" fill=\"currentColor\" viewBox=\"0 0 256 256\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28","previous":{"x":112.75,"y":792,"width":22,"height":22,"top":792,"right":134.75,"bottom":814,"left":112.75},"current":{"x":112.75,"y":783.625,"width":22,"height":22,"top":783.625,"right":134.75,"bottom":805.625,"left":112.75}}]},{"value":0.00012938020749643354,"time":3278.8000000715256,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">El balance aparece cuando exista la pareja.</p>","previous":{"x":42.59375,"y":352.46875,"width":304.8125,"height":22.5,"top":352.46875,"right":347.40625,"bottom":374.96875,"left":42.59375},"current":{"x":47.734375,"y":352.46875,"width":294.515625,"height":22.5,"top":352.46875,"right":342.25,"bottom":374.96875,"left":47.734375}}]}],"frames":4,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/cuenta","theme":"light","timeOrigin":1793755609432.7,"firstPaint":2348,"cls":0.00010093922563336577,"atBody":"light","shifts":[{"value":0.00010093922563336577,"time":3167.0999999046326,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Tu cuenta llega con el inicio de sesión.</p>","previous":{"x":60.359375,"y":352.46875,"width":269.28125,"height":22.5,"top":352.46875,"right":329.640625,"bottom":374.96875,"left":60.359375},"current":{"x":63.875,"y":352.46875,"width":262,"height":22.5,"top":352.46875,"right":325.875,"bottom":374.96875,"left":63.875}}]}],"frames":3,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+{"kind":"FIRST_FRAME","route":"/","theme":"dark","timeOrigin":1793755619361.7,"firstPaint":2380,"cls":0.0001068768271412108,"atBody":"dark","shifts":[{"value":0.0001068768271412108,"time":3415.2000000476837,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Este será el lugar para ver tus movimientos.</p>","previous":{"x":41.75,"y":352.46875,"width":306.484375,"height":22.5,"top":352.46875,"right":348.234375,"bottom":374.96875,"left":41.75},"current":{"x":45.96875,"y":352.46875,"width":298.046875,"height":22.5,"top":352.46875,"right":344.015625,"bottom":374.96875,"left":45.96875}}]}],"frames":5,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"FIRST_FRAME","route":"/actividad","theme":"dark","timeOrigin":1793755628146.7,"firstPaint":2248,"cls":0.00008378615461070229,"atBody":"dark","shifts":[{"value":0.00008378615461070229,"time":3214.7000000476837,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Aquí podrás revisar lo que registres.</p>","previous":{"x":67.8125,"y":352.46875,"width":254,"height":22.5,"top":352.46875,"right":321.8125,"bottom":374.96875,"left":67.8125},"current":{"x":72.796875,"y":352.46875,"width":244.40625,"height":22.5,"top":352.46875,"right":317.203125,"bottom":374.96875,"left":72.796875}}]}],"frames":5,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"FIRST_FRAME","route":"/metas","theme":"dark","timeOrigin":1793755637691.1,"firstPaint":2364,"cls":0.00009587480081785087,"atBody":"dark","shifts":[{"value":0.00009587480081785087,"time":3037.5,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Aquí podrás seguir lo que quieres construir.</p>","previous":{"x":42.484375,"y":352.46875,"width":305,"height":22.5,"top":352.46875,"right":347.484375,"bottom":374.96875,"left":42.484375},"current":{"x":47.28125,"y":352.46875,"width":295.4375,"height":22.5,"top":352.46875,"right":342.71875,"bottom":374.96875,"left":47.28125}}]}],"frames":3,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"FIRST_FRAME","route":"/plan","theme":"dark","timeOrigin":1793755647562.3,"firstPaint":2436,"cls":0.0002777967355077034,"atBody":"dark","shifts":[],"frames":3,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"FIRST_FRAME","route":"/balance","theme":"dark","timeOrigin":1793755656154.5,"firstPaint":2244,"cls":0.00012938020749643354,"atBody":"dark","shifts":[{"value":0.00012938020749643354,"time":3175.5,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">El balance aparece cuando exista la pareja.</p>","previous":{"x":42.59375,"y":352.46875,"width":304.8125,"height":22.5,"top":352.46875,"right":347.40625,"bottom":374.96875,"left":42.59375},"current":{"x":47.734375,"y":352.46875,"width":294.515625,"height":22.5,"top":352.46875,"right":342.25,"bottom":374.96875,"left":47.734375}}]}],"frames":3,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"FIRST_FRAME","route":"/cuenta","theme":"dark","timeOrigin":1793755665156,"firstPaint":2604,"cls":0.00010093922563336577,"atBody":"dark","shifts":[{"value":0.00010093922563336577,"time":3103.2000000476837,"sources":[{"node":"<p class=\"text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]\">Tu cuenta llega con el inicio de sesión.</p>","previous":{"x":60.359375,"y":352.46875,"width":269.28125,"height":22.5,"top":352.46875,"right":329.640625,"bottom":374.96875,"left":60.359375},"current":{"x":63.875,"y":352.46875,"width":262,"height":22.5,"top":352.46875,"right":325.875,"bottom":374.96875,"left":63.875}}]}],"frames":3,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+{"kind":"NEGATIVE_CONTROL","first":[18,18,18],"pixels":["18,18,18","247,243,235","52,53,53"],"flashDetected":true}
+{"kind":"SCROLL","route":"/","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"light","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"light","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"light","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"light","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"light","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"dark","width":360,"scrollWidth":360,"clientWidth":360,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"dark","width":390,"scrollWidth":390,"clientWidth":390,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"dark","width":430,"scrollWidth":430,"clientWidth":430,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"dark","width":1024,"scrollWidth":1024,"clientWidth":1024,"pass":true}
+{"kind":"SCROLL","route":"/","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/actividad","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/metas","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/plan","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/balance","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/cuenta","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"SCROLL","route":"/interno/primitivos","theme":"dark","width":1440,"scrollWidth":1440,"clientWidth":1440,"pass":true}
+{"kind":"TOUCH","route":"/","theme":"light","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/actividad","theme":"light","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/metas","theme":"light","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/plan","theme":"light","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/balance","theme":"light","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/cuenta","theme":"light","width":390,"count":2,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/interno/primitivos","theme":"light","width":390,"count":58,"minWidth":44,"minHeight":19,"failures":[{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":256,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":256,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false}]}
+{"kind":"TOUCH","route":"/","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/actividad","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/metas","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/plan","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/balance","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/cuenta","theme":"light","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/interno/primitivos","theme":"light","width":1440,"count":58,"minWidth":44,"minHeight":19,"failures":[{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":222,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":222,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false}]}
+{"kind":"TOUCH","route":"/","theme":"dark","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/actividad","theme":"dark","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/metas","theme":"dark","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/plan","theme":"dark","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/balance","theme":"dark","width":390,"count":9,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/cuenta","theme":"dark","width":390,"count":2,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/interno/primitivos","theme":"dark","width":390,"count":58,"minWidth":44,"minHeight":19,"failures":[{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":256,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":258,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":256,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":232.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false}]}
+{"kind":"TOUCH","route":"/","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/actividad","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/metas","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/plan","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/balance","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/cuenta","theme":"dark","width":1440,"count":10,"minWidth":32,"minHeight":24,"failures":[]}
+{"kind":"TOUCH","route":"/interno/primitivos","theme":"dark","width":1440,"count":58,"minWidth":44,"minHeight":19,"failures":[{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":222,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":224,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":222,"height":22.5,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":198.94,"height":19,"corners":false,"bar":false},{"name":"INPUT","width":186.94,"height":19,"corners":false,"bar":false}]}
+{"kind":"INP_LAB","width":390,"events":[{"name":"pointerdown","duration":112,"interactionId":1444},{"name":"pointerup","duration":112,"interactionId":1444},{"name":"click","duration":112,"interactionId":1444}],"note":"Event Timing laboratory only; entries below 16ms are omitted; never field p75"}
+{"kind":"INP_LAB","width":1440,"events":[{"name":"pointerdown","duration":48,"interactionId":9779},{"name":"pointerup","duration":48,"interactionId":9779},{"name":"click","duration":48,"interactionId":9779}],"note":"Event Timing laboratory only; entries below 16ms are omitted; never field p75"}
+```
+
+Arnés ejecutado:
+
+```javascript
+const fs=require('node:fs');
+const root=process.cwd();const req=require('node:module').createRequire(root+'/package.json');const {chromium}=req('playwright');const sharp=req('sharp');
+const out=root+'/specs/001-frontend-foundation/evidence/';const product=['/','/actividad','/metas','/plan','/balance','/cuenta'];const routes=[...product,'/interno/primitivos'];const base='http://localhost:3000';
+const log=(kind,data)=>console.log(kind+' '+JSON.stringify(data));
+async function ready(p){await p.evaluate(()=>document.fonts.ready);await p.locator('[data-context-selector][data-hydrated]').first().waitFor({state:'attached'}).catch(()=>{});}
+(async()=>{const browser=await chromium.launch();
+// CPU/network cold load, fresh context for every route/theme. All screencast frames after first-paint.
+for(const theme of ['light','dark'])for(const route of product){
+ const ctx=await browser.newContext({viewport:{width:390,height:844},colorScheme:theme,reducedMotion:'reduce'});const p=await ctx.newPage();
+ await p.addInitScript(()=>{window.__cls=0;window.__shifts=[];new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput){window.__cls+=e.value;window.__shifts.push({value:e.value,time:e.startTime,sources:e.sources.map(s=>({node:s.node?.outerHTML.slice(0,300),previous:s.previousRect,current:s.currentRect}))})}}).observe({type:'layout-shift',buffered:true});new MutationObserver(()=>{if(document.body&&window.__atBody===undefined)window.__atBody=document.documentElement.dataset.theme}).observe(document,{childList:true,subtree:true});});
+ const cdp=await ctx.newCDPSession(p);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await cdp.send('Emulation.setCPUThrottlingRate',{rate:6});await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:400,downloadThroughput:400000/8,uploadThroughput:400000/8});
+ const frames=[];cdp.on('Page.screencastFrame',e=>{frames.push(e);void cdp.send('Page.screencastFrameAck',{sessionId:e.sessionId});});await cdp.send('Page.startScreencast',{format:'png',everyNthFrame:1});await p.goto(base+route);await ready(p);await p.evaluate(()=>new Promise(r=>{let n=0;function f(){if(++n===20)r();else requestAnimationFrame(f)}requestAnimationFrame(f)}));
+ const data=await p.evaluate(()=>({timeOrigin:performance.timeOrigin,firstPaint:performance.getEntriesByName('first-paint')[0]?.startTime,cls:window.__cls,atBody:window.__atBody,shifts:window.__shifts}));await cdp.send('Page.stopScreencast');const painted=frames.filter(e=>e.metadata.timestamp*1000>=data.timeOrigin+data.firstPaint);const pixels=[];
+ for(const f of painted){const {data:d,info}=await sharp(Buffer.from(f.data,'base64')).raw().toBuffer({resolveWithObject:true});const i=(3*info.width+3)*info.channels;pixels.push([...d.subarray(i,i+3)]);}
+ const expected=theme==='dark'?[18,20,22]:[247,243,235];log('FIRST_FRAME',{route,theme,...data,frames:pixels.length,first:pixels[0],opposite:pixels.filter(rgb=>(theme==="dark"?rgb[0]>150:rgb[0]<100)).length,pixels:[...new Set(pixels.map(a=>a.join(',')))]});await ctx.close();
+}
+// Negative control: response transformation only in this disposable browser: defer theme application; remove fallback to reproduce R2 useEffect failure.
+{const ctx=await browser.newContext({viewport:{width:390,height:844},colorScheme:'dark'});const p=await ctx.newPage();await p.route('**/*',async route=>{const res=await route.fetch();const type=res.headers()['content-type']||'';if(type.includes('text/html')){let body=await res.text();body=body.replace(/<script>\(function\(\)\{var d=document.documentElement;[\s\S]*?<\/script>/,'<script>document.documentElement.dataset.theme="light";addEventListener("load",()=>{requestAnimationFrame(()=>requestAnimationFrame(()=>{document.documentElement.dataset.theme="dark"}))})</script>');await route.fulfill({response:res,body});}else await route.fulfill({response:res});});const c=await ctx.newCDPSession(p);await c.send('Emulation.setCPUThrottlingRate',{rate:6});await c.send('Network.enable');await c.send('Network.emulateNetworkConditions',{offline:false,latency:400,downloadThroughput:50000,uploadThroughput:50000});const frames=[];c.on('Page.screencastFrame',e=>{frames.push(e);void c.send('Page.screencastFrameAck',{sessionId:e.sessionId})});await c.send('Page.startScreencast',{format:'png',everyNthFrame:1});await p.goto(base);await p.waitForFunction(()=>document.documentElement.dataset.theme==='dark');await c.send('Page.stopScreencast');const pixels=[];for(const f of frames){const {data:d,info}=await sharp(Buffer.from(f.data,'base64')).raw().toBuffer({resolveWithObject:true});const i=(3*info.width+3)*info.channels;pixels.push([...d.subarray(i,i+3)]);}log('NEGATIVE_CONTROL',{first:pixels[0],pixels:[...new Set(pixels.map(a=>a.join(',')))],flashDetected:pixels.some(a=>a.join()==='247,243,235')});await ctx.close();}
+for(const theme of ['light','dark'])for(const width of [360,390,430,1024,1440])for(const route of routes){const ctx=await browser.newContext({viewport:{width,height:900},colorScheme:theme,reducedMotion:'reduce'});const p=await ctx.newPage();await p.goto(base+route);await p.evaluate(()=>document.fonts.ready);const size=await p.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));log('SCROLL',{route,theme,width,...size,pass:size.scrollWidth<=size.clientWidth});
+ if([390,1440].includes(width)){const controls=p.locator('a[href],button,input,select,textarea,[tabindex="0"]');const areas=[];for(let i=0;i<await controls.count();i++){const el=controls.nth(i);if(!await el.isVisible())continue;if(await el.evaluate(e=>getComputedStyle(e).position==='absolute'&&e.getBoundingClientRect().width<=1))continue;await el.scrollIntoViewIfNeeded();areas.push(await el.evaluate(e=>{const b=e.getBoundingClientRect(),a=getComputedStyle(e,'::after'),ext=a.content!=='none'&&a.position==='absolute',px=v=>ext&&v.endsWith('px')?parseFloat(v):0;const w=Math.max(b.width,b.width-px(a.left)-px(a.right)),h=Math.max(b.height,b.height-px(a.top)-px(a.bottom));const corners=[[-21,-21],[21,-21],[-21,21],[21,21]].every(([dx,dy])=>{const hit=document.elementFromPoint(b.x+b.width/2+dx,b.y+b.height/2+dy);return hit&&(hit===e||e.contains(hit))});return {name:e.getAttribute('aria-label')||e.textContent?.trim()||e.tagName,width:+w.toFixed(2),height:+h.toFixed(2),corners,bar:!!e.closest('nav.lg\\:hidden')};}));}log('TOUCH',{route,theme,width,count:areas.length,minWidth:Math.min(...areas.map(a=>a.width)),minHeight:Math.min(...areas.map(a=>a.height)),failures:areas.filter(a=>a.width<44||a.height<44||!a.corners),areas});}
+ await ctx.close();}
+for(const width of [390,1440]){const ctx=await browser.newContext({viewport:{width,height:900}});const p=await ctx.newPage();await p.addInitScript(()=>{window.__events=[];new PerformanceObserver(l=>{window.__events.push(...l.getEntries().filter(e=>e.interactionId).map(e=>({name:e.name,duration:e.duration,interactionId:e.interactionId})))}).observe({type:'event',buffered:true,durationThreshold:16});});await p.goto(base);await ready(p);await p.locator('[data-annotate-trigger]:visible').click();await p.getByRole('dialog').waitFor();await p.evaluate(()=>new Promise(r=>{let n=0;function f(){if(++n===30)r();else requestAnimationFrame(f)}requestAnimationFrame(f)}));log('INP_LAB',{width,events:await p.evaluate(()=>window.__events),note:'Event Timing laboratory only; entries below 16ms are omitted; never field p75'});await ctx.close();}
+await browser.close();})().catch(e=>{console.error(e);process.exitCode=1});
+
+```
+
+Repetición final del arnés R2: se conservan píxel inferior izquierdo y píxel de lienzo sin sombra en las 12 cargas. La sombra cambia ligeramente el RGB inferior, pero ningún cuadro cruza al tema contrario. El control negativo vuelve a detectar claro con sistema oscuro. Resultados (fuentes de CLS en el log original):
+
+```jsonl
+FIRST_FRAME {"route":"/","theme":"light","timeOrigin":1793756163092.6,"firstPaint":2292,"cls":0.0001068768271412108,"atBody":"light","bottomLeft":["247,243,235","243,239,231"],"frames":4,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/actividad","theme":"light","timeOrigin":1793756171817.7,"firstPaint":2384,"cls":0.00008378615461070229,"atBody":"light","bottomLeft":["247,243,235","243,239,231"],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/metas","theme":"light","timeOrigin":1793756180877,"firstPaint":2224,"cls":0.00009587480081785087,"atBody":"light","bottomLeft":["247,243,235","243,239,231"],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/plan","theme":"light","timeOrigin":1793756189720,"firstPaint":2480,"cls":0,"atBody":"light","bottomLeft":["247,243,235","243,239,231"],"frames":4,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/balance","theme":"light","timeOrigin":1793756200004.7,"firstPaint":2460,"cls":0.00012938020749643354,"atBody":"light","bottomLeft":["247,243,235","243,239,231"],"frames":5,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/cuenta","theme":"light","timeOrigin":1793756209222.1,"firstPaint":2248,"cls":0.00010093922563336577,"atBody":"light","bottomLeft":["247,243,235"],"frames":4,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}
+FIRST_FRAME {"route":"/","theme":"dark","timeOrigin":1793756217771.3,"firstPaint":2144,"cls":0.0001068768271412108,"atBody":"dark","bottomLeft":["18,20,22","16,18,20"],"frames":5,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+FIRST_FRAME {"route":"/actividad","theme":"dark","timeOrigin":1793756226400.1,"firstPaint":2412,"cls":0.00008378615461070229,"atBody":"dark","bottomLeft":["16,18,20"],"frames":4,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+FIRST_FRAME {"route":"/metas","theme":"dark","timeOrigin":1793756235028.1,"firstPaint":2220,"cls":0.00009587480081785087,"atBody":"dark","bottomLeft":["18,20,22","16,18,20"],"frames":5,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+FIRST_FRAME {"route":"/plan","theme":"dark","timeOrigin":1793756243750.6,"firstPaint":2212,"cls":0.0002777967355077034,"atBody":"dark","bottomLeft":["18,20,22","16,18,20"],"frames":5,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+FIRST_FRAME {"route":"/balance","theme":"dark","timeOrigin":1793756252433.2,"firstPaint":2212,"cls":0.00012938020749643354,"atBody":"dark","bottomLeft":["16,18,20"],"frames":4,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+FIRST_FRAME {"route":"/cuenta","theme":"dark","timeOrigin":1793756261533.5,"firstPaint":2228,"cls":0.00010093922563336577,"atBody":"dark","bottomLeft":["18,20,22"],"frames":4,"first":[18,20,22],"opposite":0,"pixels":["18,20,22"]}
+NEGATIVE_CONTROL {"first":[18,18,18],"pixels":["18,18,18","247,243,235"],"flashDetected":true}
+```
+
+Índice inferior muestreado: `((info.height-4)*info.width+3)*info.channels`; el otro píxel usa `(3*info.width+3)*info.channels`. Comando: `node %TEMP%/juntia-001-d/first-final.cjs`.
+
+## T066 · Ícono scales
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Procedimiento: capturas reales de Inicio en claro a 1024 y 1440 tras `document.fonts.ready`, build T063; composición con sharp de referencia a la izquierda e implementación a la derecha, sin medir dimensiones del diseño sobre PNG.
+
+```text
+T066 {"width":1024,"reference":"docs/design/screenshots/appshell-1024-rail-light.png","capture":"inicio-1024-light-T066.png","comparison":"scales-1024-reference-left-implementation-right.png"}
+T066 {"width":1440,"reference":"docs/design/screenshots/appshell-1440-sidebar-light.png","capture":"inicio-1440-light-T066.png","comparison":"scales-1440-reference-left-implementation-right.png"}
+```
+
+![Rail: referencia izquierda, implementación derecha](evidence/scales-1024-reference-left-implementation-right.png)
+
+![Sidebar: referencia izquierda, implementación derecha](evidence/scales-1440-reference-left-implementation-right.png)
+
+Observación visual: coincide el símbolo de balanza de dos platillos (`scales`, regular para Balance inactivo) en rail y sidebar. Se aprecian diferencias de contenido y de acceso a Cuenta previstas en el alcance 001, que no implementa finanzas ni AccountButton. La aprobación visual corresponde al revisor.
+
+## T067 · Recorrido de interacción
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Procedimiento: `npm run dev -- --port 3001` y dos scripts desechables (`interactions.cjs`, `interaction-extra.cjs`) con Playwright Chromium. Se trata de un recorrido de navegador automatizado fuera de la suite; no equivale a una aprobación humana del diseño ni a un dispositivo real. Ambos scripts exit 0.
+
+La primera tentativa se detuvo porque el badge de Next interceptaba el click de Mi cuenta a 1024; se ocultó únicamente `[data-next-badge-root]` en el shadow DOM del navegador desechable, conservando los listeners de errores. No se cambia next.config ni el producto. Salida de la tentativa en [T067-interactions.txt](evidence/T067-interactions.txt).
+
+| Punto | Resultado observado |
+| --- | --- |
+| Anchos / temas / movimiento | 360,390,430,768,1024,1280,1440 × ambos temas × reduce/no-preference: Anotar a un toque; acceso a Mi cuenta; Balance por URL. |
+| Teclado | Ir al contenido primero. Tab recorre enlaces y controles con outline sólido 2 px/offset 2 px; `aria-current` e SVG Fill en Inicio. En Balance móvil no hay destino visible porque no forma parte de la barra. |
+| Anotar | Toque, Enter, N, Escape y Cerrar; retorno del foco. Hoja <768; diálogo desde768 con ancho CSS520 (la medición de la caja sin reducción captura el scale durante la entrada). 700→900→700 conserva abierto y Escape retorna a barra. |
+| Selector | Nosotros persiste tras recargar/navegar; anuncio Ahora ves: Nosotros. Reduce: una posición; sin reducción: posiciones intermedias del spring, mismo destino final. |
+| Tema | Cambio del sistema en vivo: 0s con reduce y 0.18s sin reducción. Primer cuadro lento en T065. |
+| Copy / base | Seis rutas sin cifras/porcentajes, aviso de versión base visible. Revisión semántica del catálogo en T070; aprobación humana en T078. |
+| Texto200% | 390px: scrollWidth=clientWidth=390 en ambos temas/modos; se ocultan las cuatro etiquetas de barra y conservan sus nombres accesibles. |
+| iPhone | Emulación iPhone13 en Chromium: 390×664, sin overflow, barra termina en664. env(safe-area-inset-bottom)=0 en esta emulación; no valida una muesca física ni Safari, pendiente de revisión iOS. |
+| Segmented tablist | Flecha derecha mueve foco/selección al segundo tab, tabindex itinerante. |
+| Skeleton | Callbacks300 medidos303–318ms; los temporizadores anulados por StrictMode se muestran como null. Cero animaciones con reduce, una sin reducir. |
+| Button carga | Intercambio de visibilidad de las dos caras existentes con las mismas etiquetas: delta0 en96 botones medidos. Esto valida la geometría de la galería; no ejecuta un cambio de prop React. |
+| Área Input | **D-02 confirmado:** cajas22,5/19px y marcos48/64px; clicks a21px por encima del centro no enfocan (se midió el extremo superior), en ambos temas/modos. Requiere Claude Code y comp. |
+| Hidratación | **D-03:** en /interno/primitivos, reduce emite mismatch de tabindex de motion.button; sin reducir, cero errores. Corrección no visual en T077. |
+
+Salida real del recorrido:
+
+```jsonl
+COMPOSITION {"motion":"reduce","theme":"light","width":360,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":360,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":390,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":390,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":430,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":430,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":768,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":1024,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"reduce","theme":"light","width":1280,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"reduce","theme":"light","width":1440,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+CROSS_768 {"motion":"reduce","theme":"light","openMaintained":true,"focus":"bar"}
+CONTEXT {"motion":"reduce","theme":"light","persistsReloadNavigation":true,"positions":[285.84],"announcer":["Ahora ves: Nosotros",""]}
+THEME {"motion":"reduce","theme":"light","to":"dark","transition":"0s"}
+PRODUCT {"motion":"reduce","theme":"light","route":"/","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"light","route":"/actividad","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"light","route":"/metas","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"light","route":"/plan","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"light","route":"/balance","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"light","route":"/cuenta","notice":true,"forbidden":false}
+TEXT_200 {"motion":"reduce","theme":"light","scroll":390,"client":390,"labels":[]}
+INTERNAL {"motion":"reduce","theme":"light","tabs":[{"name":"50/50","selected":"false","tabIndex":-1},{"name":"Porcentaje","selected":"true","tabIndex":0},{"name":"Importe","selected":"false","tabIndex":-1}],"timers":[{"requested":300,"elapsed":null},{"requested":300,"elapsed":null},{"requested":300,"elapsed":307.60000002384186},{"requested":300,"elapsed":307.10000002384186}],"buttonWidths":[{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardando…","busy":"true","width":129.921875}],"skeletonAnimations":0}
+N_IN_INPUT {"motion":"reduce","theme":"light","opens":false}
+DEV_ERRORS {"motion":"reduce","theme":"light","errors":["A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <InnerLayoutRouter url=\"/interno/p...\" tree={[...]} params={{}} renderTree={{...}} segmentPath={[...]} ...>\n      <SegmentViewNode type=\"page\" pagePath=\"(internal)...\">\n        <SegmentTrieNode>\n        <InternalPrimitivesPage>\n          <main id=\"contenido\" className=\"mx-auto fl...\">\n            <header>\n            <div className=\"grid gap-6...\">\n              <PrimitivesGallery>\n                <section data-theme=\"light\" aria-labelledby=\"tema-light\" className=\"flex min-w...\">\n                  <h2>\n                  <div className=\"grid gap-5...\">\n                    <section>\n                    <section>\n                    <section>\n                    <section>\n                    <Card>\n                      <section className=\"flex min-w...\">\n                        <div>\n                        <div className=\"flex flex-...\">\n                          <div>\n                          ...\n                            <Button variant=\"primary\">\n                              <motion.button type=\"button\" data-variant=\"primary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"primary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"secondary\">\n                              <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"secondary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"ghost\">\n                              <motion.button type=\"button\" data-variant=\"ghost\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"ghost\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"danger\">\n                              <motion.button type=\"button\" data-variant=\"danger\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"danger\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          <div className=\"flex flex-...\">\n                            <span>\n                            <div className=\"flex flex-...\">\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"md\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"lg\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\" label=\"Agregar\" data-touch-probe=\"\">\n                                <motion.button data-touch-probe=\"\" type=\"button\" data-variant=\"secondary\" ...>\n                                  <button\n                                    data-touch-probe=\"\"\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label=\"Agregar\"\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                    ...\n              <PrimitivesGallery>\n                <section data-theme=\"dark\" aria-labelledby=\"tema-dark\" className=\"flex min-w...\">\n                  <h2>\n                  <div className=\"grid gap-5...\">\n                    <section>\n                    <section>\n                    <section>\n                    <section>\n                    <Card>\n                      <section className=\"flex min-w...\">\n                        <div>\n                        <div className=\"flex flex-...\">\n                          <div>\n                          ...\n                            <Button variant=\"primary\">\n                              <motion.button type=\"button\" data-variant=\"primary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"primary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"secondary\">\n                              <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"secondary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"ghost\">\n                              <motion.button type=\"button\" data-variant=\"ghost\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"ghost\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"danger\">\n                              <motion.button type=\"button\" data-variant=\"danger\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"danger\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          <div className=\"flex flex-...\">\n                            <span>\n                            <div className=\"flex flex-...\">\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"md\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"lg\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\" label=\"Agregar\" data-touch-probe=\"\">\n                                <motion.button data-touch-probe=\"\" type=\"button\" data-variant=\"secondary\" ...>\n                                  <button\n                                    data-touch-probe=\"\"\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label=\"Agregar\"\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                    ...\n      ...\n"]}
+COMPOSITION {"motion":"reduce","theme":"dark","width":360,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":360,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"dark","width":390,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":390,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"dark","width":430,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":430,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"dark","width":768,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"dark","width":1024,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"reduce","theme":"dark","width":1280,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"reduce","theme":"dark","width":1440,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+CROSS_768 {"motion":"reduce","theme":"dark","openMaintained":true,"focus":"bar"}
+CONTEXT {"motion":"reduce","theme":"dark","persistsReloadNavigation":true,"positions":[285.84],"announcer":["Ahora ves: Nosotros","Metas"]}
+THEME {"motion":"reduce","theme":"dark","to":"light","transition":"0s"}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/actividad","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/metas","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/plan","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/balance","notice":true,"forbidden":false}
+PRODUCT {"motion":"reduce","theme":"dark","route":"/cuenta","notice":true,"forbidden":false}
+TEXT_200 {"motion":"reduce","theme":"dark","scroll":390,"client":390,"labels":[]}
+INTERNAL {"motion":"reduce","theme":"dark","tabs":[{"name":"50/50","selected":"false","tabIndex":-1},{"name":"Porcentaje","selected":"true","tabIndex":0},{"name":"Importe","selected":"false","tabIndex":-1}],"timers":[{"requested":300,"elapsed":null},{"requested":300,"elapsed":null},{"requested":300,"elapsed":317.10000002384186},{"requested":300,"elapsed":317}],"buttonWidths":[{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardando…","busy":"true","width":129.921875}],"skeletonAnimations":0}
+N_IN_INPUT {"motion":"reduce","theme":"dark","opens":false}
+DEV_ERRORS {"motion":"reduce","theme":"dark","errors":["A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <InnerLayoutRouter url=\"/interno/p...\" tree={[...]} params={{}} renderTree={{...}} segmentPath={[...]} ...>\n      <SegmentViewNode type=\"page\" pagePath=\"(internal)...\">\n        <SegmentTrieNode>\n        <InternalPrimitivesPage>\n          <main id=\"contenido\" className=\"mx-auto fl...\">\n            <header>\n            <div className=\"grid gap-6...\">\n              <PrimitivesGallery>\n                <section data-theme=\"light\" aria-labelledby=\"tema-light\" className=\"flex min-w...\">\n                  <h2>\n                  <div className=\"grid gap-5...\">\n                    <section>\n                    <section>\n                    <section>\n                    <section>\n                    <Card>\n                      <section className=\"flex min-w...\">\n                        <div>\n                        <div className=\"flex flex-...\">\n                          <div>\n                          ...\n                            <Button variant=\"primary\">\n                              <motion.button type=\"button\" data-variant=\"primary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"primary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"secondary\">\n                              <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"secondary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"ghost\">\n                              <motion.button type=\"button\" data-variant=\"ghost\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"ghost\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"danger\">\n                              <motion.button type=\"button\" data-variant=\"danger\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"danger\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          <div className=\"flex flex-...\">\n                            <span>\n                            <div className=\"flex flex-...\">\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"md\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"lg\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\" label=\"Agregar\" data-touch-probe=\"\">\n                                <motion.button data-touch-probe=\"\" type=\"button\" data-variant=\"secondary\" ...>\n                                  <button\n                                    data-touch-probe=\"\"\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label=\"Agregar\"\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                    ...\n              <PrimitivesGallery>\n                <section data-theme=\"dark\" aria-labelledby=\"tema-dark\" className=\"flex min-w...\">\n                  <h2>\n                  <div className=\"grid gap-5...\">\n                    <section>\n                    <section>\n                    <section>\n                    <section>\n                    <Card>\n                      <section className=\"flex min-w...\">\n                        <div>\n                        <div className=\"flex flex-...\">\n                          <div>\n                          ...\n                            <Button variant=\"primary\">\n                              <motion.button type=\"button\" data-variant=\"primary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"primary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"secondary\">\n                              <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"secondary\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"ghost\">\n                              <motion.button type=\"button\" data-variant=\"ghost\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"ghost\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          ...\n                            <Button variant=\"danger\">\n                              <motion.button type=\"button\" data-variant=\"danger\" aria-label={undefined} ...>\n                                <button\n                                  type=\"button\"\n                                  data-variant=\"danger\"\n                                  aria-label={undefined}\n                                  aria-disabled={undefined}\n                                  aria-busy={undefined}\n                                  onClick={function handleClick}\n                                  className={\"relative inline-flex shrink-0 items-center justify-center font-semibold...\"}\n                                  style={{}}\n                                  ref={function useMotionRef.useCallback}\n-                                 tabindex=\"0\"\n                                >\n                          <div className=\"flex flex-...\">\n                            <span>\n                            <div className=\"flex flex-...\">\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"md\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"lg\" variant=\"secondary\" icon=\"plus\">\n                                <motion.button type=\"button\" data-variant=\"secondary\" aria-label={undefined} ...>\n                                  <button\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label={undefined}\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                              <Button size=\"sm\" variant=\"secondary\" icon=\"plus\" label=\"Agregar\" data-touch-probe=\"\">\n                                <motion.button data-touch-probe=\"\" type=\"button\" data-variant=\"secondary\" ...>\n                                  <button\n                                    data-touch-probe=\"\"\n                                    type=\"button\"\n                                    data-variant=\"secondary\"\n                                    aria-label=\"Agregar\"\n                                    aria-disabled={undefined}\n                                    aria-busy={undefined}\n                                    onClick={function handleClick}\n                                    className={\"relative inline-flex shrink-0 items-center justify-center font-semibo...\"}\n                                    style={{}}\n                                    ref={function useMotionRef.useCallback}\n-                                   tabindex=\"0\"\n                                  >\n                    ...\n      ...\n"]}
+COMPOSITION {"motion":"no-preference","theme":"light","width":360,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":360,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"light","width":390,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":390,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"light","width":430,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":430,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"light","width":768,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":516.87451171875,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"light","width":1024,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":517.218505859375,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"no-preference","theme":"light","width":1280,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":518.682373046875,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"no-preference","theme":"light","width":1440,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":515.061767578125,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+CROSS_768 {"motion":"no-preference","theme":"light","openMaintained":true,"focus":"bar"}
+CONTEXT {"motion":"no-preference","theme":"light","persistsReloadNavigation":true,"positions":[242.36,246.03,252.03,258.63,265.28,271.01,275.4,279,281.63,283.48,284.7,285.43,285.89,286.13,286.22,286.23,286.19,286.14,286.08,286.02,285.97,285.93,285.9,285.88,285.86,285.85,285.84],"announcer":["Ahora ves: Nosotros","Metas"]}
+THEME {"motion":"no-preference","theme":"light","to":"dark","transition":"0.18s, 0.18s"}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/actividad","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/metas","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/plan","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/balance","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"light","route":"/cuenta","notice":true,"forbidden":false}
+TEXT_200 {"motion":"no-preference","theme":"light","scroll":390,"client":390,"labels":[]}
+INTERNAL {"motion":"no-preference","theme":"light","tabs":[{"name":"50/50","selected":"false","tabIndex":-1},{"name":"Porcentaje","selected":"true","tabIndex":0},{"name":"Importe","selected":"false","tabIndex":-1}],"timers":[{"requested":300,"elapsed":null},{"requested":300,"elapsed":null},{"requested":300,"elapsed":303.2999999523163},{"requested":300,"elapsed":302.7000000476837}],"buttonWidths":[{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardando…","busy":"true","width":129.921875}],"skeletonAnimations":1}
+N_IN_INPUT {"motion":"no-preference","theme":"light","opens":false}
+DEV_ERRORS {"motion":"no-preference","theme":"light","errors":[]}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":360,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":360,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":390,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":390,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":430,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":430,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":768,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":516.476806640625,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":1024,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":511.24127197265625,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":1280,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":514.959228515625,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+COMPOSITION {"motion":"no-preference","theme":"dark","width":1440,"first":{"name":"Ir al contenido","outline":"rgb(143, 179, 193) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.6) 0px 24px 56px 0px, rgb(58, 64, 69) 0px 0px 0px 1px"},"dialog":{"width":515.03125,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":1}
+CROSS_768 {"motion":"no-preference","theme":"dark","openMaintained":true,"focus":"bar"}
+CONTEXT {"motion":"no-preference","theme":"dark","persistsReloadNavigation":true,"positions":[242.67,246.7,252.84,260.25,266.37,272.2,276.11,279.36,282.01,283.65,284.86,285.5,285.93,286.15,286.23,286.22,286.18,286.13,286.07,286.01,285.96,285.9,285.88,285.86,285.84],"announcer":["Ahora ves: Nosotros","Metas"]}
+THEME {"motion":"no-preference","theme":"dark","to":"light","transition":"0.18s, 0.18s"}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/actividad","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/metas","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/plan","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/balance","notice":true,"forbidden":false}
+PRODUCT {"motion":"no-preference","theme":"dark","route":"/cuenta","notice":true,"forbidden":false}
+TEXT_200 {"motion":"no-preference","theme":"dark","scroll":390,"client":390,"labels":[]}
+INTERNAL {"motion":"no-preference","theme":"dark","tabs":[{"name":"50/50","selected":"false","tabIndex":-1},{"name":"Porcentaje","selected":"true","tabIndex":0},{"name":"Importe","selected":"false","tabIndex":-1}],"timers":[{"requested":300,"elapsed":null},{"requested":300,"elapsed":null},{"requested":300,"elapsed":305.6999999284744},{"requested":300,"elapsed":305.7000000476837}],"buttonWidths":[{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardar","busy":null,"width":103.296875},{"name":"GuardarGuardando…","busy":"true","width":129.921875}],"skeletonAnimations":1}
+N_IN_INPUT {"motion":"no-preference","theme":"dark","opens":false}
+DEV_ERRORS {"motion":"no-preference","theme":"dark","errors":[]}
+IPHONE_EMULATION {"device":"iPhone 13 emulation in Chromium, not physical device","viewport":{"width":390,"height":664,"scroll":390},"bar":{"bottom":664,"paddingBottom":"8px"},"safeAreaNote":"Chromium emulation reports env(safe-area-inset-bottom)=0; physical inset and clipping still need iOS review"}
+```
+
+Salida adicional (al llegar a BODY se omite únicamente el texto de scripts inline; se conservan tag y estilos):
+
+```jsonl
+KEYBOARD {"width":390,"theme":"light","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"},{"name":"Anotar gasto","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Metas","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/plan"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":390,"theme":"light","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":390,"theme":"light","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":429.328125,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.921875,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":622.109375,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.078125,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.265625,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":653.859375,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.046875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":428.6875,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.28125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":621.46875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.4375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":654.21875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.40625,"focused":false}]}
+KEYBOARD {"width":1024,"theme":"light","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/metas"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1024,"theme":"light","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1024,"theme":"light","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":429.40625,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":515,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":622.1875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":456.25,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":579.4375,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":681.03125,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":804.21875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":428.609375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":514.203125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":621.390625,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":455.453125,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":578.640625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":680.234375,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":803.421875,"focused":false}]}
+KEYBOARD {"width":1440,"theme":"light","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1440,"theme":"light","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1440,"theme":"light","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":428.9375,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":514.53125,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":621.71875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":436.9375,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":560.125,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":661.71875,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":540.53125,"y":784.90625,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":428.9375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":514.53125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":621.71875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":436.9375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":560.125,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":661.71875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1232.53125,"y":784.90625,"focused":false}]}
+KEYBOARD {"width":390,"theme":"dark","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"},{"name":"Anotar gasto","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Metas","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/plan"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":390,"theme":"dark","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":390,"theme":"dark","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":429.328125,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.921875,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":622.109375,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.078125,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.265625,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":653.859375,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.046875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":428.6875,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.28125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":621.46875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.4375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":654.21875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.40625,"focused":false}]}
+KEYBOARD {"width":1024,"theme":"dark","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/metas"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1024,"theme":"dark","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1024,"theme":"dark","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":429.40625,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":515,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":622.1875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":456.25,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":579.4375,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":681.03125,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":804.21875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":428.609375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":514.203125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":621.390625,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":455.453125,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":578.640625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":680.234375,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":803.421875,"focused":false}]}
+KEYBOARD {"width":1440,"theme":"dark","motion":"reduce","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1440,"theme":"dark","motion":"reduce","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1440,"theme":"dark","motion":"reduce","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":428.9375,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":514.53125,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":621.71875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":436.9375,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":560.125,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":661.71875,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":540.53125,"y":784.90625,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":428.9375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":514.53125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":621.71875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":436.9375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":560.125,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":661.71875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1232.53125,"y":784.90625,"focused":false}]}
+KEYBOARD {"width":390,"theme":"light","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"},{"name":"Anotar gasto","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Metas","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/plan"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":390,"theme":"light","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":390,"theme":"light","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":429.328125,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.921875,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":622.109375,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.078125,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.265625,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":653.859375,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.046875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":428.6875,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.28125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":621.46875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.4375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":654.21875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.40625,"focused":false}]}
+KEYBOARD {"width":1024,"theme":"light","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(26, 28, 26) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(247, 243, 235) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(26, 28, 26) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(108, 102, 91) solid 2px","offset":"2px","href":"/metas"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1024,"theme":"light","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1024,"theme":"light","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":429.40625,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":515,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":622.1875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":456.25,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":579.4375,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":681.03125,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":804.21875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":428.609375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":514.203125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":621.390625,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":455.453125,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":578.640625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":680.234375,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":803.421875,"focused":false}]}
+KEYBOARD {"width":1440,"theme":"light","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(26, 28, 26) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(247, 243, 235) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/cuenta"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(26, 28, 26) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(46, 88, 102) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(26, 28, 26) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(72, 68, 60) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1440,"theme":"light","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1440,"theme":"light","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":428.9375,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":514.53125,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":621.71875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":436.9375,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":560.125,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":661.71875,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":540.53125,"y":784.90625,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":428.9375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":514.53125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":621.71875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":436.9375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":560.125,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":661.71875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1232.53125,"y":784.90625,"focused":false}]}
+KEYBOARD {"width":390,"theme":"dark","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"},{"name":"Anotar gasto","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Metas","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/plan"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Mi cuenta","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":390,"theme":"dark","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":390,"theme":"dark","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":429.328125,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.921875,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":622.109375,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.078125,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.265625,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":653.859375,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.046875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":428.6875,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":514.28125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":195,"y":621.46875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":429.4375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":552.625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":207.53125,"y":654.21875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":184.53125,"y":777.40625,"focused":false}]}
+KEYBOARD {"width":1024,"theme":"dark","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/cuenta"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Inicio","tag":"A","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(162, 156, 146) solid 2px","offset":"2px","href":"/metas"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1024,"theme":"dark","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1024,"theme":"dark","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":429.40625,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":515,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":622.1875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":456.25,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":579.4375,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":681.03125,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":804.21875,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":428.609375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":514.203125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":277,"y":621.390625,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":455.453125,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":578.640625,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":759.53125,"y":680.234375,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":678.53125,"y":803.421875,"focused":false}]}
+KEYBOARD {"width":1440,"theme":"dark","motion":"no-preference","focus":[{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/actividad"},{"name":"Metas","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/metas"},{"name":"Plan","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/plan"},{"name":"Balance","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/balance"},{"name":"Anotar gastoAtajo N","tag":"BUTTON","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":null},{"name":"Mi cuenta","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/cuenta"},{"name":"BODY (cycle boundary; inline scripts omitted)","tag":"BODY","outline":"rgb(243, 239, 231) none 3px","offset":"0px","href":null},{"name":"Ir al contenido","tag":"A","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":"#contenido"},{"name":"Yo","tag":"BUTTON","outline":"rgb(143, 179, 193) solid 2px","offset":"2px","href":null},{"name":"Inicio","tag":"A","outline":"rgb(243, 239, 231) solid 2px","offset":"2px","href":"/"},{"name":"Actividad","tag":"A","outline":"rgb(208, 202, 192) solid 2px","offset":"2px","href":"/actividad"}],"active":[{"name":"Inicio","svg":"<path d=\"M224,120v96a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a15.87,15.87,0,0,1,4.69-11.32l80-80a16,16,0,0,1,22.62,0l80,80A15.87,15.87,0,0,1,224,120Z\"></path>"}]}
+BUTTON_FACE_SWAP {"width":1440,"theme":"dark","motion":"no-preference","method":"DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition","widths":[{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0},{"loading":129.921875,"idleSameFaces":129.921875,"delta":0},{"loading":116.609375,"idleSameFaces":116.609375,"delta":0},{"loading":137.8125,"idleSameFaces":137.8125,"delta":0},{"loading":130.53125,"idleSameFaces":130.53125,"delta":0}]}
+INPUT_HIT {"width":1440,"theme":"dark","motion":"no-preference","hits":[{"id":"_S_1_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":428.9375,"focused":false},{"id":"_S_2_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":514.53125,"focused":false},{"id":"_S_3_-input","inputHeight":22.5,"frameHeight":48,"x":214,"y":621.71875,"focused":false},{"id":"_R_1jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":436.9375,"focused":false},{"id":"_R_2jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":560.125,"focused":false},{"id":"_R_3jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":546.53125,"y":661.71875,"focused":false},{"id":"_R_4jpklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":540.53125,"y":784.90625,"focused":false},{"id":"_S_5_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":428.9375,"focused":false},{"id":"_S_6_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":514.53125,"focused":false},{"id":"_S_7_-input","inputHeight":22.5,"frameHeight":48,"x":906,"y":621.71875,"focused":false},{"id":"_R_1jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":436.9375,"focused":false},{"id":"_R_2jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":560.125,"focused":false},{"id":"_R_3jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1238.53125,"y":661.71875,"focused":false},{"id":"_R_4jqklritpesnelb_-input","inputHeight":19,"frameHeight":64,"x":1232.53125,"y":784.90625,"focused":false}]}
+```
+
+Arneses ejecutados fuera de tests:
+
+```javascript
+const req=require('node:module').createRequire(process.cwd()+'/package.json');const{chromium,devices}=req('playwright');const {expect}=req('@playwright/test');const base='http://localhost:3001';const log=(name,data)=>console.log(name+' '+JSON.stringify(data));const routes=['/','/actividad','/metas','/plan','/balance','/cuenta'];async function hydrated(p){await p.locator('[data-context-selector][data-hydrated]').first().waitFor({state:'attached'});await p.evaluate(()=>document.fonts.ready);await p.locator('nextjs-portal [data-next-badge-root]').evaluateAll(es=>es.forEach(e=>e.style.display='none'))}async function frames(p,selector,prop='x'){return p.evaluate(([selector,prop])=>new Promise(r=>{const vals=[];function f(){const e=document.querySelector(selector);if(e)vals.push(+e.getBoundingClientRect()[prop].toFixed(2));if(vals.length===30)r(vals);else requestAnimationFrame(f)}requestAnimationFrame(f)}),[selector,prop])}
+(async()=>{const b=await chromium.launch();for(const motion of['reduce','no-preference'])for(const theme of['light','dark']){const ctx=await b.newContext({viewport:{width:390,height:900},colorScheme:theme,reducedMotion:motion,hasTouch:true});const p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+for(const width of[360,390,430,768,1024,1280,1440]){await p.setViewportSize({width,height:900});await p.goto(base);await hydrated(p);await p.keyboard.press('Tab');const first=await p.evaluate(()=>({name:document.activeElement.textContent,outline:getComputedStyle(document.activeElement).outline,boxShadow:getComputedStyle(document.activeElement).boxShadow}));await expect(p.getByRole('link',{name:'Ir al contenido'})).toBeFocused();const trigger=p.locator('[data-annotate-trigger]:visible');await expect(trigger).toHaveCount(1);await trigger.tap();await expect(p.getByRole('dialog')).toBeVisible();const dialog=await p.getByRole('dialog').evaluate(e=>({width:e.getBoundingClientRect().width,modal:e.hasAttribute('data-modal'),sheet:e.hasAttribute('data-bottom-sheet')}));await p.keyboard.press('Escape');await expect(trigger).toBeFocused();await trigger.press('Enter');await p.getByRole('button',{name:'Cerrar',exact:true}).click();await expect(trigger).toBeFocused();await p.keyboard.press('n');await expect(p.getByRole('dialog')).toBeVisible();await p.keyboard.press('Escape');const acc=p.getByRole('link',{name:'Mi cuenta',exact:true}).filter({visible:true});await expect(acc).toHaveCount(1);await acc.click();await expect(p).toHaveURL(/\/cuenta$/);await expect(p.locator('[data-base-version-notice]')).toBeVisible();await p.goto(base+'/balance');await hydrated(p);await expect(p.getByRole('heading',{name:'Todavía no disponible'})).toBeVisible();const active=await p.locator('a[aria-current="page"]:visible').count();log('COMPOSITION',{motion,theme,width,first,dialog,account:true,balanceByURL:true,active});}
+await p.setViewportSize({width:700,height:900});await p.goto(base);await hydrated(p);await p.locator('[data-annotate-trigger]:visible').click();await p.setViewportSize({width:900,height:900});await expect(p.locator('[role="dialog"][data-modal]')).toBeVisible();await p.setViewportSize({width:700,height:900});await expect(p.getByRole('dialog')).toBeVisible();await p.keyboard.press('Escape');log('CROSS_768',{motion,theme,openMaintained:true,focus:await p.evaluate(()=>document.activeElement.getAttribute('data-annotate-trigger'))});
+await p.setViewportSize({width:390,height:900});await p.goto(base);await hydrated(p);const group=p.locator('[data-context-selector]:visible');await group.getByRole('radio',{name:'Nosotros',exact:true}).click();await p.reload();await hydrated(p);await expect(group.getByRole('radio',{name:'Nosotros',exact:true})).toHaveAttribute('aria-checked','true');await p.getByRole('link',{name:'Metas',exact:true}).filter({visible:true}).click();await hydrated(p);await expect(group.getByRole('radio',{name:'Nosotros',exact:true})).toHaveAttribute('aria-checked','true');await group.getByRole('radio',{name:'Yo',exact:true}).click();await frames(p,'[data-context-selector] [data-segmented-knob]');const xs=await p.evaluate(()=>new Promise(r=>{const g=[...document.querySelectorAll('[data-context-selector]')].find(e=>e.getClientRects().length);g.querySelector('[data-value="us"]').click();const a=[];function f(){a.push(+g.querySelector('[data-segmented-knob]').getBoundingClientRect().x.toFixed(2));if(a.length===30)r(a);else requestAnimationFrame(f)}requestAnimationFrame(f)}));log('CONTEXT',{motion,theme,persistsReloadNavigation:true,positions:[...new Set(xs)],announcer:await p.locator('[aria-live]').allTextContents()});
+const other=theme==='light'?'dark':'light';await p.emulateMedia({colorScheme:other});await p.waitForFunction(t=>document.documentElement.dataset.theme===t,other);log('THEME',{motion,theme,to:other,transition:await p.evaluate(()=>getComputedStyle(document.body).transitionDuration)});await p.emulateMedia({colorScheme:theme});
+for(const route of routes){await p.goto(base+route);await hydrated(p);const text=await p.locator('main').innerText();log('PRODUCT',{motion,theme,route,notice:await p.locator('[data-base-version-notice]').isVisible(),forbidden:/\$|\d+\s*%|Al día|le debe/.test(text)});}
+await p.goto(base);await hydrated(p);await p.addStyleTag({content:'html {font-size:200% !important}'});log('TEXT_200',{motion,theme,...await p.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth,labels:[...document.querySelectorAll('nav a span')].filter(e=>e.getBoundingClientRect().width>1).map(e=>e.textContent)}))});
+// Browser timer instrumentation: measure the actual 300ms callback and skeleton attribute, without sleeping.
+await p.addInitScript(()=>{window.__timers=[];const original=window.setTimeout;window.setTimeout=function(fn,ms,...args){if(ms===300){const t={delay:ms,start:performance.now()};window.__timers.push(t);return original(()=>{t.fire=performance.now();fn(...args)},ms)}return original(fn,ms,...args)};});await p.goto(base+'/interno/primitivos');await p.locator('[data-skeleton-visible]').first().waitFor({state:'attached'});const tabs=p.locator('section[data-theme="'+theme+'"] [role="tablist"]');await tabs.getByRole('tab').first().focus();await p.keyboard.press('ArrowRight');await expect(tabs.getByRole('tab').nth(1)).toBeFocused();log('INTERNAL',{motion,theme,tabs:await tabs.getByRole('tab').evaluateAll(es=>es.map(e=>({name:e.textContent,selected:e.getAttribute('aria-selected'),tabIndex:e.tabIndex}))),timers:await p.evaluate(()=>window.__timers.map(t=>({requested:t.delay,elapsed:t.fire-t.start}))),buttonWidths:await p.locator('section[data-theme="'+theme+'"] button[data-variant="primary"]').evaluateAll(es=>es.slice(0,3).map(e=>({name:e.textContent,busy:e.getAttribute('aria-busy'),width:e.getBoundingClientRect().width}))),skeletonAnimations:await p.locator('section[data-theme="'+theme+'"] [data-skeleton]').first().evaluate(e=>e.getAnimations().length)});const input=p.locator('input').first();await input.fill('n');await expect(p.getByRole('dialog')).toHaveCount(0);log('N_IN_INPUT',{motion,theme,opens:false});log('DEV_ERRORS',{motion,theme,errors});await ctx.close();}
+const ctx=await b.newContext({...devices['iPhone 13'],defaultBrowserType:undefined});const p=await ctx.newPage();await p.goto(base);await hydrated(p);log('IPHONE_EMULATION',{device:'iPhone 13 emulation in Chromium, not physical device',viewport:await p.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth})),bar:await p.locator('nav.lg\\:hidden').evaluate(e=>({bottom:e.getBoundingClientRect().bottom,paddingBottom:getComputedStyle(e).paddingBottom})),safeAreaNote:'Chromium emulation reports env(safe-area-inset-bottom)=0; physical inset and clipping still need iOS review'});await ctx.close();await b.close()})().catch(e=>{console.error(e);process.exitCode=1});
+
+const req=require('node:module').createRequire(process.cwd()+'/package.json');const{chromium}=req('playwright');(async()=>{const b=await chromium.launch();for(const motion of['reduce','no-preference'])for(const theme of['light','dark'])for(const width of[390,1024,1440]){const p=await b.newPage({viewport:{width,height:900},colorScheme:theme,reducedMotion:motion});await p.goto('http://localhost:3001');await p.locator('[data-context-selector][data-hydrated]').first().waitFor({state:'attached'});await p.evaluate(()=>document.fonts.ready);await p.locator('nextjs-portal [data-next-badge-root]').evaluateAll(es=>es.forEach(e=>e.style.display='none'));const focus=[];for(let i=0;i<14;i++){await p.keyboard.press('Tab');focus.push(await p.evaluate(()=>{const e=document.activeElement,s=getComputedStyle(e);return {name:e.getAttribute('aria-label')||(e.tagName==='BODY'?'BODY (cycle boundary)':e.textContent.trim().slice(0,100)),tag:e.tagName,outline:s.outline,offset:s.outlineOffset,href:e.getAttribute('href')}}))}const active=await p.locator('a[aria-current="page"]:visible').evaluateAll(es=>es.map(e=>({name:e.textContent,svg:e.querySelector('svg')?.innerHTML.slice(0,160)})));console.log('KEYBOARD '+JSON.stringify({width,theme,motion,focus,active}));await p.goto('http://localhost:3001/interno/primitivos');await p.locator('[data-skeleton-visible]').first().waitFor({state:'attached'});const widths=await p.locator('button[aria-busy="true"]').evaluateAll(es=>es.map(e=>{const before=e.getBoundingClientRect().width;const faces=e.querySelector('span.grid').children;faces[0].classList.remove('invisible');faces[1].classList.add('invisible');const idle=e.getBoundingClientRect().width;faces[0].classList.add('invisible');faces[1].classList.remove('invisible');return {loading:before,idleSameFaces:idle,delta:idle-before}}));console.log('BUTTON_FACE_SWAP '+JSON.stringify({width,theme,motion,method:'DOM visibility swap of existing faces with same labels; presentation-only, not React prop transition',widths}));const inputs=p.locator('input:not([disabled])');const hits=[];for(let i=0;i<await inputs.count();i++){const e=inputs.nth(i);await e.scrollIntoViewIfNeeded();const data=await e.evaluate(e=>{const b=e.getBoundingClientRect(),frame=e.parentElement.getBoundingClientRect();return {id:e.id,inputHeight:b.height,frameHeight:frame.height,x:b.x+b.width/2,y:b.y+b.height/2-21}});await p.mouse.click(data.x,data.y);hits.push({...data,focused:await e.evaluate(e=>document.activeElement===e)});}console.log('INPUT_HIT '+JSON.stringify({width,theme,motion,hits}));await p.close()}await b.close()})().catch(e=>{console.error(e);process.exitCode=1});
+
+```
+
+## T068 · Capturas del gate visual
+
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+Procedimiento: Playwright Chromium sobre build T063, viewport altura900, sistema light/dark y reducedMotion=reduce; espera de fuentes y Skeleton. 112 visitas (8 rutas ×7 anchos ×2 temas), 62 capturas: las32 obligatorias y30 de composiciones adicionales (Inicio, Cuenta e interna). El resto de rutas se visita en los cinco anchos adicionales y conserva la composición documentada.
+
+Capturas reales nombradas por ruta/ancho/tema; el rail1024 oscuro está incluido. Las capturas de la galería larga se repitieron tras inspeccionar un tile en blanco: scroll por cada viewport y dos RAF antes de fullPage. Es una corrección del procedimiento de captura; la visita de navegador mostraba el DOM visible y el screenshot de viewport correcto. No se modifica el producto.
+
+| Ruta | Ancho | Tema | Captura |
+| --- | ---: | --- | --- |
+| / | 390 | light | [PNG](evidence/inicio-390-light.png) |
+| /actividad | 390 | light | [PNG](evidence/actividad-390-light.png) |
+| /metas | 390 | light | [PNG](evidence/metas-390-light.png) |
+| /plan | 390 | light | [PNG](evidence/plan-390-light.png) |
+| /balance | 390 | light | [PNG](evidence/balance-390-light.png) |
+| /cuenta | 390 | light | [PNG](evidence/cuenta-390-light.png) |
+| /ruta-que-no-existe | 390 | light | [PNG](evidence/ruta-que-no-existe-390-light.png) |
+| /interno/primitivos | 390 | light | [PNG](evidence/interno-primitivos-390-light.png) |
+| / | 1440 | light | [PNG](evidence/inicio-1440-light.png) |
+| /actividad | 1440 | light | [PNG](evidence/actividad-1440-light.png) |
+| /metas | 1440 | light | [PNG](evidence/metas-1440-light.png) |
+| /plan | 1440 | light | [PNG](evidence/plan-1440-light.png) |
+| /balance | 1440 | light | [PNG](evidence/balance-1440-light.png) |
+| /cuenta | 1440 | light | [PNG](evidence/cuenta-1440-light.png) |
+| /ruta-que-no-existe | 1440 | light | [PNG](evidence/ruta-que-no-existe-1440-light.png) |
+| /interno/primitivos | 1440 | light | [PNG](evidence/interno-primitivos-1440-light.png) |
+| / | 360 | light | [PNG](evidence/inicio-360-light.png) |
+| /cuenta | 360 | light | [PNG](evidence/cuenta-360-light.png) |
+| /interno/primitivos | 360 | light | [PNG](evidence/interno-primitivos-360-light.png) |
+| / | 430 | light | [PNG](evidence/inicio-430-light.png) |
+| /cuenta | 430 | light | [PNG](evidence/cuenta-430-light.png) |
+| /interno/primitivos | 430 | light | [PNG](evidence/interno-primitivos-430-light.png) |
+| / | 768 | light | [PNG](evidence/inicio-768-light.png) |
+| /cuenta | 768 | light | [PNG](evidence/cuenta-768-light.png) |
+| /interno/primitivos | 768 | light | [PNG](evidence/interno-primitivos-768-light.png) |
+| / | 1024 | light | [PNG](evidence/inicio-1024-light.png) |
+| /cuenta | 1024 | light | [PNG](evidence/cuenta-1024-light.png) |
+| /interno/primitivos | 1024 | light | [PNG](evidence/interno-primitivos-1024-light.png) |
+| / | 1280 | light | [PNG](evidence/inicio-1280-light.png) |
+| /cuenta | 1280 | light | [PNG](evidence/cuenta-1280-light.png) |
+| /interno/primitivos | 1280 | light | [PNG](evidence/interno-primitivos-1280-light.png) |
+| / | 390 | dark | [PNG](evidence/inicio-390-dark.png) |
+| /actividad | 390 | dark | [PNG](evidence/actividad-390-dark.png) |
+| /metas | 390 | dark | [PNG](evidence/metas-390-dark.png) |
+| /plan | 390 | dark | [PNG](evidence/plan-390-dark.png) |
+| /balance | 390 | dark | [PNG](evidence/balance-390-dark.png) |
+| /cuenta | 390 | dark | [PNG](evidence/cuenta-390-dark.png) |
+| /ruta-que-no-existe | 390 | dark | [PNG](evidence/ruta-que-no-existe-390-dark.png) |
+| /interno/primitivos | 390 | dark | [PNG](evidence/interno-primitivos-390-dark.png) |
+| / | 1440 | dark | [PNG](evidence/inicio-1440-dark.png) |
+| /actividad | 1440 | dark | [PNG](evidence/actividad-1440-dark.png) |
+| /metas | 1440 | dark | [PNG](evidence/metas-1440-dark.png) |
+| /plan | 1440 | dark | [PNG](evidence/plan-1440-dark.png) |
+| /balance | 1440 | dark | [PNG](evidence/balance-1440-dark.png) |
+| /cuenta | 1440 | dark | [PNG](evidence/cuenta-1440-dark.png) |
+| /ruta-que-no-existe | 1440 | dark | [PNG](evidence/ruta-que-no-existe-1440-dark.png) |
+| /interno/primitivos | 1440 | dark | [PNG](evidence/interno-primitivos-1440-dark.png) |
+| / | 360 | dark | [PNG](evidence/inicio-360-dark.png) |
+| /cuenta | 360 | dark | [PNG](evidence/cuenta-360-dark.png) |
+| /interno/primitivos | 360 | dark | [PNG](evidence/interno-primitivos-360-dark.png) |
+| / | 430 | dark | [PNG](evidence/inicio-430-dark.png) |
+| /cuenta | 430 | dark | [PNG](evidence/cuenta-430-dark.png) |
+| /interno/primitivos | 430 | dark | [PNG](evidence/interno-primitivos-430-dark.png) |
+| / | 768 | dark | [PNG](evidence/inicio-768-dark.png) |
+| /cuenta | 768 | dark | [PNG](evidence/cuenta-768-dark.png) |
+| /interno/primitivos | 768 | dark | [PNG](evidence/interno-primitivos-768-dark.png) |
+| / | 1024 | dark | [PNG](evidence/inicio-1024-dark.png) |
+| /cuenta | 1024 | dark | [PNG](evidence/cuenta-1024-dark.png) |
+| /interno/primitivos | 1024 | dark | [PNG](evidence/interno-primitivos-1024-dark.png) |
+| / | 1280 | dark | [PNG](evidence/inicio-1280-dark.png) |
+| /cuenta | 1280 | dark | [PNG](evidence/cuenta-1280-dark.png) |
+| /interno/primitivos | 1280 | dark | [PNG](evidence/interno-primitivos-1280-dark.png) |
+
+Salida de todas las visitas:
+
+```text
+{"route":"/","width":390,"theme":"light","status":200,"capture":"inicio-390-light.png"}
+{"route":"/actividad","width":390,"theme":"light","status":200,"capture":"actividad-390-light.png"}
+{"route":"/metas","width":390,"theme":"light","status":200,"capture":"metas-390-light.png"}
+{"route":"/plan","width":390,"theme":"light","status":200,"capture":"plan-390-light.png"}
+{"route":"/balance","width":390,"theme":"light","status":200,"capture":"balance-390-light.png"}
+{"route":"/cuenta","width":390,"theme":"light","status":200,"capture":"cuenta-390-light.png"}
+{"route":"/ruta-que-no-existe","width":390,"theme":"light","status":404,"capture":"ruta-que-no-existe-390-light.png"}
+{"route":"/interno/primitivos","width":390,"theme":"light","status":200,"capture":"interno-primitivos-390-light.png"}
+{"route":"/","width":1440,"theme":"light","status":200,"capture":"inicio-1440-light.png"}
+{"route":"/actividad","width":1440,"theme":"light","status":200,"capture":"actividad-1440-light.png"}
+{"route":"/metas","width":1440,"theme":"light","status":200,"capture":"metas-1440-light.png"}
+{"route":"/plan","width":1440,"theme":"light","status":200,"capture":"plan-1440-light.png"}
+{"route":"/balance","width":1440,"theme":"light","status":200,"capture":"balance-1440-light.png"}
+{"route":"/cuenta","width":1440,"theme":"light","status":200,"capture":"cuenta-1440-light.png"}
+{"route":"/ruta-que-no-existe","width":1440,"theme":"light","status":404,"capture":"ruta-que-no-existe-1440-light.png"}
+{"route":"/interno/primitivos","width":1440,"theme":"light","status":200,"capture":"interno-primitivos-1440-light.png"}
+{"route":"/","width":360,"theme":"light","status":200,"capture":"inicio-360-light.png"}
+{"route":"/actividad","width":360,"theme":"light","status":200,"capture":null}
+{"route":"/metas","width":360,"theme":"light","status":200,"capture":null}
+{"route":"/plan","width":360,"theme":"light","status":200,"capture":null}
+{"route":"/balance","width":360,"theme":"light","status":200,"capture":null}
+{"route":"/cuenta","width":360,"theme":"light","status":200,"capture":"cuenta-360-light.png"}
+{"route":"/ruta-que-no-existe","width":360,"theme":"light","status":404,"capture":null}
+{"route":"/interno/primitivos","width":360,"theme":"light","status":200,"capture":"interno-primitivos-360-light.png"}
+{"route":"/","width":430,"theme":"light","status":200,"capture":"inicio-430-light.png"}
+{"route":"/actividad","width":430,"theme":"light","status":200,"capture":null}
+{"route":"/metas","width":430,"theme":"light","status":200,"capture":null}
+{"route":"/plan","width":430,"theme":"light","status":200,"capture":null}
+{"route":"/balance","width":430,"theme":"light","status":200,"capture":null}
+{"route":"/cuenta","width":430,"theme":"light","status":200,"capture":"cuenta-430-light.png"}
+{"route":"/ruta-que-no-existe","width":430,"theme":"light","status":404,"capture":null}
+{"route":"/interno/primitivos","width":430,"theme":"light","status":200,"capture":"interno-primitivos-430-light.png"}
+{"route":"/","width":768,"theme":"light","status":200,"capture":"inicio-768-light.png"}
+{"route":"/actividad","width":768,"theme":"light","status":200,"capture":null}
+{"route":"/metas","width":768,"theme":"light","status":200,"capture":null}
+{"route":"/plan","width":768,"theme":"light","status":200,"capture":null}
+{"route":"/balance","width":768,"theme":"light","status":200,"capture":null}
+{"route":"/cuenta","width":768,"theme":"light","status":200,"capture":"cuenta-768-light.png"}
+{"route":"/ruta-que-no-existe","width":768,"theme":"light","status":404,"capture":null}
+{"route":"/interno/primitivos","width":768,"theme":"light","status":200,"capture":"interno-primitivos-768-light.png"}
+{"route":"/","width":1024,"theme":"light","status":200,"capture":"inicio-1024-light.png"}
+{"route":"/actividad","width":1024,"theme":"light","status":200,"capture":null}
+{"route":"/metas","width":1024,"theme":"light","status":200,"capture":null}
+{"route":"/plan","width":1024,"theme":"light","status":200,"capture":null}
+{"route":"/balance","width":1024,"theme":"light","status":200,"capture":null}
+{"route":"/cuenta","width":1024,"theme":"light","status":200,"capture":"cuenta-1024-light.png"}
+{"route":"/ruta-que-no-existe","width":1024,"theme":"light","status":404,"capture":null}
+{"route":"/interno/primitivos","width":1024,"theme":"light","status":200,"capture":"interno-primitivos-1024-light.png"}
+{"route":"/","width":1280,"theme":"light","status":200,"capture":"inicio-1280-light.png"}
+{"route":"/actividad","width":1280,"theme":"light","status":200,"capture":null}
+{"route":"/metas","width":1280,"theme":"light","status":200,"capture":null}
+{"route":"/plan","width":1280,"theme":"light","status":200,"capture":null}
+{"route":"/balance","width":1280,"theme":"light","status":200,"capture":null}
+{"route":"/cuenta","width":1280,"theme":"light","status":200,"capture":"cuenta-1280-light.png"}
+{"route":"/ruta-que-no-existe","width":1280,"theme":"light","status":404,"capture":null}
+{"route":"/interno/primitivos","width":1280,"theme":"light","status":200,"capture":"interno-primitivos-1280-light.png"}
+{"route":"/","width":390,"theme":"dark","status":200,"capture":"inicio-390-dark.png"}
+{"route":"/actividad","width":390,"theme":"dark","status":200,"capture":"actividad-390-dark.png"}
+{"route":"/metas","width":390,"theme":"dark","status":200,"capture":"metas-390-dark.png"}
+{"route":"/plan","width":390,"theme":"dark","status":200,"capture":"plan-390-dark.png"}
+{"route":"/balance","width":390,"theme":"dark","status":200,"capture":"balance-390-dark.png"}
+{"route":"/cuenta","width":390,"theme":"dark","status":200,"capture":"cuenta-390-dark.png"}
+{"route":"/ruta-que-no-existe","width":390,"theme":"dark","status":404,"capture":"ruta-que-no-existe-390-dark.png"}
+{"route":"/interno/primitivos","width":390,"theme":"dark","status":200,"capture":"interno-primitivos-390-dark.png"}
+{"route":"/","width":1440,"theme":"dark","status":200,"capture":"inicio-1440-dark.png"}
+{"route":"/actividad","width":1440,"theme":"dark","status":200,"capture":"actividad-1440-dark.png"}
+{"route":"/metas","width":1440,"theme":"dark","status":200,"capture":"metas-1440-dark.png"}
+{"route":"/plan","width":1440,"theme":"dark","status":200,"capture":"plan-1440-dark.png"}
+{"route":"/balance","width":1440,"theme":"dark","status":200,"capture":"balance-1440-dark.png"}
+{"route":"/cuenta","width":1440,"theme":"dark","status":200,"capture":"cuenta-1440-dark.png"}
+{"route":"/ruta-que-no-existe","width":1440,"theme":"dark","status":404,"capture":"ruta-que-no-existe-1440-dark.png"}
+{"route":"/interno/primitivos","width":1440,"theme":"dark","status":200,"capture":"interno-primitivos-1440-dark.png"}
+{"route":"/","width":360,"theme":"dark","status":200,"capture":"inicio-360-dark.png"}
+{"route":"/actividad","width":360,"theme":"dark","status":200,"capture":null}
+{"route":"/metas","width":360,"theme":"dark","status":200,"capture":null}
+{"route":"/plan","width":360,"theme":"dark","status":200,"capture":null}
+{"route":"/balance","width":360,"theme":"dark","status":200,"capture":null}
+{"route":"/cuenta","width":360,"theme":"dark","status":200,"capture":"cuenta-360-dark.png"}
+{"route":"/ruta-que-no-existe","width":360,"theme":"dark","status":404,"capture":null}
+{"route":"/interno/primitivos","width":360,"theme":"dark","status":200,"capture":"interno-primitivos-360-dark.png"}
+{"route":"/","width":430,"theme":"dark","status":200,"capture":"inicio-430-dark.png"}
+{"route":"/actividad","width":430,"theme":"dark","status":200,"capture":null}
+{"route":"/metas","width":430,"theme":"dark","status":200,"capture":null}
+{"route":"/plan","width":430,"theme":"dark","status":200,"capture":null}
+{"route":"/balance","width":430,"theme":"dark","status":200,"capture":null}
+{"route":"/cuenta","width":430,"theme":"dark","status":200,"capture":"cuenta-430-dark.png"}
+{"route":"/ruta-que-no-existe","width":430,"theme":"dark","status":404,"capture":null}
+{"route":"/interno/primitivos","width":430,"theme":"dark","status":200,"capture":"interno-primitivos-430-dark.png"}
+{"route":"/","width":768,"theme":"dark","status":200,"capture":"inicio-768-dark.png"}
+{"route":"/actividad","width":768,"theme":"dark","status":200,"capture":null}
+{"route":"/metas","width":768,"theme":"dark","status":200,"capture":null}
+{"route":"/plan","width":768,"theme":"dark","status":200,"capture":null}
+{"route":"/balance","width":768,"theme":"dark","status":200,"capture":null}
+{"route":"/cuenta","width":768,"theme":"dark","status":200,"capture":"cuenta-768-dark.png"}
+{"route":"/ruta-que-no-existe","width":768,"theme":"dark","status":404,"capture":null}
+{"route":"/interno/primitivos","width":768,"theme":"dark","status":200,"capture":"interno-primitivos-768-dark.png"}
+{"route":"/","width":1024,"theme":"dark","status":200,"capture":"inicio-1024-dark.png"}
+{"route":"/actividad","width":1024,"theme":"dark","status":200,"capture":null}
+{"route":"/metas","width":1024,"theme":"dark","status":200,"capture":null}
+{"route":"/plan","width":1024,"theme":"dark","status":200,"capture":null}
+{"route":"/balance","width":1024,"theme":"dark","status":200,"capture":null}
+{"route":"/cuenta","width":1024,"theme":"dark","status":200,"capture":"cuenta-1024-dark.png"}
+{"route":"/ruta-que-no-existe","width":1024,"theme":"dark","status":404,"capture":null}
+{"route":"/interno/primitivos","width":1024,"theme":"dark","status":200,"capture":"interno-primitivos-1024-dark.png"}
+{"route":"/","width":1280,"theme":"dark","status":200,"capture":"inicio-1280-dark.png"}
+{"route":"/actividad","width":1280,"theme":"dark","status":200,"capture":null}
+{"route":"/metas","width":1280,"theme":"dark","status":200,"capture":null}
+{"route":"/plan","width":1280,"theme":"dark","status":200,"capture":null}
+{"route":"/balance","width":1280,"theme":"dark","status":200,"capture":null}
+{"route":"/cuenta","width":1280,"theme":"dark","status":200,"capture":"cuenta-1280-dark.png"}
+{"route":"/ruta-que-no-existe","width":1280,"theme":"dark","status":404,"capture":null}
+{"route":"/interno/primitivos","width":1280,"theme":"dark","status":200,"capture":"interno-primitivos-1280-dark.png"}
+```
+
+![Resumen móvil claro](evidence/overview-390-light.png)
+
+![Resumen móvil oscuro](evidence/overview-390-dark.png)
+
+Inspección visual: páginas provisionales, barra/rail/sidebar y cuenta apilada corresponden a las composiciones del alcance; no se introducen cifras en producto. Se entrega a los fundadores para aprobación de paleta (Sara petróleo, Hogar azul tenue, superficie oscura) y SC-001. Gasto/ingreso/liquidación en tinta pasa a P0-1; no se aprueba aquí.
+
+
+**Hallazgo D-05 (T068):** en las capturas de AmountInput los dígitos son menores que el signo de pesos. La comprobación de estilo calculado a1440 devuelve fontSize15px en los8 campos (ambos paneles), por debajo del mínimo28px del contrato. Véase [salida de estilo calculado](evidence/T068-amount-type.txt). Se remite a Claude Code por anatomía/tipografía de AmountInput; no se corrige aquí.
+
+```json
+[
+  {
+    "value": "",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "999.999.999",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "999.999.999",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "999.999.999",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  },
+  {
+    "value": "999.999.999",
+    "fontSize": "15px",
+    "lineHeight": "15px",
+    "className": "min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] "
+  }
+]
+```
+
+## T069 · Inventario de pruebas
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T070 · Alcance y copy
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T071 · Licencias de fuentes
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T072 · Preview real de Vercel
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T073 · Contraste en dispositivos
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T074 · Sombras en gama media
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T075 · Lectores de pantalla
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: se incorpora en el commit de su grupo.
+
+## T076 · CI del PR D
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: ejecución según el orden de tasks.md.
+
+## T077 · Correcciones de la verificación
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: ejecución según el orden de tasks.md.
+
+## T078 · Descripción y revisión humana
+
+Fecha: 2026-11-03 · Commit: `a3216c0`.
+
+Pendiente: ejecución según el orden de tasks.md.

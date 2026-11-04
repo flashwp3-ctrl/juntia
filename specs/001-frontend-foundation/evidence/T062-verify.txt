@@ -1,0 +1,52 @@
+
+> juntia@0.1.0 verify
+> node scripts/verify.mjs
+
+
+> juntia@0.1.0 lint
+> eslint .
+
+
+> juntia@0.1.0 typecheck
+> tsc --noEmit
+
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain --passWithNoTests
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+No test files found, exiting with code 0
+
+projects: domain
+
+|domain|
+
+include: src/domain/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+
+
+> juntia@0.1.0 test:components
+> vitest run --project components
+
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+
+ Test Files  9 passed (9)
+      Tests  85 passed (85)
+   Start at  20:21:22
+   Duration  12.02s (tests 29%, import 28%, environment 28%, setup 11%, transform 4%)
+
+verify · 001
+┌─────────┬──────────────────┬──────────────────────────────────────────────────┬───────────┬─────────────┬───────┐
+│ (index) │ control          │ resultado                                        │ duración  │ presupuesto │ aviso │
+├─────────┼──────────────────┼──────────────────────────────────────────────────┼───────────┼─────────────┼───────┤
+│ 0       │ 'lint'           │ 'pasó'                                           │ '19.11 s' │ '—'         │ ''    │
+│ 1       │ 'typecheck'      │ 'pasó'                                           │ '6.17 s'  │ '—'         │ ''    │
+│ 2       │ 'unit (domain)'  │ '0 pruebas — la 001 no tiene dominio financiero' │ '1.43 s'  │ '< 15 s'    │ ''    │
+│ 3       │ 'components'     │ 'pasó'                                           │ '13.33 s' │ '—'         │ ''    │
+│ 4       │ 'SQL/RLS'        │ 'NO APLICABLE — lo incorpora P0-1'               │ '—'       │ '< 60 s'    │ ''    │
+│ 5       │ 'verify (total)' │ 'pasó'                                           │ '40.05 s' │ '< 90 s'    │ ''    │
+└─────────┴──────────────────┴──────────────────────────────────────────────────┴───────────┴─────────────┴───────┘

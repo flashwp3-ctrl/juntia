@@ -1,0 +1,2 @@
+T066 {"width":1024,"reference":"docs/design/screenshots/appshell-1024-rail-light.png","capture":"inicio-1024-light-T066.png","comparison":"scales-1024-reference-left-implementation-right.png"}
+T066 {"width":1440,"reference":"docs/design/screenshots/appshell-1440-sidebar-light.png","capture":"inicio-1440-light-T066.png","comparison":"scales-1440-reference-left-implementation-right.png"}
