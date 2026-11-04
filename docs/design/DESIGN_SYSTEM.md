@@ -47,10 +47,10 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 ### 1.4 Tipografía
 | Token | Familia | Peso | Tamaño/Interlínea | Tracking | Uso |
 | --- | --- | --- | --- | --- | --- |
-| display.xl | Brygada 1918 | 400 | 64px / 0.95 | -0.02em | Titular de escritorio, meta inmersiva |
-| display.l | Brygada 1918 | 400 | 44px / 1 | -0.01em | Titular móvil, sección |
-| title.l | Brygada 1918 | 400 | 30px / 1.1 | 0 | Saludo, nombre de tarjeta |
-| title.m | Brygada 1918 | 400 | 24px / 1.15 | 0 | Encabezado de bloque |
+| display.xl | Brygada 1918 | 500 | 56px / 1.04 | -0.015em | Titular de escritorio, meta inmersiva |
+| display.l | Brygada 1918 | 500 | 38px / 1.04 | -0.015em | Titular móvil, sección |
+| title.l | Brygada 1918 | 500 | 26px / 1.08 | -0.01em | Saludo, nombre de tarjeta |
+| title.m | Brygada 1918 | 600 | 21px / 1.12 | -0.005em | Encabezado de bloque |
 | money.xl | Onest | 600 | 52px / 1 | -0.035em | Importe héroe escritorio |
 | money.l | Onest | 600 | 40px / 1 | -0.03em | Importe héroe móvil |
 | money.m | Onest | 600 | 26px / 1.1 | -0.02em | Importe de tarjeta |
@@ -63,7 +63,9 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 | overline | Onest | 600 | 11px / 1.2 | 0.09em | Etiquetas en mayúscula |
 | meta.mono | Spline Sans Mono [P] | 500 | 11px / 1.3 | 0.02em | Fechas y referencias en tablas |
 - `font-variant-numeric: tabular-nums` global. Importes héroe fluidos: `money.l: clamp(32px, 8vw, 40px)`, `money.xl: clamp(40px, 4vw, 52px)`.
-- Pesos previstos en la implementación: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Son el subconjunto que carga Juntia, no todos los pesos de cada familia. Brygada 1918 y Onest son decisión de los fundadores (maestro §15.10, decisión 14); Spline Sans Mono es propuesta del gestor, pendiente de aprobación visual. **Los tamaños, interlineados y tracking de esta tabla son los de Instrument Serif y Geist**: el PR de implementación de la decisión 14 los recalibra para cada fuente.
+- Pesos previstos en la implementación: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Son el subconjunto que carga Juntia, no todos los pesos de cada familia. Brygada 1918 y Onest son decisión de los fundadores (maestro §15.10, decisión 14); Spline Sans Mono es propuesta del gestor, pendiente de aprobación visual.
+- **Calibración de la decisión 14.** Brygada 1918 es más ancha que Instrument Serif: los titulares van al 88 % de los tamaños anteriores, con interlineado 1,04 y tracking −0,015 em, como en la comparativa de parejas. Va a **500** porque a 400 se queda delgada en oscuro; `title.m` sube a **600** para que el encabezado pequeño no dependa solo del tamaño. Onest mide casi lo mismo que Geist (ancho medio 469 frente a 467 sobre 1000 y altura de x 527 frente a 530), así que `money.*`, `body.*`, `label.*` y `overline` conservan sus valores. Spline Sans Mono tiene el mismo ancho de celda que Geist Mono (600 sobre 1000) y `meta.mono` también se conserva; su marca `[P]` sigue abierta hasta que los fundadores aprueben las capturas.
+- Titulares del shell (fuera de la tabla, por ser fluidos): título de página `clamp(25px, 7.4vw, 30px)` en móvil y `clamp(39px, 3.7vw, 56px)` desde `lg`; titular de estado 28 px en móvil y 35 px desde `lg`; marca 26 px en el rail y 28 px en el sidebar. AmountInput: 0,68 em por carácter en su `clamp` (Onest 600 tabular mide hasta 0,590 em por carácter en importes formateados, frente a 0,537 de Geist).
 
 ### 1.5 Espacio · radio · borde
 - **space:** 0 · 2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 20 · 24 · 28 · 32 · 40 · 48 · 56 · 64 · 80 · 96 (px).
