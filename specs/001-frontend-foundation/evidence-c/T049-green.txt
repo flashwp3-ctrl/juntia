@@ -1,0 +1,15 @@
+$ npx vitest run "src/components/shell/annotate-notice.test.tsx" --reporter=verbose   # 2026-11-04T00:29:54Z sobre 0a4e8e7
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > el disparador abre un `dialog` (no `alertdialog`) con el título y el cuerpo del catálogo 202ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > dentro no hay campos ni botón de guardar 74ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el foco en el cuerpo del documento, `N` abre el mismo aviso 56ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el foco en un campo, `N` escribe la letra y no abre el aviso 48ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el aviso abierto, `N` no abre otro 121ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > Escape lo cierra y el foco vuelve al disparador 479ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > «Cerrar» lo cierra y el foco vuelve al disparador 509ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > Tab no saca el foco del aviso 180ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > abierto con `N`, al cerrarlo el foco vuelve al elemento enfocado antes 484ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > por debajo de 768 px usa la hoja y desde 768 px el diálogo 55ms
+ ✓ |components| src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > desde 768 px usa el diálogo centrado 69ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+exit: 0

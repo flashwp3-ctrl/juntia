@@ -1,0 +1,25 @@
+# Comprobaciones de alcance sobre 0a4e8e7, 2026-11-04T00:32:51Z
+$ git grep -nE "P0-[0-9]" -- src
+src/domain/README.md:4:de datos, persona y moneda llegan con P0-1 (maestro §15.10).
+(exit 0)
+$ git grep -nE "person-?[3-6]" -- src
+(exit 1)
+$ git grep -nE "412\.900|2\.840\.000|429\.900|3\.740\.000|229\.900|900\.000" -- src tests
+(exit 1)
+$ git grep -ln "localStorage" -- src
+src/components/shell/context-selector.test.tsx
+src/lib/context-preference.ts
+src/lib/theme-script.test.ts
+src/lib/theme-script.ts
+$ git grep -nE "Total gastado|Al día|le debe|alertdialog" -- src/components/shell src/app
+src/app/(app)/balance/page.tsx:1:// T045, T054 / FR-029, FR-032: Balance «todavía no disponible»; nunca «Al día» ni una cifra; no usa SharedBalance (§15.9).
+src/app/(app)/product-routes.test.tsx:3:// Criterio literal (spec, FR-029): «Ninguna ruta de producto MUST mostrar «$0», importes, «Al día», «le debe»,
+src/app/(app)/product-routes.test.tsx:33:const FORBIDDEN = /[0-9]|\$|%|al día|le debe/i;
+src/components/shell/annotate-notice.test.tsx:6:// 768 px, con semántica de diálogo accesible (`dialog`), no de `alertdialog`».
+src/components/shell/annotate-notice.test.tsx:53:  it("el disparador abre un `dialog` (no `alertdialog`) con el título y el cuerpo del catálogo", async () => {
+src/components/shell/annotate-notice.test.tsx:58:    expect(screen.queryByRole("alertdialog")).toBeNull();
+(exit 0)
+$ ls tests/e2e; git ls-files "*.spec.ts"
+ls: cannot access 'tests/e2e': No such file or directory
+$ git diff --stat cb14a9f -- package.json package-lock.json
+(sin cambios)

@@ -1,0 +1,16 @@
+$ npm run build   # 2026-11-04T00:30:45Z sobre 0a4e8e7
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /actividad
+├ ○ /balance
+├ ○ /cuenta
+├ ƒ /interno/primitivos
+├ ○ /metas
+└ ○ /plan
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+exit: 0

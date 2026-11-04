@@ -1,0 +1,30 @@
+# Mediciones de PR C fuera de la suite (script en el scratchpad de la sesión, no en tests/). 2026-11-04T00:32:33Z sobre 0a4e8e7, next start en el puerto 3100.
+# Área táctil: caja + ::after posicionado; se exige que las cuatro esquinas de un cuadrado de 44 centrado caigan en el control (elementFromPoint), en cada tema.
+táctil light 360 /: 8 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 360 /cuenta: 1 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 360 /ruta-que-no-existe: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 390 /: 8 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 390 /cuenta: 1 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 390 /ruta-que-no-existe: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 1024 /: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 1024 /cuenta: 7 controles, mínimo 48×48, fuera de 44×44: ninguno
+táctil light 1024 /ruta-que-no-existe: 10 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil light 1440 /: 9 controles, mínimo 102.5×44, fuera de 44×44: ninguno
+táctil light 1440 /cuenta: 9 controles, mínimo 102.5×44, fuera de 44×44: ninguno
+táctil light 1440 /ruta-que-no-existe: 10 controles, mínimo 86.4×44, fuera de 44×44: ninguno
+táctil dark 360 /: 8 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 360 /cuenta: 1 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 360 /ruta-que-no-existe: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 390 /: 8 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 390 /cuenta: 1 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 390 /ruta-que-no-existe: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 1024 /: 9 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 1024 /cuenta: 7 controles, mínimo 48×48, fuera de 44×44: ninguno
+táctil dark 1024 /ruta-que-no-existe: 10 controles, mínimo 44×44, fuera de 44×44: ninguno
+táctil dark 1440 /: 9 controles, mínimo 102.5×44, fuera de 44×44: ninguno
+táctil dark 1440 /cuenta: 9 controles, mínimo 102.5×44, fuera de 44×44: ninguno
+táctil dark 1440 /ruta-que-no-existe: 10 controles, mínimo 86.4×44, fuera de 44×44: ninguno
+cruce 768: antes hoja a 700 px → a 900 px diálogo, 1 diálogo(s), foco dentro: true; tras Escape el foco está en el disparador «bar»
+perilla antes de hidratar 390: html data-context=us, hidratado=false, perilla CSS en Nosotros=true, perilla de React en Yo con opacidad 0
+perilla antes de hidratar 1440: html data-context=us, hidratado=false, perilla CSS en Nosotros=true, perilla de React en Yo con opacidad 0
+texto al 200 % a 390: etiquetas de la barra ocultas 4/4; scrollWidth 390 / clientWidth 390

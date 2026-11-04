@@ -1,0 +1,13 @@
+$ curl -s -o /dev/null -w "%{http_code}" <url>   # 2026-11-04T00:30:13Z sobre 0a4e8e7, next start (build de producción) en el puerto 3100
+/cuenta/perfil 404
+/cuenta/pareja 404
+/cuenta/apariencia 404
+/cuenta/privacidad 404
+/cuenta/seguridad 404
+/ruta-que-no-existe 404
+/ 200
+/actividad 200
+/metas 200
+/plan 200
+/balance 200
+/cuenta 200
