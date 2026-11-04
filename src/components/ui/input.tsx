@@ -39,7 +39,9 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
         <span id={labelId} className="text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-ink-secondary">
           {label}
         </span>
-        <span className={`flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] px-[14px] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid ${disabled ? "" : "cursor-text"} ${field} ${fieldClassName}`}>
+        {/* D-05 (T077): body.m va en el marco y el <input> lo hereda (preflight le da `font: inherit`). Así una clase de
+            tamaño en inputClassName, como el clamp de AmountInput, no compite con la de Input por orden de CSS. */}
+        <span className={`flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] px-[14px] text-[length:var(--body-m-size)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid ${disabled ? "" : "cursor-text"} ${field} ${fieldClassName}`}>
           {prefix}
           <input
             {...rest}
@@ -49,7 +51,7 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
             aria-invalid={invalid || undefined}
             aria-errormessage={invalid ? errorId : undefined}
             aria-describedby={[showHelp ? helpId : null, invalid ? errorId : null].filter(Boolean).join(" ") || undefined}
-            className={`min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
+            className={`min-w-0 flex-1 bg-transparent font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
           />
           {endIcon ? <AppIcon name={endIcon} size={20} className="shrink-0 text-ink-secondary" /> : null}
         </span>
