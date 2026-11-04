@@ -538,6 +538,49 @@ NEGATIVE_CONTROL {"first":[18,18,18],"pixels":["18,18,18","247,243,235"],"flashD
 
 Índice inferior muestreado: `((info.height-4)*info.width+3)*info.channels`; el otro píxel usa `(3*info.width+3)*info.channels`. Comando: `node %TEMP%/juntia-001-d/first-final.cjs`.
 
+### Repetición tras T077 (D-01 y D-02)
+
+Fecha: 2026-11-03 · Commit de aplicación: `d2d5ef8` (D-01 en `57731b4`). Mismo build servido por `JUNTIA_INTERNAL_SURFACE=1 next start`, mismo arnés: `node %TEMP%/juntia-001-d/first-final.cjs`, exit 0. Salida completa en [T077-cls-r2.txt](evidence/T077-cls-r2.txt).
+
+**D-01: CLS = 0 en las 12 cargas del arnés R2** (seis rutas × dos temas, CPU 6×, 400 kbit/s, 400 ms). Ningún cuadro con el tema contrario y el control negativo sigue detectando el destello:
+
+```jsonl
+FIRST_FRAME {"route":"/","theme":"light","cls":0,"shifts":[],"frames":4,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/actividad","theme":"light","cls":0,"shifts":[],"frames":4,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/metas","theme":"light","cls":0,"shifts":[],"frames":4,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/plan","theme":"light","cls":0,"shifts":[],"frames":4,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/balance","theme":"light","cls":0,"shifts":[],"frames":4,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/cuenta","theme":"light","cls":0,"shifts":[],"frames":3,"first":[247,243,235],"opposite":0}
+FIRST_FRAME {"route":"/","theme":"dark","cls":0,"shifts":[],"frames":4,"first":[18,20,22],"opposite":0}
+FIRST_FRAME {"route":"/actividad","theme":"dark","cls":0,"shifts":[],"frames":4,"first":[18,20,22],"opposite":0}
+FIRST_FRAME {"route":"/metas","theme":"dark","cls":0,"shifts":[],"frames":5,"first":[18,20,22],"opposite":0}
+FIRST_FRAME {"route":"/plan","theme":"dark","cls":0,"shifts":[],"frames":5,"first":[18,20,22],"opposite":0}
+FIRST_FRAME {"route":"/balance","theme":"dark","cls":0,"shifts":[],"frames":4,"first":[18,20,22],"opposite":0}
+FIRST_FRAME {"route":"/cuenta","theme":"dark","cls":0,"shifts":[],"frames":3,"first":[18,20,22],"opposite":0}
+NEGATIVE_CONTROL {"first":[18,18,18],"pixels":["18,18,18","247,243,235"],"flashDetected":true}
+```
+
+(Campos compactados; las líneas originales, con `timeOrigin`, `firstPaint` y los píxeles inferiores, están en el archivo enlazado.)
+
+Una segunda pasada con un arnés de diagnóstico que además registra las fuentes cargadas ([T077-cls-sources.txt](evidence/T077-cls-sources.txt)) da 0 en 11 de 12 cargas y **0,00168 en `/` oscuro**. Esa carga no viene de las fuentes: su fuente es el selector de contexto. Por eso se repitió la medición; véase «Segunda fuente de CLS» más abajo.
+
+**Causa de D-01 y margen.** La fuente del desplazamiento no era la caja del `<p>`, sino **dónde empieza la línea de texto centrada**. Con `items-center` y `text-center`, el inicio de la línea depende de su ancho, y `/plan` lo demostraba: su `<p>` ocupa todo el ancho, el rectángulo no cambia (`[20,353.47,350,41.5]` antes y después) y Chrome igual registró el desplazamiento del nodo de texto. Ensanchar la caja no lo habría corregido. El respaldo automático de `next/font` es Arial al 104,76 % para todos los pesos; en el copy de la 001 resultaba ~3 % más ancho que Geist, y el inicio de la línea se movía entre 3,5 y 5,1 px al llegar Geist. Chrome ignora movimientos de menos de 3 px. La corrección define «Geist Fallback» con un `size-adjust` por peso, medido como relación de anchos Geist/Arial sobre las 137 cadenas de `src/lib/copy/es.ts` (400 → 1,0070; 500 → 1,0269; 600 → 0,9712), y conserva las métricas verticales de Geist. `font-display` sigue siendo `swap`. Movimiento residual del inicio de la primera línea, medido con cada familia a 390 px:
+
+| Ruta | Inicio con Geist | Inicio con el respaldo | Diferencia |
+| --- | --- | --- | --- |
+| / | 45,97 | 47,70 | 1,73 px |
+| /actividad | 72,80 | 73,72 | 0,92 px |
+| /metas | 47,28 | 49,36 | 2,08 px |
+| /plan | 47,41 | 48,09 | 0,68 px |
+| /balance | 47,73 | 48,52 | 0,79 px |
+| /cuenta | 64,88 | 65,58 | 0,70 px |
+
+Límite conocido: el respaldo sale de `local("Arial")`. En un sistema sin Arial (Android suele no tenerla), el navegador usa la fuente genérica y el ajuste no aplica, igual que con el respaldo automático de `next/font`. Las capturas de las rutas de producto, rehechas después de la corrección, son idénticas byte a byte a las de `a3216c0` (T068): tras cargar Geist no cambia nada de lo que se ve.
+
+**Segunda fuente de CLS: pintura con el DOM a medio parsear. Existía antes de D-01 y sigue abierta.** Al repetir las cargas aparece de forma intermitente un desplazamiento con otra fuente: la barra inferior (52 → 106 px de alto), el selector de contexto (50 → 129 px de ancho) o un ícono de la barra. Muestra en [T077-cls-repeat.txt](evidence/T077-cls-repeat.txt): **9 de 40 cargas con CLS > 0, entre 0,00002 y 0,00804**; en las otras 31, CLS = 0. Causa: el HTML termina de llegar a ~545 ms, pero el script de tema, inline y bloqueante (R2), va en `<head>` detrás de la hoja de estilos. El navegador no puede ejecutarlo hasta que llega el CSS (~2,3 s), así que el `<body>` empieza a parsearse tarde. Con la CPU a 6×, el parser cede antes de terminar y el primer pintado (~2,4 s) llega antes de DOMContentLoaded (~2,45–2,95 s): se pinta un shell incompleto que crece cuando se parsea el resto. Ningún archivo de D-01, D-02 o D-05 toca esos nodos. La primera pasada de Codex ya registró un caso de esta clase en `a3216c0` (el `<svg>` de la barra en `/balance` claro, 792 → 783,6). **No se corrige en este PR:** las salidas tocan la posición del script de tema, que decidió R2 y comprueba `check:theme-script`, o la composición del shell. Va a revisión (T077).
+
+**D-02.** El hit testing ahora forma parte de `tests/a11y/routes.a11y.ts` (T077): 28 de 28 marcos enfocan su `<input>` en las cuatro esquinas, en los dos temas, a 390 y 1440. Antes: 0 de 4 en todos. Véase T077.
+
 <a id="t066"></a>
 
 ## T066 · Ícono scales
@@ -1003,6 +1046,17 @@ RECAPTURE {"route":"/interno/primitivos","width":1024,"theme":"dark","capture":"
 RECAPTURE {"route":"/interno/primitivos","width":1280,"theme":"dark","capture":"interno-primitivos-1280-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
 ```
 
+### Repetición tras T077 (D-01, D-02 y D-05)
+
+Fecha: 2026-11-03 · Commit de aplicación: `d2d5ef8`. Mismos arneses: `node %TEMP%/juntia-001-d/captures.cjs` (112 visitas, 62 capturas, exit 0; [T077-captures.txt](evidence/T077-captures.txt)) y luego `node %TEMP%/juntia-001-d/recapture-internal.cjs` (14 capturas de la superficie interna, exit 0; [T077-internal-recapture.txt](evidence/T077-internal-recapture.txt)).
+
+- **Rutas de producto (con sus estados provisionales) y «no encontrado»: las 48 capturas restantes son idénticas byte a byte a las de `a3216c0`.** `git status` no marca ninguna como modificada. La corrección de D-01 solo actúa mientras Geist no ha cargado y no cambia la composición visible.
+- **Superficie interna: cambian las 14 capturas** (7 anchos × 2 temas), por D-05. Los dígitos de AmountInput pasan de 15 px a 40 px cuando el campo está vacío y a 28–34 px con 999.999.999; ahora son más grandes que el «$» (26 px), como pide el contrato. Los marcos conservan sus 64 px (48 en Input). D-02 no se ve en una captura: solo cambia dónde responde el clic.
+
+![AmountInput a 390, claro, tras D-05](evidence/interno-primitivos-390-light.png)
+
+**Comparación con el comp `Juntia DS v1 - 02 Componentes`, sección Input y monto.** El comp dibuja el monto como un campo normal: 48 px de alto, «$0» a 15 px y peso 500, en el ejemplo de error («Escribe un monto mayor que 0»). La entrada grande del importe está en otra sección, «Anotar gasto · Flujo», a 52 px: es la pantalla de P0-1, no el primitivo. La 001 sigue la autoridad escrita: `contracts/primitives.md` («reduce el tamaño hasta 28 px sin cortar») y COMPONENT_SPECIFICATIONS.md §Input (Monto) («los importes largos reducen el tamaño con `clamp`»), con el marco de 64 px que construyó el PR B. **Queda para el revisor la diferencia entre ese ejemplo del comp y el contrato.** No se resuelve aquí porque cambiaría la anatomía aprobada en B.
+
 <a id="t069"></a>
 
 ## T069 · Inventario de pruebas
@@ -1118,6 +1172,32 @@ Diferencias que requieren decisión del revisor sobre actualizar el anexo, conse
 
 No se modifica el Anexo A ni se borra ninguna regresión. T069 ejecutada con diferencias documentadas; concordancia literal pendiente de revisión.
 
+### Repetición tras T077: concordancia con el Anexo A
+
+Fecha: 2026-11-03 · Commit de aplicación: `d2d5ef8`. Mismos comandos de solo lectura, exit 0: `npx vitest list` devuelve las mismas 51 líneas (verify ejecuta 85 casos en 9 archivos) y `npx playwright test --list --project a11y` sigue en `Total: 36 tests in 1 file`. Las regresiones de T077 son aserciones dentro de las cuatro pruebas de `/interno/primitivos`, no pruebas nuevas. **E2E specs added: 0.**
+
+Los fundadores aceptaron las pruebas que añadieron las revisiones de B y C, y `tasks.md` Anexo A tiene ahora la sección **A.4 Pruebas añadidas por revisión**. Concordancia entre el inventario y el anexo, prueba a prueba:
+
+| Prueba del inventario | Fila del Anexo A |
+| --- | --- |
+| `tests/lint-rules.test.ts` (5 plantillas) | B1; la matriz de F15-1 a F15-4 está dentro de B1 y figura en A.4 como «fuera de la aceptación del 3 de noviembre» |
+| `src/styles/tokens.test.ts` | B2 |
+| `src/lib/internal-surface.test.ts` | B7 |
+| `src/lib/theme-script.test.ts` | B17 |
+| `src/components/ui/amount-input.test.tsx`, los 9 casos de T024 | B3 |
+| `amount-input.test.tsx` › «valor externo fuera de rango (%s) › por %s…» | A.4 R1 (F17-4) |
+| `amount-input.test.tsx` › «con error vacío, un valor fuera de rango sigue inválido…» | A.4 R2 (F17-R3) |
+| `src/components/shell/annotate-notice.test.tsx` | B5 |
+| `src/components/shell/context-selector.test.tsx`, salvo el caso de abajo | B4 |
+| `context-selector.test.tsx` › «si se puede leer pero no escribir, la elección de la visita prevalece…» | A.4 R3 (F19-2) |
+| `src/app/(app)/error.test.tsx` (4 casos) | A.4 R4 (F19-3) |
+| `src/app/(app)/product-routes.test.tsx` | B6 |
+| `tests/a11y/routes.a11y.ts` › 32 casos ruta · tema · ancho | B9, con F17-2 (A.4 R5), F17-R2 y T060 (R6), D-02 (R7) y D-05 (R8) como aserciones dentro de los casos de `/interno/primitivos` y de las rutas de producto |
+| `tests/a11y/routes.a11y.ts` › 4 casos `/cuenta` a 390 y 768 | B9; F19-1 figura en A.4 como «fuera de la aceptación del 3 de noviembre» |
+| `scripts/check-internal-surface.mjs` y `scripts/check-theme-script.mjs` | B8 y B18 (salidas en T063 y en T077) |
+
+Toda prueba del inventario tiene fila, y toda fila de A.1 y A.4 tiene prueba. Dos grupos, F19-1 y F15-1 a F15-4, están en el código y en el anexo pero **no** en la lista de pruebas que aceptaron los fundadores: A.4 lo dice y quedan pendientes de su visto bueno.
+
 <a id="t070"></a>
 
 ## T070 · Alcance y copy
@@ -1227,6 +1307,40 @@ Interpretación:
 - person3–6 y dataset dorado: sin coincidencias.
 - localStorage de producción: solo context-preference y theme-script; este último lee juntia:context, no persiste tema. Los otros resultados son pruebas.
 - **Diferencia D-04:** ausencia absoluta de zod no se cumple: zod4.6.7 ya existe en lock por el tooling ESLint de Next. Ausente como dependencia directa/import de aplicación. `git diff --exit-code -- package.json package-lock.json`: exit0 y sin salida. No se elimina ni se cambian versiones; requiere aclarar el criterio literal con el revisor.
+
+**Decisión del gestor sobre D-04 (3 de noviembre de 2026): T070 se cumple.** T070 mira las dependencias directas, y `zod` solo aparece como dependencia transitiva de desarrollo, a través de `eslint-plugin-react-hooks` (de `eslint-config-next`). `npm ls --depth=0` sobre `d2d5ef8`, exit 0, sin `zod` ([T070-npm-ls-depth0.txt](evidence/T070-npm-ls-depth0.txt)):
+
+```text
+juntia@0.1.0
++-- @axe-core/playwright@4.14.0
++-- @emnapi/runtime@1.11.3 extraneous
++-- @eslint/css@1.4.0
++-- @img/sharp-wasm32@0.35.5 extraneous
++-- @phosphor-icons/react@2.1.10
++-- @playwright/test@1.64.1
++-- @radix-ui/react-dialog@1.3.1
++-- @tailwindcss/postcss@4.3.4
++-- @testing-library/dom@10.4.2
++-- @testing-library/react@16.3.3
++-- @testing-library/user-event@14.6.8
++-- @types/node@24.19.2
++-- @types/react-dom@19.3.0
++-- @types/react@19.3.0
++-- eslint-config-next@16.4.4
++-- eslint@9.39.5
++-- jsdom@30.1.3
++-- motion@14.9.0
++-- next@16.4.4
++-- react-dom@19.3.1
++-- react@19.3.1
++-- server-only@0.0.1
++-- tailwindcss@4.3.4
++-- typescript@6.0.3
++-- vite@8.3.5
+`-- vitest@5.1.0
+```
+
+Las dos entradas `extraneous` (`@emnapi/runtime` y `@img/sharp-wasm32`) son paquetes de la variante WebAssembly de `sharp` que `npm ls` marca como `extraneous` en este Windows tras `npm ci`. No están en `package.json` y no son dependencias directas. T077 no cambia `package.json` ni `package-lock.json`.
 
 Revisión semántica de `copy` contra GLOSSARY§9 y BRAND§4: el shell usa tuteo y explica que no guarda datos; Anotar no promete fechas ni guardado; Plan dice que presupuesto es opcional; Balance y Cuenta están explícitamente no disponibles. No se llama depósito a un aporte, no se afirma deuda, rendimiento o saldo bancario, ni se usa una fase técnica en copy. Las etiquetas EXCEDIDO/LIQUIDADO y valores de muestra se limitan a la superficie interna identificada. Para revisión humana: catálogo `src/lib/copy/es.ts`, seis estados provisionales, aviso de versión base y aviso de Anotar; aprobar comprensión de SC-008 por ambos fundadores, no por este grep.
 
@@ -1718,16 +1832,61 @@ const req=require('node:module').createRequire(process.cwd()+'/package.json');co
 
 ```
 
+### Correcciones de Claude Code: D-01, D-02 y D-05
+
+Fecha: 2026-11-03 · Antes: `2aaf79e` · Commits: `57731b4`, `1778712`, `2e921d8`, `28ee013` y `d2d5ef8`. Rama `codex/001-d-verification`, empujada como fast-forward.
+
+| Hallazgo | Causa | Cambio | Commit |
+| --- | --- | --- | --- |
+| D-01 · CLS > 0 en las seis rutas (T065) | En un texto centrado, el inicio de la línea depende de su ancho. El respaldo automático de `next/font` (Arial al 104,76 % en todos los pesos) es ~3 % más ancho que Geist, así que al llegar la fuente el inicio se movía de 3,5 a 5,1 px, por encima del umbral de 3 px de Chrome. No era la caja del `<p>`: `/plan`, que ocupa todo el ancho, también se desplazaba | `adjustFontFallback: false` y un «Geist Fallback» propio en `globals.css`: `size-adjust` por peso, medido sobre el catálogo de copy, y las métricas verticales de Geist. `font-display` sigue siendo `swap` | `57731b4` |
+| D-02 · Input y AmountInput clicables solo en 22,5 y 19 px (T065, T067) | El `<label>` era hermano del marco, y el relleno, el prefijo y el ícono no estaban dentro de ningún control | El `<label>` envuelve el rótulo y el marco: un clic en cualquier punto del marco enfoca el `<input>` por activación nativa, sin JavaScript y también antes de hidratar. `aria-labelledby` deja el nombre accesible en el rótulo. Misma geometría | `1778712` (prueba en rojo), `2e921d8` |
+| D-05 · Dígitos de AmountInput a 15 px (T068) | Input ponía `text-[length:var(--body-m-size)]` en el `<input>` y AmountInput añadía su `clamp` al mismo elemento. Sin `tailwind-merge`, ganaba la primera por orden en la hoja | body.m pasa al marco y el `<input>` lo hereda (`font: inherit` del preflight). Así la clase de AmountInput ya no compite. Además, a 40 px Chrome impone a Geist su alto de línea `normal` (52 px) aunque se pida `leading-none`, y el marco pasa de `py-2` a `py-1.5` para seguir en 64 px. Sin dependencias nuevas | `28ee013` (prueba en rojo), `d2d5ef8` |
+
+**D-02, rojo y verde** ([T077-d02-hit-testing.txt](evidence/T077-d02-hit-testing.txt)). Es un clic real de Playwright en las cuatro esquinas de cada marco, a 5 px del borde, seguido de comprobar `document.activeElement`. Se hace dentro de la pasada de `/interno/primitivos` en `tests/a11y/routes.a11y.ts`, sobre los 7 campos habilitados de cada panel, en los dos temas, a 390 y 1440. Rojo, con el Input anterior y el arnés final: `4 failed`, y todos los campos con `esquinas que enfocan 0/4 [no no no no]`. Verde:
+
+```text
+light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+  4 passed
+```
+
+Una primera versión del arnés llevaba a la vista el `<input>` y no su marco. A 1440 dejaba el borde inferior de «Monto · Con error» fuera de la ventana y daba 2 de 4. Se corrigió el arnés, que ahora centra el marco, y el rojo se repitió con esa versión.
+
+**D-05, rojo y verde** ([T077-d05-amount-size.txt](evidence/T077-d05-amount-size.txt)). La aserción va en la misma pasada porque jsdom no aplica el CSS de Tailwind: una prueba RTL de AmountInput no ve ni el tamaño calculado ni el orden de las clases. Comprueba que los dígitos estén entre 28 y 40 px y no se corten, que el marco mida 64 px y que el Input de texto conserve body.m con su marco de 48. Rojo: `AmountInput «»: 15 px fuera de 28–40` y `AmountInput «999.999.999»: 15 px fuera de 28–40`. Verde:
+
+```text
+light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 34.0819 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 28.0053 px, marco de 64 px
+light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 29.5905 px, marco de 64 px
+  4 passed
+```
+
+Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con error crecía a 68 px (40 px de fuente y 52 de línea `normal`, más 16 de relleno). La aserción del alto del marco existe por eso.
+
+**Validación local** sobre `d2d5ef8`. Salidas completas enlazadas:
+
+- `npm run verify`, exit 0 ([T077-d-fixes-verify.txt](evidence/T077-d-fixes-verify.txt)): lint, typecheck y components pasan (85 casos en 9 archivos); unit tiene 0 pruebas, y verify total tarda 27,70 s, por debajo de los 90 s.
+- `npm run test:a11y`, exit 0 ([T077-d-fixes-a11y.txt](evidence/T077-d-fixes-a11y.txt)): `36 passed`. Incluye las aserciones de D-02 y D-05 en las cuatro pasadas internas.
+- `npm run check:internal-surface`, exit 0 ([T077-d-fixes-internal.txt](evidence/T077-d-fixes-internal.txt)): las seis filas `OK`.
+- `npm run check:theme-script`, exit 0 ([T077-d-fixes-theme.txt](evidence/T077-d-fixes-theme.txt)): las cinco comprobaciones `OK`.
+- Arnés R2 de T065: CLS = 0 en las 12 cargas. Capturas de T068 rehechas.
+
 | Hallazgo que queda | Quién / siguiente paso |
 | --- | --- |
-| D-01 / T065: CLS positivo | Claude Code con Claude Design 04 Pantallas; revisar provisional-state.tsx y métricas de fuentes. Repetir las12 cargas frías; mantener CLS=0. |
-| D-02 / T065–T067: inputs sin44px reales | Claude Code con02 Componentes, Input/AmountInput; ampliar zona interactiva conforme al comp y repetir hit testing, sin confundir marco con objetivo. |
-| D-05 / T068: AmountInput15px | Claude Code con02 Componentes y contrato mínimo28px; comprobar estilo calculado y captura antes/después. |
-| D-04 / T070: zod transitivo de tooling | Fundadores/revisor: aclarar ausencia absoluta vs uso directo con las versiones fijadas; no se cambia el lock en D. |
-| T069 diferencias del Anexo A | Revisor: decidir actualización documental; todas las regresiones se conservan. |
+| D-01 / T065 | **Corregido** (`57731b4`): CLS = 0 en las 12 cargas de R2. |
+| CLS por pintura con el DOM a medio parsear (T065, en la repetición de T077) | **Abierto; existía antes de T077.** En 9 de 40 cargas repetidas, CLS entre 0,00002 y 0,00804, con fuente en la barra, el selector o un ícono de la barra. Causa: el script de tema, que R2 colocó en `<head>`, espera al CSS y retrasa el parseo del `<body>`, y con la CPU a 6× se pinta un DOM incompleto. Corregirlo toca la posición del script (R2, `check:theme-script`) o la composición del shell: decide el revisor, no este PR. |
+| D-02 / T065–T067 | **Corregido** (`2e921d8`), con regresión en `routes.a11y.ts` (`1778712`). |
+| D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
+| D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
+| T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 y F15-1 a F15-4 quedan pendientes del visto bueno de los fundadores. |
 | T072–T075 y paleta/copy/SC-008 | Fundadores: checklists anteriores, proyecto/preview y dispositivos reales; la001 no queda aceptada por este PR. |
 
-D no añade pruebas permanentes, specs E2E, dependencias ni funcionalidad.
+D no añade specs E2E, dependencias ni funcionalidad. Sí añade aserciones permanentes de regresión dentro de las pruebas existentes de `tests/a11y/routes.a11y.ts`: las de D-02 y D-05 (Anexo A §A.4, R7 y R8).
 
 
 <a id="t078"></a>

@@ -1,0 +1,38 @@
+# Muestra repetida R2 (CPU 6x, 400 kbit/s, 400 ms), build de d2d5ef8. 12 cargas de / (6 por tema) y 16 cargas de las seis rutas; la segunda se detuvo por tiempo.
+# fp = first-paint, htmlEnd = fin de la respuesta HTML, dcl = DOMContentLoaded (ms).
+{"i":0,"route":"/","theme":"light","cls":0,"fp":2368,"htmlEnd":549,"dcl":2769,"shifts":[]}
+{"i":0,"route":"/","theme":"dark","cls":0,"fp":2368,"htmlEnd":547,"dcl":2742,"shifts":[]}
+{"i":1,"route":"/","theme":"light","cls":0,"fp":2372,"htmlEnd":576,"dcl":2710,"shifts":[]}
+{"i":1,"route":"/","theme":"dark","cls":0.00005049475355623016,"fp":2340,"htmlEnd":551,"dcl":2940,"shifts":[{"v":0.00005049475355623016,"t":2906,"src":["SPAN  33,32,32→33,32,32"]}]}
+{"i":2,"route":"/","theme":"light","cls":0,"fp":2504,"htmlEnd":540,"dcl":3034,"shifts":[]}
+{"i":2,"route":"/","theme":"dark","cls":0,"fp":2444,"htmlEnd":552,"dcl":2945,"shifts":[]}
+{"i":3,"route":"/","theme":"light","cls":0.000019896617499434148,"fp":2424,"htmlEnd":544,"dcl":2953,"shifts":[{"v":0.000019896617499434148,"t":2917,"src":["svg  113,22,22→113,22,22"]}]}
+{"i":3,"route":"/","theme":"dark","cls":0,"fp":2384,"htmlEnd":543,"dcl":2922,"shifts":[]}
+{"i":4,"route":"/","theme":"light","cls":0,"fp":2476,"htmlEnd":549,"dcl":2772,"shifts":[]}
+{"i":4,"route":"/","theme":"dark","cls":0,"fp":2416,"htmlEnd":540,"dcl":2926,"shifts":[]}
+{"i":5,"route":"/","theme":"light","cls":0,"fp":2372,"htmlEnd":542,"dcl":2772,"shifts":[]}
+{"i":5,"route":"/","theme":"dark","cls":0.000019896617499434148,"fp":2416,"htmlEnd":542,"dcl":2909,"shifts":[{"v":0.000019896617499434148,"t":2881,"src":["svg  38,22,22→38,22,22"]}]}
+TOTAL 12 with CLS>0: 3
+{"i":0,"route":"/","theme":"light","cls":0,"fp":2480,"htmlEnd":538,"dcl":2477,"shifts":[]}
+{"i":0,"route":"/actividad","theme":"light","cls":0,"fp":2624,"htmlEnd":550,"dcl":2651,"shifts":[]}
+{"i":0,"route":"/metas","theme":"light","cls":0,"fp":2236,"htmlEnd":552,"dcl":2239,"shifts":[]}
+{"i":0,"route":"/plan","theme":"light","cls":0,"fp":2388,"htmlEnd":551,"dcl":2469,"shifts":[]}
+{"i":0,"route":"/balance","theme":"light","cls":0,"fp":2448,"htmlEnd":543,"dcl":2444,"shifts":[]}
+{"i":0,"route":"/cuenta","theme":"light","cls":0,"fp":2380,"htmlEnd":548,"dcl":2387,"shifts":[]}
+{"i":0,"route":"/","theme":"dark","cls":0,"fp":2260,"htmlEnd":541,"dcl":2264,"shifts":[]}
+{"i":0,"route":"/actividad","theme":"dark","cls":0,"fp":2464,"htmlEnd":545,"dcl":2470,"shifts":[]}
+{"i":0,"route":"/metas","theme":"dark","cls":0,"fp":2300,"htmlEnd":546,"dcl":2576,"shifts":[]}
+{"i":0,"route":"/plan","theme":"dark","cls":0,"fp":2324,"htmlEnd":541,"dcl":2641,"shifts":[]}
+{"i":0,"route":"/balance","theme":"dark","cls":0,"fp":2452,"htmlEnd":544,"dcl":2448,"shifts":[]}
+{"i":0,"route":"/cuenta","theme":"dark","cls":0,"fp":2320,"htmlEnd":579,"dcl":2517,"shifts":[]}
+{"i":1,"route":"/","theme":"light","cls":0,"fp":2544,"htmlEnd":540,"dcl":2535,"shifts":[]}
+{"i":1,"route":"/actividad","theme":"light","cls":0,"fp":2296,"htmlEnd":545,"dcl":2306,"shifts":[]}
+{"i":1,"route":"/metas","theme":"light","cls":0,"fp":2336,"htmlEnd":539,"dcl":2654,"shifts":[]}
+{"i":1,"route":"/plan","theme":"light","cls":0.000019896617499434148,"fp":2496,"htmlEnd":579,"dcl":3567,"shifts":[{"v":0.000019896617499434148,"t":3227,"src":["svg  255,22,22→255,22,22"]}]}
+# Primera tanda de 12 cargas de / con el mismo arnés (salida de consola copiada; la tanda de arriba la repite).
+{"i":0,"route":"/","theme":"light","cls":0.008035533793041484,"fp":2420,"htmlEnd":540,"dcl":2501,"shifts":[{"v":0.008035533793041484,"t":2492,"src":["NAV InicioActividadMetas 0,390,52→0,390,106"]}]}
+{"i":0,"route":"/","theme":"dark","cls":0.0016795269367264887,"fp":2416,"htmlEnd":547,"dcl":2527,"shifts":[{"v":0.0016795269367264887,"t":2523,"src":["DIV YoNosotros 320,50,48→241,129,44"]}]}
+{"i":2,"route":"/","theme":"light","cls":0.00005049475355623016,"fp":2244,"htmlEnd":544,"dcl":2439,"shifts":[{"v":0.00005049475355623016,"t":2426,"src":["SPAN  33,32,32→33,32,32"]}]}
+{"i":4,"route":"/","theme":"dark","cls":0.0016223612819706516,"fp":2368,"htmlEnd":547,"dcl":2469,"shifts":[{"v":0.0016223612819706516,"t":2463,"src":["DIV YoNosotros 320,50,44→241,129,44"]}]}
+{"i":5,"route":"/","theme":"dark","cls":0.00005049475355623016,"fp":2276,"htmlEnd":547,"dcl":2474,"shifts":[{"v":0.00005049475355623016,"t":2464,"src":["SPAN  33,32,32→33,32,32"]}]}
+TOTAL 12 with CLS>0: 5 (las otras 7 con cls 0)
