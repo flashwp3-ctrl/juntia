@@ -74,7 +74,7 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
 ### Nivel 1 — cada push a un PR de código
 
-Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR que solo tocan archivos documentales (`**/*.md`, `docs/**/*.png`, `specs/**/*.png` y `specs/**/*.txt`) ni en borradores. En un borrador se lanza a mano con «Run workflow», que solo aparece cuando el workflow ya está en `main`; un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
+Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR que solo tocan archivos documentales (`**/*.md`, `docs/**/*.png`, `specs/**/*.png` y `specs/**/*.txt`), salvo los que alimentan herramientas o agentes: `.specify/**`, `.claude/**`, `.agents/**`, `AGENTS.md` y `CLAUDE.md` siempre lo disparan. Tampoco corre en borradores. En un borrador se lanza a mano con «Run workflow», que solo aparece cuando el workflow ya está en `main`; un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
 
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
