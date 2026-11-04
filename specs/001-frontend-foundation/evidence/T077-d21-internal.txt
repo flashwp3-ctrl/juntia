@@ -1,0 +1,15 @@
+
+> juntia@0.1.0 check:internal-surface
+> node scripts/check-internal-surface.mjs
+
+check:internal-surface · /interno/primitivos
+┌─────────┬───────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┬──────────┬──────────┬───────────┐
+│ (index) │ destino                                           │ host                                                        │ obtenido │ esperado │ resultado │
+├─────────┼───────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┼──────────┼──────────┼───────────┤
+│ 0       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'dominio de producción (juntia-produccion.example)'         │ 404      │ 404      │ 'OK'      │
+│ 1       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 404      │ 404      │ 'OK'      │
+│ 2       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 200      │ 200      │ 'OK'      │
+│ 3       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de rama (juntia-git-rama-prueba-equipo.vercel.app)'    │ 200      │ 200      │ 'OK'      │
+│ 4       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'dominio de producción (alias) (juntia-produccion.example)' │ 404      │ 404      │ 'OK'      │
+│ 5       │ 'ninguna variable'                                │ 'localhost (localhost)'                                     │ 404      │ 404      │ 'OK'      │
+└─────────┴───────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┴──────────┴──────────┴───────────┘

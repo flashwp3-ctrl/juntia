@@ -1,0 +1,52 @@
+# D21-1: build con <link rel="expect" blocking="render">. Arnés R2 (CPU 6x, 400 kbit/s, 400 ms), 4 iteraciones x 6 rutas x 2 temas = 48 cargas.
+# shellEnd = ms en que se inserta #juntia-shell-end; shellBeforePaint = shellEnd <= first-paint.
+{"i":0,"route":"/","theme":"light","cls":0,"fp":2420,"htmlEnd":583,"shellEnd":2186,"shellBeforePaint":true,"dcl":2432,"shifts":[]}
+{"i":0,"route":"/actividad","theme":"light","cls":0,"fp":2444,"htmlEnd":551,"shellEnd":2192,"shellBeforePaint":true,"dcl":2467,"shifts":[]}
+{"i":0,"route":"/metas","theme":"light","cls":0,"fp":2492,"htmlEnd":540,"shellEnd":2164,"shellBeforePaint":true,"dcl":2508,"shifts":[]}
+{"i":0,"route":"/plan","theme":"light","cls":0,"fp":2420,"htmlEnd":546,"shellEnd":2157,"shellBeforePaint":true,"dcl":2417,"shifts":[]}
+{"i":0,"route":"/balance","theme":"light","cls":0,"fp":2448,"htmlEnd":556,"shellEnd":2190,"shellBeforePaint":true,"dcl":2190,"shifts":[]}
+{"i":0,"route":"/cuenta","theme":"light","cls":0,"fp":2368,"htmlEnd":582,"shellEnd":2181,"shellBeforePaint":true,"dcl":2181,"shifts":[]}
+{"i":0,"route":"/","theme":"dark","cls":0,"fp":2436,"htmlEnd":544,"shellEnd":2162,"shellBeforePaint":true,"dcl":2417,"shifts":[]}
+{"i":0,"route":"/actividad","theme":"dark","cls":0,"fp":2420,"htmlEnd":553,"shellEnd":2159,"shellBeforePaint":true,"dcl":2446,"shifts":[]}
+{"i":0,"route":"/metas","theme":"dark","cls":0,"fp":2456,"htmlEnd":546,"shellEnd":2203,"shellBeforePaint":true,"dcl":2448,"shifts":[]}
+{"i":0,"route":"/plan","theme":"dark","cls":0,"fp":2484,"htmlEnd":548,"shellEnd":2180,"shellBeforePaint":true,"dcl":2475,"shifts":[]}
+{"i":0,"route":"/balance","theme":"dark","cls":0,"fp":2684,"htmlEnd":544,"shellEnd":2223,"shellBeforePaint":true,"dcl":2696,"shifts":[]}
+{"i":0,"route":"/cuenta","theme":"dark","cls":0,"fp":2388,"htmlEnd":571,"shellEnd":2177,"shellBeforePaint":true,"dcl":2396,"shifts":[]}
+{"i":1,"route":"/","theme":"light","cls":0,"fp":2456,"htmlEnd":549,"shellEnd":2205,"shellBeforePaint":true,"dcl":2451,"shifts":[]}
+{"i":1,"route":"/actividad","theme":"light","cls":0,"fp":2472,"htmlEnd":549,"shellEnd":2192,"shellBeforePaint":true,"dcl":2464,"shifts":[]}
+{"i":1,"route":"/metas","theme":"light","cls":0,"fp":2508,"htmlEnd":551,"shellEnd":2177,"shellBeforePaint":true,"dcl":2178,"shifts":[]}
+{"i":1,"route":"/plan","theme":"light","cls":0,"fp":2468,"htmlEnd":554,"shellEnd":2192,"shellBeforePaint":true,"dcl":2463,"shifts":[]}
+{"i":1,"route":"/balance","theme":"light","cls":0,"fp":2460,"htmlEnd":553,"shellEnd":2184,"shellBeforePaint":true,"dcl":2457,"shifts":[]}
+{"i":1,"route":"/cuenta","theme":"light","cls":0,"fp":2480,"htmlEnd":567,"shellEnd":2198,"shellBeforePaint":true,"dcl":2497,"shifts":[]}
+{"i":1,"route":"/","theme":"dark","cls":0,"fp":2504,"htmlEnd":549,"shellEnd":2203,"shellBeforePaint":true,"dcl":2508,"shifts":[]}
+{"i":1,"route":"/actividad","theme":"dark","cls":0,"fp":2452,"htmlEnd":549,"shellEnd":2173,"shellBeforePaint":true,"dcl":2456,"shifts":[]}
+{"i":1,"route":"/metas","theme":"dark","cls":0,"fp":2520,"htmlEnd":564,"shellEnd":2184,"shellBeforePaint":true,"dcl":2184,"shifts":[]}
+{"i":1,"route":"/plan","theme":"dark","cls":0,"fp":2440,"htmlEnd":540,"shellEnd":2193,"shellBeforePaint":true,"dcl":2467,"shifts":[]}
+{"i":1,"route":"/balance","theme":"dark","cls":0,"fp":2468,"htmlEnd":552,"shellEnd":2192,"shellBeforePaint":true,"dcl":2474,"shifts":[]}
+{"i":1,"route":"/cuenta","theme":"dark","cls":0,"fp":2404,"htmlEnd":570,"shellEnd":2178,"shellBeforePaint":true,"dcl":2401,"shifts":[]}
+{"i":2,"route":"/","theme":"light","cls":0,"fp":2428,"htmlEnd":549,"shellEnd":2169,"shellBeforePaint":true,"dcl":2435,"shifts":[]}
+{"i":2,"route":"/actividad","theme":"light","cls":0,"fp":2500,"htmlEnd":550,"shellEnd":2218,"shellBeforePaint":true,"dcl":2531,"shifts":[]}
+{"i":2,"route":"/metas","theme":"light","cls":0,"fp":2508,"htmlEnd":553,"shellEnd":2183,"shellBeforePaint":true,"dcl":2505,"shifts":[]}
+{"i":2,"route":"/plan","theme":"light","cls":0,"fp":2468,"htmlEnd":554,"shellEnd":2204,"shellBeforePaint":true,"dcl":2471,"shifts":[]}
+{"i":2,"route":"/balance","theme":"light","cls":0,"fp":2456,"htmlEnd":539,"shellEnd":2199,"shellBeforePaint":true,"dcl":2457,"shifts":[]}
+{"i":2,"route":"/cuenta","theme":"light","cls":0,"fp":2392,"htmlEnd":572,"shellEnd":2165,"shellBeforePaint":true,"dcl":2387,"shifts":[]}
+{"i":2,"route":"/","theme":"dark","cls":0,"fp":2444,"htmlEnd":543,"shellEnd":2188,"shellBeforePaint":true,"dcl":2439,"shifts":[]}
+{"i":2,"route":"/actividad","theme":"dark","cls":0,"fp":2456,"htmlEnd":540,"shellEnd":2196,"shellBeforePaint":true,"dcl":2444,"shifts":[]}
+{"i":2,"route":"/metas","theme":"dark","cls":0,"fp":2480,"htmlEnd":551,"shellEnd":2196,"shellBeforePaint":true,"dcl":2482,"shifts":[]}
+{"i":2,"route":"/plan","theme":"dark","cls":0,"fp":2428,"htmlEnd":551,"shellEnd":2181,"shellBeforePaint":true,"dcl":2427,"shifts":[]}
+{"i":2,"route":"/balance","theme":"dark","cls":0,"fp":2420,"htmlEnd":555,"shellEnd":2158,"shellBeforePaint":true,"dcl":2421,"shifts":[]}
+{"i":2,"route":"/cuenta","theme":"dark","cls":0,"fp":2416,"htmlEnd":584,"shellEnd":2178,"shellBeforePaint":true,"dcl":2420,"shifts":[]}
+{"i":3,"route":"/","theme":"light","cls":0,"fp":2456,"htmlEnd":542,"shellEnd":2193,"shellBeforePaint":true,"dcl":2454,"shifts":[]}
+{"i":3,"route":"/actividad","theme":"light","cls":0,"fp":2440,"htmlEnd":552,"shellEnd":2193,"shellBeforePaint":true,"dcl":2437,"shifts":[]}
+{"i":3,"route":"/metas","theme":"light","cls":0,"fp":2452,"htmlEnd":545,"shellEnd":2165,"shellBeforePaint":true,"dcl":2454,"shifts":[]}
+{"i":3,"route":"/plan","theme":"light","cls":0,"fp":2484,"htmlEnd":551,"shellEnd":2205,"shellBeforePaint":true,"dcl":2484,"shifts":[]}
+{"i":3,"route":"/balance","theme":"light","cls":0,"fp":2440,"htmlEnd":555,"shellEnd":2197,"shellBeforePaint":true,"dcl":2436,"shifts":[]}
+{"i":3,"route":"/cuenta","theme":"light","cls":0,"fp":2392,"htmlEnd":571,"shellEnd":2191,"shellBeforePaint":true,"dcl":2394,"shifts":[]}
+{"i":3,"route":"/","theme":"dark","cls":0,"fp":2508,"htmlEnd":552,"shellEnd":2223,"shellBeforePaint":true,"dcl":2501,"shifts":[]}
+{"i":3,"route":"/actividad","theme":"dark","cls":0,"fp":2444,"htmlEnd":554,"shellEnd":2164,"shellBeforePaint":true,"dcl":2437,"shifts":[]}
+{"i":3,"route":"/metas","theme":"dark","cls":0,"fp":2504,"htmlEnd":552,"shellEnd":2204,"shellBeforePaint":true,"dcl":2511,"shifts":[]}
+{"i":3,"route":"/plan","theme":"dark","cls":0,"fp":2484,"htmlEnd":547,"shellEnd":2179,"shellBeforePaint":true,"dcl":2491,"shifts":[]}
+{"i":3,"route":"/balance","theme":"dark","cls":0,"fp":2468,"htmlEnd":543,"shellEnd":2199,"shellBeforePaint":true,"dcl":2468,"shifts":[]}
+{"i":3,"route":"/cuenta","theme":"dark","cls":0,"fp":2428,"htmlEnd":581,"shellEnd":2201,"shellBeforePaint":true,"dcl":2429,"shifts":[]}
+TOTAL 48 with CLS>0: 0
+rep 0

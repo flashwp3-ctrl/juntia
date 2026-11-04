@@ -575,9 +575,34 @@ Una segunda pasada con un arnés de diagnóstico que además registra las fuente
 | /balance | 47,73 | 48,52 | 0,79 px |
 | /cuenta | 64,88 | 65,58 | 0,70 px |
 
-Límite conocido: el respaldo sale de `local("Arial")`. En un sistema sin Arial (Android suele no tenerla), el navegador usa la fuente genérica y el ajuste no aplica, igual que con el respaldo automático de `next/font`. Las capturas de las rutas de producto, rehechas después de la corrección, son idénticas byte a byte a las de `a3216c0` (T068): tras cargar Geist no cambia nada de lo que se ve.
+Límite conocido: el respaldo sale de `local("Arial")`. En un sistema sin Arial (Android suele no tenerla), el navegador usa la fuente genérica y el ajuste no aplica, igual que con el respaldo automático de `next/font`. Las capturas de las rutas de producto, rehechas después de la corrección, son idénticas byte a byte a las que T068 guardó en `0611109` (build de la aplicación en `a3216c0`). Tras cargar Geist, no cambia nada de lo que se ve.
 
-**Segunda fuente de CLS: pintura con el DOM a medio parsear. Existía antes de D-01 y sigue abierta.** Al repetir las cargas aparece de forma intermitente un desplazamiento con otra fuente: la barra inferior (52 → 106 px de alto), el selector de contexto (50 → 129 px de ancho) o un ícono de la barra. Muestra en [T077-cls-repeat.txt](evidence/T077-cls-repeat.txt): **9 de 40 cargas con CLS > 0, entre 0,00002 y 0,00804**; en las otras 31, CLS = 0. Causa: el HTML termina de llegar a ~545 ms, pero el script de tema, inline y bloqueante (R2), va en `<head>` detrás de la hoja de estilos. El navegador no puede ejecutarlo hasta que llega el CSS (~2,3 s), así que el `<body>` empieza a parsearse tarde. Con la CPU a 6×, el parser cede antes de terminar y el primer pintado (~2,4 s) llega antes de DOMContentLoaded (~2,45–2,95 s): se pinta un shell incompleto que crece cuando se parsea el resto. Ningún archivo de D-01, D-02 o D-05 toca esos nodos. La primera pasada de Codex ya registró un caso de esta clase en `a3216c0` (el `<svg>` de la barra en `/balance` claro, 792 → 783,6). **No se corrige en este PR:** las salidas tocan la posición del script de tema, que decidió R2 y comprueba `check:theme-script`, o la composición del shell. Va a revisión (T077).
+**Segunda fuente de CLS: pintura con el DOM a medio parsear. Existía antes de D-01; se corrige en D21-1 (abajo).** Al repetir las cargas aparece de forma intermitente un desplazamiento con otra fuente: la barra inferior (52 → 106 px de alto), el selector de contexto (50 → 129 px de ancho) o un ícono de la barra. Muestra en [T077-cls-repeat.txt](evidence/T077-cls-repeat.txt): **9 de 40 cargas con CLS > 0, entre 0,00002 y 0,00804**; en las otras 31, CLS = 0. Causa: el HTML termina de llegar a ~545 ms, pero el script de tema, inline y bloqueante (R2), va en `<head>` detrás de la hoja de estilos. El navegador no puede ejecutarlo hasta que llega el CSS (~2,3 s), así que el `<body>` empieza a parsearse tarde. Con la CPU a 6×, el parser cede antes de terminar y el primer pintado (~2,4 s) llega antes de DOMContentLoaded (~2,45–2,95 s): se pinta un shell incompleto que crece cuando se parsea el resto. Ningún archivo de D-01, D-02 o D-05 toca esos nodos. La primera pasada de Codex ya registró un caso de esta clase en `a3216c0` (el `<svg>` de la barra en `/balance` claro, 792 → 783,6). Al registrarla, este párrafo la dejaba abierta porque las salidas parecían tocar la posición del script de tema o la composición del shell. La revisión del PR #21 (D21-1, P1) pidió corregirla.
+
+### D21-1: el primer pintado espera al shell completo
+
+Fecha: 2026-11-03 · Commit de aplicación: `5756613`.
+
+**Por qué no bastan dimensiones fijas.** Fijar el alto de la barra y el ancho del selector evita que sus cajas crezcan, pero no que se muevan sus hijos. Un ícono centrado en su pestaña sube cuando el parser añade la etiqueta de debajo, como pasó con los `<svg>` de 22 × 22. El problema es pintar un DOM incompleto, no las dimensiones.
+
+**Cambio.** `<link rel="expect" href="#juntia-shell-end" blocking="render">` en el `<head>` del root layout y un `<div id="juntia-shell-end" hidden>` como último hijo del AppShell. Chrome no pinta hasta haber parseado ese elemento, así que el primer pintado ya tiene el shell completo. Una página sin el elemento, como la superficie interna, se desbloquea al terminar el parseo. Los navegadores sin soporte lo ignoran. No se toca el script de tema ni la composición. `check:theme-script` sigue en verde.
+
+**R2**, `node %TEMP%/juntia-001-d/first-final.cjs`, exit 0 ([T077-cls-r2.txt](evidence/T077-cls-r2.txt)): CLS = 0 en las 12 cargas, `opposite: 0` en las 12 y control negativo `"flashDetected":true`.
+
+**Medición ampliada:** el mismo arnés de la repetición, más el momento en que se inserta `#juntia-shell-end` ([T077-cls-repeat-d21.txt](evidence/T077-cls-repeat-d21.txt)). 4 iteraciones × 6 rutas × 2 temas:
+
+```text
+TOTAL 48 with CLS>0: 0
+```
+
+En las 48, `shellBeforePaint: true`: el final del shell se parsea antes del primer pintado. Muestra de líneas:
+
+```jsonl
+{"i":0,"route":"/","theme":"light","cls":0,"fp":2420,"htmlEnd":583,"shellEnd":2186,"shellBeforePaint":true,"dcl":2432,"shifts":[]}
+{"i":0,"route":"/balance","theme":"dark","cls":0,"fp":2684,"htmlEnd":544,"shellEnd":2223,"shellBeforePaint":true,"dcl":2696,"shifts":[]}
+```
+
+**Coste.** Con la CPU a 6×, la mediana del primer pintado pasa de 2.384 ms (33 cargas antes de D21-1, [T077-cls-repeat.txt](evidence/T077-cls-repeat.txt)) a 2.456 ms (48 cargas después): +72 ms. El rango pasa de 2.236–2.624 a 2.368–2.684 ms. Lo que se pinta no cambia: tras regenerar las capturas de T068 y de la superficie interna, ninguna cambió de hash.
 
 **D-02.** El hit testing ahora forma parte de `tests/a11y/routes.a11y.ts` (T077): 28 de 28 marcos enfocan su `<input>` en las cuatro esquinas, en los dos temas, a 390 y 1440. Antes: 0 de 4 en todos. Véase T077.
 
@@ -1050,7 +1075,7 @@ RECAPTURE {"route":"/interno/primitivos","width":1280,"theme":"dark","capture":"
 
 Fecha: 2026-11-03 · Commit de aplicación: `d2d5ef8`. Mismos arneses: `node %TEMP%/juntia-001-d/captures.cjs` (112 visitas, 62 capturas, exit 0; [T077-captures.txt](evidence/T077-captures.txt)) y luego `node %TEMP%/juntia-001-d/recapture-internal.cjs` (14 capturas de la superficie interna, exit 0; [T077-internal-recapture.txt](evidence/T077-internal-recapture.txt)).
 
-- **Rutas de producto (con sus estados provisionales) y «no encontrado»: las 48 capturas restantes son idénticas byte a byte a las de `a3216c0`.** `git status` no marca ninguna como modificada. La corrección de D-01 solo actúa mientras Geist no ha cargado y no cambia la composición visible.
+- **Rutas de producto (con sus estados provisionales) y «no encontrado»: las 48 capturas restantes son idénticas byte a byte a las que T068 guardó en `0611109`, con el build de la aplicación en `a3216c0`.** No son las capturas de C, `evidence-c/`; la comparación con esas está en T078. `git status` no marca ninguna como modificada. La corrección de D-01 solo actúa mientras Geist no ha cargado y no cambia la composición visible.
 - **Superficie interna: cambian las 14 capturas** (7 anchos × 2 temas), por D-05. Los dígitos de AmountInput pasan de 15 px a 40 px cuando el campo está vacío y a 28–34 px con 999.999.999; ahora son más grandes que el «$» (26 px), como pide el contrato. Los marcos conservan sus 64 px (48 en Input). D-02 no se ve en una captura: solo cambia dónde responde el clic.
 
 ![AmountInput a 390, claro, tras D-05](evidence/interno-primitivos-390-light.png)
@@ -1849,6 +1874,8 @@ Fecha: 2026-11-03 · Antes: `2aaf79e` · Commits: `57731b4`, `1778712`, `2e921d8
 | D-01 · CLS > 0 en las seis rutas (T065) | En un texto centrado, el inicio de la línea depende de su ancho. El respaldo automático de `next/font` (Arial al 104,76 % en todos los pesos) es ~3 % más ancho que Geist, así que al llegar la fuente el inicio se movía de 3,5 a 5,1 px, por encima del umbral de 3 px de Chrome. No era la caja del `<p>`: `/plan`, que ocupa todo el ancho, también se desplazaba | `adjustFontFallback: false` y un «Geist Fallback» propio en `globals.css`: `size-adjust` por peso, medido sobre el catálogo de copy, y las métricas verticales de Geist. `font-display` sigue siendo `swap` | `57731b4` |
 | D-02 · Input y AmountInput clicables solo en 22,5 y 19 px (T065, T067) | El `<label>` era hermano del marco, y el relleno, el prefijo y el ícono no estaban dentro de ningún control | El `<label>` envuelve el rótulo y el marco: un clic en cualquier punto del marco enfoca el `<input>` por activación nativa, sin JavaScript y también antes de hidratar. `aria-labelledby` deja el nombre accesible en el rótulo. Misma geometría | `1778712` (prueba en rojo), `2e921d8` |
 | D-05 · Dígitos de AmountInput a 15 px (T068) | Input ponía `text-[length:var(--body-m-size)]` en el `<input>` y AmountInput añadía su `clamp` al mismo elemento. Sin `tailwind-merge`, ganaba la primera por orden en la hoja | body.m pasa al marco y el `<input>` lo hereda (`font: inherit` del preflight). Así la clase de AmountInput ya no compite. Además, a 40 px Chrome impone a Geist su alto de línea `normal` (52 px) aunque se pida `leading-none`, y el marco pasa de `py-2` a `py-1.5` para seguir en 64 px. Sin dependencias nuevas | `28ee013` (prueba en rojo), `d2d5ef8` |
+| D21-1 · CLS intermitente por pintura con el DOM a medio parsear (revisión del PR #21, P1) | El script de tema, inline y bloqueante, va tras la hoja de estilos, así que el `<body>` empieza a parsearse cuando llega el CSS. Con la CPU a 6×, Chrome pintaba el shell a medio construir y la barra, el selector y los íconos se movían al llegar el resto. Dimensiones fijas no bastan: los íconos se mueven dentro de su pestaña | `<link rel="expect" blocking="render">` hacia un `<div hidden>` al final del AppShell: el primer pintado espera al shell completo. 0 de 48 cargas con CLS > 0; primer pintado +72 ms de mediana a CPU 6×; nada visible cambia | `5756613` |
+| D21-2 · T078 afirmaba capturas idénticas byte a byte a las de C (revisión del PR #21, P2) | La comparación se había hecho contra las capturas de D en `0611109`, no contra `evidence-c/` | Comparación por hash y por píxeles con `evidence-c/` en T078 y frase corregida en T065, T068 y T078 | commit de documentación de esta corrección |
 
 **D-02, rojo y verde** ([T077-d02-hit-testing.txt](evidence/T077-d02-hit-testing.txt)). Es un clic real de Playwright en las cuatro esquinas de cada marco, a 5 px del borde, seguido de comprobar `document.activeElement`. Se hace dentro de la pasada de `/interno/primitivos` en `tests/a11y/routes.a11y.ts`, sobre los 7 campos habilitados de cada panel, en los dos temas, a 390 y 1440. Rojo, con el Input anterior y el arnés final: `4 failed`, y todos los campos con `esquinas que enfocan 0/4 [no no no no]`. Verde:
 
@@ -1887,7 +1914,8 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | Hallazgo que queda | Quién / siguiente paso |
 | --- | --- |
 | D-01 / T065 | **Corregido** (`57731b4`): CLS = 0 en las 12 cargas de R2. |
-| CLS por pintura con el DOM a medio parsear (T065, en la repetición de T077) | **Abierto; existía antes de T077.** En 9 de 40 cargas repetidas, CLS entre 0,00002 y 0,00804, con fuente en la barra, el selector o un ícono de la barra. Causa: el script de tema, que R2 colocó en `<head>`, espera al CSS y retrasa el parseo del `<body>`, y con la CPU a 6× se pinta un DOM incompleto. Corregirlo toca la posición del script (R2, `check:theme-script`) o la composición del shell: decide el revisor, no este PR. |
+| D21-1 / T065: CLS por pintura con el DOM a medio parsear | **Corregido** (`5756613`): 0 de 48 cargas con CLS > 0 y R2 con 12 de 12 en 0, sin cuadro del tema contrario. Antes: 9 de 40, hasta 0,00804. Primer pintado +72 ms de mediana a CPU 6× (T065). |
+| D21-2 / T078: frase falsa sobre las capturas | **Corregido**: comparación por hash y por píxeles entre C y D en T078. El «no encontrado» bajo `/cuenta/*` de C no se reproduce con el código de `a3216c0`; queda para el revisor. |
 | D-02 / T065–T067 | **Corregido** (`2e921d8`), con regresión en `routes.a11y.ts` (`1778712`). |
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
 | D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
@@ -1910,7 +1938,7 @@ Gate humano pendiente: tres propuestas de paleta (Sara petróleo, Hogar azul ten
 
 ### Gate humano: revisión visual de la 001
 
-**Aprobado por el fundador el 3 de noviembre de 2026.** Revisó la hoja de aprobación con las capturas de `main` (PR C, `a3216c0`). Las capturas de las rutas de producto del head de D son idénticas byte a byte a esas (T068, repetición tras T077). Las de la superficie interna sí cambiaron por D-05 y no formaron parte de esa hoja.
+**Aprobado por el fundador el 3 de noviembre de 2026.** Revisó la hoja de aprobación con las capturas de C: `specs/001-frontend-foundation/evidence-c/` en `a3216c0`. Las capturas de D están en `specs/001-frontend-foundation/evidence/` y son otro juego, tomado con otro arnés; la comparación sigue a esta tabla (D21-2).
 
 | Punto | Estado |
 | --- | --- |
@@ -1921,6 +1949,22 @@ Gate humano pendiente: tres propuestas de paleta (Sara petróleo, Hogar azul ten
 | SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por un fundador; pendiente la confirmación del segundo.** SC-008 exige a los dos |
 | Pantallas en general (capturas SC-001) | Aprobado por el fundador el 3 de noviembre de 2026 |
 | Gasto, ingreso y liquidación en tinta | Sigue para P0-1 |
+
+### Capturas aprobadas (C) frente a las de D (D21-2)
+
+El fundador aprobó las 41 capturas de C, `specs/001-frontend-foundation/evidence-c/` en `a3216c0`. D tiene su propio juego en `specs/001-frontend-foundation/evidence/`: 68 capturas tomadas con otro arnés, regeneradas tras D-01, D-02, D-05 y D21-1. Una versión anterior de este párrafo decía que las capturas de producto de D eran idénticas byte a byte a las de C. **No lo son.** Por ejemplo, `inicio-390-light.png` y `actividad-390-light.png` tienen hashes distintos.
+
+Comparación por hash de blob de git y, en las distintas, por píxeles RGB exactos ([T078-captures-c-vs-d.txt](evidence/T078-captures-c-vs-d.txt)):
+
+| Grupo | Capturas | Resultado |
+| --- | --- | --- |
+| Mismo nombre, 768 px o más (Inicio 768/1024/1440, Actividad, Metas, Plan, Balance y Cuenta 1440; Cuenta 768) | 17 | **Iguales**: mismo hash |
+| Mismo nombre, 360 y 390 px (Inicio, Actividad, Metas, Plan, Balance y Cuenta) | 13 | **Hash distinto, composición conservada.** C capturó con 844 px de alto y D con 900. En las 744 filas superiores, alineadas arriba, y en las 100 inferiores con la barra fija, alineadas abajo: **0 píxeles distintos**. Las 56 filas extra de D son lienzo de un solo color (`247,243,235` en claro y `18,20,22` en oscuro) |
+| «No encontrado»: `no-encontrado-*` en C, `ruta-que-no-existe-*` en D, a 390 y 1440 | 4 | **Hash distinto.** La parte superior es igual (0 píxeles distintos en 744 u 800 filas). Cambia la franja inferior: en C no hay barra a 390 y «Mi cuenta» sale activa a 1440, como en una pantalla de `/cuenta/*`; en D están la barra y «Mi cuenta» sin marcar. **No lo causa D:** con el build de `a3216c0`, `/cuenta/perfil` y `/ruta-que-no-existe` ya muestran la barra y no marcan «Mi cuenta», antes y después de hidratar. Las mediciones de C se tomaron sobre `0a4e8e7`, antes de los arreglos de su revisión. Queda para el revisor si el «no encontrado» bajo `/cuenta/*` debe ocultar la barra |
+| Solo en C: Anotar (4), `R5-knob-before-hydration` (2), `text-200-390` (1) | 7 | Sin par en D: D no las rehízo |
+| Solo en D: anchos de Inicio y Cuenta que C no tenía (14), superficie interna (14), resúmenes `overview` (2) y las cuatro de T066 (`scales` e Inicio `-T066`) | 34 | Nuevas en D, no estaban en la hoja del fundador. Las 14 de la superficie interna muestran AmountInput tras D-05 (T068) |
+
+D-01 y D21-1 no cambian nada visible: tras cada corrección se regeneraron las 62 capturas de T068 y las 14 de la superficie interna, y ninguna de producto cambió de hash respecto de las que T068 guardó en `0611109`. D-05 sí cambia la superficie interna.
 
 ### Pendientes `[V]` que hereda P0-1
 

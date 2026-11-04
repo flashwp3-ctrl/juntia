@@ -1,0 +1,72 @@
+# C (evidence-c/ en a3216c0, aprobadas por el fundador) frente a D (evidence/ en el head de D tras D-01, D-02, D-05 y D21-1).
+# Columnas: archivo | blob de C | blob de D | resultado
+R5-knob-before-hydration-1440.png | 6191640c5b085fa5236980077194ec416dd43046 | — | solo en C
+R5-knob-before-hydration-390.png | 0c6d19f005c9433a9bd0a3db7d27b8046b1b15fb | — | solo en C
+actividad-1440-dark.png | b028fc544d6f940ce8eaaa044609ef9449a8a641 | b028fc544d6f940ce8eaaa044609ef9449a8a641 | IGUAL
+actividad-1440-light.png | 05815299693c8ced55ab35398921f5423b61ae56 | 05815299693c8ced55ab35398921f5423b61ae56 | IGUAL
+actividad-390-dark.png | 7a68f725424448ba716956baf6ce1abeee6069b4 | 244086509bc511ed2037faf79915953d13077c37 | DISTINTO
+actividad-390-light.png | d2e86f763fcdb05b76577109072afcdaa29f45cb | 19e2437e319392bb35d3d763e1fc556ecb8e8fba | DISTINTO
+anotar-1440-dark.png | 32fa421e9851fb917c749eb10f3f9b9e33564508 | — | solo en C
+anotar-1440-light.png | 00629e4b0b8301e5e9a47641928b2c9f4e6a1a2e | — | solo en C
+anotar-390-dark.png | 7ecb20907aa431885f226e96968baaa872a81e73 | — | solo en C
+anotar-390-light.png | 74997ff17d8100564dec0ec6ebc3f8a81cb90d17 | — | solo en C
+balance-1440-dark.png | a74c667aaaac88fd0bd31d302883e3207ab143e9 | a74c667aaaac88fd0bd31d302883e3207ab143e9 | IGUAL
+balance-1440-light.png | 1be9e0a97b8a74c2b01a02c47ab538a03717b7ce | 1be9e0a97b8a74c2b01a02c47ab538a03717b7ce | IGUAL
+balance-390-dark.png | 77f9d9996e80a607307c2446c9b2265431b25492 | 8dffcf0e72b673a90b8ac0617410fad9eb83d423 | DISTINTO
+balance-390-light.png | 1c2d8751dee9118e9b8afdcf028daae2df39ad6d | 70fc7d4fb9691ac0fe7dc24da9091e1de4e371a2 | DISTINTO
+cuenta-1440-dark.png | 08340f27c319171212352801ff9b7c46b764c397 | 08340f27c319171212352801ff9b7c46b764c397 | IGUAL
+cuenta-1440-light.png | c82cc48cd64ef9c69cce27d45d4313722abba67d | c82cc48cd64ef9c69cce27d45d4313722abba67d | IGUAL
+cuenta-390-dark.png | e89f454d76f33c15723947a3e0691c948a0910e3 | ce6060c5ea6fc16923b0cd0965416020153b8ef5 | DISTINTO
+cuenta-390-light.png | 82e6709198cd37cf0b13c49c4e426afa193724d1 | 60f868f5b022fd322931ad23a7b659893c9dacd7 | DISTINTO
+cuenta-768-dark.png | 6e30589e3d703fb46fc4cfab12d3c81051d727d4 | 6e30589e3d703fb46fc4cfab12d3c81051d727d4 | IGUAL
+cuenta-768-light.png | a6dd104fc302acb6d70a261802c7967603334945 | a6dd104fc302acb6d70a261802c7967603334945 | IGUAL
+inicio-1024-dark.png | bf83a91c87da1aef5aab01529602331980daf2b4 | bf83a91c87da1aef5aab01529602331980daf2b4 | IGUAL
+inicio-1024-light.png | 4adf1f1ad863b26d7f85a04218fd49103b1fc431 | 4adf1f1ad863b26d7f85a04218fd49103b1fc431 | IGUAL
+inicio-1440-dark.png | f8844e82242f82567482b265a3c67707bfce9334 | f8844e82242f82567482b265a3c67707bfce9334 | IGUAL
+inicio-1440-light.png | 2c798d33a4710f78e18a08e4717fb461b7c02cba | 2c798d33a4710f78e18a08e4717fb461b7c02cba | IGUAL
+inicio-360-light.png | 709ae8f063f58084416a23a89c57c9507cecc142 | 91eb75c5dcb97bfb4ee5e07359efaa87a7677c52 | DISTINTO
+inicio-390-dark.png | 45d987498006f4a1ad114aab5429065c898e55cf | 115ec2a001396e7acaac17122de70f996612e80c | DISTINTO
+inicio-390-light.png | d7ea7389c233b04e612fa58d2e0e20d10cd0cffa | 6178906ced681fbff9c8178d139e32e99113d54c | DISTINTO
+inicio-768-light.png | c53aea56019e88e47ebfa1265ea163ba5c88747c | c53aea56019e88e47ebfa1265ea163ba5c88747c | IGUAL
+metas-1440-dark.png | 9b08dca3523dea169eddd10784d78a547b5c5ffa | 9b08dca3523dea169eddd10784d78a547b5c5ffa | IGUAL
+metas-1440-light.png | e065341c17cf894d6d5651d1941525ef7cb70ce8 | e065341c17cf894d6d5651d1941525ef7cb70ce8 | IGUAL
+metas-390-dark.png | 8192666d62c91866d1855cc4d38c246e53dc3bc2 | 31ba95a898bb86b4f46cee7f6917fccff2d05fbd | DISTINTO
+metas-390-light.png | a0e5c9f4b438bef96ffc1b78968dcb0997c3b17d | 7757e90ef1554185cce5c5e96851d48d008f59c0 | DISTINTO
+no-encontrado-1440-dark.png | b612c5a0b649180cf46718fed6e712f1d55bd0fa | — | solo en C
+no-encontrado-1440-light.png | b908ec64994e035661d6d5a55c9f0fdde923885b | — | solo en C
+no-encontrado-390-dark.png | 837bf739e3828356d787f3a54a6d8cd3b71679d0 | — | solo en C
+no-encontrado-390-light.png | b84f3776b08d228784a418978dc4889c41ba6bc5 | — | solo en C
+plan-1440-dark.png | c1ca71e43644fd5a97cc923c16199bb5b8126bad | c1ca71e43644fd5a97cc923c16199bb5b8126bad | IGUAL
+plan-1440-light.png | 05e093005487a9cb9697807954cf62b88e19095a | 05e093005487a9cb9697807954cf62b88e19095a | IGUAL
+plan-390-dark.png | 16b185eafe7d2e2c596585a8bc94a69381f0d1b4 | de39ea378b2ad75dea812944fe9c6067cd5dccfe | DISTINTO
+plan-390-light.png | 46494ebfed057418cbb3263724a4259fb8369a7f | d5ddda06738a594eab0a8b0e3dcb599bbcb8e742 | DISTINTO
+text-200-390.png | a8d7a42a4182cfc4d8ad0bb615108128372a7324 | — | solo en C
+
+# Distintas: comparación por franjas (sharp, RGB exacto). C mide 844 px de alto y D 900. Franja superior: filas 0..(844-100) alineadas arriba; franja inferior: las últimas 100 filas alineadas abajo (barra fija); filas extra: las 56 de D entre ambas.
+{"name":"actividad-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"actividad-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"balance-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"balance-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"cuenta-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"cuenta-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"inicio-360-light.png","c":[360,844],"d":[360,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"inicio-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"inicio-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"metas-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"metas-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"plan-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"plan-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":0,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+
+# «No encontrado»: C la nombra no-encontrado-*, D ruta-que-no-existe-*. Hash y franjas:
+no-encontrado-390-light.png (C) ↔ ruta-que-no-existe-390-light.png (D) | b84f3776b08d228784a418978dc4889c41ba6bc5 | 6e62234b19f4f7922279358c82caae55e66541e7 | DISTINTO
+no-encontrado-390-dark.png (C) ↔ ruta-que-no-existe-390-dark.png (D) | 837bf739e3828356d787f3a54a6d8cd3b71679d0 | b5a4da4f9dcbbf04b126d8375fa9a230db2c6273 | DISTINTO
+no-encontrado-1440-light.png (C) ↔ ruta-que-no-existe-1440-light.png (D) | b908ec64994e035661d6d5a55c9f0fdde923885b | 4ce08bae3943f081f4d446c1123c2a72c91e7901 | DISTINTO
+no-encontrado-1440-dark.png (C) ↔ ruta-que-no-existe-1440-dark.png (D) | b612c5a0b649180cf46718fed6e712f1d55bd0fa | 6ebf4a93fc03c219fe42e9f4ab78fa22a09c1a19 | DISTINTO
+{"name":"ruta-que-no-existe-390-light.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":33867,"extraRows":56,"extraColors":["247,243,235"],"extraColorCount":1}
+{"name":"ruta-que-no-existe-390-dark.png","c":[390,844],"d":[390,900],"topRows":744,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":36746,"extraRows":56,"extraColors":["18,20,22"],"extraColorCount":1}
+{"name":"ruta-que-no-existe-1440-light.png","c":[1440,900],"d":[1440,900],"topRows":800,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":9967,"extraRows":0,"extraColors":[],"extraColorCount":0}
+{"name":"ruta-que-no-existe-1440-dark.png","c":[1440,900],"d":[1440,900],"topRows":800,"topDiffPx":0,"bottomRows":100,"bottomDiffPx":10047,"extraRows":0,"extraColors":[],"extraColorCount":0}
+# La franja inferior de C no tiene barra (390) y marca «Mi cuenta» como activa (1440): pantalla de /cuenta/*. Con el build de a3216c0 (rehecho para esta comprobación), /cuenta/perfil y /ruta-que-no-existe muestran la barra y no marcan «Mi cuenta», antes y después de hidratar:
+/cuenta/perfil {"atLoad":{"hydrated":false,"barVisible":true,"accountCurrent":false},"afterHydration":{"hydrated":true,"barVisible":true,"accountCurrent":false}}
+/ruta-que-no-existe {"atLoad":{"hydrated":false,"barVisible":true,"accountCurrent":false},"afterHydration":{"hydrated":true,"barVisible":true,"accountCurrent":false}}
+# Las mediciones de C se tomaron sobre 0a4e8e7 (cabecera de evidence-c/measurements.txt), antes de los arreglos de la revisión de C (F19-1..F19-3); las capturas llegaron en el mismo commit de evidencia, 9c0067e. No se pudo reproducir la captura de C con el código de a3216c0.
