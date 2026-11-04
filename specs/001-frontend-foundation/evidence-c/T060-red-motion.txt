@@ -1,0 +1,10 @@
+$ npm run test:a11y   # 2026-11-04T00:23:19Z, con reducedMotion: 'no-preference' puesto temporalmente en playwright.config.ts (restaurado con git checkout)
+# Aserciones que fallan, por tipo (32 pruebas = 8 URL × 2 temas × 2 anchos):
+      4     Error: animaciones de Skeleton
+      4     Error: opacidades distintas de Skeleton
+     22     Error: posiciones distintas de la perilla
+      4     Error: rectángulos distintos de Button al presionar
+     22     Error: rectángulos distintos del aviso
+     32     Error: transición de tema
+  32 failed
+exit: 1

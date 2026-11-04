@@ -1,0 +1,95 @@
+$ npm run build && npm run test:a11y   # 2026-11-04T00:23:19Z, árbol de trabajo de PR C
+dark / 1440px: 0 violaciones, 0 serias o críticas
+dark / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark / 390px: 0 violaciones, 0 serias o críticas
+dark / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+dark / 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /actividad 1440px: 0 violaciones, 0 serias o críticas
+dark /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /actividad 390px: 0 violaciones, 0 serias o críticas
+dark /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+dark /actividad 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /balance 1440px: 0 violaciones, 0 serias o críticas
+dark /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /balance 390px: 0 violaciones, 0 serias o críticas
+dark /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+dark /balance 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /cuenta 1440px: 0 violaciones, 0 serias o críticas
+dark /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /cuenta 390px: 0 violaciones, 0 serias o críticas
+dark /cuenta 390px: sin disparador visible de Anotar
+dark /cuenta 390px: sin selector en este ancho
+dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+dark /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 427.72/44.00 en 10 cuadros
+dark /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /metas 1440px: 0 violaciones, 0 serias o críticas
+dark /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /metas 390px: 0 violaciones, 0 serias o críticas
+dark /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+dark /metas 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /plan 1440px: 0 violaciones, 0 serias o críticas
+dark /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+dark /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /plan 390px: 0 violaciones, 0 serias o críticas
+dark /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+dark /plan 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+dark /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+dark /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+light / 1440px: 0 violaciones, 0 serias o críticas
+light / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light / 390px: 0 violaciones, 0 serias o críticas
+light / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+light / 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /actividad 1440px: 0 violaciones, 0 serias o críticas
+light /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /actividad 390px: 0 violaciones, 0 serias o críticas
+light /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+light /actividad 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /balance 1440px: 0 violaciones, 0 serias o críticas
+light /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /balance 390px: 0 violaciones, 0 serias o críticas
+light /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+light /balance 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /cuenta 1440px: 0 violaciones, 0 serias o críticas
+light /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /cuenta 390px: 0 violaciones, 0 serias o críticas
+light /cuenta 390px: sin disparador visible de Anotar
+light /cuenta 390px: sin selector en este ancho
+light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+light /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.36/44.00 en 10 cuadros
+light /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /metas 1440px: 0 violaciones, 0 serias o críticas
+light /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /metas 390px: 0 violaciones, 0 serias o críticas
+light /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+light /metas 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /plan 1440px: 0 violaciones, 0 serias o críticas
+light /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+light /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /plan 390px: 0 violaciones, 0 serias o críticas
+light /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+light /plan 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
+light /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+light /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+  32 passed (55.4s)
+exit: 0
