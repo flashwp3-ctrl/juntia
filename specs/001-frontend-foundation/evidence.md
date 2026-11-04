@@ -1111,7 +1111,7 @@ Comparación Anexo A: B1 lint-rules; B2 tokens; B3 AmountInput; B4 ContextSelect
 Diferencias que requieren decisión del revisor sobre actualizar el anexo, conservadas por instrucción expresa:
 
 - F17-4/F17-R3 en AmountInput: value/defaultValue fuera de rango (mil millones, negativo, decimales) y error vacío;16 casos totales del archivo.
-- F19-2 en ContextSelector: cambios rápidos mantienen la última elección.
+- F19-2 en ContextSelector: «si se puede leer pero no escribir, la elección de la visita prevalece y el anuncio coincide con lo que se ve». El caso de tres cambios rápidos ya estaba en T042; no se atribuye a F19-2.
 - F19-3: `src/app/(app)/error.test.tsx`, acción de reintento e Inicio. Archivo adicional al inventario de Anexo A.
 - F17-2 y T060: hit testing táctil/movimiento reducido dentro de routes.a11y; F19-1: cuatro casos Cuenta390/768.
 - F15-1 a F15-4: matriz reforzada de frontera domain y formas estáticas/dinámicas en lint-rules, dentro del archivo B1.
