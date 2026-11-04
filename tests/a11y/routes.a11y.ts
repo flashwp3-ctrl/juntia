@@ -213,6 +213,27 @@ for (const colorScheme of ["light", "dark"] as const) {
             console.log(`${colorScheme} ${route} ${width}px: campo «${field.label}» marco ${field.frame}, esquinas que enfocan ${field.corners.filter(Boolean).length}/4 [${field.corners.map((hit) => (hit ? "sí" : "no")).join(" ")}]`);
             expect.soft(field.corners, `«${field.label}»: las cuatro esquinas del marco enfocan el <input>`).toEqual([true, true, true, true]);
           }
+          // D-05 (T077) / FR-014; COMPONENT_SPECIFICATIONS.md §Input (Monto): los dígitos de AmountInput van entre 28 y
+          // 40 px (clamp), y el Input de texto conserva body.m. jsdom no aplica el CSS de Tailwind: esta es la capa más
+          // baja que ve el tamaño calculado. El marco conserva su alto: 64 px en AmountInput y 48 en Input.
+          const sizes = await page.locator(`${scope} input:not([disabled])`).evaluateAll((nodes) => nodes.map((node) => ({
+            amount: node.getAttribute("inputmode") === "numeric",
+            value: (node as HTMLInputElement).value,
+            size: parseFloat(getComputedStyle(node).fontSize),
+            body: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--body-m-size")),
+            frame: node.parentElement!.getBoundingClientRect().height,
+            clipped: node.scrollWidth > node.clientWidth,
+          })));
+          for (const { amount, value, size, body, frame, clipped } of sizes) {
+            console.log(`${colorScheme} ${route} ${width}px: ${amount ? "AmountInput" : "Input"} «${value}» a ${size} px, marco de ${frame} px${clipped ? ", cortado" : ""}`);
+            if (amount) {
+              expect.soft(size >= 28 && size <= 40, `AmountInput «${value}»: ${size} px fuera de 28–40`).toBe(true);
+              expect.soft(clipped, `AmountInput «${value}»: sin cortar`).toBe(false);
+            } else {
+              expect.soft(size, `Input: body.m`).toBe(body);
+            }
+            expect.soft(frame, `${amount ? "AmountInput" : "Input"} «${value}»: alto del marco`).toBe(amount ? 64 : 48);
+          }
           console.log(`${colorScheme} ${route} ${width}px: skeleton ${skeleton.animations} animaciones, opacidad ${[...new Set(skeleton.opacities)].join(",")}; button ${rects[0]} en ${rects.length} cuadros`);
         }
       });
