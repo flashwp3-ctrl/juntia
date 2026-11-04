@@ -1,6 +1,6 @@
 # Evidencia · decisión 14 (tipografía de marca)
 
-Fecha: 4 de noviembre de 2026. Build de producción servido con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100` (el 3000 lo ocupaba otro proceso). La línea base de `main` (`f6ef453`, con Geist) se compiló en un worktree aparte y se sirvió en el 3200 con el mismo comando. Chromium de Playwright 1.64.1 en Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/); no forman parte de `tests/`.
+Fecha: 4 de noviembre de 2026. Build de producción servido con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100` (el 3000 lo ocupaba otro proceso). La línea base de `main` (`f6ef453`, con Geist) se compiló en un worktree aparte y se sirvió en el 3200 con el mismo comando. Chromium de Playwright 1.64.1 en Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/) como `.cjs.txt`, para que no entren en el lint; no forman parte de `tests/`. Para ejecutarlos, cópialos fuera del repositorio sin la extensión `.txt`.
 
 ## Capturas para los fundadores
 
@@ -27,7 +27,7 @@ La marca `[P]` de Spline Sans Mono (`meta.mono`) sigue abierta: solo aparece en 
 
 ### Respaldo calibrado (D-01)
 
-`size-adjust` por peso, medido como relación de anchos sobre las 134 cadenas de `src/lib/copy/es.ts` ([`harness/ratios.cjs`](harness/ratios.cjs)): Onest/Arial 400 → 1,0398, 500 → 1,0508, 600 → 0,9900; Brygada/Georgia 400 → 1,0415, 500 → 1,0501, 600 → 0,9079, 700 → 0,9253, e itálicas. Las sobreescrituras verticales son las de cada fuente divididas por el ajuste.
+`size-adjust` por peso, medido como relación de anchos sobre las 134 cadenas de `src/lib/copy/es.ts` ([`harness/ratios.cjs.txt`](harness/ratios.cjs.txt)): Onest/Arial 400 → 1,0398, 500 → 1,0508, 600 → 0,9900; Brygada/Georgia 400 → 1,0415, 500 → 1,0501, 600 → 0,9079, 700 → 0,9253, e itálicas. Las sobreescrituras verticales son las de cada fuente divididas por el ajuste.
 
 **Desviación de la media en Onest 400: se usa 1,049.** Con 1,0398, la descripción de «no encontrado» cortaba distinto a 360 px y su primera línea se movía 18,5 px. Barrido de cada ancho entre 360 y 1023 px, donde los estados van centrados ([fallback-sweep.txt](fallback-sweep.txt)):
 
