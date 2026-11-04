@@ -17,6 +17,9 @@ on:
       - ".agents/**"
       - "AGENTS.md"
       - "CLAUDE.md"
+      # Explícitos por si "**" no cubre carpetas con punto.
+      - ".github/**"
+      - ".githooks/**"
   workflow_dispatch:
 permissions:
   contents: read
