@@ -379,6 +379,18 @@ Este refinamiento no releva de nada más. En particular, **ninguna verificación
 seguridad, autorización o atomicidad se pospone** (maestro §15.6, advertencia de
 jerarquía): las filas 8 a 13 son bloqueantes de slice y se ejecutan en CI.
 
+### 8. Aceptación por etapas (enmienda del 3 de noviembre, maestro §15.10, decisión 12)
+
+Un slice puede aceptarse con verificaciones de tipo «comprueban lo construido» todavía sin ejecutar **solo** si dependen de un dispositivo o de una infraestructura que aún no existe, y **solo** si se cumplen las tres condiciones:
+
+1. Cada verificación aplazada pasa a ser **criterio de aceptación obligatorio** de un slice posterior concreto, con dueño y momento, y la especificación de ese slice la copia entre sus criterios.
+2. Ninguna se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12).
+3. **Nunca se aplaza** una verificación de seguridad, autorización, aislamiento o atomicidad (§7, último párrafo; maestro §15.6). Si una de aislamiento depende de infraestructura, como la superficie interna en un preview real, se ejecuta en cuanto esa infraestructura existe y antes de usarla.
+
+Una verificación de dispositivo que no se puede ejecutar porque el dispositivo no está disponible solo se cierra con una **excepción formal** aprobada por los fundadores. Esa excepción lleva el estado «EXCEPCIÓN APROBADA», el motivo, el riesgo residual, la mitigación, un responsable y una fecha de revalidación.
+
+La primera aplicación de esta regla es la 001. El maestro §15.10, decisión 12, reparte T072–T075 a P0-1 y fija cuáles admiten excepción. Esta regla no mueve ningún umbral de §4 ni de §15.7.
+
 ## Consecuencias
 
 - La suite de dominio se convierte en el lugar por defecto. Eso exige que la regla

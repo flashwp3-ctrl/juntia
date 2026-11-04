@@ -919,7 +919,7 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
-| 12 | Cierre de la 001 con verificaciones que necesitan dispositivo o Vercel | **Aceptación por etapas** | La 001 se acepta sin T072–T075. Esas cuatro verificaciones pasan a ser **criterios de aceptación obligatorios de P0-1**: P0-1 no se acepta si alguna sigue sin salida real |
+| 12 | Cierre de la 001 con verificaciones que necesitan dispositivo o Vercel | **Aceptación por etapas** | La 001 se acepta sin T072–T075. Esas cuatro verificaciones pasan a ser **criterios de aceptación obligatorios de P0-1**: P0-1 no se acepta si alguna sigue sin salida real, **salvo una excepción formal** de las que se describen debajo |
 
 **La 001 se acepta cuando se cumplen todas:**
 
@@ -931,12 +931,23 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 
 | Verificación | Dueño | Cuándo |
 | --- | --- | --- |
-| T072 · Superficie interna en un preview real de Vercel | Gestor, cuando los fundadores creen el proyecto | Antes de aceptar P0-1 |
+| T072 · Superficie interna en un preview real de Vercel | Gestor, cuando los fundadores creen el proyecto | **En cuanto exista el proyecto:** justo después del primer despliegue de producción, que Vercel crea al importar el repositorio, y antes de que nadie use un despliegue o se habilite un entorno con datos reales. Si falla, el proyecto se pausa hasta corregirlo. Sigue siendo condición de aceptación de P0-1. Sin excepción posible, porque es un control de aislamiento (§15.6; ADR-011 §8) |
 | T073 · Contraste en dispositivo (iPhone) | Fundadores | Antes de aceptar P0-1; se puede adelantar en cualquier momento |
-| T074 · Sombras táctiles en un Android de gama media | Fundadores, si consiguen el dispositivo | Antes de aceptar P0-1. Si no hay Android, se registra como no ejecutada con su motivo y la excepción la deciden los fundadores |
-| T075 · VoiceOver con el flujo real de Anotar, y TalkBack si hay Android | Fundadores | Al cerrar P0-1 |
+| T074 · Sombras táctiles en un Android de gama media | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
+| T075 · VoiceOver con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Sin excepción posible, porque los fundadores tienen iPhone |
+| T075 · TalkBack con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Admite excepción formal si no hay un Android disponible |
 
-**Lo que no cambia.** Ningún umbral se mueve. Una verificación aplazada no se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12). La especificación de P0-1 copia esta tabla entre sus criterios de aceptación.
+**Excepción formal.** Solo la admiten T074 y la parte de TalkBack de T075, y solo cuando falta un dispositivo Android. Los **dos fundadores** la aprueban antes de aceptar P0-1. Se registra en la evidencia de P0-1 con estos datos:
+
+- la verificación que no se ejecutó;
+- el motivo;
+- el riesgo residual;
+- la mitigación (por ejemplo, axe y la emulación de Android en Chrome, aunque no la sustituyen);
+- quién la revalida y cuándo, a más tardar antes del lanzamiento MVP-1.
+
+Su estado es **«EXCEPCIÓN APROBADA»**, nunca «verificado» ni «superado».
+
+**Lo que no cambia.** Ningún umbral se mueve. Una verificación aplazada no se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12). La especificación de P0-1 copia esta tabla entre sus criterios de aceptación. La aceptación por etapas como regla general de pruebas está en ADR-011 §8.
 
 #### Dataset dorado: quién lo produce y cuándo
 
