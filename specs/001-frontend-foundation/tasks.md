@@ -615,7 +615,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-042 (bucle local de `docs/TESTING.md` §2).
   - Terminado cuando: la salida está en el PR, o «no funciona» con la salida que lo muestra.
 
-- [ ] T065 `[V]` Umbrales del maestro §15.7 que aplican a la 001, sobre `npm run build` servido con `npm run start` y `JUNTIA_INTERNAL_SURFACE=1`
+- [x] T065 `[V]` Umbrales del maestro §15.7 que aplican a la 001, sobre `npm run build` servido con `npm run start` y `JUNTIA_INTERNAL_SURFACE=1`
   - **Primer cuadro y CLS** (SC-006): reutilizar el arnés de research R2 (CPU 6×, red de 400 kbit/s y 400 ms, `Page.startScreencast`, píxel del lienzo) en las seis rutas de producto en claro y oscuro: ningún cuadro con el tema contrario; CLS = 0 en la carga de cada ruta (PerformanceObserver `layout-shift`).
   - **INP al abrir Anotar** (SC-005): medido en laboratorio a 390 y 1440 px y **reportado como laboratorio, no como p75 real**; < 200 ms.
   - **Scroll horizontal** (FR-039, SC-001): en cada ruta de producto y en `/interno/primitivos`, a 360, 390, 430, 1024 y 1440 px y en los dos temas, `document.documentElement.scrollWidth <= clientWidth`.
@@ -623,6 +623,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Los scripts de medición van **fuera de la suite** (plan, «Pruebas por capa»: medición del PR): en un archivo fuera del repositorio o pegados en el PR; no se añaden a `tests/`.
   - Cumple: FR-037, FR-039; SC-001, SC-003, SC-005, SC-006.
   - Terminado cuando: el PR tiene la salida de cada medición por ruta, tema y ancho, o el umbral que no se cumple con su número real.
+  - **Estado:** cerrada, en Chromium, con la salida en `evidence.md` (T065 y T077): CLS = 0 en las 12 cargas de R2 y en 0 de 48 de la tanda ampliada, sin cuadro del tema contrario, scroll e INP de laboratorio dentro del umbral, y objetivos táctiles corregidos (D-02). El mecanismo de D21-1 no aplica en Firefox ni en Safari anterior a 18.2. CLS en Firefox y WebKit, CLS en un iPhone real y el respaldo tipográfico en Android quedan como `[V]` heredados por P0-1 (decisión 12).
 
 - [x] T066 `[V]` Ícono `scales` de Phosphor para Balance (`docs/design/README.md`, Log de cambios): captura del rail a 1024 px y del sidebar a 1440 px, lado a lado con el comp de `docs/design/screenshots/`
   - Cumple: FR-019.
@@ -634,6 +635,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - También: Anotar a un toque en cada composición, destino actual con ícono Fill, acceso a Mi cuenta en cada ancho y aviso de versión base en cada ruta.
   - Cumple: FR-012, FR-015, FR-016, FR-020, FR-021, FR-022, FR-023, FR-028, FR-031, FR-038, FR-039, FR-040, FR-041; SC-010.
   - Terminado cuando: el PR lleva el resultado de cada punto; un punto que falla se arregla o se reporta, nunca se omite.
+  - **Estado: pendiente: recorrido manual.** Lo que existe en `evidence.md` (T067 y T077) es un recorrido automatizado con Playwright. No sustituye al manual que pide la tarea. Lo hace la sesión principal con los fundadores.
 
 - [x] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
   - Las capturas permiten aprobar viendo la pantalla las **propuestas §15.9 de paleta** (Sara petróleo, Hogar azul tenue, superficie oscura `#191C1F`). La de «gasto, ingreso y liquidación en tinta» **no** se aprueba aquí: pasa a P0-1 (plan, comprobación de jerarquía).
@@ -642,10 +644,11 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
 
 ### Grupo 10B — solo lectura, sin servidor ni puertos
 
-- [ ] T069 [P] Lista de las pruebas añadidas, por nombre (`docs/TESTING.md` §7): pegar en el PR la salida de `npx vitest list` y de `npx playwright test --list --project a11y`, y comprobar que coinciden con la tabla de conservadas del [Anexo A](#anexo-a--auditoría-de-las-tareas-de-test-adr-012-4-f7-4-punto-2): ninguna de más ni de menos
+- [x] T069 [P] Lista de las pruebas añadidas, por nombre (`docs/TESTING.md` §7): pegar en el PR la salida de `npx vitest list` y de `npx playwright test --list --project a11y`, y comprobar que coinciden con la tabla de conservadas del [Anexo A](#anexo-a--auditoría-de-las-tareas-de-test-adr-012-4-f7-4-punto-2): ninguna de más ni de menos
   - Si la implementación necesita una prueba que no está en el anexo, se detiene y se plantea; no se añade en silencio.
   - Cumple: FR-045, FR-047.
   - Terminado cuando: las dos listas están en el PR con la declaración «specs E2E añadidas: 0».
+  - **Estado:** cerrada. Concordancia literal con el Anexo A (§A.4, R1–R10, todas aceptadas por los fundadores el 3 de noviembre de 2026). Specs E2E añadidas: 0.
 
 - [x] T070 [P] Comprobaciones de alcance y de copy sobre `package.json`, `src/` y `tests/`, con la salida de cada comando pegada en el PR
   - `npm ls --depth=0` sin `@supabase/*`, `@tanstack/*`, `react-hook-form`, `zod`, `next-intl`, `react-i18next`, `next-themes`, `vaul`, `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `@vitejs/plugin-react`, `@testing-library/jest-dom`, `eslint-plugin-playwright`, `stylelint`.
@@ -666,6 +669,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Crear o enlazar el proyecto de Vercel, asignar un alias o desplegar en producción son acciones de los fundadores: Codex **no** las hace por su cuenta; si el proyecto no existe, la tarea queda «pendiente: no existe proyecto de Vercel» y se dice así en el PR. **Nunca** se asigna el dominio de producción con `vercel alias` a un preview (quickstart, «Restricción operativa»).
   - Cumple: FR-049, FR-053.
   - Terminado cuando: el PR tiene los códigos HTTP reales de cada caso y la observación sobre `VERCEL_URL`, o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 ### Grupo 10C — necesitan una persona con dispositivo
 
@@ -674,14 +678,17 @@ Las ejecuta una persona contra un servidor propio o un preview; no se lanzan en 
 - [ ] T073 `[V]` **Requiere persona con dispositivo.** Contraste de los pares texto/fondo del shell en los dos temas en dispositivos reales (`DESIGN_SYSTEM.md` §4), sobre `src/styles/tokens.css`: Codex prepara la lista de pares y la ruta de cada uno; los fundadores miden y la salida (herramienta, dispositivo, valores) se pega
   - Cumple: FR-004, FR-038 (foco ≥ 3:1).
   - Terminado cuando: el PR tiene los valores medidos o «pendiente: no se ejecutó» con el motivo. Nunca «verificado» sin valores.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 - [ ] T074 `[V]` **Requiere persona con dispositivo.** Rendimiento de las sombras táctiles de la barra inferior y de los botones en un móvil de gama media (`DESIGN_SYSTEM.md` §4), sobre `src/components/shell/app-shell.tsx` y `src/components/ui/button.tsx`
   - Cumple: FR-012, FR-018.
   - Terminado cuando: el PR tiene el dispositivo y la observación (o una traza de rendimiento), o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 - [ ] T075 `[V]` **Requiere persona con dispositivo.** VoiceOver (iOS) y TalkBack (Android) sobre el shell (handoff §Accesibilidad): «Ir al contenido», navegación con nombre, `aria-current`, anuncio «Ahora ves: Nosotros», aviso de Anotar (apertura, cierre, retorno del foco) y error de AmountInput en la superficie interna
   - Cumple: FR-013, FR-022, FR-027, FR-031.
   - Terminado cuando: el PR tiene lo que anunció cada lector, por punto, o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 ### Grupo 10D — cierre
 

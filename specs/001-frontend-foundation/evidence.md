@@ -604,6 +604,14 @@ En las 48, `shellBeforePaint: true`: el final del shell se parsea antes del prim
 
 **Coste.** Con la CPU a 6×, la mediana del primer pintado pasa de 2.384 ms (33 cargas antes de D21-1, [T077-cls-repeat.txt](evidence/T077-cls-repeat.txt)) a 2.456 ms (48 cargas después): +72 ms. El rango pasa de 2.236–2.624 a 2.368–2.684 ms. Lo que se pinta no cambia: tras regenerar las capturas de T068 y de la superficie interna, ninguna cambió de hash.
 
+**Alcance por navegador.** `<link rel="expect" blocking="render">` lo soportan Chromium y Safari desde la 18.2. Firefox y Safari anterior lo ignoran. **El CLS = 0 está demostrado solo en Chromium:** todas las cargas de T065 y T077 se midieron en el Chromium de Playwright. En los navegadores que ignoran el atributo puede volver la pintura con el DOM a medio parsear, y no se ha medido. Lo mismo vale para D-01: su respaldo depende de que el sistema tenga Arial. Quedan como `[V]` heredados por P0-1 (decisión 12, PR #22):
+
+| `[V]` heredado por P0-1 | Lo ejecuta | Nota |
+| --- | --- | --- |
+| CLS = 0 en Firefox y en WebKit con el arnés R2 | El gestor | Sin `blocking="render"`, en Firefox vuelve a ser posible pintar el shell a medio parsear; se mide, no se supone |
+| CLS en un iPhone real | Los fundadores | Admite excepción formal si no hay Mac para el inspector web de Safari |
+| Respaldo tipográfico en Android | Los fundadores | «Geist Fallback» sale de `local("Arial")`, que Android no suele tener. Admite excepción formal si no hay Android |
+
 **D-02.** El hit testing ahora forma parte de `tests/a11y/routes.a11y.ts` (T077): 28 de 28 marcos enfocan su `<input>` en las cuatro esquinas, en los dos temas, a 390 y 1440. Antes: 0 de 4 en todos. Véase T077.
 
 <a id="t066"></a>
@@ -630,6 +638,8 @@ Observación visual: coincide el símbolo de balanza de dos platillos (`scales`,
 ## T067 · Recorrido de interacción
 
 Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
+
+**Estado: pendiente: recorrido manual.** Esta sección registra un recorrido automatizado con Playwright. T067 pide un recorrido manual de quickstart.md §5 y el automatizado no lo sustituye. Lo hacen la sesión principal y los fundadores, y su salida se pegará aquí.
 
 Procedimiento: `npm run dev -- --port 3001` y dos scripts desechables (`interactions.cjs`, `interaction-extra.cjs`) con Playwright Chromium. Se trata de un recorrido de navegador automatizado fuera de la suite; no equivale a una aprobación humana del diseño ni a un dispositivo real. Ambos scripts exit 0.
 
@@ -1915,6 +1925,8 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | --- | --- |
 | D-01 / T065 | **Corregido** (`57731b4`): CLS = 0 en las 12 cargas de R2. |
 | D21-1 / T065: CLS por pintura con el DOM a medio parsear | **Corregido** (`5756613`): 0 de 48 cargas con CLS > 0 y R2 con 12 de 12 en 0, sin cuadro del tema contrario. Antes: 9 de 40, hasta 0,00804. Primer pintado +72 ms de mediana a CPU 6× (T065). |
+| D21-1 fuera de Chromium | **`[V]` heredados por P0-1 (decisión 12).** El mecanismo funciona en Chromium y en Safari ≥ 18.2; Firefox y Safari anterior lo ignoran. CLS = 0 está demostrado solo en Chromium. Pendientes: CLS en Firefox y WebKit con R2 (el gestor), CLS en un iPhone real (los fundadores; excepción formal si no hay Mac) y respaldo tipográfico en Android (los fundadores; excepción formal si no hay Android). Detalle en T065. |
+| T067 recorrido manual | **Pendiente: recorrido manual.** El recorrido registrado es automatizado; lo hacen la sesión principal y los fundadores. |
 | D21-2 / T078: frase falsa sobre las capturas | **Corregido**: comparación por hash y por píxeles entre C y D en T078. El «no encontrado» bajo `/cuenta/*` de C no se reproduce con el código de `a3216c0`; queda para el revisor. |
 | D-02 / T065–T067 | **Corregido** (`2e921d8`), con regresión en `routes.a11y.ts` (`1778712`). |
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
@@ -1979,3 +1991,7 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 | T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
 | T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone; TalkBack sin dueño hasta que haya Android | Cierre de P0-1 (VoiceOver); TalkBack sin fecha |
 | SC-008 · segundo fundador | Pendiente la confirmación del segundo fundador | Segundo fundador | Antes de aceptar la 001 |
+| CLS = 0 en Firefox y WebKit (arnés R2) | Pendiente: el mecanismo de D21-1 solo está demostrado en Chromium | El gestor | Antes de aceptar P0-1 (decisión 12) |
+| CLS en un iPhone real | Pendiente | Fundadores; excepción formal si no hay Mac para el inspector web | Antes de aceptar P0-1 (decisión 12) |
+| Respaldo tipográfico en Android | Pendiente | Fundadores; excepción formal si no hay Android | Antes de aceptar P0-1 (decisión 12) |
+| T067 · recorrido manual | Pendiente: recorrido manual | Sesión principal con los fundadores | Antes de aceptar la 001 |
