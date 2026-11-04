@@ -1,0 +1,12 @@
+$ npx playwright test --project a11y -g "/cuenta · .* · (390|768)px: barra"   # 2026-11-04T01:04:04Z sobre e0c24cf (build de 0a4e8e7, el mismo código de app que 9c0067e), con la comprobación nueva y sin corregir el shell
+light /cuenta 390px: disparadores de Anotar visibles 0
+dark /cuenta 390px: disparadores de Anotar visibles 0
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: element(s) not found
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: element(s) not found
+  2 failed
+  2 passed (16.6s)
+exit: 1

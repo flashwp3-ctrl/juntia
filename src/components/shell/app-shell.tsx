@@ -97,7 +97,7 @@ function SideNav({ pathname }: { pathname: string | null }) {
   );
 }
 
-function BottomBar({ pathname }: { pathname: string | null }) {
+function BottomBar({ pathname, stacked }: { pathname: string | null; stacked: boolean }) {
   const mobile = navDestinations.filter((destination) => !destination.desktopOnly);
   const tab = (index: number) => {
     const destination = mobile[index];
@@ -118,7 +118,7 @@ function BottomBar({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label={copy.shell.navigation}
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-nav)] px-2 pb-[calc(8px+env(safe-area-inset-bottom))] lg:hidden"
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-nav)] px-2 pb-[calc(8px+env(safe-area-inset-bottom))] lg:hidden ${stacked ? "max-md:hidden" : ""}`}
     >
       <div className="@container pointer-events-auto mx-auto grid max-w-[560px] grid-cols-[1fr_1fr_64px_1fr_1fr] items-center gap-1 rounded-[24px] bg-raised px-1.5 py-1.5 shadow-[var(--comp-tabbar-shadow)]">
         {tab(0)}
@@ -133,7 +133,8 @@ function BottomBar({ pathname }: { pathname: string | null }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // /cuenta en móvil y tablet: pantalla apilada sin barra inferior, con «Volver» (FR-033).
+  // /cuenta por debajo de 768: pantalla apilada sin barra inferior, con «Volver» (FR-033; RESPONSIVE_SPECIFICATIONS.md
+  // §Cuenta, 390). Desde 768 conserva la barra de tablet, para que Anotar siga a un toque (FR-020; F19-1).
   const stacked = isCurrent(ACCOUNT_HREF, pathname);
   return (
     <div className="min-h-dvh">
@@ -146,13 +147,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SideNav pathname={pathname} />
       <div className="lg:pl-[76px] xl:pl-[248px]">
         <div
-          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14 xl:px-10 xl:pt-10 ${stacked ? "pb-12" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
+          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14 xl:px-10 xl:pt-10 ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
         >
           <BaseVersionNotice className="lg:mb-8 xl:mb-0 xl:sticky xl:top-10 xl:col-start-2 xl:row-start-1 xl:self-start" />
           <div className="min-w-0 xl:col-start-1 xl:row-start-1">{children}</div>
         </div>
       </div>
-      {stacked ? null : <BottomBar pathname={pathname} />}
+      <BottomBar pathname={pathname} stacked={stacked} />
     </div>
   );
 }
@@ -171,7 +172,7 @@ export function PageHeader({ title, variant = "destination" }: PageHeaderProps) 
   return (
     <header className={`flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-3 pt-4 lg:gap-x-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
       {account ? (
-        <Link href="/" className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden`}>
+        <Link href="/" className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken md:hidden`}>
           <AppIcon name="caret-left" weight="bold" size={22} />
           <span className="sr-only">{copy.account.back}</span>
         </Link>

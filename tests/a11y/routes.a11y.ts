@@ -186,3 +186,31 @@ for (const colorScheme of ["light", "dark"] as const) {
     }
   }
 }
+
+// F19-1 (revisión del PR #19) / FR-020, FR-033: Anotar siempre a un toque. La pantalla apilada de /cuenta, sin barra, es
+// solo móvil (< 768, RESPONSIVE_SPECIFICATIONS.md §Cuenta); a 768 y más conserva la barra de tablet con su Anotar visible.
+// No es una spec E2E: visita la ruta y mira qué disparador queda visible, en la misma capa que el resto de este archivo.
+for (const colorScheme of ["light", "dark"] as const) {
+  for (const [width, barVisible] of [[390, false], [768, true]] as const) {
+    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      expect((await page.goto("/cuenta"))?.status()).toBe(200);
+      await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
+      const bar = page.locator('[data-annotate-trigger="bar"]');
+      if (barVisible) {
+        await expect(bar).toBeVisible();
+        await bar.click();
+        await expect(page.getByRole("dialog", { name: copy.annotate.title })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+      } else {
+        await expect(bar).toBeHidden();
+        await expect(page.getByRole("link", { name: copy.account.back })).toBeVisible();
+      }
+      const visibleTriggers = await page.locator("[data-annotate-trigger]").evaluateAll((nodes) => nodes.filter((node) => node.getClientRects().length > 0).length);
+      console.log(`${colorScheme} /cuenta ${width}px: disparadores de Anotar visibles ${visibleTriggers}`);
+      expect(visibleTriggers).toBe(barVisible ? 1 : 0);
+    });
+  }
+}
