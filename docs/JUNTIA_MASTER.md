@@ -886,7 +886,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 14 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 15 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -996,6 +996,16 @@ Tomada por los dos fundadores el 4 de noviembre de 2026, después de una compara
 
 **Lo que no cambia:** la paleta y los tokens de color de I2, la anatomía de los componentes y las cifras tabulares (`tabular-nums` global). La verificación heredada «respaldo tipográfico en Android» (decisión 12) pasa a aplicarse a Onest.
 
+#### Decisión 15: acceso a datos
+
+Tomada por los dos fundadores el 4 de noviembre de 2026, después de tres rondas de revisión adversarial de ADR-013 (PR #34). Cierra el pendiente de acceso a datos que figuraba al final de esta sección.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 15 | Acceso a datos | **ADR-013: `supabase-js` con `@supabase/ssr` y funciones de Postgres, sin ORM en P0** | ADR-013 pasa a Aceptado. La API solo expone `public`, con vistas `security_invoker` y funciones de entrada. Las tablas viven en `juntia_data` y las funciones que escriben dinero en `juntia_private`, como `security definer` propiedad de `juntia_writer`, un rol sin `BYPASSRLS`: la RLS se sigue aplicando con la identidad de quien llama. Ninguna escritura directa sobre las tablas de dinero ni de membresía. Idempotencia y bloqueo del agregado en cada operación, importes como texto en la frontera y `pg_graphql` desactivado |
+
+**Condición:** la verificación `[V]` 1 de ADR-013, que comprueba el mecanismo de `juntia_writer` en la versión de Supabase del stack, se ejecuta con la primera migración de P0-1 y **antes** de la primera función de dinero. Si falla, ADR-013 se reabre; no se sustituye por funciones propiedad de `postgres`.
+
 #### Dataset dorado: quién lo produce y cuándo
 
 El caso de octubre de `docs/design/COMPONENT_SPECIFICATIONS.md` y la tabla de DEC-G04 de `docs/design/HANDOFF_CLAUDE_CODE.md` son el **dataset dorado** de la suite (ADR-011). Retirarlo de las pantallas de la 001 no lo hace opcional. Vive en **un único módulo tipado del dominio**, que crece por slice:
@@ -1027,4 +1037,4 @@ La 001 no tiene servidor, cuentas ni datos. Aplicar las decisiones 4, 6, 8, 9 y 
 
 La especificación 001 diseña el aspecto y el copy de cada uno de estos estados con el paquete de diseño. Lo que no puede hacer es sustituirlos por datos de ejemplo.
 
-**Pendiente, no decidido aquí:** el mecanismo de acceso a datos —ORM o `supabase-js` con funciones de Postgres para las escrituras atómicas— necesita su propio ADR antes de P0-1. No afecta a la 001, que no tiene base de datos.
+**Acceso a datos: decidido.** El mecanismo de acceso a datos, que figuraba aquí como pendiente, lo resuelve ADR-013, aceptado el 4 de noviembre de 2026 (decisión 15). No afecta a la 001, que no tiene base de datos.
