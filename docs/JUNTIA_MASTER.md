@@ -855,9 +855,9 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 | FundingLedger (reparto ≠ fondos) | COMPONENT_SPECIFICATIONS.md §FundingLedger | Separar «reparto del gasto» de «fondos de la meta» en dos bloques es una propuesta de UI sobre reglas aprobadas (DEC-G01..G06). | **Sí** — P0-3 | **Sí** — al revisar la pantalla |
 | ConfirmationBadge y solicitud pendiente | COMPONENT_SPECIFICATIONS.md §ConfirmationBadge | Los estados y su redacción se propusieron aquí; la regla de fondo (no vence, no es transferencia) sí está aprobada en §15.5. | **Sí** — P0-3 | **Sí** — redacción de estados de dinero |
 | PlanningNote (destinado neto) | COMPONENT_SPECIFICATIONS.md §PlanningNote | Forma concreta de presentar DEC-G04 como nota secundaria. La fórmula es [A] (§15.4); su presentación es propuesta. | **Sí** — P0-3 | **Sí** — DEC-G04 es sensible (§15.4) |
-| Sección Cuenta completa: AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, CoupleStatus, SensitiveActionConfirmation, LimitNote | COMPONENT_SPECIFICATIONS.md §Cuenta | La sección entera se marcó propuesta. La **navegación** a Cuenta sí está aprobada (§15.3); la anatomía de sus siete componentes no. | **Sí** — P0-1 (perfil, apariencia) y P0-2 (pareja) | **Sí** — al revisar las pantallas de Cuenta |
-| Persistencia del tema (`profiles` + cookie) | COMPONENT_SPECIFICATIONS.md §ThemeSelector | Marcada `[P][V]`: mecanismo propuesto **y** sin validar. | **Sí** — P0-1 | **Sí** — y además hay que ejecutar el `[V]` |
-| Anotar gasto (flujo E1–E5) | COMPONENT_SPECIFICATIONS.md §Anotar gasto (flujo) | El guion de cinco estados es propuesta; el maestro §11 solo exige un Expense Flow animado y reversible. | **Sí** — F0-b pendiente y P0-1 | **Sí** — es el flujo central del producto |
+| Sección Cuenta completa: AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, CoupleStatus, SensitiveActionConfirmation, LimitNote | COMPONENT_SPECIFICATIONS.md §Cuenta | La sección entera se marcó propuesta. La **navegación** a Cuenta sí está aprobada (§15.3); la anatomía de sus siete componentes no. | **Sí** — P0-1 (perfil, apariencia) y P0-2 (pareja) | **Sí** — al revisar las pantallas de Cuenta. **Aprobada** la anatomía el 4 de noviembre de 2026 (§15.10, decisión 16) |
+| Persistencia del tema (`profiles` + cookie) | COMPONENT_SPECIFICATIONS.md §ThemeSelector | Marcada `[P][V]`: mecanismo propuesto **y** sin validar. | **Sí** — P0-1 | **Sí** — y además hay que ejecutar el `[V]`. **Aprobada** el 4 de noviembre de 2026 (§15.10, decisión 16); el `[V]` sigue pendiente |
+| Anotar gasto (flujo E1–E5) | COMPONENT_SPECIFICATIONS.md §Anotar gasto (flujo) | El guion de cinco estados es propuesta; el maestro §11 solo exige un Expense Flow animado y reversible. | **Sí** — F0-b pendiente y P0-1 | **Sí** — es el flujo central del producto. **Aprobado** en su versión privada el 4 de noviembre de 2026 (§15.10, decisión 16) |
 | Teclado nativo para el monto (`inputmode="numeric"`) | COMPONENT_SPECIFICATIONS.md §Anotar gasto · HANDOFF_CLAUDE_CODE.md, tabla | Elección de entrada propuesta; depende del comportamiento real en Android (15.6.2). | **Sí** — P0-1 | **Sí** — junto con la fila siguiente. **Aprobado** el 3 de noviembre de 2026 (§15.10, decisión 11) |
 | Teclado propio descartado | HANDOFF_CLAUDE_CODE.md §Accesibilidad | El descarte es una propuesta, no una decisión registrada en el maestro. Es la cara opuesta del punto anterior. | **Sí** — P0-1 | **Sí** — se aprueba junto con la fila anterior. **Aprobado** el 3 de noviembre de 2026 (§15.10, decisión 11) |
 | Personas configurables, escalables a N (+ patrón) | DESIGN_SYSTEM.md §1.2 · HANDOFF_CLAUDE_CODE.md, tabla | Tokens `person.1–6` y patrón de tramo pensados para N, cuando P0 es pareja de exactamente dos (§15.5). | No — P0 se implementa con `person.1–2` | **Sí** — el patrón de tramo y `person.3–6` no están aprobados; en P0 simplemente no se usan |
@@ -870,7 +870,7 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 
 **Total: 18 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **16 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cinco elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta, el patrón de personas y la monoespaciada de la decisión 14— son el motivo de que los dos ejes estén separados.
 
-**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11) y se ha añadido y cerrado la fila de Spline Sans Mono (§15.10, decisión 14; aprobada el 4 de noviembre de 2026); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
+**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11) y se ha añadido y cerrado la fila de Spline Sans Mono (§15.10, decisión 14; aprobada el 4 de noviembre de 2026), y se han cerrado Anotar, la sección Cuenta y la persistencia del tema (§15.10, decisión 16; el `[V]` del tema sigue pendiente); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
 
 **Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 23 líneas: 17 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 4 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. La tabla tiene 18 elementos y el barrido, 17 marcas: la fila de Spline Sans Mono está cerrada y ya no tiene marca literal en `DESIGN_SYSTEM.md`. Las dos filas del teclado, también cerradas, sí la conservan, porque su `[P]` venía del paquete importado; el de Spline Sans Mono lo puso la decisión 14 y se quitó al aprobarla.
 
@@ -886,7 +886,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 15 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 16 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -1005,6 +1005,27 @@ Tomada por los dos fundadores el 4 de noviembre de 2026, después de tres rondas
 | 15 | Acceso a datos | **ADR-013: `supabase-js` con `@supabase/ssr` y funciones de Postgres, sin ORM en P0** | ADR-013 pasa a Aceptado. La API solo expone `public`, con vistas `security_invoker` y funciones de entrada. Las tablas viven en `juntia_data` y las funciones que escriben dinero en `juntia_private`, como `security definer` propiedad de `juntia_writer`, un rol sin `BYPASSRLS`: la RLS se sigue aplicando con la identidad de quien llama. Ninguna escritura directa sobre las tablas de dinero ni de membresía. Idempotencia y bloqueo del agregado en cada operación, importes como texto en la frontera y `pg_graphql` desactivado |
 
 **Condición:** la verificación `[V]` 1 de ADR-013, que comprueba el mecanismo de `juntia_writer` en la versión de Supabase del stack, se ejecuta con la primera migración de P0-1 y **antes** de la primera función de dinero. Si falla, ADR-013 se reabre; no se sustituye por funciones propiedad de `postgres`.
+
+#### Decisión 16: alcance de P0-1
+
+Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doce con la recomendación del gestor. El primer fundador la aprobó en la conversación con el gestor; la segunda fundadora la confirma con el merge del PR de la especificación 002. La especificación 002 (`specs/002-cuentas-y-gastos-privados/spec.md`, «Clarifications») las aplica.
+
+| # | Tema | Elección |
+| --- | --- | --- |
+| 16.1 | Forma | Una especificación, la 002, con cuatro PR de implementación seguidos |
+| 16.2 | Anotar E1–E5 `[P]` | Aprobado en su versión privada, sin «Pagó», «Participan» ni «Reparto» |
+| 16.3 | Ingresos | Selector «Gasto o Ingreso» en Anotar, aprobado viendo la pantalla |
+| 16.4 | Eliminar | La interfaz dice «Eliminar»; el movimiento se anula y se audita. Sin «Deshacer» posterior |
+| 16.5 | Inicio y Nosotros sin pareja | Inicio en Yo sin los bloques compartidos; en Nosotros, «todavía no disponible» |
+| 16.6 | Cuenta y Acceso `[P]` | Anatomía aprobada; P0-1 construye todo menos Mi pareja |
+| 16.7 | Persistencia del tema `[P][V]` | Aprobada: `profiles` y una cookie; el `[V]` se ejecuta antes de cerrar el plan |
+| 16.8 | «Calendario» | Flechas de mes en Actividad, sin vista de cuadrícula |
+| 16.9 | Registro | Solo los correos de los fundadores hasta MVP-1, validados por la base de datos; aviso de versión privada de prueba, sin texto legal inventado |
+| 16.10 | Supabase | Plan Free en la cuenta de la segunda fundadora, región São Paulo, con el correo de Supabase hasta antes de MVP-1 |
+| 16.11 | Recuperación | Antes del primer dato real, copia completa cifrada fuera de Supabase y restauración de prueba; después, copia semanal manual |
+| 16.12 | Exportar | En P0-1, JSON y CSV de los movimientos privados propios |
+
+**Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio y apertura del registro. Se suman al bloqueo legal de §15.6.1.
 
 #### Dataset dorado: quién lo produce y cuándo
 
