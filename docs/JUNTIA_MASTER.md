@@ -885,7 +885,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. La decisión 11 se tomó después, por separado, y se registra debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 y 12 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -912,6 +912,45 @@ Lo que esta decisión **no** cierra:
 
 - **El comportamiento en Android con teclados de terceros** sigue siendo la dependencia técnica 3 de §15.6.2. Se investiga dentro de P0-1, con la hoja de Anotar real, junto con la verificación `[V]` de la altura del teclado (`visualViewport`) de `docs/design/RESPONSIVE_SPECIFICATIONS.md`. Si el resultado obliga a cambiar la entrada, el cambio vuelve a los fundadores.
 - **El uso de `AmountInput` en la 001.** Anotar sigue abriendo solo el aviso de que el registro llega con P0-1, sin campos que aparenten guardar (bloque siguiente). La especificación 001 decide cómo se verifica un primitivo que el shell todavía no muestra, en la capa más baja que detecte el fallo (ADR-011).
+
+#### Decisión 12: aceptación por etapas de la 001
+
+Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR D de la 001 (verificación y cierre). Cuatro verificaciones de la fase 10 de `specs/001-frontend-foundation/tasks.md` necesitan un dispositivo que los fundadores no tienen o un proyecto de Vercel que todavía no existe. Los dos fundadores usan iPhone y ninguno tiene Android.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 12 | Cierre de la 001 con verificaciones que necesitan dispositivo o Vercel | **Aceptación por etapas** | La 001 se acepta sin T072–T075. Esas cuatro verificaciones pasan a ser **criterios de aceptación obligatorios de P0-1**: P0-1 no se acepta si alguna sigue sin salida real, **salvo una excepción formal** de las que se describen debajo |
+
+**La 001 se acepta cuando se cumplen todas:**
+
+1. CLS = 0 en todas las cargas medidas, incluida la repetición ampliada de al menos 40 cargas, sin redondear (§15.7).
+2. Los dos fundadores aprobaron la revisión visual (SC-001) y entienden sin ayuda que la versión todavía no guarda datos (SC-008).
+3. Las demás tareas de la fase 10 tienen salida real y el CI está en verde.
+
+**Lo que hereda P0-1:**
+
+| Verificación | Dueño | Cuándo |
+| --- | --- | --- |
+| T072 · Superficie interna en un preview real de Vercel | Gestor, cuando los fundadores creen el proyecto | **En cuanto exista el proyecto:** justo después del primer despliegue de producción, que Vercel crea al importar el repositorio, y antes de que nadie use un despliegue o se habilite un entorno con datos reales. Si falla, el proyecto se pausa hasta corregirlo. Sigue siendo condición de aceptación de P0-1. Sin excepción posible, porque es un control de aislamiento (§15.6; ADR-011 §8) |
+| T073 · Contraste en dispositivo (iPhone) | Fundadores | Antes de aceptar P0-1; se puede adelantar en cualquier momento |
+| T074 · Sombras táctiles en un Android de gama media | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
+| T075 · VoiceOver con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Sin excepción posible, porque los fundadores tienen iPhone |
+| T075 · TalkBack con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Admite excepción formal si no hay un Android disponible |
+| CLS = 0 fuera de Chromium: Firefox y WebKit con el arnés R2 | Gestor | Antes de aceptar P0-1. Sin excepción posible. El mecanismo que da CLS = 0 en la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero no Firefox ni Safari anterior; en la 001 solo se demostró en Chromium |
+| CLS en un iPhone real | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Mac para el inspector web de Safari |
+| Respaldo tipográfico de Geist en Android | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
+
+**Excepción formal.** Solo la admiten las filas que lo dicen —T074, la parte de TalkBack de T075, el CLS en un iPhone real y el respaldo tipográfico en Android—, y solo cuando falta el dispositivo o el equipo que nombran. Los **dos fundadores** la aprueban antes de aceptar P0-1. Se registra en la evidencia de P0-1 con estos datos:
+
+- la verificación que no se ejecutó;
+- el motivo;
+- el riesgo residual;
+- la mitigación (por ejemplo, axe y la emulación de Android en Chrome, aunque no la sustituyen);
+- quién la revalida y cuándo, a más tardar antes del lanzamiento MVP-1.
+
+Su estado es **«EXCEPCIÓN APROBADA»**, nunca «verificado» ni «superado».
+
+**Lo que no cambia.** Ningún umbral se mueve. Una verificación aplazada no se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12). La especificación de P0-1 copia esta tabla entre sus criterios de aceptación. La aceptación por etapas como regla general de pruebas está en ADR-011 §8.
 
 #### Dataset dorado: quién lo produce y cuándo
 
