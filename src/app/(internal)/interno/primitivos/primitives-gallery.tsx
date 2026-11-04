@@ -44,7 +44,7 @@ export function PrimitivesGallery({ theme }: { theme: "light" | "dark" }) {
   const headingId = `tema-${theme}`;
   return (
     <section data-theme={theme} aria-labelledby={headingId} className="flex min-w-0 flex-col gap-5 rounded-[var(--radius-3xl)] bg-canvas p-4 text-ink ring-1 ring-border md:p-6">
-      <h2 id={headingId} className="flex items-baseline gap-3 border-t border-ink pt-3 font-serif text-[length:var(--title-l-size)] leading-none">
+      <h2 id={headingId} className="flex items-baseline gap-3 border-t border-ink pt-3 font-serif text-[length:var(--title-l-size)] leading-none font-medium tracking-[var(--title-l-tracking)]">
         {name}
       </h2>
       <div className="grid gap-5 md:grid-cols-2">

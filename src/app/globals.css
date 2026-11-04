@@ -22,9 +22,9 @@
   --color-category-income-fg: var(--category-income-fg);
   --color-category-other-bg: var(--category-other-bg);
   --color-category-other-fg: var(--category-other-fg);
-  --font-sans: var(--font-geist);
-  --font-serif: var(--font-instrument-serif);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-onest);
+  --font-serif: var(--font-brygada);
+  --font-mono: var(--font-spline-mono);
   --color-canvas: var(--color-surface-canvas);
   --color-raised: var(--color-surface-raised);
   --color-sunken: var(--color-surface-sunken);
@@ -69,20 +69,30 @@
   --radius-control-3xl: var(--radius-3xl);
 }
 
-/* D-01 (T077): respaldo de Geist mientras carga la fuente. Un size-adjust por peso iguala el ancho de Arial al de Geist
-   (relación Geist/Arial medida sobre las cadenas de src/lib/copy/es.ts: 400 → 1,0070; 500 → 1,0269; 600 → 0,9712).
-   Las sobreescrituras verticales son las de Geist (ascent 1005 y descent 295 sobre 1000) divididas por ese ajuste,
-   así que la línea no cambia de alto al llegar la fuente. */
-@font-face { font-family: "Geist Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 100.70%; ascent-override: 99.80%; descent-override: 29.30%; line-gap-override: 0%; }
-@font-face { font-family: "Geist Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 500; size-adjust: 102.69%; ascent-override: 97.87%; descent-override: 28.73%; line-gap-override: 0%; }
-@font-face { font-family: "Geist Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600; size-adjust: 97.12%; ascent-override: 103.48%; descent-override: 30.37%; line-gap-override: 0%; }
+/* D-01 (T077), recalibrado con la decisión 14: respaldos de Onest y Brygada 1918 mientras cargan. Un size-adjust por
+   peso iguala el ancho del respaldo al de la fuente, medido como relación de anchos sobre las 134 cadenas de
+   src/lib/copy/es.ts. Onest/Arial: 400 → 1,0398; 500 → 1,0508; 600 → 0,9900 (Arial Bold). Brygada/Georgia: 400 → 1,0415;
+   500 → 1,0501; 600 → 0,9079 y 700 → 0,9253 (Georgia Bold); itálicas 0,9671 · 0,9770 · 0,8498 · 0,8697.
+   Las sobreescrituras verticales son las de cada fuente (Onest: ascent 970 y descent 305 sobre 1000; Brygada: 920 y 250)
+   divididas por ese ajuste, así que la línea no cambia de alto al llegar la fuente. */
+@font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 103.98%; ascent-override: 93.29%; descent-override: 29.33%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 500; size-adjust: 105.08%; ascent-override: 92.31%; descent-override: 29.02%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600; size-adjust: 99.00%; ascent-override: 97.98%; descent-override: 30.81%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 400; size-adjust: 104.15%; ascent-override: 88.33%; descent-override: 24.00%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 500; size-adjust: 105.01%; ascent-override: 87.61%; descent-override: 23.81%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold"), local("Georgia-Bold"); font-style: normal; font-weight: 600; size-adjust: 90.79%; ascent-override: 101.33%; descent-override: 27.53%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold"), local("Georgia-Bold"); font-style: normal; font-weight: 700; size-adjust: 92.53%; ascent-override: 99.43%; descent-override: 27.02%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Italic"), local("Georgia-Italic"); font-style: italic; font-weight: 400; size-adjust: 96.71%; ascent-override: 95.13%; descent-override: 25.85%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Italic"), local("Georgia-Italic"); font-style: italic; font-weight: 500; size-adjust: 97.70%; ascent-override: 94.17%; descent-override: 25.59%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold Italic"), local("Georgia-BoldItalic"); font-style: italic; font-weight: 600; size-adjust: 84.98%; ascent-override: 108.26%; descent-override: 29.42%; line-gap-override: 0%; }
+@font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold Italic"), local("Georgia-BoldItalic"); font-style: italic; font-weight: 700; size-adjust: 86.97%; ascent-override: 105.78%; descent-override: 28.75%; line-gap-override: 0%; }
 
 html { font-variant-numeric: tabular-nums; }
 body {
   min-height: 100dvh;
   background-color: var(--color-surface-canvas);
   color: var(--color-text-primary);
-  font-family: var(--font-geist), sans-serif;
+  font-family: var(--font-onest), sans-serif;
 }
 :focus-visible { outline: var(--border-focus) solid var(--color-focus-ring); outline-offset: var(--focus-offset); }
 @media (prefers-reduced-motion: no-preference) {

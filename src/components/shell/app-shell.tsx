@@ -52,7 +52,7 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
       <span aria-hidden="true" className="grid place-items-center xl:size-11 xl:rounded-[var(--radius-md)] xl:bg-[color-mix(in_srgb,var(--color-text-onAction)_14%,transparent)]">
         <AppIcon name="plus" weight="bold" size={22} />
       </span>
-      <span className="sr-only font-serif text-[30px] leading-none xl:not-sr-only">{annotateName}</span>
+      <span className="sr-only font-serif text-[length:var(--title-l-size)] leading-none font-medium tracking-[var(--title-l-tracking)] xl:not-sr-only">{annotateName}</span>
       <span aria-hidden="true" className="hidden text-[length:var(--label-s-size)] font-medium xl:block">
         {copy.nav.shortcutLabel} {copy.nav.shortcut}
       </span>
@@ -70,7 +70,7 @@ function SideNav({ pathname }: { pathname: string | null }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-[var(--z-nav)] hidden w-[76px] flex-col overflow-y-auto border-r-[length:var(--border-hairline)] border-border bg-[var(--comp-sidebar-bg)] px-3 py-6 lg:flex xl:w-[248px] xl:px-[18px] xl:py-7">
       {/* Marca: «J» en el rail, «Juntia» con su punto bosque en el sidebar. */}
-      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[30px] leading-none text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[32px]">
+      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[26px] leading-none font-medium tracking-[-0.015em] text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[28px]">
         <span aria-hidden="true" className="hidden size-3 rounded-[4px] bg-primary xl:block" />
         <span aria-hidden="true" className="xl:hidden">{copy.shell.brand.charAt(0)}</span>
         <span className="sr-only xl:not-sr-only">{copy.shell.brand}</span>
@@ -187,7 +187,7 @@ export function PageHeader({ title, variant = "destination" }: PageHeaderProps) 
         </Link>
       )}
       {title ? (
-        <h1 className="max-w-full font-serif text-[clamp(28px,8.4vw,34px)] leading-none text-ink lg:text-[clamp(44px,4.2vw,64px)] lg:leading-[0.95] lg:tracking-[-0.02em]">
+        <h1 className="max-w-full font-serif text-[clamp(25px,7.4vw,30px)] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(39px,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]">
           {title}
         </h1>
       ) : null}

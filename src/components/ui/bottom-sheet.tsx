@@ -51,7 +51,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
                 className="fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex max-h-[calc(100dvh-96px)] flex-col gap-4 overflow-y-auto rounded-t-[30px] bg-overlay px-5 pt-3 pb-[calc(20px+env(safe-area-inset-bottom))] text-ink shadow-sheet focus-visible:outline-none"
               >
                 <span aria-hidden="true" className="mx-auto h-[5px] w-9 shrink-0 rounded-full bg-border-emphasis" />
-                <Dialog.Title className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)]">{title}</Dialog.Title>
+                <Dialog.Title className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)]">{title}</Dialog.Title>
                 {description ? <Dialog.Description className="text-[length:var(--body-m-size)] leading-[var(--body-m-line)] text-ink-secondary">{description}</Dialog.Description> : null}
                 {children}
                 <div className="flex justify-end">

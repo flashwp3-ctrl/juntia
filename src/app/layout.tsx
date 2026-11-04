@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Brygada_1918, Onest, Spline_Sans_Mono } from "next/font/google";
 import { MotionProvider } from "@/components/motion-provider";
 import { SHELL_END_ID } from "@/components/shell/shell-end";
 import { themeScript } from "@/lib/theme-script";
@@ -6,16 +6,21 @@ import "./globals.css";
 import { copy } from "@/lib/copy/es";
 export const metadata = { title: copy.shell.brand };
 
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument-serif" });
-// D-01 (T077): el respaldo automático de next/font es Arial al 104,76 % para todos los pesos, ~3 % más ancho que Geist
-// en el copy de la 001. En los textos centrados, ese ancho movía el inicio de la línea más de 3 px al llegar Geist
-// (CLS > 0). «Geist Fallback» se define en globals.css con un size-adjust por peso. font-display sigue siendo swap.
-const sans = Geist({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-geist", adjustFontFallback: false, fallback: ["Geist Fallback"] });
-const mono = Geist_Mono({ subsets: ["latin"], weight: "500", variable: "--font-geist-mono" });
+// Decisión 14 (maestro §15.10): Brygada 1918 en titulares, Onest en interfaz y cifras, Spline Sans Mono en metadatos.
+// D-01 (T077): el respaldo automático de next/font usa un solo size-adjust para todos los pesos. En los textos centrados,
+// cualquier diferencia de ancho mueve el inicio de la línea al llegar la fuente (CLS > 0). «Onest Fallback» y
+// «Brygada Fallback» (sin «1918»: next/font no entrecomilla el respaldo y un nombre con un token que empieza por cifra
+// invalida todo el font-family) se definen en globals.css con un size-adjust por peso. font-display sigue siendo swap.
+const serif = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "normal", variable: "--font-brygada", adjustFontFallback: false, fallback: ["Brygada Fallback"] });
+// La itálica es la misma familia («Brygada 1918»), en una llamada aparte para no precargarla: ninguna pantalla de la 001 la
+// usa y su archivo (24 KB) competiría con el de los titulares en la carga lenta. Se descarga solo si algún texto la pide.
+const serifItalic = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "italic", preload: false, variable: "--font-brygada-italic", adjustFontFallback: false, fallback: ["Brygada Fallback"] });
+const sans = Onest({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-onest", adjustFontFallback: false, fallback: ["Onest Fallback"] });
+const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: "500", variable: "--font-spline-mono" });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-CO" suppressHydrationWarning className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="es-CO" suppressHydrationWarning className={`${serif.variable} ${serifItalic.variable} ${sans.variable} ${mono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {/* D21-1 (T077): con la CPU lenta, Chrome pintaba el shell a medio parsear y la barra, el selector y sus íconos se
@@ -29,4 +34,3 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
-
