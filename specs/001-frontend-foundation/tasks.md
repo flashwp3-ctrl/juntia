@@ -596,22 +596,22 @@ Todas empiezan cuando termina la fase 9.
 
 Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una detrás de otra, en este orden.
 
-- [ ] T061 Crear `specs/001-frontend-foundation/evidence.md`: una sección por cada tarea de esta fase (ID y título), con la fecha, el commit sobre el que se ejecutó, el comando o el procedimiento, y la salida real o «pendiente: motivo»
+- [x] T061 Crear `specs/001-frontend-foundation/evidence.md`: una sección por cada tarea de esta fase (ID y título), con la fecha, el commit sobre el que se ejecutó, el comando o el procedimiento, y la salida real o «pendiente: motivo»
   - Ninguna sección dice «verificado» sin salida (`AGENTS.md` 12). Las capturas se guardan junto al archivo, en `specs/001-frontend-foundation/evidence/`, nombradas por ruta, ancho y tema.
   - Cumple: SC-001, SC-002, SC-003, SC-005, SC-006, SC-009.
   - Terminado cuando: el archivo existe con una sección por tarea de la fase 10, cada una vacía o «pendiente», y el PR D lo enlaza.
 
-- [ ] T062 Instalación limpia y `verify` sobre `package.json`, `package-lock.json` y `scripts/verify.mjs`: borrar `node_modules`, ejecutar `npm ci` y `npm run verify`, y pegar las dos salidas completas en el PR
+- [x] T062 Instalación limpia y `verify` sobre `package.json`, `package-lock.json` y `scripts/verify.mjs`: borrar `node_modules`, ejecutar `npm ci` y `npm run verify`, y pegar las dos salidas completas en el PR
   - Es la **primera medición real de los presupuestos** (`[V]` 1 de ADR-011): se reporta y no bloquea; si un tiempo supera su techo, se dice y el techo no se toca (cláusula anticliquet).
   - Cumple: FR-001, FR-042, FR-046; SC-009.
   - Terminado cuando: las dos salidas están en el PR y la tabla de `verify` muestra `domain` como «0 pruebas…» y `SQL/RLS` como «NO APLICABLE…».
 
-- [ ] T063 Build, axe, superficie interna y script de tema sobre `src/app/`: ejecutar `npm run build`, `npm run test:a11y`, `npm run check:internal-surface` y `npm run check:theme-script`, y pegar las cuatro salidas
+- [x] T063 Build, axe, superficie interna y script de tema sobre `src/app/`: ejecutar `npm run build`, `npm run test:a11y`, `npm run check:internal-surface` y `npm run check:theme-script`, y pegar las cuatro salidas
   - La tabla de rutas del build debe mostrar `○` para las seis rutas de producto y `ƒ /interno/primitivos`, y ninguna de las cinco rutas de `/cuenta/*` que no existen.
   - Cumple: FR-005, FR-040, FR-051, FR-052, FR-053; SC-002, SC-006.
   - Terminado cuando: las cuatro salidas están en el PR, con cero violaciones serias o críticas, las aserciones de movimiento reducido en verde, los seis casos de `check:internal-surface` correctos y todas las comprobaciones de `check:theme-script` correctas.
 
-- [ ] T064 `[V]` `vitest --changed` en el bucle local (`[V]` 6 de ADR-011): modificar `src/components/ui/amount-input.tsx` sin hacer commit, ejecutar `npx vitest run --changed` y pegar qué pruebas ejecutó; revertir el cambio
+- [x] T064 `[V]` `vitest --changed` en el bucle local (`[V]` 6 de ADR-011): modificar `src/components/ui/amount-input.tsx` sin hacer commit, ejecutar `npx vitest run --changed` y pegar qué pruebas ejecutó; revertir el cambio
   - Cumple: FR-042 (bucle local de `docs/TESTING.md` §2).
   - Terminado cuando: la salida está en el PR, o «no funciona» con la salida que lo muestra.
 
@@ -624,7 +624,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-037, FR-039; SC-001, SC-003, SC-005, SC-006.
   - Terminado cuando: el PR tiene la salida de cada medición por ruta, tema y ancho, o el umbral que no se cumple con su número real.
 
-- [ ] T066 `[V]` Ícono `scales` de Phosphor para Balance (`docs/design/README.md`, Log de cambios): captura del rail a 1024 px y del sidebar a 1440 px, lado a lado con el comp de `docs/design/screenshots/`
+- [x] T066 `[V]` Ícono `scales` de Phosphor para Balance (`docs/design/README.md`, Log de cambios): captura del rail a 1024 px y del sidebar a 1440 px, lado a lado con el comp de `docs/design/screenshots/`
   - Cumple: FR-019.
   - Terminado cuando: las capturas están en el PR con la observación «coincide» o la diferencia que se vea; la decisión es del revisor.
 
@@ -635,7 +635,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-012, FR-015, FR-016, FR-020, FR-021, FR-022, FR-023, FR-028, FR-031, FR-038, FR-039, FR-040, FR-041; SC-010.
   - Terminado cuando: el PR lleva el resultado de cada punto; un punto que falla se arregla o se reporta, nunca se omite.
 
-- [ ] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
+- [x] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
   - Las capturas permiten aprobar viendo la pantalla las **propuestas §15.9 de paleta** (Sara petróleo, Hogar azul tenue, superficie oscura `#191C1F`). La de «gasto, ingreso y liquidación en tinta» **no** se aprueba aquí: pasa a P0-1 (plan, comprobación de jerarquía).
   - Cumple: FR-009, FR-010, FR-011, FR-016, FR-018, FR-024, FR-030, FR-051; SC-001.
   - Terminado cuando: las capturas están adjuntas al PR, nombradas por ruta, ancho y tema.
@@ -647,7 +647,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-045, FR-047.
   - Terminado cuando: las dos listas están en el PR con la declaración «specs E2E añadidas: 0».
 
-- [ ] T070 [P] Comprobaciones de alcance y de copy sobre `package.json`, `src/` y `tests/`, con la salida de cada comando pegada en el PR
+- [x] T070 [P] Comprobaciones de alcance y de copy sobre `package.json`, `src/` y `tests/`, con la salida de cada comando pegada en el PR
   - `npm ls --depth=0` sin `@supabase/*`, `@tanstack/*`, `react-hook-form`, `zod`, `next-intl`, `react-i18next`, `next-themes`, `vaul`, `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `@vitejs/plugin-react`, `@testing-library/jest-dom`, `eslint-plugin-playwright`, `stylelint`.
   - `ls supabase tests/e2e public/manifest.json` → no existen; `git ls-files "*.spec.ts"` → vacío.
   - `git grep -nE "P0-[0-9]" -- src` → vacío (FR-034).
@@ -658,7 +658,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-002, FR-004, FR-005, FR-017, FR-034, FR-036, FR-047, FR-048, FR-050; SC-004.
   - Terminado cuando: cada comando y su salida están en el PR.
 
-- [ ] T071 [P] `[V]` Licencias de Instrument Serif, Geist y Geist Mono (maestro §6.1; spec, supuesto «Fuentes»), usadas en `src/app/layout.tsx`: pegar la licencia de cada familia con la URL oficial de donde sale
+- [x] T071 [P] `[V]` Licencias de Instrument Serif, Geist y Geist Mono (maestro §6.1; spec, supuesto «Fuentes»), usadas en `src/app/layout.tsx`: pegar la licencia de cada familia con la URL oficial de donde sale
   - Cumple: FR-007.
   - Terminado cuando: las tres licencias y sus fuentes están en el PR.
 
@@ -685,19 +685,19 @@ Las ejecuta una persona contra un servidor propio o un preview; no se lanzan en 
 
 ### Grupo 10D — cierre
 
-- [ ] T076 Ejecución real del CI en el PR D (`.github/workflows/ci.yml`): pegar el enlace del run y el resumen de cada job
+- [x] T076 Ejecución real del CI en el PR D (`.github/workflows/ci.yml`): pegar el enlace del run y el resumen de cada job
   - Comprobar y pegar: los tres jobs corrieron en paralelo; el job 5 ejecutó `test:a11y`, `check:internal-surface` y `check:theme-script`; el resumen del job 1 nombra los jobs 3 y 4 como no aplicables y ya no tiene filas de la 001 no aplicables; cada job publica su duración y la de cada comando contra el presupuesto. La demostración de fallo del job 1 ya se hizo en el PR A (T023).
   - Cumple: FR-043, FR-046; SC-009; US-7, escenarios 1–4.
   - Terminado cuando: el PR D lleva el enlace del run y los resúmenes pegados.
 
-- [ ] T077 Aplicar en el PR D las correcciones de código que salgan de la verificación de esta fase: cada corrección cita la tarea que detectó el fallo, se vuelve a ejecutar esa tarea y su sección de `evidence.md` se actualiza con la salida nueva
+- [x] T077 Aplicar en el PR D las correcciones de código que salgan de la verificación de esta fase: cada corrección cita la tarea que detectó el fallo, se vuelve a ejecutar esa tarea y su sección de `evidence.md` se actualiza con la salida nueva
   - **Agente:** una corrección que toca composición visual o anatomía de un primitivo necesita el comp y la hace **Claude Code**, consultando la sección de Claude Design que nombra la tarea de B o C que construyó ese archivo; el resto, Codex o Claude Code.
   - Una corrección que cambiaría alcance, aprobaría una propuesta §15.9 o movería un presupuesto se detiene y se reporta: no se resuelve en este PR (`AGENTS.md` 17; cláusula anticliquet).
   - Si la verificación no encuentra nada que corregir, la tarea se cierra con «sin correcciones» en `evidence.md`.
   - Cumple: SC-001, SC-002, SC-003, SC-005, SC-006, SC-010.
   - Terminado cuando: cada fallo de la fase 10 está corregido y vuelto a verificar, o reportado con su motivo, y `npm run verify` sigue en verde.
 
-- [ ] T078 Descripción del PR D según `AGENTS.md` 15 y `docs/TESTING.md` §7, en inglés (`docs/CONVENTIONS.md` B.4)
+- [x] T078 Descripción del PR D según `AGENTS.md` 15 y `docs/TESTING.md` §7, en inglés (`docs/CONVENTIONS.md` B.4)
   - Enlace a `specs/001-frontend-foundation/evidence.md`; objetivo, archivos, decisiones, comandos con su salida (T062, T063, T070 y T076), capturas (T066 y T068), correcciones (T077), riesgos y pendientes. Pruebas añadidas por nombre (T069) y «E2E specs added: 0». Estado de cada `[V]` (T064, T065, T066, T071, T072, T073, T074 y T075): salida en `evidence.md` o «pending» con el motivo. Lista de lo que espera aprobación humana en la revisión: las tres propuestas de paleta; el copy de los estados provisionales; que una persona que abre la app por primera vez entiende que esta versión todavía no guarda datos (SC-008); las capturas de SC-001.
   - Cumple: FR-036 (el copy queda listado para la revisión), SC-001, SC-004, SC-008 (la aprobación es de los dos fundadores en la revisión, no de esta tarea).
   - Terminado cuando: la descripción existe con todas las secciones y ningún `[V]` figura como resuelto sin salida.
