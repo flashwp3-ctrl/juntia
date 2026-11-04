@@ -105,6 +105,33 @@ async function touchArea(page: Page, selector: string) {
   });
 }
 
+// D-02 (T077) / FR-013, FR-037: todo el marco visible de Input y AmountInput enfoca su <input>. Para cada campo habilitado
+// del panel, un clic real en las cuatro esquinas del marco (el padre del <input>), a 5 px de cada borde para quedar
+// dentro del radio de 14, y después del clic el foco tiene que estar en el <input>. Devuelve el marco y las esquinas.
+async function fieldCorners(page: Page, scope: string) {
+  const inputs = page.locator(`${scope} input:not([disabled])`);
+  const results: { label: string; frame: string; corners: boolean[] }[] = [];
+  for (let index = 0; index < await inputs.count(); index++) {
+    const input = inputs.nth(index);
+    // Se centra el marco, no el <input>: el <input> puede quedar visible con el borde inferior del marco fuera de la ventana.
+    const { label, box } = await input.evaluate((element) => {
+      element.parentElement!.scrollIntoView({ block: "center" });
+      const frame = element.parentElement!.getBoundingClientRect();
+      const labelledBy = element.getAttribute("aria-labelledby");
+      const label = (labelledBy ? document.getElementById(labelledBy) : (element as HTMLInputElement).labels?.[0])?.textContent ?? "";
+      return { label, box: { x: frame.x, y: frame.y, width: frame.width, height: frame.height } };
+    });
+    const corners: boolean[] = [];
+    for (const [x, y] of [[box.x + 5, box.y + 5], [box.x + box.width - 5, box.y + 5], [box.x + 5, box.y + box.height - 5], [box.x + box.width - 5, box.y + box.height - 5]]) {
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await page.mouse.click(x, y);
+      corners.push(await input.evaluate((element) => document.activeElement === element));
+    }
+    results.push({ label, frame: `${box.width.toFixed(2)}×${box.height.toFixed(2)}`, corners });
+  }
+  return results;
+}
+
 for (const colorScheme of ["light", "dark"] as const) {
   for (const width of [390, 1440]) {
     for (const route of routes) {
@@ -179,6 +206,12 @@ for (const colorScheme of ["light", "dark"] as const) {
             expect.soft(area.width, `${name}: ancho clicable`).toBeGreaterThanOrEqual(44);
             expect.soft(area.height, `${name}: alto clicable`).toBeGreaterThanOrEqual(44);
             expect.soft(area.corners, `${name}: las esquinas de 44 × 44 caen en el control`).toBe(true);
+          }
+          const fields = await fieldCorners(page, scope);
+          expect(fields.length, "campos habilitados medidos").toBe(7);
+          for (const field of fields) {
+            console.log(`${colorScheme} ${route} ${width}px: campo «${field.label}» marco ${field.frame}, esquinas que enfocan ${field.corners.filter(Boolean).length}/4 [${field.corners.map((hit) => (hit ? "sí" : "no")).join(" ")}]`);
+            expect.soft(field.corners, `«${field.label}»: las cuatro esquinas del marco enfocan el <input>`).toEqual([true, true, true, true]);
           }
           console.log(`${colorScheme} ${route} ${width}px: skeleton ${skeleton.animations} animaciones, opacidad ${[...new Set(skeleton.opacities)].join(",")}; button ${rects[0]} en ${rects.length} cuadros`);
         }
