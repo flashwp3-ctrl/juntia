@@ -1,0 +1,6 @@
+FIRST_FRAME {"route":"/","theme":"light","timeOrigin":1793755494974.1,"firstPaint":2320,"cls":0.0001068768271412108,"atBody":"light","frames":5,"first":[247,243,235],"opposite":4,"pixels":["247,243,235","243,239,231"]}
+FIRST_FRAME {"route":"/actividad","theme":"light","timeOrigin":1793755504763.7,"firstPaint":2856,"cls":0.00008378615461070229,"atBody":"light","frames":4,"first":[243,239,231],"opposite":4,"pixels":["243,239,231"]}
+FIRST_FRAME {"route":"/metas","theme":"light","timeOrigin":1793755513582.1,"firstPaint":2252,"cls":0.00009587480081785087,"atBody":"light","frames":4,"first":[247,243,235],"opposite":3,"pixels":["247,243,235","243,239,231"]}
+FIRST_FRAME {"route":"/plan","theme":"light","timeOrigin":1793755521946,"firstPaint":2276,"cls":0.0002777967355077034,"atBody":"light","frames":4,"first":[243,239,231],"opposite":4,"pixels":["243,239,231"]}
+FIRST_FRAME {"route":"/balance","theme":"light","timeOrigin":1793755531062,"firstPaint":2592,"cls":0.00012938020749643354,"atBody":"light","frames":3,"first":[243,239,231],"opposite":3,"pixels":["243,239,231"]}
+FIRST_FRAME {"route":"/cuenta","theme":"light","timeOrigin":1793755540172.5,"firstPaint":2248,"cls":0.00010093922563336577,"atBody":"light","frames":3,"first":[247,243,235],"opposite":0,"pixels":["247,243,235"]}

@@ -1,0 +1,60 @@
+COMPOSITION {"motion":"reduce","theme":"light","width":360,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":360,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":390,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":390,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":430,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":430,"modal":false,"sheet":true},"account":true,"balanceByURL":true,"active":0}
+COMPOSITION {"motion":"reduce","theme":"light","width":768,"first":{"name":"Ir al contenido","outline":"rgb(46, 88, 102) solid 2px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(26, 28, 26, 0.22) 0px 18px 40px 0px"},"dialog":{"width":520,"modal":true,"sheet":false},"account":true,"balanceByURL":true,"active":0}
+locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for getByRole('link', { name: 'Mi cuenta', exact: true }).visible()
+    - locator resolved to <a href="/cuenta" class="mt-auto relative after:absolute after:inset-0 after:content-[''] flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] text-ink-secondary xl:text-[var(--comp-nav-muted-fg)] font-medium hover:bg-[var(--comp-nav-active-bg)]">…</a>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    57 × waiting for element to be visible, enabled and stable
+       - element is visible, enabled and stable
+       - scrolling into view if needed
+       - done scrolling
+       - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events
+     - retrying click action
+       - waiting 500ms
+
+    at C:\Users\aleja\AppData\Local\Temp\juntia-001-d\interactions.cjs:3:1206 {
+  log: [
+    "  - waiting for getByRole('link', { name: 'Mi cuenta', exact: true }).visible()",
+    `    - locator resolved to <a href="/cuenta" class="mt-auto relative after:absolute after:inset-0 after:content-[''] flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] text-ink-secondary xl:text-[var(--comp-nav-muted-fg)] font-medium hover:bg-[var(--comp-nav-active-bg)]">…</a>`,
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    57 × waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <nextjs-portal></nextjs-portal> from <script data-nextjs-dev-overlay="true">…</script> subtree intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}

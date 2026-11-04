@@ -13,6 +13,7 @@ import { useAnnotate } from "./annotate-notice";
 import { BaseVersionNotice } from "./base-version-notice";
 import { ContextSelector } from "./context-selector";
 import { ACCOUNT_HREF, isCurrent, navDestinations } from "./nav-destinations";
+import { SHELL_END_ID } from "./shell-end";
 
 const annotateName = copy.nav.annotateBlock;
 
@@ -154,6 +155,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <BottomBar pathname={pathname} stacked={stacked} />
+      {/* D21-1 (T077): fin del shell. El <link rel="expect" blocking="render"> del root layout retiene el primer pintado
+          hasta que el parser llega aquí, para que el shell nunca se pinte a medio construir (CLS = 0, maestro §15.7). */}
+      <div id={SHELL_END_ID} hidden />
     </div>
   );
 }

@@ -1,0 +1,56 @@
+# D-05 rojo: build con el Input anterior, aserción de 28ee013
+    > 227 |             if (amount) expect.soft(size >= 28 && size <= 40, `AmountInput «${value}»: ${size} px fuera de 28–40`).toBe(true);
+    Error: AmountInput «999.999.999»: 15 px fuera de 28–40
+    Error: AmountInput «»: 15 px fuera de 28–40
+  4 failed
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 15 px
+dark /interno/primitivos 1440px: AmountInput «» a 15 px
+dark /interno/primitivos 1440px: Input «» a 15 px
+dark /interno/primitivos 390px: AmountInput «999.999.999» a 15 px
+dark /interno/primitivos 390px: AmountInput «» a 15 px
+dark /interno/primitivos 390px: Input «» a 15 px
+light /interno/primitivos 1440px: AmountInput «999.999.999» a 15 px
+light /interno/primitivos 1440px: AmountInput «» a 15 px
+light /interno/primitivos 1440px: Input «» a 15 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 15 px
+light /interno/primitivos 390px: AmountInput «» a 15 px
+light /interno/primitivos 390px: Input «» a 15 px
+
+# D-05 verde: build de d2d5ef8
+  4 passed (12.6s)
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 28.0053 px, marco de 64 px
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 29.5905 px, marco de 64 px
+dark /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: AmountInput «999.999.999» a 28.0053 px, marco de 64 px
+dark /interno/primitivos 390px: AmountInput «999.999.999» a 34.0819 px, marco de 64 px
+dark /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: AmountInput «999.999.999» a 28.0053 px, marco de 64 px
+light /interno/primitivos 1440px: AmountInput «999.999.999» a 29.5905 px, marco de 64 px
+light /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: AmountInput «999.999.999» a 28.0053 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 34.0819 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]

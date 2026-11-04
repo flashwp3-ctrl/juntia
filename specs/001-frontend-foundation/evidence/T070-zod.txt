@@ -1,0 +1,14 @@
+zod@4.6.7 dev
+node_modules/zod
+  zod@"^3.25.0 || ^4.0.0" from eslint-plugin-react-hooks@7.1.1
+  node_modules/eslint-plugin-react-hooks
+    eslint-plugin-react-hooks@"^7.1.0" from eslint-config-next@16.4.4
+    node_modules/eslint-config-next
+      dev eslint-config-next@"16.4.4" from the root project
+  peer zod@"^3.25.0 || ^4.0.0" from zod-validation-error@4.0.2
+  node_modules/zod-validation-error
+    zod-validation-error@"^3.5.0 || ^4.0.0" from eslint-plugin-react-hooks@7.1.1
+    node_modules/eslint-plugin-react-hooks
+      eslint-plugin-react-hooks@"^7.1.0" from eslint-config-next@16.4.4
+      node_modules/eslint-config-next
+        dev eslint-config-next@"16.4.4" from the root project

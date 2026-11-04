@@ -17,6 +17,7 @@ export type InputProps = Omit<ComponentPropsWithRef<"input">, "size" | "prefix">
 export function Input({ label, help, error, endIcon, prefix, disabled, id, fieldClassName = "", inputClassName = "", className = "", ...rest }: InputProps) {
   const autoId = useId();
   const inputId = id ?? `${autoId}-input`;
+  const labelId = `${autoId}-label`;
   const helpId = `${autoId}-help`;
   const errorId = `${autoId}-error`;
   const invalid = Boolean(error);
@@ -31,22 +32,30 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
 
   return (
     <div className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
-      <label htmlFor={inputId} className="text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-ink-secondary">
-        {label}
+      {/* D-02 (T077): el <label> envuelve el rótulo y el marco, así que un clic en cualquier punto del marco (relleno,
+          prefijo, ícono) enfoca el <input> por la activación nativa del label, también antes de hidratar. El nombre
+          accesible sale solo del rótulo por aria-labelledby, sin el «$» ni el valor. */}
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span id={labelId} className="text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-ink-secondary">
+          {label}
+        </span>
+        {/* D-05 (T077): body.m va en el marco y el <input> lo hereda (preflight le da `font: inherit`). Así una clase de
+            tamaño en inputClassName, como el clamp de AmountInput, no compite con la de Input por orden de CSS. */}
+        <span className={`flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] px-[14px] text-[length:var(--body-m-size)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid ${disabled ? "" : "cursor-text"} ${field} ${fieldClassName}`}>
+          {prefix}
+          <input
+            {...rest}
+            id={inputId}
+            disabled={disabled}
+            aria-labelledby={labelId}
+            aria-invalid={invalid || undefined}
+            aria-errormessage={invalid ? errorId : undefined}
+            aria-describedby={[showHelp ? helpId : null, invalid ? errorId : null].filter(Boolean).join(" ") || undefined}
+            className={`min-w-0 flex-1 bg-transparent font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
+          />
+          {endIcon ? <AppIcon name={endIcon} size={20} className="shrink-0 text-ink-secondary" /> : null}
+        </span>
       </label>
-      <div className={`flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] px-[14px] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid ${field} ${fieldClassName}`}>
-        {prefix}
-        <input
-          {...rest}
-          id={inputId}
-          disabled={disabled}
-          aria-invalid={invalid || undefined}
-          aria-errormessage={invalid ? errorId : undefined}
-          aria-describedby={[showHelp ? helpId : null, invalid ? errorId : null].filter(Boolean).join(" ") || undefined}
-          className={`min-w-0 flex-1 bg-transparent text-[length:var(--body-m-size)] font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
-        />
-        {endIcon ? <AppIcon name={endIcon} size={20} className="shrink-0 text-ink-secondary" /> : null}
-      </div>
       {showHelp ? (
         <p id={helpId} className="text-[length:var(--label-s-size)] leading-[var(--label-s-line)] text-ink-secondary">
           {help}

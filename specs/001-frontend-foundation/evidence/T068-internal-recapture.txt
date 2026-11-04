@@ -1,0 +1,14 @@
+RECAPTURE {"route":"/interno/primitivos","width":390,"theme":"light","capture":"interno-primitivos-390-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1440,"theme":"light","capture":"interno-primitivos-1440-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":360,"theme":"light","capture":"interno-primitivos-360-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":430,"theme":"light","capture":"interno-primitivos-430-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":768,"theme":"light","capture":"interno-primitivos-768-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1024,"theme":"light","capture":"interno-primitivos-1024-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1280,"theme":"light","capture":"interno-primitivos-1280-light.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":390,"theme":"dark","capture":"interno-primitivos-390-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1440,"theme":"dark","capture":"interno-primitivos-1440-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":360,"theme":"dark","capture":"interno-primitivos-360-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":430,"theme":"dark","capture":"interno-primitivos-430-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":768,"theme":"dark","capture":"interno-primitivos-768-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1024,"theme":"dark","capture":"interno-primitivos-1024-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}
+RECAPTURE {"route":"/interno/primitivos","width":1280,"theme":"dark","capture":"interno-primitivos-1280-dark.png","method":"scroll through long page + 2 RAF per viewport before fullPage to paint raster tiles"}

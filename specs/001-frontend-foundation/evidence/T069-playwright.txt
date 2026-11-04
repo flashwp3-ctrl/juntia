@@ -1,0 +1,38 @@
+Listing tests:
+  [a11y] › routes.a11y.ts:111:11 › / · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /metas · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /plan · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /balance · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › / · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /metas · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /plan · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /balance · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › / · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /metas · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /plan · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /balance · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › / · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /metas · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /plan · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /balance · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 1440px
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · light · 390px: barra oculta (pantalla apilada)
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · light · 768px: barra visible con Anotar
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · dark · 390px: barra oculta (pantalla apilada)
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · dark · 768px: barra visible con Anotar
+Total: 36 tests in 1 file

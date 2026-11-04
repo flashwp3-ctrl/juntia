@@ -596,26 +596,26 @@ Todas empiezan cuando termina la fase 9.
 
 Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una detrás de otra, en este orden.
 
-- [ ] T061 Crear `specs/001-frontend-foundation/evidence.md`: una sección por cada tarea de esta fase (ID y título), con la fecha, el commit sobre el que se ejecutó, el comando o el procedimiento, y la salida real o «pendiente: motivo»
+- [x] T061 Crear `specs/001-frontend-foundation/evidence.md`: una sección por cada tarea de esta fase (ID y título), con la fecha, el commit sobre el que se ejecutó, el comando o el procedimiento, y la salida real o «pendiente: motivo»
   - Ninguna sección dice «verificado» sin salida (`AGENTS.md` 12). Las capturas se guardan junto al archivo, en `specs/001-frontend-foundation/evidence/`, nombradas por ruta, ancho y tema.
   - Cumple: SC-001, SC-002, SC-003, SC-005, SC-006, SC-009.
   - Terminado cuando: el archivo existe con una sección por tarea de la fase 10, cada una vacía o «pendiente», y el PR D lo enlaza.
 
-- [ ] T062 Instalación limpia y `verify` sobre `package.json`, `package-lock.json` y `scripts/verify.mjs`: borrar `node_modules`, ejecutar `npm ci` y `npm run verify`, y pegar las dos salidas completas en el PR
+- [x] T062 Instalación limpia y `verify` sobre `package.json`, `package-lock.json` y `scripts/verify.mjs`: borrar `node_modules`, ejecutar `npm ci` y `npm run verify`, y pegar las dos salidas completas en el PR
   - Es la **primera medición real de los presupuestos** (`[V]` 1 de ADR-011): se reporta y no bloquea; si un tiempo supera su techo, se dice y el techo no se toca (cláusula anticliquet).
   - Cumple: FR-001, FR-042, FR-046; SC-009.
   - Terminado cuando: las dos salidas están en el PR y la tabla de `verify` muestra `domain` como «0 pruebas…» y `SQL/RLS` como «NO APLICABLE…».
 
-- [ ] T063 Build, axe, superficie interna y script de tema sobre `src/app/`: ejecutar `npm run build`, `npm run test:a11y`, `npm run check:internal-surface` y `npm run check:theme-script`, y pegar las cuatro salidas
+- [x] T063 Build, axe, superficie interna y script de tema sobre `src/app/`: ejecutar `npm run build`, `npm run test:a11y`, `npm run check:internal-surface` y `npm run check:theme-script`, y pegar las cuatro salidas
   - La tabla de rutas del build debe mostrar `○` para las seis rutas de producto y `ƒ /interno/primitivos`, y ninguna de las cinco rutas de `/cuenta/*` que no existen.
   - Cumple: FR-005, FR-040, FR-051, FR-052, FR-053; SC-002, SC-006.
   - Terminado cuando: las cuatro salidas están en el PR, con cero violaciones serias o críticas, las aserciones de movimiento reducido en verde, los seis casos de `check:internal-surface` correctos y todas las comprobaciones de `check:theme-script` correctas.
 
-- [ ] T064 `[V]` `vitest --changed` en el bucle local (`[V]` 6 de ADR-011): modificar `src/components/ui/amount-input.tsx` sin hacer commit, ejecutar `npx vitest run --changed` y pegar qué pruebas ejecutó; revertir el cambio
+- [x] T064 `[V]` `vitest --changed` en el bucle local (`[V]` 6 de ADR-011): modificar `src/components/ui/amount-input.tsx` sin hacer commit, ejecutar `npx vitest run --changed` y pegar qué pruebas ejecutó; revertir el cambio
   - Cumple: FR-042 (bucle local de `docs/TESTING.md` §2).
   - Terminado cuando: la salida está en el PR, o «no funciona» con la salida que lo muestra.
 
-- [ ] T065 `[V]` Umbrales del maestro §15.7 que aplican a la 001, sobre `npm run build` servido con `npm run start` y `JUNTIA_INTERNAL_SURFACE=1`
+- [x] T065 `[V]` Umbrales del maestro §15.7 que aplican a la 001, sobre `npm run build` servido con `npm run start` y `JUNTIA_INTERNAL_SURFACE=1`
   - **Primer cuadro y CLS** (SC-006): reutilizar el arnés de research R2 (CPU 6×, red de 400 kbit/s y 400 ms, `Page.startScreencast`, píxel del lienzo) en las seis rutas de producto en claro y oscuro: ningún cuadro con el tema contrario; CLS = 0 en la carga de cada ruta (PerformanceObserver `layout-shift`).
   - **INP al abrir Anotar** (SC-005): medido en laboratorio a 390 y 1440 px y **reportado como laboratorio, no como p75 real**; < 200 ms.
   - **Scroll horizontal** (FR-039, SC-001): en cada ruta de producto y en `/interno/primitivos`, a 360, 390, 430, 1024 y 1440 px y en los dos temas, `document.documentElement.scrollWidth <= clientWidth`.
@@ -623,31 +623,34 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Los scripts de medición van **fuera de la suite** (plan, «Pruebas por capa»: medición del PR): en un archivo fuera del repositorio o pegados en el PR; no se añaden a `tests/`.
   - Cumple: FR-037, FR-039; SC-001, SC-003, SC-005, SC-006.
   - Terminado cuando: el PR tiene la salida de cada medición por ruta, tema y ancho, o el umbral que no se cumple con su número real.
+  - **Estado:** cerrada, en Chromium, con la salida en `evidence.md` (T065 y T077): CLS = 0 en las 12 cargas de R2 y en 0 de 48 de la tanda ampliada, sin cuadro del tema contrario, scroll e INP de laboratorio dentro del umbral, y objetivos táctiles corregidos (D-02). El mecanismo de D21-1 no aplica en Firefox ni en Safari anterior a 18.2. CLS en Firefox y WebKit, CLS en un iPhone real y el respaldo tipográfico en Android quedan como `[V]` heredados por P0-1 (decisión 12).
 
-- [ ] T066 `[V]` Ícono `scales` de Phosphor para Balance (`docs/design/README.md`, Log de cambios): captura del rail a 1024 px y del sidebar a 1440 px, lado a lado con el comp de `docs/design/screenshots/`
+- [x] T066 `[V]` Ícono `scales` de Phosphor para Balance (`docs/design/README.md`, Log de cambios): captura del rail a 1024 px y del sidebar a 1440 px, lado a lado con el comp de `docs/design/screenshots/`
   - Cumple: FR-019.
   - Terminado cuando: las capturas están en el PR con la observación «coincide» o la diferencia que se vea; la decisión es del revisor.
 
-- [ ] T067 Recorrido manual de [quickstart.md](quickstart.md) §5 con `npm run dev`, pegando una línea de resultado por punto
+- [x] T067 Recorrido manual de [quickstart.md](quickstart.md) §5 con `npm run dev`, pegando una línea de resultado por punto
   - Teclado completo («Ir al contenido» primero, destinos con `aria-current`, foco visible siempre); Anotar con toque, clic, Enter y `N`, hoja por debajo de 768 y diálogo de 520 desde 768, cruzar 768 con el aviso abierto; selector con recarga y navegación, perilla que se desliza y que salta con movimiento reducido; cambio del tema del sistema con la app abierta (180 ms; instantáneo con movimiento reducido); texto al 200 %; safe areas en un iPhone o su emulación; Balance abierto por URL en móvil; segmented en modo `tablist` con flechas en la superficie interna; Skeleton que aparece solo pasados 300 ms; Button en carga sin salto de ancho.
   - Todo con movimiento reducido emulado y sin él, con el mismo resultado final (SC-010).
   - También: Anotar a un toque en cada composición, destino actual con ícono Fill, acceso a Mi cuenta en cada ancho y aviso de versión base en cada ruta.
   - Cumple: FR-012, FR-015, FR-016, FR-020, FR-021, FR-022, FR-023, FR-028, FR-031, FR-038, FR-039, FR-040, FR-041; SC-010.
   - Terminado cuando: el PR lleva el resultado de cada punto; un punto que falla se arregla o se reporta, nunca se omite.
+  - **Estado: hecho** por el gestor el 3 de noviembre de 2026 (ver `evidence.md`, T067). Tres comprobaciones no son verificables en el navegador del app y se reportan, no se omiten: movimiento reducido, cambio de tema en vivo y safe areas físicas.
 
-- [ ] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
+- [x] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
   - Las capturas permiten aprobar viendo la pantalla las **propuestas §15.9 de paleta** (Sara petróleo, Hogar azul tenue, superficie oscura `#191C1F`). La de «gasto, ingreso y liquidación en tinta» **no** se aprueba aquí: pasa a P0-1 (plan, comprobación de jerarquía).
   - Cumple: FR-009, FR-010, FR-011, FR-016, FR-018, FR-024, FR-030, FR-051; SC-001.
   - Terminado cuando: las capturas están adjuntas al PR, nombradas por ruta, ancho y tema.
 
 ### Grupo 10B — solo lectura, sin servidor ni puertos
 
-- [ ] T069 [P] Lista de las pruebas añadidas, por nombre (`docs/TESTING.md` §7): pegar en el PR la salida de `npx vitest list` y de `npx playwright test --list --project a11y`, y comprobar que coinciden con la tabla de conservadas del [Anexo A](#anexo-a--auditoría-de-las-tareas-de-test-adr-012-4-f7-4-punto-2): ninguna de más ni de menos
+- [x] T069 [P] Lista de las pruebas añadidas, por nombre (`docs/TESTING.md` §7): pegar en el PR la salida de `npx vitest list` y de `npx playwright test --list --project a11y`, y comprobar que coinciden con la tabla de conservadas del [Anexo A](#anexo-a--auditoría-de-las-tareas-de-test-adr-012-4-f7-4-punto-2): ninguna de más ni de menos
   - Si la implementación necesita una prueba que no está en el anexo, se detiene y se plantea; no se añade en silencio.
   - Cumple: FR-045, FR-047.
   - Terminado cuando: las dos listas están en el PR con la declaración «specs E2E añadidas: 0».
+  - **Estado:** cerrada. Concordancia literal con el Anexo A (§A.4, R1–R10, todas aceptadas por los fundadores el 3 de noviembre de 2026). Specs E2E añadidas: 0.
 
-- [ ] T070 [P] Comprobaciones de alcance y de copy sobre `package.json`, `src/` y `tests/`, con la salida de cada comando pegada en el PR
+- [x] T070 [P] Comprobaciones de alcance y de copy sobre `package.json`, `src/` y `tests/`, con la salida de cada comando pegada en el PR
   - `npm ls --depth=0` sin `@supabase/*`, `@tanstack/*`, `react-hook-form`, `zod`, `next-intl`, `react-i18next`, `next-themes`, `vaul`, `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `@vitejs/plugin-react`, `@testing-library/jest-dom`, `eslint-plugin-playwright`, `stylelint`.
   - `ls supabase tests/e2e public/manifest.json` → no existen; `git ls-files "*.spec.ts"` → vacío.
   - `git grep -nE "P0-[0-9]" -- src` → vacío (FR-034).
@@ -658,7 +661,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-002, FR-004, FR-005, FR-017, FR-034, FR-036, FR-047, FR-048, FR-050; SC-004.
   - Terminado cuando: cada comando y su salida están en el PR.
 
-- [ ] T071 [P] `[V]` Licencias de Instrument Serif, Geist y Geist Mono (maestro §6.1; spec, supuesto «Fuentes»), usadas en `src/app/layout.tsx`: pegar la licencia de cada familia con la URL oficial de donde sale
+- [x] T071 [P] `[V]` Licencias de Instrument Serif, Geist y Geist Mono (maestro §6.1; spec, supuesto «Fuentes»), usadas en `src/app/layout.tsx`: pegar la licencia de cada familia con la URL oficial de donde sale
   - Cumple: FR-007.
   - Terminado cuando: las tres licencias y sus fuentes están en el PR.
 
@@ -666,6 +669,7 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Crear o enlazar el proyecto de Vercel, asignar un alias o desplegar en producción son acciones de los fundadores: Codex **no** las hace por su cuenta; si el proyecto no existe, la tarea queda «pendiente: no existe proyecto de Vercel» y se dice así en el PR. **Nunca** se asigna el dominio de producción con `vercel alias` a un preview (quickstart, «Restricción operativa»).
   - Cumple: FR-049, FR-053.
   - Terminado cuando: el PR tiene los códigos HTTP reales de cada caso y la observación sobre `VERCEL_URL`, o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 ### Grupo 10C — necesitan una persona con dispositivo
 
@@ -674,30 +678,33 @@ Las ejecuta una persona contra un servidor propio o un preview; no se lanzan en 
 - [ ] T073 `[V]` **Requiere persona con dispositivo.** Contraste de los pares texto/fondo del shell en los dos temas en dispositivos reales (`DESIGN_SYSTEM.md` §4), sobre `src/styles/tokens.css`: Codex prepara la lista de pares y la ruta de cada uno; los fundadores miden y la salida (herramienta, dispositivo, valores) se pega
   - Cumple: FR-004, FR-038 (foco ≥ 3:1).
   - Terminado cuando: el PR tiene los valores medidos o «pendiente: no se ejecutó» con el motivo. Nunca «verificado» sin valores.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 - [ ] T074 `[V]` **Requiere persona con dispositivo.** Rendimiento de las sombras táctiles de la barra inferior y de los botones en un móvil de gama media (`DESIGN_SYSTEM.md` §4), sobre `src/components/shell/app-shell.tsx` y `src/components/ui/button.tsx`
   - Cumple: FR-012, FR-018.
   - Terminado cuando: el PR tiene el dispositivo y la observación (o una traza de rendimiento), o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 - [ ] T075 `[V]` **Requiere persona con dispositivo.** VoiceOver (iOS) y TalkBack (Android) sobre el shell (handoff §Accesibilidad): «Ir al contenido», navegación con nombre, `aria-current`, anuncio «Ahora ves: Nosotros», aviso de Anotar (apertura, cierre, retorno del foco) y error de AmountInput en la superficie interna
   - Cumple: FR-013, FR-022, FR-027, FR-031.
   - Terminado cuando: el PR tiene lo que anunció cada lector, por punto, o «pendiente» con el motivo.
+  - **Estado: pendiente, heredada por P0-1, decisión 12** (maestro §15.10, PR #22). Dueño y momento en `evidence.md`, T078.
 
 ### Grupo 10D — cierre
 
-- [ ] T076 Ejecución real del CI en el PR D (`.github/workflows/ci.yml`): pegar el enlace del run y el resumen de cada job
+- [x] T076 Ejecución real del CI en el PR D (`.github/workflows/ci.yml`): pegar el enlace del run y el resumen de cada job
   - Comprobar y pegar: los tres jobs corrieron en paralelo; el job 5 ejecutó `test:a11y`, `check:internal-surface` y `check:theme-script`; el resumen del job 1 nombra los jobs 3 y 4 como no aplicables y ya no tiene filas de la 001 no aplicables; cada job publica su duración y la de cada comando contra el presupuesto. La demostración de fallo del job 1 ya se hizo en el PR A (T023).
   - Cumple: FR-043, FR-046; SC-009; US-7, escenarios 1–4.
   - Terminado cuando: el PR D lleva el enlace del run y los resúmenes pegados.
 
-- [ ] T077 Aplicar en el PR D las correcciones de código que salgan de la verificación de esta fase: cada corrección cita la tarea que detectó el fallo, se vuelve a ejecutar esa tarea y su sección de `evidence.md` se actualiza con la salida nueva
+- [x] T077 Aplicar en el PR D las correcciones de código que salgan de la verificación de esta fase: cada corrección cita la tarea que detectó el fallo, se vuelve a ejecutar esa tarea y su sección de `evidence.md` se actualiza con la salida nueva
   - **Agente:** una corrección que toca composición visual o anatomía de un primitivo necesita el comp y la hace **Claude Code**, consultando la sección de Claude Design que nombra la tarea de B o C que construyó ese archivo; el resto, Codex o Claude Code.
   - Una corrección que cambiaría alcance, aprobaría una propuesta §15.9 o movería un presupuesto se detiene y se reporta: no se resuelve en este PR (`AGENTS.md` 17; cláusula anticliquet).
   - Si la verificación no encuentra nada que corregir, la tarea se cierra con «sin correcciones» en `evidence.md`.
   - Cumple: SC-001, SC-002, SC-003, SC-005, SC-006, SC-010.
   - Terminado cuando: cada fallo de la fase 10 está corregido y vuelto a verificar, o reportado con su motivo, y `npm run verify` sigue en verde.
 
-- [ ] T078 Descripción del PR D según `AGENTS.md` 15 y `docs/TESTING.md` §7, en inglés (`docs/CONVENTIONS.md` B.4)
+- [x] T078 Descripción del PR D según `AGENTS.md` 15 y `docs/TESTING.md` §7, en inglés (`docs/CONVENTIONS.md` B.4)
   - Enlace a `specs/001-frontend-foundation/evidence.md`; objetivo, archivos, decisiones, comandos con su salida (T062, T063, T070 y T076), capturas (T066 y T068), correcciones (T077), riesgos y pendientes. Pruebas añadidas por nombre (T069) y «E2E specs added: 0». Estado de cada `[V]` (T064, T065, T066, T071, T072, T073, T074 y T075): salida en `evidence.md` o «pending» con el motivo. Lista de lo que espera aprobación humana en la revisión: las tres propuestas de paleta; el copy de los estados provisionales; que una persona que abre la app por primera vez entiende que esta versión todavía no guarda datos (SC-008); las capturas de SC-001.
   - Cumple: FR-036 (el copy queda listado para la revisión), SC-001, SC-004, SC-008 (la aprobación es de los dos fundadores en la revisión, no de esta tarea).
   - Terminado cuando: la descripción existe con todas las secciones y ningún `[V]` figura como resuelto sin salida.
@@ -897,6 +904,27 @@ No son huecos del plan —el plan los asigna a la revisión humana o a un `[V]`�
 | FR-012 (Button en carga sin salto de ancho) | T067, T068 | jsdom no tiene layout; el gestor lo deja en revisión humana. La pulsación sin desplazamiento con movimiento reducido sí está en B9 (T040) |
 | FR-015 en modo `tablist` | T067 | Sin consumidor en las rutas de la 001; las flechas del modo `radiogroup` ya están en B4. El gestor lo deja en revisión humana |
 | FR-016 (Skeleton: aparece solo pasados 300 ms) | T067, T068 | Retirada su prueba de componentes (B19): no está en FR-045. Revisión humana en la superficie interna (capturas de B, recorrido de D). El pulso estático con movimiento reducido sí está en B9 (T040) |
+
+### A.4 Pruebas añadidas por revisión
+
+Las revisiones de los PR A (#15), B (#17) y C (#19) y la verificación del PR D (T077) añadieron pruebas que este anexo no tenía. Los fundadores aceptaron todas las de A, B y C el 3 de noviembre de 2026 (R1–R6, R9 y R10); R7 y R8 son las regresiones de los hallazgos D-02 y D-05 de T077. **Ninguna es una tarea de test nueva ni una spec E2E:** son casos o aserciones dentro de archivos que ya figuran en A.1, salvo R4, que es un archivo de componentes nuevo. **Specs E2E que añade la 001: siguen siendo 0.**
+
+| # | Origen | Archivo | Capa | Requisito | Por qué esta capa es la más baja | Qué detecta que ninguna otra detecta |
+| --- | --- | --- | --- | --- | --- | --- |
+| R1 | F17-4 (revisión adversarial del PR #17) | `src/components/ui/amount-input.test.tsx`, dentro de B3 | Componente (RTL) | FR-013, FR-014 | Es el comportamiento del componente ante un `value` o `defaultValue` externo; no necesita layout | Que un valor fuera de rango (mil millones, negativo, con decimales) se reformatee como otro importe o llame a `onValueChange`. Seis casos: tres valores por dos props |
+| R2 | F17-R3 (PR #17) | `src/components/ui/amount-input.test.tsx`, dentro de B3 | Componente (RTL) | FR-013, FR-014 | Igual que R1: estado ARIA del campo | Que un `error=""` anule el estado inválido de un valor fuera de rango |
+| R3 | F19-2 (revisión del PR #19) | `src/components/shell/context-selector.test.tsx`, dentro de B4 | Componente (RTL) | FR-025–FR-027; SC-007 | `localStorage` simulado con lectura permitida y escritura rechazada; se observa en el DOM | Que lo que se ve, `aria-checked` y el anuncio digan cosas distintas cuando no se pudo guardar. El caso de tres cambios seguidos ya era de T042 |
+| R4 | F19-3 (PR #19) | `src/app/(app)/error.test.tsx` | Componente (RTL) | FR-028; caso límite «Ruta inexistente o error de render» | `error.tsx` se renderiza sin navegador; el shell que lo rodea ya lo comprueba B6 | Un mensaje técnico crudo o el `digest` a la vista, y que «Reintentar» e «Ir a Inicio» no funcionen. Cuatro casos. FR-045 no nombra este componente: entra por la aceptación de los fundadores |
+| R5 | F17-2 (PR #17) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta (no es spec E2E) | FR-037; SC-003 | El área clicable real (caja más `::after` posicionado) y el hit testing necesitan layout; jsdom no lo tiene | Que «Yo» del Segmented o un Button sm de solo ícono queden por debajo de 44 × 44 o que sus esquinas caigan en otro elemento |
+| R6 | F17-R2 (PR #17) y T060 (PR C) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-012, FR-016; SC-010; ADR-011 §2, fila 17 | Emulación de `prefers-reduced-motion` y cuadros de `requestAnimationFrame`: solo en navegador | Que una pasada mida el panel del otro tema (F17-R2), y que la perilla, el aviso de Anotar, Skeleton o Button se muevan con movimiento reducido |
+| R7 | D-02 (T077, PR D) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-013, FR-037; SC-003 | Un clic real en las cuatro esquinas del marco y la comprobación del foco necesitan layout y hit testing | Que solo la línea de texto del `<input>` (22,5 o 19 px) enfoque el campo dentro de un marco de 48 o 64 px. Rojo previo: 0 de 4 esquinas en los 7 campos habilitados, dos temas, 390 y 1440 |
+| R8 | D-05 (T077, PR D) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-014; COMPONENT_SPECIFICATIONS.md §Input (Monto) | jsdom no aplica el CSS de Tailwind, así que una prueba RTL no ve el tamaño calculado ni el orden de las clases en la hoja | Dígitos de AmountInput fuera de 28–40 px, un importe cortado, un marco que deja de medir 64 px (48 en Input) o un Input que pierde body.m. Rojo previo: 15 px en todos los AmountInput |
+| R9 | F19-1 (revisión del PR #19) | `tests/a11y/routes.a11y.ts`, dentro de B9: cuatro casos de `/cuenta` a 390 y 768 en los dos temas | Pasada de navegador por ruta (no es spec E2E) | FR-020, FR-033 | Qué disparador queda visible a cada ancho depende de las media queries del layout; jsdom no las evalúa | Que la barra con Anotar desaparezca de `/cuenta` desde 768 (Anotar dejaría de estar a un toque) o que vuelva bajo 768 en la pantalla apilada |
+| R10 | F15-1 a F15-4 (revisión del PR #15) | `tests/lint-rules.test.ts`, dentro de B1 | Lint, probada con la API de ESLint | FR-003, FR-006 | Igual que B1: la regla es de lint y probarla es lintear un texto | F15-1: que la frontera se resuelva mal por ruta (rutas relativas y alias desde archivos anidados de `domain`). F15-3 y F15-4: que una importación hacia fuera escape por otra forma (`export … from`, `import()`, `require`, `import x = require` o una plantilla literal) o que un especificador no estático (variable, concatenación o plantilla con expresión) pase sin marcar. Amplía la frontera que B1 ya probaba |
+
+**Aceptadas por los fundadores el 3 de noviembre de 2026.** R1 a R6 (revisiones de B y C), y R9 y R10, que el fundador aprobó ese mismo día en una segunda decisión. R7 y R8 son las regresiones de T077. Con esto, todas las pruebas del inventario de T069 tienen fila y están aceptadas.
+
+**D-01 (CLS) no añade prueba:** el primer cuadro y el CLS siguen siendo una medición del PR con el arnés de R2 (T065), no de la suite (B14, A.2).
 
 ---
 

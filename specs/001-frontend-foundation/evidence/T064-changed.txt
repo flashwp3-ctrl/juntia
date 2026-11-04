@@ -1,0 +1,25 @@
+
+ RUN  v5.1.0 C:/Users/aleja/.codex/worktrees/001-d-verification/Juntia
+
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > abre el teclado numérico nativo 456ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > formatea con puntos de miles de es-CO y sin decimales 189ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > no acepta un décimo dígito: el tope es 999.999.999 190ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar conserva solo los dígitos 61ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar sin dígitos el valor no cambia 97ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > vacío entrega null y 0 entrega 0: vacío no es cero 89ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > entrega pesos enteros, nunca unidades menores ni decimales 95ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error: aria-invalid, aria-errormessage hacia un mensaje en región polite e ícono oculto 30ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > enlaza la ayuda con aria-describedby 23ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por value: vacío, inválido y con aviso de desarrollo 18ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (mil millones) > por defaultValue: vacío, inválido y con aviso de desarrollo 13ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por value: vacío, inválido y con aviso de desarrollo 20ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (negativo) > por defaultValue: vacío, inválido y con aviso de desarrollo 23ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por value: vacío, inválido y con aviso de desarrollo 21ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (con decimales) > por defaultValue: vacío, inválido y con aviso de desarrollo 16ms
+ ✓ |components| src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error vacío, un valor fuera de rango sigue inválido con el mensaje del catálogo 15ms
+
+ Test Files  1 passed (1)
+   Affected  1 of 9 test files (related to 9 changed files)
+      Tests  16 passed (16)
+   Start at  20:24:22
+   Duration  4.48s (environment 45%, tests 32%, setup 11%, import 10%, transform 1%)

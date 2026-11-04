@@ -41,7 +41,7 @@ type ButtonProps = Omit<ComponentPropsWithRef<"button">, "disabled" | "children"
   | { children?: never; label: string; icon: AppIconName }
 );
 
-export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", ...rest }: ButtonProps) {
+export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", tabIndex = 0, ...rest }: ButtonProps) {
   const reduced = useReducedMotion();
   const inert = disabled || loading;
   // F17-R1: en danger, el texto va en --comp-danger-text-fg y los íconos en status.danger (4,28:1 sobre dangerSubtle ≥ 3:1).
@@ -54,6 +54,8 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
     <motion.button
       {...rest}
       type={type}
+      // T077/D-03: Motion infiere tabindex de whileTap en SSR; fijarlo conserva el foco nativo también al hidratar con movimiento reducido.
+      tabIndex={tabIndex}
       data-variant={variant}
       aria-label={label}
       aria-disabled={inert || undefined}

@@ -1,0 +1,19 @@
+{"route":"/","theme":"light","cls":0,"fp":2380,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/actividad","theme":"light","cls":0,"fp":2444,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/metas","theme":"light","cls":0,"fp":2320,"fonts":"Instrument Serif|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/plan","theme":"light","cls":0,"fp":2500,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/balance","theme":"light","cls":0,"fp":2380,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/cuenta","theme":"light","cls":0,"fp":2424,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/","theme":"dark","cls":0.0016795269367264887,"fp":2380,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[{"value":0.0016795269367264887,"time":2457,"sources":[{"node":"DIV YoNosotros","prev":[320,102.875,50,48],"cur":[240.59375,102.875,129.40625,44]}]}]}
+{"route":"/actividad","theme":"dark","cls":0,"fp":2444,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/metas","theme":"dark","cls":0,"fp":2448,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/plan","theme":"dark","cls":0,"fp":2452,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/balance","theme":"dark","cls":0,"fp":2488,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist|Geist Fallback|Geist Fallback|Geist Fallback","shifts":[]}
+{"route":"/cuenta","theme":"dark","cls":0,"fp":2248,"fonts":"Instrument Serif|Instrument Serif Fallback|Geist|Geist|Geist Fallback|Geist Fallback","shifts":[]}
+--- residual: inicio de la primera línea con Geist y con «Geist Fallback», 390 px
+/ {"text":"Este será el lugar para ver tu","geist":{"start":45.97,"width":298.05,"lines":1},"fallback":{"start":47.7,"width":294.58,"lines":1},"startDelta":1.73}
+/actividad {"text":"Aquí podrás revisar lo que reg","geist":{"start":72.8,"width":244.41,"lines":1},"fallback":{"start":73.72,"width":242.56,"lines":1},"startDelta":0.92}
+/metas {"text":"Aquí podrás seguir lo que quie","geist":{"start":47.28,"width":295.44,"lines":1},"fallback":{"start":49.36,"width":291.27,"lines":1},"startDelta":2.08}
+/plan {"text":"Los presupuestos serán opciona","geist":{"start":47.41,"width":295.17,"lines":2},"fallback":{"start":48.09,"width":293.8,"lines":2},"startDelta":0.68}
+/balance {"text":"El balance aparece cuando exis","geist":{"start":47.73,"width":294.52,"lines":1},"fallback":{"start":48.52,"width":292.97,"lines":1},"startDelta":0.79}
+/cuenta {"text":"Tu cuenta llega con el inicio ","geist":{"start":64.88,"width":260.23,"lines":1},"fallback":{"start":65.58,"width":258.83,"lines":1},"startDelta":0.7}
