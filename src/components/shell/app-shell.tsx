@@ -1,0 +1,186 @@
+"use client";
+// T047, T057, T058 / FR-018 a FR-025, FR-028, FR-033, FR-037 a FR-041. Un solo componente con tres composiciones por
+// CSS, no tres árboles (plan, «AppShell y navegación»):
+//   < 1024   barra inferior flotante (comp 04·1 y 04·5), centrada y de 560 como máximo desde 768 (04·9).
+//   1024–1279 rail de 76 px (04·9, «1024 · LG · RAIL DE 76 PX»).
+//   ≥ 1280   sidebar de 248 px (04·7 y 04·8) con la marca, el selector, los destinos, Anotar y Mi cuenta.
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { MouseEvent, ReactNode } from "react";
+import { AppIcon } from "@/components/ui/app-icon";
+import { copy } from "@/lib/copy/es";
+import { useAnnotate } from "./annotate-notice";
+import { BaseVersionNotice } from "./base-version-notice";
+import { ContextSelector } from "./context-selector";
+import { ACCOUNT_HREF, isCurrent, navDestinations } from "./nav-destinations";
+
+const annotateName = copy.nav.annotateBlock;
+
+function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
+  const { openFrom } = useAnnotate();
+  const common = {
+    type: "button" as const,
+    "aria-keyshortcuts": copy.nav.shortcut,
+    onClick: (event: MouseEvent<HTMLButtonElement>) => openFrom(event.currentTarget),
+  };
+  if (variant === "bar") {
+    // 04·1: integrado al centro, a ras de la barra, 54 × 54, radio 18, bosque con canto de 3 px, sin elevación.
+    return (
+      <button
+        {...common}
+        aria-label={annotateName}
+        data-annotate-trigger="bar"
+        className="mx-auto grid size-[54px] place-items-center rounded-[var(--radius-lg)] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.96]"
+      >
+        <AppIcon name="plus" weight="bold" size={24} />
+      </button>
+    );
+  }
+  // 04·9 (rail): botón de 48 al final de los destinos. 04·7 (sidebar): bloque bosque con el atajo N visible.
+  return (
+    <button
+      {...common}
+      data-annotate-trigger="side"
+      className="group mt-3 grid size-12 place-items-center self-center rounded-[15px] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] hover:bg-primary-hover active:bg-primary-pressed xl:mt-5 xl:size-auto xl:place-items-start xl:gap-3.5 xl:self-stretch xl:rounded-[var(--radius-xl)] xl:p-4 xl:text-left xl:shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]"
+    >
+      <span aria-hidden="true" className="grid place-items-center xl:size-11 xl:rounded-[var(--radius-md)] xl:bg-[color-mix(in_srgb,var(--color-text-onAction)_14%,transparent)]">
+        <AppIcon name="plus" weight="bold" size={22} />
+      </span>
+      <span className="sr-only font-serif text-[30px] leading-none xl:not-sr-only">{annotateName}</span>
+      <span aria-hidden="true" className="hidden text-[length:var(--label-s-size)] font-medium xl:block">
+        {copy.nav.shortcutLabel} {copy.nav.shortcut}
+      </span>
+    </button>
+  );
+}
+
+const sideItem =
+  "flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]";
+const sideActive = "bg-[var(--comp-nav-active-bg)] text-ink font-semibold shadow-raised";
+const sideIdle = "text-ink-secondary xl:text-[var(--comp-nav-muted-fg)] font-medium hover:bg-[var(--comp-nav-active-bg)]";
+
+function SideNav({ pathname }: { pathname: string | null }) {
+  const onAccount = isCurrent(ACCOUNT_HREF, pathname);
+  return (
+    <aside className="fixed inset-y-0 left-0 z-[var(--z-nav)] hidden w-[76px] flex-col overflow-y-auto border-r-[length:var(--border-hairline)] border-border bg-[var(--comp-sidebar-bg)] px-3 py-6 lg:flex xl:w-[248px] xl:px-[18px] xl:py-7">
+      {/* Marca: «J» en el rail, «Juntia» con su punto bosque en el sidebar. */}
+      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[30px] leading-none text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[32px]">
+        <span aria-hidden="true" className="hidden size-3 rounded-[4px] bg-primary xl:block" />
+        <span aria-hidden="true" className="xl:hidden">{copy.shell.brand.charAt(0)}</span>
+        <span className="sr-only xl:not-sr-only">{copy.shell.brand}</span>
+      </p>
+      {/* Desde 1280 el selector vive aquí, bajo la marca (§15.3); por debajo, arriba a la derecha del contenido. */}
+      <ContextSelector stretch className="mb-3.5 hidden xl:block" />
+      <nav aria-label={copy.shell.navigation} className="flex flex-col gap-1.5">
+        {navDestinations.map((destination) => {
+          const current = isCurrent(destination.href, pathname);
+          return (
+            <Link key={destination.id} href={destination.href} aria-current={current ? "page" : undefined} className={`${sideItem} ${current ? sideActive : sideIdle}`}>
+              <AppIcon name={destination.icon} weight={current ? "fill" : "regular"} size={22} className="xl:size-5" />
+              <span className="sr-only xl:not-sr-only">{copy.nav[destination.label]}</span>
+            </Link>
+          );
+        })}
+        <AnnotateTrigger variant="side" />
+      </nav>
+      {/* Mi cuenta al pie: acceso mínimo, sin avatar, nombre ni estado de pareja (decisión 8; AccountButton es §15.9). */}
+      <Link href={ACCOUNT_HREF} aria-current={onAccount ? "page" : undefined} className={`mt-auto ${sideItem} ${onAccount ? sideActive : sideIdle}`}>
+        <AppIcon name="user-circle" weight={onAccount ? "fill" : "regular"} size={24} className="xl:size-[22px]" />
+        <span className="sr-only xl:not-sr-only">{copy.nav.account}</span>
+      </Link>
+    </aside>
+  );
+}
+
+function BottomBar({ pathname }: { pathname: string | null }) {
+  const mobile = navDestinations.filter((destination) => !destination.desktopOnly);
+  const tab = (index: number) => {
+    const destination = mobile[index];
+    const current = isCurrent(destination.href, pathname);
+    return (
+      <Link
+        key={destination.id}
+        href={destination.href}
+        aria-current={current ? "page" : undefined}
+        className={`flex h-[54px] min-w-0 flex-col items-center justify-center gap-[3px] rounded-[var(--radius-lg)] ${current ? "bg-[var(--comp-nav-active-bg)] font-semibold text-ink shadow-raised" : "font-medium text-ink-secondary"}`}
+      >
+        <AppIcon name={destination.icon} weight={current ? "fill" : "regular"} size={22} />
+        {/* Con texto al 200 % la barra oculta las etiquetas y conserva el nombre (RESPONSIVE_SPECIFICATIONS.md). */}
+        <span className="max-w-full truncate text-[0.6875rem] leading-tight @max-[17rem]:sr-only">{copy.nav[destination.label]}</span>
+      </Link>
+    );
+  };
+  return (
+    <nav
+      aria-label={copy.shell.navigation}
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-nav)] px-2 pb-[calc(8px+env(safe-area-inset-bottom))] lg:hidden"
+    >
+      <div className="@container pointer-events-auto mx-auto grid max-w-[560px] grid-cols-[1fr_1fr_64px_1fr_1fr] items-center gap-1 rounded-[24px] bg-raised px-1.5 py-1.5 shadow-[var(--comp-tabbar-shadow)]">
+        {tab(0)}
+        {tab(1)}
+        <AnnotateTrigger variant="bar" />
+        {tab(2)}
+        {tab(3)}
+      </div>
+    </nav>
+  );
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  // /cuenta en móvil y tablet: pantalla apilada sin barra inferior, con «Volver» (FR-033).
+  const stacked = isCurrent(ACCOUNT_HREF, pathname);
+  return (
+    <div className="min-h-dvh">
+      <a
+        href="#contenido"
+        className="sr-only z-[var(--z-tooltip)] rounded-[var(--radius-md)] bg-overlay px-4 py-3 text-[length:var(--label-m-size)] font-semibold text-ink shadow-overlay focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        {copy.shell.skip}
+      </a>
+      <SideNav pathname={pathname} />
+      <div className="lg:pl-[76px] xl:pl-[248px]">
+        <div
+          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14 xl:px-10 xl:pt-10 ${stacked ? "pb-12" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
+        >
+          <BaseVersionNotice className="lg:mb-8 xl:mb-0 xl:sticky xl:top-10 xl:col-start-2 xl:row-start-1 xl:self-start" />
+          <div className="min-w-0 xl:col-start-1 xl:row-start-1">{children}</div>
+        </div>
+      </div>
+      {stacked ? null : <BottomBar pathname={pathname} />}
+    </div>
+  );
+}
+
+type PageHeaderProps = {
+  /** Sin título visible en el encabezado: el estado de la pantalla lleva el `h1` (no encontrado, error). */
+  title?: string;
+  variant?: "destination" | "account";
+};
+
+// Encabezado del contenido. Por debajo de 1024: Mi cuenta a la izquierda, título y selector a la derecha (04·1, 04·6).
+// De 1024 a 1279: titular editorial y selector arriba a la derecha (decisión 5). Desde 1280 el selector está en el sidebar.
+export function PageHeader({ title, variant = "destination" }: PageHeaderProps) {
+  const account = variant === "account";
+  return (
+    <header className={`flex min-h-11 items-center gap-2.5 pt-4 lg:gap-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
+      {account ? (
+        <Link href="/" className="-ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden">
+          <AppIcon name="caret-left" weight="bold" size={22} />
+          <span className="sr-only">{copy.account.back}</span>
+        </Link>
+      ) : (
+        <Link href={ACCOUNT_HREF} className="-ml-1 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden">
+          <AppIcon name="user-circle" size={30} />
+          <span className="sr-only">{copy.nav.account}</span>
+        </Link>
+      )}
+      {title ? (
+        <h1 className="min-w-0 font-serif text-[clamp(28px,8.4vw,34px)] leading-none text-ink lg:text-[clamp(44px,4.2vw,64px)] lg:leading-[0.95] lg:tracking-[-0.02em]">
+          {title}
+        </h1>
+      ) : null}
+      {account ? null : <ContextSelector className="ml-auto shrink-0 xl:hidden" />}
+    </header>
+  );
+}

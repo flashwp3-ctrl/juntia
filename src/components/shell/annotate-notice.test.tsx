@@ -4,7 +4,7 @@
 // versión, sin campos que aparenten guardar; se abre también con `N`, se cierra con Escape y con un control de cierre,
 // atrapa el foco y lo devuelve al disparador […] hoja inferior por debajo de 768 px y diálogo centrado de 520 px desde
 // 768 px, con semántica de diálogo accesible (`dialog`), no de `alertdialog`».
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { copy } from "@/lib/copy/es";
@@ -66,8 +66,9 @@ describe("Aviso de Anotar (T049)", () => {
       expect(dialog.querySelectorAll(`[role="${role}"], input, textarea, select`)).toHaveLength(0);
       expect(screen.queryAllByRole(role).filter((node) => dialog.contains(node))).toHaveLength(0);
     }
-    const buttons = [...dialog.querySelectorAll("button")].map((button) => button.textContent);
-    expect(buttons).toEqual([copy.annotate.close]);
+    const buttons = within(dialog).getAllByRole("button");
+    expect(buttons).toHaveLength(1);
+    expect(within(dialog).getByRole("button", { name: copy.annotate.close })).toBe(buttons[0]);
   });
 
   it("con el foco en el cuerpo del documento, `N` abre el mismo aviso", async () => {
