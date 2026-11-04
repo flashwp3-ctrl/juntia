@@ -1,0 +1,15 @@
+// Barrido fuente frente a respaldo. Uso: node sweep.cjs <base> <rutas,separadas,por,coma> [tamaño raíz, p. ej. 200%]
+// Fuerza el respaldo con html.fb, que redefine las variables de next/font (especificidad 0,1,1 frente a 0,1,0).
+// Antes de medir comprueba, en cada ruta, que la clase cambia de verdad la familia calculada de un <p>.
+const req=require('node:module').createRequire(process.cwd()+'/package.json');const{chromium}=req('playwright');
+const CSS='html.fb{--font-onest:"Onest Fallback";--font-brygada:"Brygada Fallback"}';
+const [,,base,routesArg,root='100%']=process.argv;const routes=routesArg.split(',');
+console.log('# CSS='+CSS+' ROOT='+root);
+(async()=>{const b=await chromium.launch();for(const route of routes){const p=await b.newPage({viewport:{width:390,height:900}});await p.goto(base+route);await p.evaluate(()=>document.fonts.ready);
+await p.evaluate(([c,r])=>{const s=document.createElement('style');s.textContent=c;document.head.append(s);document.documentElement.style.fontSize=r},[CSS,root]);
+const fam=await p.evaluate(async()=>{const f=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const el=document.querySelector('main p');const real=getComputedStyle(el).fontFamily;document.documentElement.classList.add('fb');await f();const fb=getComputedStyle(el).fontFamily;document.documentElement.classList.remove('fb');await f();return{real,fb}});
+if(!/^"?Onest"?/.test(fam.real)||!/^"?Onest Fallback"?/.test(fam.fb))throw new Error('El respaldo no se aplicó en '+route+': '+JSON.stringify(fam));
+let bad=[],max=0;
+for(let w=360;w<=1023;w++){await p.setViewportSize({width:w,height:900});const r=await p.evaluate(async()=>{const get=()=>[...document.querySelectorAll('main h1, main h2, main p')].filter(e=>getComputedStyle(e).textAlign==='center'&&e.textContent.trim()).map(e=>{const t=[...e.childNodes].find(n=>n.nodeType===3);const rr=document.createRange();rr.setStart(t,0);rr.setEnd(t,1);return rr.getBoundingClientRect().left});const f=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));document.documentElement.classList.remove('fb');await f();const a=get();document.documentElement.classList.add('fb');await f();const c=get();document.documentElement.classList.remove('fb');return a.length?Math.max(...a.map((x,i)=>Math.abs(c[i]-x))):0});max=Math.max(max,r);if(r>=3)bad.push(w)}
+const pw=await p.evaluate(()=>{const e=document.querySelector('[data-provisional-state] p');return e?Math.round(e.getBoundingClientRect().width):null});
+console.log(JSON.stringify({route,root,fontFamily:fam,max:+max.toFixed(2),widthsOver3px:bad.length,sample:bad.slice(0,12),descriptionWidthAt1023:pw}));await p.close()}await b.close()})().catch(e=>{console.error(e);process.exitCode=1});

@@ -1,0 +1,12 @@
+// Capturas a 390 px (fuente raíz al 100 %) y a 360 px con la fuente raíz al 200 %. Uso: node capture.cjs <carpeta de salida>
+const req=require('node:module').createRequire(process.cwd()+'/package.json');const{chromium}=req('playwright');
+const out=process.argv[2];
+(async()=>{const b=await chromium.launch();
+const jobs=[];for(const s of ['ruta-que-no-existe','actividad','plan','metas'])for(const t of ['light','dark'])jobs.push([s,t,390,null]);
+for(const s of ['ruta-que-no-existe','inicio'])jobs.push([s,'light',360,'200%']);
+for(const [slug,t,w,root] of jobs){const route=slug==='inicio'?'/':'/'+slug;
+ const c=await b.newContext({viewport:{width:w,height:844},colorScheme:t,reducedMotion:'reduce'});const p=await c.newPage();await p.goto('http://localhost:3100'+route);await p.evaluate(()=>document.fonts.ready);
+ if(root)await p.evaluate(r=>{const s=document.createElement('style');s.textContent='html{font-size:'+r+' !important}';document.head.append(s)},root);
+ const info=await p.evaluate(()=>({hscroll:document.documentElement.scrollWidth>innerWidth,blocks:[...document.querySelectorAll('[data-provisional-state]')].map(e=>Math.round(e.getBoundingClientRect().width))}));
+ const name=`${slug}-${w}-${t}${root?'-root200':''}.png`;console.log(name,JSON.stringify(info));await p.screenshot({path:`${out}/${name}`,fullPage:true});await c.close();}
+await b.close()})();
