@@ -1,0 +1,186 @@
+== http://localhost:3100/ @ 1440x900
+
+http://localhost:3100/
+  [icon-tile-stack] 88x88px icon tile above h2 "Tu día a día, aquí"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/actividad @ 1440x900
+
+http://localhost:3100/actividad
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no hay movimientos"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/metas @ 1440x900
+
+http://localhost:3100/metas
+  [icon-tile-stack] 88x88px icon tile above h2 "Un lugar para tus metas"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/plan @ 1440x900
+
+http://localhost:3100/plan
+  [icon-tile-stack] 88x88px icon tile above h2 "Planifica a tu manera"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/balance @ 1440x900
+
+http://localhost:3100/balance
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no disponible"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/cuenta @ 1440x900
+
+http://localhost:3100/cuenta
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no disponible"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/ruta-que-no-existe @ 1440x900
+Error: the page returned an error (HTTP 404). Findings would describe the error page, so none are reported.
+exit 1
+== http://localhost:3100/interno/primitivos @ 1440x900
+
+http://localhost:3100/interno/primitivos
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+
+18 anti-patterns found.
+exit 2
+== http://localhost:3100/ @ 390x844
+
+http://localhost:3100/
+  [icon-tile-stack] 88x88px icon tile above h2 "Tu día a día, aquí"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/actividad @ 390x844
+
+http://localhost:3100/actividad
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no hay movimientos"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/metas @ 390x844
+
+http://localhost:3100/metas
+  [icon-tile-stack] 88x88px icon tile above h2 "Un lugar para tus metas"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/plan @ 390x844
+
+http://localhost:3100/plan
+  [icon-tile-stack] 88x88px icon tile above h2 "Planifica a tu manera"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/balance @ 390x844
+
+http://localhost:3100/balance
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no disponible"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/cuenta @ 390x844
+
+http://localhost:3100/cuenta
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no disponible"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+
+1 anti-pattern found.
+exit 2
+== http://localhost:3100/ruta-que-no-existe @ 390x844
+Error: the page returned an error (HTTP 404). Findings would describe the error page, so none are reported.
+exit 1
+== http://localhost:3100/interno/primitivos @ 390x844
+
+http://localhost:3100/interno/primitivos
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+  [nested-cards] Card inside card
+    → Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.
+
+18 anti-patterns found.
+exit 2

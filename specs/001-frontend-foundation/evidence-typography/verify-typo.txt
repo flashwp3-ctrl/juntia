@@ -1,0 +1,207 @@
+HSCROLL {"route":"/","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/actividad","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/metas","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/plan","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/balance","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/cuenta","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":360,"theme":"light","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/actividad","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/metas","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/plan","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/balance","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/cuenta","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":390,"theme":"light","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/actividad","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/metas","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/plan","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/balance","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/cuenta","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":430,"theme":"light","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/actividad","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/metas","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/plan","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/balance","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/cuenta","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":768,"theme":"light","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/actividad","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/metas","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/plan","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/balance","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/cuenta","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1024,"theme":"light","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/actividad","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/metas","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/plan","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/balance","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/cuenta","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1280,"theme":"light","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/actividad","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/metas","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/plan","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/balance","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/cuenta","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1440,"theme":"light","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/actividad","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/metas","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/plan","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/balance","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/cuenta","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":360,"theme":"dark","scroll":360,"client":360,"ok":true}
+HSCROLL {"route":"/","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/actividad","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/metas","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/plan","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/balance","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/cuenta","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":390,"theme":"dark","scroll":390,"client":390,"ok":true}
+HSCROLL {"route":"/","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/actividad","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/metas","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/plan","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/balance","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/cuenta","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":430,"theme":"dark","scroll":430,"client":430,"ok":true}
+HSCROLL {"route":"/","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/actividad","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/metas","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/plan","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/balance","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/cuenta","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":768,"theme":"dark","scroll":768,"client":768,"ok":true}
+HSCROLL {"route":"/","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/actividad","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/metas","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/plan","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/balance","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/cuenta","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1024,"theme":"dark","scroll":1024,"client":1024,"ok":true}
+HSCROLL {"route":"/","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/actividad","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/metas","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/plan","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/balance","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/cuenta","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1280,"theme":"dark","scroll":1280,"client":1280,"ok":true}
+HSCROLL {"route":"/","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/actividad","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/metas","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/plan","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/balance","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/cuenta","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/ruta-que-no-existe","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL {"route":"/interno/primitivos","width":1440,"theme":"dark","scroll":1440,"client":1440,"ok":true}
+HSCROLL_TOTAL {"loads":112,"withHorizontalScroll":0}
+TEXT_200 {"route":"/","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/actividad","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/metas","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/plan","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/balance","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/cuenta","width":360,"theme":"light","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/actividad","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/metas","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/plan","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/balance","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/cuenta","width":390,"theme":"light","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/actividad","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/metas","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/plan","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/balance","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/cuenta","width":360,"theme":"dark","scroll":360,"client":360,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/actividad","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/metas","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/plan","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/balance","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+TEXT_200 {"route":"/cuenta","width":390,"theme":"dark","scroll":390,"client":390,"overlap":false,"tabNames":9}
+FALLBACK_SHIFT {"route":"/","width":360,"maxAbs":2.38,"rows":[{"text":"Tu día a día, aquí","ff":"\"Brygada 1918\"","dx":-2.38,"dy":0,"dh":0},{"text":"Este será el lugar para ver ","ff":"Onest","dx":-1.19,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/actividad","width":360,"maxAbs":1.31,"rows":[{"text":"Todavía no hay movimientos","ff":"\"Brygada 1918\"","dx":-1.31,"dy":0,"dh":0},{"text":"Aquí podrás revisar lo que r","ff":"Onest","dx":-1.11,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/metas","width":360,"maxAbs":0.77,"rows":[{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0},{"text":"Metas","ff":"Onest","dx":0.77,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/plan","width":360,"maxAbs":1.27,"rows":[{"text":"Planifica a tu manera","ff":"\"Brygada 1918\"","dx":1.27,"dy":0,"dh":0},{"text":"Los presupuestos serán opcio","ff":"Onest","dx":-0.73,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/balance","width":360,"maxAbs":2.13,"rows":[{"text":"El balance aparece cuando ex","ff":"Onest","dx":-2.13,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/cuenta","width":360,"maxAbs":1.31,"rows":[{"text":"Tu cuenta llega con el inici","ff":"Onest","dx":-1.31,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/ruta-que-no-existe","width":360,"maxAbs":0.91,"rows":[{"text":"No encontramos esta página","ff":"\"Brygada 1918\"","dx":0.91,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/","width":390,"maxAbs":2.38,"rows":[{"text":"Tu día a día, aquí","ff":"\"Brygada 1918\"","dx":-2.38,"dy":0,"dh":0},{"text":"Este será el lugar para ver ","ff":"Onest","dx":-1.19,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/actividad","width":390,"maxAbs":1.31,"rows":[{"text":"Todavía no hay movimientos","ff":"\"Brygada 1918\"","dx":-1.31,"dy":0,"dh":0},{"text":"Aquí podrás revisar lo que r","ff":"Onest","dx":-1.11,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/metas","width":390,"maxAbs":0.77,"rows":[{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0},{"text":"Metas","ff":"Onest","dx":0.77,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/plan","width":390,"maxAbs":1.27,"rows":[{"text":"Planifica a tu manera","ff":"\"Brygada 1918\"","dx":1.27,"dy":0,"dh":0},{"text":"Los presupuestos serán opcio","ff":"Onest","dx":-0.73,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/balance","width":390,"maxAbs":2.13,"rows":[{"text":"El balance aparece cuando ex","ff":"Onest","dx":-2.13,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/cuenta","width":390,"maxAbs":1.31,"rows":[{"text":"Tu cuenta llega con el inici","ff":"Onest","dx":-1.31,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/ruta-que-no-existe","width":390,"maxAbs":0.91,"rows":[{"text":"No encontramos esta página","ff":"\"Brygada 1918\"","dx":0.91,"dy":0,"dh":0},{"text":"La dirección no existe o tod","ff":"Onest","dx":0.75,"dy":0,"dh":0},{"text":"Actividad","ff":"Onest","dx":0.73,"dy":0,"dh":0}]}
+FALLBACK_SHIFT {"route":"/","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/actividad","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/metas","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/plan","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/balance","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/cuenta","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/ruta-que-no-existe","width":1024,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/actividad","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/metas","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/plan","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/balance","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/cuenta","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT {"route":"/ruta-que-no-existe","width":1440,"maxAbs":0,"rows":[]}
+FALLBACK_SHIFT_WORST_PX {"worst":2.38}
+CONTRAST {"route":"/","width":390,"theme":"light","min":4.63,"below45":[],"headings":["Inicio|500|28.86px|15.49","Tu día a día, aquí|500|28px|15.49"]}
+CONTRAST {"route":"/actividad","width":390,"theme":"light","min":4.63,"below45":[],"headings":["Actividad|500|28.86px|15.49","Todavía no hay movimient|500|28px|15.49"]}
+CONTRAST {"route":"/metas","width":390,"theme":"light","min":4.63,"below45":[],"headings":["Metas|500|28.86px|15.49","Un lugar para tus metas|500|28px|15.49"]}
+CONTRAST {"route":"/plan","width":390,"theme":"light","min":4.63,"below45":[],"headings":["Plan|500|28.86px|15.49","Planifica a tu manera|500|28px|15.49"]}
+CONTRAST {"route":"/balance","width":390,"theme":"light","min":4.63,"below45":[],"headings":["Balance|500|28.86px|15.49","Todavía no disponible|500|28px|15.49"]}
+CONTRAST {"route":"/cuenta","width":390,"theme":"light","min":7.88,"below45":[],"headings":["Mi cuenta|500|28.86px|15.49","Todavía no disponible|500|28px|15.49"]}
+CONTRAST {"route":"/ruta-que-no-existe","width":390,"theme":"light","min":4.63,"below45":[],"headings":["No encontramos esta pági|500|28px|15.49"]}
+CONTRAST {"route":"/interno/primitivos","width":390,"theme":"light","min":4.3,"below45":[{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3}],"headings":["Superficie interna de re|500|32px|15.49","Claro|500|26px|15.49","Oscuro|500|26px|16.1"]}
+CONTRAST {"route":"/","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Inicio|500|53.28px|15.49","Tu día a día, aquí|500|35px|15.49"]}
+CONTRAST {"route":"/actividad","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Actividad|500|53.28px|15.49","Todavía no hay movimient|500|35px|15.49"]}
+CONTRAST {"route":"/metas","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Metas|500|53.28px|15.49","Un lugar para tus metas|500|35px|15.49"]}
+CONTRAST {"route":"/plan","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Plan|500|53.28px|15.49","Planifica a tu manera|500|35px|15.49"]}
+CONTRAST {"route":"/balance","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Balance|500|53.28px|15.49","Todavía no disponible|500|35px|15.49"]}
+CONTRAST {"route":"/cuenta","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["Mi cuenta|500|53.28px|15.49","Todavía no disponible|500|35px|15.49"]}
+CONTRAST {"route":"/ruta-que-no-existe","width":1440,"theme":"light","min":7.88,"below45":[],"headings":["No encontramos esta pági|500|35px|15.49"]}
+CONTRAST {"route":"/interno/primitivos","width":1440,"theme":"light","min":4.3,"below45":[{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3}],"headings":["Superficie interna de re|500|38px|15.49","Claro|500|26px|15.49","Oscuro|500|26px|16.1"]}
+CONTRAST {"route":"/","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Inicio|500|28.86px|16.1","Tu día a día, aquí|500|28px|16.1"]}
+CONTRAST {"route":"/actividad","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Actividad|500|28.86px|16.1","Todavía no hay movimient|500|28px|16.1"]}
+CONTRAST {"route":"/metas","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Metas|500|28.86px|16.1","Un lugar para tus metas|500|28px|16.1"]}
+CONTRAST {"route":"/plan","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Plan|500|28.86px|16.1","Planifica a tu manera|500|28px|16.1"]}
+CONTRAST {"route":"/balance","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Balance|500|28.86px|16.1","Todavía no disponible|500|28px|16.1"]}
+CONTRAST {"route":"/cuenta","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["Mi cuenta|500|28.86px|16.1","Todavía no disponible|500|28px|16.1"]}
+CONTRAST {"route":"/ruta-que-no-existe","width":390,"theme":"dark","min":6.28,"below45":[],"headings":["No encontramos esta pági|500|28px|16.1"]}
+CONTRAST {"route":"/interno/primitivos","width":390,"theme":"dark","min":4.3,"below45":[{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3}],"headings":["Superficie interna de re|500|32px|16.1","Claro|500|26px|15.49","Oscuro|500|26px|16.1"]}
+CONTRAST {"route":"/","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Inicio|500|53.28px|16.1","Tu día a día, aquí|500|35px|16.1"]}
+CONTRAST {"route":"/actividad","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Actividad|500|53.28px|16.1","Todavía no hay movimient|500|35px|16.1"]}
+CONTRAST {"route":"/metas","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Metas|500|53.28px|16.1","Un lugar para tus metas|500|35px|16.1"]}
+CONTRAST {"route":"/plan","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Plan|500|53.28px|16.1","Planifica a tu manera|500|35px|16.1"]}
+CONTRAST {"route":"/balance","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Balance|500|53.28px|16.1","Todavía no disponible|500|35px|16.1"]}
+CONTRAST {"route":"/cuenta","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["Mi cuenta|500|53.28px|16.1","Todavía no disponible|500|35px|16.1"]}
+CONTRAST {"route":"/ruta-que-no-existe","width":1440,"theme":"dark","min":5.32,"below45":[],"headings":["No encontramos esta pági|500|35px|16.1"]}
+CONTRAST {"route":"/interno/primitivos","width":1440,"theme":"dark","min":4.3,"below45":[{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Guardar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Editar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Cancelar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3},{"text":"Eliminar","font":"Onest","weight":"600","size":"13px","ratio":4.3}],"headings":["Superficie interna de re|500|38px|16.1","Claro|500|26px|15.49","Oscuro|500|26px|16.1"]}
+CONTRAST_MIN {"min":4.3}
+JS {"route":"/","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/actividad","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/metas","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/plan","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/balance","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/cuenta","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/ruta-que-no-existe","scripts":14,"decodedKB":751.2,"decodedKiB":733.6,"transferKB":236.8}
+JS {"route":"/interno/primitivos","scripts":12,"decodedKB":709.1,"decodedKiB":692.5,"transferKB":222.2}

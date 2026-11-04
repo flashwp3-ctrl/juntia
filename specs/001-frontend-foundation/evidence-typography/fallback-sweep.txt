@@ -1,0 +1,17 @@
+# Rama, build final (Onest 400 = 1,049; Brygada 500 = 1,0501). Desplazamiento del inicio de la primera línea, fuente frente a respaldo, cada ancho 360-1023 px
+{"route":"/","max":2.38,"widthsOver3px":0,"sample":[]}
+{"route":"/actividad","max":1.31,"widthsOver3px":0,"sample":[]}
+{"route":"/metas","max":0.44,"widthsOver3px":0,"sample":[]}
+{"route":"/plan","max":1.27,"widthsOver3px":0,"sample":[]}
+{"route":"/balance","max":2.13,"widthsOver3px":0,"sample":[]}
+{"route":"/cuenta","max":1.31,"widthsOver3px":0,"sample":[]}
+{"route":"/ruta-que-no-existe","max":19.95,"widthsOver3px":4,"sample":[362,363,384,385]}
+# main (Geist), mismo arnés
+== main (Geist)
+{"route":"/","max":1.73,"widthsOver3px":0,"sample":[]}
+{"route":"/actividad","max":0.92,"widthsOver3px":0,"sample":[]}
+{"route":"/metas","max":2.08,"widthsOver3px":0,"sample":[]}
+{"route":"/plan","max":2.02,"widthsOver3px":0,"sample":[]}
+{"route":"/balance","max":0.78,"widthsOver3px":0,"sample":[]}
+{"route":"/cuenta","max":0.7,"widthsOver3px":0,"sample":[]}
+{"route":"/ruta-que-no-existe","max":8.61,"widthsOver3px":4,"sample":[370,371,372,373]}
