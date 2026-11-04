@@ -1,0 +1,65 @@
+name: Spike P0-1 [V] (desechable)
+# Spike desechable para las [V] que deciden el plan de P0-1. No toca producción ni proyectos en la nube:
+# solo `supabase start` dentro del runner. No se fusiona.
+on:
+  push:
+    branches: [spike/p0-1-plan-v]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: spike-p0-1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spike:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_CLI_VERSION: 2.121.0
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Install PostgreSQL 17 client (PGDG)
+        run: |
+          sudo apt-get install -y -qq postgresql-common >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null 2>&1
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: supabase start (minimal services)
+        run: |
+          supabase --version
+          set +e
+          supabase start --workdir spike -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/start.log" 2>&1
+          rc=$?
+          grep -v -iE 'key|secret|eyJ|sb_|jwt|password' "$RUNNER_TEMP/start.log"
+          exit $rc
+      - name: Export local keys (masked) and versions
+        run: |
+          supabase status --workdir spike -o env > "$RUNNER_TEMP/st.env" 2>/dev/null
+          echo "status variable names: $(cut -d= -f1 "$RUNNER_TEMP/st.env" | tr '\n' ' ')"
+          get() { grep -E "^$1=" "$RUNNER_TEMP/st.env" | head -1 | cut -d= -f2- | tr -d '"'; }
+          API_URL=$(get API_URL); ANON=$(get ANON_KEY); SERVICE=$(get SERVICE_ROLE_KEY)
+          echo "::add-mask::$ANON"; echo "::add-mask::$SERVICE"
+          echo "anon key prefix: ${ANON:0:3}... service key prefix: ${SERVICE:0:3}..."
+          { echo "API_URL=$API_URL"; echo "ANON=$ANON"; echo "SERVICE=$SERVICE"; echo "DB=postgresql://postgres:postgres@127.0.0.1:54322/postgres"; } >> "$GITHUB_ENV"
+          rm -f "$RUNNER_TEMP/st.env"
+          echo "=== 6. container images"; docker ps --format '{{.Image}}' | sort
+          echo "=== 6. server version"; psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -X -A -t -c "select version()"
+      - name: 1e probe (alter owner requirements)
+        run: psql "$DB" -X -f spike/probe_e.sql 2>&1
+      - name: 1a-1d, 2, 3 over HTTP
+        run: bash spike/http_tests.sh 2>&1
+      - name: 2 claim shape + 1c/1d/1f in plain SQL
+        run: |
+          CLAIMS=$(jq -cn --arg s "$UID_A" '{sub:$s, role:"authenticated"}')
+          psql "$DB" -X -v uidA="$UID_A" -v uidB="$UID_B" -v claimsA="$CLAIMS" -f spike/sql_tests.sql 2>&1
+      - name: 3 auth logs (hook)
+        run: docker logs "$(docker ps --format '{{.Names}}' | grep -m1 auth)" 2>&1 | grep -iE 'hook|before_user|signup' | tail -15 | cut -c1-400
+      - name: 4 backup / encrypt / restore
+        run: bash spike/backup_test.sh 2>&1
+      - name: Stop
+        if: always()
+        run: supabase stop --workdir spike --no-backup >/dev/null 2>&1 || true
