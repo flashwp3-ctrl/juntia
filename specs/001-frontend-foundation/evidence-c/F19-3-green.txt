@@ -1,0 +1,7 @@
+$ npx vitest run "src/app/(app)/error.test.tsx" --reporter=verbose   # 2026-11-04T01:06:22Z sobre a0bb05c, error.tsx sin cambios
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > muestra el estado diseñado con el copy del catálogo 447ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > no expone el mensaje técnico ni el digest 34ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Reintentar» llama a reset 150ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Ir a Inicio» apunta a / 83ms
+      Tests  4 passed (4)
+exit: 0

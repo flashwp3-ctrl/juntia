@@ -1,0 +1,6 @@
+$ npx vitest run "src/app/(app)/product-routes.test.tsx"   # 2026-11-04T00:09:26Z sobre cb14a9f + la prueba, sin implementación
+ FAIL  |components| src/app/(app)/product-routes.test.tsx [ src/app/(app)/product-routes.test.tsx ]
+Error: Failed to resolve import "./layout" from "src/app/(app)/product-routes.test.tsx". Does the file exist?
+ Test Files  1 failed (1)
+      Tests  no tests
+exit: 1

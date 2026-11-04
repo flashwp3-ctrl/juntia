@@ -1,0 +1,16 @@
+$ npm run build   # 2026-11-04T01:07:58Z sobre 743423d
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /actividad
+├ ○ /balance
+├ ○ /cuenta
+├ ƒ /interno/primitivos
+├ ○ /metas
+└ ○ /plan
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+exit: 0

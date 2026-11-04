@@ -17,11 +17,13 @@ type ModalProps = {
   trigger?: ReactNode;
   children?: ReactNode;
   closeLabel?: string;
+  /** Para devolver el foco a un elemento propio al cerrar (el aviso de Anotar abierto con N o tras cambiar de contenedor). */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
 const standard = [0.2, 0, 0, 1] as const; // ease.standard
 
-export function Modal({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close }: ModalProps) {
+export function Modal({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close, onCloseAutoFocus }: ModalProps) {
   const reduced = useReducedMotion();
   const seconds = dialog.durationMs / 1000;
   // Escala .98 → 1 con opacidad (MOTION_SYSTEM.md, Cuenta); con movimiento reducido, solo opacidad.
@@ -45,7 +47,7 @@ export function Modal({ open, onOpenChange, title, description, trigger, childre
             </Dialog.Overlay>
             {/* El centrado vive en un contenedor fijo para que la escala no se mezcle con el transform de posición. */}
             <div className="pointer-events-none fixed inset-0 z-[var(--z-modal)] grid place-items-center p-4">
-              <Dialog.Content asChild forceMount {...(description ? {} : { "aria-describedby": undefined })}>
+              <Dialog.Content asChild forceMount onCloseAutoFocus={onCloseAutoFocus} {...(description ? {} : { "aria-describedby": undefined })}>
                 <motion.div
                   {...motionProps}
                   data-modal=""

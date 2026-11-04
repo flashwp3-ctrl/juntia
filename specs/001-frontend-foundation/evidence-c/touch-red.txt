@@ -1,0 +1,11 @@
+# Primera pasada de measure.mjs, 2026-11-04 ~00:26Z, sobre abb0d2b (antes de 0a4e8e7). Extracto literal de la salida.
+# «corners:false» = alguna esquina del cuadrado de 44 centrado no cae en el control: Chrome respeta el border-radius al
+# decidir qué se toca. Ningún control medía menos de 44 de caja; el área clicable real sí quedaba por debajo.
+táctil light 360 /: 8 controles, mínimo 44×44, fuera de 44×44: [{"name":"Mi cuenta","w":44,"h":44,"corners":false}]
+táctil light 360 /cuenta: 1 controles, mínimo 44×44, fuera de 44×44: [{"name":"Volver","w":44,"h":44,"corners":false}]
+táctil light 1024 /: 9 controles, mínimo 44×44, fuera de 44×44: [{"name":"Inicio","w":48,"h":48,"corners":false},{"name":"Actividad","w":48,"h":48,"corners":false},{"name":"Metas","w":48,"h":48,"corners":false},{"name":"Plan","w":48,"h":48,"corners":false},{"name":"Balance","w":48,"h":48,"corners":false},{"name":"Anotar gastoAtajo N","w":48,"h":48,"corners":false},{"name":"Mi cuenta","w":48,"h":48,"corners":false}]
+táctil light 1440 /: 9 controles, mínimo 102.5×44, fuera de 44×44: ninguno
+táctil dark 390 /: 8 controles, mínimo 44×44, fuera de 44×44: [{"name":"Mi cuenta","w":44,"h":44,"corners":false}]
+táctil dark 1024 /cuenta: 7 controles, mínimo 48×48, fuera de 44×44: [{"name":"Inicio","w":48,"h":48,"corners":false},{"name":"Actividad","w":48,"h":48,"corners":false},{"name":"Metas","w":48,"h":48,"corners":false},{"name":"Plan","w":48,"h":48,"corners":false},{"name":"Balance","w":48,"h":48,"corners":false},{"name":"Anotar gastoAtajo N","w":48,"h":48,"corners":false},{"name":"Mi cuenta","w":48,"h":48,"corners":false}]
+# Diagnóstico (mismo día): elementFromPoint en las cuatro esquinas del rail de 1024 devolvía NAV, no el enlace.
+# Corrección en 0a4e8e7: ::after cuadrado sin radio sobre cada control del shell. Resultado en measurements.txt.

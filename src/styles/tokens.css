@@ -262,6 +262,12 @@
   --comp-scrim: rgba(18,20,22,.38);
   --comp-danger-text-fg: var(--coral-700); /* todo texto de peligro en claro: fundadores 3 nov 2026 y regla del gestor (F17-1); ≥ 5,21:1 sobre canvas, overlay, raised, sunken y dangerSubtle */
   --comp-field-muted-fg: var(--linen-800); /* errata de contraste F16-1, fundadores 3 nov 2026: 7,32:1 sobre sunken */
+  /* AppShell (PR C), del comp 04·5, 04·7, 04·8 y 04·9. Mismos primitivos, ningún color nuevo. En oscuro: rail y sidebar en charcoal.950, ficha activa sunken, inactivos en charcoal.200. */
+  --comp-sidebar-bg: var(--color-surface-raised);
+  --comp-nav-active-bg: var(--color-surface-overlay);
+  --comp-nav-muted-fg: var(--linen-800);
+  --comp-shell-muted-fg: var(--linen-800);
+  --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(26,28,26,.10); /* COMPONENT_SPECIFICATIONS.md §AppShell: sombra difusa 10 % en claro */
 }
 
 [data-theme="dark"] {
@@ -332,6 +338,11 @@
   --comp-scrim: rgba(18,20,22,.62);
   --comp-danger-text-fg: var(--color-status-danger);
   --comp-field-muted-fg: var(--color-text-secondary);
+  --comp-sidebar-bg: var(--charcoal-950);
+  --comp-nav-active-bg: var(--color-surface-sunken);
+  --comp-nav-muted-fg: var(--charcoal-200);
+  --comp-shell-muted-fg: var(--color-text-secondary);
+  --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(0,0,0,.45);
 }
 
 /* Sin JavaScript, el tema sigue al sistema. Paridad comprobada por T014. */
@@ -404,5 +415,10 @@
     --comp-scrim: rgba(18,20,22,.62);
     --comp-danger-text-fg: var(--color-status-danger);
     --comp-field-muted-fg: var(--color-text-secondary);
+    --comp-sidebar-bg: var(--charcoal-950);
+    --comp-nav-active-bg: var(--color-surface-sunken);
+    --comp-nav-muted-fg: var(--charcoal-200);
+    --comp-shell-muted-fg: var(--color-text-secondary);
+    --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(0,0,0,.45);
   }
 }

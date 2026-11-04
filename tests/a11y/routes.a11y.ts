@@ -3,12 +3,17 @@
 // T040 / FR-051, FR-052: «El job 5 MUST comprobar que de verdad visitó la superficie interna y fallar si no la
 // encuentra». FR-012, FR-016: con movimiento reducido, el pulso de Skeleton es estático y la pulsación de Button no
 // desplaza ni escala; solo cambia el color.
+// T060 / FR-040, FR-043; SC-002, SC-010: las rutas de producto de C y una URL inexistente, que responde 404 con el
+// estado de «no encontrado» diseñado. Con movimiento reducido, la perilla del selector salta (el primer cuadro ya es la
+// posición final) y el aviso de Anotar aparece sin desplazarse ni escalar (ADR-011 §2, fila 17).
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 
 const INTERNAL = "/interno/primitivos";
-const routes: readonly string[] = ["/", INTERNAL];
+const NOT_FOUND = "/ruta-que-no-existe";
+const PRODUCT = ["/", "/actividad", "/metas", "/plan", "/balance", "/cuenta"] as const;
+const routes: readonly string[] = [...PRODUCT, INTERNAL, NOT_FOUND];
 const FRAMES = 10;
 // F17-R2: cada pasada mide el panel de su propio tema. El selector apunta a la sección del panel, no a <html>,
 // que también lleva data-theme por el script de tema.
@@ -26,6 +31,43 @@ async function skeletonFrames(page: Page, scope: string) {
     };
     requestAnimationFrame(tick);
   }), [FRAMES, scope] as const);
+}
+
+// Perilla del Segmented: activa «Nosotros» y registra su x en cada cuadro, dentro de un único evaluate. Vuelve a «Yo».
+async function knobFrames(page: Page) {
+  return page.evaluate((frames) => new Promise<{ xs: number[] }>((resolve) => {
+    const group = [...document.querySelectorAll<HTMLElement>('[data-context-selector] [role="radiogroup"]')].find((node) => node.getClientRects().length > 0)!;
+    const us = group.querySelector<HTMLElement>('[data-value="us"]')!;
+    us.click();
+    const xs: number[] = [];
+    const tick = () => {
+      xs.push(Math.round(group.querySelector("[data-segmented-knob]")!.getBoundingClientRect().x * 100) / 100);
+      if (xs.length < frames) requestAnimationFrame(tick);
+      else { group.querySelector<HTMLElement>('[data-value="me"]')!.click(); resolve({ xs }); }
+    };
+    requestAnimationFrame(tick);
+  }), FRAMES);
+}
+
+// Aviso de Anotar: lo abre su disparador visible y registra el rectángulo del diálogo o de la hoja en cada cuadro.
+async function annotateFrames(page: Page) {
+  return page.evaluate((frames) => new Promise<{ container: string; rects: string[] }>((resolve) => {
+    const trigger = [...document.querySelectorAll<HTMLElement>("[data-annotate-trigger]")].find((node) => node.getClientRects().length > 0)!;
+    trigger.click();
+    const rects: string[] = [];
+    let container = "";
+    const tick = () => {
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+      if (dialog) {
+        container = dialog.hasAttribute("data-modal") ? "diálogo" : "hoja";
+        const { top, left, width, height } = dialog.getBoundingClientRect();
+        rects.push([top, left, width, height].map((value) => value.toFixed(2)).join("/"));
+      }
+      if (rects.length < frames) requestAnimationFrame(tick);
+      else resolve({ container, rects });
+    };
+    requestAnimationFrame(tick);
+  }), FRAMES);
 }
 
 async function pressFrames(page: Page, scope: string) {
@@ -70,7 +112,11 @@ for (const colorScheme of ["light", "dark"] as const) {
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ colorScheme });
         const response = await page.goto(route);
-        expect(response?.status()).toBe(200);
+        // Una ruta que no existe nunca cuenta como verificada: 200 en las que existen, 404 en la inexistente.
+        expect(response?.status()).toBe(route === NOT_FOUND ? 404 : 200);
+        if (route === NOT_FOUND) {
+          await expect(page.getByRole("heading", { level: 1, name: copy.states.notFound })).toBeVisible();
+        }
         if (route === INTERNAL) {
           // FR-052: sin el encabezado de la superficie, la visita no cuenta y la prueba falla.
           await expect(page.getByRole("heading", { level: 1, name: copy.internal.title })).toBeVisible();
@@ -83,6 +129,32 @@ for (const colorScheme of ["light", "dark"] as const) {
         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
+
+        if ((PRODUCT as readonly string[]).includes(route)) {
+          // Hidratado: los manejadores de React ya están. El selector existe en el DOM en todas las rutas de producto.
+          await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
+          // El selector existe en todas salvo /cuenta por debajo de 1280 (contracts/routes.md).
+          const hasSelector = await page.locator("[data-context-selector][data-hydrated]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
+          if (hasSelector) {
+            const knob = await knobFrames(page);
+            expect.soft(new Set(knob.xs).size, "posiciones distintas de la perilla").toBe(1);
+            console.log(`${colorScheme} ${route} ${width}px: perilla ${knob.xs[0]} en ${knob.xs.length} cuadros, ${new Set(knob.xs).size} posición(es)`);
+          } else {
+            console.log(`${colorScheme} ${route} ${width}px: sin selector en este ancho`);
+          }
+          // /cuenta por debajo de 1024 es una pantalla apilada sin barra: no tiene disparador visible (FR-033).
+          const hasTrigger = await page.locator("[data-annotate-trigger]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
+          if (hasTrigger) {
+            const notice = await annotateFrames(page);
+            expect.soft(notice.rects.length, "cuadros con el aviso").toBe(FRAMES);
+            expect.soft(new Set(notice.rects).size, "rectángulos distintos del aviso").toBe(1);
+            console.log(`${colorScheme} ${route} ${width}px: aviso en ${notice.container}, ${new Set(notice.rects).size} rectángulo(s) en ${notice.rects.length} cuadros`);
+            await page.keyboard.press("Escape");
+            await expect(page.getByRole("dialog")).toHaveCount(0);
+          } else {
+            console.log(`${colorScheme} ${route} ${width}px: sin disparador visible de Anotar`);
+          }
+        }
 
         if (route === INTERNAL) {
           // Skeleton: sin animaciones y con la misma opacidad en cada cuadro.
@@ -112,5 +184,33 @@ for (const colorScheme of ["light", "dark"] as const) {
         }
       });
     }
+  }
+}
+
+// F19-1 (revisión del PR #19) / FR-020, FR-033: Anotar siempre a un toque. La pantalla apilada de /cuenta, sin barra, es
+// solo móvil (< 768, RESPONSIVE_SPECIFICATIONS.md §Cuenta); a 768 y más conserva la barra de tablet con su Anotar visible.
+// No es una spec E2E: visita la ruta y mira qué disparador queda visible, en la misma capa que el resto de este archivo.
+for (const colorScheme of ["light", "dark"] as const) {
+  for (const [width, barVisible] of [[390, false], [768, true]] as const) {
+    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      expect((await page.goto("/cuenta"))?.status()).toBe(200);
+      await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
+      const bar = page.locator('[data-annotate-trigger="bar"]');
+      if (barVisible) {
+        await expect(bar).toBeVisible();
+        await bar.click();
+        await expect(page.getByRole("dialog", { name: copy.annotate.title })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+      } else {
+        await expect(bar).toBeHidden();
+        await expect(page.getByRole("link", { name: copy.account.back })).toBeVisible();
+      }
+      const visibleTriggers = await page.locator("[data-annotate-trigger]").evaluateAll((nodes) => nodes.filter((node) => node.getClientRects().length > 0).length);
+      console.log(`${colorScheme} /cuenta ${width}px: disparadores de Anotar visibles ${visibleTriggers}`);
+      expect(visibleTriggers).toBe(barVisible ? 1 : 0);
+    });
   }
 }

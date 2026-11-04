@@ -90,3 +90,17 @@ body {
 @keyframes button-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Research R5 / FR-026: antes de hidratar, React pinta «Yo» (instantánea del servidor) y la perilla visible sale de
+   <html data-context>, que el script de tema fija antes del body. Así la primera pintura ya es la correcta y la perilla
+   no se desliza al cargar. Tras hidratar, el selector se vuelve a montar con la perilla ya en «Nosotros». */
+html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-segmented-knob] { opacity: 0; }
+html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-value="us"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  border-radius: 11px;
+  background: var(--comp-segmented-knob-bg);
+  box-shadow: var(--elevation-raised);
+}

@@ -18,6 +18,8 @@ type SegmentedProps<T extends string> = {
   stretch?: boolean;
 };
 
+const knobClass = "absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised";
+
 export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false }: SegmentedProps<T>) {
   const reduced = useReducedMotion();
   const knobId = `${useId()}-knob`;
@@ -49,6 +51,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
             ref={(node) => { refs.current[index] = node; }}
             type="button"
             role={itemRole}
+            data-value={option.value}
             aria-checked={role === "radiogroup" ? selected : undefined}
             aria-selected={role === "tablist" ? selected : undefined}
             tabIndex={selected ? 0 : -1}
@@ -57,14 +60,14 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
             className={`relative isolate inline-flex min-h-[38px] min-w-[44px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} text-ink after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}
           >
             {selected ? (
-              // Perilla compartida: se desliza entre segmentos; con movimiento reducido salta (duración 0). No anima al montar.
-              <motion.span
-                layoutId={knobId}
-                initial={false}
-                transition={reduced ? { duration: 0 } : snappy}
-                data-segmented-knob=""
-                className="absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised"
-              />
+              reduced ? (
+                // Con movimiento reducido la perilla salta: sin animación de layout, que con duración 0 todavía pinta un
+                // cuadro con la proyección de la posición anterior (T060, PR C).
+                <span data-segmented-knob="" className={knobClass} />
+              ) : (
+                // Perilla compartida: se desliza entre segmentos con el spring snappy. No anima al montar.
+                <motion.span layoutId={knobId} initial={false} transition={snappy} data-segmented-knob="" className={knobClass} />
+              )
             ) : null}
             {option.label}
           </button>

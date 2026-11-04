@@ -1,0 +1,26 @@
+$ npx vitest run "src/app/(app)/product-routes.test.tsx"   # 2026-11-04T00:29:44Z sobre 0a4e8e7, con «$0» añadido temporalmente a copy.empty.home.description
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |components| src/app/(app)/product-routes.test.tsx > Rutas de producto sin cifras y con aviso de versión base (T050) > /: ni el texto visible ni los nombres accesibles tienen cifras
+AssertionError: expected 'Ir al contenidoJJuntiaYoNosotrosInici…' not to match /[0-9]|\$|%|al día|le debe/i
+
+- Expected:
+/[0-9]|\$|%|al día|le debe/i
+
++ Received:
+"Ir al contenidoJJuntiaYoNosotrosInicioActividadMetasPlanBalanceAnotar gastoAtajo NMi cuentaVersión baseEsta versión es la base de Juntia. Todavía no guarda datos.Mi cuentaInicioYoNosotrosTu día a día, aquíEste será el lugar para ver tus movimientos. $0InicioActividadMetasPlan"
+
+ ❯ src/app/(app)/product-routes.test.tsx:41:47
+     39|       pathname.current = route;
+     40|       const { container } = render(<AppLayout><Page /></AppLayout>);
+     41|       expect(container.textContent ?? "").not.toMatch(FORBIDDEN);
+       |                                               ^
+     42|       for (const attribute of NAMED) {
+     43|         for (const node of container.querySelectorAll(`[${attribute}]`…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+     × /: ni el texto visible ni los nombres accesibles tienen cifras 54ms
+      Tests  1 failed | 11 passed (12)
+exit: 1

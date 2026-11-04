@@ -1,0 +1,20 @@
+$ npx vitest run "src/app/(app)/error.test.tsx"   # 2026-11-04T01:06:16Z sobre a0bb05c, con error.tsx mutado temporalmente: description={error.message} y Reintentar sin reset (revertido con git checkout)
+ × |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > muestra el estado diseñado con el copy del catálogo 189ms
+ × |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > no expone el mensaje técnico ni el digest 26ms
+ × |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Reintentar» llama a reset 159ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Ir a Inicio» apunta a / 73ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Mi cuentaYoNosotrosNo pudimos mostrar…' not to contain 'TypeError'
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+      Tests  3 failed | 1 passed (4)
+exit: 1
+
+$ npx vitest run "src/app/(app)/error.test.tsx"   # 2026-11-04T01:06:36Z, segunda mutación temporal: «Ir a Inicio» con href="/actividad" (revertida)
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > muestra el estado diseñado con el copy del catálogo 152ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > no expone el mensaje técnico ni el digest 9ms
+ ✓ |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Reintentar» llama a reset 53ms
+ × |components| src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Ir a Inicio» apunta a / 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '/actividad' to be '/' // Object.is equality
+      Tests  1 failed | 3 passed (4)
+exit: 1

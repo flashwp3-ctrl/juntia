@@ -1,0 +1,13 @@
+$ npx vitest run src/components/shell/context-selector.test.tsx --reporter=verbose   # 2026-11-04T01:03:24Z, con la corrección de F19-2
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > sin valor guardado arranca en «Yo» 98ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > al elegir «Nosotros» queda seleccionada, se anuncia y se guarda 46ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > hay una sola región viva para el anuncio 53ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > las flechas ← → cambian la opción 72ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > al desmontar y volver a montar arranca en lo que se eligió 45ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > con un valor ilegible arranca en «Yo» y no lo reescribe hasta que la persona elige 53ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > con el almacenamiento bloqueado arranca en «Yo», cambia durante la visita y no lanza 49ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > si se puede leer pero no escribir, la elección de la visita prevalece y el anuncio coincide con lo que se ve 63ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > tres cambios seguidos dejan guardado el último 167ms
+ ✓ |components| src/components/shell/context-selector.test.tsx > ContextSelector (T042) > el contenido junto al selector no cambia al cambiar el contexto (sin Context Transition) 62ms
+      Tests  10 passed (10)
+exit: 0

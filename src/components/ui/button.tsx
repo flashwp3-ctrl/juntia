@@ -64,13 +64,14 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
       transition={snappy}
       className={`relative inline-flex shrink-0 items-center justify-center font-semibold leading-none whitespace-nowrap select-none motion-safe:transition-[background-color,box-shadow,color] motion-safe:duration-[var(--duration-instant)] ${sizes[size]} ${disabled ? disabledLook : variants[variant]} ${loading ? "cursor-progress" : ""} ${className}`}
     >
-      {/* Las dos caras ocupan la misma celda: el ancho es el mismo en reposo y en carga, sin salto de layout. */}
+      {/* Las dos caras ocupan la misma celda: el ancho es el mismo en reposo y en carga, sin salto de layout. La cara
+          inactiva va con aria-hidden para que el nombre accesible sea solo el de la visible. */}
       <span className="grid">
-        <span className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "invisible" : ""}`}>
+        <span aria-hidden={loading || undefined} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "invisible" : ""}`}>
           {icon ? <AppIcon name={icon} weight="bold" size={17} className={iconTone} /> : null}
           {children}
         </span>
-        <span className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "" : "invisible"}`}>
+        <span aria-hidden={!loading || undefined} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "" : "invisible"}`}>
           <AppIcon name="circle-notch" weight="bold" size={17} className={`${iconTone} motion-safe:animate-[button-spin_0.8s_linear_infinite]`} />
           {loadingLabel ?? children}
         </span>
