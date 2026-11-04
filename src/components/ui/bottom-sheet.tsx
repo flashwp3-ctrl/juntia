@@ -18,9 +18,11 @@ type BottomSheetProps = {
   trigger?: ReactNode;
   children?: ReactNode;
   closeLabel?: string;
+  /** Para devolver el foco a un elemento propio al cerrar (el aviso de Anotar abierto con N o tras cambiar de contenedor). */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
-export function BottomSheet({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close }: BottomSheetProps) {
+export function BottomSheet({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close, onCloseAutoFocus }: BottomSheetProps) {
   const reduced = useReducedMotion();
   // Spring sheet desde el borde inferior; con movimiento reducido, solo opacidad (MOTION_SYSTEM.md §2).
   const motionProps = reduced
@@ -41,7 +43,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
                 transition={{ duration: reduced ? 0.12 : 0.18 }}
               />
             </Dialog.Overlay>
-            <Dialog.Content asChild forceMount {...(description ? {} : { "aria-describedby": undefined })}>
+            <Dialog.Content asChild forceMount onCloseAutoFocus={onCloseAutoFocus} {...(description ? {} : { "aria-describedby": undefined })}>
               <motion.div
                 {...motionProps}
                 data-bottom-sheet=""
