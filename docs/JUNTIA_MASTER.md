@@ -954,22 +954,23 @@ Su estado es **«EXCEPCIÓN APROBADA»**, nunca «verificado» ni «superado».
 
 #### Decisión 13: dueño del repositorio y cuenta de despliegue
 
-Tomada por el fundador el 4 de noviembre de 2026. La causa son dos límites.
+Tomada por los dos fundadores el 4 de noviembre de 2026. La causa son dos límites:
 
-- Vercel Hobby no despliega repositorios privados que pertenecen a una organización de GitHub. Eso chocaba con §7.1 («Vercel Hobby») mientras el repositorio estaba en `juntia-labs`.
-- Los minutos de GitHub Actions y las cuotas de Vercel se cobran al dueño. En la cuenta personal del fundador, Juntia compartía bolsa con otro proyecto que ya las supera.
+- **Vercel Hobby no despliega repositorios privados de una organización de GitHub.** Eso chocaba con §7.1 («Vercel Hobby») mientras el repositorio estaba en `juntia-labs`.
+- **Los minutos de GitHub Actions y las cuotas de Vercel se cobran al dueño.** En la cuenta personal del primer fundador, Juntia compartía bolsa con otro proyecto suyo, que ya las supera.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
-| 13 | Dueño del repositorio y cuenta de despliegue | **`flashwp3-ctrl/juntia`**, repositorio privado en una cuenta personal dedicada, y **una cuenta Hobby de Vercel propia** conectada a esa cuenta de GitHub | Juntia tiene sus propios minutos de Actions y sus propias cuotas de Vercel. `juntia-labs/juntia` redirige al nuevo dueño; los enlaces históricos del repositorio no se reescriben |
+| 13 | Dueño del repositorio y cuenta de despliegue | **`flashwp3-ctrl/juntia`**, repositorio privado en la cuenta personal de **la segunda fundadora**, y **su propia cuenta Vercel Hobby** | El repositorio y el despliegue quedan bajo su titularidad, con sus propios minutos de Actions y sus propias cuotas de Vercel. El primer fundador colabora como colaborador con permiso de escritura. `juntia-labs/juntia` redirige al nuevo dueño; los enlaces históricos no se reescriben |
 
 **Reglas que se derivan:**
 
-1. **Autor de los commits.** En Hobby, Vercel solo despliega los commits de un repositorio privado cuyo autor es el dueño de la cuenta. Por eso todo commit de Juntia lleva la identidad `flashwp3-ctrl` con su correo noreply, configurada en el `.git/config` del repositorio. Así la heredan todos sus worktrees, los de Codex incluidos. Quien clone de nuevo la configura antes de su primer commit.
-2. **Merges.** Los hace la cuenta `flashwp3-ctrl`, porque el commit de merge lo firma quien mergea. La cuenta personal del fundador queda como colaboradora, con permiso de escritura, para que trabajen las herramientas ya autenticadas con ella.
-3. **Protección de `main`.** Una cuenta personal en GitHub Free no tiene protección de ramas en repositorios privados. Sigue la barrera local de `AGENTS.md` 14a. La decisión 3, «plan de pago de GitHub antes de datos reales», se reevalúa como **GitHub Pro para `flashwp3-ctrl`**, que protege ramas en repositorios privados personales.
-4. **Condiciones de uso.** Una cuenta Hobby es por persona, y tener una segunda cuenta para el mismo fundador queda en zona gris de las condiciones de Vercel. No bloquea el desarrollo. Si Vercel lo objeta, la salida es un equipo Pro solo para Juntia.
-5. **T072**, la superficie interna en un preview real (decisión 12), se ejecuta justo después del primer despliegue de esta cuenta y antes de compartir la URL.
+1. **Autoría honesta.** Cada fundador firma sus commits con su propia identidad de Git. Los commits de los agentes llevan la identidad del fundador que los opera, hoy el primero (`alejandrowp3`). Los commits no se atribuyen artificialmente a la dueña de la cuenta para que desplieguen.
+   - *Corrección registrada:* los commits `6789d95` y `2028875`, de los PR #23 y #24, salieron con la identidad de `flashwp3-ctrl` por una regla anterior a esta redacción. No se reescriben, porque eso exigiría force-push, y quedan anotados aquí.
+2. **Despliegue de producción.** Hobby solo despliega los commits de un repositorio privado cuyo autor es la dueña de la cuenta. El commit de merge lo firma quien mergea. Por eso **los merges a `main` los hace la cuenta `flashwp3-ctrl`**, y así producción se despliega con cualquier autor en los commits del PR.
+3. **Previews.** El preview de un PR cuyo último commit no es de la dueña queda bloqueado en Hobby. Cuando hace falta uno, la segunda fundadora añade un commit propio a la rama del PR, que puede ser vacío (`git commit --allow-empty`). Si los dos necesitan previews automáticos de forma habitual, se pasa a Vercel Pro, que despliega commits de cualquier miembro del equipo.
+4. **Protección de `main`.** GitHub Free no ofrece protección de ramas en repositorios privados de una cuenta personal. Se mantiene la barrera local de `AGENTS.md` 14a. La decisión 3, «plan de pago de GitHub antes de datos reales», se reevalúa como **GitHub Pro para `flashwp3-ctrl`**.
+5. **T072** (decisión 12) se ejecuta justo después del primer despliegue de producción de esta cuenta y antes de compartir la URL. Su parte de preview, que pide 200 por las URL de despliegue y de rama, usa la regla 3.
 
 #### Dataset dorado: quién lo produce y cuándo
 
