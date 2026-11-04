@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { SHELL_END_ID } from "@/components/shell/shell-end";
 import { themeScript } from "@/lib/theme-script";
 import "./globals.css";
 import { copy } from "@/lib/copy/es";
@@ -14,7 +15,13 @@ const mono = Geist_Mono({ subsets: ["latin"], weight: "500", variable: "--font-g
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-CO" suppressHydrationWarning className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
-      <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* D21-1 (T077): con la CPU lenta, Chrome pintaba el shell a medio parsear y la barra, el selector y sus íconos se
+            desplazaban al llegar el resto del HTML. Esto retiene el primer pintado hasta parsear el final del shell
+            (o el final del documento, si la página no lo tiene). Los navegadores sin soporte lo ignoran. */}
+        <link rel="expect" href={`#${SHELL_END_ID}`} blocking="render" />
+      </head>
       <body className="bg-canvas text-ink font-sans">{children}</body>
     </html>
   );
