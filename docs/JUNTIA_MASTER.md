@@ -885,7 +885,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 y 12 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11, 12 y 13 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -951,6 +951,25 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 Su estado es **«EXCEPCIÓN APROBADA»**, nunca «verificado» ni «superado».
 
 **Lo que no cambia.** Ningún umbral se mueve. Una verificación aplazada no se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12). La especificación de P0-1 copia esta tabla entre sus criterios de aceptación. La aceptación por etapas como regla general de pruebas está en ADR-011 §8.
+
+#### Decisión 13: dueño del repositorio y cuenta de despliegue
+
+Tomada por el fundador el 4 de noviembre de 2026. La causa son dos límites.
+
+- Vercel Hobby no despliega repositorios privados que pertenecen a una organización de GitHub. Eso chocaba con §7.1 («Vercel Hobby») mientras el repositorio estaba en `juntia-labs`.
+- Los minutos de GitHub Actions y las cuotas de Vercel se cobran al dueño. En la cuenta personal del fundador, Juntia compartía bolsa con otro proyecto que ya las supera.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 13 | Dueño del repositorio y cuenta de despliegue | **`flashwp3-ctrl/juntia`**, repositorio privado en una cuenta personal dedicada, y **una cuenta Hobby de Vercel propia** conectada a esa cuenta de GitHub | Juntia tiene sus propios minutos de Actions y sus propias cuotas de Vercel. `juntia-labs/juntia` redirige al nuevo dueño; los enlaces históricos del repositorio no se reescriben |
+
+**Reglas que se derivan:**
+
+1. **Autor de los commits.** En Hobby, Vercel solo despliega los commits de un repositorio privado cuyo autor es el dueño de la cuenta. Por eso todo commit de Juntia lleva la identidad `flashwp3-ctrl` con su correo noreply, configurada en el `.git/config` del repositorio. Así la heredan todos sus worktrees, los de Codex incluidos. Quien clone de nuevo la configura antes de su primer commit.
+2. **Merges.** Los hace la cuenta `flashwp3-ctrl`, porque el commit de merge lo firma quien mergea. La cuenta personal del fundador queda como colaboradora, con permiso de escritura, para que trabajen las herramientas ya autenticadas con ella.
+3. **Protección de `main`.** Una cuenta personal en GitHub Free no tiene protección de ramas en repositorios privados. Sigue la barrera local de `AGENTS.md` 14a. La decisión 3, «plan de pago de GitHub antes de datos reales», se reevalúa como **GitHub Pro para `flashwp3-ctrl`**, que protege ramas en repositorios privados personales.
+4. **Condiciones de uso.** Una cuenta Hobby es por persona, y tener una segunda cuenta para el mismo fundador queda en zona gris de las condiciones de Vercel. No bloquea el desarrollo. Si Vercel lo objeta, la salida es un equipo Pro solo para Juntia.
+5. **T072**, la superficie interna en un preview real (decisión 12), se ejecuta justo después del primer despliegue de esta cuenta y antes de compartir la URL.
 
 #### Dataset dorado: quién lo produce y cuándo
 
