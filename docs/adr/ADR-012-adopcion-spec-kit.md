@@ -378,7 +378,7 @@ en un clon nuevo hasta que alguien lo instala. Reducen el error accidental; no
 impiden una omisión deliberada.
 
 **Activar GitHub Team** —que daría protección de rama real— **es una decisión
-de los fundadores**, no de este ADR, porque tiene coste económico. **Decidida el 3 de noviembre de 2026** (maestro §15.10, decisión 3): protección local ahora; plan de pago antes del primer dato financiero real.
+de los fundadores**, no de este ADR, porque tiene coste económico. **Decisión original del 3 de noviembre de 2026** (maestro §15.10, decisión 3): protección local temporal y plan de pago antes del primer dato financiero real. **Revisión de los dos fundadores del 4 de noviembre de 2026:** se descarta el plan de pago, y la protección local pasa a ser definitiva, incluso con datos reales. Se acepta de forma explícita que no hay protección de servidor y que las dos barreras locales se pueden saltar. Véanse en el maestro §15.10 la decisión 3, revisada, y la regla 4 de la decisión 13.
 
 ## Consecuencias
 
