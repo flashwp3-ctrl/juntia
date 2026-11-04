@@ -51,16 +51,23 @@ Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cad
 control entra con la especificación que trae lo que controla, y mientras tanto se
 declara **no aplicable**: ver «Arranque progresivo de `verify` y del CI» en §3.
 
-**Sin Docker en local** (ADR-011 §9, decisión 17 del maestro). En el equipo,
-`verify` ejecuta lint, typecheck, dominio y componentes. Los tests SQL/RLS, la
-integración de servidor y las E2E necesitan Supabase y corren **solo en CI**, con
-Supabase dentro del runner. `verify` los declara «solo en CI», nunca como pasados.
-Para probarlos en una rama sin abrir el PR: `gh workflow run ci.yml --ref <rama>`.
-Ninguna función, política o migración está probada sin la salida de ese job.
+**Sin Docker en local** (ADR-011 §9, decisión 17 del maestro). Hay dos conceptos:
+
+- **`verify` local** ejecuta lint, typecheck, dominio y componentes. Los tests
+  SQL/RLS, la integración de servidor y las E2E aparecen como «SOLO EN CI —
+  pendiente de resultado», nunca como pasados ni como «no aplicable» una vez que
+  existen.
+- **El gate completo del PR** es `verify` más los jobs 3 y 4 de CI sobre el mismo
+  commit. Esos jobs corren en todo PR de código desde que existen, sin filtro de
+  rutas.
+
+Para probarlos en una rama sin abrir el PR: `gh workflow run ci.yml --ref <rama>`,
+que ejecuta los mismos jobs que un push. Ninguna función, política o migración
+está probada sin la salida de ese job en ese commit.
 
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
-| `npm run verify` | lint + typecheck + unit de dominio + componentes + tests SQL/RLS. **El comando por defecto.** | **< 90 s** (comando) |
+| `npm run verify` | lint + typecheck + unit de dominio + componentes; los tests SQL/RLS aparecen como «SOLO EN CI — pendiente de resultado» (ADR-011 §9). **El comando por defecto.** | **< 90 s** (comando) |
 | `npm run test:unit` | Vitest, proyecto `domain`, suite completa | **< 15 s** (comando) |
 | `npm run test:unit -- --changed` | Solo lo afectado por los cambios. Para el bucle local | — |
 | `npm run test:components` | Vitest, proyecto `components` (RTL selectivo, §10.1) | sin presupuesto propio; dentro de `verify` |

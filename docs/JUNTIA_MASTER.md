@@ -1036,7 +1036,7 @@ Tomada por el primer fundador el 4 de noviembre de 2026, al empezar el plan de P
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
-| 17 | Dónde corre Supabase en desarrollo | **Sin Docker en los equipos.** Las pruebas que necesitan Supabase corren solo en CI; la app se usa en desarrollo contra un segundo proyecto Free, `juntia-dev` | Enmienda ADR-011 §9 y `docs/TESTING.md`. `verify` local ejecuta lint, typecheck, dominio y componentes, y declara las capas de base de datos «solo en CI». `juntia-dev` vive en la cuenta de la segunda fundadora, sin datos reales y sin claves de producción. La copia de la decisión 16 (16.11) usa `pg_dump` en lugar de `supabase db dump` |
+| 17 | Dónde corre Supabase en desarrollo | **Sin Docker en los equipos.** Las pruebas que necesitan Supabase corren solo en CI; la app se usa en desarrollo contra un segundo proyecto Free, `juntia-dev` | Enmienda ADR-011 §9 y `docs/TESTING.md`. `verify` local ejecuta lint, typecheck, dominio y componentes, y declara las capas de base de datos «solo en CI». `juntia-dev` vive en la cuenta de la segunda fundadora, sin datos reales y sin claves de producción. Los jobs de base de datos corren en todo PR de código, sin filtro de rutas. Las migraciones se aplican a `juntia-dev` con `--remote` explícito. La copia de la decisión 16 (16.11) usa `pg_dump`, y su prueba de restauración pasa a un runner efímero de CI con datos de prueba; la copia real nunca pasa por CI |
 
 #### Dataset dorado: quién lo produce y cuándo
 
