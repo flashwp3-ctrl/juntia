@@ -91,7 +91,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 ## AppShell / Navigation
 - **Móvil (< 768):** barra inferior flotante radio 24, raised, con sombra difusa sutil (0 10px 28px; 10% claro / 45% oscuro) · Inicio · Actividad · Anotar · Metas · Plan · Anotar integrado al centro, a ras de la barra: 54×54, radio 18, bosque, canto de 3 px, sin elevación ni anillo · columnas flexibles con 64 px al centro · etiquetas 11/500 en una línea · la activa en Fill sobre ficha. Respeta `env(safe-area-inset-bottom)`.
 - **Tablet (768–1023):** barra inferior + contenido en 2 columnas.
-- **Escritorio (≥ 1280):** sidebar de 248 px · logotipo · segmented de contexto · destinos de 46 px (Inicio, Actividad, Metas, Plan, Balance) · Anotar como bloque bosque fijo · perfil abajo. **Entre 1024 y 1279:** rail de 76 px (ver `RESPONSIVE_SPECIFICATIONS.md`).
+- **Escritorio (≥ 1280):** sidebar de 248 px (fondo `surface.raised` en claro y `charcoal.950` en oscuro; destinos inactivos en `linen.800` en claro y `charcoal.200` en oscuro; el rail de 1024 comparte el fondo, pero sus destinos inactivos van en `text.secondary`) · logotipo · segmented de contexto · destinos de 46 px (Inicio, Actividad, Metas, Plan, Balance) · Anotar como bloque bosque fijo · perfil abajo. **Entre 1024 y 1279:** rail de 76 px (ver `RESPONSIVE_SPECIFICATIONS.md`).
 - Skip link «Ir al contenido». `nav` con `aria-label` y `aria-current="page"`.
 
 ## BottomSheet
