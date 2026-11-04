@@ -70,7 +70,7 @@ const hexSelectors = [
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  globalIgnores([".agents/**", ".claude/skills/**", ".next/**", "node_modules/**", "tests/lint-fixtures/**", "next-env.d.ts"]),
+  globalIgnores([".agents/**", ".claude/skills/**", ".claude/worktrees/**", ".next/**", "node_modules/**", "tests/lint-fixtures/**", "next-env.d.ts"]),
   { files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors] } },
   { files: ["tests/**/*.{ts,tsx,js,mjs,cjs}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors,
     { selector: "CallExpression[callee.property.name='waitForTimeout']", message: WAIT_MSG },

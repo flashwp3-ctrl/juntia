@@ -9,6 +9,7 @@ import { once } from "node:events";
 
 const require = createRequire(import.meta.url);
 const ROUTE = "/interno/primitivos";
+const INTERNAL_TITLE = "Superficie interna de revisión";
 const urls = {
   VERCEL_URL: "juntia-prueba123-equipo.vercel.app",
   VERCEL_BRANCH_URL: "juntia-git-rama-prueba-equipo.vercel.app",
@@ -61,7 +62,12 @@ async function start(env) {
 // fetch no deja fijar la cabecera Host; http.request sí.
 function status(port, host) {
   return new Promise((resolve, reject) => {
-    const req = request({ host: "127.0.0.1", port, path: ROUTE, headers: { host } }, (res) => { res.resume(); res.on("end", () => resolve(res.statusCode)); });
+    const req = request({ host: "127.0.0.1", port, path: ROUTE, headers: { host } }, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => resolve({ code: res.statusCode, body }));
+    });
     req.on("error", reject);
     req.end();
   });
@@ -73,7 +79,9 @@ for (const destination of destinations) {
   try {
     for (const { host, label, expected } of destination.cases) {
       const got = await status(destination.started.port, host);
-      rows.push({ destino: destination.name, host: `${label} (${host})`, obtenido: got, esperado: expected, resultado: got === expected ? "OK" : "FALLÓ" });
+      // Con la superficie cerrada, ni el HTML ni los datos de RSC nombran la ruta interna.
+      const leaks = got.code === 404 && got.body.includes(INTERNAL_TITLE);
+      rows.push({ destino: destination.name, host: `${label} (${host})`, obtenido: got.code, esperado: expected, fuga: leaks ? "SÍ" : "no", resultado: got.code === expected && !leaks ? "OK" : "FALLÓ" });
     }
   } catch (error) {
     console.error(error);

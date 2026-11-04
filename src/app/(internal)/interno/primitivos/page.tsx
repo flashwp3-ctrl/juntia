@@ -9,16 +9,21 @@ import { copy } from "@/lib/copy/es";
 import { isAllowedInternalHost, isInternalSurfaceEnabled } from "@/lib/internal-surface";
 import { PrimitivesGallery } from "./primitives-gallery";
 
-export const metadata: Metadata = {
-  title: copy.internal.title,
-  robots: { index: false, follow: false },
-};
+// Primera barrera: destino de despliegue. Segunda: en un preview, solo sus URL generadas.
+async function isOpen(): Promise<boolean> {
+  await connection();
+  return isInternalSurfaceEnabled(process.env) && isAllowedInternalHost((await headers()).get("host"), process.env);
+}
+
+// El título sale de la misma compuerta: con la superficie cerrada, el 404 no nombra la ruta
+// interna ni en el HTML ni en los datos de React Server Components (T072, producción).
+export async function generateMetadata(): Promise<Metadata> {
+  const robots = { index: false, follow: false };
+  return (await isOpen()) ? { title: copy.internal.title, robots } : { robots };
+}
 
 export default async function InternalPrimitivesPage() {
-  await connection();
-  // Primera barrera: destino de despliegue. Segunda: en un preview, solo sus URL generadas.
-  if (!isInternalSurfaceEnabled(process.env)) notFound();
-  if (!isAllowedInternalHost((await headers()).get("host"), process.env)) notFound();
+  if (!(await isOpen())) notFound();
 
   return (
     <main id="contenido" className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 py-10 md:px-7 xl:px-10 xl:py-14">
