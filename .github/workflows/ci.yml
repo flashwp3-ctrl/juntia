@@ -1,11 +1,38 @@
 name: Frontend foundation
-on: pull_request
+# ADR-011 §5, enmienda del 4 de noviembre de 2026: un solo job en serie, sin PR de solo
+# documentación ni borradores, y cancelación del run anterior del mismo PR.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    # Solo tipos de archivo documentales, nunca carpetas enteras (ADR-011 §5). El orden importa:
+    # lo que alimenta herramientas o agentes se vuelve a incluir, aunque sea Markdown.
+    paths:
+      - "**"
+      - "!**/*.md"
+      - "!docs/**/*.png"
+      - "!specs/**/*.png"
+      - "!specs/**/*.txt"
+      - ".specify/**"
+      - ".claude/**"
+      - ".agents/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      # Explícitos por si "**" no cubre carpetas con punto.
+      - ".github/**"
+      - ".githooks/**"
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint-typecheck-build:
+  app:
+    # Un borrador no corre (se lanza a mano con «Run workflow»); un lanzamiento manual sí.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Start job clock
         run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
@@ -14,45 +41,11 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Install, lint, typecheck and build
-        run: node scripts/ci.mjs run ci lint typecheck build
+      - name: Install, lint, typecheck and unit and component tests
+        run: node scripts/ci.mjs run ci lint typecheck test:unit test:components
+      - name: Build once, then Chromium, axe, internal surface and theme script on that build
+        run: node scripts/ci.mjs run build chromium test:a11y check:internal-surface check:theme-script
       - name: Publish timings and non-applicable controls
-        if: always()
-        env:
-          JOB_STATUS: ${{ job.status }}
-        run: node scripts/ci.mjs summary
-
-  vitest:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Start job clock
-        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install and test domain and components
-        run: node scripts/ci.mjs run ci test:unit test:components
-      - name: Publish timings
-        if: always()
-        env:
-          JOB_STATUS: ${{ job.status }}
-        run: node scripts/ci.mjs summary
-
-  a11y:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Start job clock
-        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install, build once, install Chromium, check routes, internal surface and theme script
-        run: node scripts/ci.mjs run ci build chromium test:a11y check:internal-surface check:theme-script
-      - name: Publish timings
         if: always()
         env:
           JOB_STATUS: ${{ job.status }}
