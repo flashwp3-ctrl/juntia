@@ -49,7 +49,7 @@ Dirección oficial: **I2 · Bosque & Arena**. Versión 1.0 (lote 1 de 5). Estado
 - **Casos a validar:** viaje (horizontal, cielo claro), boda (vertical, tonos claros), vivienda (interior oscuro), foto con sujeto en el borde. [V]
 
 ## 6. Identidad visual (resumen; el detalle está en DESIGN_SYSTEM.md)
-- Tipografía: Instrument Serif (emoción) + Geist (UI) + Geist tabular (dinero) + Geist Mono (solo metadatos). [A]
+- Tipografía: Brygada 1918 (emoción) + Onest (UI) + Onest tabular (dinero) + Spline Sans Mono (solo metadatos). [A] Decisión de los fundadores del 4 de noviembre de 2026 (maestro §15.10, decisión 14); sustituye a Instrument Serif + Geist + Geist Mono.
 - Color: lino/crema, tinta, bosque lleno para la acción, verde texto para el ahorro, personas configurables (petróleo, arena…). [A/P]
 - Iconos: Phosphor, con fichas de categoría de fondo suave. [A]
 - Oscuro: carbón #121416, sin cacao; la calidez vive en las fichas, las personas y la acción. [A]

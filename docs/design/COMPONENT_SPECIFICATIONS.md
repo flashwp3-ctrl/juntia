@@ -70,7 +70,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - **Motion:** ver «Shared Balance» en MOTION_SYSTEM.
 
 ## GoalCard
-- **Anatomía:** foto (focal point configurable) · scrim · metadatos (overline: COMPARTIDA/PERSONAL + fecha) · nombre (Instrument Serif 36 en móvil, 64–150 en el inmersivo) · % · cinta · importe.
+- **Anatomía:** foto (focal point configurable) · scrim · metadatos (overline: COMPARTIDA/PERSONAL + fecha) · nombre (Brygada 1918 36 en móvil, 64–150 en el inmersivo; la escala la recalibra el PR de implementación de la decisión 14) · % · cinta · importe.
 - **Cinta:** riel radio pill de 8–16 px · un tramo por persona (color + patrón) · tramo punteado = próximo aporte planeado (proyección, no certeza) · marca de ritmo = dónde deberían ir para llegar a la fecha (solo si la meta tiene fecha).
 - **Fotografía:** scrim degradado `rgba(10,12,13,.42)` arriba hasta 30%, transparente en el centro y `.82` abajo (claro); en oscuro +0,1 de opacidad. Texto siempre blanco con contraste ≥ 4,5:1 medido sobre la zona del scrim. **Focal point** guardado como `{x,y}` 0–1 → `object-position`. Crop: 4:3 en tarjeta, 9:16 en inmersivo móvil y 4:5 en escritorio. Fotos muy claras: el scrim inferior sube a .9 (detección por luminancia media [V]). Sujeto en el borde: el focal point manda y el título nunca se superpone a la zona de 30% alrededor del foco [V].
 - **Fallback sin foto:** fondo savingSubtle + inicial gigante en serif al 30% + ícono Duotone del tipo de meta (viaje airplane-tilt, boda heart, vivienda house-line). Texto en tinta.
@@ -149,7 +149,7 @@ B1 «Cómo se pagó: Con una meta» + metas del mismo contexto (las personales, 
 - **Props:** `user`, `onOpen`. **Estados:** normal, foco (anillo 2 px `focus.ring`), presionado (scale .96). **A11y:** `<button aria-label="Mi cuenta">`, title en escritorio. **Posición:** a la izquierda del encabezado de Inicio, Actividad, Metas y Plan.
 - **Sidebar:** fila de 56 «Nombre · Mi cuenta · con {pareja}» + caret; `aria-current="page"` dentro de Cuenta. Rail de 1024: avatar 36 en un área de 48.
 ### ProfileHeader
-Avatar 72 (inicial en Instrument Serif, color del sistema, no editable) · nombre `title.xl` · correo `body.m` (`overflow-wrap:anywhere`) · botón secundario «Editar perfil» de 44. Sin datos financieros.
+Avatar 72 (inicial en Brygada 1918, color del sistema, no editable) · nombre `title.xl` · correo `body.m` (`overflow-wrap:anywhere`) · botón secundario «Editar perfil» de 44. Sin datos financieros.
 ### AccountMenuItem
 Reutiliza la fila de lista. Ficha de 40 con fondo de categoría · título 15/600 · subtítulo 13 · valor + caret. Variantes: navegación, valor, externa (`role="link"`, arrow-up-right) y cargando. Lo que la app no hace no se muestra como fila: se usa LimitNote. Alto mínimo 64. «Cerrar sesión» va separado por un borde `border.strong`, en tinta y no en rojo.
 ### ThemeSelector
