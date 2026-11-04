@@ -1962,7 +1962,7 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
 | D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
 | T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 (R9) y F15-1 a F15-4 (R10), aceptadas por los fundadores el 3 de noviembre de 2026. |
-| Paleta, copy, pantallas y SC-008 | **Aprobado por el fundador el 3 de noviembre de 2026** (T078). SC-008: aprobado por un fundador; pendiente la confirmación del segundo. |
+| Paleta, copy, pantallas y SC-008 | **Aprobado por los dos fundadores**: el primero el 3 de noviembre de 2026 y el segundo el 4 de noviembre de 2026, con la misma hoja de aprobación (T078). |
 | T072–T075 | Pendientes con dueño y momento en T078 («Pendientes `[V]` que hereda P0-1»). |
 
 D no añade specs E2E, dependencias ni funcionalidad. Sí añade aserciones permanentes de regresión dentro de las pruebas existentes de `tests/a11y/routes.a11y.ts`: las de D-02 y D-05 (Anexo A §A.4, R7 y R8).
@@ -1976,20 +1976,20 @@ Fecha: 2026-11-03 · Commit de aplicación: `00f85d2975aaa9fd2a6476544ab63d387a0
 
 [PR21](https://github.com/juntia-labs/juntia/pull/21), contra main, título `chore(001): PR D — verification and closure of spec 001`, en inglés y borrador. La descripción enlaza esta evidencia, salidas T062/T063/T070/T076, capturas T066/T068, tabla de hallazgos/cambios/commits, inventario T069 y E2E specs added:0. Incluye una tabla de cada [V] y pendientes explícitos.
 
-Gate humano pendiente: tres propuestas de paleta (Sara petróleo, Hogar azul tenue y superficie oscura), copy de estados provisionales, comprensión por ambos fundadores de que aún no guarda datos (SC-008) y capturas SC-001. T072 necesita proyecto Vercel; T073–T075 necesitan persona con dispositivo. Gasto/ingreso/liquidación en tinta pasa a P0-1. Los hallazgos de composición/anatomía se entregan a Claude Code con el comp. No se hace merge.
+**Gate humano cerrado.** Los dos fundadores aprobaron las tres propuestas de paleta (Sara petróleo, Hogar azul tenue y superficie oscura), el copy de los estados provisionales, las capturas SC-001 y SC-008: el primero el 3 de noviembre de 2026 y la segunda el 4 de noviembre de 2026, con la misma hoja de aprobación. Siguen pendientes las verificaciones heredadas por P0-1 (decisión 12): T072 necesita el proyecto de Vercel y T073–T075 necesitan una persona con dispositivo. «Gasto, ingreso y liquidación en tinta» pasa a P0-1.
 
 ### Gate humano: revisión visual de la 001
 
-**Aprobado por el fundador el 3 de noviembre de 2026.** Revisó la hoja de aprobación con las capturas de C: `specs/001-frontend-foundation/evidence-c/` en `a3216c0`. Las capturas de D están en `specs/001-frontend-foundation/evidence/` y son otro juego, tomado con otro arnés; la comparación sigue a esta tabla (D21-2).
+**Aprobado por los dos fundadores: el primero el 3 de noviembre de 2026 y la segunda el 4 de noviembre de 2026.** Revisaron la hoja de aprobación con las capturas de C: `specs/001-frontend-foundation/evidence-c/` en `a3216c0`. Las capturas de D están en `specs/001-frontend-foundation/evidence/` y son otro juego, tomado con otro arnés; la comparación sigue a esta tabla (D21-2).
 
 | Punto | Estado |
 | --- | --- |
-| Sara en petróleo: `#6F98A8` en claro, `#8FB3C1` en oscuro (`--person-1`) | Aprobado por el fundador el 3 de noviembre de 2026 |
-| Hogar en azul tenue: `#DCE8EC` / `#2E5866` (`--category-home-bg` / `--category-home-fg`, tema claro) | Aprobado por el fundador el 3 de noviembre de 2026 |
-| Superficie oscura `#191C1F` (`--color-surface-raised`, tema oscuro) | Aprobado por el fundador el 3 de noviembre de 2026 |
-| Copy de los estados provisionales, sin cambios | Aprobado por el fundador el 3 de noviembre de 2026 |
-| SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por un fundador; pendiente la confirmación del segundo.** SC-008 exige a los dos |
-| Pantallas en general (capturas SC-001) | Aprobado por el fundador el 3 de noviembre de 2026 |
+| Sara en petróleo: `#6F98A8` en claro, `#8FB3C1` en oscuro (`--person-1`) | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
+| Hogar en azul tenue: `#DCE8EC` / `#2E5866` (`--category-home-bg` / `--category-home-fg`, tema claro) | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
+| Superficie oscura `#191C1F` (`--color-surface-raised`, tema oscuro) | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
+| Copy de los estados provisionales, sin cambios | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
+| SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
+| Pantallas en general (capturas SC-001) | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
 | Gasto, ingreso y liquidación en tinta | Sigue para P0-1 |
 
 ### Capturas aprobadas (C) frente a las de D (D21-2)
@@ -2017,10 +2017,20 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 | `[V]` | Estado | Dueño | Momento |
 | --- | --- | --- | --- |
 | T072 · Preview real de Vercel | Pendiente: no existe el proyecto de Vercel | Fundadores (crear el proyecto); después, el agente del slice repite las comprobaciones de T072 | Cuando exista el proyecto |
-| T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal pasará los resultados para registrarlos aquí | Fundadores, con iPhone | Sin fecha; los resultados se registran en T073 |
+| T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal registrará aquí los resultados | Fundadores, con iPhone | Antes de aceptar P0-1 (decisión 12); se puede adelantar |
 | T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
-| T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone; TalkBack sin dueño hasta que haya Android | Cierre de P0-1 (VoiceOver); TalkBack sin fecha |
-| SC-008 · segundo fundador | Pendiente la confirmación del segundo fundador | Segundo fundador | Antes de aceptar la 001 |
+| T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone y TalkBack con Android; para TalkBack, excepción formal si no hay Android (decisión 12) | Cierre de P0-1, los dos |
 | CLS = 0 en Firefox y WebKit (arnés R2) | Pendiente: el mecanismo de D21-1 solo está demostrado en Chromium | El gestor | Antes de aceptar P0-1 (decisión 12) |
 | CLS en un iPhone real | Pendiente | Fundadores; excepción formal si no hay Mac para el inspector web | Antes de aceptar P0-1 (decisión 12) |
 | Respaldo tipográfico en Android | Pendiente | Fundadores; excepción formal si no hay Android | Antes de aceptar P0-1 (decisión 12) |
+
+## Aceptación de la 001
+
+**La especificación 001 queda aceptada el 4 de noviembre de 2026**, según la decisión 12 del maestro §15.10. Se cumplen sus tres condiciones:
+
+1. **CLS = 0** en todas las cargas medidas: R2 con 12 de 12 y la repetición ampliada con 0 de 48 con CLS > 0, en Chromium (T065).
+2. **SC-001 y SC-008** aprobados por los dos fundadores, el 3 y el 4 de noviembre de 2026, con la hoja de aprobación visual sobre las capturas de C (T078).
+3. **El resto de la fase 10** tiene salida real y el CI está en verde. T067 lo hizo el gestor el 3 de noviembre de 2026.
+
+**No se dan por superadas.** Son criterios de aceptación obligatorios de P0-1 T072–T075 y tres verificaciones `[V]` adicionales: (1) CLS = 0 en Firefox y WebKit con el arnés R2; (2) CLS en un iPhone real; (3) el respaldo tipográfico de Geist en Android, que no es una medición de CLS. Todas tienen dueño y momento en la decisión 12 y en la tabla de pendientes de T078. T072 se ejecuta justo después del primer despliegue en Vercel (decisión 13).
+
