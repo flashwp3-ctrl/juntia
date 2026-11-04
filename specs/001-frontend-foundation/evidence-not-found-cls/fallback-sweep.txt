@@ -1,0 +1,8 @@
+# Barrido 360–1023 px: desplazamiento del inicio de la primera línea de cada texto centrado, fuente frente a respaldo (html.fb). Rama fix/not-found-cls.
+{"route":"/","max":2.38,"widthsOver3px":0,"sample":[]}
+{"route":"/actividad","max":1.31,"widthsOver3px":0,"sample":[]}
+{"route":"/metas","max":0.44,"widthsOver3px":0,"sample":[]}
+{"route":"/plan","max":1.27,"widthsOver3px":0,"sample":[]}
+{"route":"/balance","max":2.13,"widthsOver3px":0,"sample":[]}
+{"route":"/cuenta","max":1.31,"widthsOver3px":0,"sample":[]}
+{"route":"/ruta-que-no-existe","max":0.91,"widthsOver3px":0,"sample":[]}

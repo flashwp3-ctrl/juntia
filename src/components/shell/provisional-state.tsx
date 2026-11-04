@@ -39,7 +39,11 @@ function StateBlock({ icon, title, description, headingLevel = 2, actions, tone 
       <Heading className="font-serif text-[length:var(--state-title-size)] leading-[var(--display-l-line)] font-medium tracking-[var(--display-l-tracking)] text-ink text-balance [--state-title-size:28px] lg:[--state-title-size:35px]">
         {title}
       </Heading>
-      <p className="text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]">
+      {/* CLS = 0 (maestro §15.7): el texto centrado tiene un ancho fijo de 20rem por debajo de lg. Si el ancho depende
+          del viewport, en algunos anchos (362–363 y 384–385 px con Onest) el respaldo y la fuente cortan la línea en
+          palabras distintas y el texto se mueve al llegar la fuente. Con un solo ancho, el corte es el de 360 px, que se
+          comprobó sin movimiento. */}
+      <p className="max-w-[20rem] text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:max-w-none lg:text-[length:var(--body-l-size)]">
         {description}
       </p>
       {actions ? <div className="mt-3 flex flex-wrap justify-center gap-3 lg:justify-start">{actions}</div> : null}
