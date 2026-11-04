@@ -72,9 +72,9 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
 ## 3. Qué corre dónde
 
-### Nivel 1 — cada push a un PR
+### Nivel 1 — cada push a un PR de código
 
-Jobs **en paralelo**:
+Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR que solo tocan archivos documentales (`**/*.md`, `docs/**/*.png`, `specs/**/*.png` y `specs/**/*.txt`), salvo los que alimentan herramientas o agentes: `.specify/**`, `.claude/**`, `.agents/**`, `AGENTS.md` y `CLAUDE.md` siempre lo disparan. Tampoco corre en borradores. En un borrador se lanza a mano con «Run workflow», que solo aparece cuando el workflow ya está en `main`; un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
 
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
@@ -95,12 +95,12 @@ infraestructura antes de tiempo para que `verify` «pase completo».
 
 | Control | Entra con | Antes de eso |
 | --- | --- | --- |
-| lint + typecheck + build (job 1) | 001 | — |
-| Vitest, proyectos `domain` y `components` (job 2) | 001, que crea los dos proyectos y corre lo que haya | — |
-| axe sobre las rutas implementadas, en los dos temas (job 5) | 001 | — |
+| lint + typecheck + build (control 1, job `app`) | 001 | — |
+| Vitest, proyectos `domain` y `components` (control 2, job `app`) | 001, que crea los dos proyectos y corre lo que haya | — |
+| axe sobre las rutas implementadas, en los dos temas (control 5, job `app`) | 001 | — |
 | Reduced motion por defecto en Playwright | 001 | — |
-| Supabase local, migraciones y tests SQL/RLS (job 3, `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
-| E2E de humo (job 4) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
+| Supabase local, migraciones y tests SQL/RLS (control 3, job propio; `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
+| E2E de humo (control 4, job propio) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
 | Siembra por base de datos (`seedCouple()`, `storageState` por worker y rol) | P0-1 | **No aplicable** |
 
 Tres reglas, sin excepción:
@@ -484,7 +484,7 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | Job | Presupuesto |
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
-| **Gate de PR completo** (el más lento de los jobs en paralelo) | **< 6 min** |
+| **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
 «Mide el job» aplica **solo a esta segunda tabla**.
