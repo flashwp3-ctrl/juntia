@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Propuesto, 4 de noviembre de 2026. Pendiente de decisión de los fundadores · **Revisión:** dos rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Propuesto, 4 de noviembre de 2026. Pendiente de decisión de los fundadores · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -113,9 +113,15 @@ Documentación oficial consultada el 4 de noviembre de 2026:
 - **Privilegios y RLS son dos barreras distintas.** Los grants deciden qué
   roles llegan a una tabla, vista o función por la API de datos; la RLS decide
   qué filas ven o modifican. Una política no basta si el rol tiene un grant
-  que no debería tener, y al revés. Entre los privilegios que Supabase concede
-  por defecto están también `TRUNCATE`, `REFERENCES`, `TRIGGER` y los de las
-  secuencias.
+  que no debería tener, y al revés. Además de `select`, `insert`, `update` y
+  `delete`, una tabla tiene `TRUNCATE`, `REFERENCES` y `TRIGGER`, y las
+  secuencias tienen los suyos. Las concesiones automáticas de Supabase varían
+  según el proyecto y han cambiado con el tiempo, así que no se dan por
+  sabidas: se revocan y se conceden de forma explícita.
+- **Otra API:** Supabase puede servir también `/graphql/v1` con `pg_graphql`, que
+  refleja las tablas según los privilegios y los esquemas de su `search_path`,
+  no según la configuración de PostgREST.
+  ([Supabase, GraphQL](https://supabase.com/docs/guides/graphql))
   ([Securing your API](https://supabase.com/docs/guides/api/securing-your-api))
 
 ## Opciones
@@ -181,12 +187,14 @@ nueva que guarde importes o membresía queda fuera de ella.
 
 1. **El rol de la petición no tiene ningún privilegio de escritura ni de
    alteración.** La migración revoca **todos** los privilegios de `anon` y
-   `authenticated` sobre las tablas y secuencias de `juntia_data` (incluidos
-   `TRUNCATE`, `REFERENCES` y `TRIGGER`, que Supabase concede por defecto). Solo
-   devuelve a `authenticated` el `usage` del esquema y el `select` sobre las
-   tablas que leen las vistas, siempre filtrado por RLS. Así hay dos barreras
-   contra una escritura directa: la API no llega al esquema, y aunque llegara
-   no hay privilegio.
+   `authenticated` sobre las tablas y secuencias de `juntia_data`, incluidos
+   `TRUNCATE`, `REFERENCES` y `TRIGGER`, sean cuales sean los valores por
+   defecto del proyecto. Solo devuelve a `authenticated` el `select` sobre las
+   tablas que leen las vistas, siempre filtrado por RLS, y **no** le da `usage`
+   sobre `juntia_data`: PostgreSQL no lo exige para consultar una vista
+   `security_invoker` situada en `public`, y sin él el rol no puede nombrar las
+   tablas desde ninguna otra vía. Así hay dos barreras contra una escritura
+   directa: la API no llega al esquema, y aunque llegara no hay privilegio.
 2. **Las escribe un rol propio: `juntia_writer`.** No tiene `LOGIN` ni
    `BYPASSRLS` ni es dueño de las tablas. Tiene exactamente los privilegios que
    cada función necesita:
@@ -275,10 +283,11 @@ tipan como `number`: por encima de 2^53 pierde precisión. Este ADR da **la
 garantía de API completa**: ningún importe cruza la frontera SQL ↔ API ↔
 TypeScript como número, en ningún sentido y por ningún camino.
 
-1. **Salida:** como las tablas viven en `juntia_data`, que la API no expone, la
-   única forma de leer un importe es una vista de `public` o una función de
-   entrada, y las dos lo exponen como `text`. No hay columna `bigint` de
-   importe que una petición directa pueda leer.
+1. **Salida:** como las tablas viven en `juntia_data`, que ninguna API expone
+   (ni PostgREST ni GraphQL, §5.3), la única forma de leer un importe es una
+   vista de `public` o una función de entrada, y las dos lo exponen como
+   `text`. No hay columna `bigint` de importe que una petición directa pueda
+   leer.
 2. **Entrada:** los parámetros de importe de las funciones son `text`,
    también dentro de `jsonb`. La función los valida (solo dígitos, sin signo
    salvo donde el contrato lo permita) y los convierte a `bigint`; un valor no
@@ -296,8 +305,12 @@ TypeScript como número, en ningún sentido y por ningún camino.
    - **funciones de entrada** en `public`: `security invoker`.
      `revoke execute ... from public, anon` y `grant execute ... to authenticated`;
    - **funciones que escriben** en `juntia_private`: `security definer`,
-     propiedad de `juntia_writer`. `execute` solo para `authenticated`, que las
-     alcanza a través de la función de entrada, nunca por la API;
+     propiedad de `juntia_writer`. `authenticated` recibe `usage` sobre
+     `juntia_private` y `execute` sobre ellas, porque la función de entrada corre
+     con sus privilegios. La API de datos no las publica, pero un rol con esos
+     permisos podría llamarlas por SQL. Por eso **toda** la autorización, la
+     validación y la idempotencia están en la función que escribe, nunca en la
+     de entrada: saltarse la función de entrada no salta ninguna regla;
    - **auxiliares de autorización** (por ejemplo, «¿es miembro activo de este
      grupo?») en `juntia_private`. Pueden ser `security definer` cuando hacen
      falta para evitar políticas recursivas entre `groups` y `group_members`,
@@ -306,19 +319,24 @@ TypeScript como número, en ningún sentido y por ningún camino.
      las usan;
    - **funciones internas** (cálculos, validaciones) en `juntia_private`, sin
      `execute` para `anon` ni `authenticated`.
-2. **Privilegios por defecto:** la primera migración ajusta
+2. **Sin `create` en ningún esquema** para `anon` ni `authenticated`: ni en
+   `public`, ni en `juntia_data`, ni en `juntia_private`.
+3. **GraphQL:** Juntia no usa `/graphql/v1`. La especificación de P0-1
+   desactiva `pg_graphql`. Si alguna vez se usara, sería con una decisión
+   aparte, y nunca reflejaría `juntia_data` ni `juntia_private`.
+4. **Privilegios por defecto:** la primera migración ajusta
    `alter default privileges` en los tres esquemas. Así, las funciones nuevas no
    son ejecutables por `public`, y las tablas y secuencias nuevas no tienen
    grants hasta que la migración los conceda de forma explícita. Los valores
    por defecto de Supabase varían según la configuración del proyecto, así que
    no se dan por sabidos.
-3. **Secuencias:** las claves son identidades o UUID. `anon` y
+5. **Secuencias:** las claves son identidades o UUID. `anon` y
    `authenticated` no tienen `usage` ni `update` sobre ninguna secuencia.
-4. **Vistas** de `public`: siempre `security_invoker = true`.
-5. **Cada función `security definer`** lleva en su migración un comentario que
+6. **Vistas** de `public`: siempre `security_invoker = true`.
+7. **Cada función `security definer`** lleva en su migración un comentario que
    justifica por qué lo es, y aparece en la prueba de privilegios efectivos de
    la verificación 7.
-6. **`service_role`:** ningún camino que atienda a una persona lo usa. Si una
+8. **`service_role`:** ningún camino que atienda a una persona lo usa. Si una
    operación de mantenimiento lo necesita, se decide aparte.
 
 ### 6. Lecturas, capas y autenticación
@@ -406,14 +424,17 @@ se apoya todo lo demás.
    - dentro de una de ellas, `auth.uid()` devuelve a quien llama;
    - la RLS se aplica a `juntia_writer`, también a sus `select ... for update`.
 
-   Prueba: una función que intente escribir en la meta o el grupo de otra
-   persona falla.
+   Pruebas: una función que intente escribir en la meta o el grupo de otra
+   persona falla. Y la función que escribe, **llamada directamente por SQL**
+   con el rol `authenticated` (sin la función de entrada), aplica la misma
+   autorización, la misma RLS y las mismas invariantes.
 2. **Escritura directa imposible.** Con un JWT de `authenticated` real y la API
    de datos pública, no solo `rpc()`:
    - `insert`, `update` y `delete` sobre cada tabla controlada fallan, también
      sobre filas propias. Por ejemplo, cambiar el importe de un aporte propio
      sin pasar por la función, o cambiar la moneda de un grupo;
-   - `juntia_data` y `juntia_private` no son alcanzables por la API;
+   - `juntia_data` y `juntia_private` no son alcanzables ni por PostgREST ni por
+     `/graphql/v1`;
    - ni `TRUNCATE` ni ninguna secuencia están al alcance de `anon` ni de
      `authenticated`;
    - el historial de las tablas de solo inserción no se puede modificar, ni
@@ -437,14 +458,17 @@ se apoya todo lo demás.
 7. **Privilegios efectivos:** una prueba pgTAP lista los privilegios reales de
    `anon` y `authenticated` y los compara con la lista esperada:
    - sobre tablas, incluidos `TRUNCATE`, `REFERENCES` y `TRIGGER`;
-   - sobre vistas, secuencias, esquemas y funciones;
+   - sobre vistas, secuencias, esquemas y funciones, incluidos el `usage` y el
+     `create` de cada esquema;
    - además, comprueba en el catálogo que no hay ninguna función
      `security definer` en `public`, y que ninguna función de `juntia_private`
      es invocable desde la API de datos.
 
-   Una función nueva sin `revoke` hace fallar la prueba.
+   Una función nueva sin `revoke` hace fallar la prueba. Además, `pg_graphql`
+   está desactivado, o en su defecto ninguna tabla controlada aparece en su
+   esquema.
 8. **Las vistas** de `public` tienen `security_invoker = true`, comprobado en el
-   catálogo.
+   catálogo, y funcionan para `authenticated` sin `usage` sobre `juntia_data`.
 9. **La forma del claim** en la versión de Supabase del stack (condición de la
    decisión 1 del maestro §15.10), que también usan las políticas de
    `juntia_writer`.
