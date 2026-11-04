@@ -71,11 +71,14 @@
 
 /* D-01 (T077), recalibrado con la decisión 14: respaldos de Onest y Brygada 1918 mientras cargan. Un size-adjust por
    peso iguala el ancho del respaldo al de la fuente, medido como relación de anchos sobre las 134 cadenas de
-   src/lib/copy/es.ts. Onest/Arial: 400 → 1,0398; 500 → 1,0508; 600 → 0,9900 (Arial Bold). Brygada/Georgia: 400 → 1,0415;
+   src/lib/copy/es.ts. Onest/Arial: 400 → 1,0398 (se usa 1,049, abajo); 500 → 1,0508; 600 → 0,9900 (Arial Bold). Brygada/Georgia: 400 → 1,0415;
    500 → 1,0501; 600 → 0,9079 y 700 → 0,9253 (Georgia Bold); itálicas 0,9671 · 0,9770 · 0,8498 · 0,8697.
    Las sobreescrituras verticales son las de cada fuente (Onest: ascent 970 y descent 305 sobre 1000; Brygada: 920 y 250)
-   divididas por ese ajuste, así que la línea no cambia de alto al llegar la fuente. */
-@font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 103.98%; ascent-override: 93.29%; descent-override: 29.33%; line-gap-override: 0%; }
+   divididas por ese ajuste, así que la línea no cambia de alto al llegar la fuente.
+   Onest 400 usa 1,049 y no la media: las descripciones centradas de varias líneas miden entre 1,033 y 1,049, y con la media
+   la de «no encontrado» cortaba distinto a 360 px. Con 1,049, barriendo 360–1023 px, cambia de corte en 4 anchos
+   (362, 363, 384 y 385), los mismos que tenía Geist (370–373); las rutas de producto no pasan de 2,4 px en ningún ancho. */
+@font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 104.90%; ascent-override: 92.47%; descent-override: 29.08%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 500; size-adjust: 105.08%; ascent-override: 92.31%; descent-override: 29.02%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600; size-adjust: 99.00%; ascent-override: 97.98%; descent-override: 30.81%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 400; size-adjust: 104.15%; ascent-override: 88.33%; descent-override: 24.00%; line-gap-override: 0%; }
