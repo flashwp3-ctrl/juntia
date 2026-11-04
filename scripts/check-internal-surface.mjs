@@ -9,6 +9,7 @@ import { once } from "node:events";
 
 const require = createRequire(import.meta.url);
 const ROUTE = "/interno/primitivos";
+const INTERNAL_TITLE = "Superficie interna de revisión";
 const urls = {
   VERCEL_URL: "juntia-prueba123-equipo.vercel.app",
   VERCEL_BRANCH_URL: "juntia-git-rama-prueba-equipo.vercel.app",
@@ -58,10 +59,23 @@ async function start(env) {
   return { server, port };
 }
 
-// fetch no deja fijar la cabecera Host; http.request sí.
-function status(port, host) {
+// fetch no deja fijar la cabecera Host; http.request sí. Con `rsc`, pide la variante RSC independiente que usa la
+// navegación del cliente (cabecera `RSC: 1` y parámetro `_rsc`), además del HTML (revisión del PR #27, F27-1).
+// Next responde una redirección 307 cuando `_rsc` no coincide con las cabeceras; se sigue una vez.
+function status(port, host, rsc, path = rsc ? `${ROUTE}?_rsc` : ROUTE, hops = 0) {
   return new Promise((resolve, reject) => {
-    const req = request({ host: "127.0.0.1", port, path: ROUTE, headers: { host } }, (res) => { res.resume(); res.on("end", () => resolve(res.statusCode)); });
+    const headers = rsc ? { host, RSC: "1" } : { host };
+    const req = request({ host: "127.0.0.1", port, path, headers }, (res) => {
+      if (rsc && res.statusCode === 307 && res.headers.location && hops === 0) {
+        res.resume();
+        res.on("end", () => status(port, host, rsc, res.headers.location, 1).then(resolve, reject));
+        return;
+      }
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => resolve({ code: res.statusCode, body, type: String(res.headers["content-type"] ?? "") }));
+    });
     req.on("error", reject);
     req.end();
   });
@@ -72,8 +86,20 @@ for (const destination of destinations) {
   const { server } = await start(destination.env).then((started) => (destination.started = started));
   try {
     for (const { host, label, expected } of destination.cases) {
-      const got = await status(destination.started.port, host);
-      rows.push({ destino: destination.name, host: `${label} (${host})`, obtenido: got, esperado: expected, resultado: got === expected ? "OK" : "FALLÓ" });
+      for (const rsc of [false, true]) {
+        const got = await status(destination.started.port, host, rsc);
+        // La variante RSC tiene que llegar de verdad como RSC; si no, la fila no prueba nada.
+        const format = rsc ? (got.type.includes("text/x-component") ? "RSC" : `RSC esperado, llegó ${got.type || "sin tipo"}`) : "HTML";
+        const closed = expected === 404;
+        const hasTitle = got.body.includes(INTERNAL_TITLE);
+        // Cerrada: ni el HTML (con su RSC incrustado) ni la respuesta RSC nombran la ruta interna. Abierta: el RSC sí
+        // trae el título, prueba de que esa variante lleva los metadatos y de que la fila cerrada no pasa en vacío.
+        // Una respuesta RSC de notFound() llega con 200; su código no se compara.
+        const leaks = closed && hasTitle;
+        const codeOk = rsc ? true : got.code === expected;
+        const ok = codeOk && !leaks && (!rsc || (format === "RSC" && (closed || hasTitle)));
+        rows.push({ destino: destination.name, host: `${label} (${host})`, formato: format, obtenido: got.code, esperado: expected, fuga: leaks ? "SÍ" : "no", resultado: ok ? "OK" : "FALLÓ" });
+      }
     }
   } catch (error) {
     console.error(error);
@@ -84,4 +110,4 @@ for (const destination of destinations) {
 }
 console.log(`check:internal-surface · ${ROUTE}`);
 console.table(rows);
-if (rows.length !== 6 || rows.some((row) => row.resultado !== "OK")) process.exitCode = 1;
+if (rows.length !== 12 || rows.some((row) => row.resultado !== "OK")) process.exitCode = 1;
