@@ -1435,6 +1435,29 @@ Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
 **Estado al 3 de noviembre de 2026:** sigue pendiente; no existe el proyecto. Lista de pendientes en T078.
 
+### Aislamiento en producción: hecho el 4 de noviembre de 2026
+
+El proyecto existe desde el 4 de noviembre de 2026: cuenta Vercel Hobby de `flashwp3-ctrl` y producción en `https://juntia-alpha.vercel.app` (decisión 13). El gestor midió con `curl` contra producción:
+
+| Petición | Resultado | Esperado |
+| --- | --- | --- |
+| `/`, `/actividad`, `/balance`, `/cuenta` | 200 | 200 |
+| `/interno/primitivos` (HTML) | **404**, con «No encontramos esta página» | 404 |
+| `/cuenta/perfil`, `/nope` | 404 | 404 |
+
+**Hallazgo y corrección.** En el primer despliegue, desde `c04fdcf`, el 404 de `/interno/primitivos` llevaba en los datos de React Server Components el título estático «Superficie interna de revisión». No se filtraba ningún primitivo ni valor de prueba. El PR #27 movió el título a `generateMetadata`, detrás de la misma compuerta que la página. Ese PR amplió también `check:internal-surface` para que pida HTML y la respuesta RSC independiente (`RSC: 1` y `_rsc`): con la página anterior fallaban las 8 filas cerradas y con la corrección pasan las 12.
+
+**Comprobación tras el despliegue de `aa322be`**, que incluye los PR #27 y #28:
+
+| Petición a `/interno/primitivos` | Resultado | Contiene el título interno |
+| --- | --- | --- |
+| HTML | 404 | **No** |
+| RSC independiente (`RSC: 1`, `_rsc`) | 200, `text/x-component` (la respuesta de `notFound()`) | **No** |
+
+Vercel desplegó producción desde un commit de merge de la dueña de la cuenta, como prevé la regla 2 de la decisión 13. El caso «alias de producción sobre un preview» no se prueba en real, porque eso exigiría asignar el dominio de producción a un preview, que la decisión 13 prohíbe. Lo cubre `check:internal-surface`.
+
+**Funcionamiento en preview: pendiente.** Por decisión de los fundadores del 4 de noviembre de 2026, se hace antes de aceptar P0-1. El preview de un PR cuyo último commit no es de la dueña queda bloqueado en Hobby; el del PR #27 lo estuvo. Para esta prueba, la dueña añade un commit a la rama de un PR, y los fundadores, con sesión en Vercel, abren `/interno/primitivos` por la URL de despliegue y por la de rama: las dos deben mostrar la superficie.
+
 Para los fundadores cuando exista proyecto: facilitar preview propio y acceso bajo Deployment Protection; solicitar interna por URL de despliegue y rama (200), alias de prueba no productivo (404) y producción (404); registrar URL/host/HTTP y coincidencia VERCEL_URL. Nunca asignar el dominio productivo a un preview con vercel alias.
 
 <a id="t073"></a>
@@ -2016,7 +2039,7 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 
 | `[V]` | Estado | Dueño | Momento |
 | --- | --- | --- | --- |
-| T072 · Preview real de Vercel | Pendiente: no existe el proyecto de Vercel | Fundadores (crear el proyecto); después, el agente del slice repite las comprobaciones de T072 | Cuando exista el proyecto |
+| T072 · Preview real de Vercel | **Aislamiento en producción: hecho el 4 de noviembre de 2026** (sección T072). Funcionamiento en preview: pendiente | Gestor; el preview necesita un commit de la dueña de la cuenta (decisión 13) | Preview: antes de aceptar P0-1 (decisión 12, ajuste del 4 de noviembre de 2026) |
 | T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal registrará aquí los resultados | Fundadores, con iPhone | Antes de aceptar P0-1 (decisión 12); se puede adelantar |
 | T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
 | T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone y TalkBack con Android; para TalkBack, excepción formal si no hay Android (decisión 12) | Cierre de P0-1, los dos |
