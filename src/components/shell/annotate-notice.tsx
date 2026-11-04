@@ -2,20 +2,13 @@
 // T056 / FR-031, FR-031a; data-model.md «AnnotateNoticeState»; caso límite «Cambio de ancho con el aviso abierto».
 // Anotar abre un aviso sin campos (maestro §15.10, «Anotar») en el contenedor real: hoja por debajo de 768 px y
 // diálogo de 520 px desde 768 px. Se abre también con `N` fuera de los campos de texto.
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Modal } from "@/components/ui/modal";
-import { copy } from "@/lib/copy/es";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-const WIDE = "(min-width: 768px)";
-
-function subscribeWide(onChange: () => void) {
-  if (typeof window.matchMedia !== "function") return () => {};
-  const query = window.matchMedia(WIDE);
-  query.addEventListener?.("change", onChange);
-  return () => query.removeEventListener?.("change", onChange);
-}
-const readWide = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE).matches;
+// Rendimiento (auditoría de Impeccable, 4 de noviembre de 2026): el diálogo, Radix y su animación no viajan con cada
+// ruta. Se precargan cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados
+// para conservar la animación de salida y el retorno del foco.
+const loadNotice = () => import("./annotate-notice-dialog");
+const AnnotateNotice = lazy(loadNotice);
 
 // `N` escribe la letra en cualquier campo editable; solo fuera de ellos abre el aviso.
 function isEditable(target: EventTarget | null) {
@@ -30,6 +23,7 @@ const AnnotateContext = createContext<AnnotateState | null>(null);
 
 export function AnnotateProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const openRef = useRef(false);
   const returnFocusTo = useRef<HTMLElement | null>(null);
 
@@ -37,12 +31,18 @@ export function AnnotateProvider({ children }: { children: ReactNode }) {
     if (openRef.current) return; // un solo aviso a la vez
     returnFocusTo.current = trigger;
     openRef.current = true;
+    setMounted(true);
     setOpen(true);
   }, []);
 
   const onOpenChange = useCallback((next: boolean) => {
     openRef.current = next;
     setOpen(next);
+  }, []);
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));
+    idle(() => void loadNotice());
   }, []);
 
   useEffect(() => {
@@ -61,7 +61,11 @@ export function AnnotateProvider({ children }: { children: ReactNode }) {
   return (
     <AnnotateContext.Provider value={state}>
       {children}
-      <AnnotateNotice open={open} onOpenChange={onOpenChange} returnFocusTo={returnFocusTo} />
+      {mounted ? (
+        <Suspense fallback={null}>
+          <AnnotateNotice open={open} onOpenChange={onOpenChange} returnFocusTo={returnFocusTo} />
+        </Suspense>
+      ) : null}
     </AnnotateContext.Provider>
   );
 }
@@ -72,33 +76,3 @@ export function useAnnotate() {
   return state;
 }
 
-type AnnotateNoticeProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  returnFocusTo: { current: HTMLElement | null };
-};
-
-export function AnnotateNotice({ open, onOpenChange, returnFocusTo }: AnnotateNoticeProps) {
-  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
-  // El foco vuelve al disparador (o a lo enfocado antes de `N`), también si el contenedor cambió con el aviso abierto.
-  // Si cruza 768 px, el contenedor saliente devuelve el foco aquí y el entrante lo vuelve a llevar dentro.
-  const onCloseAutoFocus = useCallback(
-    (event: Event) => {
-      const target = returnFocusTo.current;
-      if (target && target.isConnected && target !== document.body) {
-        event.preventDefault();
-        target.focus();
-      }
-    },
-    [returnFocusTo],
-  );
-  const props = {
-    open,
-    onOpenChange,
-    title: copy.annotate.title,
-    description: copy.annotate.description,
-    closeLabel: copy.annotate.close,
-    onCloseAutoFocus,
-  };
-  return wide ? <Modal {...props} /> : <BottomSheet {...props} />;
-}

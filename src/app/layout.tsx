@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { MotionProvider } from "@/components/motion-provider";
 import { SHELL_END_ID } from "@/components/shell/shell-end";
 import { themeScript } from "@/lib/theme-script";
 import "./globals.css";
@@ -22,7 +23,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             (o el final del documento, si la página no lo tiene). Los navegadores sin soporte lo ignoran. */}
         <link rel="expect" href={`#${SHELL_END_ID}`} blocking="render" />
       </head>
-      <body className="bg-canvas text-ink font-sans">{children}</body>
+      <body className="bg-canvas text-ink font-sans">
+        <MotionProvider>{children}</MotionProvider>
+      </body>
     </html>
   );
 }

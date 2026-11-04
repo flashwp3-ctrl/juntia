@@ -4,11 +4,15 @@
 // versión, sin campos que aparenten guardar; se abre también con `N`, se cierra con Escape y con un control de cierre,
 // atrapa el foco y lo devuelve al disparador […] hoja inferior por debajo de 768 px y diálogo centrado de 520 px desde
 // 768 px, con semántica de diálogo accesible (`dialog`), no de `alertdialog`».
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { configure, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate } from "./annotate-notice";
+
+// El contenedor del aviso llega en un chunk aparte en su primera apertura; en frío y con la suite en paralelo
+// la importación puede pasar de 1 s, el límite por defecto de findBy*/waitFor.
+configure({ asyncUtilTimeout: 5000 });
 
 const originalMatchMedia = window.matchMedia;
 
@@ -53,7 +57,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("el disparador abre un `dialog` (no `alertdialog`) con el título y el cuerpo del catálogo", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
-    const dialog = screen.getByRole("dialog", { name: copy.annotate.title });
+    const dialog = await screen.findByRole("dialog", { name: copy.annotate.title });
     expect(dialog.textContent).toContain(copy.annotate.description);
     expect(screen.queryByRole("alertdialog")).toBeNull();
   });
@@ -61,7 +65,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("dentro no hay campos ni botón de guardar", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
     for (const role of ["textbox", "spinbutton", "combobox"] as const) {
       expect(dialog.querySelectorAll(`[role="${role}"], input, textarea, select`)).toHaveLength(0);
       expect(screen.queryAllByRole(role).filter((node) => dialog.contains(node))).toHaveLength(0);
@@ -76,7 +80,7 @@ describe("Aviso de Anotar (T049)", () => {
     (document.activeElement as HTMLElement | null)?.blur();
     expect(document.activeElement).toBe(document.body);
     await user.keyboard("n");
-    expect(screen.getByRole("dialog", { name: copy.annotate.title })).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: copy.annotate.title })).toBeTruthy();
   });
 
   it("con el foco en un campo, `N` escribe la letra y no abre el aviso", async () => {
@@ -90,6 +94,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("con el aviso abierto, `N` no abre otro", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
+    await screen.findByRole("dialog");
     await user.keyboard("n");
     await user.keyboard("N");
     expect(dialogs()).toHaveLength(1);
@@ -98,6 +103,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("Escape lo cierra y el foco vuelve al disparador", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
+    await screen.findByRole("dialog");
     await user.keyboard("{Escape}");
     await waitFor(() => expect(dialogs()).toHaveLength(0));
     await waitFor(() => expect(document.activeElement).toBe(trigger));
@@ -106,7 +112,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("«Cerrar» lo cierra y el foco vuelve al disparador", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
-    await user.click(screen.getByRole("button", { name: copy.annotate.close }));
+    await user.click(await screen.findByRole("button", { name: copy.annotate.close }));
     await waitFor(() => expect(dialogs()).toHaveLength(0));
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
@@ -114,7 +120,7 @@ describe("Aviso de Anotar (T049)", () => {
   it("Tab no saca el foco del aviso", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
     for (let step = 0; step < 4; step += 1) {
       await user.tab();
       expect(dialog.contains(document.activeElement)).toBe(true);
@@ -126,6 +132,7 @@ describe("Aviso de Anotar (T049)", () => {
     const before = screen.getByRole("button", { name: copy.nav.home });
     before.focus();
     await user.keyboard("n");
+    await screen.findByRole("dialog");
     expect(dialogs()).toHaveLength(1);
     await user.keyboard("{Escape}");
     await waitFor(() => expect(dialogs()).toHaveLength(0));
@@ -135,14 +142,14 @@ describe("Aviso de Anotar (T049)", () => {
   it("por debajo de 768 px usa la hoja y desde 768 px el diálogo", async () => {
     const mobile = setup(false);
     await mobile.user.click(mobile.trigger);
-    expect(screen.getByRole("dialog").hasAttribute("data-bottom-sheet")).toBe(true);
+    expect((await screen.findByRole("dialog")).hasAttribute("data-bottom-sheet")).toBe(true);
     expect(screen.getByRole("dialog").hasAttribute("data-modal")).toBe(false);
   });
 
   it("desde 768 px usa el diálogo centrado", async () => {
     const desktop = setup(true);
     await desktop.user.click(desktop.trigger);
-    expect(screen.getByRole("dialog").hasAttribute("data-modal")).toBe(true);
+    expect((await screen.findByRole("dialog")).hasAttribute("data-modal")).toBe(true);
     expect(screen.getByRole("dialog").hasAttribute("data-bottom-sheet")).toBe(false);
   });
 });

@@ -3,7 +3,8 @@
 // foco atrapado, Escape, control de cierre, retorno del foco y safe area. Sin paradas peek/full, sin arrastre y sin
 // confirmación de descarte: las añade el Expense Flow sobre esta base.
 import * as Dialog from "@radix-ui/react-dialog";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import { AnimatePresence, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { copy } from "@/lib/copy/es";
 import { sheet } from "@/lib/motion/tokens";
@@ -35,7 +36,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
         {open ? (
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-[var(--z-sheet)] bg-[var(--comp-scrim)]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -44,7 +45,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
               />
             </Dialog.Overlay>
             <Dialog.Content asChild forceMount onCloseAutoFocus={onCloseAutoFocus} {...(description ? {} : { "aria-describedby": undefined })}>
-              <motion.div
+              <m.div
                 {...motionProps}
                 data-bottom-sheet=""
                 className="fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex max-h-[calc(100dvh-96px)] flex-col gap-4 overflow-y-auto rounded-t-[30px] bg-overlay px-5 pt-3 pb-[calc(20px+env(safe-area-inset-bottom))] text-ink shadow-sheet focus-visible:outline-none"
@@ -58,7 +59,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
                     <Button variant="ghost">{closeLabel}</Button>
                   </Dialog.Close>
                 </div>
-              </motion.div>
+              </m.div>
             </Dialog.Content>
           </Dialog.Portal>
         ) : null}
