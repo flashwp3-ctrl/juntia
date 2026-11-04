@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Propuesto, 4 de noviembre de 2026. Pendiente de decisión de los fundadores · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 

@@ -14,7 +14,7 @@ Este archivo es el contrato compartido para Codex, Claude Code y otros agentes d
 | `docs/JUNTIA_MASTER.md` | Fuente de verdad del producto. La **§15** registra las decisiones de noviembre de 2026 y prevalece sobre el cuerpo v1.2 | Siempre, antes de implementar o decidir arquitectura |
 | `docs/design/HANDOFF_CLAUDE_CODE.md` | Decisiones aprobadas, alcance P0, DEC-G04, orden de implementación y **criterios de aceptación de P0** | Antes de implementar cualquier pantalla o flujo |
 | `docs/design/` (5 documentos más) | Tokens, componentes, motion, responsive y marca | Al construir interfaz. Procedencia y erratas en `docs/design/README.md` |
-| `docs/adr/` | Decisiones de arquitectura. Índice de ADR-001..011; el maestro §12.2 tiene la resolución corta de las que no tienen archivo | Antes de tomar una decisión significativa o difícil de revertir |
+| `docs/adr/` | Decisiones de arquitectura. Índice de ADR-001..013; el maestro §12.2 tiene la resolución corta de las que no tienen archivo | Antes de tomar una decisión significativa o difícil de revertir |
 | `docs/CONVENTIONS.md` | Idioma de cada capa, la excepción de las cinco métricas DEC-G04, el módulo de copy y las convenciones de git. **Bloque A** deriva del maestro; **Bloque B** son decisiones nuevas aprobadas en revisión | Al nombrar cualquier cosa, escribir copy o abrir un PR |
 | `docs/GLOSSARY.md` | Término de negocio → identificador → string de interfaz, con las precisiones que el producto no puede perder | Siempre que vayas a inventar un nombre. **No inventes uno que ya esté aquí** |
 | `docs/TESTING.md` | Documento operativo de ADR-011: comandos, qué corre dónde, presupuestos, las siete reglas duras y el reparto de responsabilidades | Antes de escribir un test o tocar CI |
