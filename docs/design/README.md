@@ -72,16 +72,18 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 | `COMPONENT_SPECIFICATIONS.md` | 36 | Mensaje de error del Input: texto en `coral.700` en claro y `status.danger` en oscuro. **Regla general: en claro, todo texto de peligro va en `coral.700`**; `status.danger` queda para bordes e iconos, donde basta 3:1 | **Extensión de la decisión de los fundadores del 3 de noviembre de 2026 (errata de contraste, F17-1 de la revisión del PR #17).** El Input se puede usar sobre cualquier superficie: `status.danger` #B4452F mide **4,46:1** sobre `raised` #EEE7DA y **4,14:1** sobre `sunken`. `coral.700` mide ≥ 5,21:1 sobre `canvas`, `overlay`, `raised` y `sunken`. En oscuro, `status.danger` #F0A08C mide ≥ 7,33:1 sobre las mismas superficies y no cambia. |
 | `COMPONENT_SPECIFICATIONS.md` | 35 | Placeholder del Input y prefijo «$» del monto sobre `surface.sunken`: se fija `linen.800` en claro y `text.secondary` en oscuro | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste, F16-1 de la revisión del PR #16).** El documento no fijaba su color y el PR B usaba `text.secondary`, que sobre `sunken` mide **4,30:1** en claro; WCAG 1.4.3 también exige contraste al placeholder. El primitivo existente `linen.800` #48443C mide **7,32:1** y sigue más tenue que el valor escrito (`text.primary`, 12,95:1). En oscuro, `text.secondary` #A29C92 sobre `sunken` #22262A mide 5,59:1 y no cambia. |
 | `COMPONENT_SPECIFICATIONS.md` | 41, 168 | Etiqueta del Segmented y texto del badge PRIVADO sobre `surface.sunken`: se fija `text.primary` | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste).** El comp pintaba ese texto con `text.secondary` #6C665B, que sobre `sunken` #E7DFD0 mide **4,30:1**; los documentos no fijaban el color. `text.primary` mide **12,95:1**. El 5,1:1 de `text.secondary` en `DESIGN_SYSTEM.md` está calculado sobre `canvas`, no sobre `sunken`. El estado `disabled` del Button (`sunken` + `text.secondary`) no cambia: WCAG 1.4.3 exime a los controles inactivos. |
-| `BRAND_FOUNDATION.md`, `DESIGN_SYSTEM.md`, `HANDOFF_CLAUDE_CODE.md`, `COMPONENT_SPECIFICATIONS.md` | 52; §1.4 y 66; 84, 127 y 149; 73 y 152 | Tipografía: Instrument Serif → **Brygada 1918**, Geist → **Onest**; Geist Mono → Spline Sans Mono como propuesta | **Decisión de los fundadores, 4 de noviembre de 2026** (maestro §15.10, decisión 14), para Brygada 1918 y Onest. Spline Sans Mono es propuesta del gestor, marcada en la fila `meta.mono` de §1.4 y pendiente de aprobación visual en el PR de implementación. La auditoría de Impeccable marcó la pareja anterior como sobreusada; las tres fuentes nuevas pasan su detector, tienen licencia OFL y soportan el español. La escala de §1.4 se recalibró en el PR de implementación (#32): titulares de Brygada al 88 % de los tamaños anteriores, a 500 y 600, y la escala de Onest sin cambios. |
+| `BRAND_FOUNDATION.md`, `DESIGN_SYSTEM.md`, `HANDOFF_CLAUDE_CODE.md`, `COMPONENT_SPECIFICATIONS.md` | 52; §1.4 y 66; 84, 127 y 149; 73 y 152 | Tipografía: Instrument Serif → **Brygada 1918**, Geist → **Onest**; Geist Mono → **Spline Sans Mono** | **Decisión de los fundadores, 4 de noviembre de 2026** (maestro §15.10, decisión 14), para Brygada 1918 y Onest. Spline Sans Mono fue propuesta del gestor: los dos fundadores la aprobaron el mismo día viendo las capturas del PR #32, y la marca de propuesta de la fila `meta.mono` de §1.4 se cerró. La auditoría de Impeccable marcó la pareja anterior como sobreusada; las tres fuentes nuevas pasan su detector, tienen licencia OFL y soportan el español. La escala de §1.4 se recalibró en el PR de implementación (#32): titulares de Brygada al 88 % de los tamaños anteriores, a 500 y 600, y la escala de Onest sin cambios. |
 
 **Intacto byte a byte** respecto a la importación: `MOTION_SYSTEM.md` (13000 B).
 
 **Cambiados**, todos por las filas de arriba:
 
-- `BRAND_FOUNDATION.md`: 3981 B → **4204 B** (línea 52, decisión 14).
+- `BRAND_FOUNDATION.md`: 3981 B → 4204 B (línea 52, decisión 14) → **4199 B** (línea 52,
+  Spline Sans Mono aprobada).
 - `HANDOFF_CLAUDE_CODE.md`: 21666 B → 21653 B (−22 B por las rutas de las
   líneas 5 y 6, +9 B por las dos sustituciones de `Settings`) → 21825 B
-  (línea 131, ficha de los estados vacíos) → **22010 B** (líneas 84, 127 y 149, decisión 14).
+  (línea 131, ficha de los estados vacíos) → 22010 B (líneas 84, 127 y 149, decisión 14)
+  → **21954 B** (líneas 84 y 127, Spline Sans Mono aprobada).
 - `RESPONSIVE_SPECIFICATIONS.md`: 4270 B → **4221 B** (línea 16).
 - `COMPONENT_SPECIFICATIONS.md`: 21146 B → 21256 B (línea 94) → 21653 B
   (líneas 27, 35, 36, 41 y 168, errata de contraste) → 21742 B (línea 41,
@@ -89,8 +91,9 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
   22022 B (líneas 73 y 152, decisión 14) → **22116 B** (línea 73, tamaños de
   GoalCard con la escala recalibrada en el PR #32).
 - `DESIGN_SYSTEM.md`: 15066 B → 15102 B (línea 205) → 15541 B (tabla de §1.4 y
-  línea 66, decisión 14) → **16540 B** (líneas 50 a 53 y 66 a 68, escala
-  recalibrada en el PR #32).
+  línea 66, decisión 14) → 16540 B (líneas 50 a 53 y 66 a 68, escala
+  recalibrada en el PR #32) → **16531 B** (líneas 64, 66 y 67, Spline Sans Mono
+  aprobada).
 
 ## Erratas conocidas
 
