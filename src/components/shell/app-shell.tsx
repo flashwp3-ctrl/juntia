@@ -16,6 +16,11 @@ import { ACCOUNT_HREF, isCurrent, navDestinations } from "./nav-destinations";
 
 const annotateName = copy.nav.annotateBlock;
 
+// FR-037 (lección de B, F17-2): cuenta el área clicable real. Chrome respeta el radio al decidir qué se toca, así que una
+// ficha de 44–54 px con radio 14–18 deja fuera las esquinas de su cuadrado de 44. Un ::after cuadrado y sin radio cubre la
+// caja completa y devuelve esas esquinas al control.
+const hitSquare = "relative after:absolute after:inset-0 after:content-['']";
+
 function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
   const { openFrom } = useAnnotate();
   const common = {
@@ -30,7 +35,7 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
         {...common}
         aria-label={annotateName}
         data-annotate-trigger="bar"
-        className="mx-auto grid size-[54px] place-items-center rounded-[var(--radius-lg)] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.96]"
+        className={`${hitSquare} mx-auto grid size-[54px] place-items-center rounded-[var(--radius-lg)] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.96]`}
       >
         <AppIcon name="plus" weight="bold" size={24} />
       </button>
@@ -41,7 +46,7 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
     <button
       {...common}
       data-annotate-trigger="side"
-      className="group mt-3 grid size-12 place-items-center self-center rounded-[15px] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] hover:bg-primary-hover active:bg-primary-pressed xl:mt-5 xl:size-auto xl:place-items-start xl:gap-3.5 xl:self-stretch xl:rounded-[var(--radius-xl)] xl:p-4 xl:text-left xl:shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]"
+      className={`${hitSquare} group mt-3 grid size-12 place-items-center self-center rounded-[15px] bg-[var(--comp-button-primary-bg)] text-[var(--comp-button-primary-fg)] hover:bg-primary-hover active:bg-primary-pressed xl:mt-5 xl:size-auto xl:place-items-start xl:gap-3.5 xl:self-stretch xl:rounded-[var(--radius-xl)] xl:p-4 xl:text-left xl:shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]`}
     >
       <span aria-hidden="true" className="grid place-items-center xl:size-11 xl:rounded-[var(--radius-md)] xl:bg-[color-mix(in_srgb,var(--color-text-onAction)_14%,transparent)]">
         <AppIcon name="plus" weight="bold" size={22} />
@@ -55,7 +60,7 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
 }
 
 const sideItem =
-  "flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]";
+  `${hitSquare} flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]`;
 const sideActive = "bg-[var(--comp-nav-active-bg)] text-ink font-semibold shadow-raised";
 const sideIdle = "text-ink-secondary xl:text-[var(--comp-nav-muted-fg)] font-medium hover:bg-[var(--comp-nav-active-bg)]";
 
@@ -102,7 +107,7 @@ function BottomBar({ pathname }: { pathname: string | null }) {
         key={destination.id}
         href={destination.href}
         aria-current={current ? "page" : undefined}
-        className={`flex h-[54px] min-w-0 flex-col items-center justify-center gap-[3px] rounded-[var(--radius-lg)] ${current ? "bg-[var(--comp-nav-active-bg)] font-semibold text-ink shadow-raised" : "font-medium text-ink-secondary"}`}
+        className={`${hitSquare} flex h-[54px] min-w-0 flex-col items-center justify-center gap-[3px] rounded-[var(--radius-lg)] ${current ? "bg-[var(--comp-nav-active-bg)] font-semibold text-ink shadow-raised" : "font-medium text-ink-secondary"}`}
       >
         <AppIcon name={destination.icon} weight={current ? "fill" : "regular"} size={22} />
         {/* Con texto al 200 % la barra oculta las etiquetas y conserva el nombre (RESPONSIVE_SPECIFICATIONS.md). */}
@@ -160,23 +165,24 @@ type PageHeaderProps = {
 
 // Encabezado del contenido. Por debajo de 1024: Mi cuenta a la izquierda, título y selector a la derecha (04·1, 04·6).
 // De 1024 a 1279: titular editorial y selector arriba a la derecha (decisión 5). Desde 1280 el selector está en el sidebar.
+// Si no caben en una línea (texto al 200 %), el selector baja de línea y sigue a la derecha: nunca se monta sobre el título.
 export function PageHeader({ title, variant = "destination" }: PageHeaderProps) {
   const account = variant === "account";
   return (
-    <header className={`flex min-h-11 items-center gap-2.5 pt-4 lg:gap-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
+    <header className={`flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-3 pt-4 lg:gap-x-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
       {account ? (
-        <Link href="/" className="-ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden">
+        <Link href="/" className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden`}>
           <AppIcon name="caret-left" weight="bold" size={22} />
           <span className="sr-only">{copy.account.back}</span>
         </Link>
       ) : (
-        <Link href={ACCOUNT_HREF} className="-ml-1 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden">
+        <Link href={ACCOUNT_HREF} className={`${hitSquare} -ml-1 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden`}>
           <AppIcon name="user-circle" size={30} />
           <span className="sr-only">{copy.nav.account}</span>
         </Link>
       )}
       {title ? (
-        <h1 className="min-w-0 font-serif text-[clamp(28px,8.4vw,34px)] leading-none text-ink lg:text-[clamp(44px,4.2vw,64px)] lg:leading-[0.95] lg:tracking-[-0.02em]">
+        <h1 className="max-w-full font-serif text-[clamp(28px,8.4vw,34px)] leading-none text-ink lg:text-[clamp(44px,4.2vw,64px)] lg:leading-[0.95] lg:tracking-[-0.02em]">
           {title}
         </h1>
       ) : null}
