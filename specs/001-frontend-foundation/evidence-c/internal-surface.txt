@@ -1,4 +1,4 @@
-$ npm run check:internal-surface   # 2026-11-04T00:31:47Z sobre 0a4e8e7
+$ npm run check:internal-surface   # 2026-11-04T01:09:31Z sobre 743423d
 check:internal-surface · /interno/primitivos
 ┌─────────┬───────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┬──────────┬──────────┬───────────┐
 │ (index) │ destino                                           │ host                                                        │ obtenido │ esperado │ resultado │

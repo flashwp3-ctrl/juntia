@@ -1,4 +1,4 @@
-$ npm run test:a11y   # 2026-11-04T00:31:45Z sobre 0a4e8e7 (build de arriba)
+$ npm run test:a11y   # 2026-11-04T01:09:28Z sobre 743423d (build de arriba)
 dark / 1440px: 0 violaciones, 0 serias o críticas
 dark / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
 dark / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
@@ -21,8 +21,10 @@ dark /cuenta 1440px: 0 violaciones, 0 serias o críticas
 dark /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
 dark /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
 dark /cuenta 390px: 0 violaciones, 0 serias o críticas
+dark /cuenta 390px: disparadores de Anotar visibles 0
 dark /cuenta 390px: sin disparador visible de Anotar
 dark /cuenta 390px: sin selector en este ancho
+dark /cuenta 768px: disparadores de Anotar visibles 1
 dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
 dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
 dark /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
@@ -67,8 +69,10 @@ light /cuenta 1440px: 0 violaciones, 0 serias o críticas
 light /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
 light /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
 light /cuenta 390px: 0 violaciones, 0 serias o críticas
+light /cuenta 390px: disparadores de Anotar visibles 0
 light /cuenta 390px: sin disparador visible de Anotar
 light /cuenta 390px: sin selector en este ancho
+light /cuenta 768px: disparadores de Anotar visibles 1
 light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
 light /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
 light /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
@@ -91,5 +95,5 @@ light /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
 light /plan 390px: perilla 285.84 en 10 cuadros, 1 posición(es)
 light /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
 light /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
-  32 passed (49.0s)
+  36 passed (1.3m)
 exit: 0
