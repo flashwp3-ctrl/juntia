@@ -26,28 +26,33 @@ const chips = {
   danger: "bg-danger-subtle text-danger",
 } as const;
 
+// CLS = 0 (maestro §15.7): por debajo de lg, el bloque tiene un ancho fijo de 320 px, en px y no en rem. Si el ancho
+// depende del viewport (antes, hasta 22rem), en algunos anchos el respaldo y la fuente real cortan el título o la
+// descripción en palabras distintas, y el texto centrado se mueve al llegar la fuente: con Onest pasaba en la
+// descripción a 362–363 y 384–385 px. Un límite en rem tampoco sirve: con la fuente raíz ampliada vuelve a depender del
+// viewport (al 200 %, el título se movía a 438–440 px). Con la fuente raíz ampliada, además, los márgenes laterales
+// crecen y entre 360 y 399 px no caben 320: el contenedor (@container) pasa entonces a un segundo ancho fijo de 280 px,
+// el que deja libre una pantalla de 360 px al 200 %. Así el bloque solo tiene dos anchos posibles y nunca sigue al viewport.
 function StateBlock({ icon, title, description, headingLevel = 2, actions, tone }: StateBlockProps) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
   return (
-    <section
-      data-provisional-state={tone}
-      className="mx-auto mt-14 flex max-w-[22rem] flex-col items-center gap-3.5 text-center lg:mx-0 lg:mt-12 lg:max-w-[34rem] lg:items-start lg:gap-4 lg:text-left"
-    >
-      <span aria-hidden="true" className={`grid size-[88px] shrink-0 place-items-center rounded-[28px] ${chips[tone]} lg:mb-2`}>
-        <AppIcon name={icon} weight="duotone" size={42} />
-      </span>
-      <Heading className="font-serif text-[length:var(--state-title-size)] leading-[var(--display-l-line)] font-medium tracking-[var(--display-l-tracking)] text-ink text-balance [--state-title-size:28px] lg:[--state-title-size:35px]">
-        {title}
-      </Heading>
-      {/* CLS = 0 (maestro §15.7): el texto centrado tiene un ancho fijo de 20rem por debajo de lg. Si el ancho depende
-          del viewport, en algunos anchos (362–363 y 384–385 px con Onest) el respaldo y la fuente cortan la línea en
-          palabras distintas y el texto se mueve al llegar la fuente. Con un solo ancho, el corte es el de 360 px, que se
-          comprobó sin movimiento. */}
-      <p className="max-w-[20rem] text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:max-w-none lg:text-[length:var(--body-l-size)]">
-        {description}
-      </p>
-      {actions ? <div className="mt-3 flex flex-wrap justify-center gap-3 lg:justify-start">{actions}</div> : null}
-    </section>
+    <div className="@container">
+      <section
+        data-provisional-state={tone}
+        className="mx-auto mt-14 flex max-w-[320px] flex-col items-center gap-3.5 text-center @max-[320px]:max-w-[280px] lg:mx-0 lg:mt-12 lg:max-w-[34rem] lg:items-start lg:gap-4 lg:text-left"
+      >
+        <span aria-hidden="true" className={`grid size-[88px] shrink-0 place-items-center rounded-[28px] ${chips[tone]} lg:mb-2`}>
+          <AppIcon name={icon} weight="duotone" size={42} />
+        </span>
+        <Heading className="font-serif text-[length:var(--state-title-size)] leading-[var(--display-l-line)] font-medium tracking-[var(--display-l-tracking)] text-ink text-balance [--state-title-size:28px] lg:[--state-title-size:35px]">
+          {title}
+        </Heading>
+        <p className="text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]">
+          {description}
+        </p>
+        {actions ? <div className="mt-3 flex flex-wrap justify-center gap-3 lg:justify-start">{actions}</div> : null}
+      </section>
+    </div>
   );
 }
 

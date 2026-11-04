@@ -1,8 +1,19 @@
-# Barrido 360–1023 px: desplazamiento del inicio de la primera línea de cada texto centrado, fuente frente a respaldo (html.fb). Rama fix/not-found-cls.
-{"route":"/","max":2.38,"widthsOver3px":0,"sample":[]}
-{"route":"/actividad","max":1.31,"widthsOver3px":0,"sample":[]}
-{"route":"/metas","max":0.44,"widthsOver3px":0,"sample":[]}
-{"route":"/plan","max":1.27,"widthsOver3px":0,"sample":[]}
-{"route":"/balance","max":2.13,"widthsOver3px":0,"sample":[]}
-{"route":"/cuenta","max":1.31,"widthsOver3px":0,"sample":[]}
-{"route":"/ruta-que-no-existe","max":0.91,"widthsOver3px":0,"sample":[]}
+# Barrido 360–1023 px: desplazamiento del inicio de la primera línea de cada texto centrado, fuente real frente a respaldo (html.fb), con la fuente raíz al 100 % y al 200 %.
+# node harness/sweep.cjs.txt http://localhost:3100 /,/actividad,/metas,/plan,/balance,/cuenta,/ruta-que-no-existe 100%
+# CSS=html.fb{--font-onest:"Onest Fallback";--font-brygada:"Brygada Fallback"} ROOT=100%
+{"route":"/","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":2.38,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":304}
+{"route":"/actividad","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.31,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":250}
+{"route":"/metas","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":0.44,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":303}
+{"route":"/plan","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.27,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":320}
+{"route":"/balance","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":2.13,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":301}
+{"route":"/cuenta","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.31,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":267}
+{"route":"/ruta-que-no-existe","root":"100%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":0.91,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":320}
+# node harness/sweep.cjs.txt http://localhost:3100 /,/actividad,/metas,/plan,/balance,/cuenta,/ruta-que-no-existe 200%
+# CSS=html.fb{--font-onest:"Onest Fallback";--font-brygada:"Brygada Fallback"} ROOT=200%
+{"route":"/","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":2.38,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":304}
+{"route":"/actividad","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.31,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":250}
+{"route":"/metas","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.06,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":303}
+{"route":"/plan","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.27,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":320}
+{"route":"/balance","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":2.13,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":301}
+{"route":"/cuenta","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":1.31,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":267}
+{"route":"/ruta-que-no-existe","root":"200%","fontFamily":{"real":"Onest, \"Onest Fallback\", sans-serif","fb":"\"Onest Fallback\", sans-serif"},"max":0.91,"widthsOver3px":0,"sample":[],"descriptionWidthAt1023":320}

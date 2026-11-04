@@ -1,0 +1,10 @@
+ruta-que-no-existe-390-light.png {"hscroll":false,"blocks":[320]}
+ruta-que-no-existe-390-dark.png {"hscroll":false,"blocks":[320]}
+actividad-390-light.png {"hscroll":false,"blocks":[320]}
+actividad-390-dark.png {"hscroll":false,"blocks":[320]}
+plan-390-light.png {"hscroll":false,"blocks":[320]}
+plan-390-dark.png {"hscroll":false,"blocks":[320]}
+metas-390-light.png {"hscroll":false,"blocks":[320]}
+metas-390-dark.png {"hscroll":false,"blocks":[320]}
+ruta-que-no-existe-360-light-root200.png {"hscroll":false,"blocks":[280]}
+inicio-360-light-root200.png {"hscroll":false,"blocks":[280]}
