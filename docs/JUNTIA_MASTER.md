@@ -885,7 +885,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 y 12 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11, 12 y 13 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -951,6 +951,26 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 Su estado es **«EXCEPCIÓN APROBADA»**, nunca «verificado» ni «superado».
 
 **Lo que no cambia.** Ningún umbral se mueve. Una verificación aplazada no se presenta como superada: queda «pendiente: motivo» hasta tener salida real (`AGENTS.md` 12). La especificación de P0-1 copia esta tabla entre sus criterios de aceptación. La aceptación por etapas como regla general de pruebas está en ADR-011 §8.
+
+#### Decisión 13: dueño del repositorio y cuenta de despliegue
+
+Tomada por los dos fundadores el 4 de noviembre de 2026. La causa son dos límites:
+
+- **Vercel Hobby no despliega repositorios privados de una organización de GitHub.** Eso chocaba con §7.1 («Vercel Hobby») mientras el repositorio estaba en `juntia-labs`.
+- **Los minutos de GitHub Actions y las cuotas de Vercel se cobran al dueño.** En la cuenta personal del primer fundador, Juntia compartía bolsa con otro proyecto suyo, que ya las supera.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 13 | Dueño del repositorio y cuenta de despliegue | **`flashwp3-ctrl/juntia`**, repositorio privado en la cuenta personal de **la segunda fundadora**, y **su propia cuenta Vercel Hobby** | El repositorio y el despliegue quedan bajo su titularidad, con sus propios minutos de Actions y sus propias cuotas de Vercel. El primer fundador colabora como colaborador con permiso de escritura. `juntia-labs/juntia` redirige al nuevo dueño; los enlaces históricos no se reescriben |
+
+**Reglas que se derivan:**
+
+1. **Autoría honesta.** Cada fundador firma sus commits con su propia identidad de Git. Los commits de los agentes llevan la identidad del fundador que los opera, hoy el primero (`alejandrowp3`). Los commits no se atribuyen artificialmente a la dueña de la cuenta para que desplieguen.
+   - *Corrección registrada:* los commits `6789d95` y `2028875`, de los PR #23 y #24, salieron con la identidad de `flashwp3-ctrl` por una regla anterior a esta redacción. No se reescriben, porque eso exigiría force-push, y quedan anotados aquí.
+2. **Despliegue de producción.** Hobby solo despliega los commits de un repositorio privado cuyo autor es la dueña de la cuenta. Por eso **los merges a `main` los hace la cuenta `flashwp3-ctrl` y siempre con «Create a merge commit»**: es el único método que crea un commit nuevo cuyo autor es quien mergea. «Squash and merge» atribuye el commit al autor del PR y «Rebase and merge» conserva los autores originales, así que ninguno de los dos garantiza el despliegue. Mientras Juntia use Hobby, la dueña **deshabilita «Allow squash merging» y «Allow rebase merging»** en Settings › General › Pull Requests, para que no se puedan elegir por error. En el primer despliegue real se comprueba que Vercel reconoce a la dueña como autora del HEAD de `main`; si no la reconoce, la regla se revisa antes de seguir.
+3. **Previews.** El preview de un PR cuyo último commit no es de la dueña queda bloqueado en Hobby. Cuando hace falta uno, la segunda fundadora añade un commit propio a la rama del PR, que puede ser vacío (`git commit --allow-empty`). Es una estrategia por comprobar, no probada: su funcionamiento se verifica al configurar el proyecto y se registra con su salida. Si los dos necesitan previews automáticos de forma habitual, se pasa a Vercel Pro, que despliega commits de cualquier miembro del equipo.
+4. **Protección de `main`.** GitHub Free no ofrece protección de ramas en repositorios privados de una cuenta personal. Se mantiene la barrera local de `AGENTS.md` 14a. La decisión 3, «plan de pago de GitHub antes de datos reales», se reevalúa como **GitHub Pro para `flashwp3-ctrl`**.
+5. **T072** (decisión 12) se ejecuta justo después del primer despliegue de producción de esta cuenta y antes de compartir la URL. Su parte de preview, que pide 200 por las URL de despliegue y de rama, usa la regla 3.
 
 #### Dataset dorado: quién lo produce y cuándo
 
