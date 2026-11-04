@@ -1962,7 +1962,7 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
 | D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
 | T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 (R9) y F15-1 a F15-4 (R10), aceptadas por los fundadores el 3 de noviembre de 2026. |
-| Paleta, copy, pantallas y SC-008 | **Aprobado por el fundador el 3 de noviembre de 2026** (T078). SC-008: aprobado por un fundador; pendiente la confirmación del segundo. |
+| Paleta, copy, pantallas y SC-008 | **Aprobado por los dos fundadores**: el primero el 3 de noviembre de 2026 y el segundo el 4 de noviembre de 2026, con la misma hoja de aprobación (T078). |
 | T072–T075 | Pendientes con dueño y momento en T078 («Pendientes `[V]` que hereda P0-1»). |
 
 D no añade specs E2E, dependencias ni funcionalidad. Sí añade aserciones permanentes de regresión dentro de las pruebas existentes de `tests/a11y/routes.a11y.ts`: las de D-02 y D-05 (Anexo A §A.4, R7 y R8).
@@ -1988,7 +1988,7 @@ Gate humano pendiente: tres propuestas de paleta (Sara petróleo, Hogar azul ten
 | Hogar en azul tenue: `#DCE8EC` / `#2E5866` (`--category-home-bg` / `--category-home-fg`, tema claro) | Aprobado por el fundador el 3 de noviembre de 2026 |
 | Superficie oscura `#191C1F` (`--color-surface-raised`, tema oscuro) | Aprobado por el fundador el 3 de noviembre de 2026 |
 | Copy de los estados provisionales, sin cambios | Aprobado por el fundador el 3 de noviembre de 2026 |
-| SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por un fundador; pendiente la confirmación del segundo.** SC-008 exige a los dos |
+| SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por los dos fundadores** (3 y 4 de noviembre de 2026) |
 | Pantallas en general (capturas SC-001) | Aprobado por el fundador el 3 de noviembre de 2026 |
 | Gasto, ingreso y liquidación en tinta | Sigue para P0-1 |
 
@@ -2020,7 +2020,17 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 | T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal pasará los resultados para registrarlos aquí | Fundadores, con iPhone | Sin fecha; los resultados se registran en T073 |
 | T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
 | T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone; TalkBack sin dueño hasta que haya Android | Cierre de P0-1 (VoiceOver); TalkBack sin fecha |
-| SC-008 · segundo fundador | Pendiente la confirmación del segundo fundador | Segundo fundador | Antes de aceptar la 001 |
 | CLS = 0 en Firefox y WebKit (arnés R2) | Pendiente: el mecanismo de D21-1 solo está demostrado en Chromium | El gestor | Antes de aceptar P0-1 (decisión 12) |
 | CLS en un iPhone real | Pendiente | Fundadores; excepción formal si no hay Mac para el inspector web | Antes de aceptar P0-1 (decisión 12) |
 | Respaldo tipográfico en Android | Pendiente | Fundadores; excepción formal si no hay Android | Antes de aceptar P0-1 (decisión 12) |
+
+## Aceptación de la 001
+
+**La especificación 001 queda aceptada el 4 de noviembre de 2026**, según la decisión 12 del maestro §15.10. Se cumplen sus tres condiciones:
+
+1. **CLS = 0** en todas las cargas medidas: R2 con 12 de 12 y la repetición ampliada con 0 de 48 con CLS > 0, en Chromium (T065).
+2. **SC-001 y SC-008** aprobados por los dos fundadores, el 3 y el 4 de noviembre de 2026, con la hoja de aprobación visual sobre las capturas de C (T078).
+3. **El resto de la fase 10** tiene salida real y el CI está en verde. T067 lo hizo el gestor el 3 de noviembre de 2026.
+
+**No se dan por superadas.** T072–T075 y las tres verificaciones de CLS fuera de Chromium son criterios de aceptación obligatorios de P0-1, con dueño y momento en la decisión 12 y en la tabla de pendientes de T078. T072 se ejecuta justo después del primer despliegue en Vercel (decisión 13).
+
