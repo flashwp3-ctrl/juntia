@@ -1,0 +1,37 @@
+# Prueba de la itálica de Brygada: <em class="font-serif italic font-medium"> inyectado con Playwright en / (no queda en el código).
+# afterProbe = archivos de fuente pedidos solo después de insertar el <em>; platformFonts = CSS.getPlatformFontsForNode de CDP.
+{
+ "preloadedOrInitial": [
+  "23538af397c3c9d4.p.3_9bqute_28nm.woff2",
+  "403ce420d25bb57e-s.p.36704whk6riu5.woff2",
+  "c50b0495a1ff0f08.p.2sla2yow9-9p_.woff2"
+ ],
+ "afterProbe": [
+  "308e5095fef27824.3tbsca1tr3rwu.woff2"
+ ],
+ "probe": {
+  "fontFamily": "\"Brygada 1918\", \"Brygada Fallback\"",
+  "fontStyle": "italic",
+  "fontWeight": "500",
+  "fontSynthesis": "weight style small-caps",
+  "loaded": [
+   "Brygada 1918 normal 500",
+   "Brygada 1918 italic 500",
+   "Onest normal 400",
+   "Onest normal 500",
+   "Onest normal 600",
+   "Brygada Fallback italic 500"
+  ]
+ },
+ "platformFonts": [
+  {
+   "familyName": "Brygada 1918",
+   "postScriptName": "Brygada-1918-Medium-Italic",
+   "isCustomFont": true,
+   "glyphCount": 10
+  }
+ ]
+}
+# @font-face emitidos por next/font (build de la rama), peso 500, subconjunto latino:
+@font-face{font-family:"Brygada 1918";font-style:normal;font-weight:500;font-display:swap;src:url(../media/23538af397c3c9d4.p.3_9bqute_28nm.woff2)form
+@font-face{font-family:"Brygada 1918";font-style:italic;font-weight:500;font-display:swap;src:url(../media/308e5095fef27824.3tbsca1tr3rwu.woff2)format

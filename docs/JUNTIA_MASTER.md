@@ -985,7 +985,7 @@ Tomada por los dos fundadores el 4 de noviembre de 2026, después de una compara
 
 **Qué cambia y dónde:**
 
-1. **Documentos de marca:** `BRAND_FOUNDATION.md` §6, `DESIGN_SYSTEM.md` §1.4, `HANDOFF_CLAUDE_CODE.md` y `COMPONENT_SPECIFICATIONS.md` nombran las fuentes nuevas en este PR. La **escala** de `DESIGN_SYSTEM.md` §1.4 (tamaños, interlineados y tracking) conserva por ahora los valores de Instrument Serif y Geist. El PR de implementación la recalibra para cada fuente y actualiza la tabla.
+1. **Documentos de marca:** `BRAND_FOUNDATION.md` §6, `DESIGN_SYSTEM.md` §1.4, `HANDOFF_CLAUDE_CODE.md` y `COMPONENT_SPECIFICATIONS.md` nombran las fuentes nuevas en este PR. La **escala** de `DESIGN_SYSTEM.md` §1.4 (tamaños, interlineados y tracking) conserva por ahora los valores de Instrument Serif y Geist. El PR de implementación la recalibra para cada fuente y actualiza la tabla. **Estado:** la escala se recalibró el 4 de noviembre de 2026 en el PR de implementación (#32); ver `DESIGN_SYSTEM.md` §1.4.
 2. **Implementación,** en un PR de Claude Code porque toca la composición del shell. Incluye:
    - las fuentes en `next/font`;
    - un respaldo calibrado por peso para mantener CLS = 0, como en D-01;
