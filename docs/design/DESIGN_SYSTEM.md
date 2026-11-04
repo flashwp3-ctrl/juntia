@@ -61,9 +61,9 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 | label.m | Onest | 600 | 13px / 1.2 | 0 | Botones, tabs, chips |
 | label.s | Onest | 500 | 12px / 1.3 | 0 | Leyendas, captions |
 | overline | Onest | 600 | 11px / 1.2 | 0.09em | Etiquetas en mayúscula |
-| meta.mono | Spline Sans Mono | 500 | 11px / 1.3 | 0.02em | Fechas y referencias en tablas |
+| meta.mono | Spline Sans Mono [P] | 500 | 11px / 1.3 | 0.02em | Fechas y referencias en tablas |
 - `font-variant-numeric: tabular-nums` global. Importes héroe fluidos: `money.l: clamp(32px, 8vw, 40px)`, `money.xl: clamp(40px, 4vw, 52px)`.
-- Pesos disponibles: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Familias de la decisión 14 del maestro §15.10. **Los tamaños, interlineados y tracking de esta tabla son los de Instrument Serif y Geist**: el PR de implementación de la decisión 14 los recalibra para cada fuente.
+- Pesos previstos en la implementación: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Son el subconjunto que carga Juntia, no todos los pesos de cada familia. Brygada 1918 y Onest son decisión de los fundadores (maestro §15.10, decisión 14); Spline Sans Mono es propuesta del gestor, pendiente de aprobación visual. **Los tamaños, interlineados y tracking de esta tabla son los de Instrument Serif y Geist**: el PR de implementación de la decisión 14 los recalibra para cada fuente.
 
 ### 1.5 Espacio · radio · borde
 - **space:** 0 · 2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 20 · 24 · 28 · 32 · 40 · 48 · 56 · 64 · 80 · 96 (px).
