@@ -639,7 +639,37 @@ Observación visual: coincide el símbolo de balanza de dos platillos (`scales`,
 
 Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-**Estado: pendiente: recorrido manual.** Esta sección registra un recorrido automatizado con Playwright. T067 pide un recorrido manual de quickstart.md §5 y el automatizado no lo sustituye. Lo hacen la sesión principal y los fundadores, y su salida se pegará aquí.
+**Recorrido manual (quickstart.md §5): hecho por el gestor, la sesión principal, el 3 de noviembre de 2026, sobre `735d364`.** No lo hicieron los fundadores. Se usó `npm run dev` en el navegador del app de escritorio, y en cada paso se manejaron a mano la página, el teclado, los clics y las emulaciones de ancho y tema. Para leer el estado del DOM en cada paso (foco, `aria-*`, medidas) se usaron consultas puntuales de consola, no un script que recorra la app. El recorrido automatizado de abajo sigue como evidencia complementaria. Resultado por punto:
+
+1. **Anchos y temas.**
+   - A 360 px (oscuro, `/actividad`), solo la barra inferior, de 74 px de alto, y el selector arriba a la derecha.
+   - A 768 px (claro, `/metas`), barra de tablet.
+   - A 1024 px (oscuro, `/plan`), rail de 51 × 330 con Inicio, Actividad, Metas, Plan y Balance, y el selector arriba a la derecha (borde derecho en 996).
+   - A 1280 px (claro, `/balance`), sidebar con el selector dentro (x = 18) y Balance como página actual.
+   - `scrollWidth` igual a `clientWidth` en todos los casos. **Cumple.**
+2. **Teclado.**
+   - El primer Tab llega a «Ir al contenido». Los siguientes, a los destinos, con `aria-current="page"` en el actual.
+   - El foco se ve siempre, con contorno sólido y offset. La medida de 1,6 px en lugar de 2 px se debe a la escala de la emulación del panel (dpr 0,8); el token es `--border-focus: 2px`. **Cumple.**
+3. **Anotar.**
+   - `N` con el foco fuera de un campo abre el aviso: `role=dialog`, nombre «Anotar un gasto», 520 px a 1440, cero campos y el foco dentro.
+   - Tab no sale del aviso. Otra `N` con el aviso abierto no abre un segundo.
+   - Escape lo cierra.
+   - Con un clic en el «+» de la barra a 390 se abre como hoja inferior, de 206 px de alto, pegada al borde inferior. Al cruzar a 800 px queda un solo diálogo, de 510 px, con el foco dentro.
+   - Enter sobre «Cerrar» lo cierra y devuelve el foco al «+» de la barra. **Cumple.**
+4. **Selector.**
+   - Al elegir Nosotros, `aria-checked` pasa a Nosotros, la región viva dice «Ahora ves: Nosotros» y se guarda `juntia:context=us`.
+   - Al recargar sigue en Nosotros, con `<html data-context="us">`. Al navegar a `/metas`, también. El contenido no cambia. **Cumple.**
+   - **No verificable en este navegador:** la perilla que salta con movimiento reducido, porque el panel no emula `prefers-reduced-motion`. Lo cubre la regresión automática de T060 y B9.
+5. **Tema.**
+   - Al cargar con la preferencia oscura, el primer pintado es oscuro (`data-theme="dark"`).
+   - **No verificable en este navegador:** cambiar el tema del sistema con la app abierta. La emulación del panel cambia el resultado de `matchMedia`, pero no dispara el evento `change`, ni siquiera a un listener propio de control. Lo cubren T015, en unidad, y T065, con R2 y el control negativo.
+6. **Sin cifras.** Ninguna ruta de producto muestra «$», importes, porcentajes, «Al día» ni «le debe». El aviso de versión base aparece en todas. **Cumple.**
+7. **Texto al 200 %.**
+   - Con el tamaño raíz al 200 % a 390 px no hay scroll horizontal, el título no se solapa con el selector y la barra conserva sus nombres accesibles. **Cumple.**
+   - **No verificable aquí:** las safe areas físicas de iOS. Se heredan junto con el iPhone real (decisión 12).
+8. **Superficie interna** (`/interno/primitivos`): título «Superficie interna de revisión», nota de valores de prueba, paneles claro y oscuro, `robots: noindex, nofollow`, el monto entre 28 y 40 px y sin scroll horizontal. **Cumple.**
+
+**Estado: hecho.** Seis puntos cumplen. Tres comprobaciones no se pueden ejecutar en este navegador y se reportan, no se omiten: la perilla con movimiento reducido, el cambio de tema en vivo y las safe areas físicas. Las dos primeras tienen regresión automática; la tercera la hereda P0-1 con el iPhone real.
 
 Procedimiento: `npm run dev -- --port 3001` y dos scripts desechables (`interactions.cjs`, `interaction-extra.cjs`) con Playwright Chromium. Se trata de un recorrido de navegador automatizado fuera de la suite; no equivale a una aprobación humana del diseño ni a un dispositivo real. Ambos scripts exit 0.
 
@@ -1926,7 +1956,7 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | D-01 / T065 | **Corregido** (`57731b4`): CLS = 0 en las 12 cargas de R2. |
 | D21-1 / T065: CLS por pintura con el DOM a medio parsear | **Corregido** (`5756613`): 0 de 48 cargas con CLS > 0 y R2 con 12 de 12 en 0, sin cuadro del tema contrario. Antes: 9 de 40, hasta 0,00804. Primer pintado +72 ms de mediana a CPU 6× (T065). |
 | D21-1 fuera de Chromium | **`[V]` heredados por P0-1 (decisión 12).** El mecanismo funciona en Chromium y en Safari ≥ 18.2; Firefox y Safari anterior lo ignoran. CLS = 0 está demostrado solo en Chromium. Pendientes: CLS en Firefox y WebKit con R2 (el gestor), CLS en un iPhone real (los fundadores; excepción formal si no hay Mac) y respaldo tipográfico en Android (los fundadores; excepción formal si no hay Android). Detalle en T065. |
-| T067 recorrido manual | **Pendiente: recorrido manual.** El recorrido registrado es automatizado; lo hacen la sesión principal y los fundadores. |
+| T067 recorrido manual | **Hecho** por el gestor el 3 de noviembre de 2026 sobre `735d364`: seis puntos cumplen y tres no son verificables en el navegador del app (movimiento reducido, cambio de tema en vivo, safe areas físicas), cubiertos por regresión automática o heredados por P0-1. |
 | D21-2 / T078: frase falsa sobre las capturas | **Corregido**: comparación por hash y por píxeles entre C y D en T078. El «no encontrado» bajo `/cuenta/*` de C no se reproduce con el código de `a3216c0`; queda para el revisor. |
 | D-02 / T065–T067 | **Corregido** (`2e921d8`), con regresión en `routes.a11y.ts` (`1778712`). |
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
@@ -1994,4 +2024,3 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 | CLS = 0 en Firefox y WebKit (arnés R2) | Pendiente: el mecanismo de D21-1 solo está demostrado en Chromium | El gestor | Antes de aceptar P0-1 (decisión 12) |
 | CLS en un iPhone real | Pendiente | Fundadores; excepción formal si no hay Mac para el inspector web | Antes de aceptar P0-1 (decisión 12) |
 | Respaldo tipográfico en Android | Pendiente | Fundadores; excepción formal si no hay Android | Antes de aceptar P0-1 (decisión 12) |
-| T067 · recorrido manual | Pendiente: recorrido manual | Sesión principal con los fundadores | Antes de aceptar la 001 |

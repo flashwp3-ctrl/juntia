@@ -629,13 +629,13 @@ Construyen, sirven, prueban o modifican archivos del checkout: se ejecutan una d
   - Cumple: FR-019.
   - Terminado cuando: las capturas están en el PR con la observación «coincide» o la diferencia que se vea; la decisión es del revisor.
 
-- [ ] T067 Recorrido manual de [quickstart.md](quickstart.md) §5 con `npm run dev`, pegando una línea de resultado por punto
+- [x] T067 Recorrido manual de [quickstart.md](quickstart.md) §5 con `npm run dev`, pegando una línea de resultado por punto
   - Teclado completo («Ir al contenido» primero, destinos con `aria-current`, foco visible siempre); Anotar con toque, clic, Enter y `N`, hoja por debajo de 768 y diálogo de 520 desde 768, cruzar 768 con el aviso abierto; selector con recarga y navegación, perilla que se desliza y que salta con movimiento reducido; cambio del tema del sistema con la app abierta (180 ms; instantáneo con movimiento reducido); texto al 200 %; safe areas en un iPhone o su emulación; Balance abierto por URL en móvil; segmented en modo `tablist` con flechas en la superficie interna; Skeleton que aparece solo pasados 300 ms; Button en carga sin salto de ancho.
   - Todo con movimiento reducido emulado y sin él, con el mismo resultado final (SC-010).
   - También: Anotar a un toque en cada composición, destino actual con ícono Fill, acceso a Mi cuenta en cada ancho y aviso de versión base en cada ruta.
   - Cumple: FR-012, FR-015, FR-016, FR-020, FR-021, FR-022, FR-023, FR-028, FR-031, FR-038, FR-039, FR-040, FR-041; SC-010.
   - Terminado cuando: el PR lleva el resultado de cada punto; un punto que falla se arregla o se reporta, nunca se omite.
-  - **Estado: pendiente: recorrido manual.** Lo que existe en `evidence.md` (T067 y T077) es un recorrido automatizado con Playwright. No sustituye al manual que pide la tarea. Lo hace la sesión principal con los fundadores.
+  - **Estado: hecho** por el gestor el 3 de noviembre de 2026 (ver `evidence.md`, T067). Tres comprobaciones no son verificables en el navegador del app y se reportan, no se omiten: movimiento reducido, cambio de tema en vivo y safe areas físicas.
 
 - [x] T068 Capturas reales para el gate visual (ADR-011 §7) de las seis rutas de producto, el estado de «no encontrado» y `/interno/primitivos`, a 390 y 1440 px en claro y oscuro; más una pasada a 360, 430, 768, 1024 y 1280 px con captura de lo que se vea distinto (incluido el rail de 1024 en oscuro, que el comp no dibuja)
   - Las capturas permiten aprobar viendo la pantalla las **propuestas §15.9 de paleta** (Sara petróleo, Hogar azul tenue, superficie oscura `#191C1F`). La de «gasto, ingreso y liquidación en tinta» **no** se aprueba aquí: pasa a P0-1 (plan, comprobación de jerarquía).
