@@ -72,9 +72,9 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
 ## 3. Qué corre dónde
 
-### Nivel 1 — cada push a un PR
+### Nivel 1 — cada push a un PR de código
 
-Jobs **en paralelo**:
+Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR de solo documentación ni en borradores (se lanza a mano con «Run workflow»); un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
 
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
@@ -484,7 +484,7 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | Job | Presupuesto |
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
-| **Gate de PR completo** (el más lento de los jobs en paralelo) | **< 6 min** |
+| **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
 | Nocturno / post-merge | **< 15 min** |
 
 «Mide el job» aplica **solo a esta segunda tabla**.

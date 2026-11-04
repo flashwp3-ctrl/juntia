@@ -281,7 +281,7 @@ descarga por una restauración de coste comparable, no quitando trabajo.
 
 ### 5. CI en dos niveles
 
-**Nivel 1 — cada push a un PR.** Jobs en paralelo:
+**Nivel 1 — cada push a un PR de código.** Controles (forma y disparadores: enmienda del 4 de noviembre, al final de esta sección):
 
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
@@ -316,6 +316,23 @@ que lo incorpora; nunca aparece como pasado ni se omite en silencio. Ninguna
 especificación adelanta infraestructura para que `verify` «pase completo». Y el
 contrapositivo: P0-1 no mergea sin el job 3. La tabla completa está en
 `docs/TESTING.md` §3.
+
+**Forma del nivel 1 y consumo de minutos** (enmienda del 4 de noviembre de 2026, decisión de los fundadores). Medido sobre los 12 primeros runs del repositorio, cada push consumía entre 6 y 8 minutos facturados de GitHub Actions. Había cuatro causas:
+
+- los PR de solo documentación corrían todo;
+- la app se construía dos veces;
+- cada job repetía `npm ci` y redondeaba al minuto;
+- los runs obsoletos no se cancelaban.
+
+Desde esta enmienda el nivel 1 se organiza así. Sustituye a «jobs en paralelo» y al FR-043 de la especificación 001:
+
+1. **Los controles 1, 2 y 5 van en un solo job, `app`, en serie y por orden de coste:** `npm ci`; lint, typecheck y Vitest, que fallan antes y más barato; un único build; y sobre ese mismo build Chromium (`npx playwright install --with-deps --only-shell chromium`), axe, `check:internal-surface` y `check:theme-script`. Cuando entren, los controles 3 (Supabase y RLS) y 4 (E2E de humo) son jobs propios, porque necesitan servicios.
+2. **Un PR que solo toca documentación no corre el CI.** El workflow ignora `docs/**`, `specs/**`, `**/*.md`, `.specify/**`, `.claude/**`, `.agents/**` y `prompts/**` (`paths-ignore`). Cualquier PR que toque otro archivo corre el nivel 1 completo. **Ningún control se salta por la ruta del cambio dentro de un PR de código**, y en particular nunca los de seguridad del job 3.
+3. **Los PR en borrador no corren.** El CI se dispara al marcar el PR como listo (`ready_for_review`) y en cada push posterior. Para la evidencia en rojo y en verde de un borrador, el workflow se lanza a mano (`workflow_dispatch`).
+4. **Un push nuevo cancela el run anterior del mismo PR** (`concurrency` con `cancel-in-progress`).
+5. **Cada job tiene un tope de 10 minutos** (`timeout-minutes`).
+
+Los presupuestos de §4 no cambian. El «gate de PR completo» se mide como el job más lento, que hoy es `app`. Las reglas de esta sección siguen intactas: los controles no aplicables se declaran y el contrapositivo vale («P0-1 no mergea sin el job 3»).
 
 ### 6. Siete reglas duras
 
