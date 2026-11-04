@@ -969,27 +969,248 @@ Inspección visual: páginas provisionales, barra/rail/sidebar y cuenta apilada 
 
 ## T069 · Inventario de pruebas
 
-Fecha: 2026-11-03 · Commit: `a3216c0`.
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-Pendiente: se incorpora en el commit de su grupo.
+Comandos de solo lectura: `npx vitest list` y `npx playwright test --list --project a11y`, exit0. Vitest lista plantillas parametrizadas; verify ejecutó85 casos en9 archivos. Playwright lista36 en1 archivo. **E2E specs added: 0**; D no añade ni retira ninguna prueba.
+
+```text
+[components] tests/lint-rules.test.ts > reglas de lint propias (T012) > marca las líneas exactas de %s y permite las anclas
+[components] tests/lint-rules.test.ts > reglas de lint propias (T012) > permite los colores en tokens.css
+[components] tests/lint-rules.test.ts > reglas de lint propias (T012) > impide importar la interfaz desde domain
+[components] tests/lint-rules.test.ts > reglas de lint propias (T012) > resuelve la frontera de %s y permite imports internos y de Node
+[components] tests/lint-rules.test.ts > vigila todas las formas de importación y rechaza especificadores dinámicos
+[components] src/styles/tokens.test.ts > mantiene el respaldo sin JavaScript idéntico al tema oscuro
+[components] src/lib/internal-surface.test.ts > isInternalSurfaceEnabled (primera barrera: destino) > %s
+[components] src/lib/internal-surface.test.ts > isAllowedInternalHost (segunda barrera: host) > %s
+[components] src/lib/theme-script.test.ts > script bloqueante de tema (T015) > resuelve matches=%s como %s
+[components] src/lib/theme-script.test.ts > script bloqueante de tema (T015) > sigue los cambios del sistema
+[components] src/lib/theme-script.test.ts > script bloqueante de tema (T015) > recupera el contexto válido %s
+[components] src/lib/theme-script.test.ts > script bloqueante de tema (T015) > ignora el contexto ausente o ilegible %s
+[components] src/lib/theme-script.test.ts > script bloqueante de tema (T015) > aplica el tema sin lanzar aunque getItem lance SecurityError
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > abre el teclado numérico nativo
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > formatea con puntos de miles de es-CO y sin decimales
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > no acepta un décimo dígito: el tope es 999.999.999
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar conserva solo los dígitos
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > al pegar sin dígitos el valor no cambia
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > vacío entrega null y 0 entrega 0: vacío no es cero
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > entrega pesos enteros, nunca unidades menores ni decimales
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error: aria-invalid, aria-errormessage hacia un mensaje en región polite e ícono oculto
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > enlaza la ayuda con aria-describedby
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > valor externo fuera de rango (%s) > por %s: vacío, inválido y con aviso de desarrollo
+[components] src/components/ui/amount-input.test.tsx > AmountInput (T024) > con error vacío, un valor fuera de rango sigue inválido con el mensaje del catálogo
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > el disparador abre un `dialog` (no `alertdialog`) con el título y el cuerpo del catálogo
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > dentro no hay campos ni botón de guardar
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el foco en el cuerpo del documento, `N` abre el mismo aviso
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el foco en un campo, `N` escribe la letra y no abre el aviso
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > con el aviso abierto, `N` no abre otro
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > Escape lo cierra y el foco vuelve al disparador
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > «Cerrar» lo cierra y el foco vuelve al disparador
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > Tab no saca el foco del aviso
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > abierto con `N`, al cerrarlo el foco vuelve al elemento enfocado antes
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > por debajo de 768 px usa la hoja y desde 768 px el diálogo
+[components] src/components/shell/annotate-notice.test.tsx > Aviso de Anotar (T049) > desde 768 px usa el diálogo centrado
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > sin valor guardado arranca en «Yo»
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > al elegir «Nosotros» queda seleccionada, se anuncia y se guarda
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > hay una sola región viva para el anuncio
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > las flechas ← → cambian la opción
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > al desmontar y volver a montar arranca en lo que se eligió
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > con un valor ilegible arranca en «Yo» y no lo reescribe hasta que la persona elige
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > con el almacenamiento bloqueado arranca en «Yo», cambia durante la visita y no lanza
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > si se puede leer pero no escribir, la elección de la visita prevalece y el anuncio coincide con lo que se ve
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > tres cambios seguidos dejan guardado el último
+[components] src/components/shell/context-selector.test.tsx > ContextSelector (T042) > el contenido junto al selector no cambia al cambiar el contexto (sin Context Transition)
+[components] src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > muestra el estado diseñado con el copy del catálogo
+[components] src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > no expone el mensaje técnico ni el digest
+[components] src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Reintentar» llama a reset
+[components] src/app/(app)/error.test.tsx > Estado de error de render (F19-3) > «Ir a Inicio» apunta a /
+[components] src/app/(app)/product-routes.test.tsx > Rutas de producto sin cifras y con aviso de versión base (T050) > ${route}: ni el texto visible ni los nombres accesibles tienen cifras
+[components] src/app/(app)/product-routes.test.tsx > Rutas de producto sin cifras y con aviso de versión base (T050) > ${route}: muestra el aviso de versión base, sin control para cerrarlo
+```
+
+```text
+Listing tests:
+  [a11y] › routes.a11y.ts:111:11 › / · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /metas · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /plan · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /balance · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 390px
+  [a11y] › routes.a11y.ts:111:11 › / · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /metas · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /plan · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /balance · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · light · 1440px
+  [a11y] › routes.a11y.ts:111:11 › / · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /metas · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /plan · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /balance · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 390px
+  [a11y] › routes.a11y.ts:111:11 › / · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /actividad · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /metas · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /plan · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /balance · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /cuenta · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /interno/primitivos · dark · 1440px
+  [a11y] › routes.a11y.ts:111:11 › /ruta-que-no-existe · dark · 1440px
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · light · 390px: barra oculta (pantalla apilada)
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · light · 768px: barra visible con Anotar
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · dark · 390px: barra oculta (pantalla apilada)
+  [a11y] › routes.a11y.ts:195:9 › /cuenta · dark · 768px: barra visible con Anotar
+Total: 36 tests in 1 file
+```
+
+Comparación Anexo A: B1 lint-rules; B2 tokens; B3 AmountInput; B4 ContextSelector; B5 AnnotateNotice; B6 product-routes; B7 internal-surface; B9 routes.a11y; B17 theme-script están presentes. B8 y B18 son scripts HTTP y sus salidas constan en T063.
+
+Diferencias que requieren decisión del revisor sobre actualizar el anexo, conservadas por instrucción expresa:
+
+- F17-4/F17-R3 en AmountInput: value/defaultValue fuera de rango (mil millones, negativo, decimales) y error vacío;16 casos totales del archivo.
+- F19-2 en ContextSelector: cambios rápidos mantienen la última elección.
+- F19-3: `src/app/(app)/error.test.tsx`, acción de reintento e Inicio. Archivo adicional al inventario de Anexo A.
+- F17-2 y T060: hit testing táctil/movimiento reducido dentro de routes.a11y; F19-1: cuatro casos Cuenta390/768.
+- F15-1 a F15-4: matriz reforzada de frontera domain y formas estáticas/dinámicas en lint-rules, dentro del archivo B1.
+
+No se modifica el Anexo A ni se borra ninguna regresión. T069 ejecutada con diferencias documentadas; concordancia literal pendiente de revisión.
 
 ## T070 · Alcance y copy
 
-Fecha: 2026-11-03 · Commit: `a3216c0`.
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-Pendiente: se incorpora en el commit de su grupo.
+Comandos y salidas:
+
+```text
+$ npm ls --depth=0
+juntia@0.1.0 C:\Users\aleja\.codex\worktrees\001-d-verification\Juntia
+├── @axe-core/playwright@4.14.0
+├── @emnapi/runtime@1.11.3 extraneous
+├── @eslint/css@1.4.0
+├── @img/sharp-wasm32@0.35.5 extraneous
+├── @phosphor-icons/react@2.1.10
+├── @playwright/test@1.64.1
+├── @radix-ui/react-dialog@1.3.1
+├── @tailwindcss/postcss@4.3.4
+├── @testing-library/dom@10.4.2
+├── @testing-library/react@16.3.3
+├── @testing-library/user-event@14.6.8
+├── @types/node@24.19.2
+├── @types/react-dom@19.3.0
+├── @types/react@19.3.0
+├── eslint-config-next@16.4.4
+├── eslint@9.39.5
+├── jsdom@30.1.3
+├── motion@14.9.0
+├── next@16.4.4
+├── react-dom@19.3.1
+├── react@19.3.1
+├── server-only@0.0.1
+├── tailwindcss@4.3.4
+├── typescript@6.0.3
+├── vite@8.3.5
+└── vitest@5.1.0
+
+$ Get-Item -LiteralPath supabase, tests/e2e, public/manifest.json
+Get-Item:
+Line |
+   2 |  … fest.json'; Get-Item -LiteralPath supabase,tests/e2e,public/manifest. …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path 'supabase' because it does not exist.
+Get-Item:
+Line |
+   2 |  … fest.json'; Get-Item -LiteralPath supabase,tests/e2e,public/manifest. …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path 'tests/e2e' because it does not exist.
+Get-Item:
+Line |
+   2 |  … fest.json'; Get-Item -LiteralPath supabase,tests/e2e,public/manifest. …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path 'public/manifest.json' because it does not exist.
+$ git ls-files *.spec.ts
+$ git grep -nE P0-[0-9] -- src
+src/domain/README.md:4:de datos, persona y moneda llegan con P0-1 (maestro §15.10).
+$ git grep -nE person-?[3-6] -- src
+$ git grep -nE golden-data -- src tests
+$ git grep -nE localStorage -- src
+src/components/shell/context-selector.test.tsx:27:beforeEach(() => window.localStorage.clear());
+src/components/shell/context-selector.test.tsx:43:    expect(window.localStorage.getItem(KEY)).toBe("us");
+src/components/shell/context-selector.test.tsx:60:    expect(window.localStorage.getItem(KEY)).toBe("me");
+src/components/shell/context-selector.test.tsx:72:    window.localStorage.setItem(KEY, "ellos");
+src/components/shell/context-selector.test.tsx:75:    expect(window.localStorage.getItem(KEY)).toBe("ellos");
+src/components/shell/context-selector.test.tsx:77:    expect(window.localStorage.getItem(KEY)).toBe("us");
+src/components/shell/context-selector.test.tsx:93:    window.localStorage.setItem(KEY, "me");
+src/components/shell/context-selector.test.tsx:110:    expect(window.localStorage.getItem(KEY)).toBe("us");
+src/lib/context-preference.ts:15:    return parse(window.localStorage.getItem(KEY));
+src/lib/context-preference.ts:28:    window.localStorage.setItem(KEY, value);
+src/lib/theme-script.test.ts:11:  const window = { matchMedia: () => media, localStorage: { getItem: (key: string) => {
+src/lib/theme-script.ts:2:export const themeScript = '(function(){var d=document.documentElement;var m=window.matchMedia("(prefers-color-scheme: dark)");function a(){d.setAttribute("data-theme",m.matches?"dark":"light")}a();if(m.addEventListener){m.addEventListener("change",a)}try{var c=window.localStorage.getItem("juntia:context");if(c==="me"||c==="us"){d.setAttribute("data-context",c)}}catch(e){}})();';
+$ git grep -n zod -- package.json package-lock.json src tests
+package-lock.json:4701:        "zod": "^3.25.0 || ^4.0.0",
+package-lock.json:4702:        "zod-validation-error": "^3.5.0 || ^4.0.0"
+package-lock.json:8774:    "node_modules/zod": {
+package-lock.json:8776:      "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
+package-lock.json:8784:    "node_modules/zod-validation-error": {
+package-lock.json:8786:      "resolved": "https://registry.npmjs.org/zod-validation-error/-/zod-validation-error-4.0.2.tgz",
+package-lock.json:8794:        "zod": "^3.25.0 || ^4.0.0"
+```
+
+Atribución adicional:
+
+```text
+zod@4.6.7 dev
+node_modules/zod
+  zod@"^3.25.0 || ^4.0.0" from eslint-plugin-react-hooks@7.1.1
+  node_modules/eslint-plugin-react-hooks
+    eslint-plugin-react-hooks@"^7.1.0" from eslint-config-next@16.4.4
+    node_modules/eslint-config-next
+      dev eslint-config-next@"16.4.4" from the root project
+  peer zod@"^3.25.0 || ^4.0.0" from zod-validation-error@4.0.2
+  node_modules/zod-validation-error
+    zod-validation-error@"^3.5.0 || ^4.0.0" from eslint-plugin-react-hooks@7.1.1
+    node_modules/eslint-plugin-react-hooks
+      eslint-plugin-react-hooks@"^7.1.0" from eslint-config-next@16.4.4
+      node_modules/eslint-config-next
+        dev eslint-config-next@"16.4.4" from the root project
+```
+
+Interpretación:
+
+- No están las dependencias directas excluidas por R1.4. `npm ls` informa dos opcionales extraneous (`@emnapi/runtime`, `@img/sharp-wasm32`); no se añaden al manifiesto/lock.
+- supabase, tests/e2e y manifest no existen; cero archivos *.spec.ts.
+- La única coincidencia P0-1 es `src/domain/README.md`, documento interno, no copy visible; se conserva.
+- person3–6 y dataset dorado: sin coincidencias.
+- localStorage de producción: solo context-preference y theme-script; este último lee juntia:context, no persiste tema. Los otros resultados son pruebas.
+- **Diferencia D-04:** ausencia absoluta de zod no se cumple: zod4.6.7 ya existe en lock por el tooling ESLint de Next. Ausente como dependencia directa/import de aplicación. `git diff --exit-code -- package.json package-lock.json`: exit0 y sin salida. No se elimina ni se cambian versiones; requiere aclarar el criterio literal con el revisor.
+
+Revisión semántica de `copy` contra GLOSSARY§9 y BRAND§4: el shell usa tuteo y explica que no guarda datos; Anotar no promete fechas ni guardado; Plan dice que presupuesto es opcional; Balance y Cuenta están explícitamente no disponibles. No se llama depósito a un aporte, no se afirma deuda, rendimiento o saldo bancario, ni se usa una fase técnica en copy. Las etiquetas EXCEDIDO/LIQUIDADO y valores de muestra se limitan a la superficie interna identificada. Para revisión humana: catálogo `src/lib/copy/es.ts`, seis estados provisionales, aviso de versión base y aviso de Anotar; aprobar comprensión de SC-008 por ambos fundadores, no por este grep.
 
 ## T071 · Licencias de fuentes
 
-Fecha: 2026-11-03 · Commit: `a3216c0`.
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-Pendiente: se incorpora en el commit de su grupo.
+Procedimiento: lectura de `src/app/layout.tsx` (Instrument_Serif normal/italic400, Geist400/500/600 y Geist_Mono500, latin) y consulta de repositorios oficiales el2026-11-03.
+
+| Familia | Licencia declarada | Fuente oficial / atribución |
+| --- | --- | --- |
+| Instrument Serif | SIL Open Font License1.1 | [OFL.txt](https://github.com/Instrument/instrument-serif/blob/main/OFL.txt), Copyright2022 The Instrument Serif Project Authors |
+| Geist | SIL Open Font License1.1 | [OFL.txt](https://github.com/vercel/geist-font/blob/main/OFL.txt), Copyright2024 The Geist Project Authors |
+| Geist Mono | SIL Open Font License1.1 | [OFL.txt](https://github.com/vercel/geist-font/blob/main/OFL.txt), Copyright2024 The Geist Project Authors |
+
+La [página oficial de Geist](https://vercel.com/font) incluye Sans y Mono y enlaza la licencia común. Resultado de las tres consultas oficiales: licencia OFL1.1, que permite uso e incorporación en software manteniendo licencia/atribución; no se modifica ninguna familia ni se instala una dependencia. Las URL enlazan el texto íntegro de cada licencia.
 
 ## T072 · Preview real de Vercel
 
-Fecha: 2026-11-03 · Commit: `a3216c0`.
+Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-Pendiente: se incorpora en el commit de su grupo.
+**Pendiente: no existe proyecto de Vercel.** No se crea, enlaza, despliega ni asigna alias. Los códigos locales simulados constan en T063 y no sustituyen este [V].
+
+Para los fundadores cuando exista proyecto: facilitar preview propio y acceso bajo Deployment Protection; solicitar interna por URL de despliegue y rama (200), alias de prueba no productivo (404) y producción (404); registrar URL/host/HTTP y coincidencia VERCEL_URL. Nunca asignar el dominio productivo a un preview con vercel alias.
 
 ## T073 · Contraste en dispositivos
 
