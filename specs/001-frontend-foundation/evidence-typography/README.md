@@ -51,4 +51,4 @@ Chrome ignora movimientos de menos de 3 px. La 404 no está en R2; en 360, 390, 
 | Otra | Instrument Serif itálica 15,7 KB | — |
 | **Total** | **70,1 KB** | **70,0 KB** |
 
-La itálica de Brygada (24,4 KB) se declara en una segunda llamada con `preload: false` y la misma familia: se descarga solo si un texto la pide. Comprobado cargándola bajo demanda.
+La itálica de Brygada (24,4 KB) se declara en una segunda llamada con `preload: false` y la misma familia: se descarga solo si un texto la pide. Las dos llamadas emiten la familia con su nombre real, «Brygada 1918», sin hash, así que `font-serif italic` encuentra la cara itálica. [italic-probe.txt](italic-probe.txt): un `<em class="font-serif italic">` inyectado pide `308e5095…woff2` solo después de insertarse, y Chrome lo pinta con `Brygada-1918-Medium-Italic`, sin itálica sintética.
