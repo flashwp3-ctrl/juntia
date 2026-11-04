@@ -900,7 +900,7 @@ No son huecos del plan —el plan los asigna a la revisión humana o a un `[V]`�
 
 ### A.4 Pruebas añadidas por revisión
 
-Las revisiones de los PR B (#17) y C (#19) y la verificación del PR D (T077) añadieron pruebas que este anexo no tenía. Los fundadores aceptaron las de B y C el 3 de noviembre de 2026; las de T077 son las regresiones de los hallazgos D-02 y D-05. **Ninguna es una tarea de test nueva ni una spec E2E:** son casos o aserciones dentro de archivos que ya figuran en A.1, salvo R4, que es un archivo de componentes nuevo. **Specs E2E que añade la 001: siguen siendo 0.**
+Las revisiones de los PR A (#15), B (#17) y C (#19) y la verificación del PR D (T077) añadieron pruebas que este anexo no tenía. Los fundadores aceptaron todas las de A, B y C el 3 de noviembre de 2026 (R1–R6, R9 y R10); R7 y R8 son las regresiones de los hallazgos D-02 y D-05 de T077. **Ninguna es una tarea de test nueva ni una spec E2E:** son casos o aserciones dentro de archivos que ya figuran en A.1, salvo R4, que es un archivo de componentes nuevo. **Specs E2E que añade la 001: siguen siendo 0.**
 
 | # | Origen | Archivo | Capa | Requisito | Por qué esta capa es la más baja | Qué detecta que ninguna otra detecta |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -912,11 +912,10 @@ Las revisiones de los PR B (#17) y C (#19) y la verificación del PR D (T077) a�
 | R6 | F17-R2 (PR #17) y T060 (PR C) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-012, FR-016; SC-010; ADR-011 §2, fila 17 | Emulación de `prefers-reduced-motion` y cuadros de `requestAnimationFrame`: solo en navegador | Que una pasada mida el panel del otro tema (F17-R2), y que la perilla, el aviso de Anotar, Skeleton o Button se muevan con movimiento reducido |
 | R7 | D-02 (T077, PR D) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-013, FR-037; SC-003 | Un clic real en las cuatro esquinas del marco y la comprobación del foco necesitan layout y hit testing | Que solo la línea de texto del `<input>` (22,5 o 19 px) enfoque el campo dentro de un marco de 48 o 64 px. Rojo previo: 0 de 4 esquinas en los 7 campos habilitados, dos temas, 390 y 1440 |
 | R8 | D-05 (T077, PR D) | `tests/a11y/routes.a11y.ts`, dentro de B9 | Pasada de navegador por ruta | FR-014; COMPONENT_SPECIFICATIONS.md §Input (Monto) | jsdom no aplica el CSS de Tailwind, así que una prueba RTL no ve el tamaño calculado ni el orden de las clases en la hoja | Dígitos de AmountInput fuera de 28–40 px, un importe cortado, un marco que deja de medir 64 px (48 en Input) o un Input que pierde body.m. Rojo previo: 15 px en todos los AmountInput |
+| R9 | F19-1 (revisión del PR #19) | `tests/a11y/routes.a11y.ts`, dentro de B9: cuatro casos de `/cuenta` a 390 y 768 en los dos temas | Pasada de navegador por ruta (no es spec E2E) | FR-020, FR-033 | Qué disparador queda visible a cada ancho depende de las media queries del layout; jsdom no las evalúa | Que la barra con Anotar desaparezca de `/cuenta` desde 768 (Anotar dejaría de estar a un toque) o que vuelva bajo 768 en la pantalla apilada |
+| R10 | F15-1 a F15-4 (revisión del PR #15) | `tests/lint-rules.test.ts`, dentro de B1 | Lint, probada con la API de ESLint | FR-003, FR-006 | Igual que B1: la regla es de lint y probarla es lintear un texto | F15-1: que la frontera se resuelva mal por ruta (rutas relativas y alias desde archivos anidados de `domain`). F15-3 y F15-4: que una importación hacia fuera escape por otra forma (`export … from`, `import()`, `require`, `import x = require` o una plantilla literal) o que un especificador no estático (variable, concatenación o plantilla con expresión) pase sin marcar. Amplía la frontera que B1 ya probaba |
 
-**Presentes en el inventario y fuera de la aceptación del 3 de noviembre.** T069 los lista para que la concordancia sea literal; esperan el visto bueno de los fundadores:
-
-- F19-1 (PR #19): cuatro casos de `/cuenta` a 390 y 768 en `tests/a11y/routes.a11y.ts` (barra oculta o visible con Anotar), dentro de B9.
-- F15-1 a F15-4 (PR #15): matriz reforzada de la frontera de `domain` y formas de importación en `tests/lint-rules.test.ts`, dentro de B1.
+**Aceptadas por los fundadores el 3 de noviembre de 2026.** R1 a R6 (revisiones de B y C), y R9 y R10, que el fundador aprobó ese mismo día en una segunda decisión. R7 y R8 son las regresiones de T077. Con esto, todas las pruebas del inventario de T069 tienen fila y están aceptadas.
 
 **D-01 (CLS) no añade prueba:** el primer cuadro y el CLS siguen siendo una medición del PR con el arnés de R2 (T065), no de la suite (B14, A.2).
 

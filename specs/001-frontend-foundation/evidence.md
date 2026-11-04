@@ -1205,7 +1205,7 @@ Los fundadores aceptaron las pruebas que añadieron las revisiones de B y C, y `
 
 | Prueba del inventario | Fila del Anexo A |
 | --- | --- |
-| `tests/lint-rules.test.ts` (5 plantillas) | B1; la matriz de F15-1 a F15-4 está dentro de B1 y figura en A.4 como «fuera de la aceptación del 3 de noviembre» |
+| `tests/lint-rules.test.ts` (5 plantillas) | B1, con la matriz de F15-1 a F15-4 en A.4 R10 |
 | `src/styles/tokens.test.ts` | B2 |
 | `src/lib/internal-surface.test.ts` | B7 |
 | `src/lib/theme-script.test.ts` | B17 |
@@ -1218,10 +1218,10 @@ Los fundadores aceptaron las pruebas que añadieron las revisiones de B y C, y `
 | `src/app/(app)/error.test.tsx` (4 casos) | A.4 R4 (F19-3) |
 | `src/app/(app)/product-routes.test.tsx` | B6 |
 | `tests/a11y/routes.a11y.ts` › 32 casos ruta · tema · ancho | B9, con F17-2 (A.4 R5), F17-R2 y T060 (R6), D-02 (R7) y D-05 (R8) como aserciones dentro de los casos de `/interno/primitivos` y de las rutas de producto |
-| `tests/a11y/routes.a11y.ts` › 4 casos `/cuenta` a 390 y 768 | B9; F19-1 figura en A.4 como «fuera de la aceptación del 3 de noviembre» |
+| `tests/a11y/routes.a11y.ts` › 4 casos `/cuenta` a 390 y 768 | B9, con F19-1 en A.4 R9 |
 | `scripts/check-internal-surface.mjs` y `scripts/check-theme-script.mjs` | B8 y B18 (salidas en T063 y en T077) |
 
-Toda prueba del inventario tiene fila, y toda fila de A.1 y A.4 tiene prueba. Dos grupos, F19-1 y F15-1 a F15-4, están en el código y en el anexo pero **no** en la lista de pruebas que aceptaron los fundadores: A.4 lo dice y quedan pendientes de su visto bueno.
+Toda prueba del inventario tiene fila, y toda fila de A.1 y A.4 tiene prueba. El 3 de noviembre de 2026 el fundador aprobó también F15-1 a F15-4 (A.4 R10) y F19-1 (A.4 R9), que esta sección había dejado fuera de la aceptación. **T069 queda cerrada: la concordancia entre el inventario y el Anexo A es literal y todas las pruebas están aceptadas.** R7 y R8 son las regresiones de T077 (D-02 y D-05).
 
 <a id="t070"></a>
 
@@ -1919,7 +1919,7 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | D-02 / T065–T067 | **Corregido** (`2e921d8`), con regresión en `routes.a11y.ts` (`1778712`). |
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
 | D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
-| T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 y F15-1 a F15-4 quedan pendientes del visto bueno de los fundadores. |
+| T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 (R9) y F15-1 a F15-4 (R10), aceptadas por los fundadores el 3 de noviembre de 2026. |
 | Paleta, copy, pantallas y SC-008 | **Aprobado por el fundador el 3 de noviembre de 2026** (T078). SC-008: aprobado por un fundador; pendiente la confirmación del segundo. |
 | T072–T075 | Pendientes con dueño y momento en T078 («Pendientes `[V]` que hereda P0-1»). |
 
@@ -1969,6 +1969,8 @@ D-01 y D21-1 no cambian nada visible: tras cada corrección se regeneraron las 6
 ### Pendientes `[V]` que hereda P0-1
 
 Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y ninguno tiene Android. La especificación de P0-1 hereda esta lista.
+
+**Decisión 12, aceptación por etapas** (maestro §15.10, [PR #22](https://github.com/juntia-labs/juntia/pull/22)): **T072, T073, T074 y T075 son criterios de aceptación obligatorios de P0-1.** P0-1 no se acepta mientras alguno no tenga salida real. Si no hay un Android disponible, T074 se registra como no ejecutada con su motivo y los fundadores deciden la excepción. Ninguna verificación aplazada se presenta como pasada. La 001 se acepta cuando se cumplen CLS = 0 en todas las cargas medidas, incluida la tanda ampliada de al menos 40 y sin redondeo; la aprobación de SC-001 y SC-008 por los dos fundadores; y salida real de las demás tareas de la fase 10, con CI en verde. **El PR #21 se mergea después del #22.**
 
 | `[V]` | Estado | Dueño | Momento |
 | --- | --- | --- | --- |
