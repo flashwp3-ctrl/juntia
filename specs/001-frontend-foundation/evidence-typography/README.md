@@ -2,11 +2,15 @@
 
 Fecha: 4 de noviembre de 2026. Build de producción servido con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100` (el 3000 lo ocupaba otro proceso). La línea base de `main` (`f6ef453`, con Geist) se compiló en un worktree aparte y se sirvió en el 3200 con el mismo comando. Chromium de Playwright 1.64.1 en Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/) como `.cjs.txt`, para que no entren en el lint; no forman parte de `tests/`. Para ejecutarlos, cópialos fuera del repositorio sin la extensión `.txt`.
 
-## Capturas para los fundadores
+## Aprobación de los fundadores
+
+Aprobado por los dos fundadores el 4 de noviembre de 2026: las 32 capturas, Spline Sans Mono para `meta.mono` y los tamaños de montos del código (40 px en móvil, 52 px en escritorio). Los comps de Claude Design, que redujeron los montos un 7 %, se alinearán con el código al diseñar P0-1.
+
+## Capturas
 
 32 PNG de página completa: las seis rutas de producto, «no encontrado» (`ruta-que-no-existe`) y `/interno/primitivos`, a 390 y 1440 px, en claro y oscuro. Nombre: `<ruta>-<ancho>-<tema>.png`. [captures.txt](captures.txt) registra el estado HTTP de cada carga y las fuentes cargadas al capturar.
 
-La marca `[P]` de Spline Sans Mono (`meta.mono`) sigue abierta: solo aparece en `/interno/primitivos` y la cierran los fundadores al ver estas capturas.
+Spline Sans Mono solo aparece en `/interno/primitivos`. Su marca de propuesta en `meta.mono` se cerró con la aprobación de arriba.
 
 ## Resultados
 
@@ -18,6 +22,7 @@ La marca `[P]` de Spline Sans Mono (`meta.mono`) sigue abierta: solo aparece en 
 | `check:theme-script` | 5 de 5 OK | [check-theme-script.txt](check-theme-script.txt) |
 | R2: 6 rutas × 2 temas, CPU 6×, 400 kbit/s, 400 ms | **CLS = 0 en 12 de 12**, sin cuadro del tema contrario; el control negativo detecta el destello | [cls-r2.txt](cls-r2.txt) |
 | Repetición de R2, 4 iteraciones | **0 de 48 con CLS > 0**, sin cuadro del tema contrario | [cls-repeat-48.txt](cls-repeat-48.txt) |
+| «No encontrado» en carga fría, condiciones de R2, 2 temas | **CLS > 0 en 8 de 8** a 362, 363, 384 y 385 px (0,001625 y 0,000826), con origen el texto de la descripción; **0 en 4 de 4** a 360 y 390 px. Queda pendiente; ver «Respaldo calibrado» | [cls-404-widths.txt](cls-404-widths.txt) |
 | Scroll horizontal: 8 rutas × 360, 390, 430, 768, 1024, 1280 y 1440 × 2 temas | 0 de 112 | [verify-typo.txt](verify-typo.txt) `HSCROLL` |
 | Texto al 200 % a 360 y 390, 6 rutas × 2 temas | Sin scroll, título sin solaparse con el selector | [verify-typo.txt](verify-typo.txt) `TEXT_200` |
 | Contraste de texto, 8 rutas × 390 y 1440 × 2 temas | Todos ≥ 4,5:1 salvo el botón `aria-disabled` de la superficie interna (4,3:1, `#6C665B` sobre `#E7DFD0`), idéntico en `main` y exento por ser un control inactivo | [verify-typo.txt](verify-typo.txt) `CONTRAST` |
@@ -33,11 +38,13 @@ La marca `[P]` de Spline Sans Mono (`meta.mono`) sigue abierta: solo aparece en 
 
 | | Rutas de producto, máximo | «No encontrado» |
 | --- | --- | --- |
-| `main` (Geist) | 2,08 px | cambia de corte en 4 anchos (370–373), hasta 8,6 px |
+| `main` (Geist) | 2,08 px | cambia de corte en 4 anchos (370–373), hasta 8,61 px |
 | Rama, Onest 400 = 1,0398 | 2,38 px | 9 anchos, entre ellos 360 |
-| **Rama, Onest 400 = 1,049** | **2,38 px** | 4 anchos (362, 363, 384, 385), hasta 20 px |
+| **Rama, Onest 400 = 1,049** | **2,38 px** | 4 anchos (362, 363, 384, 385), hasta 19,95 px |
 
-Chrome ignora movimientos de menos de 3 px. La 404 no está en R2; en 360, 390, 1024 y 1440 su residuo es 0,9 px. Los cuatro anchos que quedan son de la misma clase que ya tenía `main`.
+Chrome ignora movimientos de menos de 3 px. La 404 no está en R2; en 360, 390, 1024 y 1440 su residuo es 0,9 px. En los cuatro anchos que quedan, la cuenta es la misma que en `main` (4), pero **el desplazamiento máximo sube de 8,61 a 19,95 px**: no se comporta igual que `main`.
+
+**CLS real en esos anchos ([cls-404-widths.txt](cls-404-widths.txt)).** En carga fría, con las condiciones de R2 y en los dos temas, el CLS es **0,001625** a 362 y 363 px y **0,000826** a 384 y 385 px: mayor que 0 en las 8 cargas. Hay un solo desplazamiento por carga, hacia los 5,8 s, cuando llega Onest, y su origen es el nodo de texto de la descripción («La dirección no existe…»). A 360 y 390 px, CLS = 0 en las 4 cargas. **Queda pendiente y no se corrige en este PR.** No se midió el CLS en carga fría de `main` en sus anchos 370–373. (La primera pasada del arnés perdió el detalle de la fuente porque `outerHTML` no existe en un nodo de texto; la versión corregida es [`harness/r2-404.cjs.txt`](harness/r2-404.cjs.txt).)
 
 `font-display` sigue en `swap`. El respaldo de Brygada se llama «Brygada Fallback» y no «Brygada 1918 Fallback»: `next/font` no entrecomilla el respaldo, y un token que empieza por cifra invalida el `font-family` entero, con lo que los titulares caían a Onest.
 
