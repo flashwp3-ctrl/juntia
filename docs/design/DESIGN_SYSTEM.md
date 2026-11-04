@@ -47,23 +47,23 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 ### 1.4 Tipografía
 | Token | Familia | Peso | Tamaño/Interlínea | Tracking | Uso |
 | --- | --- | --- | --- | --- | --- |
-| display.xl | Instrument Serif | 400 | 64px / 0.95 | -0.02em | Titular de escritorio, meta inmersiva |
-| display.l | Instrument Serif | 400 | 44px / 1 | -0.01em | Titular móvil, sección |
-| title.l | Instrument Serif | 400 | 30px / 1.1 | 0 | Saludo, nombre de tarjeta |
-| title.m | Instrument Serif | 400 | 24px / 1.15 | 0 | Encabezado de bloque |
-| money.xl | Geist | 600 | 52px / 1 | -0.035em | Importe héroe escritorio |
-| money.l | Geist | 600 | 40px / 1 | -0.03em | Importe héroe móvil |
-| money.m | Geist | 600 | 26px / 1.1 | -0.02em | Importe de tarjeta |
-| money.s | Geist | 600 | 15px / 1.3 | 0 | Importe de fila |
-| body.l | Geist | 400 | 16px / 1.5 | 0 | Párrafos de explicación |
-| body.m | Geist | 400 | 15px / 1.45 | 0 | UI general, filas |
-| body.s | Geist | 400 | 13px / 1.45 | 0 | Metadatos, ayudas |
-| label.m | Geist | 600 | 13px / 1.2 | 0 | Botones, tabs, chips |
-| label.s | Geist | 500 | 12px / 1.3 | 0 | Leyendas, captions |
-| overline | Geist | 600 | 11px / 1.2 | 0.09em | Etiquetas en mayúscula |
-| meta.mono | Geist Mono | 500 | 11px / 1.3 | 0.02em | Fechas y referencias en tablas |
+| display.xl | Brygada 1918 | 400 | 64px / 0.95 | -0.02em | Titular de escritorio, meta inmersiva |
+| display.l | Brygada 1918 | 400 | 44px / 1 | -0.01em | Titular móvil, sección |
+| title.l | Brygada 1918 | 400 | 30px / 1.1 | 0 | Saludo, nombre de tarjeta |
+| title.m | Brygada 1918 | 400 | 24px / 1.15 | 0 | Encabezado de bloque |
+| money.xl | Onest | 600 | 52px / 1 | -0.035em | Importe héroe escritorio |
+| money.l | Onest | 600 | 40px / 1 | -0.03em | Importe héroe móvil |
+| money.m | Onest | 600 | 26px / 1.1 | -0.02em | Importe de tarjeta |
+| money.s | Onest | 600 | 15px / 1.3 | 0 | Importe de fila |
+| body.l | Onest | 400 | 16px / 1.5 | 0 | Párrafos de explicación |
+| body.m | Onest | 400 | 15px / 1.45 | 0 | UI general, filas |
+| body.s | Onest | 400 | 13px / 1.45 | 0 | Metadatos, ayudas |
+| label.m | Onest | 600 | 13px / 1.2 | 0 | Botones, tabs, chips |
+| label.s | Onest | 500 | 12px / 1.3 | 0 | Leyendas, captions |
+| overline | Onest | 600 | 11px / 1.2 | 0.09em | Etiquetas en mayúscula |
+| meta.mono | Spline Sans Mono [P] | 500 | 11px / 1.3 | 0.02em | Fechas y referencias en tablas |
 - `font-variant-numeric: tabular-nums` global. Importes héroe fluidos: `money.l: clamp(32px, 8vw, 40px)`, `money.xl: clamp(40px, 4vw, 52px)`.
-- Pesos disponibles: 400, 500, 600 (Geist); 400 regular e itálica (Instrument Serif).
+- Pesos previstos en la implementación: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Son el subconjunto que carga Juntia, no todos los pesos de cada familia. Brygada 1918 y Onest son decisión de los fundadores (maestro §15.10, decisión 14); Spline Sans Mono es propuesta del gestor, pendiente de aprobación visual. **Los tamaños, interlineados y tracking de esta tabla son los de Instrument Serif y Geist**: el PR de implementación de la decisión 14 los recalibra para cada fuente.
 
 ### 1.5 Espacio · radio · borde
 - **space:** 0 · 2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 20 · 24 · 28 · 32 · 40 · 48 · 56 · 64 · 80 · 96 (px).

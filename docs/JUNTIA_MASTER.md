@@ -865,13 +865,14 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 | Gasto, ingreso y liquidación en tinta | DESIGN_SYSTEM.md §4 · HANDOFF_CLAUDE_CODE.md, tabla | Propuesta de codificación cromática para evitar que ahorro e ingreso compartan verde. | No — cambia valores de token, no fronteras funcionales | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; afecta a cómo se lee el dinero |
 | Cuenta reutiliza los fondos de categoría para sus fichas de ícono | DESIGN_SYSTEM.md §4 | Reutilización propuesta; no crea tokens nuevos. | No | **Sí** — propuesta visual ya codificada en `DESIGN_SYSTEM.md`; se aprueba viendo la pantalla |
 | Stack de UI sugerido (Phosphor + `AppIcon`, Motion for React, `next/font`) | HANDOFF_CLAUDE_CODE.md §Stack de UI sugerido | Marcado propuesta en el handoff, pero **Phosphor con `AppIcon` ya está cerrado** por §15.2 y el stack por §7.1/§15. Prevalece el maestro: aquí `[P]` no reabre nada. | No | **No** — el maestro ya cerró la elección (§15.2, §7.1) |
+| Spline Sans Mono para metadatos (`meta.mono`) | DESIGN_SYSTEM.md §1.4 | Elección del gestor dentro de la decisión 14 (§15.10); los fundadores aprobaron Brygada 1918 y Onest, no la monoespaciada. Añadida el 4 de noviembre de 2026. | No — cambia la familia de un token, no fronteras funcionales | **Sí** — se aprueba viendo las capturas del PR de implementación de la decisión 14 |
 | Texto ampliado hasta 200% | HANDOFF_CLAUDE_CODE.md §Accesibilidad | Comportamiento responsive propuesto (filas a 2 líneas, segmentados apilados, importes con clamp). | No — refinamiento de un requisito ya obligatorio | **No** — el requisito (200% sin pérdida) ya es obligatorio; la técnica se valida probándola, no aprobándola |
 
-**Total: 17 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **15 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cuatro elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta y el patrón de personas— son el motivo de que los dos ejes estén separados.
+**Total: 18 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **16 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cinco elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta, el patrón de personas y la monoespaciada de la decisión 14— son el motivo de que los dos ejes estén separados.
 
-**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
+**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11) y se ha añadido la fila de Spline Sans Mono (§15.10, decisión 14); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
 
-**Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 23 líneas: 17 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 4 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. 17 marcas = 17 elementos de la tabla.
+**Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 24 líneas: 18 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 5 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. 18 marcas = 18 elementos de la tabla.
 
 #### Cómo se cierra un [P]
 
@@ -885,7 +886,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11, 12 y 13 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 14 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -940,7 +941,7 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 | T075 · TalkBack con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Admite excepción formal si no hay un Android disponible |
 | CLS = 0 fuera de Chromium: Firefox y WebKit con el arnés R2 | Gestor | Antes de aceptar P0-1. Sin excepción posible. El mecanismo que da CLS = 0 en la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero no Firefox ni Safari anterior; en la 001 solo se demostró en Chromium |
 | CLS en un iPhone real | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Mac para el inspector web de Safari |
-| Respaldo tipográfico de Geist en Android | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
+| Respaldo tipográfico de la fuente de interfaz en Android (Onest desde la decisión 14) | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
 
 **Excepción formal.** Solo la admiten las filas que lo dicen —T074, la parte de TalkBack de T075, el CLS en un iPhone real y el respaldo tipográfico en Android—, y solo cuando falta el dispositivo o el equipo que nombran. Los **dos fundadores** la aprueban antes de aceptar P0-1. Se registra en la evidencia de P0-1 con estos datos:
 
@@ -973,6 +974,27 @@ Tomada por los dos fundadores el 4 de noviembre de 2026. La causa son dos límit
 3. **Previews.** El preview de un PR cuyo último commit no es de la dueña queda bloqueado en Hobby. Cuando hace falta uno, la segunda fundadora añade un commit propio a la rama del PR, que puede ser vacío (`git commit --allow-empty`). Es una estrategia por comprobar, no probada: su funcionamiento se verifica al configurar el proyecto y se registra con su salida. Si los dos necesitan previews automáticos de forma habitual, se pasa a Vercel Pro, que despliega commits de cualquier miembro del equipo.
 4. **Protección de `main`.** GitHub Free no ofrece protección de ramas en repositorios privados de una cuenta personal. Se mantiene la barrera local de `AGENTS.md` 14a. Los fundadores decidieron el 4 de noviembre de 2026 **no contratar GitHub Pro** (decisión 3, revisada): la protección local es la definitiva.
 5. **T072** (decisión 12) tiene tres partes. El aislamiento en producción se ejecuta justo después del primer despliegue y antes de compartir la URL. El aislamiento en preview se ejecuta con el primer preview real, antes de usarlo. El funcionamiento en preview se ejecuta antes de aceptar P0-1. Las dos partes de preview usan la regla 3.
+
+#### Decisión 14: tipografía de marca
+
+Tomada por los dos fundadores el 4 de noviembre de 2026, después de una comparativa de 10 fuentes de interfaz y 7 parejas completas, aplicadas sobre pantallas reales en claro y oscuro. La auditoría de Impeccable de la 001 marcó **Instrument Serif y Geist** como fuentes sobreusadas, y los fundadores decidieron diferenciar Juntia de esa estética frecuente sin perder legibilidad.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 14 | Tipografía de marca | **Brygada 1918** para los titulares (antes Instrument Serif) y **Onest** para la interfaz y las cifras (antes Geist). Para los metadatos (antes Geist Mono) se **propone** Spline Sans Mono, pendiente de aprobación visual (punto 4) | Sustituye la tipografía [A] de `BRAND_FOUNDATION.md` §6 en titulares, interfaz y cifras. Las tres fuentes pasan el detector `overused-font` de Impeccable, tienen licencia OFL en Google Fonts y soportan el español; Onest tiene cifras tabulares. Brygada aporta pesos 400–700 con itálicas reales, y así la jerarquía de titulares ya no depende solo del tamaño |
+
+**Qué cambia y dónde:**
+
+1. **Documentos de marca:** `BRAND_FOUNDATION.md` §6, `DESIGN_SYSTEM.md` §1.4, `HANDOFF_CLAUDE_CODE.md` y `COMPONENT_SPECIFICATIONS.md` nombran las fuentes nuevas en este PR. La **escala** de `DESIGN_SYSTEM.md` §1.4 (tamaños, interlineados y tracking) conserva por ahora los valores de Instrument Serif y Geist. El PR de implementación la recalibra para cada fuente y actualiza la tabla.
+2. **Implementación,** en un PR de Claude Code porque toca la composición del shell. Incluye:
+   - las fuentes en `next/font`;
+   - un respaldo calibrado por peso para mantener CLS = 0, como en D-01;
+   - la escala en `tokens.css`;
+   - el arnés de CLS, axe y capturas a 390 y 1440 px en los dos temas, que los fundadores vuelven a aprobar.
+3. **Claude Design:** los comps DS v1 01, 02 y 04 cambian de fuentes para que P0-1 nazca con la tipografía nueva. La anatomía no cambia.
+4. **Spline Sans Mono** es una propuesta del gestor, no una decisión de los fundadores: solo aparece en fechas y referencias. Queda como `[P]` en `DESIGN_SYSTEM.md` §1.4 (fila `meta.mono`) y en el inventario de §15.9, y se cierra cuando los dos fundadores la aprueben viendo las capturas del PR de implementación. Si no la aprueban, se elige otra monoespaciada sin reabrir Brygada 1918 ni Onest.
+
+**Lo que no cambia:** la paleta y los tokens de color de I2, la anatomía de los componentes y las cifras tabulares (`tabular-nums` global). La verificación heredada «respaldo tipográfico en Android» (decisión 12) pasa a aplicarse a Onest.
 
 #### Dataset dorado: quién lo produce y cuándo
 

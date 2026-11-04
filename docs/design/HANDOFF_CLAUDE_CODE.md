@@ -81,7 +81,7 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 ## Stack de UI sugerido [P]
 - Íconos: `@phosphor-icons/react` con un wrapper `AppIcon` e imports individuales.
 - Motion: `motion` (Motion for React). View Transitions solo en Goal Journey.
-- Fuentes: `next/font` con Instrument Serif 400/italic, Geist 400–600 y Geist Mono 500; `font-variant-numeric: tabular-nums` global.
+- Fuentes: `next/font` con Brygada 1918 400–700 e itálicas, Onest 400–600 (decisión 14 del maestro) y Spline Sans Mono 500, propuesta pendiente de aprobación visual; `font-variant-numeric: tabular-nums` global.
 - Formato: `Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })`.
 
 ## Orden de implementación
@@ -124,7 +124,7 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 - Emoji como iconografía → **Aprobado**. Solo Phosphor, en 4 pesos con reglas definidas.
 - Dashboard de KPIs sin jerarquía → **Aprobado**. Un solo número héroe por pantalla. El ahorro se muestra aparte y nunca se suma.
 - Data slop (porcentajes y deltas decorativos) → **Atención**. El «+4%» del análisis solo aparece con su explicación. Hay que vigilar que no se agreguen deltas en Inicio.
-- Fuentes sobreusadas (Inter, Roboto) → **Aprobado**. Instrument Serif + Geist + Geist Mono para metadatos.
+- Fuentes sobreusadas (Inter, Roboto) → **Aprobado**. Desde la decisión 14 del maestro: Brygada 1918 + Onest, con Spline Sans Mono propuesta para metadatos; ninguna está en la lista de sobreusadas de Impeccable.
 - Bento en todo → **Atención**. El bento se limita a Inicio. Actividad, Balance y Plan son listas editoriales.
 - Copia genérica («¡Todo listo!») → **Aprobado**. La copia explica la consecuencia financiera: «no es un gasto», «no mueve dinero».
 - Animación decorativa → **Aprobado**. Solo dos momentos L2 y cada animación explica un cambio de dato.
@@ -146,7 +146,7 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 | Sara lila → petróleo | `person.1 #6F98A8 / #8FB3C1` | Avatar, cinta, balance | P |
 | Fichas de categoría a color | `category.{id}.bg/fg` | CategoryIcon, ExpenseRow, CategoryBlocks, Budget | A |
 | Por saldar neutro y punteado | `color.status.pending, border.pending` | Badge, SharedBalance | A |
-| Instrument Serif solo en titulares | `display.*, title.*` | Todas las pantallas; nunca en tablas ni formularios | A |
+| Brygada 1918 solo en titulares | `display.*, title.*` | Todas las pantallas; nunca en tablas ni formularios | A |
 | Cifras tabulares | `money.*, tabular-nums` | Toda cifra; Counter | A |
 | Oscuro cercano al negro | `surface.* (dark)` | ThemeProvider | A |
 | Elevación táctil | `elevation.raised/float/overlay/sheet` | Card, Button, Tabbar | A |
