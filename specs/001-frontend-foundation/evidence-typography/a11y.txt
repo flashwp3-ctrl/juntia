@@ -1,0 +1,193 @@
+
+Running 36 tests using 1 worker
+
+light / 390px: 0 violaciones, 0 serias o críticas
+light / 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+light / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  1 [a11y] › tests\a11y\routes.a11y.ts:138:11 › / · light · 390px (2.3s)
+light /actividad 390px: 0 violaciones, 0 serias o críticas
+light /actividad 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+light /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  2 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /actividad · light · 390px (2.0s)
+light /metas 390px: 0 violaciones, 0 serias o críticas
+light /metas 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+light /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  3 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /metas · light · 390px (1.9s)
+light /plan 390px: 0 violaciones, 0 serias o críticas
+light /plan 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+light /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  4 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /plan · light · 390px (1.9s)
+light /balance 390px: 0 violaciones, 0 serias o críticas
+light /balance 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+light /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok  5 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /balance · light · 390px (2.0s)
+light /cuenta 390px: 0 violaciones, 0 serias o críticas
+light /cuenta 390px: sin selector en este ancho
+light /cuenta 390px: sin disparador visible de Anotar
+  ok  6 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /cuenta · light · 390px (1.1s)
+light /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 31.3487 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 390px: AmountInput «999.999.999» a 28 px, marco de 64 px
+light /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.36/44.00 en 10 cuadros
+  ok  7 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /interno/primitivos · light · 390px (4.0s)
+light /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+  ok  8 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /ruta-que-no-existe · light · 390px (1.1s)
+light / 1440px: 0 violaciones, 0 serias o críticas
+light / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok  9 [a11y] › tests\a11y\routes.a11y.ts:138:11 › / · light · 1440px (2.0s)
+light /actividad 1440px: 0 violaciones, 0 serias o críticas
+light /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 10 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /actividad · light · 1440px (1.9s)
+light /metas 1440px: 0 violaciones, 0 serias o críticas
+light /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 11 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /metas · light · 1440px (2.0s)
+light /plan 1440px: 0 violaciones, 0 serias o críticas
+light /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 12 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /plan · light · 1440px (1.9s)
+light /balance 1440px: 0 violaciones, 0 serias o críticas
+light /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 13 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /balance · light · 1440px (1.8s)
+light /cuenta 1440px: 0 violaciones, 0 serias o críticas
+light /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+light /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 14 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /cuenta · light · 1440px (1.9s)
+light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+light /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+light /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+light /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+light /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+light /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+  ok 15 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /interno/primitivos · light · 1440px (3.5s)
+light /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+  ok 16 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /ruta-que-no-existe · light · 1440px (1.2s)
+dark / 390px: 0 violaciones, 0 serias o críticas
+dark / 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+dark / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 17 [a11y] › tests\a11y\routes.a11y.ts:138:11 › / · dark · 390px (1.9s)
+dark /actividad 390px: 0 violaciones, 0 serias o críticas
+dark /actividad 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+dark /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 18 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /actividad · dark · 390px (2.0s)
+dark /metas 390px: 0 violaciones, 0 serias o críticas
+dark /metas 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+dark /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 19 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /metas · dark · 390px (2.0s)
+dark /plan 390px: 0 violaciones, 0 serias o críticas
+dark /plan 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+dark /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 20 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /plan · dark · 390px (1.8s)
+dark /balance 390px: 0 violaciones, 0 serias o críticas
+dark /balance 390px: perilla 286.89 en 10 cuadros, 1 posición(es)
+dark /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+  ok 21 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /balance · dark · 390px (1.9s)
+dark /cuenta 390px: 0 violaciones, 0 serias o críticas
+dark /cuenta 390px: sin selector en este ancho
+dark /cuenta 390px: sin disparador visible de Anotar
+  ok 22 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /cuenta · dark · 390px (975ms)
+dark /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 390px: AmountInput «999.999.999» a 31.3487 px, marco de 64 px
+dark /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 390px: AmountInput «999.999.999» a 28 px, marco de 64 px
+dark /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.31/44.00 en 10 cuadros
+  ok 23 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /interno/primitivos · dark · 390px (3.6s)
+dark /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+  ok 24 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /ruta-que-no-existe · dark · 390px (1.3s)
+dark / 1440px: 0 violaciones, 0 serias o críticas
+dark / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 25 [a11y] › tests\a11y\routes.a11y.ts:138:11 › / · dark · 1440px (2.2s)
+dark /actividad 1440px: 0 violaciones, 0 serias o críticas
+dark /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 26 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /actividad · dark · 1440px (1.9s)
+dark /metas 1440px: 0 violaciones, 0 serias o críticas
+dark /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 27 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /metas · dark · 1440px (1.8s)
+dark /plan 1440px: 0 violaciones, 0 serias o críticas
+dark /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 28 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /plan · dark · 1440px (2.1s)
+dark /balance 1440px: 0 violaciones, 0 serias o críticas
+dark /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 29 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /balance · dark · 1440px (2.1s)
+dark /cuenta 1440px: 0 violaciones, 0 serias o críticas
+dark /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+dark /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+  ok 30 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /cuenta · dark · 1440px (1.9s)
+dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+dark /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+dark /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+dark /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+dark /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+  ok 31 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /interno/primitivos · dark · 1440px (3.5s)
+dark /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+  ok 32 [a11y] › tests\a11y\routes.a11y.ts:138:11 › /ruta-que-no-existe · dark · 1440px (1.0s)
+light /cuenta 390px: disparadores de Anotar visibles 0
+  ok 33 [a11y] › tests\a11y\routes.a11y.ts:249:9 › /cuenta · light · 390px: barra oculta (pantalla apilada) (428ms)
+light /cuenta 768px: disparadores de Anotar visibles 1
+  ok 34 [a11y] › tests\a11y\routes.a11y.ts:249:9 › /cuenta · light · 768px: barra visible con Anotar (948ms)
+dark /cuenta 390px: disparadores de Anotar visibles 0
+  ok 35 [a11y] › tests\a11y\routes.a11y.ts:249:9 › /cuenta · dark · 390px: barra oculta (pantalla apilada) (327ms)
+dark /cuenta 768px: disparadores de Anotar visibles 1
+  ok 36 [a11y] › tests\a11y\routes.a11y.ts:249:9 › /cuenta · dark · 768px: barra visible con Anotar (990ms)
+
+  36 passed (1.2m)

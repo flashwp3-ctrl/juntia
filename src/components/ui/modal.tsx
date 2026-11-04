@@ -54,7 +54,7 @@ export function Modal({ open, onOpenChange, title, description, trigger, childre
                   data-modal=""
                   className="pointer-events-auto flex max-h-[calc(100dvh-32px)] w-full max-w-[520px] flex-col gap-3 overflow-y-auto rounded-[var(--radius-2xl)] bg-overlay p-[22px] text-ink shadow-overlay focus-visible:outline-none"
                 >
-                  <Dialog.Title className="font-serif text-[28px] leading-none">{title}</Dialog.Title>
+                  <Dialog.Title className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)]">{title}</Dialog.Title>
                   {description ? <Dialog.Description className="text-[length:var(--body-m-size)] leading-[var(--body-m-line)] text-ink-secondary">{description}</Dialog.Description> : null}
                   {children}
                   <div className="flex justify-end gap-2 pt-1">

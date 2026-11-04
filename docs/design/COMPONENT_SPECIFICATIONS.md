@@ -70,7 +70,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - **Motion:** ver «Shared Balance» en MOTION_SYSTEM.
 
 ## GoalCard
-- **Anatomía:** foto (focal point configurable) · scrim · metadatos (overline: COMPARTIDA/PERSONAL + fecha) · nombre (Brygada 1918 36 en móvil, 64–150 en el inmersivo; la escala la recalibra el PR de implementación de la decisión 14) · % · cinta · importe.
+- **Anatomía:** foto (focal point configurable) · scrim · metadatos (overline: COMPARTIDA/PERSONAL + fecha) · nombre (Brygada 1918 a 500, 32 en móvil y 56–132 en el inmersivo: el 88 % de los tamaños anteriores, como la escala de `DESIGN_SYSTEM.md` §1.4; GoalCard no existe en la 001 y su slice confirma los valores con el comp) · % · cinta · importe.
 - **Cinta:** riel radio pill de 8–16 px · un tramo por persona (color + patrón) · tramo punteado = próximo aporte planeado (proyección, no certeza) · marca de ritmo = dónde deberían ir para llegar a la fecha (solo si la meta tiene fecha).
 - **Fotografía:** scrim degradado `rgba(10,12,13,.42)` arriba hasta 30%, transparente en el centro y `.82` abajo (claro); en oscuro +0,1 de opacidad. Texto siempre blanco con contraste ≥ 4,5:1 medido sobre la zona del scrim. **Focal point** guardado como `{x,y}` 0–1 → `object-position`. Crop: 4:3 en tarjeta, 9:16 en inmersivo móvil y 4:5 en escritorio. Fotos muy claras: el scrim inferior sube a .9 (detección por luminancia media [V]). Sujeto en el borde: el focal point manda y el título nunca se superpone a la zona de 30% alrededor del foco [V].
 - **Fallback sin foto:** fondo savingSubtle + inicial gigante en serif al 30% + ícono Duotone del tipo de meta (viaje airplane-tilt, boda heart, vivienda house-line). Texto en tinta.

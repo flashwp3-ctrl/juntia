@@ -95,10 +95,12 @@ export function AmountInput({ value, defaultValue = null, onValueChange, error, 
       onChange={handleChange}
       prefix={<span aria-hidden="true" className="shrink-0 text-[length:var(--money-m-size)] font-semibold text-[var(--comp-field-muted-fg)]">$</span>}
       // Importes largos: el tamaño baja con clamp hasta 28 px según el ancho disponible, sin cortar.
-      // D-05 (T077): a 40 px Chrome da al <input> un alto de línea `normal` de Geist (1,3 → 52 px) aunque pida
-      // leading-none; con py-1.5 el marco sigue en 64 px (12 + 52) y no crece a 68.
+      // D-05 (T077): a 40 px Chrome da al <input> un alto de línea `normal` aunque pida leading-none. Con Onest es 1,275
+      // (51 px); con py-1.5 el marco se queda en el mínimo de 64 px (12 + 51) y no crece.
+      // Decisión 14: 0,68 em por carácter. Onest 600 con tnum y -0,03 em mide hasta 0,590 em por carácter en importes
+      // formateados, frente a 0,537 de Geist; el coeficiente sube en la misma proporción (0,62 × 1,099).
       fieldClassName={`@container min-h-16 py-1.5 ${fieldClassName}`}
-      inputClassName={`text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.62+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] ${inputClassName}`}
+      inputClassName={`text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] ${inputClassName}`}
       style={{ "--amount-chars": Math.max(shown.length, 4) } as React.CSSProperties}
     />
   );
