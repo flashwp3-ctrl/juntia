@@ -4,13 +4,19 @@ name: Frontend foundation
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    # Solo tipos de archivo documentales, nunca carpetas enteras: .specify, .agents y .claude
-    # mezclan documentación con ejecutables y reglas de seguridad (ADR-011 §5).
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**/*.png"
-      - "specs/**/*.png"
-      - "specs/**/*.txt"
+    # Solo tipos de archivo documentales, nunca carpetas enteras (ADR-011 §5). El orden importa:
+    # lo que alimenta herramientas o agentes se vuelve a incluir, aunque sea Markdown.
+    paths:
+      - "**"
+      - "!**/*.md"
+      - "!docs/**/*.png"
+      - "!specs/**/*.png"
+      - "!specs/**/*.txt"
+      - ".specify/**"
+      - ".claude/**"
+      - ".agents/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
   workflow_dispatch:
 permissions:
   contents: read
