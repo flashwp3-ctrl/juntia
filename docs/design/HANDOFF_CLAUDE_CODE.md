@@ -128,7 +128,7 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 - Bento en todo → **Atención**. El bento se limita a Inicio. Actividad, Balance y Plan son listas editoriales.
 - Copia genérica («¡Todo listo!») → **Aprobado**. La copia explica la consecuencia financiera: «no es un gasto», «no mueve dinero».
 - Animación decorativa → **Aprobado**. Solo dos momentos L2 y cada animación explica un cambio de dato.
-- Ilustraciones genéricas en vacíos → **Aprobado**. Los vacíos usan un ícono Duotone en una ficha y texto útil, sin ilustraciones de stock.
+- Ilustraciones genéricas en vacíos → **Aprobado**. Los vacíos usan un ícono Duotone en una ficha y texto útil, sin ilustraciones de stock. La ficha mide 88 px con radio 28 (32 % del lado, la proporción de CategoryIcon) y el ícono 42; el texto de apoyo va en `linen.800` en claro y `text.secondary` en oscuro.
 
 ## Evaluación (criterios inspirados en Awwwards, autoevaluación)
 - Diseño: 8,8 — La identidad es reconocible: fichas de categoría, cinta y foto inmersiva. El oscuro tiene composición propia.
