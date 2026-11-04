@@ -60,6 +60,16 @@ documental.
 - Q11: ¿Qué recuperación hace falta antes de datos reales? → A: Antes del primer dato real, **una copia completa de la base, cifrada y guardada fuera de Supabase, y una restauración de prueba en local**, con salida en la evidencia. Después, una copia semanal con un comando documentado que ejecuta un fundador.
 - Q12: ¿Exportar entra en P0-1? → A: **Sí**, JSON y CSV de los movimientos privados propios. P0-3 lo completa con la pareja y las metas.
 
+### Session 2026-11-04 (revisión del PR #35)
+
+Tres preguntas que la primera revisión adversarial encontró decididas sin
+aprobación. Las respondió el primer fundador el 4 de noviembre de 2026; se suman
+a la decisión 16 del maestro y la segunda fundadora las confirma con el merge.
+
+- Q13: ¿Se permite una fecha futura en un movimiento? → A: **Sí.** Actividad tiene que dejar llegar a cualquier mes futuro que tenga movimientos, para que ninguno quede inaccesible.
+- Q14: ¿Se puede cambiar de gasto a ingreso, o al revés, al editar? → A: **No.** El tipo queda fijo; para corregirlo se elimina y se anota de nuevo.
+- Q15: ¿Qué pasa si el mismo movimiento se edita casi a la vez en dos sitios? → A: **La segunda edición falla y lo explica**, con control de versión, como en los presupuestos. Nada se pierde en silencio.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Los actores son las dos personas fundadoras, que usan Juntia con sus datos
@@ -155,11 +165,11 @@ que el eliminado no cuenta en ningún total.
 
 **Acceptance Scenarios**:
 
-1. **Given** el detalle de un movimiento propio (04·1 DETALLE, o el panel de 04·7 en escritorio), **When** Sara elige Editar, **Then** ve la edición de 04·1 sin el texto de pareja («tu pareja verá…»), con monto, categoría, fecha, descripción y tipo editables (Q2).
+1. **Given** el detalle de un movimiento propio (04·1 DETALLE, o el panel de 04·7 en escritorio), **When** Sara elige Editar, **Then** ve la edición de 04·1 sin el texto de pareja («tu pareja verá…»), con monto, categoría, fecha y descripción editables; el tipo (gasto o ingreso) no se puede cambiar (Q2, Q14).
 2. **Given** una edición guardada, **When** el servidor la confirma, **Then** el movimiento muestra los valores nuevos y la auditoría guarda actor, instante, valor anterior y nuevo, en una sola operación atómica (maestro §5.4).
 3. **Given** el detalle de un movimiento, **When** Sara elige «Eliminar gasto» y confirma en el diálogo «¿Eliminar este gasto?», **Then** el movimiento queda anulado: desaparece de Actividad, de Inicio y de la exportación, y su rastro de auditoría se conserva (Q4; maestro §5.2).
 4. **Given** el diálogo de eliminar, **When** Sara cancela o pulsa Escape, **Then** no cambia nada y el foco vuelve al botón.
-5. **Given** dos ediciones casi simultáneas del mismo movimiento (dos pestañas), **When** llegan al servidor, **Then** ninguna se pierde en silencio: la segunda, si se basó en una versión anterior, falla con un error que lo explica (ADR-013 §3; maestro §5.4).
+5. **Given** dos ediciones casi simultáneas del mismo movimiento (dos pestañas), **When** llegan al servidor, **Then** ninguna se pierde en silencio: la segunda, si se basó en una versión anterior, falla con un error que lo explica (Q15; ADR-013 §3).
 
 ---
 
@@ -204,8 +214,8 @@ buscar y filtrar, en móvil y a 1440 px.
 **Acceptance Scenarios**:
 
 1. **Given** Actividad, **When** se muestra, **Then** los movimientos del mes están agrupados por día, del más reciente al más antiguo, con el resumen «Gasto de octubre» arriba (04·1 ACTIVIDAD).
-2. **Given** el resumen del mes, **When** Sara pulsa la flecha de mes anterior o siguiente, **Then** cambia el mes, el resumen y la lista, y la URL refleja el mes elegido (Q8).
-3. **Given** el mes en curso, **When** se muestra, **Then** la flecha de mes siguiente no lleva a meses futuros vacíos (Q8).
+2. **Given** el resumen del mes, **When** Sara pulsa la flecha de mes anterior o siguiente, **Then** cambia el mes, el resumen y la lista (Q8). Cómo se conserva el mes elegido al recargar lo decide el plan.
+3. **Given** movimientos con fecha futura, **When** Sara avanza con la flecha de mes siguiente, **Then** llega hasta el mes más lejano que tenga movimientos; más allá, la flecha no avanza a meses vacíos (Q8, Q13).
 4. **Given** el buscador, **When** escribe parte de una descripción, **Then** la lista se filtra a los movimientos del mes que coinciden; el filtro de tipo (gasto o ingreso) y de categoría funcionan igual (04·1, 04·7).
 5. **Given** 1440 px, **When** abre Actividad, **Then** ve la tabla de 04·7 (Descripción · Fecha · Monto, sin la columna «Pagó·Reparto», que es de pareja) con el panel de detalle a la derecha.
 6. **Given** un mes sin movimientos, **When** lo abre, **Then** ve el estado vacío (04·6 SIN ACTIVIDAD) con texto de contexto privado, no el compartido («Cuando alguno de los dos anote…»).
@@ -321,8 +331,8 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 - **Verificación de correo desde otro dispositivo:** el enlace verifica la cuenta y lleva a entrar; no hay pantalla de «verificado» diseñada, así que el enlace termina en «Entrar» (A1) con un aviso corto de éxito.
 - **Enlace de recuperación caducado o usado:** lleva a pedir otro, sin revelar nada de la cuenta.
 - **Monto 0, negativo o con decimales en COP:** no se puede guardar; COP se anota en pesos enteros y se convierte exacto a unidades menores (maestro §5.2).
-- **Monto enorme:** se acepta hasta el máximo que define el plan sin pasar por `number` (ADR-013 §4).
-- **Fecha futura:** se permite, porque un gasto se puede anotar por adelantado; cuenta en su mes. El plan confirma el límite.
+- **Monto máximo:** 999.999.999 pesos, el máximo de AmountInput (`COMPONENT_SPECIFICATIONS.md` §AmountInput). Un monto mayor no se puede guardar. La prueba de 9007199254740993 de ADR-013 verifica la precisión del transporte, no un importe permitido.
+- **Fecha futura:** se permite y el movimiento cuenta en su mes (Q13). Inicio muestra el mes en curso, así que un movimiento futuro aparece en Inicio cuando llega su mes; en Actividad se alcanza con las flechas.
 - **Categoría sin elegir:** Guardar no se habilita (02·5 E1).
 - **Editar un movimiento ya eliminado** (otra pestaña): falla con un error que lo explica.
 - **«Deshacer» después de los 6 s o tras recargar:** ya no está disponible; queda «Eliminar».
@@ -354,11 +364,11 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 #### Dinero y movimientos (maestro §5)
 
 - **FR-012**: El dominio tiene un tipo `Money` en unidades menores ISO 4217 con `bigint`, sin `number`; COP se escribe en pesos enteros y se convierte exacto (maestro §5.2).
-- **FR-013**: Un movimiento de P0-1 es un **gasto** o un **ingreso**, privado de su autora, con importe positivo, moneda COP, categoría del catálogo canónico, fecha (`transaction_date`), descripción opcional y estado activo o anulado (maestro §7.3; Q3, Q4).
+- **FR-013**: Un movimiento de P0-1 es un **gasto** o un **ingreso**, privado de su autora, con importe positivo, moneda COP, categoría del catálogo canónico, fecha (`transaction_date`, también futura), descripción opcional, estado activo o anulado y un tipo que no cambia después de crearlo (maestro §7.3; Q3, Q4, Q13, Q14).
 - **FR-014**: El catálogo de categorías es el de `DESIGN_SYSTEM.md` §1.3; «Ingresos» solo vale para ingresos y las demás solo para gastos. Sin categorías propias (P1).
 - **FR-015**: El mes de un movimiento se calcula con `transaction_date` en `America/Bogota` (maestro §5.2).
 - **FR-016**: Crear, editar y anular son operaciones atómicas e idempotentes que escriben auditoría con actor, instante, valor anterior y nuevo (maestro §5.4; US-06).
-- **FR-017**: Una edición usa control de versión: si el movimiento cambió desde que se leyó, falla con un error propio (ADR-013 §3.5, aplicado a movimientos).
+- **FR-017**: Una edición usa control de versión: si el movimiento cambió desde que se leyó, falla con un error propio (Q15).
 - **FR-018**: Un movimiento anulado no cuenta en ningún total, lista, búsqueda ni exportación, y no se puede editar (maestro §5.2, §5.4).
 - **FR-019**: El gasto del mes es la suma de gastos activos del mes; los ingresos se muestran aparte y nunca se restan ni se suman al gasto (maestro §5.3).
 - **FR-020**: El módulo del dataset dorado existe en `src/domain/` con los tipos de contexto, persona y moneda, y la parte de P0-1: los movimientos privados de Sara de octubre de 2026, que suman exactamente 412.900 en gastos (tabla «Dataset dorado de P0-1»), más un ingreso que no suma al gasto (§15.10, «Dataset dorado», reglas 1, 2 y 4).
@@ -379,7 +389,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 - **FR-030**: La hoja de Anotar de la 001 pasa a ser el flujo real E1–E5 en su versión privada: sin «Pagó», «Participan» ni «Reparto», y con el contexto fijo en Yo (Q2). Añade las paradas, el arrastre y la confirmación de cambios sin guardar que la 001 no construyó (001, FR-031a).
 - **FR-031**: Selector «Gasto | Ingreso» arriba de la hoja, con la categoría «Ingresos» para ingreso (Q3).
-- **FR-032**: E1 con foco en el monto, `AmountInput` con teclado nativo y máscara de COP, las categorías recientes y Guardar habilitado con monto y categoría (02·5; decisión 11).
+- **FR-032**: E1 con foco en el monto, `AmountInput` con teclado nativo, máscara de COP y máximo de 999.999.999 pesos, las categorías recientes y Guardar habilitado con monto y categoría (02·5; `COMPONENT_SPECIFICATIONS.md` §AmountInput; decisión 11).
 - **FR-033**: E2 con categoría, descripción y fecha; E3 con la validación que aplique a P0-1 (monto válido); E4 «Guardando…» con los campos bloqueados y sin promesa offline; E5 con el conteo del total, la fila resaltada y el toast «Deshacer» de 6 s (02·5).
 - **FR-034**: «Deshacer» anula el movimiento recién creado con auditoría (Q2, Q4).
 - **FR-035**: El atajo `N` abre Anotar fuera de un campo de texto; Enter guarda y Escape cierra en escritorio (02·5; handoff §Accesibilidad).
@@ -388,7 +398,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 #### Editar y eliminar (04·1, 04·7, 02·1)
 
 - **FR-037**: Detalle de movimiento (04·1 DETALLE y panel de 04·7) con Editar y «Eliminar gasto» (o «Eliminar ingreso»).
-- **FR-038**: Edición de 04·1 sin el texto de pareja, con tipo, monto, categoría, fecha y descripción (Q2).
+- **FR-038**: Edición de 04·1 sin el texto de pareja, con monto, categoría, fecha y descripción; el tipo no se cambia (Q2, Q14).
 - **FR-039**: Eliminar con el diálogo de confirmación de 02·1, foco inicial en la opción segura y Escape para cancelar; sin «Deshacer» posterior (Q4).
 
 #### Inicio (04·1, 04·6, 04·7)
@@ -402,7 +412,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 #### Actividad (04·1, 04·6, 04·7)
 
-- **FR-046**: Lista del mes agrupada por día con el resumen del mes, y flechas de mes anterior y siguiente que no llevan a meses futuros; el mes elegido va en la URL (Q8).
+- **FR-046**: Lista del mes agrupada por día con el resumen del mes, y flechas de mes anterior y siguiente. La siguiente llega hasta el mes más lejano con movimientos, incluidos los futuros, y no avanza a meses vacíos más allá (Q8, Q13).
 - **FR-047**: Búsqueda por descripción y filtros por tipo y categoría dentro del mes (04·1, 04·7).
 - **FR-048**: Tabla de escritorio de 04·7 sin la columna «Pagó·Reparto», con panel de detalle.
 - **FR-049**: Estado vacío con texto de contexto privado y estado de error de 04·6.
@@ -467,7 +477,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 - **SC-003**: Mediana menor de 10 s para registrar un gasto habitual en el teléfono real de un fundador tras la primera entrada, medida con al menos 10 registros y reportada con su método (US-12; §15.7).
 - **SC-004**: INP menor de 200 ms al abrir Anotar y al guardar, medido en laboratorio y reportado como tal (§15.7).
 - **SC-005**: CLS = 0 en las cargas con Skeleton de Inicio y Actividad y en las rutas de acceso y Mi cuenta, con el arnés R2, sin cuadro del tema contrario también con el tema guardado (§15.7; Q7).
-- **SC-006**: Las diez `[V]` de ADR-013 tienen salida real en la evidencia; las 1, 2, 7, 8 y 9, antes de la primera función de dinero (ADR-013, «Verificación pendiente»).
+- **SC-006**: Las diez `[V]` de ADR-013 tienen salida real en la evidencia; las 1, 2, 7, 8 y 9 definitivas, en el PR A con la primera migración y antes de la primera función de dinero (ADR-013, «Verificación pendiente»).
 - **SC-007**: Cero accesos a datos de otra persona en los tests negativos de RLS, por la API y por SQL directo (US-05).
 - **SC-008**: Con el dataset dorado sembrado, Inicio y Actividad de octubre de 2026 muestran exactamente 412.900 de gasto de Sara y el desglose por categoría de la tabla (§15.10, «Dataset dorado»).
 - **SC-009**: Cero movimientos duplicados en las pruebas de doble envío y reintento (US-12, «sin doble envío»).
@@ -479,7 +489,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 - **Contexto Yo por defecto**, como en la 001. Nosotros existe como estado «todavía no disponible» hasta P0-2.
 - **Una persona, un perfil, un espacio privado.** No hay tabla de grupos en P0-1; P0-2 la añade. El modelo de movimientos deja sitio para el alcance de grupo sin usarlo (maestro §7.3, «Scope privado XOR grupo»).
-- **Las categorías recientes** de E1 son las cinco usadas más recientemente por la persona; sin historial, las cinco primeras del catálogo.
+- **Las categorías recientes** de E1 son las cinco usadas más recientemente por la persona (02·5). Qué se muestra sin historial lo decide el plan, como detalle local.
 - **La fecha por defecto** es hoy en `America/Bogota`.
 - **Las pantallas que no están diseñadas** (selector de ingreso, Inicio sin pareja, estados de Inicio, sesión caducada, flechas de mes) se componen con primitivos y patrones aprobados y se aprueban viendo la pantalla en su PR (§15.9).
 - **La lista permitida** contiene los dos correos de los fundadores. Cambiarla es una operación documentada, no una pantalla.
@@ -543,7 +553,8 @@ paleta ya visibles desde la 001.
 
 | `[V]` | Fuente | Qué hay que ejecutar |
 | --- | --- | --- |
-| ADR-013 [V] 1, 2, 7, 8 y 9 | ADR-013 | El mecanismo de `juntia_writer`, la escritura directa imposible, los privilegios efectivos, las vistas sin `usage` y la forma del claim, en la versión de Supabase del stack. Si la 1 falla, ADR-013 se reabre |
+| Viabilidad de `juntia_writer` (anticipo de ADR-013 [V] 1) | ADR-013 | Un prototipo SQL aislado en Supabase local, desechable: crear el rol, asignarle una función `security definer`, comprobar que `auth.uid()` devuelve a quien llama y que la RLS se le aplica. Informa el plan; **no sustituye** la [V] 1 definitiva del PR A. Si falla, ADR-013 se reabre antes de cerrar el plan |
+| Forma del claim (ADR-013 [V] 9) | ADR-013; decisión 1 | En Supabase local, la forma del claim que leen `auth.uid()` y las políticas |
 | ADR-013 [V] 10 | ADR-013 | Versiones exactas de `@supabase/supabase-js`, `@supabase/ssr` y la CLI |
 | Persistencia del tema | `COMPONENT_SPECIFICATIONS.md` §ThemeSelector; Q7 | Que la cookie llega al script bloqueante y el primer pintado usa el tema guardado, sin destello ni error de hidratación |
 | Lista permitida del registro | Q9 | Qué mecanismo de Supabase valida el correo antes de crear el usuario en el plan Free, y que una llamada directa a la API de Auth tampoco lo salta |
@@ -554,7 +565,8 @@ paleta ya visibles desde la 001.
 
 | `[V]` | Fuente | Qué se comprueba |
 | --- | --- | --- |
-| ADR-013 [V] 3, 4, 5 y 6 | ADR-013 | Atomicidad, concurrencia e idempotencia, edición concurrente (aplicada a movimientos) e importes de ida y vuelta |
+| ADR-013 [V] 1, 2, 7, 8 y 9, definitivas | ADR-013 | En el **PR A**, con la primera migración y **antes de la primera función de dinero**: `juntia_writer` sobre el esquema real, escritura directa imposible por la API pública, privilegios efectivos, vistas sin `usage` y forma del claim. Si la 1 falla, ADR-013 se reabre antes de seguir |
+| ADR-013 [V] 3, 4, 5 y 6 | ADR-013; Q15 | Atomicidad, concurrencia e idempotencia, edición concurrente de movimientos e importes de ida y vuelta |
 | Workers con usuarios aislados | ADR-011, [V] 3 | Cuántos workers de Playwright caben con siembra aislada |
 | Altura del teclado nativo con la hoja de Anotar | `RESPONSIVE_SPECIFICATIONS.md`; decisión 11 | En iPhone y Android, el teclado no tapa el monto ni Guardar |
 | Teclados de terceros en Android | §15.6.2, dependencia 3 | La máscara de COP con al menos un teclado de terceros, o excepción documentada |
@@ -564,22 +576,22 @@ paleta ya visibles desde la 001.
 
 ## Verificaciones heredadas de la decisión 12
 
-Copiada del maestro §15.10, decisión 12, como exige la propia decisión. P0-1 no
-se acepta si alguna fila sigue sin salida real, salvo una excepción formal donde
-la fila la admite.
+Copiada **literalmente** del maestro §15.10, decisión 12, como exige la propia
+decisión. P0-1 no se acepta si alguna fila sigue sin salida real, salvo una
+excepción formal donde la fila la admite.
 
 | Verificación | Dueño | Cuándo |
 | --- | --- | --- |
-| T072 · Superficie interna en Vercel, parte 1: **aislamiento en producción** (HTML y RSC sin fuga, 404) | Gestor | **Hecha el 4 de noviembre de 2026** |
-| T072, parte 2: **aislamiento en preview** (un host no autorizado sobre un preview responde 404) | Gestor, con un alias de prueba **no productivo** del tipo `*.vercel.app` que asigna la dueña; nunca el dominio de producción | **Al disponer del primer preview real y antes de que nadie use un preview.** Sin excepción posible. El preview necesita un commit de la dueña (decisión 13, regla 3) |
-| T072, parte 3: **funcionamiento en preview** (la superficie da 200 por las URL de despliegue y de rama) | Fundadores, con sesión en Vercel | Antes de aceptar P0-1 |
-| T073 · Contraste en dispositivo (iPhone) | Fundadores | Antes de aceptar P0-1 |
+| T072 · Superficie interna en Vercel, parte 1: **aislamiento en producción** (HTML y RSC sin fuga, 404) | Gestor | Justo después del primer despliegue de producción y antes de que nadie use un despliegue. Sin excepción posible: es un control de aislamiento (§15.6; ADR-011 §8). **Hecha el 4 de noviembre de 2026** |
+| T072, parte 2: **aislamiento en preview** (un host no autorizado sobre un preview responde 404, la segunda barrera de `isAllowedInternalHost`) | Gestor, con un alias de prueba **no productivo** del tipo `*.vercel.app` que asigna la dueña; nunca el dominio de producción | **Al disponer del primer preview real y antes de que nadie use un preview.** Sin excepción posible: es un control de aislamiento (ADR-011 §8). El preview necesita un commit de la dueña (decisión 13, regla 3) |
+| T072, parte 3: **funcionamiento en preview** (la superficie da 200 por las URL de despliegue y de rama) | Fundadores, con sesión en Vercel | Antes de aceptar P0-1. Aplazada por decisión de los fundadores del 4 de noviembre de 2026: comprueba que la superficie se ve donde debe y no es un control de aislamiento |
+| T073 · Contraste en dispositivo (iPhone) | Fundadores | Antes de aceptar P0-1; se puede adelantar en cualquier momento |
 | T074 · Sombras táctiles en un Android de gama media | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
-| T075 · VoiceOver con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Sin excepción posible |
+| T075 · VoiceOver con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Sin excepción posible, porque los fundadores tienen iPhone |
 | T075 · TalkBack con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Admite excepción formal si no hay un Android disponible |
-| CLS = 0 fuera de Chromium: Firefox y WebKit con el arnés R2 | Gestor | Antes de aceptar P0-1. Sin excepción posible |
+| CLS = 0 fuera de Chromium: Firefox y WebKit con el arnés R2 | Gestor | Antes de aceptar P0-1. Sin excepción posible. El mecanismo que da CLS = 0 en la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero no Firefox ni Safari anterior; en la 001 solo se demostró en Chromium |
 | CLS en un iPhone real | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Mac para el inspector web de Safari |
-| Respaldo tipográfico de la fuente de interfaz en Android (Onest) | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
+| Respaldo tipográfico de la fuente de interfaz en Android (Onest desde la decisión 14) | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
 
 La excepción formal se registra con sus cinco datos y el estado «EXCEPCIÓN
 APROBADA», nunca «verificado» (decisión 12).
@@ -611,9 +623,17 @@ APROBADA», nunca «verificado» (decisión 12).
 | --- | ---: | ---: | ---: |
 | Specs E2E existentes | 0 | 2 (spec 1 «Acceso y Mi cuenta», spec 2 «Anotar gasto, cronometrado») | 2 |
 
-La spec 1 nace sin los casos de pareja e invitaciones, que añade P0-2. Incluye el
-caso de descarga de Exportar (`docs/TESTING.md`, matriz de recorridos). La sexta
-plaza sigue libre.
+Cada una entra con el PR que entrega su recorrido, porque una funcionalidad no
+se fusiona sin su E2E (`docs/TESTING.md`, «Lo que arranca progresivamente»):
+
+| PR | Spec E2E |
+| --- | --- |
+| A · Base de datos, seguridad y dinero | Ninguna: no hay recorrido de interfaz. Entran el job SQL/RLS y la siembra |
+| B · Acceso y Mi cuenta | **Spec 1** nace, con acceso y Mi cuenta, sin pareja ni invitaciones (P0-2) |
+| C · Anotar, editar y eliminar | **Spec 2** nace, cronometrada |
+| D · Inicio, Actividad y exportación | La spec 1 suma el caso de descarga de Exportar (`docs/TESTING.md`, matriz de recorridos) |
+
+La sexta plaza sigue libre.
 
 ## Criterios de aceptación aplicables
 

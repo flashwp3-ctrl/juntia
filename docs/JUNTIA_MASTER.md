@@ -1008,7 +1008,7 @@ Tomada por los dos fundadores el 4 de noviembre de 2026, después de tres rondas
 
 #### Decisión 16: alcance de P0-1
 
-Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doce con la recomendación del gestor. El primer fundador la aprobó en la conversación con el gestor; la segunda fundadora la confirma con el merge del PR de la especificación 002. La especificación 002 (`specs/002-cuentas-y-gastos-privados/spec.md`, «Clarifications») las aplica.
+Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doce primeras con la recomendación del gestor. Las 16.13 a 16.15 salieron de la revisión adversarial del PR #35; en la 16.13 los fundadores eligieron permitir fechas futuras, frente a la recomendación de no permitirlas. El primer fundador la aprobó en la conversación con el gestor; la segunda fundadora la confirma con el merge del PR de la especificación 002. La especificación 002 (`specs/002-cuentas-y-gastos-privados/spec.md`, «Clarifications») las aplica.
 
 | # | Tema | Elección |
 | --- | --- | --- |
@@ -1024,6 +1024,9 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.10 | Supabase | Plan Free en la cuenta de la segunda fundadora, región São Paulo, con el correo de Supabase hasta antes de MVP-1 |
 | 16.11 | Recuperación | Antes del primer dato real, copia completa cifrada fuera de Supabase y restauración de prueba; después, copia semanal manual |
 | 16.12 | Exportar | En P0-1, JSON y CSV de los movimientos privados propios |
+| 16.13 | Fecha futura | Se permite; Actividad deja llegar a cualquier mes futuro con movimientos |
+| 16.14 | Tipo al editar | No se cambia de gasto a ingreso ni al revés |
+| 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
 
 **Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio y apertura del registro. Se suman al bloqueo legal de §15.6.1.
 
