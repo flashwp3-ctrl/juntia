@@ -1,6 +1,6 @@
 export const copy = {
-  shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia", notice: "Esta versión es la base de Juntia. Todavía no guarda datos." },
-  nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", shortcut: "N" },
+  shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia", notice: "Esta versión es la base de Juntia. Todavía no guarda datos.", noticeLabel: "Versión base" },
+  nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N", shortcutLabel: "Atajo" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
   annotate: { title: "Anotar un gasto", description: "Registrar gastos llega con la próxima versión. Todavía no puedes guardar movimientos.", close: "Cerrar" },
   empty: {
@@ -10,8 +10,15 @@ export const copy = {
     plan: { title: "Planifica a tu manera", description: "Los presupuestos serán opcionales. Podrás registrar gastos sin crear uno." },
   },
   balance: { title: "Todavía no disponible", description: "El balance aparece cuando exista la pareja." },
-  account: { title: "Mi cuenta", description: "Tu cuenta llega con el inicio de sesión.", back: "Volver" },
-  states: { notFound: "No encontramos esta página", error: "No pudimos mostrar esta página", retry: "Reintentar", home: "Ir a Inicio" },
+  account: { title: "Mi cuenta", status: "Todavía no disponible", description: "Tu cuenta llega con el inicio de sesión.", back: "Volver" },
+  states: {
+    notFound: "No encontramos esta página",
+    notFoundDescription: "La dirección no existe o todavía no hace parte de esta versión. Desde Inicio puedes seguir recorriendo Juntia.",
+    error: "No pudimos mostrar esta página",
+    errorDescription: "Algo falló al dibujarla. Puedes intentarlo de nuevo o volver a Inicio.",
+    retry: "Reintentar",
+    home: "Ir a Inicio",
+  },
   primitives: { loading: "Cargando…", saving: "Guardando…", close: "Cerrar", amount: "Monto", amountHelp: "Escribe el monto en pesos enteros.", amountError: "Revisa el monto y usa solo números.", pending: "POR SALDAR", settled: "LIQUIDADO", exceeded: "EXCEDIDO", nearLimit: "CERCA DEL LÍMITE", private: "PRIVADO" },
   // Solo la superficie interna (FR-050): rótulos de revisión y valores de prueba de COMPONENT_SPECIFICATIONS.md.
   internal: {

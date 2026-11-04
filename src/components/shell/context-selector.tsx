@@ -1,0 +1,80 @@
+"use client";
+// T046 / FR-025, FR-026, FR-027; research R5; COMPONENT_SPECIFICATIONS.md §Tabs / Segmented.
+// Un estado compartido por todas las instancias del selector y una única región viva para el anuncio.
+// Sin Context Transition (decisión 10; Clarifications Q2): solo se desliza la perilla del Segmented.
+import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Segmented } from "@/components/ui/segmented";
+import { copy } from "@/lib/copy/es";
+import {
+  readStoredContext,
+  serverStoredContext,
+  subscribeStoredContext,
+  writeStoredContext,
+  type ContextChoice,
+} from "@/lib/context-preference";
+
+type ContextState = { value: ContextChoice; choose: (next: ContextChoice) => void; hydrated: boolean };
+
+const ContextChoiceContext = createContext<ContextState | null>(null);
+
+const noop = () => () => {};
+
+export function ContextProvider({ children }: { children: ReactNode }) {
+  const stored = useSyncExternalStore(subscribeStoredContext, readStoredContext, serverStoredContext);
+  // Sin almacenamiento disponible, la elección vive solo durante la visita.
+  const [visit, setVisit] = useState<ContextChoice | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  const value = stored ?? visit ?? "me";
+
+  const choose = useCallback(
+    (next: ContextChoice) => {
+      if (next === value) return;
+      setVisit(next);
+      writeStoredContext(next);
+      setAnnouncement(copy.context.announce(next === "us" ? copy.context.us : copy.context.me));
+    },
+    [value],
+  );
+
+  const state = useMemo(() => ({ value, choose, hydrated }), [value, choose, hydrated]);
+  return (
+    <ContextChoiceContext.Provider value={state}>
+      {children}
+      <p aria-live="polite" className="sr-only">{announcement}</p>
+    </ContextChoiceContext.Provider>
+  );
+}
+
+export function useContextChoice() {
+  const state = useContext(ContextChoiceContext);
+  if (!state) throw new Error("ContextSelector necesita ContextProvider");
+  return state;
+}
+
+const options = [
+  { value: "me", label: copy.context.me },
+  { value: "us", label: copy.context.us },
+] as const;
+
+type ContextSelectorProps = { stretch?: boolean; className?: string };
+
+export function ContextSelector({ stretch = false, className = "" }: ContextSelectorProps) {
+  const { value, choose, hydrated } = useContextChoice();
+  return (
+    // Antes de hidratar, React pinta «Yo» (instantánea del servidor) y la perilla visible sale de <html data-context>
+    // por CSS (globals.css, research R5). Al hidratar, el Segmented se vuelve a montar con la clave nueva: la perilla
+    // aparece ya en su sitio, sin deslizarse al cargar.
+    <div data-context-selector="" data-hydrated={hydrated ? "" : undefined} className={className}>
+      <Segmented
+        key={hydrated ? "client" : "server"}
+        role="radiogroup"
+        label={copy.context.label}
+        options={options}
+        value={value}
+        onValueChange={choose}
+        stretch={stretch}
+      />
+    </div>
+  );
+}
