@@ -1368,6 +1368,8 @@ Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
 **Pendiente: no existe proyecto de Vercel.** No se crea, enlaza, despliega ni asigna alias. Los códigos locales simulados constan en T063 y no sustituyen este [V].
 
+**Estado al 3 de noviembre de 2026:** sigue pendiente; no existe el proyecto. Lista de pendientes en T078.
+
 Para los fundadores cuando exista proyecto: facilitar preview propio y acceso bajo Deployment Protection; solicitar interna por URL de despliegue y rama (200), alias de prueba no productivo (404) y producción (404); registrar URL/host/HTTP y coincidencia VERCEL_URL. Nunca asignar el dominio productivo a un preview con vercel alias.
 
 <a id="t073"></a>
@@ -1376,7 +1378,9 @@ Para los fundadores cuando exista proyecto: facilitar preview propio y acceso ba
 
 Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
-**Pendiente: requiere persona con dispositivo.** No se mide ni simula un dispositivo físico. Lista para los fundadores: ambos temas, rutas /,/actividad,/metas,/plan,/balance,/cuenta y404; abrir Anotar bajo768 y desde768; probar barra, rail y sidebar. El estado de error se revisa con su fixture de error o un fallo controlado local. Registrar modelo/SO/navegador, herramienta, par/ratio real y captura; texto normal≥4,5:1, iconos/foco≥3:1.
+**Pendiente: requiere persona con dispositivo.** No se mide ni simula un dispositivo físico.
+
+**Estado al 3 de noviembre de 2026:** sigue pendiente. Los fundadores la harán con iPhone y los resultados se registrarán aquí. Lista de pendientes en T078. Lista para los fundadores: ambos temas, rutas /,/actividad,/metas,/plan,/balance,/cuenta y404; abrir Anotar bajo768 y desde768; probar barra, rail y sidebar. El estado de error se revisa con su fixture de error o un fallo controlado local. Registrar modelo/SO/navegador, herramienta, par/ratio real y captura; texto normal≥4,5:1, iconos/foco≥3:1.
 
 Inventario de32 pares procedente de C: estos ratios son antecedentes de cálculo de escritorio, **no medidas D en dispositivo**. “Dónde” identifica cada ruta/componente; estados vacíos en /,/actividad,/metas,/plan; no disponible en /balance,/cuenta; aviso base en todas.
 
@@ -1428,6 +1432,8 @@ Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
 **Pendiente: requiere persona con dispositivo.**
 
+**Decisión de los fundadores, 3 de noviembre de 2026:** pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1.
+
 Checklist fundadores, móvil real de gama media: registrar modelo/SO/navegador y modo energético; /,/actividad,/metas,/plan y /interno/primitivos en ambos temas. Pulsar Anotar repetidamente (abrir/cerrar), navegar con la barra, pulsar Button primario/secundario/sm en galería. Observar sombras táctiles, latencia/tirones y composición mientras se presiona; repetir con movimiento reducido. Adjuntar observación por acción y, si hay degradación, traza de rendimiento. No extrapolar la emulación de Chromium al móvil real.
 
 <a id="t075"></a>
@@ -1437,6 +1443,8 @@ Checklist fundadores, móvil real de gama media: registrar modelo/SO/navegador y
 Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
 **Pendiente: requiere persona con dispositivo.**
+
+**Decisión de los fundadores, 3 de noviembre de 2026:** pendiente, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque ningún fundador tiene Android. axe no sustituye al lector de pantalla; el CI sigue corriendo axe en las 8 rutas.
 
 Ejecutar por separado VoiceOver/iOS y TalkBack/Android; guardar dispositivo, versión del SO/lector/navegador, tema, ruta, acción y anuncio literal:
 
@@ -1884,7 +1892,8 @@ Antes de mover `py`, el verde mostró que el marco de los montos vacíos y con e
 | D-05 / T068 | **Corregido** (`d2d5ef8`), con regresión en `routes.a11y.ts` (`28ee013`). Queda para el revisor la diferencia entre el ejemplo del comp (monto de 48 px a 15 px) y el contrato (`clamp` hasta 28 px); véase T068. |
 | D-04 / T070 | **Cerrado por decisión del gestor**: T070 mira las dependencias directas y `zod` solo es transitivo de desarrollo (T070). |
 | T069 diferencias del Anexo A | **Cerrado**: Anexo A §A.4 y concordancia literal en T069. F19-1 y F15-1 a F15-4 quedan pendientes del visto bueno de los fundadores. |
-| T072–T075 y paleta/copy/SC-008 | Fundadores: checklists anteriores, proyecto/preview y dispositivos reales; la001 no queda aceptada por este PR. |
+| Paleta, copy, pantallas y SC-008 | **Aprobado por el fundador el 3 de noviembre de 2026** (T078). SC-008: aprobado por un fundador; pendiente la confirmación del segundo. |
+| T072–T075 | Pendientes con dueño y momento en T078 («Pendientes `[V]` que hereda P0-1»). |
 
 D no añade specs E2E, dependencias ni funcionalidad. Sí añade aserciones permanentes de regresión dentro de las pruebas existentes de `tests/a11y/routes.a11y.ts`: las de D-02 y D-05 (Anexo A §A.4, R7 y R8).
 
@@ -1898,3 +1907,29 @@ Fecha: 2026-11-03 · Commit de aplicación: `00f85d2975aaa9fd2a6476544ab63d387a0
 [PR21](https://github.com/juntia-labs/juntia/pull/21), contra main, título `chore(001): PR D — verification and closure of spec 001`, en inglés y borrador. La descripción enlaza esta evidencia, salidas T062/T063/T070/T076, capturas T066/T068, tabla de hallazgos/cambios/commits, inventario T069 y E2E specs added:0. Incluye una tabla de cada [V] y pendientes explícitos.
 
 Gate humano pendiente: tres propuestas de paleta (Sara petróleo, Hogar azul tenue y superficie oscura), copy de estados provisionales, comprensión por ambos fundadores de que aún no guarda datos (SC-008) y capturas SC-001. T072 necesita proyecto Vercel; T073–T075 necesitan persona con dispositivo. Gasto/ingreso/liquidación en tinta pasa a P0-1. Los hallazgos de composición/anatomía se entregan a Claude Code con el comp. No se hace merge.
+
+### Gate humano: revisión visual de la 001
+
+**Aprobado por el fundador el 3 de noviembre de 2026.** Revisó la hoja de aprobación con las capturas de `main` (PR C, `a3216c0`). Las capturas de las rutas de producto del head de D son idénticas byte a byte a esas (T068, repetición tras T077). Las de la superficie interna sí cambiaron por D-05 y no formaron parte de esa hoja.
+
+| Punto | Estado |
+| --- | --- |
+| Sara en petróleo: `#6F98A8` en claro, `#8FB3C1` en oscuro (`--person-1`) | Aprobado por el fundador el 3 de noviembre de 2026 |
+| Hogar en azul tenue: `#DCE8EC` / `#2E5866` (`--category-home-bg` / `--category-home-fg`, tema claro) | Aprobado por el fundador el 3 de noviembre de 2026 |
+| Superficie oscura `#191C1F` (`--color-surface-raised`, tema oscuro) | Aprobado por el fundador el 3 de noviembre de 2026 |
+| Copy de los estados provisionales, sin cambios | Aprobado por el fundador el 3 de noviembre de 2026 |
+| SC-008: entiende sin ayuda que la versión todavía no guarda datos | **Aprobado por un fundador; pendiente la confirmación del segundo.** SC-008 exige a los dos |
+| Pantallas en general (capturas SC-001) | Aprobado por el fundador el 3 de noviembre de 2026 |
+| Gasto, ingreso y liquidación en tinta | Sigue para P0-1 |
+
+### Pendientes `[V]` que hereda P0-1
+
+Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y ninguno tiene Android. La especificación de P0-1 hereda esta lista.
+
+| `[V]` | Estado | Dueño | Momento |
+| --- | --- | --- | --- |
+| T072 · Preview real de Vercel | Pendiente: no existe el proyecto de Vercel | Fundadores (crear el proyecto); después, el agente del slice repite las comprobaciones de T072 | Cuando exista el proyecto |
+| T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal pasará los resultados para registrarlos aquí | Fundadores, con iPhone | Sin fecha; los resultados se registran en T073 |
+| T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
+| T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone; TalkBack sin dueño hasta que haya Android | Cierre de P0-1 (VoiceOver); TalkBack sin fecha |
+| SC-008 · segundo fundador | Pendiente la confirmación del segundo fundador | Segundo fundador | Antes de aceptar la 001 |
