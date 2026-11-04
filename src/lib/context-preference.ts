@@ -18,15 +18,21 @@ export function readStoredContext(): ContextChoice | null {
   }
 }
 
-/** Guarda la elección y la copia a `<html data-context>`. Sin almacenamiento, no lanza: la visita sigue sin recordar. */
-export function writeStoredContext(value: ContextChoice) {
+/**
+ * Guarda la elección y la copia a `<html data-context>`. Sin almacenamiento, no lanza: la visita sigue sin recordar.
+ * Devuelve si quedó guardada, para que la elección de la visita prevalezca cuando no (F19-2).
+ */
+export function writeStoredContext(value: ContextChoice): boolean {
+  let saved = true;
   try {
     window.localStorage.setItem(KEY, value);
   } catch {
-    // Navegación privada o almacenamiento bloqueado: el proveedor conserva la elección durante la visita.
+    // Navegación privada, cuota agotada o almacenamiento bloqueado: el proveedor conserva la elección durante la visita.
+    saved = false;
   }
   document.documentElement.setAttribute("data-context", value);
   listeners.forEach((listener) => listener());
+  return saved;
 }
 
 // Suscripción para useSyncExternalStore: cambios propios y de otras pestañas del mismo dispositivo.

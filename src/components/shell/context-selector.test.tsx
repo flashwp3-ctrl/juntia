@@ -87,6 +87,20 @@ describe("ContextSelector (T042)", () => {
     expect(option(copy.context.us).getAttribute("aria-checked")).toBe("true");
   });
 
+  // F19-2 (revisión del PR #19): lectura permitida y escritura rechazada. Lo que se muestra, `aria-checked` y el anuncio
+  // dicen lo mismo: la elección de la visita prevalece sobre lo almacenado cuando no se pudo guardar.
+  it("si se puede leer pero no escribir, la elección de la visita prevalece y el anuncio coincide con lo que se ve", async () => {
+    window.localStorage.setItem(KEY, "me");
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("Cuota", "QuotaExceededError"); });
+    const { user, option } = setup();
+    await user.click(option(copy.context.us));
+    expect(option(copy.context.us).getAttribute("aria-checked")).toBe("true");
+    expect(option(copy.context.me).getAttribute("aria-checked")).toBe("false");
+    expect(option(copy.context.us).querySelector("[data-segmented-knob]")).not.toBeNull();
+    expect(option(copy.context.me).querySelector("[data-segmented-knob]")).toBeNull();
+    expect(document.querySelector('[aria-live="polite"]')?.textContent).toBe(copy.context.announce(copy.context.us));
+  });
+
   it("tres cambios seguidos dejan guardado el último", async () => {
     const { user, option } = setup();
     await user.click(option(copy.context.us));

@@ -21,17 +21,17 @@ const noop = () => () => {};
 
 export function ContextProvider({ children }: { children: ReactNode }) {
   const stored = useSyncExternalStore(subscribeStoredContext, readStoredContext, serverStoredContext);
-  // Sin almacenamiento disponible, la elección vive solo durante la visita.
-  const [visit, setVisit] = useState<ContextChoice | null>(null);
+  // La elección de la visita. Si no se pudo guardar, prevalece sobre lo almacenado: lo que se ve, aria-checked y el
+  // anuncio dicen siempre lo mismo (F19-2, revisión del PR #19).
+  const [visit, setVisit] = useState<{ value: ContextChoice; saved: boolean } | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
-  const value = stored ?? visit ?? "me";
+  const value = visit && !visit.saved ? visit.value : (stored ?? visit?.value ?? "me");
 
   const choose = useCallback(
     (next: ContextChoice) => {
       if (next === value) return;
-      setVisit(next);
-      writeStoredContext(next);
+      setVisit({ value: next, saved: writeStoredContext(next) });
       setAnnouncement(copy.context.announce(next === "us" ? copy.context.us : copy.context.me));
     },
     [value],
