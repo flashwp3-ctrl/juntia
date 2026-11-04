@@ -1,7 +1,8 @@
 "use client";
 // FR-015, FR-040; COMPONENT_SPECIFICATIONS.md §Tabs / Segmented; MOTION_SYSTEM.md §1 (perilla, spring snappy).
 // Foco itinerante y flechas ←/→ a mano (research R1.4: sin librerías de radio ni de tabs).
-import { motion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import { useReducedMotion } from "motion/react";
 import { useId, useRef, type KeyboardEvent } from "react";
 import { snappy } from "@/lib/motion/tokens";
 
@@ -66,7 +67,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
                 <span data-segmented-knob="" className={knobClass} />
               ) : (
                 // Perilla compartida: se desliza entre segmentos con el spring snappy. No anima al montar.
-                <motion.span layoutId={knobId} initial={false} transition={snappy} data-segmented-knob="" className={knobClass} />
+                <m.span layoutId={knobId} initial={false} transition={snappy} data-segmented-knob="" className={knobClass} />
               )
             ) : null}
             {option.label}

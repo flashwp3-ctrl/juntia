@@ -1,6 +1,7 @@
 "use client";
 // FR-012, FR-037; COMPONENT_SPECIFICATIONS.md §Button. `<button>` nativo con área táctil ≥ 44.
-import { motion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import { useReducedMotion } from "motion/react";
 import type { ComponentPropsWithRef, MouseEvent, ReactNode } from "react";
 import { snappy } from "@/lib/motion/tokens";
 import { AppIcon, type AppIconName } from "./app-icon";
@@ -51,7 +52,7 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
     onClick?.(event);
   };
   return (
-    <motion.button
+    <m.button
       {...rest}
       type={type}
       // T077/D-03: Motion infiere tabindex de whileTap en SSR; fijarlo conserva el foco nativo también al hidratar con movimiento reducido.
@@ -78,6 +79,6 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
           {loadingLabel ?? children}
         </span>
       </span>
-    </motion.button>
+    </m.button>
   );
 }
