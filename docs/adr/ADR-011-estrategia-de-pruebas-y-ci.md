@@ -327,10 +327,12 @@ contrapositivo: P0-1 no mergea sin el job 3. La tabla completa está en
 Desde esta enmienda el nivel 1 se organiza así. Sustituye a «jobs en paralelo» y al FR-043 de la especificación 001:
 
 1. **Los controles 1, 2 y 5 van en un solo job, `app`, en serie y por orden de coste:** `npm ci`; lint, typecheck y Vitest, que fallan antes y más barato; un único build; y sobre ese mismo build Chromium (`npx playwright install --with-deps --only-shell chromium`), axe, `check:internal-surface` y `check:theme-script`. Cuando entren, los controles 3 (Supabase y RLS) y 4 (E2E de humo) son jobs propios, porque necesitan servicios.
-2. **Un PR que solo toca documentación no corre el CI.** El workflow ignora `docs/**`, `specs/**`, `**/*.md`, `.specify/**`, `.claude/**`, `.agents/**` y `prompts/**` (`paths-ignore`). Cualquier PR que toque otro archivo corre el nivel 1 completo. **Ningún control se salta por la ruta del cambio dentro de un PR de código**, y en particular nunca los de seguridad del job 3.
+2. **Un PR que solo toca documentación no corre el CI.** El workflow ignora (`paths-ignore`) **tipos de archivo documentales**, nunca carpetas enteras, porque carpetas como `.specify/`, `.agents/` y `.claude/` mezclan documentación con scripts ejecutables y con reglas de seguridad como `.claude/settings.json`. La lista es `**/*.md`, `docs/**/*.png`, `specs/**/*.png` y `specs/**/*.txt` (texto de evidencia). Un patrón nuevo solo se añade después de comprobar que esos archivos nunca son entrada del build, de las pruebas ni de las herramientas. Cualquier PR que toque otro archivo corre el nivel 1 completo. **Ningún control se salta por la ruta del cambio dentro de un PR de código**, y en particular nunca los de seguridad del job 3.
 3. **Los PR en borrador no corren.** El CI se dispara al marcar el PR como listo (`ready_for_review`) y en cada push posterior. Para la evidencia en rojo y en verde de un borrador, el workflow se lanza a mano (`workflow_dispatch`).
 4. **Un push nuevo cancela el run anterior del mismo PR** (`concurrency` con `cancel-in-progress`).
 5. **Cada job tiene un tope de 10 minutos** (`timeout-minutes`).
+
+**Nomenclatura.** En esta sección, «job 1» a «job 5» numeran **controles**, no jobs de GitHub Actions. Desde esta enmienda, los controles 1, 2 y 5 corren en el job `app`. Los controles 3 y 4 tendrán jobs propios, cuyos nombres fija P0-1.
 
 Los presupuestos de §4 no cambian. El «gate de PR completo» se mide como el job más lento, que hoy es `app`. Las reglas de esta sección siguen intactas: los controles no aplicables se declaran y el contrapositivo vale («P0-1 no mergea sin el job 3»).
 

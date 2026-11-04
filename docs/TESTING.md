@@ -74,7 +74,7 @@ Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
 
 ### Nivel 1 — cada push a un PR de código
 
-Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR de solo documentación ni en borradores (se lanza a mano con «Run workflow»); un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
+Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de coste**; 3 y 4 serán jobs propios cuando entren. No corre en PR que solo tocan archivos documentales (`**/*.md`, `docs/**/*.png`, `specs/**/*.png` y `specs/**/*.txt`) ni en borradores. En un borrador se lanza a mano con «Run workflow», que solo aparece cuando el workflow ya está en `main`; un push nuevo cancela el run anterior; tope de 10 min por job. Es la enmienda del 4 de noviembre de ADR-011 §5. Controles:
 
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
@@ -95,12 +95,12 @@ infraestructura antes de tiempo para que `verify` «pase completo».
 
 | Control | Entra con | Antes de eso |
 | --- | --- | --- |
-| lint + typecheck + build (job 1) | 001 | — |
-| Vitest, proyectos `domain` y `components` (job 2) | 001, que crea los dos proyectos y corre lo que haya | — |
-| axe sobre las rutas implementadas, en los dos temas (job 5) | 001 | — |
+| lint + typecheck + build (control 1, job `app`) | 001 | — |
+| Vitest, proyectos `domain` y `components` (control 2, job `app`) | 001, que crea los dos proyectos y corre lo que haya | — |
+| axe sobre las rutas implementadas, en los dos temas (control 5, job `app`) | 001 | — |
 | Reduced motion por defecto en Playwright | 001 | — |
-| Supabase local, migraciones y tests SQL/RLS (job 3, `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
-| E2E de humo (job 4) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
+| Supabase local, migraciones y tests SQL/RLS (control 3, job propio; `test:db`) | **P0-1, obligatoriamente** | **No aplicable** |
+| E2E de humo (control 4, job propio) | La primera spec E2E, que nace en P0-1 | **No aplicable** |
 | Siembra por base de datos (`seedCouple()`, `storageState` por worker y rol) | P0-1 | **No aplicable** |
 
 Tres reglas, sin excepción:
