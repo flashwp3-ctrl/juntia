@@ -936,8 +936,11 @@ Tomada por los fundadores el 3 de noviembre de 2026, durante la revisión del PR
 | T074 · Sombras táctiles en un Android de gama media | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
 | T075 · VoiceOver con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Sin excepción posible, porque los fundadores tienen iPhone |
 | T075 · TalkBack con el flujo real de Anotar | Fundadores | Al cerrar P0-1. Admite excepción formal si no hay un Android disponible |
+| CLS = 0 fuera de Chromium: Firefox y WebKit con el arnés R2 | Gestor | Antes de aceptar P0-1. Sin excepción posible. El mecanismo que da CLS = 0 en la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero no Firefox ni Safari anterior; en la 001 solo se demostró en Chromium |
+| CLS en un iPhone real | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Mac para el inspector web de Safari |
+| Respaldo tipográfico de Geist en Android | Fundadores | Antes de aceptar P0-1. Admite excepción formal si no hay un Android disponible |
 
-**Excepción formal.** Solo la admiten T074 y la parte de TalkBack de T075, y solo cuando falta un dispositivo Android. Los **dos fundadores** la aprueban antes de aceptar P0-1. Se registra en la evidencia de P0-1 con estos datos:
+**Excepción formal.** Solo la admiten las filas que lo dicen —T074, la parte de TalkBack de T075, el CLS en un iPhone real y el respaldo tipográfico en Android—, y solo cuando falta el dispositivo o el equipo que nombran. Los **dos fundadores** la aprueban antes de aceptar P0-1. Se registra en la evidencia de P0-1 con estos datos:
 
 - la verificación que no se ejecutó;
 - el motivo;
