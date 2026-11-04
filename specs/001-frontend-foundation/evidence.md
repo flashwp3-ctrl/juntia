@@ -1433,7 +1433,7 @@ Fecha: 2026-11-03 · Commit de aplicación: `a3216c0`.
 
 **Pendiente: no existe proyecto de Vercel.** No se crea, enlaza, despliega ni asigna alias. Los códigos locales simulados constan en T063 y no sustituyen este [V].
 
-**Estado al 3 de noviembre de 2026:** sigue pendiente; no existe el proyecto. Lista de pendientes en T078.
+**Estado al 3 de noviembre de 2026** (histórico, sustituido por la medición del 4 de noviembre que sigue): pendiente, porque no existía el proyecto. Lista de pendientes en T078.
 
 ### Aislamiento en producción: hecho el 4 de noviembre de 2026
 
@@ -1455,6 +1455,8 @@ El proyecto existe desde el 4 de noviembre de 2026: cuenta Vercel Hobby de `flas
 | RSC independiente (`RSC: 1`, `_rsc`) | 200, `text/x-component` (la respuesta de `notFound()`) | **No** |
 
 Vercel desplegó producción desde un commit de merge de la dueña de la cuenta, como prevé la regla 2 de la decisión 13. El caso «alias de producción sobre un preview» no se prueba en real, porque eso exigiría asignar el dominio de producción a un preview, que la decisión 13 prohíbe. Lo cubre `check:internal-surface`.
+
+**Aislamiento en preview: pendiente, obligatorio con el primer preview real y antes de usarlo** (ADR-011 §8). Un host no autorizado sobre un preview tiene que responder 404: es la segunda barrera, `isAllowedInternalHost`. Se prueba con un alias de prueba no productivo del tipo `*.vercel.app`, asignado por la dueña, nunca con el dominio de producción.
 
 **Funcionamiento en preview: pendiente.** Por decisión de los fundadores del 4 de noviembre de 2026, se hace antes de aceptar P0-1. El preview de un PR cuyo último commit no es de la dueña queda bloqueado en Hobby; el del PR #27 lo estuvo. Para esta prueba, la dueña añade un commit a la rama de un PR, y los fundadores, con sesión en Vercel, abren `/interno/primitivos` por la URL de despliegue y por la de rama: las dos deben mostrar la superficie.
 
@@ -1999,7 +2001,7 @@ Fecha: 2026-11-03 · Commit de aplicación: `00f85d2975aaa9fd2a6476544ab63d387a0
 
 [PR21](https://github.com/juntia-labs/juntia/pull/21), contra main, título `chore(001): PR D — verification and closure of spec 001`, en inglés y borrador. La descripción enlaza esta evidencia, salidas T062/T063/T070/T076, capturas T066/T068, tabla de hallazgos/cambios/commits, inventario T069 y E2E specs added:0. Incluye una tabla de cada [V] y pendientes explícitos.
 
-**Gate humano cerrado.** Los dos fundadores aprobaron las tres propuestas de paleta (Sara petróleo, Hogar azul tenue y superficie oscura), el copy de los estados provisionales, las capturas SC-001 y SC-008: el primero el 3 de noviembre de 2026 y la segunda el 4 de noviembre de 2026, con la misma hoja de aprobación. Siguen pendientes las verificaciones heredadas por P0-1 (decisión 12): T072 necesita el proyecto de Vercel y T073–T075 necesitan una persona con dispositivo. «Gasto, ingreso y liquidación en tinta» pasa a P0-1.
+**Gate humano cerrado.** Los dos fundadores aprobaron las tres propuestas de paleta (Sara petróleo, Hogar azul tenue y superficie oscura), el copy de los estados provisionales, las capturas SC-001 y SC-008: el primero el 3 de noviembre de 2026 y la segunda el 4 de noviembre de 2026, con la misma hoja de aprobación. Siguen pendientes las verificaciones heredadas por P0-1 (decisión 12): T072 tiene hecho su aislamiento en producción; le faltan el aislamiento en preview, con el primer preview real, y el funcionamiento en preview, antes de aceptar P0-1. «Gasto, ingreso y liquidación en tinta» pasa a P0-1.
 
 ### Gate humano: revisión visual de la 001
 
@@ -2039,7 +2041,7 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 
 | `[V]` | Estado | Dueño | Momento |
 | --- | --- | --- | --- |
-| T072 · Preview real de Vercel | **Aislamiento en producción: hecho el 4 de noviembre de 2026** (sección T072). Funcionamiento en preview: pendiente | Gestor; el preview necesita un commit de la dueña de la cuenta (decisión 13) | Preview: antes de aceptar P0-1 (decisión 12, ajuste del 4 de noviembre de 2026) |
+| T072 · Superficie interna en Vercel | (1) **Aislamiento en producción: hecho el 4 de noviembre de 2026** (sección T072). (2) Aislamiento en preview: pendiente. (3) Funcionamiento en preview: pendiente | Gestor para (1) y (2), con un alias de prueba no productivo; fundadores para (3). Los previews necesitan un commit de la dueña (decisión 13) | (2) con el primer preview real y antes de usarlo; (3) antes de aceptar P0-1 (decisión 12) |
 | T073 · Contraste en dispositivo | Pendiente. Los fundadores la harán con iPhone y la sesión principal registrará aquí los resultados | Fundadores, con iPhone | Antes de aceptar P0-1 (decisión 12); se puede adelantar |
 | T074 · Sombras en gama media | Pendiente: no hay Android de gama media disponible; los fundadores lo dejan para el cierre de P0-1 | Fundadores | Cierre de P0-1 |
 | T075 · Lectores de pantalla | Pendiente por decisión de los fundadores, para el cierre de P0-1. VoiceOver se hará con el flujo real de Anotar. TalkBack queda pendiente porque no hay Android. axe no lo sustituye; el CI sigue corriendo axe en las 8 rutas (job 5) | Fundadores: VoiceOver con iPhone y TalkBack con Android; para TalkBack, excepción formal si no hay Android (decisión 12) | Cierre de P0-1, los dos |
@@ -2055,5 +2057,5 @@ Decisión de los fundadores del 3 de noviembre de 2026: los dos tienen iPhone y 
 2. **SC-001 y SC-008** aprobados por los dos fundadores, el 3 y el 4 de noviembre de 2026, con la hoja de aprobación visual sobre las capturas de C (T078).
 3. **El resto de la fase 10** tiene salida real y el CI está en verde. T067 lo hizo el gestor el 3 de noviembre de 2026.
 
-**No se dan por superadas.** Son criterios de aceptación obligatorios de P0-1 T072–T075 y tres verificaciones `[V]` adicionales: (1) CLS = 0 en Firefox y WebKit con el arnés R2; (2) CLS en un iPhone real; (3) el respaldo tipográfico de Geist en Android, que no es una medición de CLS. Todas tienen dueño y momento en la decisión 12 y en la tabla de pendientes de T078. T072 se ejecuta justo después del primer despliegue en Vercel (decisión 13).
+**No se dan por superadas.** Son criterios de aceptación obligatorios de P0-1 T072–T075 y tres verificaciones `[V]` adicionales: (1) CLS = 0 en Firefox y WebKit con el arnés R2; (2) CLS en un iPhone real; (3) el respaldo tipográfico de Geist en Android, que no es una medición de CLS. Todas tienen dueño y momento en la decisión 12 y en la tabla de pendientes de T078. T072 tiene hecha su parte de producción (4 de noviembre de 2026). Su aislamiento en preview va con el primer preview real, antes de usarlo, y su funcionamiento en preview, antes de aceptar P0-1 (decisión 12).
 
