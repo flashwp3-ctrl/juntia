@@ -51,13 +51,20 @@ Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cad
 control entra con la especificación que trae lo que controla, y mientras tanto se
 declara **no aplicable**: ver «Arranque progresivo de `verify` y del CI» en §3.
 
+**Sin Docker en local** (ADR-011 §9, decisión 17 del maestro). En el equipo,
+`verify` ejecuta lint, typecheck, dominio y componentes. Los tests SQL/RLS, la
+integración de servidor y las E2E necesitan Supabase y corren **solo en CI**, con
+Supabase dentro del runner. `verify` los declara «solo en CI», nunca como pasados.
+Para probarlos en una rama sin abrir el PR: `gh workflow run ci.yml --ref <rama>`.
+Ninguna función, política o migración está probada sin la salida de ese job.
+
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
 | `npm run verify` | lint + typecheck + unit de dominio + componentes + tests SQL/RLS. **El comando por defecto.** | **< 90 s** (comando) |
 | `npm run test:unit` | Vitest, proyecto `domain`, suite completa | **< 15 s** (comando) |
 | `npm run test:unit -- --changed` | Solo lo afectado por los cambios. Para el bucle local | — |
 | `npm run test:components` | Vitest, proyecto `components` (RTL selectivo, §10.1) | sin presupuesto propio; dentro de `verify` |
-| `npm run test:db` | `supabase test db` contra Supabase local | **< 60 s** (comando) |
+| `npm run test:db` | `supabase test db` contra Supabase local. **Solo en CI** (ADR-011 §9) | **< 60 s**, medido dentro del job 3 |
 | `npm run test:e2e:smoke` | Playwright, specs de humo del PR, solo Chromium | **< 3 min** (job de CI) |
 | `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
 | `npm run test:a11y` | axe sobre las rutas **ya implementadas**, en los dos temas (§3) | PR y nivel 2 |
@@ -79,7 +86,7 @@ Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de cos
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
    que `verify` ejecuta en local, menos los tests SQL/RLS, que van en el job 3
-3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
+3. Supabase local en contenedor **dentro del runner**, migraciones aplicadas, tests SQL de RLS e integración de servidor. Es la única ejecución de esas capas: no corren en los equipos (ADR-011 §9)
 4. E2E de humo: **las specs E2E 1, 2 y 3, más la spec E2E del área que el PR toca**, solo
    Chromium
 5. **axe en los dos temas** — ver la regla justo debajo

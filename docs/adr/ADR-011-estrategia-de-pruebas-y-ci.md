@@ -412,6 +412,45 @@ Una verificación de dispositivo que no se puede ejecutar porque el dispositivo 
 
 La primera aplicación de esta regla es la 001. El maestro §15.10, decisión 12, reparte T072–T075 a P0-1 y fija cuáles admiten excepción. Esta regla no mueve ningún umbral de §4 ni de §15.7.
 
+### 9. Sin Docker en los equipos de desarrollo (enmienda del 4 de noviembre de 2026, maestro §15.10, decisión 17)
+
+Supabase local necesita Docker, y Docker Desktop vuelve lento el equipo de los
+fundadores. Los fundadores decidieron no usarlo en sus equipos. La definición de
+`verify` de §4 sigue siendo la misma y se cumple **en CI**; lo que cambia es
+dónde corre cada parte.
+
+1. **En local, `verify` ejecuta lint, typecheck, dominio y componentes.** Las capas
+   que necesitan Supabase (SQL/RLS con pgTAP, integración de servidor y E2E) no
+   corren en el equipo. `verify` las declara «solo en CI» con el job que las
+   ejecuta, **nunca como pasadas** (regla 1 del arranque progresivo, §5).
+2. **Esas capas corren en CI, con Supabase local dentro del runner de GitHub.** El
+   job 3 (SQL/RLS e integración de servidor) y el job 4 (E2E de humo) levantan
+   Supabase con la CLI, aplican las migraciones y ejecutan sus pruebas. El job 3
+   sigue siendo obligatorio desde P0-1.
+3. **Para iterar sobre la base sin esperar al PR**, el workflow se lanza a mano
+   sobre la rama (`gh workflow run ci.yml --ref <rama>`), también en borradores.
+   Cada lanzamiento consume minutos de Actions de la dueña del repositorio. Por
+   eso los jobs 3 y 4 llevan un filtro de rutas propio, que concreta el plan de
+   P0-1, para no correr en PR que no tocan la base de datos ni los recorridos.
+4. **Para usar la app en desarrollo** hay un segundo proyecto Supabase Free,
+   `juntia-dev`, en la cuenta de la segunda fundadora y en la región de
+   producción. No guarda datos reales, no comparte claves con producción y no lo
+   usa ninguna prueba automatizada. Las migraciones se aplican con
+   `supabase db push`, que no necesita Docker.
+5. **Presupuestos.** El de `verify` (< 90 s) se mide en local sin las capas de base
+   de datos. El de `test:db` (< 60 s) se mide dentro del job 3 y no como comando
+   local.
+6. **Ninguna función, política o migración se da por probada sin la salida del
+   job 3 en su rama** (`AGENTS.md` 12). «Pasa en local» no existe para la base de
+   datos.
+
+**Consecuencias.** Iterar sobre la base de datos cuesta minutos y no segundos. El
+consumo de Actions sube en P0-1 y P0-3, que son los slices con más SQL. La copia
+de seguridad de la decisión 16 (16.11) no puede usar `supabase db dump`, que
+necesita Docker: usa el cliente `pg_dump` y lo verifica el plan de P0-1. Si
+iterar en CI se vuelve el cuello de botella, la alternativa es Docker con un
+límite de memoria en el equipo, y se decide entonces.
+
 ## Consecuencias
 
 - La suite de dominio se convierte en el lugar por defecto. Eso exige que la regla

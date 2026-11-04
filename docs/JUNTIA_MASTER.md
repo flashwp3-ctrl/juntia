@@ -886,7 +886,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 16 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 17 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -1029,6 +1029,14 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
 
 **Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio y apertura del registro. Se suman al bloqueo legal de §15.6.1.
+
+#### Decisión 17: sin Docker en los equipos de desarrollo
+
+Tomada por el primer fundador el 4 de noviembre de 2026, al empezar el plan de P0-1: Docker Desktop vuelve lento su equipo. La segunda fundadora la confirma con el merge de su PR.
+
+| # | Decisión | Elección | Consecuencia |
+| --- | --- | --- | --- |
+| 17 | Dónde corre Supabase en desarrollo | **Sin Docker en los equipos.** Las pruebas que necesitan Supabase corren solo en CI; la app se usa en desarrollo contra un segundo proyecto Free, `juntia-dev` | Enmienda ADR-011 §9 y `docs/TESTING.md`. `verify` local ejecuta lint, typecheck, dominio y componentes, y declara las capas de base de datos «solo en CI». `juntia-dev` vive en la cuenta de la segunda fundadora, sin datos reales y sin claves de producción. La copia de la decisión 16 (16.11) usa `pg_dump` en lugar de `supabase db dump` |
 
 #### Dataset dorado: quién lo produce y cuándo
 
