@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Propuesto, 4 de noviembre de 2026. Pendiente de decisión de los fundadores · **Revisión:** primera ronda adversarial del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Propuesto, 4 de noviembre de 2026. Pendiente de decisión de los fundadores · **Revisión:** dos rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -60,7 +60,11 @@ Documentación oficial consultada el 4 de noviembre de 2026:
   función nueva es invocable por cualquier rol, **incluido `anon`**, hasta que
   se le revoca `execute`. Las funciones `security definer` necesitan
   `search_path = ''` y pueden saltarse la RLS.
+  Supabase dice además que una función `security definer` **nunca** debe crearse
+  en un esquema expuesto por la API, porque la API la llamaría con los
+  privilegios de su propietario. Las auxiliares van en un esquema no expuesto.
   ([Database functions](https://supabase.com/docs/guides/database/functions);
+  [¿Hay que exponer las funciones `security definer` de las políticas?](https://supabase.com/kb/troubleshooting/do-i-need-to-expose-security-definer-functions-in-row-level-security-policies-iI0uOw);
   [Securing your API](https://supabase.com/docs/guides/api/securing-your-api);
   [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security))
 - **Next.js:** `@supabase/ssr` con un cliente de servidor (`createServerClient`,
@@ -94,6 +98,8 @@ Documentación oficial consultada el 4 de noviembre de 2026:
   función `security definer` corre como su propietario. Si ese propietario no
   tiene `BYPASSRLS` ni es dueño de la tabla, las políticas se siguen
   aplicando dentro de la función. En Supabase, `postgres` sí tiene `BYPASSRLS`.
+  `select ... for update` necesita privilegio y política de lectura **y** de
+  actualización sobre las filas que bloquea.
   ([PostgreSQL, Row Security Policies](https://www.postgresql.org/docs/current/ddl-rowsecurity.html);
   [Supabase, Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security))
 - **Identidad dentro de la transacción:** PostgREST deja los claims del JWT en
@@ -107,7 +113,9 @@ Documentación oficial consultada el 4 de noviembre de 2026:
 - **Privilegios y RLS son dos barreras distintas.** Los grants deciden qué
   roles llegan a una tabla, vista o función por la API de datos; la RLS decide
   qué filas ven o modifican. Una política no basta si el rol tiene un grant
-  que no debería tener, y al revés.
+  que no debería tener, y al revés. Entre los privilegios que Supabase concede
+  por defecto están también `TRUNCATE`, `REFERENCES`, `TRIGGER` y los de las
+  secuencias.
   ([Securing your API](https://supabase.com/docs/guides/api/securing-your-api))
 
 ## Opciones
@@ -137,52 +145,94 @@ nada que A no resuelva.
 
 ## Decisión propuesta
 
-**Opción A.** `supabase-js` con `@supabase/ssr`. Las tablas de dinero **solo se
-escriben a través de funciones de Postgres**, y la RLS se sigue aplicando
-dentro de ellas. Sin ORM ni query builder en P0.
+**Opción A.** `supabase-js` con `@supabase/ssr`. La API de datos solo ve
+proyecciones y funciones de entrada; las tablas y la lógica privilegiada viven
+en esquemas que la API no expone. Las tablas de dinero **solo se escriben a
+través de funciones de Postgres**, y la RLS se sigue aplicando dentro de ellas.
+Sin ORM ni query builder en P0.
 
-### 1. Tablas de dinero: sin escritura directa
+### 1. Tres esquemas
 
-Son tablas de dinero las que guardan importes o deciden quién puede moverlos:
-`transactions`, `transaction_allocations`, `budgets`, `savings_goals`,
-`goal_ledger_entries`, `goal_usage_allocations`, `goal_usage_confirmations`,
-`group_members`, `group_invitations`, `idempotency_records` y `audit_events`.
-La especificación de P0-1 confirma la lista con el esquema real.
+| Esquema | ¿Lo expone la API? | Contiene |
+| --- | --- | --- |
+| `public` | **Sí** | Solo vistas `security_invoker = true`, que exponen los importes como texto, y funciones de entrada `security invoker`. Ninguna tabla y ninguna función `security definer` |
+| `juntia_data` | No | Las tablas, con RLS activada en todas |
+| `juntia_private` | No | Las funciones que escriben dinero (`security definer`, propiedad de `juntia_writer`), las auxiliares de autorización y las internas |
 
-1. **El rol de la petición solo puede leerlas.** `authenticated` y `anon` no
-   tienen `insert`, `update` ni `delete` sobre ninguna: se revocan
-   explícitamente en la migración. `authenticated` tiene `select`, filtrado
-   por RLS. Una petición directa de escritura a la API de datos falla por
-   privilegios antes de llegar a ninguna política.
+Supabase prohíbe expresamente crear funciones `security definer` en un esquema
+expuesto, porque la API de datos las puede llamar con los privilegios de su
+propietario. Con esta separación, nada privilegiado queda en la superficie que
+ve un cliente. Los nombres de los esquemas los puede ajustar la especificación
+de P0-1; la separación no.
+
+### 2. Tablas de dinero y de autorización: sin escritura directa
+
+Son **tablas controladas** las que guardan importes o deciden quién puede
+moverlos:
+- `transactions`, `transaction_allocations`, `budgets`, `savings_goals`,
+  `goal_ledger_entries`, `goal_usage_allocations`, `goal_usage_confirmations`,
+  `idempotency_records` y `audit_events`;
+- `groups`, `group_members` y `group_invitations`. `groups` no guarda importes,
+  pero su tipo, su moneda y su creador condicionan la validez de toda operación
+  del grupo.
+
+La especificación de P0-1 confirma la lista con el esquema real. Ninguna tabla
+nueva que guarde importes o membresía queda fuera de ella.
+
+1. **El rol de la petición no tiene ningún privilegio de escritura ni de
+   alteración.** La migración revoca **todos** los privilegios de `anon` y
+   `authenticated` sobre las tablas y secuencias de `juntia_data` (incluidos
+   `TRUNCATE`, `REFERENCES` y `TRIGGER`, que Supabase concede por defecto). Solo
+   devuelve a `authenticated` el `usage` del esquema y el `select` sobre las
+   tablas que leen las vistas, siempre filtrado por RLS. Así hay dos barreras
+   contra una escritura directa: la API no llega al esquema, y aunque llegara
+   no hay privilegio.
 2. **Las escribe un rol propio: `juntia_writer`.** No tiene `LOGIN` ni
-   `BYPASSRLS` ni es dueño de las tablas. Tiene exactamente los privilegios de
-   escritura que cada tabla necesita: sobre las tablas de solo inserción
-   (`goal_ledger_entries`, `audit_events`, las correcciones de ADR-007), solo
-   `insert`.
-3. **Cada operación de dinero es una función `security definer` propiedad de
-   `juntia_writer`**, con `set search_path = ''` y nombres cualificados. Corre
-   con los privilegios de `juntia_writer`, pero:
+   `BYPASSRLS` ni es dueño de las tablas. Tiene exactamente los privilegios que
+   cada función necesita:
+   - **escritura:** sobre las tablas de solo inserción (`goal_ledger_entries`,
+     `audit_events`, las correcciones de ADR-007), solo `insert`;
+   - **lectura:** `select` sobre las filas que tiene que validar o bloquear
+     (la meta, el grupo, la membresía, la idempotencia), con sus propias
+     políticas `for select ... to juntia_writer`. Las políticas de
+     `authenticated` no le sirven;
+   - **bloqueo:** `select ... for update` exige además `update` y su política
+     sobre las filas raíz que bloquea.
+3. **Cada operación de dinero tiene dos funciones:**
+   - una **función de entrada** en `public`, `security invoker`, que es lo
+     único que el cliente llama con `rpc()` y que se limita a pasar la petición;
+   - la **función que escribe** en `juntia_private`, `security definer`,
+     propiedad de `juntia_writer`, con `set search_path = ''` y nombres
+     cualificados. Es la que valida y escribe.
+
+   Dentro de la función que escribe:
    - `auth.uid()` sigue devolviendo a la persona que llama, porque los claims
      del JWT son una variable de la transacción;
    - la RLS se sigue aplicando, porque `juntia_writer` no tiene `BYPASSRLS` ni
-     es dueño. Sus políticas `for insert/update ... to juntia_writer` repiten
-     la regla de propiedad o membresía con `auth.uid()`;
+     es dueño. Sus políticas repiten la regla de propiedad o membresía con
+     `auth.uid()`;
    - la función comprueba además, de forma explícita, que hay una persona
      autenticada y que es miembro activo cuando corresponde.
 
    Esto no es `security definer` «por conveniencia» (§7.4). Es el mecanismo que
    impide escribir dinero fuera del camino validado, sin saltarse ninguna
-   política.
+   política y sin exponer nada privilegiado.
 4. **Las invariantes no dependen solo de la función.** Restricciones `check`,
    claves foráneas, índices únicos y triggers protegen lo que debe ser cierto
-   llegue la escritura por donde llegue: importes positivos, alcance privado
-   **XOR** grupo, partes que suman exactamente el importe (trigger de
-   restricción diferido al final de la transacción), meta nunca negativa y
-   registros de solo inserción.
-5. **Escrituras sin dinero** de una fila, como las preferencias del perfil,
-   pueden ir directas con `insert` o `update` bajo RLS, con su grant explícito.
+   llegue la escritura por donde llegue:
+   - importes positivos;
+   - alcance privado **XOR** grupo;
+   - partes que suman exactamente el importe, con un trigger de restricción
+     diferido al final de la transacción;
+   - meta nunca negativa;
+   - registros de solo inserción, con un trigger que rechaza `update` y
+     `delete` incluso para `juntia_writer`.
+5. **Escrituras sin dinero.** Las preferencias del perfil, por ejemplo, van por
+   una función de entrada `security invoker` o una vista actualizable, con
+   grants **por columna**. Nunca tocan columnas que concedan permisos, ni la
+   identidad o la membresía.
 
-### 2. Concurrencia
+### 3. Concurrencia
 
 Una operación atómica no basta: con `READ COMMITTED`, dos retiros simultáneos
 de una meta con 100 000 disponibles pueden leer el mismo saldo y aprobarse los
@@ -191,32 +241,44 @@ operaciones concurrentes se hubieran ejecutado una detrás de otra**, al menos
 para sus invariantes:
 
 1. **Primero la idempotencia.** La función inserta la clave en
-   `idempotency_records` con un índice único `(actor, acción, clave)`. Si la
-   clave ya existe, devuelve el resultado guardado y no hace nada más. Dos
-   peticiones con la misma clave nunca ejecutan dos veces.
-2. **Después, bloquear la raíz del agregado** cuya invariante se comprueba
-   (la meta, el grupo o el presupuesto), con `select ... for update`, antes de
-   leer saldos. Dos operaciones sobre la misma meta se ordenan; sobre metas
-   distintas no se esperan.
-3. **Ediciones de presupuesto:** con control de versión (`where version = $esperada`).
-   Si la versión cambió, falla con un error propio y la interfaz lo explica.
-   Nunca se sobrescribe en silencio (§15.6.3 punto 7).
+   `idempotency_records` con un índice único `(actor, acción, clave)` y una
+   huella de la petición normalizada.
+   - **Misma clave y misma huella:** devuelve el resultado guardado y no hace
+     nada más. Dos peticiones con la misma clave nunca ejecutan dos veces.
+   - **Misma clave con otra huella:** falla con un error propio. Nunca devuelve
+     en silencio el resultado de otra intención.
+2. **Después, bloquear la raíz del agregado** cuya invariante se comprueba (la
+   meta, el grupo o el presupuesto), con `select ... for update`, y **solo
+   entonces** leer saldos. Dos operaciones sobre la misma meta se ordenan;
+   sobre metas distintas no se esperan.
+3. **Varias raíces:** si una operación bloquea más de una, las adquiere en un
+   orden determinista que fija la especificación, por ejemplo por
+   identificador.
+4. **Interbloqueo o fallo de serialización** (`40P01`, `40001`): la función no
+   los oculta. La capa de servidor reintenta la misma petición con la misma
+   clave de idempotencia, un número acotado de veces, y después falla con un
+   error de dominio. La idempotencia hace seguro ese reintento.
+5. **Ediciones de presupuesto:** con control de versión
+   (`where version = $esperada`). Si la versión cambió, fallan con un error
+   propio y la interfaz lo explica. Nunca se sobrescribe en silencio (§15.6.3
+   punto 7).
 
 La especificación de P0-1 elige, para cada función, los bloqueos concretos o
-el nivel `serializable` con reintento. Este ADR fija el resultado exigido y su
-prueba, no la técnica de cada caso.
+el nivel `serializable`. Este ADR fija el resultado exigido y su prueba, no la
+técnica de cada caso.
 
-### 3. Importes en la frontera: siempre texto
+### 4. Importes en la frontera: siempre texto
 
 En la base, los importes son `bigint` en unidades menores (§5). La API de datos
 serializa `bigint` como número JSON, y los tipos generados de Supabase lo
-tipan como `number`: por encima de 2^53 pierde precisión. Por eso **ningún
-importe cruza la frontera SQL ↔ API ↔ TypeScript como número**, en ningún
-sentido:
+tipan como `number`: por encima de 2^53 pierde precisión. Este ADR da **la
+garantía de API completa**: ningún importe cruza la frontera SQL ↔ API ↔
+TypeScript como número, en ningún sentido y por ningún camino.
 
-1. **Salida:** los importes se leen a través de vistas `security_invoker = true`
-   o de funciones que los exponen como `text`. La capa `src/lib/db/` no
-   selecciona columnas de importe de las tablas base.
+1. **Salida:** como las tablas viven en `juntia_data`, que la API no expone, la
+   única forma de leer un importe es una vista de `public` o una función de
+   entrada, y las dos lo exponen como `text`. No hay columna `bigint` de
+   importe que una petición directa pueda leer.
 2. **Entrada:** los parámetros de importe de las funciones son `text`,
    también dentro de `jsonb`. La función los valida (solo dígitos, sin signo
    salvo donde el contrato lo permita) y los convierte a `bigint`; un valor no
@@ -224,42 +286,47 @@ sentido:
 3. **TypeScript:** los tipos de transporte de `src/lib/db/` declaran los
    importes como `string` y los convierten al tipo `Money` del dominio, sin
    pasar por `number`. Una prueba comprueba que ningún campo de importe de los
-   tipos generados que usa la aplicación es `number`.
+   tipos generados de `public` es `number`.
 4. **Prueba de ida y vuelta** con `9007199254740993` (2^53 + 1) y con los
    límites de `bigint`, en los dos sentidos.
 
-### 4. Privilegios: modelo explícito y comprobado
+### 5. Privilegios: modelo explícito y comprobado
 
-1. **Tres tipos de función, en esquemas distintos:**
-   - **RPC de negocio** en `public`, el esquema expuesto: las operaciones de
-     dinero de §1.3. `revoke execute ... from public, anon` y
-     `grant execute ... to authenticated`.
-   - **Funciones auxiliares de autorización** (por ejemplo, «¿es miembro activo
-     de este grupo?») en un esquema propio no expuesto por la API de datos.
-     Pueden ser `security definer` cuando hacen falta para evitar políticas
-     recursivas entre `groups` y `group_members`, como documenta Supabase. En
-     ese caso devuelven solo un booleano, tienen `search_path = ''` y conceden
-     `execute` solo a los roles cuyas políticas las usan.
-   - **Funciones internas** de las RPC (cálculos, validaciones) en ese mismo
-     esquema no expuesto, sin `execute` para `anon` ni `authenticated`.
+1. **Funciones, por esquema:**
+   - **funciones de entrada** en `public`: `security invoker`.
+     `revoke execute ... from public, anon` y `grant execute ... to authenticated`;
+   - **funciones que escriben** en `juntia_private`: `security definer`,
+     propiedad de `juntia_writer`. `execute` solo para `authenticated`, que las
+     alcanza a través de la función de entrada, nunca por la API;
+   - **auxiliares de autorización** (por ejemplo, «¿es miembro activo de este
+     grupo?») en `juntia_private`. Pueden ser `security definer` cuando hacen
+     falta para evitar políticas recursivas entre `groups` y `group_members`,
+     como documenta Supabase. En ese caso devuelven solo un booleano, tienen
+     `search_path = ''` y conceden `execute` solo a los roles cuyas políticas
+     las usan;
+   - **funciones internas** (cálculos, validaciones) en `juntia_private`, sin
+     `execute` para `anon` ni `authenticated`.
 2. **Privilegios por defecto:** la primera migración ajusta
-   `alter default privileges` para que las funciones nuevas no sean ejecutables
-   por `public`, y las tablas y secuencias nuevas no tengan grants hasta que la
-   migración los conceda de forma explícita. Los valores por defecto de
-   Supabase varían según la configuración del proyecto, así que no se dan por
-   sabidos.
-3. **Vistas** que leen datos protegidos: siempre `security_invoker = true`.
-4. **Cada función `security definer`** lleva en su migración un comentario que
+   `alter default privileges` en los tres esquemas. Así, las funciones nuevas no
+   son ejecutables por `public`, y las tablas y secuencias nuevas no tienen
+   grants hasta que la migración los conceda de forma explícita. Los valores
+   por defecto de Supabase varían según la configuración del proyecto, así que
+   no se dan por sabidos.
+3. **Secuencias:** las claves son identidades o UUID. `anon` y
+   `authenticated` no tienen `usage` ni `update` sobre ninguna secuencia.
+4. **Vistas** de `public`: siempre `security_invoker = true`.
+5. **Cada función `security definer`** lleva en su migración un comentario que
    justifica por qué lo es, y aparece en la prueba de privilegios efectivos de
    la verificación 7.
-5. **`service_role`:** ningún camino que atienda a una persona lo usa. Si una
+6. **`service_role`:** ningún camino que atienda a una persona lo usa. Si una
    operación de mantenimiento lo necesita, se decide aparte.
 
-### 5. Lecturas, capas y autenticación
+### 6. Lecturas, capas y autenticación
 
 1. **Lecturas** con `supabase-js` desde el servidor (Server Components, Server
-   Actions o Route Handlers), con el cliente de servidor de la petición. La
-   RLS decide qué filas ve cada persona.
+   Actions o Route Handlers), con el cliente de servidor de la petición, sobre
+   las vistas de `public`. La RLS de las tablas base decide qué filas ve cada
+   persona.
 2. **Dominio en TypeScript, verificación en SQL.** El cálculo del reparto (el
    algoritmo de mayor residuo de ADR-002) vive en `src/domain/` y es puro. El
    servidor calcula las partes y las envía a la función, que las vuelve a
@@ -271,7 +338,7 @@ sentido:
    - `src/lib/supabase/`: los dos clientes y los tipos generados
      (`database.types.ts`);
    - `src/lib/db/`: una función por operación, la única capa que conoce nombres
-     de tablas, vistas y funciones;
+     de vistas y funciones;
    - `src/domain/` no importa nada de ahí (§7.2).
 5. **Autenticación:**
    - `getClaims()` en el servidor para proteger páginas y datos, que valida la
@@ -286,16 +353,19 @@ sentido:
 - **El esquema tiene una sola fuente:** las migraciones SQL de
   `supabase/migrations/`. Tablas, grants, políticas, funciones y triggers se
   revisan en el mismo diff.
+- **Cada operación de dinero son dos funciones** (entrada y escritura) y cada
+  tabla controlada tiene dos juegos de políticas (`authenticated` para leer y
+  `juntia_writer` para validar, bloquear y escribir). Es más código que con una
+  sola función `security invoker`, a cambio de que ninguna escritura de dinero
+  esquive el camino validado y de que nada privilegiado quede expuesto.
+- **Toda lectura de la aplicación pasa por vistas.** Las uniones que la API de
+  datos no resuelve bien también van en vistas o en funciones de entrada.
 - **La lógica de dinero que debe ser atómica se escribe en PL/pgSQL**, que es
   más verbosa que TypeScript y tiene menos herramientas. Se compensa con
   pgTAP: cada función tiene tests SQL de éxito, de rechazo por RLS, de
   repetición idempotente y de cada validación. La concurrencia y la
   idempotencia de extremo a extremo siguen en integración de servidor
   (`docs/TESTING.md`).
-- **Cada tabla de dinero necesita dos juegos de políticas:** `select` para
-  `authenticated` y escritura para `juntia_writer`. Son más políticas que con
-  `security invoker`, a cambio de que ninguna escritura de dinero esquive las
-  funciones.
 - **Los tipos generados se versionan.** El job SQL/RLS del CI, que entra con
   P0-1 (ADR-011 §5), los regenera contra Supabase local y falla si no
   coinciden con los del repositorio.
@@ -308,7 +378,7 @@ sentido:
   directa desde Vercel.
 - **Salir de Supabase** significaría reescribir `src/lib/supabase/` y
   `src/lib/db/`, y adaptar las políticas que leen `auth.uid()`. Las tablas, las
-  funciones y los roles son Postgres estándar.
+  funciones, los esquemas y los roles son Postgres estándar.
 
 ## Qué no decide este ADR
 
@@ -316,8 +386,8 @@ sentido:
   maestro §7.3.
 - Si las liquidaciones van en `transactions` o en una tabla propia (§7.3 lo
   deja abierto y pide documentarlo antes de migrar).
-- Los bloqueos concretos o el nivel de aislamiento de cada función (§2 fija el
-  resultado y su prueba).
+- Los bloqueos concretos, su orden y el nivel de aislamiento de cada función
+  (§3 fija el resultado y su prueba).
 - El uso de TanStack Query en el cliente (§7.1). Es independiente de cómo habla
   el servidor con la base.
 
@@ -329,33 +399,52 @@ escribir la primera función de dinero, porque validan el mecanismo en el que
 se apoya todo lo demás.
 
 1. **El mecanismo de `juntia_writer` funciona en la versión de Supabase del
-   stack:** la migración puede crear el rol y hacerlo propietario de las
-   funciones; dentro de una de ellas, `auth.uid()` devuelve a quien llama; y
-   la RLS se aplica a `juntia_writer`. Prueba: una función que intente
-   escribir en la meta o el grupo de otra persona falla.
+   stack:**
+   - la migración puede crear el rol y asignarle la propiedad de las funciones.
+     `alter function ... owner to` exige que quien migra pueda asumir el rol y
+     que el rol tenga `create` en el esquema de la función;
+   - dentro de una de ellas, `auth.uid()` devuelve a quien llama;
+   - la RLS se aplica a `juntia_writer`, también a sus `select ... for update`.
+
+   Prueba: una función que intente escribir en la meta o el grupo de otra
+   persona falla.
 2. **Escritura directa imposible.** Con un JWT de `authenticated` real y la API
-   de datos pública (no solo `rpc()`): `insert`, `update` y `delete` sobre
-   cada tabla de dinero fallan, también sobre filas propias. Por ejemplo,
-   cambiar el importe de un aporte propio sin pasar por la función.
+   de datos pública, no solo `rpc()`:
+   - `insert`, `update` y `delete` sobre cada tabla controlada fallan, también
+     sobre filas propias. Por ejemplo, cambiar el importe de un aporte propio
+     sin pasar por la función, o cambiar la moneda de un grupo;
+   - `juntia_data` y `juntia_private` no son alcanzables por la API;
+   - ni `TRUNCATE` ni ninguna secuencia están al alcance de `anon` ni de
+     `authenticated`;
+   - el historial de las tablas de solo inserción no se puede modificar, ni
+     siquiera desde una función de `juntia_writer`.
 3. **Atomicidad:** un `RAISE` a mitad de una función de varias escrituras no
    deja ninguna fila (§15.6.3).
-4. **Concurrencia:** dos retiros simultáneos sobre la misma meta, que juntos
-   superan el saldo. Uno se aprueba y el otro falla, y la meta nunca queda
-   negativa. Además, dos peticiones simultáneas con la **misma** clave de
-   idempotencia producen una sola operación, y dos con claves **distintas**
-   producen dos.
+4. **Concurrencia e idempotencia:**
+   - dos retiros simultáneos sobre la misma meta que juntos superan el saldo:
+     uno se aprueba, el otro falla por saldo insuficiente y la meta nunca queda
+     negativa;
+   - dos peticiones simultáneas con la **misma** clave y la misma intención
+     producen una sola operación;
+   - la misma clave con **otra** intención falla con su error propio;
+   - dos intenciones **distintas** se evalúan cada una por su cuenta, y la
+     segunda puede ser rechazada por saldo.
 5. **Edición concurrente de presupuesto:** la segunda edición con versión
    antigua falla con su error propio y no sobrescribe la primera.
 6. **Importes:** ida y vuelta de `9007199254740993` y de los límites de
    `bigint`, en entrada y en salida, por función y por vista. Más la prueba de
-   que ningún tipo de importe de transporte es `number`.
-7. **Privilegios efectivos:** una prueba pgTAP lista los grants reales de
-   `anon` y `authenticated` sobre tablas, vistas, secuencias y funciones, y
-   compara con la lista esperada. Una función nueva sin `revoke` falla la
-   prueba. Ninguna función auxiliar ni interna es invocable desde la API de
-   datos.
-8. **Las vistas** que leen datos protegidos tienen `security_invoker = true`,
-   comprobado en el catálogo.
+   que ningún tipo de importe de `public` es `number`.
+7. **Privilegios efectivos:** una prueba pgTAP lista los privilegios reales de
+   `anon` y `authenticated` y los compara con la lista esperada:
+   - sobre tablas, incluidos `TRUNCATE`, `REFERENCES` y `TRIGGER`;
+   - sobre vistas, secuencias, esquemas y funciones;
+   - además, comprueba en el catálogo que no hay ninguna función
+     `security definer` en `public`, y que ninguna función de `juntia_private`
+     es invocable desde la API de datos.
+
+   Una función nueva sin `revoke` hace fallar la prueba.
+8. **Las vistas** de `public` tienen `security_invoker = true`, comprobado en el
+   catálogo.
 9. **La forma del claim** en la versión de Supabase del stack (condición de la
    decisión 1 del maestro §15.10), que también usan las políticas de
    `juntia_writer`.
