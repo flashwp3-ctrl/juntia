@@ -14,3 +14,7 @@ end;
 $$;
 grant usage on schema tests to authenticated;
 grant execute on function tests.authenticate_as(uuid) to authenticated;
+
+-- T013: solo correos sintéticos; se añaden con la migración que crea la tabla.
+insert into juntia_data.signup_allowlist(email) values
+  ('sara@seed.test'),('tomas@seed.test'),('signup@seed.test');

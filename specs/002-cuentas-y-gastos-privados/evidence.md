@@ -336,3 +336,37 @@ en `evidence/domain-and-sql-red-local-verify.txt`.
 
 T011 añade las claves exactas de `contracts/errors.md` y las diez categorías
 de producto en `es.ts`; redacción pendiente de revisión humana del PR A.
+
+### T012 — pruebas antes de foundation: rojo observado
+
+Fecha: 5 de noviembre de 2026, America/Bogota.
+Commit: `7c04dab16e763929bb6341787d32d02427347c6c`.
+Run: [41971899990](https://github.com/flashwp3-ctrl/juntia/actions/runs/41971899990).
+Comandos: `gh workflow run ci.yml --ref feat/002-a-database` y
+`gh run watch 41971899990 --exit-status --interval 20` (exit 1 esperado).
+
+Extractos reales:
+
+```text
+00_smoke.test.sql ....... ok
+01_privileges.test.sql:9: ERROR: schema "juntia_data" does not exist
+02_claims.test.sql:9: ERROR: role "juntia_writer" does not exist
+03_views.test.sql:4: ERROR: relation "public.my_profile" does not exist
+04_writer.test.sql:6: ERROR: relation "juntia_data.profiles" does not exist
+06_profiles.test.sql:6: ERROR: relation "juntia_data.profiles" does not exist
+09_allowlist.test.sql:4: ERROR: relation "juntia_data.signup_allowlist" does not exist
+✓ integration tests/integration/smoke.test.ts (1 test) 67ms
+Test Files 1 failed | 1 passed (2)
+Tests 1 failed | 3 passed (4)
+AssertionError: expected { code: 'PGRST202', …(3) } to be null
+```
+
+`app` pasó en 2m47s. `db` falló en 3m11s solo en pruebas nuevas: arranque,
+reset y comparación de tipos pasaron. pgTAP tardó 5.85 s (< 60 s);
+el resumen midió `db` 184.44 s y `app` 161.89 s (< 360 s).
+Log completo: [`evidence/foundation-red.txt`](evidence/foundation-red.txt).
+Es el rojo requerido **antes** de crear `foundation`, no el punto de control
+1 de T015 ni un fallo del mecanismo real: la migración aún no existía.
+
+Después del rojo se añadió a la integración una sonda SQL temporal para observar
+los claims reales de PostgREST; se elimina en `finally`. No modifica la migración.
