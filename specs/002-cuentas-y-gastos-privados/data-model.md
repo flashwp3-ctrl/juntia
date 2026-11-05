@@ -234,7 +234,8 @@ completar la fila al final (§2.5) y el trigger impide cualquier otro cambio.
 | `transactions` | `authenticated` select · `juntia_writer` select, update | `owner_user_id = (select auth.uid())` (P0-2 añade la rama de grupo) |
 | `transactions` | `juntia_writer` insert | `with check (created_by = (select auth.uid()) and owner_user_id = (select auth.uid()))` |
 | `audit_events` | `juntia_writer` insert | `with check (actor_user_id = (select auth.uid()))` |
-| `idempotency_records` | `juntia_writer` select, insert | `actor_user_id = (select auth.uid())` |
+| `idempotency_records` | `juntia_writer` select | `actor_user_id = (select auth.uid())` |
+| `idempotency_records` | `juntia_writer` insert | `with check (actor_user_id = (select auth.uid()) and status = 'pending' and result is null and completed_at is null)`: solo se puede nacer `pending` |
 | `idempotency_records` | `juntia_writer` update | `using (actor_user_id = (select auth.uid()) and status = 'pending') with check (actor_user_id = (select auth.uid()) and status = 'completed')` |
 | `signup_allowlist` | `supabase_auth_admin` select | `using (true)` |
 
