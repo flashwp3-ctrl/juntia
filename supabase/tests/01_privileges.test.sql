@@ -38,7 +38,7 @@ select format('%I.%I(%s)',n.nspname,p.proname,pg_get_function_identity_arguments
   has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
   has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_execute
 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-where p.proowner='postgres'::regrole and n.nspname !~ '^pg_' and n.nspname<>'information_schema'
+where p.proowner=(select oid from pg_roles where rolname='postgres') and n.nspname !~ '^pg_' and n.nspname<>'information_schema'
   and p.oid<>all(array[
     'public.complete_first_entry()'::regprocedure,'public.create_transaction(text,text,text,text,text,text)'::regprocedure,
     'public.ensure_profile()'::regprocedure,'public.set_theme(text)'::regprocedure,
