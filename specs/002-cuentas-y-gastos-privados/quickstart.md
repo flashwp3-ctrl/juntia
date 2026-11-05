@@ -114,14 +114,35 @@ npx --yes supabase@2.121.0 db push --linked
 **No se anota ningún dato real hasta que la primera copia y su restauración
 tienen salida registrada** en la evidencia de la 002 (US-10.4, SC-010). **Y la
 copia no se considera restaurable hasta que los dos caminos de 4.2 tienen salida
-del job `db`** (research R6). La hace un fundador desde su equipo, con
-PowerShell o Git Bash; los comandos son los mismos.
+del job `db`** (research R6).
 
 **Qué es una copia completa** (research R6): el **esquema por referencia** (las
-migraciones del commit etiquetado que coincide con producción), los **datos**
-(`data.sql`) y un **manifiesto** (etiqueta y SHA, migraciones aplicadas,
-recuentos y sumas de comprobación por tabla, `sha256` de `data.sql`). No se
+migraciones de un commit concreto), los **datos** (`data.sql`) y un
+**manifiesto** (modo, SHA y, en producción, la etiqueta; migraciones aplicadas;
+recuentos y sumas de comprobación por tabla; `sha256` de `data.sql`). No se
 vuelca el esquema con `pg_dump`.
+
+**Dos modos, las mismas comprobaciones** (`scripts/backup-manifest.sh`, que crea
+el PR A):
+
+| Modo | Commit del esquema | Qué exige | Quién lo usa |
+| --- | --- | --- | --- |
+| `--mode ci --sha <sha>` | El **SHA exacto del commit que se verifica** (`$GITHUB_SHA`); no necesita etiqueta | Que las migraciones aplicadas a la base de origen sean exactamente las de ese SHA | El ensayo del job `db` (4.2): prueba el esquema del commit en revisión, no una etiqueta histórica |
+| `--mode production --tag <db-prod-…>` | El commit de la **etiqueta de despliegue** | Que la etiqueta exista, y que las migraciones de producción sean exactamente las de ese commit | La copia real (4.1) y su restauración (4.3) |
+
+En los dos modos, el manifiesto se genera y se verifica con el mismo código
+(`--write` al copiar, `--verify` al restaurar): SHA, lista de migraciones,
+recuentos, sumas de comprobación y `sha256`. Cualquier diferencia termina con
+código distinto de 0.
+
+**Fallar pronto, siempre.** Los procedimientos se ejecutan en **Git Bash** (también
+en Windows) como scripts con `set -euo pipefail`: el primer comando que falla
+detiene todo y su código de salida es el del script. No hay `|| break` ni
+comprobaciones opcionales. El esquema de la etiqueta se toma con `git worktree
+add` en una carpeta temporal, así que no se cambia la rama de trabajo y no hace
+falta un `git checkout -` que pueda ocultar un fallo. Un `trap` de salida borra
+los archivos descifrados y la carpeta temporal **y conserva el código de salida
+original**.
 
 ### 4.0 Etiquetar el commit de producción (la dueña, al aplicar migraciones)
 
@@ -133,80 +154,119 @@ git tag -a db-prod-AAAA-MM-DD -m "Migraciones aplicadas a producción" <sha-de-m
 git push origin db-prod-AAAA-MM-DD
 ```
 
-### 4.1 Copia (semanal, y antes del primer dato real)
+### 4.1 Copia (semanal, y antes del primer dato real) — modo producción
 
-`$DB` es la cadena de conexión **directa** de producción del panel (Connect ›
-Direct o Session pooler), con la contraseña de la base. No se guarda en ningún
-archivo del repositorio ni del historial de la terminal compartida. `TAG` es la
-última etiqueta `db-prod-*`.
+`DB` es la cadena de conexión **directa** de producción del panel (Connect ›
+Direct o Session pooler), con la contraseña de la base; se exporta en la sesión y
+no se guarda en ningún archivo del repositorio. El script es
+`scripts/backup.sh` (lo crea el PR A); esto es lo que hace:
 
 ```bash
-D=$(date +%F); TAG=$(git describe --tags --match 'db-prod-*' --abbrev=0 origin/main)
-git checkout "$TAG"
+#!/usr/bin/env bash
+set -euo pipefail
+: "${DB:?exporta DB con la cadena de conexión de producción}"
+TAG=$(git describe --tags --match 'db-prod-*' --abbrev=0 origin/main)
+D=$(date +%F); WORK=$(mktemp -d); SRC="$WORK/src"
+cleanup() {
+  rc=$?
+  rm -f "$WORK/data.sql" "$WORK/juntia.tar"
+  git worktree remove --force "$SRC" 2>/dev/null || true
+  rm -rf "$WORK"
+  exit "$rc"
+}
+trap cleanup EXIT
+git worktree add --detach "$SRC" "$TAG"
 pg_dump "$DB" --data-only --column-inserts --on-conflict-do-nothing \
-  -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql
-bash scripts/backup-manifest.sh "$DB" "$TAG" data.sql > manifest.txt   # falla si las migraciones de producción ≠ las de $TAG
-tar -cf "juntia-$D.tar" data.sql manifest.txt
-gpg --symmetric --cipher-algo AES256 -o "juntia-$D.tar.gpg" "juntia-$D.tar"
-rm data.sql "juntia-$D.tar"                    # solo quedan el cifrado y manifest.txt
-git checkout -
+  -t 'juntia_data.*' -t auth.users -t auth.identities -f "$WORK/data.sql"
+# Bloqueante: falla si la etiqueta no existe o si las migraciones de producción ≠ las de la etiqueta.
+bash scripts/backup-manifest.sh --write --mode production --tag "$TAG" \
+  --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "juntia-$D.manifest.txt"
+tar -cf "$WORK/juntia.tar" -C "$WORK" data.sql -C "$PWD" "juntia-$D.manifest.txt"
+gpg --symmetric --cipher-algo AES256 -o "juntia-$D.tar.gpg" "$WORK/juntia.tar"
+echo "COPIA LISTA: juntia-$D.tar.gpg (etiqueta $TAG)"
 ```
 
 - `-t 'juntia_data.*'` y no `-n juntia_data`: con `-t` presente, `-n` se ignora
   (research R6). `--column-inserts`, para que una columna que falte en el destino
   falle en lugar de desplazar valores.
-- `scripts/backup-manifest.sh` lo crea el PR A: compara
-  `supabase_migrations.schema_migrations` con `supabase/migrations/` del `TAG` y
-  escribe SHA, etiqueta, migraciones, recuentos, sumas de comprobación y el
-  `sha256` de `data.sql`. Si no coinciden, **no hay copia válida**: se para.
+- Solo quedan el `.gpg` y el manifiesto, que no lleva datos personales y se pega
+  en la evidencia. Si algo falla, no queda ni una copia a medias ni `data.sql` en
+  claro, y el mensaje `COPIA LISTA` no aparece.
 - La frase de paso va en el gestor de contraseñas del fundador, nunca junto al
-  archivo.
-- El `.gpg` se guarda **fuera de Supabase y del repositorio** (por ejemplo, en el
-  almacenamiento personal del fundador). `manifest.txt` no lleva datos personales
-  y se pega en la evidencia.
+  archivo. El `.gpg` se guarda **fuera de Supabase y del repositorio**.
 
-### 4.2 Ensayo de los dos caminos, en CI con datos de prueba
+### 4.2 Ensayo de los dos caminos, en CI con datos de prueba — modo CI
 
-`npm run db:restore-drill` corre en el job `db` de cada PR de código. Siembra
-datos de prueba, hace la copia con los comandos de 4.1 (contra el Supabase del
-runner) y la restaura **dos veces, siempre desde una base vacía**:
+`npm run db:restore-drill` corre en el job `db` de cada PR de código, con
+`set -euo pipefail` y el mismo `trap`. Usa `--mode ci --sha "$GITHUB_SHA"`: el
+esquema es **el del commit que se está verificando**. Siembra datos de prueba,
+hace la copia como en 4.1 contra el Supabase del runner y la restaura **dos
+veces, siempre desde una base vacía**:
 
-- **Camino A · Supabase local:** `supabase db reset` con las migraciones del SHA
-  del manifiesto y sin la semilla, y después `psql -v ON_ERROR_STOP=1 -1 -f
-  data.sql`.
+- **Camino A · Supabase local:** `supabase db reset` con las migraciones de ese
+  SHA y sin la semilla, y después `psql -v ON_ERROR_STOP=1 -1 -f data.sql`.
 - **Camino B · PostgreSQL 17 normal** del runner (servidor de PGDG, sin
-  Supabase): `createdb`, `plain-postgres-bootstrap.sql`, las migraciones del SHA
-  en orden con `ON_ERROR_STOP`, y `data.sql`. Antes, el ensayo compara las
-  columnas de `auth.users` y `auth.identities` del arranque con las del stack
-  local y falla si difieren.
+  Supabase): `createdb`, `plain-postgres-bootstrap.sql`, cada migración de ese
+  SHA con `psql -v ON_ERROR_STOP=1 -1` (el bucle se corta con el código de la
+  migración que falla), y `data.sql`. Antes, compara las columnas de
+  `auth.users` y `auth.identities` del arranque con las del stack local y falla
+  si difieren.
 
-En los dos: recuentos, sumas de comprobación y `sha256` contra el manifiesto; en
-el A, además, un usuario restaurado entra. Cualquier dependencia que falte hace
-fallar el job. **Ningún dato real pasa por CI.**
+En los dos: `backup-manifest.sh --verify` es obligatorio y bloqueante; en el A,
+además, un usuario restaurado entra.
 
-### 4.3 Restauración real, en el equipo de un fundador (camino B)
+**Controles negativos** (PR A, en el mismo job): el ensayo se repite con
+fallos inyectados y **debe fallar** en cada uno, sin imprimir nunca el mensaje de
+éxito:
 
-Solo cuando el camino B tiene salida verde del job `db`. En un PostgreSQL 17
-instalado en el equipo (sin Docker), desde una base **vacía**, con el repositorio
-en el SHA del manifiesto:
+1. una migración rota añadida en una copia temporal de `supabase/migrations/`;
+2. un manifiesto con un recuento alterado;
+3. un manifiesto con otro SHA;
+4. un `data.sql` modificado (no coincide el `sha256`).
+
+El job comprueba el código de salida distinto de 0 de cada uno y que la salida no
+contiene la marca de éxito; si un control negativo «pasa», el job falla. **Ningún
+dato real pasa por CI.**
+
+### 4.3 Restauración real, en el equipo de un fundador (camino B, modo producción)
+
+Solo cuando el camino B tiene salida verde del job `db` del commit de la etiqueta
+o posterior. En un PostgreSQL 17 instalado en el equipo (sin Docker), en una base
+**vacía**. El script es `scripts/restore-plain.sh` (lo crea el PR A):
 
 ```bash
-gpg -d -o juntia.tar "juntia-$D.tar.gpg"
-tar -xf juntia.tar
-git checkout "$(grep '^sha=' manifest.txt | cut -d= -f2)"
-createdb -h localhost -U postgres juntia_restore
-psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -f supabase/restore/plain-postgres-bootstrap.sql
-for m in supabase/migrations/*.sql; do psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -1 -f "$m" || break; done
-psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -1 -f data.sql
-bash scripts/backup-manifest.sh --verify "postgresql://postgres@localhost/juntia_restore" manifest.txt && echo "MANIFIESTO COINCIDE"
-git checkout -
+#!/usr/bin/env bash
+set -euo pipefail
+ARCHIVE=${1:?ruta del .tar.gpg}; PG=${PG:-postgresql://postgres@localhost}
+WORK=$(mktemp -d); SRC="$WORK/src"
+cleanup() {
+  rc=$?
+  rm -f "$WORK/data.sql" "$WORK/juntia.tar"
+  git worktree remove --force "$SRC" 2>/dev/null || true
+  rm -rf "$WORK"
+  exit "$rc"
+}
+trap cleanup EXIT
+gpg -d -o "$WORK/juntia.tar" "$ARCHIVE"
+tar -xf "$WORK/juntia.tar" -C "$WORK"
+MANIFEST=$(ls "$WORK"/juntia-*.manifest.txt)
+SHA=$(sed -n 's/^sha=//p' "$MANIFEST"); test -n "$SHA"
+git worktree add --detach "$SRC" "$SHA"
+createdb --maintenance-db="$PG/postgres" juntia_restore   # falla si ya existe: la base tiene que estar vacía
+psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -f "$SRC/supabase/restore/plain-postgres-bootstrap.sql"
+for m in "$SRC"/supabase/migrations/*.sql; do
+  psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -1 -f "$m"   # con set -e, la primera que falla detiene todo
+done
+psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql"
+bash scripts/backup-manifest.sh --verify --mode production --manifest "$MANIFEST" \
+  --migrations "$SRC/supabase/migrations" --db "$PG/juntia_restore" --data "$WORK/data.sql"
+echo "MANIFIESTO COINCIDE"
 ```
 
-Se pega en la evidencia: la salida de cada comando (sin datos), `MANIFIESTO
-COINCIDE` y la fecha. Después se borran `juntia_restore`, `data.sql` y el `.tar`,
-y el servicio de PostgreSQL se apaga o se desinstala (ADR-011 §9.6). El arranque
-y el script del manifiesto los crea el PR A y se ensayan en 4.2 antes de este
-paso.
+Se pega en la evidencia: la salida del script (sin datos), `MANIFIESTO COINCIDE`
+y la fecha. Si el script termina con otro código, la restauración **no** cuenta.
+Después se borra `juntia_restore` (`dropdb`) y el servicio de PostgreSQL se apaga
+o se desinstala (ADR-011 §9.6).
 
 ## 5. Revisión de un PR de implementación
 

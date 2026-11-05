@@ -12,7 +12,7 @@ tabla del final.
 | `test:db` | `supabase test db` (pgTAP en `supabase/tests/`) | Solo job `db` |
 | `test:integration` | `vitest run --project integration` (supabase-js contra el Supabase local del runner; sin navegador) | Solo job `db` |
 | `db:types:check` | `supabase gen types typescript --local --schema public` comparado con `src/lib/supabase/database.types.ts` | Solo job `db` |
-| `db:restore-drill` | `bash scripts/restore-drill.sh`: siembra datos de prueba, hace la copia (`data.sql` + manifiesto, research R6), la cifra y la restaura **desde una base vacía** por los dos caminos: A, Supabase local con `supabase db reset` a las migraciones del SHA del manifiesto, sin semilla, y los datos; B, PostgreSQL 17 normal de PGDG con `plain-postgres-bootstrap.sql`, las migraciones de ese SHA y los datos. Compara recuentos, sumas de comprobación y `sha256`, y las columnas de `auth` del arranque con las del stack; cualquier dependencia que falte falla el job | Solo job `db` |
+| `db:restore-drill` | `bash scripts/restore-drill.sh`, con `set -euo pipefail` y un `trap` que limpia y conserva el código de salida. **Modo CI** (`backup-manifest.sh --mode ci --sha "$GITHUB_SHA"`): el esquema es el del **commit que se verifica**, sin etiqueta. Siembra datos de prueba, hace la copia (`data.sql` + manifiesto, research R6), la cifra y la restaura **desde una base vacía** por los dos caminos: A, Supabase local con `supabase db reset` a las migraciones de ese SHA, sin semilla, y los datos; B, PostgreSQL 17 normal de PGDG con `plain-postgres-bootstrap.sql`, cada migración de ese SHA con `ON_ERROR_STOP` y los datos. `--verify` del manifiesto obligatorio en los dos; columnas de `auth` del arranque comparadas con el stack. **Controles negativos**: migración rota, recuento alterado en el manifiesto, otro SHA en el manifiesto y `data.sql` modificado; cada uno debe terminar con código distinto de 0 y sin la marca de éxito, o el job falla | Solo job `db` |
 | `test:e2e:smoke` | `playwright test --project e2e` (specs E2E que existan) | Solo job `e2e` |
 
 La CLI es la del workflow (`supabase/setup-cli@v3`, `version: 2.121.0`), no una
@@ -48,9 +48,9 @@ Disparadores, permisos, `concurrency`, filtro de rutas documentales y
 
 | Job | Control | Entra | Pasos | Presupuesto |
 | --- | --- | --- | --- | --- |
-| `app` | 1, 2 y 5 parcial | Existe | Como en la 001. Desde el PR B, `check:theme-script` pide `/entrar` (las rutas de producto redirigen sin sesión) y axe de rutas autenticadas se va al job `e2e` | Gate < 6 min |
+| `app` | 1, 2 y 5 parcial | Existe | Como en la 001. Desde el PR B, `check:theme-script` pide `/entrar` (las rutas de producto redirigen sin sesión) y axe corre aquí **solo para los estados que no necesitan sesión** (tabla «Axe» de abajo) | Gate < 6 min |
 | `db` | 3 | **PR A** | `supabase/setup-cli@v3`; `supabase start` con los servicios mínimos (`-x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`); `npm ci`; `test:db` (comando medido, < 60 s); `test:integration`; `db:types:check`; `db:restore-drill` (cliente y servidor PostgreSQL 17 de PGDG); `supabase stop` | Gate < 6 min |
-| `e2e` | 4 y 5 (rutas con sesión) | **PR B** | `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` con `storageState` sembrado | Humo < 3 min · Gate < 6 min |
+| `e2e` | 4 y 5 (estados que necesitan sesión) | **PR B** | `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` con `storageState` sembrado | Humo < 3 min · Gate < 6 min |
 
 Notas:
 
@@ -75,11 +75,43 @@ Notas:
   mismos jobs (ADR-011 §9.3). Es la forma de probar la base de datos antes de
   abrir el PR.
 
+## Axe: clasificación por la sesión que necesita el estado real
+
+ADR-011 §5, enmienda «Axe en dos jobs», precisada en la segunda revisión del PR
+#37. Lo que decide el job **no es el grupo de rutas** (`(auth)` o `(app)`), sino si
+el estado real que se audita necesita una sesión. Un registro único,
+`tests/a11y/route-registry.ts`, lista cada ruta y estado con `session: 'none' |
+'user' | 'recovery'`.
+
+| Estado | Ruta | Sesión real | Job de axe |
+| --- | --- | --- | --- |
+| A1, A1b, A1c, A1d, aviso de verificado, S3 | `/entrar` | Ninguna | `app` |
+| A2 | `/crear-cuenta` | Ninguna | `app` |
+| A3 | `/verificar-correo` | Ninguna | `app` |
+| A4, A4b, aviso de enlace caducado | `/recuperar` | Ninguna | `app` |
+| A5 | `/nueva-contrasena` | **De recuperación** (la crea `/auth/confirm` con `type=recovery`) | `e2e` |
+| A6 | `/primera-entrada` | **De usuario** | `e2e` |
+| Inicio, Actividad, detalle, Mi cuenta y sus subrutas, Metas, Plan, Balance | `(app)` | De usuario | `e2e` |
+| Sesión caducada (Anotar) | dentro de `(app)` | De usuario, que caduca | `e2e` |
+| No encontrado, superficie interna | — | Ninguna | `app` |
+
+Si un estado sin sesión cambia al tener sesión (por ejemplo, `/entrar` con
+sesión lleva a Inicio), se audita el estado **sin** sesión, que es el que se ve.
+A5 sin sesión de recuperación no es A5: termina en el aviso de enlace caducado
+de `/recuperar`, que ya está en la lista de `app`.
+
+**Prueba de cobertura** (PR B, donde el reparto empieza a aplicar; Vitest
+`components` en entorno `node`): recorre los `page.tsx` de `src/app` y afirma que
+**cada ruta implementada está en exactamente una de las dos listas**, que **las dos
+listas juntas cubren todas las rutas**, que cada entrada se audita en **los dos
+temas** y que ninguna entrada con `session: 'user'` o `'recovery'` cae en `app`.
+Una ruta nueva sin clasificar hace fallar `verify`.
+
 ## Playwright
 
 | Proyecto | `testDir` | Usa sesión | Desde |
 | --- | --- | --- | --- |
-| `a11y` | `tests/a11y` | Rutas de acceso e interna sin sesión; producto y Mi cuenta con `storageState` sembrado | 001; con sesión desde el PR B |
+| `a11y` | `tests/a11y` | Según el registro de rutas de la sección «Axe»: sin sesión en `app`; con sesión de usuario o de recuperación sembrada en `e2e` | 001; con sesión desde el PR B |
 | `e2e` | `tests/e2e` | Fixture de scope `worker` que siembra Sara (y Tomás donde haga falta) y sobrescribe `storageState` por `parallelIndex` y rol | PR B |
 
 `reducedMotion: 'reduce'` por defecto, `retries` 0/1, solo Chromium, cero

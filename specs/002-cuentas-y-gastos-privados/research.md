@@ -385,17 +385,22 @@ la misma que en todo lo demás (FR-001): **las migraciones del repositorio**.
 Una copia completa son tres cosas:
 
 1. **El esquema, por referencia:** las migraciones de `supabase/migrations/` en
-   el **commit etiquetado que coincide con producción**. Cada vez que la dueña
-   aplica migraciones a producción, etiqueta ese commit de `main`
-   (`db-prod-AAAA-MM-DD`). La copia comprueba que la lista de
-   `supabase_migrations.schema_migrations` de producción es **exactamente** la
-   de esa etiqueta; si no lo es, no hay copia válida y se dice.
+   un commit concreto, según el **modo** (segunda revisión del PR #37, R2-2). Los
+   dos modos comparten el mismo código de comprobación:
+   - **modo CI** (`--mode ci --sha <sha>`): el **SHA exacto del commit que se
+     verifica** (`$GITHUB_SHA`), sin etiqueta. El ensayo prueba así el esquema del
+     commit en revisión, no uno histórico;
+   - **modo producción** (`--mode production --tag <db-prod-…>`): cada vez que la
+     dueña aplica migraciones a producción, etiqueta ese commit de `main`
+     (`db-prod-AAAA-MM-DD`). La copia exige la etiqueta y comprueba que la lista
+     de `supabase_migrations.schema_migrations` de producción es **exactamente**
+     la de ese commit; si no lo es, no hay copia válida y el script falla.
 2. **Los datos:** `pg_dump --data-only --column-inserts --on-conflict-do-nothing
    -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql`. Es el
    comando probado en el run 3 con `--column-inserts` en lugar de `--inserts`:
    con los nombres de columna, una columna que falte en el destino falla con un
    error en vez de desplazar valores en silencio.
-3. **El manifiesto:** etiqueta y SHA del commit, lista de migraciones aplicadas,
+3. **El manifiesto:** modo, SHA del commit (y la etiqueta en producción), lista de migraciones aplicadas,
    recuento de filas y suma de comprobación por tabla
    (`md5(string_agg(t::text, '|' order by <clave>))`) y `sha256` de `data.sql`.
 
@@ -406,7 +411,7 @@ ignorados, y una restauración que necesita ignorar errores no prueba nada.
 
 **Restauración, siempre desde una base vacía y por dos caminos:**
 
-- **A · Supabase local (CI):** `supabase start` vacío, checkout del SHA del
+- **A · Supabase local (CI):** `supabase start` vacío, el SHA del
   manifiesto, `supabase db reset` con las migraciones de ese commit y sin la
   semilla, y después `psql -v ON_ERROR_STOP=1 -1 -f data.sql`. Recuentos, sumas
   de comprobación y `sha256` contra el manifiesto, y un usuario restaurado entra.
@@ -422,6 +427,22 @@ ignorados, y una restauración que necesita ignorar errores no prueba nada.
   migraciones del SHA en orden con `ON_ERROR_STOP`, y por último `data.sql`. Un
   paso del ensayo compara las columnas del arranque con las del stack local de
   esa versión de la CLI y **falla** si GoTrue cambió las suyas.
+
+**Fallar pronto** (segunda revisión del PR #37, R2-1). La copia, el ensayo y la
+restauración real son scripts de Git Bash con `set -euo pipefail`: el primer
+fallo detiene todo y su código de salida es el del script. Sin `|| break` ni
+pasos opcionales: la comprobación del manifiesto (`--verify`) es obligatoria y
+bloqueante. El esquema de otro commit se toma con `git worktree add` en una
+carpeta temporal, no con `git checkout`, y un `trap` de salida borra los
+archivos descifrados y esa carpeta **conservando el código de salida original**
+(quickstart §4).
+
+**Controles negativos** (PR A): el ensayo del job `db` se repite con fallos
+inyectados —una migración rota, un recuento alterado en el manifiesto, otro SHA
+en el manifiesto y un `data.sql` modificado— y cada repetición **debe**
+terminar con código distinto de 0 y sin la marca de éxito. Si una de ellas
+«pasa», el job falla. Así se demuestra que el ensayo puede fallar, no solo que
+pasa.
 
 **Qué está probado hoy:** solo el camino A con el esquema de la migración
 desechable (run 3). **El camino B no se ha ejecutado.** El PR A ensaya **los dos

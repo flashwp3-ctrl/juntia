@@ -116,7 +116,7 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 | Versiones exactas (ADR-013 [V] 10) | Decide | **Research R3**: CLI 2.121.0, supabase-js 2.118.0, ssr 0.12.7 y el stack local; el lockfile lo genera el PR A | No — **verificado**; lockfile en el PR A |
 | Lista permitida del registro (Q9) | Decide | **Research R4**: hook Before User Created; 403 sin fila, también por `/otp`; la API de administración no pasa por él | No — **verificado**; enumeración por la API aceptada (16.16) |
 | Correo de Supabase (Q10) | Decide | **Research R5, evidencia documental (no un run)**: 2 por hora en todo el proyecto y solo a miembros del equipo | No — la comprobación real (correos en el equipo y un correo de verificación recibido) es requisito operativo antes de probar el PR B |
-| Copia y restauración (Q11) | Decide | **Research R6**: `pg_dump` 17 de solo datos + `gpg` + restauración en base migrada, recuentos iguales y usuario que entra; `-Fc` descartado. Revisión del PR #37: el esquema va por referencia a las migraciones etiquetadas, no por `pg_dump` | No — decide el comando de datos y el cifrado; los dos caminos de restauración desde vacío los prueba el PR A |
+| Copia y restauración (Q11) | Decide | **Research R6**: `pg_dump` 17 de solo datos + `gpg` + restauración en base migrada, recuentos iguales y usuario que entra; `-Fc` descartado. Revisión del PR #37: el esquema va por referencia a las migraciones de un commit (SHA verificado en CI, etiqueta en producción), no por `pg_dump` | No — decide el comando de datos y el cifrado; los dos caminos de restauración desde vacío los prueba el PR A |
 | Persistencia del tema (Q7) | Decide | **Research R7**, en local sin Docker: primer cuadro del tema guardado, CLS = 0, cero errores de hidratación, control negativo que destella | No — **verificado** para la lectura de la cookie |
 
 **Comprueban lo construido — se ejecutan en los PR y su salida va al PR:**
@@ -126,7 +126,7 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 | ADR-013 [V] 1, 2, 7, 8 y 9 **definitivas** | **A**, en **dos puntos de control** antes de la primera función de dinero: tras `foundation` (1 y 9, y lo que ya se pueda de 2, 7 y 8) y tras `controlled_tables` (las cinco sobre todas las tablas controladas y vistas) | Pendiente | No |
 | ADR-013 [V] 3, 4, 5 (equivalente en movimientos, Q15) y 6 | A | Pendiente | No |
 | Rol de login de `db push` alojado, `drop extension pg_graphql` y esquemas expuestos en `juntia-dev` | A | Pendiente | No |
-| Restauración desde vacío por los dos caminos (Supabase local con `db reset` al commit etiquetado; PostgreSQL 17 normal con arranque + migraciones), con datos de prueba | A | Pendiente. Hasta tener salida, la copia no es restaurable | No |
+| Restauración desde vacío por los dos caminos, en modo CI con el SHA del commit verificado (Supabase local con `db reset`; PostgreSQL 17 normal con arranque + migraciones), con datos de prueba y controles negativos | A | Pendiente. Hasta tener salida, la copia no es restaurable | No |
 | Tema: cookie escrita desde el perfil, dos dispositivos, CLS en acceso y Mi cuenta | B | Pendiente | No |
 | Workers con usuarios aislados (ADR-011 [V] 3) | B (medición), C (con dos specs) | Pendiente | No |
 | Altura del teclado nativo con la hoja (iPhone y Android) | C | Pendiente | No |
@@ -273,8 +273,10 @@ tests/
 └── a11y/routes.a11y.ts                  # + rutas nuevas, con sesión sembrada
 scripts/
 ├── verify.mjs · ci.mjs                  # Filas «SOLO EN CI — pendiente de resultado»
-├── backup-manifest.sh                   # Manifiesto de la copia: SHA, migraciones, recuentos, sumas; --verify
-└── restore-drill.sh                     # Ensayo de copia y de los dos caminos de restauración desde vacío (job db)
+├── backup.sh                            # Copia en modo producción (set -euo pipefail, trap)
+├── restore-plain.sh                     # Restauración real, camino B (ídem)
+├── backup-manifest.sh                   # Manifiesto: --write / --verify, --mode ci | production
+└── restore-drill.sh                     # Ensayo en modo CI: dos caminos desde vacío + controles negativos (job db)
 ```
 
 Las pruebas de Vitest de dominio y componentes van junto a lo que prueban
@@ -403,17 +405,25 @@ SQL/RLS e integración, y E2E queda «NO APLICABLE — nace en el PR B» (ADR-01
 FR-063). El presupuesto de `test:db` (< 60 s) se mide dentro del job.
 
 **Copia (research R6; quickstart §4):** la copia completa es el esquema **por
-referencia** (las migraciones del commit etiquetado `db-prod-*` que coincide con
-producción), `data.sql` (`--data-only --column-inserts -t 'juntia_data.*' -t
-auth.users -t auth.identities`) y un manifiesto (SHA, migraciones, recuentos,
-sumas de comprobación y `sha256`). No se vuelca el esquema con `pg_dump`. El PR A
-crea `scripts/restore-drill.sh`, `scripts/backup-manifest.sh` y
-`supabase/restore/plain-postgres-bootstrap.sql`, y **prueba en el job `db` los
-dos caminos desde una base vacía**, con datos de prueba: A, Supabase local con
-`db reset` a las migraciones de ese commit y después los datos; B, PostgreSQL 17
-normal con el arranque, las migraciones y los datos. El ensayo falla ante
-cualquier dependencia que falte. **La copia no se presenta como restaurable hasta
-que los dos caminos tienen salida en la evidencia.**
+referencia** (las migraciones de un commit), `data.sql` (`--data-only
+--column-inserts -t 'juntia_data.*' -t auth.users -t auth.identities`) y un
+manifiesto (modo, SHA, migraciones, recuentos, sumas de comprobación y
+`sha256`). No se vuelca el esquema con `pg_dump`. **Dos modos con las mismas
+comprobaciones**: el **modo CI** usa el SHA exacto del commit que se verifica,
+sin etiqueta; el **modo producción** exige la etiqueta `db-prod-*` y comprueba
+que las migraciones de producción coinciden con ella. El PR A crea
+`scripts/backup.sh`, `scripts/restore-plain.sh`, `scripts/restore-drill.sh`,
+`scripts/backup-manifest.sh` y `supabase/restore/plain-postgres-bootstrap.sql`,
+todos con `set -euo pipefail`, sin `|| break`, con `--verify` del manifiesto
+obligatorio y un `trap` que borra lo descifrado y conserva el código de salida.
+Y **prueba en el job `db`, en modo CI, los dos caminos desde una base vacía**,
+con datos de prueba: A, Supabase local con `db reset` a las migraciones de ese
+commit y después los datos; B, PostgreSQL 17 normal con el arranque, las
+migraciones y los datos. **Controles negativos** en el mismo job: una migración
+rota, un recuento alterado y otro SHA en el manifiesto, y un `data.sql`
+modificado deben hacer fallar el ensayo, sin que nunca imprima el éxito (si uno
+«pasa», el job falla). **La copia no se presenta como restaurable hasta que los
+dos caminos y los controles negativos tienen salida en la evidencia.**
 
 **`[V]` que cierra:** ADR-013 [V] 1–9 (10 ya está en el plan; el lockfile aquí);
 rol de `db push` alojado; restauración desde vacío por los caminos A y B;
@@ -666,7 +676,7 @@ Decisiones del plan que el revisor puede querer distintas. Ninguna necesita ADR.
 9. **Los correos reales de la lista no entran en git**: se insertan con SQL en
    cada proyecto (research R4).
 10. **Copia en tres partes** (esquema por referencia a las migraciones
-    etiquetadas `db-prod-*`, datos y manifiesto) y el camino B con un arranque
+    de un commit, en modo CI o producción, datos y manifiesto) y el camino B con un arranque
     propio en PostgreSQL normal (research R6; revisión del PR #37, F37-1).
 11. **Sin RHF, Zod ni TanStack Query** en P0-1 (research R8.12).
 
