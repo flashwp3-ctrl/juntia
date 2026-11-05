@@ -487,7 +487,7 @@ incluyen `npm ci`.**
 
 | Comando | Presupuesto |
 | --- | --- |
-| `verify` (lint + typecheck + dominio + componentes + SQL/RLS) | **< 90 s** |
+| `verify` local (lint + typecheck + dominio + componentes; SQL/RLS solo en CI, ADR-011 §9) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
 | Tests SQL / RLS (comando medido dentro del job 3 en CI, ADR-011 §9) | **< 60 s** |
 
