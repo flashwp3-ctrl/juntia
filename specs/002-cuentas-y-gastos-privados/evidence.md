@@ -1235,8 +1235,10 @@ Test de componentes `confirm.test.ts` visto en rojo
 ([`confirm-code-red.txt`](evidence/pr-b/confirm-code-red.txt)) y en verde en local;
 `tests/integration/confirm-code.test.ts` recorre contra el GoTrue del runner la URL
 de la plantilla por defecto (`/auth/v1/verify?token=…&redirect_to=…`): code canjeado
-en el mismo navegador, otro navegador sin verificador y enlace repetido. Salida:
-job `db` del gate (abajo).
+en el mismo navegador, otro navegador sin verificador y enlace repetido (Auth
+devuelve el error en la consulta → aviso de enlace caducado). Salida: 2 de 2 en el
+job `db` del run [42093325736](https://github.com/flashwp3-ctrl/juntia/actions/runs/42093325736)
+([`t059-gate-e38af80.txt`](evidence/pr-b/t059-gate-e38af80.txt)).
 
 T048 (sesión caducada): estado del registro de axe y capturas
 `cuenta_perfil--sesion-caducada--*`: la sesión se borra con la página abierta,
@@ -1367,15 +1369,18 @@ del PR.
 
 ### T059
 
-**Gate sobre ab6a1b1** (el último commit de código del PR):
-`npm run verify` en local pasó (lint, typecheck, 28 de dominio, 149 de
-componentes; 27,9 s, < 90 s) y el run
-[42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)
-tiene `app` 114 s, `db` 250 s y `e2e` 365 s en verde
-([`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt)). Presupuestos:
-`test:db` 5,63 s (< 60), humo 14,40 s (< 180); el job `e2e` supera los 360 s con la
-medición de T054 incluida (aviso, ver T052). El commit posterior solo añade
-evidencia (`.md` y `.png`).
+**Gate sobre e38af80** (el último commit de código del PR, con la enmienda de
+`/auth/confirm`): `npm run verify` en local pasó (22,8 s, < 90 s) y el run
+[42093325736](https://github.com/flashwp3-ctrl/juntia/actions/runs/42093325736)
+tiene `app` 152 s (axe 44/44), `db` 254 s (24 pruebas de integración, incluidas
+las dos del camino `code`) y `e2e` 353 s (spec 1 6/6 en 13,3 s; axe 76/76) en verde
+([`t059-gate-e38af80.txt`](evidence/pr-b/t059-gate-e38af80.txt)). Presupuestos:
+`test:db` 5,74 s (< 60), humo 13,34 s (< 180), los tres jobs por debajo de 360 s.
+El gate anterior, sobre ab6a1b1 (run
+[42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)),
+queda en [`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt); las
+capturas y T053 son de ese commit, y la enmienda solo cambia el aviso de Entrar
+con `?aviso=enlace`. Los commits posteriores solo añaden evidencia.
 
 ### T060
 
