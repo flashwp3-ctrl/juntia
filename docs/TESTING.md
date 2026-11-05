@@ -41,10 +41,11 @@ código afirma el bug además de la función.
 
 ## 2. Comandos
 
-**`verify` ejecuta exactamente esto, aquí y en CI:** lint + typecheck + unit de
-dominio + **componentes (RTL selectivo)** + tests SQL/RLS. Los componentes están
-dentro. Es el mismo enunciado que usa el ADR, palabra por palabra, para que no haya
-dos definiciones circulando.
+**El contenido de los controles es uno solo:** lint + typecheck + unit de dominio
++ **componentes (RTL selectivo)** + tests SQL/RLS. Es el mismo enunciado que usa el
+ADR, palabra por palabra. **Dónde corre cada parte** lo fija ADR-011 §9: `verify`
+local ejecuta los cuatro primeros y marca SQL/RLS «SOLO EN CI — pendiente de
+resultado»; el gate completo del PR los ejecuta todos, sobre el mismo commit.
 
 **Esa definición es el destino, no el primer día.** La especificación 001 no tiene
 Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cada
@@ -488,7 +489,7 @@ incluyen `npm ci`.**
 | --- | --- |
 | `verify` (lint + typecheck + dominio + componentes + SQL/RLS) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
-| Tests SQL / RLS | **< 60 s** |
+| Tests SQL / RLS (comando medido dentro del job 3 en CI, ADR-011 §9) | **< 60 s** |
 
 ### Presupuestos de job de CI
 

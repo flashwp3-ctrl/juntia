@@ -210,7 +210,7 @@ instaladas y, donde haga falta, Supabase ya arrancado.
 | --- | --- |
 | `verify` local (lint + typecheck + unit de dominio + componentes; SQL/RLS solo en CI, §9) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
-| Tests SQL / RLS | **< 60 s** |
+| Tests SQL / RLS (comando medido dentro del job 3 en CI, §9) | **< 60 s** |
 
 #### Presupuestos de job de CI
 
@@ -443,6 +443,8 @@ cambian; cambia **dónde** corre cada uno.
    002), se ejecuta en un **runner efímero** con un workflow propio sobre una rama
    desechable que nunca se fusiona. La salida se pega en el plan. Ese preflight
    informa el plan; **no sustituye** las verificaciones definitivas del slice.
+   Ese workflow se dispara con `on: push` limitado a la rama del preflight, porque
+   `workflow_dispatch` solo funciona con workflows que ya existen en `main`.
 5. **Para usar la app en desarrollo** hay un segundo proyecto Supabase Free,
    `juntia-dev`, en la cuenta de la segunda fundadora y en la región de
    producción. No guarda datos reales, no comparte claves con producción y no lo
@@ -459,8 +461,12 @@ cambian; cambia **dónde** corre cada uno.
    - La **prueba de restauración** del procedimiento se hace en un **runner
      efímero de CI**, con datos de prueba y el mismo esquema, nunca con la copia
      real.
-   - La copia real se comprueba sin restaurarla en CI: descifrado, integridad y
-     recuento de filas, en el equipo del fundador.
+   - La **copia real se restaura de verdad** en un PostgreSQL normal instalado en
+     el equipo de un fundador, sin Docker. Se comprueban el descifrado, la
+     restauración sin errores de los esquemas y datos de Juntia, y los recuentos
+     de filas contra producción. Después ese PostgreSQL se apaga o se desinstala.
+     Lo que no se puede reproducir en un PostgreSQL normal (los roles y esquemas
+     propios de Supabase) queda cubierto por la prueba del procedimiento en CI.
    - Ningún dato real pasa por CI, ni por sus artefactos ni por sus logs.
 
    El plan de P0-1 define qué esquemas, roles y datos forman una «copia
