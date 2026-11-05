@@ -1533,8 +1533,12 @@ con `?aviso=enlace`. Los commits posteriores solo añaden evidencia.
 
 ### T060
 
-Descripción del PR B en #43. **Pendiente: revisión humana** de los dos
-fundadores (capturas, `[P]` y copy nuevo de `es.ts`).
+**Aprobado por Alejandro el 5 de noviembre de 2026; pendiente la segunda fundadora**
+(SC-001 pide los dos). Vio las 15 pantallas principales a 390 px en claro y, a 1440 px,
+las tres marcadas para aprobar viendo la pantalla, que quedan aprobadas por él: la
+composición de escritorio de las pantallas de acceso, el estado de sesión caducada y
+«Cuenta reutiliza los fondos de categoría» (propuesta §15.9). La casilla de T060 se
+marca cuando apruebe la segunda fundadora.
 
 ### T071
 
