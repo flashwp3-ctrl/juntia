@@ -58,7 +58,10 @@ export function SignInForm({ volver, notice }: Props) {
       </form>
       <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[14px]">
         <Link href="/recuperar" className={`${authLink} relative inline-flex min-h-11 items-center`}>{copy.auth.signIn.forgot}</Link>
-        <Link href="/crear-cuenta" className={`${authLink} relative inline-flex min-h-11 items-center`}>{copy.auth.signIn.createAccount}</Link>
+        {/* Alineado a la derecha, su ancho cambia unos píxeles al llegar la fuente. Con dirección rtl, el punto de partida
+            que mide Layout Instability es su esquina derecha, que no se mueve (CLS 0,000009 medido en el runner). El texto
+            no tiene signos que la dirección pueda reordenar. */}
+        <Link href="/crear-cuenta" className={`${authLink} relative inline-flex min-h-11 items-center [direction:rtl]`}>{copy.auth.signIn.createAccount}</Link>
       </p>
     </>
   );
