@@ -27,6 +27,43 @@ select ok(not has_sequence_privilege(r,c.oid,p), '[V7] sin secuencias ' || r || 
 from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join unnest(array['anon','authenticated']) r cross join unnest(array['USAGE','SELECT','UPDATE']) p
 where c.relkind='S' and n.nspname in ('public','juntia_data','juntia_private');
 -- Las concesiones automáticas no vuelven a abrir objetos nuevos.
+-- F40-2 / ADR-013 §5.4: inventario bloqueante de funciones de postgres en TODOS
+-- los esquemas no del sistema; no se excluyen auth ni extensiones por esquema.
+-- Única excepción del runner fuera de las siete entradas: el grant explícito
+-- tests.authenticate_as(uuid), T003/seed.sql. Las implementaciones privadas son
+-- de writer y por tanto no pertenecen al conjunto de funciones de postgres.
+create temporary view f40_uncontracted_execute as
+select format('%I.%I(%s)',n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)) as signature,
+  exists(select 1 from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a where a.grantee=0 and a.privilege_type='EXECUTE') as public_execute,
+  has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
+  has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_execute
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where p.proowner='postgres'::regrole and n.nspname !~ '^pg_' and n.nspname<>'information_schema'
+  and p.oid<>all(array[
+    'public.complete_first_entry()'::regprocedure,'public.create_transaction(text,text,text,text,text,text)'::regprocedure,
+    'public.ensure_profile()'::regprocedure,'public.set_theme(text)'::regprocedure,
+    'public.update_display_name(text)'::regprocedure,'public.update_transaction(text,uuid,integer,text,text,text,text)'::regprocedure,
+    'public.void_transaction(text,uuid,integer,text)'::regprocedure,'tests.authenticate_as(uuid)'::regprocedure
+  ]::oid[])
+  and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE')
+    or exists(select 1 from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a where a.grantee=0 and a.privilege_type='EXECUTE'));
+select is((select coalesce(jsonb_agg(to_jsonb(f) order by signature),'[]'::jsonb) from f40_uncontracted_execute f),'[]'::jsonb,
+  '[F40-2] inventario de postgres fuera del contrato: firmas y EXECUTE PUBLIC/anon/authenticated');
+create function tests.f40_global_probe() returns integer language sql return 1;
+select is((select count(*) from f40_uncontracted_execute),0::bigint,'[F40-2] default global cerrado también fuera de esquemas Juntia');
+grant execute on function tests.f40_global_probe() to public;
+select is((select jsonb_agg(to_jsonb(f)) from f40_uncontracted_execute f),
+  '[{"signature":"tests.f40_global_probe()","public_execute":true,"anon_execute":true,"authenticated_execute":true}]'::jsonb,'[F40-2] inventario detecta un grant PUBLIC fuera del contrato');
+revoke execute on function tests.f40_global_probe() from public;
+grant execute on function tests.f40_global_probe() to anon;
+select is((select jsonb_agg(to_jsonb(f)) from f40_uncontracted_execute f),
+  '[{"signature":"tests.f40_global_probe()","public_execute":false,"anon_execute":true,"authenticated_execute":false}]'::jsonb,'[F40-2] inventario detecta un grant anon fuera del contrato');
+revoke execute on function tests.f40_global_probe() from anon;
+grant execute on function tests.f40_global_probe() to authenticated;
+select is((select jsonb_agg(to_jsonb(f)) from f40_uncontracted_execute f),
+  '[{"signature":"tests.f40_global_probe()","public_execute":false,"anon_execute":false,"authenticated_execute":true}]'::jsonb,'[F40-2] inventario detecta un grant authenticated fuera del contrato');
+revoke execute on function tests.f40_global_probe() from authenticated;
+select is((select count(*) from f40_uncontracted_execute),0::bigint,'[F40-2] inventario vacío tras retirar las sondas');
 create function public.ungranted_probe() returns integer language sql return 1;
 create table juntia_data.ungranted_probe(id bigint generated always as identity);
 select ok(not has_function_privilege(r,'public.ungranted_probe()','EXECUTE'), '[V7] default EXECUTE cerrado ' || r) from unnest(array['anon','authenticated']) r;

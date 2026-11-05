@@ -330,6 +330,17 @@ TypeScript como número, en ningún sentido y por ningún camino.
    grants hasta que la migración los conceda de forma explícita. Los valores
    por defecto de Supabase varían según la configuración del proyecto, así que
    no se dan por sabidos.
+
+   **Nota de implementación · 5 de noviembre de 2026 (F40-2).** La revocación
+   `alter default privileges for role postgres revoke execute on functions
+   from public, anon, authenticated` es **global**: afecta a las funciones que
+   cree `postgres` en cualquier esquema. PostgreSQL no permite retirar por
+   esquema el `EXECUTE` global concedido a `PUBLIC`; se conserva esta revocación
+   para cumplir este apartado y data-model §1.4. Una función futura de Supabase
+   o de una extensión creada por `postgres` que necesite ser ejecutable por
+   esos roles requerirá un `GRANT` explícito. Si falta, el resultado será un
+   error de permiso visible, nunca una fuga de acceso. Cada función de Juntia
+   tiene además su propio `REVOKE` explícito en la migración.
 5. **Secuencias:** las claves son identidades o UUID. `anon` y
    `authenticated` no tienen `usage` ni `update` sobre ninguna secuencia.
 6. **Vistas** de `public`: siempre `security_invoker = true`.
