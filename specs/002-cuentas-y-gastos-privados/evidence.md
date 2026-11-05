@@ -617,6 +617,47 @@ El commit posterior de entrega contiene solo este registro, los logs de
 verificación y las casillas de tareas: la migración y el código siguen siendo
 los del commit de punto de control citado, sin un run adicional documental.
 
+## juntia-dev tras PR A — aplicación reportada por el fundador
+
+Fecha: **5 de noviembre de 2026**. Proyecto `juntia-dev`, ref
+`itfrhnadovezpahikuol`. Commit aplicado: `027a5b2`.
+El fundador ejecutó el dry-run, el push y las consultas de solo lectura;
+el agente registra su reporte, sin atribuirse una ejecución ni una observación
+directa de esas comprobaciones.
+
+El dry-run listó únicamente estas dos migraciones, posteriores a foundation:
+
+```text
+20261105000200_controlled_tables.sql
+20261105000300_money_functions.sql
+```
+
+Salida final del push aportada por el fundador:
+
+```text
+Finished supabase db push.
+```
+
+`migration list --linked`: `000100`, `000200` y `000300` en **Local y Remote**
+(sufijos de las versiones reportados por el fundador).
+
+Resultado aportado de `db query --linked` (solo lectura):
+
+```text
+pg_graphql: ausente
+juntia_data: 6 tablas, dueño postgres y RLS activo
+juntia_private: 7 definers, dueño juntia_writer y search_path=""
+public: 7 entradas invoker, EXECUTE para authenticated y no para anon
+public: 4 vistas con security_invoker=true, SELECT solo para authenticated
+Permisos en public y juntia_data: ninguno distinto de SELECT para anon o authenticated
+Triggers presentes: 4
+Movimientos: 0
+```
+
+Este registro complementa T016 con la aplicación de controlled_tables y
+money_functions a desarrollo. No acredita aplicación a producción ni sustituye
+la revisión humana del SQL de T033.
+
 ## T017 — pruebas previas a controlled_tables
 
 Fecha: 5 de noviembre de 2026. Commit `12709ce43ecb9ee5e07c4da2fc81881f73185caf`.
