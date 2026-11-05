@@ -463,6 +463,15 @@ cambian; cambia **dónde** corre cada uno.
    porque desde la v3 `db push` apunta a la base local por defecto. Antes de
    aplicar, se comprueba que el destino es `juntia-dev`. Ningún equipo guarda una
    configuración enlazada a producción.
+
+   **Nota · 5 de noviembre de 2026.** Dos precisiones de la ejecución de la 002.
+   `juntia-dev` quedó en East US (North Virginia), no en la región de
+   producción; los fundadores lo aceptaron porque no guarda datos reales y la
+   región no cambia cómo se comportan las migraciones. Y las migraciones a
+   proyectos alojados las puede lanzar el gestor (Claude Code) en el equipo de un
+   fundador, con la sesión de la CLI de ese fundador y su confirmación explícita
+   antes de cada paso de escritura; en producción, el enlace dura solo esa sesión
+   y termina con `unlink` (quickstart §3 de la 002).
 6. **Recuperación (decisión 16, 16.11).**
    - La copia de producción la hace un fundador con el cliente `pg_dump`, sin
      Docker, siguiendo el procedimiento de copia de Supabase para que no arrastre

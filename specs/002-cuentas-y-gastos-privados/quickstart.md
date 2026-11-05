@@ -78,11 +78,17 @@ npx --yes supabase@2.121.0 db push --linked
 
 - **Comprobar el destino antes de aplicar**, siempre: si `project-ref` no es
   `itfrhnadovezpahikuol`, parar.
-- **Ningún equipo enlaza producción** (ADR-011 §9.5). Las migraciones de
-  producción las aplica la segunda fundadora desde su equipo con el mismo
-  procedimiento y el `project-ref` de producción, después del merge, y desenlaza
-  al terminar. **Después de cada `db push` a producción**, el gestor y la
-  segunda fundadora comprueban que `pg_graphql` está quitado o desactivado y que
+- **Ningún equipo se queda enlazado a producción** (ADR-011 §9.5). Las
+  migraciones de producción se aplican después del merge, con el mismo
+  procedimiento y el `project-ref` de producción, en una sola sesión que termina
+  con `unlink` y, en el equipo de trabajo, con volver a enlazar `juntia-dev`. Las
+  lanza un fundador, o el gestor (Claude Code) en el equipo de un fundador, con su
+  sesión de la CLI y **su confirmación explícita antes de cada paso de escritura**
+  (`link`, `db push`, etiqueta, `unlink`); dry-run, listados y consultas de
+  lectura no la necesitan. Mientras el equipo está enlazado a producción, ningún
+  otro agente trabaja en esa carpeta (ajuste del 5 de noviembre de 2026; antes,
+  solo la segunda fundadora desde su equipo). **Después de cada `db push` a
+  producción**, el gestor y un fundador comprueban que `pg_graphql` está quitado o desactivado y que
   «Exposed schemas» es solo `public`, y pegan la salida sin claves en la
   evidencia (FR-005 en producción). Producción no recibe datos reales hasta que
   esa comprobación pasa.

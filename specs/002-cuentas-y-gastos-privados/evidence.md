@@ -1096,11 +1096,77 @@ se rellenan en el PR que les corresponde; no constituyen evidencia de ejecución
 
 ### T034
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+Fecha: 5 de noviembre de 2026, America/Bogota. Commit aplicado: `56d0dde`
+(merge del PR #40 en `main`). Etiqueta: `db-prod-2026-11-05`.
+
+**Quién.** Lo ejecutó Claude Code en el equipo de Alejandro, con su sesión de la
+CLI y su confirmación explícita antes de cada paso de escritura; no la segunda
+fundadora desde su equipo, como decía quickstart §3. El enlace a producción duró
+solo esta sesión: se desenlazó al terminar y el equipo volvió a `juntia-dev`.
+Ningún otro agente trabajó en la carpeta mientras estuvo enlazada. La regla se
+ajustó en quickstart §3 y ADR-011 §9.5 en este mismo PR.
+
+```text
+$ npx --yes supabase@2.121.0 link --project-ref enwaxmwgldqohfawxhdm
+$ npx --yes supabase@2.121.0 projects list
+     ●    | vvnhzhfmvqhmvdehxndw | enwaxmwgldqohfawxhdm | juntia-prod | South America (São Paulo) | 2026-11-04 22:29:10
+          | vvnhzhfmvqhmvdehxndw | itfrhnadovezpahikuol | juntia-dev  | East US (North Virginia)  | 2026-11-04 23:19:18
+$ cat supabase/.temp/project-ref
+enwaxmwgldqohfawxhdm
+$ npx --yes supabase@2.121.0 db push --linked --dry-run
+Initialising login role...
+DRY RUN: migrations will *not* be pushed to the database.
+Would push these migrations:
+ • 20261105000100_foundation.sql
+ • 20261105000200_controlled_tables.sql
+ • 20261105000300_money_functions.sql
+$ npx --yes supabase@2.121.0 db push --linked
+Applying migration 20261105000100_foundation.sql...
+Applying migration 20261105000200_controlled_tables.sql...
+Applying migration 20261105000300_money_functions.sql...
+Finished supabase db push.
+$ npx --yes supabase@2.121.0 migration list --linked
+   `20261105000100` | `20261105000100` | `2026-11-05 00:01:00`
+   `20261105000200` | `20261105000200` | `2026-11-05 00:02:00`
+   `20261105000300` | `20261105000300` | `2026-11-05 00:03:00`
+$ git tag -a db-prod-2026-11-05 -m "Migraciones aplicadas a producción" 56d0dde
+$ git push origin db-prod-2026-11-05
+ * [new tag]         db-prod-2026-11-05 -> db-prod-2026-11-05
+$ npx --yes supabase@2.121.0 unlink
+Unlinking project: enwaxmwgldqohfawxhdm
+Finished supabase unlink.
+$ npx --yes supabase@2.121.0 link --project-ref itfrhnadovezpahikuol
+$ cat supabase/.temp/project-ref
+itfrhnadovezpahikuol
+```
+
+Sin `--include-seed`. La CLI no imprimió el `NOTICE foundation migrator`; las
+tablas creadas son de `postgres` (abajo), igual que en `juntia-dev`.
 
 ### T035
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+Fecha: 5 de noviembre de 2026, tras el push de T034 (`db-prod-2026-11-05`).
+Comprobación de solo lectura con `db query --linked` mientras producción estaba
+enlazada, antes de `unlink`:
+
+| Comprobación | Resultado en `juntia-prod` |
+| --- | --- |
+| `pg_graphql` | No instalada (`pg_graphql_installed = 0`) |
+| Tablas de `juntia_data` | `audit_events`, `categories`, `idempotency_records`, `profiles`, `signup_allowlist`, `transactions`: dueño `postgres`, RLS activo |
+| Definers de `juntia_private` | `complete_first_entry`, `create_transaction`, `ensure_profile`, `set_theme`, `update_display_name`, `update_transaction`, `void_transaction`: dueño `juntia_writer`, `search_path=""` |
+| Entradas de `public` | Las 7, `security invoker`; EXECUTE para `authenticated`, no para `anon` |
+| Vistas de `public` | `my_profile`, `my_recent_categories`, `my_transaction_months`, `my_transactions`: `security_invoker=true`, SELECT solo para `authenticated` |
+| Privilegios distintos de SELECT para `anon` o `authenticated` en `public` y `juntia_data` | Ninguno |
+| Triggers | `audit_events_append_only`, `audit_events_no_truncate`, `idempotency_records_guard`, `transactions_guard_update` |
+| Movimientos | 0 |
+
+**Exposed schemas** (panel de `juntia-prod`, Integrations › Data API › Settings,
+captura tras recargar): «1 of 4 schemas exposed», solo `public`. «Exposed tables
+0 of 10» y «Exposed functions 0 of 21» no se tocaron; «Automatically expose new
+tables» apagado.
+
+**Resultado: pasa.** Producción sigue sin datos reales: falta la primera copia y
+su restauración (quickstart §4.1 y §4.3) y la configuración de Auth (T036–T038).
 
 ### T036
 

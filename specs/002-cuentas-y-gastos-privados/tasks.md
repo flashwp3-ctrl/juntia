@@ -250,11 +250,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2A — prerrequisitos operativos (Humana; antes de probar en `juntia-dev` o producción)
 
-- [ ] T034 **Humana** (dueña): aplicar las migraciones del PR A a **producción** con el procedimiento de quickstart §3 y el `project-ref` de producción, comprobando el destino; desenlazar al terminar; etiquetar el commit aplicado `db-prod-AAAA-MM-DD` y subir la etiqueta (quickstart §4.0)
+- [x] T034 **Humana** (un fundador; quickstart §3, ajustado el 5 de noviembre de 2026): aplicar las migraciones del PR A a **producción** con el procedimiento de quickstart §3 y el `project-ref` de producción, comprobando el destino; desenlazar al terminar; etiquetar el commit aplicado `db-prod-AAAA-MM-DD` y subir la etiqueta (quickstart §4.0)
   - Cumple: FR-058; quickstart §3 y §4.0.
   - Terminado cuando: `evidence.md` registra fecha, etiqueta y SHA (sin claves).
 
-- [ ] T035 **Humana** (gestor y segunda fundadora), **después de cada `db push` a producción, empezando por el de T034**: comprobar en `juntia-prod` que `pg_graphql` está quitado o desactivado y que «Exposed schemas» es solo `public`, y pegar la salida (sin claves) en `evidence.md` con la fecha y la etiqueta `db-prod-*` del push. Es FR-005 aplicado a producción, no alcance nuevo. **Producción no recibe datos reales hasta que esta comprobación pasa**; si falla, se para y se reporta, como en T016
+- [x] T035 **Humana** (gestor y un fundador), **después de cada `db push` a producción, empezando por el de T034**: comprobar en `juntia-prod` que `pg_graphql` está quitado o desactivado y que «Exposed schemas» es solo `public`, y pegar la salida (sin claves) en `evidence.md` con la fecha y la etiqueta `db-prod-*` del push. Es FR-005 aplicado a producción, no alcance nuevo. **Producción no recibe datos reales hasta que esta comprobación pasa**; si falla, se para y se reporta, como en T016
   - Cumple: FR-002, FR-005; ADR-013 §5.3 y [V] 7.
   - Terminado cuando: hay una entrada por push a producción, con `pg_graphql` ausente o desactivado y solo `public` expuesto.
 
