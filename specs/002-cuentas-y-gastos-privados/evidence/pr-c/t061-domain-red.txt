@@ -1,0 +1,9 @@
+   × flechas de mes: llegan al mes futuro más lejano y no más, y cruzan el año 14ms
+   × busca en la descripción sin distinguir tildes ni mayúsculas y filtra por tipo y categoría 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |domain| src/domain/transactions/transactions.test.ts > flechas de mes: llegan al mes futuro más lejano y no más, y cruzan el año
+TypeError: monthNavigation is not a function
+ FAIL  |domain| src/domain/transactions/transactions.test.ts > busca en la descripción sin distinguir tildes ni mayúsculas y filtra por tipo y categoría
+TypeError: filterTransactions is not a function
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 29 passed (31)

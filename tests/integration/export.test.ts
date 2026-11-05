@@ -1,0 +1,123 @@
+// T063 / FR-057; US-8.2; ADR-011 §2, fila 2 — capa: integración de servidor (el route handler real contra el Supabase
+// del runner; solo se sustituye el cliente de la petición por el de la persona sembrada, porque fuera de Next no hay
+// cookies). Criterio literal (tasks.md, T063): «en JSON, la estructura de contracts/database.md («Exportación»:
+// `exported_at`, `currency`, `note`, `transactions[]` con sus campos), `amount_minor` como string y ningún campo interno
+// (`id`, `version`, `owner_user_id`, `created_by`, `status`); en los dos, solo movimientos activos propios, importes como
+// texto, sin tokens ni identificadores ni anulados; CSV RFC 4180 con BOM y `'` delante de `= + - @`; Tomás nunca recibe
+// filas de Sara; sin sesión, 401; formato no válido, 400».
+import { randomUUID } from "node:crypto";
+import { beforeAll, expect, it, vi } from "vitest";
+import { createClient } from "@supabase/supabase-js";
+import { moneyFromPesos } from "../../src/domain/money";
+import { saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
+import { createTransaction, voidTransaction } from "../../src/lib/db/transactions";
+import { copy } from "../../src/lib/copy/es";
+import { runnerEnv } from "./support/env";
+import { createTestUser } from "./support/users";
+
+vi.mock("server-only", () => ({}));
+const current = vi.hoisted(() => ({ client: null as unknown }));
+vi.mock("../../src/lib/supabase/server", () => ({ createClient: async () => current.client }));
+const { GET } = await import("../../src/app/api/export/route");
+
+let sara: Awaited<ReturnType<typeof createTestUser>>;
+let tomas: Awaited<ReturnType<typeof createTestUser>>;
+let saraIds: string[] = [];
+let voidedId = "";
+const FORMULAS = ["=SUM(A1:A2)", "+57 300", "-cmd", "@HOY"];
+
+beforeAll(async () => {
+  sara = await createTestUser("Sara exporta");
+  tomas = await createTestUser("Tomás exporta");
+  for (const { type, amount, categoryId, transactionDate, description } of saraPrivateOctober2026) {
+    saraIds.push((await createTransaction(sara.client, { idempotencyKey: randomUUID(), type, amount, categoryId, transactionDate, description })).id);
+  }
+  // Descripciones con comillas, comas, saltos de línea y comienzos de fórmula (RFC 4180 e inyección).
+  for (const description of [...FORMULAS, 'Dijo "hola", y\nse fue']) {
+    saraIds.push((await createTransaction(sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(1000n), categoryId: "other", transactionDate: "2026-11-02", description })).id);
+  }
+  const voided = await createTransaction(sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(777000n), categoryId: "home", transactionDate: "2026-11-03", description: "Anulado no se exporta" });
+  await voidTransaction(sara.client, { idempotencyKey: randomUUID(), transactionId: voided.id, expectedVersion: voided.version, reason: "delete" });
+  voidedId = voided.id;
+  await createTransaction(tomas.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(123000n), categoryId: "market", transactionDate: "2026-10-09", description: "Privado de Tomás" });
+});
+
+const call = async (client: unknown, format: string) => {
+  current.client = client;
+  return GET(new Request(`http://localhost:3000/api/export?format=${encodeURIComponent(format)}`));
+};
+const forbidden = (text: string) => {
+  for (const id of [...saraIds, voidedId, sara.id, tomas.id]) expect(text).not.toContain(id);
+  expect(text).not.toContain(sara.token);
+  expect(text).not.toMatch(/owner_user_id|created_by|"version"|"status"|"id"|access_token|refresh_token/);
+  expect(text).not.toContain("Anulado no se exporta");
+  expect(text).not.toContain("777000");
+  expect(text).not.toContain("Privado de Tomás");
+};
+
+it("JSON: la estructura del contrato, importes como texto y nada interno, anulado ni ajeno", async () => {
+  const response = await call(sara.client, "json");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toMatch(/^application\/json/);
+  expect(response.headers.get("cache-control")).toBe("no-store");
+  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-movimientos-\d{4}-\d{2}-\d{2}\.json"$/);
+  const text = await response.text();
+  forbidden(text);
+  const body = JSON.parse(text);
+  expect(Object.keys(body)).toEqual(["exported_at", "currency", "note", "transactions"]);
+  expect(body.currency).toBe("COP");
+  expect(body.note).toBe(copy.export.fileNote);
+  expect(body.exported_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-05:00$/);
+  expect(body.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + 1);
+  for (const row of body.transactions) {
+    expect(Object.keys(row)).toEqual(["transaction_date", "type", "category", "category_name", "description", "amount_minor", "currency", "created_at", "updated_at"]);
+    expect(typeof row.amount_minor).toBe("string");
+    expect(row.amount_minor).toMatch(/^[0-9]+$/);
+  }
+  const taxi = body.transactions.find((row: { description: string }) => row.description === "Taxi a la oficina");
+  expect(taxi).toMatchObject({ transaction_date: "2026-10-03", type: "expense", category: "transport", category_name: copy.categories.transport, amount_minor: "4500000", currency: "COP" });
+  const income = body.transactions.filter((row: { type: string }) => row.type === "income");
+  expect(income).toEqual([expect.objectContaining({ description: "Reembolso EPS", amount_minor: "8600000", category: "income" })]);
+});
+
+it("CSV: RFC 4180 con BOM, las mismas columnas, fórmulas neutralizadas y nada interno, anulado ni ajeno", async () => {
+  const response = await call(sara.client, "csv");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toBe("text/csv; charset=utf-8");
+  expect(response.headers.get("cache-control")).toBe("no-store");
+  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-movimientos-\d{4}-\d{2}-\d{2}\.csv"$/);
+  const bytes = new Uint8Array(await response.clone().arrayBuffer());
+  expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+  const text = (await response.text()).replace(/^﻿/, "");
+  forbidden(text);
+  expect(text.split("\r\n")[0]).toBe("transaction_date,type,category,category_name,description,amount_minor,currency,created_at,updated_at");
+  expect(text).toContain('2026-10-03,expense,transport,Transporte,Taxi a la oficina,4500000,COP,');
+  for (const formula of FORMULAS) expect(text).toContain(`,'${formula},`);
+  expect(text).toContain('"Dijo ""hola"", y\nse fue"');
+  expect(text.endsWith("\r\n")).toBe(true);
+  // Cabecera + filas propias activas (una de ellas con un salto de línea dentro de la celda).
+  expect(text.trimEnd().split("\r\n")).toHaveLength(1 + saraPrivateOctober2026.length + FORMULAS.length + 1);
+});
+
+it("Tomás solo recibe lo suyo, nunca filas de Sara", async () => {
+  for (const format of ["json", "csv"]) {
+    const text = await (await call(tomas.client, format)).text();
+    expect(text).toContain("Privado de Tomás");
+    for (const { description } of saraPrivateOctober2026) expect(text).not.toContain(description!);
+  }
+});
+
+it("sin sesión responde 401 y con un formato no válido, 400; ninguno trae datos", async () => {
+  const { apiUrl, publishableKey } = runnerEnv();
+  const anonymous = createClient(apiUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  for (const format of ["json", "csv"]) {
+    const response = await call(anonymous, format);
+    expect(response.status).toBe(401);
+    expect(await response.text()).not.toMatch(/Taxi|amount_minor/);
+  }
+  for (const format of ["xml", "", "JSON", "json,csv"]) {
+    const response = await call(sara.client, format);
+    expect(response.status).toBe(400);
+    expect(await response.text()).not.toMatch(/Taxi|amount_minor/);
+  }
+});

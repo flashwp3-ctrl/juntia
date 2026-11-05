@@ -1,0 +1,8 @@
+ FAIL  |components| src/components/ui/expense-row.test.tsx [ src/components/ui/expense-row.test.tsx ]
+Error: Failed to resolve import "./expense-row" from "src/components/ui/expense-row.test.tsx". Does the file exist?
+ FAIL  |components| src/features/home/home.test.tsx [ src/features/home/home.test.tsx ]
+Error: Failed to resolve import "./home-view" from "src/features/home/home.test.tsx". Does the file exist?
+ FAIL  |components| src/features/activity/activity.test.tsx [ src/features/activity/activity.test.tsx ]
+Error: Failed to resolve import "./activity-view" from "src/features/activity/activity.test.tsx". Does the file exist?
+ Test Files  3 failed (3)
+      Tests  no tests
