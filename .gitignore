@@ -34,3 +34,5 @@ Thumbs.db
 /test-results/
 /playwright-report/
 *.tsbuildinfo
+supabase/.temp/
+supabase/.branches/

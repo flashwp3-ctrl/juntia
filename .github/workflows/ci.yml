@@ -50,3 +50,64 @@ jobs:
         env:
           JOB_STATUS: ${{ job.status }}
         run: node scripts/ci.mjs summary
+
+  db:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      - name: Start Supabase and reset the runner database
+        id: database
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+          supabase db reset
+      - name: Install dependencies
+        id: install
+        run: node scripts/ci.mjs run ci
+      - name: Test SQL
+        run: node scripts/ci.mjs run test:db
+      - name: Test API
+        if: always() && steps.database.outcome == 'success' && steps.install.outcome == 'success'
+        run: node scripts/ci.mjs run test:integration
+      - name: Check generated types
+        if: always() && steps.database.outcome == 'success' && steps.install.outcome == 'success'
+        run: node scripts/ci.mjs run db:types:check
+      - name: Preserve generated public types
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: database-types
+          path: ${{ runner.temp }}/database.types.ts
+          if-no-files-found: ignore
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+      - name: Publish db timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
