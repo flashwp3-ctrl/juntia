@@ -587,7 +587,7 @@ el fundador aceptó la evidencia indirecta de la propiedad de las tablas,
 sin atribuir un NOTICE ni un session_user que no se observaron.
 **Si pg_graphql no se puede quitar o desactivar, el PR A se detiene.**
 
-## Estado actual al entregar T016
+## Estado al entregar la pausa T016 (registro histórico)
 
 - T001–T015: completadas con el run del punto de control 1 y las salidas anteriores.
 - T016: pendiente humana; T017 en adelante no iniciadas.
@@ -616,3 +616,27 @@ SQL/RLS e integración «SOLO EN CI»; E2E «NO APLICABLE».
 El commit posterior de entrega contiene solo este registro, los logs de
 verificación y las casillas de tareas: la migración y el código siguen siendo
 los del commit de punto de control citado, sin un run adicional documental.
+
+## T017 — pruebas previas a controlled_tables
+
+Fecha: 5 de noviembre de 2026. Commit `12709ce43ecb9ee5e07c4da2fc81881f73185caf`.
+Run: [42035071059](https://github.com/flashwp3-ctrl/juntia/actions/runs/42035071059).
+Comandos: `gh workflow run ci.yml --ref feat/002-a-database`;
+`gh run watch 42035071059 --exit-status --interval 20` (exit 1 esperado).
+Log completo: [`evidence/controlled-tables-red.txt`](evidence/controlled-tables-red.txt).
+
+```text
+00_smoke.test.sql .......... ok
+01_privileges.test.sql:14: ERROR: relation "juntia_data.transactions" does not exist
+03_views.test.sql:8: ERROR: relation "public.my_transactions" does not exist
+04_writer.test.sql:36: ERROR: relation "juntia_data.transactions" does not exist
+05_direct_writes.test.sql:8: ERROR: relation "juntia_data.transactions" does not exist
+07_transactions.test.sql:31: ERROR: relation "juntia_data.transactions" does not exist
+Test Files 2 passed (2)
+Tests 6 passed (6)
+```
+
+Arranque, reset, integración de foundation y tipos pasaron. `app` pasó en
+2m33s; `db` falló en 3m9s por los objetos aún no implementados. `test:db` tardó
+6.43 s (< 60 s). No es un fallo del mecanismo [V] 1: se trata del rojo previo
+exigido por T017 antes de escribir la migración.
