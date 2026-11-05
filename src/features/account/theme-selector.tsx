@@ -4,7 +4,7 @@
 // del body (globals.css), que con movimiento reducido no existe. Persistencia aprobada (Q7): `profiles` + cookie.
 // La miniatura se pinta con los tokens del tema que representa (`data-theme` local), sin colores sueltos.
 import Link from "next/link";
-import { useRef, useState, useTransition, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
@@ -39,35 +39,49 @@ type ThemeSelectorProps = { initial: Theme; persist: (theme: Theme) => Promise<A
 export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
   const [value, setValue] = useState<Theme>(initial);
   const [problem, setProblem] = useState<"sessionExpired" | "failed" | null>(null);
-  // F43-1 (revisión del PR #43): el último tema que el perfil confirmó; un fallo al guardar vuelve a él.
+  // F43-1 (revisión del PR #43, dos rondas): el último tema que el perfil confirmó. Las escrituras se serializan: hay como
+  // mucho una en vuelo, y la elección más reciente espera su turno («última elección pendiente»; las intermedias se
+  // descartan). Cada escritura correcta actualiza el confirmado, aunque ya no sea la última elección. Las opciones no se
+  // deshabilitan: las flechas del radiogroup siguen funcionando mientras guarda.
   const confirmed = useRef<Theme>(initial);
-  const [, startTransition] = useTransition();
+  const inFlight = useRef(false);
+  const pending = useRef<Theme | null>(null);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  // Las respuestas pueden llegar desordenadas si se cambia rápido: solo cuenta la de la última elección.
-  const latest = useRef(0);
+
+  const revertTo = (theme: Theme) => {
+    setValue(theme);
+    applyTheme(theme);
+    writeThemeCookie(theme);
+  };
+
+  const save = async (theme: Theme) => {
+    inFlight.current = true;
+    const result = await persist(theme);
+    if (result.ok) confirmed.current = theme;
+    const next = pending.current;
+    pending.current = null;
+    if (next !== null && next !== theme) {
+      // Hay una elección más reciente: se guarda ella y decide el resultado final.
+      void save(next);
+      return;
+    }
+    inFlight.current = false;
+    if (result.ok) setProblem(null);
+    // La sesión caducó: el dispositivo conserva la elección y se pide volver a entrar (T048).
+    else if (result.error === "sessionExpired") setProblem("sessionExpired");
+    else {
+      // Cualquier otro fallo no se muestra como éxito: data-theme, cookie y selección vuelven al último confirmado.
+      revertTo(confirmed.current);
+      setProblem("failed");
+    }
+  };
 
   const choose = (theme: Theme) => {
     setValue(theme);
     applyTheme(theme);
     writeThemeCookie(theme);
-    const request = ++latest.current;
-    startTransition(async () => {
-      const result = await persist(theme);
-      if (request !== latest.current) return;
-      if (result.ok) {
-        confirmed.current = theme;
-        setProblem(null);
-      } else if (result.error === "sessionExpired") {
-        // La sesión caducó: el dispositivo conserva la elección y se pide volver a entrar (T048).
-        setProblem("sessionExpired");
-      } else {
-        // Cualquier otro fallo no se muestra como éxito: data-theme, cookie y selección vuelven al último confirmado.
-        setValue(confirmed.current);
-        applyTheme(confirmed.current);
-        writeThemeCookie(confirmed.current);
-        setProblem("failed");
-      }
-    });
+    if (inFlight.current) pending.current = theme;
+    else void save(theme);
   };
 
   const move = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {

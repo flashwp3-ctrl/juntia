@@ -82,4 +82,65 @@ describe("ThemeSelector (T040)", () => {
     expect(option(copy.account.appearance.dark).getAttribute("aria-checked")).toBe("true");
     expect(option(copy.account.appearance.system).getAttribute("aria-checked")).toBe("false");
   });
+
+  // F43-1, segunda ronda (concurrencia): las escrituras se serializan y el tema confirmado sigue a cada escritura
+  // efectiva. Al final, el perfil (lo que guardó persist), la cookie, data-theme y la selección coinciden.
+  function deferred() {
+    let resolve!: (value: { ok: true } | { ok: false; error: "failed" }) => void;
+    const promise = new Promise<{ ok: true } | { ok: false; error: "failed" }>((done) => { resolve = done; });
+    return { promise, resolve };
+  }
+  const state = () => ({
+    theme: document.documentElement.getAttribute("data-theme"),
+    cookie: document.cookie.match(/juntia_theme=([a-z]+)/)?.[1],
+    checked: screen.getAllByRole("radio").find((radio) => radio.getAttribute("aria-checked") === "true")?.textContent,
+  });
+
+  it("dos guardados seguidos: el segundo espera al primero y el final coincide con el perfil", async () => {
+    const first = deferred();
+    const second = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const user = userEvent.setup();
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    await user.click(option(copy.account.appearance.system));
+    expect(persist).toHaveBeenCalledTimes(1);
+    second.resolve({ ok: true }); // una respuesta «adelantada» del segundo no cambia nada: todavía no se envió
+    first.resolve({ ok: true });
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    expect(persist.mock.calls.map(([theme]) => theme)).toEqual(["dark", "system"]);
+    await vi.waitFor(() => expect(state()).toEqual({ theme: "light", cookie: "system", checked: copy.account.appearance.system }));
+    expect(screen.queryByText(copy.errors.saveFailed)).toBeNull();
+  });
+
+  it("el primero se guarda y el segundo falla: vuelve al tema realmente guardado (dark), no al inicial", async () => {
+    const first = deferred();
+    const second = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const user = userEvent.setup();
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    await user.click(option(copy.account.appearance.system));
+    first.resolve({ ok: true });
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    second.resolve({ ok: false, error: "failed" });
+    expect(await screen.findByText(copy.errors.saveFailed)).toBeTruthy();
+    const saved = persist.mock.calls[0][0];
+    expect(saved).toBe("dark");
+    expect(state()).toEqual({ theme: "dark", cookie: "dark", checked: copy.account.appearance.dark });
+  });
+
+  it("varias elecciones mientras guarda: solo se envía la última", async () => {
+    const first = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    await user.click(option(copy.account.appearance.system));
+    await user.click(option(copy.account.appearance.light));
+    first.resolve({ ok: true });
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    expect(persist.mock.calls.map(([theme]) => theme)).toEqual(["dark", "light"]);
+    await vi.waitFor(() => expect(state()).toEqual({ theme: "light", cookie: "light", checked: copy.account.appearance.light }));
+  });
 });

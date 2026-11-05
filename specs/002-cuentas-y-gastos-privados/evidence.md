@@ -1467,6 +1467,21 @@ fallido. Con `sessionExpired` conserva la elección del dispositivo y pide volve
 entrar (T048). Prueba de componentes con `persist()` → `{ ok: false, error:
 "failed" }` (rojo y verde).
 
+**F43-1, segunda ronda (concurrencia).** Si una escritura correcta respondía cuando
+ya había otra elección en vuelo, se ignoraba y el confirmado no avanzaba; un fallo
+posterior revertía al tema inicial y dejaba el perfil en otro tema. Ahora las
+escrituras se serializan con una cola de «última elección pendiente»: como mucho una
+en vuelo, la elección más reciente espera su turno (las intermedias se descartan), y
+cada escritura correcta actualiza el confirmado aunque ya no sea la última. Las
+opciones no se deshabilitan, así que las flechas del radiogroup siguen funcionando.
+Pruebas con promesas controladas: dos guardados seguidos (el segundo espera al
+primero; una respuesta «adelantada» del segundo no cambia nada), uno correcto y
+otro fallido (revierte a dark, el tema realmente guardado) y varias elecciones
+mientras guarda (solo se envía la última). En las tres, el perfil, la cookie,
+`data-theme` y la selección coinciden al final. Rojo con la implementación anterior
+([`f43-1-queue-red.txt`](evidence/pr-b/f43-1-queue-red.txt)) y verde
+([`f43-1-queue-green.txt`](evidence/pr-b/f43-1-queue-green.txt)).
+
 **Menor, el fragmento en una variable de módulo.** Entrar guarda solo el aviso ya
 interpretado (verificado, caducado o ninguno); la cadena del fragmento, que puede
 llevar tokens, no se conserva y se borra de la URL.
