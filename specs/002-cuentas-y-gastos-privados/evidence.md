@@ -209,3 +209,48 @@ inspección del artefacto, commit propio de los tipos y un run completo verde.
 La comparación sigue bloqueante, sin `continue-on-error`; el artefacto se
 conserva en el workflow para cada migración posterior. Esta autorización
 resuelve la dependencia circular de T007; no cambia las etapas ni los gates.
+
+### Ejecución preparatoria — rojo esperado
+
+Fecha: 4 de noviembre de 2026, America/Bogota.
+Commit: `5e38f845e026a44e9b4e54223e96266b0e2e612c`.
+Run: [41970243181](https://github.com/flashwp3-ctrl/juntia/actions/runs/41970243181).
+
+```text
+$ git push -u origin feat/002-a-database
+ * [new branch] feat/002-a-database -> feat/002-a-database
+$ gh workflow run ci.yml --ref feat/002-a-database
+$ gh run watch 41970243181 --exit-status --interval 15
+X db in 3m36s
+  ✓ Start Supabase and reset the runner database
+  ✓ Test SQL
+  ✓ Test API
+  X Check generated types
+  ✓ Preserve generated public types
+✓ app in 3m20s
+exit=1
+$ gh run download 41970243181 --name database-types --dir specs/002-cuentas-y-gastos-privados/evidence/type-generation-bootstrap
+(sin salida, exit=0)
+```
+
+La generación terminó bien; la comparación falló por ausencia del primer
+archivo versionado, conforme a la excepción autorizada. Ningún control omitido
+ni `continue-on-error`. El artefacto contenía un solo `database.types.ts`:
+se leyó completo y se buscó `https?://`, prefijos de claves, JWT, contraseñas
+y correos (sin coincidencias). Solo contiene tipos genéricos, el esquema
+`public` vacío y `Constants` con sus enums vacíos; no hay datos de personas.
+Se movió sin editar a `src/lib/supabase/database.types.ts`.
+
+Salida real de los tiempos del resumen:
+
+```text
+supabase start: 119 s
+| test:db | pasó | 8.69 s | < 60 s |
+| test:integration | pasó | 0.68 s | — |
+| db:types:check | falló | 1.11 s | — |
+| Job db (incluye instalación) | failure | 211.30 s | < 360 s |
+| Job app (incluye instalación) | success | 191.09 s | < 360 s |
+```
+
+Log completo (con claves enmascaradas por Actions):
+[`evidence/bootstrap-preparatory.txt`](evidence/bootstrap-preparatory.txt).
