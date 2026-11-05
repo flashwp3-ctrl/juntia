@@ -8,10 +8,35 @@ export type Database = {
             [_ in never]: never
           }
           Views: {
-            [_ in never]: never
+            "my_profile": {
+                  Row: {
+                    "display_name": string | null,"first_entry_completed": boolean | null,"theme": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "display_name"?: string | null,"first_entry_completed"?: never,"theme"?: string | null
+                         }
+                        Update: {
+                           "display_name"?: string | null,"first_entry_completed"?: never,"theme"?: string | null
+                         }
+                        Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
-            [_ in never]: never
+            "complete_first_entry":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"ensure_profile":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"set_theme":
+{ Args: { "p_theme": string }; Returns: Json
+                           },
+"update_display_name":
+{ Args: { "p_display_name": string }; Returns: Json
+                           }
           }
           Enums: {
             [_ in never]: never

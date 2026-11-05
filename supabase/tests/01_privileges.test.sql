@@ -18,10 +18,10 @@ cross join unnest(array['INSERT','UPDATE','REFERENCES']) p;
 select is(has_table_privilege(r, 'juntia_data.' || t, 'SELECT'), r = 'authenticated' and t <> 'signup_allowlist', '[V7] SELECT exacto ' || r || '.' || t)
 from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist']) t;
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosecdef), 0::bigint, '[V7] ningún definer en public');
-select results_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and has_function_privilege('authenticated',p.oid,'EXECUTE') order by 1$$,
-  $$values ('complete_first_entry'::text),('ensure_profile'),('set_theme'),('update_display_name')$$, '[V7] lista exacta de entradas authenticated');
-select results_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and has_function_privilege('authenticated',p.oid,'EXECUTE') order by 1$$,
-  $$values ('complete_first_entry'::text),('ensure_profile'),('set_theme'),('update_display_name')$$, '[V7] solo las cuatro implementaciones accesibles por SQL');
+select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
+  '["complete_first_entry","ensure_profile","set_theme","update_display_name"]'::jsonb, '[V7] lista exacta de entradas authenticated');
+select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
+  '["complete_first_entry","ensure_profile","set_theme","update_display_name"]'::jsonb, '[V7] solo las cuatro implementaciones accesibles por SQL');
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','juntia_private') and has_function_privilege('anon',p.oid,'EXECUTE')), 0::bigint, '[V7] anon sin funciones');
 select ok(not has_sequence_privilege(r,c.oid,p), '[V7] sin secuencias ' || r || '.' || c.relname || '.' || p)
 from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join unnest(array['anon','authenticated']) r cross join unnest(array['USAGE','SELECT','UPDATE']) p

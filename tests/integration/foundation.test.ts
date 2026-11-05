@@ -4,6 +4,7 @@ import { beforeAll, expect, it, vi } from "vitest";
 import { createTestUser } from "./support/users";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
+import { createClient } from "@supabase/supabase-js";
 let sara: Awaited<ReturnType<typeof createTestUser>>;
 let tomas: Awaited<ReturnType<typeof createTestUser>>;
 beforeAll(async () => { sara = await createTestUser("Sara HTTP"); tomas = await createTestUser("Tomás HTTP"); });
@@ -33,6 +34,18 @@ it("[V1/V8] ensure_profile por HTTP conserva la identidad y es idempotente", asy
   expect((await tomas.client.rpc("ensure_profile")).error).toBeNull();
   expect((await tomas.client.from("my_profile").select("*")).data).toEqual([{ display_name: "Tomás HTTP", theme: "system", first_entry_completed: false }]);
 });
+// FR-024: la petición real de Auth ejecuta el hook como supabase_auth_admin.
+it("Auth aplica la lista permitida antes de crear la cuenta", async () => {
+  const { apiUrl, publishableKey } = runnerEnv();
+  const client = createClient(apiUrl, publishableKey, { auth: { persistSession: false } });
+  const allowed = await client.auth.signUp({ email: "signup@seed.test", password: "Synthetic-Signup-2026!" });
+  expect(allowed.error).toBeNull();
+  expect(allowed.data.user?.email).toBe("signup@seed.test");
+  expect(allowed.data.session).toBeNull();
+  const denied = await client.auth.signUp({ email: "not-allowed@seed.test", password: "Synthetic-Signup-2026!" });
+  expect(denied.error?.status).toBe(403);
+  expect(denied.data.user).toBeNull();
+});
 it("[V2/V7] POST/PATCH/DELETE directos y perfiles privados no son accesibles", async () => {
   const { apiUrl, publishableKey } = runnerEnv();
   for (const method of ["POST", "PATCH", "DELETE"]) {
@@ -42,10 +55,12 @@ it("[V2/V7] POST/PATCH/DELETE directos y perfiles privados no son accesibles", a
       ["juntia_private", "profiles", {}],
       ["public", "my_profile", { display_name: "Intrusión" }],
     ] as const) {
-      const response = await fetch(`${apiUrl}/rest/v1/${resource}`, { method, headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json", "Content-Profile": schema, "Accept-Profile": schema }, ...(method === "DELETE" ? {} : { body: JSON.stringify(payload) }) });
+      // Un filtro válido evita que safeupdate rechace la petición antes de comprobar grants/RLS.
+      const filter = method === "POST" ? "" : "?display_name=eq.Sara%20HTTP";
+      const response = await fetch(`${apiUrl}/rest/v1/${resource}${filter}`, { method, headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json", "Content-Profile": schema, "Accept-Profile": schema }, ...(method === "DELETE" ? {} : { body: JSON.stringify(payload) }) });
       expect(response.ok, `${method} ${schema}.${resource}`).toBe(false);
       const body = await response.json();
-      expect(["PGRST205", "PGRST106", "42501"]).toContain(body.code);
+      expect(["PGRST205", "PGRST106", "42501"], `${method} ${schema}.${resource}: ${body.code} ${body.message}`).toContain(body.code);
     }
   }
   const response = await fetch(`${apiUrl}/rest/v1/rpc/ensure_profile`, { method: "POST", headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json", "Content-Profile": "juntia_private" }, body: "{}" });

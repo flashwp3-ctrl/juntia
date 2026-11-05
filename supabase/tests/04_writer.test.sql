@@ -5,8 +5,8 @@ select no_plan();
 select is((select rolcanlogin or rolbypassrls or rolsuper from pg_roles where rolname='juntia_writer'), false, '[V1] writer sin LOGIN, BYPASSRLS ni superusuario');
 select is((select pg_get_userbyid(relowner) from pg_class where oid='juntia_data.profiles'::regclass), 'postgres', '[V1] writer no es dueño de profiles');
 select ok((select relrowsecurity from pg_class where oid='juntia_data.profiles'::regclass), '[V1] profiles con RLS');
-select results_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and p.prosecdef and p.proowner='juntia_writer'::regrole order by 1$$,
-  $$values ('complete_first_entry'::text),('ensure_profile'),('set_theme'),('update_display_name')$$, '[V1] cuatro implementaciones propiedad de writer');
+select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and p.prosecdef and p.proowner='juntia_writer'::regrole),
+  '["complete_first_entry","ensure_profile","set_theme","update_display_name"]'::jsonb, '[V1] cuatro implementaciones propiedad de writer');
 select tests.create_user('11111111-1111-4111-8111-111111111111','sara@seed.test');
 select tests.create_user('22222222-2222-4222-8222-222222222222','tomas@seed.test');
 set local role authenticated;

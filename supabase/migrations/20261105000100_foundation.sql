@@ -1,4 +1,6 @@
 -- T013 / ADR-013: solo foundation. Sin tablas controladas ni funciones de dinero.
+-- Evidencia T016: muestra el rol migrador real, sin credenciales ni datos.
+do $$ begin raise notice 'foundation migrator: current_user=%, session_user=%', current_user, session_user; end $$;
 create schema juntia_data;
 create schema juntia_private;
 revoke all on schema juntia_data, juntia_private from public, anon, authenticated;

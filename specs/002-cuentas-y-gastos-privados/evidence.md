@@ -370,3 +370,64 @@ Es el rojo requerido **antes** de crear `foundation`, no el punto de control
 
 Después del rojo se añadió a la integración una sonda SQL temporal para observar
 los claims reales de PostgREST; se elimina en `finally`. No modifica la migración.
+
+### Primera ejecución de foundation — arnés interrumpido y tipos generados
+
+Commit: `4c6c94c3fe9ae0246fdd0826740261ab366d43fe`.
+Run: [41972604571](https://github.com/flashwp3-ctrl/juntia/actions/runs/41972604571).
+`gh run watch 41972604571 --exit-status --interval 20`: exit 1.
+Log completo: [`evidence/foundation-first-run.txt`](evidence/foundation-first-run.txt).
+
+```text
+00_smoke.test.sql ....... ok
+01_privileges.test.sql .. All 76 subtests passed
+02_claims.test.sql ...... ok
+03_views.test.sql ....... ok
+04_writer.test.sql ...... All 3 subtests passed
+06_profiles.test.sql .... ok
+01_privileges.test.sql:22: ERROR: could not determine which collation to use for string comparison
+04_writer.test.sql:9: ERROR: could not determine which collation to use for string comparison
+CONTEXT: PL/pgSQL function results_eq(refcursor,refcursor,text)
+09_allowlist.test.sql:5: ERROR: permission denied to set role "supabase_auth_admin"
+✓ [V9] PostgREST fija request.jwt.claims y no el claim legacy
+✓ [V1/V8] ensure_profile por HTTP conserva la identidad y es idempotente
+× [V2/V7] POST/PATCH/DELETE directos y perfiles privados no son accesibles
+AssertionError: expected [ 'PGRST205', 'PGRST106', '42501' ] to include '21000'
+✓ [V7] GraphQL no puede exponer datos ni esquemas de Juntia
+```
+
+La [V] 1 **no está cerrada**: el arnés abortó en una comparación de catálogos
+antes de terminarla; no hubo una aserción negativa del mecanismo. No se ha
+modificado el dueño de ninguna función para resolverlo. Se sustituyeron las
+comparaciones `results_eq` afectadas por comparaciones de listas JSONB exactas,
+que no dependen de collation. Para el hook, pgTAP comprueba grants y resultados;
+la integración de Auth, con la clave publicable, prueba el rol real en lugar
+de conceder a `postgres` poder asumir `supabase_auth_admin`.
+
+El rechazo `21000` en una mutación sin filtro no demuestra los permisos:
+se añadió un filtro válido a PATCH/DELETE, manteniendo la lista estricta de
+errores de autorización. Es coherente con la protección de operaciones sin
+condición de [pg-safeupdate, documentación de PostgREST](https://docs.postgrest.org/en/stable/integrations/pg-safeupdate.html).
+La causa concreta se confirmará al repetir; no se acepta `21000` para fabricar
+un verde.
+
+```text
+supabase start: 129 s
+| test:db | falló | 9.23 s | < 60 s |
+| test:integration | falló | 1.43 s | — |
+| db:types:check | falló | 1.07 s | — |
+| Job db (incluye instalación) | failure | 192.66 s | < 360 s |
+| Job app (incluye instalación) | success | 149.45 s | < 360 s |
+$ gh run download 41972604571 --name database-types --dir specs/002-cuentas-y-gastos-privados/evidence/type-generation-foundation
+exit=0
+```
+
+El artefacto se leyó completo y se buscó URLs, JWT, claves, contraseñas y correos:
+ninguna coincidencia. Contiene solo tipos, `my_profile`, las cuatro entradas de
+perfil y constantes de enums vacíos. Movido sin editar a `database.types.ts`,
+SHA256 `2c7b564edbf1edbe8aecd729571e6b9134cfa849ac3c77d5f43f9a788ee90694`.
+La CLI genera espacios al final de una línea vacía: se conserva la salida original
+para la comparación exacta, y `git diff --check` lo avisa. No se omite el check de tipos.
+
+Se añadió a `foundation` un `NOTICE` del rol efectivo y de login, sin claves,
+para que T016 pueda registrar quién ejecuta realmente la migración alojada.
