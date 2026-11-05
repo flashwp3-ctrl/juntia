@@ -1147,7 +1147,9 @@ tablas creadas son de `postgres` (abajo), igual que en `juntia-dev`.
 
 Fecha: 5 de noviembre de 2026, tras el push de T034 (`db-prod-2026-11-05`).
 Comprobación de solo lectura con `db query --linked` mientras producción estaba
-enlazada, antes de `unlink`:
+enlazada, antes de `unlink`. La consulta exacta y su salida están en
+[`evidence/t035-prod-readonly-check.txt`](evidence/t035-prod-readonly-check.txt);
+el resumen:
 
 | Comprobación | Resultado en `juntia-prod` |
 | --- | --- |
@@ -1161,7 +1163,9 @@ enlazada, antes de `unlink`:
 | Movimientos | 0 |
 
 **Exposed schemas** (panel de `juntia-prod`, Integrations › Data API › Settings,
-captura tras recargar): «1 of 4 schemas exposed», solo `public`. «Exposed tables
+captura tras recargar:
+[`evidence/t035-prod-exposed-schemas.webp`](evidence/t035-prod-exposed-schemas.webp),
+sin claves ni datos): «1 of 4 schemas exposed», solo `public`. «Exposed tables
 0 of 10» y «Exposed functions 0 of 21» no se tocaron; «Automatically expose new
 tables» apagado.
 

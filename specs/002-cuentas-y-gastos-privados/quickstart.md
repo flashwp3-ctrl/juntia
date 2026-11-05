@@ -92,6 +92,24 @@ npx --yes supabase@2.121.0 db push --linked
   «Exposed schemas» es solo `public`, y pegan la salida sin claves en la
   evidencia (FR-005 en producción). Producción no recibe datos reales hasta que
   esa comprobación pasa.
+- **Recuperación si la sesión se corta.** Si algo falla o se interrumpe entre
+  `link` a producción y `unlink` (un `db push` que falla, la terminal cerrada, el
+  agente detenido), la carpeta puede seguir enlazada a producción. Por eso, **antes
+  de cualquier trabajo con Supabase** en un equipo de trabajo, y después de
+  cualquier error o interrupción, se lee `supabase/.temp/project-ref`:
+  - si es `itfrhnadovezpahikuol`, se sigue;
+  - si es `enwaxmwgldqohfawxhdm` o cualquier otro valor, **se para toda operación
+    con `--linked`**, se avisa al fundador y, con su confirmación, se ejecuta
+    `npx --yes supabase@2.121.0 unlink`, luego `link --project-ref
+    itfrhnadovezpahikuol` y se vuelve a leer `project-ref` antes de continuar. Si
+    la interrupción fue a mitad de un `db push` a producción, antes de desenlazar
+    se lee `migration list --linked` y se registra en la evidencia qué quedó
+    aplicado.
+
+  La sesión de la CLI del fundador alcanza todos los proyectos de la
+  organización, producción incluida; el enlace local solo elige el destino por
+  defecto. Por eso la confirmación humana antes de cada escritura es la barrera
+  principal, no el enlace.
 - Nunca `--include-seed`: `supabase/seed.sql` es solo para el runner.
 - Con la CLI v3 la sintaxis es `--remote=<ref>` (ADR-011 §9.5); subir de major es
   un PR propio.
