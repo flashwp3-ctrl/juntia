@@ -49,7 +49,7 @@ Disparadores, permisos, `concurrency`, filtro de rutas documentales y
 | Job | Control | Entra | Pasos | Presupuesto |
 | --- | --- | --- | --- | --- |
 | `app` | 1, 2 y 5 parcial | Existe | Como en la 001. Desde el PR B, `check:theme-script` pide `/entrar` (las rutas de producto redirigen sin sesión) y axe corre aquí **solo para los estados que no necesitan sesión** (tabla «Axe» de abajo) | Gate < 6 min |
-| `db` | 3 | **PR A** | `supabase/setup-cli@v3`; `supabase start` con los servicios mínimos (`-x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`); `npm ci`; `test:db` (comando medido, < 60 s); `test:integration`; `db:types:check`; `db:restore-drill` (cliente y servidor PostgreSQL 17 de PGDG); `supabase stop` | Gate < 6 min |
+| `db` | 3 | **PR A** | `supabase/setup-cli@v3`; `supabase start` con los servicios mínimos (`-x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`); `npm ci`; `test:db` (comando medido, < 60 s); `test:integration`; `db:types:check` (desde el primer commit del PR A, con una prueba pgTAP de humo y una de integración mínima, sin `passWithNoTests`); `db:restore-drill` (cliente y servidor PostgreSQL 17 de PGDG); `supabase stop` | Gate < 6 min |
 | `e2e` | 4 y 5 (estados que necesitan sesión) | **PR B** | `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` con `storageState` sembrado | Humo < 3 min · Gate < 6 min |
 
 Notas:
@@ -116,7 +116,7 @@ Una ruta nueva sin clasificar hace fallar `verify`.
 
 `reducedMotion: 'reduce'` por defecto, `retries` 0/1, solo Chromium, cero
 `waitForTimeout` (las reglas de lint de la 001 ya cubren `tests/**`). Un test con
-motion activo para los momentos L2 de E5 (PR C). `playwright/.auth` en
+motion activo para los momentos L2 de E5 (PR D). `playwright/.auth` en
 `.gitignore`. El número de workers se mide en el PR B y se reporta (ADR-011 [V] 3).
 
 ## Lint nuevo
@@ -135,5 +135,7 @@ La regla de dependencia de `domain` de la 001 ya prohíbe `@supabase/*` y
 | --- | --- | --- | --- |
 | A | `app` + **`db`** | 0 | Filas de base de datos «SOLO EN CI»; E2E «NO APLICABLE» |
 | B | + **`e2e`** | **1** nace | E2E «SOLO EN CI» |
-| C | igual | **2** nace; corren 1 y 2 | igual |
-| D | igual | 1 suma la descarga de Exportar; corren 1 y 2 | igual |
+| C | igual | 1 suma la descarga de Exportar; corre la 1 | igual |
+| D | igual | **2** nace; corren 1 y 2 | igual |
+
+Orden C/D de la decisión 16.18 (4 nov 2026).

@@ -77,7 +77,11 @@ npx --yes supabase@2.121.0 db push --linked
 - **Ningún equipo enlaza producción** (ADR-011 §9.5). Las migraciones de
   producción las aplica la segunda fundadora desde su equipo con el mismo
   procedimiento y el `project-ref` de producción, después del merge, y desenlaza
-  al terminar.
+  al terminar. **Después de cada `db push` a producción**, el gestor y la
+  segunda fundadora comprueban que `pg_graphql` está quitado o desactivado y que
+  «Exposed schemas» es solo `public`, y pegan la salida sin claves en la
+  evidencia (FR-005 en producción). Producción no recibe datos reales hasta que
+  esa comprobación pasa.
 - Nunca `--include-seed`: `supabase/seed.sql` es solo para el runner.
 - Con la CLI v3 la sintaxis es `--remote=<ref>` (ADR-011 §9.5); subir de major es
   un PR propio.

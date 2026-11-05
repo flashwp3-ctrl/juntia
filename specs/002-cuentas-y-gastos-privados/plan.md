@@ -44,7 +44,7 @@ Enfoque técnico, con lo verificado en [research.md](research.md):
 - **Sin Docker en los equipos**: SQL/RLS, integración y E2E corren solo en CI,
   en los jobs `db` (desde el PR A) y `e2e` (desde el PR B); `verify` local los
   declara «SOLO EN CI — pendiente de resultado» (ADR-011 §9).
-- **Dos specs E2E**: la 1 nace en el PR B y la 2 en el PR C (tope de ADR-011 §3).
+- **Dos specs E2E**: la 1 nace en el PR B y la 2 en el PR D (tope de ADR-011 §3; orden C/D de la decisión 16.18).
 
 ## Technical Context
 
@@ -90,14 +90,14 @@ Comprobado contra la tabla de 18 elementos del maestro §15.9 y la de la spec.
 | Sección Cuenta completa, §Cuenta | Sí — P0-1 y P0-2 | Sí | **Aprobada** la anatomía, decisión 16.6 (Q6). P0-1 construye todo menos Mi pareja; CoupleStatus y SensitiveActionConfirmation quedan para P0-2 | No |
 | Persistencia del tema `[P][V]`, §ThemeSelector | Sí — P0-1 | Sí, y el `[V]` | **Aprobada**, decisión 16.7 (Q7). **`[V]` ejecutado** en research R7 | No |
 | Teclado nativo / teclado propio descartado | Sí — P0-1 | Sí | **Aprobados**, decisión 11 (3 nov 2026); `AmountInput` ya existe | No |
-| Gasto, ingreso y liquidación en tinta, `DESIGN_SYSTEM.md` §4 | No | Sí — viendo la pantalla | **Pendiente de la revisión del PR C** (fila e ingreso en Anotar y detalle) **y del PR D** (Inicio y Actividad) | No |
+| Gasto, ingreso y liquidación en tinta, `DESIGN_SYSTEM.md` §4 | No | Sí — viendo la pantalla | **Pendiente de la revisión del PR C** (filas de Inicio, Actividad y detalle) **y del PR D** (fila nueva e ingreso en Anotar) | No |
 | Cuenta reutiliza los fondos de categoría, `DESIGN_SYSTEM.md` §4 | No | Sí — viendo la pantalla | **Pendiente de la revisión del PR B** (AccountMenuItem de Mi cuenta) | No |
 | Texto ampliado hasta 200 %, handoff §Accesibilidad | No | No — requisito obligatorio | Se aplica y se prueba en cada PR de interfaz (FR-061) | No |
 | Stack de UI sugerido, handoff | No | No — cerrado por §15.2 y §7.1 | Phosphor + `AppIcon`, `motion`, `next/font` tal cual | No |
 
 **Pantallas nuevas no diseñadas** (spec, «Inventario de `[P]`»): se tratan como
 `[P]` de aprobación viendo la pantalla. **PR B:** sesión caducada (edge case).
-**PR C:** selector «Gasto · Ingreso» (Q3). **PR D:** Inicio en Yo sin bloques
+**PR D:** selector «Gasto · Ingreso» (Q3). **PR C:** Inicio en Yo sin bloques
 compartidos y sus estados (Q5), «todavía no disponible» de Nosotros en Inicio y
 Actividad (Q5) y las flechas de mes (Q8).
 
@@ -128,10 +128,10 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 | Rol de login de `db push` alojado, `drop extension pg_graphql` y esquemas expuestos en `juntia-dev` | A | Pendiente | No |
 | Restauración desde vacío por los dos caminos, en modo CI con el SHA del commit verificado (Supabase local con `db reset`; PostgreSQL 17 normal con arranque + migraciones), con datos de prueba y controles negativos | A | Pendiente. Hasta tener salida, la copia no es restaurable | No |
 | Tema: cookie escrita desde el perfil, dos dispositivos, CLS en acceso y Mi cuenta | B | Pendiente | No |
-| Workers con usuarios aislados (ADR-011 [V] 3) | B (medición), C (con dos specs) | Pendiente | No |
-| Altura del teclado nativo con la hoja (iPhone y Android) | C | Pendiente | No |
-| Teclados de terceros en Android (§15.6.2, 3) | C | Pendiente o excepción documentada | No |
-| Umbrales de §15.7 | B (CLS acceso/cuenta), C (INP, US-12 en laboratorio), D (CLS Inicio/Actividad, US-12 en teléfono) | Pendiente | No |
+| Workers con usuarios aislados (ADR-011 [V] 3) | B (medición), D (con dos specs) | Pendiente | No |
+| Altura del teclado nativo con la hoja (iPhone y Android) | D | Pendiente | No |
+| Teclados de terceros en Android (§15.6.2, 3) | D | Pendiente o excepción documentada | No |
+| Umbrales de §15.7 | B (CLS acceso/cuenta), C (CLS Inicio/Actividad), D (INP, US-12 en laboratorio y en teléfono) | Pendiente | No |
 | Presupuestos de tiempo (ADR-011 [V] 1 y 2) | A (`test:db`), B–D (humo y gate) | Pendiente; avisan | No |
 | Verificaciones heredadas de la decisión 12 | Tabla de «Verificaciones heredadas» | Pendiente salvo T072 parte 1 | No |
 
@@ -200,7 +200,7 @@ supabase/
 │   ├── 20261105000200_controlled_tables.sql # PR A, 2.ª (tras el punto de control 1): transactions, audit_events,
 │   │                                    #   idempotency_records, triggers, políticas, vistas de movimientos; sin funciones de dinero
 │   └── 20261105000300_money_functions.sql # PR A, 3.ª (tras el punto de control 2): create/update/void, parse_amount_minor, request_fingerprint
-├── seed.sql                             # Solo runner: correos de prueba en la lista y esquema tests con helpers de pgTAP
+├── seed.sql                             # Solo runner: esquema tests con helpers de pgTAP; los correos de prueba de la lista entran con foundation
 ├── restore/
 │   └── plain-postgres-bootstrap.sql     # Roles y objetos mínimos de auth para el camino B (R6)
 └── tests/
@@ -268,8 +268,8 @@ tests/
 ├── support/seed.ts                      # Usuarios por worker y rol, storageState, dataset por la función real
 ├── integration/                         # Vitest `integration`: API real, concurrencia, idempotencia, exportación
 ├── e2e/
-│   ├── access-account.e2e.ts            # Spec E2E 1 (PR B; descarga de Exportar en el PR D)
-│   └── annotate.e2e.ts                  # Spec E2E 2 (PR C), cronometrada
+│   ├── access-account.e2e.ts            # Spec E2E 1 (PR B; descarga de Exportar en el PR C)
+│   └── annotate.e2e.ts                  # Spec E2E 2 (PR D), cronometrada
 └── a11y/routes.a11y.ts                  # + rutas nuevas, con sesión sembrada
 scripts/
 ├── verify.mjs · ci.mjs                  # Filas «SOLO EN CI — pendiente de resultado»
@@ -352,6 +352,7 @@ evidencia con el enlace al run. **Si la [V] 1 falla en cualquiera de los dos, se
 para** y ADR-013 se reabre (decisión 15); no se sustituye por funciones de
 `postgres`.
 
+0. **Arranque del job `db`** (revisión del PR #38): antes de la primera migración, el job está en verde con una prueba pgTAP de humo sobre el esquema vacío, una prueba de integración mínima contra la API del runner y `db:types:check` sobre los primeros tipos; `seed.sql` solo trae las auxiliares de pgTAP y recibe las filas de prueba de la lista en el mismo commit que crea la tabla. Así el rojo esperado de cada punto de control viene de sus pruebas nuevas, no del arranque.
 1. **Punto de control 1 — migración `foundation`** (esquemas, `juntia_writer`,
    privilegios por defecto, `pg_graphql`, `current_uid()`, `profiles`,
    `categories`, `signup_allowlist`, el hook, `my_profile` y las funciones de
@@ -459,7 +460,7 @@ nuevas; revisión humana del SQL.
 **Alcance.** Supabase Auth con las pantallas de 04·17, `proxy.ts`, perfil, A6,
 AccountButton y perfil del sidebar, Mi cuenta completa salvo pareja (con su
 estado «llega con P0-2») y Exportar todavía **sin** la descarga real, que es del
-PR D; el tema persistido; la siembra por base de datos; el job `e2e` y la spec
+PR C; el tema persistido; la siembra por base de datos; el job `e2e` y la spec
 E2E 1.
 
 **FR y US:** FR-021–FR-029, FR-050–FR-056, FR-064, FR-065 (spec 1), FR-067; US-1,
@@ -475,15 +476,21 @@ correo de verificación recibido de verdad por cada uno** (research R5, que es
 evidencia documental); contraseña mínima de 8 en el proyecto; lista permitida y
 hook configurados; Preview de Vercel apuntando a `juntia-dev`.
 
+**Después de cada `db push` a producción, empezando por el primero:** el gestor
+y la segunda fundadora comprueban en `juntia-prod` que `pg_graphql` está quitado o
+desactivado y que «Exposed schemas» es solo `public`, y pegan la salida (sin
+claves) en la evidencia. Es FR-005 aplicado a producción, no alcance nuevo;
+producción no recibe datos reales hasta que pasa.
+
 **Pruebas por capa:**
 
 | Capa | Qué |
 | --- | --- |
-| Dominio | Validación de nombre visible; `volver` solo acepta rutas propias |
+| Dominio | Validación de nombre visible; `volver` solo acepta un destino interno (research R8.7: una sola `/` inicial, sin `\`, sin controles ni espacios, también tras decodificar, y mismo origen con `new URL`), con casos negativos de redirección abierta |
 | Componentes (RTL) | Las respuestas de registro 200/403/422/429 producen **la misma** salida (FR-023); recuperación siempre A4b; ThemeSelector como `radiogroup` con flechas, aplica y escribe la cookie; P1–P5; LimitNote de eliminar cuenta no es un control |
 | SQL/RLS | Ya en el PR A; aquí se añade el caso de `set_theme` y `update_display_name` ajenos si falta |
-| Integración | `ensure_profile()` idempotente con el nombre de A2; `/auth/confirm` con enlace válido, caducado y usado; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada por Auth** (`weak_password`) y no crea usuario (F37-7) |
-| E2E | **Spec 1 nace**: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **segundo contexto de navegador que entra y pinta oscuro desde el primer cuadro**; recuperación uniforme; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar |
+| Integración | `ensure_profile()` idempotente con el nombre de A2; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada por Auth** (`weak_password`) y no crea usuario (F37-7) |
+| E2E | **Spec 1 nace**: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **segundo contexto de navegador que entra y pinta oscuro desde el primer cuadro**; recuperación uniforme; `/auth/confirm` (Route Handler) con enlace válido, caducado y usado; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar |
 | axe | Clasificadas por la sesión que necesita su estado real ([contracts/ci.md](contracts/ci.md), «Axe»): A1–A4 en `app` sin sesión; **A5 `/nueva-contrasena` con sesión de recuperación y A6 `/primera-entrada` con sesión de usuario, en `e2e`**; Mi cuenta en `e2e`. Los dos temas |
 | Cobertura de axe (Vitest `components`, entorno `node`) | **Nace aquí**, donde el reparto empieza a aplicar: cada ruta implementada (`page.tsx` de `src/app`) está en **exactamente una** de las dos listas de `tests/a11y/route-registry.ts`, las dos juntas cubren todas las rutas, cada entrada se audita en los dos temas y ninguna entrada que necesite sesión cae en `app` |
 
@@ -511,49 +518,24 @@ críticas en las rutas nuevas (SC-002); CLS = 0 en acceso y Mi cuenta (SC-005);
 T072 parte 2 con salida real; pasada de Impeccable; aprobación visual de los dos
 fundadores (SC-001).
 
-### PR C · Anotar, editar y eliminar
+**Orden C/D intercambiado el 4 de noviembre de 2026 (decisión 16.18)**: C = Inicio,
+Actividad y Exportar; D = Anotar, editar y eliminar, más las verificaciones
+heredadas y la aceptación. **Mismo alcance.** Así E5 tiene Inicio y Actividad
+donde actualizar el total y la fila, y el detalle tiene un punto de entrada desde
+el primer PR que lo construye.
 
-**Alcance.** El Expense Flow conectado: E1–E5 en versión privada con el
-selector «Gasto · Ingreso», edición sin cambiar el tipo, eliminar con el diálogo
-de 02·1, «Deshacer» 6 s, el detalle del movimiento, ExpenseRow (gasto e
-ingreso) y el Toast. La spec E2E 2.
-
-**FR y US:** FR-030–FR-039, FR-062, FR-065 (spec 2); US-2, US-3, US-4.
-
-**Migraciones/funciones:** ninguna nueva (PR A).
-
-**Pruebas por capa:**
-
-| Capa | Qué |
-| --- | --- |
-| Dominio | Ya en el PR A; se añaden los casos que salgan del flujo (por ejemplo, la fecha por defecto en Bogotá) |
-| Componentes (RTL) | Hoja: foco en el monto, Guardar solo con monto y categoría, E2 sin «Pagó», «Participan» ni «Reparto»; selector de tipo cambia título, categoría y botón; E4 bloquea campos; error de guardado deja la hoja abierta con los datos y reintenta **con la misma clave**; `N` fuera de un campo, Enter guarda, Escape cierra; confirmación de cambios sin guardar; **ExpenseRow de ingreso con «+», ficha arena, ícono `arrow-down-left` y tinta, no verde** (ADR-011 fila 5); diálogo de eliminar con foco inicial en Cancelar y Escape |
-| SQL/RLS · Integración | Ya en el PR A; aquí, el caso «editar un eliminado» y «Deshacer» de punta a punta por `src/lib/db` si falta |
-| E2E | **Spec 2 nace, cronometrada**: con sesión y el dataset sembrados, `N` → monto → categoría reciente → Guardar → total sube, fila resaltada, Toast; doble toque en Guardar → **un solo movimiento** (comprobado por la base, SC-009); el tiempo del recorrido se reporta como laboratorio. Un test con motion activo para los momentos L2 de E5 |
-
-**`[V]` que cierra:** altura del teclado nativo con la hoja (iPhone por los
-fundadores; Android o excepción); teclados de terceros en Android (o excepción
-documentada); INP < 200 ms al abrir Anotar y al guardar, en laboratorio (SC-004).
-
-**Capturas:** 390 y 1440, claro y oscuro: E1 gasto, E1 ingreso, E2, E3, E4, E5
-con el Toast, detalle, edición, diálogo de eliminar.
-
-**`[P]` por aprobar viendo la pantalla:** «Gasto, ingreso y liquidación en tinta»
-(fila e ingreso); selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5.
-
-**Criterios de salida:** specs 1 y 2 verdes; axe en Anotar en los dos temas;
-INP medido; pasada de Impeccable; aprobación visual; **T075 VoiceOver** se puede
-adelantar con el flujo real.
-
-### PR D · Inicio, Actividad, exportación y verificaciones heredadas
+### PR C · Inicio, Actividad y exportación
 
 **Alcance.** Inicio en Yo (04·1 sin bloques compartidos, escritorio de 04·7),
 Nosotros «todavía no disponible» en todos los destinos, Actividad por mes con
-flechas, búsqueda, filtros, tabla y panel, estados vacío/cargando/error, la
-descarga real de Exportar, la retirada del aviso de versión base y el cierre de
-las verificaciones heredadas.
+flechas, búsqueda, filtros, tabla y panel, estados vacío/cargando/error,
+ExpenseRow (gasto e ingreso), el **detalle de movimiento de solo lectura**
+(`/actividad/[id]` y el panel de 04·7, al que se llega desde Actividad e Inicio),
+la descarga real de Exportar y la retirada del aviso de versión base. Muestra
+datos **sembrados por las funciones reales de escritura** del PR A. Editar y
+Eliminar no están aquí: entran en el PR D sobre este mismo detalle.
 
-**FR y US:** FR-040–FR-049, FR-057, FR-061; US-5, US-6, US-8, US-11.
+**FR y US:** FR-037 (lectura), FR-040–FR-049, FR-057, FR-061; US-5, US-6, US-8.
 
 **Migraciones/funciones:** ninguna nueva.
 
@@ -562,22 +544,60 @@ las verificaciones heredadas.
 | Capa | Qué |
 | --- | --- |
 | Dominio | Flechas: la siguiente llega al mes más lejano con movimientos futuros y no más (Q13); agrupación por día; búsqueda sin tildes |
-| Componentes (RTL) | **Inicio con las filas del dataset dorado muestra 412.900** y el desglose de la tabla (SC-008); sin «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras (FR-041); vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra |
+| Componentes (RTL) | **Inicio con las filas del dataset dorado muestra 412.900** y el desglose de la tabla (SC-008); sin «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras (FR-041); vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra; **ExpenseRow de ingreso con «+», ficha arena, ícono `arrow-down-left` y tinta, no verde** (ADR-011 fila 5) |
 | Integración | Exportación: solo movimientos activos propios, importes como texto, sin tokens, sin identificadores, sin anulados, CSV con BOM y sin inyección de fórmulas; Tomás nunca recibe filas de Sara (ADR-011 fila 2) |
 | E2E | **La spec 1 suma la descarga de Exportar**: el archivo llega (evento de descarga, nombre y tamaño), sin abrir su contenido (ADR-011 §3, matriz) |
-| axe | Inicio, Actividad y detalle, en los dos temas |
+| axe | Inicio, Actividad, detalle y Exportar, en los dos temas |
 
 **`[V]` que cierra:** CLS = 0 con Skeleton en Inicio y Actividad (arnés R2, SC-005);
-sin scroll horizontal en los siete anchos; US-12 en teléfono real (SC-003); las
-verificaciones heredadas que queden (tabla de abajo).
+sin scroll horizontal en los siete anchos.
 
 **Capturas:** 390 y 1440, claro y oscuro: Inicio con datos, vacío, cargando y
 error; Nosotros; Actividad con datos, mes vacío, futuro, búsqueda y filtros;
-tabla y panel a 1440; Exportar D2–D5.
+tabla y panel a 1440 y detalle a 390; Exportar D2–D5.
 
 **`[P]` por aprobar viendo la pantalla:** «en tinta» en Inicio y Actividad;
 Inicio sin pareja y sus estados (Q5); Nosotros «todavía no disponible» (Q5);
 flechas de mes (Q8).
+
+**Criterios de salida:** spec 1 verde con su caso de descarga; axe en las rutas
+nuevas en los dos temas; CLS medido; pasada de Impeccable; aprobación visual.
+
+### PR D · Anotar, editar y eliminar, verificaciones heredadas y aceptación
+
+**Alcance.** El Expense Flow conectado: E1–E5 en versión privada con el
+selector «Gasto · Ingreso», que en E5 actualiza el total de Inicio y resalta la
+fila en Inicio y Actividad (PR C); **Editar** (sin cambiar el tipo) y **Eliminar**
+con el diálogo de 02·1 sobre el detalle del PR C; «Deshacer» 6 s y el Toast; la
+spec E2E 2; el cierre de las verificaciones heredadas (001-T075 necesita el
+Anotar real) y la aceptación del slice.
+
+**FR y US:** FR-030–FR-039, FR-062, FR-065 (spec 2); US-2, US-3, US-4, US-11.
+
+**Migraciones/funciones:** ninguna nueva (PR A).
+
+**Pruebas por capa:**
+
+| Capa | Qué |
+| --- | --- |
+| Dominio | Ya en el PR A; se añaden los casos que salgan del flujo (por ejemplo, la fecha por defecto en Bogotá) |
+| Componentes (RTL) | Hoja: foco en el monto, Guardar solo con monto y categoría, E2 sin «Pagó», «Participan» ni «Reparto»; selector de tipo cambia título, categoría y botón; E4 bloquea campos; error de guardado deja la hoja abierta con los datos y reintenta **con la misma clave**; `N` fuera de un campo, Enter guarda, Escape cierra; confirmación de cambios sin guardar; diálogo de eliminar con foco inicial en Cancelar y Escape |
+| SQL/RLS · Integración | Ya en el PR A; aquí, el caso «editar un eliminado» y «Deshacer» de punta a punta por `src/lib/db` si falta |
+| E2E | **Spec 2 nace, cronometrada**: con sesión y el dataset sembrados, `N` → monto → categoría reciente → Guardar → el total de Inicio sube, fila resaltada, Toast; doble toque en Guardar → **un solo movimiento** (comprobado por la base, SC-009); el tiempo del recorrido se reporta como laboratorio. Un test con motion activo para los momentos L2 de E5 |
+| axe | Anotar, edición y diálogo de eliminar, en los dos temas |
+
+**`[V]` que cierra:** altura del teclado nativo con la hoja (iPhone por los
+fundadores; Android o excepción); teclados de terceros en Android (o excepción
+documentada); INP < 200 ms al abrir Anotar y al guardar, en laboratorio (SC-004);
+US-12 en teléfono real (SC-003); las verificaciones heredadas (tabla de abajo).
+
+**Capturas:** 390 y 1440, claro y oscuro: E1 gasto, E1 ingreso, E2, E3, E4, E5
+con el Toast y la fila resaltada, detalle con Editar y Eliminar, edición,
+diálogo de eliminar.
+
+**`[P]` por aprobar viendo la pantalla:** «Gasto, ingreso y liquidación en tinta»
+(fila nueva e ingreso); selector «Gasto · Ingreso» (Q3); la versión privada de
+E1–E5.
 
 **Criterios de salida:** specs 1 y 2 verdes; cada fila de la tabla heredada con
 salida real o «EXCEPCIÓN APROBADA» (SC-011); primera copia y restauración real
@@ -591,13 +611,13 @@ aprobación visual y salida interna de los dos fundadores (SC-001, SC-012).
 | SC-001 | Sin scroll horizontal ni solapes, 7 anchos, 2 temas | Capturas 390/1440 en el PR; los demás anchos en el recorrido manual | Agente (capturas), fundadores (aprobación) | B, C, D |
 | SC-002 | axe sin serias ni críticas | Proyecto `a11y`: estados sin sesión en `app`, con sesión en `e2e`; la prueba de cobertura asegura que no falta ninguna ruta | CI | B, C, D |
 | SC-003 | Mediana < 10 s en teléfono real, ≥ 10 registros, con método | Teléfono de un fundador, cronómetro o grabación de pantalla, tras A6; en producción tras la copia (SC-010) o contra `juntia-dev` | Fundadores | D |
-| SC-004 | INP < 200 ms al abrir Anotar y al guardar | Playwright con `PerformanceObserver` de `event` y CPU 4×, reportado como laboratorio (maestro §10.2) | Agente | C |
-| SC-005 | CLS = 0 con Skeleton y con tema guardado | Arnés de la research R2 de la 001 + R7 | Agente | B (acceso, cuenta), D (Inicio, Actividad) |
+| SC-004 | INP < 200 ms al abrir Anotar y al guardar | Playwright con `PerformanceObserver` de `event` y CPU 4×, reportado como laboratorio (maestro §10.2) | Agente | D |
+| SC-005 | CLS = 0 con Skeleton y con tema guardado | Arnés de la research R2 de la 001 + R7 | Agente | B (acceso, cuenta), C (Inicio, Actividad) |
 | SC-006 | Las diez [V] de ADR-013 | pgTAP e integración en el job `db`; [V] 10 en este plan | Agente + CI | A |
 | SC-007 | Cero accesos cruzados | pgTAP + integración (API y SQL directo) | CI | A |
-| SC-008 | 412.900 y desglose exactos | Dominio (A), integración (A), RTL de Inicio (D) | CI; los fundadores lo ven en la revisión | A, D |
-| SC-009 | Cero duplicados | Integración con la misma clave en paralelo (A); doble toque en la spec 2 (C) | CI | A, C |
-| SC-010 | Copia y restauración real antes del primer dato real | Quickstart §4, salida en la evidencia | Un fundador | Después de mergear C y antes de anotar datos reales; registrado en D |
+| SC-008 | 412.900 y desglose exactos | Dominio (A), integración (A), RTL de Inicio (C) | CI; los fundadores lo ven en la revisión | A, C |
+| SC-009 | Cero duplicados | Integración con la misma clave en paralelo (A); doble toque en la spec 2 (D) | CI | A, D |
+| SC-010 | Copia y restauración real antes del primer dato real | Quickstart §4, salida en la evidencia | Un fundador | Antes del primer movimiento real y, en cualquier caso, antes del merge del PR D; registrado en D |
 | SC-011 | Verificaciones heredadas | Tabla de abajo | Sus dueños | D |
 | SC-012 | Salida interna aprobada | Uso real de los dos fundadores | Fundadores | D |
 
@@ -614,7 +634,7 @@ superada sin salida; las excepciones llevan sus cinco datos y el estado
 | T072 parte 3 · funcionamiento en preview | Fundadores, con sesión en Vercel | PR B o C; obligatoria antes de aceptar (PR D) | No (aplazada, no excepcionable) |
 | T073 · contraste en iPhone | Fundadores | Desde el PR B; a más tardar en el PR D | No |
 | T074 · sombras táctiles en Android de gama media | Fundadores | PR D | Sí, si no hay Android |
-| T075 · VoiceOver con el Anotar real | Fundadores | PR C o D, con el flujo real | No |
+| T075 · VoiceOver con el Anotar real | Fundadores | PR D, con el flujo real | No |
 | T075 · TalkBack con el Anotar real | Fundadores | PR D | Sí, si no hay Android |
 | CLS fuera de Chromium (Firefox y WebKit, arnés R2) | Gestor | PR D, en local con `npx playwright install firefox webkit` (sin Docker) | No |
 | CLS en un iPhone real | Fundadores | PR D | Sí, si no hay Mac |
