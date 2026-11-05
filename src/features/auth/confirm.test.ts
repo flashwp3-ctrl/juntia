@@ -2,6 +2,8 @@
 // pueden editar las plantillas de correo sin SMTP propio, así que el enlace llega por /auth/v1/verify →
 // /auth/confirm?next=…&code=… (PKCE). En el Supabase local de CI llega con token_hash + type. /auth/confirm acepta los
 // dos. Caducado, usado o abierto en otro navegador (sin el verificador PKCE) → copy existente; ningún dato de la cuenta.
+// F43-3 (revisión del PR #43): con una sesión establecida, el flujo lo decide el claim `amr` de esa sesión (`recovery`
+// o no), nunca `next` ni `type` de la URL, que cualquiera puede cambiar. `next` solo orienta cuando no hay sesión.
 import { AuthApiError, AuthPKCECodeVerifierMissingError } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
@@ -9,20 +11,25 @@ import { linkNoticeFromHash, resolveConfirm, type ConfirmAuth } from "./confirm"
 
 const ok = { error: null };
 const expired = { error: new AuthApiError("Email link is invalid or has expired", 403, "otp_expired") };
-function auth(over: Partial<ConfirmAuth> = {}): ConfirmAuth {
-  return { verifyOtp: vi.fn().mockResolvedValue(ok), exchangeCodeForSession: vi.fn().mockResolvedValue(ok), ...over };
+const SIGNUP = ["email/signup"];
+const RECOVERY = ["recovery"];
+function auth(methods: string[], over: Partial<ConfirmAuth> = {}): ConfirmAuth {
+  return { verifyOtp: vi.fn().mockResolvedValue(ok), exchangeCodeForSession: vi.fn().mockResolvedValue(ok), authMethods: vi.fn().mockResolvedValue(methods), ...over };
 }
 const input = (params: Record<string, string>) => new URLSearchParams(params);
+const VERIFIED = { to: "/entrar?aviso=verificado", session: "signup" };
+const NEW_PASSWORD = { to: "/nueva-contrasena", session: "recovery" };
+const EXPIRED = { to: "/recuperar?enlace=caducado", session: null };
 
 describe("/auth/confirm · camino token_hash (Supabase local con las plantillas del repo)", () => {
-  it("verificación y recuperación válidas", async () => {
-    expect(await resolveConfirm(input({ token_hash: "h", type: "signup" }), auth())).toEqual({ to: "/entrar?aviso=verificado", session: "signup" });
-    expect(await resolveConfirm(input({ token_hash: "h", type: "email" }), auth())).toEqual({ to: "/entrar?aviso=verificado", session: "signup" });
-    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth())).toEqual({ to: "/nueva-contrasena", session: "recovery" });
+  it("verificación y recuperación válidas, según el amr de la sesión", async () => {
+    expect(await resolveConfirm(input({ token_hash: "h", type: "signup" }), auth(SIGNUP))).toEqual(VERIFIED);
+    expect(await resolveConfirm(input({ token_hash: "h", type: "email" }), auth(["otp"]))).toEqual(VERIFIED);
+    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(RECOVERY))).toEqual(NEW_PASSWORD);
   });
   it("caducado o usado → aviso de enlace caducado, sin sesión", async () => {
     for (const type of ["signup", "recovery"]) {
-      expect(await resolveConfirm(input({ token_hash: "h", type }), auth({ verifyOtp: vi.fn().mockResolvedValue(expired) }))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+      expect(await resolveConfirm(input({ token_hash: "h", type }), auth(SIGNUP, { verifyOtp: vi.fn().mockResolvedValue(expired) }))).toEqual(EXPIRED);
     }
   });
 });
@@ -30,34 +37,46 @@ describe("/auth/confirm · camino token_hash (Supabase local con las plantillas 
 describe("/auth/confirm · camino code (plantilla por defecto de los proyectos alojados)", () => {
   it("canjea el code con el verificador del mismo navegador", async () => {
     const exchange = vi.fn().mockResolvedValue(ok);
-    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: exchange }))).toEqual({ to: "/entrar?aviso=verificado", session: "signup" });
+    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(SIGNUP, { exchangeCodeForSession: exchange }))).toEqual(VERIFIED);
     expect(exchange).toHaveBeenCalledWith("c");
-    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth())).toEqual({ to: "/nueva-contrasena", session: "recovery" });
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth(RECOVERY))).toEqual(NEW_PASSWORD);
+  });
+  it("F43-3: next no decide el flujo de una sesión; lo decide su amr", async () => {
+    // Un code de registro con next=recovery sigue siendo un registro: se cierra la sesión y no se llega a A5.
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth(SIGNUP))).toEqual(VERIFIED);
+    // Un code de recuperación con next=signup sigue siendo una recuperación: la sesión que A5 necesita se conserva.
+    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(RECOVERY))).toEqual(NEW_PASSWORD);
+    // Lo mismo por el camino token_hash con el type cambiado.
+    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(SIGNUP))).toEqual(VERIFIED);
+  });
+  it("sin poder leer el amr de la sesión, la trata como registro (la cierra) y nunca da A5", async () => {
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth([]))).toEqual(VERIFIED);
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth(RECOVERY, { authMethods: vi.fn().mockRejectedValue(new Error("red")) }))).toEqual(VERIFIED);
   });
   it("Auth devuelve el error en la URL (caducado o ya usado) → aviso de enlace caducado", async () => {
     for (const next of ["signup", "recovery"]) {
       const exchange = vi.fn();
-      expect(await resolveConfirm(input({ next, error: "access_denied", error_code: "otp_expired", error_description: "Email link is invalid or has expired" }), auth({ exchangeCodeForSession: exchange }))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+      expect(await resolveConfirm(input({ next, error: "access_denied", error_code: "otp_expired", error_description: "Email link is invalid or has expired" }), auth(SIGNUP, { exchangeCodeForSession: exchange }))).toEqual(EXPIRED);
       expect(exchange).not.toHaveBeenCalled();
     }
   });
-  it("otro navegador: el registro ya quedó verificado en /auth/v1/verify → Entrar con el aviso; la recuperación pide abrirlo en el mismo navegador", async () => {
+  it("otro navegador (sin sesión): next solo orienta el aviso", async () => {
     const missing = vi.fn().mockResolvedValue({ error: new AuthPKCECodeVerifierMissingError() });
-    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: missing }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
+    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(SIGNUP, { exchangeCodeForSession: missing }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
     // Copy aprobado el 5 nov 2026 (Alejandro): la recuperación en otro navegador lo dice con su propio aviso.
-    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth({ exchangeCodeForSession: missing }))).toEqual({ to: "/recuperar?enlace=otro-navegador", session: null });
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth(RECOVERY, { exchangeCodeForSession: missing }))).toEqual({ to: "/recuperar?enlace=otro-navegador", session: null });
     const thrown = vi.fn().mockRejectedValue(new AuthPKCECodeVerifierMissingError());
-    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: thrown }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
+    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(SIGNUP, { exchangeCodeForSession: thrown }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
   });
   it("un code que no se puede canjear por otro motivo → caducado", async () => {
     const invalid = vi.fn().mockResolvedValue({ error: new AuthApiError("invalid flow state, no valid flow state found", 404, "flow_state_not_found") });
-    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: invalid }))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+    expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(SIGNUP, { exchangeCodeForSession: invalid }))).toEqual(EXPIRED);
   });
   it("sin parámetros legibles por el servidor (flujo implícito del reenvío: todo va en el #) → Entrar lee el fragmento", async () => {
-    expect(await resolveConfirm(input({ next: "signup" }), auth())).toEqual({ to: "/entrar?aviso=enlace", session: null });
-    expect(await resolveConfirm(input({ next: "recovery" }), auth())).toEqual({ to: "/recuperar?enlace=caducado", session: null });
-    expect(await resolveConfirm(input({}), auth())).toEqual({ to: "/recuperar?enlace=caducado", session: null });
-    expect(await resolveConfirm(input({ next: "otra", code: "c" }), auth())).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+    expect(await resolveConfirm(input({ next: "signup" }), auth(SIGNUP))).toEqual({ to: "/entrar?aviso=enlace", session: null });
+    expect(await resolveConfirm(input({ next: "recovery" }), auth(SIGNUP))).toEqual(EXPIRED);
+    expect(await resolveConfirm(input({}), auth(SIGNUP))).toEqual(EXPIRED);
+    expect(await resolveConfirm(input({ next: "otra", code: "c" }), auth(SIGNUP))).toEqual(EXPIRED);
   });
 });
 

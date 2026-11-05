@@ -106,6 +106,9 @@ test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché co
   expect(response?.status()).toBe(200);
   expect(response?.headers()["cache-control"] ?? "").toMatch(/private/);
   expect(response?.headers()["cache-control"] ?? "").toMatch(/no-store/);
+  // F43-4: con una sesión iniciada con contraseña, A5 no se muestra; se pide el enlace desde Seguridad y sesión.
+  await page.goto("/nueva-contrasena");
+  await expect(page).toHaveURL(/\/cuenta\/seguridad$/);
   // Un `volver` externo nunca sale de Juntia (research R8.7).
   await page.context().clearCookies();
   await page.goto(`/entrar?volver=${encodeURIComponent("//evil.example")}`);

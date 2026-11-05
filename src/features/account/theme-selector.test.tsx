@@ -68,4 +68,18 @@ describe("ThemeSelector (T040)", () => {
     expect(await screen.findByText(copy.errors.sessionExpired)).toBeTruthy();
     expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
   });
+  // F43-1 (revisión del PR #43): un fallo al guardar no se muestra como éxito. Vuelve al último tema confirmado
+  // (data-theme, cookie y selección) y lo dice con copy.errors.saveFailed.
+  it("si guardar falla, vuelve al último tema confirmado y lo dice", async () => {
+    const user = userEvent.setup();
+    const persist = vi.fn().mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: false, error: "failed" });
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    await user.click(option(copy.account.appearance.system));
+    expect(await screen.findByText(copy.errors.saveFailed)).toBeTruthy();
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+    expect(document.cookie).toContain("juntia_theme=dark");
+    expect(option(copy.account.appearance.dark).getAttribute("aria-checked")).toBe("true");
+    expect(option(copy.account.appearance.system).getAttribute("aria-checked")).toBe("false");
+  });
 });

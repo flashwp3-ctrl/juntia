@@ -13,3 +13,8 @@ export async function getSessionIdentity(client: SupabaseClient): Promise<{ user
   if (!claims?.sub) return null;
   return { userId: claims.sub, email: typeof claims.email === "string" ? claims.email : "" };
 }
+/** Claims validados de la sesión de la petición, o null sin sesión. F43-4: A5 lee de aquí el `amr`. */
+export async function getSessionClaims(client: SupabaseClient) {
+  const { data } = await client.auth.getClaims();
+  return data?.claims?.sub ? data.claims : null;
+}

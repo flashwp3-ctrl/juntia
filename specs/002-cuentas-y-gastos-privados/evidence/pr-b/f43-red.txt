@@ -1,0 +1,10 @@
+     × F43-3: next no decide el flujo de una sesión; lo decide su amr 17ms
+     × sin poder leer el amr de la sesión, la trata como registro (la cierra) y nunca da A5 2ms
+     × si guardar falla, vuelve al último tema confirmado y lo dice 1108ms
+Error: Failed to resolve import "./recovery-session" from "src/features/auth/recovery-session.test.ts". Does the file exist?
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: No pudimos guardar. Reintentar.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+AssertionError: expected { to: '/nueva-contrasena', …(1) } to deeply equal { Object (to, session) }
+AssertionError: expected { to: '/nueva-contrasena', …(1) } to deeply equal { Object (to, session) }
+ Test Files  3 failed | 4 passed (7)
+      Tests  3 failed | 32 passed (35)

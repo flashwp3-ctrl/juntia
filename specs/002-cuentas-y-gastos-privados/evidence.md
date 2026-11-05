@@ -1423,9 +1423,69 @@ corrigieron (T051, T053). Revisión visual de las capturas: coinciden con
 04·14–04·19 salvo lo que se lista como propuesta o desviación en la descripción
 del PR.
 
+### Revisión del PR #43 (ChatGPT): F43-1 a F43-4 y el menor
+
+**F43-2 (bloqueante), el gate de 81b60e9 en rojo**, run
+[42112383415](https://github.com/flashwp3-ctrl/juntia/actions/runs/42112383415):
+la aserción de foco fallaba en A1d (`app`) y A1b (`e2e`) con «email: input none,
+marco none» ([`f43-2-focus-red.txt`](evidence/pr-b/f43-2-focus-red.txt)). **Era
+el arnés, no el componente:** tras enviar el formulario el foco quedaba en el
+botón «Entrar», `document.body.focus()` no lo movía (el body no es enfocable) y
+el Tab salía del botón al enlace siguiente, así que el campo de correo nunca
+recibía el foco. El arnés ahora enfoca el campo, sale con Shift+Tab y vuelve con
+Tab, y exige `document.activeElement === campo` antes de medir. Verde en local
+contra `juntia-dev` en los 8 casos de A1b y en A1, A2, A4 y la superficie interna
+([`f43-2-focus-green.txt`](evidence/pr-b/f43-2-focus-green.txt)). A1d solo existe
+en el job `app` (sin Supabase) y lo cubre el gate de este push.
+
+**F43-3, `next` decidía el flujo de un `code`.** Con una sesión ya establecida,
+`resolveConfirm` decide ahora por el claim `amr` de esa sesión, leído con
+`getClaims()`: `recovery` conserva la sesión y va a A5; cualquier otro método, o
+un `amr` ilegible, se trata como verificación (se cierra la sesión, nunca A5).
+`next` solo orienta los avisos cuando no hay sesión (otro navegador, fragmento del
+reenvío). Pruebas: `confirm.test.ts` (unidad, rojo y verde) e integración contra el
+GoTrue del runner en `confirm-code.test.ts`: un `code` de registro con
+`next=recovery` y uno de recuperación con `next=signup` siguen su flujo real, y el
+log del job `db` registra el `amr` observado de cada sesión.
+
+**F43-4, A5 aceptaba sesiones normales.** La página `/nueva-contrasena` y la Server
+Action `setNewPassword` exigen en el servidor `isRecentRecovery(claims)`:
+método `recovery` en `amr`, de hace una hora como mucho (la vida del enlace,
+`otp_expiry = 3600`). Sin sesión → A4 con el aviso de enlace caducado; con una
+sesión normal → Seguridad y sesión (G1). Pruebas: `recovery-session.test.ts`
+(unidad, rojo y verde); integración: una sesión iniciada con contraseña da `false`
+y la de recuperación `true`, con los claims reales del runner; spec E2E 1, «ruta
+protegida»: con sesión normal, `/nueva-contrasena` lleva a `/cuenta/seguridad`; el
+positivo (enlace de recuperación → A5 → contraseña nueva) sigue en la spec 1.
+`secure_password_change` no se tocó.
+
+**F43-1, un fallo al guardar el tema se mostraba como éxito.** ThemeSelector
+recuerda el último tema confirmado por el perfil; ante cualquier error que no sea
+`sessionExpired` vuelve a él (`data-theme`, cookie y selección) y muestra
+`copy.errors.saveFailed`, la clave de `contracts/errors.md` para un guardado
+fallido. Con `sessionExpired` conserva la elección del dispositivo y pide volver a
+entrar (T048). Prueba de componentes con `persist()` → `{ ok: false, error:
+"failed" }` (rojo y verde).
+
+**Menor, el fragmento en una variable de módulo.** Entrar guarda solo el aviso ya
+interpretado (verificado, caducado o ninguno); la cadena del fragmento, que puede
+llevar tokens, no se conserva y se borra de la URL.
+
+Rojo de F43-1, F43-3 y F43-4 en las pruebas de unidad y de componentes:
+[`f43-red.txt`](evidence/pr-b/f43-red.txt); verde: [`f43-green.txt`](evidence/pr-b/f43-green.txt)
+(37 pruebas en `src/features`). `npm run verify` en local pasó (32,6 s). El gate
+de CI de este push (PR listo) es el definitivo: SHA y run en T059.
+
 ### T059
 
-**Gate sobre e38af80** (el último commit de código del PR, con la enmienda de
+**Gate final: el run de CI del push que cierra la revisión del PR #43** (cabeza de
+`feat/002-b-access`, PR listo): su SHA y su run quedan en la descripción del PR,
+porque registrarlos aquí exigiría otro commit y otro gate. Los runs anteriores:
+81b60e9 en rojo por el arnés de foco (run
+[42112383415](https://github.com/flashwp3-ctrl/juntia/actions/runs/42112383415),
+F43-2 arriba).
+
+**Gate sobre e38af80** (con la enmienda de
 `/auth/confirm`): `npm run verify` en local pasó (22,8 s, < 90 s) y el run
 [42093325736](https://github.com/flashwp3-ctrl/juntia/actions/runs/42093325736)
 tiene `app` 152 s (axe 44/44), `db` 254 s (24 pruebas de integración, incluidas

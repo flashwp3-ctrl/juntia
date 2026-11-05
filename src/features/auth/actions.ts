@@ -7,9 +7,11 @@ import { redirect } from "next/navigation";
 import { displayNameError, normalizeDisplayName, safeReturnPath } from "@/domain/account";
 import { copy } from "@/lib/copy/es";
 import { completeFirstEntry, ensureProfile } from "@/lib/db/profile";
+import { getSessionClaims } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase/server";
 import { THEME_COOKIE, themeCookieOptions } from "@/lib/theme";
 import { newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult, type AuthErrorLike, type AuthResult } from "./auth-errors";
+import { isRecentRecovery } from "./recovery-session";
 
 export type FormState = { redirectTo?: string; error?: string; field?: "name" | "email" | "password" | "repeat" | "acknowledge"; notice?: string; resend?: boolean; email?: string; name?: string };
 
@@ -99,12 +101,15 @@ export async function recover(_: FormState, form: FormData): Promise<FormState> 
   return toState(recoverResult(error), { email });
 }
 
-/** A5, con la sesión de recuperación que creó /auth/confirm. */
+/** A5, con la sesión de recuperación que creó /auth/confirm. F43-4: la acción lo vuelve a exigir (amr `recovery` reciente). */
 export async function setNewPassword(_: FormState, form: FormData): Promise<FormState> {
   const password = text(form, "password");
   if ([...password].length < MIN_PASSWORD) return { field: "password", error: copy.auth.newPassword.weak };
   if (password !== text(form, "repeat")) return { field: "repeat", error: copy.auth.newPassword.mismatch };
   const supabase = await createClient();
+  const claims = await getSessionClaims(supabase);
+  if (!claims) redirect("/recuperar?enlace=caducado");
+  if (!isRecentRecovery(claims)) redirect("/cuenta/seguridad");
   const { error } = await supabase.auth.updateUser({ password });
   const result = newPasswordResult(error);
   if (result.kind === "redirect") redirect(result.to);

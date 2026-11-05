@@ -17,6 +17,10 @@ export async function GET(request: NextRequest) {
   const outcome = await resolveConfirm(request.nextUrl.searchParams, {
     verifyOtp: (args) => client.auth.verifyOtp(args),
     exchangeCodeForSession: (code) => client.auth.exchangeCodeForSession(code),
+    authMethods: async () => {
+      const amr = (await client.auth.getClaims()).data?.claims.amr;
+      return Array.isArray(amr) ? amr.map((entry: { method?: unknown }) => String(entry.method)) : [];
+    },
   });
   let theme: string | null = null;
   if (outcome.session) {

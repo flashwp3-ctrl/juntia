@@ -38,7 +38,9 @@ type ThemeSelectorProps = { initial: Theme; persist: (theme: Theme) => Promise<A
 
 export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
   const [value, setValue] = useState<Theme>(initial);
-  const [expired, setExpired] = useState(false);
+  const [problem, setProblem] = useState<"sessionExpired" | "failed" | null>(null);
+  // F43-1 (revisión del PR #43): el último tema que el perfil confirmó; un fallo al guardar vuelve a él.
+  const confirmed = useRef<Theme>(initial);
   const [, startTransition] = useTransition();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   // Las respuestas pueden llegar desordenadas si se cambia rápido: solo cuenta la de la última elección.
@@ -52,7 +54,19 @@ export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
     startTransition(async () => {
       const result = await persist(theme);
       if (request !== latest.current) return;
-      setExpired(!result.ok && result.error === "sessionExpired");
+      if (result.ok) {
+        confirmed.current = theme;
+        setProblem(null);
+      } else if (result.error === "sessionExpired") {
+        // La sesión caducó: el dispositivo conserva la elección y se pide volver a entrar (T048).
+        setProblem("sessionExpired");
+      } else {
+        // Cualquier otro fallo no se muestra como éxito: data-theme, cookie y selección vuelven al último confirmado.
+        setValue(confirmed.current);
+        applyTheme(confirmed.current);
+        writeThemeCookie(confirmed.current);
+        setProblem("failed");
+      }
     });
   };
 
@@ -95,7 +109,8 @@ export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
         })}
       </div>
       <p className="text-[13px] leading-[1.45] text-ink-secondary">{copy.account.appearance.help}</p>
-      {expired ? (
+      {problem === "failed" ? <InlineNotice tone="danger" icon="warning-circle">{copy.errors.saveFailed}</InlineNotice> : null}
+      {problem === "sessionExpired" ? (
         <InlineNotice tone="danger" icon="warning-circle">
           {copy.errors.sessionExpired}{" "}
           <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/apariencia")}`} className="font-semibold text-ink underline underline-offset-2">{copy.account.signInAgain}</Link>

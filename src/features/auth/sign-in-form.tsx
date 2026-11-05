@@ -11,8 +11,10 @@ import { linkNoticeFromHash } from "./confirm";
 import { PasswordInput, SubmitButton, authLink } from "./auth-ui";
 
 // El fragmento se lee una sola vez por carga (después se borra de la URL); en el servidor no existe.
-let capturedHash: string | null = null;
-const readHash = () => (capturedHash ??= window.location.hash);
+// Menor de la revisión del PR #43: se guarda solo el aviso ya interpretado (verificado, caducado o ninguno); la cadena
+// del fragmento, que puede llevar tokens, no se conserva en ninguna variable.
+let hashNotice: string | null | undefined;
+const readHashNotice = () => (hashNotice === undefined ? (hashNotice = linkNoticeFromHash(window.location.hash)) : hashNotice);
 const noSubscription = () => () => {};
 
 type Props = { volver: string; notice: "verificado" | "sesion-cerrada" | "enlace" | null };
@@ -26,8 +28,9 @@ export function SignInForm({ volver, notice }: Props) {
   }, [state.redirectTo]);
   // aviso=enlace: el enlace reenviado vuelve con el resultado en el fragmento (confirm.ts). Se lee una vez y se borra de
   // la URL sin usar ningún token.
-  const hash = useSyncExternalStore(noSubscription, readHash, () => null);
-  const linkNotice = notice === "enlace" && hash !== null ? (linkNoticeFromHash(hash) ?? copy.auth.recover.linkExpired) : null;
+  // En el servidor el fragmento no existe: "" significa «todavía sin leer» y no pinta ningún aviso.
+  const fromHash = useSyncExternalStore(noSubscription, readHashNotice, () => "");
+  const linkNotice = notice === "enlace" && fromHash !== "" ? (fromHash ?? copy.auth.recover.linkExpired) : null;
   useEffect(() => {
     if (notice === "enlace" && window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   }, [notice]);

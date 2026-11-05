@@ -96,16 +96,14 @@ async function pressFrames(page: Page, scope: string) {
 // texto visible tiene un solo indicador: el <input> sin outline y el marco con el anillo de focus.ring.
 async function fieldFocusRings(page: Page) {
   const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").count();
-  const results: { name: string; input: string; frame: string }[] = [];
+  const results: { name: string; focused: boolean; input: string; frame: string }[] = [];
   for (let index = 0; index < count; index++) {
     const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").nth(index);
-    await input.evaluate((node) => (node as HTMLElement).blur());
-    // Tab desde el elemento anterior para que el foco sea de teclado (:focus-visible), no de puntero.
-    await input.evaluate((node) => {
-      const all = [...document.querySelectorAll<HTMLElement>("a[href], button, input, [tabindex]")].filter((el) => !el.hasAttribute("disabled") && el.tabIndex >= 0 && el.getClientRects().length > 0);
-      const before = all[all.indexOf(node as HTMLElement) - 1];
-      (before ?? document.body).focus();
-    });
+    // F43-2: el foco llega por teclado al campo que se mide. Se enfoca el campo, Shift+Tab sale al anterior y Tab vuelve:
+    // así :focus-visible es de teclado aunque un envío previo haya dejado el foco en un botón (A1b, A1d). Si el campo es el
+    // primero de la página, Shift+Tab sale del documento y Tab vuelve a él. Se comprueba qué elemento quedó enfocado.
+    await input.focus();
+    await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Tab");
     results.push(await input.evaluate((node) => {
       const own = getComputedStyle(node);
@@ -197,7 +195,8 @@ for (const colorScheme of THEMES) {
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
         for (const ring of await fieldFocusRings(page)) {
-          console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+          console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»${ring.focused ? "" : " (SIN FOCO)"}: input ${ring.input}, marco ${ring.frame}`);
+          expect.soft(ring.focused, `«${ring.name}»: recibió el foco con el teclado`).toBe(true);
           expect.soft(ring.input, `«${ring.name}»: el <input> no pinta su propio outline`).toBe("none");
           expect.soft(ring.frame.startsWith("solid"), `«${ring.name}»: el marco lleva el anillo de foco`).toBe(true);
         }

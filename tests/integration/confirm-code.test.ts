@@ -4,9 +4,12 @@
 // Aquí se construye esa misma URL con el token del correo de Mailpit y se recorre contra el GoTrue real del runner:
 // verify → 303 a /auth/confirm?next=…&code=… → resolveConfirm canjea el code con el verificador PKCE del mismo
 // «navegador» (almacén de cookies), falla sin él y trata el enlace repetido como caducado.
+// F43-3 y F43-4 (revisión del PR #43): con el amr real de las sesiones del GoTrue del runner, el flujo no depende de
+// `next` y A5 solo acepta una sesión de recuperación reciente.
 import { randomUUID } from "node:crypto";
 import { afterAll, expect, it, vi } from "vitest";
 import { linkNoticeFromHash, resolveConfirm, type ConfirmAuth } from "@/features/auth/confirm";
+import { isRecentRecovery } from "@/features/auth/recovery-session";
 import { copy } from "@/lib/copy/es";
 import { confirmLink } from "../support/mailpit";
 import { cookieJarClient, seedUser } from "../support/seed";
@@ -20,7 +23,13 @@ afterAll(() => { for (const email of emails) runnerSql(`delete from juntia_data.
 const authOf = (client: ReturnType<typeof cookieJarClient>["client"]): ConfirmAuth => ({
   verifyOtp: (args) => client.auth.verifyOtp(args),
   exchangeCodeForSession: (code) => client.auth.exchangeCodeForSession(code),
+  // Igual que src/app/auth/confirm/route.ts.
+  authMethods: async () => {
+    const amr = (await client.auth.getClaims()).data?.claims.amr;
+    return Array.isArray(amr) ? amr.map((entry: { method?: unknown }) => String(entry.method)) : [];
+  },
 });
+const amrOf = async (client: ReturnType<typeof cookieJarClient>["client"]) => JSON.stringify((await client.auth.getClaims()).data?.claims.amr);
 
 async function tokenHash(email: string, type: "signup" | "recovery") {
   let link: string | null = null;
@@ -80,4 +89,43 @@ it("recuperación por la plantilla por defecto: el mismo navegador obtiene la se
   expect(await resolveConfirm(landing.searchParams, authOf(cookieJarClient().client))).toEqual({ to: "/recuperar?enlace=otro-navegador", session: null });
   expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/nueva-contrasena", session: "recovery" });
   expect((await browser.client.auth.getClaims()).data?.claims.sub).toBe(user.id);
+});
+
+async function signUpLink(next: "signup" | "recovery") {
+  const email = `code-${randomUUID().slice(0, 8)}@seed.test`;
+  emails.push(email);
+  runnerSql(`insert into juntia_data.signup_allowlist(email) values ('${email}')`);
+  const browser = cookieJarClient();
+  expect((await browser.client.auth.signUp({ email, password: `Clave-${randomUUID()}`, options: { emailRedirectTo: `${SITE}/auth/confirm?next=${next}` } })).error).toBeNull();
+  return { browser, landing: await followDefaultLink(await tokenHash(email, "signup"), "signup", next) };
+}
+async function recoveryLink(next: "signup" | "recovery") {
+  const user = await seedUser({ role: "code-recupera", index: 0 });
+  const browser = cookieJarClient();
+  expect((await browser.client.auth.resetPasswordForEmail(user.email, { redirectTo: `${SITE}/auth/confirm?next=${next}` })).error).toBeNull();
+  return { user, browser, landing: await followDefaultLink(await tokenHash(user.email, "recovery"), "recovery", next) };
+}
+
+it("F43-3: un code de registro con next=recovery sigue el flujo de registro (sin A5)", async () => {
+  const { browser, landing } = await signUpLink("recovery");
+  expect(landing.searchParams.get("next")).toBe("recovery");
+  expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/entrar?aviso=verificado", session: "signup" });
+  console.log(`amr de la sesión de registro: ${await amrOf(browser.client)}`);
+});
+
+it("F43-3: un code de recuperación con next=signup sigue el flujo de recuperación (A5, sesión conservada)", async () => {
+  const { browser, landing } = await recoveryLink("signup");
+  expect(landing.searchParams.get("next")).toBe("signup");
+  expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/nueva-contrasena", session: "recovery" });
+  console.log(`amr de la sesión de recuperación: ${await amrOf(browser.client)}`);
+});
+
+it("F43-4: A5 acepta la sesión de recuperación y rechaza una sesión iniciada con contraseña", async () => {
+  const signedIn = await seedUser({ role: "a5-normal", index: 0 });
+  const normal = (await signedIn.client.auth.getClaims()).data?.claims;
+  console.log(`amr de una sesión con contraseña: ${JSON.stringify(normal?.amr)}`);
+  expect(isRecentRecovery(normal)).toBe(false);
+  const { browser, landing } = await recoveryLink("recovery");
+  await resolveConfirm(landing.searchParams, authOf(browser.client));
+  expect(isRecentRecovery((await browser.client.auth.getClaims()).data?.claims)).toBe(true);
 });

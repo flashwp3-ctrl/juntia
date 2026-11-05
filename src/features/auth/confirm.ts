@@ -13,6 +13,8 @@ type Result = { error: { name?: string; code?: string } | null };
 export type ConfirmAuth = {
   verifyOtp: (args: { token_hash: string; type: "signup" | "email" | "recovery" }) => Promise<Result>;
   exchangeCodeForSession: (code: string) => Promise<Result>;
+  /** Métodos del claim `amr` de la sesión recién creada (getClaims). F43-3: la única autoridad sobre su flujo. */
+  authMethods: () => Promise<string[]>;
 };
 /** `signup` o `recovery`: qué sesión quedó abierta (la de registro se cierra después de crear el perfil). */
 export type ConfirmOutcome = { to: string; session: "signup" | "recovery" | null };
@@ -22,6 +24,21 @@ const NEW_PASSWORD = "/nueva-contrasena";
 const EXPIRED: ConfirmOutcome = { to: "/recuperar?enlace=caducado", session: null };
 const success = (kind: "signup" | "recovery"): ConfirmOutcome => ({ to: kind === "signup" ? VERIFIED : NEW_PASSWORD, session: kind });
 
+/**
+ * F43-3 (revisión del PR #43): con una sesión ya establecida, el flujo lo decide su claim `amr`, no `next` ni `type` de la
+ * URL, que se pueden cambiar. Una recuperación conserva la sesión y va a A5; cualquier otra (o si el amr no se puede
+ * leer) se trata como verificación: se cierra la sesión y nunca se llega a A5.
+ */
+async function established(auth: ConfirmAuth): Promise<ConfirmOutcome> {
+  let methods: string[] = [];
+  try {
+    methods = await auth.authMethods();
+  } catch {
+    methods = [];
+  }
+  return success(methods.includes("recovery") ? "recovery" : "signup");
+}
+
 const kindOf = (value: string | null) => (value === "signup" || value === "email" ? "signup" : value === "recovery" ? "recovery" : null);
 
 export async function resolveConfirm(params: URLSearchParams, auth: ConfirmAuth): Promise<ConfirmOutcome> {
@@ -29,9 +46,10 @@ export async function resolveConfirm(params: URLSearchParams, auth: ConfirmAuth)
   const type = params.get("type");
   if (tokenHash && kindOf(type)) {
     const { error } = await auth.verifyOtp({ token_hash: tokenHash, type: type as "signup" | "email" | "recovery" });
-    return error ? EXPIRED : success(kindOf(type)!);
+    return error ? EXPIRED : established(auth);
   }
 
+  // Sin sesión todavía, `next` solo orienta qué aviso mostrar (enlace implícito del reenvío, otro navegador).
   const kind = kindOf(params.get("next"));
   if (!kind || params.get("error") || params.get("error_code")) return EXPIRED;
   const code = params.get("code");
@@ -43,7 +61,7 @@ export async function resolveConfirm(params: URLSearchParams, auth: ConfirmAuth)
   } catch (caught) {
     error = caught as Result["error"];
   }
-  if (!error) return success(kind);
+  if (!error) return established(auth);
   // Otro navegador: /auth/v1/verify ya confirmó el correo antes de redirigir; solo falta entrar con la contraseña. Una
   // recuperación sin sesión no puede crear la contraseña: dice que se abra en el mismo navegador o se pida otro.
   if (error.name === "AuthPKCECodeVerifierMissingError") return kind === "signup" ? { to: VERIFIED, session: null } : { to: "/recuperar?enlace=otro-navegador", session: null };
