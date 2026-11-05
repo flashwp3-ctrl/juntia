@@ -10,13 +10,13 @@ from unnest(array['anon','authenticated']) r cross join unnest(array['public','j
 select is(has_schema_privilege(r, s, 'USAGE'), s = 'public' or (r = 'authenticated' and s = 'juntia_private'), '[V7] USAGE exacto ' || r || '.' || s)
 from unnest(array['anon','authenticated']) r cross join unnest(array['public','juntia_data','juntia_private']) s;
 select is(has_table_privilege(r, 'juntia_data.' || t, p), false, '[V7] sin ' || p || ' ' || r || '.' || t)
-from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist']) t
+from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist','transactions','audit_events','idempotency_records']) t
 cross join unnest(array['INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p;
 select is(has_any_column_privilege(r, 'juntia_data.' || t, p), false, '[V7] sin grant por columna ' || p || ' ' || r || '.' || t)
-from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist']) t
+from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist','transactions','audit_events','idempotency_records']) t
 cross join unnest(array['INSERT','UPDATE','REFERENCES']) p;
-select is(has_table_privilege(r, 'juntia_data.' || t, 'SELECT'), r = 'authenticated' and t <> 'signup_allowlist', '[V7] SELECT exacto ' || r || '.' || t)
-from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist']) t;
+select is(has_table_privilege(r, 'juntia_data.' || t, 'SELECT'), r = 'authenticated' and t in ('profiles','categories','transactions'), '[V7] SELECT exacto ' || r || '.' || t)
+from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist','transactions','audit_events','idempotency_records']) t;
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosecdef), 0::bigint, '[V7] ningún definer en public');
 select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
   '["complete_first_entry","ensure_profile","set_theme","update_display_name"]'::jsonb, '[V7] lista exacta de entradas authenticated');

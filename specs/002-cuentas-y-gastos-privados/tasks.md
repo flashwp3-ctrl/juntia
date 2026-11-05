@@ -150,7 +150,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: SC-006 (punto temprano); plan, PR A, paso 1.
   - Terminado cuando: el commit, el enlace y la salida están en `evidence.md`, o el PR está parado con el motivo.
 
-- [ ] T016 **Humana** (persona con acceso a `juntia-dev`, quickstart §3): aplicar `foundation` a `juntia-dev` con `npx --yes supabase@2.121.0 link --project-ref itfrhnadovezpahikuol` y `db push --linked`, comprobando el destino antes; registrar sin claves qué rol de login usa, si `grant juntia_writer to …`, `alter function … owner to juntia_writer` y `drop extension pg_graphql` funcionan, y que «Exposed schemas» es solo `public`
+- [x] T016 **Humana** (persona con acceso a `juntia-dev`, quickstart §3): aplicar `foundation` a `juntia-dev` con `npx --yes supabase@2.121.0 link --project-ref itfrhnadovezpahikuol` y `db push --linked`, comprobando el destino antes; registrar sin claves qué rol de login usa, si `grant juntia_writer to …`, `alter function … owner to juntia_writer` y `drop extension pg_graphql` funcionan, y que «Exposed schemas» es solo `public`
   - **Salida dura (F37-8):** si `pg_graphql` no se puede quitar o desactivar, **el PR A se para y lo reporta**; no se cambia a ninguna alternativa.
   - Cumple: FR-005; plan, PR A, paso 2; research R1 («Queda para el PR A»).
   - Terminado cuando: la salida está en `evidence.md` con `pg_graphql` ausente, o el PR está parado con el motivo.

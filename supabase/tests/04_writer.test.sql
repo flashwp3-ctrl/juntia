@@ -31,5 +31,20 @@ set local role juntia_writer;
 select set_config('tests.current_uid', coalesce(juntia_private.current_uid()::text,'null'), true);
 reset role;
 select is(current_setting('tests.current_uid'), 'null', '[V1] current_uid null sin claims');
+-- T017 / [V1] definitiva: RLS y bloqueo sobre las tres tablas controladas.
+select ok(relrowsecurity and relowner<>'juntia_writer'::regrole,'[V1] RLS y dueño separado: '||relname)
+from pg_class where oid in ('juntia_data.transactions'::regclass,'juntia_data.audit_events'::regclass,'juntia_data.idempotency_records'::regclass);
+insert into juntia_data.transactions(id,type,created_by,owner_user_id,amount_minor,category_id,transaction_date)
+values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','expense','11111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111',4500000,'transport','2026-10-03');
+grant usage on schema extensions to juntia_writer;
+set local role juntia_writer;
+set local "request.jwt.claims" = '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}';
+select is((with locked as (select id from juntia_data.transactions where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' for update) select count(*) from locked),0::bigint,'[V1] no bloquea gasto ajeno');
+select throws_ok($$insert into juntia_data.transactions(type,created_by,owner_user_id,amount_minor,category_id,transaction_date) values('expense','11111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111',100,'transport','2026-10-03')$$,'42501',null,'[V1] no inserta movimiento ajeno');
+select throws_ok($$insert into juntia_data.audit_events(id,actor_user_id,entity_type,entity_id,action) values(gen_random_uuid(),'11111111-1111-4111-8111-111111111111','transaction','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','create')$$,'42501',null,'[V1] no atribuye auditoría ajena');
+select throws_ok($$insert into juntia_data.idempotency_records(actor_user_id,action,idempotency_key,request_fingerprint) values('11111111-1111-4111-8111-111111111111','create_transaction',gen_random_uuid(),'fp')$$,'42501',null,'[V1] no inserta clave ajena');
+set local "request.jwt.claims" = '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+select is((with locked as (select id from juntia_data.transactions where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' for update) select count(*) from locked),1::bigint,'[V1] bloquea gasto propio');
+reset role;
 select * from finish();
 rollback;

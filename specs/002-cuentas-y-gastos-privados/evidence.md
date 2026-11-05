@@ -492,9 +492,65 @@ fue el cambio de imagen de ubuntu-latest; ningún control falló.
 
 ## T016 — pausa humana obligatoria
 
-**Pendiente: ejecución del fundador administrador en juntia-dev.** No se ha
-solicitado ni recibido la contraseña de la base. Ninguna operación se ejecutó
-contra juntia-dev ni producción desde el agente.
+**Ejecución reportada por el fundador el 5 de noviembre de 2026.** Proyecto
+`juntia-dev`, ref `itfrhnadovezpahikuol`. La aplicación y las consultas alojadas
+las ejecutó el fundador; no el agente. No se solicitó ni recibió contraseña.
+
+Región East US (North Virginia), aceptada por los fundadores y documentada en
+quickstart §3 por `f0bc3af62794c98b6c2122b36a5ce4d802de651c`. Antes de continuar:
+
+```text
+$ git pull --no-rebase origin feat/002-a-database
+From https://github.com/flashwp3-ctrl/juntia
+ * branch feat/002-a-database -> FETCH_HEAD
+Already up to date.
+```
+
+Salida aportada por el fundador (no observada de nuevo por el agente):
+
+```text
+project-ref: itfrhnadovezpahikuol
+projects list: juntia-dev enlazado
+dry-run: Would push these migrations: • 20261105000100_foundation.sql
+push: Initialising login role
+Applying migration 20261105000100_foundation.sql...
+Finished supabase db push.
+migration list --linked: 20261105000100 en Local y en Remote
+
+db query --linked (solo lectura):
+pg_graphql_installed = 0
+postgres_member_of_writer = true
+complete_first_entry: owner=juntia_writer, prosecdef=true
+ensure_profile: owner=juntia_writer, prosecdef=true
+set_theme: owner=juntia_writer, prosecdef=true
+update_display_name: owner=juntia_writer, prosecdef=true
+juntia_writer: login=false, bypassrls=false
+juntia_data.categories: owner=postgres, RLS activo
+juntia_data.profiles: owner=postgres, RLS activo
+juntia_data.signup_allowlist: owner=postgres, RLS activo
+```
+
+Sin semilla. La CLI usó un rol de acceso temporal («Initialising login role»),
+sin contraseña de la base; **no imprimió el NOTICE**. Rol migrador efectivo:
+**evidencia indirecta** de `current_user = postgres`, por la propiedad de las
+tablas que crea esta migración (no les cambia el dueño). No se atribuye un
+`session_user` concreto ni se presenta el NOTICE como observado.
+
+**Exposed schemas: confirmado por el fundador el 5 de noviembre de 2026.**
+Venía con `graphql_public` además de `public`; el fundador quitó
+`graphql_public` y guardó. Ahora muestra solo `public` y «1 of 4 schemas exposed».
+Exposed tables y functions siguen en 0 en el panel y no se tocaron;
+Automatically expose new tables está apagado. Es evidencia reportada por
+el fundador, no una captura tomada por el agente.
+
+Comprobaciones adicionales aportadas: en `public` solo está la vista
+`my_profile`, con SELECT solo para authenticated; las cuatro entradas públicas
+tienen EXECUTE para authenticated y no para anon. **Pendiente antes del PR B:**
+dejar el mismo ajuste de esquemas expuestos en `juntia-prod`.
+
+T016 cerrada con esta confirmación. El fundador autorizó seguir con T017 en
+adelante. El rol migrador sigue registrado como evidencia indirecta, nunca
+como un NOTICE observado.
 
 Desde `feat/002-a-database`, los comandos exactos de quickstart §3 son:
 
@@ -526,8 +582,9 @@ order by p.proname;
 ```
 
 Además, confirmar en API / Data API que **Exposed schemas = solo public**.
-El rol del SQL Editor no se atribuye al login de db push: si el NOTICE no se
-imprime, esa evidencia del rol migrador seguirá pendiente hasta observarlo.
+El rol del SQL Editor no se atribuye al login de db push: en esta ejecución
+el fundador aceptó la evidencia indirecta de la propiedad de las tablas,
+sin atribuir un NOTICE ni un session_user que no se observaron.
 **Si pg_graphql no se puede quitar o desactivar, el PR A se detiene.**
 
 ## Estado actual al entregar T016
