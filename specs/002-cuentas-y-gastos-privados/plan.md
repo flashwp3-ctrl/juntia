@@ -200,7 +200,7 @@ supabase/
 │   ├── 20261105000200_controlled_tables.sql # PR A, 2.ª (tras el punto de control 1): transactions, audit_events,
 │   │                                    #   idempotency_records, triggers, políticas, vistas de movimientos; sin funciones de dinero
 │   └── 20261105000300_money_functions.sql # PR A, 3.ª (tras el punto de control 2): create/update/void, parse_amount_minor, request_fingerprint
-├── seed.sql                             # Solo runner: correos de prueba en la lista y esquema tests con helpers de pgTAP
+├── seed.sql                             # Solo runner: esquema tests con helpers de pgTAP; los correos de prueba de la lista entran con foundation
 ├── restore/
 │   └── plain-postgres-bootstrap.sql     # Roles y objetos mínimos de auth para el camino B (R6)
 └── tests/
@@ -352,6 +352,7 @@ evidencia con el enlace al run. **Si la [V] 1 falla en cualquiera de los dos, se
 para** y ADR-013 se reabre (decisión 15); no se sustituye por funciones de
 `postgres`.
 
+0. **Arranque del job `db`** (revisión del PR #38): antes de la primera migración, el job está en verde con una prueba pgTAP de humo sobre el esquema vacío, una prueba de integración mínima contra la API del runner y `db:types:check` sobre los primeros tipos; `seed.sql` solo trae las auxiliares de pgTAP y recibe las filas de prueba de la lista en el mismo commit que crea la tabla. Así el rojo esperado de cada punto de control viene de sus pruebas nuevas, no del arranque.
 1. **Punto de control 1 — migración `foundation`** (esquemas, `juntia_writer`,
    privilegios por defecto, `pg_graphql`, `current_uid()`, `profiles`,
    `categories`, `signup_allowlist`, el hook, `my_profile` y las funciones de

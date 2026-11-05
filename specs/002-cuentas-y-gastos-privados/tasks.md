@@ -32,7 +32,7 @@ PR del plan; la auditoría está en el [Anexo A](#anexo-a--auditoría-de-las-tar
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: se puede ejecutar en paralelo con las demás `[P]` **de su mismo grupo y de su mismo PR**: archivos distintos, ninguna depende de otra del grupo y **ninguna compite por el mismo checkout, servidor, puerto o run de CI**. Una tarea que compila, sirve la app, ocupa un puerto, ejecuta `npm ci`, lanza el CI o modifica un archivo de forma temporal no lleva `[P]`. Ninguna tarea de un PR es paralela a otra de otro PR.
+- **[P]**: se puede ejecutar en paralelo con las demás `[P]` **de su mismo grupo y de su mismo PR**: archivos distintos, ninguna depende de otra del grupo y **ninguna compite por el mismo checkout, servidor, puerto o run de CI**. Una tarea `[P]` también puede ir a la vez que una **secuencia sin marcar e independiente** de su mismo grupo, mientras esa secuencia conserva su orden interno (por ejemplo, T011 junto a la serie T008 → T009 → T010). Una tarea que compila, sirve la app, ocupa un puerto, ejecuta `npm ci`, lanza el CI o modifica un archivo de forma temporal no lleva `[P]`. Ninguna tarea de un PR es paralela a otra de otro PR.
 - **[Story]**: historia de la spec (US1…US11). Configuración, CI, evidencia y aceptación no llevan etiqueta.
 - **Humana**: la ejecuta una persona (fundadora, fundador o gestor, según se diga); nunca un agente por su cuenta.
 - Cada tarea dice debajo **Cumple** (requisitos y criterios) y **Terminado cuando** (comprobación concreta).
@@ -70,6 +70,15 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 **Orden obligatorio** (plan, PR A; SC-006; decisión 15): `foundation` → **punto de control 1** → comprobaciones en `juntia-dev` → `controlled_tables` → **punto de control 2** → **solo entonces** `money_functions`. **Si la [V] 1 falla en cualquiera de los dos puntos, el PR se para** y ADR-013 se reabre; no se sustituye por funciones de `postgres`.
 
+**Arranque del job `db` por etapas** (revisión del PR #38, R2-1). En cada etapa, `supabase start` y `supabase db reset` del runner terminan bien y el job está en verde **antes** de añadir las pruebas que se esperan en rojo, para que un rojo venga siempre de las pruebas nuevas y nunca de la infraestructura:
+
+| Etapa | Commit | Migraciones | `seed.sql` | Pruebas que deben pasar |
+| --- | --- | --- | --- | --- |
+| 0 | T001–T007 | Ninguna de Juntia | Solo el esquema `tests` con las auxiliares de pgTAP | `00_smoke.test.sql`, `tests/integration/smoke.test.ts`, `db:types:check` sobre el esquema sin migraciones |
+| 1 | Punto de control 1 (T015) | `foundation` | + las filas de prueba de `signup_allowlist`, en el **mismo commit** que crea la tabla | Etapa 0 + T012 y T014 |
+| 2 | Punto de control 2 (T020) | + `controlled_tables` | Igual | Etapa 1 + T017 y T019 |
+| 3 | T022 en adelante | + `money_functions` | Igual | Etapa 2 + T021, T025… |
+
 ### Grupo 1A — configuración (en serie)
 
 - [ ] T001 Añadir a `package.json` `@supabase/supabase-js` **2.118.0** y `@supabase/ssr` **0.12.7** en `dependencies`, exactas, y regenerar `package-lock.json`; añadir los scripts `test:db` (`supabase test db`), `test:integration` (`vitest run --project integration`), `db:types:check` y `db:restore-drill` (`bash scripts/restore-drill.sh`) según [contracts/ci.md](contracts/ci.md)
@@ -80,9 +89,9 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-001, FR-002, FR-021, FR-024; quickstart §3 (F37-7: la contraseña mínima la aplica Auth).
   - Terminado cuando: el archivo existe con esos valores; `git check-ignore supabase/.temp` lo imprime; ningún secreto en el archivo (los que la CLI genera usan `env(…)`).
 
-- [ ] T003 Crear `supabase/seed.sql`, **solo para el runner** (nunca se empuja con `--include-seed`, quickstart §3): los correos de prueba `*@seed.test` en `juntia_data.signup_allowlist` y el esquema `tests` con las auxiliares de pgTAP (crear un usuario de prueba y fijar la identidad con `set local role` y `"request.jwt.claims"`)
+- [ ] T003 Crear `supabase/seed.sql`, **solo para el runner** (nunca se empuja con `--include-seed`, quickstart §3), con **solo** el esquema `tests` y las auxiliares de pgTAP (crear un usuario de prueba y fijar la identidad con `set local role` y `"request.jwt.claims"`). **Sin filas de `juntia_data`**: la tabla `signup_allowlist` todavía no existe; sus correos de prueba `*@seed.test` los añade T013 a este archivo en el mismo commit que crea la tabla (etapa 1)
   - Cumple: FR-024 (lista de prueba); research R4 (los correos reales no van en git); regla 6.
-  - Terminado cuando: el archivo no contiene ningún correo que no termine en `@seed.test`; `git grep -n "@" -- supabase/migrations` no devuelve correos.
+  - Terminado cuando: `supabase start` y `supabase db reset` del runner terminan bien con este archivo y sin migraciones de Juntia (lo comprueba el run de T007); el archivo no contiene ningún correo que no termine en `@seed.test`; `git grep -n "@" -- supabase/migrations` no devuelve correos.
 
 - [ ] T004 Ampliar `vitest.config.mts` con el proyecto `integration` (entorno `node`, `include: ["tests/integration/**/*.test.ts"]`, excluido de `verify`) y crear `tests/integration/support/env.ts`, que lee `API_URL`, `PUBLISHABLE_KEY` y `SECRET_KEY` del entorno del runner y falla si faltan
   - Cumple: FR-063; `docs/TESTING.md` §2.
@@ -98,8 +107,9 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 - [ ] T007 Crear el job `db` en `.github/workflows/ci.yml` según [contracts/ci.md](contracts/ci.md): `supabase/setup-cli@v3` con `version: 2.121.0`; `supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`; claves de `supabase status -o env` enmascaradas con `::add-mask::` y llevadas a `$GITHUB_ENV`; `npm ci`; `test:db` medido; `test:integration`; `db:types:check`; `supabase stop`; `timeout-minutes: 10`; resumen con tiempos contra presupuesto (aviso, no fallo). Sin filtro de rutas propio y sin secretos de GitHub. El paso `db:restore-drill` lo añade T030
   - Cumple: FR-063; ADR-011 §5 y §9.2.
+  - **Pruebas de humo de la etapa 0** (R2-1), para que el primer job `db` en verde sea real: `supabase/tests/00_smoke.test.sql` (`select plan(1); select has_schema('public'); select * from finish();`, pasa con el esquema vacío) y `tests/integration/smoke.test.ts` (la API del Supabase del runner responde, `GET /auth/v1/health` da 200, y `anon` no obtiene datos: una consulta a una tabla de `public` responde sin filas o con `PGRST205`). `test:integration` y `test:db` se ejecutan **sin** `passWithNoTests` ni nada que fabrique un verde sin pruebas.
   - **`db:types:check` desde el primer commit** (F38-2): esta tarea implementa el script (`supabase gen types typescript --local --schema public` en el runner, comparado con `src/lib/supabase/database.types.ts`, que falla si difieren) y versiona un **primer `database.types.ts`** generado en el runner sobre el esquema sin migraciones de Juntia. Desde aquí, **cada migración** (T013, T018, T022) regenera y commitea los tipos en su mismo commit, así que cada punto de control comprueba los tipos de su commit.
-  - Terminado cuando: `gh workflow run ci.yml --ref <rama>` corre `app` y `db` con `db:types:check` en verde, el log no contiene ninguna clave y el resumen publica la duración de `supabase start` y de `test:db` contra < 60 s.
+  - Terminado cuando: `gh workflow run ci.yml --ref <rama>` corre `app` y `db` en la etapa 0 con las dos pruebas de humo y `db:types:check` en verde, el log no contiene ninguna clave y el resumen publica la duración de `supabase start` y de `test:db` contra < 60 s.
 
 ### Grupo 1B — dominio (tests primero; T008 → T009 → T010 en serie, T011 en paralelo con ellas)
 
@@ -126,9 +136,9 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 - [ ] T012 [US9] Tests **pgTAP** del punto de control 1, escritos antes de la migración: `supabase/tests/01_privileges.test.sql` (privilegios efectivos de `anon` y `authenticated` sobre los tres esquemas y las tablas que existen, incluidos `TRUNCATE`, `REFERENCES`, `TRIGGER`, secuencias, `usage` y `create`; ninguna función `security definer` en `public`; nada de `juntia_private` invocable por la API), `02_claims.test.sql` ([V] 9 y `current_uid()` por SQL), `03_views.test.sql` (`my_profile` con `security_invoker` y sin `usage`), `04_writer.test.sql` ([V] 1 con `ensure_profile`: devuelve a quien llama, RLS aplicada a `juntia_writer`, perfil de otra persona rechazado, `current_uid()` nulo sin claims), `06_profiles.test.sql` (RLS por dueño; escritura directa imposible por SQL, I1) y `09_allowlist.test.sql` (hook: permitido, no permitido, mayúsculas)
   - Cumple: FR-002, FR-004, FR-024, FR-029; ADR-013 [V] 1, 2, 7, 8 y 9 (parte del punto 1).
-  - Terminado cuando: los seis archivos existen y fallan contra un esquema vacío en un run del job `db`.
+  - Terminado cuando: en un run del job `db`, los seis archivos fallan contra el esquema sin `foundation` **mientras `00_smoke.test.sql` y `tests/integration/smoke.test.ts` siguen en verde**; la evidencia muestra que el rojo viene de las pruebas nuevas y no del arranque.
 
-- [ ] T013 [US9] Crear `supabase/migrations/20261105000100_foundation.sql` según [data-model.md](data-model.md) §1, §2.1, §2.2, §2.6, §3 (filas de estas tablas), §4 (`my_profile`) y §5 (funciones de perfil y hook): esquemas y `revoke`; `juntia_writer` en un `DO` idempotente; `grant juntia_writer to postgres`; `create` temporal en `juntia_private` revocado al final; `alter default privileges`; `drop extension if exists pg_graphql`; `juntia_private.current_uid()` (enmienda de ADR-013 §2.3); `profiles`, `categories` sembrada, `signup_allowlist`, el hook, `my_profile`, `ensure_profile`, `complete_first_entry`, `update_display_name`, `set_theme`. Cada `security definer` lleva el comentario que lo justifica. **Ninguna tabla controlada ni función de dinero**. En el mismo commit, `src/lib/supabase/database.types.ts` regenerado en el runner
+- [ ] T013 [US9] Crear `supabase/migrations/20261105000100_foundation.sql` según [data-model.md](data-model.md) §1, §2.1, §2.2, §2.6, §3 (filas de estas tablas), §4 (`my_profile`) y §5 (funciones de perfil y hook): esquemas y `revoke`; `juntia_writer` en un `DO` idempotente; `grant juntia_writer to postgres`; `create` temporal en `juntia_private` revocado al final; `alter default privileges`; `drop extension if exists pg_graphql`; `juntia_private.current_uid()` (enmienda de ADR-013 §2.3); `profiles`, `categories` sembrada, `signup_allowlist`, el hook, `my_profile`, `ensure_profile`, `complete_first_entry`, `update_display_name`, `set_theme`. Cada `security definer` lleva el comentario que lo justifica. **Ninguna tabla controlada ni función de dinero**. En el mismo commit, `src/lib/supabase/database.types.ts` regenerado en el runner y las filas de prueba `*@seed.test` de `signup_allowlist` añadidas a `supabase/seed.sql` (etapa 1)
   - Cumple: FR-001, FR-002, FR-004, FR-005, FR-024, FR-029, FR-052 (columna `theme`).
   - Terminado cuando: los tests de T012 pasan en el job `db`.
 
@@ -726,7 +736,7 @@ Docker en un equipo; `service_role` en la app; datos reales en CI; una tercera s
 | FR-006 | T022, T024 | T021, T025 |
 | FR-007 | T018 | T017, T021 |
 | FR-008 | T018, T023, T024 | T008, T021, T023, T025 |
-| FR-009 | T023 | T023 (`db:types:check`) |
+| FR-009 | T007 (crea `db:types:check` y los primeros tipos); T013, T018 y T022 (los regeneran); T023 (clientes y test de tipos) | T007, T015, T020, T023 (`db:types:check` en cada etapa) |
 | FR-010 | T023, T024 | T005 |
 | FR-011 | T005, T038 | T005, T104 |
 | FR-012 | T008 | T008 |
