@@ -140,7 +140,7 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 | ADR | Qué decide para este slice | Estado | ¿Bloquea el plan? |
 | --- | --- | --- | --- |
 | ADR-013 | Acceso a datos, esquemas, `juntia_writer`, concurrencia, importes como texto | Aceptado (decisión 15); **enmienda de nota de implementación de §2.3 en esta rama**, sin cambiar la decisión | No, si el revisor acepta la enmienda como nota y no como decisión nueva |
-| ADR-011 | Capas, jobs 3 y 4, siembra, presupuestos, §9 sin Docker | Aceptado; §9 en la rama de la decisión 17, base de esta | No, si la decisión 17 se mergea antes que este plan |
+| ADR-011 | Capas, jobs 3 y 4, siembra, presupuestos, §9 sin Docker, axe en dos jobs (§5) | Aceptado; §9 en `main` desde el PR #36 (decisión 17); la enmienda «Axe en dos jobs» de §5, en esta rama | No |
 | ADR-012 | Formato y gates | Aceptado | No |
 | ADR-001 | Solo referencia (no hay Mover a Pareja en P0-1) | Aceptado (§12.2) | No |
 
@@ -161,13 +161,13 @@ entregan al gestor aparte y no están escritas aquí como decididas.
 | --- | --- | --- | --- | --- |
 | La API de Auth enumera (403 de la lista, 422 de cuenta existente) frente a «Sin enumeración de cuentas» | Maestro §15.5 / research R4 | **Resuelto por decisión** del primer fundador (16.16): riesgo aceptado hasta MVP-1, las pantallas no enumeran. FR-023 y el maestro se enmiendan en esta rama | Este PR | No |
 | ADR-013 §2.3 da por hecho que `auth.uid()` funciona dentro de la función de `juntia_writer` | ADR-013 / research R1 | Nota de implementación en ADR-013, sin cambiar la decisión | Este PR | No |
-| La tabla de la decisión 17 del maestro dice «`--remote` explícito»; ADR-011 §9.5 (ya corregido) dice `--linked` en la v2 y `--remote` en la v3, y la CLI fijada es la v2 | Maestro §15.10 / ADR-011 §9.5 | Manda el maestro, pero su texto describe la v3. El plan aplica la versión fijada (v2, `--linked`) | **Por corregir** en la rama de la decisión 17, que aún no está en `main` | No, si se corrige antes del merge de la 17 |
+| La tabla de la decisión 17 del maestro decía «`--remote` explícito»; ADR-011 §9.5 dice `--linked` en la v2 y `--remote` en la v3, y la CLI fijada es la v2 | Maestro §15.10 / ADR-011 §9.5 | **Resuelto**: la fila dice ahora «con el destino explícito en la sintaxis de la CLI fijada (ADR-011 §9.5)» | Commit `d46d5ca` de esta rama | No |
 | ADR-011 §5 (enmienda de la forma del nivel 1) ponía axe (control 5) solo en el job `app`; desde el PR B las rutas de producto exigen sesión y Supabase, que `app` no tiene | ADR-011 §5 / spec FR-027 | **Resuelto por la enmienda «Axe en dos jobs» de ADR-011 §5** (4 nov 2026, en esta rama): por la sesión que necesita el estado real (A5 y A6 en `e2e` aunque sean pantallas de acceso), completo en cada PR de código y comprobado por una prueba de cobertura | Este PR | No |
-| **Lectura.** `docs/TESTING.md` §9 todavía escribe «`verify` (… + SQL/RLS) < 90 s»; §2 y ADR-011 §9.7 lo miden sin las capas de base de datos | `docs/TESTING.md` / ADR-011 §9 | Manda ADR-011 (TESTING lo dice de sí mismo) | Puede ir en la rama de la decisión 17 | No |
+| `docs/TESTING.md` §9 escribía «`verify` (… + SQL/RLS) < 90 s»; §2 y ADR-011 §9.7 lo miden sin las capas de base de datos | `docs/TESTING.md` / ADR-011 §9 | **Resuelto**: la fila dice ahora «`verify` local (lint + typecheck + dominio + componentes; SQL/RLS solo en CI, ADR-011 §9)» | `bcfe675`, en `main` con el PR #36 | No |
 
-**Resultado del gate (antes de la Fase 0)**: **PASA**, con dos condiciones de
-orden: la rama de la decisión 17 se mergea antes que este plan, con la frase
-`--remote` de la tabla del maestro corregida.
+**Resultado del gate (antes de la Fase 0)**: **PASA**, sin condiciones de orden:
+la decisión 17 ya está en `main` (PR #36) y los dos conflictos de redacción están
+resueltos.
 
 ## Project Structure
 
@@ -640,10 +640,9 @@ Repasada contra research.md, data-model.md, contracts/ y quickstart.md.
 | ¿Añade specs E2E por encima del tope? | No: dos, la 1 y la 2 |
 | ¿Añade dependencias fuera de §7.1 o que P0-1 no usa? | No: solo `@supabase/supabase-js` y `@supabase/ssr` (§7.1, ADR-013). Ninguna de las propuestas de §7.1 que P0-1 no necesita |
 | ¿Se salta algún control por ruta o por Docker? | No: `db` y `e2e` corren en todo PR de código; `verify` declara «SOLO EN CI» |
-| Conflictos nuevos | Los dos de lectura del primer gate; ninguno bloquea |
+| Conflictos nuevos | Ninguno; los del primer gate están resueltos |
 
-**Resultado del gate (después del diseño)**: **PASA**, con las condiciones de
-orden del primer gate.
+**Resultado del gate (después del diseño)**: **PASA**.
 
 ## Puntos para el revisor
 
