@@ -162,7 +162,7 @@ entregan al gestor aparte y no están escritas aquí como decididas.
 | La API de Auth enumera (403 de la lista, 422 de cuenta existente) frente a «Sin enumeración de cuentas» | Maestro §15.5 / research R4 | **Resuelto por decisión** del primer fundador (16.16): riesgo aceptado hasta MVP-1, las pantallas no enumeran. FR-023 y el maestro se enmiendan en esta rama | Este PR | No |
 | ADR-013 §2.3 da por hecho que `auth.uid()` funciona dentro de la función de `juntia_writer` | ADR-013 / research R1 | Nota de implementación en ADR-013, sin cambiar la decisión | Este PR | No |
 | La tabla de la decisión 17 del maestro dice «`--remote` explícito»; ADR-011 §9.5 (ya corregido) dice `--linked` en la v2 y `--remote` en la v3, y la CLI fijada es la v2 | Maestro §15.10 / ADR-011 §9.5 | Manda el maestro, pero su texto describe la v3. El plan aplica la versión fijada (v2, `--linked`) | **Por corregir** en la rama de la decisión 17, que aún no está en `main` | No, si se corrige antes del merge de la 17 |
-| ADR-011 §5 (enmienda de la forma del nivel 1) ponía axe (control 5) solo en el job `app`; desde el PR B las rutas de producto exigen sesión y Supabase, que `app` no tiene | ADR-011 §5 / spec FR-027 | **Resuelto por la enmienda «Axe en dos jobs» de ADR-011 §5** (4 nov 2026, en esta rama): sin sesión en `app`, con sesión en `e2e`, completo en cada PR de código | Este PR | No |
+| ADR-011 §5 (enmienda de la forma del nivel 1) ponía axe (control 5) solo en el job `app`; desde el PR B las rutas de producto exigen sesión y Supabase, que `app` no tiene | ADR-011 §5 / spec FR-027 | **Resuelto por la enmienda «Axe en dos jobs» de ADR-011 §5** (4 nov 2026, en esta rama): por la sesión que necesita el estado real (A5 y A6 en `e2e` aunque sean pantallas de acceso), completo en cada PR de código y comprobado por una prueba de cobertura | Este PR | No |
 | **Lectura.** `docs/TESTING.md` §9 todavía escribe «`verify` (… + SQL/RLS) < 90 s»; §2 y ADR-011 §9.7 lo miden sin las capas de base de datos | `docs/TESTING.md` / ADR-011 §9 | Manda ADR-011 (TESTING lo dice de sí mismo) | Puede ir en la rama de la decisión 17 | No |
 
 **Resultado del gate (antes de la Fase 0)**: **PASA**, con dos condiciones de
@@ -475,11 +475,12 @@ hook configurados; Preview de Vercel apuntando a `juntia-dev`.
 | SQL/RLS | Ya en el PR A; aquí se añade el caso de `set_theme` y `update_display_name` ajenos si falta |
 | Integración | `ensure_profile()` idempotente con el nombre de A2; `/auth/confirm` con enlace válido, caducado y usado; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada por Auth** (`weak_password`) y no crea usuario (F37-7) |
 | E2E | **Spec 1 nace**: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **segundo contexto de navegador que entra y pinta oscuro desde el primer cuadro**; recuperación uniforme; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar |
-| axe | Rutas de acceso y de Mi cuenta, en los dos temas, con sesión sembrada |
+| axe | Clasificadas por la sesión que necesita su estado real ([contracts/ci.md](contracts/ci.md), «Axe»): A1–A4 en `app` sin sesión; **A5 `/nueva-contrasena` con sesión de recuperación y A6 `/primera-entrada` con sesión de usuario, en `e2e`**; Mi cuenta en `e2e`. Los dos temas |
+| Cobertura de axe (Vitest `components`, entorno `node`) | **Nace aquí**, donde el reparto empieza a aplicar: cada ruta implementada (`page.tsx` de `src/app`) está en **exactamente una** de las dos listas de `tests/a11y/route-registry.ts`, las dos juntas cubren todas las rutas, cada entrada se audita en los dos temas y ninguna entrada que necesite sesión cae en `app` |
 
-**CI:** entra el job `e2e`; `check:theme-script` pide `/entrar`; axe de las rutas
-con sesión corre en el job `e2e` y el de las rutas sin sesión sigue en `app`
-(ADR-011 §5, enmienda «Axe en dos jobs»).
+**CI:** entra el job `e2e`; `check:theme-script` pide `/entrar`; axe se reparte
+por la sesión que necesita cada estado real, no por grupo de rutas: los que la
+necesitan en `e2e`, los demás en `app` (ADR-011 §5, enmienda «Axe en dos jobs»).
 
 **`[V]` que cierra:** tema (escritura desde el perfil, dos dispositivos, CLS =
 0 con el arnés en acceso y Mi cuenta); workers con usuarios aislados (primera
@@ -579,7 +580,7 @@ aprobación visual y salida interna de los dos fundadores (SC-001, SC-012).
 | SC | Qué | Dónde y cómo | Quién | PR |
 | --- | --- | --- | --- | --- |
 | SC-001 | Sin scroll horizontal ni solapes, 7 anchos, 2 temas | Capturas 390/1440 en el PR; los demás anchos en el recorrido manual | Agente (capturas), fundadores (aprobación) | B, C, D |
-| SC-002 | axe sin serias ni críticas | Proyecto `a11y` en el job `e2e`, todas las rutas implementadas | CI | B, C, D |
+| SC-002 | axe sin serias ni críticas | Proyecto `a11y`: estados sin sesión en `app`, con sesión en `e2e`; la prueba de cobertura asegura que no falta ninguna ruta | CI | B, C, D |
 | SC-003 | Mediana < 10 s en teléfono real, ≥ 10 registros, con método | Teléfono de un fundador, cronómetro o grabación de pantalla, tras A6; en producción tras la copia (SC-010) o contra `juntia-dev` | Fundadores | D |
 | SC-004 | INP < 200 ms al abrir Anotar y al guardar | Playwright con `PerformanceObserver` de `event` y CPU 4×, reportado como laboratorio (maestro §10.2) | Agente | C |
 | SC-005 | CLS = 0 con Skeleton y con tema guardado | Arnés de la research R2 de la 001 + R7 | Agente | B (acceso, cuenta), D (Inicio, Actividad) |
