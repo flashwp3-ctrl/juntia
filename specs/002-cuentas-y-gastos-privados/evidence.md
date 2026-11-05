@@ -1164,7 +1164,7 @@ el resumen:
 
 **Exposed schemas** (panel de `juntia-prod`, Integrations › Data API › Settings,
 captura tras recargar:
-[`evidence/t035-prod-exposed-schemas.webp`](evidence/t035-prod-exposed-schemas.webp),
+[`evidence/t035-prod-exposed-schemas.png`](evidence/t035-prod-exposed-schemas.png),
 sin claves ni datos): «1 of 4 schemas exposed», solo `public`. «Exposed tables
 0 of 10» y «Exposed functions 0 of 21» no se tocaron; «Automatically expose new
 tables» apagado.
