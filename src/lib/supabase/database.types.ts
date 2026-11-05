@@ -58,6 +58,9 @@ export type Database = {
             "complete_first_entry":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"create_transaction":
+{ Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_idempotency_key": string,"p_transaction_date": string,"p_type": string }; Returns: Json
+                           },
 "ensure_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -66,6 +69,12 @@ export type Database = {
                            },
 "update_display_name":
 { Args: { "p_display_name": string }; Returns: Json
+                           },
+"update_transaction":
+{ Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_expected_version": number,"p_idempotency_key": string,"p_transaction_date": string,"p_transaction_id": string }; Returns: Json
+                           },
+"void_transaction":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_transaction_id": string }; Returns: Json
                            }
           }
           Enums: {

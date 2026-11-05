@@ -729,3 +729,49 @@ Después de implementarlo: 1 archivo, 24 pruebas pasadas, exit 0.
 Los tipos se mantienen pendientes de generación en el runner: `npm run typecheck`
 solo señala que faltan `create_transaction` y `update_transaction` en el tipo
 generado anterior. No se editan ni se relaja la comprobación.
+
+## T022 — funciones y generación de tipos
+
+Commit `74b6e72`, run [42040320912](https://github.com/flashwp3-ctrl/juntia/actions/runs/42040320912).
+`gh run watch ... --exit-status --interval 20`: exit 1;
+[log completo](evidence/money-generation.txt).
+
+```text
+08_money_functions.test.sql .. ok
+04_writer: Failed test 4: cuatro implementaciones propiedad de writer
+have: complete_first_entry, create_transaction, ensure_profile, set_theme, update_display_name, update_transaction, void_transaction
+want: complete_first_entry, ensure_profile, set_theme, update_display_name
+Files=10, Tests=318; Failed: 1
+Test Files 4 passed (4); Tests 17 passed (17)
+40P01 real se reintenta con la misma clave: passed (1358 ms)
+supabase start: 109 s; test:db: 5.83 s
+Job app: failure, 42.20 s; Job db: failure, 188.84 s (resúmenes internos)
+```
+
+La lista explícita del inventario de definers se actualiza a las siete funciones
+previstas; el mecanismo de identidad/RLS no falló y los puntos de control 1 y 2
+conservan sus verdes previos. `db:types:check` y el typecheck de app también
+fallaron por los tipos anteriores, como se esperaba antes de descargar el artefacto.
+`gh run download 42040320912 --name database-types --dir .../type-generation-money`:
+descargado y leído completo; solo definiciones, sin claves, URLs ni datos.
+Se movió sin editar a `src/lib/supabase/database.types.ts`.
+SHA256 `46d68f6321aec0845190f461a332d757240fcca9348dae589da09b66e47ea25c`.
+`npm run typecheck` con el artefacto: exit 0.
+El artefacto `auth-bootstrap-description` contiene solo la definición de `auth.uid()`
+y el catálogo de columnas (ninguna fila), para versionar el arranque T027 contra
+la versión real del stack. El siguiente gate comprobará estos tipos sin cambios.
+
+## T027–T030 — rojo previo del ensayo
+
+Antes de escribir los scripts de copia/restauración se escribió `restore-drill.sh`
+con los dos caminos y los nueve negativos. Git Bash (sin Docker ni WSL):
+
+```text
+bash -n scripts/restore-drill.sh
+syntax-exit=0
+bash scripts/restore-drill.sh
+FALTA: scripts/backup-manifest.sh
+test-exit=1
+```
+
+Ejecución real del ensayo: pendiente de completar los scripts y el runner PGDG 17.
