@@ -10,11 +10,13 @@ export type InputProps = Omit<ComponentPropsWithRef<"input">, "size" | "prefix">
   endIcon?: AppIconName;
   /** Adorno visual al inicio del campo (por ejemplo, el signo de pesos de AmountInput). */
   prefix?: ReactNode;
+  /** Control propio al final del marco (por ejemplo, mostrar u ocultar la contraseña). */
+  end?: ReactNode;
   fieldClassName?: string;
   inputClassName?: string;
 };
 
-export function Input({ label, help, error, endIcon, prefix, disabled, id, fieldClassName = "", inputClassName = "", className = "", ...rest }: InputProps) {
+export function Input({ label, help, error, endIcon, prefix, end, disabled, id, fieldClassName = "", inputClassName = "", className = "", ...rest }: InputProps) {
   const autoId = useId();
   const inputId = id ?? `${autoId}-input`;
   const labelId = `${autoId}-label`;
@@ -54,6 +56,7 @@ export function Input({ label, help, error, endIcon, prefix, disabled, id, field
             className={`min-w-0 flex-1 bg-transparent font-medium placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed ${inputClassName}`}
           />
           {endIcon ? <AppIcon name={endIcon} size={20} className="shrink-0 text-ink-secondary" /> : null}
+          {end}
         </span>
       </label>
       {showHelp ? (

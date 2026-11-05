@@ -1,0 +1,25 @@
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |domain| src/domain/account/account.test.ts > ruta volver > cae a / con cualquier destino externo, codificado o con controles
+AssertionError: "/\\evil": expected '/\evil' to be '/' // Object.is equality
+
+Expected: "/"
+Received: "/\evil"
+
+ ❯ src/domain/account/account.test.ts:38:89
+     36|       "/%E0%A4%A", "/\u0000", "/\u007f", "///evil",
+     37|     ];
+     38|     for (const value of negatives) expect(safeReturnPath(value), JSON.…
+       |                                                                                         ^
+     39|     expect(safeReturnPath(null)).toBe("/");
+     40|     expect(safeReturnPath(undefined)).toBe("/");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  12:34:25
+   Duration  386ms (transform 49%, tests 19%, worker 18%, import 14%)
+

@@ -9,12 +9,26 @@ export const copy = {
   categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Entretenimiento", shopping: "Compras", services: "Servicios", income: "Ingresos", other: "Otra" },
   errors: { sessionExpired: "Tu sesión caducó. Vuelve a entrar para continuar.", unexpected: "Algo salió mal. Inténtalo de nuevo.", saveFailed: "No pudimos guardar. Reintentar.", network: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo." },
   transaction: { errors: { notFound: "No encontramos este movimiento.", versionConflict: "Este movimiento cambió. Recárgalo antes de editar.", alreadyDeleted: "Este movimiento ya se eliminó." } },
+  // P0-1, PR B (04·17). Copy nuevo para revisión de los fundadores en el PR.
   auth: {
-    verifyEmail: { title: "Verifica tu correo", description: "Si podemos completar el registro, recibirás un enlace. Revisa tu correo o inténtalo más tarde.", resent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde." },
-    signIn: { invalidCredentials: "Correo o contraseña incorrectos.", notVerified: "Verifica tu correo antes de entrar.", verified: "Tu correo está verificado. Ya puedes entrar." },
-    networkError: "No pudimos conectar. Inténtalo de nuevo.", recover: { sent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", linkExpired: "Este enlace caducó o ya se usó. Pide uno nuevo." },
-    newPassword: { weak: "Usa una contraseña de al menos 8 caracteres.", same: "Elige una contraseña distinta de la anterior." },
-    signUp: { weakPassword: "Usa una contraseña de al menos 8 caracteres." },
+    back: "Volver",
+    fields: { email: "Correo", password: "Contraseña", showPassword: "Mostrar contraseña", hidePassword: "Ocultar contraseña" },
+    verifyEmail: { title: "Verifica tu correo", description: "Si podemos completar el registro, recibirás un enlace. Revisa tu correo o inténtalo más tarde.", resent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", spam: "Si no llega en unos minutos, revisa la carpeta de spam.", resend: "Reenviar enlace", resending: "Reenviando…", backToSignIn: "Volver a entrar" },
+    signIn: {
+      titleLead: "Lo tuyo, lo mío y", titleEmphasis: "lo nuestro.", submit: "Entrar", submitting: "Entrando…", forgot: "Olvidé mi contraseña", createAccount: "Crear cuenta", resend: "Reenviar enlace",
+      invalidCredentials: "Correo o contraseña incorrectos.", notVerified: "Verifica tu correo antes de entrar.", verified: "Tu correo está verificado. Ya puedes entrar.", signedOut: "Cerraste sesión en este dispositivo.",
+      missing: "Escribe tu correo y tu contraseña.",
+    },
+    networkError: "No pudimos conectar. Inténtalo de nuevo.",
+    recover: { title: "Recupera tu acceso", description: "Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.", submit: "Enviar enlace", submitting: "Enviando…", sent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", linkExpired: "Este enlace caducó o ya se usó. Pide uno nuevo.", missing: "Escribe tu correo." },
+    newPassword: { title: "Crea una contraseña nueva", label: "Contraseña nueva", repeat: "Repítela", repeatPlaceholder: "Repite la contraseña", help: "Usa al menos 8 caracteres.", mismatch: "Las dos contraseñas no coinciden.", submit: "Guardar contraseña", submitting: "Guardando…", weak: "Usa una contraseña de al menos 8 caracteres.", same: "Elige una contraseña distinta de la anterior." },
+    signUp: {
+      title: "Crea tu cuenta", nameLabel: "Nombre visible", nameHelp: "Así aparecerás en Juntia.", namePlaceholder: "Tu nombre", passwordPlaceholder: "Crea una contraseña", passwordHelp: "Al menos 8 caracteres. Usa una que no uses en otro sitio.",
+      // Q9 / FR-025: aviso de versión privada de prueba, sin enlaces ni texto legal inventado.
+      notice: "Juntia es una versión privada de prueba. Todavía no tiene términos de uso publicados.", acknowledge: "Entiendo que es una versión privada de prueba.",
+      submit: "Crear cuenta", submitting: "Creando cuenta…", haveAccount: "Ya tengo cuenta", weakPassword: "Usa una contraseña de al menos 8 caracteres.", missing: "Completa los tres campos y confirma el aviso.",
+    },
+    firstEntry: { greeting: (name: string) => `Hola, ${name}`, description: "Tu espacio personal ya está listo.", startTitle: "Empezar por mi cuenta", startDescription: "Anota tus gastos e ingresos. Lo que anotas es solo tuyo.", noBudget: "No te pedimos un presupuesto. Si te sirve, podrás crearlo después en Plan.", continue: "Continuar", continuing: "Entrando…" },
   },
   empty: {
     home: { title: "Tu día a día, aquí", description: "Este será el lugar para ver tus movimientos." },
@@ -23,7 +37,41 @@ export const copy = {
     plan: { title: "Planifica a tu manera", description: "Los presupuestos serán opcionales. Podrás registrar gastos sin crear uno." },
   },
   balance: { title: "Todavía no disponible", description: "El balance aparece cuando exista la pareja." },
-  account: { title: "Mi cuenta", status: "Todavía no disponible", description: "Tu cuenta llega con el inicio de sesión.", back: "Volver", profile: { errors: { displayName: "Escribe un nombre de 1 a 60 caracteres, sin saltos de línea." } }, security: { signOutFailed: "No pudimos cerrar la sesión. Inténtalo de nuevo." } },
+  // P0-1, PR B (02·9–02·10, 04·14–04·19). Copy nuevo para revisión de los fundadores en el PR.
+  account: {
+    title: "Mi cuenta", back: "Volver", signInAgain: "Entrar de nuevo", sections: "Secciones de Mi cuenta", editProfile: "Editar perfil",
+    groups: { mySpace: "Mi espacio", preferences: "Preferencias", privacySecurity: "Privacidad y seguridad" },
+    menu: {
+      profile: "Mi perfil", profileHint: "Nombre visible", partner: "Mi pareja", partnerHint: "Llega con la próxima versión",
+      appearance: "Apariencia", privacy: "Privacidad y datos", privacyHint: "Qué es solo tuyo, exportar", security: "Seguridad y sesión", securityHint: "Contraseña y esta sesión",
+    },
+    signOut: { label: "Cerrar sesión", hint: "No borra nada: vuelves a entrar con tu correo.", loading: "Cerrando sesión…" },
+    profile: {
+      title: "Mi perfil", avatarNote: "Tu avatar usa tu inicial y el color que Juntia te asigna.", nameLabel: "Nombre visible", namePlaceholder: "Tu nombre",
+      emailLabel: "Correo de acceso", emailHelp: "No se puede cambiar desde Juntia.", authorshipNote: "Cambiar tu nombre no cambia quién registró cada movimiento.",
+      save: "Guardar cambios", cancel: "Cancelar", saved: "Perfil actualizado.", saveFailed: "No se guardó. Revisa tu conexión e inténtalo de nuevo. Tus cambios siguen aquí.",
+      errors: { displayName: "Escribe un nombre de 1 a 60 caracteres, sin saltos de línea." },
+    },
+    partner: { title: "Mi pareja", unavailableTitle: "Tu pareja llega con la próxima versión", unavailableDescription: "Por ahora Juntia funciona en tu espacio personal: lo que anotas es solo tuyo. Invitar a tu pareja llega pronto." },
+    appearance: { title: "Apariencia", label: "Apariencia", light: "Claro", dark: "Oscuro", system: "Sistema", help: "Sistema sigue la configuración de tu dispositivo. El cambio es inmediato." },
+    privacy: {
+      title: "Privacidad y datos", whoSees: "Qué ve cada uno", onlyYou: "Solo tú", onlyYouItems: ["Los gastos e ingresos que anotas", "Tu nombre visible y tu correo de acceso"],
+      partnerLater: "Cuando invites a tu pareja, aquí verás qué comparten y qué sigue siendo solo tuyo.", yourData: "Tus datos",
+      export: "Exportar mis datos", exportHint: "JSON y CSV con tus movimientos",
+      deleteTitle: "Eliminar tu cuenta", deleteDescription: "La solicitud de eliminación todavía no está disponible en la app. Nada se borra sin que lo confirmes.",
+    },
+    export: {
+      title: "Exportar mis datos", format: "Formato", json: "JSON", jsonHint: "Tus movimientos, estructurados.", csv: "CSV", csvHint: "Tus movimientos en una tabla: fecha, tipo, categoría, descripción e importe.",
+      includes: "Incluye solo tus movimientos activos.", excludes: "Nunca incluye datos internos ni de otras personas.", notRestore: "Es una copia para consultar. No sirve para restaurar ni migrar automáticamente.",
+      comingSoon: "Preparar el archivo llega con la próxima versión de Juntia.", close: "Cerrar",
+    },
+    security: {
+      title: "Seguridad y sesión", password: "Contraseña", change: "Cambiar contraseña", changeHint: "Te enviaremos un enlace seguro a tu correo.", changing: "Enviando enlace…",
+      sentHint: "Te enviamos un enlace seguro a tu correo.", sent: (email: string) => `Revisa ${email}. El enlace sirve una vez.`,
+      thisSession: "Esta sesión", sessionNote: "Sesión iniciada en este dispositivo. Al cerrarla, Juntia borra lo que tenía guardado aquí.",
+      signOutFailed: "No pudimos cerrar la sesión. Revisa tu conexión e inténtalo de nuevo.",
+    },
+  },
   states: {
     notFound: "No encontramos esta página",
     notFoundDescription: "La dirección no existe o todavía no hace parte de esta versión. Desde Inicio puedes seguir recorriendo Juntia.",

@@ -4,21 +4,40 @@
 // totales, porcentajes, barras de presupuesto ni progreso de metas».
 // Criterio literal (spec, FR-028): «El AppShell MUST mostrar en todas sus rutas un aviso visible de que esta versión
 // todavía no guarda datos, que no se puede descartar».
-// No importa ningún módulo con `server-only`.
+// No importa ningún módulo con `server-only`. Desde el PR B de la 002 el layout de (app) lee la sesión y el perfil en el
+// servidor (T047): esta prueba compone el mismo árbol de cliente que él con un perfil de prueba. /cuenta muestra datos de la
+// cuenta y se prueba con sesión real en la spec E2E 1 y en axe (job e2e).
 import { render, screen, within } from "@testing-library/react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
-import AppLayout from "./layout";
+import { AnnotateProvider } from "@/components/shell/annotate-notice";
+import { AppShell } from "@/components/shell/app-shell";
+import { ContextProvider } from "@/components/shell/context-selector";
+import { AccountProvider } from "@/features/account/account-context";
 import HomePage from "./page";
 import ActivityPage from "./actividad/page";
 import GoalsPage from "./metas/page";
 import PlanPage from "./plan/page";
 import BalancePage from "./balance/page";
-import AccountPage from "./cuenta/page";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+
+// El árbol de cliente de src/app/(app)/layout.tsx, con un perfil de prueba sin cifras.
+function AppLayout({ children }: { children: ReactNode }) {
+  return (
+    <AccountProvider displayName="Sara" theme="system">
+      <ContextProvider>
+        <AnnotateProvider>
+          <AppShell>
+            <main id="contenido">{children}</main>
+          </AppShell>
+        </AnnotateProvider>
+      </ContextProvider>
+    </AccountProvider>
+  );
+}
 
 const routes: readonly [string, ComponentType][] = [
   ["/", HomePage],
@@ -26,7 +45,6 @@ const routes: readonly [string, ComponentType][] = [
   ["/metas", GoalsPage],
   ["/plan", PlanPage],
   ["/balance", BalancePage],
-  ["/cuenta", AccountPage],
 ];
 
 // Dígitos, signo de pesos, porcentaje y las dos afirmaciones de saldo que §15.10 prohíbe sin datos.

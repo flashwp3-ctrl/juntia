@@ -24,6 +24,8 @@
   --color-category-other-fg: var(--category-other-fg);
   --font-sans: var(--font-onest);
   --font-serif: var(--font-brygada);
+  /* Itálica de Brygada (A1 «lo nuestro.», 04·17): llamada aparte en el layout, sin precarga. */
+  --font-serif-italic: var(--font-brygada-italic);
   --font-mono: var(--font-spline-mono);
   --color-canvas: var(--color-surface-canvas);
   --color-raised: var(--color-surface-raised);

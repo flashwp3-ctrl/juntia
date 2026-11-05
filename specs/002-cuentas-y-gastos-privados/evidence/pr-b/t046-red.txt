@@ -1,0 +1,7 @@
+     × con juntia_theme=light y el sistema en true, el primer valor es light 9ms
+     × con juntia_theme=dark y el sistema en false, el primer valor es dark 1ms
+     × con otra=1; juntia_theme=dark; sb-x=2 y el sistema en false, el primer valor es dark 1ms
+     × un cambio del sistema no pisa el tema guardado 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 passed (20)
