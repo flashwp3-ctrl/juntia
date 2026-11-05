@@ -455,7 +455,12 @@ terminar con código distinto de 0 y sin la marca de éxito. Además: una
 restauración que falla a mitad no deja **ninguna base `juntia_restore*`** y sí su
 log con `exit=` distinto de 0; una copia que falla no deja **ningún archivo de
 salida** ni carpeta temporal; y una copia contra un nombre que ya existe falla
-y deja el archivo existente intacto. Si una de ellas
+y deja el archivo existente intacto; un `dropdb` que falla tras una
+restauración correcta hace salir al script con código distinto de 0 y deja en
+el log qué base borrar a mano; y una comprobación de descifrado que no coincide
+impide publicar la copia. La comprobación del cifrado descifra de verdad y
+compara con el original: `gpg --list-packets --batch` no sirve, porque falla sin
+la contraseña disponible aunque el archivo sea válido. Si una de ellas
 «pasa», el job falla. Así se demuestra que el ensayo puede fallar, no solo que
 pasa.
 

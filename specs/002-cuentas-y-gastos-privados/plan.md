@@ -429,7 +429,9 @@ rota, un recuento alterado y otro SHA en el manifiesto, y un `data.sql`
 modificado deben hacer fallar el ensayo, sin que nunca imprima el éxito (si uno
 «pasa», el job falla); una restauración fallida no deja ninguna base
 `juntia_restore*`, una copia fallida no deja archivos de salida, y una copia
-contra un nombre existente falla sin tocarlo. **La copia no se presenta como restaurable hasta que los
+contra un nombre existente falla sin tocarlo; un `dropdb` que falla hace fallar
+la restauración y deja dicho qué base borrar a mano; y una comprobación de
+descifrado que no coincide impide publicar. **La copia no se presenta como restaurable hasta que los
 dos caminos y los controles negativos tienen salida en la evidencia.**
 
 **`[V]` que cierra:** ADR-013 [V] 1–9 (10 ya está en el plan; el lockfile aquí);

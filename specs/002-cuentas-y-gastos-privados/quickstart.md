@@ -188,7 +188,10 @@ bash scripts/backup-manifest.sh --write --mode production --tag "$TAG" \
   --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "$WORK/manifest.txt"
 tar -cf "$WORK/juntia.tar" -C "$WORK" data.sql manifest.txt
 gpg --symmetric --cipher-algo AES256 -o "$WORK/juntia.tar.gpg" "$WORK/juntia.tar"
-gpg --list-packets --batch "$WORK/juntia.tar.gpg" > /dev/null   # el archivo cifrado es legible
+# Comprobación real: descifrar en la carpeta temporal y comparar con el original. Pide la
+# contraseña si el agente de gpg no la tiene en caché; no usa --batch para no fallar sin ella.
+gpg -d -o "$WORK/check.tar" "$WORK/juntia.tar.gpg"
+cmp -s "$WORK/juntia.tar" "$WORK/check.tar"            # con set -e, si difieren, no se publica nada
 # Publicación: solo después de todas las comprobaciones. ln falla si el destino existe.
 ln "$WORK/juntia.tar.gpg" "$OUT_GPG"; PUBLISHED+=("$OUT_GPG")
 ln "$WORK/manifest.txt" "$OUT_MAN"; PUBLISHED+=("$OUT_MAN")
@@ -245,7 +248,9 @@ fallos inyectados y **debe fallar** en cada uno, sin imprimir nunca el mensaje d
 4. un `data.sql` modificado (no coincide el `sha256`).
 5. **una restauración que falla a mitad** (camino B con la migración rota): además de fallar, **no debe quedar ninguna base `juntia_restore*`** en el servidor del runner (`select count(*) from pg_database where datname like 'juntia_restore%'` = 0) y el log debe existir con su `exit=` distinto de 0;
 6. **una copia que falla** (por ejemplo, el manifiesto rechaza otro SHA): **no debe quedar ningún archivo de salida** (`juntia-*.tar.gpg`, `juntia-*.manifest.txt`) ni carpeta `.juntia-backup.*`;
-7. una copia con un nombre de destino que ya existe: falla y el archivo existente queda intacto (mismo `sha256`).
+7. una copia con un nombre de destino que ya existe: falla y el archivo existente queda intacto (mismo `sha256`);
+8. **un `dropdb` que falla** después de una restauración correcta (`DROPDB=false`): el script **debe salir con código distinto de 0** y el log debe decir «DROP FALLÓ» con el nombre de la base; después el job borra esa base y comprueba que no queda ninguna `juntia_restore*`;
+9. **un descifrado de comprobación que no coincide** (se altera `juntia.tar.gpg` entre el cifrado y la comprobación): la copia falla y no publica nada.
 
 El job comprueba el código de salida distinto de 0 de cada uno y que la salida no
 contiene la marca de éxito; si un control negativo «pasa», el job falla. **Ningún
@@ -267,7 +272,15 @@ WORK=$(mktemp -d); SRC="$WORK/src"; CREATED_DB=0
 cleanup() {
   rc=$?
   echo "exit=$rc base=$DBNAME creada_por_este_script=$CREATED_DB" >> "$LOG"   # la evidencia se escribe antes de borrar
-  if [ "$CREATED_DB" -eq 1 ]; then dropdb --maintenance-db="$PG/postgres" "$DBNAME" && echo "base $DBNAME borrada" >> "$LOG"; fi
+  if [ "$CREATED_DB" -eq 1 ]; then
+    # Borrar la base es parte del éxito: si falla, el script falla y dice qué limpiar a mano.
+    if ${DROPDB:-dropdb} --force --maintenance-db="$PG/postgres" "$DBNAME"; then
+      echo "base $DBNAME borrada" >> "$LOG"
+    else
+      echo "DROP FALLÓ: la base $DBNAME puede tener datos reales; bórrala a mano con dropdb --force $DBNAME" | tee -a "$LOG" >&2
+      [ "$rc" -eq 0 ] && rc=1
+    fi
+  fi
   git worktree remove --force "$SRC" 2>/dev/null || true
   rm -rf "$WORK"                                        # tar y data.sql descifrados
   exit "$rc"
