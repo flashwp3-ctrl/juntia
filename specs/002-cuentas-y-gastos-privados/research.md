@@ -721,8 +721,15 @@ Ver «Puntos para el revisor».
   `/nueva-contrasena` para la recuperación.
 - **`src/proxy.ts`** renueva la sesión con `@supabase/ssr`, valida con
   `getClaims()` y redirige las rutas de producto y de Mi cuenta a
-  `/entrar?volver=<ruta>`. `volver` solo acepta rutas relativas propias
-  (`/^\/(?!\/)/`), para no abrir una redirección.
+  `/entrar?volver=<ruta>`. `volver` solo acepta un **destino interno**
+  (corregido en la revisión del PR #38, F38-1: la expresión `/^\/(?!\/)/` dejaba
+  pasar `/\evil.example`, que `new URL()` resuelve a `https://evil.example/`):
+  empieza por una sola `/` seguida de algo que no es `/` ni `\`; no contiene
+  ninguna barra invertida, ni caracteres de control ni espacios; se decodifica
+  una vez y se vuelven a aplicar las mismas reglas (así se rechazan `%2F%2F`,
+  `%5C`, `%09` y similares); y por último `new URL(value, base).origin ===
+  base.origin`, quedándose solo con `pathname + search + hash`. Cualquier otro
+  valor, incluido el vacío, cae a `/`.
 - **Caché:** las respuestas autenticadas llevan `Cache-Control: private,
   no-store`; nada autenticado es estático. Las rutas de producto dejan de
   prerenderizarse; las de acceso pueden seguir estáticas.

@@ -98,21 +98,22 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 - [ ] T007 Crear el job `db` en `.github/workflows/ci.yml` según [contracts/ci.md](contracts/ci.md): `supabase/setup-cli@v3` con `version: 2.121.0`; `supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`; claves de `supabase status -o env` enmascaradas con `::add-mask::` y llevadas a `$GITHUB_ENV`; `npm ci`; `test:db` medido; `test:integration`; `db:types:check`; `supabase stop`; `timeout-minutes: 10`; resumen con tiempos contra presupuesto (aviso, no fallo). Sin filtro de rutas propio y sin secretos de GitHub. El paso `db:restore-drill` lo añade T030
   - Cumple: FR-063; ADR-011 §5 y §9.2.
-  - Terminado cuando: `gh workflow run ci.yml --ref <rama>` corre `app` y `db`, el log no contiene ninguna clave y el resumen publica la duración de `supabase start` y de `test:db` contra < 60 s.
+  - **`db:types:check` desde el primer commit** (F38-2): esta tarea implementa el script (`supabase gen types typescript --local --schema public` en el runner, comparado con `src/lib/supabase/database.types.ts`, que falla si difieren) y versiona un **primer `database.types.ts`** generado en el runner sobre el esquema sin migraciones de Juntia. Desde aquí, **cada migración** (T013, T018, T022) regenera y commitea los tipos en su mismo commit, así que cada punto de control comprueba los tipos de su commit.
+  - Terminado cuando: `gh workflow run ci.yml --ref <rama>` corre `app` y `db` con `db:types:check` en verde, el log no contiene ninguna clave y el resumen publica la duración de `supabase start` y de `test:db` contra < 60 s.
 
-### Grupo 1B — dominio (tests primero)
+### Grupo 1B — dominio (tests primero; T008 → T009 → T010 en serie, T011 en paralelo con ellas)
 
-- [ ] T008 [P] Test de **dominio** en `src/domain/money/money.test.ts` y después `src/domain/money/` (`Currency`, `Money`, `moneyFromPesos`, `parseAmountMinor`, `serializeAmountMinor`, `formatMoney`, `MAX_COP_PESOS`) según [data-model.md](data-model.md) §6
+- [ ] T008 Test de **dominio** en `src/domain/money/money.test.ts` y después `src/domain/money/` (`Currency`, `Money`, `moneyFromPesos`, `parseAmountMinor`, `serializeAmountMinor`, `formatMoney`, `MAX_COP_PESOS`) según [data-model.md](data-model.md) §6
   - Casos: ningún `number` en la API pública del módulo; pesos → unidades menores exacto; texto ↔ `bigint` con `9007199254740993`, `9223372036854775807` y los no válidos; formato es-CO sin decimales.
   - Cumple: FR-012, FR-008; maestro §5.2.
   - Terminado cuando: el test se vio fallar y después pasa en `npm run test:unit`.
 
-- [ ] T009 [P] Test de **dominio** en `src/domain/transactions/transactions.test.ts` y después `src/domain/transactions/` (tipos, `CATEGORY_CATALOG` con las diez claves y su `kind`, `validateDraft`, `monthKey`, `todayInBogota`, `monthSummary`, `groupByDay`, `fillRecentCategories`, `monthBounds`)
+- [ ] T009 Test de **dominio** en `src/domain/transactions/transactions.test.ts` y después `src/domain/transactions/` (tipos, `CATEGORY_CATALOG` con las diez claves y su `kind`, `validateDraft`, `monthKey`, `todayInBogota`, `monthSummary`, `groupByDay`, `fillRecentCategories`, `monthBounds`)
   - Casos: catálogo literal de [data-model.md](data-model.md) §2.2; «Ingresos» solo para ingreso; monto > 0, ≤ máximo, pesos enteros; descripción ≤ 140; «hoy» con un instante de borde (UTC del 1 de noviembre de 2026, aún 31 de octubre en Bogotá); `monthSummary` no suma ingresos al gasto; recientes completadas con el orden del catálogo (research R8.8); la flecha siguiente llega al mes más lejano con movimientos y no más (Q13).
   - Cumple: FR-013, FR-014, FR-015, FR-019; US-6.7.
   - Terminado cuando: el test se vio fallar y después pasa.
 
-- [ ] T010 [P] Test de **dominio** en `src/domain/golden/october-2026.test.ts` y después `src/domain/golden/october-2026.ts` con `ContextKind`, `PersonId`, `GoldenCurrency` y `saraPrivateOctober2026`, **copiado** de la tabla «Dataset dorado de P0-1» de la spec
+- [ ] T010 Test de **dominio** en `src/domain/golden/october-2026.test.ts` y después `src/domain/golden/october-2026.ts` con `ContextKind`, `PersonId`, `GoldenCurrency` y `saraPrivateOctober2026`, **copiado** de la tabla «Dataset dorado de P0-1» de la spec
   - Casos: los ocho gastos suman exactamente `41290000` unidades menores (412.900); el ingreso de 86.000 no suma al gasto; el desglose por categoría coincide con la tabla.
   - Cumple: FR-020; SC-008 (mitad de dominio); maestro §15.10, «Dataset dorado», reglas 1, 2 y 4.
   - Terminado cuando: el test pasa con `monthSummary` de T009.
@@ -127,7 +128,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-002, FR-004, FR-024, FR-029; ADR-013 [V] 1, 2, 7, 8 y 9 (parte del punto 1).
   - Terminado cuando: los seis archivos existen y fallan contra un esquema vacío en un run del job `db`.
 
-- [ ] T013 [US9] Crear `supabase/migrations/20261105000100_foundation.sql` según [data-model.md](data-model.md) §1, §2.1, §2.2, §2.6, §3 (filas de estas tablas), §4 (`my_profile`) y §5 (funciones de perfil y hook): esquemas y `revoke`; `juntia_writer` en un `DO` idempotente; `grant juntia_writer to postgres`; `create` temporal en `juntia_private` revocado al final; `alter default privileges`; `drop extension if exists pg_graphql`; `juntia_private.current_uid()` (enmienda de ADR-013 §2.3); `profiles`, `categories` sembrada, `signup_allowlist`, el hook, `my_profile`, `ensure_profile`, `complete_first_entry`, `update_display_name`, `set_theme`. Cada `security definer` lleva el comentario que lo justifica. **Ninguna tabla controlada ni función de dinero**
+- [ ] T013 [US9] Crear `supabase/migrations/20261105000100_foundation.sql` según [data-model.md](data-model.md) §1, §2.1, §2.2, §2.6, §3 (filas de estas tablas), §4 (`my_profile`) y §5 (funciones de perfil y hook): esquemas y `revoke`; `juntia_writer` en un `DO` idempotente; `grant juntia_writer to postgres`; `create` temporal en `juntia_private` revocado al final; `alter default privileges`; `drop extension if exists pg_graphql`; `juntia_private.current_uid()` (enmienda de ADR-013 §2.3); `profiles`, `categories` sembrada, `signup_allowlist`, el hook, `my_profile`, `ensure_profile`, `complete_first_entry`, `update_display_name`, `set_theme`. Cada `security definer` lleva el comentario que lo justifica. **Ninguna tabla controlada ni función de dinero**. En el mismo commit, `src/lib/supabase/database.types.ts` regenerado en el runner
   - Cumple: FR-001, FR-002, FR-004, FR-005, FR-024, FR-029, FR-052 (columna `theme`).
   - Terminado cuando: los tests de T012 pasan en el job `db`.
 
@@ -135,7 +136,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-002, FR-004, FR-005; ADR-013 [V] 2 (parte del punto 1); ADR-011, condición 2 de la decisión 1 (prueba con el cliente real).
   - Terminado cuando: pasa en el job `db`.
 
-- [ ] T015 **Punto de control 1**: commit propio con T012–T014, `gh workflow run ci.yml --ref <rama>` sobre ese commit y salida pegada en la sección «Punto de control 1» de `evidence.md` (si todavía no existe, esta tarea lo crea con el formato de T031) con el enlace al run: [V] 1 con `ensure_profile`, [V] 9, y lo que ya corre de [V] 2, 7 y 8. **Si la [V] 1 falla, se para el PR y se reporta** (decisión 15)
+- [ ] T015 **Punto de control 1**: commit propio con T012–T014 y los tipos regenerados de T013 (el job corre `db:types:check` contra ellos), `gh workflow run ci.yml --ref <rama>` sobre ese commit y salida pegada en la sección «Punto de control 1» de `evidence.md` (si todavía no existe, esta tarea lo crea con el formato de T031) con el enlace al run: [V] 1 con `ensure_profile`, [V] 9, y lo que ya corre de [V] 2, 7 y 8. **Si la [V] 1 falla, se para el PR y se reporta** (decisión 15)
   - Cumple: SC-006 (punto temprano); plan, PR A, paso 1.
   - Terminado cuando: el commit, el enlace y la salida están en `evidence.md`, o el PR está parado con el motivo.
 
@@ -150,7 +151,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-003, FR-004, FR-007, FR-013, FR-018; ADR-013 [V] 1, 2, 7, 8 y 9 definitivas.
   - Terminado cuando: fallan contra el esquema de `foundation` en un run del job `db`.
 
-- [ ] T018 [US9] Crear `supabase/migrations/20261105000200_controlled_tables.sql`: `transactions`, `audit_events`, `idempotency_records`, sus restricciones, índices, triggers, políticas y grants ([data-model.md](data-model.md) §2.3–§2.5 y §3) y las vistas `my_transactions`, `my_transaction_months` y `my_recent_categories` con importes como `text` (§4). **Ninguna función de dinero**
+- [ ] T018 [US9] Crear `supabase/migrations/20261105000200_controlled_tables.sql`: `transactions`, `audit_events`, `idempotency_records`, sus restricciones, índices, triggers, políticas y grants ([data-model.md](data-model.md) §2.3–§2.5 y §3) y las vistas `my_transactions`, `my_transaction_months` y `my_recent_categories` con importes como `text` (§4). **Ninguna función de dinero**. En el mismo commit, `database.types.ts` regenerado
   - Cumple: FR-003, FR-004, FR-007, FR-008, FR-013, FR-015, FR-018.
   - Terminado cuando: T012 y T017 pasan en el job `db`.
 
@@ -158,7 +159,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-002, FR-004; SC-007 (parte); ADR-013 [V] 2.
   - Terminado cuando: pasa en el job `db`.
 
-- [ ] T020 **Punto de control 2**: commit propio con T017–T019 y su run del job `db`; salida de **[V] 1, 2, 7, 8 y 9 definitivas sobre todas las tablas controladas y vistas** pegada en la sección «Punto de control 2» de `evidence.md` con el enlace. Es anterior a cualquier función de dinero. **Si la [V] 1 falla, se para**
+- [ ] T020 **Punto de control 2**: commit propio con T017–T019 y los tipos regenerados de T018, y su run del job `db` (con `db:types:check`); salida de **[V] 1, 2, 7, 8 y 9 definitivas sobre todas las tablas controladas y vistas** pegada en la sección «Punto de control 2» de `evidence.md` con el enlace. Es anterior a cualquier función de dinero. **Si la [V] 1 falla, se para**
   - Cumple: SC-006; ADR-013, nota del 4 de noviembre de 2026 en «Verificación pendiente».
   - Terminado cuando: el commit, el enlace y la salida están en `evidence.md`.
 
@@ -168,13 +169,13 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-006, FR-007, FR-008, FR-013, FR-016, FR-017, FR-018; ADR-013 [V] 6.
   - Terminado cuando: falla contra el esquema de T018 en un run del job `db`.
 
-- [ ] T022 [US2] [US4] Crear `supabase/migrations/20261105000300_money_functions.sql`: `parse_amount_minor`, `request_fingerprint` y las tres operaciones (entrada en `public` `security invoker` y escritura en `juntia_private` `security definer` de `juntia_writer`, `set search_path = ''`, usando `current_uid()`), con el orden de [data-model.md](data-model.md) §5 y la concurrencia de research R8.4
+- [ ] T022 [US2] [US4] Crear `supabase/migrations/20261105000300_money_functions.sql`: `parse_amount_minor`, `request_fingerprint` y las tres operaciones (entrada en `public` `security invoker` y escritura en `juntia_private` `security definer` de `juntia_writer`, `set search_path = ''`, usando `current_uid()`), con el orden de [data-model.md](data-model.md) §5 y la concurrencia de research R8.4. En el mismo commit, `database.types.ts` regenerado
   - Cumple: FR-006, FR-016, FR-017, FR-034 (anular con motivo `undo`), FR-036.
   - Terminado cuando: T021 pasa en el job `db`.
 
-- [ ] T023 Generar `src/lib/supabase/database.types.ts` (`supabase gen types typescript --local --schema public` en el runner), implementar `db:types:check` y crear `src/lib/supabase/server.ts` (cliente por petición, `server-only`) y `src/lib/supabase/browser.ts`. Test de **tipos** en `src/lib/db/types.test.ts` (`expectTypeOf`): ningún campo de importe de `public` es `number`
+- [ ] T023 Con los tipos ya versionados desde T007 y regenerados por cada migración, crear `src/lib/supabase/server.ts` (cliente por petición, `server-only`) y `src/lib/supabase/browser.ts`. Test de **tipos** en `src/lib/db/types.test.ts` (`expectTypeOf`): ningún campo de importe de `public` es `number`
   - Cumple: FR-008, FR-009, FR-010; ADR-013 §4.3.
-  - Terminado cuando: `db:types:check` pasa en el job `db` y falla si se edita a mano el archivo; el test de tipos pasa en `npm run typecheck`.
+  - Terminado cuando: el test de tipos pasa en `npm run typecheck`; `db:types:check` sigue en verde y falla si se edita a mano el archivo.
 
 - [ ] T024 Crear `src/lib/db/` (`types.ts`, `errors.ts`, `retry.ts`, `profile.ts`, `transactions.ts`): única capa que conoce vistas y funciones; importes `string` → `Money`; traducción de códigos según [contracts/errors.md](contracts/errors.md); reintento de `40P01`/`40001` hasta 3 veces con la misma clave. Test de **componentes** (entorno `node`) en `src/lib/db/errors.test.ts`: cada código de la tabla da su error de dominio y un código desconocido da `unexpected`
   - Cumple: FR-006, FR-008, FR-010, FR-060; ADR-013 §3.4, §6.3.
@@ -269,11 +270,12 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-051, FR-052, FR-055; US-7.2, US-7.3, US-7.7.
   - Terminado cuando: se vieron fallar.
 
-- [ ] T041 [P] [US1] [US7] Test de **dominio** en `src/domain/account/account.test.ts` y después `src/domain/account/` (I2): validación del nombre visible (recortado, 1–60, sin saltos de línea) y de la ruta `volver` (solo rutas relativas propias, `/^\/(?!\/)/`)
+- [ ] T041 [P] [US1] [US7] Test de **dominio** en `src/domain/account/account.test.ts` y después `src/domain/account/` (I2): validación del nombre visible (recortado, 1–60, sin saltos de línea) y de la ruta `volver` como **destino interno** (research R8.7, corregida en la revisión del PR #38): empieza por una sola `/` seguida de algo que no es `/` ni `\`; ninguna barra invertida; ningún carácter de control ni espacio; se decodifica una vez y se vuelve a comprobar todo (rechaza `%2F%2F`, `%5C`, `%09` y similares); y como última comprobación `new URL(value, base).origin === base.origin`, devolviendo solo `pathname + search + hash`. Cualquier otro valor cae a `/`
+  - **Casos negativos explícitos, todos → `/`**: `//evil`, `/\evil`, `/%5Cevil`, `/%2F%2Fevil`, `https://evil`, `javascript:alert(1)`, un tabulador o salto de línea al principio (`\t/actividad`, `\n/actividad`) y el valor vacío. Casos positivos: `/actividad?mes=2026-10`, `/cuenta/perfil#x`.
   - Cumple: FR-027, FR-051; research R8.7.
-  - Terminado cuando: pasa en `npm run test:unit`.
+  - Terminado cuando: el test se vio fallar con la expresión anterior (`/\evil` pasaba) y pasa en `npm run test:unit`, antes de T043.
 
-- [ ] T042 [US1] Test de **integración de servidor** en `tests/integration/auth.test.ts`: `ensure_profile()` idempotente con el `display_name` de A2; `/auth/confirm` con enlace válido, caducado y usado; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada** (`weak_password`) y no crea usuario (F37-7); `set_theme` y `update_display_name` no tocan el perfil de otra persona (si no lo cubre ya T012)
+- [ ] T042 [US1] Test de **integración de servidor** en `tests/integration/auth.test.ts`: `ensure_profile()` idempotente con el `display_name` de A2; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada** (`weak_password`) y no crea usuario (F37-7); `set_theme` y `update_display_name` no tocan el perfil de otra persona (si no lo cubre ya T012)
   - Cumple: FR-021, FR-024, FR-029; US-1.1, US-1.3.
   - Terminado cuando: pasa en el job `db`.
 
@@ -307,11 +309,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2D — siembra, axe, spec E2E 1 y CI (en serie)
 
-- [ ] T049 Siembra en `tests/support/seed.ts` (research R8.11): por worker y por rol (Sara; Tomás donde haga falta) crea un usuario confirmado con la API de administración del Supabase **del runner**, entra con `createServerClient` sobre un almacén de cookies en memoria y guarda `playwright/.auth/<parallelIndex>-<rol>.json`; fixture de scope `worker` en `tests/e2e/fixtures.ts`; proyecto `e2e` en `playwright.config.ts`; `playwright/.auth` en `.gitignore`
+- [ ] T049 Siembra en `tests/support/seed.ts` (research R8.11): por worker y por rol (Sara; Tomás donde haga falta) crea un usuario confirmado con la API de administración del Supabase **del runner**, entra con `createServerClient` sobre un almacén de cookies en memoria y guarda `playwright/.auth/<parallelIndex>-<rol>.json`; fixture de scope `worker` en `tests/e2e/fixtures.ts`; **y un fixture reutilizable del dataset dorado** (`seedGoldenMovements`), que crea los movimientos de `saraPrivateOctober2026` **por la función real `create_transaction`** con la sesión de la Sara de ese worker, aislado por worker, y que usan Inicio, Actividad y Exportar en el PR C (T066, T067, T070) y la spec E2E 2. **Solo en el runner**, nunca contra `juntia-dev` ni producción; proyecto `e2e` en `playwright.config.ts`; `playwright/.auth` en `.gitignore`
   - Cumple: FR-064; ADR-011 §6, reglas 1 y 2.
-  - Terminado cuando: dos workers siembran usuarios distintos y ninguno comparte su `storageState`.
+  - Terminado cuando: dos workers siembran usuarios distintos y ninguno comparte su `storageState`; los movimientos sembrados de un worker no aparecen en otro; el fixture se niega a correr si la URL de Supabase no es la del runner.
 
-- [ ] T050 [US1] [US7] **Spec E2E 1** «Acceso y Mi cuenta» en `tests/e2e/access-account.e2e.ts`: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → la misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **un segundo contexto que entra y tiene `data-theme="dark"` antes de `<body>`**; recuperación uniforme; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar
+- [ ] T050 [US1] [US7] **Spec E2E 1** «Acceso y Mi cuenta» en `tests/e2e/access-account.e2e.ts`: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → la misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **un segundo contexto que entra y tiene `data-theme="dark"` antes de `<body>`**; recuperación uniforme; **`/auth/confirm`** (Route Handler, con la app y Mailpit): enlace de verificación válido → A1 con aviso, enlace caducado y enlace ya usado → aviso de enlace caducado sin datos de la cuenta, enlace de recuperación válido → A5; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar
   - Cumple: FR-065; US-1, US-7; ADR-011 §2, fila 15.
   - Terminado cuando: pasa en el job `e2e` (T052) y se vio fallar con una ruta sin protección.
 
@@ -346,7 +348,8 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T057 Capturas a **390 y 1440 px en claro y oscuro** de las 7 pantallas de acceso, las 6 de Mi cuenta y la sesión caducada, en `specs/002-cuentas-y-gastos-privados/evidence/`
   - **Para aprobar viendo la pantalla** (propuestas §15.9 y pantallas nuevas): «Cuenta reutiliza los fondos de categoría»; la sesión caducada.
   - Cumple: SC-001 (B).
-  - Terminado cuando: las capturas están nombradas por ruta, estado, ancho y tema.
+  - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
+  - Terminado cuando: la pasada está registrada y las capturas están nombradas por ruta, estado, ancho y tema.
 
 - [ ] T058 **Pasada fija de Impeccable** (auditoría y crítica) sobre las pantallas del PR B a 390 y 1440 en los dos temas; hallazgos y correcciones en `evidence.md`. Impeccable verifica; no decide alcance ni dirección (`CLAUDE.md` 7)
   - Cumple: plan, «Paso fijo».
@@ -376,11 +379,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-046, FR-047; US-6.2–6.4.
   - Terminado cuando: se vio fallar y pasa.
 
-- [ ] T062 [P] [US5] Test de **componentes** en `src/features/home/home.test.tsx`: con las filas del dataset dorado, Inicio muestra **412.900** y el desglose de la tabla (SC-008); no aparece «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras de límite; vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra
-  - Cumple: FR-040, FR-041, FR-042, FR-043; US-5.1–5.4, US-5.6; SC-008.
+- [ ] T062 [P] [US5] Test de **componentes** en `src/features/home/home.test.tsx`: con las filas del dataset dorado, Inicio muestra **412.900** y el desglose de la tabla (SC-008); no aparece «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras de límite; vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra. Y en `src/features/activity/activity.test.tsx`: con las mismas filas, el **resumen del mes de Actividad** de octubre de 2026 muestra **412.900** y el desglose por categoría de la tabla (SC-008)
+  - Cumple: FR-040, FR-041, FR-042, FR-043, FR-046; US-5.1–5.4, US-5.6, US-6.1; SC-008.
   - Terminado cuando: se vio fallar.
 
-- [ ] T063 [P] [US8] Test de **integración de servidor** en `tests/integration/export.test.ts`: solo movimientos activos propios, importes como texto, sin tokens ni identificadores ni anulados; CSV RFC 4180 con BOM y `'` delante de `= + - @`; Tomás nunca recibe filas de Sara; sin sesión, 401; formato no válido, 400 (ADR-011 §2, fila 2)
+- [ ] T063 [P] [US8] Test de **integración de servidor** en `tests/integration/export.test.ts`, para `format=json` y `format=csv`: en **JSON**, la estructura de [contracts/database.md](contracts/database.md) («Exportación»: `exported_at`, `currency`, `note`, `transactions[]` con sus campos), `amount_minor` como **string** y ningún campo interno (`id`, `version`, `owner_user_id`, `created_by`, `status`); en los dos, solo movimientos activos propios, importes como texto, sin tokens ni identificadores ni anulados; CSV RFC 4180 con BOM y `'` delante de `= + - @`; Tomás nunca recibe filas de Sara; sin sesión, 401; formato no válido, 400 (ADR-011 §2, fila 2)
   - Cumple: FR-057; US-8.2.
   - Terminado cuando: se vio fallar en el job `db`.
 
@@ -405,7 +408,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-046–FR-049 (flechas de Q8, se aprueban viendo la pantalla); US-6.
   - Terminado cuando: T061 pasa y la ruta está en el registro de T051.
 
-- [ ] T068 [US4] [US6] Detalle **de solo lectura** del movimiento en `src/app/(app)/actividad/[id]/page.tsx` y `src/app/(app)/actividad/layout.tsx`: en ≥ 1024, panel de 04·7 junto a la tabla; en móvil, solo el detalle; se llega desde la fila de Actividad y de Inicio. Sin «Editar» ni «Eliminar» todavía (entran en el PR D, T081). Un movimiento ajeno o inexistente da el estado de `JT010`
+- [ ] T068 [US4] [US6] Detalle **de solo lectura** del movimiento en `src/app/(app)/actividad/[id]/page.tsx` y `src/app/(app)/actividad/layout.tsx`: en ≥ 1024, panel de 04·7 junto a la tabla; en móvil, solo el detalle; se llega desde la fila de Actividad y de Inicio. Sin «Editar» ni «Eliminar» todavía (entran en el PR D, T082). Un movimiento ajeno o inexistente da el estado de `JT010`
   - Claude Design: `04 Pantallas`, 04·1 (DETALLE) y 04·7.
   - Cumple: FR-037 (parte de lectura); US-4.1 (entrada al detalle).
   - Terminado cuando: el detalle abre desde las dos listas y la ruta está en el registro de T051.
@@ -434,7 +437,8 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T073 Capturas a **390 y 1440 px en claro y oscuro**: Inicio con datos, vacío, cargando y error; Nosotros; Actividad con datos, mes vacío, mes futuro, búsqueda y filtros; tabla y panel de detalle a 1440 y detalle a 390; Exportar D2–D5
   - **Para aprobar viendo la pantalla**: «Gasto, ingreso y liquidación en tinta» (filas de Inicio y Actividad); Inicio sin pareja y sus estados (Q5); Nosotros «todavía no disponible» (Q5); las flechas de mes (Q8).
   - Cumple: SC-001 (C).
-  - Terminado cuando: las capturas están en `evidence/`.
+  - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
+  - Terminado cuando: la pasada está registrada y las capturas están en `evidence/`.
 
 - [ ] T074 **Pasada fija de Impeccable** sobre las pantallas del PR C, como T058
   - Terminado cuando: la salida y lo corregido están en `evidence.md`.
@@ -464,26 +468,25 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-038, FR-039; US-4.1, US-4.4, US-4.5; Q14, Q15.
   - Terminado cuando: se vio fallar.
 
+- [ ] T079 [US4] Test de **integración de servidor** en `tests/integration/money.test.ts`, antes de la hoja y de Editar/Eliminar: «Deshacer» de punta a punta por `src/lib/db` deja el movimiento anulado con auditoría `reason = 'undo'`, y editar un eliminado por `src/lib/db` → `JT012` traducido a `transactionVoided`. Lo que ya cubren T021 (en SQL) y T025 se comprueba y se cita en `evidence.md` en lugar de duplicarlo; solo se añade el caso que falte
+  - Cumple: FR-018, FR-034; US-2.5; spec, caso límite «Editar un movimiento ya eliminado».
+  - Terminado cuando: el caso nuevo se vio fallar y pasa en el job `db`, o `evidence.md` cita la prueba existente que ya lo cubre.
 ### Grupo 4B — implementación (en serie)
 
-- [ ] T079 Crear `src/components/ui/toast.tsx` según `COMPONENT_SPECIFICATIONS.md` §Toast (6 s con acción, pausa con hover y foco, `role="status"`/`"alert"`, aparición con spring `gentle` y solo opacidad con movimiento reducido)
+- [ ] T080 Crear `src/components/ui/toast.tsx` según `COMPONENT_SPECIFICATIONS.md` §Toast (6 s con acción, pausa con hover y foco, `role="status"`/`"alert"`, aparición con spring `gentle` y solo opacidad con movimiento reducido)
   - Claude Design: `02 Componentes`, 02·1.
   - Cumple: US-2.4.
-  - Terminado cuando: lo usa T080 y pasa axe en la hoja (T084).
+  - Terminado cuando: lo usa T081 y pasa axe en la hoja (T084).
 
-- [ ] T080 [US2] [US3] Hoja de Anotar en `src/features/expenses/`, sustituyendo el aviso de la 001: `BottomSheet`/`Modal` con paradas, arrastre desde el asa y confirmación de cambios sin guardar (FR-031a de la 001); AmountInput; selector «Gasto · Ingreso»; categorías recientes por `my_recent_categories` + `fillRecentCategories`; fecha de hoy en Bogotá; clave de idempotencia al abrir; Server Action con `src/lib/db`; E5 con cierre, **conteo del total de Inicio, fila nueva resaltada en Inicio y Actividad** (ExpenseRow del PR C) y Toast «Deshacer» que llama a `void_transaction` con `undo`; motion de `MOTION_SYSTEM.md` con alternativa de movimiento reducido
+- [ ] T081 [US2] [US3] Hoja de Anotar en `src/features/expenses/`, sustituyendo el aviso de la 001: `BottomSheet`/`Modal` con paradas, arrastre desde el asa y confirmación de cambios sin guardar (FR-031a de la 001); AmountInput; selector «Gasto · Ingreso»; categorías recientes por `my_recent_categories` + `fillRecentCategories`; fecha de hoy en Bogotá; clave de idempotencia al abrir; Server Action con `src/lib/db`; E5 con cierre, **conteo del total de Inicio, fila nueva resaltada en Inicio y Actividad** (ExpenseRow del PR C) y Toast «Deshacer» que llama a `void_transaction` con `undo`; motion de `MOTION_SYSTEM.md` con alternativa de movimiento reducido
   - Claude Design: `02 Componentes`, 02·5 y 02·6.
   - Cumple: FR-030–FR-036, FR-062 (propuesta §15.9 aprobada en su versión privada, decisión 16.2; selector Q3).
   - Terminado cuando: T077 pasa.
 
-- [ ] T081 [US4] **Editar y Eliminar** sobre el detalle del PR C (T068): «Editar» abre la hoja de T080 en modo edición con la `version` leída; «Eliminar gasto»/«Eliminar ingreso» abre `Modal` como `alertdialog` y llama a `void_transaction` con `delete`; tras eliminar, el movimiento sale de Inicio, Actividad y la exportación
+- [ ] T082 [US4] **Editar y Eliminar** sobre el detalle del PR C (T068): «Editar» abre la hoja de T081 en modo edición con la `version` leída; «Eliminar gasto»/«Eliminar ingreso» abre `Modal` como `alertdialog` y llama a `void_transaction` con `delete`; tras eliminar, el movimiento sale de Inicio, Actividad y la exportación
   - Claude Design: `04 Pantallas`, 04·1 (DETALLE, edición) y 04·7; `02 Componentes`, 02·1 (diálogo).
   - Cumple: FR-037, FR-038, FR-039; US-4.1–4.4.
   - Terminado cuando: T078 pasa.
-
-- [ ] T082 [US4] Test de **integración de servidor** en `tests/integration/money.test.ts` (si falta): editar un eliminado → `JT012`; «Deshacer» de punta a punta por `src/lib/db` deja el movimiento anulado con auditoría `reason = 'undo'`
-  - Cumple: FR-018, FR-034; US-2.5; spec, caso límite «Editar un movimiento ya eliminado».
-  - Terminado cuando: pasa en el job `db`.
 
 ### Grupo 4C — spec E2E 2 y `[V]`
 
@@ -548,7 +551,8 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 - [ ] T098 Capturas a **390 y 1440 px en claro y oscuro**: E1 gasto, E1 ingreso, E2, E3, E4, E5 con el Toast y la fila resaltada en Inicio, detalle con Editar y Eliminar, edición y diálogo de eliminar
   - **Para aprobar viendo la pantalla**: «Gasto, ingreso y liquidación en tinta» (fila nueva e ingreso); el selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5.
   - Cumple: SC-001 (D).
-  - Terminado cuando: las capturas están en `evidence/`.
+  - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
+  - Terminado cuando: la pasada está registrada y las capturas están en `evidence/`.
 
 - [ ] T099 **Pasada fija de Impeccable** sobre las pantallas del PR D, como T058
   - Terminado cuando: la salida y lo corregido están en `evidence.md`.
@@ -566,7 +570,7 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 
 **Purpose**: la aceptación del slice con cada criterio de éxito respaldado por salida real, la salida interna de los fundadores y el registro del cierre de F0-b. Forma parte del PR D (decisión 16.18) y se hace antes de su merge; si la aprobación de los fundadores llega después, va en un PR documental inmediatamente posterior.
 
-- [ ] T102 Tabla «Aceptación de la 002» en `evidence.md`: **SC-001 a SC-011**, cada uno con la tarea que lo midió y su salida (SC-001: T057, T098, T072, T073; SC-002: T051, T084, T071; SC-003: T087; SC-004: T085; SC-005: T053, T072; SC-006: T015, T020, T021, T025 y R3 de la research para la [V] 10; SC-007: T019, T025; SC-008: T010, T025, T062; SC-009: T025, T083; SC-010: T097; SC-011: T055, T056, T088–T096)
+- [ ] T102 Tabla «Aceptación de la 002» en `evidence.md`: **SC-001 a SC-011**, cada uno con la tarea que lo midió y su salida (SC-001: T057, T073, T098 —capturas a 390 y 1440 y pasada manual a los siete anchos en los dos temas— y T072; SC-002: T051, T084, T071; SC-003: T087; SC-004: T085; SC-005: T053, T072; SC-006: T015, T020, T021, T025 y R3 de la research para la [V] 10; SC-007: T019, T025; SC-008: T010, T025, T062; SC-009: T025, T083; SC-010: T097; SC-011: T055, T056, T088–T096)
   - Terminado cuando: ninguna fila queda sin salida real o «EXCEPCIÓN APROBADA» donde la tabla de la decisión 12 la admite.
 
 - [ ] T103 **Humana** (los dos fundadores): **SC-012**, salida interna: registran, editan y eliminan movimientos reales y los entienden sin ayuda (maestro §11); aprobación registrada en `evidence.md` con fecha y observaciones
@@ -604,17 +608,16 @@ Tests antes que la implementación que prueban; migración antes que las pruebas
 
 ### Parallel Opportunities
 
-Solo dentro de un mismo grupo y PR: T008–T011 (dominio y copy); T039–T041 (tests de acceso y cuenta); T061–T064 (tests de C); T077–T078 (tests de D). Las implementaciones de cada PR van en serie: comparten `es.ts`, el layout o el shell. Ninguna tarea que use el CI, sirva la app o ejecute `npm ci` es paralela.
+Solo dentro de un mismo grupo y PR: T011 (copy) a la vez que la serie T008 → T009 → T010, que dependen una de otra; T039–T041 (tests de acceso y cuenta); T061–T064 (tests de C); T077–T078 (tests de D). Las implementaciones de cada PR van en serie: comparten `es.ts`, el layout o el shell. Ninguna tarea que use el CI, sirva la app o ejecute `npm ci` es paralela.
 
 ---
 
 ## Parallel Example: Grupo 1B
 
 ```bash
-# A la vez, después del grupo 1A:
-Task: "T008 Test de dominio de Money y src/domain/money/"
-Task: "T009 Test de dominio de movimientos y src/domain/transactions/"
-Task: "T010 Dataset dorado y su test"
+# Después del grupo 1A, dos líneas a la vez:
+# línea 1, en serie: T008 (Money) → T009 (movimientos, usa Money) → T010 (dataset, usa monthSummary)
+# línea 2, en paralelo con la 1:
 Task: "T011 Claves de error y categorías en es.ts"
 ```
 
@@ -624,7 +627,7 @@ Task: "T011 Claves de error y categorías en es.ts"
 
 ### Cuatro PR de implementación, en serie — decisión de los fundadores (Clarify Q1; decisiones 16.1 y 16.18)
 
-**Orden C/D intercambiado el 4 de noviembre de 2026 (decisión 16.18)**: C = Inicio, Actividad y Exportar; D = Anotar, editar y eliminar, más las verificaciones heredadas y la aceptación. Mismo alcance. El detalle de movimiento entra de solo lectura en C (T068), donde está su punto de entrada; Editar y Eliminar entran en D (T081).
+**Orden C/D intercambiado el 4 de noviembre de 2026 (decisión 16.18)**: C = Inicio, Actividad y Exportar; D = Anotar, editar y eliminar, más las verificaciones heredadas y la aceptación. Mismo alcance. El detalle de movimiento entra de solo lectura en C (T068), donde está su punto de entrada; Editar y Eliminar entran en D (T082).
 
 **Quién implementa cada PR** (asignación operativa de los fundadores, no alcance): un PR que necesita mirar los comps de Claude Design lo implementa **Claude Code**; el resto, **Codex o Claude Code**.
 
@@ -677,23 +680,23 @@ Docker en un equipo; `service_role` en la app; datos reales en CI; una tercera s
 | C2 | T008 | `src/domain/money/money.test.ts` | Dominio | FR-008, FR-012 | Aritmética y conversión puras |
 | C3 | T009, T061 | `src/domain/transactions/transactions.test.ts` | Dominio | FR-013–FR-015, FR-019, FR-046, FR-047 | Reglas de tipo, mes, resumen y flechas sin persistencia |
 | C4 | T010 | `src/domain/golden/october-2026.test.ts` | Dominio | FR-020; SC-008 | Es el dataset contra la función (ADR-011 §2, fila 7) |
-| C5 | T041 | `src/domain/account/account.test.ts` | Dominio | FR-027, FR-051 | Validaciones puras |
+| C5 | T041 | `src/domain/account/account.test.ts` | Dominio | FR-027, FR-051 | Validaciones puras, con los casos negativos de redirección abierta (`//evil`, `/\evil`, codificados, esquemas, controles, vacío) |
 | C6 | T012, T017, T021 | `supabase/tests/01`–`09_*.test.sql` | SQL/RLS (pgTAP) | FR-002–FR-007, FR-013, FR-016–FR-018, FR-024; ADR-013 [V] 1, 2, 6–9 | Autorización, privilegios e invariantes: «el ataque no usa el botón» |
 | C7 | T014, T019 | `tests/integration/foundation.test.ts` (+ `controlled-tables.test.ts`) | Integración de servidor | FR-002, FR-004, FR-005; ADR-013 [V] 2; condición 2 de la decisión 1 | Es la prueba con el cliente real que exige la decisión 1: que PostgREST no amplía lo que la política permite |
-| C8 | T025, T082 | `tests/integration/money.test.ts` | Integración de servidor | FR-006, FR-016, FR-017, FR-034, FR-036; SC-007–SC-009; ADR-013 [V] 3–6 | Concurrencia, idempotencia y atomicidad necesitan dos clientes simultáneos (ADR-011 §2, filas 11–13) |
+| C8 | T025, T079 | `tests/integration/money.test.ts` | Integración de servidor | FR-006, FR-016, FR-017, FR-034, FR-036; SC-007–SC-009; ADR-013 [V] 3–6 | Concurrencia, idempotencia y atomicidad necesitan dos clientes simultáneos (ADR-011 §2, filas 11–13) |
 | C9 | T023 | `src/lib/db/types.test.ts` | Tipos | FR-008; ADR-013 §4.3 | Es una afirmación de tipos en compilación |
 | C10 | T024 | `src/lib/db/errors.test.ts` | Unidad (`components`, `node`) | FR-060; contracts/errors.md | Traducción pura de códigos |
 | C11 | T030 | `scripts/restore-drill.sh` (nueve controles negativos) | Ensayo en el job `db` | FR-059; US-10 | La restauración real solo se ve contra una base; sin Docker, solo en el runner |
 | C12 | T039 | `src/features/auth/auth-errors.test.ts` | Componentes | FR-023 | Que respuestas distintas produzcan la misma salida es presentación |
 | C13 | T040 | `src/features/account/*.test.tsx` | Componentes (RTL) | FR-051, FR-052, FR-055 | Teclado, ARIA y cookie del selector en el DOM |
-| C14 | T042 | `tests/integration/auth.test.ts` | Integración de servidor | FR-021, FR-024, FR-029; F37-7 | La contraseña mínima y el enlace de `/auth/confirm` los aplica Auth, no la pantalla |
+| C14 | T042 | `tests/integration/auth.test.ts` | Integración de servidor | FR-021, FR-024, FR-029; F37-7 | La contraseña mínima la aplica Auth, no la pantalla: se prueba llamando a la API directamente |
 | C15 | T046 | `src/lib/theme-script.test.ts` y `scripts/check-theme-script.mjs` | Unidad + HTTP contra el build | FR-052; SC-005 | Lógica del script y su posición en el HTML servido (B17 y B18 de la 001) |
-| C16 | T050, T070 | `tests/e2e/access-account.e2e.ts` | **Spec E2E 1** | FR-065; US-1, US-7, US-8 (descarga) | Recorridos con sesión, redirección, correo y dos contextos (ADR-011 §2, fila 15; §3, matriz) |
+| C16 | T050, T070 | `tests/e2e/access-account.e2e.ts` | **Spec E2E 1** | FR-065; US-1, US-7, US-8 (descarga) | Recorridos con sesión, redirección, correo, dos contextos y los enlaces de `/auth/confirm` (válido, caducado, usado), que son un Route Handler de Next y solo se ven con la app servida (ADR-011 §2, fila 15; §3, matriz) |
 | C17 | T051, T084, T071 | `tests/a11y/routes.a11y.ts` y `tests/a11y/route-registry.test.ts` | Axe por ruta + cobertura (`node`) | FR-067; SC-002 | axe necesita árbol real; la cobertura es una comparación de listas |
 | C18 | T064, T077, T078 | `src/components/ui/expense-row.test.tsx` (PR C), `src/features/expenses/*.test.tsx` (PR D) | Componentes (RTL) | FR-030–FR-039; US-3.2 | Foco, teclado y lo que «se presenta» (ADR-011 §2, fila 5) |
 | C19 | T083 | `tests/e2e/annotate.e2e.ts` | **Spec E2E 2** | FR-065; US-2; SC-009 | US-12 y el doble toque son de la experiencia completa (ADR-011 §2, fila 14) |
-| C20 | T062 | `src/features/home/home.test.tsx` | Componentes (RTL) | FR-040–FR-043; SC-008 | Que 412.900 **se presenta** y que no aparece ningún límite |
-| C21 | T063 | `tests/integration/export.test.ts` | Integración de servidor | FR-057 | El contenido del archivo es serialización con autorización (ADR-011 §2, fila 2) |
+| C20 | T062 | `src/features/home/home.test.tsx`, `src/features/activity/activity.test.tsx` | Componentes (RTL) | FR-040–FR-043, FR-046; SC-008 | Que 412.900 y el desglose **se presentan** en Inicio y en Actividad, y que no aparece ningún límite |
+| C21 | T063 | `tests/integration/export.test.ts` | Integración de servidor | FR-057 | El contenido del archivo, en JSON y en CSV, es serialización con autorización (ADR-011 §2, fila 2) |
 
 ### A.2 Lo que no tiene tarea de test propia, a propósito
 
@@ -732,7 +735,7 @@ Docker en un equipo; `service_role` en la app; datos reales en CI; una tercera s
 | FR-015 | T009, T018 | T009 |
 | FR-016 | T022 | T021, T025 |
 | FR-017 | T022 | T021, T025 |
-| FR-018 | T018, T022 | T017, T021, T082 |
+| FR-018 | T018, T022 | T017, T021, T079 |
 | FR-019 | T009 | T009, T010 |
 | FR-020 | T010 | T010, T025 |
 | FR-021 | T002, T037, T044 | T042, T050 |
@@ -744,12 +747,12 @@ Docker en un equipo; `service_role` en la app; datos reales en CI; una tercera s
 | FR-027 | T043 | T041, T050 |
 | FR-028 | T044, T047 | T050 |
 | FR-029 | T013, T044 | T012, T042 |
-| FR-030–FR-033 | T080 | T077, T083 |
-| FR-034 | T022, T080 | T021, T082 |
-| FR-035 | T080 | T077 |
-| FR-036 | T080 | T025, T077, T083 |
-| FR-037 | T068 (lectura), T081 (acciones) | T078 |
-| FR-038–FR-039 | T081 | T078 |
+| FR-030–FR-033 | T081 | T077, T083 |
+| FR-034 | T022, T081 | T021, T079 |
+| FR-035 | T081 | T077 |
+| FR-036 | T081 | T025, T077, T083 |
+| FR-037 | T068 (lectura), T082 (acciones) | T078 |
+| FR-038–FR-039 | T082 | T078 |
 | FR-040–FR-045 | T066 | T062, T073 |
 | FR-046–FR-049 | T067 | T061, T073 |
 | FR-050–FR-056 | T047 | T040, T050, T057 |
@@ -758,8 +761,8 @@ Docker en un equipo; `service_role` en la app; datos reales en CI; una tercera s
 | FR-005 (producción) | T035 | T035 |
 | FR-059 | T027–T030 | T030, T097 |
 | FR-060 | T011, T024 | T024, revisión humana de cada PR |
-| FR-061 | T047, T080, T066, T067 | T072 |
-| FR-062 | T080 | T083 (test con motion activo) |
+| FR-061 | T047, T081, T066, T067 | T072 |
+| FR-062 | T081 | T083 (test con motion activo) |
 | FR-063 | T006, T007 | T032 |
 | FR-064 | T049 | T054 |
 | FR-065 | T050, T052, T083, T070 | T059, T100, T075 |
