@@ -166,11 +166,28 @@ P0-1: ninguna pantalla la muestra.
 | `action` | `text not null` | `create_transaction`, `update_transaction`, `void_transaction` |
 | `idempotency_key` | `uuid not null` | La genera el cliente al abrir la hoja o el diálogo (FR-036) |
 | `request_fingerprint` | `text not null` | `sha256` hex del `jsonb` normalizado de los argumentos salvo la clave |
-| `result` | `jsonb not null` | Lo que devolvió la primera ejecución |
+| `status` | `text not null default 'pending'` | `check (status in ('pending','completed'))` |
+| `result` | `jsonb` | `null` mientras `pending`; lo que devolvió la primera ejecución cuando `completed`. `check ((status = 'pending') = (result is null))` |
 | `created_at` | `timestamptz not null default now()` | |
+| `completed_at` | `timestamptz` | `null` mientras `pending` |
 
 PK `(actor_user_id, action, idempotency_key)`. Sin purga en P0-1 (volumen de dos
 personas); se revisa antes de MVP-1.
+
+**Protocolo (ADR-013 §3.1, corrección del 4 de noviembre de 2026 tras el bloqueo
+de la implementación del PR A).** La función inserta la fila `pending` **al
+principio**, antes del bloqueo de la raíz, y la completa **al final** con
+`update … set status = 'completed', result = …, completed_at = now() where …
+and status = 'pending'`, dentro de la **misma transacción**. Si la operación
+falla, la transacción revierte y la fila `pending` desaparece con ella, así que
+nunca queda una clave a medias. Una segunda petición con la misma clave espera en
+el índice de la PK hasta que la primera termina: si encuentra `completed` con la
+misma huella, devuelve `result`; con otra huella, `JT008`. Un trigger
+`idempotency_records_guard` (`before update`) hace la fila **inmutable salvo esa
+única transición**: rechaza cualquier cambio de `actor_user_id`, `action`,
+`idempotency_key`, `request_fingerprint` y `created_at`, cualquier `update` de una
+fila ya `completed` y cualquier transición distinta de `pending → completed`, también
+para `juntia_writer`.
 
 ### 2.6 `signup_allowlist`
 
@@ -195,7 +212,7 @@ quickstart. Los correos reales no van en migraciones (research R4).
 | `categories` | `select` | `select` | — |
 | `transactions` | `select` | `select`, `insert`, `update (amount_minor, category_id, transaction_date, description, status, voided_at, voided_by, version, updated_at)` | — |
 | `audit_events` | — | `insert` | — |
-| `idempotency_records` | — | `select`, `insert` | — |
+| `idempotency_records` | — | `select`, `insert`, `update (status, result, completed_at)` | — |
 | `signup_allowlist` | — | — | `select` |
 | funciones de entrada (`public`) | `execute` | — | — |
 | funciones que escriben (`juntia_private`) | `execute` | dueño | — |
@@ -204,7 +221,8 @@ quickstart. Los correos reales no van en migraciones (research R4).
 
 `select ... for update` de las funciones exige `update` y política de `update`
 sobre las filas que bloquean (ADR-013 §2.2): `juntia_writer` las tiene en
-`transactions`.
+`transactions`. En `idempotency_records`, el `update` por columnas sirve solo para
+completar la fila al final (§2.5) y el trigger impide cualquier otro cambio.
 
 **Políticas** (todas con `(select auth.uid())`, que no está afectada por R1):
 
@@ -216,7 +234,9 @@ sobre las filas que bloquean (ADR-013 §2.2): `juntia_writer` las tiene en
 | `transactions` | `authenticated` select · `juntia_writer` select, update | `owner_user_id = (select auth.uid())` (P0-2 añade la rama de grupo) |
 | `transactions` | `juntia_writer` insert | `with check (created_by = (select auth.uid()) and owner_user_id = (select auth.uid()))` |
 | `audit_events` | `juntia_writer` insert | `with check (actor_user_id = (select auth.uid()))` |
-| `idempotency_records` | `juntia_writer` select, insert | `actor_user_id = (select auth.uid())` |
+| `idempotency_records` | `juntia_writer` select | `actor_user_id = (select auth.uid())` |
+| `idempotency_records` | `juntia_writer` insert | `with check (actor_user_id = (select auth.uid()) and status = 'pending' and result is null and completed_at is null)`: solo se puede nacer `pending` |
+| `idempotency_records` | `juntia_writer` update | `using (actor_user_id = (select auth.uid()) and status = 'pending') with check (actor_user_id = (select auth.uid()) and status = 'completed')` |
 | `signup_allowlist` | `supabase_auth_admin` select | `using (true)` |
 
 Ni `authenticated` ni `juntia_writer` tienen `delete` ni `truncate` en ninguna
@@ -255,7 +275,8 @@ autorización y la validación están en la segunda.
 Orden dentro de cada función de dinero (FR-006; research R8.4): identidad
 (`current_uid()` no nulo, `JT001`) → validación de argumentos → idempotencia →
 bloqueo de la fila (editar y anular) → comprobación de versión y estado →
-escritura → auditoría → guardar el resultado en `idempotency_records`.
+escritura → auditoría → completar la fila `pending` de `idempotency_records` con
+el resultado (§2.5), en la misma transacción.
 
 Internas en `juntia_private`, sin `execute` para `anon` ni `authenticated`:
 `parse_amount_minor(text) returns bigint` (solo dígitos, sin signo, ≤ 19
