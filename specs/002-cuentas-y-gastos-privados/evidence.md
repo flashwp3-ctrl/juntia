@@ -431,3 +431,131 @@ para la comparación exacta, y `git diff --check` lo avisa. No se omite el check
 
 Se añadió a `foundation` un `NOTICE` del rol efectivo y de login, sin claves,
 para que T016 pueda registrar quién ejecuta realmente la migración alojada.
+
+## Punto de control 1 — T015
+
+Fecha: 5 de noviembre de 2026, America/Bogota.
+Commit: `cbccec832d338402bc7262973b8e0b539d6dddff`.
+Run: [41973425784](https://github.com/flashwp3-ctrl/juntia/actions/runs/41973425784).
+Log: [`evidence/checkpoint-1-green.txt`](evidence/checkpoint-1-green.txt).
+
+```text
+$ gh workflow run ci.yml --ref feat/002-a-database
+$ gh run watch 41973425784 --exit-status --interval 20
+✓ app in 1m55s
+✓ db in 3m24s
+exit=0
+
+00_smoke.test.sql ....... ok
+01_privileges.test.sql .. ok
+02_claims.test.sql ...... ok
+03_views.test.sql ....... ok
+04_writer.test.sql ...... ok
+06_profiles.test.sql .... ok
+09_allowlist.test.sql ... ok
+All tests successful.
+Files=7, Tests=137
+Result: PASS
+
+Test Files 2 passed (2)
+Tests 6 passed (6)
+database.types.ts coincide con public generado en el runner.
+```
+
+| Verificación temprana | Salida real y alcance |
+| --- | --- |
+| [V] 1 | `04_writer.test.sql ... ok` y la integración completa pasó: dueño `juntia_writer`, sin LOGIN/BYPASSRLS, sin ser dueño de profiles; implementación llamada por SQL como authenticated; identidad propia y rechazo RLS de perfil ajeno desde un definer desechable de writer; `current_uid` nulo sin claims. **No falló el mecanismo ni se cambió a funciones de postgres.** |
+| [V] 2, parte disponible | `06_profiles.test.sql ... ok` y el archivo de integración pasó: escrituras directas SQL sobre profiles rechazadas, POST/PATCH/DELETE por HTTP rechazados también en my_profile y con perfiles privados; privacidad entre Sara y Tomás. |
+| [V] 7, parte disponible | `01_privileges.test.sql ... ok`: grants de esquemas/tablas/columnas/funciones y defaults, sin CREATE, sin definer público, sin GraphQL; integración de esquemas privados y GraphQL pasó. |
+| [V] 8, parte disponible | `03_views.test.sql ... ok`, `my_profile` invoker y lectura sin USAGE sobre juntia_data; integración de lectura pasó. |
+| [V] 9 | `02_claims.test.sql ... ok` y la sonda HTTP del claim pasó: JSON `request.jwt.claims`, sin claim legacy, mismo sub en auth.uid/current_uid. |
+
+Las [V] 2, 7 y 8 son **solo la parte disponible en foundation**; las cinco
+definitivas sobre todas las tablas controladas y vistas siguen pendientes de T020.
+La sonda de claims se eliminó antes de regenerar tipos, que contienen únicamente
+las cuatro funciones de perfil. No hay funciones de dinero.
+
+Tiempos reales del resumen (presupuestos sin cambios):
+
+```text
+supabase start: 128 s
+| test:db | pasó | 9.01 s | < 60 s |
+| test:integration | pasó | 1.76 s | — |
+| db:types:check | pasó | 1.20 s | — |
+| Job db (incluye instalación) | success | 196.37 s | < 360 s |
+| Job app (incluye instalación) | success | 111.43 s | < 360 s |
+```
+
+`app` también ejecutó 23 tests de dominio, 87 de componentes, build, 36 casos
+de axe y los checks de superficie interna y tema. El único aviso de Actions
+fue el cambio de imagen de ubuntu-latest; ningún control falló.
+
+## T016 — pausa humana obligatoria
+
+**Pendiente: ejecución del fundador administrador en juntia-dev.** No se ha
+solicitado ni recibido la contraseña de la base. Ninguna operación se ejecutó
+contra juntia-dev ni producción desde el agente.
+
+Desde `feat/002-a-database`, los comandos exactos de quickstart §3 son:
+
+```bash
+npx --yes supabase@2.121.0 login
+npx --yes supabase@2.121.0 link --project-ref itfrhnadovezpahikuol
+npx --yes supabase@2.121.0 projects list
+cat supabase/.temp/project-ref
+npx --yes supabase@2.121.0 db push --linked --dry-run
+npx --yes supabase@2.121.0 db push --linked
+```
+
+Antes de los dos `db push`, `project-ref` debe ser `itfrhnadovezpahikuol`.
+El dry-run debe anunciar **solo `20261105000100_foundation.sql`**. Si el destino
+o la lista no coincide, parar. Nunca `--include-seed`.
+
+Para la evidencia, el fundador entrega la salida del dry-run y push sin claves,
+el `NOTICE foundation migrator` si la CLI lo imprime y la comprobación de
+propiedad/GraphQL. Consultas de lectura en el SQL Editor de **juntia-dev**:
+
+```sql
+select extname from pg_extension where extname = 'pg_graphql';
+select pg_has_role('postgres', 'juntia_writer', 'MEMBER') as postgres_member_of_writer;
+select p.proname, pg_get_userbyid(p.proowner) as owner, p.prosecdef
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'juntia_private' and p.proname in
+  ('ensure_profile', 'complete_first_entry', 'set_theme', 'update_display_name')
+order by p.proname;
+```
+
+Además, confirmar en API / Data API que **Exposed schemas = solo public**.
+El rol del SQL Editor no se atribuye al login de db push: si el NOTICE no se
+imprime, esa evidencia del rol migrador seguirá pendiente hasta observarlo.
+**Si pg_graphql no se puede quitar o desactivar, el PR A se detiene.**
+
+## Estado actual al entregar T016
+
+- T001–T015: completadas con el run del punto de control 1 y las salidas anteriores.
+- T016: pendiente humana; T017 en adelante no iniciadas.
+- Punto de control 2, funciones de dinero, restauración y nueve controles negativos: pendientes del gate T016.
+- PR: no abierto; el PR A aún no está terminado.
+- Excepción del contrato: arranque de tipos autorizado por el fundador, con su rojo y verde registrados. Se conservó el mismo camino de artefactos para foundation.
+- Incidencias de ejecución: arnés de collation/rol y peticiones sin filtro corregidos sin ampliar privilegios ni aceptar errores genéricos como prueba de autorización; log del fallo conservado.
+- Sin Docker Desktop, WSL, datos reales, push a main, rebase, force-push ni merge de PR.
+
+### Verificación local sobre el mismo commit del punto de control 1
+
+`npm run verify` ejecutado con HEAD
+`cbccec832d338402bc7262973b8e0b539d6dddff`, exit 0.
+Salida completa: [`evidence/checkpoint-1-same-commit-verify.txt`](evidence/checkpoint-1-same-commit-verify.txt).
+
+```text
+Test Files 3 passed (3)
+Tests 23 passed (23)
+Test Files 9 passed (9)
+Tests 87 passed (87)
+```
+
+Tabla real: lint 13.03 s; typecheck 3.45 s; dominio 1.72 s (< 15 s);
+componentes 10.71 s; verify total 28.90 s (< 90 s).
+SQL/RLS e integración «SOLO EN CI»; E2E «NO APLICABLE».
+El commit posterior de entrega contiene solo este registro, los logs de
+verificación y las casillas de tareas: la migración y el código siguen siendo
+los del commit de punto de control citado, sin un run adicional documental.
