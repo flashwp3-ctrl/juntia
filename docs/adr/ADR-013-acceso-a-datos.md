@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite; y nota de precisión sobre cuándo corren las [V] definitivas («Verificación pendiente») · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -416,6 +416,16 @@ verificaciones 1, 2, 7, 8 y 9 se hacen con la primera migración, **antes** de
 escribir la primera función de dinero, porque validan el mecanismo en el que
 se apoya todo lo demás.
 
+*Nota de precisión del 4 de noviembre de 2026 (revisión del PR #37 del plan de
+P0-1). Alinea la redacción con el orden ejecutable; **no es una decisión
+nueva**:* las verificaciones 1, 2, 7, 8 y 9 **definitivas** corren cuando ya
+existen **todas** las tablas controladas y vistas de P0-1, y **antes** de la
+primera función de dinero. Se mantiene un **punto de control temprano** justo
+después de la primera migración (1 y 9 con una función que escribe sin dinero, y
+lo que ya se pueda de 2, 7 y 8), y la regla de **parar en cuanto falle la 1**, en
+cualquiera de los dos puntos. «Con la primera migración» se lee como ese punto
+temprano, no como la ejecución definitiva sobre un esquema incompleto.
+
 1. **El mecanismo de `juntia_writer` funciona en la versión de Supabase del
    stack:**
    - la migración puede crear el rol y asignarle la propiedad de las funciones.
@@ -455,6 +465,16 @@ se apoya todo lo demás.
 6. **Importes:** ida y vuelta de `9007199254740993` y de los límites de
    `bigint`, en entrada y en salida, por función y por vista. Más la prueba de
    que ningún tipo de importe de `public` es `number`.
+
+   *Nota del 4 de noviembre de 2026 (decisión de los fundadores en la revisión
+   del PR #37; precisa la verificación, no relaja ningún límite):* como las
+   funciones que escriben aplican el tope de negocio de Anotar (999.999.999
+   pesos), un importe de `9007199254740993` nunca puede entrar por ellas. La
+   precisión se demuestra entonces (a) en el parser de texto a `bigint` que usan
+   **todas** las funciones que escriben, llamado directamente en pgTAP con
+   `9007199254740993` y los límites de `bigint`, y (b) en la lectura por vista de
+   una fila sembrada como `postgres` con ese importe. El tope de negocio se
+   prueba por separado en la función pública.
 7. **Privilegios efectivos:** una prueba pgTAP lista los privilegios reales de
    `anon` y `authenticated` y los compara con la lista esperada:
    - sobre tablas, incluidos `TRUNCATE`, `REFERENCES` y `TRIGGER`;
@@ -479,6 +499,38 @@ Si la verificación 1 falla, por ejemplo porque Supabase no permite que la
 migración asigne la propiedad de las funciones a un rol propio, este ADR se
 reabre **antes** de seguir con P0-1. No se sustituye en silencio por funciones
 propiedad de `postgres`, que tiene `BYPASSRLS`.
+
+## Enmienda del 4 de noviembre de 2026 — nota de implementación de §2.3
+
+**No cambia la decisión.** Precisa cómo se cumple «`auth.uid()` sigue
+devolviendo a la persona que llama» dentro de la función que escribe. Origen: el
+preflight del plan de P0-1 (ADR-011 §9.4), runs
+[41937553460](https://github.com/flashwp3-ctrl/juntia/actions/runs/41937553460),
+[41938278390](https://github.com/flashwp3-ctrl/juntia/actions/runs/41938278390) y
+[41938774244](https://github.com/flashwp3-ctrl/juntia/actions/runs/41938774244),
+con Supabase CLI 2.121.0 y PostgreSQL 17.11. La salida está en
+`specs/002-cuentas-y-gastos-privados/research.md`, R1.
+
+- **Lo encontrado.** Un cuerpo PL/pgSQL propiedad de `juntia_writer` que nombra
+  `auth.uid()` falla con `42501 permission denied for schema auth`:
+  `juntia_writer` no tiene `usage` sobre `auth`, y `grant usage on schema auth`
+  no concede nada (`WARNING 01007: no privileges were granted for "auth"`),
+  porque el esquema es de `supabase_admin`. Las políticas RLS con
+  `(select auth.uid())` no están afectadas: su expresión se guarda resuelta al
+  crearlas.
+- **Cómo se cumple §2.3.** Las funciones que escriben no nombran `auth.uid()`.
+  Llaman a una auxiliar `juntia_private.current_uid()`, `language sql stable
+  security invoker` con **cuerpo SQL estándar** (`return auth.uid();`), propiedad
+  de `postgres`, sin `execute` para `public`, `anon` ni `authenticated`, y con
+  `execute` solo para `juntia_writer`. El cuerpo estándar se resuelve al crear la
+  función y en ejecución solo exige `execute` sobre `auth.uid()`, que ya tiene
+  `public`. Dentro de la función que escribe devuelve a quien llama, por la API y
+  por SQL directo, y `null` sin claims.
+- **Lo que no cambia.** `juntia_writer` sigue sin `LOGIN`, sin `BYPASSRLS` y sin
+  ser dueño de las tablas; la RLS se le sigue aplicando; no se concede nada
+  sobre el esquema `auth`. La auxiliar es `security invoker`: no amplía
+  privilegios. La [V] 1 definitiva sigue siendo del PR A de P0-1, con la primera
+  migración.
 
 ## Referencias
 

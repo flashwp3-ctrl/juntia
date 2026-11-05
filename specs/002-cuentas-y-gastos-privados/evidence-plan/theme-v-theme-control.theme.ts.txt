@@ -1,0 +1,69 @@
+import { expect, test } from "@playwright/test";
+
+// Control negativo del [V] de tema (spec 002, research R7). /control aplica la cookie juntia_theme_ctl en un
+// useEffect, después de hidratar: con el sistema en claro y la cookie en oscuro DEBE pintar primero claro y
+// después oscuro. Si el detector no viera esas dos fases, no probaría nada sobre el script bloqueante.
+const BASE = process.env.BASE_URL ?? "http://localhost:3200";
+const LIGHT = [247, 243, 235]; // surface.canvas claro
+const DARK = [18, 20, 22]; // surface.canvas oscuro
+// Superficie del navegador antes del documento (blanca con el sistema en claro).
+const BLANK = "[255,255,255]";
+
+// Instante (epoch ms) de cada cambio de data-theme en <html>, visto desde la página.
+const OBSERVER = `(() => {
+  const w = window; w.__themeChanges = [];
+  const rec = () => w.__themeChanges.push({ theme: document.documentElement.getAttribute("data-theme"), epochMs: performance.timeOrigin + performance.now() });
+  new MutationObserver((ms) => { for (const m of ms) { if (m.target === document.documentElement && m.attributeName === "data-theme") rec(); } })
+    .observe(document, { attributes: true, subtree: true, attributeFilter: ["data-theme"] });
+})();`;
+
+type Change = { theme: string; epochMs: number };
+
+test("control negativo · cookie aplicada en useEffect · /control", async ({ page, context }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  const url = new URL(BASE);
+  await context.addCookies([{ name: "juntia_theme_ctl", value: "dark", domain: url.hostname, path: "/", sameSite: "Lax" }]);
+  await page.addInitScript(OBSERVER);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await cdp.send("Network.enable");
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 400, downloadThroughput: (400 * 1024) / 8, uploadThroughput: (400 * 1024) / 8 });
+  const frames: { epochMs: number; data: string }[] = [];
+  cdp.on("Page.screencastFrame", (f) => { frames.push({ epochMs: (f.metadata.timestamp ?? 0) * 1000, data: f.data }); void cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }); });
+  await cdp.send("Page.startScreencast", { format: "png", everyNthFrame: 1 });
+  await page.goto(BASE + "/control", { waitUntil: "load" });
+  // Se sigue grabando hasta que el efecto aplica el tema, y un cuadro más, para capturar la fase oscura.
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", { timeout: 20000 });
+  const changes = await page.evaluate(() => (window as unknown as { __themeChanges: Change[] }).__themeChanges);
+  const applied = changes.find((c) => c.theme === "dark")!.epochMs;
+  await page.mouse.move(10, 10);
+  await expect.poll(() => frames.filter((f) => f.epochMs > applied).length, { timeout: 10000 }).toBeGreaterThan(0);
+  await cdp.send("Page.stopScreencast");
+  const firstPaint = await page.evaluate(() => {
+    const fp = performance.getEntriesByType("paint").find((e) => e.name === "first-paint");
+    return fp ? performance.timeOrigin + fp.startTime : null;
+  });
+  const decoder = await context.newPage();
+  const sampled: { epochMs: number; pixel: number[] }[] = [];
+  for (const f of frames) {
+    const pixel = await decoder.evaluate(async (b64) => {
+      const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode();
+      const c = new OffscreenCanvas(img.width, img.height); const x = c.getContext("2d")!; x.drawImage(img, 0, 0);
+      return Array.from(x.getImageData(4, img.height - 4, 1, 1).data.slice(0, 3));
+    }, f.data);
+    sampled.push({ epochMs: f.epochMs, pixel });
+  }
+  await decoder.close();
+  const t0 = firstPaint ?? sampled[0].epochMs;
+  const rel = (ms: number) => `${ms - t0 >= 0 ? "+" : ""}${Math.round(ms - t0)} ms`;
+  console.log(`t0 = first-paint (performance) · ${Math.round(t0)} epoch ms`);
+  for (const c of changes) console.log(`data-theme -> ${c.theme} at ${rel(c.epochMs)}`);
+  for (const s of sampled) console.log(`frame at ${rel(s.epochMs)} pixel=${JSON.stringify(s.pixel)}`);
+  // El reloj del screencast y el de performance no coinciden al milisegundo: el primer cuadro pintado puede llevar
+  // una marca unos ms anterior a first-paint. Por eso se miran todos los cuadros con contenido.
+  const content = sampled.filter((s) => JSON.stringify(s.pixel) !== BLANK);
+  const laterDark = content.find((s) => s.epochMs > applied && JSON.stringify(s.pixel) === JSON.stringify(DARK));
+  console.log(`first content frame: ${rel(content[0].epochMs)} ${JSON.stringify(content[0].pixel)} · first dark frame after apply: ${laterDark ? `${rel(laterDark.epochMs)} ${JSON.stringify(laterDark.pixel)}` : "none"}`);
+  expect(content[0].pixel).toEqual(LIGHT);
+  expect(laterDark).toBeTruthy();
+});

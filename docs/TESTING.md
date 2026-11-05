@@ -140,6 +140,13 @@ mapa de ruta tocada —qué rutas afecta un cambio— y **ese mapa todavía no e
 > dos temas. Si todavía no hay ninguna implementada, no corre nada y no hay nada
 > que declarar.
 
+**Dónde corre** (ADR-011 §5, enmienda «Axe en dos jobs»): según si el estado real
+necesita sesión, no según el grupo de rutas. Los estados sin sesión, en el job
+`app`; los que la necesitan (incluidas la primera entrada y la contraseña nueva
+con sesión de recuperación), en el job `e2e`, con sesión sembrada. Una prueba de
+cobertura comprueba que entre los dos el control está completo en cada PR de
+código.
+
 Y la parte que no se puede malinterpretar: **una ruta futura nunca cuenta como
 verificada**. El fallback no es «damos por buenas las cinco»; es «corremos las que
 hay». De las cinco rutas de la matriz, el PR solo puede afirmar las que existen, y

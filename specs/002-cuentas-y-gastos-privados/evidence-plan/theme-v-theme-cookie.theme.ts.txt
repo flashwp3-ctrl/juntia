@@ -1,0 +1,113 @@
+﻿import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+
+// [V] de tema persistido (spec 002, research R7). Arnés de la research R2 de la 001, extendido: cookie del tema,
+// CLS y, desde la revisión del PR #37, TODOS los cuadros del screencast, no solo el primero «después de first-paint»
+// (el reloj del screencast y el de performance difieren unos ms y ese filtro podía saltarse el primer cuadro real).
+// Colores de referencia del píxel inferior izquierdo a 1280 px: sidebar (surface.raised / charcoal.950) y lienzo.
+const PALETTE = {
+  light: [[238, 231, 218], [247, 243, 235]],
+  dark: [[15, 17, 18], [18, 20, 22]],
+} as const;
+// Superficie del navegador antes de que llegue el documento: blanca con el sistema en claro y #121212 con el sistema
+// en oscuro. No es de la página ni depende del tema de Juntia; el arnés comprueba que solo aparece antes de first-paint.
+const BLANKS = ["[255,255,255]", "[18,18,18]"];
+const BASE = process.env.BASE_URL ?? "http://localhost:3200";
+
+const OBSERVER = `(() => {
+  const w = window;
+  w.__themeAtBody = undefined; w.__cls = 0;
+  new MutationObserver((_, o) => {
+    if (document.body) { w.__themeAtBody = document.documentElement.getAttribute("data-theme"); o.disconnect(); }
+  }).observe(document, { childList: true, subtree: true });
+  new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (!e.hadRecentInput) w.__cls += e.value; } }).observe({ type: "layout-shift", buffered: true });
+})();`;
+
+async function setCookie(context: BrowserContext, value: string) {
+  const url = new URL(BASE);
+  await context.addCookies([{ name: "juntia_theme", value, domain: url.hostname, path: "/", sameSite: "Lax" }]);
+}
+
+async function probe(page: Page, path: string) {
+  const consoleProblems: string[] = [];
+  page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") consoleProblems.push(`${m.type()}: ${m.text().slice(0, 160)}`); });
+  page.on("pageerror", (e) => consoleProblems.push(`pageerror: ${e.message.slice(0, 160)}`));
+  await page.addInitScript(OBSERVER);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await cdp.send("Network.enable");
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 400, downloadThroughput: (400 * 1024) / 8, uploadThroughput: (400 * 1024) / 8 });
+  const frames: { ts: number; data: string }[] = [];
+  cdp.on("Page.screencastFrame", (f) => { frames.push({ ts: f.metadata.timestamp ?? 0, data: f.data }); void cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }); });
+  await cdp.send("Page.startScreencast", { format: "png", everyNthFrame: 1 });
+  await page.goto(BASE + path, { waitUntil: "load" });
+  await expect(page.locator("main")).toBeVisible();
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await cdp.send("Page.stopScreencast");
+  const timing = await page.evaluate(() => {
+    const w = window as unknown as { __themeAtBody: string | null; __cls: number };
+    const fp = performance.getEntriesByType("paint").find((e) => e.name === "first-paint");
+    return { themeAtBody: w.__themeAtBody, cls: w.__cls, finalTheme: document.documentElement.getAttribute("data-theme"), firstPaint: fp ? performance.timeOrigin + fp.startTime : 0 };
+  });
+  const decoder = await page.context().newPage();
+  const pixels: { px: string; rel: number }[] = [];
+  for (const f of frames) {
+    const px = await decoder.evaluate(async (b64) => {
+      const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode();
+      const c = new OffscreenCanvas(img.width, img.height); const x = c.getContext("2d")!; x.drawImage(img, 0, 0);
+      return Array.from(x.getImageData(4, img.height - 4, 1, 1).data.slice(0, 3));
+    }, f.data);
+    pixels.push({ px: JSON.stringify(px), rel: Math.round(f.ts * 1000 - timing.firstPaint) });
+  }
+  await decoder.close();
+  const timeline = pixels.map((p) => `${p.px}@${p.rel >= 0 ? "+" : ""}${p.rel}ms`);
+  const blanksAfterPaint = pixels.filter((p) => BLANKS.includes(p.px) && p.rel >= 0).length;
+  const content = pixels.filter((p) => !BLANKS.includes(p.px)).map((p) => p.px);
+  return { themeAtBody: timing.themeAtBody, finalTheme: timing.finalTheme, firstContentFrame: content[0] ?? null, contentFrames: content.length, framePixels: [...new Set(content)], timeline, blanksAfterPaint, cls: timing.cls, consoleProblems };
+}
+
+// Cookie opuesta al sistema: si el script no la leyera, algún cuadro sería del tema del sistema.
+const cases = [
+  { system: "light", cookie: "dark", expected: "dark" },
+  { system: "dark", cookie: "light", expected: "light" },
+  { system: "dark", cookie: "system", expected: "dark" },
+  { system: "light", cookie: "bogus", expected: "light" },
+  { system: "dark", cookie: null, expected: "dark" },
+] as const;
+
+for (const path of ["/", "/actividad", "/cuenta"]) {
+  for (const c of cases) {
+    test(`${path} · sistema ${c.system} · cookie ${c.cookie ?? "(ninguna)"}`, async ({ page, context }) => {
+      await page.emulateMedia({ colorScheme: c.system });
+      if (c.cookie) await setCookie(context, c.cookie);
+      const r = await probe(page, path);
+      console.log(`${path} system=${c.system} cookie=${c.cookie ?? "-"}: ${JSON.stringify(r)}`);
+      const opposite = (c.expected === "dark" ? PALETTE.light : PALETTE.dark).map((p) => JSON.stringify(p));
+      expect(r.themeAtBody).toBe(c.expected);
+      expect(r.contentFrames).toBeGreaterThan(0);
+      expect(r.blanksAfterPaint).toBe(0); // la superficie del navegador solo aparece antes del primer pintado
+      expect(r.firstContentFrame).toBe(JSON.stringify(PALETTE[c.expected][0]));
+      expect(r.framePixels.filter((p) => opposite.includes(p))).toEqual([]); // ningún cuadro del tema contrario
+      expect(r.cls).toBe(0);
+      expect(r.consoleProblems).toEqual([]);
+    });
+  }
+}
+
+test("con cookie, un cambio del sistema con la app abierta no pisa el tema guardado", async ({ page, context }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await setCookie(context, "dark");
+  await page.goto(BASE + "/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  console.log("system flip with cookie=dark: data-theme stays dark");
+});
+
+test("HTML servido sin data-theme del servidor, también con la cookie", async ({ request }) => {
+  const res = await request.get(BASE + "/", { headers: { cookie: "juntia_theme=dark" } });
+  const html = await res.text();
+  const htmlTag = html.match(/<html\b[^>]*>/i)?.[0] ?? "";
+  console.log(`served <html>: ${htmlTag}`);
+  expect(htmlTag).not.toMatch(/data-theme/);
+});

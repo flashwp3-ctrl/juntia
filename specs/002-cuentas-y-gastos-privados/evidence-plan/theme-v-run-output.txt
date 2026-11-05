@@ -1,0 +1,39 @@
+# Salida real, 4 de noviembre de 2026, Windows 11, Node v24.22.1, copia desechable de la app (Next 16.4.4, React 19.3.1).
+# Reproducir: copiar los theme-v-*.txt de esta carpeta a sus rutas (sin .txt) sobre una copia de la app, npm ci,
+# npx next build, npx next start --port 3200 y los dos comandos de abajo. Sin Docker ni base de datos.
+
+$ npx playwright test -c playwright.theme.config.ts --reporter=line
+# (las líneas del control de esta corrida se omiten: después se reescribió su archivo para corregir la codificación de
+#  los comentarios y se volvió a ejecutar solo, abajo; la lógica no cambió)
+Running 18 tests using 2 workers
+/ system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2516ms","[15,17,18]@+0ms","[15,17,18]@+67ms","[15,17,18]@+850ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2540ms","[238,231,218]@-4ms","[238,231,218]@+63ms","[238,231,218]@+846ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=system: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[18,18,18]@-2423ms","[15,17,18]@+1ms","[15,17,18]@+68ms","[15,17,18]@+934ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=light cookie=bogus: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[255,255,255]@-2466ms","[238,231,218]@+4ms","[238,231,218]@+54ms","[238,231,218]@+904ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=-: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2399ms","[18,18,18]@-2361ms","[15,17,18]@+6ms","[15,17,18]@+39ms","[15,17,18]@+1006ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2458ms","[15,17,18]@+3ms","[15,17,18]@+70ms","[15,17,18]@+870ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2318ms","[238,231,218]@+4ms","[238,231,218]@+71ms","[238,231,218]@+1054ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=dark cookie=system: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2444ms","[18,18,18]@-2411ms","[15,17,18]@+5ms","[15,17,18]@+55ms","[15,17,18]@+939ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=light cookie=bogus: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[255,255,255]@-2486ms","[238,231,218]@+6ms","[238,231,218]@+39ms","[238,231,218]@+822ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=dark cookie=-: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[18,18,18]@-2566ms","[15,17,18]@+0ms","[15,17,18]@+67ms","[15,17,18]@+834ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2482ms","[15,17,18]@+4ms","[15,17,18]@+37ms","[15,17,18]@+770ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2486ms","[238,231,218]@+7ms","[238,231,218]@+73ms","[238,231,218]@+907ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=dark cookie=system: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[18,18,18]@-2474ms","[15,17,18]@+5ms","[15,17,18]@+71ms","[15,17,18]@+888ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=light cookie=bogus: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[255,255,255]@-2491ms","[238,231,218]@+5ms","[238,231,218]@+72ms","[238,231,218]@+855ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=dark cookie=-: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[18,18,18]@-2410ms","[15,17,18]@+6ms","[15,17,18]@+56ms","[15,17,18]@+856ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+system flip with cookie=dark: data-theme stays dark
+served <html>: <html lang="es-CO" class="R_a3Gq_variable ZJly0G_variable _ttCGa_variable _9N-dia_variable">
+  18 passed (1.9m)
+
+$ npx playwright test -c playwright.theme.config.ts --reporter=line tests/theme/theme-control.theme.ts
+Running 1 test using 1 worker
+t0 = first-paint (performance) · 1793842648546 epoch ms
+data-theme -> light at -150 ms
+data-theme -> dark at +5192 ms
+frame at -2061 ms pixel=[255,255,255]
+frame at +6 ms pixel=[247,243,235]
+frame at +223 ms pixel=[247,243,235]
+frame at +1173 ms pixel=[247,243,235]
+frame at +5222 ms pixel=[18,20,22]
+first content frame: +6 ms [247,243,235] · first dark frame after apply: +5222 ms [18,20,22]
+  1 passed (8.7s)

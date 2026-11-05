@@ -1027,8 +1027,12 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.13 | Fecha futura | Se permite; Actividad deja llegar a cualquier mes futuro con movimientos |
 | 16.14 | Tipo al editar | No se cambia de gasto a ingreso ni al revés |
 | 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
+| 16.16 | Enumeración por la API de Auth | Riesgo aceptado hasta MVP-1; las pantallas no enumeran. Decidida por el primer fundador el 4 de noviembre de 2026, tras el preflight del plan de P0-1: la API de Auth de Supabase, llamada directamente, revela si un correo está en la lista permitida (403) y si ya tiene cuenta (422). Se suma a los pendientes de lanzamiento |
+| 16.17 | Creación del perfil | En el primer acceso verificado, con el nombre visible de A2 guardado hasta entonces en los metadatos de la cuenta. Decidida por el primer fundador el 4 de noviembre de 2026 en la revisión del PR del plan de P0-1 (spec 002, Q16 y FR-029) |
 
-**Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio y apertura del registro. Se suman al bloqueo legal de §15.6.1.
+La 16.16 salió del preflight del plan de P0-1 y la 16.17 de su revisión; la segunda fundadora las confirma con el merge del PR del plan.
+
+**Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio, apertura del registro y cerrar la enumeración por la API de Auth (16.16). Se suman al bloqueo legal de §15.6.1.
 
 #### Decisión 17: sin Docker en los equipos de desarrollo
 
@@ -1036,7 +1040,7 @@ Tomada por el primer fundador el 4 de noviembre de 2026, al empezar el plan de P
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
-| 17 | Dónde corre Supabase en desarrollo | **Sin Docker en los equipos.** Las pruebas que necesitan Supabase corren solo en CI; la app se usa en desarrollo contra un segundo proyecto Free, `juntia-dev` | Enmienda ADR-011 §9 y `docs/TESTING.md`. `verify` local ejecuta lint, typecheck, dominio y componentes, y declara las capas de base de datos «solo en CI». `juntia-dev` vive en la cuenta de la segunda fundadora, sin datos reales y sin claves de producción. Los jobs de base de datos corren en todo PR de código, sin filtro de rutas. Las migraciones se aplican a `juntia-dev` con `--remote` explícito. La copia de la decisión 16 (16.11) usa `pg_dump`, y su prueba de restauración tiene dos partes: el procedimiento, en un runner efímero de CI con datos de prueba, y la copia real, restaurada en un PostgreSQL normal en el equipo de un fundador (elegido por el primer fundador frente a aceptar una garantía reducida). La copia real nunca pasa por CI |
+| 17 | Dónde corre Supabase en desarrollo | **Sin Docker en los equipos.** Las pruebas que necesitan Supabase corren solo en CI; la app se usa en desarrollo contra un segundo proyecto Free, `juntia-dev` | Enmienda ADR-011 §9 y `docs/TESTING.md`. `verify` local ejecuta lint, typecheck, dominio y componentes, y declara las capas de base de datos «solo en CI». `juntia-dev` vive en la cuenta de la segunda fundadora, sin datos reales y sin claves de producción. Los jobs de base de datos corren en todo PR de código, sin filtro de rutas. Las migraciones se aplican a `juntia-dev` con el destino explícito en la sintaxis de la CLI fijada (ADR-011 §9.5). La copia de la decisión 16 (16.11) usa `pg_dump`, y su prueba de restauración tiene dos partes: el procedimiento, en un runner efímero de CI con datos de prueba, y la copia real, restaurada en un PostgreSQL normal en el equipo de un fundador (elegido por el primer fundador frente a aceptar una garantía reducida). La copia real nunca pasa por CI |
 
 #### Dataset dorado: quién lo produce y cuándo
 

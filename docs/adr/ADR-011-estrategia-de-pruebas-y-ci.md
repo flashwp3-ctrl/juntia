@@ -1,6 +1,6 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit · **Alcance:** P0 (MVP-1)
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit; 4 de noviembre de 2026, forma del nivel 1 (§5), sin Docker (§9) y axe en dos jobs (§5) · **Alcance:** P0 (MVP-1)
 
 > **Terminología.** En este ADR, «spec E2E *n*» es siempre una spec de Playwright
 > de la tabla de §3. Una **especificación** (001, 002…) es un slice de producto.
@@ -337,6 +337,14 @@ Desde esta enmienda el nivel 1 se organiza así. Sustituye a «jobs en paralelo�
 **Nomenclatura.** En esta sección, «job 1» a «job 5» numeran **controles**, no jobs de GitHub Actions. Desde esta enmienda, los controles 1, 2 y 5 corren en el job `app`. Los controles 3 y 4 tendrán jobs propios, cuyos nombres fija P0-1.
 
 Los presupuestos de §4 no cambian. El «gate de PR completo» se mide como el job más lento, que hoy es `app`. Las reglas de esta sección siguen intactas: los controles no aplicables se declaran y el contrapositivo vale («P0-1 no mergea sin el job 3»).
+
+**Axe en dos jobs** (enmienda del 4 de noviembre de 2026, revisión del PR #37, plan de la especificación 002). Desde P0-1 las rutas de producto y de Mi cuenta exigen sesión, y la sesión necesita Supabase, que el job `app` no levanta. El **control 5 (axe en los dos temas) no cambia**; se reparte según **si el estado real que se audita necesita una sesión**, no según el grupo de rutas al que pertenece:
+
+1. **En el job `app`**, los estados que se ven **sin sesión**: por ejemplo entrar, crear cuenta, verificar el correo, pedir la recuperación, «no encontrado» y la superficie interna.
+2. **En el job `e2e`** (el del control 4, con Supabase en el runner), los estados que **necesitan una sesión**, sembrada por base de datos (§6, reglas 1 y 2): las rutas de producto y de Mi cuenta, y también las de acceso que solo existen con sesión, como la primera entrada (sesión de usuario) o la contraseña nueva tras un enlace de recuperación (sesión de recuperación).
+3. **Entre los dos, el control sigue completo en cada PR de código**: todas las rutas implementadas, en los dos temas, con la regla de «Qué rutas pasa axe en un PR» de `docs/TESTING.md`. Una prueba de cobertura afirma que cada ruta está en exactamente una de las dos listas y que juntas las cubren todas. Ninguna ruta queda sin axe porque su job no corra: los dos corren en todo PR de código, sin filtro de rutas (§9.2).
+
+*Precisión del 4 de noviembre de 2026 (segunda revisión del PR #37):* la primera redacción repartía por grupo de rutas («las de acceso» en `app`), lo que habría auditado sin sesión estados que solo existen con ella.
 
 ### 6. Siete reglas duras
 

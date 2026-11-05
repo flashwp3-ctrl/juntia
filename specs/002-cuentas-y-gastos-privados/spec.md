@@ -70,6 +70,15 @@ a la decisión 16 del maestro y la segunda fundadora las confirma con el merge.
 - Q14: ¿Se puede cambiar de gasto a ingreso, o al revés, al editar? → A: **No.** El tipo queda fijo; para corregirlo se elimina y se anota de nuevo.
 - Q15: ¿Qué pasa si el mismo movimiento se edita casi a la vez en dos sitios? → A: **La segunda edición falla y lo explica**, con control de versión, como en los presupuestos. Nada se pierde en silencio.
 
+### Session 2026-11-04 (revisión del PR #37, plan)
+
+Una pregunta que la revisión adversarial del plan encontró sin decidir. La
+respondió el primer fundador el 4 de noviembre de 2026; se suma a la decisión 16
+del maestro (16.17) y la segunda fundadora la confirma con el merge del PR del
+plan.
+
+- Q16: ¿Cuándo se crea el perfil? → A: **En el primer acceso verificado**, con el nombre visible de A2, que hasta entonces se guarda en los metadatos de la cuenta. No con la cuenta misma (FR-029).
+
 ## User Scenarios & Testing *(mandatory)*
 
 Los actores son las dos personas fundadoras, que usan Juntia con sus datos
@@ -379,13 +388,13 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 - **FR-021**: Supabase Auth con correo y contraseña, verificación de correo y recuperación por enlace seguro. Sin Google, Apple, magic link independiente, passkeys ni MFA propio (§15.5).
 - **FR-022**: Pantallas y estados de 04·17: Entrar (A1, A1b, A1c, A1d), Crear cuenta (A2), Verifica tu correo (A3), Recuperar (A4, A4b), Contraseña nueva (A5) y Primera entrada (A6, sin «Invitar a mi pareja») (Q6).
-- **FR-023**: Ninguna respuesta de acceso, registro ni recuperación revela si un correo tiene cuenta (§15.5).
+- **FR-023**: Ninguna pantalla ni respuesta de Juntia de acceso, registro ni recuperación revela si un correo tiene cuenta ni si está en la lista permitida (§15.5). **Riesgo aceptado hasta MVP-1** (decisión 16.16, enmienda del 4 de noviembre de 2026 tras el preflight del plan): la API de Auth de Supabase, llamada directamente, sí lo revela (403 del hook de la lista permitida, 422 `user_already_exists`). Las pantallas no enumeran; la API cruda queda fuera de esta garantía hasta MVP-1.
 - **FR-024**: El registro solo se completa para los correos de una lista permitida que la base de datos valida antes de crear el usuario; el plan elige el mecanismo de Supabase y su `[V]` (Q9).
 - **FR-025**: El aviso de Crear cuenta dice que Juntia es una versión privada de prueba; no enlaza ni inventa términos legales (Q9).
 - **FR-026**: La sesión se valida en el servidor con `getClaims()`, se renueva en `proxy.ts`, se crea un cliente por petición y ninguna respuesta autenticada se guarda en cachés compartidas (ADR-013 §6.5).
 - **FR-027**: Las rutas de producto y de Mi cuenta exigen sesión; sin sesión redirigen a Entrar y, tras entrar, vuelven a la ruta pedida.
 - **FR-028**: Cerrar sesión muestra S1, S2 si falla y S3 en Entrar (04·16).
-- **FR-029**: Un perfil se crea con la cuenta, con el nombre visible de A2, y es la autoridad del nombre y del tema (§15.5).
+- **FR-029**: El perfil se crea en el primer acceso verificado, con el nombre visible de A2, que hasta entonces se guarda en los metadatos de la cuenta; es la autoridad del nombre y del tema (§15.5; Q16).
 
 #### Anotar (02·5, 02·6)
 
@@ -479,7 +488,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 - **SC-003**: Mediana menor de 10 s para registrar un gasto habitual en el teléfono real de un fundador tras la primera entrada, medida con al menos 10 registros y reportada con su método (US-12; §15.7).
 - **SC-004**: INP menor de 200 ms al abrir Anotar y al guardar, medido en laboratorio y reportado como tal (§15.7).
 - **SC-005**: CLS = 0 en las cargas con Skeleton de Inicio y Actividad y en las rutas de acceso y Mi cuenta, con el arnés R2, sin cuadro del tema contrario también con el tema guardado (§15.7; Q7).
-- **SC-006**: Las diez `[V]` de ADR-013 tienen salida real en la evidencia; las 1, 2, 7, 8 y 9 definitivas, en el PR A con la primera migración y antes de la primera función de dinero (ADR-013, «Verificación pendiente»).
+- **SC-006**: Las diez `[V]` de ADR-013 tienen salida real en la evidencia; las 1, 2, 7, 8 y 9 definitivas, en el PR A **cuando ya existen todas las tablas controladas y vistas y antes de la primera función de dinero**, con un punto de control previo justo después de la primera migración; si la 1 falla en cualquiera de los dos, se para (ADR-013, «Verificación pendiente», nota del 4 de noviembre de 2026; alineación de redacción con el orden ejecutable de la revisión del PR #37, no una decisión nueva).
 - **SC-007**: Cero accesos a datos de otra persona en los tests negativos de RLS, por la API y por SQL directo (US-05).
 - **SC-008**: Con el dataset dorado sembrado, Inicio y Actividad de octubre de 2026 muestran exactamente 412.900 de gasto de Sara y el desglose por categoría de la tabla (§15.10, «Dataset dorado»).
 - **SC-009**: Cero movimientos duplicados en las pruebas de doble envío y reintento (US-12, «sin doble envío»).
@@ -567,7 +576,7 @@ paleta ya visibles desde la 001.
 
 | `[V]` | Fuente | Qué se comprueba |
 | --- | --- | --- |
-| ADR-013 [V] 1, 2, 7, 8 y 9, definitivas | ADR-013 | En el **PR A**, con la primera migración y **antes de la primera función de dinero**: `juntia_writer` sobre el esquema real, escritura directa imposible por la API pública, privilegios efectivos, vistas sin `usage` y forma del claim. Si la 1 falla, ADR-013 se reabre antes de seguir |
+| ADR-013 [V] 1, 2, 7, 8 y 9, definitivas | ADR-013 | En el **PR A**, **cuando ya existen todas las tablas controladas y vistas y antes de la primera función de dinero**, con un punto de control previo justo después de la primera migración (1 y 9, y lo que ya se pueda de 2, 7 y 8): `juntia_writer` sobre el esquema real, escritura directa imposible por la API pública, privilegios efectivos, vistas sin `usage` y forma del claim. Si la 1 falla, ADR-013 se reabre antes de seguir |
 | ADR-013 [V] 3, 4, 5 y 6 | ADR-013; Q15 | Atomicidad, concurrencia e idempotencia, edición concurrente de movimientos e importes de ida y vuelta |
 | Workers con usuarios aislados | ADR-011, [V] 3 | Cuántos workers de Playwright caben con siembra aislada |
 | Altura del teclado nativo con la hoja de Anotar | `RESPONSIVE_SPECIFICATIONS.md`; decisión 11 | En iPhone y Android, el teclado no tapa el monto ni Guardar |
