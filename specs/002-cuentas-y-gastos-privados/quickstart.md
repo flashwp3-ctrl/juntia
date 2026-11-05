@@ -106,67 +106,101 @@ npx --yes supabase@2.121.0 db push --linked
 ## 4. Copia de seguridad y restauración (Q11; decisión 17)
 
 **No se anota ningún dato real hasta que la primera copia y su restauración
-tienen salida registrada** en la evidencia de la 002 (US-10.4, SC-010). La hace
-un fundador desde su equipo, con PowerShell o Git Bash; los comandos son los
-mismos.
+tienen salida registrada** en la evidencia de la 002 (US-10.4, SC-010). **Y la
+copia no se considera restaurable hasta que los dos caminos de 4.2 tienen salida
+del job `db`** (research R6). La hace un fundador desde su equipo, con
+PowerShell o Git Bash; los comandos son los mismos.
+
+**Qué es una copia completa** (research R6): el **esquema por referencia** (las
+migraciones del commit etiquetado que coincide con producción), los **datos**
+(`data.sql`) y un **manifiesto** (etiqueta y SHA, migraciones aplicadas,
+recuentos y sumas de comprobación por tabla, `sha256` de `data.sql`). No se
+vuelca el esquema con `pg_dump`.
+
+### 4.0 Etiquetar el commit de producción (la dueña, al aplicar migraciones)
+
+Cada vez que aplica migraciones a producción (§3), la dueña etiqueta el commit de
+`main` que aplicó y la sube:
+
+```bash
+git tag -a db-prod-AAAA-MM-DD -m "Migraciones aplicadas a producción" <sha-de-main>
+git push origin db-prod-AAAA-MM-DD
+```
 
 ### 4.1 Copia (semanal, y antes del primer dato real)
 
 `$DB` es la cadena de conexión **directa** de producción del panel (Connect ›
 Direct o Session pooler), con la contraseña de la base. No se guarda en ningún
-archivo del repositorio ni del historial de la terminal compartida.
+archivo del repositorio ni del historial de la terminal compartida. `TAG` es la
+última etiqueta `db-prod-*`.
 
 ```bash
-D=$(date +%F)
-pg_dump "$DB" --data-only --inserts --on-conflict-do-nothing \
+D=$(date +%F); TAG=$(git describe --tags --match 'db-prod-*' --abbrev=0 origin/main)
+git checkout "$TAG"
+pg_dump "$DB" --data-only --column-inserts --on-conflict-do-nothing \
   -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql
-pg_dump "$DB" --schema-only -n juntia_data -n juntia_private \
-  -t 'public.my_*' -t auth.users -t auth.identities -f schema.sql
-psql "$DB" -X -A -t -c "select version from supabase_migrations.schema_migrations order by 1" > migrations.txt
-psql "$DB" -X -A -t -f supabase/restore/counts.sql > counts.txt
-tar -cf "juntia-$D.tar" data.sql schema.sql migrations.txt counts.txt
+bash scripts/backup-manifest.sh "$DB" "$TAG" data.sql > manifest.txt   # falla si las migraciones de producción ≠ las de $TAG
+tar -cf "juntia-$D.tar" data.sql manifest.txt
 gpg --symmetric --cipher-algo AES256 -o "juntia-$D.tar.gpg" "juntia-$D.tar"
-rm data.sql schema.sql "juntia-$D.tar"        # solo queda el cifrado
+rm data.sql "juntia-$D.tar"                    # solo quedan el cifrado y manifest.txt
+git checkout -
 ```
 
-- `-n` se ignora cuando hay `-t`: por eso el esquema de la app va como
-  `-t 'juntia_data.*'` en la copia de datos (research R6). La lista exacta de
-  `public` (`-t 'public.my_*'` y las funciones de entrada) la fija el PR A con
-  los nombres reales.
+- `-t 'juntia_data.*'` y no `-n juntia_data`: con `-t` presente, `-n` se ignora
+  (research R6). `--column-inserts`, para que una columna que falte en el destino
+  falle en lugar de desplazar valores.
+- `scripts/backup-manifest.sh` lo crea el PR A: compara
+  `supabase_migrations.schema_migrations` con `supabase/migrations/` del `TAG` y
+  escribe SHA, etiqueta, migraciones, recuentos, sumas de comprobación y el
+  `sha256` de `data.sql`. Si no coinciden, **no hay copia válida**: se para.
 - La frase de paso va en el gestor de contraseñas del fundador, nunca junto al
   archivo.
 - El `.gpg` se guarda **fuera de Supabase y del repositorio** (por ejemplo, en el
-  almacenamiento personal del fundador) y `counts.txt` se pega en la evidencia.
+  almacenamiento personal del fundador). `manifest.txt` no lleva datos personales
+  y se pega en la evidencia.
 
-### 4.2 Ensayo del procedimiento, en CI con datos de prueba
+### 4.2 Ensayo de los dos caminos, en CI con datos de prueba
 
-`npm run db:restore-drill` corre en el job `db` de cada PR de código: siembra
-datos de prueba, hace la copia con los comandos de 4.1, la cifra, y la restaura
-dos veces: en una base recién migrada (`supabase db reset` + `psql -v
-ON_ERROR_STOP=1 -1 -f data.sql`, como en el preflight) y en un **PostgreSQL 17
-normal del runner** con el arranque de 4.3. Compara recuentos y sumas, y
-comprueba que un usuario restaurado entra. **Ningún dato real pasa por CI.**
+`npm run db:restore-drill` corre en el job `db` de cada PR de código. Siembra
+datos de prueba, hace la copia con los comandos de 4.1 (contra el Supabase del
+runner) y la restaura **dos veces, siempre desde una base vacía**:
 
-### 4.3 Restauración real, en el equipo de un fundador
+- **Camino A · Supabase local:** `supabase db reset` con las migraciones del SHA
+  del manifiesto y sin la semilla, y después `psql -v ON_ERROR_STOP=1 -1 -f
+  data.sql`.
+- **Camino B · PostgreSQL 17 normal** del runner (servidor de PGDG, sin
+  Supabase): `createdb`, `plain-postgres-bootstrap.sql`, las migraciones del SHA
+  en orden con `ON_ERROR_STOP`, y `data.sql`. Antes, el ensayo compara las
+  columnas de `auth.users` y `auth.identities` del arranque con las del stack
+  local y falla si difieren.
 
-En un PostgreSQL 17 instalado en el equipo (sin Docker), en una base nueva:
+En los dos: recuentos, sumas de comprobación y `sha256` contra el manifiesto; en
+el A, además, un usuario restaurado entra. Cualquier dependencia que falte hace
+fallar el job. **Ningún dato real pasa por CI.**
+
+### 4.3 Restauración real, en el equipo de un fundador (camino B)
+
+Solo cuando el camino B tiene salida verde del job `db`. En un PostgreSQL 17
+instalado en el equipo (sin Docker), desde una base **vacía**, con el repositorio
+en el SHA del manifiesto:
 
 ```bash
 gpg -d -o juntia.tar "juntia-$D.tar.gpg"
 tar -xf juntia.tar
+git checkout "$(grep '^sha=' manifest.txt | cut -d= -f2)"
 createdb -h localhost -U postgres juntia_restore
 psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -f supabase/restore/plain-postgres-bootstrap.sql
-psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -1 -f schema.sql
+for m in supabase/migrations/*.sql; do psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -1 -f "$m" || break; done
 psql -h localhost -U postgres -d juntia_restore -v ON_ERROR_STOP=1 -1 -f data.sql
-psql -h localhost -U postgres -d juntia_restore -X -A -t -f supabase/restore/counts.sql > restored-counts.txt
-diff counts.txt restored-counts.txt && echo "RECUENTOS IGUALES"
+bash scripts/backup-manifest.sh --verify "postgresql://postgres@localhost/juntia_restore" manifest.txt && echo "MANIFIESTO COINCIDE"
+git checkout -
 ```
 
-Se pega en la evidencia: la salida de cada comando (sin datos), `RECUENTOS
-IGUALES` y la fecha. Después se borran `juntia_restore`, los `.sql` descifrados
-y el `.tar`, y el servicio de PostgreSQL se apaga o se desinstala (ADR-011 §9.6).
-`plain-postgres-bootstrap.sql` y `counts.sql` los crea el PR A y se ensayan en
-4.2 antes de este paso.
+Se pega en la evidencia: la salida de cada comando (sin datos), `MANIFIESTO
+COINCIDE` y la fecha. Después se borran `juntia_restore`, `data.sql` y el `.tar`,
+y el servicio de PostgreSQL se apaga o se desinstala (ADR-011 §9.6). El arranque
+y el script del manifiesto los crea el PR A y se ensayan en 4.2 antes de este
+paso.
 
 ## 5. Revisión de un PR de implementación
 

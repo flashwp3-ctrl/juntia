@@ -12,7 +12,7 @@ tabla del final.
 | `test:db` | `supabase test db` (pgTAP en `supabase/tests/`) | Solo job `db` |
 | `test:integration` | `vitest run --project integration` (supabase-js contra el Supabase local del runner; sin navegador) | Solo job `db` |
 | `db:types:check` | `supabase gen types typescript --local --schema public` comparado con `src/lib/supabase/database.types.ts` | Solo job `db` |
-| `db:restore-drill` | `bash scripts/restore-drill.sh` (copia, cifrado y las dos restauraciones con datos de prueba) | Solo job `db` |
+| `db:restore-drill` | `bash scripts/restore-drill.sh`: siembra datos de prueba, hace la copia (`data.sql` + manifiesto, research R6), la cifra y la restaura **desde una base vacía** por los dos caminos: A, Supabase local con `supabase db reset` a las migraciones del SHA del manifiesto, sin semilla, y los datos; B, PostgreSQL 17 normal de PGDG con `plain-postgres-bootstrap.sql`, las migraciones de ese SHA y los datos. Compara recuentos, sumas de comprobación y `sha256`, y las columnas de `auth` del arranque con las del stack; cualquier dependencia que falte falla el job | Solo job `db` |
 | `test:e2e:smoke` | `playwright test --project e2e` (specs E2E que existan) | Solo job `e2e` |
 
 La CLI es la del workflow (`supabase/setup-cli@v3`, `version: 2.121.0`), no una
@@ -60,6 +60,10 @@ Notas:
   job conoce claves de `juntia-dev` ni de producción.
 - **Sin datos reales:** el ensayo de restauración usa datos sembrados en el
   runner (ADR-011 §9.6).
+- **Coste del ensayo:** se queda en el job `db` de cada PR de código mientras el
+  PR A lo tiene que demostrar. Después del PR A, moverlo a un workflow propio (en
+  los merges a `main` y antes del primer dato real) **exige una decisión
+  explícita en ADR-011**; no se decide aquí, y mientras no exista sigue en `db`.
 - **Resumen** (`scripts/ci.mjs summary`): cada job publica sus tiempos contra el
   presupuesto. La tabla del job `app` cambia «3 · … NO APLICABLE — lo incorpora
   P0-1» por «3 · Supabase local, migraciones y SQL/RLS · job `db`» y, desde el PR

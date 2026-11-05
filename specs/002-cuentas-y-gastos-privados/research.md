@@ -367,38 +367,60 @@ Run 3 corrigió el 2: con `-t` presente, `-n` se ignora, así que el esquema de
 la app va como `-t 'juntia_data.*'`.
 
 **Decisión del plan — qué es una «copia completa»** (ADR-011 §9.6 lo deja al
-plan). Un archivo cifrado con tres partes:
+plan; rehecha en la revisión del PR #37, F37-1). La primera versión metía un
+`schema.sql` hecho con `pg_dump --schema-only -n juntia_data -n juntia_private
+… -t …`; como `-n` se ignora cuando hay `-t`, **ese archivo no contenía los
+esquemas de Juntia**. Se descarta el volcado de esquema. La fuente del esquema es
+la misma que en todo lo demás (FR-001): **las migraciones del repositorio**.
 
-1. `data.sql`: `pg_dump --data-only --inserts --on-conflict-do-nothing -t
-   'juntia_data.*' -t auth.users -t auth.identities` (el comando probado).
-2. `schema.sql`: `pg_dump --schema-only -n juntia_data -n juntia_private` más
-   las vistas y funciones de `public` y la estructura de `auth.users` y
-   `auth.identities` (con `-t`, por lo de arriba). Cumple «el esquema y los
-   datos» de US-10.1 y permite la restauración en un PostgreSQL normal.
-3. `manifest.txt`: fecha, commit de `main`, lista de migraciones aplicadas
-   (`supabase_migrations.schema_migrations`) y recuentos por tabla.
+Una copia completa son tres cosas:
 
-Se cifra con `gpg --symmetric --cipher-algo AES256` y se guarda fuera de Supabase
-y del repositorio. La copia completa con `-Fc` **se descarta**: restaura los
-datos pero con 167 errores de roles ignorados, y una restauración que necesita
-ignorar errores no prueba nada.
+1. **El esquema, por referencia:** las migraciones de `supabase/migrations/` en
+   el **commit etiquetado que coincide con producción**. Cada vez que la dueña
+   aplica migraciones a producción, etiqueta ese commit de `main`
+   (`db-prod-AAAA-MM-DD`). La copia comprueba que la lista de
+   `supabase_migrations.schema_migrations` de producción es **exactamente** la
+   de esa etiqueta; si no lo es, no hay copia válida y se dice.
+2. **Los datos:** `pg_dump --data-only --column-inserts --on-conflict-do-nothing
+   -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql`. Es el
+   comando probado en el run 3 con `--column-inserts` en lugar de `--inserts`:
+   con los nombres de columna, una columna que falte en el destino falla con un
+   error en vez de desplazar valores en silencio.
+3. **El manifiesto:** etiqueta y SHA del commit, lista de migraciones aplicadas,
+   recuento de filas y suma de comprobación por tabla
+   (`md5(string_agg(t::text, '|' order by <clave>))`) y `sha256` de `data.sql`.
 
-**Restauración, en dos partes (decisión 17):**
+Se empaqueta (`data.sql` + `manifest.txt`), se cifra con `gpg --symmetric
+--cipher-algo AES256` y se guarda fuera de Supabase y del repositorio. La copia
+con `-Fc` sigue descartada: restaura los datos con 167 errores de roles
+ignorados, y una restauración que necesita ignorar errores no prueba nada.
 
-- **Procedimiento, en CI con datos de prueba** (PR A): base recién migrada
-  (`supabase db reset`) + `psql -v ON_ERROR_STOP=1 -1 -f data.sql`; recuentos y
-  suma iguales y un usuario restaurado entra. Es lo que demostró el run 3.
-- **Copia real, en un PostgreSQL 17 normal en el equipo de un fundador**: no
-  existen los roles ni el esquema `auth` de Supabase. **Decisión del plan:** un
-  script de arranque versionado (`supabase/restore/plain-postgres-bootstrap.sql`)
-  crea los roles que nombran las migraciones (`anon`, `authenticated`,
-  `service_role`, `supabase_auth_admin`, `juntia_writer`), el esquema `auth` y
-  una `auth.uid()` equivalente; después se cargan `schema.sql` y `data.sql` con
-  `ON_ERROR_STOP` y se comparan los recuentos con `manifest.txt`. **No está
-  ejecutado:** el PR A lo ensaya en el runner sobre un PostgreSQL 17 normal
-  instalado con apt (sin Supabase), con datos de prueba, antes de que un
-  fundador lo use con la copia real. Si `auth.users` arrastra tipos o
-  dependencias que el arranque no cubre, el PR A lo amplía y lo dice.
+**Restauración, siempre desde una base vacía y por dos caminos:**
+
+- **A · Supabase local (CI):** `supabase start` vacío, checkout del SHA del
+  manifiesto, `supabase db reset` con las migraciones de ese commit y sin la
+  semilla, y después `psql -v ON_ERROR_STOP=1 -1 -f data.sql`. Recuentos, sumas
+  de comprobación y `sha256` contra el manifiesto, y un usuario restaurado entra.
+  Es lo que demostró el run 3, ahora con la versión exacta del esquema.
+- **B · PostgreSQL 17 normal:** una base vacía, sin roles ni esquemas de
+  Supabase. Un **arranque** versionado
+  (`supabase/restore/plain-postgres-bootstrap.sql`) crea los roles que nombran
+  las migraciones (`anon`, `authenticated`, `service_role`, `supabase_auth_admin`;
+  `juntia_writer` lo crea la propia migración) y los objetos mínimos de `auth`
+  que necesitan las migraciones y los datos: el esquema, `auth.uid()` con la
+  misma definición que el stack (research R2) y las tablas `auth.users` y
+  `auth.identities` con las columnas que vuelca el `pg_dump`. Después, las
+  migraciones del SHA en orden con `ON_ERROR_STOP`, y por último `data.sql`. Un
+  paso del ensayo compara las columnas del arranque con las del stack local de
+  esa versión de la CLI y **falla** si GoTrue cambió las suyas.
+
+**Qué está probado hoy:** solo el camino A con el esquema de la migración
+desechable (run 3). **El camino B no se ha ejecutado.** El PR A ensaya **los dos
+caminos desde una base vacía** en el job `db`, con datos de prueba, y el ensayo
+falla ante cualquier dependencia que falte (`ON_ERROR_STOP`, `--column-inserts`,
+comparación de columnas del arranque). **La copia no se presenta como
+restaurable hasta que los dos caminos tienen salida en la evidencia**, y la copia
+real se restaura en el equipo de un fundador solo por el camino B ya ensayado.
 
 En los equipos con Windows hacen falta las herramientas de línea de comandos de
 PostgreSQL 17 (y el servidor, para la restauración real) y Gpg4win.
@@ -715,7 +737,7 @@ abiertas).
 | Versiones | R3 (fijadas; lockfile en el PR A) |
 | Lista permitida | R4 (verificado; enumeración por la API, riesgo aceptado 16.16) |
 | Correo de Supabase | R5 (documentado; requisito operativo) |
-| Copia y restauración | R6 (verificado en CI con datos de prueba; restauración en PostgreSQL normal por ensayar en el PR A) |
+| Copia y restauración | R6 (comandos de datos y cifrado verificados en CI; esquema por migraciones etiquetadas; los dos caminos de restauración desde vacío, por ensayar en el PR A) |
 | Persistencia del tema | R7 (verificado en local para la lectura de la cookie) |
 | Modelo, concurrencia, rutas, siembra | R8 |
 
