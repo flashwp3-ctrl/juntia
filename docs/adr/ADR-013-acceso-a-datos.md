@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite; y nota de precisión sobre cuándo corren las [V] definitivas («Verificación pendiente») · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -415,6 +415,16 @@ Se ejecutan en P0-1 y su salida se pega en la evidencia del slice. Las
 verificaciones 1, 2, 7, 8 y 9 se hacen con la primera migración, **antes** de
 escribir la primera función de dinero, porque validan el mecanismo en el que
 se apoya todo lo demás.
+
+*Nota de precisión del 4 de noviembre de 2026 (revisión del PR #37 del plan de
+P0-1). Alinea la redacción con el orden ejecutable; **no es una decisión
+nueva**:* las verificaciones 1, 2, 7, 8 y 9 **definitivas** corren cuando ya
+existen **todas** las tablas controladas y vistas de P0-1, y **antes** de la
+primera función de dinero. Se mantiene un **punto de control temprano** justo
+después de la primera migración (1 y 9 con una función que escribe sin dinero, y
+lo que ya se pueda de 2, 7 y 8), y la regla de **parar en cuanto falle la 1**, en
+cualquiera de los dos puntos. «Con la primera migración» se lee como ese punto
+temprano, no como la ejecución definitiva sobre un esquema incompleto.
 
 1. **El mecanismo de `juntia_writer` funciona en la versión de Supabase del
    stack:**
