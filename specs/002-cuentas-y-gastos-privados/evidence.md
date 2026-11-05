@@ -51,9 +51,50 @@ conserva intacta.
 
 ### F40 — comprobación de las correcciones
 
-Pendiente: CI con la instantánea compartida, el inventario pgTAP y N6 contra el
-commit real de foundation. N6 exige ahora el diagnóstico de rechazo del
-manifiesto, además del código no nulo y ausencia de archivos/temporales.
+Commits pequeños: `b100a65` añade nota e inventario F40-2; `9dae176` cambia N6
+al commit real de foundation y habilita historial completo en el job db;
+`4e5e198777780d9e1831d750ae8d4b3d19a4dd44` implementa la instantánea común y
+actualiza quickstart §4.1 (conexión directa o pooler de sesión, nunca transacción).
+El run [42052290510](https://github.com/flashwp3-ctrl/juntia/actions/runs/42052290510)
+falló antes de alcanzar el ensayo por un error del arnés nuevo, no por un
+fallo del mecanismo de RLS ni de una migración:
+
+```text
+01_privileges.test.sql:49: ERROR: constant of the type regrole cannot be used here
+Files=10, Tests=296
+Job app: success, 117.91 s
+Job db: failure, 178.18 s
+```
+
+`gh run watch 42052290510 --exit-status --interval 20`: exit 1.
+Log completo: [f40-inventory-harness-red.txt](evidence/f40-inventory-harness-red.txt).
+La vista temporal consulta ahora el OID de postgres en pg_roles en lugar de
+guardar una constante regrole no admitida. El predicado de dueño, la lista
+permitida y los grants permanecen iguales.
+
+El diagnóstico de N6 se probó primero en la capa de unidad, con psql simulado
+que devuelve las tres versiones aplicadas y el commit real cbccec8 que solo
+contiene foundation. No se ejecutó Supabase ni PostgreSQL local. Comando:
+[f40-n6-diagnostic-command.txt](evidence/f40-n6-diagnostic-command.txt).
+
+```text
+Antes (exit 1 de la prueba):
+F40-3 unidad de diagnóstico (psql simulado, sin Supabase local): manifest-exit=1
+F40-3: assertion failed: falta diagnóstico de validación del manifiesto
+
+Después (exit 0 de la misma prueba):
+F40-3 unidad de diagnóstico (psql simulado, sin Supabase local): manifest-exit=1
+MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden (sha=cbccec832d338402bc7262973b8e0b539d6dddff)
+```
+
+Salidas: [rojo](evidence/f40-n6-diagnostic-local-red.txt) y
+[verde de unidad](evidence/f40-n6-diagnostic-local-green.txt). El mensaje se emite
+únicamente tras comparar las migraciones aplicadas con las del commit, después
+de leerlas en la instantánea. El test de CI N6 exige ese mensaje, código no nulo,
+cero archivos publicados/temporales y cero sesiones exportadoras restantes.
+
+Pendiente: resultado real de CI con la instantánea, inventario y diagnóstico N6
+corregidos. El verde de unidad anterior no sustituye ese ensayo.
 
 ## PR A — detenido antes de T001
 

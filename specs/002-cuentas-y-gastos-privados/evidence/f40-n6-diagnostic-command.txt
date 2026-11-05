@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+mkdir "$WORK/bin" "$WORK/migrations"
+git show cbccec832d338402bc7262973b8e0b539d6dddff:supabase/migrations/20261105000100_foundation.sql > "$WORK/migrations/20261105000100_foundation.sql"
+: > "$WORK/data.sql"
+cat > "$WORK/bin/psql" <<'SH'
+#!/usr/bin/env bash
+cat >/dev/null
+printf 'migration=20261105000100\nmigration=20261105000200\nmigration=20261105000300\ntable=synthetic.fixture|0|d41d8cd98f00b204e9800998ecf8427e\n'
+SH
+chmod +x "$WORK/bin/psql"
+rc=0
+PATH="$WORK/bin:$PATH" bash scripts/backup-manifest.sh --write --mode ci --sha cbccec832d338402bc7262973b8e0b539d6dddff --snapshot 00000001-00000001-1 --db synthetic-fixture --migrations "$WORK/migrations" --data "$WORK/data.sql" > "$WORK/actual" 2> "$WORK/error" || rc=$?
+echo "F40-3 unidad de diagnóstico (psql simulado, sin Supabase local): manifest-exit=$rc"
+test "$rc" -ne 0
+if ! grep -F 'MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden' "$WORK/error"; then
+  echo 'F40-3: assertion failed: falta diagnóstico de validación del manifiesto'
+  exit 1
+fi
