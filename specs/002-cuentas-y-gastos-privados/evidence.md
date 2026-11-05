@@ -848,15 +848,68 @@ supabase start: 126 s; test:db: 10.63 s (< 60 s)
 ENSAYO LISTO: A y B, nueve controles negativos rechazados
 ```
 
-Pendiente: gate de entrega con los comentarios de justificación de cada definer
-exigidos por ADR-013 §5.7. No cambian cuerpos, grants ni políticas. Se ejecuta
-igualmente el gate completo sobre ese commit; ningún techo se ha movido.
+**Gate de entrega terminado**, 5 de noviembre de 2026:
+commit `314ec31f78171ce672ee1e1f4652ed1278dacb3f`, run
+[42043654607](https://github.com/flashwp3-ctrl/juntia/actions/runs/42043654607).
+Incluye en la migración los comentarios de justificación de cada definer
+exigidos por ADR-013 §5.7. `npm run verify` sobre ese mismo SHA: exit 0,
+23.09 s; [salida local](evidence/final-local-verify.txt).
+Dispatch manual y `gh run watch 42043654607 --exit-status --interval 20`:
+exit 0; [log completo](evidence/final-green.txt).
+
+```text
+Test Files 3 passed (3); Tests 23 passed (23) [domain]
+Test Files 11 passed (11); Tests 112 passed (112) [components]
+01_privileges.test.sql ....... ok
+02_claims.test.sql ........... ok
+03_views.test.sql ............ ok
+04_writer.test.sql ........... ok
+05_direct_writes.test.sql .... ok
+Files=10, Tests=318; Result: PASS
+Test Files 4 passed (4); Tests 17 passed (17) [integration]
+36 passed [axe]
+database.types.ts coincide con public generado en el runner.
+Camino A: MANIFIESTO COINCIDE; usuario restaurado entra
+Camino B: MANIFIESTO COINCIDE; base temporal borrada
+exit=0 base=juntia_restore_20261105T142206_12915 creada_por_este_script=1
+ENSAYO LISTO: A y B, nueve controles negativos rechazados
+app in 2m20s; db in 4m22s [gh run watch]
+Job app: success, 136.37 s; Job db: success, 255.15 s [resúmenes internos]
+supabase start: 115 s; test:db: 6.10 s (< 60 s)
+```
+
+[V] 1: `04_writer` pasa con identidad, autorización, RLS y bloqueos propios/ajenos.
+[V] 2: `05_direct_writes` e integración pasan, incluidos los guards inmutables.
+[V] 7: `01_privileges` pasa con privilegios efectivos/defaults y GraphQL ausente.
+[V] 8: `03_views` pasa sin USAGE de datos para authenticated y vistas invoker.
+[V] 9: `02_claims` y la sonda HTTP de foundation pasan con el JWT real.
+La salida de pg_prove es resumida por archivo en los éxitos; no se inventan líneas
+TAP individuales que la CLI no imprime. [V] 3–6 quedan cubiertas por la inyección
+de rollback, concurrencia, precisión y deadlock de las ocho pruebas de dinero.
+
+Negativos del gate final: N1=1, N2=1, N3=1, N4=1, N5=1, N6=128,
+N7=1, N8=1, N9=2; todos sin marcador de éxito. N5 deja cero bases y log de fallo;
+N6 y N9 no publican archivos ni dejan temporales; N7 conserva el SHA256 existente;
+N8 registra DROP FALLÓ/exit=1 y el job borra después esa base. Los manifiestos
+íntegros, recuentos y hashes están en el log enlazado; no hay datos reales.
+No se movieron techos. El commit posterior de evidencia solo guarda esta salida,
+los logs y las casillas; no modifica ningún archivo ejecutable ni migración.
 
 ## T033 — entrega para revisión
 
-Pendiente: abrir el PR listo para revisión con Objective, Files, Decisions,
-Commands, Screenshots y Risks and pending. La revisión humana del SQL permanece
-pendiente de los fundadores; no se marca T033 completada ni se mergea el PR.
+Descripción en inglés preparada con Objective, Files, Decisions, Commands,
+Screenshots (no aplica), Risks and pending y atribución final de Codex; incluye
+los dos checkpoints, el gate, las pruebas del Anexo A y «E2E specs added: 0».
+Se entrega mediante `gh pr create --base main --head feat/002-a-database
+--body-file <archivo temporal>` sin `--draft`. Su URL se comunica en la entrega.
+La revisión humana del SQL permanece pendiente de los fundadores: T033 conserva
+la casilla sin marcar y el PR no se mergea. También quedan pendientes la revisión
+del copy y T034–T038 en producción antes del PR B.
+
+Desviaciones de procedimiento: solo el circuito de tipos/artefactos autorizado
+por el fundador y la región dev aceptada. Se conservan los rojos esperados, los
+fallos de arnés/inventario y su corrección. Ninguna ampliación de alcance ni
+sustitución del mecanismo writer de ADR-013.
 
 ## T031 — reservas de evidencia de los PR siguientes
 

@@ -228,11 +228,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 1G — salida del PR A
 
-- [ ] T031 Crear `specs/002-cuentas-y-gastos-privados/evidence.md` con una sección por tarea que pide salida en este archivo (de este PR y de los siguientes), cada una con fecha, commit, comando o procedimiento y salida real o «pendiente: motivo». Capturas en `specs/002-cuentas-y-gastos-privados/evidence/`, nombradas por ruta, estado, ancho y tema
+- [x] T031 Crear `specs/002-cuentas-y-gastos-privados/evidence.md` con una sección por tarea que pide salida en este archivo (de este PR y de los siguientes), cada una con fecha, commit, comando o procedimiento y salida real o «pendiente: motivo». Capturas en `specs/002-cuentas-y-gastos-privados/evidence/`, nombradas por ruta, estado, ancho y tema
   - Cumple: `AGENTS.md` 12; plan, «PR de implementación A–D».
   - Terminado cuando: el archivo tiene una sección por cada tarea que pide salida en este PR y en los siguientes; las de T015, T016, T020, T030 y T032 rellenas y el resto «pendiente».
 
-- [ ] T032 **Gate completo sobre el mismo commit** (ADR-011 §9.1): `npm run verify` en local y el run de CI (`app` y `db`) del último commit, con la salida de `verify`, el enlace al run, el tiempo de `test:db` contra < 60 s y el de `supabase start` (research R8.13), sin mover ningún techo
+- [x] T032 **Gate completo sobre el mismo commit** (ADR-011 §9.1): `npm run verify` en local y el run de CI (`app` y `db`) del último commit, con la salida de `verify`, el enlace al run, el tiempo de `test:db` contra < 60 s y el de `supabase start` (research R8.13), sin mover ningún techo
   - Cumple: FR-063; ADR-011 [V] 1 (medición, avisa).
   - Terminado cuando: las dos salidas son del mismo SHA y están en `evidence.md`.
 
