@@ -249,7 +249,7 @@ fallos inyectados y **debe fallar** en cada uno, sin imprimir nunca el mensaje d
 5. **una restauración que falla a mitad** (camino B con la migración rota): además de fallar, **no debe quedar ninguna base `juntia_restore*`** en el servidor del runner (`select count(*) from pg_database where datname like 'juntia_restore%'` = 0) y el log debe existir con su `exit=` distinto de 0;
 6. **una copia que falla** (por ejemplo, el manifiesto rechaza otro SHA): **no debe quedar ningún archivo de salida** (`juntia-*.tar.gpg`, `juntia-*.manifest.txt`) ni carpeta `.juntia-backup.*`;
 7. una copia con un nombre de destino que ya existe: falla y el archivo existente queda intacto (mismo `sha256`);
-8. **un `dropdb` que falla** después de una restauración correcta (`DROPDB=false`): el script **debe salir con código distinto de 0** y el log debe decir «DROP FALLÓ» con el nombre de la base; después el job borra esa base y comprueba que no queda ninguna `juntia_restore*`;
+8. **un `dropdb` que falla** después de una restauración correcta (`DROPDB=false`): el script **debe salir con código distinto de 0**, el log debe contener `exit=1` y «DROP FALLÓ» con el nombre de la base, y **no** debe aparecer «RESTAURACIÓN LISTA»; después el job borra esa base y comprueba que no queda ninguna `juntia_restore*`;
 9. **un descifrado de comprobación que no coincide** (se altera `juntia.tar.gpg` entre el cifrado y la comprobación): la copia falla y no publica nada.
 
 El job comprueba el código de salida distinto de 0 de cada uno y que la salida no
@@ -268,10 +268,9 @@ set -euo pipefail
 ARCHIVE=${1:?ruta del .tar.gpg}; PG=${PG:-postgresql://postgres@localhost}
 STAMP=$(date +%Y%m%dT%H%M%S); DBNAME="juntia_restore_${STAMP}_$$"
 LOG="$PWD/juntia-restore-$STAMP.log"                 # evidencia: recuentos y sumas, sin datos reales
-WORK=$(mktemp -d); SRC="$WORK/src"; CREATED_DB=0
+WORK=$(mktemp -d); SRC="$WORK/src"; CREATED_DB=0; VERIFIED=0
 cleanup() {
   rc=$?
-  echo "exit=$rc base=$DBNAME creada_por_este_script=$CREATED_DB" >> "$LOG"   # la evidencia se escribe antes de borrar
   if [ "$CREATED_DB" -eq 1 ]; then
     # Borrar la base es parte del éxito: si falla, el script falla y dice qué limpiar a mano.
     if ${DROPDB:-dropdb} --force --maintenance-db="$PG/postgres" "$DBNAME"; then
@@ -283,6 +282,10 @@ cleanup() {
   fi
   git worktree remove --force "$SRC" 2>/dev/null || true
   rm -rf "$WORK"                                        # tar y data.sql descifrados
+  # El código final se registra cuando ya se sabe si la limpieza funcionó.
+  echo "exit=$rc base=$DBNAME creada_por_este_script=$CREATED_DB" >> "$LOG"
+  # Único marcador de éxito global: solo con el manifiesto verificado y la limpieza completa.
+  if [ "$rc" -eq 0 ] && [ "$VERIFIED" -eq 1 ]; then echo "RESTAURACIÓN LISTA" | tee -a "$LOG"; fi
   exit "$rc"
 }
 trap cleanup EXIT
@@ -301,7 +304,7 @@ psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql"
 # Escribe en el log los recuentos y sumas de origen y de destino; falla si no coinciden.
 bash scripts/backup-manifest.sh --verify --mode production --manifest "$WORK/manifest.txt" \
   --migrations "$SRC/supabase/migrations" --db "$PG/$DBNAME" --data "$WORK/data.sql" | tee -a "$LOG"
-echo "MANIFIESTO COINCIDE" | tee -a "$LOG"
+echo "manifiesto verificado (paso intermedio, no es el éxito final)" >> "$LOG"; VERIFIED=1
 ```
 
 - **Base temporal propia:** el script crea `juntia_restore_<fecha-hora>_<pid>`,
