@@ -835,7 +835,22 @@ se devuelve al producto. Se repetirá el gate completo porque cambió código.
 
 ## T032 — gate final
 
-Pendiente: ejecución completa sobre el commit de la corrección final de T024.
+La corrección de red `e9c9046856693498739446c42d16baed844bd153` pasó el run
+[42042730228](https://github.com/flashwp3-ctrl/juntia/actions/runs/42042730228),
+con `gh run watch ... --exit-status --interval 20`, exit 0, y verify local del
+mismo SHA, exit 0 (20.70 s). Salidas:
+[network-fix-green.txt](evidence/network-fix-green.txt) y
+[network-fix-local-verify.txt](evidence/network-fix-local-verify.txt).
+
+```text
+Job app: success, 126.58 s; Job db: success, 265.82 s (resúmenes internos)
+supabase start: 126 s; test:db: 10.63 s (< 60 s)
+ENSAYO LISTO: A y B, nueve controles negativos rechazados
+```
+
+Pendiente: gate de entrega con los comentarios de justificación de cada definer
+exigidos por ADR-013 §5.7. No cambian cuerpos, grants ni políticas. Se ejecuta
+igualmente el gate completo sobre ese commit; ningún techo se ha movido.
 
 ## T033 — entrega para revisión
 

@@ -17,6 +17,7 @@ revoke all on function juntia_private.parse_amount_minor(text),juntia_private.re
 grant execute on function juntia_private.parse_amount_minor(text),juntia_private.request_fingerprint(jsonb) to juntia_writer;
 
 grant create on schema juntia_private to juntia_writer;
+-- Definer de writer: crea y audita con RLS sin conceder INSERT a authenticated.
 create function juntia_private.create_transaction(p_idempotency_key text,p_type text,p_amount_minor text,p_category_id text,p_transaction_date text,p_description text)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare
@@ -57,6 +58,7 @@ begin
 end $$;
 alter function juntia_private.create_transaction(text,text,text,text,text,text) owner to juntia_writer;
 
+-- Definer de writer: bloquea, versiona y audita sin conceder UPDATE a authenticated.
 create function juntia_private.update_transaction(p_idempotency_key text,p_transaction_id uuid,p_expected_version integer,p_amount_minor text,p_category_id text,p_transaction_date text,p_description text)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare
@@ -102,6 +104,7 @@ begin
 end $$;
 alter function juntia_private.update_transaction(text,uuid,integer,text,text,text,text) owner to juntia_writer;
 
+-- Definer de writer: anula y audita bajo RLS, conservando el rastro y la idempotencia.
 create function juntia_private.void_transaction(p_idempotency_key text,p_transaction_id uuid,p_expected_version integer,p_reason text)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare uid uuid := juntia_private.current_uid(); key uuid; fp text; saved juntia_data.idempotency_records;
