@@ -416,13 +416,20 @@ que las migraciones de producción coinciden con ella. El PR A crea
 `scripts/backup-manifest.sh` y `supabase/restore/plain-postgres-bootstrap.sql`,
 todos con `set -euo pipefail`, sin `|| break`, con `--verify` del manifiesto
 obligatorio y un `trap` que borra lo descifrado y conserva el código de salida.
+La copia escribe todo en una carpeta temporal y publica el `.gpg` y el
+manifiesto con un enlace duro atómico solo al final, con nombre único al segundo
+y sin sobrescribir nunca; la restauración real crea su propia base temporal con
+nombre único y la borra con éxito o con fallo, después de escribir la evidencia
+(sin datos reales) en un log, y nunca borra una base que no creó.
 Y **prueba en el job `db`, en modo CI, los dos caminos desde una base vacía**,
 con datos de prueba: A, Supabase local con `db reset` a las migraciones de ese
 commit y después los datos; B, PostgreSQL 17 normal con el arranque, las
 migraciones y los datos. **Controles negativos** en el mismo job: una migración
 rota, un recuento alterado y otro SHA en el manifiesto, y un `data.sql`
 modificado deben hacer fallar el ensayo, sin que nunca imprima el éxito (si uno
-«pasa», el job falla). **La copia no se presenta como restaurable hasta que los
+«pasa», el job falla); una restauración fallida no deja ninguna base
+`juntia_restore*`, una copia fallida no deja archivos de salida, y una copia
+contra un nombre existente falla sin tocarlo. **La copia no se presenta como restaurable hasta que los
 dos caminos y los controles negativos tienen salida en la evidencia.**
 
 **`[V]` que cierra:** ADR-013 [V] 1–9 (10 ya está en el plan; el lockfile aquí);

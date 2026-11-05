@@ -437,10 +437,25 @@ carpeta temporal, no con `git checkout`, y un `trap` de salida borra los
 archivos descifrados y esa carpeta **conservando el código de salida original**
 (quickstart §4).
 
+**Salidas y base temporal** (tercera revisión del PR #37, R3-1 y R3-2). La copia
+escribe el manifiesto y el `.gpg` dentro de su carpeta temporal y solo los publica
+con su nombre final después de pasar todas las comprobaciones, con un enlace duro
+(atómico y que falla si el nombre existe). El nombre lleva fecha y hora al
+segundo y, si aun así existe, el script falla: **nunca sobrescribe** una copia.
+La restauración real crea **su propia** base temporal con nombre único
+(`juntia_restore_<fecha-hora>_<pid>`), apunta que la creó, escribe la evidencia
+(recuentos, sumas, SHA y código de salida, sin datos reales) en un log local y
+la borra en el `trap` **tanto con éxito como con fallo**. Si el nombre ya existe,
+falla sin tocarla: nunca borra una base que no creó.
+
 **Controles negativos** (PR A): el ensayo del job `db` se repite con fallos
 inyectados —una migración rota, un recuento alterado en el manifiesto, otro SHA
 en el manifiesto y un `data.sql` modificado— y cada repetición **debe**
-terminar con código distinto de 0 y sin la marca de éxito. Si una de ellas
+terminar con código distinto de 0 y sin la marca de éxito. Además: una
+restauración que falla a mitad no deja **ninguna base `juntia_restore*`** y sí su
+log con `exit=` distinto de 0; una copia que falla no deja **ningún archivo de
+salida** ni carpeta temporal; y una copia contra un nombre que ya existe falla
+y deja el archivo existente intacto. Si una de ellas
 «pasa», el job falla. Así se demuestra que el ensayo puede fallar, no solo que
 pasa.
 

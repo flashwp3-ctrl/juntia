@@ -166,32 +166,52 @@ no se guarda en ningún archivo del repositorio. El script es
 set -euo pipefail
 : "${DB:?exporta DB con la cadena de conexión de producción}"
 TAG=$(git describe --tags --match 'db-prod-*' --abbrev=0 origin/main)
-D=$(date +%F); WORK=$(mktemp -d); SRC="$WORK/src"
+# Nombre único con marca de tiempo al segundo; si aun así existe, el script falla (nunca sobrescribe).
+NAME="juntia-$(date +%Y-%m-%dT%H%M%S)"
+OUT_GPG="$PWD/$NAME.tar.gpg"; OUT_MAN="$PWD/$NAME.manifest.txt"
+# Temporal en la misma carpeta de destino: el paso final es un enlace duro, atómico en el mismo sistema de archivos.
+WORK=$(mktemp -d "$PWD/.juntia-backup.XXXXXX"); SRC="$WORK/src"; PUBLISHED=()
 cleanup() {
   rc=$?
-  rm -f "$WORK/data.sql" "$WORK/juntia.tar"
+  if [ "$rc" -ne 0 ]; then rm -f "${PUBLISHED[@]}"; fi   # solo lo que este script publicó
   git worktree remove --force "$SRC" 2>/dev/null || true
-  rm -rf "$WORK"
+  rm -rf "$WORK"                                          # data.sql en claro, tar, manifiesto y .gpg temporales
   exit "$rc"
 }
 trap cleanup EXIT
+test ! -e "$OUT_GPG" && test ! -e "$OUT_MAN"
 git worktree add --detach "$SRC" "$TAG"
 pg_dump "$DB" --data-only --column-inserts --on-conflict-do-nothing \
   -t 'juntia_data.*' -t auth.users -t auth.identities -f "$WORK/data.sql"
 # Bloqueante: falla si la etiqueta no existe o si las migraciones de producción ≠ las de la etiqueta.
 bash scripts/backup-manifest.sh --write --mode production --tag "$TAG" \
-  --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "juntia-$D.manifest.txt"
-tar -cf "$WORK/juntia.tar" -C "$WORK" data.sql -C "$PWD" "juntia-$D.manifest.txt"
-gpg --symmetric --cipher-algo AES256 -o "juntia-$D.tar.gpg" "$WORK/juntia.tar"
-echo "COPIA LISTA: juntia-$D.tar.gpg (etiqueta $TAG)"
+  --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "$WORK/manifest.txt"
+tar -cf "$WORK/juntia.tar" -C "$WORK" data.sql manifest.txt
+gpg --symmetric --cipher-algo AES256 -o "$WORK/juntia.tar.gpg" "$WORK/juntia.tar"
+gpg --list-packets --batch "$WORK/juntia.tar.gpg" > /dev/null   # el archivo cifrado es legible
+# Publicación: solo después de todas las comprobaciones. ln falla si el destino existe.
+ln "$WORK/juntia.tar.gpg" "$OUT_GPG"; PUBLISHED+=("$OUT_GPG")
+ln "$WORK/manifest.txt" "$OUT_MAN"; PUBLISHED+=("$OUT_MAN")
+echo "COPIA LISTA: $NAME.tar.gpg (etiqueta $TAG)"
 ```
 
 - `-t 'juntia_data.*'` y no `-n juntia_data`: con `-t` presente, `-n` se ignora
   (research R6). `--column-inserts`, para que una columna que falte en el destino
   falle en lugar de desplazar valores.
-- Solo quedan el `.gpg` y el manifiesto, que no lleva datos personales y se pega
-  en la evidencia. Si algo falla, no queda ni una copia a medias ni `data.sql` en
-  claro, y el mensaje `COPIA LISTA` no aparece.
+- **Lo que garantiza** (y nada más):
+  - todo se escribe primero en una carpeta temporal `.juntia-backup.*` dentro de
+    la carpeta de destino, que el `trap` borra siempre, con éxito o con fallo;
+  - el `.gpg` y el manifiesto solo aparecen con su nombre final **después** de
+    pasar todas las comprobaciones, cada uno con un enlace duro, que es atómico y
+    falla si el nombre ya existe;
+  - **nunca sobrescribe** una copia: el nombre lleva fecha y hora al segundo, y si
+    aun así existe, el script falla antes de empezar;
+  - si algo falla, el código de salida es distinto de 0, `COPIA LISTA` no
+    aparece, no queda `data.sql` en claro, y si el fallo llega entre los dos
+    enlaces, el `trap` borra el que este script ya había publicado.
+  - **No** garantiza nada sobre copias anteriores ni sobre la carpeta donde el
+    fundador las guarde después.
+- El manifiesto no lleva datos personales y se pega en la evidencia.
 - La frase de paso va en el gestor de contraseñas del fundador, nunca junto al
   archivo. El `.gpg` se guarda **fuera de Supabase y del repositorio**.
 
@@ -223,6 +243,9 @@ fallos inyectados y **debe fallar** en cada uno, sin imprimir nunca el mensaje d
 2. un manifiesto con un recuento alterado;
 3. un manifiesto con otro SHA;
 4. un `data.sql` modificado (no coincide el `sha256`).
+5. **una restauración que falla a mitad** (camino B con la migración rota): además de fallar, **no debe quedar ninguna base `juntia_restore*`** en el servidor del runner (`select count(*) from pg_database where datname like 'juntia_restore%'` = 0) y el log debe existir con su `exit=` distinto de 0;
+6. **una copia que falla** (por ejemplo, el manifiesto rechaza otro SHA): **no debe quedar ningún archivo de salida** (`juntia-*.tar.gpg`, `juntia-*.manifest.txt`) ni carpeta `.juntia-backup.*`;
+7. una copia con un nombre de destino que ya existe: falla y el archivo existente queda intacto (mismo `sha256`).
 
 El job comprueba el código de salida distinto de 0 de cada uno y que la salida no
 contiene la marca de éxito; si un control negativo «pasa», el job falla. **Ningún
@@ -238,35 +261,45 @@ o posterior. En un PostgreSQL 17 instalado en el equipo (sin Docker), en una bas
 #!/usr/bin/env bash
 set -euo pipefail
 ARCHIVE=${1:?ruta del .tar.gpg}; PG=${PG:-postgresql://postgres@localhost}
-WORK=$(mktemp -d); SRC="$WORK/src"
+STAMP=$(date +%Y%m%dT%H%M%S); DBNAME="juntia_restore_${STAMP}_$$"
+LOG="$PWD/juntia-restore-$STAMP.log"                 # evidencia: recuentos y sumas, sin datos reales
+WORK=$(mktemp -d); SRC="$WORK/src"; CREATED_DB=0
 cleanup() {
   rc=$?
-  rm -f "$WORK/data.sql" "$WORK/juntia.tar"
+  echo "exit=$rc base=$DBNAME creada_por_este_script=$CREATED_DB" >> "$LOG"   # la evidencia se escribe antes de borrar
+  if [ "$CREATED_DB" -eq 1 ]; then dropdb --maintenance-db="$PG/postgres" "$DBNAME" && echo "base $DBNAME borrada" >> "$LOG"; fi
   git worktree remove --force "$SRC" 2>/dev/null || true
-  rm -rf "$WORK"
+  rm -rf "$WORK"                                        # tar y data.sql descifrados
   exit "$rc"
 }
 trap cleanup EXIT
 gpg -d -o "$WORK/juntia.tar" "$ARCHIVE"
 tar -xf "$WORK/juntia.tar" -C "$WORK"
-MANIFEST=$(ls "$WORK"/juntia-*.manifest.txt)
-SHA=$(sed -n 's/^sha=//p' "$MANIFEST"); test -n "$SHA"
+SHA=$(sed -n 's/^sha=//p' "$WORK/manifest.txt"); test -n "$SHA"
 git worktree add --detach "$SRC" "$SHA"
-createdb --maintenance-db="$PG/postgres" juntia_restore   # falla si ya existe: la base tiene que estar vacía
-psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -f "$SRC/supabase/restore/plain-postgres-bootstrap.sql"
+# La base no debe existir: si existe, falla y no la toca (nunca borra una base que no creó).
+test "$(psql "$PG/postgres" -X -A -t -c "select count(*) from pg_database where datname = '$DBNAME'")" = 0
+createdb --maintenance-db="$PG/postgres" "$DBNAME"; CREATED_DB=1
+psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -f "$SRC/supabase/restore/plain-postgres-bootstrap.sql"
 for m in "$SRC"/supabase/migrations/*.sql; do
-  psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -1 -f "$m"   # con set -e, la primera que falla detiene todo
+  psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -1 -f "$m"     # con set -e, la primera que falla detiene todo
 done
-psql "$PG/juntia_restore" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql"
-bash scripts/backup-manifest.sh --verify --mode production --manifest "$MANIFEST" \
-  --migrations "$SRC/supabase/migrations" --db "$PG/juntia_restore" --data "$WORK/data.sql"
-echo "MANIFIESTO COINCIDE"
+psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql"
+# Escribe en el log los recuentos y sumas de origen y de destino; falla si no coinciden.
+bash scripts/backup-manifest.sh --verify --mode production --manifest "$WORK/manifest.txt" \
+  --migrations "$SRC/supabase/migrations" --db "$PG/$DBNAME" --data "$WORK/data.sql" | tee -a "$LOG"
+echo "MANIFIESTO COINCIDE" | tee -a "$LOG"
 ```
 
-Se pega en la evidencia: la salida del script (sin datos), `MANIFIESTO COINCIDE`
-y la fecha. Si el script termina con otro código, la restauración **no** cuenta.
-Después se borra `juntia_restore` (`dropdb`) y el servicio de PostgreSQL se apaga
-o se desinstala (ADR-011 §9.6).
+- **Base temporal propia:** el script crea `juntia_restore_<fecha-hora>_<pid>`,
+  apunta que la creó él, y el `trap` la borra **tanto si termina bien como si
+  falla**, después de escribir la evidencia en `juntia-restore-<fecha-hora>.log`.
+  Si el nombre ya existe, falla sin tocarla: nunca borra una base que no creó.
+- **El log** solo lleva recuentos, sumas de comprobación, el SHA, el código de
+  salida y el nombre de la base; ningún dato real. Es lo que se pega en la
+  evidencia, con `MANIFIESTO COINCIDE`. Si el log termina en `exit=` distinto
+  de 0, la restauración **no** cuenta.
+- Al terminar, el servicio de PostgreSQL se apaga o se desinstala (ADR-011 §9.6).
 
 ## 5. Revisión de un PR de implementación
 
