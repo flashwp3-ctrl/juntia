@@ -454,8 +454,8 @@ cambian; cambia **dónde** corre cada uno.
    Ese workflow se dispara con `on: push` limitado a la rama del preflight, porque
    `workflow_dispatch` solo funciona con workflows que ya existen en `main`.
 5. **Para usar la app en desarrollo** hay un segundo proyecto Supabase Free,
-   `juntia-dev`, en la cuenta de la segunda fundadora y en la región de
-   producción. No guarda datos reales, no comparte claves con producción y no lo
+   `juntia-dev`, en la cuenta de la segunda fundadora, en East US (North
+   Virginia) (nota del 5 de noviembre de 2026). No guarda datos reales, no comparte claves con producción y no lo
    usa ninguna prueba automatizada, tampoco el preflight. Las migraciones se le
    aplican con la CLI fijada en el plan y **siempre con el destino explícito**, en
    la sintaxis de esa versión: en la v2, `supabase db push --linked` con el
@@ -463,6 +463,18 @@ cambian; cambia **dónde** corre cada uno.
    porque desde la v3 `db push` apunta a la base local por defecto. Antes de
    aplicar, se comprueba que el destino es `juntia-dev`. Ningún equipo guarda una
    configuración enlazada a producción.
+
+   **Nota · 5 de noviembre de 2026.** Dos precisiones de la ejecución de la 002.
+   `juntia-dev` quedó en East US (North Virginia), no en la región de
+   producción como preveía este apartado; los fundadores lo aceptaron porque no guarda datos reales y la
+   región no cambia cómo se comportan las migraciones. Y las migraciones a
+   proyectos alojados las puede lanzar el gestor (Claude Code) en el equipo de un
+   fundador, con la sesión de la CLI de ese fundador y su confirmación explícita
+   antes de cada paso de escritura; en producción, el enlace dura solo esa sesión
+   y termina con `unlink`. Si la sesión se corta, se aplica la recuperación de
+   quickstart §3 de la 002: antes de cualquier trabajo con Supabase se lee el
+   `project-ref` enlazado y, si no es `juntia-dev`, se para y se desenlaza con
+   confirmación del fundador.
 6. **Recuperación (decisión 16, 16.11).**
    - La copia de producción la hace un fundador con el cliente `pg_dump`, sin
      Docker, siguiendo el procedimiento de copia de Supabase para que no arrastre
