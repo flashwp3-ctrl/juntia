@@ -108,11 +108,15 @@ jobs:
         shell: bash
         run: |
           psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select jsonb_build_object('uid', pg_get_functiondef('auth.uid()'::regprocedure), 'columns', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) order by c.relname,a.attnum) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where n.nspname='auth' and c.relname in ('users','identities') and a.attnum>0 and not a.attisdropped));" > "$RUNNER_TEMP/auth-bootstrap.json"
+          # F40-2: solo firmas y ACL, nunca cuerpos, claves ni filas de usuario.
+          psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select n.nspname,p.oid::regprocedure,coalesce(p.proacl::text,'DEFAULT') from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proowner='postgres'::regrole and n.nspname !~ '^pg_' and n.nspname<>'information_schema' and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE')) order by n.nspname,p.proname,p.oid;" > "$RUNNER_TEMP/postgres-execute-inventory.txt"
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: auth-bootstrap-description
-          path: ${{ runner.temp }}/auth-bootstrap.json
+          path: |
+            ${{ runner.temp }}/auth-bootstrap.json
+            ${{ runner.temp }}/postgres-execute-inventory.txt
           if-no-files-found: ignore
       - name: Install plain PostgreSQL 17 from PGDG
         id: plain

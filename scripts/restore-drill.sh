@@ -15,7 +15,28 @@ trap cleanup EXIT
 export DRILL_USER_FILE="$WORK/user.json"
 node "$ROOT/tests/support/restore-user.mjs" seed
 mkdir "$WORK/good"
-(cd "$WORK/good"; DB="$DB_URL" bash "$ROOT/scripts/backup.sh" --mode ci --sha "$GITHUB_SHA")
+# F40-1: «una escritura después de exportar la instantánea y antes del manifiesto
+# no cambia la copia». Se intercepta solo pg_dump del test, nunca el de producción.
+mkdir "$WORK/concurrent-bin"
+export DRILL_REAL_PG_DUMP DRILL_SNAPSHOT_MARKER="$WORK/dump-snapshot"
+DRILL_REAL_PG_DUMP=$(command -v pg_dump)
+cat > "$WORK/concurrent-bin/pg_dump" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+imported=false
+for arg in "$@"; do [[ $arg != --snapshot=* ]] || imported=true; done
+"$DRILL_REAL_PG_DUMP" "$@"
+# Otra conexión confirma una escritura que el manifiesto no debe ver.
+psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -c "insert into juntia_data.signup_allowlist(email) values('snapshot-concurrent@seed.test')"
+printf '%s\n' "$imported" > "$DRILL_SNAPSHOT_MARKER"
+echo "F40-1: escritura concurrente confirmada después del dump; snapshot importado=$imported" >&2
+SH
+chmod +x "$WORK/concurrent-bin/pg_dump"
+(cd "$WORK/good"; PATH="$WORK/concurrent-bin:$PATH" DB="$DB_URL" bash "$ROOT/scripts/backup.sh" --mode ci --sha "$GITHUB_SHA")
+# backup.sh conserva el diagnóstico de pg_dump en su temporal privado; el marcador
+# del test confirma fuera de él que la escritura sí se ejecutó (sin esperas fijas).
+test -f "$DRILL_SNAPSHOT_MARKER"
+echo "F40-1: escritura concurrente confirmada; snapshot importado=$(cat "$DRILL_SNAPSHOT_MARKER")"
 ARCHIVE=$(find "$WORK/good" -name 'juntia-*.tar.gpg')
 gpg --batch --pinentry-mode loopback --passphrase-fd 3 -d -o "$WORK/copy.tar" "$ARCHIVE" 3<<<"$JUNTIA_BACKUP_PASSPHRASE"
 tar -xf "$WORK/copy.tar" -C "$WORK"
@@ -25,6 +46,9 @@ psql "$DB_URL" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql" > "$WORK/path-a-sql.
 bash "$ROOT/scripts/backup-manifest.sh" --verify --mode ci --sha "$GITHUB_SHA" --manifest "$WORK/manifest.txt" --migrations "$ROOT/supabase/migrations" --db "$DB_URL" --data "$WORK/data.sql"
 node "$ROOT/tests/support/restore-user.mjs" login
 echo 'Camino A: MANIFIESTO COINCIDE; usuario restaurado entra'
+test "$(cat "$DRILL_SNAPSHOT_MARKER")" = true
+test "$(psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from juntia_data.signup_allowlist where email='snapshot-concurrent@seed.test'")" = 0
+echo 'F40-1: dump y manifiesto comparten instantánea; restauración A excluye la escritura concurrente'
 (cd "$WORK/good"; bash "$ROOT/scripts/restore-plain.sh" "$ARCHIVE" --mode ci --sha "$GITHUB_SHA")
 echo 'Camino B: MANIFIESTO COINCIDE; base temporal borrada'
 no_database() { test "$(psql "$PG/postgres" -X -qAt -c "select count(*) from pg_database where datname like 'juntia_restore%'")" = 0; }
