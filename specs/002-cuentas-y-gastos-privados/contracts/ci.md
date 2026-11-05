@@ -116,7 +116,7 @@ Una ruta nueva sin clasificar hace fallar `verify`.
 
 `reducedMotion: 'reduce'` por defecto, `retries` 0/1, solo Chromium, cero
 `waitForTimeout` (las reglas de lint de la 001 ya cubren `tests/**`). Un test con
-motion activo para los momentos L2 de E5 (PR C). `playwright/.auth` en
+motion activo para los momentos L2 de E5 (PR D). `playwright/.auth` en
 `.gitignore`. El número de workers se mide en el PR B y se reporta (ADR-011 [V] 3).
 
 ## Lint nuevo
@@ -135,5 +135,7 @@ La regla de dependencia de `domain` de la 001 ya prohíbe `@supabase/*` y
 | --- | --- | --- | --- |
 | A | `app` + **`db`** | 0 | Filas de base de datos «SOLO EN CI»; E2E «NO APLICABLE» |
 | B | + **`e2e`** | **1** nace | E2E «SOLO EN CI» |
-| C | igual | **2** nace; corren 1 y 2 | igual |
-| D | igual | 1 suma la descarga de Exportar; corren 1 y 2 | igual |
+| C | igual | 1 suma la descarga de Exportar; corre la 1 | igual |
+| D | igual | **2** nace; corren 1 y 2 | igual |
+
+Orden C/D de la decisión 16.18 (4 nov 2026).

@@ -1012,7 +1012,7 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 
 | # | Tema | Elección |
 | --- | --- | --- |
-| 16.1 | Forma | Una especificación, la 002, con cuatro PR de implementación seguidos |
+| 16.1 | Forma | Una especificación, la 002, con cuatro PR de implementación seguidos: A, base de datos, seguridad y dinero; B, acceso y Mi cuenta; C, Inicio, Actividad y Exportar; D, Anotar, editar y eliminar, más las verificaciones heredadas (orden de C y D según la 16.18) |
 | 16.2 | Anotar E1–E5 `[P]` | Aprobado en su versión privada, sin «Pagó», «Participan» ni «Reparto» |
 | 16.3 | Ingresos | Selector «Gasto o Ingreso» en Anotar, aprobado viendo la pantalla |
 | 16.4 | Eliminar | La interfaz dice «Eliminar»; el movimiento se anula y se audita. Sin «Deshacer» posterior |
@@ -1029,8 +1029,9 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
 | 16.16 | Enumeración por la API de Auth | Riesgo aceptado hasta MVP-1; las pantallas no enumeran. Decidida por el primer fundador el 4 de noviembre de 2026, tras el preflight del plan de P0-1: la API de Auth de Supabase, llamada directamente, revela si un correo está en la lista permitida (403) y si ya tiene cuenta (422). Se suma a los pendientes de lanzamiento |
 | 16.17 | Creación del perfil | En el primer acceso verificado, con el nombre visible de A2 guardado hasta entonces en los metadatos de la cuenta. Decidida por el primer fundador el 4 de noviembre de 2026 en la revisión del PR del plan de P0-1 (spec 002, Q16 y FR-029) |
+| 16.18 | Orden de los PR C y D | Orden de los PR C y D intercambiado: C = Inicio, Actividad y Exportar; D = Anotar, editar y eliminar, más las verificaciones heredadas; mismo alcance. Decidida por el primer fundador el 4 de noviembre de 2026 en la revisión del PR de tasks de la 002: E5 necesita Inicio y Actividad para actualizar el total y la fila |
 
-La 16.16 salió del preflight del plan de P0-1 y la 16.17 de su revisión; la segunda fundadora las confirma con el merge del PR del plan.
+La 16.16 salió del preflight del plan de P0-1 y la 16.17 de su revisión; la segunda fundadora las confirma con el merge del PR del plan. La 16.18 salió de la revisión del PR de tasks y la confirma con el merge de ese PR.
 
 **Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio, apertura del registro y cerrar la enumeración por la API de Auth (16.16). Se suman al bloqueo legal de §15.6.1.
 

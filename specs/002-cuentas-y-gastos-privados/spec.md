@@ -47,11 +47,11 @@ documental.
 
 ### Session 2026-11-04
 
-- Q1: ¿Una especificación o dos para P0-1? → A: **Una**, la 002, con **cuatro PR de implementación seguidos**: (A) base de datos, seguridad y dinero; (B) Acceso y Mi cuenta; (C) Anotar, editar y eliminar; (D) Inicio, Actividad, exportación y las verificaciones heredadas.
+- Q1: ¿Una especificación o dos para P0-1? → A: **Una**, la 002, con **cuatro PR de implementación seguidos**: (A) base de datos, seguridad y dinero; (B) Acceso y Mi cuenta; (C) Inicio, Actividad y exportación; (D) Anotar, editar y eliminar, y las verificaciones heredadas. *Orden C/D intercambiado el 4 nov 2026 (decisión 16.18)*: en la primera versión C era Anotar y D era Inicio; el alcance no cambia, y así E5 tiene Inicio y Actividad donde actualizar el total y la fila.
 - Q2: ¿Se aprueba el flujo de Anotar E1–E5 `[P]`? → A: **Sí, en su versión privada.** Sin «Pagó», «Participan» ni «Reparto», porque en P0-1 no existe la pareja. Monto, categoría, fecha y descripción, con el «Deshacer» de 6 s al guardar.
-- Q3: ¿Cómo se anota un ingreso, que no está diseñado? → A: Con un selector **«Gasto · Ingreso»** arriba de la hoja de Anotar y la categoría «Ingresos». Se diseña siguiendo el sistema y se aprueba viendo la pantalla en el PR C (maestro §15.9).
+- Q3: ¿Cómo se anota un ingreso, que no está diseñado? → A: Con un selector **«Gasto · Ingreso»** arriba de la hoja de Anotar y la categoría «Ingresos». Se diseña siguiendo el sistema y se aprueba viendo la pantalla en el PR D (maestro §15.9; orden de la decisión 16.18).
 - Q4: ¿«Eliminar» o «anular»? → A: La interfaz dice **«Eliminar»**, con el diálogo diseñado (02·1, «¿Eliminar este gasto?»). Por dentro, el movimiento queda **anulado y auditado**: sale de listas y totales, pero no se borra (maestro §5.2, §5.4). Sin «Deshacer» después de eliminar.
-- Q5: ¿Qué muestra Inicio sin pareja, y Nosotros? → A: En **Yo**, el Inicio diseñado (04·1) sin los bloques compartidos. En **Nosotros**, un estado «todavía no disponible» que explica que llega cuando exista la pareja, como Balance en la 001. Los estados vacío, cargando y error siguen el patrón de 04·6 y el Skeleton de 02·1. Se aprueban viendo las pantallas en el PR D.
+- Q5: ¿Qué muestra Inicio sin pareja, y Nosotros? → A: En **Yo**, el Inicio diseñado (04·1) sin los bloques compartidos. En **Nosotros**, un estado «todavía no disponible» que explica que llega cuando exista la pareja, como Balance en la 001. Los estados vacío, cargando y error siguen el patrón de 04·6 y el Skeleton de 02·1. Se aprueban viendo las pantallas en el PR C (orden de la decisión 16.18).
 - Q6: ¿Se aprueba la sección Cuenta y Acceso `[P]`? → A: **Sí, la anatomía tal como está** (04·14 a 04·19). P0-1 construye todo menos Mi pareja, que muestra «llega con P0-2». En la primera entrada (A6) no aparece «Invitar a mi pareja».
 - Q7: ¿Se aprueba la persistencia del tema `[P][V]`? → A: **Sí**: en `profiles` y en una cookie que lee el script bloqueante. Su `[V]` se ejecuta antes de cerrar el plan.
 - Q8: ¿Qué es «calendario» en P0-1? → A: El resumen del mes de Actividad con **flechas de mes anterior y siguiente**, y la fecha de cada movimiento elegida en Anotar. Sin vista de cuadrícula.
@@ -641,8 +641,10 @@ se fusiona sin su E2E (`docs/TESTING.md`, «Lo que arranca progresivamente»):
 | --- | --- |
 | A · Base de datos, seguridad y dinero | Ninguna: no hay recorrido de interfaz. Entran el job SQL/RLS y la siembra |
 | B · Acceso y Mi cuenta | **Spec 1** nace, con acceso y Mi cuenta, sin pareja ni invitaciones (P0-2) |
-| C · Anotar, editar y eliminar | **Spec 2** nace, cronometrada |
-| D · Inicio, Actividad y exportación | La spec 1 suma el caso de descarga de Exportar (`docs/TESTING.md`, matriz de recorridos) |
+| C · Inicio, Actividad y exportación | La spec 1 suma el caso de descarga de Exportar (`docs/TESTING.md`, matriz de recorridos) |
+| D · Anotar, editar y eliminar | **Spec 2** nace, cronometrada |
+
+Orden C/D intercambiado el 4 nov 2026 (decisión 16.18).
 
 La sexta plaza sigue libre.
 
