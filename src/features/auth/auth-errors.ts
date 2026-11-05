@@ -48,14 +48,6 @@ export function recoverResult(error: AuthErrorLike): AuthResult {
   return { kind: "notice", notice: copy.auth.recover.sent };
 }
 
-/** `/auth/confirm`: verificación → A1 con aviso; recuperación → A5; caducado, usado o incompleto → A4 con aviso. */
-export function confirmResult(type: string | null, error: AuthErrorLike): AuthResult {
-  if (error || !type) return { kind: "redirect", to: LINK_EXPIRED };
-  if (type === "signup" || type === "email") return { kind: "redirect", to: "/entrar?aviso=verificado" };
-  if (type === "recovery") return { kind: "redirect", to: "/nueva-contrasena" };
-  return { kind: "redirect", to: LINK_EXPIRED };
-}
-
 /** A5. Sin la sesión de recuperación, el enlace ya no sirve: se pide otro. */
 export function newPasswordResult(error: AuthErrorLike): AuthResult {
   if (!error) return { kind: "ok" };

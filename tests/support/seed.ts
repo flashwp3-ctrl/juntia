@@ -35,7 +35,7 @@ const adminClient = () => {
 };
 
 /** Cliente de servidor de @supabase/ssr sobre un almacén de cookies en memoria. */
-function cookieJarClient() {
+export function cookieJarClient() {
   const { url, publishableKey } = runnerSupabase();
   const jar = new Map<string, { value: string; maxAge?: number }>();
   const client = createServerClient(url, publishableKey, {

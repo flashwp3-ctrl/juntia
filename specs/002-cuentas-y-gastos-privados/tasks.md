@@ -262,11 +262,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-058; Q10; quickstart §3, paso 6.
   - Terminado cuando: `evidence.md` registra fecha y proyecto de cada correo recibido, sin las direcciones.
 
-- [ ] T037 **Humana** (dueña), en **los dos proyectos** (producción y `juntia-dev`), según quickstart §3: confirmación de correo y plantillas con `/auth/confirm?token_hash=…&type=…`; URL del sitio y de redirección; hook Before User Created → `juntia_private.before_user_created_hook`; «Exposed schemas» solo `public`; **contraseña mínima 8**; las filas de la lista permitida con el SQL de quickstart §3, paso 7
+- [x] T037 **Humana** (dueña), en **los dos proyectos** (producción y `juntia-dev`), según quickstart §3: confirmación de correo y plantillas con `/auth/confirm?token_hash=…&type=…`; URL del sitio y de redirección; hook Before User Created → `juntia_private.before_user_created_hook`; «Exposed schemas» solo `public`; **contraseña mínima 8**; las filas de la lista permitida con el SQL de quickstart §3, paso 7
   - Cumple: FR-021, FR-023, FR-024, FR-058; F37-7.
   - Terminado cuando: `evidence.md` tiene una línea por ajuste y proyecto, sin correos ni claves.
 
-- [ ] T038 **Humana** (dueña): variables de entorno de Vercel por nombre (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL`): **Production → proyecto de producción; Preview → `juntia-dev`**. Ninguna clave secreta en Vercel (quickstart §3; plan, «Puntos para el revisor», 6)
+- [x] T038 **Humana** (dueña): variables de entorno de Vercel por nombre (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL`): **Production → proyecto de producción; Preview → `juntia-dev`**. Ninguna clave secreta en Vercel (quickstart §3; plan, «Puntos para el revisor», 6)
   - Cumple: FR-058, FR-011.
   - Terminado cuando: `evidence.md` lista los nombres por entorno, sin valores.
 

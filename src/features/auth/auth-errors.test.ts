@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { AuthApiError, AuthRetryableFetchError, AuthSessionMissingError, AuthWeakPasswordError } from "@supabase/supabase-js";
 import { copy } from "@/lib/copy/es";
-import { confirmResult, newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult } from "./auth-errors";
+import { newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult } from "./auth-errors";
 
 const hook403 = new AuthApiError("No fue posible completar el registro.", 403, "unknown");
 const exists422 = new AuthApiError("User already registered", 422, "user_already_exists");
@@ -56,17 +56,7 @@ describe("recuperar (A4 → A4b)", () => {
   });
 });
 
-describe("enlace de /auth/confirm", () => {
-  it("verificación válida → A1 con aviso; recuperación válida → A5; caducado o usado → A4 sin datos", () => {
-    expect(confirmResult("signup", null)).toEqual({ kind: "redirect", to: "/entrar?aviso=verificado" });
-    expect(confirmResult("email", null)).toEqual({ kind: "redirect", to: "/entrar?aviso=verificado" });
-    expect(confirmResult("recovery", null)).toEqual({ kind: "redirect", to: "/nueva-contrasena" });
-    const expired = new AuthApiError("Email link is invalid or has expired", 403, "otp_expired");
-    for (const type of ["signup", "recovery", "email"] as const) expect(confirmResult(type, expired)).toEqual({ kind: "redirect", to: "/recuperar?enlace=caducado" });
-    expect(confirmResult(null, null)).toEqual({ kind: "redirect", to: "/recuperar?enlace=caducado" });
-  });
-});
-
+// Los dos caminos de /auth/confirm (token_hash y code) se prueban en confirm.test.ts.
 describe("contraseña nueva (A5) y cerrar sesión", () => {
   it("valida contraseña débil, igual o sesión de recuperación perdida", () => {
     expect(newPasswordResult(null)).toEqual({ kind: "ok" });

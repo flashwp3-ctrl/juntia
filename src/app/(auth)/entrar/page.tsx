@@ -10,6 +10,6 @@ type Props = { searchParams: Promise<{ volver?: string | string[]; aviso?: strin
 export default async function SignInPage({ searchParams }: Props) {
   const params = await searchParams;
   const volver = safeReturnPath(typeof params.volver === "string" ? params.volver : null);
-  const notice = params.aviso === "verificado" || params.aviso === "sesion-cerrada" ? params.aviso : null;
+  const notice = params.aviso === "verificado" || params.aviso === "sesion-cerrada" || params.aviso === "enlace" ? params.aviso : null;
   return <SignInForm volver={volver} notice={notice} />;
 }

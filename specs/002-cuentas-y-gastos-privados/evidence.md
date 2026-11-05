@@ -1178,11 +1178,31 @@ Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
 
 ### T037
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
+Alejandro** (sin correos ni claves):
+
+| Ajuste | `juntia-dev` | `juntia-prod` |
+| --- | --- | --- |
+| Hook Before User Created → `juntia_private.before_user_created_hook` | Activado | Activado |
+| Contraseña mínima | 8 | 8 |
+| Confirm email | Activado | Activado |
+| Site URL | `http://localhost:3000` | `https://juntia.vercel.app` |
+| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | `https://juntia.vercel.app/**` |
+| Lista permitida | Los dos fundadores | Los dos fundadores |
+| «Exposed schemas» solo `public` | Comprobado en el PR A | T035 |
+| Plantillas de correo | **No editables en Free sin SMTP propio.** Decisión del mismo día («Adaptar la app»): se usan las plantillas por defecto y `/auth/confirm` acepta su `code` (quickstart §3, paso 1, enmendado) | Igual |
 
 ### T038
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
+Alejandro.** Variables de Vercel por nombre, sin valores:
+
+| Entorno | Variables |
+| --- | --- |
+| Production | `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de `juntia-prod`; `SITE_URL` |
+| Preview | `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de `juntia-dev`; sin `SITE_URL` (la app usa el origen de la petición) |
+
+Ninguna clave secreta en Vercel.
 
 ### PR B · T039–T050 (tests primero e implementación)
 
@@ -1207,6 +1227,16 @@ comprueba `Cache-Control: private, no-store` en `/cuenta` con sesión.
 T045 pide además que cada estado se alcance con `npm run dev` contra
 `juntia-dev`: **pendiente de T036–T038** (humanas); hasta entonces cada estado
 se alcanza en el Supabase del runner (spec 1 y axe del job `e2e`).
+
+**Enmienda del 5 de noviembre de 2026 · `/auth/confirm` con dos caminos.**
+`src/features/auth/confirm.ts` resuelve `token_hash` (plantillas del repo, Supabase
+local y runner) y `code` (plantilla por defecto de los proyectos alojados en Free).
+Test de componentes `confirm.test.ts` visto en rojo
+([`confirm-code-red.txt`](evidence/pr-b/confirm-code-red.txt)) y en verde en local;
+`tests/integration/confirm-code.test.ts` recorre contra el GoTrue del runner la URL
+de la plantilla por defecto (`/auth/v1/verify?token=…&redirect_to=…`): code canjeado
+en el mismo navegador, otro navegador sin verificador y enlace repetido. Salida:
+job `db` del gate (abajo).
 
 T048 (sesión caducada): estado del registro de axe y capturas
 `cuenta_perfil--sesion-caducada--*`: la sesión se borra con la página abierta,

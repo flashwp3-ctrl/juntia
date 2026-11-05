@@ -22,6 +22,8 @@ const text = (form: FormData, key: string) => {
   return typeof value === "string" ? value : "";
 };
 
+// Destino de los enlaces de Auth (enmienda del 5 nov 2026): SITE_URL, o el origen de la petición en los previews, que
+// no la definen. Tiene que estar en las Redirect URLs del proyecto (quickstart §3, paso 2).
 async function siteUrl() {
   if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, "");
   const list = await headers();
@@ -47,7 +49,7 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email, password,
-    options: { data: { display_name: normalizeDisplayName(name) }, emailRedirectTo: `${await siteUrl()}/auth/confirm` },
+    options: { data: { display_name: normalizeDisplayName(name) }, emailRedirectTo: `${await siteUrl()}/auth/confirm?next=signup` },
   });
   const result = signUpResult(error);
   if (result.kind !== "redirect") return toState(result, kept);
@@ -61,7 +63,7 @@ export async function resend(_: FormState, form: FormData): Promise<FormState> {
   // Sin correo conocido, el mismo aviso: no hay nada que distinguir.
   if (!email) return { notice: copy.auth.verifyEmail.resent };
   const supabase = await createClient();
-  const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${await siteUrl()}/auth/confirm` } });
+  const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${await siteUrl()}/auth/confirm?next=signup` } });
   return toState(resendResult(error), { email: text(form, "email") });
 }
 
@@ -93,7 +95,7 @@ export async function recover(_: FormState, form: FormData): Promise<FormState> 
   const email = text(form, "email").trim();
   if (!email) return { field: "email", error: copy.auth.recover.missing };
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await siteUrl()}/nueva-contrasena` });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await siteUrl()}/auth/confirm?next=recovery` });
   return toState(recoverResult(error), { email });
 }
 

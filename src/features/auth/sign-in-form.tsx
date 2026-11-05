@@ -2,14 +2,20 @@
 // T045 / FR-022, FR-028; 04·17 A1, A1b, A1c, A1d; aviso de verificado (caso límite) y S3 («Cerraste sesión en este
 // dispositivo.»). A1b no dice cuál de los dos falló (US-1.4).
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useSyncExternalStore } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
 import { resend, signIn, type FormState } from "./actions";
+import { linkNoticeFromHash } from "./confirm";
 import { PasswordInput, SubmitButton, authLink } from "./auth-ui";
 
-type Props = { volver: string; notice: "verificado" | "sesion-cerrada" | null };
+// El fragmento se lee una sola vez por carga (después se borra de la URL); en el servidor no existe.
+let capturedHash: string | null = null;
+const readHash = () => (capturedHash ??= window.location.hash);
+const noSubscription = () => () => {};
+
+type Props = { volver: string; notice: "verificado" | "sesion-cerrada" | "enlace" | null };
 
 export function SignInForm({ volver, notice }: Props) {
   const [state, action] = useActionState<FormState, FormData>(signIn, {});
@@ -18,6 +24,13 @@ export function SignInForm({ volver, notice }: Props) {
   useEffect(() => {
     if (state.redirectTo) window.location.assign(state.redirectTo);
   }, [state.redirectTo]);
+  // aviso=enlace: el enlace reenviado vuelve con el resultado en el fragmento (confirm.ts). Se lee una vez y se borra de
+  // la URL sin usar ningún token.
+  const hash = useSyncExternalStore(noSubscription, readHash, () => null);
+  const linkNotice = notice === "enlace" && hash !== null ? (linkNoticeFromHash(hash) ?? copy.auth.recover.linkExpired) : null;
+  useEffect(() => {
+    if (notice === "enlace" && window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  }, [notice]);
   return (
     <>
       <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[26px] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
@@ -25,7 +38,8 @@ export function SignInForm({ volver, notice }: Props) {
         {copy.shell.brand}
       </p>
       {notice === "sesion-cerrada" ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice> : null}
-      {notice === "verificado" ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}
+      {notice === "verificado" || linkNotice === copy.auth.signIn.verified ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}
+      {linkNotice === copy.auth.recover.linkExpired ? <InlineNotice tone="danger" icon="warning-circle">{copy.auth.recover.linkExpired}</InlineNotice> : null}
       <h1 className={`font-serif text-[clamp(34px,calc((100vw-48px)*0.128),46px)] leading-[0.98] lg:text-[44px] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>
         {/* Dos líneas, como el comp, y un tamaño con el que «Lo tuyo, lo mío y» cabe en la columna con la fuente real y con su
             respaldo (que mide un 3 % más): con 48 px la línea medía 360 px reales y 371 de respaldo en una columna de 360, y

@@ -116,11 +116,24 @@ npx --yes supabase@2.121.0 db push --linked
 
 ### Configuración de Auth en cada proyecto alojado (una vez, la dueña)
 
-1. **Correo:** confirmación obligatoria; plantillas de confirmación y
-   recuperación con `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
-   y `…&type=recovery`.
+1. **Correo:** confirmación obligatoria. **Plantillas: no se tocan** (enmienda
+   del 5 de noviembre de 2026, decisión de Alejandro, «Adaptar la app»). En el
+   plan Free no se pueden editar sin SMTP propio («Set up custom SMTP to edit
+   templates»), así que los proyectos alojados mandan la plantilla por defecto:
+   `{{ .ConfirmationURL }}` pasa por `/auth/v1/verify` de Supabase y redirige a
+   `/auth/confirm?next=signup|recovery&code=…` (PKCE), el destino que fija la app
+   con `emailRedirectTo`/`redirectTo` (`SITE_URL` o el origen de la petición).
+   Las plantillas de `supabase/templates/`
+   (`{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=…`) solo
+   aplican al Supabase local y al del runner. `/auth/confirm` acepta los dos
+   caminos (`src/features/auth/confirm.ts`). **Limitación aceptada:** con la
+   plantilla por defecto, el enlace se abre en el mismo navegador donde se hizo el
+   registro o la recuperación; en otro navegador, el registro queda verificado y
+   lleva a Entrar, y la recuperación pide un enlace nuevo. El SMTP propio sigue
+   previsto antes de MVP-1 (decisión 16.10).
 2. **URL del sitio y de redirección:** producción → su dominio; `juntia-dev` →
-   `http://localhost:3000` y los previews de Vercel.
+   `http://localhost:3000` y los previews de Vercel. Las Redirect URLs tienen que
+   cubrir `<origen>/auth/confirm?next=…` (con `/**` basta).
 3. **Hook Before User Created** → Postgres → `juntia_private.before_user_created_hook`.
 4. **API › Exposed schemas:** solo `public`.
 5. **Contraseña mínima: 8 caracteres** (Authentication › Providers › Email ›

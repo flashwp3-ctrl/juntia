@@ -329,6 +329,10 @@ recibido de verdad) es un **requisito operativo antes de probar el PR B** (punto
    recuperación cuenta. El quickstart lo avisa.
 4. El servidor de correo propio sigue siendo un pendiente antes de MVP-1
    (decisión 16.10).
+5. **Nota del 5 de noviembre de 2026 (PR B):** sin SMTP propio, el plan Free
+   tampoco deja editar las plantillas de correo. Los proyectos alojados mandan la
+   plantilla por defecto y la app acepta su enlace (`code` de PKCE) además del
+   `token_hash` del Supabase local; ver quickstart §3, paso 1.
 
 ---
 

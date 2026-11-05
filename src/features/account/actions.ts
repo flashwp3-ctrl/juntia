@@ -47,7 +47,7 @@ export async function requestPasswordChange(): Promise<AccountActionResult> {
   if (!identity?.email) return { ok: false, error: "sessionExpired" };
   const list = await headers();
   const site = (process.env.SITE_URL ?? `${list.get("x-forwarded-proto") ?? "http"}://${list.get("host")}`).replace(/\/$/, "");
-  const { error } = await client.auth.resetPasswordForEmail(identity.email, { redirectTo: `${site}/nueva-contrasena` });
+  const { error } = await client.auth.resetPasswordForEmail(identity.email, { redirectTo: `${site}/auth/confirm?next=recovery` });
   // 429 da el mismo aviso: el enlace llega o se pide más tarde (contracts/errors.md, recuperación).
   if (error && error.name === "AuthRetryableFetchError") return { ok: false, error: "failed" };
   return { ok: true };
