@@ -1,0 +1,887 @@
+app	Set up job	﻿2026-11-05T13:57:02.8229198Z Current runner version: '2.338.2'
+app	Set up job	2026-11-05T13:57:02.8275739Z ##[group]Runner Image Provisioner
+app	Set up job	2026-11-05T13:57:02.8277437Z Hosted Compute Agent
+app	Set up job	2026-11-05T13:57:02.8278653Z Version: 20261028.624
+app	Set up job	2026-11-05T13:57:02.8279712Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+app	Set up job	2026-11-05T13:57:02.8281024Z Build Date: 2026-10-28T21:51:42Z
+app	Set up job	2026-11-05T13:57:02.8282236Z Worker ID: {3edbcf10-95c4-400e-89a3-60ce703bc6fe}
+app	Set up job	2026-11-05T13:57:02.8283453Z Region: eastus
+app	Set up job	2026-11-05T13:57:02.8284537Z Cloud: Azure
+app	Set up job	2026-11-05T13:57:02.8285434Z ##[endgroup]
+app	Set up job	2026-11-05T13:57:02.8308298Z ##[group]Operating System
+app	Set up job	2026-11-05T13:57:02.8309643Z Ubuntu
+app	Set up job	2026-11-05T13:57:02.8310650Z 24.04.5
+app	Set up job	2026-11-05T13:57:02.8311688Z LTS
+app	Set up job	2026-11-05T13:57:02.8312604Z ##[endgroup]
+app	Set up job	2026-11-05T13:57:02.8313519Z ##[group]Runner Image
+app	Set up job	2026-11-05T13:57:02.8314670Z Image: ubuntu-24.04
+app	Set up job	2026-11-05T13:57:02.8315671Z Version: 20261101.360.1
+app	Set up job	2026-11-05T13:57:02.8318041Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261101.360/images/ubuntu/Ubuntu2404-Readme.md
+app	Set up job	2026-11-05T13:57:02.8321167Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261101.360
+app	Set up job	2026-11-05T13:57:02.8323273Z ##[endgroup]
+app	Set up job	2026-11-05T13:57:02.8325248Z ##[group]GITHUB_TOKEN Permissions
+app	Set up job	2026-11-05T13:57:02.8348658Z Contents: read
+app	Set up job	2026-11-05T13:57:02.8350087Z Metadata: read
+app	Set up job	2026-11-05T13:57:02.8351215Z ##[endgroup]
+app	Set up job	2026-11-05T13:57:02.8354164Z Secret source: Actions
+app	Set up job	2026-11-05T13:57:02.8355894Z Cache mode: write
+app	Set up job	2026-11-05T13:57:02.8357579Z Prepare workflow directory
+app	Set up job	2026-11-05T13:57:02.9150665Z Prepare all required actions
+app	Set up job	2026-11-05T13:57:02.9222759Z Getting action download info
+app	Set up job	2026-11-05T13:57:03.2227347Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+app	Set up job	2026-11-05T13:57:03.5831532Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+app	Set up job	2026-11-05T13:57:03.8643532Z Complete job name: app
+app	Start job clock	﻿2026-11-05T13:57:03.9476296Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+app	Start job clock	2026-11-05T13:57:03.9477506Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+app	Start job clock	2026-11-05T13:57:03.9501218Z shell: /usr/bin/bash -e {0}
+app	Start job clock	2026-11-05T13:57:03.9502042Z ##[endgroup]
+app	Run actions/checkout@v7	﻿2026-11-05T13:57:03.9872562Z ##[group]Run actions/checkout@v7
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9873176Z with:
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9873605Z   repository: flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9877886Z   token: ***
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9878331Z   ssh-strict: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9878759Z   ssh-user: git
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9879198Z   persist-credentials: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9879687Z   clean: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9880175Z   sparse-checkout-cone-mode: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9880695Z   fetch-depth: 1
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9881114Z   fetch-tags: false
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9881543Z   show-progress: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9881978Z   lfs: false
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9882376Z   submodules: false
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9882810Z   set-safe-directory: true
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9883303Z   allow-unsafe-pr-checkout: false
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9883812Z env:
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9884205Z   JOB_STARTED_MS: 1793887023962
+app	Run actions/checkout@v7	2026-11-05T13:57:03.9884688Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.0186701Z Syncing repository: flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:06.0189125Z ##[group]Getting Git version info
+app	Run actions/checkout@v7	2026-11-05T13:57:06.0189809Z Working directory is '/home/runner/work/juntia/juntia'
+app	Run actions/checkout@v7	2026-11-05T13:57:06.0225886Z [command]/usr/bin/git version
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1346645Z git version 2.56.0
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1373545Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1389659Z Temporarily overriding HOME='/home/runner/work/_temp/cd59fa4d-c16d-4434-a6f9-badb1382dd34' before making global git config changes
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1396195Z Adding repository directory to the temporary git global config as a safe directory
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1398664Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1611093Z Deleting the contents of '/home/runner/work/juntia/juntia'
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1614609Z ##[group]Determining repository object format
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1617201Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1618283Z ##[group]Initializing the repository
+app	Run actions/checkout@v7	2026-11-05T13:57:06.1627646Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2077108Z hint: Using 'master' as the name for the initial branch. This default branch name
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2079325Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2080781Z hint: to use in all of your new repositories, which will suppress this warning,
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2081804Z hint: call:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2082499Z hint:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2083345Z hint: 	git config --global init.defaultBranch <name>
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2084116Z hint:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2084751Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2085747Z hint: 'development'. The just-created branch can be renamed via this command:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2086515Z hint:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2087250Z hint: 	git branch -m <name>
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2087746Z hint:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2088412Z hint: Disable this message with "git config set advice.defaultBranchName false"
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2165264Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2197270Z [command]/usr/bin/git remote add origin https://github.com/flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2404559Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2406062Z ##[group]Disabling automatic garbage collection
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2409048Z [command]/usr/bin/git config --local gc.auto 0
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2467974Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2469287Z ##[group]Setting up auth
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2470399Z Removing SSH command configuration
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2477160Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+app	Run actions/checkout@v7	2026-11-05T13:57:06.2528014Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4199850Z Removing HTTP extra header
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4204210Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4254439Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4510391Z Removing includeIf entries pointing to credentials config files
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4514177Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4569689Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4831636Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4884180Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Run actions/checkout@v7	2026-11-05T13:57:06.4931786Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Run actions/checkout@v7	2026-11-05T13:57:06.5002775Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Run actions/checkout@v7	2026-11-05T13:57:06.5050701Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Run actions/checkout@v7	2026-11-05T13:57:06.5095384Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:06.5096494Z ##[group]Fetching the repository
+app	Run actions/checkout@v7	2026-11-05T13:57:06.5103422Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +74b6e72b97a63406918eadc7d73d572232b4566e:refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7651335Z From https://github.com/flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7668098Z  * [new ref]         74b6e72b97a63406918eadc7d73d572232b4566e -> origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7670903Z [command]/usr/bin/git branch --list --remote origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7706788Z   origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7730026Z [command]/usr/bin/git rev-parse refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7755418Z 74b6e72b97a63406918eadc7d73d572232b4566e
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7762280Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7763419Z ##[group]Determining the checkout info
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7764583Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7768004Z [command]/usr/bin/git sparse-checkout disable
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7907383Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7954811Z ##[group]Checking out the ref
+app	Run actions/checkout@v7	2026-11-05T13:57:07.7960592Z [command]/usr/bin/git checkout --progress --force -B feat/002-a-database refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T13:57:08.1518350Z Switched to a new branch 'feat/002-a-database'
+app	Run actions/checkout@v7	2026-11-05T13:57:08.1570795Z branch 'feat/002-a-database' set up to track 'origin/feat/002-a-database'.
+app	Run actions/checkout@v7	2026-11-05T13:57:08.1609656Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T13:57:08.1733514Z [command]/usr/bin/git log -1 --format=%H
+app	Run actions/checkout@v7	2026-11-05T13:57:08.1757458Z 74b6e72b97a63406918eadc7d73d572232b4566e
+app	Run actions/setup-node@v7	﻿2026-11-05T13:57:08.1992051Z ##[group]Run actions/setup-node@v7
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1992383Z with:
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1992585Z   node-version: 24
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1992793Z   cache: npm
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1992997Z   check-latest: false
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1995574Z   token: ***
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1995798Z   package-manager-cache: true
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1996059Z env:
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1996257Z   JOB_STARTED_MS: 1793887023962
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.1996515Z ##[endgroup]
+app	Run actions/setup-node@v7	2026-11-05T13:57:08.3737414Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+app	Run actions/setup-node@v7	2026-11-05T13:57:09.0390177Z ##[group]Environment details
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.7125880Z node: v24.22.2
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.7126748Z npm: 11.19.1
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.7127492Z yarn: 1.22.22
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.7128567Z ##[endgroup]
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.7153640Z [command]/opt/hostedtoolcache/node/24.22.2/x64/bin/npm config get cache
+app	Run actions/setup-node@v7	2026-11-05T13:57:10.9656319Z /home/runner/.npm
+app	Run actions/setup-node@v7	2026-11-05T13:57:11.1426213Z Cache hit for: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+app	Run actions/setup-node@v7	2026-11-05T13:57:12.2590899Z Received 150994944 of 214050325 (70.5%), 142.6 MBs/sec
+app	Run actions/setup-node@v7	2026-11-05T13:57:12.4943578Z Received 214050325 of 214050325 (100.0%), 163.8 MBs/sec
+app	Run actions/setup-node@v7	2026-11-05T13:57:12.4944892Z Cache Size: ~204 MB (214050325 B)
+app	Run actions/setup-node@v7	2026-11-05T13:57:12.4983717Z [command]/usr/bin/tar -xf /home/runner/work/_temp/2ef31d92-838d-4253-999b-1501c99c725d/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+app	Run actions/setup-node@v7	2026-11-05T13:57:13.0603337Z Cache restored successfully
+app	Run actions/setup-node@v7	2026-11-05T13:57:13.0723130Z Cache restored from key: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+app	Install, lint, typecheck and unit and component tests	﻿2026-11-05T13:57:13.1141530Z ##[group]Run node scripts/ci.mjs run ci lint typecheck test:unit test:components
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:13.1142183Z [36;1mnode scripts/ci.mjs run ci lint typecheck test:unit test:components[0m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:13.1236320Z shell: /usr/bin/bash -e {0}
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:13.1236612Z env:
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:13.1236993Z   JOB_STARTED_MS: 1793887023962
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:13.1237249Z ##[endgroup]
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8636033Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8649662Z added 493 packages, and audited 500 packages in 22s
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8651319Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8652786Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8653335Z 167 packages are looking for funding
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8654612Z   run `npm fund` for details
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8655147Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8655624Z 8 moderate severity vulnerabilities
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8656170Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8656739Z To address all issues (including breaking changes), run:
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8667146Z   npm audit fix --force
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8667735Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:35.8668184Z Run `npm audit` for details.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:40.9437806Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:40.9438779Z > juntia@0.1.0 lint
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:40.9440859Z > eslint .
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:40.9441269Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1088619Z Falló typecheck
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1088972Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1089294Z > juntia@0.1.0 typecheck
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1115555Z > tsc --noEmit
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1144723Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1177601Z ##[error]src/lib/db/types.test.ts(7,48): error TS2339: Property 'create_transaction' does not exist on type '{ complete_first_entry: { Args: Record<PropertyKey, never>; Returns: Json; }; ensure_profile: { Args: Record<PropertyKey, never>; Returns: Json; }; set_theme: { ...; }; update_display_name: { ...; }; }'.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1191660Z ##[error]src/lib/db/types.test.ts(8,48): error TS2339: Property 'update_transaction' does not exist on type '{ complete_first_entry: { Args: Record<PropertyKey, never>; Returns: Json; }; ensure_profile: { Args: Record<PropertyKey, never>; Returns: Json; }; set_theme: { ...; }; update_display_name: { ...; }; }'.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T13:57:46.1195497Z ##[error]Process completed with exit code 2.
+app	Publish timings and non-applicable controls	﻿2026-11-05T13:57:46.1253858Z ##[group]Run node scripts/ci.mjs summary
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1254228Z [36;1mnode scripts/ci.mjs summary[0m
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1275068Z shell: /usr/bin/bash -e {0}
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1275464Z env:
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1275671Z   JOB_STARTED_MS: 1793887023962
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1275918Z   JOB_STATUS: failure
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1276136Z ##[endgroup]
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1618758Z | Control | Estado | Duración | Presupuesto |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1632505Z | --- | --- | --- | --- |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1647952Z | ci | pasó | 22.71 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1648794Z | lint | pasó | 5.08 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1649614Z | typecheck | falló | 5.16 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1650676Z | Job app (incluye instalación) | failure | 42.20 s | < 360 s |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1651343Z 
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1651744Z | Control | Estado |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1652397Z | --- | --- |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1653319Z | 3 · Supabase local, migraciones y SQL/RLS | job `db` |
+app	Publish timings and non-applicable controls	2026-11-05T13:57:46.1654615Z | 4 · E2E de humo | NO APLICABLE — la spec E2E 1 nace en el PR B de la 002 |
+app	Post Run actions/checkout@v7	﻿2026-11-05T13:57:46.1808647Z Post job cleanup.
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.2807668Z [command]/usr/bin/git version
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.2918088Z git version 2.56.0
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.2971021Z Temporarily overriding HOME='/home/runner/work/_temp/429bf50e-1a16-4ff7-9e2d-e03e4f7c328e' before making global git config changes
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.2973331Z Adding repository directory to the temporary git global config as a safe directory
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.2974991Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3038128Z Removing SSH command configuration
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3040447Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3128950Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3692490Z Removing HTTP extra header
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3694758Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.3789413Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4182774Z Removing includeIf entries pointing to credentials config files
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4184239Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4224376Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4238703Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4239882Z includeif.gitdir:/github/workspace/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4240880Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4246565Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4298305Z /home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4311461Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-5afd037e\-714c\-458f\-89e1\-30f54ff82e8e\.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4365808Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4409397Z /home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4421337Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-5afd037e\-714c\-458f\-89e1\-30f54ff82e8e\.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4478795Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4518384Z /github/runner_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4528786Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-5afd037e\-714c\-458f\-89e1\-30f54ff82e8e\.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4579523Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4618924Z /github/runner_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4629333Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-5afd037e\-714c\-458f\-89e1\-30f54ff82e8e\.config
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4682559Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+app	Post Run actions/checkout@v7	2026-11-05T13:57:46.4948329Z Removing credentials config '/home/runner/work/_temp/git-credentials-5afd037e-714c-458f-89e1-30f54ff82e8e.config'
+app	Complete job	﻿2026-11-05T13:57:46.5115635Z Cleaning up orphan processes
+db	Set up job	﻿2026-11-05T13:57:03.9096595Z Current runner version: '2.338.2'
+db	Set up job	2026-11-05T13:57:03.9124014Z ##[group]Runner Image Provisioner
+db	Set up job	2026-11-05T13:57:03.9125052Z Hosted Compute Agent
+db	Set up job	2026-11-05T13:57:03.9125657Z Version: 20261028.624
+db	Set up job	2026-11-05T13:57:03.9126276Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+db	Set up job	2026-11-05T13:57:03.9127132Z Build Date: 2026-10-28T21:51:42Z
+db	Set up job	2026-11-05T13:57:03.9128268Z Worker ID: {3dc074b9-a4c9-4967-8a75-a47dd07d001f}
+db	Set up job	2026-11-05T13:57:03.9129099Z Region: westus
+db	Set up job	2026-11-05T13:57:03.9129667Z Cloud: Azure
+db	Set up job	2026-11-05T13:57:03.9130208Z ##[endgroup]
+db	Set up job	2026-11-05T13:57:03.9131866Z ##[group]Operating System
+db	Set up job	2026-11-05T13:57:03.9132558Z Ubuntu
+db	Set up job	2026-11-05T13:57:03.9133159Z 24.04.5
+db	Set up job	2026-11-05T13:57:03.9133827Z LTS
+db	Set up job	2026-11-05T13:57:03.9134621Z ##[endgroup]
+db	Set up job	2026-11-05T13:57:03.9135721Z ##[group]Runner Image
+db	Set up job	2026-11-05T13:57:03.9136905Z Image: ubuntu-24.04
+db	Set up job	2026-11-05T13:57:03.9138306Z Version: 20261101.360.1
+db	Set up job	2026-11-05T13:57:03.9140429Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261101.360/images/ubuntu/Ubuntu2404-Readme.md
+db	Set up job	2026-11-05T13:57:03.9143738Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261101.360
+db	Set up job	2026-11-05T13:57:03.9145657Z ##[endgroup]
+db	Set up job	2026-11-05T13:57:03.9148464Z ##[group]GITHUB_TOKEN Permissions
+db	Set up job	2026-11-05T13:57:03.9151451Z Contents: read
+db	Set up job	2026-11-05T13:57:03.9152640Z Metadata: read
+db	Set up job	2026-11-05T13:57:03.9153638Z ##[endgroup]
+db	Set up job	2026-11-05T13:57:03.9156600Z Secret source: Actions
+db	Set up job	2026-11-05T13:57:03.9158707Z Cache mode: write
+db	Set up job	2026-11-05T13:57:03.9159929Z Prepare workflow directory
+db	Set up job	2026-11-05T13:57:03.9559950Z Prepare all required actions
+db	Set up job	2026-11-05T13:57:03.9611653Z Getting action download info
+db	Set up job	2026-11-05T13:57:04.3416214Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+db	Set up job	2026-11-05T13:57:04.4574868Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+db	Set up job	2026-11-05T13:57:04.5493298Z Download action repository 'supabase/setup-cli@v3' (SHA:689adcfb80d947100a1eab127289b97d1fb07b13)
+db	Set up job	2026-11-05T13:57:04.7902332Z Download action repository 'actions/upload-artifact@v6' (SHA:b7c566a772e6b6bfb58ed0dc250532a479d7789f)
+db	Set up job	2026-11-05T13:57:05.0928525Z Getting action download info
+db	Set up job	2026-11-05T13:57:05.2510378Z Download action repository 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+db	Set up job	2026-11-05T13:57:05.3660368Z Download action repository 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' (SHA:0c5077e51419868618aeaa5fe8019c62421857d6)
+db	Set up job	2026-11-05T13:57:05.7748257Z Complete job name: db
+db	Start job clock	﻿2026-11-05T13:57:05.8750782Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+db	Start job clock	2026-11-05T13:57:05.8752615Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+db	Start job clock	2026-11-05T13:57:05.8779659Z shell: /usr/bin/bash -e {0}
+db	Start job clock	2026-11-05T13:57:05.8781294Z ##[endgroup]
+db	Run actions/checkout@v7	﻿2026-11-05T13:57:05.9352809Z ##[group]Run actions/checkout@v7
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9353979Z with:
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9354841Z   repository: flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9363971Z   token: ***
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9364833Z   ssh-strict: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9365699Z   ssh-user: git
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9366598Z   persist-credentials: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9367696Z   clean: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9368585Z   sparse-checkout-cone-mode: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9369638Z   fetch-depth: 1
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9370477Z   fetch-tags: false
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9371344Z   show-progress: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9372274Z   lfs: false
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9373084Z   submodules: false
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9373978Z   set-safe-directory: true
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9374991Z   allow-unsafe-pr-checkout: false
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9376016Z env:
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9376805Z   JOB_STARTED_MS: 1793887025899
+db	Run actions/checkout@v7	2026-11-05T13:57:05.9377904Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4687481Z Syncing repository: flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4690535Z ##[group]Getting Git version info
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4691413Z Working directory is '/home/runner/work/juntia/juntia'
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4692957Z [command]/usr/bin/git version
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4693486Z git version 2.56.0
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4695224Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4704798Z Temporarily overriding HOME='/home/runner/work/_temp/1e8b5806-eb7f-485c-9ed1-42453c81c2b2' before making global git config changes
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4719817Z Adding repository directory to the temporary git global config as a safe directory
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4721263Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4723392Z Deleting the contents of '/home/runner/work/juntia/juntia'
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4724744Z ##[group]Determining repository object format
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4725861Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4727171Z ##[group]Initializing the repository
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4729405Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4731962Z hint: Using 'master' as the name for the initial branch. This default branch name
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4734511Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4737067Z hint: to use in all of your new repositories, which will suppress this warning,
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4739491Z hint: call:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4739923Z hint:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4742212Z hint: 	git config --global init.defaultBranch <name>
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4744441Z hint:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4746630Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4749126Z hint: 'development'. The just-created branch can be renamed via this command:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4751395Z hint:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4751850Z hint: 	git branch -m <name>
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4752541Z hint:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4754642Z hint: Disable this message with "git config set advice.defaultBranchName false"
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4761182Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4765069Z [command]/usr/bin/git remote add origin https://github.com/flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4769889Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4771230Z ##[group]Disabling automatic garbage collection
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4775653Z [command]/usr/bin/git config --local gc.auto 0
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4788272Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4789752Z ##[group]Setting up auth
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4801268Z Removing SSH command configuration
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4823676Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+db	Run actions/checkout@v7	2026-11-05T13:57:06.4916571Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5618964Z Removing HTTP extra header
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5620547Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5626491Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5848684Z Removing includeIf entries pointing to credentials config files
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5850496Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+db	Run actions/checkout@v7	2026-11-05T13:57:06.5909574Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6182541Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6232641Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6279948Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6328051Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6388455Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6423608Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6425205Z ##[group]Fetching the repository
+db	Run actions/checkout@v7	2026-11-05T13:57:06.6432221Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +74b6e72b97a63406918eadc7d73d572232b4566e:refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0209687Z From https://github.com/flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0210528Z  * [new ref]         74b6e72b97a63406918eadc7d73d572232b4566e -> origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0243514Z [command]/usr/bin/git branch --list --remote origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0273742Z   origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0298920Z [command]/usr/bin/git rev-parse refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0325128Z 74b6e72b97a63406918eadc7d73d572232b4566e
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0330501Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0331394Z ##[group]Determining the checkout info
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0332550Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0337924Z [command]/usr/bin/git sparse-checkout disable
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0418244Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0472601Z ##[group]Checking out the ref
+db	Run actions/checkout@v7	2026-11-05T13:57:08.0479523Z [command]/usr/bin/git checkout --progress --force -B feat/002-a-database refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T13:57:08.4030524Z Switched to a new branch 'feat/002-a-database'
+db	Run actions/checkout@v7	2026-11-05T13:57:08.4055735Z branch 'feat/002-a-database' set up to track 'origin/feat/002-a-database'.
+db	Run actions/checkout@v7	2026-11-05T13:57:08.4105528Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T13:57:08.4165856Z [command]/usr/bin/git log -1 --format=%H
+db	Run actions/checkout@v7	2026-11-05T13:57:08.4228964Z 74b6e72b97a63406918eadc7d73d572232b4566e
+db	Run actions/setup-node@v7	﻿2026-11-05T13:57:08.4477254Z ##[group]Run actions/setup-node@v7
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4477914Z with:
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4478123Z   node-version: 24
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4478326Z   cache: npm
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4478519Z   check-latest: false
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4481060Z   token: ***
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4481283Z   package-manager-cache: true
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4481544Z env:
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4481737Z   JOB_STARTED_MS: 1793887025899
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.4481972Z ##[endgroup]
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.5950117Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+db	Run actions/setup-node@v7	2026-11-05T13:57:08.7581666Z ##[group]Environment details
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.2688577Z node: v24.22.2
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.2701185Z npm: 11.19.1
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.2879082Z yarn: 1.22.22
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.2897327Z ##[endgroup]
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.3031493Z [command]/opt/hostedtoolcache/node/24.22.2/x64/bin/npm config get cache
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.4273647Z /home/runner/.npm
+db	Run actions/setup-node@v7	2026-11-05T13:57:09.7074045Z Cache hit for: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+db	Run actions/setup-node@v7	2026-11-05T13:57:10.9904958Z Received 4194304 of 214050325 (2.0%), 4.0 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T13:57:11.9911581Z Received 134217728 of 214050325 (62.7%), 64.0 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T13:57:12.7422001Z Received 214050325 of 214050325 (100.0%), 74.2 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T13:57:12.7423231Z Cache Size: ~204 MB (214050325 B)
+db	Run actions/setup-node@v7	2026-11-05T13:57:12.7462075Z [command]/usr/bin/tar -xf /home/runner/work/_temp/574408fd-919a-48c1-8d31-6dfff726aad1/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+db	Run actions/setup-node@v7	2026-11-05T13:57:13.3159217Z Cache restored successfully
+db	Run actions/setup-node@v7	2026-11-05T13:57:13.3262560Z Cache restored from key: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+db	Run supabase/setup-cli@v3	﻿2026-11-05T13:57:13.3778969Z ##[group]Run supabase/setup-cli@v3
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3779483Z with:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3779693Z   version: 2.121.0
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3779894Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3780079Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3780314Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3845036Z ##[start-action display=Resolve Bun Download URL;id=__supabase_setup-cli.bun-download]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3910154Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3910664Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3911018Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3911352Z [36;1mis_musl=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3911735Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3912097Z [36;1mif [ "${RUNNER_OS}" = "Linux" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3913025Z [36;1m  # setup-bun does not detect Linux musl yet, so Alpine-like containers need the musl asset explicitly.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3913987Z [36;1m  if [ -f /etc/alpine-release ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3914506Z [36;1m    is_musl=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3915169Z [36;1m  elif command -v ldd >/dev/null 2>&1 && ldd --version 2>&1 | grep -qi musl; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3915983Z [36;1m    is_musl=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3916373Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3916708Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3917033Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3917453Z [36;1mecho "is-musl=${is_musl}" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3918237Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3918601Z [36;1mif [ "${is_musl}" != "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3919078Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3919451Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3919755Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3920095Z [36;1mversion="$(cat .bun-version)"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3920627Z [36;1mcase "$(uname -m)" in[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3921051Z [36;1m  x86_64) arch="x64" ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3921474Z [36;1m  aarch64|arm64) arch="aarch64" ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3921748Z [36;1m  *)[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3922059Z [36;1m    echo "Unsupported Linux musl architecture: $(uname -m)" >&2[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3922470Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3922672Z [36;1m    ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3922872Z [36;1mesac[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3923054Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.3923569Z [36;1mecho "url=https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-${arch}-musl.zip" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4427034Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4427406Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4427879Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4428213Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4566989Z ##[end-action id=__supabase_setup-cli.bun-download;outcome=success;conclusion=success;duration_ms=71]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4572379Z ##[start-action display=Install Alpine Runtime Dependencies;id=__supabase_setup-cli.__run]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4612906Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4613204Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4613399Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4613603Z [36;1mif [ "false" != "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4613867Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4614079Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4614272Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4614609Z [36;1m# Alpine/musl containers need runtime packages for Bun and the npm CLI shim.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4615190Z [36;1m# actions/setup-node uses glibc Node builds, so install Alpine's Node/npm instead.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4615662Z [36;1mif command -v apk >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4615966Z [36;1m  missing_packages=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4616232Z [36;1m  prefer_apk_bin=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4616512Z [36;1m  for package in libstdc++ libgcc; do[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4616858Z [36;1m    if ! apk info -e "${package}" >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4617240Z [36;1m      missing_packages="${missing_packages} ${package}"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4617854Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4618109Z [36;1m  done[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4618307Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4618695Z [36;1m  if ! command -v node >/dev/null 2>&1 || ! node -p 'process.versions.node' >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4619773Z [36;1m    if [ -x /usr/bin/node ] && PATH="/usr/bin:${PATH}" /usr/bin/node -p 'process.versions.node' >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4620280Z [36;1m      prefer_apk_bin=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4620610Z [36;1m    else[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4620896Z [36;1m      missing_packages="${missing_packages} nodejs"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4621203Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4621390Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4621576Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4621881Z [36;1m  if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4622435Z [36;1m    if [ -x /usr/bin/npm ] && PATH="/usr/bin:${PATH}" /usr/bin/npm --version >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4622874Z [36;1m      prefer_apk_bin=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4623122Z [36;1m    else[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4623370Z [36;1m      missing_packages="${missing_packages} npm"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4623679Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4623870Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4624060Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4624273Z [36;1m  if [ "${prefer_apk_bin}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4624578Z [36;1m    echo "/usr/bin" >> "$GITHUB_PATH"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4624876Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4625058Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4625268Z [36;1m  if [ -z "${missing_packages}" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4625540Z [36;1m    exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4625738Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4625925Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4626114Z [36;1m  if [ "$(id -u)" != "0" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4626893Z [36;1m    echo "::error::Alpine/musl containers need${missing_packages} to run Supabase CLI. Add 'apk add --no-cache${missing_packages}' before supabase/setup-cli, or run this job container as root."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4628031Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4628242Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4628425Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4628652Z [36;1m  apk add --no-cache ${missing_packages}[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4629061Z [36;1m  if echo " ${missing_packages} " | grep -Eq ' (nodejs|npm) '; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4629446Z [36;1m    echo "/usr/bin" >> "$GITHUB_PATH"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4629716Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4629899Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4630091Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4630268Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4630795Z [36;1mecho "::error::Linux musl containers need libstdc++, libgcc, nodejs, and npm to run Supabase CLI. Install them before supabase/setup-cli."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4631389Z [36;1mexit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4674773Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4675030Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4675228Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4675471Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4748202Z ##[end-action id=__supabase_setup-cli.__run;outcome=success;conclusion=success;duration_ms=17]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4750706Z ##[start-action display=Resolve Node Runtime;id=__supabase_setup-cli.node-runtime]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4771266Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4771547Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4771754Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4771945Z [36;1mnode_version=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4772179Z [36;1mnode_major=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4772398Z [36;1mhas_npm=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4772612Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4772833Z [36;1mif command -v node >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4773265Z [36;1m  node_version="$(node -p 'process.versions.node' 2>/dev/null || true)"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4773688Z [36;1m  node_major="${node_version%%.*}"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4773960Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4774142Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4774361Z [36;1mif command -v npm >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4774647Z [36;1m  has_npm=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4774866Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4775046Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4775308Z [36;1mif [ -n "${node_version}" ] && [ "${has_npm}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4775971Z [36;1m  case "${node_major}" in[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4776231Z [36;1m    ''|*[!0-9]*)[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4776772Z [36;1m      echo "::error::Could not determine Node.js version from '${node_version}'. Supabase CLI npm installs require Node.js 20 or newer."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4777353Z [36;1m      exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4777904Z [36;1m      ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4778159Z [36;1m  esac[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4778354Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4778565Z [36;1m  if [ "${node_major}" -lt 20 ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4779378Z [36;1m    echo "::error::Supabase CLI npm installs require Node.js 20 or newer, but found Node.js ${node_version}. Set up Node.js 20+ before supabase/setup-cli, or use a runner image with Node.js 20+ and npm."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4780154Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4780357Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4780543Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4780785Z [36;1m  echo "setup-node=false" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4781099Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4781291Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4781475Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4781669Z [36;1mif [ "false" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4782594Z [36;1m  echo "::error::Linux musl containers need Node.js 20 or newer and npm from musl-compatible packages. Install libstdc++, libgcc, nodejs, and npm before supabase/setup-cli, or run this job container as root so the action can install them."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4783508Z [36;1m  exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4783700Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4783883Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4784147Z [36;1mif [ -n "${node_version}" ] || [ "${has_npm}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4784945Z [36;1m  echo "::error::Supabase CLI npm installs need both Node.js 20+ and npm. Found Node.js '${node_version:-missing}' and npm '${has_npm}'. Configure both before supabase/setup-cli."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4785647Z [36;1m  exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4785854Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4786033Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4786257Z [36;1mecho "setup-node=true" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4829491Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4829759Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4829958Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.4830201Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5250313Z ##[end-action id=__supabase_setup-cli.node-runtime;outcome=success;conclusion=success;duration_ms=49]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5253186Z ##[start-action display=Setup Node;id=__supabase_setup-cli.__actions_setup-node]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5263088Z ##[end-action id=__supabase_setup-cli.__actions_setup-node;outcome=skipped;conclusion=skipped;duration_ms=0]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5265401Z ##[start-action display=Setup Bun;id=__supabase_setup-cli.__oven-sh_setup-bun]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5312170Z ##[group]Run oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5312586Z with:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5312925Z   bun-version-file: /home/runner/work/_actions/supabase/setup-cli/v3/.bun-version
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5313344Z   no-cache: false
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5315859Z   token: ***
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5316052Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5316246Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.5316492Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:13.7301414Z Obtained version 1.3.10 from /home/runner/work/_actions/supabase/setup-cli/v3/.bun-version
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:14.0510602Z Cache hit for: bun-Ki+pY5x+JEo+hNxyfTQYMbDXy7M=
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.3259614Z Received 8388608 of 36196344 (23.2%), 8.0 MBs/sec
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.5172725Z Received 36196344 of 36196344 (100.0%), 29.0 MBs/sec
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.5174095Z Cache Size: ~35 MB (36196344 B)
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.5346199Z [command]/usr/bin/tar -xf /home/runner/work/_temp/8349b5c6-09cf-4109-b7f5-13b7f2a7a703/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7686938Z Cache restored successfully
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7710764Z [command]/home/runner/.bun/bin/bun --revision
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7768509Z 1.3.10+30e609e08
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7785196Z Using a cached version of Bun: 1.3.10+30e609e08
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7886377Z ##[end-action id=__supabase_setup-cli.__oven-sh_setup-bun;outcome=success;conclusion=success;duration_ms=2262]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7890237Z ##[start-action display=Install Action Dependencies;id=__supabase_setup-cli.__run_2]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7912710Z ##[group]Run bun install --frozen-lockfile --production
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7913134Z [36;1mbun install --frozen-lockfile --production[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7957322Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7957851Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7958087Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.7958368Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8047313Z bun install v1.3.10 (30e609e0)
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8693157Z 
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8703424Z + @actions/core@3.0.1
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8704148Z 
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8704607Z 6 packages installed [65.00ms]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8734282Z ##[end-action id=__supabase_setup-cli.__run_2;outcome=success;conclusion=success;duration_ms=84]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8739181Z ##[start-action display=Setup Supabase CLI;id=__supabase_setup-cli.setup-cli]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8777500Z ##[group]Run bun src/main.ts
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8778202Z [36;1mbun src/main.ts[0m
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8829315Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8829591Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8829797Z   JOB_STARTED_MS: 1793887025899
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8830063Z   INPUT_VERSION: 2.121.0
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8830314Z   SUPABASE_SETUP_CLI_MUSL: false
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:15.8830588Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T13:57:20.9096000Z ##[end-action id=__supabase_setup-cli.setup-cli;outcome=success;conclusion=success;duration_ms=5035]
+db	Start Supabase and reset the runner database	﻿2026-11-05T13:57:20.9179767Z ##[group]Run set -euo pipefail
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9180140Z [36;1mset -euo pipefail[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9180398Z [36;1mstarted=$(date +%s)[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9181379Z [36;1msupabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9182425Z [36;1mseconds=$(($(date +%s)-started))[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9182833Z [36;1mecho "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9183405Z [36;1m# El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9183899Z [36;1mstatus=$(supabase status -o env 2>/dev/null)[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9184257Z [36;1mwhile IFS='=' read -r name value; do[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9184582Z [36;1m  value=${value#\"}; value=${value%\"}[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9184911Z [36;1m  [ -z "$value" ] || echo "::add-mask::$value"[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9185268Z [36;1m  case "$name" in[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9185726Z [36;1m    API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9186200Z [36;1m  esac[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9186417Z [36;1mdone <<< "$status"[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9186669Z [36;1msupabase db reset[0m
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9207499Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9208138Z env:
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9208338Z   JOB_STARTED_MS: 1793887025899
+db	Start Supabase and reset the runner database	2026-11-05T13:57:20.9208591Z ##[endgroup]
+db	Start Supabase and reset the runner database	2026-11-05T13:59:09.7013773Z supabase start: 109 s
+db	Start Supabase and reset the runner database	2026-11-05T13:59:11.4932631Z Resetting local database...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:11.8750904Z Recreating database...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:22.5018879Z Initialising schema...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.8296171Z Seeding globals from roles.sql...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.8326176Z Applying migration 20261105000100_foundation.sql...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.9003666Z Applying migration 20261105000200_controlled_tables.sql...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.9493615Z Applying migration 20261105000300_money_functions.sql...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.9901746Z Seeding data from supabase/seed.sql...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:28.9999539Z Restarting containers...
+db	Start Supabase and reset the runner database	2026-11-05T13:59:29.5822772Z Finished supabase db reset on branch feat/002-a-database.
+db	Start Supabase and reset the runner database	2026-11-05T13:59:30.0672772Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Start Supabase and reset the runner database	2026-11-05T13:59:30.0675056Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Install dependencies	﻿2026-11-05T13:59:30.0900168Z ##[group]Run node scripts/ci.mjs run ci
+db	Install dependencies	2026-11-05T13:59:30.0900597Z [36;1mnode scripts/ci.mjs run ci[0m
+db	Install dependencies	2026-11-05T13:59:30.0922476Z shell: /usr/bin/bash -e {0}
+db	Install dependencies	2026-11-05T13:59:30.0922776Z env:
+db	Install dependencies	2026-11-05T13:59:30.0923005Z   JOB_STARTED_MS: 1793887025899
+db	Install dependencies	2026-11-05T13:59:30.0923680Z   API_URL: ***
+db	Install dependencies	2026-11-05T13:59:30.0924125Z   DB_URL: ***
+db	Install dependencies	2026-11-05T13:59:30.0924492Z   PUBLISHABLE_KEY: ***
+db	Install dependencies	2026-11-05T13:59:30.0924824Z   SECRET_KEY: ***
+db	Install dependencies	2026-11-05T13:59:30.0925070Z ##[endgroup]
+db	Install dependencies	2026-11-05T13:59:52.8965050Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+db	Install dependencies	2026-11-05T13:59:52.8966150Z 
+db	Install dependencies	2026-11-05T13:59:52.8971190Z added 493 packages, and audited 500 packages in 22s
+db	Install dependencies	2026-11-05T13:59:52.8972209Z 
+db	Install dependencies	2026-11-05T13:59:52.8972619Z 167 packages are looking for funding
+db	Install dependencies	2026-11-05T13:59:52.8976521Z   run `npm fund` for details
+db	Install dependencies	2026-11-05T13:59:52.8977044Z 
+db	Install dependencies	2026-11-05T13:59:52.8979475Z 8 moderate severity vulnerabilities
+db	Install dependencies	2026-11-05T13:59:52.8981263Z 
+db	Install dependencies	2026-11-05T13:59:52.8981942Z To address all issues (including breaking changes), run:
+db	Install dependencies	2026-11-05T13:59:52.8982804Z   npm audit fix --force
+db	Install dependencies	2026-11-05T13:59:52.8983194Z 
+db	Install dependencies	2026-11-05T13:59:52.8983605Z Run `npm audit` for details.
+db	Test SQL	﻿2026-11-05T13:59:52.9116340Z ##[group]Run node scripts/ci.mjs run test:db
+db	Test SQL	2026-11-05T13:59:52.9118891Z [36;1mnode scripts/ci.mjs run test:db[0m
+db	Test SQL	2026-11-05T13:59:52.9204694Z shell: /usr/bin/bash -e {0}
+db	Test SQL	2026-11-05T13:59:52.9205239Z env:
+db	Test SQL	2026-11-05T13:59:52.9205655Z   JOB_STARTED_MS: 1793887025899
+db	Test SQL	2026-11-05T13:59:52.9206426Z   API_URL: ***
+db	Test SQL	2026-11-05T13:59:52.9207202Z   DB_URL: ***
+db	Test SQL	2026-11-05T13:59:52.9208106Z   PUBLISHABLE_KEY: ***
+db	Test SQL	2026-11-05T13:59:52.9208708Z   SECRET_KEY: ***
+db	Test SQL	2026-11-05T13:59:52.9209131Z ##[endgroup]
+db	Test SQL	2026-11-05T13:59:58.7959807Z 
+db	Test SQL	2026-11-05T13:59:58.7960798Z > juntia@0.1.0 test:db
+db	Test SQL	2026-11-05T13:59:58.7961624Z > supabase test db
+db	Test SQL	2026-11-05T13:59:58.7962081Z 
+db	Test SQL	2026-11-05T13:59:58.7962900Z /home/runner/work/juntia/juntia/supabase/tests/00_smoke.test.sql ............ ok
+db	Test SQL	2026-11-05T13:59:58.7964470Z /home/runner/work/juntia/juntia/supabase/tests/01_privileges.test.sql ....... ok
+db	Test SQL	2026-11-05T13:59:58.7966023Z /home/runner/work/juntia/juntia/supabase/tests/02_claims.test.sql ........... ok
+db	Test SQL	2026-11-05T13:59:58.7968059Z /home/runner/work/juntia/juntia/supabase/tests/03_views.test.sql ............ ok
+db	Test SQL	2026-11-05T13:59:58.7969139Z Connecting to local database...
+db	Test SQL	2026-11-05T13:59:58.7970372Z /home/runner/work/juntia/juntia/supabase/tests/04_writer.test.sql ........... 
+db	Test SQL	2026-11-05T13:59:58.7971694Z # Failed test 4: "[V1] cuatro implementaciones propiedad de writer"
+db	Test SQL	2026-11-05T13:59:58.7973645Z #         have: ["complete_first_entry", "create_transaction", "ensure_profile", "set_theme", "update_display_name", "update_transaction", "void_transaction"]
+db	Test SQL	2026-11-05T13:59:58.7975636Z #         want: ["complete_first_entry", "ensure_profile", "set_theme", "update_display_name"]
+db	Test SQL	2026-11-05T13:59:58.7976825Z # Looks like you failed 1 test of 18
+db	Test SQL	2026-11-05T13:59:58.7977813Z Failed 1/18 subtests 
+db	Test SQL	2026-11-05T13:59:58.7978521Z 3.36: Pulling from supabase/pg_prove
+db	Test SQL	2026-11-05T13:59:58.7979796Z /home/runner/work/juntia/juntia/supabase/tests/05_direct_writes.test.sql .... ok
+db	Test SQL	2026-11-05T13:59:58.7981317Z /home/runner/work/juntia/juntia/supabase/tests/06_profiles.test.sql ......... ok
+db	Test SQL	2026-11-05T13:59:58.7982932Z /home/runner/work/juntia/juntia/supabase/tests/07_transactions.test.sql ..... ok
+db	Test SQL	2026-11-05T13:59:58.7984384Z /home/runner/work/juntia/juntia/supabase/tests/08_money_functions.test.sql .. ok
+db	Test SQL	2026-11-05T13:59:58.7985840Z /home/runner/work/juntia/juntia/supabase/tests/09_allowlist.test.sql ........ ok
+db	Test SQL	2026-11-05T13:59:58.7989250Z 
+db	Test SQL	2026-11-05T13:59:58.7989648Z Test Summary Report
+db	Test SQL	2026-11-05T13:59:58.7990195Z -------------------
+db	Test SQL	2026-11-05T13:59:58.7991324Z /home/runner/work/juntia/juntia/supabase/tests/04_writer.test.sql         (Wstat: 0 Tests: 18 Failed: 1)
+db	Test SQL	2026-11-05T13:59:58.7992399Z   Failed test:  4
+db	Test SQL	2026-11-05T13:59:58.7993333Z Files=10, Tests=318,  1 wallclock secs ( 0.06 usr  0.02 sys +  0.10 cusr  0.05 csys =  0.23 CPU)
+db	Test SQL	2026-11-05T13:59:58.7994264Z Result: FAIL
+db	Test SQL	2026-11-05T13:59:58.7996109Z dcccee43ad5d: Pulling fs layer
+db	Test SQL	2026-11-05T13:59:58.7996790Z 06d62d0de6d7: Pulling fs layer
+db	Test SQL	2026-11-05T13:59:58.7997386Z a22cb17b3b93: Pulling fs layer
+db	Test SQL	2026-11-05T13:59:58.7998428Z 4f4fb700ef54: Pulling fs layer
+db	Test SQL	2026-11-05T13:59:58.8000861Z 4f4fb700ef54: Waiting
+db	Test SQL	2026-11-05T13:59:58.8004920Z dcccee43ad5d: Verifying Checksum
+db	Test SQL	2026-11-05T13:59:58.8005687Z dcccee43ad5d: Download complete
+db	Test SQL	2026-11-05T13:59:58.8025219Z a22cb17b3b93: Verifying Checksum
+db	Test SQL	2026-11-05T13:59:58.8029433Z a22cb17b3b93: Download complete
+db	Test SQL	2026-11-05T13:59:58.8030374Z 06d62d0de6d7: Verifying Checksum
+db	Test SQL	2026-11-05T13:59:58.8031104Z 06d62d0de6d7: Download complete
+db	Test SQL	2026-11-05T13:59:58.8031796Z 4f4fb700ef54: Verifying Checksum
+db	Test SQL	2026-11-05T13:59:58.8032451Z 4f4fb700ef54: Download complete
+db	Test SQL	2026-11-05T13:59:58.8033184Z dcccee43ad5d: Pull complete
+db	Test SQL	2026-11-05T13:59:58.8033827Z 06d62d0de6d7: Pull complete
+db	Test SQL	2026-11-05T13:59:58.8034588Z a22cb17b3b93: Pull complete
+db	Test SQL	2026-11-05T13:59:58.8035241Z 4f4fb700ef54: Pull complete
+db	Test SQL	2026-11-05T13:59:58.8036148Z Digest: sha256:eda7c5e68719e9c8287e78c017118407b48df904a51c935f5ab6098b8c0bc6bc
+db	Test SQL	2026-11-05T13:59:58.8037321Z Status: Downloaded newer image for public.ecr.aws/supabase/pg_prove:3.36
+db	Test SQL	2026-11-05T13:59:58.8039961Z public.ecr.aws/supabase/pg_prove:3.36
+db	Test SQL	2026-11-05T13:59:58.8040648Z error running container: exit 1
+db	Test SQL	2026-11-05T13:59:58.8041446Z Try rerunning the command with --debug to troubleshoot the error.
+db	Test SQL	2026-11-05T13:59:58.8042386Z Falló test:db
+db	Test SQL	2026-11-05T13:59:58.8057018Z ##[error]Process completed with exit code 1.
+db	Test API	﻿2026-11-05T13:59:58.8145480Z ##[group]Run node scripts/ci.mjs run test:integration
+db	Test API	2026-11-05T13:59:58.8145963Z [36;1mnode scripts/ci.mjs run test:integration[0m
+db	Test API	2026-11-05T13:59:58.8166917Z shell: /usr/bin/bash -e {0}
+db	Test API	2026-11-05T13:59:58.8167228Z env:
+db	Test API	2026-11-05T13:59:58.8167471Z   JOB_STARTED_MS: 1793887025899
+db	Test API	2026-11-05T13:59:58.8168155Z   API_URL: ***
+db	Test API	2026-11-05T13:59:58.8168617Z   DB_URL: ***
+db	Test API	2026-11-05T13:59:58.8168999Z   PUBLISHABLE_KEY: ***
+db	Test API	2026-11-05T13:59:58.8169347Z   SECRET_KEY: ***
+db	Test API	2026-11-05T13:59:58.8169603Z ##[endgroup]
+db	Test API	2026-11-05T14:00:04.6108212Z 
+db	Test API	2026-11-05T14:00:04.6109082Z > juntia@0.1.0 test:integration
+db	Test API	2026-11-05T14:00:04.6110326Z > vitest run --project integration
+db	Test API	2026-11-05T14:00:04.6110720Z 
+db	Test API	2026-11-05T14:00:04.6110736Z 
+db	Test API	2026-11-05T14:00:04.6111751Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+db	Test API	2026-11-05T14:00:04.6112372Z 
+db	Test API	2026-11-05T14:00:04.6114091Z  [32m✓[39m [30m[45m integration [49m[39m tests/integration/money.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 2564[2mms[22m[39m
+db	Test API	2026-11-05T14:00:04.6115816Z    [33m[2m✓[22m[39m 40P01 real se reintenta con la misma clave[33m 1358[2mms[22m[39m
+db	Test API	2026-11-05T14:00:04.6117828Z  [32m✓[39m [30m[45m integration [49m[39m tests/integration/foundation.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 899[2mms[22m[39m
+db	Test API	2026-11-05T14:00:04.6120027Z  [32m✓[39m [30m[45m integration [49m[39m tests/integration/controlled-tables.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 546[2mms[22m[39m
+db	Test API	2026-11-05T14:00:04.6122725Z  [32m✓[39m [30m[45m integration [49m[39m tests/integration/smoke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 62[2mms[22m[39m
+db	Test API	2026-11-05T14:00:04.6128547Z 
+db	Test API	2026-11-05T14:00:04.6129362Z [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+db	Test API	2026-11-05T14:00:04.6130771Z [2m      Tests [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+db	Test API	2026-11-05T14:00:04.6131843Z [2m   Start at [22m 13:59:59
+db	Test API	2026-11-05T14:00:04.6135620Z [2m   Duration [22m 5.02s[2m (tests 92%, import 4%, transform 3%)[22m
+db	Test API	2026-11-05T14:00:04.6141389Z 
+db	Check generated types	﻿2026-11-05T14:00:04.6235981Z ##[group]Run node scripts/ci.mjs run db:types:check
+db	Check generated types	2026-11-05T14:00:04.6236426Z [36;1mnode scripts/ci.mjs run db:types:check[0m
+db	Check generated types	2026-11-05T14:00:04.6256834Z shell: /usr/bin/bash -e {0}
+db	Check generated types	2026-11-05T14:00:04.6257139Z env:
+db	Check generated types	2026-11-05T14:00:04.6257378Z   JOB_STARTED_MS: 1793887025899
+db	Check generated types	2026-11-05T14:00:04.6258026Z   API_URL: ***
+db	Check generated types	2026-11-05T14:00:04.6258465Z   DB_URL: ***
+db	Check generated types	2026-11-05T14:00:04.6258828Z   PUBLISHABLE_KEY: ***
+db	Check generated types	2026-11-05T14:00:04.6259163Z   SECRET_KEY: ***
+db	Check generated types	2026-11-05T14:00:04.6259413Z ##[endgroup]
+db	Check generated types	2026-11-05T14:00:06.1149166Z Connecting to 127.0.0.1 54322
+db	Check generated types	2026-11-05T14:00:06.1149734Z 
+db	Check generated types	2026-11-05T14:00:06.1150575Z Generated TypeScript is unformatted. Format it with:
+db	Check generated types	2026-11-05T14:00:06.1151282Z > juntia@0.1.0 db:types:check
+db	Check generated types	2026-11-05T14:00:06.1156975Z   npx oxfmt <generated-file.ts>
+db	Check generated types	2026-11-05T14:00:06.1157875Z > node scripts/check-db-types.mjs
+db	Check generated types	2026-11-05T14:00:06.1159357Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Check generated types	2026-11-05T14:00:06.1160108Z 
+db	Check generated types	2026-11-05T14:00:06.1162297Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Check generated types	2026-11-05T14:00:06.1172371Z Los tipos versionados difieren del esquema. Recupera database.types.ts del artefacto del runner.
+db	Check generated types	2026-11-05T14:00:06.1173849Z Falló db:types:check
+db	Check generated types	2026-11-05T14:00:06.1199807Z ##[error]Process completed with exit code 1.
+db	Preserve generated public types	﻿2026-11-05T14:00:06.1292589Z ##[group]Run actions/upload-artifact@v6
+db	Preserve generated public types	2026-11-05T14:00:06.1293209Z with:
+db	Preserve generated public types	2026-11-05T14:00:06.1293625Z   name: database-types
+db	Preserve generated public types	2026-11-05T14:00:06.1294193Z   path: /home/runner/work/_temp/database.types.ts
+db	Preserve generated public types	2026-11-05T14:00:06.1294829Z   if-no-files-found: ignore
+db	Preserve generated public types	2026-11-05T14:00:06.1295347Z   compression-level: 6
+db	Preserve generated public types	2026-11-05T14:00:06.1295817Z   overwrite: false
+db	Preserve generated public types	2026-11-05T14:00:06.1296515Z   include-hidden-files: false
+db	Preserve generated public types	2026-11-05T14:00:06.1297044Z env:
+db	Preserve generated public types	2026-11-05T14:00:06.1297487Z   JOB_STARTED_MS: 1793887025899
+db	Preserve generated public types	2026-11-05T14:00:06.1298655Z   API_URL: ***
+db	Preserve generated public types	2026-11-05T14:00:06.1299401Z   DB_URL: ***
+db	Preserve generated public types	2026-11-05T14:00:06.1300055Z   PUBLISHABLE_KEY: ***
+db	Preserve generated public types	2026-11-05T14:00:06.1300670Z   SECRET_KEY: ***
+db	Preserve generated public types	2026-11-05T14:00:06.1301116Z ##[endgroup]
+db	Preserve generated public types	2026-11-05T14:00:06.3214370Z With the provided path, there will be 1 file uploaded
+db	Preserve generated public types	2026-11-05T14:00:06.3268549Z Artifact name is valid!
+db	Preserve generated public types	2026-11-05T14:00:06.3269864Z Root directory input is valid!
+db	Preserve generated public types	2026-11-05T14:00:06.7057993Z Beginning upload of artifact content to blob storage
+db	Preserve generated public types	2026-11-05T14:00:07.0070828Z Uploaded bytes 1275
+db	Preserve generated public types	2026-11-05T14:00:07.0792522Z Finished uploading artifact content to blob storage!
+db	Preserve generated public types	2026-11-05T14:00:07.0794356Z SHA256 digest of uploaded artifact zip is 02d93cb588968ba16868b60b935b3a369acd11319fb27a7ff57704d5e8da1f00
+db	Preserve generated public types	2026-11-05T14:00:07.0796013Z Finalizing artifact upload
+db	Preserve generated public types	2026-11-05T14:00:07.7140117Z Artifact database-types.zip successfully finalized. Artifact ID 13422370137
+db	Preserve generated public types	2026-11-05T14:00:07.7141901Z Artifact database-types has been successfully uploaded! Final size is 1275 bytes. Artifact ID is 13422370137
+db	Preserve generated public types	2026-11-05T14:00:07.7143906Z Artifact download URL: https://github.com/flashwp3-ctrl/juntia/actions/runs/42040320912/artifacts/13422370137
+db	Describe Auth bootstrap for the plain PostgreSQL restore	﻿2026-11-05T14:00:07.7301178Z ##[group]Run psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select jsonb_build_object('uid', pg_get_functiondef('auth.uid()'::regprocedure), 'columns', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) order by c.relname,a.attnum) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where n.nspname='auth' and c.relname in ('users','identities') and a.attnum>0 and not a.attisdropped));" > "$RUNNER_TEMP/auth-bootstrap.json"
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7310084Z [36;1mpsql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select jsonb_build_object('uid', pg_get_functiondef('auth.uid()'::regprocedure), 'columns', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) order by c.relname,a.attnum) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where n.nspname='auth' and c.relname in ('users','identities') and a.attnum>0 and not a.attisdropped));" > "$RUNNER_TEMP/auth-bootstrap.json"[0m
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7344820Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7345502Z env:
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7345914Z   JOB_STARTED_MS: 1793887025899
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7346565Z   API_URL: ***
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7347290Z   DB_URL: ***
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7348223Z   PUBLISHABLE_KEY: ***
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7348988Z   SECRET_KEY: ***
+db	Describe Auth bootstrap for the plain PostgreSQL restore	2026-11-05T14:00:07.7349450Z ##[endgroup]
+db	Run actions/upload-artifact@v6	﻿2026-11-05T14:00:07.8758804Z ##[group]Run actions/upload-artifact@v6
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8759461Z with:
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8759898Z   name: auth-bootstrap-description
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8760530Z   path: /home/runner/work/_temp/auth-bootstrap.json
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8761167Z   if-no-files-found: ignore
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8761670Z   compression-level: 6
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8762135Z   overwrite: false
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8762688Z   include-hidden-files: false
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8763181Z env:
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8763579Z   JOB_STARTED_MS: 1793887025899
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8764191Z   API_URL: ***
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8764967Z   DB_URL: ***
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8765692Z   PUBLISHABLE_KEY: ***
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8766367Z   SECRET_KEY: ***
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:07.8766908Z ##[endgroup]
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.0989220Z With the provided path, there will be 1 file uploaded
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.1028524Z Artifact name is valid!
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.1038278Z Root directory input is valid!
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.4775323Z Beginning upload of artifact content to blob storage
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.7726203Z Uploaded bytes 917
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.8448369Z Finished uploading artifact content to blob storage!
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.8450488Z SHA256 digest of uploaded artifact zip is de93caf582fbf9a5c7a53f10a14d9e8ceba51f3196bacae2af3a3f80f4e748bd
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:08.8451917Z Finalizing artifact upload
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:09.5468826Z Artifact auth-bootstrap-description.zip successfully finalized. Artifact ID 13421835600
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:09.5470839Z Artifact auth-bootstrap-description has been successfully uploaded! Final size is 917 bytes. Artifact ID is 13421835600
+db	Run actions/upload-artifact@v6	2026-11-05T14:00:09.5472728Z Artifact download URL: https://github.com/flashwp3-ctrl/juntia/actions/runs/42040320912/artifacts/13421835600
+db	Stop Supabase	﻿2026-11-05T14:00:09.5605401Z ##[group]Run supabase stop
+db	Stop Supabase	2026-11-05T14:00:09.5605908Z [36;1msupabase stop[0m
+db	Stop Supabase	2026-11-05T14:00:09.5633485Z shell: /usr/bin/bash -e {0}
+db	Stop Supabase	2026-11-05T14:00:09.5633962Z env:
+db	Stop Supabase	2026-11-05T14:00:09.5634398Z   JOB_STARTED_MS: 1793887025899
+db	Stop Supabase	2026-11-05T14:00:09.5634994Z   API_URL: ***
+db	Stop Supabase	2026-11-05T14:00:09.5635644Z   DB_URL: ***
+db	Stop Supabase	2026-11-05T14:00:09.5636238Z   PUBLISHABLE_KEY: ***
+db	Stop Supabase	2026-11-05T14:00:09.5636776Z   SECRET_KEY: ***
+db	Stop Supabase	2026-11-05T14:00:09.5637187Z ##[endgroup]
+db	Stop Supabase	2026-11-05T14:00:10.1448849Z Stopping containers...
+db	Stop Supabase	2026-11-05T14:00:14.1759608Z Stopped supabase local development setup.
+db	Stop Supabase	2026-11-05T14:00:14.6729890Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Stop Supabase	2026-11-05T14:00:14.6759376Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Stop Supabase	2026-11-05T14:00:14.6770800Z Local data are backed up to docker volume. Use docker to show them: docker volume ls --filter label=com.supabase.cli.project=Juntia
+db	Publish db timings	﻿2026-11-05T14:00:14.6972230Z ##[group]Run node scripts/ci.mjs summary
+db	Publish db timings	2026-11-05T14:00:14.6972922Z [36;1mnode scripts/ci.mjs summary[0m
+db	Publish db timings	2026-11-05T14:00:14.6995222Z shell: /usr/bin/bash -e {0}
+db	Publish db timings	2026-11-05T14:00:14.6996080Z env:
+db	Publish db timings	2026-11-05T14:00:14.6996526Z   JOB_STARTED_MS: 1793887025899
+db	Publish db timings	2026-11-05T14:00:14.6997250Z   API_URL: ***
+db	Publish db timings	2026-11-05T14:00:14.6998367Z   DB_URL: ***
+db	Publish db timings	2026-11-05T14:00:14.6999036Z   PUBLISHABLE_KEY: ***
+db	Publish db timings	2026-11-05T14:00:14.6999669Z   SECRET_KEY: ***
+db	Publish db timings	2026-11-05T14:00:14.7000123Z   JOB_STATUS: failure
+db	Publish db timings	2026-11-05T14:00:14.7000604Z ##[endgroup]
+db	Publish db timings	2026-11-05T14:00:14.7391869Z | Control | Estado | Duración | Presupuesto |
+db	Publish db timings	2026-11-05T14:00:14.7393534Z | --- | --- | --- | --- |
+db	Publish db timings	2026-11-05T14:00:14.7413411Z | ci | pasó | 22.77 s | — |
+db	Publish db timings	2026-11-05T14:00:14.7414644Z | test:db | falló | 5.83 s | < 60 s |
+db	Publish db timings	2026-11-05T14:00:14.7416058Z | test:integration | pasó | 5.76 s | — |
+db	Publish db timings	2026-11-05T14:00:14.7417268Z | db:types:check | falló | 1.46 s | — |
+db	Publish db timings	2026-11-05T14:00:14.7419763Z | Job db (incluye instalación) | failure | 188.84 s | < 360 s |
+db	Post Run supabase/setup-cli@v3	﻿2026-11-05T14:00:14.7616909Z Post job cleanup.
+db	Post Run supabase/setup-cli@v3	2026-11-05T14:00:14.7621283Z ##[start-action display=Setup Bun;id=__38d1abc7-8977-4c8b-840e-1a9a4e4b42a1.__oven-sh_setup-bun]
+db	Post Run supabase/setup-cli@v3	2026-11-05T14:00:14.7623801Z ##[end-action id=__38d1abc7-8977-4c8b-840e-1a9a4e4b42a1.__oven-sh_setup-bun;outcome=skipped;conclusion=skipped;duration_ms=0]
+db	Post Run actions/checkout@v7	﻿2026-11-05T14:00:14.7699467Z Post job cleanup.
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.8811393Z [command]/usr/bin/git version
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.8853262Z git version 2.56.0
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.8912072Z Temporarily overriding HOME='/home/runner/work/_temp/f5d384ef-8019-4ec1-a867-d795448f47ee' before making global git config changes
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.8949074Z Adding repository directory to the temporary git global config as a safe directory
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.8968880Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9118469Z Removing SSH command configuration
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9122926Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9127435Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9442247Z Removing HTTP extra header
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9560833Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9732079Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9932083Z Removing includeIf entries pointing to credentials config files
+db	Post Run actions/checkout@v7	2026-11-05T14:00:14.9939340Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0015463Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0020029Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0020960Z includeif.gitdir:/github/workspace/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0022122Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0024013Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0118995Z /home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0127182Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-9e2edbbc\-a2c7\-4f99\-b162\-81c548ec86e5\.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0229114Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0295029Z /home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0301105Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-9e2edbbc\-a2c7\-4f99\-b162\-81c548ec86e5\.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0343286Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0383829Z /github/runner_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0392998Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-9e2edbbc\-a2c7\-4f99\-b162\-81c548ec86e5\.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0440705Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0489130Z /github/runner_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0493189Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-9e2edbbc\-a2c7\-4f99\-b162\-81c548ec86e5\.config
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.0557919Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+db	Post Run actions/checkout@v7	2026-11-05T14:00:15.1000816Z Removing credentials config '/home/runner/work/_temp/git-credentials-9e2edbbc-a2c7-4f99-b162-81c548ec86e5.config'
+db	Complete job	﻿2026-11-05T14:00:15.1219199Z Cleaning up orphan processes

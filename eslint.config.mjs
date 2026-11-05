@@ -67,11 +67,20 @@ const hexSelectors = [
   { selector: `Literal[value=/${HEX}/]`, message: HEX_MSG },
   { selector: `TemplateElement[value.raw=/${HEX}/]`, message: HEX_MSG },
 ];
+const serviceSelectors = [
+  { selector: "Identifier[name=/^SUPABASE_(SECRET_KEY|SERVICE_ROLE_KEY)$/]", message: "FR-011: ninguna clave privilegiada en la app." },
+  { selector: "Literal[value=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
+  { selector: "TemplateElement[value.raw=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
+];
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   globalIgnores([".agents/**", ".claude/skills/**", ".claude/worktrees/**", ".next/**", "node_modules/**", "tests/lint-fixtures/**", "next-env.d.ts"]),
   { files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors] } },
+  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors] } },
+  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], ignores: ["src/lib/db/**", "src/lib/supabase/**"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors,
+    { selector: "CallExpression[callee.property.name=/^(rpc|from)$/]", message: "FR-010: el acceso a datos pertenece a src/lib/db o src/lib/supabase." },
+  ] } },
   { files: ["tests/**/*.{ts,tsx,js,mjs,cjs}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors,
     { selector: "CallExpression[callee.property.name='waitForTimeout']", message: WAIT_MSG },
     { selector: "CallExpression[callee.name='setTimeout']", message: WAIT_MSG },
@@ -84,7 +93,7 @@ export default defineConfig([
     plugins: { juntia: { rules: { "domain-imports": domainImports } } },
     rules: { "juntia/domain-imports": "error", "no-restricted-imports": ["error", {
     paths: ["react", "react-dom", "next", "motion"],
-    patterns: [{ group: ["react/*", "react-dom/*", "next/*", "motion/*", "@phosphor-icons/*", "@radix-ui/*", "@supabase/*", "@/components/*"], message: "Maestro §7.2: domain no depende de la interfaz ni de SDK de proveedores." }],
+    patterns: [{ group: ["react/*", "react-dom/*", "next/*", "motion/*", "@phosphor-icons/*", "@radix-ui/*", "@supabase/*", "@/components/*", "@/lib/db/*", "@/lib/supabase/*"], message: "Maestro §7.2: domain no depende de la interfaz ni de SDK de proveedores." }],
   }] } },
 ]);
 

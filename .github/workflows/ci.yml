@@ -50,3 +50,105 @@ jobs:
         env:
           JOB_STATUS: ${{ job.status }}
         run: node scripts/ci.mjs summary
+
+  db:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+        with:
+          # F40-3: N6 usa el commit real de foundation, no un SHA inexistente.
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      - name: Start Supabase and reset the runner database
+        id: database
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+          supabase db reset
+      - name: Install dependencies
+        id: install
+        run: node scripts/ci.mjs run ci
+      - name: Test SQL
+        run: node scripts/ci.mjs run test:db
+      - name: Test API
+        if: always() && steps.database.outcome == 'success' && steps.install.outcome == 'success'
+        run: node scripts/ci.mjs run test:integration
+      - name: Check generated types
+        if: always() && steps.database.outcome == 'success' && steps.install.outcome == 'success'
+        run: node scripts/ci.mjs run db:types:check
+      - name: Preserve generated public types
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: database-types
+          path: ${{ runner.temp }}/database.types.ts
+          if-no-files-found: ignore
+      - name: Describe Auth bootstrap for the plain PostgreSQL restore
+        if: always() && steps.database.outcome == 'success'
+        shell: bash
+        run: |
+          psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select jsonb_build_object('uid', pg_get_functiondef('auth.uid()'::regprocedure), 'columns', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) order by c.relname,a.attnum) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where n.nspname='auth' and c.relname in ('users','identities') and a.attnum>0 and not a.attisdropped));" > "$RUNNER_TEMP/auth-bootstrap.json"
+          # F40-2: solo firmas y ACL, nunca cuerpos, claves ni filas de usuario.
+          psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select n.nspname,p.oid::regprocedure,coalesce(p.proacl::text,'DEFAULT') from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proowner='postgres'::regrole and n.nspname !~ '^pg_' and n.nspname<>'information_schema' and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE')) order by n.nspname,p.proname,p.oid;" > "$RUNNER_TEMP/postgres-execute-inventory.txt"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: auth-bootstrap-description
+          path: |
+            ${{ runner.temp }}/auth-bootstrap.json
+            ${{ runner.temp }}/postgres-execute-inventory.txt
+          if-no-files-found: ignore
+      - name: Install plain PostgreSQL 17 from PGDG
+        id: plain
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-17 postgresql-client-17
+          sudo pg_createcluster 17 juntia --port 55432 --start
+          password=$(openssl rand -hex 24)
+          echo "::add-mask::$password"
+          sudo -u postgres psql -p 55432 -q -v ON_ERROR_STOP=1 -c "alter user postgres password '$password'"
+          connection="postgresql://postgres:$password@127.0.0.1:55432"
+          echo "::add-mask::$connection"
+          echo "PG=$connection" >> "$GITHUB_ENV"
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+      - name: Restore drill and nine negative controls
+        run: node scripts/ci.mjs run db:restore-drill
+      - name: Stop plain PostgreSQL
+        if: always() && steps.plain.outcome == 'success'
+        run: sudo pg_dropcluster --stop 17 juntia
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+      - name: Publish db timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary

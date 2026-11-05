@@ -1,0 +1,64 @@
+import { type Money, MAX_COP_PESOS } from "../money";
+export type TransactionType = "expense" | "income";
+export type TransactionStatus = "active" | "voided";
+export const CATEGORY_CATALOG = [
+  { id: "market", kind: "expense" }, { id: "restaurants", kind: "expense" },
+  { id: "home", kind: "expense" }, { id: "transport", kind: "expense" },
+  { id: "health", kind: "expense" }, { id: "entertainment", kind: "expense" },
+  { id: "shopping", kind: "expense" }, { id: "services", kind: "expense" },
+  { id: "income", kind: "income" }, { id: "other", kind: "expense" },
+] as const;
+export type CategoryId = (typeof CATEGORY_CATALOG)[number]["id"];
+export type TransactionDraft = Readonly<{
+  type: TransactionType; amount: Money; categoryId: CategoryId;
+  transactionDate: string; description: string | null;
+}>;
+export type Transaction = TransactionDraft & Readonly<{
+  id: string; status: TransactionStatus; version: number; createdAt: string; updatedAt: string;
+}>;
+export type DraftError = "invalidType" | "amountOutOfRange" | "invalidCategory" | "invalidDate" | "descriptionTooLong";
+export function validateDraft(draft: TransactionDraft): DraftError[] {
+  const errors: DraftError[] = [];
+  if (draft.type !== "expense" && draft.type !== "income") errors.push("invalidType");
+  if (draft.amount.amountMinor <= 0n || draft.amount.amountMinor > MAX_COP_PESOS * 100n || draft.amount.amountMinor % 100n !== 0n) errors.push("amountOutOfRange");
+  if (!CATEGORY_CATALOG.some(({ id, kind }) => id === draft.categoryId && kind === draft.type)) errors.push("invalidCategory");
+  const date = new Date(`${draft.transactionDate}T00:00:00Z`);
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(draft.transactionDate) || draft.transactionDate.startsWith("0000") || Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== draft.transactionDate) errors.push("invalidDate");
+  if (draft.description !== null && [...draft.description.trim()].length > 140) errors.push("descriptionTooLong");
+  return errors;
+}
+export function monthKey(date: string): string { return date.slice(0, 7); }
+export function todayInBogota(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  const part = (type: string) => parts.find((item) => item.type === type)!.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+const money = (amountMinor: bigint): Money => ({ amountMinor, currency: "COP" });
+export function monthSummary(rows: readonly Transaction[], month: string) {
+  let expense = 0n; let income = 0n;
+  const byCategory: Partial<Record<CategoryId, Money>> = {};
+  for (const row of rows) {
+    if (row.status !== "active" || monthKey(row.transactionDate) !== month) continue;
+    if (row.type === "income") income += row.amount.amountMinor;
+    else {
+      expense += row.amount.amountMinor;
+      byCategory[row.categoryId] = money((byCategory[row.categoryId]?.amountMinor ?? 0n) + row.amount.amountMinor);
+    }
+  }
+  return { expenseTotal: money(expense), incomeTotal: money(income), byCategory };
+}
+export function groupByDay(rows: readonly Transaction[]) {
+  const groups = new Map<string, Transaction[]>();
+  for (const row of rows.filter(({ status }) => status === "active").sort((a, b) => b.transactionDate.localeCompare(a.transactionDate) || b.createdAt.localeCompare(a.createdAt))) {
+    const group = groups.get(row.transactionDate) ?? [];
+    group.push(row); groups.set(row.transactionDate, group);
+  }
+  return [...groups].map(([date, transactions]) => ({ date, transactions }));
+}
+export function fillRecentCategories(recent: readonly CategoryId[]): CategoryId[] {
+  return [...new Set([...recent, ...CATEGORY_CATALOG.map(({ id }) => id)])].filter((id) => id !== "income").slice(0, 5);
+}
+export function monthBounds(months: readonly string[], current: string) {
+  const sorted = [...months.map(monthKey), monthKey(current)].sort();
+  return { min: sorted[0], max: sorted[sorted.length - 1] };
+}

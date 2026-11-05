@@ -1,0 +1,2 @@
+F40-3 unidad de diagnóstico (psql simulado, sin Supabase local): manifest-exit=1
+MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden (sha=cbccec832d338402bc7262973b8e0b539d6dddff)

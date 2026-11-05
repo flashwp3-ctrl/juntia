@@ -2,7 +2,20 @@ export const copy = {
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia", notice: "Esta versión es la base de Juntia. Todavía no guarda datos.", noticeLabel: "Versión base" },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N", shortcutLabel: "Atajo" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
-  annotate: { title: "Anotar un gasto", description: "Registrar gastos llega con la próxima versión. Todavía no puedes guardar movimientos.", close: "Cerrar" },
+  annotate: { title: "Anotar un gasto", description: "Registrar gastos llega con la próxima versión. Todavía no puedes guardar movimientos.", close: "Cerrar", errors: {
+    amountInvalid: "Escribe el monto en pesos enteros.", amountOutOfRange: "Escribe un monto entre $1 y $999.999.999.",
+    category: "Elige una categoría para este movimiento.", date: "Elige una fecha válida.", descriptionTooLong: "Usa hasta 140 caracteres en la descripción.",
+  } },
+  categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Entretenimiento", shopping: "Compras", services: "Servicios", income: "Ingresos", other: "Otra" },
+  errors: { sessionExpired: "Tu sesión caducó. Vuelve a entrar para continuar.", unexpected: "Algo salió mal. Inténtalo de nuevo.", saveFailed: "No pudimos guardar. Reintentar.", network: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo." },
+  transaction: { errors: { notFound: "No encontramos este movimiento.", versionConflict: "Este movimiento cambió. Recárgalo antes de editar.", alreadyDeleted: "Este movimiento ya se eliminó." } },
+  auth: {
+    verifyEmail: { title: "Verifica tu correo", description: "Si podemos completar el registro, recibirás un enlace. Revisa tu correo o inténtalo más tarde.", resent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde." },
+    signIn: { invalidCredentials: "Correo o contraseña incorrectos.", notVerified: "Verifica tu correo antes de entrar.", verified: "Tu correo está verificado. Ya puedes entrar." },
+    networkError: "No pudimos conectar. Inténtalo de nuevo.", recover: { sent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", linkExpired: "Este enlace caducó o ya se usó. Pide uno nuevo." },
+    newPassword: { weak: "Usa una contraseña de al menos 8 caracteres.", same: "Elige una contraseña distinta de la anterior." },
+    signUp: { weakPassword: "Usa una contraseña de al menos 8 caracteres." },
+  },
   empty: {
     home: { title: "Tu día a día, aquí", description: "Este será el lugar para ver tus movimientos." },
     activity: { title: "Todavía no hay movimientos", description: "Aquí podrás revisar lo que registres." },
@@ -10,7 +23,7 @@ export const copy = {
     plan: { title: "Planifica a tu manera", description: "Los presupuestos serán opcionales. Podrás registrar gastos sin crear uno." },
   },
   balance: { title: "Todavía no disponible", description: "El balance aparece cuando exista la pareja." },
-  account: { title: "Mi cuenta", status: "Todavía no disponible", description: "Tu cuenta llega con el inicio de sesión.", back: "Volver" },
+  account: { title: "Mi cuenta", status: "Todavía no disponible", description: "Tu cuenta llega con el inicio de sesión.", back: "Volver", profile: { errors: { displayName: "Escribe un nombre de 1 a 60 caracteres, sin saltos de línea." } }, security: { signOutFailed: "No pudimos cerrar la sesión. Inténtalo de nuevo." } },
   states: {
     notFound: "No encontramos esta página",
     notFoundDescription: "La dirección no existe o todavía no hace parte de esta versión. Desde Inicio puedes seguir recorriendo Juntia.",

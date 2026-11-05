@@ -44,8 +44,12 @@ commit de prueba y comprueba que el job se pone rojo (TESTING §6, paso 5).
 ## 3. Usar la app en desarrollo: `juntia-dev`
 
 `juntia-dev` (`itfrhnadovezpahikuol`) es un proyecto Free de la segunda
-fundadora, en la región de producción, **sin datos reales** y con claves propias
-(ADR-011 §9.5). No lo usa ninguna prueba automatizada.
+fundadora, **sin datos reales** y con claves propias (ADR-011 §9.5). No lo usa
+ninguna prueba automatizada. Está en **East US (North Virginia)**, no en la región
+de producción (São Paulo): la región no se puede cambiar sin recrear el proyecto, y
+los fundadores la aceptaron el 5 de noviembre de 2026 porque dev no guarda datos
+reales y la región no cambia el comportamiento de las migraciones. Las latencias
+medidas en dev no representan a producción.
 
 ### Variables de entorno (solo nombres; los valores, del panel del proyecto)
 
@@ -162,7 +166,14 @@ git push origin db-prod-AAAA-MM-DD
 
 `DB` es la cadena de conexión **directa** de producción del panel (Connect ›
 Direct o Session pooler), con la contraseña de la base; se exporta en la sesión y
-no se guarda en ningún archivo del repositorio. El script es
+no se guarda en ningún archivo del repositorio. **Necesita una conexión de sesión:
+directa o pooler en modo sesión; nunca pooler en modo transacción.** La sesión
+exportadora mantiene abierta una transacción `repeatable read, read only` hasta
+que terminen tanto `pg_dump --snapshot` como todas las consultas del manifiesto.
+Estas importan esa misma instantánea con `SET TRANSACTION SNAPSHOT`, antes de
+consultar migraciones, recuentos o hashes; una escritura o un inicio de sesión
+concurrentes no alteran la vista de la copia. El cierre normal y el `trap` cierran
+la sesión exportadora ([PostgreSQL 17: instantáneas sincronizadas](https://www.postgresql.org/docs/17/functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION)). El script es
 `scripts/backup.sh` (lo crea el PR A); esto es lo que hace:
 
 ```bash
@@ -175,8 +186,14 @@ NAME="juntia-$(date +%Y-%m-%dT%H%M%S)"
 OUT_GPG="$PWD/$NAME.tar.gpg"; OUT_MAN="$PWD/$NAME.manifest.txt"
 # Temporal en la misma carpeta de destino: el paso final es un enlace duro, atómico en el mismo sistema de archivos.
 WORK=$(mktemp -d "$PWD/.juntia-backup.XXXXXX"); SRC="$WORK/src"; PUBLISHED=()
+SNAPSHOT_PID= SNAPSHOT_INPUT= SNAPSHOT_OUTPUT=
 cleanup() {
   rc=$?
+  if [ -n "$SNAPSHOT_PID" ]; then
+    if [ -n "$SNAPSHOT_INPUT" ]; then exec {SNAPSHOT_INPUT}>&- || true; fi
+    if [ -n "$SNAPSHOT_OUTPUT" ]; then exec {SNAPSHOT_OUTPUT}<&- || true; fi
+    wait "$SNAPSHOT_PID" || true
+  fi
   if [ "$rc" -ne 0 ]; then rm -f "${PUBLISHED[@]}"; fi   # solo lo que este script publicó
   git worktree remove --force "$SRC" 2>/dev/null || true
   rm -rf "$WORK"                                          # data.sql en claro, tar, manifiesto y .gpg temporales
@@ -185,11 +202,23 @@ cleanup() {
 trap cleanup EXIT
 test ! -e "$OUT_GPG" && test ! -e "$OUT_MAN"
 git worktree add --detach "$SRC" "$TAG"
-pg_dump "$DB" --data-only --column-inserts --on-conflict-do-nothing \
+coproc SNAPSHOT_EXPORTER { psql "$DB" -X -qAt -v ON_ERROR_STOP=1; }
+SNAPSHOT_PID=$SNAPSHOT_EXPORTER_PID
+exec {SNAPSHOT_INPUT}>&"${SNAPSHOT_EXPORTER[1]}"
+exec {SNAPSHOT_OUTPUT}<&"${SNAPSHOT_EXPORTER[0]}"
+original_input=${SNAPSHOT_EXPORTER[1]}; original_output=${SNAPSHOT_EXPORTER[0]}
+exec {original_input}>&-; exec {original_output}<&-
+printf 'begin isolation level repeatable read read only;\nselect pg_export_snapshot();\n' >&"$SNAPSHOT_INPUT"
+IFS= read -r -t 30 SNAPSHOT <&"$SNAPSHOT_OUTPUT"
+[[ $SNAPSHOT =~ ^[0-9A-Fa-f]+-[0-9A-Fa-f]+-[0-9]+$ ]]
+pg_dump "$DB" --snapshot="$SNAPSHOT" --data-only --column-inserts --on-conflict-do-nothing \
   -t 'juntia_data.*' -t auth.users -t auth.identities -f "$WORK/data.sql"
 # Bloqueante: falla si la etiqueta no existe o si las migraciones de producción ≠ las de la etiqueta.
 bash scripts/backup-manifest.sh --write --mode production --tag "$TAG" \
-  --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "$WORK/manifest.txt"
+  --snapshot "$SNAPSHOT" --migrations "$SRC/supabase/migrations" --db "$DB" --data "$WORK/data.sql" > "$WORK/manifest.txt"
+printf 'commit;\n\\q\n' >&"$SNAPSHOT_INPUT"
+exec {SNAPSHOT_INPUT}>&-; exec {SNAPSHOT_OUTPUT}<&-
+wait "$SNAPSHOT_PID"; SNAPSHOT_PID=
 tar -cf "$WORK/juntia.tar" -C "$WORK" data.sql manifest.txt
 gpg --symmetric --cipher-algo AES256 -o "$WORK/juntia.tar.gpg" "$WORK/juntia.tar"
 # Comprobación real: descifrar en la carpeta temporal y comparar con el original. Pide la

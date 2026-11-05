@@ -1,0 +1,23 @@
+-- FR-029 / T012 I1: RLS por dueño y «escritura directa imposible por SQL».
+begin;
+select no_plan();
+select tests.create_user('11111111-1111-4111-8111-111111111111','sara@seed.test');
+select tests.create_user('22222222-2222-4222-8222-222222222222','tomas@seed.test');
+insert into juntia_data.profiles(user_id,display_name) values ('11111111-1111-4111-8111-111111111111','Sara');
+set local role authenticated;
+set local "request.jwt.claims" = '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","email":"tomas@seed.test","user_metadata":{"display_name":"Tomás"}}';
+select is((select count(*) from public.my_profile), 0::bigint, '[V2] Tomás no lee a Sara');
+select is(public.ensure_profile()->>'display_name', 'Tomás', 'perfil propio');
+select is(public.set_theme('dark')->>'theme', 'dark', 'cambia solo el tema propio');
+select is(public.update_display_name(' Tomás nuevo ')->>'display_name', 'Tomás nuevo', 'nombre recortado');
+select is(public.complete_first_entry()->>'first_entry_completed', 'true', 'A6 completada');
+select throws_ok($$select public.update_display_name(E'Nombre\nOtro')$$, 'JT014', 'invalidDisplayName', 'nombre sin saltos');
+select throws_ok($$select public.set_theme('invalid')$$, 'JT015', 'invalidTheme', 'tema válido');
+select throws_ok($$insert into juntia_data.profiles(user_id,display_name) values ('22222222-2222-4222-8222-222222222222','Otro')$$, '42501', 'permission denied for schema juntia_data', '[V2] INSERT directo imposible');
+select throws_ok($$update juntia_data.profiles set display_name='Otro'$$, '42501', 'permission denied for schema juntia_data', '[V2] UPDATE directo imposible');
+select throws_ok('delete from juntia_data.profiles', '42501', 'permission denied for schema juntia_data', '[V2] DELETE directo imposible');
+select throws_ok('truncate juntia_data.profiles', '42501', 'permission denied for schema juntia_data', '[V2] TRUNCATE directo imposible');
+reset role;
+select is((select display_name from juntia_data.profiles where user_id='11111111-1111-4111-8111-111111111111'), 'Sara', 'las funciones de Tomás no tocaron a Sara');
+select * from finish();
+rollback;

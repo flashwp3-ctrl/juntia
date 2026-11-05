@@ -1,0 +1,2 @@
+F40-3 unidad de diagnóstico (psql simulado, sin Supabase local): manifest-exit=1
+F40-3: assertion failed: falta diagnóstico de validación del manifiesto

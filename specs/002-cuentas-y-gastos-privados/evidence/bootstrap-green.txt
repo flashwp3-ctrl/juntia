@@ -1,0 +1,1303 @@
+app	Set up job	﻿2026-11-05T04:55:31.9632833Z Current runner version: '2.338.2'
+app	Set up job	2026-11-05T04:55:31.9711650Z ##[group]Runner Image Provisioner
+app	Set up job	2026-11-05T04:55:31.9713338Z Hosted Compute Agent
+app	Set up job	2026-11-05T04:55:31.9714445Z Version: 20261021.618
+app	Set up job	2026-11-05T04:55:31.9715725Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+app	Set up job	2026-11-05T04:55:31.9716987Z Build Date: 2026-10-21T00:45:21Z
+app	Set up job	2026-11-05T04:55:31.9718178Z Worker ID: {7a18a3fd-c029-428f-bf65-51ff64bf537a}
+app	Set up job	2026-11-05T04:55:31.9719530Z Region: eastus
+app	Set up job	2026-11-05T04:55:31.9720969Z Cloud: Azure
+app	Set up job	2026-11-05T04:55:31.9722014Z ##[endgroup]
+app	Set up job	2026-11-05T04:55:31.9724520Z ##[group]Operating System
+app	Set up job	2026-11-05T04:55:31.9725646Z Ubuntu
+app	Set up job	2026-11-05T04:55:31.9726870Z 24.04.5
+app	Set up job	2026-11-05T04:55:31.9727823Z LTS
+app	Set up job	2026-11-05T04:55:31.9728818Z ##[endgroup]
+app	Set up job	2026-11-05T04:55:31.9740753Z ##[group]Runner Image
+app	Set up job	2026-11-05T04:55:31.9741911Z Image: ubuntu-24.04
+app	Set up job	2026-11-05T04:55:31.9743096Z Version: 20261025.353.1
+app	Set up job	2026-11-05T04:55:31.9745020Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+app	Set up job	2026-11-05T04:55:31.9748771Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+app	Set up job	2026-11-05T04:55:31.9750924Z ##[endgroup]
+app	Set up job	2026-11-05T04:55:31.9753107Z ##[group]GITHUB_TOKEN Permissions
+app	Set up job	2026-11-05T04:55:31.9756224Z Contents: read
+app	Set up job	2026-11-05T04:55:31.9757311Z Metadata: read
+app	Set up job	2026-11-05T04:55:31.9758360Z ##[endgroup]
+app	Set up job	2026-11-05T04:55:31.9776871Z Secret source: Actions
+app	Set up job	2026-11-05T04:55:31.9778374Z Cache mode: write
+app	Set up job	2026-11-05T04:55:31.9780291Z Prepare workflow directory
+app	Set up job	2026-11-05T04:55:32.0668382Z Prepare all required actions
+app	Set up job	2026-11-05T04:55:32.0741294Z Getting action download info
+app	Set up job	2026-11-05T04:55:32.3194192Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+app	Set up job	2026-11-05T04:55:32.4874955Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+app	Set up job	2026-11-05T04:55:32.6807563Z Complete job name: app
+app	Start job clock	﻿2026-11-05T04:55:32.7595476Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+app	Start job clock	2026-11-05T04:55:32.7596434Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+app	Start job clock	2026-11-05T04:55:32.7620989Z shell: /usr/bin/bash -e {0}
+app	Start job clock	2026-11-05T04:55:32.7621897Z ##[endgroup]
+app	Run actions/checkout@v7	﻿2026-11-05T04:55:32.7979296Z ##[group]Run actions/checkout@v7
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7980231Z with:
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7980688Z   repository: flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7984705Z   token: ***
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7985138Z   ssh-strict: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7985570Z   ssh-user: git
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7986013Z   persist-credentials: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7986499Z   clean: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7986940Z   sparse-checkout-cone-mode: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7987460Z   fetch-depth: 1
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7987891Z   fetch-tags: false
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7988333Z   show-progress: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7988773Z   lfs: false
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7989183Z   submodules: false
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7989907Z   set-safe-directory: true
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7990470Z   allow-unsafe-pr-checkout: false
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7991033Z env:
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7991441Z   JOB_STARTED_MS: 1793854532773
+app	Run actions/checkout@v7	2026-11-05T04:55:32.7991936Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2434398Z Syncing repository: flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2437251Z ##[group]Getting Git version info
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2438804Z Working directory is '/home/runner/work/juntia/juntia'
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2441077Z [command]/usr/bin/git version
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2442271Z git version 2.56.0
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2446013Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2467840Z Temporarily overriding HOME='/home/runner/work/_temp/008321b2-77f6-4a57-920c-808e48574a57' before making global git config changes
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2474986Z Adding repository directory to the temporary git global config as a safe directory
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2477427Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2483824Z Deleting the contents of '/home/runner/work/juntia/juntia'
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2487189Z ##[group]Determining repository object format
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2488904Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2491644Z ##[group]Initializing the repository
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2501515Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2503417Z hint: Using 'master' as the name for the initial branch. This default branch name
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2507710Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2510261Z hint: to use in all of your new repositories, which will suppress this warning,
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2513065Z hint: call:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2514107Z hint:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2515466Z hint: 	git config --global init.defaultBranch <name>
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2516959Z hint:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2519176Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2523188Z hint: 'development'. The just-created branch can be renamed via this command:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2524676Z hint:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2526231Z hint: 	git branch -m <name>
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2527137Z hint:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2528246Z hint: Disable this message with "git config set advice.defaultBranchName false"
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2530333Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2534623Z [command]/usr/bin/git remote add origin https://github.com/flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2537973Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2539295Z ##[group]Disabling automatic garbage collection
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2541383Z [command]/usr/bin/git config --local gc.auto 0
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2546554Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2547956Z ##[group]Setting up auth
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2549495Z Removing SSH command configuration
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2552465Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2556526Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2895340Z Removing HTTP extra header
+app	Run actions/checkout@v7	2026-11-05T04:55:33.2898698Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3002077Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3292336Z Removing includeIf entries pointing to credentials config files
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3296524Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3354543Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3627492Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3681928Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3729017Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3779360Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3829232Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3875655Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3877682Z ##[group]Fetching the repository
+app	Run actions/checkout@v7	2026-11-05T04:55:33.3885636Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6ea9b3f27e3453ae3b8e883f7cadb8acd8677950:refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5465006Z From https://github.com/flashwp3-ctrl/juntia
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5479487Z  * [new ref]         6ea9b3f27e3453ae3b8e883f7cadb8acd8677950 -> origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5493983Z [command]/usr/bin/git branch --list --remote origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5521447Z   origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5534557Z [command]/usr/bin/git rev-parse refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5574750Z 6ea9b3f27e3453ae3b8e883f7cadb8acd8677950
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5579436Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5582113Z ##[group]Determining the checkout info
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5584475Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5586523Z [command]/usr/bin/git sparse-checkout disable
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5654848Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5703765Z ##[group]Checking out the ref
+app	Run actions/checkout@v7	2026-11-05T04:55:34.5707380Z [command]/usr/bin/git checkout --progress --force -B feat/002-a-database refs/remotes/origin/feat/002-a-database
+app	Run actions/checkout@v7	2026-11-05T04:55:34.9260554Z Switched to a new branch 'feat/002-a-database'
+app	Run actions/checkout@v7	2026-11-05T04:55:34.9290914Z branch 'feat/002-a-database' set up to track 'origin/feat/002-a-database'.
+app	Run actions/checkout@v7	2026-11-05T04:55:34.9298927Z ##[endgroup]
+app	Run actions/checkout@v7	2026-11-05T04:55:34.9401063Z [command]/usr/bin/git log -1 --format=%H
+app	Run actions/checkout@v7	2026-11-05T04:55:34.9465090Z 6ea9b3f27e3453ae3b8e883f7cadb8acd8677950
+app	Run actions/setup-node@v7	﻿2026-11-05T04:55:34.9716538Z ##[group]Run actions/setup-node@v7
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9716869Z with:
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9717067Z   node-version: 24
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9717280Z   cache: npm
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9717486Z   check-latest: false
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9720459Z   token: ***
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9720701Z   package-manager-cache: true
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9720974Z env:
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9721168Z   JOB_STARTED_MS: 1793854532773
+app	Run actions/setup-node@v7	2026-11-05T04:55:34.9721431Z ##[endgroup]
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.1238856Z Found in cache @ /opt/hostedtoolcache/node/24.22.1/x64
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.2244416Z ##[group]Environment details
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.7370388Z node: v24.22.1
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.7371089Z npm: 11.19.1
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.7371434Z yarn: 1.22.22
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.7372429Z ##[endgroup]
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.7391956Z [command]/opt/hostedtoolcache/node/24.22.1/x64/bin/npm config get cache
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.9015937Z /home/runner/.npm
+app	Run actions/setup-node@v7	2026-11-05T04:55:35.9904675Z Cache hit for: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.0711526Z Received 197273109 of 214050325 (92.2%), 187.4 MBs/sec
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.1403295Z Received 214050325 of 214050325 (100.0%), 189.9 MBs/sec
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.1404564Z Cache Size: ~204 MB (214050325 B)
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.1455589Z [command]/usr/bin/tar -xf /home/runner/work/_temp/b1870bd3-521c-4b11-9130-c58f516767cf/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.7143690Z Cache restored successfully
+app	Run actions/setup-node@v7	2026-11-05T04:55:37.7242060Z Cache restored from key: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+app	Install, lint, typecheck and unit and component tests	﻿2026-11-05T04:55:37.7463108Z ##[group]Run node scripts/ci.mjs run ci lint typecheck test:unit test:components
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:55:37.7463746Z [36;1mnode scripts/ci.mjs run ci lint typecheck test:unit test:components[0m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:55:37.7494274Z shell: /usr/bin/bash -e {0}
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:55:37.7494534Z env:
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:55:37.7494733Z   JOB_STARTED_MS: 1793854532773
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:55:37.7494976Z ##[endgroup]
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3235605Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3245700Z added 493 packages, and audited 500 packages in 22s
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3247804Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3248977Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3263254Z 167 packages are looking for funding
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3264569Z   run `npm fund` for details
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3265211Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3265715Z 8 moderate severity vulnerabilities
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3266282Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3266913Z To address all issues (including breaking changes), run:
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3267793Z   npm audit fix --force
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3268267Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:00.3268682Z Run `npm audit` for details.
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:05.1544578Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:05.1545590Z > juntia@0.1.0 lint
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:05.1546390Z > eslint .
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:05.1546789Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:09.8101209Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:09.8101907Z > juntia@0.1.0 typecheck
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:09.8102550Z > tsc --noEmit
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:09.8102890Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3894085Z [2mprojects: [22m[33mdomain[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3894551Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3894692Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3899491Z > juntia@0.1.0 test:unit
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3900878Z > vitest run --project domain --passWithNoTests
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3901524Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3901797Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3902889Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3903753Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3904273Z No test files found, exiting with code 0
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3904834Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3911309Z [30m[45m domain [49m[39m 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3911927Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3912651Z [2minclude: [22m[33msrc/domain/**/*.test.ts[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3913956Z [2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/.git/**[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:10.3914628Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4703281Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4704184Z > juntia@0.1.0 test:components
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4705213Z > vitest run --project components
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4705866Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4706093Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4708949Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4710708Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4732681Z  [32m✓[39m [30m[45m components [49m[39m src/components/shell/annotate-notice.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 999[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4741529Z    [32m✓[39m Aviso de Anotar (T049) [2m(11)[22m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4761375Z      [33m[2m✓[22m[39m el disparador abre un `dialog` (no `alertdialog`) con el título y el cuerpo del catálogo[33m 561[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4768646Z  [32m✓[39m [30m[45m components [49m[39m src/components/ui/amount-input.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 428[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4771158Z  [32m✓[39m [30m[45m components [49m[39m src/components/shell/context-selector.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 427[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4773383Z  [32m✓[39m [30m[45m components [49m[39m tests/lint-rules.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1788[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4775555Z    [33m[2m✓[22m[39m marca claves privilegiadas y accesos fuera de la capa de datos[33m 1475[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4777672Z  [32m✓[39m [30m[45m components [49m[39m src/app/(app)/product-routes.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[32m 284[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4780285Z  [32m✓[39m [30m[45m components [49m[39m src/lib/internal-surface.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4782932Z  [32m✓[39m [30m[45m components [49m[39m src/app/(app)/error.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 236[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4785084Z  [32m✓[39m [30m[45m components [49m[39m src/lib/theme-script.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4787203Z  [32m✓[39m [30m[45m components [49m[39m src/styles/tokens.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4788164Z 
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4788840Z [2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4790155Z [2m      Tests [22m [1m[32m87 passed[39m[22m[90m (87)[39m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4791292Z [2m   Start at [22m 04:56:10
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4792381Z [2m   Duration [22m 10.53s[2m (tests 44%, environment 33%, import 11%, setup 8%, transform 3%)[22m
+app	Install, lint, typecheck and unit and component tests	2026-11-05T04:56:21.4793016Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	﻿2026-11-05T04:56:21.4835472Z ##[group]Run node scripts/ci.mjs run build chromium test:a11y check:internal-surface check:theme-script
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:21.4836248Z [36;1mnode scripts/ci.mjs run build chromium test:a11y check:internal-surface check:theme-script[0m
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:21.4857627Z shell: /usr/bin/bash -e {0}
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:21.4857890Z env:
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:21.4858090Z   JOB_STARTED_MS: 1793854532773
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:21.4858345Z ##[endgroup]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9846325Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9847214Z > juntia@0.1.0 build
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9848282Z > next build
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9848884Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9851708Z ▲ Next.js 16.4.4 (Turbopack)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9853064Z ✓ Running next.config.ts took 43ms
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9861936Z ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9863628Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9865312Z This information is used to shape Next.js' roadmap and prioritize features.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9867041Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9868320Z https://nextjs.org/telemetry
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9868803Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9868980Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9869427Z   Creating an optimized production build ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9871469Z ✓ Compiled successfully in 8.7s
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9872185Z   Running TypeScript ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9872854Z   Finished TypeScript in 5.7s ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9873594Z   Collecting page data using 1 worker ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9874435Z   Generating static pages using 1 worker (0/9) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9875438Z   Generating static pages using 1 worker (2/9) 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9876425Z   Generating static pages using 1 worker (4/9) 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9877331Z   Generating static pages using 1 worker (6/9) 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9878429Z ✓ Generating static pages using 1 worker (9/9) in 296ms
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9879311Z   Finalizing page optimization ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9880177Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9880574Z Route (app)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9881219Z ┌ ○ /
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9881846Z ├ ○ /_not-found
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9882499Z ├ ○ /actividad
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9883145Z ├ ○ /balance
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9883729Z ├ ○ /cuenta
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9884371Z ├ ƒ /interno/primitivos
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9885014Z ├ ○ /metas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9885637Z └ ○ /plan
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9886050Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9886257Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9887136Z ○  (Static)   prerendered as static content
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9888218Z ƒ  (Dynamic)  server-rendered on demand
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:37.9910056Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5897921Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5898581Z Installing dependencies...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5899929Z Switching to root user to install dependencies...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5901251Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5902511Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5903780Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5905042Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5906387Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5907618Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5909019Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [731 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5910798Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [663 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5912276Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1408 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5914011Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [311 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5915458Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1707 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5917254Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [343 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5918945Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1813 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5920792Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [412 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5922379Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [14.3 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5923350Z Running kernel seems to be up-to-date.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5924541Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1157 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5926060Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [233 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5927598Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1225 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5929044Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [247 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5930951Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1721 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5931731Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5932705Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [394 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5934321Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse Translation-en [12.4 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5935508Z Fetched 12.8 MB in 2s (7926 kB/s)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5936232Z Reading package lists...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5936893Z Reading package lists...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5937531Z Building dependency tree...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5938218Z Reading state information...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5939131Z libasound2t64 is already the newest version (1.2.11-1ubuntu0.3).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5942089Z libasound2t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5943211Z libatk-bridge2.0-0t64 is already the newest version (2.52.0-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5944253Z libatk-bridge2.0-0t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5945238Z libatk1.0-0t64 is already the newest version (2.52.0-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5946139Z libatk1.0-0t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5947054Z libatspi2.0-0t64 is already the newest version (2.52.0-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5947952Z libatspi2.0-0t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5948845Z libcairo2 is already the newest version (1.18.0-3build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5950011Z libcairo2 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5950607Z No services need to be restarted.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5953325Z libcups2t64 is already the newest version (2.4.7-1.2ubuntu7.14).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5962769Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5963143Z libcups2t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5964153Z libdbus-1-3 is already the newest version (1.14.10-4ubuntu4.1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5965068Z libdbus-1-3 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5966002Z libdrm2 is already the newest version (2.4.125-1ubuntu0.1~24.04.2).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5966905Z libdrm2 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5967785Z libgbm1 is already the newest version (25.2.8-0ubuntu0.24.04.4).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5968676Z libgbm1 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5969864Z libglib2.0-0t64 is already the newest version (2.80.0-6ubuntu3.10).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5970868Z libglib2.0-0t64 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5971804Z libnspr4 is already the newest version (2:4.35-1.1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5972665Z libnspr4 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5973542Z libnss3 is already the newest version (2:3.98-1ubuntu0.3).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5974383Z libnss3 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5975345Z libpango-1.0-0 is already the newest version (1.52.1+ds-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5976544Z libpango-1.0-0 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5977435Z libx11-6 is already the newest version (2:1.8.7-1ubuntu0.1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5978556Z libx11-6 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5979390Z libxcb1 is already the newest version (1.15-1ubuntu2).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5980306Z No containers need to be restarted.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5981047Z libxcb1 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5981944Z libxcomposite1 is already the newest version (1:0.4.5-1build3).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5982841Z libxcomposite1 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5983782Z libxdamage1 is already the newest version (1:1.1.6-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5984721Z libxdamage1 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5985700Z libxext6 is already the newest version (2:1.3.4-1build2).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5986547Z libxext6 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5987505Z libxfixes3 is already the newest version (1:6.0.0-2build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5988410Z libxfixes3 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5989827Z libxkbcommon0 is already the newest version (1.6.0-1build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5990450Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5991031Z libxkbcommon0 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5991954Z libxrandr2 is already the newest version (2:1.5.2-2build1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5992793Z libxrandr2 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5993636Z xvfb is already the newest version (2:21.1.12-1ubuntu1.9).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5994725Z fonts-noto-color-emoji is already the newest version (2.047-0ubuntu0.24.04.1).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5995862Z libfontconfig1 is already the newest version (2.15.0-1.1ubuntu2).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5996758Z libfontconfig1 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5997743Z libfreetype6 is already the newest version (2.13.2+dfsg-1ubuntu0.2).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.5998723Z libfreetype6 set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6000249Z fonts-liberation is already the newest version (1:2.1.5-3).
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6003887Z No user sessions are running outdated binaries.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6004667Z fonts-liberation set to manually installed.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6006653Z The following additional packages will be installed:
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6007553Z   xfonts-encodings xfonts-utils
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6008194Z Recommended packages:
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6008831Z   fonts-ipafont-mincho fonts-tlwg-loma
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6009880Z The following NEW packages will be installed:
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6010916Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6012037Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6012851Z   xfonts-utils
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6013647Z 0 upgraded, 9 newly installed, 0 to remove and 27 not upgraded.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6014449Z Need to get 21.1 MB of archives.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6015368Z After this operation, 79.5 MB of additional disk space will be used.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6017040Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6018497Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-ipafont-gothic all 00303-21ubuntu1 [3513 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6020491Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-freefont-ttf all 20211204+svn4273-2 [5641 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6021299Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6022225Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-tlwg-loma-otf all 1:0.7.3-1 [107 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6023861Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-unifont all 1:15.1.01-1build1 [2993 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6025450Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-wqy-zenhei all 0.9.45-8 [7472 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6027015Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-encodings all 1:1.0.5-0ubuntu2 [578 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6028562Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-utils amd64 1:7.7+6build3 [94.4 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6030581Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 xfonts-cyrillic all 1:1.0.5+nmu1 [384 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6032337Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-scalable all 1:1.0.3-1.3 [304 kB]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6033394Z Fetched 21.1 MB in 0s (74.0 MB/s)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6034217Z Selecting previously unselected package fonts-ipafont-gothic.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6034963Z (Reading database ... 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6035490Z (Reading database ... 5%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6036024Z (Reading database ... 10%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6036561Z (Reading database ... 15%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6037094Z (Reading database ... 20%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6037620Z (Reading database ... 25%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6038152Z (Reading database ... 30%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6038691Z (Reading database ... 35%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6039219Z (Reading database ... 40%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6039946Z (Reading database ... 45%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6040720Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6041538Z (Reading database ... 50%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6042070Z (Reading database ... 55%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6042618Z (Reading database ... 60%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6043148Z (Reading database ... 65%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6043675Z (Reading database ... 70%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6044211Z (Reading database ... 75%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6044745Z (Reading database ... 80%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6045289Z (Reading database ... 85%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6045935Z (Reading database ... 90%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6046564Z (Reading database ... 95%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6047167Z (Reading database ... 100%
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6048100Z (Reading database ... 215504 files and directories currently installed.)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6049349Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-21ubuntu1_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6050625Z Unpacking fonts-ipafont-gothic (00303-21ubuntu1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6051607Z Selecting previously unselected package fonts-freefont-ttf.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6052855Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-2_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6053868Z Unpacking fonts-freefont-ttf (20211204+svn4273-2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6054824Z Selecting previously unselected package fonts-tlwg-loma-otf.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6055870Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6056823Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6057757Z Selecting previously unselected package fonts-unifont.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6058817Z Preparing to unpack .../3-fonts-unifont_1%3a15.1.01-1build1_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6059966Z Unpacking fonts-unifont (1:15.1.01-1build1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6060848Z Selecting previously unselected package fonts-wqy-zenhei.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6061737Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6062511Z Unpacking fonts-wqy-zenhei (0.9.45-8) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6063293Z Selecting previously unselected package xfonts-encodings.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6064248Z Preparing to unpack .../5-xfonts-encodings_1%3a1.0.5-0ubuntu2_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6065148Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6066009Z Selecting previously unselected package xfonts-utils.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6066937Z Preparing to unpack .../6-xfonts-utils_1%3a7.7+6build3_amd64.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6067887Z Unpacking xfonts-utils (1:7.7+6build3) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6068697Z Selecting previously unselected package xfonts-cyrillic.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6069906Z Preparing to unpack .../7-xfonts-cyrillic_1%3a1.0.5+nmu1_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6070858Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6071707Z Selecting previously unselected package xfonts-scalable.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6072698Z Preparing to unpack .../8-xfonts-scalable_1%3a1.0.3-1.3_all.deb ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6073572Z Unpacking xfonts-scalable (1:1.0.3-1.3) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6074569Z Setting up fonts-wqy-zenhei (0.9.45-8) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6075372Z Setting up fonts-freefont-ttf (20211204+svn4273-2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6076184Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6077178Z Setting up xfonts-encodings (1:1.0.5-0ubuntu2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6078030Z Setting up fonts-ipafont-gothic (00303-21ubuntu1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6080238Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6082004Z Setting up fonts-unifont (1:15.1.01-1build1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6082771Z Setting up xfonts-utils (1:7.7+6build3) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6083521Z Setting up xfonts-cyrillic (1:1.0.5+nmu1) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6084295Z Setting up xfonts-scalable (1:1.0.3-1.3) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6085098Z Processing triggers for man-db (2.12.0-4build2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6085970Z Not building database; man-db/auto-update is not 'true'.
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6086909Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6088917Z Downloading Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-headless-shell-linux64.zip
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6091014Z |                                                                                |   0% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6092418Z |■■■■■■■■                                                                        |  10% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6093607Z |■■■■■■■■■■■■■■■■                                                                |  20% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6094800Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6096014Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6097275Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6098532Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6100080Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6101436Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6102748Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6104040Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 120 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6105855Z Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1248
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6108148Z Downloading FFmpeg (playwright ffmpeg v1013) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1013/ffmpeg-linux.zip
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6110014Z |                                                                                |   0% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6111276Z |■■■■■■■■                                                                        |  10% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6112452Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6113777Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6115041Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6116290Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6117580Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6119200Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6120737Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6122234Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6123467Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.2 MiB
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:56:59.6124747Z FFmpeg (playwright ffmpeg v1013) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1013
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3773056Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3773960Z > juntia@0.1.0 test:a11y
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3775094Z > playwright test --project a11y
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3775703Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3775901Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3776338Z Running 36 tests using 1 worker
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3777474Z light / 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3778580Z light / 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3780155Z light / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3781350Z ·light /actividad 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3782668Z light /actividad 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3784043Z light /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3797855Z ·light /metas 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3799061Z light /metas 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3802025Z light /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3803075Z ·light /plan 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3804217Z light /plan 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3805332Z light /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3806421Z ·light /balance 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3807659Z light /balance 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3809062Z light /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3810720Z ·light /cuenta 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3811792Z light /cuenta 390px: sin selector en este ancho
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3812736Z light /cuenta 390px: sin disparador visible de Anotar
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3813969Z ·light /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3846763Z light /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3850289Z light /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3852540Z light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3854518Z light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3856766Z light /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3859004Z light /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3861285Z light /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3863302Z light /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3865494Z light /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3867160Z light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3868466Z light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3869897Z light /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3871317Z light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3872843Z light /interno/primitivos 390px: AmountInput «999.999.999» a 31.3487 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3874250Z light /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3875636Z light /interno/primitivos 390px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3877100Z light /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 428.36/44.00 en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3878538Z ·light /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3879913Z ·light / 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3881022Z light / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3882154Z light / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3883326Z ·light /actividad 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3884568Z light /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3885839Z light /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3887014Z ·light /metas 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3888135Z light /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3889334Z light /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3890771Z ·light /plan 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3891886Z light /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3893071Z light /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3894207Z ·light /balance 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3895354Z light /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3896632Z light /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3897898Z ·light /cuenta 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3899062Z light /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3900517Z light /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3901781Z ·light /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3903497Z light /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3905530Z light /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="light"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3907506Z light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3909415Z light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3911923Z light /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3913876Z light /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3916123Z light /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3918132Z light /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3920620Z light /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3922358Z light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3923637Z light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3924899Z light /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3926158Z light /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3927586Z light /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3929054Z light /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3930726Z light /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3932263Z light /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3933745Z ·light /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3934857Z ·dark / 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3935898Z dark / 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3937050Z dark / 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3939528Z ·dark /actividad 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3941055Z dark /actividad 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3942285Z dark /actividad 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3943417Z ·dark /metas 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3944499Z dark /metas 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3945625Z dark /metas 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3946704Z ·dark /plan 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3947741Z dark /plan 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3948983Z dark /plan 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3950332Z ·dark /balance 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3951432Z dark /balance 390px: perilla 283 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3952560Z dark /balance 390px: aviso en hoja, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3953900Z ·dark /cuenta 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3954768Z dark /cuenta 390px: sin selector en este ancho
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3955636Z dark /cuenta 390px: sin disparador visible de Anotar
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3956759Z ·dark /interno/primitivos 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3958399Z dark /interno/primitivos 390px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3960541Z dark /interno/primitivos 390px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3962550Z dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3964412Z dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3966254Z dark /interno/primitivos 390px: campo «Descripción» marco 286.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3968226Z dark /interno/primitivos 390px: campo «Monto · Vacío» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3970506Z dark /interno/primitivos 390px: campo «Monto · Tope 999.999.999» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3973527Z dark /interno/primitivos 390px: campo «Monto · Con error» marco 286.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3975701Z dark /interno/primitivos 390px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3977328Z dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3978488Z dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3979880Z dark /interno/primitivos 390px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3981126Z dark /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3982539Z dark /interno/primitivos 390px: AmountInput «999.999.999» a 31.3487 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3983888Z dark /interno/primitivos 390px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3985270Z dark /interno/primitivos 390px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3986738Z dark /interno/primitivos 390px: skeleton 0 animaciones, opacidad 1; button 427.91/44.00 en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3988189Z ·dark /ruta-que-no-existe 390px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3989266Z ·dark / 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3990523Z dark / 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3991868Z dark / 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3993026Z ·dark /actividad 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3994306Z dark /actividad 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3995905Z dark /actividad 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3997146Z ·dark /metas 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3998369Z dark /metas 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.3999815Z dark /metas 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4000999Z ·dark /plan 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4002153Z dark /plan 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4003379Z dark /plan 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4004496Z ·dark /balance 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4005682Z dark /balance 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4006905Z dark /balance 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4008044Z ·dark /cuenta 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4009475Z dark /cuenta 1440px: perilla 123.5 en 10 cuadros, 1 posición(es)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4010914Z dark /cuenta 1440px: aviso en diálogo, 1 rectángulo(s) en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4012174Z ·dark /interno/primitivos 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4014101Z dark /interno/primitivos 1440px: área táctil Segmented «Yo» [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4016096Z dark /interno/primitivos 1440px: área táctil Button sm solo ícono [section[data-theme="dark"]] 44×44, esquinas de 44 dentro
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4018052Z dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4020127Z dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4022035Z dark /interno/primitivos 1440px: campo «Descripción» marco 252.00×48.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4023941Z dark /interno/primitivos 1440px: campo «Monto · Vacío» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4025894Z dark /interno/primitivos 1440px: campo «Monto · Tope 999.999.999» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4027888Z dark /interno/primitivos 1440px: campo «Monto · Con error» marco 252.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4030233Z dark /interno/primitivos 1440px: campo «Monto · Importe largo en espacio angosto» marco 240.00×64.00, esquinas que enfocan 4/4 [sí sí sí sí]
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4031939Z dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4033131Z dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4034305Z dark /interno/primitivos 1440px: Input «» a 15 px, marco de 48 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4035596Z dark /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4036981Z dark /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4038339Z dark /interno/primitivos 1440px: AmountInput «» a 40 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4039980Z dark /interno/primitivos 1440px: AmountInput «999.999.999» a 28 px, marco de 64 px
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4041489Z dark /interno/primitivos 1440px: skeleton 0 animaciones, opacidad 1; button 428.16/44.00 en 10 cuadros
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4042950Z ·dark /ruta-que-no-existe 1440px: 0 violaciones, 0 serias o críticas
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4044186Z ·light /cuenta 390px: disparadores de Anotar visibles 0
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4045245Z ·light /cuenta 768px: disparadores de Anotar visibles 1
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4046490Z ·dark /cuenta 390px: disparadores de Anotar visibles 0
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4047579Z ·dark /cuenta 768px: disparadores de Anotar visibles 1
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4048346Z ·
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:05.4048874Z   36 passed (1.1m)
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9235692Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9236567Z > juntia@0.1.0 check:internal-surface
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9237469Z > node scripts/check-internal-surface.mjs
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9237984Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9238746Z check:internal-surface · /interno/primitivos
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9240903Z ┌─────────┬───────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┬─────────┬──────────┬──────────┬──────┬───────────┐
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9243056Z │ (index) │ destino                                           │ host                                                        │ formato │ obtenido │ esperado │ fuga │ resultado │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9245366Z ├─────────┼───────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┼──────────┼──────────┼──────┼───────────┤
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9247785Z │ 0       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'dominio de producción (juntia-produccion.example)'         │ 'HTML'  │ 404      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9251645Z │ 1       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'dominio de producción (juntia-produccion.example)'         │ 'RSC'   │ 200      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9254348Z │ 2       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 'HTML'  │ 404      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9257154Z │ 3       │ 'VERCEL=1 VERCEL_ENV=production + URLs de prueba' │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 'RSC'   │ 200      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9259870Z │ 4       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 'HTML'  │ 200      │ 200      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9262622Z │ 5       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de despliegue (juntia-prueba123-equipo.vercel.app)'    │ 'RSC'   │ 200      │ 200      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9265197Z │ 6       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de rama (juntia-git-rama-prueba-equipo.vercel.app)'    │ 'HTML'  │ 200      │ 200      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9267960Z │ 7       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'URL de rama (juntia-git-rama-prueba-equipo.vercel.app)'    │ 'RSC'   │ 200      │ 200      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9271958Z │ 8       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'dominio de producción (alias) (juntia-produccion.example)' │ 'HTML'  │ 404      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9274555Z │ 9       │ 'VERCEL=1 VERCEL_ENV=preview + URLs de prueba'    │ 'dominio de producción (alias) (juntia-produccion.example)' │ 'RSC'   │ 200      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9277123Z │ 10      │ 'ninguna variable'                                │ 'localhost (localhost)'                                     │ 'HTML'  │ 404      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9279392Z │ 11      │ 'ninguna variable'                                │ 'localhost (localhost)'                                     │ 'RSC'   │ 200      │ 404      │ 'no' │ 'OK'      │
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:07.9282345Z └─────────┴───────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┴─────────┴──────────┴──────────┴──────┴───────────┘
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9600457Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9601360Z > juntia@0.1.0 check:theme-script
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9602176Z > node scripts/check-theme-script.mjs
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9602660Z 
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9603259Z OK · / responde 200
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9603930Z OK · head precede a body
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9604701Z OK · script de tema inline dentro de head
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9605572Z OK · script sin src, async ni defer
+app	Build once, then Chromium, axe, internal surface and theme script on that build	2026-11-05T04:58:08.9606398Z OK · html sin data-theme fijado por el servidor
+app	Publish timings and non-applicable controls	﻿2026-11-05T04:58:08.9707759Z ##[group]Run node scripts/ci.mjs summary
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9708132Z [36;1mnode scripts/ci.mjs summary[0m
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9730445Z shell: /usr/bin/bash -e {0}
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9730707Z env:
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9730908Z   JOB_STARTED_MS: 1793854532773
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9731164Z   JOB_STATUS: success
+app	Publish timings and non-applicable controls	2026-11-05T04:58:08.9731391Z ##[endgroup]
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0196796Z | Control | Estado | Duración | Presupuesto |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0208751Z | --- | --- | --- | --- |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0215366Z | ci | pasó | 22.54 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0231622Z | lint | pasó | 4.83 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0242491Z | typecheck | pasó | 4.66 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0246228Z | test:unit | 0 pruebas — la 001 no tiene dominio financiero | 0.58 s | < 15 s |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0247195Z | test:components | pasó | 11.08 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0247829Z | build | pasó | 16.47 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0248408Z | chromium | pasó | 21.60 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0249010Z | test:a11y | pasó | 65.79 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0255060Z | check:internal-surface | pasó | 2.55 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0255905Z | check:theme-script | pasó | 1.04 s | — |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0256786Z | Job app (incluye instalación) | success | 156.24 s | < 360 s |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0257252Z 
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0257435Z | Control | Estado |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0257807Z | --- | --- |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0258470Z | 3 · Supabase local, migraciones y SQL/RLS | job `db` |
+app	Publish timings and non-applicable controls	2026-11-05T04:58:09.0259470Z | 4 · E2E de humo | NO APLICABLE — la spec E2E 1 nace en el PR B de la 002 |
+app	Post Run actions/setup-node@v7	﻿2026-11-05T04:58:09.0417226Z Post job cleanup.
+app	Post Run actions/setup-node@v7	2026-11-05T04:58:09.2080008Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847, not saving cache.
+app	Post Run actions/checkout@v7	﻿2026-11-05T04:58:09.2341155Z Post job cleanup.
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4038482Z [command]/usr/bin/git version
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4150795Z git version 2.56.0
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4371362Z Temporarily overriding HOME='/home/runner/work/_temp/a0fb1b3e-fe48-4dad-841d-6fdcf1d8ba4e' before making global git config changes
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4434652Z Adding repository directory to the temporary git global config as a safe directory
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4496370Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4525134Z Removing SSH command configuration
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4532989Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.4706185Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.5640244Z Removing HTTP extra header
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.5664151Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.5685532Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6151018Z Removing includeIf entries pointing to credentials config files
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6158020Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6202332Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6210574Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6226359Z includeif.gitdir:/github/workspace/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6227419Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6230004Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6255706Z /home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6290102Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-fcaa0e8d\-c4d0\-4b57\-a0e7\-084a4e598719\.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6347842Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6401030Z /home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6418570Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-fcaa0e8d\-c4d0\-4b57\-a0e7\-084a4e598719\.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6478617Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6520742Z /github/runner_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6583234Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-fcaa0e8d\-c4d0\-4b57\-a0e7\-084a4e598719\.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6622365Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6690699Z /github/runner_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6754798Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-fcaa0e8d\-c4d0\-4b57\-a0e7\-084a4e598719\.config
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.6793968Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+app	Post Run actions/checkout@v7	2026-11-05T04:58:09.7224303Z Removing credentials config '/home/runner/work/_temp/git-credentials-fcaa0e8d-c4d0-4b57-a0e7-084a4e598719.config'
+app	Complete job	﻿2026-11-05T04:58:09.7455084Z Cleaning up orphan processes
+db	Set up job	﻿2026-11-05T04:55:33.1014932Z Current runner version: '2.338.2'
+db	Set up job	2026-11-05T04:55:33.1054992Z ##[group]Runner Image Provisioner
+db	Set up job	2026-11-05T04:55:33.1056765Z Hosted Compute Agent
+db	Set up job	2026-11-05T04:55:33.1057813Z Version: 20261028.624
+db	Set up job	2026-11-05T04:55:33.1059097Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+db	Set up job	2026-11-05T04:55:33.1060397Z Build Date: 2026-10-28T21:51:42Z
+db	Set up job	2026-11-05T04:55:33.1062189Z Worker ID: {90105e25-e8eb-49a9-bb32-ebaa1a6b1c79}
+db	Set up job	2026-11-05T04:55:33.1063602Z Region: westus
+db	Set up job	2026-11-05T04:55:33.1064680Z Cloud: Azure
+db	Set up job	2026-11-05T04:55:33.1065796Z ##[endgroup]
+db	Set up job	2026-11-05T04:55:33.1068294Z ##[group]Operating System
+db	Set up job	2026-11-05T04:55:33.1069521Z Ubuntu
+db	Set up job	2026-11-05T04:55:33.1070455Z 24.04.5
+db	Set up job	2026-11-05T04:55:33.1071600Z LTS
+db	Set up job	2026-11-05T04:55:33.1072604Z ##[endgroup]
+db	Set up job	2026-11-05T04:55:33.1073625Z ##[group]Runner Image
+db	Set up job	2026-11-05T04:55:33.1074797Z Image: ubuntu-24.04
+db	Set up job	2026-11-05T04:55:33.1076005Z Version: 20261101.360.1
+db	Set up job	2026-11-05T04:55:33.1078095Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261101.360/images/ubuntu/Ubuntu2404-Readme.md
+db	Set up job	2026-11-05T04:55:33.1081760Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261101.360
+db	Set up job	2026-11-05T04:55:33.1083577Z ##[endgroup]
+db	Set up job	2026-11-05T04:55:33.1085641Z ##[group]GITHUB_TOKEN Permissions
+db	Set up job	2026-11-05T04:55:33.1089104Z Contents: read
+db	Set up job	2026-11-05T04:55:33.1090244Z Metadata: read
+db	Set up job	2026-11-05T04:55:33.1091602Z ##[endgroup]
+db	Set up job	2026-11-05T04:55:33.1095864Z Secret source: Actions
+db	Set up job	2026-11-05T04:55:33.1097407Z Cache mode: write
+db	Set up job	2026-11-05T04:55:33.1098842Z Prepare workflow directory
+db	Set up job	2026-11-05T04:55:33.1764689Z Prepare all required actions
+db	Set up job	2026-11-05T04:55:33.1817336Z Getting action download info
+db	Set up job	2026-11-05T04:55:33.5404515Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+db	Set up job	2026-11-05T04:55:33.6503212Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+db	Set up job	2026-11-05T04:55:33.7404972Z Download action repository 'supabase/setup-cli@v3' (SHA:689adcfb80d947100a1eab127289b97d1fb07b13)
+db	Set up job	2026-11-05T04:55:34.0148511Z Download action repository 'actions/upload-artifact@v6' (SHA:b7c566a772e6b6bfb58ed0dc250532a479d7789f)
+db	Set up job	2026-11-05T04:55:34.4877127Z Getting action download info
+db	Set up job	2026-11-05T04:55:34.6339710Z Download action repository 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+db	Set up job	2026-11-05T04:55:34.7326999Z Download action repository 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' (SHA:0c5077e51419868618aeaa5fe8019c62421857d6)
+db	Set up job	2026-11-05T04:55:35.1414611Z Complete job name: db
+db	Start job clock	﻿2026-11-05T04:55:35.2306220Z ##[group]Run echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+db	Start job clock	2026-11-05T04:55:35.2307983Z [36;1mecho "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"[0m
+db	Start job clock	2026-11-05T04:55:35.2334388Z shell: /usr/bin/bash -e {0}
+db	Start job clock	2026-11-05T04:55:35.2335715Z ##[endgroup]
+db	Run actions/checkout@v7	﻿2026-11-05T04:55:35.2895905Z ##[group]Run actions/checkout@v7
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2897052Z with:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2897945Z   repository: flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2907592Z   token: ***
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2908450Z   ssh-strict: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2909312Z   ssh-user: git
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2910214Z   persist-credentials: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2911450Z   clean: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2912343Z   sparse-checkout-cone-mode: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2913381Z   fetch-depth: 1
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2914226Z   fetch-tags: false
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2915104Z   show-progress: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2915990Z   lfs: false
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2916806Z   submodules: false
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2917693Z   set-safe-directory: true
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2918694Z   allow-unsafe-pr-checkout: false
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2919696Z env:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2920495Z   JOB_STARTED_MS: 1793854535246
+db	Run actions/checkout@v7	2026-11-05T04:55:35.2921608Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6710257Z Syncing repository: flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6714854Z ##[group]Getting Git version info
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6717328Z Working directory is '/home/runner/work/juntia/juntia'
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6721772Z [command]/usr/bin/git version
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6737582Z git version 2.56.0
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6833102Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6863089Z Temporarily overriding HOME='/home/runner/work/_temp/13f4f14a-7cbe-4b01-b330-b61c7260d05d' before making global git config changes
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6872354Z Adding repository directory to the temporary git global config as a safe directory
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6892560Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6943215Z Deleting the contents of '/home/runner/work/juntia/juntia'
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6963162Z ##[group]Determining repository object format
+db	Run actions/checkout@v7	2026-11-05T04:55:35.6982960Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7003247Z ##[group]Initializing the repository
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7005092Z [command]/usr/bin/git init /home/runner/work/juntia/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7045642Z hint: Using 'master' as the name for the initial branch. This default branch name
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7048460Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7050629Z hint: to use in all of your new repositories, which will suppress this warning,
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7053367Z hint: call:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7054875Z hint:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7083663Z hint: 	git config --global init.defaultBranch <name>
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7085461Z hint:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7092309Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7094487Z hint: 'development'. The just-created branch can be renamed via this command:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7096308Z hint:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7122185Z hint: 	git branch -m <name>
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7124009Z hint:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7142593Z hint: Disable this message with "git config set advice.defaultBranchName false"
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7144815Z Initialized empty Git repository in /home/runner/work/juntia/juntia/.git/
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7170217Z [command]/usr/bin/git remote add origin https://github.com/flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7176464Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7179079Z ##[group]Disabling automatic garbage collection
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7181544Z [command]/usr/bin/git config --local gc.auto 0
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7253302Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7256348Z ##[group]Setting up auth
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7258212Z Removing SSH command configuration
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7260063Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7344452Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7982205Z Removing HTTP extra header
+db	Run actions/checkout@v7	2026-11-05T04:55:35.7992356Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8028094Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8274447Z Removing includeIf entries pointing to credentials config files
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8278369Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8334188Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8716988Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8758135Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git.path /home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8809428Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8858081Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8905778Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8954854Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8957496Z ##[group]Fetching the repository
+db	Run actions/checkout@v7	2026-11-05T04:55:35.8963087Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6ea9b3f27e3453ae3b8e883f7cadb8acd8677950:refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1061674Z From https://github.com/flashwp3-ctrl/juntia
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1062954Z  * [new ref]         6ea9b3f27e3453ae3b8e883f7cadb8acd8677950 -> origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1083109Z [command]/usr/bin/git branch --list --remote origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1115796Z   origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1132936Z [command]/usr/bin/git rev-parse refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1175549Z 6ea9b3f27e3453ae3b8e883f7cadb8acd8677950
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1192516Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1193489Z ##[group]Determining the checkout info
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1194538Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1195281Z [command]/usr/bin/git sparse-checkout disable
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1284104Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1331527Z ##[group]Checking out the ref
+db	Run actions/checkout@v7	2026-11-05T04:55:38.1336416Z [command]/usr/bin/git checkout --progress --force -B feat/002-a-database refs/remotes/origin/feat/002-a-database
+db	Run actions/checkout@v7	2026-11-05T04:55:38.4838256Z Switched to a new branch 'feat/002-a-database'
+db	Run actions/checkout@v7	2026-11-05T04:55:38.4862216Z branch 'feat/002-a-database' set up to track 'origin/feat/002-a-database'.
+db	Run actions/checkout@v7	2026-11-05T04:55:38.4890324Z ##[endgroup]
+db	Run actions/checkout@v7	2026-11-05T04:55:38.4978683Z [command]/usr/bin/git log -1 --format=%H
+db	Run actions/checkout@v7	2026-11-05T04:55:38.5034148Z 6ea9b3f27e3453ae3b8e883f7cadb8acd8677950
+db	Run actions/setup-node@v7	﻿2026-11-05T04:55:38.5303738Z ##[group]Run actions/setup-node@v7
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5304067Z with:
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5304263Z   node-version: 24
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5304468Z   cache: npm
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5304664Z   check-latest: false
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5307373Z   token: ***
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5307601Z   package-manager-cache: true
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5307851Z env:
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5308307Z   JOB_STARTED_MS: 1793854535246
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.5308708Z ##[endgroup]
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.6823372Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+db	Run actions/setup-node@v7	2026-11-05T04:55:38.7872968Z ##[group]Environment details
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.2140387Z node: v24.22.2
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.2141549Z npm: 11.19.1
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.2142267Z yarn: 1.22.22
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.2143504Z ##[endgroup]
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.2183275Z [command]/opt/hostedtoolcache/node/24.22.2/x64/bin/npm config get cache
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.4521363Z /home/runner/.npm
+db	Run actions/setup-node@v7	2026-11-05T04:55:39.7519007Z Cache hit for: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+db	Run actions/setup-node@v7	2026-11-05T04:55:41.0665241Z Received 0 of 214050325 (0.0%), 0.0 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T04:55:42.0771946Z Received 100663296 of 214050325 (47.0%), 47.9 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T04:55:42.9263318Z Received 214050325 of 214050325 (100.0%), 71.4 MBs/sec
+db	Run actions/setup-node@v7	2026-11-05T04:55:42.9264465Z Cache Size: ~204 MB (214050325 B)
+db	Run actions/setup-node@v7	2026-11-05T04:55:42.9302627Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d0258ebf-cf5c-44f0-b5c4-46c4f254e4da/cache.tzst -P -C /home/runner/work/juntia/juntia --use-compress-program unzstd
+db	Run actions/setup-node@v7	2026-11-05T04:55:43.4846951Z Cache restored successfully
+db	Run actions/setup-node@v7	2026-11-05T04:55:43.4947957Z Cache restored from key: node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847
+db	Run supabase/setup-cli@v3	﻿2026-11-05T04:55:43.5388610Z ##[group]Run supabase/setup-cli@v3
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5388921Z with:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5389300Z   version: 2.121.0
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5389500Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5389688Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5389927Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5452123Z ##[start-action display=Resolve Bun Download URL;id=__supabase_setup-cli.bun-download]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5482558Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5482856Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5483060Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5483260Z [36;1mis_musl=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5483481Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5483697Z [36;1mif [ "${RUNNER_OS}" = "Linux" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5484219Z [36;1m  # setup-bun does not detect Linux musl yet, so Alpine-like containers need the musl asset explicitly.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5484754Z [36;1m  if [ -f /etc/alpine-release ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5485045Z [36;1m    is_musl=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5485429Z [36;1m  elif command -v ldd >/dev/null 2>&1 && ldd --version 2>&1 | grep -qi musl; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5485915Z [36;1m    is_musl=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5486138Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5486327Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5486515Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5486747Z [36;1mecho "is-musl=${is_musl}" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5487037Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5487239Z [36;1mif [ "${is_musl}" != "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5487515Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5487709Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5487889Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5488087Z [36;1mversion="$(cat .bun-version)"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5488365Z [36;1mcase "$(uname -m)" in[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5488609Z [36;1m  x86_64) arch="x64" ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5488872Z [36;1m  aarch64|arm64) arch="aarch64" ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5489136Z [36;1m  *)[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5489436Z [36;1m    echo "Unsupported Linux musl architecture: $(uname -m)" >&2[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5489810Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5490014Z [36;1m    ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5490214Z [36;1mesac[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5490401Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5491255Z [36;1mecho "url=https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-${arch}-musl.zip" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5624996Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5625290Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5625514Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5625762Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5797349Z ##[end-action id=__supabase_setup-cli.bun-download;outcome=success;conclusion=success;duration_ms=34]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5803036Z ##[start-action display=Install Alpine Runtime Dependencies;id=__supabase_setup-cli.__run]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5843518Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5843823Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5844021Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5844228Z [36;1mif [ "false" != "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5844495Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5844717Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5844910Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5845246Z [36;1m# Alpine/musl containers need runtime packages for Bun and the npm CLI shim.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5845811Z [36;1m# actions/setup-node uses glibc Node builds, so install Alpine's Node/npm instead.[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5846262Z [36;1mif command -v apk >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5846571Z [36;1m  missing_packages=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5846845Z [36;1m  prefer_apk_bin=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5847122Z [36;1m  for package in libstdc++ libgcc; do[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5847470Z [36;1m    if ! apk info -e "${package}" >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5847860Z [36;1m      missing_packages="${missing_packages} ${package}"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5848185Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5848381Z [36;1m  done[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5848566Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5848939Z [36;1m  if ! command -v node >/dev/null 2>&1 || ! node -p 'process.versions.node' >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5850124Z [36;1m    if [ -x /usr/bin/node ] && PATH="/usr/bin:${PATH}" /usr/bin/node -p 'process.versions.node' >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5850638Z [36;1m      prefer_apk_bin=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5851225Z [36;1m    else[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5851493Z [36;1m      missing_packages="${missing_packages} nodejs"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5851800Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5851984Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5852178Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5852495Z [36;1m  if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5853062Z [36;1m    if [ -x /usr/bin/npm ] && PATH="/usr/bin:${PATH}" /usr/bin/npm --version >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5853496Z [36;1m      prefer_apk_bin=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5853748Z [36;1m    else[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5854002Z [36;1m      missing_packages="${missing_packages} npm"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5854317Z [36;1m    fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5854509Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5854706Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5854936Z [36;1m  if [ "${prefer_apk_bin}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5855250Z [36;1m    echo "/usr/bin" >> "$GITHUB_PATH"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5855521Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5855713Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5855930Z [36;1m  if [ -z "${missing_packages}" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5856213Z [36;1m    exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5856415Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5856601Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5856802Z [36;1m  if [ "$(id -u)" != "0" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5857577Z [36;1m    echo "::error::Alpine/musl containers need${missing_packages} to run Supabase CLI. Add 'apk add --no-cache${missing_packages}' before supabase/setup-cli, or run this job container as root."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5858351Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5858557Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5858738Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5858959Z [36;1m  apk add --no-cache ${missing_packages}[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5859355Z [36;1m  if echo " ${missing_packages} " | grep -Eq ' (nodejs|npm) '; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5859747Z [36;1m    echo "/usr/bin" >> "$GITHUB_PATH"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5860020Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5860209Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5860403Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5860593Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5861455Z [36;1mecho "::error::Linux musl containers need libstdc++, libgcc, nodejs, and npm to run Supabase CLI. Install them before supabase/setup-cli."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5862053Z [36;1mexit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5905865Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5906125Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5906325Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5906573Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5979447Z ##[end-action id=__supabase_setup-cli.__run;outcome=success;conclusion=success;duration_ms=17]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.5982298Z ##[start-action display=Resolve Node Runtime;id=__supabase_setup-cli.node-runtime]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6002481Z ##[group]Run set -eu
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6002775Z [36;1mset -eu[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6002972Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6003167Z [36;1mnode_version=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6003406Z [36;1mnode_major=""[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6003633Z [36;1mhas_npm=false[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6003849Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6004080Z [36;1mif command -v node >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6004524Z [36;1m  node_version="$(node -p 'process.versions.node' 2>/dev/null || true)"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6004941Z [36;1m  node_major="${node_version%%.*}"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6005212Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6005399Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6005626Z [36;1mif command -v npm >/dev/null 2>&1; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6005914Z [36;1m  has_npm=true[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6006130Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6006315Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6006580Z [36;1mif [ -n "${node_version}" ] && [ "${has_npm}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6007246Z [36;1m  case "${node_major}" in[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6007502Z [36;1m    ''|*[!0-9]*)[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6008036Z [36;1m      echo "::error::Could not determine Node.js version from '${node_version}'. Supabase CLI npm installs require Node.js 20 or newer."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6008607Z [36;1m      exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6008822Z [36;1m      ;;[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6009019Z [36;1m  esac[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6009209Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6009435Z [36;1m  if [ "${node_major}" -lt 20 ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6010230Z [36;1m    echo "::error::Supabase CLI npm installs require Node.js 20 or newer, but found Node.js ${node_version}. Set up Node.js 20+ before supabase/setup-cli, or use a runner image with Node.js 20+ and npm."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6011575Z [36;1m    exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6011801Z [36;1m  fi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6012006Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6012260Z [36;1m  echo "setup-node=false" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6012564Z [36;1m  exit 0[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6012756Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6012954Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6013149Z [36;1mif [ "false" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6014057Z [36;1m  echo "::error::Linux musl containers need Node.js 20 or newer and npm from musl-compatible packages. Install libstdc++, libgcc, nodejs, and npm before supabase/setup-cli, or run this job container as root so the action can install them."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6014966Z [36;1m  exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6015154Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6015338Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6015592Z [36;1mif [ -n "${node_version}" ] || [ "${has_npm}" = "true" ]; then[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6016367Z [36;1m  echo "::error::Supabase CLI npm installs need both Node.js 20+ and npm. Found Node.js '${node_version:-missing}' and npm '${has_npm}'. Configure both before supabase/setup-cli."[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6017064Z [36;1m  exit 1[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6017269Z [36;1mfi[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6017454Z [36;1m[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6017688Z [36;1mecho "setup-node=true" >> "$GITHUB_OUTPUT"[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6061894Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6062147Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6062347Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6062599Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6460615Z ##[end-action id=__supabase_setup-cli.node-runtime;outcome=success;conclusion=success;duration_ms=47]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6464379Z ##[start-action display=Setup Node;id=__supabase_setup-cli.__actions_setup-node]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6473458Z ##[end-action id=__supabase_setup-cli.__actions_setup-node;outcome=skipped;conclusion=skipped;duration_ms=0]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6475843Z ##[start-action display=Setup Bun;id=__supabase_setup-cli.__oven-sh_setup-bun]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6523313Z ##[group]Run oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6523711Z with:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6524050Z   bun-version-file: /home/runner/work/_actions/supabase/setup-cli/v3/.bun-version
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6524479Z   no-cache: false
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6527124Z   token: ***
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6527327Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6527522Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.6527765Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:43.8738089Z Obtained version 1.3.10 from /home/runner/work/_actions/supabase/setup-cli/v3/.bun-version
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:44.1269254Z Downloading a new version of Bun: https://github.com/oven-sh/bun/releases/download/bun-v1.3.10/bun-linux-x64.zip
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:44.6265097Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/d57fa931-e2b3-4e3c-a001-a2e31feb252e.zip
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3752047Z [command]/home/runner/.bun/bin/bun --revision
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3820254Z 1.3.10+30e609e08
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3950621Z ##[end-action id=__supabase_setup-cli.__oven-sh_setup-bun;outcome=success;conclusion=success;duration_ms=1747]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3954312Z ##[start-action display=Install Action Dependencies;id=__supabase_setup-cli.__run_2]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3977223Z ##[group]Run bun install --frozen-lockfile --production
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.3977894Z [36;1mbun install --frozen-lockfile --production[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.4022719Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.4022975Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.4023179Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.4023422Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.4132716Z bun install v1.3.10 (30e609e0)
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5163528Z 
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5164438Z + @actions/core@3.0.1
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5179826Z 
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5180210Z 6 packages installed [106.00ms]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5195033Z ##[end-action id=__supabase_setup-cli.__run_2;outcome=success;conclusion=success;duration_ms=123]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5203320Z ##[start-action display=Setup Supabase CLI;id=__supabase_setup-cli.setup-cli]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5223551Z ##[group]Run bun src/main.ts
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5223843Z [36;1mbun src/main.ts[0m
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5267301Z shell: /usr/bin/sh -e {0}
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5267573Z env:
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5267781Z   JOB_STARTED_MS: 1793854535246
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5268035Z   INPUT_VERSION: 2.121.0
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5268281Z   SUPABASE_SETUP_CLI_MUSL: false
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:45.5268539Z ##[endgroup]
+db	Run supabase/setup-cli@v3	2026-11-05T04:55:52.6136447Z ##[end-action id=__supabase_setup-cli.setup-cli;outcome=success;conclusion=success;duration_ms=7093]
+db	Start Supabase and reset the runner database	﻿2026-11-05T04:55:52.6215257Z ##[group]Run set -euo pipefail
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6215795Z [36;1mset -euo pipefail[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6216210Z [36;1mstarted=$(date +%s)[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6217872Z [36;1msupabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6219627Z [36;1mseconds=$(($(date +%s)-started))[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6220283Z [36;1mecho "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6221596Z [36;1m# El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6222433Z [36;1mstatus=$(supabase status -o env 2>/dev/null)[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6222982Z [36;1mwhile IFS='=' read -r name value; do[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6223501Z [36;1m  value=${value#\"}; value=${value%\"}[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6224042Z [36;1m  [ -z "$value" ] || echo "::add-mask::$value"[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6224590Z [36;1m  case "$name" in[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6225322Z [36;1m    API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6226120Z [36;1m  esac[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6226455Z [36;1mdone <<< "$status"[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6226845Z [36;1msupabase db reset[0m
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6254164Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6254724Z env:
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6255042Z   JOB_STARTED_MS: 1793854535246
+db	Start Supabase and reset the runner database	2026-11-05T04:55:52.6255435Z ##[endgroup]
+db	Start Supabase and reset the runner database	2026-11-05T04:57:43.1163995Z supabase start: 111 s
+db	Start Supabase and reset the runner database	2026-11-05T04:57:44.8325273Z Resetting local database...
+db	Start Supabase and reset the runner database	2026-11-05T04:57:45.2031551Z Recreating database...
+db	Start Supabase and reset the runner database	2026-11-05T04:57:55.7984197Z Initialising schema...
+db	Start Supabase and reset the runner database	2026-11-05T04:58:02.1252483Z Seeding globals from roles.sql...
+db	Start Supabase and reset the runner database	2026-11-05T04:58:02.1595425Z Seeding data from supabase/seed.sql...
+db	Start Supabase and reset the runner database	2026-11-05T04:58:02.1759420Z Restarting containers...
+db	Start Supabase and reset the runner database	2026-11-05T04:58:02.7995598Z Finished supabase db reset on branch feat/002-a-database.
+db	Start Supabase and reset the runner database	2026-11-05T04:58:03.3026325Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Start Supabase and reset the runner database	2026-11-05T04:58:03.3028135Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Install dependencies	﻿2026-11-05T04:58:03.3253205Z ##[group]Run node scripts/ci.mjs run ci
+db	Install dependencies	2026-11-05T04:58:03.3253621Z [36;1mnode scripts/ci.mjs run ci[0m
+db	Install dependencies	2026-11-05T04:58:03.3274363Z shell: /usr/bin/bash -e {0}
+db	Install dependencies	2026-11-05T04:58:03.3274656Z env:
+db	Install dependencies	2026-11-05T04:58:03.3274945Z   JOB_STARTED_MS: 1793854535246
+db	Install dependencies	2026-11-05T04:58:03.3275805Z   API_URL: ***
+db	Install dependencies	2026-11-05T04:58:03.3276257Z   DB_URL: ***
+db	Install dependencies	2026-11-05T04:58:03.3276616Z   PUBLISHABLE_KEY: ***
+db	Install dependencies	2026-11-05T04:58:03.3276945Z   SECRET_KEY: ***
+db	Install dependencies	2026-11-05T04:58:03.3277183Z ##[endgroup]
+db	Install dependencies	2026-11-05T04:58:19.2687658Z 
+db	Install dependencies	2026-11-05T04:58:19.2692995Z added 493 packages, and audited 500 packages in 16s
+db	Install dependencies	2026-11-05T04:58:19.2695578Z 
+db	Install dependencies	2026-11-05T04:58:19.2696148Z 167 packages are looking for funding
+db	Install dependencies	2026-11-05T04:58:19.2698838Z   run `npm fund` for details
+db	Install dependencies	2026-11-05T04:58:19.2699370Z 
+db	Install dependencies	2026-11-05T04:58:19.2717282Z npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+db	Install dependencies	2026-11-05T04:58:19.2718050Z 8 moderate severity vulnerabilities
+db	Install dependencies	2026-11-05T04:58:19.2718330Z 
+db	Install dependencies	2026-11-05T04:58:19.2718572Z To address all issues (including breaking changes), run:
+db	Install dependencies	2026-11-05T04:58:19.2718961Z   npm audit fix --force
+db	Install dependencies	2026-11-05T04:58:19.2719133Z 
+db	Install dependencies	2026-11-05T04:58:19.2719269Z Run `npm audit` for details.
+db	Test SQL	﻿2026-11-05T04:58:19.2880555Z ##[group]Run node scripts/ci.mjs run test:db
+db	Test SQL	2026-11-05T04:58:19.2881469Z [36;1mnode scripts/ci.mjs run test:db[0m
+db	Test SQL	2026-11-05T04:58:19.2968115Z shell: /usr/bin/bash -e {0}
+db	Test SQL	2026-11-05T04:58:19.2968636Z env:
+db	Test SQL	2026-11-05T04:58:19.2969054Z   JOB_STARTED_MS: 1793854535246
+db	Test SQL	2026-11-05T04:58:19.2969795Z   API_URL: ***
+db	Test SQL	2026-11-05T04:58:19.2970527Z   DB_URL: ***
+db	Test SQL	2026-11-05T04:58:19.2971261Z   PUBLISHABLE_KEY: ***
+db	Test SQL	2026-11-05T04:58:19.2971619Z   SECRET_KEY: ***
+db	Test SQL	2026-11-05T04:58:19.2971865Z ##[endgroup]
+db	Test SQL	2026-11-05T04:58:25.0987539Z 
+db	Test SQL	2026-11-05T04:58:25.0992749Z Connecting to local database...
+db	Test SQL	2026-11-05T04:58:25.0993698Z 3.36: Pulling from supabase/pg_prove
+db	Test SQL	2026-11-05T04:58:25.0994502Z dcccee43ad5d: Pulling fs layer
+db	Test SQL	2026-11-05T04:58:25.0995506Z 06d62d0de6d7: Pulling fs layer
+db	Test SQL	2026-11-05T04:58:25.0999038Z a22cb17b3b93: Pulling fs layer
+db	Test SQL	2026-11-05T04:58:25.0999787Z 4f4fb700ef54: Pulling fs layer
+db	Test SQL	2026-11-05T04:58:25.1008651Z 4f4fb700ef54: Waiting
+db	Test SQL	2026-11-05T04:58:25.1011492Z > juntia@0.1.0 test:db
+db	Test SQL	2026-11-05T04:58:25.1012334Z a22cb17b3b93: Verifying Checksum
+db	Test SQL	2026-11-05T04:58:25.1012744Z > supabase test db
+db	Test SQL	2026-11-05T04:58:25.1016036Z a22cb17b3b93: Download complete
+db	Test SQL	2026-11-05T04:58:25.1016468Z 
+db	Test SQL	2026-11-05T04:58:25.1017057Z dcccee43ad5d: Verifying Checksum
+db	Test SQL	2026-11-05T04:58:25.1017785Z dcccee43ad5d: Download complete
+db	Test SQL	2026-11-05T04:58:25.1018416Z 06d62d0de6d7: Verifying Checksum
+db	Test SQL	2026-11-05T04:58:25.1019114Z 06d62d0de6d7: Download complete
+db	Test SQL	2026-11-05T04:58:25.1019786Z 4f4fb700ef54: Verifying Checksum
+db	Test SQL	2026-11-05T04:58:25.1020456Z 4f4fb700ef54: Download complete
+db	Test SQL	2026-11-05T04:58:25.1021364Z dcccee43ad5d: Pull complete
+db	Test SQL	2026-11-05T04:58:25.1022037Z 06d62d0de6d7: Pull complete
+db	Test SQL	2026-11-05T04:58:25.1022605Z a22cb17b3b93: Pull complete
+db	Test SQL	2026-11-05T04:58:25.1023219Z 4f4fb700ef54: Pull complete
+db	Test SQL	2026-11-05T04:58:25.1024118Z Digest: sha256:eda7c5e68719e9c8287e78c017118407b48df904a51c935f5ab6098b8c0bc6bc
+db	Test SQL	2026-11-05T04:58:25.1025321Z Status: Downloaded newer image for public.ecr.aws/supabase/pg_prove:3.36
+db	Test SQL	2026-11-05T04:58:25.1026457Z /home/runner/work/juntia/juntia/supabase/tests/00_smoke.test.sql .. ok
+db	Test SQL	2026-11-05T04:58:25.1027352Z public.ecr.aws/supabase/pg_prove:3.36
+db	Test SQL	2026-11-05T04:58:25.1027802Z All tests successful.
+db	Test SQL	2026-11-05T04:58:25.1028320Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Test SQL	2026-11-05T04:58:25.1029288Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Test SQL	2026-11-05T04:58:25.1030137Z Files=1, Tests=1,  0 wallclock secs ( 0.02 usr +  0.00 sys =  0.02 CPU)
+db	Test SQL	2026-11-05T04:58:25.1030539Z Result: PASS
+db	Test API	﻿2026-11-05T04:58:25.1099358Z ##[group]Run node scripts/ci.mjs run test:integration
+db	Test API	2026-11-05T04:58:25.1099830Z [36;1mnode scripts/ci.mjs run test:integration[0m
+db	Test API	2026-11-05T04:58:25.1121181Z shell: /usr/bin/bash -e {0}
+db	Test API	2026-11-05T04:58:25.1121494Z env:
+db	Test API	2026-11-05T04:58:25.1121730Z   JOB_STARTED_MS: 1793854535246
+db	Test API	2026-11-05T04:58:25.1122107Z   API_URL: ***
+db	Test API	2026-11-05T04:58:25.1122740Z   DB_URL: ***
+db	Test API	2026-11-05T04:58:25.1123100Z   PUBLISHABLE_KEY: ***
+db	Test API	2026-11-05T04:58:25.1123428Z   SECRET_KEY: ***
+db	Test API	2026-11-05T04:58:25.1123658Z ##[endgroup]
+db	Test API	2026-11-05T04:58:26.0296029Z 
+db	Test API	2026-11-05T04:58:26.0343237Z > juntia@0.1.0 test:integration
+db	Test API	2026-11-05T04:58:26.0352030Z > vitest run --project integration
+db	Test API	2026-11-05T04:58:26.0352553Z 
+db	Test API	2026-11-05T04:58:26.0352658Z 
+db	Test API	2026-11-05T04:58:26.0353730Z [1m[30m[46m RUN [49m[39m[22m [36mv5.1.0 [39m[90m/home/runner/work/juntia/juntia[39m
+db	Test API	2026-11-05T04:58:26.0354450Z 
+db	Test API	2026-11-05T04:58:26.0360618Z  [32m✓[39m [30m[45m integration [49m[39m tests/integration/smoke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 84[2mms[22m[39m
+db	Test API	2026-11-05T04:58:26.0361851Z 
+db	Test API	2026-11-05T04:58:26.0362496Z [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+db	Test API	2026-11-05T04:58:26.0363512Z [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+db	Test API	2026-11-05T04:58:26.0364330Z [2m   Start at [22m 04:58:25
+db	Test API	2026-11-05T04:58:26.0365463Z [2m   Duration [22m 335ms[2m (tests 66%, transform 20%, import 10%, worker 3%)[22m
+db	Test API	2026-11-05T04:58:26.0366060Z 
+db	Check generated types	﻿2026-11-05T04:58:26.0419292Z ##[group]Run node scripts/ci.mjs run db:types:check
+db	Check generated types	2026-11-05T04:58:26.0419743Z [36;1mnode scripts/ci.mjs run db:types:check[0m
+db	Check generated types	2026-11-05T04:58:26.0441614Z shell: /usr/bin/bash -e {0}
+db	Check generated types	2026-11-05T04:58:26.0441919Z env:
+db	Check generated types	2026-11-05T04:58:26.0442146Z   JOB_STARTED_MS: 1793854535246
+db	Check generated types	2026-11-05T04:58:26.0442514Z   API_URL: ***
+db	Check generated types	2026-11-05T04:58:26.0442993Z   DB_URL: ***
+db	Check generated types	2026-11-05T04:58:26.0443391Z   PUBLISHABLE_KEY: ***
+db	Check generated types	2026-11-05T04:58:26.0443713Z   SECRET_KEY: ***
+db	Check generated types	2026-11-05T04:58:26.0443949Z ##[endgroup]
+db	Check generated types	2026-11-05T04:58:27.4378942Z Connecting to 127.0.0.1 54322
+db	Check generated types	2026-11-05T04:58:27.4379409Z 
+db	Check generated types	2026-11-05T04:58:27.4407710Z Generated TypeScript is unformatted. Format it with:
+db	Check generated types	2026-11-05T04:58:27.4408442Z > juntia@0.1.0 db:types:check
+db	Check generated types	2026-11-05T04:58:27.4434122Z > node scripts/check-db-types.mjs
+db	Check generated types	2026-11-05T04:58:27.4435069Z   npx oxfmt <generated-file.ts>
+db	Check generated types	2026-11-05T04:58:27.4436488Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Check generated types	2026-11-05T04:58:27.4445193Z 
+db	Check generated types	2026-11-05T04:58:27.4446989Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Check generated types	2026-11-05T04:58:27.4462788Z database.types.ts coincide con public generado en el runner.
+db	Preserve generated public types	﻿2026-11-05T04:58:27.4654566Z ##[group]Run actions/upload-artifact@v6
+db	Preserve generated public types	2026-11-05T04:58:27.4655093Z with:
+db	Preserve generated public types	2026-11-05T04:58:27.4655467Z   name: database-types
+db	Preserve generated public types	2026-11-05T04:58:27.4655959Z   path: /home/runner/work/_temp/database.types.ts
+db	Preserve generated public types	2026-11-05T04:58:27.4656533Z   if-no-files-found: ignore
+db	Preserve generated public types	2026-11-05T04:58:27.4656980Z   compression-level: 6
+db	Preserve generated public types	2026-11-05T04:58:27.4657398Z   overwrite: false
+db	Preserve generated public types	2026-11-05T04:58:27.4657813Z   include-hidden-files: false
+db	Preserve generated public types	2026-11-05T04:58:27.4658256Z env:
+db	Preserve generated public types	2026-11-05T04:58:27.4658620Z   JOB_STARTED_MS: 1793854535246
+db	Preserve generated public types	2026-11-05T04:58:27.4659174Z   API_URL: ***
+db	Preserve generated public types	2026-11-05T04:58:27.4659804Z   DB_URL: ***
+db	Preserve generated public types	2026-11-05T04:58:27.4660383Z   PUBLISHABLE_KEY: ***
+db	Preserve generated public types	2026-11-05T04:58:27.4661144Z   SECRET_KEY: ***
+db	Preserve generated public types	2026-11-05T04:58:27.4661534Z ##[endgroup]
+db	Preserve generated public types	2026-11-05T04:58:27.7931781Z With the provided path, there will be 1 file uploaded
+db	Preserve generated public types	2026-11-05T04:58:27.7951461Z Artifact name is valid!
+db	Preserve generated public types	2026-11-05T04:58:27.7971796Z Root directory input is valid!
+db	Preserve generated public types	2026-11-05T04:58:28.1999182Z Beginning upload of artifact content to blob storage
+db	Preserve generated public types	2026-11-05T04:58:28.5446620Z Uploaded bytes 791
+db	Preserve generated public types	2026-11-05T04:58:28.6262400Z Finished uploading artifact content to blob storage!
+db	Preserve generated public types	2026-11-05T04:58:28.6280623Z SHA256 digest of uploaded artifact zip is dd3aa9c14aa5b4c5799259839e880b57df670291c2c5e3ceb6b49a2b0f3d08c9
+db	Preserve generated public types	2026-11-05T04:58:28.6290040Z Finalizing artifact upload
+db	Preserve generated public types	2026-11-05T04:58:29.2772191Z Artifact database-types.zip successfully finalized. Artifact ID 13389940881
+db	Preserve generated public types	2026-11-05T04:58:29.2811241Z Artifact database-types has been successfully uploaded! Final size is 791 bytes. Artifact ID is 13389940881
+db	Preserve generated public types	2026-11-05T04:58:29.2812904Z Artifact download URL: https://github.com/flashwp3-ctrl/juntia/actions/runs/41970766206/artifacts/13389940881
+db	Stop Supabase	﻿2026-11-05T04:58:29.2942733Z ##[group]Run supabase stop
+db	Stop Supabase	2026-11-05T04:58:29.2943262Z [36;1msupabase stop[0m
+db	Stop Supabase	2026-11-05T04:58:29.2970005Z shell: /usr/bin/bash -e {0}
+db	Stop Supabase	2026-11-05T04:58:29.2970469Z env:
+db	Stop Supabase	2026-11-05T04:58:29.2971067Z   JOB_STARTED_MS: 1793854535246
+db	Stop Supabase	2026-11-05T04:58:29.2971679Z   API_URL: ***
+db	Stop Supabase	2026-11-05T04:58:29.2972332Z   DB_URL: ***
+db	Stop Supabase	2026-11-05T04:58:29.2972911Z   PUBLISHABLE_KEY: ***
+db	Stop Supabase	2026-11-05T04:58:29.2973590Z   SECRET_KEY: ***
+db	Stop Supabase	2026-11-05T04:58:29.2973979Z ##[endgroup]
+db	Stop Supabase	2026-11-05T04:58:30.1436115Z Stopping containers...
+db	Stop Supabase	2026-11-05T04:58:34.6715717Z Stopped supabase local development setup.
+db	Stop Supabase	2026-11-05T04:58:35.1752894Z A new version of Supabase CLI is available: v3.0.0 (currently installed v2.121.0)
+db	Stop Supabase	2026-11-05T04:58:35.1757692Z We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+db	Stop Supabase	2026-11-05T04:58:35.1763775Z Local data are backed up to docker volume. Use docker to show them: docker volume ls --filter label=com.supabase.cli.project=Juntia
+db	Publish db timings	﻿2026-11-05T04:58:35.1988542Z ##[group]Run node scripts/ci.mjs summary
+db	Publish db timings	2026-11-05T04:58:35.1989231Z [36;1mnode scripts/ci.mjs summary[0m
+db	Publish db timings	2026-11-05T04:58:35.2019226Z shell: /usr/bin/bash -e {0}
+db	Publish db timings	2026-11-05T04:58:35.2019741Z env:
+db	Publish db timings	2026-11-05T04:58:35.2020153Z   JOB_STARTED_MS: 1793854535246
+db	Publish db timings	2026-11-05T04:58:35.2021086Z   API_URL: ***
+db	Publish db timings	2026-11-05T04:58:35.2021886Z   DB_URL: ***
+db	Publish db timings	2026-11-05T04:58:35.2022498Z   PUBLISHABLE_KEY: ***
+db	Publish db timings	2026-11-05T04:58:35.2023069Z   SECRET_KEY: ***
+db	Publish db timings	2026-11-05T04:58:35.2023516Z   JOB_STATUS: success
+db	Publish db timings	2026-11-05T04:58:35.2023951Z ##[endgroup]
+db	Publish db timings	2026-11-05T04:58:35.2442507Z | Control | Estado | Duración | Presupuesto |
+db	Publish db timings	2026-11-05T04:58:35.2443019Z | --- | --- | --- | --- |
+db	Publish db timings	2026-11-05T04:58:35.2443392Z | ci | pasó | 15.91 s | — |
+db	Publish db timings	2026-11-05T04:58:35.2443800Z | test:db | pasó | 5.76 s | < 60 s |
+db	Publish db timings	2026-11-05T04:58:35.2444628Z | test:integration | pasó | 0.88 s | — |
+db	Publish db timings	2026-11-05T04:58:35.2445395Z | db:types:check | pasó | 1.36 s | — |
+db	Publish db timings	2026-11-05T04:58:35.2446291Z | Job db (incluye instalación) | success | 180.00 s | < 360 s |
+db	Post Run supabase/setup-cli@v3	﻿2026-11-05T04:58:35.2658404Z Post job cleanup.
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:35.2662958Z ##[start-action display=Setup Bun;id=__ce4fdcf9-bc38-4372-8c41-9d258d9752d2.__oven-sh_setup-bun]
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:35.2712399Z Post job cleanup.
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:35.5033272Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/juntia/juntia --files-from manifest.txt --use-compress-program zstdmt
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:37.3389702Z Sent 19070976 of 36196344 (52.7%), 18.2 MBs/sec
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:37.8138127Z Sent 36196344 of 36196344 (100.0%), 23.4 MBs/sec
+db	Post Run supabase/setup-cli@v3	2026-11-05T04:58:38.1116562Z ##[end-action id=__ce4fdcf9-bc38-4372-8c41-9d258d9752d2.__oven-sh_setup-bun;outcome=success;conclusion=success;duration_ms=2845]
+db	Post Run actions/setup-node@v7	﻿2026-11-05T04:58:38.1198059Z Post job cleanup.
+db	Post Run actions/setup-node@v7	2026-11-05T04:58:38.2492249Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-8802b1c62a5665767a12c2613659c4ca5ee48c899912c937064588cdccad1847, not saving cache.
+db	Post Run actions/checkout@v7	﻿2026-11-05T04:58:38.2669821Z Post job cleanup.
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.3756653Z [command]/usr/bin/git version
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.3850003Z git version 2.56.0
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.3909258Z Temporarily overriding HOME='/home/runner/work/_temp/32171c29-b505-4264-a0d3-d818b8f63b98' before making global git config changes
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.3932204Z Adding repository directory to the temporary git global config as a safe directory
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.3966174Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/juntia/juntia
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4003981Z Removing SSH command configuration
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4005071Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4088648Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4758872Z Removing HTTP extra header
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4786431Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.4881212Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5261394Z Removing includeIf entries pointing to credentials config files
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5272352Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5309083Z includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5310384Z includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5322779Z includeif.gitdir:/github/workspace/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5326561Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5355997Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5381995Z /home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5394541Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-505f1b1e\-b91f\-4538\-b2ed\-07e8b81699b4\.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5473284Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5514564Z /home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5543204Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/juntia/juntia/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-505f1b1e\-b91f\-4538\-b2ed\-07e8b81699b4\.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5585780Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5626254Z /github/runner_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5635037Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-505f1b1e\-b91f\-4538\-b2ed\-07e8b81699b4\.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5685157Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5725532Z /github/runner_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5734150Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-505f1b1e\-b91f\-4538\-b2ed\-07e8b81699b4\.config
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.5785864Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+db	Post Run actions/checkout@v7	2026-11-05T04:58:38.6058094Z Removing credentials config '/home/runner/work/_temp/git-credentials-505f1b1e-b91f-4538-b2ed-07e8b81699b4.config'
+db	Complete job	﻿2026-11-05T04:58:38.6236507Z Cleaning up orphan processes

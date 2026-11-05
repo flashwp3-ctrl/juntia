@@ -9,6 +9,22 @@ const fixture = (name: string) => readFile(`tests/lint-fixtures/${name}`, "utf8"
 const restrictedLines = (messages: { ruleId: string | null; line: number }[]) =>
   messages.filter(({ ruleId }) => ruleId === "no-restricted-syntax").map(({ line }) => line);
 
+// 002 T005 / FR-010, FR-011: «Ningún camino que atiende a una persona usa service_role»;
+// «src/lib/db/ es la única capa que conoce vistas y funciones» (contracts/ci.md, Lint nuevo).
+it("marca claves privilegiadas y accesos fuera de la capa de datos", async () => {
+  const [result] = await eslint.lintText(await fixture("data-boundary.ts"), { filePath: "src/features/fixture.ts" });
+  expect(restrictedLines(result.messages)).toEqual([1, 2, 3, 4, 5]);
+  for (const filePath of ["src/lib/db/fixture.ts", "src/lib/supabase/fixture.ts"]) {
+    const [allowed] = await eslint.lintText(await fixture("data-boundary.ts"), { filePath });
+    expect(restrictedLines(allowed.messages)).toEqual([1, 2, 3]);
+  }
+}, 30_000);
+
+it("impide importar ambas capas de datos desde domain", async () => {
+  const [result] = await eslint.lintText(await fixture("domain-data.ts"), { filePath: "src/domain/fixture.ts" });
+  expect(result.messages.filter(({ ruleId }) => ruleId === "no-restricted-imports").map(({ line }) => line)).toEqual([1, 2]);
+});
+
 describe("reglas de lint propias (T012)", () => {
   // En Windows, iniciar ESLint en frío puede superar los 5 s de Vitest.
   // Los 30 s solo aplican a estos fixtures; no cambian el timeout global ni el presupuesto de verify.
