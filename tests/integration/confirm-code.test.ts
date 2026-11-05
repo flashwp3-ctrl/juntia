@@ -129,3 +129,17 @@ it("F43-4: A5 acepta la sesión de recuperación y rechaza una sesión iniciada 
   await resolveConfirm(landing.searchParams, authOf(browser.client));
   expect(isRecentRecovery((await browser.client.auth.getClaims()).data?.claims)).toBe(true);
 });
+
+it("camino token_hash (plantillas del repo): verifyOtp de recuperación → A5, amr «otp» aceptado por la guarda de A5", async () => {
+  const user = await seedUser({ role: "token-recupera", index: 0 });
+  const browser = cookieJarClient();
+  expect((await browser.client.auth.resetPasswordForEmail(user.email, { redirectTo: `${SITE}/auth/confirm?next=recovery` })).error).toBeNull();
+  const params = new URLSearchParams({ token_hash: await tokenHash(user.email, "recovery"), type: "recovery" });
+  // Un type cambiado no verifica: el token de recuperación no vale como registro.
+  expect(await resolveConfirm(new URLSearchParams({ token_hash: params.get("token_hash")!, type: "signup" }), authOf(cookieJarClient().client))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+  const other = cookieJarClient();
+  expect(await resolveConfirm(params, authOf(other.client))).toEqual({ to: "/nueva-contrasena", session: "recovery" });
+  const claims = (await other.client.auth.getClaims()).data?.claims;
+  console.log(`amr de la sesión de recuperación por token_hash: ${JSON.stringify(claims?.amr)}`);
+  expect(isRecentRecovery(claims)).toBe(true);
+});

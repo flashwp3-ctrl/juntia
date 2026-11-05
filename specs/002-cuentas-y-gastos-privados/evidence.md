@@ -1471,6 +1471,23 @@ entrar (T048). Prueba de componentes con `persist()` → `{ ok: false, error:
 interpretado (verificado, caducado o ninguno); la cadena del fragmento, que puede
 llevar tokens, no se conserva y se borra de la URL.
 
+**Segundo push (gate de 9eca9e6 en rojo, run
+[42116416520](https://github.com/flashwp3-ctrl/juntia/actions/runs/42116416520)).**
+`app` y `db` en verde; `e2e` rojo en A5 por el camino `token_hash` (spec 1 y axe):
+la recuperación caía en «verificado»
+([`f43-3-token-hash-red.txt`](evidence/pr-b/f43-3-token-hash-red.txt)). El job
+`db` registró el `amr` real: `recovery` (code de recuperación), `email/signup`
+(code de registro), `password` (sesión con contraseña). `verifyOtp` (token_hash),
+en cambio, firma la sesión con `otp` para cualquier tipo, así que ahí el `amr` no
+distingue. Corrección: por `token_hash` cuenta el `type`, que GoTrue verifica con
+el token (un `type` cambiado no verifica y sale caducado: lo prueba la integración);
+la guarda de A5 acepta `recovery` u `otp` recientes, porque `otp` solo nace de un
+enlace de correo y `/auth/confirm` cierra en el acto las sesiones de registro;
+`password`, `email/signup` y `token_refresh` solos se rechazan. Rojo y verde de
+unidad: [`f43-3-token-hash-unit-red.txt`](evidence/pr-b/f43-3-token-hash-unit-red.txt),
+[`f43-3-token-hash-unit-green.txt`](evidence/pr-b/f43-3-token-hash-unit-green.txt);
+integración nueva del camino `token_hash` en `confirm-code.test.ts`.
+
 Rojo de F43-1, F43-3 y F43-4 en las pruebas de unidad y de componentes:
 [`f43-red.txt`](evidence/pr-b/f43-red.txt); verde: [`f43-green.txt`](evidence/pr-b/f43-green.txt)
 (37 pruebas en `src/features`). `npm run verify` en local pasó (32,6 s). El gate
@@ -1483,7 +1500,8 @@ de CI de este push (PR listo) es el definitivo: SHA y run en T059.
 porque registrarlos aquí exigiría otro commit y otro gate. Los runs anteriores:
 81b60e9 en rojo por el arnés de foco (run
 [42112383415](https://github.com/flashwp3-ctrl/juntia/actions/runs/42112383415),
-F43-2 arriba).
+F43-2 arriba) y 9eca9e6 en rojo por A5 en el camino `token_hash` (run
+[42116416520](https://github.com/flashwp3-ctrl/juntia/actions/runs/42116416520), arriba).
 
 **Gate sobre e38af80** (con la enmienda de
 `/auth/confirm`): `npm run verify` en local pasó (22,8 s, < 90 s) y el run

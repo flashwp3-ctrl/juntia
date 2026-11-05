@@ -1,0 +1,15 @@
+# Gate de 9eca9e6, run 42116416520: e2e rojo (A5 por el camino token_hash); amr observados en el job db
+amr de la sesión de registro: [{"method":"email/signup","timestamp":1793915679}]
+amr de la sesión de recuperación: [{"method":"recovery","timestamp":1793915679}]
+amr de una sesión con contraseña: [{"method":"password","timestamp":1793915679}]
+    Expected pattern: /\/nueva-contrasena$/
+    Received string:  "http://localhost:3000/entrar?aviso=verificado"
+  1 failed
+  1) [a11y] › tests/a11y/routes.a11y.ts:169:11 › /nueva-contrasena · A5 · light · 390px ────────────
+  1) [e2e] › tests/e2e/access-account.e2e.ts:159:5 › recuperación uniforme; /auth/confirm caducado → aviso sin datos; enlace válido → A5 
+  2) [a11y] › tests/a11y/routes.a11y.ts:169:11 › /nueva-contrasena · A5 · light · 1440px ───────────
+  3) [a11y] › tests/a11y/routes.a11y.ts:169:11 › /nueva-contrasena · A5 · dark · 390px ─────────────
+  4 failed
+  4) [a11y] › tests/a11y/routes.a11y.ts:169:11 › /nueva-contrasena · A5 · dark · 1440px ────────────
+  5 passed (26.3s)
+  72 passed (2.8m)

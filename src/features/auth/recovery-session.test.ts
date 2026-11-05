@@ -10,11 +10,15 @@ describe("isRecentRecovery", () => {
   it("acepta una sesión de recuperación reciente", () => {
     expect(isRecentRecovery({ amr: [{ method: "recovery", timestamp: now - 60 }] }, now)).toBe(true);
     expect(isRecentRecovery({ amr: [{ method: "token_refresh", timestamp: now - 10 }, { method: "recovery", timestamp: now - RECOVERY_WINDOW_SECONDS }] }, now)).toBe(true);
+    // Enlace por token_hash (verifyOtp): GoTrue firma con «otp». Las de registro se cierran en /auth/confirm.
+    expect(isRecentRecovery({ amr: [{ method: "otp", timestamp: now - 60 }] }, now)).toBe(true);
   });
   it("rechaza una sesión normal, una vieja y cualquier claim mal formado", () => {
     expect(isRecentRecovery({ amr: [{ method: "password", timestamp: now - 60 }] }, now)).toBe(false);
     expect(isRecentRecovery({ amr: [{ method: "email/signup", timestamp: now - 60 }] }, now)).toBe(false);
     expect(isRecentRecovery({ amr: [{ method: "recovery", timestamp: now - RECOVERY_WINDOW_SECONDS - 1 }] }, now)).toBe(false);
+    expect(isRecentRecovery({ amr: [{ method: "otp", timestamp: now - RECOVERY_WINDOW_SECONDS - 1 }] }, now)).toBe(false);
+    expect(isRecentRecovery({ amr: [{ method: "token_refresh", timestamp: now - 10 }] }, now)).toBe(false);
     expect(isRecentRecovery({ amr: [{ method: "recovery" }] }, now)).toBe(false);
     expect(isRecentRecovery({ amr: "recovery" }, now)).toBe(false);
     expect(isRecentRecovery({}, now)).toBe(false);

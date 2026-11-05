@@ -22,10 +22,13 @@ const NEW_PASSWORD = { to: "/nueva-contrasena", session: "recovery" };
 const EXPIRED = { to: "/recuperar?enlace=caducado", session: null };
 
 describe("/auth/confirm · camino token_hash (Supabase local con las plantillas del repo)", () => {
-  it("verificación y recuperación válidas, según el amr de la sesión", async () => {
-    expect(await resolveConfirm(input({ token_hash: "h", type: "signup" }), auth(SIGNUP))).toEqual(VERIFIED);
+  // Observado en el GoTrue del runner (gate de 9eca9e6): verifyOtp firma la sesión con amr «otp» para cualquier tipo, así
+  // que aquí el amr no distingue. El type sí es fiable: GoTrue busca el token_hash en la columna de su tipo y un type
+  // cambiado no verifica (sale caducado).
+  it("verificación y recuperación válidas: amr «otp» y el type que GoTrue ya verificó", async () => {
+    expect(await resolveConfirm(input({ token_hash: "h", type: "signup" }), auth(["otp"]))).toEqual(VERIFIED);
     expect(await resolveConfirm(input({ token_hash: "h", type: "email" }), auth(["otp"]))).toEqual(VERIFIED);
-    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(RECOVERY))).toEqual(NEW_PASSWORD);
+    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(["otp"]))).toEqual(NEW_PASSWORD);
   });
   it("caducado o usado → aviso de enlace caducado, sin sesión", async () => {
     for (const type of ["signup", "recovery"]) {
@@ -46,8 +49,8 @@ describe("/auth/confirm · camino code (plantilla por defecto de los proyectos a
     expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth(SIGNUP))).toEqual(VERIFIED);
     // Un code de recuperación con next=signup sigue siendo una recuperación: la sesión que A5 necesita se conserva.
     expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth(RECOVERY))).toEqual(NEW_PASSWORD);
-    // Lo mismo por el camino token_hash con el type cambiado.
-    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(SIGNUP))).toEqual(VERIFIED);
+    // Por el camino token_hash, un type cambiado no verifica en GoTrue: sale caducado, nunca a A5.
+    expect(await resolveConfirm(input({ token_hash: "h", type: "recovery" }), auth(["otp"], { verifyOtp: vi.fn().mockResolvedValue(expired) }))).toEqual(EXPIRED);
   });
   it("sin poder leer el amr de la sesión, la trata como registro (la cierra) y nunca da A5", async () => {
     expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth([]))).toEqual(VERIFIED);

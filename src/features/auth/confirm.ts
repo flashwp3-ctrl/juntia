@@ -29,14 +29,14 @@ const success = (kind: "signup" | "recovery"): ConfirmOutcome => ({ to: kind ===
  * URL, que se pueden cambiar. Una recuperación conserva la sesión y va a A5; cualquier otra (o si el amr no se puede
  * leer) se trata como verificación: se cierra la sesión y nunca se llega a A5.
  */
-async function established(auth: ConfirmAuth): Promise<ConfirmOutcome> {
+async function established(auth: ConfirmAuth, verifiedRecovery = false): Promise<ConfirmOutcome> {
   let methods: string[] = [];
   try {
     methods = await auth.authMethods();
   } catch {
     methods = [];
   }
-  return success(methods.includes("recovery") ? "recovery" : "signup");
+  return success(methods.includes("recovery") || verifiedRecovery ? "recovery" : "signup");
 }
 
 const kindOf = (value: string | null) => (value === "signup" || value === "email" ? "signup" : value === "recovery" ? "recovery" : null);
@@ -46,7 +46,9 @@ export async function resolveConfirm(params: URLSearchParams, auth: ConfirmAuth)
   const type = params.get("type");
   if (tokenHash && kindOf(type)) {
     const { error } = await auth.verifyOtp({ token_hash: tokenHash, type: type as "signup" | "email" | "recovery" });
-    return error ? EXPIRED : established(auth);
+    // verifyOtp firma la sesión con amr «otp» para cualquier tipo (observado en el runner), así que aquí cuenta el type:
+    // GoTrue lo verificó con el token, que solo vale para su tipo (un type cambiado no verifica y sale caducado).
+    return error ? EXPIRED : established(auth, type === "recovery");
   }
 
   // Sin sesión todavía, `next` solo orienta qué aviso mostrar (enlace implícito del reenvío, otro navegador).

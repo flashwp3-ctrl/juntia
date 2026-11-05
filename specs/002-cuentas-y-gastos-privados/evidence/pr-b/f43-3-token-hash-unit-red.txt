@@ -1,0 +1,5 @@
+     × acepta una sesión de recuperación reciente 16ms
+     × verificación y recuperación válidas: amr «otp» y el type que GoTrue ya verificó 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 23 passed (25)
