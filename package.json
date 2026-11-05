@@ -12,7 +12,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:unit": "vitest run --project domain --passWithNoTests",
+    "test:unit": "vitest run --project domain",
     "test:components": "vitest run --project components",
     "test:a11y": "playwright test --project a11y",
     "check:internal-surface": "node scripts/check-internal-surface.mjs",

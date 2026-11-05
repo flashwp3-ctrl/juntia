@@ -254,3 +254,85 @@ supabase start: 119 s
 
 Log completo (con claves enmascaradas por Actions):
 [`evidence/bootstrap-preparatory.txt`](evidence/bootstrap-preparatory.txt).
+
+### Verificación local del commit de tipos
+
+Commit: `6ea9b3f27e3453ae3b8e883f7cadb8acd8677950`.
+`database.types.ts` descargado sin editar: SHA256
+`8bd40c6b84ae9057dbecbb57c894ba490b6df91401d56c8d7ffbbd1ff399d120`.
+
+Extracto de `npm run verify`, exit 0:
+
+```text
+Test Files  9 passed (9)
+     Tests  87 passed (87)
+  Duration  10.70s (environment 38%, tests 30%, import 17%, setup 14%, transform 1%)
+```
+
+Tabla real: lint 10.44 s, typecheck 3.58 s, dominio sin archivos 1.49 s,
+componentes 11.93 s, total 27.44 s (< 90 s). SQL/RLS e integración siguen
+«SOLO EN CI» y E2E «NO APLICABLE»; no se atribuye a este comando ninguna prueba
+de base de datos.
+
+### Bootstrap completo — verde
+
+Commit: `6ea9b3f27e3453ae3b8e883f7cadb8acd8677950`.
+Run: [41970766206](https://github.com/flashwp3-ctrl/juntia/actions/runs/41970766206).
+
+```text
+$ gh workflow run ci.yml --ref feat/002-a-database
+$ gh run watch 41970766206 --exit-status --interval 20
+✓ app in 2m40s
+✓ db in 3m10s
+  ✓ Start Supabase and reset the runner database
+  ✓ Test SQL
+  ✓ Test API
+  ✓ Check generated types
+  ✓ Preserve generated public types
+exit=0
+supabase start: 111 s
+| test:db | pasó | 5.76 s | < 60 s |
+| test:integration | pasó | 0.88 s | — |
+| db:types:check | pasó | 1.36 s | — |
+| Job db (incluye instalación) | success | 180.00 s | < 360 s |
+| Job app (incluye instalación) | success | 156.24 s | < 360 s |
+```
+
+Las duraciones de `gh run watch` incluyen setup/post del job; el resumen interno
+mide desde su primer paso. Ambas se conservan sin cambiar presupuestos.
+Log: [`evidence/bootstrap-green.txt`](evidence/bootstrap-green.txt).
+T001–T007 terminadas con la excepción de arranque autorizada; no hay migraciones.
+
+### T008–T011 — dominio, dataset y copy
+
+Extractos reales de `npm run test:unit`, en orden, antes de crear cada módulo:
+
+```text
+T008: Error: Cannot find module './index' imported from src/domain/money/money.test.ts
+Test Files 1 failed (1); Tests no tests; Duration 293ms; exit=1
+Después: Test Files 1 passed (1); Tests 16 passed (16); Duration 343ms; exit=0
+
+T009: Error: Cannot find module './index' imported from src/domain/transactions/transactions.test.ts
+Test Files 1 failed | 1 passed (2); Tests 16 passed (16); Duration 386ms; exit=1
+Después: Test Files 2 passed (2); Tests 22 passed (22); Duration 372ms; exit=0
+
+T010: Error: Cannot find module './october-2026' imported from src/domain/golden/october-2026.test.ts
+Test Files 1 failed | 2 passed (3); Tests 22 passed (22); Duration 355ms; exit=1
+Después: Test Files 3 passed (3); Tests 23 passed (23); Duration 498ms; exit=0
+$ npm run typecheck
+exit=0
+```
+
+La salida completa del último dominio está en `evidence/domain-green.txt`.
+Los tests del dataset afirman 41290000 unidades menores de gasto, 8600000 de
+ingreso aparte y las ocho categorías literales.
+
+Detalles locales necesarios: TypeScript apunta ahora a ES2020 para los literales
+`bigint`; `test:unit` ya no usa `passWithNoTests`; el proyecto de dominio usa
+globals tipados de Vitest para mantener intacta la frontera de imports del
+dominio. El primer `verify` detectó imports de `vitest` bloqueados por esa
+regla; se quitaron esos imports, sin debilitar la regla. Se conserva la salida
+en `evidence/domain-and-sql-red-local-verify.txt`.
+
+T011 añade las claves exactas de `contracts/errors.md` y las diez categorías
+de producto en `es.ts`; redacción pendiente de revisión humana del PR A.

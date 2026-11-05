@@ -1,0 +1,13 @@
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain
+
+
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia
+
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  00:01:30
+   Duration  498ms (transform 35%, import 31%, tests 24%, worker 10%)
+
