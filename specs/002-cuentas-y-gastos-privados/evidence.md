@@ -1224,9 +1224,34 @@ T043: el build marca todas las rutas de producto y de Mi cuenta como dinámicas
 [`t043-build-routes.txt`](evidence/pr-b/t043-build-routes.txt). La spec 1
 comprueba `Cache-Control: private, no-store` en `/cuenta` con sesión.
 
-T045 pide además que cada estado se alcance con `npm run dev` contra
-`juntia-dev`: **pendiente de T036–T038** (humanas); hasta entonces cada estado
-se alcanza en el Supabase del runner (spec 1 y axe del job `e2e`).
+**T045 · cada estado y qué lo cubre** (reparto decidido por el gestor el 5 de
+noviembre de 2026: Alejandro hace dos comprobaciones a mano contra `juntia-dev`;
+el resto queda cubierto por las pruebas automáticas y la evidencia sin correo).
+Leyenda: **M** = a mano por Alejandro en `npm run dev` contra `juntia-dev`;
+**D** = demostrado por el agente contra `juntia-dev` sin correo
+([`t045-sin-correo-juntia-dev.txt`](evidence/pr-b/t045-sin-correo-juntia-dev.txt));
+**A** = automático en el Supabase del runner (spec E2E 1 `tests/e2e/access-account.e2e.ts`,
+axe `tests/a11y/routes.a11y.ts` con `route-registry.ts`, integración en el job `db`).
+
+| Estado | Cubierto por |
+| --- | --- |
+| A2 crear cuenta, A3 verifica tu correo (correo permitido) | **M 1** (pendiente) · A: spec 1, «registro permitido» |
+| Correo de verificación recibido (T036) | **M 1** (pendiente) |
+| Enlace de verificación abierto en el mismo navegador → A1 con aviso de verificado | **M 1** (pendiente; camino `code` de la plantilla por defecto) · A: spec 1 (camino `token_hash`) e integración `confirm-code.test.ts` (camino `code` contra GoTrue) |
+| A1 entrar → A6 primera entrada → Inicio | **M 1** (pendiente) · A: spec 1, «registro permitido» |
+| A4 recuperar, A4b enlace enviado | **M 2** (pendiente) · A: spec 1, «recuperación uniforme» |
+| Enlace de recuperación → A5 contraseña nueva → Inicio | **M 2** (pendiente) · A: spec 1 (`token_hash`) e integración `confirm-code.test.ts` (`code`) |
+| Registro no permitido: la misma A3 y ninguna cuenta | A: spec 1, «registro no permitido o de una cuenta existente» (403 del hook y 422) |
+| A1b contraseña incorrecta | **D** (respuesta real de `juntia-dev`) · A: axe, entrada A1b |
+| A1c cuenta sin verificar | A: axe, entrada A1c (cuenta sembrada sin confirmar) |
+| A1d error de red | A: axe del job `app` (Supabase inaccesible a propósito) |
+| Aviso de verificado, S3 cerraste sesión | A: spec 1 y axe |
+| Enlace usado o caducado → aviso sin datos de la cuenta | **D** (`error_code=otp_expired` y `token_hash` inválido) · A: spec 1 (enlace usado; recuperación fechada dos horas atrás) e integración (enlace repetido por la plantilla por defecto) |
+| Enlace abierto en otro navegador | **D** (registro → A1 verificado; recuperación → aviso propio) · A: `confirm.test.ts` e integración `confirm-code.test.ts` |
+| Ruta protegida sin sesión → Entrar → vuelve | **D** (`/actividad?mes=2026-10`) · A: spec 1 |
+| Mi cuenta: C1, perfil P1–P5, pareja, privacidad D1/D2, seguridad G1 | A: spec 1 (perfil) y axe con sesión de todas las rutas; P2–P5 y la sesión caducada en pruebas de componentes y axe |
+| Tema: apariencia oscuro y segundo dispositivo oscuro antes de `<body>` | A: spec 1 y arnés de T053 |
+| Cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar | A: spec 1 |
 
 **Enmienda del 5 de noviembre de 2026 · `/auth/confirm` con dos caminos.**
 `src/features/auth/confirm.ts` resuelve `token_hash` (plantillas del repo, Supabase
