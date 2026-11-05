@@ -672,3 +672,34 @@ Artefacto descargado con `gh run download 42036309887 --name database-types
 Se leyó completo, sin claves, URLs ni datos: solo las cuatro vistas y funciones
 de perfil, tipos auxiliares y constantes. Se movió sin editar a su ruta final.
 SHA256 `0211ee4bf5cd3eb06ae54406475ab5937636f8a90f62da0d336bad8586c30c02`.
+
+## T020 — punto de control 2
+
+5 de noviembre de 2026. Commit `0d48a9372088fc35c43e2c88d5d2519639b7f0b7`.
+Run [42037086359](https://github.com/flashwp3-ctrl/juntia/actions/runs/42037086359).
+`gh workflow run ci.yml --ref feat/002-a-database` y
+`gh run watch 42037086359 --exit-status --interval 20`: exit 0.
+Log íntegro: [checkpoint-2-green.txt](evidence/checkpoint-2-green.txt).
+
+```text
+All tests successful.
+Files=9, Tests=273
+Result: PASS
+Test Files 3 passed (3)
+Tests 9 passed (9)
+app: success, 3m18s (resumen interno 192.93 s)
+db: success, 3m58s (resumen interno 229.16 s)
+supabase start: 138 s
+test:db: 13.81 s (< 60 s)
+test:integration: 2.69 s
+db:types:check: 1.26 s
+```
+
+Las salidas pgTAP `04_writer` ([V] 1), `05_direct_writes` y la integración
+([V] 2), `01_privileges` ([V] 7), `03_views` ([V] 8) y `02_claims` más la
+sonda HTTP de foundation ([V] 9) pasan con las tres tablas controladas. El
+log conserva cada archivo y el resultado real del conjunto; no hay funciones
+de dinero en este commit. `npm run verify` sobre ese mismo SHA: exit 0,
+29.88 s, 23 pruebas de dominio y 87 de componentes; salida en
+[checkpoint-2-local-verify.txt](evidence/checkpoint-2-local-verify.txt).
+Los techos no se cambian; el arranque por encima de 60 s queda medido.
