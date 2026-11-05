@@ -1027,8 +1027,11 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.13 | Fecha futura | Se permite; Actividad deja llegar a cualquier mes futuro con movimientos |
 | 16.14 | Tipo al editar | No se cambia de gasto a ingreso ni al revés |
 | 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
+| 16.16 | Enumeración por la API de Auth | Riesgo aceptado hasta MVP-1; las pantallas no enumeran. Decidida por el primer fundador el 4 de noviembre de 2026, tras el preflight del plan de P0-1: la API de Auth de Supabase, llamada directamente, revela si un correo está en la lista permitida (403) y si ya tiene cuenta (422). Se suma a los pendientes de lanzamiento |
 
-**Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio y apertura del registro. Se suman al bloqueo legal de §15.6.1.
+La 16.16 salió del preflight del plan de P0-1; la segunda fundadora la confirma con el merge del PR del plan.
+
+**Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio, apertura del registro y cerrar la enumeración por la API de Auth (16.16). Se suman al bloqueo legal de §15.6.1.
 
 #### Decisión 17: sin Docker en los equipos de desarrollo
 

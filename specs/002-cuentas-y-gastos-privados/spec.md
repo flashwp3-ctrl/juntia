@@ -379,7 +379,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 - **FR-021**: Supabase Auth con correo y contraseña, verificación de correo y recuperación por enlace seguro. Sin Google, Apple, magic link independiente, passkeys ni MFA propio (§15.5).
 - **FR-022**: Pantallas y estados de 04·17: Entrar (A1, A1b, A1c, A1d), Crear cuenta (A2), Verifica tu correo (A3), Recuperar (A4, A4b), Contraseña nueva (A5) y Primera entrada (A6, sin «Invitar a mi pareja») (Q6).
-- **FR-023**: Ninguna respuesta de acceso, registro ni recuperación revela si un correo tiene cuenta (§15.5).
+- **FR-023**: Ninguna pantalla ni respuesta de Juntia de acceso, registro ni recuperación revela si un correo tiene cuenta ni si está en la lista permitida (§15.5). **Riesgo aceptado hasta MVP-1** (decisión 16.16, enmienda del 4 de noviembre de 2026 tras el preflight del plan): la API de Auth de Supabase, llamada directamente, sí lo revela (403 del hook de la lista permitida, 422 `user_already_exists`). Las pantallas no enumeran; la API cruda queda fuera de esta garantía hasta MVP-1.
 - **FR-024**: El registro solo se completa para los correos de una lista permitida que la base de datos valida antes de crear el usuario; el plan elige el mecanismo de Supabase y su `[V]` (Q9).
 - **FR-025**: El aviso de Crear cuenta dice que Juntia es una versión privada de prueba; no enlaza ni inventa términos legales (Q9).
 - **FR-026**: La sesión se valida en el servidor con `getClaims()`, se renueva en `proxy.ts`, se crea un cliente por petición y ninguna respuesta autenticada se guarda en cachés compartidas (ADR-013 §6.5).
