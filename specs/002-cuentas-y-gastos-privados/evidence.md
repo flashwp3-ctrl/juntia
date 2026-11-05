@@ -1174,55 +1174,390 @@ su restauración (quickstart §4.1 y §4.3) y la configuración de Auth (T036–
 
 ### T036
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Parcial, 5 de noviembre de 2026.** `juntia-dev`: **Alejandro recibió de verdad**
+el correo de verificación (plantilla por defecto de Supabase) y, después, el de
+recuperación; la prueba la hizo el gestor en el Chrome de Windows de Alejandro,
+con su autorización, con `npm run dev` en `http://localhost:3000` (commit
+e819450) y gastó los 2 correos de esa hora. Sin direcciones en esta evidencia.
+
+**Falta:** el correo de verificación de la segunda fundadora en `juntia-dev`, y
+los dos en `juntia-prod` cuando se pruebe allí.
 
 ### T037
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
+Alejandro** (sin correos ni claves):
+
+| Ajuste | `juntia-dev` | `juntia-prod` |
+| --- | --- | --- |
+| Hook Before User Created → `juntia_private.before_user_created_hook` | Activado | Activado |
+| Contraseña mínima | 8 | 8 |
+| Confirm email | Activado | Activado |
+| Site URL | `http://localhost:3000` | `https://juntia.vercel.app` |
+| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | `https://juntia.vercel.app/**` |
+| Lista permitida | Los dos fundadores | Los dos fundadores |
+| «Exposed schemas» solo `public` | Comprobado en el PR A | T035 |
+| Plantillas de correo | **No editables en Free sin SMTP propio.** Decisión del mismo día («Adaptar la app»): se usan las plantillas por defecto y `/auth/confirm` acepta su `code` (quickstart §3, paso 1, enmendado) | Igual |
 
 ### T038
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
+Alejandro.** Variables de Vercel por nombre, sin valores:
+
+| Entorno | Variables |
+| --- | --- |
+| Production | `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de `juntia-prod`; `SITE_URL` |
+| Preview | `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de `juntia-dev`; sin `SITE_URL` (la app usa el origen de la petición) |
+
+Ninguna clave secreta en Vercel.
+
+### PR B · T039–T050 (tests primero e implementación)
+
+Rama `feat/002-b-access`, PR #43. Salidas literales en
+[`evidence/pr-b/`](evidence/pr-b/). Los tests se vieron fallar antes que el código
+(`docs/TESTING.md` §6):
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T039 `auth-errors` | [`t039-red.txt`](evidence/pr-b/t039-red.txt) (módulo inexistente) | [`t039-green.txt`](evidence/pr-b/t039-green.txt): 11 pruebas |
+| T040 ThemeSelector, ProfileForm, LimitNote | [`t040-red.txt`](evidence/pr-b/t040-red.txt) | [`t040-green.txt`](evidence/pr-b/t040-green.txt): 22 pruebas de `src/features` |
+| T041 dominio (`volver`, nombre visible) | [`t041-red.txt`](evidence/pr-b/t041-red.txt): con la expresión anterior `/^\/(?!\/)/`, `"/\\evil"` → `/\evil` | [`t041-green.txt`](evidence/pr-b/t041-green.txt): 5 pruebas |
+| T042 integración (`auth.test.ts`) | — (solo CI) | job `db` de ab6a1b1: 22 pruebas de integración en verde, incluidas F37-7 (`/auth/v1/signup` con 7 caracteres → 422 `weak_password`, 0 usuarios) y Tomás sin tocar el perfil de Sara |
+| T046 script de tema | [`t046-red.txt`](evidence/pr-b/t046-red.txt): 4 fallos de la cookie | [`t046-green.txt`](evidence/pr-b/t046-green.txt): 20 pruebas; `check:theme-script` pide `/entrar` y pasa (job `app`) |
+| T050 spec E2E 1 | [`t050-red-unprotected-route.txt`](evidence/pr-b/t050-red-unprotected-route.txt): con `/actividad` fuera de `PRODUCT` en `src/lib/routes.ts`, «ruta protegida sin sesión» falla en la redirección | job `e2e` de ab6a1b1: 6 de 6 |
+
+T043: el build marca todas las rutas de producto y de Mi cuenta como dinámicas
+(ƒ) y `ƒ Proxy (Middleware)`:
+[`t043-build-routes.txt`](evidence/pr-b/t043-build-routes.txt). La spec 1
+comprueba `Cache-Control: private, no-store` en `/cuenta` con sesión.
+
+**T045 · cada estado y qué lo cubre** (reparto decidido por el gestor el 5 de
+noviembre de 2026: Alejandro hace dos comprobaciones a mano contra `juntia-dev`;
+el resto queda cubierto por las pruebas automáticas y la evidencia sin correo).
+Leyenda: **M** = a mano por Alejandro en `npm run dev` contra `juntia-dev`;
+**D** = demostrado por el agente contra `juntia-dev` sin correo
+([`t045-sin-correo-juntia-dev.txt`](evidence/pr-b/t045-sin-correo-juntia-dev.txt));
+**A** = automático en el Supabase del runner (spec E2E 1 `tests/e2e/access-account.e2e.ts`,
+axe `tests/a11y/routes.a11y.ts` con `route-registry.ts`, integración en el job `db`).
+
+| Estado | Cubierto por |
+| --- | --- |
+| A2 crear cuenta, A3 verifica tu correo (correo permitido) | **M 1** ✅ · A: spec 1, «registro permitido» |
+| Correo de verificación recibido (T036) | **M 1** ✅ |
+| Enlace de verificación abierto en el mismo navegador → A1 con aviso de verificado | **M 1** ✅ (camino `code` de la plantilla por defecto) · A: spec 1 (camino `token_hash`) e integración `confirm-code.test.ts` (camino `code` contra GoTrue) |
+| A1 entrar → A6 primera entrada → Inicio | **M 1** ✅ hasta A6 («Hola, Alejandro»; Inicio tras «Continuar» lo cubre la spec 1) · A: spec 1, «registro permitido» |
+| A4 recuperar, A4b enlace enviado | **M 2** ✅ · A: spec 1, «recuperación uniforme» |
+| Enlace de recuperación → A5 contraseña nueva → Inicio | **M 2** ✅ (camino `code`; con sesión tras guardar, en `/primera-entrada` porque A6 seguía sin completar) · A: spec 1 (`token_hash`) e integración `confirm-code.test.ts` (`code`) |
+| Registro no permitido: la misma A3 y ninguna cuenta | A: spec 1, «registro no permitido o de una cuenta existente» (403 del hook y 422) |
+| A1b contraseña incorrecta | **D** (respuesta real de `juntia-dev`) · A: axe, entrada A1b |
+| A1c cuenta sin verificar | A: axe, entrada A1c (cuenta sembrada sin confirmar) |
+| A1d error de red | A: axe del job `app` (Supabase inaccesible a propósito) |
+| Aviso de verificado, S3 cerraste sesión | A: spec 1 y axe |
+| Enlace usado o caducado → aviso sin datos de la cuenta | **D** (`error_code=otp_expired` y `token_hash` inválido) · A: spec 1 (enlace usado; recuperación fechada dos horas atrás) e integración (enlace repetido por la plantilla por defecto) |
+| Enlace abierto en otro navegador | **D** (registro → A1 verificado; recuperación → aviso propio) · A: `confirm.test.ts` e integración `confirm-code.test.ts` |
+| Ruta protegida sin sesión → Entrar → vuelve | **D** (`/actividad?mes=2026-10`) · A: spec 1 |
+| Mi cuenta: C1, perfil P1–P5, pareja, privacidad D1/D2, seguridad G1 | A: spec 1 (perfil) y axe con sesión de todas las rutas; P2–P5 y la sesión caducada en pruebas de componentes y axe |
+| Tema: apariencia oscuro y segundo dispositivo oscuro antes de `<body>` | A: spec 1 y arnés de T053 |
+| Cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar | A: spec 1 |
+
+**Comprobación a mano (M), 5 de noviembre de 2026**, en `juntia-dev`, con `npm run
+dev` en `http://localhost:3000` (commit e819450), en el Chrome de Windows de
+Alejandro, por el gestor con su autorización; resultados reportados por el gestor:
+
+1. **Registro:** `/crear-cuenta` con el correo de Alejandro (en la lista
+   permitida) → `/verificar-correo`. Llegó el correo con la plantilla por
+   defecto. El enlace, abierto desde Gmail en otra ventana del mismo Chrome, llevó
+   a `/entrar` con «Tu correo está verificado. Ya puedes entrar.», sin sesión.
+   Entrar con correo y contraseña llevó a `/primera-entrada` (A6, «Hola,
+   Alejandro»).
+2. **Recuperación:** `/recuperar` → mensaje neutro. Llegó el correo; el enlace
+   llevó a A5; con la contraseña nueva quedó la sesión abierta, en
+   `/primera-entrada`.
+
+**¿El registro canjeó el `code` o cayó en el caso de otro navegador?** Las dos
+salidas son la misma pantalla por diseño (la sesión del enlace de registro se
+cierra a propósito: spec, caso límite «Verificación desde otro dispositivo»), así
+que la pantalla no lo distingue. El log del servidor dev sí: `GET
+/auth/confirm?code=…&next=signup → 303` con **1718 ms** de código de aplicación
+(canje, `ensure_profile` y cierre de sesión: tres llamadas a `juntia-dev`), frente
+a **14 ms** del caso sin verificador medido antes en el mismo servidor, que no
+llama a la red. La recuperación: **528 ms** (canje y `ensure_profile`). Conclusión:
+el `code` se canjeó en los dos; **no es un bug** y no hay nada que corregir.
+
+**Enmienda del 5 de noviembre de 2026 · `/auth/confirm` con dos caminos.**
+`src/features/auth/confirm.ts` resuelve `token_hash` (plantillas del repo, Supabase
+local y runner) y `code` (plantilla por defecto de los proyectos alojados en Free).
+Test de componentes `confirm.test.ts` visto en rojo
+([`confirm-code-red.txt`](evidence/pr-b/confirm-code-red.txt)) y en verde en local;
+`tests/integration/confirm-code.test.ts` recorre contra el GoTrue del runner la URL
+de la plantilla por defecto (`/auth/v1/verify?token=…&redirect_to=…`): code canjeado
+en el mismo navegador, otro navegador sin verificador y enlace repetido (Auth
+devuelve el error en la consulta → aviso de enlace caducado). Salida: 2 de 2 en el
+job `db` del run [42093325736](https://github.com/flashwp3-ctrl/juntia/actions/runs/42093325736)
+([`t059-gate-e38af80.txt`](evidence/pr-b/t059-gate-e38af80.txt)).
+
+T048 (sesión caducada): estado del registro de axe y capturas
+`cuenta_perfil--sesion-caducada--*`: la sesión se borra con la página abierta,
+«Guardar cambios» responde `copy.errors.sessionExpired` con «Entrar de nuevo» y
+el nombre escrito sigue en el campo.
+
+**Interpretación de ejecución (T051), para el revisor.** Las dos listas del
+registro son las de la sesión que necesita cada ruta. A1b, A1c y A4b no necesitan
+sesión pero sí la respuesta real de Auth, que el job `app` no tiene: se marcan
+`needsAuthApi` y se auditan en el job `e2e`, sin cambiar la lista de su ruta. A1d
+se audita en `app`, donde Supabase es inaccesible a propósito (el error de red
+real). Si se prefiere otra lectura, cambia el registro, no el alcance.
 
 ### T051
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05 · ab6a1b1 · run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264).**
+Prueba de cobertura: se vio fallar con `/cuenta/pareja` sin clasificar
+([`t051-red-unclassified.txt`](evidence/pr-b/t051-red-unclassified.txt)) y pasa
+([`t051-green.txt`](evidence/pr-b/t051-green.txt)). Axe sin violaciones serias ni
+críticas en los dos temas y a 390 y 1440:
+
+- job `app`: 44 de 44, cada línea «0 serias o críticas»
+  ([`t051-a11y-app-ab6a1b1.txt`](evidence/pr-b/t051-a11y-app-ab6a1b1.txt));
+- job `e2e`: 76 de 76 (72 auditorías con «0 serias o críticas» y las 4 de la barra
+  de `/cuenta`) ([`t051-a11y-e2e-ab6a1b1.txt`](evidence/pr-b/t051-a11y-e2e-ab6a1b1.txt)).
+
+Corregido durante el PR, con salida: `text.secondary` sobre `surface.sunken` en
+claro daba 4,29:1 (LimitNote, perfil del sidebar, hoja de exportar); ahora usa
+`--comp-field-muted-fg`, el par ya corregido en F16-1.
+
+**Hallazgo que no se corrige aquí (tokens aprobados):** `action.primaryHover` en
+oscuro con `text.onAction` mide 4,32:1, por debajo de 4,5:1, mientras el puntero
+está sobre un botón primario
+([`t051-a11y-app-local-hover-finding.txt`](evidence/pr-b/t051-a11y-app-local-hover-finding.txt)).
+Axe audita el estado en reposo; el token queda para decisión de los fundadores.
 
 ### T052
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+Job `e2e` creado (Supabase del runner con Auth y Mailpit, build con sus
+variables, `test:e2e:smoke` y axe con sesión). `app`, `db` y `e2e` en verde sobre
+ab6a1b1, run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)
+([`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt)). Humo:
+`test:e2e:smoke` 14,40 s (< 180 s). Job `e2e` 364,91 s, **por encima de 360 s
+(aviso)**: incluye los ~40 s de la medición de T054, que solo corre en ese
+lanzamiento manual; `supabase start` 108 s. No se mueve ningún techo.
 
 ### T053
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+`[V]` **2026-11-05 · ab6a1b1 · run [42089287324](https://github.com/flashwp3-ctrl/juntia/actions/runs/42089287324) (job `evidence`).**
+Arnés de `evidence-plan/` sobre `/entrar`, `/crear-cuenta`, `/recuperar`,
+`/cuenta`, `/cuenta/perfil`, `/cuenta/apariencia` y `/cuenta/seguridad`, con cinco
+casos cada una (cookie contraria al sistema en los dos sentidos, `system`, valor
+no válido y sin cookie), CPU 6× y red lenta: **35 de 35 con CLS = 0, el tema
+esperado al aparecer `<body>` y ningún cuadro del tema contrario**
+([`t053-tema-cls-runner.txt`](evidence/pr-b/t053-tema-cls-runner.txt)).
+
+Lo que el arnés encontró antes y se corrigió en el PR: el titular de A1 (48 px)
+medía 360 px reales y 371 px con el respaldo en una columna de 360 (CLS 0,0053 en
+local); los botones de Mi perfil, la nota de «Esta sesión» y el perfil del
+sidebar dependían de las métricas de la fuente (CLS 0,00013 y 0,00068 en el
+runner); y el enlace «Crear cuenta», alineado a la derecha (0,000009). El job
+instala Arial y Georgia, sobre las que se ajustan los respaldos de Onest y
+Brygada (`globals.css`): sin ellas el runner mide otro respaldo que no es el de la
+app. La escritura desde el perfil y los dos dispositivos los cubre la spec 1
+(«un segundo dispositivo oscuro antes de `<body>`»).
 
 ### T054
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+`[V]` **2026-11-05 · ab6a1b1 · run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264).**
+
+| Workers | Duración | Salida | Resultado |
+| --- | --- | --- | --- |
+| 1 | 13 s | exit 0 | 6 passed (12,4 s) |
+| 2 | 13 s | exit 0 | 6 passed (12,8 s) |
+| 4 | 13 s | exit 0 | 6 passed (12,7 s) |
+
+([`t054-workers.txt`](evidence/pr-b/t054-workers.txt)). Sin fallos con ninguno.
+**Lectura honesta:** con una sola spec en un solo archivo y sin `fullyParallel`,
+Playwright da el archivo entero a un worker, así que 2 y 4 no reparten trabajo y
+la duración no cambia. El aislamiento entre workers se prueba aparte en
+`tests/integration/seed.test.ts` (job `db`, verde): dos workers siembran usuarios
+y `storageState` distintos y el dataset dorado de uno no aparece en el otro. La
+medición con reparto real llega con la spec 2 (PR D). Ningún techo se mueve.
 
 ### T055
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Humana (gestor), pendiente:** 001-T072 parte 1 tras el primer despliegue de
+producción con Supabase.
 
 ### T056
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Humana (dueña y gestor), pendiente:** commit propio de la dueña en
+`feat/002-b-access` para el primer preview y 001-T072 parte 2 antes de usarlo.
 
 ### T057
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05 · ab6a1b1 · run [42089287324](https://github.com/flashwp3-ctrl/juntia/actions/runs/42089287324).**
+92 capturas a 390 y 1440 en claro y oscuro, con cuentas sembradas en el runner
+(ningún dato real), en [`evidence/pr-b/capturas/`](evidence/pr-b/capturas/),
+nombradas `ruta--estado--ancho--tema.png`: acceso (A1, A1b, A1c, aviso de
+verificado, S3, A2, A2 con validación, A3, A4, A4b, aviso de enlace caducado, A5,
+A6), Inicio con AccountButton, Mi cuenta (C1, P1, Mi pareja, T1, D1, D2, G1) y la
+sesión caducada. A1d (error de red) solo existe sin Supabase y se capturó en
+local. **Pasada de los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en
+los dos temas: 308 de 308 filas sin scroll horizontal y sin elementos fuera de la
+ventana ([`t057-pasada-siete-anchos.txt`](evidence/pr-b/t057-pasada-siete-anchos.txt)).
+Los solapamientos se revisan sobre las capturas.
+
+**Para aprobar viendo la pantalla:** «Cuenta reutiliza los fondos de categoría»
+(fichas de C1 y de la columna de secciones); la sesión caducada (pantalla nueva);
+y la composición de escritorio de las pantallas de acceso (04·17 solo dibuja
+390): la misma columna de 440 sobre una tarjeta elevada, con la marca arriba a la
+izquierda.
 
 ### T058
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05.** Pasada fija de Impeccable, auditoría y crítica, a 390 y 1440:
+el detector de código no encontró nada en `src/features/auth`,
+`src/features/account`, `src/app/(auth)`, `src/app/(app)/cuenta` ni
+`inline-notice.tsx`; el detector sobre la página servida
+([`t058-impeccable-detect.txt`](evidence/pr-b/t058-impeccable-detect.txt)) marca
+`icon-tile-stack` en A2, A3 y A4: es el botón «Volver» de 44 y la ficha de 64 de
+A3 que dibuja el comp aprobado 04·17. **No se aplica**: cambiarlo reabriría la
+dirección aprobada (`CLAUDE.md` 7). Los hallazgos de contraste y de CLS se
+corrigieron (T051, T053). Revisión visual de las capturas: coinciden con
+04·14–04·19 salvo lo que se lista como propuesta o desviación en la descripción
+del PR.
+
+### Revisión del PR #43 (ChatGPT): F43-1 a F43-4 y el menor
+
+**F43-2 (bloqueante), el gate de 81b60e9 en rojo**, run
+[42112383415](https://github.com/flashwp3-ctrl/juntia/actions/runs/42112383415):
+la aserción de foco fallaba en A1d (`app`) y A1b (`e2e`) con «email: input none,
+marco none» ([`f43-2-focus-red.txt`](evidence/pr-b/f43-2-focus-red.txt)). **Era
+el arnés, no el componente:** tras enviar el formulario el foco quedaba en el
+botón «Entrar», `document.body.focus()` no lo movía (el body no es enfocable) y
+el Tab salía del botón al enlace siguiente, así que el campo de correo nunca
+recibía el foco. El arnés ahora enfoca el campo, sale con Shift+Tab y vuelve con
+Tab, y exige `document.activeElement === campo` antes de medir. Verde en local
+contra `juntia-dev` en los 8 casos de A1b y en A1, A2, A4 y la superficie interna
+([`f43-2-focus-green.txt`](evidence/pr-b/f43-2-focus-green.txt)). A1d solo existe
+en el job `app` (sin Supabase) y lo cubre el gate de este push.
+
+**F43-3, `next` decidía el flujo de un `code`.** Con una sesión ya establecida,
+`resolveConfirm` decide ahora por el claim `amr` de esa sesión, leído con
+`getClaims()`: `recovery` conserva la sesión y va a A5; cualquier otro método, o
+un `amr` ilegible, se trata como verificación (se cierra la sesión, nunca A5).
+`next` solo orienta los avisos cuando no hay sesión (otro navegador, fragmento del
+reenvío). Pruebas: `confirm.test.ts` (unidad, rojo y verde) e integración contra el
+GoTrue del runner en `confirm-code.test.ts`: un `code` de registro con
+`next=recovery` y uno de recuperación con `next=signup` siguen su flujo real, y el
+log del job `db` registra el `amr` observado de cada sesión.
+
+**F43-4, A5 aceptaba sesiones normales.** La página `/nueva-contrasena` y la Server
+Action `setNewPassword` exigen en el servidor `isRecentRecovery(claims)`:
+método `recovery` en `amr`, de hace una hora como mucho (la vida del enlace,
+`otp_expiry = 3600`). Sin sesión → A4 con el aviso de enlace caducado; con una
+sesión normal → Seguridad y sesión (G1). Pruebas: `recovery-session.test.ts`
+(unidad, rojo y verde); integración: una sesión iniciada con contraseña da `false`
+y la de recuperación `true`, con los claims reales del runner; spec E2E 1, «ruta
+protegida»: con sesión normal, `/nueva-contrasena` lleva a `/cuenta/seguridad`; el
+positivo (enlace de recuperación → A5 → contraseña nueva) sigue en la spec 1.
+`secure_password_change` no se tocó.
+
+**F43-1, un fallo al guardar el tema se mostraba como éxito.** ThemeSelector
+recuerda el último tema confirmado por el perfil; ante cualquier error que no sea
+`sessionExpired` vuelve a él (`data-theme`, cookie y selección) y muestra
+`copy.errors.saveFailed`, la clave de `contracts/errors.md` para un guardado
+fallido. Con `sessionExpired` conserva la elección del dispositivo y pide volver a
+entrar (T048). Prueba de componentes con `persist()` → `{ ok: false, error:
+"failed" }` (rojo y verde).
+
+**F43-1, segunda ronda (concurrencia).** Si una escritura correcta respondía cuando
+ya había otra elección en vuelo, se ignoraba y el confirmado no avanzaba; un fallo
+posterior revertía al tema inicial y dejaba el perfil en otro tema. Ahora las
+escrituras se serializan con una cola de «última elección pendiente»: como mucho una
+en vuelo, la elección más reciente espera su turno (las intermedias se descartan), y
+cada escritura correcta actualiza el confirmado aunque ya no sea la última. Las
+opciones no se deshabilitan, así que las flechas del radiogroup siguen funcionando.
+Pruebas con promesas controladas: dos guardados seguidos (el segundo espera al
+primero; una respuesta «adelantada» del segundo no cambia nada), uno correcto y
+otro fallido (revierte a dark, el tema realmente guardado) y varias elecciones
+mientras guarda (solo se envía la última). En las tres, el perfil, la cookie,
+`data-theme` y la selección coinciden al final. Rojo con la implementación anterior
+([`f43-1-queue-red.txt`](evidence/pr-b/f43-1-queue-red.txt)) y verde
+([`f43-1-queue-green.txt`](evidence/pr-b/f43-1-queue-green.txt)).
+
+**F43-1, tercera ronda (desmontaje y rechazo).** La cola vivía en la instancia y moría al
+navegar a otra página de Mi cuenta: una escritura vieja podía terminar después de la
+nueva o revertir sobre ella, y un `persist()` rechazado dejaba la cola bloqueada. Ahora
+la cola es un controlador de módulo (`src/features/account/theme-controller.ts`) que
+sobrevive al desmontaje: como mucho una escritura en vuelo, última elección pendiente,
+el confirmado sigue a cada escritura correcta, y solo el controlador aplica
+`data-theme`, escribe la cookie y revierte. Un rechazo cuenta como fallo (revierte y
+muestra `errors.saveFailed`) y `finally` libera siempre la escritura. ThemeSelector solo
+se suscribe. Además, el `AccountProvider` del layout no pisa el tema con el del perfil
+que trae el servidor (por ejemplo tras `revalidatePath` al guardar el nombre) si en esa
+página ya hubo una elección. Pruebas, rojo y verde
+([`f43-1-r3-red.txt`](evidence/pr-b/f43-1-r3-red.txt),
+[`f43-1-r3-green.txt`](evidence/pr-b/f43-1-r3-green.txt)): desmontar y volver a montar
+con las respuestas invertidas, fallo de la escritura vieja después del desmontaje sin
+pisar la elección nueva, `persist()` que rechaza y una elección posterior que se guarda,
+y el layout con una elección en curso. En todas, el perfil, la cookie, `data-theme` y la
+selección coinciden al final.
+
+**Menor, el fragmento en una variable de módulo.** Entrar guarda solo el aviso ya
+interpretado (verificado, caducado o ninguno); la cadena del fragmento, que puede
+llevar tokens, no se conserva y se borra de la URL.
+
+**Segundo push (gate de 9eca9e6 en rojo, run
+[42116416520](https://github.com/flashwp3-ctrl/juntia/actions/runs/42116416520)).**
+`app` y `db` en verde; `e2e` rojo en A5 por el camino `token_hash` (spec 1 y axe):
+la recuperación caía en «verificado»
+([`f43-3-token-hash-red.txt`](evidence/pr-b/f43-3-token-hash-red.txt)). El job
+`db` registró el `amr` real: `recovery` (code de recuperación), `email/signup`
+(code de registro), `password` (sesión con contraseña). `verifyOtp` (token_hash),
+en cambio, firma la sesión con `otp` para cualquier tipo, así que ahí el `amr` no
+distingue. Corrección: por `token_hash` cuenta el `type`, que GoTrue verifica con
+el token (un `type` cambiado no verifica y sale caducado: lo prueba la integración);
+la guarda de A5 acepta `recovery` u `otp` recientes, porque `otp` solo nace de un
+enlace de correo y `/auth/confirm` cierra en el acto las sesiones de registro;
+`password`, `email/signup` y `token_refresh` solos se rechazan. Rojo y verde de
+unidad: [`f43-3-token-hash-unit-red.txt`](evidence/pr-b/f43-3-token-hash-unit-red.txt),
+[`f43-3-token-hash-unit-green.txt`](evidence/pr-b/f43-3-token-hash-unit-green.txt);
+integración nueva del camino `token_hash` en `confirm-code.test.ts`.
+
+Rojo de F43-1, F43-3 y F43-4 en las pruebas de unidad y de componentes:
+[`f43-red.txt`](evidence/pr-b/f43-red.txt); verde: [`f43-green.txt`](evidence/pr-b/f43-green.txt)
+(37 pruebas en `src/features`). `npm run verify` en local pasó (32,6 s). El gate
+de CI de este push (PR listo) es el definitivo: SHA y run en T059.
 
 ### T059
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Gate final: el run de CI del push que cierra la revisión del PR #43** (cabeza de
+`feat/002-b-access`, PR listo): su SHA y su run quedan en la descripción del PR,
+porque registrarlos aquí exigiría otro commit y otro gate. Los runs anteriores:
+81b60e9 en rojo por el arnés de foco (run
+[42112383415](https://github.com/flashwp3-ctrl/juntia/actions/runs/42112383415),
+F43-2 arriba) y 9eca9e6 en rojo por A5 en el camino `token_hash` (run
+[42116416520](https://github.com/flashwp3-ctrl/juntia/actions/runs/42116416520), arriba).
+
+**Gate sobre e38af80** (con la enmienda de
+`/auth/confirm`): `npm run verify` en local pasó (22,8 s, < 90 s) y el run
+[42093325736](https://github.com/flashwp3-ctrl/juntia/actions/runs/42093325736)
+tiene `app` 152 s (axe 44/44), `db` 254 s (24 pruebas de integración, incluidas
+las dos del camino `code`) y `e2e` 353 s (spec 1 6/6 en 13,3 s; axe 76/76) en verde
+([`t059-gate-e38af80.txt`](evidence/pr-b/t059-gate-e38af80.txt)). Presupuestos:
+`test:db` 5,74 s (< 60), humo 13,34 s (< 180), los tres jobs por debajo de 360 s.
+El gate anterior, sobre ab6a1b1 (run
+[42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)),
+queda en [`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt); las
+capturas y T053 son de ese commit, y la enmienda solo cambia el aviso de Entrar
+con `?aviso=enlace`. Los commits posteriores solo añaden evidencia.
 
 ### T060
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Aprobado por los dos fundadores el 5 de noviembre de 2026** (SC-001). Alejandro vio
+las 15 pantallas principales a 390 px en claro y, a 1440 px, las tres marcadas para
+aprobar viendo la pantalla: la composición de escritorio de las pantallas de acceso, el
+estado de sesión caducada y «Cuenta reutiliza los fondos de categoría» (propuesta
+§15.9). Las tres `[P]` quedan aprobadas. La segunda fundadora también aprobó las
+pantallas ese día (confirmado por Alejandro al gestor). La descripción del PR la publica
+el gestor.
 
 ### T071
 

@@ -1,0 +1,3 @@
+Error: Cannot find module './route-registry' imported from C:/Users/aleja/Documents/PP/Juntia/.claude/worktrees/feat-002-b-access-87a3f9/tests/a11y/route-registry.test.ts
+ Test Files  1 failed (1)
+      Tests  no tests

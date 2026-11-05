@@ -1,0 +1,308 @@
+{"route":"/entrar","state":"A1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"aviso de verificado","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"S3","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1b","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/entrar","state":"A1c","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/crear-cuenta","state":"A2 · validación","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/verificar-correo","state":"A3","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"aviso de enlace caducado","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/recuperar","state":"A4b","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/nueva-contrasena","state":"A5","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/primera-entrada","state":"A6","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta","state":"C1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"P1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/perfil","state":"sesión caducada","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/pareja","state":"llega con P0-2","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/apariencia","state":"T1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D2 · hoja de exportar","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/seguridad","state":"G1","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}

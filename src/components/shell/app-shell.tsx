@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
+import { AccountButton, SidebarAccount } from "@/features/account/account-button";
 import { copy } from "@/lib/copy/es";
 import { useAnnotate } from "./annotate-notice";
 import { BaseVersionNotice } from "./base-version-notice";
@@ -89,11 +90,9 @@ function SideNav({ pathname }: { pathname: string | null }) {
         })}
         <AnnotateTrigger variant="side" />
       </nav>
-      {/* Mi cuenta al pie: acceso mínimo, sin avatar, nombre ni estado de pareja (decisión 8; AccountButton es §15.9). */}
-      <Link href={ACCOUNT_HREF} aria-current={onAccount ? "page" : undefined} className={`mt-auto ${sideItem} ${onAccount ? sideActive : sideIdle}`}>
-        <AppIcon name="user-circle" weight={onAccount ? "fill" : "regular"} size={24} className="xl:size-[22px]" />
-        <span className="sr-only xl:not-sr-only">{copy.nav.account}</span>
-      </Link>
+      {/* T047 / FR-050: perfil al pie del sidebar (COMPONENT_SPECIFICATIONS.md §AccountButton, «Sidebar»), aprobado con la
+          sección Cuenta (decisión 16.6). Sin estado de pareja en P0-1. */}
+      <SidebarAccount current={onAccount} />
     </aside>
   );
 }
@@ -148,9 +147,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SideNav pathname={pathname} />
       <div className="lg:pl-[76px] xl:pl-[248px]">
         <div
-          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14 xl:px-10 xl:pt-10 ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
+          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:px-10 xl:pt-10 ${stacked ? "" : "xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14"} ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
         >
-          <BaseVersionNotice className="lg:mb-8 xl:mb-0 xl:sticky xl:top-10 xl:col-start-2 xl:row-start-1 xl:self-start" />
+          {/* En Mi cuenta, las dos columnas de 04·18 (360 + 680) ocupan todo el ancho: el aviso (FR-028 de la 001) va arriba,
+              en el flujo, y no en la columna lateral. El PR C lo retira de todas las rutas (T066). */}
+          <BaseVersionNotice className={stacked ? "mb-6 lg:mb-8 xl:!flex-row xl:!items-center xl:!gap-3 xl:!rounded-[var(--radius-lg)] xl:!px-3 xl:!py-2.5" : "lg:mb-8 xl:mb-0 xl:sticky xl:top-10 xl:col-start-2 xl:row-start-1 xl:self-start"} />
           <div className="min-w-0 xl:col-start-1 xl:row-start-1">{children}</div>
         </div>
       </div>
@@ -166,25 +167,25 @@ type PageHeaderProps = {
   /** Sin título visible en el encabezado: el estado de la pantalla lleva el `h1` (no encontrado, error). */
   title?: string;
   variant?: "destination" | "account";
+  /** Destino de «Volver» en la pantalla apilada de Mi cuenta: Inicio desde /cuenta, /cuenta desde sus secciones. */
+  backHref?: string;
 };
 
 // Encabezado del contenido. Por debajo de 1024: Mi cuenta a la izquierda, título y selector a la derecha (04·1, 04·6).
 // De 1024 a 1279: titular editorial y selector arriba a la derecha (decisión 5). Desde 1280 el selector está en el sidebar.
 // Si no caben en una línea (texto al 200 %), el selector baja de línea y sigue a la derecha: nunca se monta sobre el título.
-export function PageHeader({ title, variant = "destination" }: PageHeaderProps) {
+export function PageHeader({ title, variant = "destination", backHref = "/" }: PageHeaderProps) {
   const account = variant === "account";
   return (
     <header className={`flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-3 pt-4 lg:gap-x-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
       {account ? (
-        <Link href="/" className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken md:hidden`}>
+        <Link href={backHref} className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken md:hidden`}>
           <AppIcon name="caret-left" weight="bold" size={22} />
           <span className="sr-only">{copy.account.back}</span>
         </Link>
       ) : (
-        <Link href={ACCOUNT_HREF} className={`${hitSquare} -ml-1 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken lg:hidden`}>
-          <AppIcon name="user-circle" size={30} />
-          <span className="sr-only">{copy.nav.account}</span>
-        </Link>
+        // T047 / FR-050: AccountButton a la izquierda del encabezado de Inicio, Actividad, Metas y Plan (por debajo de 1024).
+        <AccountButton className="-ml-0.5 lg:hidden" />
       )}
       {title ? (
         <h1 className="max-w-full font-serif text-[clamp(25px,7.4vw,30px)] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(39px,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]">

@@ -26,6 +26,28 @@ import { UserCircle } from "@phosphor-icons/react/dist/ssr/UserCircle";
 import { Warning } from "@phosphor-icons/react/dist/ssr/Warning";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr/WarningCircle";
 import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr/ArrowRight";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr/CaretRight";
+import { Check } from "@phosphor-icons/react/dist/ssr/Check";
+import { CircleHalf } from "@phosphor-icons/react/dist/ssr/CircleHalf";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { EnvelopeSimple } from "@phosphor-icons/react/dist/ssr/EnvelopeSimple";
+import { Eye } from "@phosphor-icons/react/dist/ssr/Eye";
+import { EyeSlash } from "@phosphor-icons/react/dist/ssr/EyeSlash";
+import { GearSix } from "@phosphor-icons/react/dist/ssr/GearSix";
+import { Info } from "@phosphor-icons/react/dist/ssr/Info";
+import { Key } from "@phosphor-icons/react/dist/ssr/Key";
+import { Moon } from "@phosphor-icons/react/dist/ssr/Moon";
+import { PaperPlaneTilt } from "@phosphor-icons/react/dist/ssr/PaperPlaneTilt";
+import { PencilSimple } from "@phosphor-icons/react/dist/ssr/PencilSimple";
+import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
+import { SignIn } from "@phosphor-icons/react/dist/ssr/SignIn";
+import { SignOut } from "@phosphor-icons/react/dist/ssr/SignOut";
+import { Sun } from "@phosphor-icons/react/dist/ssr/Sun";
+import { User } from "@phosphor-icons/react/dist/ssr/User";
+import { UsersThree } from "@phosphor-icons/react/dist/ssr/UsersThree";
+import { WifiSlash } from "@phosphor-icons/react/dist/ssr/WifiSlash";
+import { X } from "@phosphor-icons/react/dist/ssr/X";
 import type { Icon } from "@phosphor-icons/react/dist/lib/types";
 
 // Mapa semántico de DESIGN_SYSTEM.md §3 que usa la 001, circle-notch (§Button, carga), los diez íconos de
@@ -58,6 +80,29 @@ const icons = {
   "dots-three-outline": DotsThreeOutline,
   "piggy-bank": PiggyBank,
   "arrows-left-right": ArrowsLeftRight,
+  // P0-1, PR B: acceso y Mi cuenta (04·14–04·19), con los nombres de los comps.
+  "arrow-right": ArrowRight,
+  "caret-right": CaretRight,
+  check: Check,
+  "circle-half": CircleHalf,
+  "download-simple": DownloadSimple,
+  "envelope-simple": EnvelopeSimple,
+  eye: Eye,
+  "eye-slash": EyeSlash,
+  "gear-six": GearSix,
+  info: Info,
+  key: Key,
+  moon: Moon,
+  "paper-plane-tilt": PaperPlaneTilt,
+  "pencil-simple": PencilSimple,
+  "shield-check": ShieldCheck,
+  "sign-in": SignIn,
+  "sign-out": SignOut,
+  sun: Sun,
+  user: User,
+  "users-three": UsersThree,
+  "wifi-slash": WifiSlash,
+  x: X,
 } as const satisfies Record<string, Icon>;
 
 export type AppIconName = keyof typeof icons;

@@ -21,6 +21,15 @@ on:
       - ".github/**"
       - ".githooks/**"
   workflow_dispatch:
+    inputs:
+      measure_workers:
+        description: "T054: run spec E2E 1 with 1, 2 and 4 workers"
+        type: boolean
+        default: false
+      capture_evidence:
+        description: "T053/T057: screenshots, seven-width pass and theme harness (PR evidence, not a gate)"
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -30,7 +39,8 @@ concurrency:
 jobs:
   app:
     # Un borrador no corre (se lanza a mano con «Run workflow»); un lanzamiento manual sí.
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -44,6 +54,12 @@ jobs:
       - name: Install, lint, typecheck and unit and component tests
         run: node scripts/ci.mjs run ci lint typecheck test:unit test:components
       - name: Build once, then Chromium, axe, internal surface and theme script on that build
+        # T051/T052 (002, PR B): axe solo de los estados sin sesión. Este job no tiene Supabase: la URL apunta a un puerto
+        # local donde no escucha nadie, así que el acceso responde con el error de red real (A1d). No es una clave.
+        env:
+          A11Y_JOB: app
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_unreachable-in-app-job
         run: node scripts/ci.mjs run build chromium test:a11y check:internal-surface check:theme-script
       - name: Publish timings and non-applicable controls
         if: always()
@@ -52,7 +68,8 @@ jobs:
         run: node scripts/ci.mjs summary
 
   db:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -152,3 +169,148 @@ jobs:
         env:
           JOB_STATUS: ${{ job.status }}
         run: node scripts/ci.mjs summary
+
+  e2e:
+    # T052 (002, PR B) / FR-065–FR-067; contracts/ci.md: Supabase del runner con Auth y Mailpit, build con sus variables,
+    # la spec E2E 1 (`test:e2e:smoke`) y axe de los estados con sesión o que necesitan la respuesta real de Auth.
+    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      SITE_URL: http://localhost:3000
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      - name: Start Supabase with Auth and Mailpit
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+            case "$name" in
+              API_URL) printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$value" >> "$GITHUB_ENV" ;;
+              PUBLISHABLE_KEY) printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+      - name: Install, build with the runner's Supabase and install Chromium
+        run: node scripts/ci.mjs run ci build chromium
+      - name: E2E smoke (spec 1)
+        id: smoke
+        run: node scripts/ci.mjs run test:e2e:smoke
+      - name: Axe of the states that need a session or the Auth API
+        if: always() && steps.smoke.outcome != 'skipped'
+        env:
+          A11Y_JOB: e2e
+        run: node scripts/ci.mjs run test:a11y
+      - name: T054 · spec 1 with 1, 2 and 4 workers (manual runs only)
+        if: github.event_name == 'workflow_dispatch' && inputs.measure_workers
+        shell: bash
+        run: |
+          for workers in 1 2 4; do
+            started=$(date +%s%3N)
+            set +e
+            npx playwright test --project e2e --workers "$workers" --retries 0 --reporter=line > "$RUNNER_TEMP/workers-$workers.log" 2>&1
+            code=$?
+            set -e
+            seconds=$(( ($(date +%s%3N) - started) / 1000 ))
+            summary=$(grep -E "^\s+[0-9]+ (passed|failed|flaky)" "$RUNNER_TEMP/workers-$workers.log" | tr '\n' ' ')
+            echo "| $workers | ${seconds} s | exit $code | $summary |" | tee -a "$RUNNER_TEMP/workers.md"
+          done
+          { echo "| Workers | Duración | Salida | Resultado |"; echo "| --- | --- | --- | --- |"; cat "$RUNNER_TEMP/workers.md"; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-e2e
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+      - name: Publish e2e timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
+
+  evidence:
+    # T053, T057 (002, PR B): evidencia del PR, solo bajo demanda. No forma parte del gate.
+    if: github.event_name == 'workflow_dispatch' && inputs.capture_evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SITE_URL: http://localhost:3000
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      - name: Start Supabase with Auth and Mailpit
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+            case "$name" in
+              API_URL) printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$value" >> "$GITHUB_ENV" ;;
+              PUBLISHABLE_KEY) printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+      - name: Install, build and install Chromium
+        run: node scripts/ci.mjs run ci build chromium
+      - name: Install Arial and Georgia for the font fallbacks (T053)
+        # Los respaldos de Onest y Brygada (globals.css) se ajustan sobre local("Arial") y local("Georgia"), presentes en
+        # Windows, macOS e iOS y no en el runner. Sin ellas el arnés mediría otro respaldo, no el de la app.
+        shell: bash
+        run: |
+          echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+          sudo apt-get install -y -qq ttf-mscorefonts-installer > /dev/null
+          fc-list | grep -c -i -E "arial|georgia"
+      - name: Screenshots, seven-width pass and theme harness
+        run: npx playwright test --project evidence --workers 4 --retries 0 --reporter=line
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: evidence-pr-b
+          path: test-results/evidence/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop

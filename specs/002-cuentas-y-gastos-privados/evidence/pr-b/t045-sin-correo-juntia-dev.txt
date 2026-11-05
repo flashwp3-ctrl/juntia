@@ -1,0 +1,23 @@
+# T045 · estados alcanzados sin correo, `npm run dev` en http://localhost:3000 contra juntia-dev
+# 2026-11-05 · commit 2484ebc · .env.local solo con NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY y SITE_URL
+# Navegador del agente (panel del escritorio), sin sesión. Ningún correo enviado. Logs del servidor: sin errores.
+
+GET /actividad?mes=2026-10 (sin sesión)
+  → http://localhost:3000/entrar?volver=%2Factividad%3Fmes%3D2026-10   (proxy.ts, FR-027)
+
+/entrar · correo inexistente *@seed.test + contraseña de prueba → Auth de juntia-dev
+  → «Correo o contraseña incorrectos.»   (A1b, invalid_credentials real del proyecto alojado)
+
+/auth/confirm?next=recovery&code=<uuid inválido>   (camino de la plantilla por defecto, sin verificador PKCE)
+  → /recuperar?enlace=otro-navegador · «Abre el enlace en el mismo navegador donde lo pediste o pide uno nuevo.»
+
+/auth/confirm?next=signup&code=<uuid inválido>   (sin verificador PKCE)
+  → /entrar?aviso=verificado · «Tu correo está verificado. Ya puedes entrar.»
+  Nota: sin el verificador no se puede distinguir un code válido de uno inventado; con la plantilla por defecto,
+  /auth/v1/verify ya confirmó el correo antes de redirigir, así que en el uso real el aviso es cierto.
+
+/auth/confirm?next=signup&error=access_denied&error_code=otp_expired
+  → /recuperar?enlace=caducado · «Este enlace caducó o ya se usó. Pide uno nuevo.»
+
+/auth/confirm?token_hash=<inválido>&type=signup   (camino de las plantillas del repo, verifyOtp contra juntia-dev)
+  → /recuperar?enlace=caducado · «Este enlace caducó o ya se usó. Pide uno nuevo.»

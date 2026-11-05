@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 
 const timingFile = join(process.env.RUNNER_TEMP ?? tmpdir(), `juntia-ci-${process.env.GITHUB_JOB ?? "local"}.jsonl`);
 const [mode, ...commands] = process.argv.slice(2);
-const budgets = { "test:unit": 15, verify: 90, "test:db": 60 };
+const budgets = { "test:unit": 15, verify: 90, "test:db": 60, "test:e2e:smoke": 180 };
 if (mode === "run") {
   for (const command of commands) {
     const start = Date.now();
@@ -27,7 +27,7 @@ if (mode === "run") {
   const duration = (Date.now() - Number(process.env.JOB_STARTED_MS)) / 1000;
   lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < 360 s |`);
   if (duration >= 360) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < 360 s`);
-  if (process.env.GITHUB_JOB === "app") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | job `db` |", "| 4 · E2E de humo | NO APLICABLE — la spec E2E 1 nace en el PR B de la 002 |");
+  if (process.env.GITHUB_JOB === "app") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | job `db` |", "| 4 · E2E de humo | job `e2e` |");
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
   console.log(lines.join("\n"));
 } else {

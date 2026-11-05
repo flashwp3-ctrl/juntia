@@ -1,0 +1,37 @@
+  44 passed (36.9s)
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 9.95 s | — |
+| lint | pasó | 4.85 s | — |
+| typecheck | pasó | 4.36 s | — |
+| test:unit | pasó | 0.90 s | < 15 s |
+| test:components | pasó | 11.34 s | — |
+| build | pasó | 15.42 s | — |
+| chromium | pasó | 19.05 s | — |
+| test:a11y | pasó | 37.42 s | — |
+| check:internal-surface | pasó | 1.57 s | — |
+| check:theme-script | pasó | 0.61 s | — |
+| Job app (incluye instalación) | success | 114.06 s | < 360 s |
+| Control | Estado |
+| 3 · Supabase local, migraciones y SQL/RLS | job `db` |
+| 4 · E2E de humo | job `e2e` |
+supabase start: 112 s
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 22.91 s | — |
+| test:db | pasó | 5.63 s | < 60 s |
+| test:integration | pasó | 7.46 s | — |
+| db:types:check | pasó | 1.32 s | — |
+| db:restore-drill | pasó | 31.02 s | — |
+| Job db (incluye instalación) | success | 250.30 s | < 360 s |
+supabase start: 108 s
+  6 passed (13.5s)
+  76 passed (2.0m)
+| 1 | 13 s | exit 0 |   6 passed (12.4s)  |
+| 2 | 13 s | exit 0 |   6 passed (12.8s)  |
+| 4 | 13 s | exit 0 |   6 passed (12.7s)  |
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 19.07 s | — |
+| build | pasó | 23.81 s | — |
+| chromium | pasó | 19.05 s | — |
+| test:e2e:smoke | pasó | 14.40 s | < 180 s |
+| test:a11y | pasó | 118.77 s | — |
+| Job e2e (incluye instalación) | success | 364.91 s | < 360 s |

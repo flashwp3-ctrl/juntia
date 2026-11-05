@@ -152,13 +152,14 @@ Ningún `insert`, `update` ni `delete` sobre vistas ni tablas (ADR-013 [V] 2); n
 | `auth.resend({ type: 'signup', email })` | A3 «Reenviar enlace» |
 | `auth.signInWithPassword` | A1 |
 | `auth.resetPasswordForEmail(email, { redirectTo })` | A4 y G1 |
-| `auth.verifyOtp({ token_hash, type })` en `/auth/confirm` | Verificación (`signup`) y recuperación (`recovery`) |
+| `auth.verifyOtp({ token_hash, type })` en `/auth/confirm` | Verificación (`signup`) y recuperación (`recovery`) con las plantillas del repo (Supabase local y del runner) |
+| `auth.exchangeCodeForSession(code)` en `/auth/confirm?next=…` | Lo mismo con la plantilla por defecto de los proyectos alojados (enmienda del 5 nov 2026, quickstart §3, paso 1) |
 | `auth.updateUser({ password })` | A5 |
 | `auth.signOut({ scope: 'local' })` | S1–S3 |
 | `auth.getClaims()` en `proxy.ts` y en cada lectura | Sesión validada (FR-026) |
 
-Las plantillas de correo usan `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=…`
-en `config.toml` y en el panel de cada proyecto (quickstart).
+Las plantillas del repo (`supabase/templates/`, solo Supabase local y runner) usan `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=…`
+en `config.toml`. Los proyectos alojados en Free usan la plantilla por defecto, que no se puede editar sin SMTP propio (quickstart §3, paso 1).
 
 ## Exportación (route handler propio)
 

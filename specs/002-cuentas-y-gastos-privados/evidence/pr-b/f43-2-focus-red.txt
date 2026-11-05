@@ -1,0 +1,28 @@
+# F43-2 · gate de 81b60e9, run 42112383415: aserción de foco roja en A1d (app) y A1b (e2e)
+  1) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1b · light · 390px ─────────────────────
+  1) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1d · light · 390px ─────────────────────
+  2) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1b · light · 1440px ────────────────────
+  2) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1d · light · 1440px ────────────────────
+  3) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1b · dark · 390px ──────────────────────
+  3) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1d · dark · 390px ──────────────────────
+  4 failed
+  4) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1b · dark · 1440px ─────────────────────
+  4) [a11y] › tests/a11y/routes.a11y.ts:171:11 › /entrar · A1d · dark · 1440px ─────────────────────
+  44 passed (59.2s)
+  72 passed (2.3m)
+dark /entrar · A1b 1440px: foco del campo «email»: input none, marco none 3px rgb(243, 239, 231)
+dark /entrar · A1b 1440px: foco del campo «password»: input none, marco solid 2px rgb(143, 179, 193)
+dark /entrar · A1b 390px: foco del campo «email»: input none, marco none 3px rgb(243, 239, 231)
+dark /entrar · A1b 390px: foco del campo «password»: input none, marco solid 2px rgb(143, 179, 193)
+dark /entrar · A1d 1440px: foco del campo «email»: input none, marco none 3px rgb(243, 239, 231)
+dark /entrar · A1d 1440px: foco del campo «password»: input none, marco solid 2px rgb(143, 179, 193)
+dark /entrar · A1d 390px: foco del campo «email»: input none, marco none 3px rgb(243, 239, 231)
+dark /entrar · A1d 390px: foco del campo «password»: input none, marco solid 2px rgb(143, 179, 193)
+light /entrar · A1b 1440px: foco del campo «email»: input none, marco none 3px rgb(26, 28, 26)
+light /entrar · A1b 1440px: foco del campo «password»: input none, marco solid 2px rgb(46, 88, 102)
+light /entrar · A1b 390px: foco del campo «email»: input none, marco none 3px rgb(26, 28, 26)
+light /entrar · A1b 390px: foco del campo «password»: input none, marco solid 2px rgb(46, 88, 102)
+light /entrar · A1d 1440px: foco del campo «email»: input none, marco none 3px rgb(26, 28, 26)
+light /entrar · A1d 1440px: foco del campo «password»: input none, marco solid 2px rgb(46, 88, 102)
+light /entrar · A1d 390px: foco del campo «email»: input none, marco none 3px rgb(26, 28, 26)
+light /entrar · A1d 390px: foco del campo «password»: input none, marco solid 2px rgb(46, 88, 102)

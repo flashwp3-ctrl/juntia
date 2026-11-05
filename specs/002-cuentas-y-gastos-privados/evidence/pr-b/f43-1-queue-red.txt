@@ -1,0 +1,6 @@
+     × dos guardados seguidos: el segundo espera al primero y el final coincide con el perfil 119ms
+     × el primero se guarda y el segundo falla: vuelve al tema realmente guardado (dark), no al inicial 132ms
+     × varias elecciones mientras guarda: solo se envía la última 1146ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)

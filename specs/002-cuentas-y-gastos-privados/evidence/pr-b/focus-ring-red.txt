@@ -1,0 +1,11 @@
+light /crear-cuenta · A2 1440px: foco del campo «displayName»: input solid, marco solid 2px rgb(46, 88, 102)
+light /crear-cuenta · A2 1440px: foco del campo «email»: input solid, marco solid 2px rgb(46, 88, 102)
+light /crear-cuenta · A2 1440px: foco del campo «password»: input solid, marco solid 2px rgb(46, 88, 102)
+      200 |           console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+      200 |           console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+      200 |           console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+dark /entrar · A1 1440px: foco del campo «email»: input solid, marco solid 2px rgb(143, 179, 193)
+dark /entrar · A1 1440px: foco del campo «password»: input solid, marco solid 2px rgb(143, 179, 193)
+      200 |           console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+      200 |           console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+  2 failed

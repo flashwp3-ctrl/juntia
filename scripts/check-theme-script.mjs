@@ -21,7 +21,8 @@ try {
     server.once("error", (error) => { clearTimeout(deadline); reject(error); });
     server.once("exit", (code) => { clearTimeout(deadline); reject(new Error(`El servidor terminó con ${code}: ${output}`)); });
   });
-  const response = await fetch(`http://127.0.0.1:${port}/`);
+  // T046 (002): desde el PR B las rutas de producto exigen sesión y redirigen; se pide /entrar, que se sirve sin ella.
+  const response = await fetch(`http://127.0.0.1:${port}/entrar`, { redirect: "manual" });
   const html = await response.text();
   const headStart = html.search(/<head\b/i);
   const headEnd = html.search(/<\/head>/i);
@@ -30,7 +31,7 @@ try {
   const scripts = [...head.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
   const script = scripts.find((match) => match[2].includes("prefers-color-scheme") && match[2].includes("data-theme"));
   const checks = [
-    ["/ responde 200", response.status === 200],
+    ["/entrar responde 200", response.status === 200],
     ["head precede a body", headStart >= 0 && headEnd > headStart && bodyStart > headEnd],
     ["script de tema inline dentro de head", Boolean(script)],
     ["script sin src, async ni defer", Boolean(script) && !/\b(?:src|async|defer)(?:\s|=|$)/i.test(script[1])],

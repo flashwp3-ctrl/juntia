@@ -1,19 +1,26 @@
-// T021 / SC-002: cero violaciones serias o críticas en las rutas implementadas, en los dos temas.
+// T021 / SC-002 (001): cero violaciones serias o críticas en las rutas implementadas, en los dos temas.
 // ADR-011 §2, fila 17: todos los momentos de motion respetan prefers-reduced-motion.
-// T040 / FR-051, FR-052: «El job 5 MUST comprobar que de verdad visitó la superficie interna y fallar si no la
+// T040 / FR-051, FR-052 (001): «El job 5 MUST comprobar que de verdad visitó la superficie interna y fallar si no la
 // encuentra». FR-012, FR-016: con movimiento reducido, el pulso de Skeleton es estático y la pulsación de Button no
 // desplaza ni escala; solo cambia el color.
-// T060 / FR-040, FR-043; SC-002, SC-010: las rutas de producto de C y una URL inexistente, que responde 404 con el
-// estado de «no encontrado» diseñado. Con movimiento reducido, la perilla del selector salta (el primer cuadro ya es la
-// posición final) y el aviso de Anotar aparece sin desplazarse ni escalar (ADR-011 §2, fila 17).
+// T060 / FR-040, FR-043; SC-002, SC-010 (001): las rutas de producto y una URL inexistente, que responde 404 con el
+// estado de «no encontrado» diseñado. Con movimiento reducido, la perilla del selector salta y el aviso de Anotar aparece
+// sin desplazarse ni escalar (ADR-011 §2, fila 17).
+// T051 / FR-067; SC-002 (002): el recorrido sale de tests/a11y/route-registry.ts. Con A11Y_JOB=app (job app) audita los
+// estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
+// recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
+import { seedUser } from "../support/seed";
+import { openWithSession, reach } from "../support/states";
+import { appEntries, e2eEntries, THEMES } from "./route-registry";
 
+const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
+const entries = JOB === "e2e" ? e2eEntries : appEntries;
 const INTERNAL = "/interno/primitivos";
 const NOT_FOUND = "/ruta-que-no-existe";
 const PRODUCT = ["/", "/actividad", "/metas", "/plan", "/balance", "/cuenta"] as const;
-const routes: readonly string[] = [...PRODUCT, INTERNAL, NOT_FOUND];
 const FRAMES = 10;
 // F17-R2: cada pasada mide el panel de su propio tema. El selector apunta a la sección del panel, no a <html>,
 // que también lleva data-theme por el script de tema.
@@ -84,6 +91,29 @@ async function pressFrames(page: Page, scope: string) {
   }), [FRAMES, scope] as const);
 }
 
+// Hallazgo de la prueba manual del PR B (5 nov 2026): el campo pintaba dos marcos de foco, el anillo del diseño en el
+// marco y el outline global de :focus-visible en el <input>. Con el foco puesto desde el teclado (Tab), cada campo de
+// texto visible tiene un solo indicador: el <input> sin outline y el marco con el anillo de focus.ring.
+async function fieldFocusRings(page: Page) {
+  const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").count();
+  const results: { name: string; focused: boolean; input: string; frame: string }[] = [];
+  for (let index = 0; index < count; index++) {
+    const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").nth(index);
+    // F43-2: el foco llega por teclado al campo que se mide. Se enfoca el campo, Shift+Tab sale al anterior y Tab vuelve:
+    // así :focus-visible es de teclado aunque un envío previo haya dejado el foco en un botón (A1b, A1d). Si el campo es el
+    // primero de la página, Shift+Tab sale del documento y Tab vuelve a él. Se comprueba qué elemento quedó enfocado.
+    await input.focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    results.push(await input.evaluate((node) => {
+      const own = getComputedStyle(node);
+      const frame = getComputedStyle(node.parentElement!);
+      return { name: node.getAttribute("name") ?? node.getAttribute("type") ?? "", focused: document.activeElement === node, input: own.outlineStyle, frame: `${frame.outlineStyle} ${frame.outlineWidth} ${frame.outlineColor}` };
+    }));
+  }
+  return results;
+}
+
 // F17-2 / FR-037: área clicable real ≥ 44 × 44. Combina la caja del elemento con su ::after posicionado y
 // comprueba con elementFromPoint que las cuatro esquinas de un cuadrado de 44 centrado caen en el mismo control.
 async function touchArea(page: Page, selector: string) {
@@ -132,15 +162,20 @@ async function fieldCorners(page: Page, scope: string) {
   return results;
 }
 
-for (const colorScheme of ["light", "dark"] as const) {
+
+for (const colorScheme of THEMES) {
   for (const width of [390, 1440]) {
-    for (const route of routes) {
-      test(`${route} · ${colorScheme} · ${width}px`, async ({ page }) => {
+    for (const entry of entries) {
+      test(`${entry.route} · ${entry.state} · ${colorScheme} · ${width}px`, async ({ page: base, browser, baseURL }, testInfo) => {
+        const page = await openWithSession(browser, base, entry, colorScheme, width, testInfo.parallelIndex, baseURL!);
+        const route = entry.route;
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ colorScheme });
-        const response = await page.goto(route);
-        // Una ruta que no existe nunca cuenta como verificada: 200 en las que existen, 404 en la inexistente.
-        expect(response?.status()).toBe(route === NOT_FOUND ? 404 : 200);
+        if (entry.session !== "recovery") {
+          const response = await page.goto(entry.path);
+          // Una ruta que no existe nunca cuenta como verificada: 200 en las que existen, 404 en la inexistente.
+          expect(response?.status()).toBe(entry.status ?? 200);
+        }
         if (route === NOT_FOUND) {
           await expect(page.getByRole("heading", { level: 1, name: copy.states.notFound })).toBeVisible();
         }
@@ -149,15 +184,24 @@ for (const colorScheme of ["light", "dark"] as const) {
           await expect(page.getByRole("heading", { level: 1, name: copy.internal.title })).toBeVisible();
           await expect(page.locator("[data-skeleton-visible]").first()).toBeAttached();
         }
+        await reach(page, entry, testInfo.parallelIndex);
+        // Los momentos de motion de las rutas de producto se miden en su estado base, no con una hoja o un aviso abiertos.
+        const isProduct = (PRODUCT as readonly string[]).includes(route) && !entry.prepare;
         const result = await new AxeBuilder({ page }).analyze();
         const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
-        console.log(`${colorScheme} ${route} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+        console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
         expect(blocking).toEqual([]);
         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
-
-        if ((PRODUCT as readonly string[]).includes(route)) {
+        for (const ring of await fieldFocusRings(page)) {
+          console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»${ring.focused ? "" : " (SIN FOCO)"}: input ${ring.input}, marco ${ring.frame}`);
+          expect.soft(ring.focused, `«${ring.name}»: recibió el foco con el teclado`).toBe(true);
+          expect.soft(ring.input, `«${ring.name}»: el <input> no pinta su propio outline`).toBe("none");
+          expect.soft(ring.frame.startsWith("solid"), `«${ring.name}»: el marco lleva el anillo de foco`).toBe(true);
+        }
+  
+        if (isProduct) {
           // Hidratado: los manejadores de React ya están. El selector existe en el DOM en todas las rutas de producto.
           await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
           // El selector existe en todas salvo /cuenta por debajo de 1280 (contracts/routes.md).
@@ -182,7 +226,7 @@ for (const colorScheme of ["light", "dark"] as const) {
             console.log(`${colorScheme} ${route} ${width}px: sin disparador visible de Anotar`);
           }
         }
-
+  
         if (route === INTERNAL) {
           // Skeleton: sin animaciones y con la misma opacidad en cada cuadro.
           const scope = panel(colorScheme);
@@ -236,6 +280,7 @@ for (const colorScheme of ["light", "dark"] as const) {
           }
           console.log(`${colorScheme} ${route} ${width}px: skeleton ${skeleton.animations} animaciones, opacidad ${[...new Set(skeleton.opacities)].join(",")}; button ${rects[0]} en ${rects.length} cuadros`);
         }
+        if (page !== base) await page.context().close();
       });
     }
   }
@@ -244,9 +289,13 @@ for (const colorScheme of ["light", "dark"] as const) {
 // F19-1 (revisión del PR #19) / FR-020, FR-033: Anotar siempre a un toque. La pantalla apilada de /cuenta, sin barra, es
 // solo móvil (< 768, RESPONSIVE_SPECIFICATIONS.md §Cuenta); a 768 y más conserva la barra de tablet con su Anotar visible.
 // No es una spec E2E: visita la ruta y mira qué disparador queda visible, en la misma capa que el resto de este archivo.
-for (const colorScheme of ["light", "dark"] as const) {
+// Con sesión: solo en el job e2e (T051).
+for (const colorScheme of JOB === "e2e" ? THEMES : []) {
   for (const [width, barVisible] of [[390, false], [768, true]] as const) {
-    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, async ({ page }) => {
+    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, async ({ browser, baseURL }, testInfo) => {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+      await context.addCookies((await seedUser({ role: "axe-barra", index: testInfo.parallelIndex })).cookies);
+      const page = await context.newPage();
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ colorScheme });
       expect((await page.goto("/cuenta"))?.status()).toBe(200);
@@ -265,6 +314,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       const visibleTriggers = await page.locator("[data-annotate-trigger]").evaluateAll((nodes) => nodes.filter((node) => node.getClientRects().length > 0).length);
       console.log(`${colorScheme} /cuenta ${width}px: disparadores de Anotar visibles ${visibleTriggers}`);
       expect(visibleTriggers).toBe(barVisible ? 1 : 0);
+      await context.close();
     });
   }
 }

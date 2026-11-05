@@ -1,0 +1,21 @@
+# T050 rojo: /actividad quitada temporalmente de src/lib/routes.ts (PRODUCT), build local sin Supabase, solo el test de la ruta protegida
+Running 1 test using 1 worker
+[1/1] [e2e] › tests\e2e\access-account.e2e.ts:98:5 › ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida
+  1) [e2e] › tests\e2e\access-account.e2e.ts:98:5 › ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida 
+    Error: expect(page).toHaveURL(expected) failed
+    Expected pattern: /\/entrar\?volver=%2Factividad%3Fmes%3D2026-10$/
+    Received string:  "http://localhost:3000/entrar"
+    Timeout: 5000ms
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        13 × locator resolved to <html lang="es-CO" data-theme="light" class="R_a3Gq_variable ZJly0G_variable _ttCGa_variable _9N-dia_variable">…</html>
+           - unexpected value "http://localhost:3000/entrar"
+       98 | test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida", async ({ page }) => {
+       99 |   await page.goto("/actividad?mes=2026-10");
+    > 100 |   await expect(page).toHaveURL(/\/entrar\?volver=%2Factividad%3Fmes%3D2026-10$/);
+          |                      ^
+      101 |   // El usuario se siembra después de comprobar la redirección: sin protección, la prueba falla antes de sembrar.
+      102 |   const user = await seedUser({ role: "volver", index: test.info().parallelIndex });
+      103 |   await signInWith(page, user.email, user.password);
+    Error Context: test-results\access-account.e2e.ts-ruta-c1abd-a-ruta-sin-caché-compartida-e2e\error-context.md
+  1 failed

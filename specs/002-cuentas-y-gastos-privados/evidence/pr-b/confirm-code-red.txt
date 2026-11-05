@@ -1,0 +1,4 @@
+Error: Failed to resolve import "./confirm" from "src/features/auth/confirm.test.ts". Does the file exist?
+  10 |  const expired = { error: new AuthApiError("Email link is invalid or has expired", 403, "otp_expired") };
+ Test Files  1 failed (1)
+      Tests  8 passed (8)

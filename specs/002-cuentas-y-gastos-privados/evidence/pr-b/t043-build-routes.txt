@@ -1,0 +1,28 @@
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /actividad
+├ ƒ /auth/confirm
+├ ƒ /balance
+├ ○ /crear-cuenta
+├ ƒ /cuenta
+├ ƒ /cuenta/apariencia
+├ ƒ /cuenta/pareja
+├ ƒ /cuenta/perfil
+├ ƒ /cuenta/privacidad
+├ ƒ /cuenta/seguridad
+├ ƒ /entrar
+├ ƒ /interno/primitivos
+├ ƒ /metas
+├ ○ /nueva-contrasena
+├ ƒ /plan
+├ ƒ /primera-entrada
+├ ƒ /recuperar
+└ ○ /verificar-correo
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

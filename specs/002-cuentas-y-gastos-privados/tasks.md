@@ -262,86 +262,86 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-058; Q10; quickstart §3, paso 6.
   - Terminado cuando: `evidence.md` registra fecha y proyecto de cada correo recibido, sin las direcciones.
 
-- [ ] T037 **Humana** (dueña), en **los dos proyectos** (producción y `juntia-dev`), según quickstart §3: confirmación de correo y plantillas con `/auth/confirm?token_hash=…&type=…`; URL del sitio y de redirección; hook Before User Created → `juntia_private.before_user_created_hook`; «Exposed schemas» solo `public`; **contraseña mínima 8**; las filas de la lista permitida con el SQL de quickstart §3, paso 7
+- [x] T037 **Humana** (dueña), en **los dos proyectos** (producción y `juntia-dev`), según quickstart §3: confirmación de correo y plantillas con `/auth/confirm?token_hash=…&type=…`; URL del sitio y de redirección; hook Before User Created → `juntia_private.before_user_created_hook`; «Exposed schemas» solo `public`; **contraseña mínima 8**; las filas de la lista permitida con el SQL de quickstart §3, paso 7
   - Cumple: FR-021, FR-023, FR-024, FR-058; F37-7.
   - Terminado cuando: `evidence.md` tiene una línea por ajuste y proyecto, sin correos ni claves.
 
-- [ ] T038 **Humana** (dueña): variables de entorno de Vercel por nombre (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL`): **Production → proyecto de producción; Preview → `juntia-dev`**. Ninguna clave secreta en Vercel (quickstart §3; plan, «Puntos para el revisor», 6)
+- [x] T038 **Humana** (dueña): variables de entorno de Vercel por nombre (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SITE_URL`): **Production → proyecto de producción; Preview → `juntia-dev`**. Ninguna clave secreta en Vercel (quickstart §3; plan, «Puntos para el revisor», 6)
   - Cumple: FR-058, FR-011.
   - Terminado cuando: `evidence.md` lista los nombres por entorno, sin valores.
 
 ### Grupo 2B — tests primero
 
-- [ ] T039 [P] [US1] Test de **componentes** en `src/features/auth/auth-errors.test.ts` y después `src/features/auth/auth-errors.ts`: las respuestas de `signUp` 200, 403 del hook, 422 `user_already_exists` y 429 producen **exactamente la misma** salida de interfaz (A3); la recuperación siempre A4b; el resto según [contracts/errors.md](contracts/errors.md), «Supabase Auth»
+- [x] T039 [P] [US1] Test de **componentes** en `src/features/auth/auth-errors.test.ts` y después `src/features/auth/auth-errors.ts`: las respuestas de `signUp` 200, 403 del hook, 422 `user_already_exists` y 429 producen **exactamente la misma** salida de interfaz (A3); la recuperación siempre A4b; el resto según [contracts/errors.md](contracts/errors.md), «Supabase Auth»
   - Cumple: FR-023 (enmendado, decisión 16.16); US-1.2, US-1.5.
   - Terminado cuando: el test se vio fallar y pasa.
 
-- [ ] T040 [P] [US7] Tests de **componentes** en `src/features/account/theme-selector.test.tsx`, `src/features/account/profile-form.test.tsx` y `src/features/account/limit-note.test.tsx`: ThemeSelector es `radiogroup` con flechas, aplica `data-theme` y escribe la cookie `juntia_theme`; P1–P5 del nombre visible; LimitNote de «Eliminar tu cuenta» tiene `role="note"` y no es un control
+- [x] T040 [P] [US7] Tests de **componentes** en `src/features/account/theme-selector.test.tsx`, `src/features/account/profile-form.test.tsx` y `src/features/account/limit-note.test.tsx`: ThemeSelector es `radiogroup` con flechas, aplica `data-theme` y escribe la cookie `juntia_theme`; P1–P5 del nombre visible; LimitNote de «Eliminar tu cuenta» tiene `role="note"` y no es un control
   - Cumple: FR-051, FR-052, FR-055; US-7.2, US-7.3, US-7.7.
   - Terminado cuando: se vieron fallar.
 
-- [ ] T041 [P] [US1] [US7] Test de **dominio** en `src/domain/account/account.test.ts` y después `src/domain/account/` (I2): validación del nombre visible (recortado, 1–60, sin saltos de línea) y de la ruta `volver` como **destino interno** (research R8.7, corregida en la revisión del PR #38): empieza por una sola `/` seguida de algo que no es `/` ni `\`; ninguna barra invertida; ningún carácter de control ni espacio; se decodifica una vez y se vuelve a comprobar todo (rechaza `%2F%2F`, `%5C`, `%09` y similares); y como última comprobación `new URL(value, base).origin === base.origin`, devolviendo solo `pathname + search + hash`. Cualquier otro valor cae a `/`
+- [x] T041 [P] [US1] [US7] Test de **dominio** en `src/domain/account/account.test.ts` y después `src/domain/account/` (I2): validación del nombre visible (recortado, 1–60, sin saltos de línea) y de la ruta `volver` como **destino interno** (research R8.7, corregida en la revisión del PR #38): empieza por una sola `/` seguida de algo que no es `/` ni `\`; ninguna barra invertida; ningún carácter de control ni espacio; se decodifica una vez y se vuelve a comprobar todo (rechaza `%2F%2F`, `%5C`, `%09` y similares); y como última comprobación `new URL(value, base).origin === base.origin`, devolviendo solo `pathname + search + hash`. Cualquier otro valor cae a `/`
   - **Casos negativos explícitos, todos → `/`**: `//evil`, `/\evil`, `/%5Cevil`, `/%2F%2Fevil`, `https://evil`, `javascript:alert(1)`, un tabulador o salto de línea al principio (`\t/actividad`, `\n/actividad`) y el valor vacío. Casos positivos: `/actividad?mes=2026-10`, `/cuenta/perfil#x`.
   - Cumple: FR-027, FR-051; research R8.7.
   - Terminado cuando: el test se vio fallar con la expresión anterior (`/\evil` pasaba) y pasa en `npm run test:unit`, antes de T043.
 
-- [ ] T042 [US1] Test de **integración de servidor** en `tests/integration/auth.test.ts`: `ensure_profile()` idempotente con el `display_name` de A2; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada** (`weak_password`) y no crea usuario (F37-7); `set_theme` y `update_display_name` no tocan el perfil de otra persona (si no lo cubre ya T012)
+- [x] T042 [US1] Test de **integración de servidor** en `tests/integration/auth.test.ts`: `ensure_profile()` idempotente con el `display_name` de A2; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada** (`weak_password`) y no crea usuario (F37-7); `set_theme` y `update_display_name` no tocan el perfil de otra persona (si no lo cubre ya T012)
   - Cumple: FR-021, FR-024, FR-029; US-1.1, US-1.3.
   - Terminado cuando: pasa en el job `db`.
 
 ### Grupo 2C — implementación (en serie: comparten `es.ts`, el layout y el shell)
 
-- [ ] T043 [US1] Crear `src/lib/supabase/proxy.ts` y `src/proxy.ts`: renovación de sesión con `@supabase/ssr`, `getClaims()`, redirección de producto y Mi cuenta a `/entrar?volver=<ruta>` validada con T041, `Cache-Control: private, no-store` en respuestas autenticadas
+- [x] T043 [US1] Crear `src/lib/supabase/proxy.ts` y `src/proxy.ts`: renovación de sesión con `@supabase/ssr`, `getClaims()`, redirección de producto y Mi cuenta a `/entrar?volver=<ruta>` validada con T041, `Cache-Control: private, no-store` en respuestas autenticadas
   - Cumple: FR-026, FR-027; ADR-013 §6.5.
   - Terminado cuando: el build muestra las rutas de producto como dinámicas y el caso «ruta protegida sin sesión → `/entrar` → vuelve» pasa en T050.
 
-- [ ] T044 [US1] Server Actions de acceso en `src/features/auth/` (registro con `options.data.display_name` y `emailRedirectTo`, reenvío, entrar, recuperar, contraseña nueva, cerrar sesión) con `src/lib/supabase/server.ts`, traduciendo errores con T039; tras entrar y en `/auth/confirm`, `ensure_profile()` y copia de `profiles.theme` a la cookie de la respuesta (research R7, R8.5)
+- [x] T044 [US1] Server Actions de acceso en `src/features/auth/` (registro con `options.data.display_name` y `emailRedirectTo`, reenvío, entrar, recuperar, contraseña nueva, cerrar sesión) con `src/lib/supabase/server.ts`, traduciendo errores con T039; tras entrar y en `/auth/confirm`, `ensure_profile()` y copia de `profiles.theme` a la cookie de la respuesta (research R7, R8.5)
   - Cumple: FR-021, FR-023, FR-028, FR-029; US-1.
   - Terminado cuando: T039 y T042 pasan.
 
-- [ ] T045 [US1] Pantallas de 04·17 en `src/app/(auth)/` — `entrar` (A1, A1b, A1c, A1d, aviso de verificado, S3), `crear-cuenta` (A2, con el aviso de versión privada de prueba sin texto legal, Q9), `verificar-correo` (A3), `recuperar` (A4, A4b, enlace caducado), `nueva-contrasena` (A5), `primera-entrada` (A6, solo «Empezar por mi cuenta» y sin presupuesto) — y `src/app/auth/confirm/route.ts`
+- [x] T045 [US1] Pantallas de 04·17 en `src/app/(auth)/` — `entrar` (A1, A1b, A1c, A1d, aviso de verificado, S3), `crear-cuenta` (A2, con el aviso de versión privada de prueba sin texto legal, Q9), `verificar-correo` (A3), `recuperar` (A4, A4b, enlace caducado), `nueva-contrasena` (A5), `primera-entrada` (A6, solo «Empezar por mi cuenta» y sin presupuesto) — y `src/app/auth/confirm/route.ts`
   - Claude Design: `04 Pantallas`, 04·17.
   - Cumple: FR-022, FR-025; US-1.1–1.7.
   - Terminado cuando: cada estado se puede alcanzar en `npm run dev` contra `juntia-dev` y aparece en el registro de T051.
 
-- [ ] T046 [US7] Tema persistido: `src/lib/theme-script.ts` lee la cookie `juntia_theme` como en `evidence-plan/theme-v-theme-script.ts.txt`; `src/lib/theme-script.test.ts` lo cubre (cookie `light`/`dark`, `system`, valor no válido, sin cookie, cambio del sistema que no pisa el tema guardado); `scripts/check-theme-script.mjs` pide `/entrar`; el layout de `(app)` compara `profiles.theme` con la cookie y la reescribe si difiere (research R8.6)
+- [x] T046 [US7] Tema persistido: `src/lib/theme-script.ts` lee la cookie `juntia_theme` como en `evidence-plan/theme-v-theme-script.ts.txt`; `src/lib/theme-script.test.ts` lo cubre (cookie `light`/`dark`, `system`, valor no válido, sin cookie, cambio del sistema que no pisa el tema guardado); `scripts/check-theme-script.mjs` pide `/entrar`; el layout de `(app)` compara `profiles.theme` con la cookie y la reescribe si difiere (research R8.6)
   - Cumple: FR-052; Q7; US-7.3, US-7.4.
   - Terminado cuando: `npm run check:theme-script` pasa y el HTML servido no lleva `data-theme`.
 
-- [ ] T047 [US7] Mi cuenta: componentes de `src/features/account/` (AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, LimitNote) y rutas `src/app/(app)/cuenta/` (C1, `perfil` P1–P5, `pareja` «llega con P0-2» sin formulario, `apariencia` T1, `privacidad` D1 con Exportar sin la descarga real y la LimitNote, `seguridad` G1, G2, S1–S2); AccountButton en el encabezado de Inicio, Actividad, Metas y Plan y perfil al pie del sidebar; tablet y escritorio de 04·18 y oscuro de 04·19
+- [x] T047 [US7] Mi cuenta: componentes de `src/features/account/` (AccountButton, ProfileHeader, AccountMenuItem, ThemeSelector, LimitNote) y rutas `src/app/(app)/cuenta/` (C1, `perfil` P1–P5, `pareja` «llega con P0-2» sin formulario, `apariencia` T1, `privacidad` D1 con Exportar sin la descarga real y la LimitNote, `seguridad` G1, G2, S1–S2); AccountButton en el encabezado de Inicio, Actividad, Metas y Plan y perfil al pie del sidebar; tablet y escritorio de 04·18 y oscuro de 04·19
   - Claude Design: `02 Componentes` (02·9–02·10) y `04 Pantallas` (04·14, 04·16, 04·18, 04·19).
   - Cumple: FR-050–FR-056 (propuesta §15.9 aprobada, decisión 16.6); US-7.
   - Terminado cuando: T040 pasa y cada ruta está en el registro de T051.
 
-- [ ] T048 Estado «sesión caducada» (I3) con el patrón de error, traduciendo `JT001` y el 401 de PostgREST a `copy.errors.sessionExpired` sin perder lo escrito; se usa en las acciones de Mi cuenta
+- [x] T048 Estado «sesión caducada» (I3) con el patrón de error, traduciendo `JT001` y el 401 de PostgREST a `copy.errors.sessionExpired` sin perder lo escrito; se usa en las acciones de Mi cuenta
   - Cumple: spec, caso límite «Sesión caducada»; [contracts/errors.md](contracts/errors.md).
   - Terminado cuando: es visible al caducar la sesión en `perfil` y figura en las capturas de T057.
 
 ### Grupo 2D — siembra, axe, spec E2E 1 y CI (en serie)
 
-- [ ] T049 Siembra en `tests/support/seed.ts` (research R8.11): por worker y por rol (Sara; Tomás donde haga falta) crea un usuario confirmado con la API de administración del Supabase **del runner**, entra con `createServerClient` sobre un almacén de cookies en memoria y guarda `playwright/.auth/<parallelIndex>-<rol>.json`; fixture de scope `worker` en `tests/e2e/fixtures.ts`; **y un fixture reutilizable del dataset dorado** (`seedGoldenMovements`), que crea los movimientos de `saraPrivateOctober2026` **por la función real `create_transaction`** con la sesión de la Sara de ese worker, aislado por worker, y que usan Inicio, Actividad y Exportar en el PR C (T066, T067, T070) y la spec E2E 2. **Solo en el runner**, nunca contra `juntia-dev` ni producción; proyecto `e2e` en `playwright.config.ts`; `playwright/.auth` en `.gitignore`
+- [x] T049 Siembra en `tests/support/seed.ts` (research R8.11): por worker y por rol (Sara; Tomás donde haga falta) crea un usuario confirmado con la API de administración del Supabase **del runner**, entra con `createServerClient` sobre un almacén de cookies en memoria y guarda `playwright/.auth/<parallelIndex>-<rol>.json`; fixture de scope `worker` en `tests/e2e/fixtures.ts`; **y un fixture reutilizable del dataset dorado** (`seedGoldenMovements`), que crea los movimientos de `saraPrivateOctober2026` **por la función real `create_transaction`** con la sesión de la Sara de ese worker, aislado por worker, y que usan Inicio, Actividad y Exportar en el PR C (T066, T067, T070) y la spec E2E 2. **Solo en el runner**, nunca contra `juntia-dev` ni producción; proyecto `e2e` en `playwright.config.ts`; `playwright/.auth` en `.gitignore`
   - Cumple: FR-064; ADR-011 §6, reglas 1 y 2.
   - Terminado cuando: dos workers siembran usuarios distintos y ninguno comparte su `storageState`; los movimientos sembrados de un worker no aparecen en otro; el fixture se niega a correr si la URL de Supabase no es la del runner.
 
-- [ ] T050 [US1] [US7] **Spec E2E 1** «Acceso y Mi cuenta» en `tests/e2e/access-account.e2e.ts`: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → la misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **un segundo contexto que entra y tiene `data-theme="dark"` antes de `<body>`**; recuperación uniforme; **`/auth/confirm`** (Route Handler, con la app y Mailpit): enlace de verificación válido → A1 con aviso, enlace caducado y enlace ya usado → aviso de enlace caducado sin datos de la cuenta, enlace de recuperación válido → A5; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar
+- [x] T050 [US1] [US7] **Spec E2E 1** «Acceso y Mi cuenta» en `tests/e2e/access-account.e2e.ts`: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → la misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **un segundo contexto que entra y tiene `data-theme="dark"` antes de `<body>`**; recuperación uniforme; **`/auth/confirm`** (Route Handler, con la app y Mailpit): enlace de verificación válido → A1 con aviso, enlace caducado y enlace ya usado → aviso de enlace caducado sin datos de la cuenta, enlace de recuperación válido → A5; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar
   - Cumple: FR-065; US-1, US-7; ADR-011 §2, fila 15.
   - Terminado cuando: pasa en el job `e2e` (T052) y se vio fallar con una ruta sin protección.
 
-- [ ] T051 Registro y cobertura de axe: `tests/a11y/route-registry.ts` con cada ruta y estado y su `session: 'none' | 'user' | 'recovery'` según la tabla «Axe» de [contracts/ci.md](contracts/ci.md) (A5 con sesión de recuperación y A6 con sesión de usuario, en `e2e`); `tests/a11y/routes.a11y.ts` recorre la lista que toca a cada job, en los dos temas; **prueba de cobertura** en `tests/a11y/route-registry.test.ts` (Vitest `components`, entorno `node`): cada `page.tsx` de `src/app` está en **exactamente una** lista, las dos juntas cubren todas, cada entrada en los dos temas y ninguna entrada con sesión cae en `app`
+- [x] T051 Registro y cobertura de axe: `tests/a11y/route-registry.ts` con cada ruta y estado y su `session: 'none' | 'user' | 'recovery'` según la tabla «Axe» de [contracts/ci.md](contracts/ci.md) (A5 con sesión de recuperación y A6 con sesión de usuario, en `e2e`); `tests/a11y/routes.a11y.ts` recorre la lista que toca a cada job, en los dos temas; **prueba de cobertura** en `tests/a11y/route-registry.test.ts` (Vitest `components`, entorno `node`): cada `page.tsx` de `src/app` está en **exactamente una** lista, las dos juntas cubren todas, cada entrada en los dos temas y ninguna entrada con sesión cae en `app`
   - Cumple: FR-067; SC-002; ADR-011 §5, enmienda «Axe en dos jobs».
   - Terminado cuando: la prueba de cobertura se vio fallar con una ruta sin clasificar y pasa; axe sin violaciones serias o críticas en las rutas de este PR en los dos jobs.
 
-- [ ] T052 Crear el job `e2e` en `.github/workflows/ci.yml` ([contracts/ci.md](contracts/ci.md)): `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` de las entradas con sesión; tiempos contra < 3 min (aviso). El job `app` corre axe solo de las entradas sin sesión. `verify` y el resumen pasan la fila de E2E a «SOLO EN CI — pendiente de resultado · job e2e»
+- [x] T052 Crear el job `e2e` en `.github/workflows/ci.yml` ([contracts/ci.md](contracts/ci.md)): `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` de las entradas con sesión; tiempos contra < 3 min (aviso). El job `app` corre axe solo de las entradas sin sesión. `verify` y el resumen pasan la fila de E2E a «SOLO EN CI — pendiente de resultado · job e2e»
   - Cumple: FR-065, FR-066, FR-067; ADR-011 §5 y §9.
   - Terminado cuando: un run manual muestra `app`, `db` y `e2e` en verde sobre el mismo SHA.
 
 ### Grupo 2E — `[V]` del PR B
 
-- [ ] T053 `[V]` Tema: CLS = 0 y ningún cuadro del tema contrario en las rutas reales de acceso y de Mi cuenta, con el arnés de `evidence-plan/` (cookie contraria al sistema, sin cookie, `system`); la escritura desde el perfil y los dos dispositivos los cubre T050
+- [x] T053 `[V]` Tema: CLS = 0 y ningún cuadro del tema contrario en las rutas reales de acceso y de Mi cuenta, con el arnés de `evidence-plan/` (cookie contraria al sistema, sin cookie, `system`); la escritura desde el perfil y los dos dispositivos los cubre T050
   - Cumple: SC-005 (acceso y Mi cuenta); US-7.4.
   - Terminado cuando: la salida por ruta, tema y caso está en `evidence.md`.
 
-- [ ] T054 `[V]` Workers con usuarios aislados (ADR-011 [V] 3): ejecutar la spec 1 con 1, 2 y 4 workers en el job `e2e` y reportar duración y fallos
+- [x] T054 `[V]` Workers con usuarios aislados (ADR-011 [V] 3): ejecutar la spec 1 con 1, 2 y 4 workers en el job `e2e` y reportar duración y fallos
   - Cumple: FR-064.
   - Terminado cuando: la tabla de mediciones está en `evidence.md`; ningún techo se mueve.
 
@@ -355,21 +355,21 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2F — salida del PR B
 
-- [ ] T057 Capturas a **390 y 1440 px en claro y oscuro** de las 7 pantallas de acceso, las 6 de Mi cuenta y la sesión caducada, en `specs/002-cuentas-y-gastos-privados/evidence/`
+- [x] T057 Capturas a **390 y 1440 px en claro y oscuro** de las 7 pantallas de acceso, las 6 de Mi cuenta y la sesión caducada, en `specs/002-cuentas-y-gastos-privados/evidence/`
   - **Para aprobar viendo la pantalla** (propuestas §15.9 y pantallas nuevas): «Cuenta reutiliza los fondos de categoría»; la sesión caducada.
   - Cumple: SC-001 (B).
   - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
   - Terminado cuando: la pasada está registrada y las capturas están nombradas por ruta, estado, ancho y tema.
 
-- [ ] T058 **Pasada fija de Impeccable** (auditoría y crítica) sobre las pantallas del PR B a 390 y 1440 en los dos temas; hallazgos y correcciones en `evidence.md`. Impeccable verifica; no decide alcance ni dirección (`CLAUDE.md` 7)
+- [x] T058 **Pasada fija de Impeccable** (auditoría y crítica) sobre las pantallas del PR B a 390 y 1440 en los dos temas; hallazgos y correcciones en `evidence.md`. Impeccable verifica; no decide alcance ni dirección (`CLAUDE.md` 7)
   - Cumple: plan, «Paso fijo».
   - Terminado cuando: la salida y lo corregido están en `evidence.md`; una corrección que cambiaría alcance se reporta y no se aplica.
 
-- [ ] T059 **Gate completo sobre el mismo commit**: `npm run verify` y el run de `app`, `db` y `e2e` del último commit; tiempos del humo y del gate contra presupuesto (avisan)
+- [x] T059 **Gate completo sobre el mismo commit**: `npm run verify` y el run de `app`, `db` y `e2e` del último commit; tiempos del humo y del gate contra presupuesto (avisan)
   - Cumple: ADR-011 §9.1.
   - Terminado cuando: las salidas son del mismo SHA y están en `evidence.md`.
 
-- [ ] T060 Descripción del PR B y **revisión humana**: lo de T033 más capturas (T057), Impeccable (T058), los `[P]` para aprobar, «E2E specs added: 1 (spec 1)» y el copy nuevo listado para revisión en `es.ts`
+- [x] T060 Descripción del PR B y **revisión humana**: lo de T033 más capturas (T057), Impeccable (T058), los `[P]` para aprobar, «E2E specs added: 1 (spec 1)» y el copy nuevo listado para revisión en `es.ts`
   - Cumple: plan, PR B, «Criterios de salida»; SC-001 (aprobación de los dos fundadores).
   - Terminado cuando: los dos fundadores aprobaron la revisión visual y los `[P]` del PR, o el PR no se mergea.
 

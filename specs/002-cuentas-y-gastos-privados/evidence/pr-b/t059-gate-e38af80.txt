@@ -1,0 +1,43 @@
+# Gate sobre e38af80, run 42093325736
+stdout | tests/integration/confirm-code.test.ts > registro por la plantilla por defecto: code canjeado en el mismo navegador; repetido → caducado; otro navegador → verificado sin sesión
+enlace repetido: error en la consulta → /recuperar?enlace=caducado
+ ✓  integration  tests/integration/confirm-code.test.ts (2 tests) 678ms
+ Test Files  7 passed (7)
+      Tests  24 passed (24)
+## app
+  44 passed (52.4s)
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 19.03 s | — |
+| lint | pasó | 6.45 s | — |
+| typecheck | pasó | 5.93 s | — |
+| test:unit | pasó | 1.20 s | < 15 s |
+| test:components | pasó | 16.93 s | — |
+| build | pasó | 21.42 s | — |
+| chromium | pasó | 17.82 s | — |
+| test:a11y | pasó | 53.14 s | — |
+| check:internal-surface | pasó | 2.36 s | — |
+| check:theme-script | pasó | 0.93 s | — |
+| Job app (incluye instalación) | success | 152.36 s | < 360 s |
+| Control | Estado |
+| 3 · Supabase local, migraciones y SQL/RLS | job `db` |
+| 4 · E2E de humo | job `e2e` |
+## db
+supabase start: 114 s
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 22.45 s | — |
+| test:db | pasó | 5.74 s | < 60 s |
+| test:integration | pasó | 8.34 s | — |
+| db:types:check | pasó | 1.35 s | — |
+| db:restore-drill | pasó | 30.94 s | — |
+| Job db (incluye instalación) | success | 254.05 s | < 360 s |
+## e2e
+supabase start: 115 s
+  6 passed (12.5s)
+  76 passed (1.9m)
+| Control | Estado | Duración | Presupuesto |
+| ci | pasó | 18.34 s | — |
+| build | pasó | 21.90 s | — |
+| chromium | pasó | 51.16 s | — |
+| test:e2e:smoke | pasó | 13.34 s | < 180 s |
+| test:a11y | pasó | 115.74 s | — |
+| Job e2e (incluye instalación) | success | 352.82 s | < 360 s |
