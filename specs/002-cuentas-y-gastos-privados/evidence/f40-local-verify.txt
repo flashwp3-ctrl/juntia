@@ -1,0 +1,51 @@
+
+> juntia@0.1.0 verify
+> node scripts/verify.mjs
+
+
+> juntia@0.1.0 lint
+> eslint .
+
+
+> juntia@0.1.0 typecheck
+> tsc --noEmit
+
+
+> juntia@0.1.0 test:unit
+> vitest run --project domain
+
+
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia
+
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  10:21:09
+   Duration  283ms (tests 32%, transform 24%, worker 22%, import 21%)
+
+
+> juntia@0.1.0 test:components
+> vitest run --project components
+
+
+ RUN  v5.1.0 C:/Users/aleja/Documents/PP/Juntia
+
+
+ Test Files  11 passed (11)
+      Tests  112 passed (112)
+   Start at  10:21:11
+   Duration  8.44s (environment 48%, tests 25%, setup 13%, import 12%, transform 1%)
+
+verify · 002
+┌─────────┬────────────────────────┬──────────────────────────────────────────────────────────┬───────────┬─────────────────┬───────┐
+│ (index) │ control                │ resultado                                                │ duración  │ presupuesto     │ aviso │
+├─────────┼────────────────────────┼──────────────────────────────────────────────────────────┼───────────┼─────────────────┼───────┤
+│ 0       │ 'lint'                 │ 'pasó'                                                   │ '9.38 s'  │ '—'             │ ''    │
+│ 1       │ 'typecheck'            │ 'pasó'                                                   │ '3.67 s'  │ '—'             │ ''    │
+│ 2       │ 'unit (domain)'        │ 'pasó'                                                   │ '3.12 s'  │ '< 15 s'        │ ''    │
+│ 3       │ 'components'           │ 'pasó'                                                   │ '9.67 s'  │ '—'             │ ''    │
+│ 4       │ 'SQL/RLS (pgTAP)'      │ 'SOLO EN CI — pendiente de resultado · job db'           │ '—'       │ '< 60 s'        │ ''    │
+│ 5       │ 'integración servidor' │ 'SOLO EN CI — pendiente de resultado · job db'           │ '—'       │ '—'             │ ''    │
+│ 6       │ 'E2E de humo'          │ 'NO APLICABLE — la spec E2E 1 nace en el PR B de la 002' │ '—'       │ '< 3 min (job)' │ ''    │
+│ 7       │ 'verify (total)'       │ 'pasó'                                                   │ '25.85 s' │ '< 90 s'        │ ''    │
+└─────────┴────────────────────────┴──────────────────────────────────────────────────────────┴───────────┴─────────────────┴───────┘

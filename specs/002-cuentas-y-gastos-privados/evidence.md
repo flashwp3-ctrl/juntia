@@ -93,8 +93,49 @@ Salidas: [rojo](evidence/f40-n6-diagnostic-local-red.txt) y
 de leerlas en la instantánea. El test de CI N6 exige ese mensaje, código no nulo,
 cero archivos publicados/temporales y cero sesiones exportadoras restantes.
 
-Pendiente: resultado real de CI con la instantánea, inventario y diagnóstico N6
-corregidos. El verde de unidad anterior no sustituye ese ensayo.
+### F40 — verde completo con la escritura concurrente y N6 real
+
+5 de noviembre de 2026. Head probado:
+`a267ec9eaade26c091bfafec61a5f3465f0c796e`. Run del PR
+[42053806709](https://github.com/flashwp3-ctrl/juntia/actions/runs/42053806709),
+`gh run watch 42053806709 --exit-status --interval 20`: exit 0.
+Salida completa: [f40-green.txt](evidence/f40-green.txt).
+`npm run verify` sobre ese mismo head: exit 0, 25.85 s; salida íntegra en
+[f40-local-verify.txt](evidence/f40-local-verify.txt).
+
+```text
+01_privileges.test.sql ....... ok
+Files=10, Tests=324; Result: PASS
+Test Files 4 passed (4); Tests 17 passed (17) [integration]
+database.types.ts coincide con public generado en el runner.
+F40-1: escritura concurrente confirmada; snapshot importado=true
+Camino A: MANIFIESTO COINCIDE; usuario restaurado entra
+F40-1: dump y manifiesto comparten instantánea; restauración A excluye la escritura concurrente
+Camino B: MANIFIESTO COINCIDE; base temporal borrada
+N6-backup: rechazo esperado, exit=1, sin marca de éxito
+MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden (sha=cbccec832d338402bc7262973b8e0b539d6dddff)
+N6-cleanup: sin archivos publicados ni temporales; exportadoras restantes=0
+ENSAYO LISTO: A y B, nueve controles negativos rechazados
+Job app: success, 164.49 s; Job db: success, 237.72 s [resúmenes internos]
+supabase start: 112 s; test:db: 6.41 s (< 60 s)
+```
+
+Los seis casos pgTAP añadidos comprueban el inventario vacío fuera del contrato,
+el default global cerrado en un esquema ajeno a Juntia y la detección de grants
+PUBLIC, anon y authenticated mediante sondas revertidas. La nota fechada de
+ADR-013 §5.4 documenta el efecto global y los grants futuros explícitos; ninguna
+migración ni privilegio real se modificó. N6 llega al diagnóstico solo después
+de crear el worktree del commit real, hacer el dump y leer las migraciones
+aplicadas en la instantánea. Su limpieza comprueba cero sesiones exportadoras,
+además de cero archivos publicados y temporales. N1–N8 salieron con 1 y N9 con 2;
+todos sin marca de éxito.
+
+`git diff 2f83712..HEAD -- supabase/migrations`: sin salida. Los commits de código
+son `4e5e198` (instantánea) y `7506a1a` (diagnóstico); `ccd10d0` corrige la vista
+del arnés. El siguiente commit solo incorpora este registro y los dos logs de
+verde. El CI automático del PR se espera también sobre ese último commit; su
+estado y enlace se reflejan en la descripción del PR, sin lanzar un run duplicado.
+No se usa Docker/WSL local, no hay datos reales en CI y no se hace merge.
 
 ## PR A — detenido antes de T001
 
