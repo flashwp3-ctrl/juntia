@@ -299,7 +299,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-021, FR-023, FR-028, FR-029; US-1.
   - Terminado cuando: T039 y T042 pasan.
 
-- [ ] T045 [US1] Pantallas de 04·17 en `src/app/(auth)/` — `entrar` (A1, A1b, A1c, A1d, aviso de verificado, S3), `crear-cuenta` (A2, con el aviso de versión privada de prueba sin texto legal, Q9), `verificar-correo` (A3), `recuperar` (A4, A4b, enlace caducado), `nueva-contrasena` (A5), `primera-entrada` (A6, solo «Empezar por mi cuenta» y sin presupuesto) — y `src/app/auth/confirm/route.ts`
+- [x] T045 [US1] Pantallas de 04·17 en `src/app/(auth)/` — `entrar` (A1, A1b, A1c, A1d, aviso de verificado, S3), `crear-cuenta` (A2, con el aviso de versión privada de prueba sin texto legal, Q9), `verificar-correo` (A3), `recuperar` (A4, A4b, enlace caducado), `nueva-contrasena` (A5), `primera-entrada` (A6, solo «Empezar por mi cuenta» y sin presupuesto) — y `src/app/auth/confirm/route.ts`
   - Claude Design: `04 Pantallas`, 04·17.
   - Cumple: FR-022, FR-025; US-1.1–1.7.
   - Terminado cuando: cada estado se puede alcanzar en `npm run dev` contra `juntia-dev` y aparece en el registro de T051.
