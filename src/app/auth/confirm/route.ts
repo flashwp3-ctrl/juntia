@@ -5,12 +5,10 @@
 // - Recuperación válida: deja la sesión de recuperación, copia el tema del perfil a la cookie y lleva a A5.
 // - Caducado, usado o incompleto: A4 con el aviso de enlace caducado, sin ningún dato de la cuenta.
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { confirmResult } from "@/features/auth/auth-errors";
 import { ensureProfile } from "@/lib/db/profile";
-import { createClient } from "@/lib/supabase/server";
+import { createRouteClient } from "@/lib/supabase/route";
 import { THEME_COOKIE, themeCookieOptions } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
@@ -20,22 +18,26 @@ export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const rawType = request.nextUrl.searchParams.get("type");
   const type = TYPES.find((value) => value === rawType) ?? null;
-  if (!tokenHash || !type) {
-    const missing = confirmResult(null, null);
-    redirect(missing.kind === "redirect" ? missing.to : "/recuperar?enlace=caducado");
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-  const result = confirmResult(type, error);
-  if (!error) {
-    try {
-      const profile = await ensureProfile(supabase);
-      if (type === "recovery") (await cookies()).set(THEME_COOKIE, profile.theme, themeCookieOptions);
-    } catch {
-      // El perfil se vuelve a asegurar al entrar; el enlace ya se usó y no se puede repetir.
+  const { client, applyTo } = createRouteClient(request);
+  let theme: string | null = null;
+  let result = confirmResult(null, null);
+  if (tokenHash && type) {
+    const { error } = await client.auth.verifyOtp({ token_hash: tokenHash, type });
+    result = confirmResult(type, error);
+    if (!error) {
+      try {
+        theme = (await ensureProfile(client)).theme;
+      } catch {
+        // El perfil se vuelve a asegurar al entrar; el enlace ya se usó y no se puede repetir.
+      }
+      if (type !== "recovery") {
+        await client.auth.signOut({ scope: "local" });
+        theme = null;
+      }
     }
-    if (type !== "recovery") await supabase.auth.signOut({ scope: "local" });
   }
-  redirect(result.kind === "redirect" ? result.to : "/recuperar?enlace=caducado");
+  const to = result.kind === "redirect" ? result.to : "/recuperar?enlace=caducado";
+  const response = applyTo(NextResponse.redirect(new URL(to, request.url), 303));
+  if (theme) response.cookies.set(THEME_COOKIE, theme, themeCookieOptions);
+  return response;
 }

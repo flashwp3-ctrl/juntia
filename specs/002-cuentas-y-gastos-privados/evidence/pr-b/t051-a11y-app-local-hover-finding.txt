@@ -1,0 +1,13 @@
+# Primer intento local: hover del botón primario en oscuro tras pulsar (hallazgo de tokens)
+    +             "data": Object {
+    +               "bgColor": "#487a61",
+    +               "contrastRatio": 4.32,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#f3efe7",
+    +               "fontSize": "12.0pt (16px)",
+--
+    +             "data": Object {
+    +               "bgColor": "#487a61",
+    +               "contrastRatio": 4.32,
+    +               "expectedContrastRatio": "4.5:1",
+    +               "fgColor": "#f3efe7",

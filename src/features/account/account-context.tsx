@@ -12,8 +12,7 @@ const AccountContext = createContext<ShellAccount | null>(null);
 
 export function AccountProvider({ displayName, theme, children }: { displayName: string; theme: Theme; children: ReactNode }) {
   useEffect(() => {
-    if (readThemeCookie() === theme) return;
-    writeThemeCookie(theme);
+    if (readThemeCookie() !== theme) writeThemeCookie(theme);
     applyTheme(theme);
   }, [theme]);
   return <AccountContext.Provider value={{ displayName, initial: initialOf(displayName) }}>{children}</AccountContext.Provider>;

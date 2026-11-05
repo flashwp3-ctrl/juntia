@@ -9,9 +9,9 @@ import { copy } from "@/lib/copy/es";
 import { completeFirstEntry, ensureProfile } from "@/lib/db/profile";
 import { createClient } from "@/lib/supabase/server";
 import { THEME_COOKIE, themeCookieOptions } from "@/lib/theme";
-import { newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult, type AuthResult } from "./auth-errors";
+import { newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult, type AuthErrorLike, type AuthResult } from "./auth-errors";
 
-export type FormState = { error?: string; field?: "name" | "email" | "password" | "repeat" | "acknowledge"; notice?: string; resend?: boolean; email?: string; name?: string };
+export type FormState = { redirectTo?: string; error?: string; field?: "name" | "email" | "password" | "repeat" | "acknowledge"; notice?: string; resend?: boolean; email?: string; name?: string };
 
 /** Correo del registro, para «Reenviar enlace» en A3 sin ponerlo en la URL (solo esta cookie, de una hora). */
 const PENDING_EMAIL = "juntia_pending_email";
@@ -83,7 +83,9 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   } catch {
     return { email, error: copy.auth.networkError };
   }
-  redirect(firstEntryCompleted ? volver : `/primera-entrada?volver=${encodeURIComponent(volver)}`);
+  // Navegación completa, no del router: la primera página de producto se carga de cero y el script bloqueante ya lee la
+  // cookie del tema que se acaba de escribir, sin un cuadro del tema contrario (US-7.4, research R7).
+  return { redirectTo: firstEntryCompleted ? volver : `/primera-entrada?volver=${encodeURIComponent(volver)}` };
 }
 
 /** A4 → A4b, siempre igual (US-1.5). */
@@ -109,15 +111,15 @@ export async function setNewPassword(_: FormState, form: FormData): Promise<Form
 }
 
 /** S1 → S3; S2 si falla. Borra la cookie del tema: sin sesión, el acceso sigue al sistema (caso límite). */
-export async function signOut(_: FormState): Promise<FormState> {
+export async function signOut(): Promise<FormState> {
   const supabase = await createClient();
-  let error: unknown = null;
+  let error: AuthErrorLike = null;
   try {
     ({ error } = await supabase.auth.signOut({ scope: "local" }));
-  } catch (caught) {
-    error = caught;
+  } catch {
+    error = { name: "AuthRetryableFetchError" };
   }
-  const result = signOutResult(error as never);
+  const result = signOutResult(error);
   if (result.kind !== "redirect") return toState(result);
   (await cookies()).delete(THEME_COOKIE);
   redirect(result.to);

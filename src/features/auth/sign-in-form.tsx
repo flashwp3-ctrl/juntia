@@ -2,7 +2,7 @@
 // T045 / FR-022, FR-028; 04·17 A1, A1b, A1c, A1d; aviso de verificado (caso límite) y S3 («Cerraste sesión en este
 // dispositivo.»). A1b no dice cuál de los dos falló (US-1.4).
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
@@ -15,6 +15,9 @@ export function SignInForm({ volver, notice }: Props) {
   const [state, action] = useActionState<FormState, FormData>(signIn, {});
   const [resent, resendAction, resending] = useActionState<FormState, FormData>(resend, {});
   const network = state.error === copy.auth.networkError;
+  useEffect(() => {
+    if (state.redirectTo) window.location.assign(state.redirectTo);
+  }, [state.redirectTo]);
   return (
     <>
       <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[26px] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">

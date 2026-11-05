@@ -28,6 +28,8 @@ test-results/
 Thumbs.db
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# Sesiones sembradas por worker y rol (T049): solo del runner, nunca versionadas
+playwright/.auth/
 
 /node_modules/
 /.next/
