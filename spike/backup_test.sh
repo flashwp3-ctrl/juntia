@@ -35,9 +35,10 @@ echo "errors: $(grep -c 'error:' restoreA.err)"; grep 'error:' restoreA.err | se
 grep -i 'errors ignored' restoreA.err
 echo "--- counts in restore_full:"; counts "$BASE/restore_full"
 
+echo "(run 3: -n is ignored when -t is present, so the schema goes as -t juntia_data.*)"
 echo "=== 4.4 restore B: data-only dump (app schema + auth users/identities) -> supabase db reset -> load"
-echo '$ pg_dump "$DB" --data-only --inserts --on-conflict-do-nothing -n juntia_data -t auth.users -t auth.identities -f data.sql'
-pg_dump "$DB" --data-only --inserts --on-conflict-do-nothing -n juntia_data -t auth.users -t auth.identities -f data.sql 2> dataB.err; echo "exit=$?"; head -5 dataB.err
+echo '$ pg_dump "$DB" --data-only --inserts --on-conflict-do-nothing -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql'
+pg_dump "$DB" --data-only --inserts --on-conflict-do-nothing -t 'juntia_data.*' -t auth.users -t auth.identities -f data.sql 2> dataB.err; echo "exit=$?"; head -5 dataB.err
 gpg --batch --yes --pinentry-mode loopback --passphrase-file pass.txt --symmetric --cipher-algo AES256 -o data.sql.gpg data.sql 2>/dev/null; ls -l data.sql.gpg
 (cd "$GITHUB_WORKSPACE" && supabase db reset --workdir spike 2>&1 | grep -v -iE 'key|secret|eyJ' | tail -5)
 echo "--- counts after reset (should be empty except allowlist seed):"; counts "$DB"
