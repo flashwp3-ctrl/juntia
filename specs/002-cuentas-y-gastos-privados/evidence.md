@@ -1174,7 +1174,14 @@ su restauración (quickstart §4.1 y §4.3) y la configuración de Auth (T036–
 
 ### T036
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Parcial, 5 de noviembre de 2026.** `juntia-dev`: **Alejandro recibió de verdad**
+el correo de verificación (plantilla por defecto de Supabase) y, después, el de
+recuperación; la prueba la hizo el gestor en el Chrome de Windows de Alejandro,
+con su autorización, con `npm run dev` en `http://localhost:3000` (commit
+e819450) y gastó los 2 correos de esa hora. Sin direcciones en esta evidencia.
+
+**Falta:** el correo de verificación de la segunda fundadora en `juntia-dev`, y
+los dos en `juntia-prod` cuando se pruebe allí.
 
 ### T037
 
@@ -1235,12 +1242,12 @@ axe `tests/a11y/routes.a11y.ts` con `route-registry.ts`, integración en el job 
 
 | Estado | Cubierto por |
 | --- | --- |
-| A2 crear cuenta, A3 verifica tu correo (correo permitido) | **M 1** (pendiente) · A: spec 1, «registro permitido» |
-| Correo de verificación recibido (T036) | **M 1** (pendiente) |
-| Enlace de verificación abierto en el mismo navegador → A1 con aviso de verificado | **M 1** (pendiente; camino `code` de la plantilla por defecto) · A: spec 1 (camino `token_hash`) e integración `confirm-code.test.ts` (camino `code` contra GoTrue) |
-| A1 entrar → A6 primera entrada → Inicio | **M 1** (pendiente) · A: spec 1, «registro permitido» |
-| A4 recuperar, A4b enlace enviado | **M 2** (pendiente) · A: spec 1, «recuperación uniforme» |
-| Enlace de recuperación → A5 contraseña nueva → Inicio | **M 2** (pendiente) · A: spec 1 (`token_hash`) e integración `confirm-code.test.ts` (`code`) |
+| A2 crear cuenta, A3 verifica tu correo (correo permitido) | **M 1** ✅ · A: spec 1, «registro permitido» |
+| Correo de verificación recibido (T036) | **M 1** ✅ |
+| Enlace de verificación abierto en el mismo navegador → A1 con aviso de verificado | **M 1** ✅ (camino `code` de la plantilla por defecto) · A: spec 1 (camino `token_hash`) e integración `confirm-code.test.ts` (camino `code` contra GoTrue) |
+| A1 entrar → A6 primera entrada → Inicio | **M 1** ✅ hasta A6 («Hola, Alejandro»; Inicio tras «Continuar» lo cubre la spec 1) · A: spec 1, «registro permitido» |
+| A4 recuperar, A4b enlace enviado | **M 2** ✅ · A: spec 1, «recuperación uniforme» |
+| Enlace de recuperación → A5 contraseña nueva → Inicio | **M 2** ✅ (camino `code`; con sesión tras guardar, en `/primera-entrada` porque A6 seguía sin completar) · A: spec 1 (`token_hash`) e integración `confirm-code.test.ts` (`code`) |
 | Registro no permitido: la misma A3 y ninguna cuenta | A: spec 1, «registro no permitido o de una cuenta existente» (403 del hook y 422) |
 | A1b contraseña incorrecta | **D** (respuesta real de `juntia-dev`) · A: axe, entrada A1b |
 | A1c cuenta sin verificar | A: axe, entrada A1c (cuenta sembrada sin confirmar) |
@@ -1252,6 +1259,30 @@ axe `tests/a11y/routes.a11y.ts` con `route-registry.ts`, integración en el job 
 | Mi cuenta: C1, perfil P1–P5, pareja, privacidad D1/D2, seguridad G1 | A: spec 1 (perfil) y axe con sesión de todas las rutas; P2–P5 y la sesión caducada en pruebas de componentes y axe |
 | Tema: apariencia oscuro y segundo dispositivo oscuro antes de `<body>` | A: spec 1 y arnés de T053 |
 | Cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar | A: spec 1 |
+
+**Comprobación a mano (M), 5 de noviembre de 2026**, en `juntia-dev`, con `npm run
+dev` en `http://localhost:3000` (commit e819450), en el Chrome de Windows de
+Alejandro, por el gestor con su autorización; resultados reportados por el gestor:
+
+1. **Registro:** `/crear-cuenta` con el correo de Alejandro (en la lista
+   permitida) → `/verificar-correo`. Llegó el correo con la plantilla por
+   defecto. El enlace, abierto desde Gmail en otra ventana del mismo Chrome, llevó
+   a `/entrar` con «Tu correo está verificado. Ya puedes entrar.», sin sesión.
+   Entrar con correo y contraseña llevó a `/primera-entrada` (A6, «Hola,
+   Alejandro»).
+2. **Recuperación:** `/recuperar` → mensaje neutro. Llegó el correo; el enlace
+   llevó a A5; con la contraseña nueva quedó la sesión abierta, en
+   `/primera-entrada`.
+
+**¿El registro canjeó el `code` o cayó en el caso de otro navegador?** Las dos
+salidas son la misma pantalla por diseño (la sesión del enlace de registro se
+cierra a propósito: spec, caso límite «Verificación desde otro dispositivo»), así
+que la pantalla no lo distingue. El log del servidor dev sí: `GET
+/auth/confirm?code=…&next=signup → 303` con **1718 ms** de código de aplicación
+(canje, `ensure_profile` y cierre de sesión: tres llamadas a `juntia-dev`), frente
+a **14 ms** del caso sin verificador medido antes en el mismo servidor, que no
+llama a la red. La recuperación: **528 ms** (canje y `ensure_profile`). Conclusión:
+el `code` se canjeó en los dos; **no es un bug** y no hay nada que corregir.
 
 **Enmienda del 5 de noviembre de 2026 · `/auth/confirm` con dos caminos.**
 `src/features/auth/confirm.ts` resuelve `token_hash` (plantillas del repo, Supabase
