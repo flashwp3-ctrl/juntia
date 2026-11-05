@@ -1,0 +1,44 @@
+light /entrar · A1 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · aviso de verificado 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · S3 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1d 390px: 0 violaciones, 0 serias o críticas
+·light /crear-cuenta · A2 390px: 0 violaciones, 0 serias o críticas
+·light /crear-cuenta · A2 · validación 390px: 0 violaciones, 0 serias o críticas
+·light /verificar-correo · A3 390px: 0 violaciones, 0 serias o críticas
+·light /recuperar · A4 390px: 0 violaciones, 0 serias o críticas
+·light /recuperar · aviso de enlace caducado 390px: 0 violaciones, 0 serias o críticas
+·light /interno/primitivos · superficie interna 390px: 0 violaciones, 0 serias o críticas
+·light /ruta-que-no-existe · no encontrado 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1 1440px: 0 violaciones, 0 serias o críticas
+·light /entrar · aviso de verificado 1440px: 0 violaciones, 0 serias o críticas
+·light /entrar · S3 1440px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1d 1440px: 0 violaciones, 0 serias o críticas
+·light /crear-cuenta · A2 1440px: 0 violaciones, 0 serias o críticas
+·light /crear-cuenta · A2 · validación 1440px: 0 violaciones, 0 serias o críticas
+·light /verificar-correo · A3 1440px: 0 violaciones, 0 serias o críticas
+·light /recuperar · A4 1440px: 0 violaciones, 0 serias o críticas
+·light /recuperar · aviso de enlace caducado 1440px: 0 violaciones, 0 serias o críticas
+·light /interno/primitivos · superficie interna 1440px: 0 violaciones, 0 serias o críticas
+·light /ruta-que-no-existe · no encontrado 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · aviso de verificado 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · S3 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1d 390px: 0 violaciones, 0 serias o críticas
+·dark /crear-cuenta · A2 390px: 0 violaciones, 0 serias o críticas
+·dark /crear-cuenta · A2 · validación 390px: 0 violaciones, 0 serias o críticas
+·dark /verificar-correo · A3 390px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · A4 390px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · aviso de enlace caducado 390px: 0 violaciones, 0 serias o críticas
+·dark /interno/primitivos · superficie interna 390px: 0 violaciones, 0 serias o críticas
+·dark /ruta-que-no-existe · no encontrado 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · aviso de verificado 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · S3 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1d 1440px: 0 violaciones, 0 serias o críticas
+·dark /crear-cuenta · A2 1440px: 0 violaciones, 0 serias o críticas
+·dark /crear-cuenta · A2 · validación 1440px: 0 violaciones, 0 serias o críticas
+·dark /verificar-correo · A3 1440px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · A4 1440px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · aviso de enlace caducado 1440px: 0 violaciones, 0 serias o críticas
+·dark /interno/primitivos · superficie interna 1440px: 0 violaciones, 0 serias o críticas
+·dark /ruta-que-no-existe · no encontrado 1440px: 0 violaciones, 0 serias o críticas

@@ -1,0 +1,34 @@
+== 390x844 /entrar
+== 390x844 /crear-cuenta
+http://localhost:3311/crear-cuenta
+  [icon-tile-stack] 44x44px icon tile above h1 "Crea tu cuenta"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 390x844 /verificar-correo
+http://localhost:3311/verificar-correo
+  [icon-tile-stack] 64x64px icon tile above h1 "Verifica tu correo"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 390x844 /recuperar
+http://localhost:3311/recuperar
+  [icon-tile-stack] 44x44px icon tile above h1 "Recupera tu acceso"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 390x844 /recuperar?enlace=caducado
+== 1440x900 /entrar
+== 1440x900 /crear-cuenta
+http://localhost:3311/crear-cuenta
+  [icon-tile-stack] 44x44px icon tile above h1 "Crea tu cuenta"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 1440x900 /verificar-correo
+http://localhost:3311/verificar-correo
+  [icon-tile-stack] 64x64px icon tile above h1 "Verifica tu correo"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 1440x900 /recuperar
+http://localhost:3311/recuperar
+  [icon-tile-stack] 44x44px icon tile above h1 "Recupera tu acceso"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 1440x900 /recuperar?enlace=caducado

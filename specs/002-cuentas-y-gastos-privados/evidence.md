@@ -1184,45 +1184,173 @@ Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
 
 Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
 
+### PR B · T039–T050 (tests primero e implementación)
+
+Rama `feat/002-b-access`, PR #43. Salidas literales en
+[`evidence/pr-b/`](evidence/pr-b/). Los tests se vieron fallar antes que el código
+(`docs/TESTING.md` §6):
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T039 `auth-errors` | [`t039-red.txt`](evidence/pr-b/t039-red.txt) (módulo inexistente) | [`t039-green.txt`](evidence/pr-b/t039-green.txt): 11 pruebas |
+| T040 ThemeSelector, ProfileForm, LimitNote | [`t040-red.txt`](evidence/pr-b/t040-red.txt) | [`t040-green.txt`](evidence/pr-b/t040-green.txt): 22 pruebas de `src/features` |
+| T041 dominio (`volver`, nombre visible) | [`t041-red.txt`](evidence/pr-b/t041-red.txt): con la expresión anterior `/^\/(?!\/)/`, `"/\\evil"` → `/\evil` | [`t041-green.txt`](evidence/pr-b/t041-green.txt): 5 pruebas |
+| T042 integración (`auth.test.ts`) | — (solo CI) | job `db` de ab6a1b1: 22 pruebas de integración en verde, incluidas F37-7 (`/auth/v1/signup` con 7 caracteres → 422 `weak_password`, 0 usuarios) y Tomás sin tocar el perfil de Sara |
+| T046 script de tema | [`t046-red.txt`](evidence/pr-b/t046-red.txt): 4 fallos de la cookie | [`t046-green.txt`](evidence/pr-b/t046-green.txt): 20 pruebas; `check:theme-script` pide `/entrar` y pasa (job `app`) |
+| T050 spec E2E 1 | [`t050-red-unprotected-route.txt`](evidence/pr-b/t050-red-unprotected-route.txt): con `/actividad` fuera de `PRODUCT` en `src/lib/routes.ts`, «ruta protegida sin sesión» falla en la redirección | job `e2e` de ab6a1b1: 6 de 6 |
+
+T043: el build marca todas las rutas de producto y de Mi cuenta como dinámicas
+(ƒ) y `ƒ Proxy (Middleware)`:
+[`t043-build-routes.txt`](evidence/pr-b/t043-build-routes.txt). La spec 1
+comprueba `Cache-Control: private, no-store` en `/cuenta` con sesión.
+
+T045 pide además que cada estado se alcance con `npm run dev` contra
+`juntia-dev`: **pendiente de T036–T038** (humanas); hasta entonces cada estado
+se alcanza en el Supabase del runner (spec 1 y axe del job `e2e`).
+
+T048 (sesión caducada): estado del registro de axe y capturas
+`cuenta_perfil--sesion-caducada--*`: la sesión se borra con la página abierta,
+«Guardar cambios» responde `copy.errors.sessionExpired` con «Entrar de nuevo» y
+el nombre escrito sigue en el campo.
+
+**Interpretación de ejecución (T051), para el revisor.** Las dos listas del
+registro son las de la sesión que necesita cada ruta. A1b, A1c y A4b no necesitan
+sesión pero sí la respuesta real de Auth, que el job `app` no tiene: se marcan
+`needsAuthApi` y se auditan en el job `e2e`, sin cambiar la lista de su ruta. A1d
+se audita en `app`, donde Supabase es inaccesible a propósito (el error de red
+real). Si se prefiere otra lectura, cambia el registro, no el alcance.
+
 ### T051
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05 · ab6a1b1 · run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264).**
+Prueba de cobertura: se vio fallar con `/cuenta/pareja` sin clasificar
+([`t051-red-unclassified.txt`](evidence/pr-b/t051-red-unclassified.txt)) y pasa
+([`t051-green.txt`](evidence/pr-b/t051-green.txt)). Axe sin violaciones serias ni
+críticas en los dos temas y a 390 y 1440:
+
+- job `app`: 44 de 44, cada línea «0 serias o críticas»
+  ([`t051-a11y-app-ab6a1b1.txt`](evidence/pr-b/t051-a11y-app-ab6a1b1.txt));
+- job `e2e`: 76 de 76 (72 auditorías con «0 serias o críticas» y las 4 de la barra
+  de `/cuenta`) ([`t051-a11y-e2e-ab6a1b1.txt`](evidence/pr-b/t051-a11y-e2e-ab6a1b1.txt)).
+
+Corregido durante el PR, con salida: `text.secondary` sobre `surface.sunken` en
+claro daba 4,29:1 (LimitNote, perfil del sidebar, hoja de exportar); ahora usa
+`--comp-field-muted-fg`, el par ya corregido en F16-1.
+
+**Hallazgo que no se corrige aquí (tokens aprobados):** `action.primaryHover` en
+oscuro con `text.onAction` mide 4,32:1, por debajo de 4,5:1, mientras el puntero
+está sobre un botón primario
+([`t051-a11y-app-local-hover-finding.txt`](evidence/pr-b/t051-a11y-app-local-hover-finding.txt)).
+Axe audita el estado en reposo; el token queda para decisión de los fundadores.
 
 ### T052
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+Job `e2e` creado (Supabase del runner con Auth y Mailpit, build con sus
+variables, `test:e2e:smoke` y axe con sesión). `app`, `db` y `e2e` en verde sobre
+ab6a1b1, run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)
+([`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt)). Humo:
+`test:e2e:smoke` 14,40 s (< 180 s). Job `e2e` 364,91 s, **por encima de 360 s
+(aviso)**: incluye los ~40 s de la medición de T054, que solo corre en ese
+lanzamiento manual; `supabase start` 108 s. No se mueve ningún techo.
 
 ### T053
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+`[V]` **2026-11-05 · ab6a1b1 · run [42089287324](https://github.com/flashwp3-ctrl/juntia/actions/runs/42089287324) (job `evidence`).**
+Arnés de `evidence-plan/` sobre `/entrar`, `/crear-cuenta`, `/recuperar`,
+`/cuenta`, `/cuenta/perfil`, `/cuenta/apariencia` y `/cuenta/seguridad`, con cinco
+casos cada una (cookie contraria al sistema en los dos sentidos, `system`, valor
+no válido y sin cookie), CPU 6× y red lenta: **35 de 35 con CLS = 0, el tema
+esperado al aparecer `<body>` y ningún cuadro del tema contrario**
+([`t053-tema-cls-runner.txt`](evidence/pr-b/t053-tema-cls-runner.txt)).
+
+Lo que el arnés encontró antes y se corrigió en el PR: el titular de A1 (48 px)
+medía 360 px reales y 371 px con el respaldo en una columna de 360 (CLS 0,0053 en
+local); los botones de Mi perfil, la nota de «Esta sesión» y el perfil del
+sidebar dependían de las métricas de la fuente (CLS 0,00013 y 0,00068 en el
+runner); y el enlace «Crear cuenta», alineado a la derecha (0,000009). El job
+instala Arial y Georgia, sobre las que se ajustan los respaldos de Onest y
+Brygada (`globals.css`): sin ellas el runner mide otro respaldo que no es el de la
+app. La escritura desde el perfil y los dos dispositivos los cubre la spec 1
+(«un segundo dispositivo oscuro antes de `<body>`»).
 
 ### T054
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+`[V]` **2026-11-05 · ab6a1b1 · run [42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264).**
+
+| Workers | Duración | Salida | Resultado |
+| --- | --- | --- | --- |
+| 1 | 13 s | exit 0 | 6 passed (12,4 s) |
+| 2 | 13 s | exit 0 | 6 passed (12,8 s) |
+| 4 | 13 s | exit 0 | 6 passed (12,7 s) |
+
+([`t054-workers.txt`](evidence/pr-b/t054-workers.txt)). Sin fallos con ninguno.
+**Lectura honesta:** con una sola spec en un solo archivo y sin `fullyParallel`,
+Playwright da el archivo entero a un worker, así que 2 y 4 no reparten trabajo y
+la duración no cambia. El aislamiento entre workers se prueba aparte en
+`tests/integration/seed.test.ts` (job `db`, verde): dos workers siembran usuarios
+y `storageState` distintos y el dataset dorado de uno no aparece en el otro. La
+medición con reparto real llega con la spec 2 (PR D). Ningún techo se mueve.
 
 ### T055
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Humana (gestor), pendiente:** 001-T072 parte 1 tras el primer despliegue de
+producción con Supabase.
 
 ### T056
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Humana (dueña y gestor), pendiente:** commit propio de la dueña en
+`feat/002-b-access` para el primer preview y 001-T072 parte 2 antes de usarlo.
 
 ### T057
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05 · ab6a1b1 · run [42089287324](https://github.com/flashwp3-ctrl/juntia/actions/runs/42089287324).**
+92 capturas a 390 y 1440 en claro y oscuro, con cuentas sembradas en el runner
+(ningún dato real), en [`evidence/pr-b/capturas/`](evidence/pr-b/capturas/),
+nombradas `ruta--estado--ancho--tema.png`: acceso (A1, A1b, A1c, aviso de
+verificado, S3, A2, A2 con validación, A3, A4, A4b, aviso de enlace caducado, A5,
+A6), Inicio con AccountButton, Mi cuenta (C1, P1, Mi pareja, T1, D1, D2, G1) y la
+sesión caducada. A1d (error de red) solo existe sin Supabase y se capturó en
+local. **Pasada de los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en
+los dos temas: 308 de 308 filas sin scroll horizontal y sin elementos fuera de la
+ventana ([`t057-pasada-siete-anchos.txt`](evidence/pr-b/t057-pasada-siete-anchos.txt)).
+Los solapamientos se revisan sobre las capturas.
+
+**Para aprobar viendo la pantalla:** «Cuenta reutiliza los fondos de categoría»
+(fichas de C1 y de la columna de secciones); la sesión caducada (pantalla nueva);
+y la composición de escritorio de las pantallas de acceso (04·17 solo dibuja
+390): la misma columna de 440 sobre una tarjeta elevada, con la marca arriba a la
+izquierda.
 
 ### T058
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**2026-11-05.** Pasada fija de Impeccable, auditoría y crítica, a 390 y 1440:
+el detector de código no encontró nada en `src/features/auth`,
+`src/features/account`, `src/app/(auth)`, `src/app/(app)/cuenta` ni
+`inline-notice.tsx`; el detector sobre la página servida
+([`t058-impeccable-detect.txt`](evidence/pr-b/t058-impeccable-detect.txt)) marca
+`icon-tile-stack` en A2, A3 y A4: es el botón «Volver» de 44 y la ficha de 64 de
+A3 que dibuja el comp aprobado 04·17. **No se aplica**: cambiarlo reabriría la
+dirección aprobada (`CLAUDE.md` 7). Los hallazgos de contraste y de CLS se
+corrigieron (T051, T053). Revisión visual de las capturas: coinciden con
+04·14–04·19 salvo lo que se lista como propuesta o desviación en la descripción
+del PR.
 
 ### T059
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+**Gate sobre ab6a1b1** (el último commit de código del PR):
+`npm run verify` en local pasó (lint, typecheck, 28 de dominio, 149 de
+componentes; 27,9 s, < 90 s) y el run
+[42090711264](https://github.com/flashwp3-ctrl/juntia/actions/runs/42090711264)
+tiene `app` 114 s, `db` 250 s y `e2e` 365 s en verde
+([`t059-gate-ab6a1b1.txt`](evidence/pr-b/t059-gate-ab6a1b1.txt)). Presupuestos:
+`test:db` 5,63 s (< 60), humo 14,40 s (< 180); el job `e2e` supera los 360 s con la
+medición de T054 incluida (aviso, ver T052). El commit posterior solo añade
+evidencia (`.md` y `.png`).
 
 ### T060
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+Descripción del PR B en #43. **Pendiente: revisión humana** de los dos
+fundadores (capturas, `[P]` y copy nuevo de `es.ts`).
 
 ### T071
 

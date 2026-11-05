@@ -1,0 +1,72 @@
+light /entrar · A1b 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1c 390px: 0 violaciones, 0 serias o críticas
+·light /recuperar · A4b 390px: 0 violaciones, 0 serias o críticas
+·light /nueva-contrasena · A5 390px: 0 violaciones, 0 serias o críticas
+·light /primera-entrada · A6 390px: 0 violaciones, 0 serias o críticas
+·light / · Inicio 390px: 0 violaciones, 0 serias o críticas
+·light /actividad · Actividad 390px: 0 violaciones, 0 serias o críticas
+·light /metas · Metas 390px: 0 violaciones, 0 serias o críticas
+·light /plan · Plan 390px: 0 violaciones, 0 serias o críticas
+·light /balance · Balance 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta · C1 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/perfil · P1 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/perfil · sesión caducada 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/pareja · llega con P0-2 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/apariencia · T1 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/privacidad · D1 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/privacidad · D2 · hoja de exportar 390px: 0 violaciones, 0 serias o críticas
+·light /cuenta/seguridad · G1 390px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1b 1440px: 0 violaciones, 0 serias o críticas
+·light /entrar · A1c 1440px: 0 violaciones, 0 serias o críticas
+·light /recuperar · A4b 1440px: 0 violaciones, 0 serias o críticas
+·light /nueva-contrasena · A5 1440px: 0 violaciones, 0 serias o críticas
+·light /primera-entrada · A6 1440px: 0 violaciones, 0 serias o críticas
+·light / · Inicio 1440px: 0 violaciones, 0 serias o críticas
+·light /actividad · Actividad 1440px: 0 violaciones, 0 serias o críticas
+·light /metas · Metas 1440px: 0 violaciones, 0 serias o críticas
+·light /plan · Plan 1440px: 0 violaciones, 0 serias o críticas
+·light /balance · Balance 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta · C1 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/perfil · P1 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/perfil · sesión caducada 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/pareja · llega con P0-2 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/apariencia · T1 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/privacidad · D1 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/privacidad · D2 · hoja de exportar 1440px: 0 violaciones, 0 serias o críticas
+·light /cuenta/seguridad · G1 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1b 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1c 390px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · A4b 390px: 0 violaciones, 0 serias o críticas
+·dark /nueva-contrasena · A5 390px: 0 violaciones, 0 serias o críticas
+·dark /primera-entrada · A6 390px: 0 violaciones, 0 serias o críticas
+·dark / · Inicio 390px: 0 violaciones, 0 serias o críticas
+·dark /actividad · Actividad 390px: 0 violaciones, 0 serias o críticas
+·dark /metas · Metas 390px: 0 violaciones, 0 serias o críticas
+·dark /plan · Plan 390px: 0 violaciones, 0 serias o críticas
+·dark /balance · Balance 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta · C1 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/perfil · P1 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/perfil · sesión caducada 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/pareja · llega con P0-2 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/apariencia · T1 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/privacidad · D1 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/privacidad · D2 · hoja de exportar 390px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/seguridad · G1 390px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1b 1440px: 0 violaciones, 0 serias o críticas
+·dark /entrar · A1c 1440px: 0 violaciones, 0 serias o críticas
+·dark /recuperar · A4b 1440px: 0 violaciones, 0 serias o críticas
+·dark /nueva-contrasena · A5 1440px: 0 violaciones, 0 serias o críticas
+·dark /primera-entrada · A6 1440px: 0 violaciones, 0 serias o críticas
+·dark / · Inicio 1440px: 0 violaciones, 0 serias o críticas
+·dark /actividad · Actividad 1440px: 0 violaciones, 0 serias o críticas
+·dark /metas · Metas 1440px: 0 violaciones, 0 serias o críticas
+·dark /plan · Plan 1440px: 0 violaciones, 0 serias o críticas
+·dark /balance · Balance 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta · C1 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/perfil · P1 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/perfil · sesión caducada 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/pareja · llega con P0-2 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/apariencia · T1 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/privacidad · D1 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/privacidad · D2 · hoja de exportar 1440px: 0 violaciones, 0 serias o críticas
+·dark /cuenta/seguridad · G1 1440px: 0 violaciones, 0 serias o críticas
