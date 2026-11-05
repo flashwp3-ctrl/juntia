@@ -1183,6 +1183,11 @@ e819450) y gastó los 2 correos de esa hora. Sin direcciones en esta evidencia.
 **Falta:** el correo de verificación de la segunda fundadora en `juntia-dev`, y
 los dos en `juntia-prod` cuando se pruebe allí.
 
+**Producción, 5 de noviembre de 2026** (tras la corrección de dominio de T037):
+Alejandro se registró en `https://juntia-alpha.vercel.app`, recibió el correo de
+verificación, verificó y entró a Inicio. **Falta** la segunda fundadora, en
+`juntia-dev` y en `juntia-prod`; la casilla sigue sin marcar.
+
 ### T037
 
 **Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
@@ -1193,11 +1198,23 @@ Alejandro** (sin correos ni claves):
 | Hook Before User Created → `juntia_private.before_user_created_hook` | Activado | Activado |
 | Contraseña mínima | 8 | 8 |
 | Confirm email | Activado | Activado |
-| Site URL | `http://localhost:3000` | `https://juntia.vercel.app` |
-| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | `https://juntia.vercel.app/**` |
+| Site URL | `http://localhost:3000` | `https://juntia-alpha.vercel.app` (corregido el 5 de noviembre; ver debajo) |
+| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | Solo `https://juntia-alpha.vercel.app/**` (corregido el 5 de noviembre; ver debajo) |
 | Lista permitida | Los dos fundadores | Los dos fundadores |
 | «Exposed schemas» solo `public` | Comprobado en el PR A | T035 |
 | Plantillas de correo | **No editables en Free sin SMTP propio.** Decisión del mismo día («Adaptar la app»): se usan las plantillas por defecto y `/auth/confirm` acepta su `code` (quickstart §3, paso 1, enmendado) | Igual |
+
+**Corrección de configuración, 5 de noviembre de 2026.** `juntia.vercel.app` **no
+es nuestro**: es la web de otra empresa. Ese día se habían configurado por error con
+ese dominio la Site URL y la Redirect URL de `juntia-prod` y `SITE_URL` de Vercel
+(Production). El gestor lo corrigió el mismo día:
+
+- Supabase `juntia-prod`: Site URL `https://juntia-alpha.vercel.app` y Redirect URLs
+  solo `https://juntia-alpha.vercel.app/**`; la entrada ajena se borró.
+- Vercel, `SITE_URL` (Production) = `https://juntia-alpha.vercel.app`, con redeploy.
+
+Antes de la corrección **no se envió ningún correo de producción**. El dominio de
+producción es `https://juntia-alpha.vercel.app` (decisión 13; 001-T072).
 
 ### T038
 
@@ -1381,8 +1398,21 @@ medición con reparto real llega con la spec 2 (PR D). Ningún techo se mueve.
 
 ### T055
 
-**Humana (gestor), pendiente:** 001-T072 parte 1 tras el primer despliegue de
-producción con Supabase.
+**Hecha por el gestor el 5 de noviembre de 2026**, tras el merge del PR #43
+(`c2561d5`; Vercel: «Deployment has completed»), contra el dominio real de
+producción `https://juntia-alpha.vercel.app`:
+
+| Petición | Resultado |
+| --- | --- |
+| `/entrar`, HTML | 200 |
+| `/entrar`, RSC (`RSC: 1`) | 200 |
+| `/interno/primitivos`, HTML | **404** |
+| `/interno/primitivos`, RSC (`RSC: 1`) | 200 `text/x-component` con el payload `NEXT_HTTP_ERROR_FALLBACK;404` y «No encontramos esta página», **sin contenido interno** |
+
+Es el mismo comportamiento aceptado en la 001
+(`specs/001-frontend-foundation/evidence.md`, 001-T072, «Comprobación tras el
+despliegue de `aa322be`»): la respuesta RSC de `notFound()` es un 200 cuyo
+contenido es el 404. **Resultado: pasa.**
 
 ### T056
 

@@ -345,7 +345,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-064.
   - Terminado cuando: la tabla de mediciones está en `evidence.md`; ningún techo se mueve.
 
-- [ ] T055 **Humana** (gestor): 001-T072 parte 1 repetida tras el primer despliegue de producción con Supabase (las rutas pasan a ser dinámicas): `/interno/primitivos` da 404 en producción, en HTML y RSC (plan, «Verificaciones heredadas»)
+- [x] T055 **Humana** (gestor): 001-T072 parte 1 repetida tras el primer despliegue de producción con Supabase (las rutas pasan a ser dinámicas): `/interno/primitivos` da 404 en producción, en HTML y RSC (plan, «Verificaciones heredadas»)
   - Cumple: SC-011; decisión 12.
   - Terminado cuando: los códigos reales están en `evidence.md`.
 
