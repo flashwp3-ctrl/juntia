@@ -1482,6 +1482,24 @@ mientras guarda (solo se envía la última). En las tres, el perfil, la cookie,
 ([`f43-1-queue-red.txt`](evidence/pr-b/f43-1-queue-red.txt)) y verde
 ([`f43-1-queue-green.txt`](evidence/pr-b/f43-1-queue-green.txt)).
 
+**F43-1, tercera ronda (desmontaje y rechazo).** La cola vivía en la instancia y moría al
+navegar a otra página de Mi cuenta: una escritura vieja podía terminar después de la
+nueva o revertir sobre ella, y un `persist()` rechazado dejaba la cola bloqueada. Ahora
+la cola es un controlador de módulo (`src/features/account/theme-controller.ts`) que
+sobrevive al desmontaje: como mucho una escritura en vuelo, última elección pendiente,
+el confirmado sigue a cada escritura correcta, y solo el controlador aplica
+`data-theme`, escribe la cookie y revierte. Un rechazo cuenta como fallo (revierte y
+muestra `errors.saveFailed`) y `finally` libera siempre la escritura. ThemeSelector solo
+se suscribe. Además, el `AccountProvider` del layout no pisa el tema con el del perfil
+que trae el servidor (por ejemplo tras `revalidatePath` al guardar el nombre) si en esa
+página ya hubo una elección. Pruebas, rojo y verde
+([`f43-1-r3-red.txt`](evidence/pr-b/f43-1-r3-red.txt),
+[`f43-1-r3-green.txt`](evidence/pr-b/f43-1-r3-green.txt)): desmontar y volver a montar
+con las respuestas invertidas, fallo de la escritura vieja después del desmontaje sin
+pisar la elección nueva, `persist()` que rechaza y una elección posterior que se guarda,
+y el layout con una elección en curso. En todas, el perfil, la cookie, `data-theme` y la
+selección coinciden al final.
+
 **Menor, el fragmento en una variable de módulo.** Entrar guarda solo el aviso ya
 interpretado (verificado, caducado o ninguno); la cadena del fragmento, que puede
 llevar tokens, no se conserva y se borra de la URL.

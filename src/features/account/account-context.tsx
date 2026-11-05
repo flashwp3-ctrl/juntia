@@ -6,12 +6,15 @@
 import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { initialOf } from "@/domain/account";
 import { applyTheme, readThemeCookie, writeThemeCookie, type Theme } from "@/lib/theme";
+import { themeController } from "./theme-controller";
 
 export type ShellAccount = { displayName: string; initial: string };
 const AccountContext = createContext<ShellAccount | null>(null);
 
 export function AccountProvider({ displayName, theme, children }: { displayName: string; theme: Theme; children: ReactNode }) {
   useEffect(() => {
+    // F43-1, tercera ronda: con una elección hecha en esta página, manda el controlador (el perfil puede venir desfasado).
+    if (themeController().hasChoice()) return;
     if (readThemeCookie() !== theme) writeThemeCookie(theme);
     applyTheme(theme);
   }, [theme]);

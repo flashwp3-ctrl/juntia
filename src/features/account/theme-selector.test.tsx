@@ -5,10 +5,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
+import { resetThemeController } from "./theme-controller";
 import { ThemeSelector } from "./theme-selector";
 
 let systemDark = false;
 beforeEach(() => {
+  // El controlador del tema vive a nivel de módulo (F43-1, tercera ronda): cada prueba empieza con uno nuevo.
+  resetThemeController();
   systemDark = false;
   document.cookie = "juntia_theme=; Path=/; Max-Age=0";
   document.documentElement.removeAttribute("data-theme");
@@ -87,8 +90,9 @@ describe("ThemeSelector (T040)", () => {
   // efectiva. Al final, el perfil (lo que guardó persist), la cookie, data-theme y la selección coinciden.
   function deferred() {
     let resolve!: (value: { ok: true } | { ok: false; error: "failed" }) => void;
-    const promise = new Promise<{ ok: true } | { ok: false; error: "failed" }>((done) => { resolve = done; });
-    return { promise, resolve };
+    let reject!: (error: unknown) => void;
+    const promise = new Promise<{ ok: true } | { ok: false; error: "failed" }>((done, fail) => { resolve = done; reject = fail; });
+    return { promise, resolve, reject };
   }
   const state = () => ({
     theme: document.documentElement.getAttribute("data-theme"),
@@ -142,5 +146,58 @@ describe("ThemeSelector (T040)", () => {
     await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
     expect(persist.mock.calls.map(([theme]) => theme)).toEqual(["dark", "light"]);
     await vi.waitFor(() => expect(state()).toEqual({ theme: "light", cookie: "light", checked: copy.account.appearance.light }));
+  });
+
+  // F43-1, tercera ronda (revisión del PR #43): la cola sobrevive al desmontaje (navegar a Perfil y volver) y un rechazo
+  // de persist() no la bloquea. Solo el controlador revierte y escribe la cookie; una instancia vieja nunca pisa la nueva.
+  it("desmontar y volver a montar con las respuestas invertidas: al final todo coincide con el perfil", async () => {
+    const first = deferred();
+    const second = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const user = userEvent.setup();
+    const view = render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    view.unmount();
+    // La página nueva llega con el tema del servidor (todavía light): la elección en curso manda.
+    render(<ThemeSelector initial="light" persist={persist} />);
+    expect(state()).toEqual({ theme: "dark", cookie: "dark", checked: copy.account.appearance.dark });
+    await user.click(option(copy.account.appearance.system));
+    expect(persist).toHaveBeenCalledTimes(1);
+    second.resolve({ ok: true }); // la respuesta «adelantada» de B no cambia nada: B todavía no se envió
+    first.resolve({ ok: true });
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    expect(persist.mock.calls.map(([theme]) => theme)).toEqual(["dark", "system"]);
+    await vi.waitFor(() => expect(state()).toEqual({ theme: "light", cookie: "system", checked: copy.account.appearance.system }));
+    expect(screen.queryByText(copy.errors.saveFailed)).toBeNull();
+  });
+
+  it("un fallo de A después de desmontar no pisa la elección de la instancia nueva", async () => {
+    const first = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const view = render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    view.unmount();
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.system));
+    first.resolve({ ok: false, error: "failed" });
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(state()).toEqual({ theme: "light", cookie: "system", checked: copy.account.appearance.system }));
+    expect(screen.queryByText(copy.errors.saveFailed)).toBeNull();
+  });
+
+  it("persist() que rechaza: revierte, lo dice y la cola se recupera para la siguiente elección", async () => {
+    const first = deferred();
+    const persist = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<ThemeSelector initial="light" persist={persist} />);
+    await user.click(option(copy.account.appearance.dark));
+    first.reject(new TypeError("Failed to fetch"));
+    expect(await screen.findByText(copy.errors.saveFailed)).toBeTruthy();
+    expect(state()).toEqual({ theme: "light", cookie: "light", checked: copy.account.appearance.light });
+    await user.click(option(copy.account.appearance.system));
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(screen.queryByText(copy.errors.saveFailed)).toBeNull());
+    expect(state()).toEqual({ theme: "light", cookie: "system", checked: copy.account.appearance.system });
   });
 });

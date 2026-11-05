@@ -1,0 +1,10 @@
+     × desmontar y volver a montar con las respuestas invertidas: al final todo coincide con el perfil 80ms
+     × un fallo de A después de desmontar no pisa la elección de la instancia nueva 1101ms
+     × persist() que rechaza: revierte, lo dice y la cola se recupera para la siguiente elección 1066ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+     × con una elección en curso, no la pisa con el perfil del servidor 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

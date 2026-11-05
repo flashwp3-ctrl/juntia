@@ -4,11 +4,12 @@
 // del body (globals.css), que con movimiento reducido no existe. Persistencia aprobada (Q7): `profiles` + cookie.
 // La miniatura se pinta con los tokens del tema que representa (`data-theme` local), sin colores sueltos.
 import Link from "next/link";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
-import { applyTheme, writeThemeCookie, type Theme } from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
+import { themeController } from "./theme-controller";
 import type { AccountActionResult } from "./types";
 
 const options: readonly { value: Theme; icon: AppIconName }[] = [
@@ -37,52 +38,15 @@ function Preview({ theme }: { theme: Theme }) {
 type ThemeSelectorProps = { initial: Theme; persist: (theme: Theme) => Promise<AccountActionResult> };
 
 export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
-  const [value, setValue] = useState<Theme>(initial);
-  const [problem, setProblem] = useState<"sessionExpired" | "failed" | null>(null);
-  // F43-1 (revisión del PR #43, dos rondas): el último tema que el perfil confirmó. Las escrituras se serializan: hay como
-  // mucho una en vuelo, y la elección más reciente espera su turno («última elección pendiente»; las intermedias se
-  // descartan). Cada escritura correcta actualiza el confirmado, aunque ya no sea la última elección. Las opciones no se
-  // deshabilitan: las flechas del radiogroup siguen funcionando mientras guarda.
-  const confirmed = useRef<Theme>(initial);
-  const inFlight = useRef(false);
-  const pending = useRef<Theme | null>(null);
+  // F43-1 (revisión del PR #43, tres rondas): el guardado lo hace el controlador de módulo (theme-controller.ts), que
+  // serializa las escrituras, sigue el tema confirmado, revierte y escribe la cookie, y sobrevive a desmontar la página.
+  // Este componente solo se suscribe a su estado y le pasa las elecciones.
+  const controller = themeController();
+  useState(() => controller.adopt(initial));
+  const serverState = useMemo(() => ({ value: initial, problem: null }), [initial]);
+  const { value, problem } = useSyncExternalStore(controller.subscribe, controller.getState, () => serverState);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const revertTo = (theme: Theme) => {
-    setValue(theme);
-    applyTheme(theme);
-    writeThemeCookie(theme);
-  };
-
-  const save = async (theme: Theme) => {
-    inFlight.current = true;
-    const result = await persist(theme);
-    if (result.ok) confirmed.current = theme;
-    const next = pending.current;
-    pending.current = null;
-    if (next !== null && next !== theme) {
-      // Hay una elección más reciente: se guarda ella y decide el resultado final.
-      void save(next);
-      return;
-    }
-    inFlight.current = false;
-    if (result.ok) setProblem(null);
-    // La sesión caducó: el dispositivo conserva la elección y se pide volver a entrar (T048).
-    else if (result.error === "sessionExpired") setProblem("sessionExpired");
-    else {
-      // Cualquier otro fallo no se muestra como éxito: data-theme, cookie y selección vuelven al último confirmado.
-      revertTo(confirmed.current);
-      setProblem("failed");
-    }
-  };
-
-  const choose = (theme: Theme) => {
-    setValue(theme);
-    applyTheme(theme);
-    writeThemeCookie(theme);
-    if (inFlight.current) pending.current = theme;
-    else void save(theme);
-  };
+  const choose = (theme: Theme) => controller.choose(theme, persist);
 
   const move = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const last = options.length - 1;
