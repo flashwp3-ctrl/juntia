@@ -775,3 +775,251 @@ test-exit=1
 ```
 
 Ejecución real del ensayo: pendiente de completar los scripts y el runner PGDG 17.
+
+## T030 — primer ensayo completo y tipos verdes
+
+5 de noviembre de 2026, commit `698f04e5e3ec8d5c49fa16fd2c99019a3e6554b5`.
+Run [42041786375](https://github.com/flashwp3-ctrl/juntia/actions/runs/42041786375),
+dispatch manual y `gh run watch ... --exit-status --interval 20`: exit 0.
+Salida completa: [restore-first-green.txt](evidence/restore-first-green.txt).
+`verify` sobre el mismo SHA, exit 0, 20.41 s:
+[restore-first-local-verify.txt](evidence/restore-first-local-verify.txt).
+
+```text
+Files=10, Tests=318; Result: PASS
+Test Files 4 passed (4); Tests 17 passed (17)
+database.types.ts coincide con public generado en el runner.
+Camino A: MANIFIESTO COINCIDE; usuario restaurado entra
+Auth: columnas y auth.uid() coinciden con el stack
+Camino B: MANIFIESTO COINCIDE; base temporal borrada
+exit=0 base=juntia_restore_20261105T140958_12851 creada_por_este_script=1
+N1-migration: rechazo esperado, exit=1, sin marca de éxito
+N2-count: rechazo esperado, exit=1, sin marca de éxito
+N3-sha: rechazo esperado, exit=1, sin marca de éxito
+N4-data-hash: rechazo esperado, exit=1, sin marca de éxito
+N5-partial-restore: rechazo esperado, exit=1, sin marca de éxito
+N5-cleanup: bases restantes=0; log con exit distinto de cero
+N6-backup: rechazo esperado, exit=128, sin marca de éxito
+N6-cleanup: sin archivos publicados ni temporales
+N7-existing: rechazo esperado, exit=1, sin marca de éxito
+N7-integridad: sha256 del archivo existente idéntico
+N8-drop: rechazo esperado, exit=1, sin marca de éxito
+N8-cleanup: DROP FALLÓ, exit=1; job borró la base propia; bases restantes=0
+N9-decrypt: rechazo esperado, exit=2, sin marca de éxito
+N9-cleanup: sin archivos publicados ni temporales
+ENSAYO LISTO: A y B, nueve controles negativos rechazados
+supabase start: 104 s; test:db: 5.89 s (< 60 s)
+Job app: success, 153.34 s; Job db: success, 224.09 s (resúmenes internos)
+```
+
+Sin cambios de techo ni datos reales. El registro de migraciones del arranque
+plain conserva las versiones aplicadas para exigir la misma comparación del
+manifiesto en ambos destinos. Los hooks de fallo solo se aceptan en modo CI;
+el modo producción exige etiqueta `db-prod-*`. El glosario solo cambia las dos
+filas `voided`; `scope` conserva su condición de propuesta.
+
+### Corrección final de T024 — objeto de red del SDK
+
+Antes de la corrección se añadió al caso existente el error de fetch envuelto
+por PostgREST y se ejecutó `npm run test:components -- --run src/lib/db/errors.test.ts`:
+
+```text
+HTTP, red y desconocidos sin filtrar mensaje técnico: failed
+AssertionError: expected 'unexpected' to be 'network'
+Tests 1 failed | 23 passed (24)
+```
+
+Después de traducir el objeto con código vacío y mensaje de fetch/abort:
+`Test Files 1 passed (1); Tests 24 passed (24)`, exit 0. Ningún mensaje técnico
+se devuelve al producto. Se repetirá el gate completo porque cambió código.
+
+## T032 — gate final
+
+Pendiente: ejecución completa sobre el commit de la corrección final de T024.
+
+## T033 — entrega para revisión
+
+Pendiente: abrir el PR listo para revisión con Objective, Files, Decisions,
+Commands, Screenshots y Risks and pending. La revisión humana del SQL permanece
+pendiente de los fundadores; no se marca T033 completada ni se mergea el PR.
+
+## T031 — reservas de evidencia de los PR siguientes
+
+No se adelantan tareas ni verificaciones de interfaz. Las secciones siguientes
+se rellenan en el PR que les corresponde; no constituyen evidencia de ejecución.
+
+### T034
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T035
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T036
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T037
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T038
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T051
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T052
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T053
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T054
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T055
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T056
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T057
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T058
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T059
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T060
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR B**.
+
+### T071
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T072
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T073
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T074
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T075
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T076
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+
+### T079
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T084
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T085
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T086
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T087
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T088
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T089
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T090
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T091
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T092
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T093
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T094
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T095
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T096
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T097
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T098
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T099
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T100
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T101
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T102
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T103
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T104
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+
+### T105
+
+Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.

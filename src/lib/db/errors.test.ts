@@ -14,6 +14,8 @@ it.each(Object.entries(codes))("%s → %s", (code, kind) => expect(mapDbError({ 
 it("HTTP, red y desconocidos sin filtrar mensaje técnico", () => {
   expect(mapDbError({ status: 401 }).kind).toBe("notAuthenticated");
   expect(mapDbError(new TypeError("fetch failed")).kind).toBe("network");
+  expect(mapDbError({ code: "", message: "TypeError: fetch failed", details: "internal fetch stack" }).kind).toBe("network");
+  expect(mapDbError({ code: "", message: "AbortError: The operation was aborted" }).kind).toBe("network");
   expect(mapDbError({ code: "PGRST500" }).kind).toBe("unexpected");
   expect(mapDbError({ code: "unknown", message: "private detail" }).message).not.toContain("private detail");
 });

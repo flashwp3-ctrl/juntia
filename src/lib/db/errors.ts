@@ -16,6 +16,9 @@ export function mapDbError(error: unknown): DbError {
   if (typeof error === "object" && error !== null) {
     if ("status" in error && error.status === 401) return new DbError("notAuthenticated");
     if ("code" in error && typeof error.code === "string" && Object.hasOwn(kinds, error.code)) return new DbError(kinds[error.code as keyof typeof kinds]);
+    // PostgREST envuelve los fallos de fetch en un objeto con code vacío.
+    if ("code" in error && error.code === "" && "message" in error && typeof error.message === "string"
+      && /^(?:TypeError: (?:fetch failed|Failed to fetch|Load failed)|AbortError:|FetchError:)/.test(error.message)) return new DbError("network");
   }
   return new DbError("unexpected");
 }
