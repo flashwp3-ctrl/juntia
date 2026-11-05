@@ -632,8 +632,11 @@ clave devuelve ese resultado **sin escribir auditoría otra vez**.
 
 ### R8.5 Perfil: se crea al primer acceso, no con un trigger en `auth.users`
 
-**Fuente:** FR-029 (el perfil nace con la cuenta, con el nombre de A2); ADR-013
-§2.5; R1 (el esquema `auth` no es de `postgres`).
+**Fuente:** FR-029, enmendado tras la revisión del PR #37 por decisión del primer
+fundador (Q16; maestro 16.17): «el perfil se crea en el primer acceso verificado,
+con el nombre visible de A2». ADR-013 §2.5; R1 (el esquema `auth` no es de
+`postgres`). `ensure_profile()` solo corre con una sesión, y Auth solo da sesión
+a una cuenta verificada.
 
 **Decisión:** el nombre visible viaja en `user_metadata.display_name` al
 registrarse. La primera petición autenticada (la acción de entrar o

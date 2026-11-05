@@ -70,6 +70,15 @@ a la decisión 16 del maestro y la segunda fundadora las confirma con el merge.
 - Q14: ¿Se puede cambiar de gasto a ingreso, o al revés, al editar? → A: **No.** El tipo queda fijo; para corregirlo se elimina y se anota de nuevo.
 - Q15: ¿Qué pasa si el mismo movimiento se edita casi a la vez en dos sitios? → A: **La segunda edición falla y lo explica**, con control de versión, como en los presupuestos. Nada se pierde en silencio.
 
+### Session 2026-11-04 (revisión del PR #37, plan)
+
+Una pregunta que la revisión adversarial del plan encontró sin decidir. La
+respondió el primer fundador el 4 de noviembre de 2026; se suma a la decisión 16
+del maestro (16.17) y la segunda fundadora la confirma con el merge del PR del
+plan.
+
+- Q16: ¿Cuándo se crea el perfil? → A: **En el primer acceso verificado**, con el nombre visible de A2, que hasta entonces se guarda en los metadatos de la cuenta. No con la cuenta misma (FR-029).
+
 ## User Scenarios & Testing *(mandatory)*
 
 Los actores son las dos personas fundadoras, que usan Juntia con sus datos
@@ -385,7 +394,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 - **FR-026**: La sesión se valida en el servidor con `getClaims()`, se renueva en `proxy.ts`, se crea un cliente por petición y ninguna respuesta autenticada se guarda en cachés compartidas (ADR-013 §6.5).
 - **FR-027**: Las rutas de producto y de Mi cuenta exigen sesión; sin sesión redirigen a Entrar y, tras entrar, vuelven a la ruta pedida.
 - **FR-028**: Cerrar sesión muestra S1, S2 si falla y S3 en Entrar (04·16).
-- **FR-029**: Un perfil se crea con la cuenta, con el nombre visible de A2, y es la autoridad del nombre y del tema (§15.5).
+- **FR-029**: El perfil se crea en el primer acceso verificado, con el nombre visible de A2, que hasta entonces se guarda en los metadatos de la cuenta; es la autoridad del nombre y del tema (§15.5; Q16).
 
 #### Anotar (02·5, 02·6)
 

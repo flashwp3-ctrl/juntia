@@ -1028,8 +1028,9 @@ Tomada el 4 de noviembre de 2026 sobre la hoja de decisiones de P0-1, en las doc
 | 16.14 | Tipo al editar | No se cambia de gasto a ingreso ni al revés |
 | 16.15 | Edición doble | La segunda edición con versión antigua falla y lo explica; nada se pierde en silencio |
 | 16.16 | Enumeración por la API de Auth | Riesgo aceptado hasta MVP-1; las pantallas no enumeran. Decidida por el primer fundador el 4 de noviembre de 2026, tras el preflight del plan de P0-1: la API de Auth de Supabase, llamada directamente, revela si un correo está en la lista permitida (403) y si ya tiene cuenta (422). Se suma a los pendientes de lanzamiento |
+| 16.17 | Creación del perfil | En el primer acceso verificado, con el nombre visible de A2 guardado hasta entonces en los metadatos de la cuenta. Decidida por el primer fundador el 4 de noviembre de 2026 en la revisión del PR del plan de P0-1 (spec 002, Q16 y FR-029) |
 
-La 16.16 salió del preflight del plan de P0-1; la segunda fundadora la confirma con el merge del PR del plan.
+La 16.16 salió del preflight del plan de P0-1 y la 16.17 de su revisión; la segunda fundadora las confirma con el merge del PR del plan.
 
 **Pendientes de lanzamiento que añade esta decisión:** términos legales definitivos, servidor de correo propio, apertura del registro y cerrar la enumeración por la API de Auth (16.16). Se suman al bloqueo legal de §15.6.1.
 

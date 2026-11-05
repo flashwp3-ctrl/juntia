@@ -639,8 +639,10 @@ Decisiones del plan que el revisor puede querer distintas. Ninguna necesita ADR.
    `docs/GLOSSARY.md` §10. Si se aprueba con este plan, el PR A quita la marca
    «[propuesta]» de esa fila del glosario. **No** se usa `scope`: el alcance se
    deriva de `owner_user_id` / `group_id` (research R8.1).
-2. **Perfil creado al primer acceso** con `ensure_profile()`, no con un trigger
-   en `auth.users` (research R8.5).
+2. **Perfil creado al primer acceso verificado** con `ensure_profile()`, no con
+   un trigger en `auth.users` (research R8.5). Ya no es solo del plan: lo decidió
+   el primer fundador en la revisión del PR #37 (spec Q16 y FR-029; maestro
+   16.17).
 3. **Tope de 140 caracteres** en la descripción y de 60 en el nombre visible:
    no los fija el diseño.
 4. **Contraseña mínima de 8 caracteres**, sin reglas de composición (el valor
