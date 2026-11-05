@@ -598,8 +598,23 @@ de la tabla y Vitest la del dominio.
 enteros (`amount_minor % 100 = 0`) y el máximo de AmountInput (999.999.999
 pesos = `99999999900`). Así la prueba de ida y vuelta de `9007199254740993` por
 la **vista** se puede sembrar (como `postgres`, en pgTAP) sin violar la tabla,
-y la regla de negocio sigue en la función y en el dominio. Ver la pregunta
-abierta sobre la ida y vuelta «por función» en el plan.
+y la regla de negocio sigue en la función y en el dominio. Ningún límite se
+relaja.
+
+**Cómo se prueba la precisión ([V] 6), según la nota del 4 de noviembre de 2026
+en ADR-013** (decisión de los fundadores en la revisión del PR #37, F37-5):
+
+- **(a) En el parser** `juntia_private.parse_amount_minor(text)`, el único que
+  usan todas las funciones que escriben para pasar de texto a `bigint`, llamado
+  directamente en pgTAP con `9007199254740993` y los límites de `bigint`
+  (`9223372036854775807` acepta; `9223372036854775808`, signo, decimales, letras
+  y vacío fallan con `JT002`).
+- **(b) En la lectura por vista** de una fila con `9007199254740993` sembrada
+  como `postgres`, que vuelve como texto idéntico por SQL y por supabase-js.
+- **Aparte**, el tope de negocio de Anotar (999.999.999 pesos) se prueba en la
+  función pública `create_transaction`: acepta `99999999900` y rechaza
+  `100000000000` con `JT003`. Las funciones que escriben nunca aceptan
+  `9007199254740993`, y eso es correcto.
 
 ### R8.4 Concurrencia, por función (ADR-013 §3)
 

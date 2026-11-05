@@ -36,12 +36,22 @@ código. Lo marcado **decisión del plan** está justificado en
    para `public`, `anon` ni `authenticated`; sin grants en tablas y secuencias
    nuevas (ADR-013 §5.4). Se comprueba con la prueba de privilegios efectivos, no
    se supone.
-5. `drop extension if exists pg_graphql` (FR-005; ADR-013 §5.3). Si el proyecto
-   alojado no lo permite, el PR A lo dice y la [V] 7 cae a su alternativa
-   («ninguna tabla controlada aparece en su esquema»).
+5. `drop extension if exists pg_graphql` (FR-005; ADR-013 §5.3). Quitarlo o
+   desactivarlo, en local y en `juntia-dev`, es un **criterio de salida del PR
+   A**. Si el proyecto alojado no lo permite, **el PR A se para y lo reporta**; no
+   cambia a la alternativa de «ninguna tabla controlada en su esquema» (revisión
+   del PR #37, F37-8).
 6. `juntia_private.current_uid()` (enmienda de ADR-013 §2.3): `language sql
    stable security invoker return auth.uid();`, de `postgres`, `execute` solo
    para `juntia_writer`.
+
+**Reparto en tres migraciones** (revisión del PR #37, F37-2; plan, PR A):
+
+| Migración | Contiene | Punto de control después |
+| --- | --- | --- |
+| `foundation` | Lo de arriba, `profiles`, `categories`, `signup_allowlist`, el hook, `my_profile` y las funciones de perfil | 1: [V] 1 (con `ensure_profile`) y 9, y lo que ya se pueda de 2, 7 y 8 |
+| `controlled_tables` | `transactions`, `audit_events`, `idempotency_records`, sus triggers, políticas y grants, y las vistas de movimientos. **Ninguna función de dinero** | 2: [V] 1, 2, 7, 8 y 9 definitivas sobre todas las tablas controladas y vistas |
+| `money_functions` | `create_transaction`, `update_transaction`, `void_transaction`, `parse_amount_minor`, `request_fingerprint` | — |
 
 ## 2. Tablas de `juntia_data`
 

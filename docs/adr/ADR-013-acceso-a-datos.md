@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final) · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -455,6 +455,16 @@ se apoya todo lo demás.
 6. **Importes:** ida y vuelta de `9007199254740993` y de los límites de
    `bigint`, en entrada y en salida, por función y por vista. Más la prueba de
    que ningún tipo de importe de `public` es `number`.
+
+   *Nota del 4 de noviembre de 2026 (decisión de los fundadores en la revisión
+   del PR #37; precisa la verificación, no relaja ningún límite):* como las
+   funciones que escriben aplican el tope de negocio de Anotar (999.999.999
+   pesos), un importe de `9007199254740993` nunca puede entrar por ellas. La
+   precisión se demuestra entonces (a) en el parser de texto a `bigint` que usan
+   **todas** las funciones que escriben, llamado directamente en pgTAP con
+   `9007199254740993` y los límites de `bigint`, y (b) en la lectura por vista de
+   una fila sembrada como `postgres` con ese importe. El tope de negocio se
+   prueba por separado en la función pública.
 7. **Privilegios efectivos:** una prueba pgTAP lista los privilegios reales de
    `anon` y `authenticated` y los compara con la lista esperada:
    - sobre tablas, incluidos `TRUNCATE`, `REFERENCES` y `TRIGGER`;

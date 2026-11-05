@@ -123,7 +123,7 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 
 | Elemento `[V]` | PR | Salida real | ¿Bloquea el plan? |
 | --- | --- | --- | --- |
-| ADR-013 [V] 1, 2, 7, 8 y 9 **definitivas** | **A**, con la primera migración y **antes** de la primera función de dinero | Pendiente | No |
+| ADR-013 [V] 1, 2, 7, 8 y 9 **definitivas** | **A**, en **dos puntos de control** antes de la primera función de dinero: tras `foundation` (1 y 9, y lo que ya se pueda de 2, 7 y 8) y tras `controlled_tables` (las cinco sobre todas las tablas controladas y vistas) | Pendiente | No |
 | ADR-013 [V] 3, 4, 5 (equivalente en movimientos, Q15) y 6 | A | Pendiente | No |
 | Rol de login de `db push` alojado, `drop extension pg_graphql` y esquemas expuestos en `juntia-dev` | A | Pendiente | No |
 | Restauración desde vacío por los dos caminos (Supabase local con `db reset` al commit etiquetado; PostgreSQL 17 normal con arranque + migraciones), con datos de prueba | A | Pendiente. Hasta tener salida, la copia no es restaurable | No |
@@ -197,9 +197,9 @@ supabase/
 ├── migrations/
 │   ├── 20261105000100_foundation.sql    # PR A, 1.ª: esquemas, juntia_writer, default privileges, pg_graphql, current_uid(),
 │   │                                    #   profiles, categories, signup_allowlist, hook, vistas my_profile, funciones de perfil
-│   ├── 20261105000200_transactions.sql  # PR A, 2.ª (después del run verde de la 1.ª): transactions, audit_events,
-│   │                                    #   idempotency_records, triggers, vistas de movimientos
-│   └── 20261105000300_money_functions.sql # PR A, 3.ª: create/update/void, parse_amount_minor, request_fingerprint
+│   ├── 20261105000200_controlled_tables.sql # PR A, 2.ª (tras el punto de control 1): transactions, audit_events,
+│   │                                    #   idempotency_records, triggers, políticas, vistas de movimientos; sin funciones de dinero
+│   └── 20261105000300_money_functions.sql # PR A, 3.ª (tras el punto de control 2): create/update/void, parse_amount_minor, request_fingerprint
 ├── seed.sql                             # Solo runner: correos de prueba en la lista y esquema tests con helpers de pgTAP
 ├── restore/
 │   └── plain-postgres-bootstrap.sql     # Roles y objetos mínimos de auth para el camino B (R6)
@@ -292,7 +292,8 @@ No es `tasks.md`: dice qué decisión técnica aplica a cada requisito.
 
 - **Base de datos y seguridad (FR-001–FR-011):** según
   [data-model.md](data-model.md) §1–§5. Tres migraciones en el orden de la tabla
-  de arriba; la 1.ª no contiene ninguna función de dinero.
+  de arriba; solo la 3.ª contiene funciones de dinero, y entra después de los dos
+  puntos de control del PR A.
 - **Dinero (FR-012–FR-020):** `domain/money` y `domain/transactions` puros; las
   mismas reglas repetidas en la función SQL y protegidas por la tabla
   (research R8.3).
@@ -342,19 +343,49 @@ US-10.
 
 **Orden obligatorio dentro del PR (SC-006; decisión 15):**
 
-1. Migración `foundation` (sin funciones de dinero) + pgTAP `01`–`06` y `09` +
-   pruebas de integración de [V] 2 por HTTP. `gh workflow run ci.yml --ref
-   <rama>` sobre **ese commit**: salida de **ADR-013 [V] 1, 2, 7, 8 y 9
-   definitivas** pegada en la evidencia. La [V] 1 se prueba con una función de
-   escritura sin dinero (`ensure_profile`), llamada por la API y por SQL directo,
-   y con un caso de RLS a nombre de otra persona.
-2. Si la [V] 1 falla, **se para** y ADR-013 se reabre (decisión 15). No se
-   sustituye por funciones de `postgres`.
-3. Comprobaciones en `juntia-dev` con `db push --linked` de la migración 1:
-   qué rol de login usa, si `grant juntia_writer to …`, `alter function … owner
-   to juntia_writer` y `drop extension pg_graphql` funcionan, y que «Exposed
-   schemas» es solo `public`. Salida (sin claves) en la evidencia.
-4. Solo entonces, migraciones `transactions` y `money_functions` con sus pruebas.
+Dos puntos de control **antes de cualquier función de dinero** (revisión del PR
+#37, F37-2). Cada uno es **un commit propio** con **su propio run** de `gh
+workflow run ci.yml --ref <rama>` sobre ese commit, y su salida va a la
+evidencia con el enlace al run. **Si la [V] 1 falla en cualquiera de los dos, se
+para** y ADR-013 se reabre (decisión 15); no se sustituye por funciones de
+`postgres`.
+
+1. **Punto de control 1 — migración `foundation`** (esquemas, `juntia_writer`,
+   privilegios por defecto, `pg_graphql`, `current_uid()`, `profiles`,
+   `categories`, `signup_allowlist`, el hook, `my_profile` y las funciones de
+   perfil; **ninguna tabla controlada ni función de dinero**), con pgTAP `01`,
+   `02`, `03`, `04`, `06` y `09` e integración por HTTP. Salida:
+   - **[V] 1** con `ensure_profile` (función que escribe sin dinero, de
+     `juntia_writer`): devuelve a quien llama por la API y por SQL directo como
+     `authenticated`, la RLS se le aplica (insertar el perfil de otra persona
+     falla) y `current_uid()` es `null` sin claims;
+   - **[V] 9**, forma del claim;
+   - lo que de **[V] 2, 7 y 8** ya se puede correr sobre lo que existe:
+     escritura directa imposible en `profiles` por la API y por SQL, privilegios
+     efectivos de los tres esquemas y de estas tablas, `my_profile` con
+     `security_invoker` y sin `usage`.
+2. **Comprobaciones en `juntia-dev`** con `db push --linked` de la migración
+   `foundation`: qué rol de login usa, si `grant juntia_writer to …`, `alter
+   function … owner to juntia_writer` y `drop extension pg_graphql` funcionan, y
+   que «Exposed schemas» es solo `public`. Salida (sin claves) en la evidencia.
+   **Si `pg_graphql` no se puede quitar o desactivar, el PR A se para y lo
+   reporta** (F37-8): no cambia a una alternativa.
+3. **Punto de control 2 — migración `controlled_tables`**: `transactions`,
+   `audit_events`, `idempotency_records`, sus triggers, políticas y grants, y las
+   vistas de movimientos (`my_transactions`, `my_transaction_months`,
+   `my_recent_categories`), **todavía sin funciones de dinero**. pgTAP `01`–`05`,
+   `07` y `09` completos e integración por HTTP. Salida de **[V] 1, 2, 7, 8 y 9
+   definitivas sobre todas las tablas controladas y vistas**: `juntia_writer`
+   con sus políticas sobre las tablas nuevas (inserción y `select … for update`
+   a nombre de otra persona con `set local role juntia_writer` y los claims de
+   quien llama, como en el preflight, 1d.3; nada queda en el esquema); escritura directa imposible en
+   cada tabla controlada; la auditoría no se modifica ni desde `juntia_writer`;
+   privilegios efectivos completos; las cuatro vistas con `security_invoker` y
+   sin `usage`.
+4. **Solo entonces, migración `money_functions`** (`create_transaction`,
+   `update_transaction`, `void_transaction`, `parse_amount_minor`,
+   `request_fingerprint`) con `08_money_functions.test.sql` y el resto de la
+   integración ([V] 3, 4, 5, 6).
 
 **Pruebas por capa:**
 
@@ -362,8 +393,8 @@ US-10.
 | --- | --- | --- |
 | Dominio (Vitest `domain`) | `Money` sin `number`; pesos → unidades menores exacto; texto ↔ `bigint` con `9007199254740993` y los límites de `bigint`; validación de borrador; `monthKey` y «hoy» en Bogotá con un instante de borde (UTC del 1 de noviembre, aún 31 de octubre en Bogotá); `monthSummary` excluye ingresos; recientes; flechas; **dataset dorado: los gastos suman 41290000 unidades menores (412.900) y el ingreso no suma** | `src/domain/**/*.test.ts` |
 | Componentes | Ninguna (no hay interfaz) | — |
-| SQL/RLS (pgTAP) | Los nueve archivos de `supabase/tests/`: privilegios efectivos de `anon` y `authenticated` comparados con la lista esperada (incluidos `TRUNCATE`, `REFERENCES`, `TRIGGER`, secuencias, `usage` y `create` por esquema); ninguna función `security definer` en `public`; vistas con `security_invoker`; forma del claim; RLS de cada tabla para cada rol; invariantes de FR-007; trigger de tipo inmutable; auditoría de solo inserción también para `juntia_writer`; cada función con éxito, rechazo por RLS, repetición idempotente, clave reusada con otra intención y cada validación; importe de `9007199254740993` sembrado como `postgres` y leído por la vista como texto idéntico; catálogo exacto | `supabase/tests/` |
-| Integración de servidor (Vitest `integration`) | Escrituras directas por PostgREST con un JWT real (POST/PATCH/DELETE, perfiles `juntia_data`/`juntia_private`, `/graphql/v1`); dos peticiones simultáneas con la misma clave → un movimiento ([V] 4); misma clave, otra intención → `JT008`; dos ediciones con la misma versión → una gana, la otra `JT011` y nada se sobrescribe ([V] 5 en movimientos, Q15); un `RAISE` a mitad de `create_transaction` no deja filas ([V] 3); importes como `string` por `src/lib/db` y test de tipos de que ningún importe de `database.types.ts` es `number` ([V] 6); Tomás no ve ni cambia nada de Sara por vistas ni funciones (SC-007); la siembra del dataset dorado por la función real y los totales de octubre por `src/lib/db` + dominio = 412.900 (SC-008); reintento de `40P01` con la misma clave (simulado con dos transacciones que se bloquean) | `tests/integration/` |
+| SQL/RLS (pgTAP) | Los nueve archivos de `supabase/tests/`: privilegios efectivos de `anon` y `authenticated` comparados con la lista esperada (incluidos `TRUNCATE`, `REFERENCES`, `TRIGGER`, secuencias, `usage` y `create` por esquema); ninguna función `security definer` en `public`; vistas con `security_invoker`; forma del claim; RLS de cada tabla para cada rol; invariantes de FR-007; trigger de tipo inmutable; auditoría de solo inserción también para `juntia_writer`; cada función con éxito, rechazo por RLS, repetición idempotente, clave reusada con otra intención y cada validación; **[V] 6 según su nota del 4 nov 2026 en ADR-013**: (a) `juntia_private.parse_amount_minor`, el parser texto → `bigint` que usan todas las funciones que escriben, llamado directamente con `9007199254740993`, `9223372036854775807` y los valores no válidos (signo, decimales, letras, `9223372036854775808`, vacío), y (b) una fila con `9007199254740993` sembrada como `postgres` y leída por la vista como texto idéntico; **aparte**, el tope de Anotar (999.999.999 pesos = `99999999900`) en `public.create_transaction`, que acepta `99999999900` y rechaza `100000000000` (1.000.000.000 pesos) con `JT003`; catálogo exacto | `supabase/tests/` |
+| Integración de servidor (Vitest `integration`) | Escrituras directas por PostgREST con un JWT real (POST/PATCH/DELETE, perfiles `juntia_data`/`juntia_private`, `/graphql/v1`); dos peticiones simultáneas con la misma clave → un movimiento ([V] 4); misma clave, otra intención → `JT008`; dos ediciones con la misma versión → una gana, la otra `JT011` y nada se sobrescribe ([V] 5 en movimientos, Q15); un `RAISE` a mitad de `create_transaction` no deja filas ([V] 3); importes como `string` por `src/lib/db` (la fila sembrada de `9007199254740993` vuelve idéntica por supabase-js) y test de tipos de que ningún importe de `database.types.ts` es `number` (resto de [V] 6); Tomás no ve ni cambia nada de Sara por vistas ni funciones (SC-007); la siembra del dataset dorado por la función real y los totales de octubre por `src/lib/db` + dominio = 412.900 (SC-008); reintento de `40P01` con la misma clave (simulado con dos transacciones que se bloquean) | `tests/integration/` |
 | E2E | **Ninguna**: no hay recorrido de interfaz (spec, tabla de specs E2E) | — |
 
 **CI:** entra el job `db` ([contracts/ci.md](contracts/ci.md)); `verify` y el
@@ -393,8 +424,11 @@ presupuesto de `test:db`
 
 **`[P]` por aprobar viendo la pantalla:** ninguno.
 
-**Criterios de salida:** el job `db` verde en el último commit, con [V] 1, 2, 7,
-8 y 9 pegadas de un commit **anterior** a la primera función de dinero; el
+**Criterios de salida:** el job `db` verde en el último commit; las salidas de
+los **dos puntos de control**, cada una de su commit y su run, los dos
+**anteriores** a la primera función de dinero; `pg_graphql` quitado o
+desactivado en local y en `juntia-dev` (si no se puede, el PR se para y lo
+reporta); el
 dataset dorado da 412.900 en dominio e integración; cero accesos cruzados
 (SC-007); cero duplicados (SC-009, mitad de servidor); comprobaciones de
 `juntia-dev` registradas; ensayo de restauración verde **en los dos caminos desde
