@@ -93,10 +93,17 @@ echo 'N5-cleanup: bases restantes=0; log con exit distinto de cero'
 mkdir "$WORK/failed-backup"
 (
   cd "$WORK/failed-backup"
-  negative N6-backup env DB="$DB_URL" bash "$ROOT/scripts/backup.sh" --mode ci --sha 0000000000000000000000000000000000000000
+  # F40-3: referencia real de foundation; el worktree debe existir y la
+  # divergencia de las migraciones aplicadas debe rechazarla en el manifiesto.
+  negative N6-backup env DB="$DB_URL" bash "$ROOT/scripts/backup.sh" --mode ci --sha cbccec832d338402bc7262973b8e0b539d6dddff
+  if ! grep -F 'MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden' "$WORK/N6-backup.log"; then
+    echo 'F40-3: falta diagnóstico de validación del manifiesto en N6' >&2
+    exit 1
+  fi
   test -z "$(find . -mindepth 1 -maxdepth 1)"
+  test "$(psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from pg_stat_activity where application_name like 'juntia_backup_snapshot_%'")" = 0
 )
-echo 'N6-cleanup: sin archivos publicados ni temporales'
+echo 'N6-cleanup: sin archivos publicados ni temporales; exportadoras restantes=0'
 mkdir "$WORK/existing"
 export BACKUP_NAME=juntia-2099-01-01T000000
 printf 'existing synthetic archive' > "$WORK/existing/$BACKUP_NAME.tar.gpg"
