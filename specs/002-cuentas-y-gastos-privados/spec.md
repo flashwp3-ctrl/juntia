@@ -291,7 +291,9 @@ reales a la API pública con el JWT de otra persona.
 ### User Story 10 - Empezar a usar datos reales con copia de seguridad (Priority: P2)
 
 Antes de anotar su primer gasto real, un fundador hace una copia completa de la
-base, cifrada y fuera de Supabase, y la restaura en local. A partir de ahí, una
+base, cifrada y fuera de Supabase, y la restaura en un PostgreSQL normal en su
+equipo, sin Docker. El procedimiento completo se prueba además en un runner efímero
+de CI con datos de prueba (decisión 17). A partir de ahí, una
 vez por semana, repite la copia con el comando documentado.
 
 **Why this priority**: el maestro §11 y CLAUDE.md 11 permiten datos reales en
@@ -303,7 +305,7 @@ la salida en la evidencia del slice.
 **Acceptance Scenarios**:
 
 1. **Given** el proyecto de producción, **When** se ejecuta el procedimiento de copia, **Then** produce un archivo cifrado con el esquema y los datos, guardado fuera de Supabase y del repositorio (Q11; maestro §7.4).
-2. **Given** esa copia, **When** se restaura en Supabase local, **Then** la restauración termina sin errores y los totales de los movimientos coinciden con los de producción (Q11).
+2. **Given** el procedimiento de restauración, **When** se prueba en un runner efímero de CI con datos de prueba y el mismo esquema, **Then** termina sin errores y los totales coinciden; **and Given** la copia real, **When** el fundador la descifra y la restaura en un PostgreSQL normal en su equipo, **Then** los esquemas y datos de Juntia restauran sin errores y los recuentos de filas coinciden con producción. La copia real nunca pasa por CI (Q11; decisión 17).
 3. **Given** el procedimiento documentado, **When** un fundador lo sigue sin ayuda, **Then** puede repetir la copia semanal (Q11).
 4. **Given** que ninguna copia y restauración tiene salida registrada, **When** se pregunta si ya se pueden usar datos reales, **Then** la respuesta es no (Q11; maestro §11).
 
@@ -434,7 +436,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 #### Operación (Q9, Q10, Q11)
 
 - **FR-058**: Proyecto Supabase Free en la cuenta de la segunda fundadora, región São Paulo, con el correo de Supabase. Las claves van solo en variables de entorno de Vercel y local; ninguna clave privilegiada en `NEXT_PUBLIC_*` (Q10; maestro §7.4).
-- **FR-059**: Procedimiento documentado de copia completa cifrada fuera de Supabase, restauración de prueba en local y copia semanal manual. Los datos reales no se usan hasta que la primera copia y restauración tienen salida registrada (Q11).
+- **FR-059**: Procedimiento documentado de copia completa cifrada fuera de Supabase con `pg_dump`, prueba de restauración en un runner efímero de CI con datos de prueba, restauración de la copia real en un PostgreSQL normal en el equipo del fundador y copia semanal manual (Q11; decisión 17). Los datos reales no se usan hasta que la primera copia y restauración tienen salida registrada (Q11).
 
 #### Copy, accesibilidad, responsive y motion
 
@@ -553,8 +555,8 @@ paleta ya visibles desde la 001.
 
 | `[V]` | Fuente | Qué hay que ejecutar |
 | --- | --- | --- |
-| Viabilidad de `juntia_writer` (anticipo de ADR-013 [V] 1) | ADR-013 | Un prototipo SQL aislado en Supabase local, desechable: crear el rol, asignarle una función `security definer`, comprobar que `auth.uid()` devuelve a quien llama y que la RLS se le aplica. Informa el plan; **no sustituye** la [V] 1 definitiva del PR A. Si falla, ADR-013 se reabre antes de cerrar el plan |
-| Forma del claim (ADR-013 [V] 9) | ADR-013; decisión 1 | En Supabase local, la forma del claim que leen `auth.uid()` y las políticas |
+| Viabilidad de `juntia_writer` (anticipo de ADR-013 [V] 1) | ADR-013; ADR-011 §9.4 | Un prototipo SQL desechable en el preflight de plan (Supabase local dentro de un runner efímero, ADR-011 §9.4): crear el rol, asignarle una función `security definer`, comprobar que `auth.uid()` devuelve a quien llama y que la RLS se le aplica. Informa el plan; **no sustituye** la [V] 1 definitiva del PR A. Si falla, ADR-013 se reabre antes de cerrar el plan |
+| Forma del claim (ADR-013 [V] 9) | ADR-013; decisión 1 | En el mismo preflight, la forma del claim que leen `auth.uid()` y las políticas |
 | ADR-013 [V] 10 | ADR-013 | Versiones exactas de `@supabase/supabase-js`, `@supabase/ssr` y la CLI |
 | Persistencia del tema | `COMPONENT_SPECIFICATIONS.md` §ThemeSelector; Q7 | Que la cookie llega al script bloqueante y el primer pintado usa el tema guardado, sin destello ni error de hidratación |
 | Lista permitida del registro | Q9 | Qué mecanismo de Supabase valida el correo antes de crear el usuario en el plan Free, y que una llamada directa a la API de Auth tampoco lo salta |

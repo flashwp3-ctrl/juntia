@@ -41,23 +41,38 @@ código afirma el bug además de la función.
 
 ## 2. Comandos
 
-**`verify` ejecuta exactamente esto, aquí y en CI:** lint + typecheck + unit de
-dominio + **componentes (RTL selectivo)** + tests SQL/RLS. Los componentes están
-dentro. Es el mismo enunciado que usa el ADR, palabra por palabra, para que no haya
-dos definiciones circulando.
+**El contenido de los controles es uno solo:** lint + typecheck + unit de dominio
++ **componentes (RTL selectivo)** + tests SQL/RLS. Es el mismo enunciado que usa el
+ADR, palabra por palabra. **Dónde corre cada parte** lo fija ADR-011 §9: `verify`
+local ejecuta los cuatro primeros y marca SQL/RLS «SOLO EN CI — pendiente de
+resultado»; el gate completo del PR los ejecuta todos, sobre el mismo commit.
 
 **Esa definición es el destino, no el primer día.** La especificación 001 no tiene
 Supabase, migraciones ni auth, así que su `verify` no puede correr SQL/RLS. Cada
 control entra con la especificación que trae lo que controla, y mientras tanto se
 declara **no aplicable**: ver «Arranque progresivo de `verify` y del CI» en §3.
 
+**Sin Docker en local** (ADR-011 §9, decisión 17 del maestro). Hay dos conceptos:
+
+- **`verify` local** ejecuta lint, typecheck, dominio y componentes. Los tests
+  SQL/RLS, la integración de servidor y las E2E aparecen como «SOLO EN CI —
+  pendiente de resultado», nunca como pasados ni como «no aplicable» una vez que
+  existen.
+- **El gate completo del PR** es `verify` más los jobs 3 y 4 de CI sobre el mismo
+  commit. Esos jobs corren en todo PR de código desde que existen, sin filtro de
+  rutas.
+
+Para probarlos en una rama sin abrir el PR: `gh workflow run ci.yml --ref <rama>`,
+que ejecuta los mismos jobs que un push. Ninguna función, política o migración
+está probada sin la salida de ese job en ese commit.
+
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
-| `npm run verify` | lint + typecheck + unit de dominio + componentes + tests SQL/RLS. **El comando por defecto.** | **< 90 s** (comando) |
+| `npm run verify` | lint + typecheck + unit de dominio + componentes; los tests SQL/RLS aparecen como «SOLO EN CI — pendiente de resultado» (ADR-011 §9). **El comando por defecto.** | **< 90 s** (comando) |
 | `npm run test:unit` | Vitest, proyecto `domain`, suite completa | **< 15 s** (comando) |
 | `npm run test:unit -- --changed` | Solo lo afectado por los cambios. Para el bucle local | — |
 | `npm run test:components` | Vitest, proyecto `components` (RTL selectivo, §10.1) | sin presupuesto propio; dentro de `verify` |
-| `npm run test:db` | `supabase test db` contra Supabase local | **< 60 s** (comando) |
+| `npm run test:db` | `supabase test db` contra Supabase local. **Solo en CI** (ADR-011 §9) | **< 60 s**, medido dentro del job 3 |
 | `npm run test:e2e:smoke` | Playwright, specs de humo del PR, solo Chromium | **< 3 min** (job de CI) |
 | `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
 | `npm run test:a11y` | axe sobre las rutas **ya implementadas**, en los dos temas (§3) | PR y nivel 2 |
@@ -79,7 +94,7 @@ Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de cos
 1. lint + typecheck + build
 2. **Vitest: dominio completo y componentes (RTL selectivo)** — el mismo contenido
    que `verify` ejecuta en local, menos los tests SQL/RLS, que van en el job 3
-3. Supabase local en contenedor, migraciones aplicadas, tests SQL de RLS
+3. Supabase local en contenedor **dentro del runner**, migraciones aplicadas, tests SQL de RLS e integración de servidor. Es la única ejecución de esas capas: no corren en los equipos (ADR-011 §9)
 4. E2E de humo: **las specs E2E 1, 2 y 3, más la spec E2E del área que el PR toca**, solo
    Chromium
 5. **axe en los dos temas** — ver la regla justo debajo
@@ -472,9 +487,9 @@ incluyen `npm ci`.**
 
 | Comando | Presupuesto |
 | --- | --- |
-| `verify` (lint + typecheck + dominio + componentes + SQL/RLS) | **< 90 s** |
+| `verify` local (lint + typecheck + dominio + componentes; SQL/RLS solo en CI, ADR-011 §9) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
-| Tests SQL / RLS | **< 60 s** |
+| Tests SQL / RLS (comando medido dentro del job 3 en CI, ADR-011 §9) | **< 60 s** |
 
 ### Presupuestos de job de CI
 

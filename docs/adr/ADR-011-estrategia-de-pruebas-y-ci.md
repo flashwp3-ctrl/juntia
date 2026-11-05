@@ -208,9 +208,9 @@ instaladas y, donde haga falta, Supabase ya arrancado.
 
 | Comando | Presupuesto |
 | --- | --- |
-| `verify` (lint + typecheck + unit de dominio + componentes + SQL/RLS) | **< 90 s** |
+| `verify` local (lint + typecheck + unit de dominio + componentes; SQL/RLS solo en CI, §9) | **< 90 s** |
 | Unit de dominio, suite completa | **< 15 s** |
-| Tests SQL / RLS | **< 60 s** |
+| Tests SQL / RLS (comando medido dentro del job 3 en CI, §9) | **< 60 s** |
 
 #### Presupuestos de job de CI
 
@@ -412,6 +412,79 @@ Una verificación de dispositivo que no se puede ejecutar porque el dispositivo 
 
 La primera aplicación de esta regla es la 001. El maestro §15.10, decisión 12, reparte T072–T075 a P0-1 y fija cuáles admiten excepción. Esta regla no mueve ningún umbral de §4 ni de §15.7.
 
+### 9. Sin Docker en los equipos de desarrollo (enmienda del 4 de noviembre de 2026, maestro §15.10, decisión 17)
+
+Supabase local necesita Docker, y Docker Desktop vuelve lento el equipo de los
+fundadores. Los fundadores decidieron no usarlo en sus equipos. Los controles no
+cambian; cambia **dónde** corre cada uno.
+
+1. **Dos conceptos distintos:**
+   - **`verify` local** ejecuta lint, typecheck, dominio y componentes. Las capas
+     que necesitan Supabase (SQL/RLS con pgTAP, integración de servidor y E2E)
+     aparecen en su resumen como «SOLO EN CI — pendiente de resultado», con el job
+     que las ejecuta. Nunca como pasadas, y tampoco como «no aplicable» una vez
+     que el control existe (regla 1 del arranque progresivo, §5).
+   - **El gate completo del PR** es `verify` más los jobs 3 y 4 de CI, todos
+     sobre el **mismo commit**. Un PR de código está verificado solo cuando el gate
+     completo pasa.
+2. **Esas capas corren en CI, con Supabase local dentro del runner de GitHub.** El
+   job 3 (SQL/RLS e integración de servidor) y el job 4 (E2E de humo) levantan
+   Supabase con la CLI, aplican las migraciones y ejecutan sus pruebas. **Corren en
+   todo PR de código desde que existen, sin filtro de rutas**: la regla «ningún
+   control se salta por la ruta del cambio» de §5 sigue intacta. Lo que se
+   optimiza es el coste de cada ejecución (caché, concurrencia que cancela runs
+   viejos y tiempos medidos), no qué se ejecuta.
+3. **Para iterar sobre una rama antes de abrir el PR**, el workflow se lanza a mano
+   (`gh workflow run ci.yml --ref <rama>`), también en borradores. Un lanzamiento
+   manual ejecuta los mismos jobs que un push: no hay forma de lanzar solo una
+   parte para saltarse un control.
+4. **Preflight de plan.** Cuando un plan necesita una salida de SQL antes de que
+   exista el job 3 (como la viabilidad de `juntia_writer` de la especificación
+   002), se ejecuta en un **runner efímero** con un workflow propio sobre una rama
+   desechable que nunca se fusiona. La salida se pega en el plan. Ese preflight
+   informa el plan; **no sustituye** las verificaciones definitivas del slice.
+   Ese workflow se dispara con `on: push` limitado a la rama del preflight, porque
+   `workflow_dispatch` solo funciona con workflows que ya existen en `main`.
+5. **Para usar la app en desarrollo** hay un segundo proyecto Supabase Free,
+   `juntia-dev`, en la cuenta de la segunda fundadora y en la región de
+   producción. No guarda datos reales, no comparte claves con producción y no lo
+   usa ninguna prueba automatizada, tampoco el preflight. Las migraciones se le
+   aplican con la CLI fijada en el plan y **siempre con el destino explícito**, en
+   la sintaxis de esa versión: en la v2, `supabase db push --linked` con el
+   proyecto enlazado a `juntia-dev`, o `--db-url`; en la v3, `--remote=<ref>`,
+   porque desde la v3 `db push` apunta a la base local por defecto. Antes de
+   aplicar, se comprueba que el destino es `juntia-dev`. Ningún equipo guarda una
+   configuración enlazada a producción.
+6. **Recuperación (decisión 16, 16.11).**
+   - La copia de producción la hace un fundador con el cliente `pg_dump`, sin
+     Docker, siguiendo el procedimiento de copia de Supabase para que no arrastre
+     objetos internos que fallen al restaurar.
+   - La **prueba de restauración** del procedimiento se hace en un **runner
+     efímero de CI**, con datos de prueba y el mismo esquema, nunca con la copia
+     real.
+   - La **copia real se restaura de verdad** en un PostgreSQL normal instalado en
+     el equipo de un fundador, sin Docker. Se comprueban el descifrado, la
+     restauración sin errores de los esquemas y datos de Juntia, y los recuentos
+     de filas contra producción. Después ese PostgreSQL se apaga o se desinstala.
+     Lo que no se puede reproducir en un PostgreSQL normal (los roles y esquemas
+     propios de Supabase) queda cubierto por la prueba del procedimiento en CI.
+   - Ningún dato real pasa por CI, ni por sus artefactos ni por sus logs.
+
+   El plan de P0-1 define qué esquemas, roles y datos forman una «copia
+   completa».
+7. **Presupuestos.** El de `verify` (< 90 s) se mide en local sin las capas de base
+   de datos. El de `test:db` (< 60 s) se mide dentro del job 3.
+8. **Ninguna función, política o migración se da por probada sin la salida del
+   job 3 de ese mismo commit** (`AGENTS.md` 12). «Pasa en local» no existe para la
+   base de datos.
+
+**Consecuencias.** Iterar sobre la base de datos cuesta minutos y no segundos, y el
+consumo de Actions sube en P0-1 y P0-3, que son los slices con más SQL. El PR A de
+P0-1 adapta el resumen de `scripts/verify.mjs` y el del CI a «SOLO EN CI —
+pendiente de resultado». Si iterar en CI se vuelve el cuello de botella, la
+alternativa es Docker con un límite de memoria en el equipo, y se decide
+entonces.
+
 ## Consecuencias
 
 - La suite de dominio se convierte en el lugar por defecto. Eso exige que la regla
@@ -429,7 +502,9 @@ La primera aplicación de esta regla es la 001. El maestro §15.10, decisión 12
   dos documentos:** lint + typecheck + unit de dominio + componentes (RTL
   selectivo) + tests SQL/RLS. En CI ese contenido se parte en dos jobs paralelos
   —Vitest por un lado, SQL/RLS por otro— y eso no cambia qué se ejecuta, solo
-  dónde.
+  dónde. Desde la enmienda de §9, la parte SQL/RLS corre **solo en CI**: `verify`
+  local la marca «SOLO EN CI — pendiente de resultado», y el gate completo del PR
+  es `verify` más los jobs de CI sobre el mismo commit.
 - Hace falta infraestructura de siembra por base de datos (`seedCouple()` y
   equivalentes) **antes** del primer E2E, y con **dos roles autenticados por
   worker**, no uno. Esto es trabajo real de la **primera especificación que
