@@ -369,7 +369,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: ADR-011 §9.1.
   - Terminado cuando: las salidas son del mismo SHA y están en `evidence.md`.
 
-- [ ] T060 Descripción del PR B y **revisión humana**: lo de T033 más capturas (T057), Impeccable (T058), los `[P]` para aprobar, «E2E specs added: 1 (spec 1)» y el copy nuevo listado para revisión en `es.ts`
+- [x] T060 Descripción del PR B y **revisión humana**: lo de T033 más capturas (T057), Impeccable (T058), los `[P]` para aprobar, «E2E specs added: 1 (spec 1)» y el copy nuevo listado para revisión en `es.ts`
   - Cumple: plan, PR B, «Criterios de salida»; SC-001 (aprobación de los dos fundadores).
   - Terminado cuando: los dos fundadores aprobaron la revisión visual y los `[P]` del PR, o el PR no se mergea.
 

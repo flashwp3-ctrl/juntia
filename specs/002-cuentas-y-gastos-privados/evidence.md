@@ -1533,12 +1533,13 @@ con `?aviso=enlace`. Los commits posteriores solo añaden evidencia.
 
 ### T060
 
-**Aprobado por Alejandro el 5 de noviembre de 2026; pendiente la segunda fundadora**
-(SC-001 pide los dos). Vio las 15 pantallas principales a 390 px en claro y, a 1440 px,
-las tres marcadas para aprobar viendo la pantalla, que quedan aprobadas por él: la
-composición de escritorio de las pantallas de acceso, el estado de sesión caducada y
-«Cuenta reutiliza los fondos de categoría» (propuesta §15.9). La casilla de T060 se
-marca cuando apruebe la segunda fundadora.
+**Aprobado por los dos fundadores el 5 de noviembre de 2026** (SC-001). Alejandro vio
+las 15 pantallas principales a 390 px en claro y, a 1440 px, las tres marcadas para
+aprobar viendo la pantalla: la composición de escritorio de las pantallas de acceso, el
+estado de sesión caducada y «Cuenta reutiliza los fondos de categoría» (propuesta
+§15.9). Las tres `[P]` quedan aprobadas. La segunda fundadora también aprobó las
+pantallas ese día (confirmado por Alejandro al gestor). La descripción del PR la publica
+el gestor.
 
 ### T071
 
