@@ -51,6 +51,11 @@ select r.rolname as role, m.admin_option, m.inherit_option, m.set_option
 select has_schema_privilege('juntia_writer','auth','usage') as writer_usage_auth,
        has_function_privilege('juntia_writer','auth.uid()','execute') as writer_exec_uid,
        has_schema_privilege('public','auth','usage') as public_usage_auth;
+\echo '== e.7b direct attempt (outside the DO block) to grant usage on auth to juntia_writer'
+grant usage on schema auth to juntia_writer;
+\echo '== e.7c helper with SQL-standard body (RETURN auth.uid()): prosqlbody set?'
+select proname, prosqlbody is not null as has_sqlbody, pg_get_userbyid(proowner) as owner
+  from pg_proc where proname = 'current_uid' and pronamespace = 'juntia_private'::regnamespace;
 select n.nspname, nspacl from pg_namespace n where nspname in ('auth','juntia_data','juntia_private');
 select proname, proacl from pg_proc where oid = 'auth.uid'::regproc;
 

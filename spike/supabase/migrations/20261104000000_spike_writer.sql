@@ -180,3 +180,80 @@ grant execute on function juntia_private.before_user_created_hook(jsonb) to supa
 grant select on table juntia_data.signup_allowlist to supabase_auth_admin;
 create policy allowlist_auth_admin on juntia_data.signup_allowlist
   for select to supabase_auth_admin using (true);
+
+-- ===== Run 2: juntia_writer no tiene (ni puede recibir) usage sobre el esquema auth =====
+-- Variante H (helper): función SQL con cuerpo estándar (RETURN expr): se resuelve al crearla, guarda
+-- el OID de auth.uid() y en ejecución solo exige EXECUTE (concedido a PUBLIC), no USAGE sobre auth.
+create function juntia_private.current_uid()
+returns uuid language sql stable security invoker
+return auth.uid();
+revoke all on function juntia_private.current_uid() from public, anon, authenticated;
+grant execute on function juntia_private.current_uid() to juntia_writer, authenticated;
+
+create function juntia_private.add_movement_v2(p_amount bigint)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := juntia_private.current_uid();
+begin
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+  insert into juntia_data.movements (owner_id, amount_minor) values (v_uid, p_amount);
+  return v_uid;
+end $$;
+alter function juntia_private.add_movement_v2(bigint) owner to juntia_writer;
+
+-- Variante C (claims): leer el claim directamente, sin tocar el esquema auth.
+create function juntia_private.add_movement_v3(p_amount bigint)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+  insert into juntia_data.movements (owner_id, amount_minor) values (v_uid, p_amount);
+  return v_uid;
+end $$;
+alter function juntia_private.add_movement_v3(bigint) owner to juntia_writer;
+
+create function juntia_private.whoami_definer_v2()
+returns jsonb language plpgsql security definer set search_path = '' as $$
+begin
+  return jsonb_build_object(
+    'current_user', current_user::text,
+    'current_uid_helper', juntia_private.current_uid(),
+    'claims', current_setting('request.jwt.claims', true),
+    'claim_sub_legacy', current_setting('request.jwt.claim.sub', true));
+end $$;
+alter function juntia_private.whoami_definer_v2() owner to juntia_writer;
+
+revoke all on function juntia_private.add_movement_v2(bigint) from public, anon, authenticated;
+revoke all on function juntia_private.add_movement_v3(bigint) from public, anon, authenticated;
+revoke all on function juntia_private.whoami_definer_v2() from public, anon, authenticated;
+grant execute on function juntia_private.add_movement_v2(bigint) to authenticated;
+grant execute on function juntia_private.add_movement_v3(bigint) to authenticated;
+grant execute on function juntia_private.whoami_definer_v2() to authenticated;
+
+create function public.spike_add_movement_v2(p_amount bigint)
+returns uuid language sql security invoker set search_path = '' as $$
+  select juntia_private.add_movement_v2(p_amount);
+$$;
+create function public.spike_add_movement_v3(p_amount bigint)
+returns uuid language sql security invoker set search_path = '' as $$
+  select juntia_private.add_movement_v3(p_amount);
+$$;
+create function public.spike_whoami_v2()
+returns jsonb language sql security invoker set search_path = '' as $$
+  select jsonb_build_object(
+    'invoker_current_user', current_user::text,
+    'invoker_auth_uid', auth.uid(),
+    'invoker_role_setting', current_setting('role', true),
+    'claims', current_setting('request.jwt.claims', true),
+    'claim_sub_legacy', current_setting('request.jwt.claim.sub', true),
+    'definer', juntia_private.whoami_definer_v2());
+$$;
+revoke all on function public.spike_add_movement_v2(bigint) from public, anon;
+revoke all on function public.spike_add_movement_v3(bigint) from public, anon;
+revoke all on function public.spike_whoami_v2() from public, anon;
+grant execute on function public.spike_add_movement_v2(bigint) to authenticated;
+grant execute on function public.spike_add_movement_v3(bigint) to authenticated;
+grant execute on function public.spike_whoami_v2() to authenticated;

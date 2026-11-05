@@ -32,7 +32,7 @@ jobs:
         run: |
           supabase --version
           set +e
-          supabase start --workdir spike -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/start.log" 2>&1
+          supabase start --workdir spike -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta > "$RUNNER_TEMP/start.log" 2>&1
           rc=$?
           grep -v -iE 'key|secret|eyJ|sb_|jwt|password' "$RUNNER_TEMP/start.log"
           exit $rc

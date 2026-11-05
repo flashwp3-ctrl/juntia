@@ -39,15 +39,25 @@ jwt_payload "$TA" | jq -c .
 echo "=== 2. rpc/spike_whoami as A (what PostgREST sets)"
 req POST /rest/v1/rpc/spike_whoami "$TA" '{}'
 
-echo "=== 1a. rpc/spike_add_movement as A (amount 4500000)"
-R=$(req POST /rest/v1/rpc/spike_add_movement "$TA" '{"p_amount":4500000}'); echo "$R"
+echo "=== 2. rpc/spike_whoami_v2 as A (what PostgREST sets; invoker + definer view)"
+req POST /rest/v1/rpc/spike_whoami_v2 "$TA" '{}'
+
+echo "=== 1a. v1 (auth.uid() named inside definer body) as A — expected to fail (run 1)"
+req POST /rest/v1/rpc/spike_add_movement "$TA" '{"p_amount":4500000}'
+echo "=== 1a. v2 (helper current_uid, SQL-standard body) as A (amount 4500000)"
+R=$(req POST /rest/v1/rpc/spike_add_movement_v2 "$TA" '{"p_amount":4500000}'); echo "$R"
 echo "returned == A ? $( [ "$(echo "$R" | sed 's/^HTTP [0-9]* //' | jq -r .)" = "$UA" ] && echo YES || echo NO )"
-echo "=== 1a'. rpc/spike_add_movement as A with 9007199254740993 sent as JSON string"
-req POST /rest/v1/rpc/spike_add_movement "$TA" '{"p_amount":"9007199254740993"}'
-echo "=== 1a''. rpc/spike_add_movement as anon (no user token)"
-req POST /rest/v1/rpc/spike_add_movement "" '{"p_amount":1}'
-echo "=== 1a'''. rpc/spike_add_movement as A with amount 0 (check constraint)"
-req POST /rest/v1/rpc/spike_add_movement "$TA" '{"p_amount":0}'
+echo "=== 1a. v3 (reads request.jwt.claims directly) as A (amount 12345)"
+R=$(req POST /rest/v1/rpc/spike_add_movement_v3 "$TA" '{"p_amount":12345}'); echo "$R"
+echo "returned == A ? $( [ "$(echo "$R" | sed 's/^HTTP [0-9]* //' | jq -r .)" = "$UA" ] && echo YES || echo NO )"
+echo "=== 1a'. v2 as A with 9007199254740993 sent as JSON string"
+req POST /rest/v1/rpc/spike_add_movement_v2 "$TA" '{"p_amount":"9007199254740993"}'
+echo "=== 1a''. v2 as anon (no user token)"
+req POST /rest/v1/rpc/spike_add_movement_v2 "" '{"p_amount":1}'
+echo "=== 1a'''. v2 as A with amount 0 (check constraint)"
+req POST /rest/v1/rpc/spike_add_movement_v2 "$TA" '{"p_amount":0}'
+echo "=== 1a''''. B inserts one own row via v2 (for isolation check)"
+req POST /rest/v1/rpc/spike_add_movement_v2 "$TB" '{"p_amount":555}'
 
 echo "=== 1b. GET view as A"
 req GET '/rest/v1/spike_movements?select=*' "$TA" ''
@@ -56,6 +66,9 @@ req GET '/rest/v1/spike_movements?select=*' "$TB" ''
 echo "=== 1b. GET view as anon"
 req GET '/rest/v1/spike_movements?select=*' "" ''
 MID=$(curl -s "$API_URL/rest/v1/spike_movements?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $TA" | jq -r '.[0].id')
+echo "A's row id for later tests: $MID"
+echo "=== 1b. supabase-js-style count: GET view as B with filter on A's id"
+req GET "/rest/v1/spike_movements?id=eq.$MID" "$TB" ''
 
 echo "=== 1c. direct table access over the API"
 echo "-- POST /rest/v1/movements (public)"; req POST /rest/v1/movements "$TA" "{\"owner_id\":\"$UA\",\"amount_minor\":1}"
@@ -84,10 +97,17 @@ echo "-- signup NOT allowed: mallory@spike.test"
 req POST /auth/v1/signup "" "{\"email\":\"mallory@spike.test\",\"password\":\"$PW\"}"
 echo "-- signup NOT allowed, uppercase variant: Mallory@Spike.Test"
 req POST /auth/v1/signup "" "{\"email\":\"Mallory@Spike.Test\",\"password\":\"$PW\"}"
+echo "(run 2: enable_confirmations = true, as on hosted by default)"
 echo "-- signup allowed: carol@spike.test"
-req POST /auth/v1/signup "" "{\"email\":\"carol@spike.test\",\"password\":\"$PW\"}" | cut -c1-120
-echo "-- signup allowed but ALREADY REGISTERED: alice@spike.test"
-req POST /auth/v1/signup "" "{\"email\":\"alice@spike.test\",\"password\":\"$PW\"}" | cut -c1-300
+req POST /auth/v1/signup "" "{\"email\":\"carol@spike.test\",\"password\":\"$PW\"}" | sed -E 's/"(access_token|refresh_token)":"[^"]*"/"\1":"<redacted>"/g' | cut -c1-400
+echo "-- signup allowed but ALREADY REGISTERED (confirmed): alice@spike.test"
+req POST /auth/v1/signup "" "{\"email\":\"alice@spike.test\",\"password\":\"$PW\"}" | cut -c1-400
+echo "-- signup allowed, ALREADY REGISTERED but unconfirmed: carol@spike.test again"
+req POST /auth/v1/signup "" "{\"email\":\"carol@spike.test\",\"password\":\"$PW\"}" | cut -c1-400
+echo "-- recover for NOT allowed / unknown email: mallory"
+req POST /auth/v1/recover "" '{"email":"mallory@spike.test"}'
+echo "-- recover for existing: alice"
+req POST /auth/v1/recover "" '{"email":"alice@spike.test"}'
 echo "-- admin API create NOT allowed: dave@spike.test (does the hook apply to admin too?)"
 admin POST /auth/v1/admin/users "{\"email\":\"dave@spike.test\",\"password\":\"$PW\",\"email_confirm\":true}"
 echo "-- OTP/magic link NOT allowed: POST /auth/v1/otp mallory (create_user default true)"

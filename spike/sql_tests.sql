@@ -79,6 +79,27 @@ begin; set local role authenticated; set local "request.jwt.claims" = :'claimsA'
 select juntia_private.add_movement(777) = :'uidA'::uuid as returns_caller;
 select count(*) as rows_visible_to_A from public.spike_movements;
 rollback;
+\echo '== 1d.1b v2 (helper current_uid) DIRECTLY by SQL as authenticated: own row'
+begin; set local role authenticated; set local "request.jwt.claims" = :'claimsA';
+select juntia_private.add_movement_v2(777) = :'uidA'::uuid as v2_returns_caller;
+select count(*) as rows_visible_to_A_in_tx from public.spike_movements;
+rollback;
+\echo '== 1d.1c v3 (reads claims json) DIRECTLY by SQL as authenticated, claims set via set_config'
+begin; set local role authenticated; select set_config('request.jwt.claims', :'claimsA', true) is not null;
+select juntia_private.add_movement_v3(778) = :'uidA'::uuid as v3_returns_caller;
+rollback;
+\echo '== 1d.1d v2 with ONLY legacy request.jwt.claim.sub set'
+begin; set local role authenticated; set local request.jwt.claim.sub = :'uidA';
+select juntia_private.add_movement_v2(779) = :'uidA'::uuid as v2_legacy_sub_returns_caller;
+rollback;
+\echo '== 1d.1e v2 with NO claims: expect not authenticated (28000)'
+begin; set local role authenticated;
+select juntia_private.add_movement_v2(1);
+rollback;
+\echo '== 1d.1f whoami_definer_v2 in plain SQL'
+begin; set local role authenticated; set local "request.jwt.claims" = :'claimsA';
+select juntia_private.whoami_definer_v2();
+rollback;
 \echo '== 1d.2 writer fn variant DIRECTLY by SQL as authenticated: owner = other user (expect RLS error)'
 begin; set local role authenticated; set local "request.jwt.claims" = :'claimsA';
 select juntia_private.add_movement_for(:'uidB', 1);
