@@ -91,6 +91,31 @@ async function pressFrames(page: Page, scope: string) {
   }), [FRAMES, scope] as const);
 }
 
+// Hallazgo de la prueba manual del PR B (5 nov 2026): el campo pintaba dos marcos de foco, el anillo del diseño en el
+// marco y el outline global de :focus-visible en el <input>. Con el foco puesto desde el teclado (Tab), cada campo de
+// texto visible tiene un solo indicador: el <input> sin outline y el marco con el anillo de focus.ring.
+async function fieldFocusRings(page: Page) {
+  const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").count();
+  const results: { name: string; input: string; frame: string }[] = [];
+  for (let index = 0; index < count; index++) {
+    const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").nth(index);
+    await input.evaluate((node) => (node as HTMLElement).blur());
+    // Tab desde el elemento anterior para que el foco sea de teclado (:focus-visible), no de puntero.
+    await input.evaluate((node) => {
+      const all = [...document.querySelectorAll<HTMLElement>("a[href], button, input, [tabindex]")].filter((el) => !el.hasAttribute("disabled") && el.tabIndex >= 0 && el.getClientRects().length > 0);
+      const before = all[all.indexOf(node as HTMLElement) - 1];
+      (before ?? document.body).focus();
+    });
+    await page.keyboard.press("Tab");
+    results.push(await input.evaluate((node) => {
+      const own = getComputedStyle(node);
+      const frame = getComputedStyle(node.parentElement!);
+      return { name: node.getAttribute("name") ?? node.getAttribute("type") ?? "", focused: document.activeElement === node, input: own.outlineStyle, frame: `${frame.outlineStyle} ${frame.outlineWidth} ${frame.outlineColor}` };
+    }));
+  }
+  return results;
+}
+
 // F17-2 / FR-037: área clicable real ≥ 44 × 44. Combina la caja del elemento con su ::after posicionado y
 // comprueba con elementFromPoint que las cuatro esquinas de un cuadrado de 44 centrado caen en el mismo control.
 async function touchArea(page: Page, selector: string) {
@@ -171,6 +196,11 @@ for (const colorScheme of THEMES) {
         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
+        for (const ring of await fieldFocusRings(page)) {
+          console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: foco del campo «${ring.name}»: input ${ring.input}, marco ${ring.frame}`);
+          expect.soft(ring.input, `«${ring.name}»: el <input> no pinta su propio outline`).toBe("none");
+          expect.soft(ring.frame.startsWith("solid"), `«${ring.name}»: el marco lleva el anillo de foco`).toBe(true);
+        }
   
         if (isProduct) {
           // Hidratado: los manejadores de React ya están. El selector existe en el DOM en todas las rutas de producto.
