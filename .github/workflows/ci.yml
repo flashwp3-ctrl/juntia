@@ -114,6 +114,29 @@ jobs:
           name: auth-bootstrap-description
           path: ${{ runner.temp }}/auth-bootstrap.json
           if-no-files-found: ignore
+      - name: Install plain PostgreSQL 17 from PGDG
+        id: plain
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-17 postgresql-client-17
+          sudo pg_createcluster 17 juntia --port 55432 --start
+          password=$(openssl rand -hex 24)
+          echo "::add-mask::$password"
+          sudo -u postgres psql -p 55432 -q -v ON_ERROR_STOP=1 -c "alter user postgres password '$password'"
+          connection="postgresql://postgres:$password@127.0.0.1:55432"
+          echo "::add-mask::$connection"
+          echo "PG=$connection" >> "$GITHUB_ENV"
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+      - name: Restore drill and nine negative controls
+        run: node scripts/ci.mjs run db:restore-drill
+      - name: Stop plain PostgreSQL
+        if: always() && steps.plain.outcome == 'success'
+        run: sudo pg_dropcluster --stop 17 juntia
       - name: Stop Supabase
         if: always()
         run: supabase stop

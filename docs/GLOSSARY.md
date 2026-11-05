@@ -46,7 +46,7 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Pagador | `payer_user_id` | §7.3 | «pagó Tomás» | Aplica a gastos. En Mover a Pareja **el pagador original se mantiene** (handoff). |
 | Origen y destino de una liquidación | `from_user_id` / `to_user_id` | §7.3 | «Tomás → Sara» | Aplica solo a liquidaciones. |
 | Fecha del movimiento | `transaction_date` | §5.2 | «hoy», «12 oct» | Define el mes presupuestal. `created_at`/`updated_at` son auditoría, no periodo. |
-| Anulación | estado `voided` **[propuesta]** | §5.4 describe la anulación; no da identificador | — | Excluye el movimiento de los agregados **conservando** su rastro de auditoría. No es borrado. |
+| Anulación | estado `voided` | §5.4; spec 002, FR-013 y data-model §8 | — | Excluye el movimiento de los agregados **conservando** su rastro de auditoría. No es borrado. |
 | Reclasificar privado → compartido | `reclassifyToShared()` **[propuesta]** | El flujo está en §15.5, handoff y ADR-001; la función no está nombrada | «Mover a Pareja» | Una transacción **atómica e idempotente** anula el privado y crea el compartido. **Nunca hay dos gastos activos.** Deshacer solo inmediato y solo si el servidor confirma que no hay dependencias. No existe «mover a Yo» general en P0. |
 
 ---
@@ -201,7 +201,7 @@ literales del tipo propuesto.
 | Propuesta | Concepto que nombra | Dónde está descrito sin nombre |
 | --- | --- | --- |
 | `scope: 'private' \| 'group'` **y sus dos literales** | El tipo del eje privado/compartido y los valores que lo nombran | §7.3 «Scope privado **XOR** grupo» y DEC-G01 (`owner_user_id` XOR `group_id`) definen el eje, **no los literales** |
-| `voided` | El estado de un movimiento anulado | §5.4 «Anulación: excluir el gasto anulado de agregados actuales; conservar su rastro de auditoría» |
+| `voided` (aprobado por spec 002) | El estado de un movimiento anulado | §5.4; spec 002, FR-013 y data-model §8 |
 | `reclassifyToShared()` | La operación «Mover a Pareja» | §15.5, handoff §Flujos, ADR-001 |
 
 La propuesta del tipo **incluye sus dos literales**: donde las filas de las
