@@ -294,6 +294,14 @@ jobs:
           done <<< "$status"
       - name: Install, build and install Chromium
         run: node scripts/ci.mjs run ci build chromium
+      - name: Install Arial and Georgia for the font fallbacks (T053)
+        # Los respaldos de Onest y Brygada (globals.css) se ajustan sobre local("Arial") y local("Georgia"), presentes en
+        # Windows, macOS e iOS y no en el runner. Sin ellas el arnés mediría otro respaldo, no el de la app.
+        shell: bash
+        run: |
+          echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+          sudo apt-get install -y -qq ttf-mscorefonts-installer > /dev/null
+          fc-list | grep -c -i -E "arial|georgia"
       - name: Screenshots, seven-width pass and theme harness
         run: npx playwright test --project evidence --workers 4 --retries 0 --reporter=line
       - uses: actions/upload-artifact@v6

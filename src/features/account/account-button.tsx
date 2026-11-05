@@ -47,8 +47,8 @@ export function SidebarAccount({ current }: { current: boolean }) {
         <AppIcon name="user-circle" weight={current ? "fill" : "regular"} size={24} />
       )}
       <span className="sr-only flex min-w-0 flex-col xl:not-sr-only">
-        <span className="truncate text-[14px] font-semibold text-ink">{name}</span>
-        {account ? <span className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.nav.account}</span> : null}
+        <span className="truncate text-[14px] leading-5 font-semibold text-ink">{name}</span>
+        {account ? <span className="text-[12px] leading-4 text-[var(--comp-field-muted-fg)]">{copy.nav.account}</span> : null}
       </span>
       <AppIcon name="caret-right" size={18} className="ml-auto hidden shrink-0 text-ink-secondary xl:block" />
     </Link>

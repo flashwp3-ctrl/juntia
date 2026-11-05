@@ -69,8 +69,9 @@ export function ProfileForm({ initialName, email, save }: ProfileFormProps) {
       />
       <Input label={copy.account.profile.emailLabel} value={email} readOnly endIcon="lock-simple" help={copy.account.profile.emailHelp} fieldClassName="!bg-canvas border-[1.5px] border-dashed border-border !shadow-none" inputClassName="text-ink-secondary" />
       <InlineNotice icon="info">{copy.account.profile.authorshipNote}</InlineNotice>
-      <div className="mt-1 flex flex-col gap-2 md:flex-row-reverse md:justify-start">
-        <Button type="submit" size="lg" icon="check" loading={pending} loadingLabel={copy.primitives.saving} disabled={showError} className="md:min-w-48">{copy.account.profile.save}</Button>
+      {/* Dos columnas iguales desde md: el ancho de los botones no depende del ancho del texto (ni de la fuente que llegue). */}
+      <div className="mt-1 grid gap-2 md:grid-cols-2">
+        <Button type="submit" size="lg" icon="check" loading={pending} loadingLabel={copy.primitives.saving} disabled={showError} className="md:order-2">{copy.account.profile.save}</Button>
         <Button variant="ghost" size="lg" disabled={pending || name === saved} onClick={() => { setName(saved); setTouched(false); setStatus("editing"); }}>{copy.account.profile.cancel}</Button>
       </div>
       {status === "saved" ? (

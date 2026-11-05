@@ -20,7 +20,8 @@ export default async function SecurityPage() {
         <PasswordChange email={email} />
       </MenuGroup>
       <MenuGroup title={copy.account.security.thisSession}>
-        <p className="text-[14px] leading-[1.5] text-ink-secondary">{copy.account.security.sessionNote}</p>
+        {/* Ancho máximo menor que el texto: siempre dos líneas, con la fuente real o con su respaldo (CLS = 0). */}
+        <p className="max-w-[26rem] text-[14px] leading-[1.5] text-ink-secondary">{copy.account.security.sessionNote}</p>
         <SignOutGhost />
       </MenuGroup>
     </>
