@@ -1,0 +1,8 @@
+public|complete_first_entry()|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|create_transaction(text,text,text,text,text,text)|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|ensure_profile()|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|set_theme(text)|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|update_display_name(text)|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|update_transaction(text,uuid,integer,text,text,text,text)|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+public|void_transaction(text,uuid,integer,text)|{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+tests|tests.authenticate_as(uuid)|{postgres=X/postgres,authenticated=X/postgres}

@@ -1,5 +1,60 @@
 # Evidencia de implementación — 002
 
+## Revisión PR #40 — F40-1, F40-2 y F40-3
+
+5 de noviembre de 2026. Cambios solicitados por el fundador tras la revisión:
+instantánea común de copia/manifiesto; nota e inventario sobre la revocación
+global de funciones de postgres, sin cambiarla; N6 con un commit real y rechazo
+demostrable en el manifiesto. Sin cambios de migraciones ni merge.
+
+### F40-1 — rojo antes de corregir la copia
+
+Prueba escrita primero en `restore-drill.sh`, commit
+`21aff49fb71bbd4d049da58be9fc9349457b4644`. CI automático del PR
+[42050531430](https://github.com/flashwp3-ctrl/juntia/actions/runs/42050531430).
+`gh run watch 42050531430 --exit-status --interval 20`: exit 1 esperado.
+Log íntegro: [f40-concurrent-red.txt](evidence/f40-concurrent-red.txt).
+
+Un wrapper de pg_dump exclusivo de la prueba hace el dump real y luego otra
+conexión confirma un INSERT sintético en signup_allowlist, antes del manifiesto.
+La restauración A debe seguir coincidiendo con la copia anterior al INSERT.
+
+```text
+COPIA LISTA: juntia-2026-11-05T150352.tar.gpg
+F40-1: escritura concurrente confirmada; snapshot importado=false
+-table=juntia_data.signup_allowlist|4|0fd0be4a10ffd3f98eef7244b10c4caf
++table=juntia_data.signup_allowlist|3|3f12309080bde11c0f76b5163c9ddff8
+Job app: success, 158.60 s
+Job db: failure, 229.88 s
+```
+
+El manifiesto tenía cuatro filas mientras el dump solo contenía tres: la copia
+se publicaba y fallaba al verificar la restauración, que es el defecto F40-1.
+El SHA de integración de GitHub que aparece en el manifiesto del run es
+`cc54dd20cf011eb4aab74df9c81c42606bc941f6`; el head del PR probado es el commit
+de pruebas citado arriba.
+
+El artefacto `auth-bootstrap-description`, descargado con
+`gh run download 42050531430 --name auth-bootstrap-description`, también recoge
+el inventario de firmas/ACL (sin cuerpos, claves ni datos personales):
+[postgres-execute-inventory.txt](evidence/f40-inventory/postgres-execute-inventory.txt).
+Hay siete entradas públicas y `tests.authenticate_as(uuid)`, cuyo GRANT explícito
+es el de T003/seed.sql. No aparecen otras funciones de postgres ejecutables por
+anon o authenticated. F40-2 añade la comprobación bloqueante para PUBLIC y esos
+dos roles, con sondas que detectan cada concesión fuera del contrato.
+
+Validación local de sintaxis antes de publicar la corrección:
+`bash -n scripts/backup.sh`, `bash -n scripts/backup-manifest.sh` y
+`bash -n scripts/restore-drill.sh`, todos exit 0. `git diff --check`: sin salida,
+exit 0. `git diff -- supabase/migrations`: sin salida; la revocación global se
+conserva intacta.
+
+### F40 — comprobación de las correcciones
+
+Pendiente: CI con la instantánea compartida, el inventario pgTAP y N6 contra el
+commit real de foundation. N6 exige ahora el diagnóstico de rechazo del
+manifiesto, además del código no nulo y ausencia de archivos/temporales.
+
 ## PR A — detenido antes de T001
 
 Fecha: 4 de noviembre de 2026 (America/Bogota).
