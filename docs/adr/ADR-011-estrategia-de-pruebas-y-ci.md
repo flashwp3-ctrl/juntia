@@ -449,11 +449,12 @@ cambian; cambia **dónde** corre cada uno.
    `juntia-dev`, en la cuenta de la segunda fundadora y en la región de
    producción. No guarda datos reales, no comparte claves con producción y no lo
    usa ninguna prueba automatizada, tampoco el preflight. Las migraciones se le
-   aplican con la CLI fijada en el plan y con el destino explícito:
-   `supabase db push --remote=<ref de juntia-dev>`. Desde la CLI v3, `db push`
-   apunta a la base local si no se indica `--remote`. Antes de aplicar, se
-   comprueba que el destino es `juntia-dev`. Ningún equipo guarda una configuración
-   enlazada a producción.
+   aplican con la CLI fijada en el plan y **siempre con el destino explícito**, en
+   la sintaxis de esa versión: en la v2, `supabase db push --linked` con el
+   proyecto enlazado a `juntia-dev`, o `--db-url`; en la v3, `--remote=<ref>`,
+   porque desde la v3 `db push` apunta a la base local por defecto. Antes de
+   aplicar, se comprueba que el destino es `juntia-dev`. Ningún equipo guarda una
+   configuración enlazada a producción.
 6. **Recuperación (decisión 16, 16.11).**
    - La copia de producción la hace un fundador con el cliente `pg_dump`, sin
      Docker, siguiendo el procedimiento de copia de Supabase para que no arrastre
