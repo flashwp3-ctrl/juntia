@@ -91,11 +91,17 @@ npx --yes supabase@2.121.0 db push --linked
    `http://localhost:3000` y los previews de Vercel.
 3. **Hook Before User Created** → Postgres → `juntia_private.before_user_created_hook`.
 4. **API › Exposed schemas:** solo `public`.
-5. **Requisito del correo integrado** (research R5): los correos de los dos
-   fundadores son miembros de la organización de Supabase. Límite: **2 correos
-   por hora en todo el proyecto**; cada registro, reenvío o recuperación manual
-   cuenta.
-6. **Lista permitida:** en el SQL Editor del proyecto,
+5. **Contraseña mínima: 8 caracteres** (Authentication › Providers › Email ›
+   «Minimum password length»), igual que `[auth] minimum_password_length = 8` en
+   `supabase/config.toml`. Requisito antes de probar el PR B en ese proyecto: Auth
+   la aplica también a una llamada directa a la API, no solo la pantalla.
+6. **Requisito del correo integrado, antes de probar el PR B** (research R5): los
+   correos de los dos fundadores son miembros de la organización de Supabase, y
+   **cada fundador recibe de verdad un correo de verificación** de ese proyecto;
+   la evidencia del PR B lo registra (fecha y proyecto, sin el correo). Límite:
+   **2 correos por hora en todo el proyecto**; cada registro, reenvío o
+   recuperación manual cuenta.
+7. **Lista permitida:** en el SQL Editor del proyecto,
 
    ```sql
    insert into juntia_data.signup_allowlist (email) values (lower('<correo>'));

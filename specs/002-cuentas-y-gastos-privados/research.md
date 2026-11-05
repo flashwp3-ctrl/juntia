@@ -300,7 +300,15 @@ hook compara en minúsculas.
 
 ---
 
-## R5 · `[V]` Correo de Supabase (Q10)
+## R5 · `[V]` Correo de Supabase (Q10) — evidencia documental
+
+**Tipo de evidencia: documental**, de la documentación oficial de Supabase
+consultada el 4 de noviembre de 2026. **No es un run**: ningún correo se envió a
+un proyecto alojado. El único dato ejecutado es el valor del stack local, que
+refleja el límite pero no lo prueba en un proyecto Free. La comprobación real
+(los dos correos en el equipo de la organización y un correo de verificación
+recibido de verdad) es un **requisito operativo antes de probar el PR B** (punto
+1 de abajo; quickstart §3, paso 6).
 
 - **Límite:** el correo integrado envía **2 correos por hora en todo el
   proyecto** ([Rate limits](https://supabase.com/docs/guides/auth/rate-limits)).
@@ -312,8 +320,9 @@ hook compara en minúsculas.
 
 1. **Requisito operativo antes de probar el PR B en `juntia-dev` o producción:**
    los correos de los dos fundadores son miembros de la organización de
-   Supabase de la segunda fundadora. Si no, la verificación y la recuperación no
-   llegan. Lo hace la dueña; el PR B lo confirma en su evidencia.
+   Supabase de la segunda fundadora, **y cada fundador recibe de verdad un correo
+   de verificación** de ese proyecto. Si no, la verificación y la recuperación no
+   llegan. Lo hace la dueña; el PR B registra las dos cosas en su evidencia.
 2. **Ninguna prueba automatizada usa el correo real.** Las E2E leen el enlace en
    Mailpit, dentro del runner.
 3. **Pruebas manuales:** con 2 correos por hora, cada registro, reenvío o

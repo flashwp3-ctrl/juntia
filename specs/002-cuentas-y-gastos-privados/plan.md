@@ -115,7 +115,7 @@ visibles desde la 001. **Ningún `[P]` con alcance «Sí» está sin aprobar.**
 | Forma del claim (ADR-013 [V] 9; decisión 1) | Decide | **Research R2**: `request.jwt.claims` con el JSON; `claim.sub` nulo; pgTAP usa `"request.jwt.claims"` | No — **verificado** |
 | Versiones exactas (ADR-013 [V] 10) | Decide | **Research R3**: CLI 2.121.0, supabase-js 2.118.0, ssr 0.12.7 y el stack local; el lockfile lo genera el PR A | No — **verificado**; lockfile en el PR A |
 | Lista permitida del registro (Q9) | Decide | **Research R4**: hook Before User Created; 403 sin fila, también por `/otp`; la API de administración no pasa por él | No — **verificado**; enumeración por la API aceptada (16.16) |
-| Correo de Supabase (Q10) | Decide | **Research R5**: 2 por hora en todo el proyecto y solo a miembros del equipo | No — requisito operativo antes de probar el PR B |
+| Correo de Supabase (Q10) | Decide | **Research R5, evidencia documental (no un run)**: 2 por hora en todo el proyecto y solo a miembros del equipo | No — la comprobación real (correos en el equipo y un correo de verificación recibido) es requisito operativo antes de probar el PR B |
 | Copia y restauración (Q11) | Decide | **Research R6**: `pg_dump` 17 de solo datos + `gpg` + restauración en base migrada, recuentos iguales y usuario que entra; `-Fc` descartado. Revisión del PR #37: el esquema va por referencia a las migraciones etiquetadas, no por `pg_dump` | No — decide el comando de datos y el cifrado; los dos caminos de restauración desde vacío los prueba el PR A |
 | Persistencia del tema (Q7) | Decide | **Research R7**, en local sin Docker: primer cuadro del tema guardado, CLS = 0, cero errores de hidratación, control negativo que destella | No — **verificado** para la lectura de la cookie |
 
@@ -162,7 +162,7 @@ entregan al gestor aparte y no están escritas aquí como decididas.
 | La API de Auth enumera (403 de la lista, 422 de cuenta existente) frente a «Sin enumeración de cuentas» | Maestro §15.5 / research R4 | **Resuelto por decisión** del primer fundador (16.16): riesgo aceptado hasta MVP-1, las pantallas no enumeran. FR-023 y el maestro se enmiendan en esta rama | Este PR | No |
 | ADR-013 §2.3 da por hecho que `auth.uid()` funciona dentro de la función de `juntia_writer` | ADR-013 / research R1 | Nota de implementación en ADR-013, sin cambiar la decisión | Este PR | No |
 | La tabla de la decisión 17 del maestro dice «`--remote` explícito»; ADR-011 §9.5 (ya corregido) dice `--linked` en la v2 y `--remote` en la v3, y la CLI fijada es la v2 | Maestro §15.10 / ADR-011 §9.5 | Manda el maestro, pero su texto describe la v3. El plan aplica la versión fijada (v2, `--linked`) | **Por corregir** en la rama de la decisión 17, que aún no está en `main` | No, si se corrige antes del merge de la 17 |
-| **Lectura.** ADR-011 §5 (enmienda) pone axe (control 5) en el job `app`; desde el PR B las rutas de producto exigen sesión y Supabase, que `app` no tiene | ADR-011 §5 / spec FR-027 | El control no cambia; cambia el job donde corre para las rutas con sesión (`e2e`). El plan lo propone | Lo aprueba quien mergee este plan | No |
+| ADR-011 §5 (enmienda de la forma del nivel 1) ponía axe (control 5) solo en el job `app`; desde el PR B las rutas de producto exigen sesión y Supabase, que `app` no tiene | ADR-011 §5 / spec FR-027 | **Resuelto por la enmienda «Axe en dos jobs» de ADR-011 §5** (4 nov 2026, en esta rama): sin sesión en `app`, con sesión en `e2e`, completo en cada PR de código | Este PR | No |
 | **Lectura.** `docs/TESTING.md` §9 todavía escribe «`verify` (… + SQL/RLS) < 90 s»; §2 y ADR-011 §9.7 lo miden sin las capas de base de datos | `docs/TESTING.md` / ADR-011 §9 | Manda ADR-011 (TESTING lo dice de sí mismo) | Puede ir en la rama de la decisión 17 | No |
 
 **Resultado del gate (antes de la Fase 0)**: **PASA**, con dos condiciones de
@@ -193,7 +193,7 @@ Sigue el maestro §7.2. Solo se crea lo que P0-1 llena.
 
 ```text
 supabase/
-├── config.toml                          # api.schemas = ["public"]; auth: confirmaciones, hook, plantillas, rate limit local
+├── config.toml                          # api.schemas = ["public"]; auth: confirmaciones, minimum_password_length = 8, hook, plantillas
 ├── migrations/
 │   ├── 20261105000100_foundation.sql    # PR A, 1.ª: esquemas, juntia_writer, default privileges, pg_graphql, current_uid(),
 │   │                                    #   profiles, categories, signup_allowlist, hook, vistas my_profile, funciones de perfil
@@ -450,9 +450,11 @@ US-7.
 PR A). Configuración de Auth en `config.toml` y, en los proyectos alojados, por
 la dueña (quickstart §3).
 
-**Requisitos operativos antes de probar en `juntia-dev`:** correos de los
-fundadores en la organización de Supabase (research R5), lista permitida y hook
-configurados, Preview de Vercel apuntando a `juntia-dev`.
+**Requisitos operativos antes de probar en `juntia-dev` o producción**
+(quickstart §3): correos de los fundadores en la organización de Supabase **y un
+correo de verificación recibido de verdad por cada uno** (research R5, que es
+evidencia documental); contraseña mínima de 8 en el proyecto; lista permitida y
+hook configurados; Preview de Vercel apuntando a `juntia-dev`.
 
 **Pruebas por capa:**
 
@@ -461,12 +463,13 @@ configurados, Preview de Vercel apuntando a `juntia-dev`.
 | Dominio | Validación de nombre visible; `volver` solo acepta rutas propias |
 | Componentes (RTL) | Las respuestas de registro 200/403/422/429 producen **la misma** salida (FR-023); recuperación siempre A4b; ThemeSelector como `radiogroup` con flechas, aplica y escribe la cookie; P1–P5; LimitNote de eliminar cuenta no es un control |
 | SQL/RLS | Ya en el PR A; aquí se añade el caso de `set_theme` y `update_display_name` ajenos si falta |
-| Integración | `ensure_profile()` idempotente con el nombre de A2; `/auth/confirm` con enlace válido, caducado y usado |
+| Integración | `ensure_profile()` idempotente con el nombre de A2; `/auth/confirm` con enlace válido, caducado y usado; **una llamada directa a `/auth/v1/signup` con una contraseña de 7 caracteres y un correo de la lista es rechazada por Auth** (`weak_password`) y no crea usuario (F37-7) |
 | E2E | **Spec 1 nace**: registro de un correo permitido → enlace en Mailpit → A1 con aviso → entrar → A6 sin «Invitar a mi pareja» → Inicio; registro no permitido → misma pantalla y ninguna cuenta; ruta protegida sin sesión → `/entrar` → vuelve a la ruta; Mi cuenta: perfil, apariencia en oscuro y **segundo contexto de navegador que entra y pinta oscuro desde el primer cuadro**; recuperación uniforme; cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar |
 | axe | Rutas de acceso y de Mi cuenta, en los dos temas, con sesión sembrada |
 
-**CI:** entra el job `e2e`; `check:theme-script` pide `/entrar`; axe de rutas
-con sesión pasa al job `e2e` (conflicto de lectura del Constitution Check).
+**CI:** entra el job `e2e`; `check:theme-script` pide `/entrar`; axe de las rutas
+con sesión corre en el job `e2e` y el de las rutas sin sesión sigue en `app`
+(ADR-011 §5, enmienda «Axe en dos jobs»).
 
 **`[V]` que cierra:** tema (escritura desde el perfil, dos dispositivos, CLS =
 0 con el arnés en acceso y Mi cuenta); workers con usuarios aislados (primera
@@ -645,14 +648,18 @@ Decisiones del plan que el revisor puede querer distintas. Ninguna necesita ADR.
    16.17).
 3. **Tope de 140 caracteres** en la descripción y de 60 en el nombre visible:
    no los fija el diseño.
-4. **Contraseña mínima de 8 caracteres**, sin reglas de composición (el valor
-   local por defecto es 6). El diseño de A2 no lo fija.
+4. **Contraseña mínima de 8 caracteres**, sin reglas de composición, **aplicada
+   por Auth** y no solo por la pantalla (revisión del PR #37, F37-7): en
+   `supabase/config.toml` (`[auth] minimum_password_length = 8`, la clave que
+   genera la CLI 2.121.0, comprobada en el `config.toml` del preflight, donde
+   valía 6) y en los dos proyectos alojados como requisito del quickstart. El
+   diseño de A2 no fija el número.
 5. **El tema en un segundo dispositivo** se corrige en la carga siguiente a un
    cambio, no en la misma (research R8.6).
 6. **Preview de Vercel → `juntia-dev`**: los previews nunca tocan la base de
    producción.
-7. **Axe de las rutas con sesión en el job `e2e`** (conflicto de lectura del
-   gate).
+7. **Axe de las rutas con sesión en el job `e2e`**: ya no es decisión del plan;
+   la fija la enmienda «Axe en dos jobs» de ADR-011 §5 (revisión del PR #37).
 8. **Rutas de acceso** `/entrar`, `/crear-cuenta`, `/verificar-correo`,
    `/recuperar`, `/nueva-contrasena`, `/primera-entrada`, `/auth/confirm` y
    `/api/export`.
