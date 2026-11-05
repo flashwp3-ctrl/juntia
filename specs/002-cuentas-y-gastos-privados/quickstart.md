@@ -44,8 +44,12 @@ commit de prueba y comprueba que el job se pone rojo (TESTING §6, paso 5).
 ## 3. Usar la app en desarrollo: `juntia-dev`
 
 `juntia-dev` (`itfrhnadovezpahikuol`) es un proyecto Free de la segunda
-fundadora, en la región de producción, **sin datos reales** y con claves propias
-(ADR-011 §9.5). No lo usa ninguna prueba automatizada.
+fundadora, **sin datos reales** y con claves propias (ADR-011 §9.5). No lo usa
+ninguna prueba automatizada. Está en **East US (North Virginia)**, no en la región
+de producción (São Paulo): la región no se puede cambiar sin recrear el proyecto, y
+los fundadores la aceptaron el 5 de noviembre de 2026 porque dev no guarda datos
+reales y la región no cambia el comportamiento de las migraciones. Las latencias
+medidas en dev no representan a producción.
 
 ### Variables de entorno (solo nombres; los valores, del panel del proyecto)
 
