@@ -63,7 +63,10 @@ order by n.nspname,c.relname
 commit;
 SQL
 sed -n 's/^migration=//p' "$WORK/database-manifest" > "$WORK/applied-versions"
-cmp "$WORK/expected-versions" "$WORK/applied-versions"
+if ! cmp -s "$WORK/expected-versions" "$WORK/applied-versions"; then
+  echo "MANIFIESTO RECHAZADO: migraciones aplicadas no coinciden (sha=$SHA)" >&2
+  exit 1
+fi
 {
   printf 'mode=%s\nsha=%s\n' "$MODE" "$SHA"
   [[ $MODE != production ]] || printf 'tag=%s\n' "$TAG"
