@@ -32,6 +32,7 @@ export const registry: readonly RouteEntry[] = [
   { route: "/verificar-correo", state: "A3", path: "/verificar-correo", session: "none" },
   { route: "/recuperar", state: "A4", path: "/recuperar", session: "none" },
   { route: "/recuperar", state: "aviso de enlace caducado", path: "/recuperar?enlace=caducado", session: "none" },
+  { route: "/recuperar", state: "aviso de otro navegador", path: "/recuperar?enlace=otro-navegador", session: "none" },
   { route: "/recuperar", state: "A4b", path: "/recuperar", session: "none", needsAuthApi: true, prepare: "recoverSent" },
   // Con sesión de recuperación o de usuario.
   { route: "/nueva-contrasena", state: "A5", path: "/nueva-contrasena", session: "recovery" },

@@ -41,10 +41,11 @@ describe("/auth/confirm · camino code (plantilla por defecto de los proyectos a
       expect(exchange).not.toHaveBeenCalled();
     }
   });
-  it("otro navegador: el registro ya quedó verificado en /auth/v1/verify → Entrar con el aviso; la recuperación no tiene sesión → caducado", async () => {
+  it("otro navegador: el registro ya quedó verificado en /auth/v1/verify → Entrar con el aviso; la recuperación pide abrirlo en el mismo navegador", async () => {
     const missing = vi.fn().mockResolvedValue({ error: new AuthPKCECodeVerifierMissingError() });
     expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: missing }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
-    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth({ exchangeCodeForSession: missing }))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+    // Copy aprobado el 5 nov 2026 (Alejandro): la recuperación en otro navegador lo dice con su propio aviso.
+    expect(await resolveConfirm(input({ next: "recovery", code: "c" }), auth({ exchangeCodeForSession: missing }))).toEqual({ to: "/recuperar?enlace=otro-navegador", session: null });
     const thrown = vi.fn().mockRejectedValue(new AuthPKCECodeVerifierMissingError());
     expect(await resolveConfirm(input({ next: "signup", code: "c" }), auth({ exchangeCodeForSession: thrown }))).toEqual({ to: "/entrar?aviso=verificado", session: null });
   });

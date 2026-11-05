@@ -20,7 +20,9 @@ export const copy = {
       missing: "Escribe tu correo y tu contraseña.",
     },
     networkError: "No pudimos conectar. Inténtalo de nuevo.",
-    recover: { title: "Recupera tu acceso", description: "Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.", submit: "Enviar enlace", submitting: "Enviando…", sent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", linkExpired: "Este enlace caducó o ya se usó. Pide uno nuevo.", missing: "Escribe tu correo." },
+    recover: { title: "Recupera tu acceso", description: "Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.", submit: "Enviar enlace", submitting: "Enviando…", sent: "Si podemos enviar el enlace, lo recibirás en tu correo. Si no llega, inténtalo más tarde.", linkExpired: "Este enlace caducó o ya se usó. Pide uno nuevo.", missing: "Escribe tu correo.",
+      // Aprobado el 5 nov 2026 (Alejandro): enlace de recuperación de la plantilla por defecto abierto en otro navegador.
+      otherBrowser: "Abre el enlace en el mismo navegador donde lo pediste o pide uno nuevo." },
     newPassword: { title: "Crea una contraseña nueva", label: "Contraseña nueva", repeat: "Repítela", repeatPlaceholder: "Repite la contraseña", help: "Usa al menos 8 caracteres.", mismatch: "Las dos contraseñas no coinciden.", submit: "Guardar contraseña", submitting: "Guardando…", weak: "Usa una contraseña de al menos 8 caracteres.", same: "Elige una contraseña distinta de la anterior." },
     signUp: {
       title: "Crea tu cuenta", nameLabel: "Nombre visible", nameHelp: "Así aparecerás en Juntia.", namePlaceholder: "Tu nombre", passwordPlaceholder: "Crea una contraseña", passwordHelp: "Al menos 8 caracteres. Usa una que no uses en otro sitio.",

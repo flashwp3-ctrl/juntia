@@ -45,8 +45,8 @@ export async function resolveConfirm(params: URLSearchParams, auth: ConfirmAuth)
   }
   if (!error) return success(kind);
   // Otro navegador: /auth/v1/verify ya confirmó el correo antes de redirigir; solo falta entrar con la contraseña. Una
-  // recuperación sin sesión no puede crear la contraseña: se pide otro enlace.
-  if (error.name === "AuthPKCECodeVerifierMissingError" && kind === "signup") return { to: VERIFIED, session: null };
+  // recuperación sin sesión no puede crear la contraseña: dice que se abra en el mismo navegador o se pida otro.
+  if (error.name === "AuthPKCECodeVerifierMissingError") return kind === "signup" ? { to: VERIFIED, session: null } : { to: "/recuperar?enlace=otro-navegador", session: null };
   return EXPIRED;
 }
 

@@ -77,7 +77,7 @@ it("recuperación por la plantilla por defecto: el mismo navegador obtiene la se
   expect((await browser.client.auth.resetPasswordForEmail(user.email, { redirectTo: `${SITE}/auth/confirm?next=recovery` })).error).toBeNull();
   const landing = await followDefaultLink(await tokenHash(user.email, "recovery"), "recovery", "recovery");
   expect(landing.searchParams.get("code")).toBeTruthy();
-  expect(await resolveConfirm(landing.searchParams, authOf(cookieJarClient().client))).toEqual({ to: "/recuperar?enlace=caducado", session: null });
+  expect(await resolveConfirm(landing.searchParams, authOf(cookieJarClient().client))).toEqual({ to: "/recuperar?enlace=otro-navegador", session: null });
   expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/nueva-contrasena", session: "recovery" });
   expect((await browser.client.auth.getClaims()).data?.claims.sub).toBe(user.id);
 });
