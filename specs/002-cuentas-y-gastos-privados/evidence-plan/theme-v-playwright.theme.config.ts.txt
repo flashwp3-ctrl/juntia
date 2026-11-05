@@ -1,0 +1,9 @@
+import { defineConfig, devices } from "@playwright/test";
+export default defineConfig({
+  testDir: "tests/theme",
+  testMatch: "**/*.theme.ts",
+  retries: 0,
+  workers: 2,
+  use: { reducedMotion: "reduce" },
+  projects: [{ name: "theme", use: { ...devices["Desktop Chrome"] } }],
+});

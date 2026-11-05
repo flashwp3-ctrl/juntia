@@ -1,0 +1,3 @@
+// [V] tema persistido (spec 002, Q7): prototipo desechable. La cookie juntia_theme (light|dark) manda sobre el sistema;
+// sin cookie, «system» o un valor no válido, sigue a prefers-color-scheme como en la 001.
+export const themeScript = '(function(){var d=document.documentElement;var m=window.matchMedia("(prefers-color-scheme: dark)");var t=null;try{var k=document.cookie.match(/(?:^|;\\s*)juntia_theme=(light|dark)(?:;|$)/);if(k){t=k[1]}}catch(e){}function a(){d.setAttribute("data-theme",t||(m.matches?"dark":"light"))}a();if(m.addEventListener){m.addEventListener("change",a)}try{var c=window.localStorage.getItem("juntia:context");if(c==="me"||c==="us"){d.setAttribute("data-context",c)}}catch(e){}})();';

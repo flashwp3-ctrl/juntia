@@ -431,69 +431,100 @@ antes del primer pintado) no necesita base de datos.
    nuevo pinta bien desde la primera página de producto. Ver R8.6 para el caso
    de dos dispositivos.
 
-### Cómo se midió
+### Cómo se midió (corregido en la revisión del PR #37, F37-4)
 
-El arnés de la research R2 de la 001 (primer cuadro por `Page.startScreencast`
-con CPU 6× y red de 400 kbit/s y 400 ms, atributo en el instante en que se crea
+El arnés de la research R2 de la 001 (screencast con `Page.startScreencast`, CPU
+6× y red de 400 kbit/s y 400 ms; atributo en el instante en que se crea
 `<body>`), más CLS con `PerformanceObserver`. La cookie se pone con
 `context.addCookies` y el sistema se emula **al contrario**: si el script no la
-leyera, el primer cuadro sería del tema del sistema. A 1280 px el píxel inferior
-izquierdo es el sidebar del shell: `#EEE7DA` = `[238,231,218]` en claro y
-`#0F1112` = `[15,17,18]` en oscuro. **Control negativo:** `/control` aplica la
-misma cookie en un `useEffect` y debe pintar primero el tema del sistema.
+leyera, algún cuadro sería del tema del sistema.
+
+**Lo que cambió tras la revisión.** La primera versión solo miraba el primer
+cuadro con marca «≥ first-paint − 1 ms», y su control negativo no mostraba el
+destello: terminaba antes de que el efecto aplicara el tema. Al rehacerlo con la
+línea de tiempo completa apareció la causa: **el reloj del screencast y el de
+`performance` difieren unos milisegundos**, y el primer cuadro pintado puede
+llevar una marca anterior a `first-paint` (en `/ system=dark cookie=light`,
+`-4 ms`). Ese filtro podía saltarse justo el cuadro que importa. Desde ahora:
+
+- se decodifican **todos** los cuadros y se publica su línea de tiempo relativa
+  a `first-paint`;
+- la superficie del navegador antes del documento (blanca, o `#121212` con el
+  sistema en oscuro) se separa por tiempo y se exige que **no** aparezca después
+  de `first-paint`;
+- se exige que el primer cuadro con contenido sea del tema esperado y que
+  **ningún** cuadro tenga el color del tema contrario (sidebar o lienzo).
+
+A 1280 px el píxel inferior izquierdo es el sidebar del shell: `#EEE7DA` =
+`[238,231,218]` en claro y `#0F1112` = `[15,17,18]` en oscuro. El control
+`/control` no tiene shell: su píxel es el lienzo, `[247,243,235]` y `[18,20,22]`.
+
+**Reproducible.** El arnés, la página de control, el script modificado y la
+configuración están en
+[`evidence-plan/`](evidence-plan/) como `.txt`, igual que la evidencia de la 001;
+la salida completa, en `evidence-plan/theme-v-run-output.txt`.
 
 ### Salida (`next build` + `next start`, Next 16.4.4)
 
 ```
 $ npx playwright test -c playwright.theme.config.ts --reporter=line
-/ system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstFrame":[15,17,18],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/ system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstFrame":[238,231,218],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/ system=dark cookie=system: {"themeAtBody":"dark","finalTheme":"dark","firstFrame":[15,17,18],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/ system=light cookie=bogus: {"themeAtBody":"light","finalTheme":"light","firstFrame":[238,231,218],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/ system=dark cookie=-: {"themeAtBody":"dark","finalTheme":"dark","firstFrame":[15,17,18],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/actividad system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstFrame":[15,17,18],"framesAfterPaint":2,"cls":0,"consoleProblems":[]}
-/actividad system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstFrame":[238,231,218],"framesAfterPaint":2,"cls":0,"consoleProblems":[]}
-/actividad system=dark cookie=system: … "firstFrame":[15,17,18] … "cls":0,"consoleProblems":[]}
-/actividad system=light cookie=bogus: … "firstFrame":[238,231,218] … "cls":0,"consoleProblems":[]}
-/actividad system=dark cookie=-: … "firstFrame":[15,17,18] … "cls":0,"consoleProblems":[]}
-/cuenta system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstFrame":[15,17,18],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/cuenta system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstFrame":[238,231,218],"framesAfterPaint":3,"cls":0,"consoleProblems":[]}
-/cuenta system=dark cookie=system: … "firstFrame":[15,17,18] … "cls":0,"consoleProblems":[]}
-/cuenta system=light cookie=bogus: … "firstFrame":[238,231,218] … "cls":0,"consoleProblems":[]}
-/cuenta system=dark cookie=-: … "firstFrame":[15,17,18] … "cls":0,"consoleProblems":[]}
+/ system=light cookie=dark: {"themeAtBody":"dark","finalTheme":"dark","firstContentFrame":"[15,17,18]","contentFrames":3,"framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2516ms","[15,17,18]@+0ms","[15,17,18]@+67ms","[15,17,18]@+850ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=light: {"themeAtBody":"light","finalTheme":"light","firstContentFrame":"[238,231,218]","contentFrames":3,"framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2540ms","[238,231,218]@-4ms","[238,231,218]@+63ms","[238,231,218]@+846ms"],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=system: … "framePixels":["[15,17,18]"],"timeline":["[18,18,18]@-2423ms","[15,17,18]@+1ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=light cookie=bogus: … "framePixels":["[238,231,218]"],"timeline":["[255,255,255]@-2466ms","[238,231,218]@+4ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/ system=dark cookie=-: … "framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2399ms","[18,18,18]@-2361ms","[15,17,18]@+6ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=light cookie=dark: … "framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2458ms","[15,17,18]@+3ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad system=dark cookie=light: … "framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2318ms","[238,231,218]@+4ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/actividad (system, bogus, sin cookie): framePixels solo del tema esperado, blanksAfterPaint 0, cls 0, consoleProblems []
+/cuenta system=light cookie=dark: … "framePixels":["[15,17,18]"],"timeline":["[255,255,255]@-2482ms","[15,17,18]@+4ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta system=dark cookie=light: … "framePixels":["[238,231,218]"],"timeline":["[18,18,18]@-2486ms","[238,231,218]@+7ms",…],"blanksAfterPaint":0,"cls":0,"consoleProblems":[]}
+/cuenta (system, bogus, sin cookie): framePixels solo del tema esperado, blanksAfterPaint 0, cls 0, consoleProblems []
 system flip with cookie=dark: data-theme stays dark
 served <html>: <html lang="es-CO" class="R_a3Gq_variable ZJly0G_variable _ttCGa_variable _9N-dia_variable">
-  17 passed (2.0m)
+  18 passed (1.9m)
 
-$ npx playwright test -c playwright.theme.config.ts --reporter=line -g "control negativo"
-/control system=light ctl=dark: {"themeAtBody":"light","finalTheme":"light","firstFrame":[247,243,235],"framesAfterPaint":3,"cls":0,"consoleProblems":["warning: Did not find element expected to be parsed from: <link rel=expect href=\"#juntia-shell-end\">"]}
-  1 passed (8.8s)
+$ npx playwright test -c playwright.theme.config.ts --reporter=line tests/theme/theme-control.theme.ts
+t0 = first-paint (performance) · 1793842648546 epoch ms
+data-theme -> light at -150 ms
+data-theme -> dark at +5192 ms
+frame at -2061 ms pixel=[255,255,255]
+frame at +6 ms pixel=[247,243,235]
+frame at +223 ms pixel=[247,243,235]
+frame at +1173 ms pixel=[247,243,235]
+frame at +5222 ms pixel=[18,20,22]
+first content frame: +6 ms [247,243,235] · first dark frame after apply: +5222 ms [18,20,22]
+  1 passed (8.7s)
 
-$ BASE_URL=http://localhost:3201 npx playwright test … -g "cookie (dark|light)$"   (next dev: hidratación)
-/ system=light cookie=dark: {"themeAtBody":"dark",…,"firstFrame":[15,17,18],…,"cls":0,"consoleProblems":[]}
-/ system=dark cookie=light: {"themeAtBody":"light",…,"firstFrame":[238,231,218],…,"cls":0,"consoleProblems":[]}
-/actividad … (las dos)   "cls":0,"consoleProblems":[]
-/cuenta … (las dos)      "cls":0,"consoleProblems":[]
+$ BASE_URL=http://localhost:3201 npx playwright test … -g "cookie (dark|light)$"   (next dev, arnés anterior: hidratación)
+/ · /actividad · /cuenta, cookie dark y light: "cls":0,"consoleProblems":[]
   6 passed (2.4m)
 ```
 
-Lectura: con la cookie contraria al sistema, el atributo ya está antes de
-`<body>` y **el primer cuadro es del tema guardado**, con CLS = 0, en las tres
-rutas. `system`, un valor no válido y la ausencia de cookie siguen al sistema. Un
-cambio del sistema con la app abierta no pisa el tema guardado. El HTML servido
-no lleva `data-theme` aunque llegue la cookie. **El control sí destella**
-(primer cuadro claro con la cookie en oscuro): el detector ve el destello cuando
-existe. En `next dev` no hay errores ni avisos de hidratación. El aviso del
-control es del `<link rel="expect">` del shell, que `/control` no tiene; no
-aparece en las rutas reales.
+Las líneas resumidas con «…» están completas en
+`evidence-plan/theme-v-run-output.txt`.
+
+Lectura:
+
+- **Control negativo, validado.** El script bloqueante pone `light` 150 ms antes
+  del primer pintado; el primer cuadro con contenido (+6 ms) es **claro**, siguen
+  claros a +223 y +1173 ms, el efecto aplica `dark` a +5192 ms y el siguiente
+  cuadro (+5222 ms) es **oscuro**. El detector ve las dos fases cuando existe un
+  destello.
+- **Con la cookie contraria al sistema**, el atributo ya está antes de `<body>`,
+  **todos** los cuadros con contenido son del tema guardado, la superficie del
+  navegador solo aparece antes del primer pintado y CLS = 0, en las tres rutas.
+- `system`, un valor no válido y la ausencia de cookie siguen al sistema; un
+  cambio del sistema con la app abierta no pisa el tema guardado; el HTML servido
+  no lleva `data-theme` aunque llegue la cookie.
+- La comprobación de hidratación en `next dev` es de la primera corrida (mismo
+  script, arnés anterior): cero errores y avisos.
 
 **Resultado del `[V]`: verificado** en Next 16.4.4 y React 19.3.1, para la lectura
-de la cookie. **No cubre** (comprueba lo construido, en el PR B): la escritura de
-la cookie desde el perfil al entrar, el caso de dos dispositivos con la spec E2E
-1 y dos contextos, y CLS = 0 con el arnés en las rutas de acceso y Mi cuenta
-reales (SC-005). La primera fila de la tabla de la 001 se recalibró: el píxel de
-referencia ya no es el lienzo sino el sidebar, porque el shell cambió desde
-entonces.
+de la cookie, con un detector validado por su control. **No cubre** (comprueba lo
+construido, en el PR B): la escritura de la cookie desde el perfil al entrar, el
+caso de dos dispositivos con la spec E2E 1 y dos contextos, y CLS = 0 con el
+arnés en las rutas de acceso y Mi cuenta reales (SC-005). El PR B usa este arnés
+(el de `evidence-plan/`), no el de la research de la 001.
 
 ---
 

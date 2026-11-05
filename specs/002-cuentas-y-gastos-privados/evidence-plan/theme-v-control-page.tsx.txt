@@ -1,0 +1,9 @@
+﻿"use client";
+import { useEffect } from "react";
+export default function Control() {
+  useEffect(() => {
+    const k = document.cookie.match(/(?:^|;\s*)juntia_theme_ctl=(light|dark)(?:;|$)/);
+    if (k) document.documentElement.setAttribute("data-theme", k[1]);
+  }, []);
+  return <main className="min-h-dvh bg-canvas">control</main>;
+}
