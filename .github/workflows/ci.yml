@@ -103,6 +103,17 @@ jobs:
           name: database-types
           path: ${{ runner.temp }}/database.types.ts
           if-no-files-found: ignore
+      - name: Describe Auth bootstrap for the plain PostgreSQL restore
+        if: always() && steps.database.outcome == 'success'
+        shell: bash
+        run: |
+          psql "$DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select jsonb_build_object('uid', pg_get_functiondef('auth.uid()'::regprocedure), 'columns', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) order by c.relname,a.attnum) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum where n.nspname='auth' and c.relname in ('users','identities') and a.attnum>0 and not a.attisdropped));" > "$RUNNER_TEMP/auth-bootstrap.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: auth-bootstrap-description
+          path: ${{ runner.temp }}/auth-bootstrap.json
+          if-no-files-found: ignore
       - name: Stop Supabase
         if: always()
         run: supabase stop

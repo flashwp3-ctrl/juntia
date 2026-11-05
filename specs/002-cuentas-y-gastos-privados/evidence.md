@@ -703,3 +703,29 @@ de dinero en este commit. `npm run verify` sobre ese mismo SHA: exit 0,
 29.88 s, 23 pruebas de dominio y 87 de componentes; salida en
 [checkpoint-2-local-verify.txt](evidence/checkpoint-2-local-verify.txt).
 Los techos no se cambian; el arranque por encima de 60 s queda medido.
+
+## T021, T023–T025 — pruebas previas de dinero
+
+5 de noviembre de 2026, commit `3eb0695a2569e59144580a2c949069ac6285a312`.
+Run [42039337632](https://github.com/flashwp3-ctrl/juntia/actions/runs/42039337632).
+Dispatch manual y `gh run watch 42039337632 --exit-status --interval 20`:
+exit 1 esperado; [log íntegro](evidence/money-red.txt).
+
+```text
+08_money_functions.test.sql:5: ERROR: function juntia_private.parse_amount_minor(unknown) does not exist
+Files=10, Tests=273
+Test Files 1 failed | 3 passed (4)
+Cannot find module '../../src/lib/db/transactions'
+app typecheck: faltan errors, types, transactions y las dos RPC en tipos generados
+supabase start: 120 s
+Job app: failure, 35.36 s (resumen interno)
+Job db: failure, 186.58 s (resumen interno)
+```
+
+El humo y las pruebas anteriores pasan. Antes de implementar `errors.ts`,
+`npm run test:components -- --run src/lib/db/errors.test.ts src/lib/db/types.test.ts`
+falló localmente por `Cannot find module './errors'` (exit 1).
+Después de implementarlo: 1 archivo, 24 pruebas pasadas, exit 0.
+Los tipos se mantienen pendientes de generación en el runner: `npm run typecheck`
+solo señala que faltan `create_transaction` y `update_transaction` en el tipo
+generado anterior. No se editan ni se relaja la comprobación.
