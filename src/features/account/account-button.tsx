@@ -48,7 +48,7 @@ export function SidebarAccount({ current }: { current: boolean }) {
       )}
       <span className="sr-only flex min-w-0 flex-col xl:not-sr-only">
         <span className="truncate text-[14px] font-semibold text-ink">{name}</span>
-        {account ? <span className="text-[12px] text-ink-secondary">{copy.nav.account}</span> : null}
+        {account ? <span className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.nav.account}</span> : null}
       </span>
       <AppIcon name="caret-right" size={18} className="ml-auto hidden shrink-0 text-ink-secondary xl:block" />
     </Link>

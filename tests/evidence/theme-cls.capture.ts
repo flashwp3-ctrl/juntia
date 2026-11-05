@@ -8,9 +8,9 @@ import { seedUser } from "../support/seed";
 const PALETTE = { light: ["[238,231,218]", "[247,243,235]"], dark: ["[15,17,18]", "[18,20,22]"] } as const;
 const BLANKS = ["[255,255,255]", "[18,18,18]"];
 const OBSERVER = `(() => {
-  const w = window; w.__themeAtBody = undefined; w.__cls = 0;
+  const w = window; w.__themeAtBody = undefined; w.__cls = 0; w.__shifts = [];
   new MutationObserver((_, o) => { if (document.body) { w.__themeAtBody = document.documentElement.getAttribute("data-theme"); o.disconnect(); } }).observe(document, { childList: true, subtree: true });
-  new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (!e.hadRecentInput) w.__cls += e.value; } }).observe({ type: "layout-shift", buffered: true });
+  new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (!e.hadRecentInput) { w.__cls += e.value; w.__shifts.push(e.value.toFixed(5) + " " + (e.sources || []).map((s) => s.node ? (s.node.nodeName + (s.node.className && s.node.className.baseVal === undefined ? "." + String(s.node.className).split(" ").slice(0, 2).join(".") : "") + " " + JSON.stringify([s.previousRect.x, s.previousRect.y, s.previousRect.width, s.previousRect.height, s.currentRect.x, s.currentRect.y, s.currentRect.width, s.currentRect.height]) + " " + (s.node.textContent || "").slice(0, 30)) : "?").join(" | ")); } } }).observe({ type: "layout-shift", buffered: true });
 })();`;
 
 async function probe(page: Page, url: string) {
@@ -27,9 +27,9 @@ async function probe(page: Page, url: string) {
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   await cdp.send("Page.stopScreencast");
   const timing = await page.evaluate(() => {
-    const w = window as unknown as { __themeAtBody: string | null; __cls: number };
+    const w = window as unknown as { __themeAtBody: string | null; __cls: number; __shifts: string[] };
     const fp = performance.getEntriesByType("paint").find((e) => e.name === "first-paint");
-    return { themeAtBody: w.__themeAtBody, cls: w.__cls, finalTheme: document.documentElement.getAttribute("data-theme"), firstPaint: fp ? performance.timeOrigin + fp.startTime : 0 };
+    return { themeAtBody: w.__themeAtBody, cls: w.__cls, shifts: w.__shifts, finalTheme: document.documentElement.getAttribute("data-theme"), firstPaint: fp ? performance.timeOrigin + fp.startTime : 0 };
   });
   const decoder = await page.context().newPage();
   const pixels: { px: string; rel: number }[] = [];
@@ -74,7 +74,7 @@ for (const route of routes.filter(({ session }) => withSupabase || !session)) {
       const result = await probe(page, route.path);
       const palette: readonly string[] = PALETTE[c.expected];
       const wrongFrames = result.framePixels.filter((px) => !palette.includes(px));
-      console.log(JSON.stringify({ route: route.path, system: c.system, cookie: c.cookie, expected: c.expected, themeAtBody: result.themeAtBody, finalTheme: result.finalTheme, cls: result.cls, contentFrames: result.contentFrames, framePixels: result.framePixels, wrongFrames, blanksAfterPaint: result.blanksAfterPaint }));
+      console.log(JSON.stringify({ route: route.path, system: c.system, cookie: c.cookie, expected: c.expected, themeAtBody: result.themeAtBody, finalTheme: result.finalTheme, cls: result.cls, shifts: result.shifts, contentFrames: result.contentFrames, framePixels: result.framePixels, wrongFrames, blanksAfterPaint: result.blanksAfterPaint }));
       expect(result.themeAtBody).toBe(c.expected);
       expect(result.finalTheme).toBe(c.expected);
       expect(result.cls).toBe(0);

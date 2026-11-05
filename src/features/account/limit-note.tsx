@@ -8,7 +8,7 @@ export function LimitNote({ title, description }: { title: string; description: 
       <AppIcon name="info" size={20} className="mt-px shrink-0 text-ink-secondary" />
       <span className="flex min-w-0 flex-col gap-[3px]">
         <span className="text-[14px] leading-snug font-semibold text-ink">{title}</span>
-        <span className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{description}</span>
+        <span className="text-[13px] leading-[1.45] text-pretty text-[var(--comp-field-muted-fg)]">{description}</span>
       </span>
     </div>
   );

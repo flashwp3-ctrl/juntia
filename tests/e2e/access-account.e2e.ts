@@ -135,12 +135,13 @@ test("Mi cuenta: perfil, apariencia en oscuro y un segundo dispositivo oscuro an
 
   // Segundo dispositivo: sin cookies y con el sistema en claro. Registra el tema en el instante en que aparece <body>.
   const other = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme: "light" });
+  // El observador va sobre document (el arnés de research R7): al correr el script de inicio todavía no hay <html> parseado.
   await other.addInitScript(() => {
     new MutationObserver((_, observer) => {
       if (!document.body) return;
       (window as unknown as { themeAtBody: string | null }).themeAtBody = document.documentElement.getAttribute("data-theme");
       observer.disconnect();
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    }).observe(document, { childList: true, subtree: true });
   });
   const second = await other.newPage();
   await second.goto("/entrar");
@@ -200,7 +201,8 @@ test("cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar", asy
   await signInContext(page.context(), user);
   await page.goto("/cuenta/seguridad");
   await expect(page.getByRole("textbox", { name: copy.account.profile.emailLabel })).toHaveValue(user.email);
-  await page.getByRole("button", { name: copy.account.signOut.label }).click();
+  // «Esta sesión» (G1). En escritorio, la columna de Mi cuenta tiene además la fila «Cerrar sesión», con su ayuda en el nombre.
+  await page.getByRole("button", { name: copy.account.signOut.label, exact: true }).click();
   await expect(page).toHaveURL(/\/entrar\?aviso=sesion-cerrada$/);
   await expect(page.getByText(copy.auth.signIn.signedOut)).toBeVisible();
   for (const route of ["/", "/actividad", "/cuenta", "/cuenta/perfil"]) {

@@ -169,7 +169,7 @@ export function ExportEntry() {
               >
                 <span className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-semibold text-ink">{option.label}</span>
-                  <span className="text-[12px] leading-[1.4] text-ink-secondary">{option.hint}</span>
+                  <span className="text-[12px] leading-[1.4] text-[var(--comp-field-muted-fg)]">{option.hint}</span>
                 </span>
                 <span aria-hidden="true" className={`grid size-[22px] place-items-center rounded-full border-2 ${selected ? "border-ink" : "border-border-emphasis"}`}>
                   {selected ? <span className="size-2.5 rounded-full bg-ink" /> : null}

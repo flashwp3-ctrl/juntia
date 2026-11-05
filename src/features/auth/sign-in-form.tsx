@@ -26,8 +26,12 @@ export function SignInForm({ volver, notice }: Props) {
       </p>
       {notice === "sesion-cerrada" ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice> : null}
       {notice === "verificado" ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}
-      <h1 className={`font-serif text-[clamp(40px,12vw,48px)] leading-[0.98] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>
-        {copy.auth.signIn.titleLead} <em className="font-serif-italic italic">{copy.auth.signIn.titleEmphasis}</em>
+      <h1 className={`font-serif text-[clamp(34px,calc((100vw-48px)*0.128),46px)] leading-[0.98] lg:text-[44px] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>
+        {/* Dos líneas, como el comp, y un tamaño con el que «Lo tuyo, lo mío y» cabe en la columna con la fuente real y con su
+            respaldo (que mide un 3 % más): con 48 px la línea medía 360 px reales y 371 de respaldo en una columna de 360, y
+            la llegada de la fuente movía el titular (CLS 0,0053 con el arnés de T053). A 390 px, 48 no cabía ni con la real. */}
+        <span className="block">{copy.auth.signIn.titleLead}</span>{" "}
+        <em className="block font-serif-italic italic">{copy.auth.signIn.titleEmphasis}</em>
       </h1>
       {state.resend ? (
         <InlineNotice icon="envelope-simple">
@@ -36,7 +40,7 @@ export function SignInForm({ volver, notice }: Props) {
             <input type="hidden" name="email" value={state.email ?? ""} />
             <button type="submit" disabled={resending} className={`${authLink} relative inline-flex min-h-11 items-center align-middle`}>{copy.auth.signIn.resend}</button>
           </form>
-          {resent.notice ? <span className="mt-1 block font-normal text-ink-secondary">{resent.notice}</span> : null}
+          {resent.notice ? <span className="mt-1 block font-normal text-[var(--comp-field-muted-fg)]">{resent.notice}</span> : null}
         </InlineNotice>
       ) : null}
       {network ? <InlineNotice tone="danger" icon="wifi-slash">{state.error}</InlineNotice> : null}
