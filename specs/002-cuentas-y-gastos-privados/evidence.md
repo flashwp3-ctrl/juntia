@@ -640,3 +640,35 @@ Arranque, reset, integración de foundation y tipos pasaron. `app` pasó en
 2m33s; `db` falló en 3m9s por los objetos aún no implementados. `test:db` tardó
 6.43 s (< 60 s). No es un fallo del mecanismo [V] 1: se trata del rojo previo
 exigido por T017 antes de escribir la migración.
+
+## T018–T019 — tablas, vistas e integración antes de fijar los tipos
+
+Commit `359a663b367cc6472fe47dde726f74135a6c2772`.
+Run [42036309887](https://github.com/flashwp3-ctrl/juntia/actions/runs/42036309887).
+`gh run watch ... --exit-status --interval 20`: exit 1, solo por tipos antiguos.
+
+```text
+All tests successful.
+Files=9, Tests=273
+Result: PASS
+Test Files 3 passed (3)
+Tests 9 passed (9)
+app: success, 2m45s
+db: failure, 2m40s; solo Check generated types
+supabase start: 92 s
+test:db: 6.40 s (< 60 s)
+Job app (resumen interno): 160.88 s
+Job db (resumen interno): 153.44 s
+```
+
+La RLS de writer pasó en las tablas nuevas, incluida inserción ajena rechazada
+y `SELECT ... FOR UPDATE` limitado a filas propias. También pasaron las pruebas
+del protocolo pending/completed y de la auditoría inmutable. No existe aún
+ninguna función de dinero.
+
+Log: [`evidence/controlled-generation.txt`](evidence/controlled-generation.txt).
+Artefacto descargado con `gh run download 42036309887 --name database-types
+--dir specs/002-cuentas-y-gastos-privados/evidence/type-generation-controlled`.
+Se leyó completo, sin claves, URLs ni datos: solo las cuatro vistas y funciones
+de perfil, tipos auxiliares y constantes. Se movió sin editar a su ruta final.
+SHA256 `0211ee4bf5cd3eb06ae54406475ab5937636f8a90f62da0d336bad8586c30c02`.

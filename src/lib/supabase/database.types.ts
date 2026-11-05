@@ -22,6 +22,36 @@ export type Database = {
                         Relationships: [
                     
                   ]
+                },"my_recent_categories": {
+                  Row: {
+                    "category_id": string | null,"last_used_at": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"my_transaction_months": {
+                  Row: {
+                    "count": number | null,"month": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"my_transactions": {
+                  Row: {
+                    "amount_minor": string | null,"category_id": string | null,"created_at": string | null,"currency": string | null,"description": string | null,"id": string | null,"transaction_date": string | null,"type": string | null,"updated_at": string | null,"version": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "amount_minor"?: never,"category_id"?: string | null,"created_at"?: string | null,"currency"?: string | null,"description"?: string | null,"id"?: string | null,"transaction_date"?: string | null,"type"?: string | null,"updated_at"?: string | null,"version"?: number | null
+                         }
+                        Update: {
+                           "amount_minor"?: never,"category_id"?: string | null,"created_at"?: string | null,"currency"?: string | null,"description"?: string | null,"id"?: string | null,"transaction_date"?: string | null,"type"?: string | null,"updated_at"?: string | null,"version"?: number | null
+                         }
+                        Relationships: [
+                    
+                  ]
                 }
           }
           Functions: {
