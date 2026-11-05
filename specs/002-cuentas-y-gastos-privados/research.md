@@ -557,6 +557,8 @@ Las líneas resumidas con «…» están completas en
 
 Lectura:
 
+- **Recuento:** 18 tests aprobados, incluidos 15 escenarios parametrizados de
+  tema; el control negativo se repitió y pasó por separado.
 - **Control negativo, validado.** El script bloqueante pone `light` 150 ms antes
   del primer pintado; el primer cuadro con contenido (+6 ms) es **claro**, siguen
   claros a +223 y +1173 ms, el efecto aplica `dark` a +5192 ms y el siguiente
