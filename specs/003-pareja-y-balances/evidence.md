@@ -204,12 +204,86 @@ Sin push ni PR; sin runs de CI. T013–T027 no iniciadas, T028 pendiente de huma
 
 ## Checkpoints CI
 
-T012, T016 y T027 pendientes. Ningún run lanzado.
+T012: **verde**, run [42264891265](https://github.com/flashwp3-ctrl/juntia/actions/runs/42264891265),
+commit `080410a93b0b8416b10034bd37c299cc60221d08`. `app`, `db` y `e2e` en verde;
+`evidence` omitido porque este checkpoint no solicita capturas. Sin relanzamiento.
+T016 y T027 pendientes.
+
+Salida real extraída del log del job `db` de T012:
+
+```text
+All tests successful.
+Files=11, Tests=508
+Test API: Test Files 8 passed (8)
+database.types.ts coincide con public generado en el runner.
+Camino A: MANIFIESTO COINCIDE; usuario restaurado entra
+Camino B: MANIFIESTO COINCIDE; base temporal borrada
+ENSAYO LISTO: A y B, nueve controles negativos rechazados
+test:db: pasó, 6.92 s (< 60 s)
+test:integration: pasó, 10.85 s
+db:types:check: pasó, 1.46 s
+db:restore-drill: pasó, 31.16 s
+Job db (incluye instalación): success, 282.23 s (< 360 s)
+```
+
+T012 cierra el mecanismo de membresía de esta migración: identidad/RLS sin
+recursión, privilegios efectivos y ausencia de escrituras directas, con la salida
+pgTAP del checkpoint. Las [V] sobre dinero compartido siguen pendientes de T016/T027.
 
 Antes de T012: `npm run verify` pasa en **43,00 s** tras los cambios de T010 y
 los tipos nuevos: lint 11,75 s, typecheck 2,77 s, dominio 42 tests / 1,40 s de
 comando, components 298 pasan / 2 omitidos / 27,08 s de comando. SQL/RLS,
 integración y E2E siguen marcadas pendientes del resultado de CI, como corresponde.
+
+## T013 — rojo antes de la segunda migración
+
+`npm run test:db:dev`, 45,73 s: faltan `public.couple_expenses`,
+`transactions.payer_user_id` y el trigger de suma; `11a_shared_tables` falla por
+la columna aún inexistente, antes de cualquier implementación de shared_money_tables.
+No hay errores de sintaxis del arnés. Los tests de pareja de T010 (42) siguen pasando.
+
+## T014/T015 — iteración de tablas y lecturas compartidas
+
+- Tras la migración: las vistas reprodujeron Octubre (Nosotros 284000000,
+  consumo Sara 191290000, partes Tomás 134000000 y saldo 42990000 → 22990000 sin
+  variar el consumo). Se corrigió el orden de los BEFORE triggers para conservar
+  los errores de inmutabilidad de la 002 y se dejó el CHECK de contexto como
+  autoridad para combinaciones inválidas.
+- El primer pase de integración rechazó escrituras privadas (`forbidden`): el
+  trigger diferido nuevo también se convocaba para privados al terminar la petición.
+  Se limita por `WHEN (new.group_id is not null)` y su fila local es `record`;
+  no se concedió USAGE sobre `juntia_data` a la app ni se amplió la RLS.
+- Pruebas adicionales, vistas en rojo antes de corregir el CHECK: porcentajes
+  con elementos nulos e índices distintos de 1/2 daban éxito; el CHECK ahora exige
+  un array unidimensional, base 1 y sin null. El caso de suma también se ejecuta
+  al cambiar el importe del gasto, no solo al cambiar partes.
+- Último pase: `npm run test:db:dev` **pasa**, 5 migraciones, 52,71 s. Por archivo:
+  00 (1), 01 (310), 02 (4), 03 (21), 04 (18), 05 (48), 06 (12), 07 (31), 08 (45),
+  09 (6), 10a (42), 11a (35).
+- `npm run test:integration:dev` **pasa**, 29 tests y las 9 omisiones esperadas,
+  Vitest 25,82 s, runner 27,29 s. La 002 sigue en verde.
+
+Los triggers de dinero siguen siendo `security invoker`. Al implementar T020,
+las funciones deben hacer cumplir las restricciones diferidas al concluir sus
+escrituras, todavía en el contexto de writer (sin nuevos privilegios). Esto se
+comprobará por la API en T018a/T023. No se escribe una función de dinero en T014.
+
+Tipos de T014: regeneración **directa** con la CLI 2.121.0, `--db-url` sin
+contraseña y `--schema public`; no se usa el formato de la API de metadatos ni
+una transformación posterior. Comando de lectura ejecutado con los mismos
+`checkDevTarget`, `cleanPgEnv`, `dbUrlWithoutPassword` y `runInSession` del runner,
+lock propio y filtro de salida; PGPASSWORD solo en el entorno del hijo. Sin
+Docker, sin cambios a scripts o dependencias. El lock ajeno se esperó sin forzar;
+antes de generar se repitió `test:db:dev` para restaurar el esquema de la rama
+(todo pasa, 51,54 s). La sesión de lectura terminó y liberó su lock normalmente.
+La coincidencia definitiva del archivo generado sigue siendo de T016.
+
+Antes de T016, `npm run verify` fuera del sandbox pasa en **44,94 s**: lint
+9,84 s, typecheck 3,17 s, dominio 42 tests / 1,53 s de comando, componentes
+298 pasan y 2 omitidos / 30,41 s de comando. El intento aislado anterior repitió
+el EPERM de las pruebas temporales del lock; se corrigió el modo de ejecución,
+sin cambiar esas pruebas ni scripts. La nueva generación de tipos es íntegra,
+directa y sin transformación; `db:types:check` de T016 debe confirmarla.
 
 ## Revisión humana
 
