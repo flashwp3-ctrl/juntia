@@ -117,11 +117,12 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await fillAnnotate(page, "0");
       return expect(page.getByText(copy.annotate.errors.amountOutOfRange)).toBeVisible();
     }
-    case "annotateSaving": { // E4: la Server Action no responde mientras se captura.
+    case "annotateSaving": { // E4 nueva (guardado optimista): la Server Action no responde; la hoja se oculta y la fila queda «Guardando…».
       await page.route("**/*", (route) => (isAction(route.request().method(), route.request().headers()) ? undefined : route.fallback()));
       const sheet = await fillAnnotate(page);
       await sheet.getByRole("button", { name: /^Guardar/ }).click();
-      return expect(sheet.getByRole("button", { name: copy.annotate.saving })).toBeVisible();
+      await expect(sheet, "la hoja se oculta").toBeHidden();
+      return expect(page.locator("[data-pending='saving']:visible"), "la fila en vuelo aparece, marcada «Guardando…»").toHaveCount(1);
     }
     case "annotateFailed": { // La red cae al guardar: la hoja sigue abierta, con el aviso y su botón Reintentar.
       await page.route("**/*", (route) => (isAction(route.request().method(), route.request().headers()) ? route.abort("failed") : route.fallback()));

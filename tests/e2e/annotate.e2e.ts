@@ -314,3 +314,49 @@ test("UX 2: con el teclado abierto (544 px de alto emulado), Guardar es visible 
   await save.click();
   await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
 });
+
+// F51-1 (revisión de ChatGPT del PR #51). Criterio literal: «retener la respuesta después del commit (route.abort o fulfill con
+// fallo de red tras dejar pasar la petición), navegar a Actividad y comprobar una sola fila y una sola transacción en la base».
+// La primera Server Action llega al servidor (que escribe) y el navegador no ve la respuesta: el resultado es desconocido. Al
+// cerrar la confirmación, el proveedor reenvía LA MISMA intención con la misma clave; el servidor devuelve el resultado original
+// con el id real sin crear otra, y queda una sola fila en Actividad y una sola transacción más en la base.
+test("F51-1: respuesta perdida tras el commit → se reconcilia con la misma clave: una sola fila y una sola transacción", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "respuesta-perdida", index: testInfo.parallelIndex });
+  const seeded = (await seedMovements(user, "recent")).length;
+  await signedInHome(page, user);
+  const bodies: string[] = [];
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && "next-action" in request.headers()) {
+      bodies.push(request.postData() ?? "");
+      if (bodies.length === 1) {
+        await route.fetch(); // la petición llega y el servidor escribe…
+        await route.abort("failed"); // …pero el navegador no ve la respuesta
+        return;
+      }
+    }
+    await route.continue();
+  });
+
+  const sheet = await annotate(page, "61250");
+  await page.keyboard.press("Enter");
+  await expect(sheet.getByRole("alert")).toBeVisible();
+  await expect(page.locator("[data-pending='unknown']:visible")).toHaveCount(1);
+  expect(await activeCount(user), "el servidor sí guardó aunque el navegador no lo sepa").toBe(seeded + 1);
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toHaveCount(0);
+
+  // Cerrar la confirmación incierta no suelta la intención: se reenvía tal cual.
+  await sheet.getByRole("button", { name: copy.annotate.close }).click();
+  await page.getByRole("alertdialog", { name: copy.annotate.uncertain.title }).getByRole("button", { name: copy.annotate.uncertain.close }).click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  expect(bodies).toHaveLength(2);
+  expect(bodies[1], "el reenvío lleva la misma intención y la misma clave (mismo cuerpo)").toBe(bodies[0]);
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+
+  // Navegar a Actividad: una sola fila de $61.250 y una sola transacción más en la base.
+  await page.getByRole("link", { name: copy.nav.activity }).first().click();
+  await expect(page).toHaveURL(/\/actividad/);
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  await expect(page.locator("tbody tr:visible, [data-transaction-id]:visible").filter({ hasText: "61.250" })).toHaveCount(1);
+  expect(await activeCount(user)).toBe(seeded + 1);
+});

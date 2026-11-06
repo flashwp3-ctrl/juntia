@@ -8,7 +8,7 @@
 import { act, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
@@ -74,7 +74,7 @@ function Pages({ rows = [] }: { rows?: string[] }) {
 
 function setup(actions = mockActions(), rows: string[] = []) {
   const user = userEvent.setup();
-  render(<AnnotateProvider actions={actions} recentCategories={["market", "restaurants"]} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
+  render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
   return { user, actions, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
 }
 
@@ -88,7 +88,9 @@ async function fillMinimum(user: ReturnType<typeof userEvent.setup>, pesos = "45
   await user.click(screen.getByRole("radio", { name: copy.categories.market }));
 }
 
-afterEach(() => { vi.useRealTimers(); router.push.mockReset(); });
+// Cada creación guarda su intención en localStorage (F51-1): que no pase de una prueba a la siguiente.
+beforeEach(() => window.localStorage.clear());
+afterEach(() => { vi.useRealTimers(); router.push.mockReset(); window.localStorage.clear(); });
 
 // La primera apertura importa el chunk de la hoja; con la suite en paralelo puede pasar de los 5 s por defecto.
 describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
@@ -293,6 +295,56 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(dialog.contains(dock)).toBe(true);
   });
 
+  // F51-3 (revisión de ChatGPT): el mensaje de fecha inválida se asocia al campo y el chip se activa con ratón y teclado.
+  it("F51-3: la fecha inválida asocia su mensaje al campo con aria-describedby y aria-invalid", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date);
+    expect(date.getAttribute("aria-describedby")).toBeNull();
+    fireEvent.change(date, { target: { value: "" } });
+    const message = within(dialog).getByText(copy.annotate.errors.date);
+    expect(message.id).toBeTruthy();
+    expect(date.getAttribute("aria-describedby")).toBe(message.id);
+    expect(date.getAttribute("aria-invalid")).toBe("true");
+    fireEvent.change(date, { target: { value: "2026-11-04" } });
+    expect(date.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("F51-3: pulsar el chip llama a showPicker() cuando existe, y no falla cuando no existe", async () => {
+    const showPicker = vi.fn();
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    await user.click(date); // sin showPicker (jsdom): no lanza
+    expect(date.value).toBe("2026-11-05");
+    Object.defineProperty(date, "showPicker", { configurable: true, value: showPicker });
+    await user.click(date);
+    expect(showPicker).toHaveBeenCalledTimes(1);
+    // Aunque showPicker lance (sin gesto del usuario), el campo nativo sigue usable.
+    showPicker.mockImplementationOnce(() => { throw new DOMException("sin gesto", "NotAllowedError"); });
+    await user.click(date);
+    expect(showPicker).toHaveBeenCalledTimes(2);
+  });
+
+  it("F51-3: Tab llega al chip de fecha y Enter o Espacio lo activan", async () => {
+    const showPicker = vi.fn();
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    Object.defineProperty(date, "showPicker", { configurable: true, value: showPicker });
+    await user.click(within(dialog).getByRole("textbox", { name: copy.annotate.description }));
+    await user.tab();
+    expect(document.activeElement).toBe(date);
+    await user.keyboard("{Enter}");
+    expect(showPicker).toHaveBeenCalledTimes(1);
+    await user.keyboard(" ");
+    expect(showPicker).toHaveBeenCalledTimes(2);
+    expect(date.value).toBe("2026-11-05");
+  });
+
   it("UX 2: «Solo tú» es un indicador con candado, sin interacción ni flechas de desplegable", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
@@ -425,7 +477,9 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("F45-1: «Cerrar» en la confirmación incierta cierra la hoja sin otro envío", async () => {
+  // F51-1: cerrar la confirmación incierta ya no suelta la intención: la hoja se cierra y el proveedor la reenvía tal cual, con la
+  // misma clave (nunca otra intención ni otra clave).
+  it("F45-1 + F51-1: «Cerrar» en la confirmación incierta cierra la hoja y la intención se reenvía con la misma clave", async () => {
     const create = vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: false, error: "saveFailed" });
     const { user, trigger } = setup(mockActions({ create }));
     await user.click(trigger);
@@ -436,7 +490,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: copy.annotate.close }));
     await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(create).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
   });
 
   it("F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado", async () => {
@@ -461,16 +516,38 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
   });
 
-  it("F45-2: si la fila nueva ya está a la vista, no se navega", async () => {
+  it("F45-2: si la fila nueva ya está a la vista, no se navega (cuadros controlados, sin esperas)", async () => {
+    // F51-4: el proveedor mira la fila durante REVEAL_FRAMES cuadros. Se toma el control de requestAnimationFrame y se avanzan
+    // cuadro a cuadro: la fila está a la vista, así que no se navega ni al agotar el plazo.
+    const frames: FrameRequestCallback[] = [];
     const { user, trigger } = setup(mockActions(), [saved().id]);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     await user.click(saveButton());
     await screen.findByRole("button", { name: copy.annotate.undo });
-    // Más que los cuadros que espera el proveedor (60) antes de decidir.
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    for (let step = 0; step < 70; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
     expect(router.push).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("F45-2: sin la fila a la vista, navega a Actividad al agotarse los cuadros (60), ni uno antes", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const { user, trigger } = setup(mockActions(), []);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    for (let step = 0; step < 59; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { frames.splice(0).forEach((callback) => callback(960)); });
+    expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    vi.restoreAllMocks();
   });
 
   it("JT001 no bloquea: el servidor no escribió nada y se puede corregir", async () => {
@@ -767,20 +844,22 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
     await waitFor(() => expect(pendingRows()).toHaveLength(0));
   });
 
-  it("«Cerrar» en la confirmación incierta retira la fila sin confirmar, sin afirmar nada y sin otro envío", async () => {
-    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: false, error: "saveFailed" });
+  it("«Cerrar» en la confirmación incierta conserva la fila, la reconcilia con la misma clave y no afirma nada mientras tanto", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockResolvedValueOnce({ ok: true, value: saved() });
     const { user, trigger } = setup(mockActions({ create }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
     await screen.findByRole("alert");
+    expect(document.body.textContent).not.toMatch(/no se guard/i);
     await user.click(screen.getByRole("button", { name: copy.annotate.close }));
     await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(pendingRows()).toHaveLength(0);
-    expect(document.body.textContent).not.toMatch(/no se guard/i);
-    expect(create).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+    expect(await screen.findByText(copy.annotate.saved.expense)).toBeTruthy();
   });
 
   it("la fila en vuelo sobrevive a la navegación (el proveedor vive en el layout) y no se duplica", async () => {

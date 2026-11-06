@@ -124,7 +124,8 @@ function DayList({ rows, month, today, selectedId, pending }: { rows: readonly T
     <div className="flex flex-col gap-4 xl:hidden">
       {groupByDay(rows).map(({ date, transactions }) => {
         const label = dayLabel(date, today);
-        const spent = transactions.reduce((total, row) => (row.type === "expense" ? total + row.amount.amountMinor : total), 0n);
+        // F51-2: el subtotal del día solo suma lo confirmado; las filas en vuelo o sin confirmar se listan, pero no cuentan.
+        const spent = transactions.reduce((total, row) => (row.type === "expense" && !pending.has(row.id) ? total + row.amount.amountMinor : total), 0n);
         return (
           <section key={date} aria-labelledby={`day-${date}`} className="flex flex-col">
             <div className="flex items-baseline justify-between gap-3 border-b-[length:var(--border-hairline)] border-border pb-1.5">

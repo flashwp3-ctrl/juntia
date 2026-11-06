@@ -55,9 +55,6 @@ export function groupByDay(rows: readonly Transaction[]) {
   }
   return [...groups].map(([date, transactions]) => ({ date, transactions }));
 }
-export function fillRecentCategories(recent: readonly CategoryId[]): CategoryId[] {
-  return [...new Set([...recent, ...CATEGORY_CATALOG.map(({ id }) => id)])].filter((id) => id !== "income").slice(0, 5);
-}
 export function monthBounds(months: readonly string[], current: string) {
   const sorted = [...months.map(monthKey), monthKey(current)].sort();
   return { min: sorted[0], max: sorted[sorted.length - 1] };

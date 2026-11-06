@@ -11,19 +11,18 @@ import { AccountProvider } from "@/features/account/account-context";
 import { loadAccount } from "@/features/account/load-account";
 import { createTransactionAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
-import { loadRecentCategories } from "@/features/expenses/load";
 import { todayInBogota } from "@/domain/transactions";
 
 const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const [account, recentCategories] = await Promise.all([loadAccount(), loadRecentCategories()]);
+  const account = await loadAccount();
   if (!account) redirect("/entrar");
   if (!account.profile.firstEntryCompleted) redirect("/primera-entrada");
   return (
     <AccountProvider displayName={account.profile.displayName} theme={account.profile.theme}>
       <ContextProvider>
-        <AnnotateProvider actions={actions} recentCategories={recentCategories} today={todayInBogota()}>
+        <AnnotateProvider actions={actions} today={todayInBogota()}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

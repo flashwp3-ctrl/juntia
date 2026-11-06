@@ -1,7 +1,7 @@
 // FR-013–FR-019 (spec.md): «un gasto o un ingreso»; «Ingresos solo vale para
 // ingresos»; «el gasto del mes es la suma de gastos activos del mes».
 import { moneyFromPesos } from "../money";
-import { CATEGORY_CATALOG, validateDraft, monthKey, todayInBogota, monthSummary, groupByDay, fillRecentCategories, monthBounds, monthNavigation, shiftMonth, filterTransactions, matchesSearch, isSupportedMonth, clampMonth, type Transaction, type TransactionDraft } from "./index";
+import { CATEGORY_CATALOG, validateDraft, monthKey, todayInBogota, monthSummary, groupByDay, monthBounds, monthNavigation, shiftMonth, filterTransactions, matchesSearch, isSupportedMonth, clampMonth, type Transaction, type TransactionDraft } from "./index";
 const draft: TransactionDraft = { type: "expense", amount: moneyFromPesos(45000n), categoryId: "transport", transactionDate: "2026-10-03", description: null };
 const row = (overrides: Partial<Transaction> = {}): Transaction => ({ ...draft, id: "one", status: "active", version: 1, createdAt: "2026-10-03T12:00:00Z", updatedAt: "2026-10-03T12:00:00Z", ...overrides });
 it("conserva el catálogo literal y su orden (data-model §2.2)", () => {
@@ -33,9 +33,6 @@ it("excluye anulados, otros meses e ingresos del gasto y agrupa días sin mutar"
   expect(monthSummary(rows, "2026-10")).toEqual({ expenseTotal: moneyFromPesos(45000n), incomeTotal: moneyFromPesos(86000n), byCategory: { transport: moneyFromPesos(45000n) } });
   expect(groupByDay(rows).map(({ date, transactions }) => [date, transactions.map(({ id }) => id)])).toEqual([["2026-11-01", ["next"]], ["2026-10-03", ["one", "income"]]]);
   expect(rows[0].id).toBe("one");
-});
-it("completa cinco recientes sin duplicados ni ingresos (research R8.8)", () => {
-  expect(fillRecentCategories(["health", "health", "income", "transport"])).toEqual(["health", "transport", "market", "restaurants", "home"]);
 });
 // US-6.3: «llega hasta el mes más lejano que tenga movimientos» (Q13).
 it("limita las flechas al primer y último mes con movimientos o al actual", () => {

@@ -34,7 +34,7 @@ export const isAmbiguousError = (error: ExpenseActionError) => error === "networ
  * Una creación en vuelo que Inicio y Actividad pintan al instante (UX lote 1, cambio 3). `saving`: la petición sigue en
  * camino. `unknown`: no se sabe si llegó; ni se afirma que se guardó ni que no. Vive en el proveedor, nunca en la base.
  */
-export type PendingRow = { key: string; state: "saving" | "unknown"; transaction: Transaction };
+export type PendingRow = { key: string; state: "saving" | "unknown"; transaction: Transaction; payload: CreatePayload };
 
 export type ExpenseActions = {
   create: (payload: CreatePayload) => Promise<ActionResult<SavedTransaction>>;

@@ -29,6 +29,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import type { SheetMode } from "./annotate-provider";
 import { normalizeDescription, toPayloadPesos } from "./payload";
 import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
+import { rowFromPayload } from "./unconfirmed";
 
 const WIDE = "(min-width: 768px)";
 function subscribeWide(onChange: () => void) {
@@ -56,7 +57,8 @@ type AnnotateSheetProps = {
   onSaved: (saved: SavedTransaction, kind: SheetMode["kind"]) => void;
   /** UX lote 1, cambio 3: la creación viaja por el proveedor, que oculta la hoja y enseña la fila al instante. */
   onTrack: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
-  onAbandon: (key: string) => void;
+  /** Cerrar la confirmación incierta no suelta la intención: el proveedor sigue reconciliándola con la misma clave (F51-1). */
+  onRelease: (key: string) => void;
   returnFocusTo: { current: HTMLElement | null };
 };
 
@@ -130,7 +132,9 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
 const chip = "flex h-11 items-center gap-2 rounded-[14px] bg-sunken px-3 text-[14px] font-medium text-ink shadow-[var(--comp-field-inset)]";
 
 /** El chip de fecha es un selector nativo: un `input type="date"` transparente cubre el chip, así que el toque (o Enter) abre el selector del sistema. */
-function DateChip({ value, today, invalid, onChange }: { value: string; today: string; invalid: boolean; onChange: (value: string) => void }) {
+function DateChip({ value, today, invalid, errorId, onChange }: { value: string; today: string; invalid: boolean; errorId: string; onChange: (value: string) => void }) {
+  // showPicker() abre el calendario del sistema (con un gesto del usuario); donde no existe o falla, el campo nativo sigue ahí.
+  const openPicker = (input: HTMLInputElement) => { try { input.showPicker?.(); } catch { /* sin gesto del usuario */ } };
   return (
     <label className={`${chip} relative cursor-pointer focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid has-[:disabled]:cursor-not-allowed`}>
       <AppIcon name="calendar-blank" size={17} className="text-ink-secondary" />
@@ -139,17 +143,20 @@ function DateChip({ value, today, invalid, onChange }: { value: string; today: s
         type="date"
         aria-label={copy.annotate.date}
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
         required
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        onClick={(event) => { try { event.currentTarget.showPicker?.(); } catch { /* sin gesto del usuario: el campo nativo sigue ahí */ } }}
+        onClick={(event) => openPicker(event.currentTarget)}
+        // Con teclado, Enter o Espacio abren el selector (Enter, además, no envía el formulario desde este campo).
+        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPicker(event.currentTarget); } }}
         className="absolute inset-0 size-full cursor-pointer opacity-0 focus-visible:outline-none"
       />
     </label>
   );
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, onAbandon, returnFocusTo }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, onRelease, returnFocusTo }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit";
   const [initial] = useState(() => initialDraft(mode, today));
@@ -160,6 +167,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const [locked, setLocked] = useState(false);
   const saving = useRef(false);
   const amountId = `${useId()}-amount`;
+  const dateErrorId = `${useId()}-date-error`;
 
   const { type, amount, categoryId, date, description } = draft;
   const isSaving = status.kind === "saving";
@@ -191,17 +199,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     try {
       if (mode.kind === "edit") result = await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
       else {
-        // Se guarda por el proveedor: oculta la hoja y la fila aparece ya; si falla, la hoja vuelve con esto mismo.
-        const now = new Date().toISOString();
-        const row: PendingRow = {
-          key: idempotencyKey,
-          state: "saving",
-          transaction: {
-            id: `pending:${idempotencyKey}`, type: value.type, amount: moneyFromPesos(BigInt(value.amount)), categoryId: value.categoryId,
-            transactionDate: value.date, description: common.description, status: "active", version: 1, createdAt: now, updatedAt: now,
-          },
-        };
-        result = await onTrack(row, () => actions.create({ ...common, type: value.type }));
+        // Se guarda por el proveedor: oculta la hoja y la fila aparece ya; si falla, la hoja vuelve con esto mismo. El proveedor
+        // guarda la intención (clave y payload) y, si el resultado queda en duda, la reenvía con la misma clave (F51-1).
+        const payload = { ...common, type: value.type };
+        result = await onTrack(rowFromPayload(payload, "saving"), () => actions.create(payload));
       }
     } catch {
       // La Server Action no llegó al servidor o su respuesta no volvió: se ofrece reintentar con la misma clave.
@@ -333,13 +334,13 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
         </div>
         {/* La fecha abre el selector; «Solo tú» (P0-1: el contexto es siempre Yo) solo informa, con su candado y sin flechas. */}
         <div className="flex flex-wrap items-center gap-2">
-          <DateChip value={date} today={today} invalid={dateInvalid} onChange={(next) => update({ date: next })} />
+          <DateChip value={date} today={today} invalid={dateInvalid} errorId={dateErrorId} onChange={(next) => update({ date: next })} />
           <span className={chip}>
             <AppIcon name="lock-simple" size={17} className="text-ink-secondary" />
             {copy.annotate.onlyYou}
           </span>
         </div>
-        {dateInvalid ? <p className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
+        {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
       </fieldset>
       {/* «Guardar sube con el teclado» (comp 1c): en la hoja móvil el pie va fijo al fondo del área desplazable, con el fondo de
           la hoja y el safe area: la hoja «bare» no pone relleno inferior, lo trae este pie. Desde 768 px (diálogo) el pie no es
@@ -360,7 +361,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
           title={copy.annotate.uncertain.title}
           description={copy.annotate.uncertain.description}
           cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); void save(); }}>{copy.annotate.uncertain.retry}</Button>}
-          confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onAbandon(idempotencyKey); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
+          confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onRelease(idempotencyKey); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
         />
       ) : (
         <ConfirmDialog
