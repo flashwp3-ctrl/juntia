@@ -62,17 +62,24 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_unreachable-in-app-job
         run: node scripts/ci.mjs run build
       - name: Install Chromium (own time limit, one retry)
-        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052),
-        # gastando el tiempo del job. Paso propio con tiempo límite; la descarga y las dependencias del sistema (apt) van por
-        # separado y con la salida a la vista, para saber cuál se cuelga; cada una tiene 150 s y un reintento. Sin caché de
+        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052).
+        # La salida a la vista (run 42153365570) mostró la causa: no es un cuelgue, es apt bajando las fuentes de
+        # `install-deps` a ~40 KB/s desde el mirror del runner; las librerías de Chromium ya vienen en la imagen. Por eso:
+        # descarga del navegador con 150 s y un reintento; si Chromium arranca con las librerías del runner, no se instala
+        # nada con apt; si no arranca, `install-deps` con 150 s y un reintento, matando antes el apt-get que dejó el
+        # intento anterior (el `timeout` mata npx, no a su apt-get con sudo, que retiene el bloqueo de dpkg). Sin caché de
         # binarios (docs/TESTING.md §9).
         timeout-minutes: 6
         shell: bash
         run: |
           started=$(date +%s%3N)
-          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; done; return 1; }
+          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; sudo pkill -x apt-get || true; done; return 1; }
           try npx playwright install --only-shell chromium
-          try npx playwright install-deps chromium
+          if node -e "require('@playwright/test').chromium.launch().then((b) => b.close(), () => process.exit(1))"; then
+            echo "Chromium arranca con las librerías del runner: sin install-deps"
+          else
+            try npx playwright install-deps chromium
+          fi
           echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
       - name: Chromium, axe, internal surface and theme script on that build
         env:
@@ -233,17 +240,24 @@ jobs:
       - name: Install and build with the runner's Supabase
         run: node scripts/ci.mjs run ci build
       - name: Install Chromium (own time limit, one retry)
-        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052),
-        # gastando el tiempo del job. Paso propio con tiempo límite; la descarga y las dependencias del sistema (apt) van por
-        # separado y con la salida a la vista, para saber cuál se cuelga; cada una tiene 150 s y un reintento. Sin caché de
+        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052).
+        # La salida a la vista (run 42153365570) mostró la causa: no es un cuelgue, es apt bajando las fuentes de
+        # `install-deps` a ~40 KB/s desde el mirror del runner; las librerías de Chromium ya vienen en la imagen. Por eso:
+        # descarga del navegador con 150 s y un reintento; si Chromium arranca con las librerías del runner, no se instala
+        # nada con apt; si no arranca, `install-deps` con 150 s y un reintento, matando antes el apt-get que dejó el
+        # intento anterior (el `timeout` mata npx, no a su apt-get con sudo, que retiene el bloqueo de dpkg). Sin caché de
         # binarios (docs/TESTING.md §9).
         timeout-minutes: 6
         shell: bash
         run: |
           started=$(date +%s%3N)
-          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; done; return 1; }
+          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; sudo pkill -x apt-get || true; done; return 1; }
           try npx playwright install --only-shell chromium
-          try npx playwright install-deps chromium
+          if node -e "require('@playwright/test').chromium.launch().then((b) => b.close(), () => process.exit(1))"; then
+            echo "Chromium arranca con las librerías del runner: sin install-deps"
+          else
+            try npx playwright install-deps chromium
+          fi
           echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
       - name: E2E smoke (spec 1)
         id: smoke
@@ -327,17 +341,24 @@ jobs:
       - name: Install and build
         run: node scripts/ci.mjs run ci build
       - name: Install Chromium (own time limit, one retry)
-        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052),
-        # gastando el tiempo del job. Paso propio con tiempo límite; la descarga y las dependencias del sistema (apt) van por
-        # separado y con la salida a la vista, para saber cuál se cuelga; cada una tiene 150 s y un reintento. Sin caché de
+        # PR C de la 002: `playwright install --with-deps` se colgó dos veces en el PR B y otra en el PR C (run 42138118052).
+        # La salida a la vista (run 42153365570) mostró la causa: no es un cuelgue, es apt bajando las fuentes de
+        # `install-deps` a ~40 KB/s desde el mirror del runner; las librerías de Chromium ya vienen en la imagen. Por eso:
+        # descarga del navegador con 150 s y un reintento; si Chromium arranca con las librerías del runner, no se instala
+        # nada con apt; si no arranca, `install-deps` con 150 s y un reintento, matando antes el apt-get que dejó el
+        # intento anterior (el `timeout` mata npx, no a su apt-get con sudo, que retiene el bloqueo de dpkg). Sin caché de
         # binarios (docs/TESTING.md §9).
         timeout-minutes: 6
         shell: bash
         run: |
           started=$(date +%s%3N)
-          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; done; return 1; }
+          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; sudo pkill -x apt-get || true; done; return 1; }
           try npx playwright install --only-shell chromium
-          try npx playwright install-deps chromium
+          if node -e "require('@playwright/test').chromium.launch().then((b) => b.close(), () => process.exit(1))"; then
+            echo "Chromium arranca con las librerías del runner: sin install-deps"
+          else
+            try npx playwright install-deps chromium
+          fi
           echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
       - name: Install Arial and Georgia for the font fallbacks (T053)
         # Los respaldos de Onest y Brygada (globals.css) se ajustan sobre local("Arial") y local("Georgia"), presentes en
