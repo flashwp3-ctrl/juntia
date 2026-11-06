@@ -315,7 +315,7 @@ test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; 
     const html = await document!.text();
     expect(leaks(html)).toEqual([]);
     expect(html).toContain('aria-busy="true"');
-    await expect(page.getByText("Regalo de cumpleaños")).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
     await expect.poll(async () => (await context.cookies()).find(({ name }) => name === "juntia_context")?.value).toBe("me");
     await context.close();
   }
@@ -325,7 +325,7 @@ test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; 
     const { context, page } = await open("me", "me");
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
-    await expect(page.getByText("Regalo de cumpleaños")).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
     await page.getByRole("link", { name: copy.home.seeAll }).hover();
     await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
     await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
