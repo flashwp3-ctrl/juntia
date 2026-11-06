@@ -455,8 +455,9 @@ cambian; cambia **dónde** corre cada uno.
    `workflow_dispatch` solo funciona con workflows que ya existen en `main`.
 5. **Para usar la app en desarrollo** hay un segundo proyecto Supabase Free,
    `juntia-dev`, en la cuenta de la segunda fundadora, en East US (North
-   Virginia) (nota del 5 de noviembre de 2026). No guarda datos reales, no comparte claves con producción y no lo
-   usa ninguna prueba automatizada, tampoco el preflight. Las migraciones se le
+   Virginia) (nota del 5 de noviembre de 2026). No guarda datos reales y no comparte claves con producción.
+   Desde la decisión 18 (§9.9) es además el **entorno desechable donde los agentes
+   iteran** las capas de base de datos; el preflight y el gate siguen en el runner. Las migraciones se le
    aplican con la CLI fijada en el plan y **siempre con el destino explícito**, en
    la sintaxis de esa versión: en la v2, `supabase db push --linked` con el
    proyecto enlazado a `juntia-dev`, o `--db-url`; en la v3, `--remote=<ref>`,
@@ -496,7 +497,28 @@ cambian; cambia **dónde** corre cada uno.
    de datos. El de `test:db` (< 60 s) se mide dentro del job 3.
 8. **Ninguna función, política o migración se da por probada sin la salida del
    job 3 de ese mismo commit** (`AGENTS.md` 12). «Pasa en local» no existe para la
-   base de datos.
+   base de datos, y «pasa en `juntia-dev`» tampoco (§9.9).
+9. **Iteración contra `juntia-dev` (enmienda del 6 de noviembre de 2026, maestro
+   §15.10, decisión 18).** Iterar en CI agotaba los minutos de GitHub Free, así que
+   los agentes iteran contra `juntia-dev` y el CI se reserva para los puntos de
+   control del `tasks.md` y el gate final.
+   - **Qué corre contra `juntia-dev`:** aplicar las migraciones de la rama,
+     reiniciar la base (`supabase db reset --linked`, sin semilla de producción),
+     pgTAP, integración de servidor y las E2E que no dependen de leer un correo.
+     Los usuarios de prueba se crean ya verificados por la API de administración.
+   - **Qué sigue solo en CI:** los flujos que leen correos (Mailpit), el ensayo de
+     restauración (§9.6) y toda evidencia de una `[V]` o de un punto de control.
+   - **Guardias:** la clave secreta de `juntia-dev` solo en un `.env.test` local
+     ignorado por git; un guardia en los scripts comprueba que el destino es
+     `itfrhnadovezpahikuol` antes de escribir y se niega con cualquier otro; nunca
+     una clave de producción; un solo agente usa `juntia-dev` a la vez. En
+     `juntia-dev` los agentes no necesitan confirmación por paso (es desechable);
+     en producción la necesitan siempre (§9.5).
+   - **El gate no cambia** (§9.1, §9.2, §9.8): mismos jobs, mismo commit, mismo
+     Supabase limpio del runner, sin filtro de rutas.
+   - Lo prepara un PR técnico propio después del PR D de la 002: los comandos
+     `test:db:dev`, `test:integration:dev` y `e2e:dev`, el guardia de destino, la
+     siembra de usuarios verificados y el reinicio.
 
 **Consecuencias.** Iterar sobre la base de datos cuesta minutos y no segundos, y el
 consumo de Actions sube en P0-1 y P0-3, que son los slices con más SQL. El PR A de
