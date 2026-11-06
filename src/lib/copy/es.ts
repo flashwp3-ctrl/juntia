@@ -2,13 +2,34 @@ export const copy = {
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N", shortcutLabel: "Atajo" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
-  annotate: { title: "Anotar un gasto", description: "Registrar gastos llega con la próxima versión. Todavía no puedes guardar movimientos.", close: "Cerrar", errors: {
-    amountInvalid: "Escribe el monto en pesos enteros.", amountOutOfRange: "Escribe un monto entre $1 y $999.999.999.",
-    category: "Elige una categoría para este movimiento.", date: "Elige una fecha válida.", descriptionTooLong: "Usa hasta 140 caracteres en la descripción.",
-  } },
+  // P0-1, PR D (02·5, 02·6, 02·1, 04·1). Copy nuevo para revisión de los fundadores en el PR.
+  annotate: {
+    title: { expense: "Anotar gasto", income: "Anotar ingreso" }, editTitle: { expense: "Editar gasto", income: "Editar ingreso" },
+    type: "Tipo de movimiento", expense: "Gasto", income: "Ingreso",
+    amount: "Monto", category: "Categoría", recent: "Categorías recientes", allCategories: "Todas las categorías",
+    details: "Editar detalles", hideDetails: "Ocultar detalles",
+    description: "Descripción", descriptionPlaceholder: "Cómo lo reconoces", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú", onlyYou: "Solo tú",
+    save: { expense: "Guardar", income: "Guardar ingreso" }, saveWithAmount: (label: string, amount: string) => `${label} · ${amount}`,
+    saveChanges: "Guardar cambios", saving: "Guardando…", close: "Cerrar",
+    discard: { expense: "¿Descartar este gasto?", income: "¿Descartar este ingreso?", edit: "¿Descartar los cambios?", description: "Lo que escribiste no se guardará.", keep: "Seguir editando", confirm: "Descartar" },
+    saved: { expense: "Gasto guardado", income: "Ingreso guardado", edit: "Cambios guardados" },
+    undo: "Deshacer", undone: { expense: "Gasto deshecho", income: "Ingreso deshecho" },
+    undoFailed: "No pudimos deshacer.", undoChanged: "No se pudo deshacer porque el movimiento cambió. Puedes eliminarlo desde su detalle.",
+    retry: "Reintentar", reload: "Recargar",
+    errors: {
+      amountInvalid: "Escribe el monto en pesos enteros.", amountOutOfRange: "Escribe un monto entre $1 y $999.999.999.",
+      category: "Elige una categoría para este movimiento.", date: "Elige una fecha válida.", descriptionTooLong: "Usa hasta 140 caracteres en la descripción.",
+    },
+  },
+  remove: {
+    action: { expense: "Eliminar gasto", income: "Eliminar ingreso" }, title: { expense: "¿Eliminar este gasto?", income: "¿Eliminar este ingreso?" },
+    description: (title: string, amount: string) => `${title} · ${amount}. Sale de tus totales, de Actividad y de la exportación.`,
+    cancel: "Cancelar", confirm: "Eliminar", deleting: "Eliminando…", done: { expense: "Gasto eliminado", income: "Ingreso eliminado" },
+    failed: "No pudimos eliminar. Revisa tu conexión.", backToActivity: "Ir a Actividad",
+  },
   categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Entretenimiento", shopping: "Compras", services: "Servicios", income: "Ingresos", other: "Otra" },
-  errors: { sessionExpired: "Tu sesión caducó. Vuelve a entrar para continuar.", unexpected: "Algo salió mal. Inténtalo de nuevo.", saveFailed: "No pudimos guardar. Reintentar.", network: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo." },
-  transaction: { errors: { notFound: "No encontramos este movimiento.", versionConflict: "Este movimiento cambió. Recárgalo antes de editar.", alreadyDeleted: "Este movimiento ya se eliminó." } },
+  errors: { sessionExpired: "Tu sesión caducó. Vuelve a entrar para continuar.", unexpected: "Algo salió mal. Inténtalo de nuevo.", saveFailed: "No pudimos guardar. Revisa tu conexión.", network: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo." },
+  transaction: { errors: { notFound: "No encontramos este movimiento.", versionConflict: "Este movimiento cambió en otro lugar. Recárgalo para ver lo último.", alreadyDeleted: "Este movimiento ya se eliminó." } },
   // P0-1, PR B (04·17). Copy nuevo para revisión de los fundadores en el PR.
   auth: {
     back: "Volver",
@@ -114,7 +135,7 @@ export const copy = {
   },
   detail: {
     expense: "Gasto", income: "Ingreso", panel: "Detalle del movimiento", back: "Volver a Actividad", close: "Cerrar detalle",
-    category: "Categoría", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú",
+    category: "Categoría", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú", edit: "Editar",
     noted: (date: string, edited: boolean) => `Anotado el ${date} · ${edited ? "con ediciones" : "sin ediciones"}`,
     notFound: { title: "No encontramos este movimiento", description: "Puede que se haya eliminado o que no sea tuyo. En Actividad están todos tus movimientos." },
     pick: { title: "Elige un movimiento", description: "Su detalle aparece aquí, junto a la lista." },
