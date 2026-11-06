@@ -3,7 +3,7 @@
 Este archivo es el contrato compartido para Codex, Claude Code y otros agentes del repositorio.
 
 ## Autoridad y alcance
-1. Leer completo `docs/JUNTIA_MASTER.md` antes de implementar o decidir arquitectura.
+1. Leer completo `docs/JUNTIA_MASTER.md` antes de implementar o decidir arquitectura. 
 2. Jerarquía: maestro (§15 v1.3 prevalece sobre el cuerpo v1.2) > ADRs de `docs/adr/` y contratos de dinero y privacidad > paquete de diseño aprobado en `docs/design/` y convenciones de `docs/CONVENTIONS.md` > especificación del slice > consejos de skills.
 2a. El paquete de diseño vive en `docs/design/`; el documento operativo es `docs/design/HANDOFF_CLAUDE_CODE.md`. **No existen `DESIGN.md` ni `MOTION.md`** y no se van a crear: sus nombres en el cuerpo v1.2 del maestro se refieren a `docs/design/DESIGN_SYSTEM.md` y `docs/design/MOTION_SYSTEM.md`.
 
