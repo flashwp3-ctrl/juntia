@@ -349,7 +349,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: SC-011; decisión 12.
   - Terminado cuando: los códigos reales están en `evidence.md`.
 
-- [ ] T056 **Humana** (dueña y después gestor): la dueña añade un commit propio a la rama del PR B (`git commit --allow-empty`, decisión 13, regla 3) para el **primer preview real**; **inmediatamente**, antes de que nadie lo use, el gestor ejecuta **001-T072 parte 2** con un alias `*.vercel.app` no productivo que asigna la dueña: un host no autorizado sobre el preview responde 404. Nunca el dominio de producción
+- [x] T056 **Humana** (dueña y después gestor): la dueña añade un commit propio a la rama del PR B (`git commit --allow-empty`, decisión 13, regla 3) para el **primer preview real**; **inmediatamente**, antes de que nadie lo use, el gestor ejecuta **001-T072 parte 2** con un alias `*.vercel.app` no productivo que asigna la dueña: un host no autorizado sobre el preview responde 404. Nunca el dominio de producción
   - Cumple: SC-011; decisión 12 (sin excepción posible).
   - Terminado cuando: los códigos reales están en `evidence.md` antes de que el preview se comparta.
 
@@ -524,7 +524,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada sin salida.
 
-- [ ] T088 **Humana** (fundadores, con sesión en Vercel): **001-T072 parte 3**, funcionamiento en preview: `/interno/primitivos` da 200 por la URL de despliegue y por la de rama. En el PR B o C; obligatoria antes de aceptar. Sin excepción posible
+- [x] T088 **Humana** (fundadores, con sesión en Vercel): **001-T072 parte 3**, funcionamiento en preview: `/interno/primitivos` da 200 por la URL de despliegue y por la de rama. En el PR B o C; obligatoria antes de aceptar. Sin excepción posible
   - Terminado cuando: los códigos reales están en `evidence.md`.
 
 - [ ] T089 **Humana** (fundadores): **001-T073**, contraste de los pares de texto y fondo en un iPhone, en los dos temas. Se puede adelantar desde el PR B; a más tardar aquí. Sin excepción posible

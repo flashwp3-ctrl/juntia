@@ -1416,8 +1416,15 @@ contenido es el 404. **Resultado: pasa.**
 
 ### T056
 
-**Humana (dueña y gestor), pendiente:** commit propio de la dueña en
-`feat/002-b-access` para el primer preview y 001-T072 parte 2 antes de usarlo.
+**Hecha el 6 de noviembre de 2026, en el PR D** (aplazada desde el PR B), con el preview del commit propio de la
+dueña en `feat/002-d-annotate` (050a769). Lo comunicó el gestor; ningún agente la ejecutó.
+- La dueña añadió en Vercel el dominio `juntia-alias-prueba.vercel.app`, conectado a la rama `feat/002-d-annotate`
+  (entorno Preview), con «Valid Configuration». El dominio de producción `juntia-alpha.vercel.app` no se tocó.
+- Alejandro abrió `https://juntia-alias-prueba.vercel.app/interno/primitivos` en su Chrome con sesión de Vercel:
+  «No encontramos esta página», con el shell de la app y la ruta 404. La superficie interna no se expone por un
+  host no autorizado sobre el preview.
+- Sin sesión, el gestor recibe 302 de la protección de despliegue en ese mismo alias.
+- La dueña borra el alias después de la prueba.
 
 ### T057
 
@@ -1929,7 +1936,13 @@ queda para T087 y la revisión de los fundadores.
 
 ### T088
 
-**Pendiente · Humana (fundadores con sesión en Vercel).** 001-T072 parte 3: `/interno/primitivos` → 200 por la URL de despliegue y por la de rama. El commit propio de la dueña ya está en la rama (050a769, 6 nov 2026); faltan los códigos reales. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Hecha por Alejandro el 6 de noviembre de 2026** (001-T072 parte 3), en su Chrome con sesión de Vercel; lo
+comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-annotate`, entorno Preview, Ready.
+- URL de rama `https://juntia-git-feat-002-d-annotate-flashwp3-8258.vercel.app/interno/primitivos` → «Superficie
+  interna de revisión» (200).
+- URL de despliegue `https://juntia-g9azqimwg-flashwp3-8258.vercel.app/interno/primitivos` → la misma página (200).
+- Sin sesión de Vercel, la URL de rama responde 302 a la protección de despliegue (petición sin credenciales del
+  gestor).
 
 ### T089
 
@@ -2048,7 +2061,7 @@ Cada criterio con la tarea que lo midió y su salida. Lo que depende de una tare
 | SC-008 · 412.900 exacto | T010, T025, T062 | Con salida (PR A y C) |
 | SC-009 · un solo movimiento por intención | T025, T083 | Con salida: spec 2, doble toque más el mismo envío repetido a mano → una fila en la base |
 | SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana** |
-| SC-011 · verificaciones heredadas | T055 (con salida, PR B); T056, T088–T096 | **Pendiente · Humana**: T056 y T088 esperan el preview real (el commit de la dueña ya está, 050a769); T089–T095 en dispositivos; T096 sin excepciones todavía |
+| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | **Pendiente · Humana**: T089–T095 en dispositivos; T096 sin excepciones todavía |
 | SC-012 · salida interna | T103 | **Pendiente · Humana** |
 
 ### T103
