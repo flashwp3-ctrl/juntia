@@ -131,6 +131,53 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(within(dialog).queryByRole("radio", { name: copy.context.us })).toBeNull();
   });
 
+  // UX lote 1, cambio 1. Decisión de los fundadores (petición del PR): «La X de cerrar va a la DERECHA en la hoja de Anotar»;
+  // sustituye a la comp 02·5, que la ponía a la izquierda.
+  it("UX 1: la × de cerrar está a la derecha del título, y sigue cerrando la hoja", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const close = within(dialog).getByRole("button", { name: copy.annotate.close });
+    const title = within(dialog).getByRole("heading", { name: copy.annotate.title.expense });
+    expect(title.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // En la misma fila del encabezado y en su última columna: nada después de ella.
+    const header = title.parentElement!;
+    expect(header.contains(close)).toBe(true);
+    expect(header.lastElementChild).toBe(close);
+    await user.click(close);
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.annotate.title.expense })).toBeNull());
+  });
+
+  // UX lote 1, cambio 2. Propuesta por defecto de la petición: «un chip «Más…» al final de la fila de categorías rápidas,
+  // que abre los detalles con todas las categorías». Las 9 categorías de gasto, «Otra» incluida, y la nota.
+  it("UX 2: el chip «Más…» va al final de las categorías rápidas y abre las 9 categorías, «Otra» y la nota", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const quick = within(dialog).getByRole("group", { name: copy.annotate.recent });
+    const more = within(quick).getByRole("button", { name: copy.annotate.moreLabel });
+    expect(more.textContent).toBe(copy.annotate.more);
+    expect(quick.lastElementChild).toBe(more);
+    expect(within(dialog).queryByRole("button", { name: copy.categories.other })).toBeNull();
+    expect(within(dialog).queryByRole("textbox", { name: copy.annotate.description })).toBeNull();
+    await user.click(more);
+    const all = within(dialog).getByRole("group", { name: copy.annotate.category });
+    const names = within(all).getAllByRole("button").map((button) => button.textContent);
+    expect(names).toHaveLength(9);
+    expect(names).toContain(copy.categories.other);
+    expect(within(dialog).getByRole("textbox", { name: copy.annotate.description })).toBeTruthy();
+    expect(within(dialog).queryByRole("button", { name: copy.annotate.moreLabel })).toBeNull();
+  });
+
+  it("UX 2: elegir una categoría rápida antes de «Más…» no se pierde al abrir los detalles", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    await user.click(within(dialog).getByRole("button", { name: copy.categories.restaurants }));
+    await user.click(within(dialog).getByRole("button", { name: copy.annotate.moreLabel }));
+    expect(within(dialog).getByRole("button", { name: copy.categories.restaurants }).getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("US-3.1: el selector «Gasto · Ingreso» cambia título, categoría («Ingresos» elegida) y botón", async () => {
     const { user, trigger, actions } = setup();
     await user.click(trigger);

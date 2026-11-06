@@ -1,13 +1,13 @@
 export const copy = {
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
-  nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N", shortcutLabel: "Atajo" },
+  nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
   // P0-1, PR D (02·5, 02·6, 02·1, 04·1). Copy nuevo para revisión de los fundadores en el PR.
   annotate: {
     title: { expense: "Anotar gasto", income: "Anotar ingreso" }, editTitle: { expense: "Editar gasto", income: "Editar ingreso" },
     type: "Tipo de movimiento", expense: "Gasto", income: "Ingreso",
     amount: "Monto", category: "Categoría", recent: "Categorías recientes", allCategories: "Todas las categorías",
-    details: "Editar detalles", hideDetails: "Ocultar detalles",
+    details: "Editar detalles", hideDetails: "Ocultar detalles", more: "Más…", moreLabel: "Más… todas las categorías, nota y fecha",
     description: "Descripción", descriptionPlaceholder: "Cómo lo reconoces", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú", onlyYou: "Solo tú",
     save: { expense: "Guardar", income: "Guardar ingreso" }, saveWithAmount: (label: string, amount: string) => `${label} · ${amount}`,
     saveChanges: "Guardar cambios", saving: "Guardando…", close: "Cerrar",

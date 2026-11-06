@@ -96,6 +96,21 @@ function CategoryChip({ id, selected, onSelect, onEnter }: { id: CategoryId; sel
   );
 }
 
+/** UX lote 1, cambio 2: el último chip de la fila rápida abre los detalles con todas las categorías y la nota. */
+function MoreChip({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-expanded={false}
+      aria-label={copy.annotate.moreLabel}
+      onClick={onClick}
+      className={`${hit} flex h-10 shrink-0 items-center rounded-[14px] bg-sunken px-3.5 text-[13px] font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60`}
+    >
+      <span aria-hidden="true">{copy.annotate.more}</span>
+    </button>
+  );
+}
+
 function SummaryChip({ icon, children, onClick }: { icon: "calendar-blank" | "lock-simple"; children: ReactNode; onClick?: () => void }) {
   const look = "flex h-[34px] items-center gap-1.5 rounded-[11px] bg-sunken px-[11px] text-[13px] font-semibold text-ink";
   const content = <><AppIcon name={icon} size={15} className="text-ink-secondary" />{children}</>;
@@ -217,8 +232,11 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
 
   const body = (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3.5">
-      {/* 02·5: × a la izquierda, título serif al centro; la columna derecha equilibra el encabezado. */}
+      {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
+          izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
       <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+        <span />
+        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
         <button
           type="button"
           onClick={() => requestClose(false)}
@@ -227,8 +245,6 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
         >
           <AppIcon name="x" weight="bold" size={16} />
         </button>
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
-        <span />
       </div>
       <fieldset disabled={isSaving || locked} data-locked={locked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
         {editing ? null : (
@@ -259,6 +275,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           {/* Bloqueada (E4 o tras un fallo ambiguo), la fila deja de desplazarse: sin fichas enfocables, una región con
               scroll quedaría fuera del teclado (axe, scrollable-region-focusable). */}
           {choices.map((id) => <CategoryChip key={id} id={id} selected={categoryId === id} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />)}
+          {details || type === "income" ? null : <MoreChip onClick={() => setDetails(true)} />}
         </div>
         {details ? (
           <div className="flex flex-col gap-3.5">
