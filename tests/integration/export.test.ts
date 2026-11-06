@@ -10,7 +10,8 @@ import { beforeAll, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { moneyFromPesos } from "../../src/domain/money";
 import { saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
-import { createTransaction, voidTransaction } from "../../src/lib/db/transactions";
+import { createTransaction, listTransactions, voidTransaction } from "../../src/lib/db/transactions";
+import { exportTransactions } from "../../src/lib/db/export";
 import { copy } from "../../src/lib/copy/es";
 import { runnerEnv } from "./support/env";
 import { createTestUser } from "./support/users";
@@ -25,6 +26,12 @@ let tomas: Awaited<ReturnType<typeof createTestUser>>;
 const saraIds: string[] = [];
 let voidedId = "";
 const FORMULAS = ["=SUM(A1:A2)", "+57 300", "-cmd", "@HOY"];
+// F44-3 (revisión del PR #44): tabulador, CR, LF y otros controles al principio, solos o antes de un operador. La función
+// de escritura recorta solo espacios, así que llegan tal cual a la base y al archivo. [descripción, celda esperada]
+const CONTROLS = [
+  ["\t=1+1", ",'\t=1+1,"], ["\r+57", ",\"'\r+57\","], ["\n-cmd", ",\"'\n-cmd\","],
+  ["\u0001@HOY", ",'\u0001@HOY,"], ["\u007f=1", ",'\u007f=1,"], ["\tTexto", ",'\tTexto,"],
+] as const;
 
 beforeAll(async () => {
   sara = await createTestUser("Sara exporta");
@@ -33,7 +40,7 @@ beforeAll(async () => {
     saraIds.push((await createTransaction(sara.client, { idempotencyKey: randomUUID(), type, amount, categoryId, transactionDate, description })).id);
   }
   // Descripciones con comillas, comas, saltos de línea y comienzos de fórmula (RFC 4180 e inyección).
-  for (const description of [...FORMULAS, 'Dijo "hola", y\nse fue']) {
+  for (const description of [...FORMULAS, ...CONTROLS.map(([value]) => value), 'Dijo "hola", y\nse fue']) {
     saraIds.push((await createTransaction(sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(1000n), categoryId: "other", transactionDate: "2026-11-02", description })).id);
   }
   const voided = await createTransaction(sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(777000n), categoryId: "home", transactionDate: "2026-11-03", description: "Anulado no se exporta" });
@@ -68,7 +75,7 @@ it("JSON: la estructura del contrato, importes como texto y nada interno, anulad
   expect(body.currency).toBe("COP");
   expect(body.note).toBe(copy.export.fileNote);
   expect(body.exported_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-05:00$/);
-  expect(body.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + 1);
+  expect(body.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + CONTROLS.length + 1);
   for (const row of body.transactions) {
     expect(Object.keys(row)).toEqual(["transaction_date", "type", "category", "category_name", "description", "amount_minor", "currency", "created_at", "updated_at"]);
     expect(typeof row.amount_minor).toBe("string");
@@ -93,10 +100,11 @@ it("CSV: RFC 4180 con BOM, las mismas columnas, fórmulas neutralizadas y nada i
   expect(text.split("\r\n")[0]).toBe("transaction_date,type,category,category_name,description,amount_minor,currency,created_at,updated_at");
   expect(text).toContain('2026-10-03,expense,transport,Transporte,Taxi a la oficina,4500000,COP,');
   for (const formula of FORMULAS) expect(text).toContain(`,'${formula},`);
+  for (const [, encoded] of CONTROLS) expect(text).toContain(encoded);
   expect(text).toContain('"Dijo ""hola"", y\nse fue"');
   expect(text.endsWith("\r\n")).toBe(true);
   // Cabecera + filas propias activas (una de ellas con un salto de línea dentro de la celda).
-  expect(text.trimEnd().split("\r\n")).toHaveLength(1 + saraPrivateOctober2026.length + FORMULAS.length + 1);
+  expect(text.trimEnd().split("\r\n")).toHaveLength(1 + saraPrivateOctober2026.length + FORMULAS.length + CONTROLS.length + 1);
 });
 
 it("Tomás solo recibe lo suyo, nunca filas de Sara", async () => {
@@ -119,5 +127,32 @@ it("sin sesión responde 401 y con un formato no válido, 400; ninguno trae dato
     const response = await call(sara.client, format);
     expect(response.status).toBe(400);
     expect(await response.text()).not.toMatch(/Taxi|amount_minor/);
+  }
+});
+
+// F44-2 (revisión del PR #44): «pagina con .range() y un orden total estable […] hasta agotar las filas». Con páginas
+// pequeñas sobre la consulta real, el archivo y el mes salen idénticos a la lectura con la página por defecto.
+it("F44-2: la exportación y la lectura del mes recorren todas las páginas con un orden estable", async () => {
+  const now = new Date("2026-11-05T15:00:00Z");
+  for (const format of ["json", "csv"] as const) {
+    const whole = await exportTransactions(sara.client, format, now);
+    for (const pageSize of [1, 2, 3]) expect((await exportTransactions(sara.client, format, now, { pageSize })).body, `${format}, páginas de ${pageSize}`).toBe(whole.body);
+  }
+  const json = JSON.parse((await exportTransactions(sara.client, "json", now, { pageSize: 2 })).body);
+  expect(json.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + CONTROLS.length + 1);
+  for (const month of ["2026-10", "2026-11"]) {
+    const whole = (await listTransactions(sara.client, month)).map(({ id }) => id);
+    expect(whole.length).toBeGreaterThan(4);
+    for (const pageSize of [1, 2, 4]) expect((await listTransactions(sara.client, month, { pageSize })).map(({ id }) => id), `${month}, páginas de ${pageSize}`).toEqual(whole);
+  }
+});
+
+it("F44-2: si la lectura falla, 500 y ningún archivo", async () => {
+  const broken = { auth: sara.client.auth, from: () => { throw new TypeError("fetch failed"); } };
+  for (const format of ["json", "csv"]) {
+    const response = await call(broken, format);
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-disposition")).toBeNull();
+    expect(await response.text()).toBe("");
   }
 });

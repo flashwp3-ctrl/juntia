@@ -1,7 +1,7 @@
 // FR-013–FR-019 (spec.md): «un gasto o un ingreso»; «Ingresos solo vale para
 // ingresos»; «el gasto del mes es la suma de gastos activos del mes».
 import { moneyFromPesos } from "../money";
-import { CATEGORY_CATALOG, validateDraft, monthKey, todayInBogota, monthSummary, groupByDay, fillRecentCategories, monthBounds, monthNavigation, shiftMonth, filterTransactions, matchesSearch, type Transaction, type TransactionDraft } from "./index";
+import { CATEGORY_CATALOG, validateDraft, monthKey, todayInBogota, monthSummary, groupByDay, fillRecentCategories, monthBounds, monthNavigation, shiftMonth, filterTransactions, matchesSearch, isSupportedMonth, clampMonth, type Transaction, type TransactionDraft } from "./index";
 const draft: TransactionDraft = { type: "expense", amount: moneyFromPesos(45000n), categoryId: "transport", transactionDate: "2026-10-03", description: null };
 const row = (overrides: Partial<Transaction> = {}): Transaction => ({ ...draft, id: "one", status: "active", version: 1, createdAt: "2026-10-03T12:00:00Z", updatedAt: "2026-10-03T12:00:00Z", ...overrides });
 it("conserva el catálogo literal y su orden (data-model §2.2)", () => {
@@ -74,4 +74,18 @@ it("busca en la descripción sin distinguir tildes ni mayúsculas y filtra por t
 it("agrupa por día del más reciente al más antiguo y, dentro del día, por creación", () => {
   const rows = [row({ id: "old", transactionDate: "2026-10-03", createdAt: "2026-10-03T08:00:00Z" }), row({ id: "new", transactionDate: "2026-10-03", createdAt: "2026-10-03T09:00:00Z" }), row({ id: "later", transactionDate: "2026-10-23" })];
   expect(groupByDay(rows).map(({ date, transactions }) => [date, transactions.map(({ id }) => id)])).toEqual([["2026-10-23", ["later"]], ["2026-10-03", ["new", "old"]]]);
+});
+// F44-4 (revisión del PR #44): «?mes=0000-01» y «9999-12» no son meses del dominio de fechas, y un mes fuera del
+// intervalo navegable no genera flechas más allá de sus límites.
+it("valida el mes contra el dominio de fechas y lleva los meses lejanos al intervalo navegable", () => {
+  for (const month of ["0000-01", "0000-12", "2026-00", "2026-13", "26-10", "2026-1", "", "2026-10-01"]) expect(isSupportedMonth(month), month).toBe(false);
+  for (const month of ["0001-01", "2026-10", "9999-12"]) expect(isSupportedMonth(month), month).toBe(true);
+  const months = ["2026-09-01", "2027-03-01"];
+  expect(clampMonth(months, "2026-11", "9999-12")).toBe("2027-03");
+  expect(clampMonth(months, "2026-11", "0001-01")).toBe("2026-09");
+  expect(clampMonth(months, "2026-11", "2026-12")).toBe("2026-12");
+  expect(monthNavigation(months, "2026-11", "9999-12")).toEqual({ previous: "2027-02", next: null });
+  expect(monthNavigation(months, "2026-11", "0001-01")).toEqual({ previous: null, next: "2026-10" });
+  expect(monthNavigation(months, "2026-11", "2100-06")).toEqual({ previous: "2027-02", next: null });
+  expect(monthNavigation([], "2026-11", "1990-01")).toEqual({ previous: null, next: null });
 });

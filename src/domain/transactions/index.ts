@@ -74,7 +74,20 @@ export function shiftMonth(month: string, delta: number): string {
  */
 export function monthNavigation(months: readonly string[], current: string, selected: string) {
   const { min, max } = monthBounds(months, current);
-  return { previous: selected > min ? shiftMonth(selected, -1) : null, next: selected < max ? shiftMonth(selected, 1) : null };
+  const month = clampMonth(months, current, selected);
+  return { previous: month > min ? shiftMonth(month, -1) : null, next: month < max ? shiftMonth(month, 1) : null };
+}
+/**
+ * F44-4 (revisión del PR #44). Un mes `AAAA-MM` del dominio de fechas de los movimientos: el mismo que admite
+ * `transaction_date` (validateDraft y la función SQL rechazan el año 0000), de 0001-01 a 9999-12.
+ */
+export function isSupportedMonth(month: unknown): month is string {
+  return typeof month === "string" && /^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month) && month >= "0001-01";
+}
+/** Lleva un mes al intervalo navegable de las flechas (del primer al último mes con movimientos, o el actual). */
+export function clampMonth(months: readonly string[], current: string, month: string) {
+  const { min, max } = monthBounds(months, current);
+  return month < min ? min : month > max ? max : month;
 }
 const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es").trim();
 /** Búsqueda por descripción sin distinguir tildes ni mayúsculas (FR-047; research R8.9). */

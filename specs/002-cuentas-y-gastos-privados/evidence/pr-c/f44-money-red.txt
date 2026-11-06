@@ -1,0 +1,5 @@
+     × formatea es-CO sin decimales sin perder precisión 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "$412.900"
+Received: "$ 412.900"
+      Tests  1 failed | 15 passed (16)

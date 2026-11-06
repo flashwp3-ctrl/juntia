@@ -3,17 +3,17 @@ import "server-only";
 // petición (src/lib/db). «Hoy» y el mes en curso se calculan en America/Bogota. Una sesión que ya no vale lleva a Entrar
 // con `volver`; cualquier otro fallo de lectura es el estado de error con Reintentar (FR-042, FR-049).
 import { redirect } from "next/navigation";
-import { monthNavigation, todayInBogota, type Transaction } from "@/domain/transactions";
+import { clampMonth, isSupportedMonth, monthNavigation, todayInBogota, type Transaction } from "@/domain/transactions";
 import { DbError, mapDbError } from "@/lib/db/errors";
 import { getTransaction, listTransactionMonths, listTransactions } from "@/lib/db/transactions";
 import { createClient } from "@/lib/supabase/server";
 
-export type MonthData = { rows: Transaction[]; navigation: { previous: string | null; next: string | null } };
+/** `month` es el mes que se enseña: el pedido, llevado al intervalo navegable de las flechas (F44-4). */
+export type MonthData = { rows: Transaction[]; month: string; navigation: { previous: string | null; next: string | null } };
 type Loaded<T> = { ok: true; value: T } | { ok: false };
 
-const MONTH = /^[0-9]{4}-(0[1-9]|1[0-2])$/;
-/** El mes de `?mes=`, o el mes en curso si falta o no es válido. */
-export const monthParam = (value: unknown, today: string) => (typeof value === "string" && MONTH.test(value) ? value : today.slice(0, 7));
+/** El mes de `?mes=`, o el mes en curso si falta o no es un mes del dominio de fechas (F44-4: ni 0000-01 ni 13). */
+export const monthParam = (value: unknown, today: string) => (isSupportedMonth(value) ? value : today.slice(0, 7));
 export const today = () => todayInBogota();
 
 async function guard<T>(read: () => Promise<T>, volver: string): Promise<Loaded<T>> {
@@ -27,12 +27,16 @@ async function guard<T>(read: () => Promise<T>, volver: string): Promise<Loaded<
   }
 }
 
-/** Filas activas del mes y los límites de las flechas. */
-export async function loadMonth(month: string, current: string, volver: string): Promise<Loaded<MonthData>> {
+/**
+ * Filas activas del mes y los límites de las flechas. Un mes fuera del intervalo navegable (por ejemplo 9999-12) se
+ * lleva al límite más cercano antes de leer (F44-4): la página redirige a ese mes y ninguna flecha pasa del máximo.
+ */
+export async function loadMonth(requested: string, current: string, volver: string): Promise<Loaded<MonthData>> {
   return guard(async () => {
     const client = await createClient();
-    const [rows, months] = await Promise.all([listTransactions(client, month), listTransactionMonths(client)]);
-    return { rows, navigation: monthNavigation(months, current.slice(0, 7), month) };
+    const months = await listTransactionMonths(client);
+    const month = clampMonth(months, current.slice(0, 7), requested);
+    return { rows: await listTransactions(client, month), month, navigation: monthNavigation(months, current.slice(0, 7), month) };
   }, volver);
 }
 

@@ -100,7 +100,11 @@ export async function openWithSession(browser: Browser, page: Page, entry: Route
     await context.addCookies(user.cookies);
     const created = entry.data ? await seedMovements(user, entry.data) : [];
     paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()));
-    if (entry.prepare === "us") await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+    // Nosotros recordado en el dispositivo: localStorage y la cookie que lee el servidor (F44-1).
+    if (entry.prepare === "us") {
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+      await context.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL).hostname, path: "/" }]);
+    }
   }
   return target;
 }

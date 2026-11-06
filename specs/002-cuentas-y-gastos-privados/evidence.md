@@ -1728,6 +1728,58 @@ separado, cada una con 150 s y un reintento y la salida a la vista, con el paso 
 noviembre con el equipo cargado (`next dev` y Playwright a la vez) y no se guardó el
 nombre de la prueba; las cinco siguientes, incluida la de este gate, pasaron 180/180.
 
+### Revisión del PR #44 (ChatGPT): F44-1 a F44-4 y el formato de importes
+
+Pedir cambios, sin bloqueantes. Todo va en un solo push sobre 6f9d0d0; el SHA y el run
+del gate quedan en la descripción del PR, porque registrarlos aquí exigiría otro commit y
+otro gate (como en T059).
+
+**F44-1 (privacidad).** Con «Nosotros» recordado, las páginas servían los dos
+subárboles y CSS escondía el de Yo: los movimientos viajaban en el HTML y en el payload
+RSC. Ahora la misma preferencia de la 001 se copia en una cookie del dispositivo,
+`juntia_context` (`me` o `us`, los mismos valores que `localStorage`), con el patrón de
+`juntia_theme`: la escribe el selector, y `src/lib/server-context.ts` la lee. Con `us`,
+Inicio, Actividad y el detalle **no leen movimientos ni construyen la vista privada**.
+Sin cookie o con un valor no válido, el servidor pinta Yo, el valor por defecto de la 001
+(decisión 10; 001 FR-026). Si el dispositivo recuerda otra cosa, `ContextView` reescribe
+la cookie y pide la página otra vez; mientras tanto, Yo enseña su Skeleton. **Interpretación
+de ejecución:** la cookie replica la preferencia aprobada de la 001 y no la sustituye; no
+se guarda en el servidor ni se sincroniza entre dispositivos, y no es `scope`. Pruebas:
+cuatro casos de componentes en `src/features/home/home.test.tsx` (las dos discrepancias,
+el caso sin discrepancia y Nosotros sin cifras) y un caso nuevo en la spec E2E 1: el HTML y
+el payload RSC (`RSC: 1`) de `/`, `/actividad?mes=…` y `/actividad/[id]` con la cookie en
+`us` no contienen ninguna descripción ni importe del dataset (ni «412.900» ni «41290000»);
+con `me`, sí (control positivo).
+
+**F44-2 (integridad).** `listTransactions` y la exportación leen página a página con
+`.range()` y un orden total estable (fecha, `created_at`, `id`) hasta una página vacía,
+avanzando lo que de verdad llegó (`src/lib/db/paginate.ts`, páginas de 500). Si una página
+falla, la lectura entera falla y la exportación responde 500 sin archivo. Pruebas: unidad
+de `readAllPages` (orden, máximo del servidor menor que la página, fallo a mitad, vacío) e
+integración con páginas de 1, 2, 3 y 4 filas sobre la consulta real, idénticas a la lectura
+por defecto, para la exportación (JSON y CSV) y para dos meses; un cliente que falla da 500.
+
+**F44-3.** El CSV pone `'` delante de `= + - @`, de cualquier control C0 o DEL al
+principio (tabulador, CR y LF incluidos) y de espacios seguidos de un operador, y conserva
+el escapado RFC 4180. Pruebas: `src/lib/db/export.test.ts` (unidad) y seis descripciones
+con controles en `tests/integration/export.test.ts`.
+
+**F44-4.** `isSupportedMonth` acepta solo meses de 0001-01 a 9999-12 (el dominio de
+`transaction_date`: el año 0000 no es una fecha válida para la función SQL ni para
+`validateDraft`); `clampMonth` lleva un mes al intervalo navegable y `monthNavigation` ya
+no da flechas fuera de él. Actividad y el detalle redirigen un `?mes=` fuera del intervalo
+al límite más cercano. Rojo: [`f44-4-domain-red.txt`](evidence/pr-c/f44-4-domain-red.txt)
+(`isSupportedMonth is not a function`); verde: 32 pruebas de dominio.
+
+**Formato de importes.** `formatMoney` quita el espacio que `Intl` pone en es-CO:
+«$412.900» y «-$200.000», como el diseño. Era trivial: no cambia el cálculo ni las pruebas
+doradas, solo la aserción de formato de `money.test.ts`, que pasa a ser exacta. Rojo:
+[`f44-money-red.txt`](evidence/pr-c/f44-money-red.txt) (`"$ 412.900"`). **Las capturas de
+T073 son anteriores a este cambio**: muestran «$ 412.900»; todo lo demás no cambia. Se
+pueden volver a capturar con un run de evidencia si los fundadores lo piden.
+
+El presupuesto del job `e2e` no se mueve: sigue como aviso para los fundadores (T075).
+
 ### T076
 
 Descripción del PR C (#44) con capturas, Impeccable, los `[P]` para aprobar y «E2E

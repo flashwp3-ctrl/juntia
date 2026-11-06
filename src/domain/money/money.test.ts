@@ -21,7 +21,9 @@ describe("Money — contrato de precisión", () => {
     expect(() => parseAmountMinor(text)).toThrow();
   });
   it("formatea es-CO sin decimales sin perder precisión", () => {
-    expect(formatMoney(moneyFromPesos(412900n))).toMatch(/^\$\s?412\.900$/);
-    expect(formatMoney(moneyFromPesos(9007199254740993n))).toMatch(/^\$\s?9\.007\.199\.254\.740\.993$/);
+    // Revisión del PR #44: «$412.900», sin espacio, como el diseño.
+    expect(formatMoney(moneyFromPesos(412900n))).toBe("$412.900");
+    expect(formatMoney({ amountMinor: -20000000n, currency: "COP" })).toBe("-$200.000");
+    expect(formatMoney(moneyFromPesos(9007199254740993n))).toBe("$9.007.199.254.740.993");
   });
 });

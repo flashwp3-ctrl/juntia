@@ -15,7 +15,7 @@ import type { Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
 import { confirmLink } from "../support/mailpit";
-import { seedUser } from "../support/seed";
+import { seedMovements, seedUser } from "../support/seed";
 import { expect, signInContext, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
@@ -232,5 +232,35 @@ test("Exportar: el archivo JSON y el CSV llegan como descarga, con su nombre y u
     expect((await stat(await download.path())).size).toBeGreaterThan(0);
     await page.keyboard.press("Escape");
     await expect(sheet).toHaveCount(0);
+  }
+});
+
+// F44-1 (revisión del PR #44): «el HTML inicial y el payload RSC con la cookie en nosotros no contienen importes ni
+// descripciones del dataset dorado, en Inicio y en Actividad», y con la cookie en `me` sí (control positivo). Se piden
+// las respuestas tal cual llegan, sin ejecutar la página: lo que importa es lo que viaja, no lo que se ve.
+test("Nosotros no lleva datos privados ni en el HTML ni en el payload RSC; Yo sí", async ({ page, baseURL }) => {
+  const user = await seedUser({ role: "contexto", index: test.info().parallelIndex });
+  const [first] = await seedMovements(user, "current");
+  await signInContext(page.context(), user);
+  const month = first.transactionDate.slice(0, 7);
+  const host = new URL(baseURL!).hostname;
+  const routes = ["/", `/actividad?mes=${month}`, `/actividad/${first.id}?mes=${month}`];
+  const markers = ["Taxi a la oficina", "Reembolso EPS", "Regalo de cumpleaños", "412.900", "41290000", "45.000", "4500000"];
+  const body = async (path: string, rsc: boolean) => {
+    const url = rsc ? `${path}${path.includes("?") ? "&" : "?"}_rsc=f44` : path;
+    const response = await page.request.get(url, { headers: rsc ? { RSC: "1" } : {} });
+    expect(response.status(), `${url} ${rsc ? "RSC" : "HTML"}`).toBe(200);
+    return response.text();
+  };
+  for (const [context, leaks] of [["us", false], ["me", true]] as const) {
+    await page.context().addCookies([{ name: "juntia_context", value: context, domain: host, path: "/" }]);
+    for (const path of routes) {
+      for (const rsc of [false, true]) {
+        const text = await body(path, rsc);
+        const found = markers.filter((marker) => text.includes(marker));
+        if (leaks) expect(found.length, `${context} ${path} ${rsc ? "RSC" : "HTML"}: los datos de Yo llegan`).toBeGreaterThan(0);
+        else expect(found, `${context} ${path} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+      }
+    }
   }
 });

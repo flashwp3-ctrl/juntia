@@ -11,7 +11,7 @@
 // servidor (T047): esta prueba compone el mismo árbol de cliente que él con un perfil de prueba. /cuenta muestra datos de la
 // cuenta y se prueba con sesión real en la spec E2E 1 y en axe (job e2e).
 import { render } from "@testing-library/react";
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { AnnotateProvider } from "@/components/shell/annotate-notice";
 import { AppShell } from "@/components/shell/app-shell";
@@ -22,7 +22,10 @@ import PlanPage from "./plan/page";
 import BalancePage from "./balance/page";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
-vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useRouter: () => ({ refresh: vi.fn() }) }));
+// Metas y Plan leen la cookie de contexto en el servidor (F44-1); aquí, sin cookie: Yo.
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/server-context", () => ({ serverContext: async () => "me" }));
 
 // El árbol de cliente de src/app/(app)/layout.tsx, con un perfil de prueba sin cifras.
 function AppLayout({ children }: { children: ReactNode }) {
@@ -39,7 +42,7 @@ function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
-const routes: readonly [string, ComponentType][] = [
+const routes: readonly [string, () => ReactNode | Promise<ReactNode>][] = [
   ["/metas", GoalsPage],
   ["/plan", PlanPage],
   ["/balance", BalancePage],
@@ -51,9 +54,9 @@ const NAMED = ["aria-label", "aria-description", "title", "alt"] as const;
 
 describe("Rutas de producto sin datos: sin cifras y sin aviso de versión base (T050; FR-044 de la 002)", () => {
   for (const [route, Page] of routes) {
-    it(`${route}: ni el texto visible ni los nombres accesibles tienen cifras`, () => {
+    it(`${route}: ni el texto visible ni los nombres accesibles tienen cifras`, async () => {
       pathname.current = route;
-      const { container } = render(<AppLayout><Page /></AppLayout>);
+      const { container } = render(<AppLayout>{await Page()}</AppLayout>);
       expect(container.textContent ?? "").not.toMatch(FORBIDDEN);
       for (const attribute of NAMED) {
         for (const node of container.querySelectorAll(`[${attribute}]`)) {
@@ -62,9 +65,9 @@ describe("Rutas de producto sin datos: sin cifras y sin aviso de versión base (
       }
     });
 
-    it(`${route}: ya no muestra el aviso de versión base (FR-044)`, () => {
+    it(`${route}: ya no muestra el aviso de versión base (FR-044)`, async () => {
       pathname.current = route;
-      const { container } = render(<AppLayout><Page /></AppLayout>);
+      const { container } = render(<AppLayout>{await Page()}</AppLayout>);
       expect(container.querySelector("[data-base-version-notice]")).toBeNull();
       expect(container.textContent).not.toMatch(/Versión base|Todavía no guarda datos/);
     });

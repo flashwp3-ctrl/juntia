@@ -4,7 +4,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CategoryId, TransactionType } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
-import { mapDbError } from "./errors";
+import { DbError } from "./errors";
+import { PAGE_SIZE, readAllPages } from "./paginate";
 import { requireClaims } from "./session";
 
 export type ExportFormat = "json" | "csv";
@@ -19,24 +20,30 @@ function bogotaInstant(now: Date) {
   return `${new Date(now.getTime() - 5 * 3_600_000).toISOString().slice(0, 19)}-05:00`;
 }
 
-// RFC 4180: comillas si hay coma, comilla, CR o LF; comillas internas dobladas. Inyección de fórmulas: un «'» delante de
-// cualquier celda que empiece por = + - @ (research R8.10).
-function cell(value: string | null) {
+// RFC 4180: comillas si hay coma, comilla, CR o LF; comillas internas dobladas. Inyección de fórmulas (research R8.10;
+// F44-3 de la revisión del PR #44): un «'» delante de cualquier celda que empiece por = + - @, por un carácter de control
+// (tabulador, CR, LF, el resto de C0 y DEL, que una hoja de cálculo puede saltar o tratar como separador) o por espacios
+// seguidos de un operador.
+const FORMULA = /^(?:[=+\-@\u0000-\u001f\u007f]|\s+[=+\-@])/;
+export function csvCell(value: string | null) {
   if (value === null) return "";
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+  const safe = FORMULA.test(value) ? `'${value}` : value;
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-export async function exportTransactions(client: SupabaseClient, format: ExportFormat, now = new Date()) {
+export async function exportTransactions(client: SupabaseClient, format: ExportFormat, now = new Date(), { pageSize = PAGE_SIZE }: { pageSize?: number } = {}) {
   await requireClaims(client);
-  const { data, error } = await client
+  // F44-2: todas las páginas, con orden total estable; el `id` ordena pero no sale en el archivo. Si una página falla,
+  // no hay archivo (el route handler responde 500): nunca uno parcial con 200.
+  const data = await readAllPages<Row & { id: string }>((from, to) => client
     .from("my_transactions")
-    .select("transaction_date, type, category_id, description, amount_minor, currency, created_at, updated_at")
+    .select("id, transaction_date, type, category_id, description, amount_minor, currency, created_at, updated_at")
     .order("transaction_date", { ascending: true })
-    .order("created_at", { ascending: true });
-  if (error) throw mapDbError(error);
-  const rows: ExportRow[] = (data as Row[]).map((row) => {
-    if (typeof row.amount_minor !== "string" || !/^[0-9]+$/.test(row.amount_minor)) throw mapDbError(new Error("amount"));
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .range(from, to), pageSize);
+  const rows: ExportRow[] = data.map((row) => {
+    if (typeof row.amount_minor !== "string" || !/^[0-9]+$/.test(row.amount_minor)) throw new DbError("unexpected");
     return {
       transaction_date: row.transaction_date, type: row.type, category: row.category_id, category_name: copy.categories[row.category_id],
       description: row.description, amount_minor: row.amount_minor, currency: row.currency, created_at: row.created_at, updated_at: row.updated_at,
@@ -48,6 +55,6 @@ export async function exportTransactions(client: SupabaseClient, format: ExportF
     const body = JSON.stringify({ exported_at: exportedAt, currency: "COP", note: copy.export.fileNote, transactions: rows }, null, 2);
     return { body, filename, contentType: "application/json; charset=utf-8" };
   }
-  const lines = [COLUMNS.join(","), ...rows.map((row) => COLUMNS.map((column) => cell(row[column])).join(","))];
+  const lines = [COLUMNS.join(","), ...rows.map((row) => COLUMNS.map((column) => csvCell(row[column])).join(","))];
   return { body: `\uFEFF${lines.join("\r\n")}\r\n`, filename, contentType: "text/csv; charset=utf-8" };
 }

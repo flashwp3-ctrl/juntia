@@ -26,7 +26,8 @@ const breakdown = [
   ["shopping", "96.000"], ["entertainment", "34.000"], ["market", "27.300"], ["other", "50.000"],
 ] as const;
 
-beforeEach(() => { window.localStorage.clear(); document.documentElement.removeAttribute("data-context"); refresh.mockClear(); });
+const clearCookie = () => { document.cookie = "juntia_context=; Path=/; Max-Age=0"; };
+beforeEach(() => { window.localStorage.clear(); clearCookie(); document.documentElement.removeAttribute("data-context"); refresh.mockClear(); });
 
 describe("Inicio en Yo (T062)", () => {
   it("con el dataset dorado de octubre muestra 412.900 y el desglose literal de la tabla", () => {
@@ -66,8 +67,36 @@ describe("Inicio en Yo (T062)", () => {
 
   it("en Nosotros: «todavía no disponible», sin ninguna cifra ni dato privado", () => {
     window.localStorage.setItem("juntia:context", "us");
-    const { container } = wrap(<ContextView me={october()} />);
+    const { container } = wrap(<ContextView server="us" me={null} />);
     expect(screen.getByRole("heading", { name: copy.us.title })).toBeTruthy();
     expect(container.textContent).not.toMatch(/[0-9]|\$|Taxi|Reembolso/);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  // F44-1 (revisión del PR #44): el servidor pinta el contexto de la cookie; si el dispositivo recuerda otro, se reescribe
+  // la cookie y se pide la página otra vez, sin enseñar nunca datos de la otra respuesta.
+  it("F44-1: con Yo en el dispositivo y Nosotros en el servidor, Skeleton, cookie «me» y una sola recarga", () => {
+    window.localStorage.setItem("juntia:context", "me");
+    document.cookie = "juntia_context=us; Path=/";
+    const { container } = wrap(<ContextView server="us" me={october()} pending={<p>cargando</p>} />);
+    expect(screen.getByText("cargando")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/Taxi|412/);
+    expect(document.cookie).toContain("juntia_context=me");
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("F44-1: con Nosotros en el dispositivo y Yo en el servidor, el estado no disponible, cookie «us» y una recarga", () => {
+    window.localStorage.setItem("juntia:context", "us");
+    const { container } = wrap(<ContextView server="me" me={october()} />);
+    expect(screen.getByRole("heading", { name: copy.us.title })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/Taxi|412/);
+    expect(document.cookie).toContain("juntia_context=us");
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("F44-1: con el mismo contexto en los dos lados no hay recarga", () => {
+    wrap(<ContextView server="me" me={october()} />);
+    expect(screen.getByRole("region", { name: copy.home.spentIn("octubre") })).toBeTruthy();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

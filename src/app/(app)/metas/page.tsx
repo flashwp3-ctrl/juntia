@@ -4,12 +4,14 @@ import { PageHeader } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/shell/provisional-state";
 import { ContextView } from "@/features/context/context-view";
 import { copy } from "@/lib/copy/es";
+import { serverContext } from "@/lib/server-context";
 
-export default function GoalsPage() {
+export default async function GoalsPage() {
+  const context = await serverContext();
   return (
     <>
       <PageHeader title={copy.nav.goals} />
-      <ContextView me={<EmptyState icon="flag-banner" title={copy.empty.goals.title} description={copy.empty.goals.description} />} />
+      <ContextView server={context} me={<EmptyState icon="flag-banner" title={copy.empty.goals.title} description={copy.empty.goals.description} />} />
     </>
   );
 }
