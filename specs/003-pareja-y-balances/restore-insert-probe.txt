@@ -1,0 +1,36 @@
+-- Preflight de compatibilidad con backup.sh: INSERT por fila, una transacción,
+-- sin desactivar triggers. Solo datos sintéticos; no es un ensayo de restauración
+-- ni evidencia de [V]. Detecta decisiones necesarias antes de gastar T027 en CI.
+begin;
+select no_plan();
+select tests.create_user('55555555-5555-4555-8555-555555555555','restore-sara@seed.test');
+select tests.create_user('66666666-6666-4666-8666-666666666666','restore-tomas@seed.test');
+select tests.create_user('77777777-7777-4777-8777-777777777777','restore-sara2@seed.test');
+select tests.create_user('88888888-8888-4888-8888-888888888888','restore-tomas2@seed.test');
+select tests.seed_couple('55555555-aaaa-4555-8555-555555555555','55555555-5555-4555-8555-555555555555','66666666-6666-4666-8666-666666666666');
+set constraints all immediate;
+set constraints all deferred;
+select lives_ok($test$do $body$ begin
+  -- Cualquiera de las dos filas del ciclo que se importe primero referencia
+  -- una fila todavía ausente. SET CONSTRAINTS no difiere una FK no deferrable.
+  insert into juntia_data.transactions(id,type,created_by,owner_user_id,amount_minor,category_id,transaction_date,status,voided_at,voided_by,moved_to_transaction_id)
+    values('55555555-bbbb-4555-8555-555555555555','expense','55555555-5555-4555-8555-555555555555','55555555-5555-4555-8555-555555555555',10000,'transport','2026-10-03','voided',now(),'55555555-5555-4555-8555-555555555555','55555555-cccc-4555-8555-555555555555');
+  insert into juntia_data.transactions(id,type,created_by,group_id,payer_user_id,amount_minor,category_id,transaction_date,split_mode,moved_from_transaction_id)
+    values('55555555-cccc-4555-8555-555555555555','expense','55555555-5555-4555-8555-555555555555','55555555-aaaa-4555-8555-555555555555','55555555-5555-4555-8555-555555555555',10000,'transport','2026-10-03','equal','55555555-bbbb-4555-8555-555555555555');
+  insert into juntia_data.transaction_allocations values('55555555-cccc-4555-8555-555555555555','55555555-5555-4555-8555-555555555555',5000),('55555555-cccc-4555-8555-555555555555','66666666-6666-4666-8666-666666666666',5000);
+  set constraints all immediate;
+end $body$;$test$,'restaurar el ciclo privado/compartido mediante INSERT por fila');
+select lives_ok($test$do $body$ begin
+  insert into juntia_data.groups(id,owner_user_id,status,activated_at) values('77777777-aaaa-4777-8777-777777777777','77777777-7777-4777-8777-777777777777','active',now());
+  -- La FK exige la raíz; el pagador y las partes necesitan además las membresías,
+  -- dependencia entre tablas que pg_dump no deduce de un trigger.
+  insert into juntia_data.transactions(id,type,created_by,group_id,payer_user_id,amount_minor,category_id,transaction_date,split_mode)
+    values('77777777-bbbb-4777-8777-777777777777','expense','77777777-7777-4777-8777-777777777777','77777777-aaaa-4777-8777-777777777777','77777777-7777-4777-8777-777777777777',10000,'transport','2026-10-03','equal');
+  insert into juntia_data.group_members(group_id,user_id,role,status,join_order) values('77777777-aaaa-4777-8777-777777777777','77777777-7777-4777-8777-777777777777','owner','active',1),('77777777-aaaa-4777-8777-777777777777','88888888-8888-4888-8888-888888888888','member','active',2);
+  insert into juntia_data.group_invitations(group_id,email,token_hash,status,created_by,inviter_display_name,accepted_by,accepted_at)
+    values('77777777-aaaa-4777-8777-777777777777','restore-tomas2@seed.test',repeat('f',64),'accepted','77777777-7777-4777-8777-777777777777','Sara','88888888-8888-4888-8888-888888888888',now());
+  insert into juntia_data.transaction_allocations values('77777777-bbbb-4777-8777-777777777777','77777777-7777-4777-8777-777777777777',5000),('77777777-bbbb-4777-8777-777777777777','88888888-8888-4888-8888-888888888888',5000);
+  set constraints all immediate;
+end $body$;$test$,'restaurar gastos de grupo antes de las membresías');
+select * from finish();
+rollback;

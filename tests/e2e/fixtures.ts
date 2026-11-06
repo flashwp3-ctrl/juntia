@@ -2,11 +2,18 @@
 // `storageState` por `parallelIndex` y rol. Dos workers nunca comparten usuario ni archivo de sesión. Los tests que
 // cambian el estado de la cuenta (tema, nombre, cerrar sesión) siembran su propio usuario con `seedUser`.
 import { test as base, type BrowserContext } from "@playwright/test";
-import { seedGoldenMovements, seedUser, writeStorageState, type SeededUser } from "../support/seed";
+import { seedGoldenMovements, seedUser, seedCouple, writeStorageState, type SeededUser } from "../support/seed";
 
-type WorkerFixtures = { sara: SeededUser & { statePath: string }; goldenSara: SeededUser & { statePath: string; movements: number } };
+type PairedUsers={groupId:string;sara:SeededUser&{statePath:string};tomas:SeededUser&{statePath:string}};
+type WorkerFixtures = { sara: SeededUser & { statePath: string }; goldenSara: SeededUser & { statePath: string; movements: number }; couple:PairedUsers };
 
 export const test = base.extend<object, WorkerFixtures>({
+  couple: [async ({},use,workerInfo)=>{
+    const pair=await seedCouple({index:workerInfo.parallelIndex});
+    await use({groupId:pair.groupId,
+      sara:{...pair.sara,statePath:await writeStorageState(pair.sara,workerInfo.parallelIndex,"couple-sara")},
+      tomas:{...pair.tomas,statePath:await writeStorageState(pair.tomas,workerInfo.parallelIndex,"couple-tomas")}});
+  },{scope:"worker"}],
   sara: [async ({}, use, workerInfo) => {
     const user = await seedUser({ role: "sara", index: workerInfo.parallelIndex, displayName: "Sara" });
     await use({ ...user, statePath: await writeStorageState(user, workerInfo.parallelIndex, "sara") });

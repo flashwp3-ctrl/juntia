@@ -3,6 +3,11 @@
 import { expect, it } from "vitest";
 import { mapDbError } from "./errors";
 const codes = {
+  JT101: "alreadyInCouple", JT102: "invitationNotFound", JT103: "invitationAlreadyAccepted", JT104: "invitationInvalid",
+  JT105: "coupleNotActive", JT106: "nothingToSettle", JT107: "settlementExceedsPending", JT108: "invalidEmail",
+  JT109: "invalidTokenHash", JT110: "invalidSplit", JT111: "notCoupleMember", JT112: "settlementNotFound",
+  JT113: "settlementVoided", JT114: "invalidSettlementDate", JT115: "moveNotAllowed", JT116: "moveFundedByGoal",
+  JT117: "undoNotAvailable", JT118: "invalidSplitMode", JT119: "invalidCoupleTransition",
   JT001: "notAuthenticated", JT002: "invalidAmount", JT003: "amountOutOfRange", JT004: "invalidType",
   JT005: "invalidCategory", JT006: "invalidDate", JT007: "descriptionTooLong", JT008: "idempotencyKeyReused",
   JT009: "invalidIdempotencyKey", JT010: "transactionNotFound", JT011: "versionConflict", JT012: "transactionVoided",
@@ -10,6 +15,10 @@ const codes = {
   "40P01": "retryable", "40001": "retryable", "23514": "constraintViolation", "23503": "constraintViolation",
   "23505": "constraintViolation", "42501": "forbidden", PGRST301: "notAuthenticated",
 };
+// 003 T007 · contracts/errors.md: «23505 sobre los índices de pareja se traduce a JT101».
+it.each(["group_members_one_couple_per_person", "group_invitations_one_pending"])("%s se traduce sin filtrar mensaje técnico", name => {
+  expect(mapDbError({ code: "23505", message: `duplicate key value violates unique constraint "${name}"` }).kind).toBe("alreadyInCouple");
+});
 it.each(Object.entries(codes))("%s → %s", (code, kind) => expect(mapDbError({ code, message: "technical detail" }).kind).toBe(kind));
 it("HTTP, red y desconocidos sin filtrar mensaje técnico", () => {
   expect(mapDbError({ status: 401 }).kind).toBe("notAuthenticated");
