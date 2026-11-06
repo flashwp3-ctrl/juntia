@@ -1,6 +1,9 @@
 -- ADR-013 [V] 8: «security_invoker = true» y funcionan «sin usage sobre juntia_data».
 begin;
 select no_plan();
+-- 003 T013: toda proyección nueva conserva security_invoker.
+select is(reloptions,array['security_invoker=true'],'invoker '||relname) from pg_class where oid in
+ ('public.couple_expenses'::regclass,'public.couple_settlements'::regclass,'public.couple_transaction_months'::regclass,'public.my_shared_parts'::regclass,'public.couple_month_summary'::regclass,'public.me_month_summary'::regclass,'public.couple_balance'::regclass);
 -- 003 T009: proyecciones de pareja sin correo, hash ni preferencias del otro.
 select is(reloptions,array['security_invoker=true'],'invoker '||relname) from pg_class where oid in ('public.my_couple'::regclass,'public.couple_members'::regclass);
 select is((select array_agg(column_name::text order by ordinal_position) from information_schema.columns where table_schema='public' and table_name='couple_members'),array['user_id','display_name','role','join_order'],'couple_members: solo identidad visible');
