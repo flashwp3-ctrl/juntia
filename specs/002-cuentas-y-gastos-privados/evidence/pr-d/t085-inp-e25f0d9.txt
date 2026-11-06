@@ -1,0 +1,3 @@
+# T085 · INP de laboratorio — run 42166090433 (evidence) sobre e25f0d9; Chromium, CPU 4x, 5 aperturas y 5 guardados por ancho
+{"width":390,"cpu":"4x","runs":5,"open":[48,64,64,64,56],"save":[24,32,24,16,16],"inpOpen":64,"inpSave":32,"under200":true,"kind":"laboratorio"}
+{"width":1440,"cpu":"4x","runs":5,"open":[40,96,104,72,80],"save":[32,32,24,32,24],"inpOpen":104,"inpSave":32,"under200":true,"kind":"laboratorio"}

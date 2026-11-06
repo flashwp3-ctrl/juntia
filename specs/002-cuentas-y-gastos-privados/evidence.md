@@ -1904,63 +1904,114 @@ job `e2e`: 152/152, **0 violaciones serias o críticas** en los 24 estados nuevo
 
 ### T085
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Laboratorio, no campo** (SC-004; maestro §15.7). `tests/evidence/inp.capture.ts`: Chromium con la CPU
+a 4× (CDP `Emulation.setCPUThrottlingRate`), Event Timing con `durationThreshold: 16`; para cada
+interacción, la mayor duración de sus eventos con el mismo `interactionId`. Cinco aperturas (clic real en
+el disparador visible) y cinco guardados (clic en Guardar; la respuesta del servidor no cuenta para INP),
+con sesión y movimientos sembrados, en serie. Run [42166090433](https://github.com/flashwp3-ctrl/juntia/actions/runs/42166090433)
+sobre e25f0d9 ([`t085-inp-e25f0d9.txt`](evidence/pr-d/t085-inp-e25f0d9.txt)):
+
+| Ancho | Abrir Anotar (ms) | INP abrir | Guardar (ms) | INP guardar | < 200 ms |
+| --- | --- | --- | --- | --- | --- |
+| 390 | 48, 64, 64, 64, 56 | **64** | 24, 32, 24, 16, 16 | **32** | Sí |
+| 1440 | 40, 96, 104, 72, 80 | **104** | 32, 32, 24, 32, 24 | **32** | Sí |
+
+La primera corrida (42164303222, 081fe44) dio 80/32 a 390 y 96/40 a 1440. El valor en un teléfono real
+queda para T087 y la revisión de los fundadores.
 
 ### T086
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** Teclado nativo con la hoja en iPhone (no tapa el monto ni Guardar; la hoja sube con `visualViewport`, `bottom-sheet.tsx`) y, en Android, lo mismo más la máscara de COP con un teclado de terceros, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T087
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** US-12 en el teléfono de un fundador tras A6: al menos 10 gastos habituales, mediana < 10 s y el método. El tiempo de la spec 2 es de laboratorio y no lo sustituye. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T088
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores con sesión en Vercel).** 001-T072 parte 3: `/interno/primitivos` → 200 por la URL de despliegue y por la de rama. El commit propio de la dueña ya está en la rama (050a769, 6 nov 2026); faltan los códigos reales. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T089
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** 001-T073: contraste de los pares de texto y fondo en un iPhone, en los dos temas, con la herramienta y los valores. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T090
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** 001-T074: sombras táctiles en un Android de gama media, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T091
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** 001-T075 · VoiceOver con el Anotar real: apertura (foco en «Monto»), selector Gasto · Ingreso, categorías (botones con estado pulsado), Guardar, el aviso «Gasto guardado» con «Deshacer» y el retorno del foco al disparador. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T092
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** 001-T075 · TalkBack con el Anotar real, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T093
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (gestor).** CLS = 0 fuera de Chromium, Firefox y WebKit, con el arnés R2 en local (`npx playwright install firefox webkit`, sin Docker). Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T094
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** CLS en un iPhone real con el inspector web de Safari, o excepción T096 si no hay Mac. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T095
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (fundadores).** Respaldo tipográfico de Onest en Android, con captura, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T096
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Ninguna excepción registrada todavía.** Si los fundadores usan alguna (solo T086 en su parte de Android, T090, T092, T094 o T095), va aquí con sus cinco datos —verificación no ejecutada, motivo, riesgo residual, mitigación, quién la revalida y cuándo— y el estado «EXCEPCIÓN APROBADA» con la aprobación de los dos fundadores, nunca «verificado».
 
 ### T097
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (un fundador).** Primera copia real de producción con `scripts/backup.sh` y su restauración en PostgreSQL 17 con `scripts/restore-plain.sh` (quickstart §4.1 y §4.3); se pegan el manifiesto y el log con `exit=0`, sin datos, **antes del primer movimiento real** y antes del merge de este PR. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T098
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Capturas a 390 y 1440 en claro y oscuro** ([`evidence/pr-d/t098/`](evidence/pr-d/t098/)), del run
+[42166090433](https://github.com/flashwp3-ctrl/juntia/actions/runs/42166090433) sobre e25f0d9, con la
+entrada `evidence_filter` del job `evidence` para no repetir las capturas de los PR B y C: E1 gasto
+(`inicio--anotar-e1-gasto`), E1 ingreso, E2 detalles, E3 monto no válido, E4 guardando, el error de
+guardado con su Reintentar, E5 con el aviso y la fila resaltada en Inicio (`inicio--anotar-e5-guardado`),
+el detalle con Editar y Eliminar (`actividad_id--detalle`), la edición y el diálogo de eliminar.
+
+**Pasada de los siete anchos** (360, 390, 430, 768, 1024, 1280, 1440) en los dos temas
+([`t098-pasada-anchos-e25f0d9.txt`](evidence/pr-d/t098-pasada-anchos-e25f0d9.txt)): 140 filas, **ninguna con
+scroll horizontal**. En E1, E3, E4 y el error, a 360, 390 y 430, la pasada lista fichas de categoría fuera
+de la ventana: es la fila de recientes con scroll horizontal propio del comp 02·5 (la quinta categoría
+asoma por la derecha), no un desborde de la página; desde 768 las recientes se reparten en filas.
+
+**Para aprobar viendo la pantalla** (revisión de los fundadores, T101): «Gasto, ingreso y liquidación en
+tinta» en la fila nueva y en el ingreso; el selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5;
+y, nuevo en este PR, el bloqueo de los campos tras un fallo ambiguo (decisión del 5 de noviembre).
 
 ### T099
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**6 de noviembre de 2026.** Pasada fija de Impeccable (auditoría y crítica), como T058 y T074
+([`t099-impeccable-detect.txt`](evidence/pr-d/t099-impeccable-detect.txt)).
+
+- **Detector de código** sobre `src/features/expenses`, `toast.tsx`, `bottom-sheet.tsx`, `modal.tsx`,
+  `transaction-detail.tsx` y `expense-row.tsx`: sin hallazgos (solo reglas de texto; las de página no
+  corren sobre archivos).
+- **Detector de página** sobre los componentes reales en una página local temporal sin Supabase, que
+  no se versionó: la hoja montada abierta (E1) y la edición, y el detalle con el total que cuenta y
+  Editar/Eliminar, a 390 y 1440: **0 hallazgos**. La primera pasada dio un error de hidratación que
+  era del arnés temporal (leía el modo distinto en servidor y cliente), no del producto; corregido el
+  arnés, 0.
+
+**Crítica sobre las capturas y lo corregido en este PR** (las capturas de la corrida 42164303222 y
+lo que se vio en local):
+- **El monto escrito no se veía** en la hoja (E1, edición): el marco se encogía a cero al centrar los
+  hijos del `<label>`. Corregido en e25f0d9: «$» y la cifra centrados juntos, en 48 px como máximo.
+- En el diálogo de 520 las recientes se cortaban por la derecha: desde 768 se reparten en filas.
+- Contraste (axe, punto de control 1): meta de la fila nueva y «Editar detalles» en oscuro.
+- **Se reporta y no se corrige:** a menos de 768, la fila de recientes desborda su caja a propósito
+  (scroll horizontal de 02·5, la quinta categoría asoma); la pasada de anchos la lista como
+  «elementos fuera de la ventana» pero no hay scroll de página. La fecha usa el control nativo
+  `type="date"`, que muestra el formato del navegador (en el runner, `MM/DD/AAAA`); en un navegador
+  en español sale `DD/MM/AAAA`. La edición no repite el encabezado grande de 04·1 (ficha e importe):
+  reusa la hoja (T082) y se aprueba viendo la pantalla.
 
 ### T100
 
@@ -1970,18 +2021,49 @@ Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
 
 Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
 
-### T102
+### T102 · Aceptación de la 002
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+Cada criterio con la tarea que lo midió y su salida. Lo que depende de una tarea humana queda
+**pendiente** hasta que su salida esté arriba; ninguna fila se da por cerrada sin ella.
+
+| SC | Medido en | Estado |
+| --- | --- | --- |
+| SC-001 · siete anchos, dos temas, capturas aprobadas | T057 (PR B), T073 (PR C), T098 (este PR) y T072 | Capturas y pasada con salida; **pendiente** la aprobación de los fundadores de las pantallas del PR D (T101) |
+| SC-002 · axe sin violaciones serias o críticas | T051, T071, T084 | Con salida: 152/152 con sesión y 48/48 sin sesión, 0 serias o críticas (T084, T100) |
+| SC-003 · US-12 < 10 s en teléfono real | T087 | **Pendiente · Humana** |
+| SC-004 · INP < 200 ms | T085 | Con salida, **laboratorio**: 104 ms abrir y 32 ms guardar como máximo (CPU 4×) |
+| SC-005 · CLS = 0 | T053, T072 | Con salida (PR B y C); fuera de Chromium y en iPhone, T093 y T094 **pendientes** |
+| SC-006 · migraciones, RLS y privilegios | T015, T020, T021, T025; research R3 ([V] 10) | Con salida (PR A); job `db` verde en cada gate de este PR |
+| SC-007 · aislamiento entre personas | T019, T025 | Con salida (PR A) |
+| SC-008 · 412.900 exacto | T010, T025, T062 | Con salida (PR A y C) |
+| SC-009 · un solo movimiento por intención | T025, T083 | Con salida: spec 2, doble toque más el mismo envío repetido a mano → una fila en la base |
+| SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana** |
+| SC-011 · verificaciones heredadas | T055 (con salida, PR B); T056, T088–T096 | **Pendiente · Humana**: T056 y T088 esperan el preview real (el commit de la dueña ya está, 050a769); T089–T095 en dispositivos; T096 sin excepciones todavía |
+| SC-012 · salida interna | T103 | **Pendiente · Humana** |
 
 ### T103
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (los dos fundadores).** SC-012, salida interna: registran, editan y eliminan movimientos reales y los entienden sin ayuda; aprobación por escrito con fecha y observaciones. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T104
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**6 de noviembre de 2026 · e25f0d9** ([`t104-scope.txt`](evidence/pr-d/t104-scope.txt)): `git grep` de
+`service_role` y `SUPABASE_SECRET_KEY` en `src` vacío; ninguna dependencia de research R8.12 en
+`package.json`; en `supabase/` solo el comentario por defecto `admin@email.com` de `config.toml`, que no
+es un correo real; **dos specs E2E** en `tests/e2e/` (12 casos); axe con sesión, 152 auditorías, y sin
+sesión, 48; diez archivos pgTAP de `00` a `09`.
+
+**Contra el Anexo A**, las pruebas de este PR son las de C8 (`money.test.ts`, T079), C17 (registro de
+axe, T084), C18 (`src/features/expenses/*.test.tsx`, T077 y T078) y C19 (`annotate.e2e.ts`, T083).
+**Una prueba no está en el anexo y se plantea en la revisión** (`AGENTS.md` 13a; `tasks.md`, «Qué no se
+hace»): `src/features/expenses/payload.test.ts`, unidad en el proyecto `components`, que prueba lo que
+las Server Actions aceptan del navegador (importes solo como texto de dígitos, FR-008; sin tipo en la
+edición, Q14; solo `delete` o `undo`). Es la capa más baja que ve ese fallo: la integración no pasa por
+la Server Action. Si el revisor prefiere no tenerla, se retira sin tocar el resto. Las demás diferencias
+con el anexo vienen de los PR B y C (`context-preference`, `paginate`, `confirm`, `recovery-session`,
+`seed`, `confirm-code`) y ya se revisaron allí. Se retira `src/components/shell/annotate-notice.test.tsx`
+(001): probaba el aviso que la hoja real sustituye (FR-030).
 
 ### T105
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · gestor**, en un commit documental posterior a T102 y T103: cierre de F0-b y aceptación de la 002 en el maestro §15.1.

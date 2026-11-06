@@ -470,45 +470,45 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 4A — tests primero
 
-- [ ] T077 [P] [US2] [US3] Test de **componentes** en `src/features/expenses/annotate-sheet.test.tsx`: foco en el monto; Guardar solo con monto y categoría; E2 sin «Pagó», «Participan» ni «Reparto» y contexto fijo en Yo; el selector de tipo cambia título, categoría («Ingresos» elegida) y botón; E4 bloquea los campos; un error de guardado deja la hoja abierta con los datos y reintenta **con la misma clave**; `JT001` muestra la sesión caducada sin perder lo escrito; `N` fuera de un campo, Enter guarda, Escape cierra; confirmación de cambios sin guardar
+- [x] T077 [P] [US2] [US3] Test de **componentes** en `src/features/expenses/annotate-sheet.test.tsx`: foco en el monto; Guardar solo con monto y categoría; E2 sin «Pagó», «Participan» ni «Reparto» y contexto fijo en Yo; el selector de tipo cambia título, categoría («Ingresos» elegida) y botón; E4 bloquea los campos; un error de guardado deja la hoja abierta con los datos y reintenta **con la misma clave**; `JT001` muestra la sesión caducada sin perder lo escrito; `N` fuera de un campo, Enter guarda, Escape cierra; confirmación de cambios sin guardar
   - Cumple: FR-030–FR-033, FR-035, FR-036; US-2.1–2.3, US-2.7, US-3.1.
   - Terminado cuando: se vio fallar.
 
-- [ ] T078 [P] [US4] Test de **componentes** en `src/features/expenses/delete-dialog.test.tsx` y `src/features/expenses/edit-sheet.test.tsx`: el diálogo es `alertdialog` con foco inicial en Cancelar, Escape cancela y el foco vuelve; la edición no permite cambiar el tipo; `JT011` explica que cambió y ofrece recargar; `JT012` explica que ya se eliminó
+- [x] T078 [P] [US4] Test de **componentes** en `src/features/expenses/delete-dialog.test.tsx` y `src/features/expenses/edit-sheet.test.tsx`: el diálogo es `alertdialog` con foco inicial en Cancelar, Escape cancela y el foco vuelve; la edición no permite cambiar el tipo; `JT011` explica que cambió y ofrece recargar; `JT012` explica que ya se eliminó
   - Cumple: FR-038, FR-039; US-4.1, US-4.4, US-4.5; Q14, Q15.
   - Terminado cuando: se vio fallar.
 
-- [ ] T079 [US4] Test de **integración de servidor** en `tests/integration/money.test.ts`, antes de la hoja y de Editar/Eliminar: «Deshacer» de punta a punta por `src/lib/db` deja el movimiento anulado con auditoría `reason = 'undo'`, y editar un eliminado por `src/lib/db` → `JT012` traducido a `transactionVoided`. Lo que ya cubren T021 (en SQL) y T025 se comprueba y se cita en `evidence.md` en lugar de duplicarlo; solo se añade el caso que falte
+- [x] T079 [US4] Test de **integración de servidor** en `tests/integration/money.test.ts`, antes de la hoja y de Editar/Eliminar: «Deshacer» de punta a punta por `src/lib/db` deja el movimiento anulado con auditoría `reason = 'undo'`, y editar un eliminado por `src/lib/db` → `JT012` traducido a `transactionVoided`. Lo que ya cubren T021 (en SQL) y T025 se comprueba y se cita en `evidence.md` en lugar de duplicarlo; solo se añade el caso que falte
   - Cumple: FR-018, FR-034; US-2.5; spec, caso límite «Editar un movimiento ya eliminado».
   - Terminado cuando: el caso nuevo se vio fallar y pasa en el job `db`, o `evidence.md` cita la prueba existente que ya lo cubre.
 ### Grupo 4B — implementación (en serie)
 
-- [ ] T080 Crear `src/components/ui/toast.tsx` según `COMPONENT_SPECIFICATIONS.md` §Toast (6 s con acción, pausa con hover y foco, `role="status"`/`"alert"`, aparición con spring `gentle` y solo opacidad con movimiento reducido)
+- [x] T080 Crear `src/components/ui/toast.tsx` según `COMPONENT_SPECIFICATIONS.md` §Toast (6 s con acción, pausa con hover y foco, `role="status"`/`"alert"`, aparición con spring `gentle` y solo opacidad con movimiento reducido)
   - Claude Design: `02 Componentes`, 02·1.
   - Cumple: US-2.4.
   - Terminado cuando: lo usa T081 y pasa axe en la hoja (T084).
 
-- [ ] T081 [US2] [US3] Hoja de Anotar en `src/features/expenses/`, sustituyendo el aviso de la 001: `BottomSheet`/`Modal` con paradas, arrastre desde el asa y confirmación de cambios sin guardar (FR-031a de la 001); AmountInput; selector «Gasto · Ingreso»; categorías recientes por `my_recent_categories` + `fillRecentCategories`; fecha de hoy en Bogotá; clave de idempotencia al abrir; Server Action con `src/lib/db`; E5 con cierre, **conteo del total de Inicio, fila nueva resaltada en Inicio y Actividad** (ExpenseRow del PR C) y Toast «Deshacer» que llama a `void_transaction` con `undo`; motion de `MOTION_SYSTEM.md` con alternativa de movimiento reducido
+- [x] T081 [US2] [US3] Hoja de Anotar en `src/features/expenses/`, sustituyendo el aviso de la 001: `BottomSheet`/`Modal` con paradas, arrastre desde el asa y confirmación de cambios sin guardar (FR-031a de la 001); AmountInput; selector «Gasto · Ingreso»; categorías recientes por `my_recent_categories` + `fillRecentCategories`; fecha de hoy en Bogotá; clave de idempotencia al abrir; Server Action con `src/lib/db`; E5 con cierre, **conteo del total de Inicio, fila nueva resaltada en Inicio y Actividad** (ExpenseRow del PR C) y Toast «Deshacer» que llama a `void_transaction` con `undo`; motion de `MOTION_SYSTEM.md` con alternativa de movimiento reducido
   - Claude Design: `02 Componentes`, 02·5 y 02·6.
   - Cumple: FR-030–FR-036, FR-062 (propuesta §15.9 aprobada en su versión privada, decisión 16.2; selector Q3).
   - Terminado cuando: T077 pasa.
 
-- [ ] T082 [US4] **Editar y Eliminar** sobre el detalle del PR C (T068): «Editar» abre la hoja de T081 en modo edición con la `version` leída; «Eliminar gasto»/«Eliminar ingreso» abre `Modal` como `alertdialog` y llama a `void_transaction` con `delete`; tras eliminar, el movimiento sale de Inicio, Actividad y la exportación
+- [x] T082 [US4] **Editar y Eliminar** sobre el detalle del PR C (T068): «Editar» abre la hoja de T081 en modo edición con la `version` leída; «Eliminar gasto»/«Eliminar ingreso» abre `Modal` como `alertdialog` y llama a `void_transaction` con `delete`; tras eliminar, el movimiento sale de Inicio, Actividad y la exportación
   - Claude Design: `04 Pantallas`, 04·1 (DETALLE, edición) y 04·7; `02 Componentes`, 02·1 (diálogo).
   - Cumple: FR-037, FR-038, FR-039; US-4.1–4.4.
   - Terminado cuando: T078 pasa.
 
 ### Grupo 4C — spec E2E 2 y `[V]`
 
-- [ ] T083 [US2] **Spec E2E 2** «Anotar gasto, cronometrado» en `tests/e2e/annotate.e2e.ts`: con sesión y dataset sembrados, `N` → monto → categoría reciente → Guardar → **el total de Inicio sube y la fila nueva queda resaltada**, Toast; doble toque en Guardar → **un solo movimiento**, comprobado por la base (SC-009); el tiempo del recorrido se reporta como laboratorio; **un test con motion activo** para los momentos L2 de E5
+- [x] T083 [US2] **Spec E2E 2** «Anotar gasto, cronometrado» en `tests/e2e/annotate.e2e.ts`: con sesión y dataset sembrados, `N` → monto → categoría reciente → Guardar → **el total de Inicio sube y la fila nueva queda resaltada**, Toast; doble toque en Guardar → **un solo movimiento**, comprobado por la base (SC-009); el tiempo del recorrido se reporta como laboratorio; **un test con motion activo** para los momentos L2 de E5
   - Cumple: FR-065; US-2; SC-009; ADR-011 §2, fila 14.
   - Terminado cuando: pasa en el job `e2e` junto con la spec 1.
 
-- [ ] T084 Añadir al registro de T051 Anotar (hoja y diálogo), la edición y el diálogo de eliminar, con sesión, en los dos temas
+- [x] T084 Añadir al registro de T051 Anotar (hoja y diálogo), la edición y el diálogo de eliminar, con sesión, en los dos temas
   - Cumple: FR-067; SC-002.
   - Terminado cuando: la prueba de cobertura pasa y axe no tiene violaciones serias o críticas.
 
-- [ ] T085 `[V]` INP < 200 ms al abrir Anotar y al guardar, en laboratorio (Playwright con `PerformanceObserver` de `event` y CPU 4×), a 390 y 1440, **reportado como laboratorio**
+- [x] T085 `[V]` INP < 200 ms al abrir Anotar y al guardar, en laboratorio (Playwright con `PerformanceObserver` de `event` y CPU 4×), a 390 y 1440, **reportado como laboratorio**
   - Cumple: SC-004; maestro §15.7.
   - Terminado cuando: los valores están en `evidence.md`.
 
@@ -558,13 +558,13 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
   - Cumple: FR-059; US-10.1–10.4; SC-010; Q11.
   - Terminado cuando: el manifiesto, el log con `exit=0` y la base temporal borrada están en `evidence.md` con fecha anterior al primer movimiento real.
 
-- [ ] T098 Capturas a **390 y 1440 px en claro y oscuro**: E1 gasto, E1 ingreso, E2, E3, E4, E5 con el Toast y la fila resaltada en Inicio, detalle con Editar y Eliminar, edición y diálogo de eliminar
+- [x] T098 Capturas a **390 y 1440 px en claro y oscuro**: E1 gasto, E1 ingreso, E2, E3, E4, E5 con el Toast y la fila resaltada en Inicio, detalle con Editar y Eliminar, edición y diálogo de eliminar
   - **Para aprobar viendo la pantalla**: «Gasto, ingreso y liquidación en tinta» (fila nueva e ingreso); el selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5.
   - Cumple: SC-001 (D).
   - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
   - Terminado cuando: la pasada está registrada y las capturas están en `evidence/`.
 
-- [ ] T099 **Pasada fija de Impeccable** sobre las pantallas del PR D, como T058
+- [x] T099 **Pasada fija de Impeccable** sobre las pantallas del PR D, como T058
   - Terminado cuando: la salida y lo corregido están en `evidence.md`.
 
 - [ ] T100 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con las specs 1 y 2), como T059
@@ -586,7 +586,7 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 - [ ] T103 **Humana** (los dos fundadores): **SC-012**, salida interna: registran, editan y eliminan movimientos reales y los entienden sin ayuda (maestro §11); aprobación registrada en `evidence.md` con fecha y observaciones
   - Terminado cuando: los dos aprobaron por escrito.
 
-- [ ] T104 Comprobación final de alcance sobre `package.json`, `src/`, `supabase/` y `tests/`, con la salida pegada: sin dependencias de research R8.12; `git grep -nE "service_role|SUPABASE_SECRET_KEY" -- src` vacío; ningún correo real en `supabase/`; dos specs E2E en `tests/e2e/`; lista de pruebas (`npx vitest list`, `npx playwright test --list`, archivos de `supabase/tests/`) igual a la del Anexo A
+- [x] T104 Comprobación final de alcance sobre `package.json`, `src/`, `supabase/` y `tests/`, con la salida pegada: sin dependencias de research R8.12; `git grep -nE "service_role|SUPABASE_SECRET_KEY" -- src` vacío; ningún correo real en `supabase/`; dos specs E2E en `tests/e2e/`; lista de pruebas (`npx vitest list`, `npx playwright test --list`, archivos de `supabase/tests/`) igual a la del Anexo A
   - Cumple: FR-011, FR-065; `docs/TESTING.md` §7.
   - Terminado cuando: cada comando y su salida están en `evidence.md`.
 
