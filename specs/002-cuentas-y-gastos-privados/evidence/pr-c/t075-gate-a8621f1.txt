@@ -1,0 +1,34 @@
+Gate del PR C sobre a8621f1 · run 42140614161 (workflow_dispatch) · 5-6 de noviembre de 2026
+Tablas de tiempos de scripts/ci.mjs y recuentos de Vitest/Playwright, por job:
+e2e   7 passed (15.9s)
+e2e   128 passed (3.5m)
+e2e | ci | pasó | 22.58 s | — |
+e2e | build | pasó | 25.49 s | — |
+e2e | chromium | pasó | 21.00 s | — |
+e2e | test:e2e:smoke | pasó | 16.73 s | < 180 s |
+e2e | test:a11y | pasó | 212.37 s | — |
+e2e | Job e2e (incluye instalación) | success | 427.26 s | < 360 s |
+app  Test Files  4 passed (4)
+app       Tests  31 passed (31)
+app  Test Files  23 passed (23)
+app       Tests  180 passed (180)
+app   48 passed (59.3s)
+app | ci | pasó | 18.59 s | — |
+app | lint | pasó | 7.55 s | — |
+app | typecheck | pasó | 6.53 s | — |
+app | test:unit | pasó | 1.23 s | < 15 s |
+app | test:components | pasó | 25.09 s | — |
+app | build | pasó | 22.36 s | — |
+app | chromium | pasó | 19.00 s | — |
+app | test:a11y | pasó | 60.08 s | — |
+app | check:internal-surface | pasó | 3.46 s | — |
+app | check:theme-script | pasó | 1.40 s | — |
+app | Job app (incluye instalación) | success | 171.24 s | < 360 s |
+db  Test Files  8 passed (8)
+db       Tests  32 passed (32)
+db | ci | pasó | 22.55 s | — |
+db | test:db | pasó | 5.49 s | < 60 s |
+db | test:integration | pasó | 10.04 s | — |
+db | db:types:check | pasó | 1.36 s | — |
+db | db:restore-drill | pasó | 30.55 s | — |
+db | Job db (incluye instalación) | success | 243.85 s | < 360 s |

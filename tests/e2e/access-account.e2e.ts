@@ -6,13 +6,17 @@
 // app y Mailpit): enlace de verificación válido → A1 con aviso, enlace caducado y enlace ya usado → aviso de enlace
 // caducado sin datos de la cuenta, enlace de recuperación válido → A5; cerrar sesión → S3 y ninguna ruta de producto sin
 // volver a entrar».
+// PR C (T070 / FR-057, FR-065; ADR-011 §3, matriz): la descarga de Exportar llega como archivo (evento de descarga,
+// nombre y tamaño), sin abrir su contenido; el contenido lo prueba la integración (T063).
 // Solo Chromium, movimiento reducido y ninguna espera fija (ADR-011 §6). Cada test que cambia una cuenta siembra la suya.
 import { randomUUID } from "node:crypto";
+import { stat } from "node:fs/promises";
 import type { Page } from "@playwright/test";
+import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
 import { confirmLink } from "../support/mailpit";
-import { seedUser } from "../support/seed";
+import { seedMovements, seedUser } from "../support/seed";
 import { expect, signInContext, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
@@ -65,7 +69,7 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja 
     await expect(page.getByText("Invitar a mi pareja")).toHaveCount(0);
     await page.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1, name: copy.nav.home })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: copy.home.greeting("Sara Nueva") })).toBeVisible();
 
     // Enlace ya usado: aviso de enlace caducado, sin ningún dato de la cuenta.
     await page.context().clearCookies();
@@ -96,12 +100,15 @@ test("registro no permitido o de una cuenta existente: la misma pantalla y ningu
 });
 
 test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida", async ({ page }) => {
-  await page.goto("/actividad?mes=2026-10");
-  await expect(page).toHaveURL(/\/entrar\?volver=%2Factividad%3Fmes%3D2026-10$/);
+  // Un mes navegable para una cuenta sin movimientos (el mes en curso): desde F44-4, un mes fuera del intervalo redirige
+  // al límite más cercano, y aquí se prueba que «volver» conserva la ruta y su query, no esa redirección.
+  const month = todayInBogota().slice(0, 7);
+  await page.goto(`/actividad?mes=${month}`);
+  await expect(page).toHaveURL(new RegExp(`/entrar\\?volver=%2Factividad%3Fmes%3D${month}$`));
   // El usuario se siembra después de comprobar la redirección: sin protección, la prueba falla antes de sembrar.
   const user = await seedUser({ role: "volver", index: test.info().parallelIndex });
   await signInWith(page, user.email, user.password);
-  await expect(page).toHaveURL(/\/actividad\?mes=2026-10$/);
+  await expect(page).toHaveURL(new RegExp(`/actividad\\?mes=${month}$`));
   const response = await page.goto("/cuenta");
   expect(response?.status()).toBe(200);
   expect(response?.headers()["cache-control"] ?? "").toMatch(/private/);
@@ -211,5 +218,121 @@ test("cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar", asy
   for (const route of ["/", "/actividad", "/cuenta", "/cuenta/perfil"]) {
     await page.goto(route);
     await expect(page, route).toHaveURL(/\/entrar\?volver=/);
+  }
+});
+
+test("Exportar: el archivo JSON y el CSV llegan como descarga, con su nombre y un tamaño, sin abrirlos", async ({ page, goldenSara }) => {
+  await signInContext(page.context(), goldenSara);
+  await page.goto("/cuenta/privacidad");
+  for (const format of ["json", "csv"] as const) {
+    await page.getByRole("button", { name: new RegExp(copy.account.privacy.export) }).click();
+    const sheet = page.getByRole("dialog", { name: copy.account.export.title });
+    await sheet.getByRole("radio", { name: new RegExp(`^${copy.account.export[format]}`) }).click();
+    await sheet.getByRole("button", { name: copy.account.export.prepare }).click();
+    await expect(sheet.getByText(copy.account.export.ready)).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent("download"), sheet.getByRole("link", { name: copy.account.export.download }).click()]);
+    expect(download.suggestedFilename()).toMatch(new RegExp(`^juntia-movimientos-\\d{4}-\\d{2}-\\d{2}\\.${format}$`));
+    expect(await download.failure()).toBeNull();
+    expect((await stat(await download.path())).size).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  }
+});
+
+// F44-1 (revisión del PR #44): «el HTML inicial y el payload RSC con la cookie en nosotros no contienen importes ni
+// descripciones del dataset dorado, en Inicio y en Actividad», y con la cookie en `me` sí (control positivo). Se piden
+// las respuestas tal cual llegan, sin ejecutar la página: lo que importa es lo que viaja, no lo que se ve.
+test("Nosotros no lleva datos privados ni en el HTML ni en el payload RSC; Yo sí", async ({ page, baseURL }) => {
+  const user = await seedUser({ role: "contexto", index: test.info().parallelIndex });
+  const [first] = await seedMovements(user, "current");
+  await signInContext(page.context(), user);
+  const month = first.transactionDate.slice(0, 7);
+  const host = new URL(baseURL!).hostname;
+  const routes = ["/", `/actividad?mes=${month}`, `/actividad/${first.id}?mes=${month}`];
+  const markers = ["Taxi a la oficina", "Reembolso EPS", "Regalo de cumpleaños", "412.900", "41290000", "45.000", "4500000"];
+  const body = async (path: string, rsc: boolean) => {
+    const url = rsc ? `${path}${path.includes("?") ? "&" : "?"}_rsc=f44` : path;
+    const response = await page.request.get(url, { headers: rsc ? { RSC: "1" } : {} });
+    expect(response.status(), `${url} ${rsc ? "RSC" : "HTML"}`).toBe(200);
+    return response.text();
+  };
+  for (const [context, leaks] of [["us", false], ["me", true]] as const) {
+    await page.context().addCookies([{ name: "juntia_context", value: context, domain: host, path: "/" }]);
+    for (const path of routes) {
+      for (const rsc of [false, true]) {
+        const text = await body(path, rsc);
+        const found = markers.filter((marker) => text.includes(marker));
+        if (leaks) expect(found.length, `${context} ${path} ${rsc ? "RSC" : "HTML"}: los datos de Yo llegan`).toBeGreaterThan(0);
+        else expect(found, `${context} ${path} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+      }
+    }
+  }
+});
+
+// F44-1, segunda ronda: «con localStorage=us y la cookie ausente, y también con la cookie inválida, el HTML y el RSC
+// iniciales no contienen datos del dataset. Después del refresco se ve "Nosotros". Con localStorage=me y sin cookie,
+// primero aparece el esqueleto y después los datos». Y el prefetch: con enlaces precargados en Yo, se cambia a Nosotros
+// y se navega; la vista nueva no muestra datos privados.
+test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; el cliente resuelve y recarga", async ({ browser, baseURL }) => {
+  const user = await seedUser({ role: "sin-cookie", index: test.info().parallelIndex });
+  const [first] = await seedMovements(user, "current");
+  const month = first.transactionDate.slice(0, 7);
+  const host = new URL(baseURL!).hostname;
+  const markers = ["Taxi a la oficina", "Reembolso EPS", "Regalo de cumpleaños", "412.900", "41290000", "45.000", "4500000"];
+  const leaks = (text: string) => markers.filter((marker) => text.includes(marker));
+  const open = async (stored: "me" | "us" | null, cookie: string | null) => {
+    const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+    await context.addCookies(user.cookies);
+    if (cookie !== null) await context.addCookies([{ name: "juntia_context", value: cookie, domain: host, path: "/" }]);
+    if (stored) await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), stored);
+    return { context, page: await context.newPage() };
+  };
+
+  for (const cookie of [null, "nosotros"]) {
+    // Respuestas iniciales, sin ejecutar la página: HTML y RSC de las tres rutas.
+    const { context, page } = await open("us", cookie);
+    for (const path of ["/", `/actividad?mes=${month}`, `/actividad/${first.id}?mes=${month}`]) {
+      for (const rsc of [false, true]) {
+        const url = rsc ? `${path}${path.includes("?") ? "&" : "?"}_rsc=f44b` : path;
+        const response = await page.request.get(url, { headers: rsc ? { RSC: "1" } : {} });
+        expect(response.status(), url).toBe(200);
+        expect(leaks(await response.text()), `${cookie ?? "sin cookie"} ${url} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+      }
+    }
+    // En el navegador, con Nosotros recordado: el documento inicial no trae nada y después se ve Nosotros.
+    const document = await page.goto("/");
+    expect(leaks(await document!.text()), `${cookie ?? "sin cookie"}: documento inicial`).toEqual([]);
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    await expect.poll(async () => (await context.cookies()).find(({ name }) => name === "juntia_context")?.value).toBe("us");
+    expect(leaks(await page.locator("main").innerText())).toEqual([]);
+    await context.close();
+  }
+
+  // Yo recordado y sin cookie: primero el Skeleton (el documento no trae datos), después los datos.
+  {
+    const { context, page } = await open("me", null);
+    const document = await page.goto("/");
+    const html = await document!.text();
+    expect(leaks(html)).toEqual([]);
+    expect(html).toContain('aria-busy="true"');
+    await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
+    await expect.poll(async () => (await context.cookies()).find(({ name }) => name === "juntia_context")?.value).toBe("me");
+    await context.close();
+  }
+
+  // Prefetch: en Yo, con los enlaces de Inicio a la vista (y precargados), se cambia a Nosotros y se navega a Actividad.
+  {
+    const { context, page } = await open("me", "me");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
+    await page.getByRole("link", { name: copy.home.seeAll }).hover();
+    await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
+    await expect(page).toHaveURL(/\/actividad$/);
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    expect(leaks(await page.locator("main").innerText())).toEqual([]);
+    await context.close();
   }
 });

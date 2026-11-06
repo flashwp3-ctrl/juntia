@@ -1,5 +1,5 @@
 export const copy = {
-  shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia", notice: "Esta versión es la base de Juntia. Todavía no guarda datos.", noticeLabel: "Versión base" },
+  shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N", shortcutLabel: "Atajo" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
   annotate: { title: "Anotar un gasto", description: "Registrar gastos llega con la próxima versión. Todavía no puedes guardar movimientos.", close: "Cerrar", errors: {
@@ -65,7 +65,8 @@ export const copy = {
     export: {
       title: "Exportar mis datos", format: "Formato", json: "JSON", jsonHint: "Tus movimientos, estructurados.", csv: "CSV", csvHint: "Tus movimientos en una tabla: fecha, tipo, categoría, descripción e importe.",
       includes: "Incluye solo tus movimientos activos.", excludes: "Nunca incluye datos internos ni de otras personas.", notRestore: "Es una copia para consultar. No sirve para restaurar ni migrar automáticamente.",
-      comingSoon: "Preparar el archivo llega con la próxima versión de Juntia.", close: "Cerrar",
+      close: "Cerrar", prepare: "Preparar archivo", preparing: "Preparando…", ready: "Archivo listo.", download: "Descargar",
+      failedLead: "No se pudo preparar.", failed: "No se descargó nada. Inténtalo de nuevo.", retry: "Reintentar",
     },
     security: {
       title: "Seguridad y sesión", password: "Contraseña", change: "Cambiar contraseña", changeHint: "Te enviaremos un enlace seguro a tu correo.", changing: "Enviando enlace…",
@@ -74,6 +75,51 @@ export const copy = {
       signOutFailed: "No pudimos cerrar la sesión. Revisa tu conexión e inténtalo de nuevo.",
     },
   },
+  // P0-1, PR C (04·1, 04·6, 04·7, 04·16). Copy nuevo para revisión de los fundadores en el PR.
+  dates: {
+    months: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+    monthsShort: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+    weekdays: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+    today: "Hoy", yesterday: "Ayer",
+  },
+  row: {
+    onlyYou: "Solo tú",
+    accessibleName: ({ title, amount, income, category, date }: { title: string; amount: string; income: boolean; category: string; date: string }) =>
+      `${title}, ${income ? "más " : ""}${amount} pesos, ${category}, ${date}`,
+  },
+  home: {
+    greeting: (name: string) => `Hola, ${name}`,
+    spentIn: (month: string) => `En ${month} gastaste`,
+    noExpenses: (month: string) => `En ${month} todavía no anotas gastos`,
+    dateLine: (date: string, left: number) => `${date} · ${left === 0 ? "último día del mes" : left === 1 ? "queda 1 día del mes" : `quedan ${left} días del mes`}`,
+    annotateHint: "Monto y categoría",
+    breakdownTitle: "En qué se fue", recentTitle: "Tus movimientos", seeAll: "Ver todo",
+    empty: { title: "Todavía no anotas nada este mes", description: "Cuando anotes un gasto o un ingreso, aquí verás cuánto llevas y en qué se fue. Solo tú lo ves.", action: "Anotar el primero" },
+    loading: "Cargando movimientos",
+  },
+  us: { title: "Todavía no disponible", description: "Nosotros aparece cuando exista la pareja. Por ahora, lo que anotas es solo tuyo y lo ves en Yo." },
+  load: { error: { title: "No pudimos cargar tus movimientos", description: "Revisa tu conexión. Lo que ya estaba guardado sigue a salvo; sin conexión no podemos guardar nada nuevo." } },
+  activity: {
+    spentIn: (month: string) => `Gasto de ${month}`,
+    monthTitle: (month: string, year: string) => `${month} ${year}`,
+    count: (count: number) => (count === 1 ? "1 movimiento" : `${count} movimientos`),
+    previousMonth: (label: string) => `Mes anterior: ${label}`, nextMonth: (label: string) => `Mes siguiente: ${label}`,
+    searchLabel: "Buscar por descripción", searchPlaceholder: "Buscar", type: "Tipo", all: "Todos", expenses: "Gastos", incomes: "Ingresos",
+    categoryFilter: "Filtrar por categoría", categoryChip: (category: string, amount: string) => `${category}, ${amount} pesos`,
+    results: (count: number) => (count === 1 ? "1 movimiento coincide" : `${count} movimientos coinciden`),
+    table: { caption: "Movimientos del mes", description: "Descripción", date: "Fecha", amount: "Monto" },
+    empty: { title: "Aún no hay movimientos este mes", description: "Cuando anotes un gasto o un ingreso con fecha de este mes, aparecerá aquí. Solo tú lo ves.", action: "Anotar el primero" },
+    noResults: { title: "Nada coincide", description: "Prueba con otra palabra o quita los filtros.", clear: "Quitar filtros" },
+    loading: "Cargando movimientos",
+  },
+  detail: {
+    expense: "Gasto", income: "Ingreso", panel: "Detalle del movimiento", back: "Volver a Actividad", close: "Cerrar detalle",
+    category: "Categoría", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú",
+    noted: (date: string, edited: boolean) => `Anotado el ${date} · ${edited ? "con ediciones" : "sin ediciones"}`,
+    notFound: { title: "No encontramos este movimiento", description: "Puede que se haya eliminado o que no sea tuyo. En Actividad están todos tus movimientos." },
+    pick: { title: "Elige un movimiento", description: "Su detalle aparece aquí, junto a la lista." },
+  },
+  export: { fileNote: "Copia de consulta de tus movimientos activos en Juntia. No sirve para restaurar ni migrar automáticamente." },
   states: {
     notFound: "No encontramos esta página",
     notFoundDescription: "La dirección no existe o todavía no hace parte de esta versión. Desde Inicio puedes seguir recorriendo Juntia.",

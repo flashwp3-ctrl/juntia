@@ -1,0 +1,4 @@
+   × valida el mes contra el dominio de fechas y lleva los meses lejanos al intervalo navegable 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: isSupportedMonth is not a function
+      Tests  1 failed | 9 passed (10)

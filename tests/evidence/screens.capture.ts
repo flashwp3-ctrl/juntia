@@ -5,18 +5,18 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { test } from "@playwright/test";
 import { registry, THEMES, type RouteEntry } from "../a11y/route-registry";
-import { openWithSession, reach } from "../support/states";
+import { openWithSession, reach, targetPath } from "../support/states";
 
 const OUT = "test-results/evidence";
 const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
 const SHOT = new Set([390, 1440]);
-const SKIP = new Set(["/interno/primitivos", "/ruta-que-no-existe", "/actividad", "/metas", "/plan", "/balance"]);
+const SKIP = new Set(["/interno/primitivos", "/ruta-que-no-existe", "/plan", "/balance"]);
 const withSupabase = Boolean(process.env.API_URL);
 const entries = registry.filter((entry) => !SKIP.has(entry.route) && (withSupabase
   ? entry.prepare !== "networkError"
   : entry.session === "none" && !entry.needsAuthApi));
 
-const slug = (entry: RouteEntry) => `${entry.route === "/" ? "inicio" : entry.route.slice(1).replace(/\//g, "_")}--${entry.state.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase()}`;
+const slug = (entry: RouteEntry) => `${entry.route === "/" ? "inicio" : entry.route.slice(1).replace(/\//g, "_").replace(/[[\]]/g, "")}--${entry.state.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase()}`;
 
 for (const colorScheme of THEMES) {
   for (const entry of entries) {
@@ -27,7 +27,7 @@ for (const colorScheme of THEMES) {
         const page = await openWithSession(browser, base, entry, colorScheme, width, testInfo.parallelIndex, baseURL!);
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
-        if (entry.session !== "recovery") await page.goto(entry.path);
+        if (entry.session !== "recovery") await page.goto(targetPath(page, entry));
         await reach(page, entry, testInfo.parallelIndex);
         await page.evaluate(() => document.fonts.ready);
         const layout = await page.evaluate(() => {

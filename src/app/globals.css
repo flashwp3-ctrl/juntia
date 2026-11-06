@@ -124,6 +124,17 @@ body {
   50% { opacity: .55; }
 }
 /* COMPONENT_SPECIFICATIONS.md §Button: circle-notch a 0,8 s por vuelta. Solo se usa con motion-safe. */
+/* ExpenseRow «nueva» (COMPONENT_SPECIFICATIONS.md §ExpenseRow): fondo savingSubtle que se desvanece en 1,2 s. */
+@keyframes row-new {
+  from { background-color: var(--color-finance-savingSubtle); }
+  to { background-color: transparent; }
+}
+
+/* Nosotros sin datos (FR-043): antes de hidratar, el script de tema ya fijó <html data-context>. Así la primera pintura
+   enseña la vista del contexto recordado y nunca la otra; al hidratar, ContextView monta solo esa. */
+html[data-context="us"] [data-context-view="me"],
+html:not([data-context="us"]) [data-context-view="us"] { display: none; }
+
 @keyframes button-spin {
   to { transform: rotate(360deg); }
 }

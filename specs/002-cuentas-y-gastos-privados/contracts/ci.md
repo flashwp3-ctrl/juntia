@@ -50,7 +50,7 @@ Disparadores, permisos, `concurrency`, filtro de rutas documentales y
 | --- | --- | --- | --- | --- |
 | `app` | 1, 2 y 5 parcial | Existe | Como en la 001. Desde el PR B, `check:theme-script` pide `/entrar` (las rutas de producto redirigen sin sesión) y axe corre aquí **solo para los estados que no necesitan sesión** (tabla «Axe» de abajo) | Gate < 6 min |
 | `db` | 3 | **PR A** | `supabase/setup-cli@v3`; `supabase start` con los servicios mínimos (`-x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor`); `npm ci`; `test:db` (comando medido, < 60 s); `test:integration`; `db:types:check` (desde el primer commit del PR A, con una prueba pgTAP de humo y una de integración mínima, sin `passWithNoTests`); `db:restore-drill` (cliente y servidor PostgreSQL 17 de PGDG); `supabase stop` | Gate < 6 min |
-| `e2e` | 4 y 5 (estados que necesitan sesión) | **PR B** | `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --with-deps --only-shell chromium`; `test:e2e:smoke`; `test:a11y` con `storageState` sembrado | Humo < 3 min · Gate < 6 min |
+| `e2e` | 4 y 5 (estados que necesitan sesión) | **PR B** | `supabase start` con Auth y Mailpit; `npm ci`; build con las variables del Supabase local; `npx playwright install --only-shell chromium` en un paso propio de 6 min como máximo, con 150 s y un reintento; `npx playwright install-deps chromium` solo si Chromium no arranca con las librerías del runner (PR C: el «cuelgue» de `--with-deps` era apt bajando fuentes desde un mirror lento, run 42153365570); `test:e2e:smoke`; `test:a11y` con `storageState` sembrado | Humo < 3 min · Gate < 6 min |
 
 Notas:
 

@@ -13,7 +13,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { seedUser } from "../support/seed";
-import { openWithSession, reach } from "../support/states";
+import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
@@ -172,7 +172,7 @@ for (const colorScheme of THEMES) {
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ colorScheme });
         if (entry.session !== "recovery") {
-          const response = await page.goto(entry.path);
+          const response = await page.goto(targetPath(page, entry));
           // Una ruta que no existe nunca cuenta como verificada: 200 en las que existen, 404 en la inexistente.
           expect(response?.status()).toBe(entry.status ?? 200);
         }

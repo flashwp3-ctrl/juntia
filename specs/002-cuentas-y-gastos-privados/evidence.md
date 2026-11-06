@@ -1183,6 +1183,11 @@ e819450) y gastó los 2 correos de esa hora. Sin direcciones en esta evidencia.
 **Falta:** el correo de verificación de la segunda fundadora en `juntia-dev`, y
 los dos en `juntia-prod` cuando se pruebe allí.
 
+**Producción, 5 de noviembre de 2026** (tras la corrección de dominio de T037):
+Alejandro se registró en `https://juntia-alpha.vercel.app`, recibió el correo de
+verificación, verificó y entró a Inicio. **Falta** la segunda fundadora, en
+`juntia-dev` y en `juntia-prod`; la casilla sigue sin marcar.
+
 ### T037
 
 **Hecha por el gestor el 5 de noviembre de 2026, con la confirmación de
@@ -1193,11 +1198,23 @@ Alejandro** (sin correos ni claves):
 | Hook Before User Created → `juntia_private.before_user_created_hook` | Activado | Activado |
 | Contraseña mínima | 8 | 8 |
 | Confirm email | Activado | Activado |
-| Site URL | `http://localhost:3000` | `https://juntia.vercel.app` |
-| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | `https://juntia.vercel.app/**` |
+| Site URL | `http://localhost:3000` | `https://juntia-alpha.vercel.app` (corregido el 5 de noviembre; ver debajo) |
+| Redirect URLs | `http://localhost:3000/**` y `https://juntia-*-flashwp3-8258.vercel.app/**` | Solo `https://juntia-alpha.vercel.app/**` (corregido el 5 de noviembre; ver debajo) |
 | Lista permitida | Los dos fundadores | Los dos fundadores |
 | «Exposed schemas» solo `public` | Comprobado en el PR A | T035 |
 | Plantillas de correo | **No editables en Free sin SMTP propio.** Decisión del mismo día («Adaptar la app»): se usan las plantillas por defecto y `/auth/confirm` acepta su `code` (quickstart §3, paso 1, enmendado) | Igual |
+
+**Corrección de configuración, 5 de noviembre de 2026.** `juntia.vercel.app` **no
+es nuestro**: es la web de otra empresa. Ese día se habían configurado por error con
+ese dominio la Site URL y la Redirect URL de `juntia-prod` y `SITE_URL` de Vercel
+(Production). El gestor lo corrigió el mismo día:
+
+- Supabase `juntia-prod`: Site URL `https://juntia-alpha.vercel.app` y Redirect URLs
+  solo `https://juntia-alpha.vercel.app/**`; la entrada ajena se borró.
+- Vercel, `SITE_URL` (Production) = `https://juntia-alpha.vercel.app`, con redeploy.
+
+Antes de la corrección **no se envió ningún correo de producción**. El dominio de
+producción es `https://juntia-alpha.vercel.app` (decisión 13; 001-T072).
 
 ### T038
 
@@ -1381,8 +1398,21 @@ medición con reparto real llega con la spec 2 (PR D). Ningún techo se mueve.
 
 ### T055
 
-**Humana (gestor), pendiente:** 001-T072 parte 1 tras el primer despliegue de
-producción con Supabase.
+**Hecha por el gestor el 5 de noviembre de 2026**, tras el merge del PR #43
+(`c2561d5`; Vercel: «Deployment has completed»), contra el dominio real de
+producción `https://juntia-alpha.vercel.app`:
+
+| Petición | Resultado |
+| --- | --- |
+| `/entrar`, HTML | 200 |
+| `/entrar`, RSC (`RSC: 1`) | 200 |
+| `/interno/primitivos`, HTML | **404** |
+| `/interno/primitivos`, RSC (`RSC: 1`) | 200 `text/x-component` con el payload `NEXT_HTTP_ERROR_FALLBACK;404` y «No encontramos esta página», **sin contenido interno** |
+
+Es el mismo comportamiento aceptado en la 001
+(`specs/001-frontend-foundation/evidence.md`, 001-T072, «Comprobación tras el
+despliegue de `aa322be`»): la respuesta RSC de `notFound()` es un 200 cuyo
+contenido es el 404. **Resultado: pasa.**
 
 ### T056
 
@@ -1559,29 +1589,252 @@ estado de sesión caducada y «Cuenta reutiliza los fondos de categoría» (prop
 pantallas ese día (confirmado por Alejandro al gestor). La descripción del PR la publica
 el gestor.
 
+### PR C · T061–T070 (tests primero e implementación)
+
+Rama `feat/002-c-home`, PR #44. Salidas literales en
+[`evidence/pr-c/`](evidence/pr-c/). Los tests se vieron fallar antes que el código
+(`docs/TESTING.md` §6), en el commit 9b28809 (más 4550000, que solo cambia un `let`
+por `const` del test de exportación):
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T061 dominio (flechas, búsqueda, días) | [`t061-domain-red.txt`](evidence/pr-c/t061-domain-red.txt): `monthNavigation` y `filterTransactions` no existen | [`t061-domain-green.txt`](evidence/pr-c/t061-domain-green.txt): 31 pruebas de dominio |
+| T062, T064 componentes (Inicio, Actividad, ExpenseRow) | [`t062-t064-components-red.txt`](evidence/pr-c/t062-t064-components-red.txt): módulos inexistentes | [`t062-t064-components-green.txt`](evidence/pr-c/t062-t064-components-green.txt): 12 pruebas, entre ellas **412.900** y el desglose literal en Inicio y en Actividad (SC-008) |
+| T063 integración (`export.test.ts`) | [`t063-integration-red.txt`](evidence/pr-c/t063-integration-red.txt): job `db` del run [42133717139](https://github.com/flashwp3-ctrl/juntia/actions/runs/42133717139), sin route handler | Job `db` del gate (T075): `export.test.ts` 4/4 |
+| T070 spec E2E 1, descarga | — (solo CI) | Job `e2e` del gate (T075): spec 1 con 7 casos en verde, el nuevo incluido (JSON y CSV: evento de descarga, nombre `juntia-movimientos-AAAA-MM-DD.<ext>`, sin fallo y tamaño > 0, sin abrir el contenido) |
+
+**T066, dataset dorado por la función real.** La siembra `seedMovements` crea las
+filas con `create_transaction` y la sesión de la cuenta sembrada (research R8.11).
+Actividad de octubre de 2026 (`?mes=2026-10`, dataset literal) y el Inicio del mes en
+curso (las mismas filas e importes, llevados al mismo día del mes en curso, porque
+Inicio enseña el mes en curso: spec, casos límite) muestran **$ 412.900** en las
+capturas de T073. Ese fixture del mes en curso **no** sustituye al dataset dorado: la
+comprobación literal de octubre está en el test de componentes y en Actividad.
+
+**Interpretación de ejecución.** El panel de detalle junto a la tabla aparece desde
+**1280** y no desde 1024 como dice T068: `RESPONSIVE_SPECIFICATIONS.md` («Actividad en
+modo maestro-detalle desde 1280» y el detalle de 400 fijo a 1440) está por encima de
+`tasks.md` en la jerarquía. Entre 1024 y 1279, Actividad es la lista y el detalle abre
+como pantalla, como en móvil.
+
 ### T071
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5 de noviembre de 2026 · a8621f1.** Registro de `tests/a11y/route-registry.ts` con
+las entradas nuevas, todas con sesión: Inicio con datos, vacío y en Nosotros;
+Actividad con datos, mes vacío, mes futuro, búsqueda, filtros y en Nosotros; el
+detalle y el detalle no encontrado (JT010); Metas en Nosotros; Exportar D3, D4 y D5.
+La prueba de cobertura vio fallar `/actividad/[id]` sin clasificar (verify local antes
+de T071) y pasa. **Axe en el job `e2e` del gate: 128/128** (todas las entradas con
+sesión, a 390 y 1440, en los dos temas); job `app`: 48/48.
+
+El primer gate con las rutas nuevas (run
+[42139515463](https://github.com/flashwp3-ctrl/juntia/actions/runs/42139515463),
+bb56acb) encontró dos fallos reales, corregidos en a8621f1:
+`label-content-name-mismatch` en las filas y en los chips de categoría (el
+`aria-label` decía «50.000 pesos» donde se ve «$ 50.000»; ahora el nombre sale de un
+texto oculto, con lo visible fuera del árbol accesible) y contraste 4,29:1 del texto
+secundario sobre `surface.sunken` en el chip y la fila seleccionados (pasa a tinta,
+también en hover). En el mismo run, `/recuperar` A4b (PR B) dio una vez
+`document-title` y pasó en el reintento: intermitente previo, no de este PR.
 
 ### T072
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5–6 de noviembre de 2026 · a8621f1 · run
+[42141494682](https://github.com/flashwp3-ctrl/juntia/actions/runs/42141494682)**
+(job `evidence`, paso en un solo worker de `tests/evidence/home-states.capture.ts`).
+Mediciones línea a línea en
+[`t072-measurements.jsonl.txt`](evidence/pr-c/t072-measurements.jsonl.txt).
+
+| Medición | Rutas | Casos | Resultado |
+| --- | --- | --- | --- |
+| CLS con el Skeleton retenido (un `lock table … access exclusive` real en la base del runner retiene la lectura; se ve el Skeleton y se suelta) | `/` y `/actividad?mes=2026-10` | 390 y 1440 · claro y oscuro · tema guardado (perfil y cookie) · CPU 6× · 5 cargas | **40/40 con CLS = 0**, el Skeleton visible en las 40 |
+| CLS en carga normal | las mismas | los mismos | **40/40 con CLS = 0** |
+| Objetivos táctiles < 44 px (el `<input>` cuenta por el marco de su `<label>`) | las mismas, con datos | 390 y 1440 · dos temas | **ninguno** |
+| Texto al 200 % (fuente raíz al 200 %) | las mismas | 390 y 1440 · dos temas | **sin scroll horizontal** en las 8 combinaciones; capturas `*--texto-200--*` en [`capturas/`](evidence/pr-c/capturas/) |
+| Sin scroll horizontal a 360, 390, 430, 768, 1024, 1280 y 1440 | las 16 entradas del PR C del registro (Inicio, Actividad, detalle, Metas en Nosotros, Exportar D2–D5) | dos temas | **224/224 sin scroll ni elementos fuera de la ventana** ([`t073-seven-widths.jsonl.txt`](evidence/pr-c/t073-seven-widths.jsonl.txt)); la pasada de todo el registro, 532/532 |
+
+Antes de a8621f1, el texto al 200 % daba 552 px de ancho en Actividad a 390 (el mes
+tenía un ancho mínimo en rem) y la ficha de categoría invadía su columna: corregido en
+bb56acb. **Lo único que el arnés anota sin ser de este PR:** al 200 % y a 390, el
+avatar de `AccountButton` (PR B) desborda su caja 3 px (`a «S» 91/88`); no produce
+scroll.
 
 ### T073
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5–6 de noviembre de 2026 · a8621f1 · run
+[42141494682](https://github.com/flashwp3-ctrl/juntia/actions/runs/42141494682).**
+88 capturas a 390 y 1440 en claro y oscuro, con cuentas sembradas en el runner por
+`create_transaction`, en [`capturas/`](evidence/pr-c/capturas/), nombradas por ruta,
+estado, ancho y tema: Inicio con datos, vacío, cargando (Skeleton retenido) y error
+(lectura denegada de verdad en el runner y devuelta al terminar); Nosotros en Inicio,
+Actividad y Metas; Actividad con datos, mes vacío, mes futuro, búsqueda y filtros; el
+detalle (tabla y panel a 1440, pantalla a 390) y el detalle no encontrado; Exportar
+D2–D5; y el texto al 200 %. La pasada manual de los siete anchos está en T072.
+
+**Para aprobar viendo la pantalla** (propuestas §15.9 y pantallas nuevas): «Gasto,
+ingreso y liquidación en tinta» en las filas de Inicio y Actividad; Inicio sin pareja
+y sus estados (Q5); Nosotros «todavía no disponible» (Q5); las flechas de mes (Q8).
 
 ### T074
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5 de noviembre de 2026 · 577de4a.** Pasada fija de Impeccable, auditoría y crítica.
+El detector de código no encuentra nada en `src/features/home`,
+`src/features/activity`, `src/features/context`, `expense-row.tsx`,
+`src/app/(app)/actividad`, `src/app/(app)/page.tsx` ni `account-controls.tsx`. El
+detector de página corrió sobre los componentes reales con el dataset dorado, en una
+página local temporal sin Supabase que no se versionó, a 390 y 1440
+([`t074-impeccable-detect.txt`](evidence/pr-c/t074-impeccable-detect.txt)): marca
+`icon-tile-stack` en el vacío y el error de Inicio. Es la ficha de 88 con radio 28 que
+dibuja el comp aprobado 04·6 (handoff, «Auditoría anti-slop»). **No se aplica**, como
+en T058: cambiarla reabriría la dirección (`CLAUDE.md` 7).
+
+Crítica sobre las capturas y lo corregido en este PR: la barra de herramientas de
+Actividad invadía el panel a 1440 (ahora en dos filas); los chips del desglose se
+cortaban con scroll horizontal (ahora se reparten en filas); en Inicio móvil, «Anotar
+gasto» partía el título y las fichas truncaban «Restaurantes» y «Servicios» (ahora la
+pista va a la derecha y la ficha apila ícono y nombre); al 200 % el mes desbordaba y
+la ficha de la fila invadía su columna (T072). **Se reporta y no se corrige:** el
+importe sale «$ 412.900», con el espacio que pone `Intl.NumberFormat("es-CO")` en
+`formatMoney` (dominio del PR A), y el comp dibuja «$412.900».
 
 ### T075
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**Gate sobre a8621f1:** `npm run verify` local pasó (37,9 s, < 90 s) y el run
+[42140614161](https://github.com/flashwp3-ctrl/juntia/actions/runs/42140614161) tiene
+`app`, `db` y `e2e` en verde
+([`t075-gate-a8621f1.txt`](evidence/pr-c/t075-gate-a8621f1.txt)): `app` 171 s
+(unidad 31, componentes 180, axe 48/48); `db` 244 s (`test:db` 5,49 s < 60;
+integración 32, entre ellas las 4 de exportación; ensayo de restauración); `e2e` 427 s
+(spec 1 7/7 en 15,9 s, humo 16,7 s < 180; axe 128/128 en 212 s).
+
+**Presupuesto superado (aviso; ADR-011 §4 y `docs/TESTING.md` §9):** el job `e2e`
+tardó **427 s frente a < 360 s**. La causa es axe con sesión: 64 auditorías nuevas
+(16 estados × 2 temas × 2 anchos, cada una con su usuario sembrado y, en 12 estados,
+nueve movimientos por `create_transaction`) llevan `test:a11y` a 212 s. No se mueve el
+techo: se reporta a los fundadores para que decidan si se reparte la auditoría o se
+acepta el coste.
+
+**Arreglo de CI incluido.** La instalación de Chromium tiene paso propio en `app`,
+`e2e` y `evidence`. En el run
+[42138118052](https://github.com/flashwp3-ctrl/juntia/actions/runs/42138118052)
+`--with-deps` se volvió a colgar en `e2e` y el límite de 4 min lo cortó (antes consumía
+los 10 del job). Desde bb56acb la descarga (`playwright install --only-shell
+chromium`) y las dependencias del sistema (`playwright install-deps chromium`) van por
+separado, cada una con 150 s y un reintento y la salida a la vista, con el paso en
+6 min como máximo; en el gate, `chromium` tardó 19–21 s. **Sin caché de binarios:**
+`docs/TESTING.md` §9 lo desaconseja expresamente; queda consultado al gestor.
+
+**Nota de `verify` local:** una de seis ejecuciones de `components` falló el 5 de
+noviembre con el equipo cargado (`next dev` y Playwright a la vez) y no se guardó el
+nombre de la prueba; las cinco siguientes, incluida la de este gate, pasaron 180/180.
+
+### Revisión del PR #44 (ChatGPT): F44-1 a F44-4 y el formato de importes
+
+Pedir cambios, sin bloqueantes. Todo va en un solo push sobre 6f9d0d0; el SHA y el run
+del gate quedan en la descripción del PR, porque registrarlos aquí exigiría otro commit y
+otro gate (como en T059).
+
+**F44-1 (privacidad).** Con «Nosotros» recordado, las páginas servían los dos
+subárboles y CSS escondía el de Yo: los movimientos viajaban en el HTML y en el payload
+RSC. Ahora la misma preferencia de la 001 se copia en una cookie del dispositivo,
+`juntia_context` (`me` o `us`, los mismos valores que `localStorage`), con el patrón de
+`juntia_theme`: la escribe el selector, y `src/lib/server-context.ts` la lee. Con `us`,
+Inicio, Actividad y el detalle **no leen movimientos ni construyen la vista privada**.
+Sin cookie o con un valor no válido, el servidor pinta Yo, el valor por defecto de la 001
+(decisión 10; 001 FR-026). Si el dispositivo recuerda otra cosa, `ContextView` reescribe
+la cookie y pide la página otra vez; mientras tanto, Yo enseña su Skeleton. **Interpretación
+de ejecución:** la cookie replica la preferencia aprobada de la 001 y no la sustituye; no
+se guarda en el servidor ni se sincroniza entre dispositivos, y no es `scope`. Pruebas:
+cuatro casos de componentes en `src/features/home/home.test.tsx` (las dos discrepancias,
+el caso sin discrepancia y Nosotros sin cifras) y un caso nuevo en la spec E2E 1: el HTML y
+el payload RSC (`RSC: 1`) de `/`, `/actividad?mes=…` y `/actividad/[id]` con la cookie en
+`us` no contienen ninguna descripción ni importe del dataset (ni «412.900» ni «41290000»);
+con `me`, sí (control positivo).
+
+**F44-2 (integridad).** `listTransactions` y la exportación leen página a página con
+`.range()` y un orden total estable (fecha, `created_at`, `id`) hasta una página vacía,
+avanzando lo que de verdad llegó (`src/lib/db/paginate.ts`, páginas de 500). Si una página
+falla, la lectura entera falla y la exportación responde 500 sin archivo. Pruebas: unidad
+de `readAllPages` (orden, máximo del servidor menor que la página, fallo a mitad, vacío) e
+integración con páginas de 1, 2, 3 y 4 filas sobre la consulta real, idénticas a la lectura
+por defecto, para la exportación (JSON y CSV) y para dos meses; un cliente que falla da 500.
+
+**F44-3.** El CSV pone `'` delante de `= + - @`, de cualquier control C0 o DEL al
+principio (tabulador, CR y LF incluidos) y de espacios seguidos de un operador, y conserva
+el escapado RFC 4180. Pruebas: `src/lib/db/export.test.ts` (unidad) y seis descripciones
+con controles en `tests/integration/export.test.ts`.
+
+**F44-4.** `isSupportedMonth` acepta solo meses de 0001-01 a 9999-12 (el dominio de
+`transaction_date`: el año 0000 no es una fecha válida para la función SQL ni para
+`validateDraft`); `clampMonth` lleva un mes al intervalo navegable y `monthNavigation` ya
+no da flechas fuera de él. Actividad y el detalle redirigen un `?mes=` fuera del intervalo
+al límite más cercano. Por eso el primer gate de 056bd59 falló en axe: la entrada «Actividad mes vacío» pedía septiembre de 2026, fuera del intervalo de la cuenta sembrada (octubre y el mes en curso), y la página redirigía a octubre en mitad de la auditoría; la entrada pasa a ser el mes en curso, vacío y navegable. Por la misma causa, el caso «ruta protegida sin sesión» de la spec 1 (PR B) pedía `/actividad?mes=2026-10` con una cuenta sin movimientos; tras entrar, la página redirigía al mes en curso y el `goto` siguiente se abortaba (run 42148372799; ya había salido intermitente en 42147450345). La prueba pasa a pedir el mes en curso: sigue comprobando que `volver` conserva la ruta y su query. Rojo: [`f44-4-domain-red.txt`](evidence/pr-c/f44-4-domain-red.txt)
+(`isSupportedMonth is not a function`); verde: 32 pruebas de dominio.
+
+**Formato de importes.** `formatMoney` quita el espacio que `Intl` pone en es-CO:
+«$412.900» y «-$200.000», como el diseño. Era trivial: no cambia el cálculo ni las pruebas
+doradas, solo la aserción de formato de `money.test.ts`, que pasa a ser exacta. Rojo:
+[`f44-money-red.txt`](evidence/pr-c/f44-money-red.txt) (`"$ 412.900"`). **Las capturas de
+T073 son anteriores a este cambio**: muestran «$ 412.900»; todo lo demás no cambia. Se
+pueden volver a capturar con un run de evidencia si los fundadores lo piden.
+
+El presupuesto del job `e2e` no se mueve: sigue como aviso para los fundadores (T075).
+
+**Segunda ronda (F44-1 y F44-2, cerradas en un solo push).**
+
+- **F44-1, cookie ausente o no válida.** `serverContext()` devuelve `null` sin cookie o
+  con un valor no válido, y entonces Inicio, Actividad y el detalle **no leen movimientos
+  ni construyen la vista privada**: pintan el Skeleton con la geometría final y, al lado,
+  el estado de Nosotros (CSS enseña uno según `<html data-context>`). El cliente resuelve
+  la preferencia (`localStorage` o, sin ella, Yo, el valor de la 001), escribe la cookie y
+  pide la página otra vez. Metas y Plan no tienen datos privados: sin cookie pintan Yo y el
+  cliente corrige igual. **Regresión corregida:** la expresión de `readContextCookie()`
+  tenía `;s*` en lugar de `;\s*` y fallaba cuando `juntia_context` no era la primera
+  cookie. Rojo:
+  [`f44-1-cookie-regex-red.txt`](evidence/pr-c/f44-1-cookie-regex-red.txt); verde en
+  `src/lib/context-preference.test.ts` (cookie en varias posiciones, otra cookie con el
+  mismo final, valor no válido). Pruebas nuevas: dos casos de componentes con `server`
+  nulo y un caso de la spec E2E 1. Ese caso cubre, sin cookie y con la cookie
+  `nosotros` (no válida) y Nosotros en `localStorage`, el HTML y el RSC iniciales de las
+  tres rutas y el documento inicial del navegador sin ningún dato del dataset; después
+  del refresco se ve Nosotros y la cookie queda en `us`. Con Yo y sin cookie, el
+  documento trae el Skeleton (`aria-busy`) y no los datos, que llegan después. Y el
+  prefetch: en Yo a 1440, con «Ver todo» precargado, se cambia a Nosotros y se navega a
+  Actividad; `main` no enseña ningún dato privado.
+- **F44-2, paginación por cursor.** `readByCursor` (`src/lib/db/paginate.ts`) sustituye
+  al desplazamiento: orden total (`transaction_date`, `created_at`, `id`) y cada página
+  pide lo estrictamente posterior a la última clave leída, con un filtro `or` de
+  PostgREST (`afterFilter`, el instante entre comillas). **Garantía, escrita en el
+  código:** ninguna fila sale dos veces y no se salta ninguna de las que existen durante
+  toda la lectura. Una fila insertada o anulada mientras se lee puede aparecer o no. No
+  hay instantánea de la base. Pruebas:
+  - unidad, con una fuente ordenada que se modifica entre páginas (inserción antes y
+    después del cursor, baja de una fila ya leída y de otra sin leer), un máximo del
+    servidor menor que la página y un fallo a mitad;
+  - integración sobre la consulta real con páginas de 2 filas: en la lectura del mes
+    (descendente) y en la exportación (ascendente), entre la primera y la segunda página
+    se inserta una fila con una clave anterior al cursor y se anula una ya leída; no hay
+    duplicados y salen una vez todas las filas que existieron de principio a fin.
+
+**CI, de paso.** Con la salida a la vista, el run 42153365570 mostró por fin la causa del «cuelgue» de la
+instalación de Chromium: no se cuelga, es `apt` bajando las fuentes de `install-deps` a unos 40 KB/s desde el mirror
+del runner (las librerías de Chromium ya vienen en la imagen), y el reintento fallaba porque `timeout` mata `npx` pero
+no su `apt-get`, que retiene el bloqueo de dpkg. Desde 5cdcce3 el paso descarga el navegador (150 s, un reintento) y
+solo ejecuta `install-deps` si Chromium no arranca, matando antes el `apt-get` sobrante; en el run 42154140506 arrancó
+con las librerías del runner y el paso tardó 6–7 s.
+
+El SHA y el run de esta ronda están en la descripción del PR.
 
 ### T076
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**Aprobado por los dos fundadores el 6 de noviembre de 2026** (SC-001), viendo las
+pantallas del PR C; lo comunicó el gestor. Las cuatro `[P]` del PR quedan aprobadas:
+«Gasto, ingreso y liquidación en tinta» en las filas de Inicio y Actividad (propuesta
+§15.9); Inicio sin pareja y sus estados (Q5); Nosotros «todavía no disponible» (Q5); y
+las flechas de mes (Q8). El importe sin espacio («$412.900»), que las capturas de T073
+todavía muestran con espacio, va en la corrección de la revisión del PR #44 (056bd59).
+La descripción del PR lleva capturas, Impeccable, los `[P]` y «E2E specs added: 0»
+(la spec 1 suma la descarga de Exportar y el caso de privacidad de F44-1); total 1.
 
 ### T079
 

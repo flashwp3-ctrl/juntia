@@ -1,0 +1,14 @@
+ ✓ |components| src/components/ui/expense-row.test.tsx > ExpenseRow (T064) > gasto: tinta, sin signo, enlace al detalle con nombre completo 380ms
+ ✓ |components| src/components/ui/expense-row.test.tsx > ExpenseRow (T064) > ingreso: «+», ficha arena, ícono arrow-down-left y tinta, nunca el verde de ahorro 36ms
+ ✓ |components| src/components/ui/expense-row.test.tsx > ExpenseRow (T064) > sin descripción, el título es la categoría; y el estado «nueva» queda marcado para E5 22ms
+ ✓ |components| src/features/activity/activity.test.tsx > Actividad (T062) > el resumen de octubre de 2026 muestra 412.900 y el desglose literal por categoría 635ms
+ ✓ |components| src/features/home/home.test.tsx > Inicio en Yo (T062) > con el dataset dorado de octubre muestra 412.900 y el desglose literal de la tabla 608ms
+ ✓ |components| src/features/home/home.test.tsx > Inicio en Yo (T062) > no finge presupuesto, límite ni nada compartido 65ms
+ ✓ |components| src/features/activity/activity.test.tsx > Actividad (T062) > agrupa por día, del más reciente al más antiguo, y cada fila enlaza a su detalle 357ms
+ ✓ |components| src/features/home/home.test.tsx > Inicio en Yo (T062) > vacío: el estado diseñado con la invitación a Anotar, nunca «$0» 45ms
+ ✓ |components| src/features/home/home.test.tsx > Inicio en Yo (T062) > error: lo explica y Reintentar vuelve a pedir los datos 1263ms
+ ✓ |components| src/features/home/home.test.tsx > Inicio en Yo (T062) > en Nosotros: «todavía no disponible», sin ninguna cifra ni dato privado 20ms
+ ✓ |components| src/features/activity/activity.test.tsx > Actividad (T062) > busca sin tildes y filtra por tipo y por categoría 1989ms
+ ✓ |components| src/features/activity/activity.test.tsx > Actividad (T062) > mes vacío: texto de contexto privado, no el compartido 32ms
+ Test Files  3 passed (3)
+      Tests  12 passed (12)

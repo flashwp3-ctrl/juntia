@@ -48,6 +48,12 @@ import { User } from "@phosphor-icons/react/dist/ssr/User";
 import { UsersThree } from "@phosphor-icons/react/dist/ssr/UsersThree";
 import { WifiSlash } from "@phosphor-icons/react/dist/ssr/WifiSlash";
 import { X } from "@phosphor-icons/react/dist/ssr/X";
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr/ArrowClockwise";
+import { CalendarBlank } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
+import { FileText } from "@phosphor-icons/react/dist/ssr/FileText";
+import { FunnelSimple } from "@phosphor-icons/react/dist/ssr/FunnelSimple";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { Tag } from "@phosphor-icons/react/dist/ssr/Tag";
 import type { Icon } from "@phosphor-icons/react/dist/lib/types";
 
 // Mapa semántico de DESIGN_SYSTEM.md §3 que usa la 001, circle-notch (§Button, carga), los diez íconos de
@@ -103,6 +109,13 @@ const icons = {
   "users-three": UsersThree,
   "wifi-slash": WifiSlash,
   x: X,
+  // P0-1, PR C: Inicio, Actividad, detalle y Exportar (04·1, 04·6, 04·7, 04·16), con los nombres de los comps.
+  "arrow-clockwise": ArrowClockwise,
+  "calendar-blank": CalendarBlank,
+  "file-text": FileText,
+  "funnel-simple": FunnelSimple,
+  "magnifying-glass": MagnifyingGlass,
+  tag: Tag,
 } as const satisfies Record<string, Icon>;
 
 export type AppIconName = keyof typeof icons;
@@ -120,5 +133,5 @@ type AppIconProps = {
 export function AppIcon({ name, weight = "regular", size = 20, label, className }: AppIconProps) {
   const Glyph = icons[name];
   const a11y = label ? { role: "img", "aria-label": label } : ({ "aria-hidden": true, focusable: "false" } as const);
-  return <Glyph weight={weight} size={size} className={className} {...a11y} />;
+  return <Glyph weight={weight} size={size} className={className} data-icon={name} {...a11y} />;
 }

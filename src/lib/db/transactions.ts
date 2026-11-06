@@ -3,6 +3,7 @@ import { parseAmountMinor, serializeAmountMinor } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
 import type { CreateTransactionInput, UpdateTransactionInput, VoidTransactionInput, VoidResult, TransactionTransport } from "./types";
 import { DbError, mapDbError } from "./errors";
+import { afterFilter, readByCursor, type PageOptions } from "./paginate";
 import { withRetry } from "./retry";
 import { requireClaims } from "./session";
 function transaction(row: TransactionTransport): Transaction {
@@ -30,18 +31,27 @@ export async function voidTransaction(client: SupabaseClient, input: VoidTransac
   const params = { p_idempotency_key: input.idempotencyKey, p_transaction_id: input.transactionId, p_expected_version: input.expectedVersion, p_reason: input.reason };
   return withRetry<VoidResult>(() => client.rpc("void_transaction", params));
 }
-export async function listTransactions(client: SupabaseClient, month?: string): Promise<Transaction[]> {
+/**
+ * Movimientos activos propios, del mes si se pide, del más reciente al más antiguo. F44-2: todas las páginas, por cursor
+ * sobre el orden total (fecha, `created_at`, `id`); el total del mes nunca se calcula sobre una lectura cortada. La
+ * garantía con escrituras concurrentes está en paginate.ts.
+ */
+export async function listTransactions(client: SupabaseClient, month?: string, options: PageOptions = {}): Promise<Transaction[]> {
   await requireClaims(client);
-  let query = client.from("my_transactions").select("*").order("transaction_date", { ascending: false }).order("created_at", { ascending: false });
+  let range: [string, string] | null = null;
   if (month) {
-    if (!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month)) throw new DbError("invalidDate");
+    if (!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month) || month < "0001-01") throw new DbError("invalidDate");
     const [year, part] = month.split("-").map(Number);
-    const next = part === 12 ? `${year + 1}-01` : `${year}-${String(part + 1).padStart(2, "0")}`;
-    query = query.gte("transaction_date", `${month}-01`).lt("transaction_date", `${next}-01`);
+    const next = part === 12 ? `${String(year + 1).padStart(4, "0")}-01` : `${String(year).padStart(4, "0")}-${String(part + 1).padStart(2, "0")}`;
+    range = [`${month}-01`, `${next}-01`];
   }
-  const { data, error } = await query;
-  if (error) throw mapDbError(error);
-  return (data as TransactionTransport[]).map(transaction);
+  const rows = await readByCursor<TransactionTransport>((after, limit) => {
+    let query = client.from("my_transactions").select("*");
+    if (range) query = query.gte("transaction_date", range[0]).lt("transaction_date", range[1]);
+    if (after) query = query.or(afterFilter(after, "desc"));
+    return query.order("transaction_date", { ascending: false }).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);
+  }, options);
+  return rows.map(transaction);
 }
 export async function listTransactionMonths(client: SupabaseClient): Promise<string[]> {
   await requireClaims(client);
@@ -54,4 +64,17 @@ export async function listRecentCategories(client: SupabaseClient) {
   const { data, error } = await client.from("my_recent_categories").select("category_id");
   if (error) throw mapDbError(error);
   return data.map(({ category_id }) => category_id as TransactionTransport["category_id"]);
+}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Un movimiento activo propio para el detalle (FR-037, lectura). Ajeno, anulado o inexistente dan lo mismo,
+ * `transactionNotFound` (JT010): la RLS no deja distinguirlos y la pantalla tampoco lo intenta.
+ */
+export async function getTransaction(client: SupabaseClient, id: string): Promise<Transaction> {
+  await requireClaims(client);
+  if (!UUID.test(id)) throw new DbError("transactionNotFound");
+  const { data, error } = await client.from("my_transactions").select("*").eq("id", id).maybeSingle();
+  if (error) throw mapDbError(error);
+  if (!data) throw new DbError("transactionNotFound");
+  return transaction(data as TransactionTransport);
 }

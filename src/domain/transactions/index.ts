@@ -62,3 +62,41 @@ export function monthBounds(months: readonly string[], current: string) {
   const sorted = [...months.map(monthKey), monthKey(current)].sort();
   return { min: sorted[0], max: sorted[sorted.length - 1] };
 }
+/** Suma o resta meses a una clave `AAAA-MM`, cruzando el año. */
+export function shiftMonth(month: string, delta: number): string {
+  const [year, part] = month.split("-").map(Number);
+  const index = year * 12 + (part - 1) + delta;
+  return `${String(Math.floor(index / 12)).padStart(4, "0")}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+/**
+ * Flechas de Actividad (FR-046; Q8, Q13): hasta el primer mes con movimientos y hasta el más lejano con movimientos,
+ * incluidos los futuros, o el mes actual si queda fuera. Los meses vacíos entre medias se recorren; más allá, no.
+ */
+export function monthNavigation(months: readonly string[], current: string, selected: string) {
+  const { min, max } = monthBounds(months, current);
+  const month = clampMonth(months, current, selected);
+  return { previous: month > min ? shiftMonth(month, -1) : null, next: month < max ? shiftMonth(month, 1) : null };
+}
+/**
+ * F44-4 (revisión del PR #44). Un mes `AAAA-MM` del dominio de fechas de los movimientos: el mismo que admite
+ * `transaction_date` (validateDraft y la función SQL rechazan el año 0000), de 0001-01 a 9999-12.
+ */
+export function isSupportedMonth(month: unknown): month is string {
+  return typeof month === "string" && /^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month) && month >= "0001-01";
+}
+/** Lleva un mes al intervalo navegable de las flechas (del primer al último mes con movimientos, o el actual). */
+export function clampMonth(months: readonly string[], current: string, month: string) {
+  const { min, max } = monthBounds(months, current);
+  return month < min ? min : month > max ? max : month;
+}
+const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("es").trim();
+/** Búsqueda por descripción sin distinguir tildes ni mayúsculas (FR-047; research R8.9). */
+export function matchesSearch(description: string | null, query: string): boolean {
+  const needle = fold(query);
+  return needle === "" || (description !== null && fold(description).includes(needle));
+}
+export type TransactionFilter = Readonly<{ query?: string; type?: TransactionType; categoryId?: CategoryId }>;
+/** Filtros de Actividad dentro del mes: texto, tipo y categoría. No reordena ni muta. */
+export function filterTransactions(rows: readonly Transaction[], { query = "", type, categoryId }: TransactionFilter): Transaction[] {
+  return rows.filter((row) => (!type || row.type === type) && (!categoryId || row.categoryId === categoryId) && matchesSearch(row.description, query));
+}

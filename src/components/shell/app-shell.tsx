@@ -11,7 +11,6 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { AccountButton, SidebarAccount } from "@/features/account/account-button";
 import { copy } from "@/lib/copy/es";
 import { useAnnotate } from "./annotate-notice";
-import { BaseVersionNotice } from "./base-version-notice";
 import { ContextSelector } from "./context-selector";
 import { ACCOUNT_HREF, isCurrent, navDestinations } from "./nav-destinations";
 import { SHELL_END_ID } from "./shell-end";
@@ -147,12 +146,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SideNav pathname={pathname} />
       <div className="lg:pl-[76px] xl:pl-[248px]">
         <div
-          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:px-10 xl:pt-10 ${stacked ? "" : "xl:grid xl:grid-cols-[minmax(0,1fr)_17rem] xl:gap-x-14"} ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
+          className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:px-10 xl:pt-10 ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
         >
-          {/* En Mi cuenta, las dos columnas de 04·18 (360 + 680) ocupan todo el ancho: el aviso (FR-028 de la 001) va arriba,
-              en el flujo, y no en la columna lateral. El PR C lo retira de todas las rutas (T066). */}
-          <BaseVersionNotice className={stacked ? "mb-6 lg:mb-8 xl:!flex-row xl:!items-center xl:!gap-3 xl:!rounded-[var(--radius-lg)] xl:!px-3 xl:!py-2.5" : "lg:mb-8 xl:mb-0 xl:sticky xl:top-10 xl:col-start-2 xl:row-start-1 xl:self-start"} />
-          <div className="min-w-0 xl:col-start-1 xl:row-start-1">{children}</div>
+          {/* P0-1, PR C (T066, FR-044): sin el aviso de versión base de la 001; el servidor ya guarda los datos. */}
+          <div className="min-w-0">{children}</div>
         </div>
       </div>
       <BottomBar pathname={pathname} stacked={stacked} />
