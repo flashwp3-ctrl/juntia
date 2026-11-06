@@ -164,7 +164,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const quick = within(dialog).getByRole("group", { name: copy.annotate.recent });
     const more = within(quick).getByRole("button", { name: copy.annotate.moreLabel });
     expect(more.textContent).toBe(copy.annotate.more);
-    expect(quick.lastElementChild).toBe(more);
+    expect(quick.lastElementChild?.contains(more)).toBe(true);
     expect(within(dialog).queryByRole("button", { name: copy.categories.other })).toBeNull();
     expect(within(dialog).queryByRole("textbox", { name: copy.annotate.description })).toBeNull();
     await user.click(more);

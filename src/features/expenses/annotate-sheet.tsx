@@ -99,18 +99,21 @@ function CategoryChip({ id, selected, onSelect, onEnter }: { id: CategoryId; sel
   );
 }
 
-/** UX lote 1, cambio 2: el último chip de la fila rápida abre los detalles con todas las categorías y la nota. */
+/** UX lote 1, cambio 2: el último chip de la fila rápida abre los detalles con todas las categorías y la nota. En móvil la
+ *  fila se desplaza; el chip queda fijo al borde derecho (sticky) para que «Más…» siempre se vea (hallazgo de las capturas). */
 function MoreChip({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      aria-expanded={false}
-      aria-label={copy.annotate.moreLabel}
-      onClick={onClick}
-      className={`${hit} flex h-10 shrink-0 items-center rounded-[14px] bg-sunken px-3.5 text-[13px] font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60`}
-    >
-      <span aria-hidden="true">{copy.annotate.more}</span>
-    </button>
+    <span className="sticky right-0 z-[1] flex shrink-0 bg-overlay pl-2 md:static md:pl-0">
+      <button
+        type="button"
+        aria-expanded={false}
+        aria-label={copy.annotate.moreLabel}
+        onClick={onClick}
+        className={`${hit} flex h-10 shrink-0 items-center rounded-[14px] bg-sunken px-3.5 text-[13px] font-semibold text-ink shadow-[0_0_0_1.5px_var(--color-border-subtle)] disabled:cursor-not-allowed disabled:opacity-60`}
+      >
+        <span aria-hidden="true">{copy.annotate.more}</span>
+      </button>
+    </span>
   );
 }
 

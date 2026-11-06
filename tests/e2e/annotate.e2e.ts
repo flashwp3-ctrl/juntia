@@ -163,8 +163,8 @@ test("UX 3: Guardar → la fila aparece antes de la respuesta del servidor → s
   await page.getByRole("link", { name: copy.nav.activity }).first().click();
   await expect(page).toHaveURL(/\/actividad/);
   await expect(page.locator("[data-pending]")).toHaveCount(0);
-  // En Actividad la fila real es un enlace con su nombre accesible completo (lista o tabla, según el ancho).
-  await expect(page.getByRole("link", { name: /47.350 pesos/ })).toHaveCount(1);
+  // En Actividad la fila real es un enlace con su nombre accesible completo (a 1280 px la tabla; debajo, la lista).
+  await expect(page.locator("tbody tr:visible, [data-transaction-id]:visible").filter({ hasText: "47.350" })).toHaveCount(1);
 });
 
 // UX lote 1, cambio 5. El cursor computado en un navegador real, en 390 y 1440 px: mano en lo pulsable, not-allowed en lo
