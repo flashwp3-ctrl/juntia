@@ -1782,9 +1782,14 @@ El presupuesto del job `e2e` no se mueve: sigue como aviso para los fundadores (
 
 ### T076
 
-Descripción del PR C (#44) con capturas, Impeccable, los `[P]` para aprobar y «E2E
-specs added: 0 (spec 1 gains the export download case); total 1». **Pendiente: la
-revisión humana de los dos fundadores.**
+**Aprobado por los dos fundadores el 6 de noviembre de 2026** (SC-001), viendo las
+pantallas del PR C; lo comunicó el gestor. Las cuatro `[P]` del PR quedan aprobadas:
+«Gasto, ingreso y liquidación en tinta» en las filas de Inicio y Actividad (propuesta
+§15.9); Inicio sin pareja y sus estados (Q5); Nosotros «todavía no disponible» (Q5); y
+las flechas de mes (Q8). El importe sin espacio («$412.900»), que las capturas de T073
+todavía muestran con espacio, va en la corrección de la revisión del PR #44 (056bd59).
+La descripción del PR lleva capturas, Impeccable, los `[P]` y «E2E specs added: 0»
+(la spec 1 suma la descarga de Exportar y el caso de privacidad de F44-1); total 1.
 
 ### T079
 

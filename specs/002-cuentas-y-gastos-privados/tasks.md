@@ -456,7 +456,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [x] T075 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con la spec 1 y su caso de descarga), como T059
   - Terminado cuando: las salidas son del mismo SHA y están en `evidence.md`.
 
-- [ ] T076 Descripción del PR C y **revisión humana**, como T060, con «E2E specs added: 0 (spec 1 gains the export download case); total 1»
+- [x] T076 Descripción del PR C y **revisión humana**, como T060, con «E2E specs added: 0 (spec 1 gains the export download case); total 1»
   - Cumple: plan, PR C, «Criterios de salida».
   - Terminado cuando: los fundadores aprobaron la revisión visual y los `[P]` del PR.
 
