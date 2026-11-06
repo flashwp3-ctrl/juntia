@@ -64,7 +64,7 @@ Enfoque técnico, con lo verificado en [research.md](research.md):
 
 **Constraints**: sin Docker en los equipos; importes nunca como `number`; ningún camino de persona usa `service_role`; nada privado en el HTML, el RSC ni el prefetch de Nosotros; 360–1440 px sin scroll horizontal; 44 px; movimiento reducido; texto al 200 %; todo el copy en `src/lib/copy/es.ts`; job `e2e` < 480 s.
 
-**Scale/Scope**: 2 personas y una pareja. 4 migraciones, 11 funciones de escritura, 1 de lectura con parámetros (`preview_invitation`), 9 vistas nuevas y 3 cambiadas, 1 ruta pública (`/invitacion`), Mi pareja real, Balance real y Anotar, Inicio y Actividad en Nosotros.
+**Scale/Scope**: 2 personas y una pareja. 4 migraciones, 11 funciones de escritura, 2 de lectura con parámetros (`preview_invitation`, `write_status`), 2 de la 002 redefinidas (`update_transaction`, `void_transaction`), 9 vistas nuevas y 3 cambiadas, 1 ruta pública (`/invitacion`), Mi pareja real, Balance real y Anotar, Inicio y Actividad en Nosotros.
 
 ## Constitution Check — comprobación de jerarquía
 
@@ -249,7 +249,11 @@ servidor de US-1, US-2, US-5, US-6, US-7 y US-8.
    `couple_members` y la lectura del perfil del otro integrante. **Ninguna tabla de
    dinero ni función que escriba.** pgTAP `01`, `03`, `05` y `10` (la parte sin
    funciones). Salida: ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas, sin recursión y
-   tercera cuenta sin filas.
+   tercera cuenta sin filas. **En este mismo commit**, `my_profile` pasa a filtrar
+   por `auth.uid()` (F49-1; [data-model.md](data-model.md) §3.5), porque es el
+   commit que amplía `profiles_read`; y las políticas de `update` de `groups` son
+   las tres definitivas, con `USING` y `WITH CHECK` separados (F49-5; data-model
+   §5).
 2. **Punto de control 2 — `shared_money_tables`**: cambios de `transactions`,
    `transaction_allocations`, `settlements`, `audit_events`, `idempotency_records`,
    triggers (transiciones de la pareja, partes que suman, solo parejas activas,
@@ -259,15 +263,21 @@ servidor de US-1, US-2, US-5, US-6, US-7 y US-8.
    `11` (la parte sin funciones). Salida: vistas de Yo sin compartidos, ninguna
    vista de pareja con datos privados, escritura directa imposible.
 3. **`couple_functions`** y **`shared_money_functions`**, con
-   `10_couple.test.sql` y `11_shared_money.test.sql` completos e integración.
+   `10_couple.test.sql` y `11_shared_money.test.sql` completos e integración. En
+   `shared_money_functions` se **redefinen `update_transaction` y
+   `void_transaction` de la 002** para limitarlas a privados propios (`group_id is
+   null and owner_user_id = current_uid()`), y se añade `row_count` a las seis
+   funciones de la 002 que escriben y a `ensure_profile` (F49-2; data-model §3.5).
+   Va en esta migración, la primera en la que existe una política de escritura de
+   grupo sobre `transactions`, y antes de cualquier commit que la use.
 
 **Pruebas por capa:**
 
 | Capa | Qué |
 | --- | --- |
 | Dominio | `splitAmount` con propiedades (suma exacta, pesos enteros, determinismo) y los casos de FR-019a; `nextSplitOnParticipantsChange` (55/45 → uno → dos = 55/45; 100/0 → uno → dos = 50/50); `computeBalance` contra `beforeSettlement` (+429.900 / −429.900) y `afterSettlement` (+229.900 / −229.900) y con la propiedad de suma cero; `settlementSuggestion`; `meMonthSummary` = 1.912.900 para Sara; estados de pareja |
-| SQL/RLS (pgTAP) | Privilegios efectivos con `juntia_membership` y el inventario sin funciones de extensiones (F40-2); cada tabla nueva con su RLS para Sara, Tomás y una tercera cuenta; las transiciones de `groups` (también para `juntia_writer`); índices de una pareja por persona y de dos integrantes; partes que suman (trigger diferido); cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella, cada validación y una política rota a propósito que hace fallar la función en vez de devolver éxito (R1) |
-| Integración | Las carreras de FR-064 con dos sesiones reales (las sondas del preflight, convertidas en pruebas); FR-012a: la respuesta se pierde, reintento con la misma clave, mismo resultado; lecturas consistentes (R4: un total no mezcla dos estados con una inserción concurrente) y `couple_balance` = `computeBalance`; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas; ningún importe es `number` en los tipos generados; HTML/RSC fuera de alcance (no hay pantallas) |
+| SQL/RLS (pgTAP) | Privilegios efectivos con `juntia_membership` (nadie lo hereda: `pg_has_role` `MEMBER` y `USAGE` falsos para `anon`, `authenticated` y `juntia_writer`, F49-6) y el inventario sin funciones de extensiones (F40-2); **compatibilidad con la 002** (data-model §3.5): con una pareja activa, las cuatro vistas de la 002 devuelven solo lo propio y privado, y `update_transaction`/`void_transaction` contra un gasto compartido fallan con `JT010` sin efectos; las tres políticas de `update` de `groups` (F49-5: la propietaria descarta su provisional, nadie descarta una activa); regenerar dos veces con la misma versión (F49-3); cada tabla nueva con su RLS para Sara, Tomás y una tercera cuenta; las transiciones de `groups` (también para `juntia_writer`); índices de una pareja por persona y de dos integrantes; partes que suman (trigger diferido); cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella, cada validación y una política rota a propósito que hace fallar la función en vez de devolver éxito (R1) |
+| Integración | Las carreras de FR-064 con dos sesiones reales (las sondas del preflight, convertidas en pruebas), más regenerar contra regenerar (F49-3); FR-012a: la respuesta se pierde, reintento con la misma clave, mismo resultado; `write_status` tras una respuesta perdida, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona (F49-4); las RPC antiguas de la 002 contra un gasto compartido, por la API, sin efectos (F49-2); `my_profile` y `couple_members` con dos cuentas emparejadas (F49-1); lecturas consistentes (R4: un total no mezcla dos estados con una inserción concurrente) y `couple_balance` = `computeBalance`; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas; ningún importe es `number` en los tipos generados; HTML/RSC fuera de alcance (no hay pantallas) |
 | E2E | Ninguna nueva; corren las specs 1 y 2 |
 
 **`[V]` que cierra:** ADR-013 [V] 1–7 sobre las tablas y funciones nuevas; ciclo

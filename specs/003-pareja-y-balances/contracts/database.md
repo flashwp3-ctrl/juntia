@@ -45,7 +45,7 @@ comunes (ADR-013):
 | Función de `public` | Parámetros | Devuelve | Bloquea | Errores propios |
 | --- | --- | --- | --- | --- |
 | `create_invitation` | `p_idempotency_key`, `p_email`, `p_token_hash` | `{group_id, invitation_id, expires_at}` | persona (quien invita) | `JT101`, `JT108`, `JT109` |
-| `regenerate_invitation` | `p_idempotency_key`, `p_group_id`, `p_expected_version`, `p_token_hash` | Ídem, con el `invitation_id` nuevo | persona, grupo | `JT102`, `JT103`, `JT011`, `JT109` |
+| `regenerate_invitation` | `p_idempotency_key`, `p_group_id`, `p_expected_version` (la `version` de `my_couple` que leyó M4), `p_token_hash` | Ídem, con el `invitation_id` nuevo y la `version` nueva (+1) | persona, grupo | `JT102`, `JT103`, `JT011`, `JT109` |
 | `cancel_invitation` | `p_idempotency_key`, `p_group_id`, `p_expected_version` | `{group_id, status: 'discarded'}` | persona, grupo | `JT102`, `JT103`, `JT011` |
 | `preview_invitation` | `p_token_hash` | `{inviter_display_name, expires_at}` o `JT104` | — (solo lectura, `stable`, `security definer` de `juntia_writer`: lee la invitación por la política «correo de quien llama», nunca por el hash solo) | `JT104` (igual para todos los motivos) |
 | `accept_invitation` | `p_idempotency_key`, `p_token_hash` | `{group_id, status: 'active'}` | persona (quien acepta), grupo | `JT101`, `JT104` |
@@ -75,6 +75,43 @@ visible es de 6 s (toast); los 60 s de servidor cubren la latencia y los
 reintentos sin dejar una puerta abierta indefinida. **Decisión del plan**
 (research R7).
 
+**Regenerar dos veces a la vez** (revisión del PR #49, F49-3): dos pestañas pulsan
+«Generar enlace nuevo» con claves distintas y la misma `p_expected_version`. La
+primera reemplaza la invitación y sube `groups.version`; la segunda espera al
+bloqueo del grupo, ve otra versión y falla con `JT011` **sin** reemplazar nada: el
+enlace válido es el de la primera. M4 relee `my_couple` y muestra que el enlace ya
+se regeneró.
+
+## Estado de una escritura (`write_status`)
+
+Para «Comprobar estado» tras un resultado `unknown` (revisión del PR #49, F49-4):
+
+| Función de `public` | Parámetros | Devuelve |
+| --- | --- | --- |
+| `write_status` | `p_action` (una de las acciones de `idempotency_records`), `p_idempotency_key` | `{state: 'completed', result}` o `{state: 'not_found'}` |
+
+- Es de **solo lectura** (`stable`, `security definer` de `juntia_writer`), y **no
+  ejecuta ni reintenta nada**.
+- Busca solo por `(actor_user_id = current_uid(), action, idempotency_key)`, con la
+  política de lectura de `juntia_writer` sobre `idempotency_records` (la de la 002,
+  `actor_user_id = auth.uid()`). Nadie puede consultar la clave de otra persona: da
+  `not_found`, igual que una clave que no existe.
+- `result` es **el mismo** `result` guardado que habría devuelto el reintento, ya
+  limitado a lo que esa persona puede ver (las funciones nunca guardan datos
+  privados del otro en `result`).
+- Nunca expone `idempotency_records`: ni la huella, ni las fechas, ni otras filas.
+- `pending` no se ve nunca: el registro pasa a `completed` en la misma transacción
+  que la escritura, así que una escritura en curso o revertida da `not_found`.
+  Entonces la interfaz dice que todavía no consta y que reintentar es seguro. El
+  reintento con la misma clave, si la primera sigue en curso, espera a su índice
+  único y devuelve su resultado.
+
+Prueba de integración: la escritura confirma, la respuesta se pierde (el cliente de
+prueba la descarta); `write_status` devuelve `completed` y el mismo `result`; se
+repite `write_status` y después el reintento con la misma clave: **una sola**
+escritura, ningún duplicado y ninguna fila nueva en `audit_events`. Con la clave de
+Sara, `write_status` desde la sesión de Tomás da `not_found`.
+
 ## Privilegios (pgTAP `01`)
 
 La prueba de privilegios efectivos de la 002 se amplía a:
@@ -85,6 +122,12 @@ La prueba de privilegios efectivos de la 002 se amplía a:
   las cuatro auxiliares; `nologin`, `nobypassrls`, no es dueño de ninguna tabla.
 - Las cuatro auxiliares: `security definer`, `search_path = ''`, devuelven
   `boolean`, `execute` solo para `authenticated` y `juntia_writer`.
+- **Nadie hereda `juntia_membership`** (revisión del PR #49, F49-6):
+  `pg_has_role(r, 'juntia_membership', 'MEMBER')` y `pg_has_role(r,
+  'juntia_membership', 'USAGE')` son **falsos** para `anon`, `authenticated` y
+  `juntia_writer` (lo mismo para `juntia_writer` como rol objetivo desde `anon` y
+  `authenticated`). `postgres` sí es miembro, porque lo necesita para `alter
+  function … owner to`, igual que con `juntia_writer` en la 002.
 - El inventario de funciones ejecutables por `public`, `anon` y `authenticated`
   sigue la lección F40-2 de la 002 y **excluye las funciones que pertenecen a una
   extensión** (`pg_depend` con `deptype = 'e'`), para que una versión nueva de

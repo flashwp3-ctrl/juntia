@@ -34,7 +34,7 @@ Todas son **tablas controladas** (ADR-013 §2; spec FR-001): RLS activada,
 | `owner_user_id` | `uuid not null` → `auth.users` | Inmutable. La propietaria |
 | `currency` | `text not null default 'COP'` | `check (currency = 'COP')`, inmutable (ADR-002) |
 | `time_zone` | `text not null default 'America/Bogota'` | `check (time_zone = 'America/Bogota')` en P0 |
-| `version` | `integer not null default 1` | Sube en cada cambio de estado |
+| `version` | `integer not null default 1` | Sube en cada cambio de estado **y en cada «Generar enlace nuevo»** (revisión del PR #49, F49-3). Es la `expectedVersion` que M4 envía al regenerar y al anular, leída de `my_couple.version` |
 | `created_at`, `activated_at`, `discarded_at` | `timestamptz` | `activated_at` no nulo ⇔ estado activa o posterior; `discarded_at` no nulo ⇔ descartada |
 
 **Transiciones** (un trigger rechaza cualquier otra, también para `juntia_writer`):
@@ -177,9 +177,48 @@ Assumptions; Q12).
 ### 3.4 `profiles`
 
 La lectura de `authenticated` pasa de «la propia» a «la propia **o** la del otro
-integrante de mi pareja activa» (`juntia_private.shares_couple_with(user_id)`),
-pero solo a través de la vista `couple_members`, que expone `display_name` y
-`join_order` y **nunca** el correo (CoupleStatus; spec «Visibilidad del otro»).
+integrante de mi pareja activa» (`juntia_private.shares_couple_with(user_id)`).
+Del otro integrante **solo** se obtienen `display_name`, `role` y `join_order`, y
+**solo** por la vista `couple_members`; nunca el correo, el tema ni
+`first_entry_completed` (CoupleStatus; spec «Visibilidad del otro»).
+
+**En el mismo commit** que amplía `profiles_read`, `my_profile` pasa a filtrar
+`where user_id = (select auth.uid())` explícitamente (revisión del PR #49, F49-1).
+Hoy la filtra solo la RLS: con la política ampliada devolvería también el perfil de
+la pareja, con su tema y su primera entrada.
+
+### 3.5 Inventario de compatibilidad con la 002 (revisión del PR #49, F49-1 y F49-2)
+
+La rama de grupo de la RLS cambia lo que «ve» cualquier consulta que confíe solo
+en ella. Este es el inventario **completo** de lo que la 002 tiene en `main`
+(`d2e1c64`) y lo que el PR A le hace, en el mismo commit que amplía cada política.
+
+**Vistas que hoy filtran solo por la RLS** (las cuatro de la 002):
+
+| Vista | Riesgo con la RLS ampliada | Cambio en el PR A |
+| --- | --- | --- |
+| `my_profile` | Devolvería el perfil de la pareja (tema, primera entrada) | `where user_id = (select auth.uid())` |
+| `my_transactions` | Devolvería los gastos compartidos como si fueran privados (R2, demostrado en el preflight) | `where owner_user_id = (select auth.uid()) and group_id is null` |
+| `my_transaction_months` | Contaría meses con solo compartidos | Ídem |
+| `my_recent_categories` | Mezclaría las categorías de lo compartido en E1 de Yo | Ídem |
+
+**Funciones de la 002 que escriben** (las seis, más `ensure_profile`):
+
+| Función | Riesgo | Cambio en el PR A |
+| --- | --- | --- |
+| `update_transaction` | Busca solo por `id` (`money_functions.sql`, l. 90): con la rama de grupo podría editar un gasto compartido sin partes ni bloqueo del grupo | La búsqueda exige `group_id is null and owner_user_id = juntia_private.current_uid()`; si no, `JT010`. Comprueba `row_count` = 1 en el `update` del movimiento y en el de `idempotency_records` |
+| `void_transaction` | Ídem (l. 127): podría anular un compartido saltándose `void_shared_expense` | Ídem |
+| `create_transaction` | Sin riesgo de grupo (inserta privado propio) | `row_count` = 1 al completar `idempotency_records` |
+| `complete_first_entry`, `update_display_name`, `set_theme` | Ya filtran `where user_id = uid`; la política de escritura de `profiles` no cambia | `row_count` = 1 en su `update` (no-op silencioso, R1) |
+| `ensure_profile` | `insert … on conflict do nothing` y `select … into` | Falla si el `select` final no encuentra el perfil, en vez de devolver `null` |
+
+Pruebas (pgTAP e integración): con Sara y Tomás emparejados, `my_profile` de cada
+uno devuelve solo su perfil y `couple_members` solo los tres campos del otro;
+`update_transaction` y `void_transaction` contra un gasto compartido —por la
+función de entrada y por SQL directo, con la cuenta de cada integrante— fallan con
+`JT010` y el gasto, sus partes, su versión y la auditoría quedan iguales; y cada
+una de las siete funciones, con una política rota a propósito, falla en vez de
+devolver éxito.
 
 ## 4. Auxiliares de membresía (`juntia_private`, dueño `juntia_membership`)
 
@@ -203,12 +242,31 @@ entrar sin verificar (`enable_confirmations = true`, 002).
 
 | Tabla | `authenticated` (select) | `juntia_writer` |
 | --- | --- | --- |
-| `groups` | `is_group_member(id)` | select y update: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'` |
+| `groups` | `is_group_member(id)` | select: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'`; update: las tres políticas de la tabla siguiente |
 | `group_members` | `is_group_member(group_id)` | select: propia o `is_group_member`; insert y update: solo la fila propia |
 | `group_invitations` | `is_group_member(group_id)` (la propietaria ve la suya; **nunca** el hash fuera de las funciones: la vista no lo expone) | select y update: `is_group_member(group_id) or email = current_email()`; insert: `created_by = current_uid() and is_group_member(group_id)` |
 | `transactions` | `owner_user_id = auth.uid() or (group_id is not null and is_couple_member(group_id))` | Ídem para select; insert y update por rama: privada propia o de grupo con `is_couple_member` |
 | `transaction_allocations` | Existe el movimiento visible (subconsulta sobre `transactions`, que aplica su RLS) | Ídem; insert y delete solo por las funciones de gasto compartido |
 | `settlements` | `is_couple_member(group_id)` | select, insert y update de estado: `is_couple_member(group_id)` |
+
+**`update` de `groups` para `juntia_writer`, con `USING` y `WITH CHECK` separados**
+(revisión del PR #49, F49-5). Postgres exige que la fila pase el `USING` antes del
+cambio y el `WITH CHECK` después; también un `select … for update` exige el
+`USING`. El trigger de transiciones de §2.1 sigue siendo la última barrera.
+
+| Política | `USING` (fila antes) | `WITH CHECK` (fila después) | Para |
+| --- | --- | --- | --- |
+| `groups_owner_provisional` | `status = 'provisional' and owner_user_id = current_uid()` | `owner_user_id = current_uid() and status in ('provisional','discarded')` | Regenerar (sube `version`) y **anular: provisional → discarded**. No sirve para una pareja activa: su `USING` exige `provisional` |
+| `groups_accept` | `status = 'provisional' and is_invited_to(id)` | `status = 'active' and is_group_member(id)` | Aceptar. La función **inserta primero** la membresía de quien acepta (para que `is_group_member` sea verdadero), **después** activa el grupo y **al final** marca la invitación como aceptada (mientras sigue pendiente, `is_invited_to` es verdadero) |
+| `groups_couple_lock` | `status = 'active' and is_couple_member(id)` | `status = 'active' and is_couple_member(id)` | El `select … for update` de la raíz en las operaciones de dinero. **Nunca** permite salir de `active` |
+
+Así ningún camino descarta una pareja activa: ni la política (ninguna con `USING`
+sobre `active` admite otro estado en el `WITH CHECK`) ni el trigger. Las pruebas
+de anular, aceptar y regenerar corren **estas** políticas, no las simplificadas del
+spike (`with check (true)`, research R1): la propietaria descarta su provisional;
+ni ella ni el integrante pueden descartar ni pasar a provisional una activa (por la
+función ni con `set local role juntia_writer` y `update` directo); quien no está
+invitado no puede activar.
 
 El spike R1 demostró que esta combinación no tiene recursión y que una tercera
 cuenta no ve nada.
@@ -218,8 +276,9 @@ cuenta no ve nada.
 Importes siempre como `text` (ADR-013 §4). Contrato en
 [contracts/database.md](contracts/database.md).
 
-**Cambio obligatorio en las vistas de la 002 (research R2):** `my_transactions`,
-`my_transaction_months` y `my_recent_categories` filtran ahora **explícitamente**
+**Cambio obligatorio en las vistas de la 002 (research R2; §3.5):** `my_profile`
+filtra ahora `user_id = auth.uid()`, y `my_transactions`,
+`my_transaction_months` y `my_recent_categories` filtran **explícitamente**
 `owner_user_id = auth.uid() and group_id is null`. Hoy dependen solo de la RLS, y
 el spike demostró que con la rama de grupo de la RLS empezarían a devolver los
 gastos compartidos. Es la lección F44-1 aplicada a las vistas.

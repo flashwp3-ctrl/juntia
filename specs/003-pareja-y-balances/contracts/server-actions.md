@@ -15,9 +15,13 @@ Toda Server Action de escritura devuelve uno de tres resultados, y la interfaz
 | `rejected` (con su error de dominio) | La función respondió con un `JTnnn` | Puede decir «no se guardó / no se movió / no se registró». Los campos siguen editables (salvo que el error diga lo contrario) |
 | `unknown` | Error de red, tiempo agotado, respuesta perdida, 5xx sin `JTnnn` o reintentos de `40P01`/`40001` agotados | **Nunca** afirma que no se escribió. Conserva la clave, bloquea los campos, ofrece «Reintentar» (misma clave, misma carga) y «Comprobar estado». Cerrar pregunta «¿Cerrar sin confirmar?» |
 
-«Comprobar estado» relee la entidad afectada (el privado sigue activo o ya hay un
-compartido que apunta a él; el gasto existe con esa clave; la liquidación existe)
-y lleva al resultado real. Reintentar con la misma clave es siempre seguro por la
+«Comprobar estado» llama a `write_status(acción, clave)`
+([contracts/database.md](database.md), «Estado de una escritura»; revisión del PR
+#49, F49-4). Es una lectura protegida por (actor, acción, clave), que **no
+reejecuta nada** y devuelve solo `completed` con el resultado autorizado o
+`not_found`. Con `completed` la interfaz lleva al resultado real (E5, A4, el
+saldo nuevo); con `not_found` dice que todavía no consta y que reintentar es
+seguro. Reintentar con la misma clave es siempre seguro por la
 idempotencia; si el primer intento sí llegó, el reintento devuelve el mismo
 resultado.
 
@@ -57,7 +61,10 @@ resultado.
    menos de 7 días, la app lleva a `/invitacion`. Si no existe, la persona abre
    otra vez el enlace (spec, caso límite «Verificación de correo desde otro
    dispositivo»).
-6. La entrada se borra al aceptar, al ver M7, con «Ahora no» y al cerrar sesión.
+6. La entrada se borra al aceptar, al ver M7, con «Ahora no», al cerrar sesión y
+   **cuando su `savedAt` tiene 7 días o más**: se comprueba cada vez que se lee, y
+   una entrada vencida se borra sin abrir `/invitacion` (revisión del PR #49,
+   F49-7).
 
 ## 4. Contexto Yo/Nosotros en el servidor (FR-037 a FR-040)
 
