@@ -32,6 +32,12 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Invitación | `group_invitations` | §7.3 | «Invitación» · badges PENDIENTE / NO VÁLIDA | 7 días, **un solo uso**, token guardado como hash, una activa por pareja, asociada a un correo verificado (§15.5). |
 | Perfil | `profiles` | §7.3 | «Mi cuenta» · `ProfileHeader` | Nombre visible editable; correo visible y **no** editable; avatar con inicial, sin foto (§15.5). |
 | Resumen histórico de exintegrante | `member_history_snapshots` | §7.3, ADR-003 | — | Propiedad del exintegrante; **sin datos de terceros**. No da acceso a los registros activos del grupo. |
+| Rol de lectura de membresía | `juntia_membership` | ADR-013 §5.1, nota; 003 data-model §1 | — | Sin LOGIN, BYPASSRLS, escritura ni herencia por los roles de la app; dueño de las cuatro auxiliares booleanas. |
+| Pareja provisional | `provisional` | 003 FR-010 | «PENDIENTE» | Solo la propietaria; nunca admite dinero compartido. |
+| Pareja activa | `active` | 003 FR-010 | «ACTIVA» | Dos integrantes, sin salida en P0. Solo una aceptación válida la activa. |
+| Pareja descartada | `discarded` | 003 FR-010a | «Sin pareja» | Final; anular la invitación libera a la propietaria atómicamente. |
+| Orden de ingreso | `join_order` | ADR-002, nota 20.8; 003 data-model §2.2 | — | Decide color y desempate; 1 propietaria, 2 integrante. |
+| Estado de escritura | `write_status` | 003 contracts/database.md | «Comprobar estado» | Solo actor, acción y clave propios; lee sin repetir ninguna escritura. |
 
 ---
 
@@ -47,7 +53,7 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Origen y destino de una liquidación | `from_user_id` / `to_user_id` | §7.3 | «Tomás → Sara» | Aplica solo a liquidaciones. |
 | Fecha del movimiento | `transaction_date` | §5.2 | «hoy», «12 oct» | Define el mes presupuestal. `created_at`/`updated_at` son auditoría, no periodo. |
 | Anulación | estado `voided` | §5.4; spec 002, FR-013 y data-model §8 | — | Excluye el movimiento de los agregados **conservando** su rastro de auditoría. No es borrado. |
-| Reclasificar privado → compartido | `reclassifyToShared()` **[propuesta]** | El flujo está en §15.5, handoff y ADR-001; la función no está nombrada | «Mover a Pareja» | Una transacción **atómica e idempotente** anula el privado y crea el compartido. **Nunca hay dos gastos activos.** Deshacer solo inmediato y solo si el servidor confirma que no hay dependencias. No existe «mover a Yo» general en P0. |
+| Reclasificar privado → compartido | `reclassifyToShared()` | ADR-001; spec 003, plan PR A: nombre aprobado por este slice | «Mover a Pareja» | Una transacción **atómica e idempotente** anula el privado y crea el compartido. **Nunca hay dos gastos activos.** Deshacer solo inmediato y solo si el servidor confirma que no hay dependencias. No existe «mover a Yo» general en P0. |
 
 ---
 
@@ -56,6 +62,8 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Término (español) | Identificador | Fuente | String de interfaz | Precisión |
 | --- | --- | --- | --- | --- |
 | Reparto | `transaction_allocations` · `domain/allocations` | §7.2, §7.3 | «50/50» · «Porcentaje» · «Importe» | La suma de las partes es **exactamente** el importe del gasto. **Nunca se asume 50/50** (handoff). |
+| Modo de reparto | `split_mode` | 003 data-model §3.1 | «50/50» · «Porcentaje» · «Importe» | `equal`, `percent`, `amount`; las partes guardadas son la verdad del dinero. |
+| Liquidaciones registradas | `settlements` | 003 data-model §2.5; ADR-007, enmienda | «Liquidaciones» | Tabla propia; anular no edita ni borra el pago declarado y no altera el consumo. |
 | Porcentaje personalizado | — (modo de reparto) | §15.5, handoff | «Porcentaje 55/45» | Es un reparto porcentual **configurable**; **no** significa proporcional a ingresos (handoff, §Terminología; BRAND §4). |
 | Parte que le corresponde | parte de `transaction_allocations` | §5.1 «partes asignadas» | «le corresponde $1.500.000» | Es lo distinto de «pagó». Separarlos es la razón de ser de `SharedBalance`. |
 | Total pagado | `gross_paid` | §5.1 | «pagó $186.500» | Refleja pagos, **no consumo**: no altera presupuesto. |

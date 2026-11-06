@@ -47,13 +47,28 @@ export function monthSummary(rows: readonly Transaction[], month: string) {
   }
   return { expenseTotal: money(expense), incomeTotal: money(income), byCategory };
 }
-export function groupByDay(rows: readonly Transaction[]) {
-  const groups = new Map<string, Transaction[]>();
-  for (const row of rows.filter(({ status }) => status === "active").sort((a, b) => b.transactionDate.localeCompare(a.transactionDate) || b.createdAt.localeCompare(a.createdAt))) {
-    const group = groups.get(row.transactionDate) ?? [];
-    group.push(row); groups.set(row.transactionDate, group);
+export type DatedMovement = Readonly<{ id: string; status: TransactionStatus; createdAt: string }> & (Readonly<{ transactionDate: string }> | Readonly<{ settlementDate: string }>);
+export function groupByDay<T extends DatedMovement>(rows: readonly T[]) {
+  const dateOf = (row: DatedMovement) => "transactionDate" in row ? row.transactionDate : row.settlementDate;
+  const groups = new Map<string, T[]>();
+  for (const row of rows.filter(({ status }) => status === "active").sort((a, b) => dateOf(b).localeCompare(dateOf(a)) || b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))) {
+    const date = dateOf(row);
+    const group = groups.get(date) ?? [];
+    group.push(row); groups.set(date, group);
   }
   return [...groups].map(([date, transactions]) => ({ date, transactions }));
+}
+/** FR-045: partes compartidas y privados son conjuntos disjuntos; nunca sumar Yo + Nosotros. */
+export function meMonthSummary(privateRows: readonly Transaction[], sharedRows: readonly (Transaction & Readonly<{ myPart: Money }>)[], month: string) {
+  const summary = monthSummary(privateRows, month);
+  let shared = 0n;
+  const byCategory = { ...summary.byCategory };
+  for (const row of sharedRows) {
+    if (row.status !== "active" || row.type !== "expense" || monthKey(row.transactionDate) !== month) continue;
+    shared += row.myPart.amountMinor;
+    byCategory[row.categoryId] = money((byCategory[row.categoryId]?.amountMinor ?? 0n) + row.myPart.amountMinor);
+  }
+  return { privateTotal: summary.expenseTotal, sharedPartTotal: money(shared), gasto_consumo: money(summary.expenseTotal.amountMinor + shared), byCategory };
 }
 export function fillRecentCategories(recent: readonly CategoryId[]): CategoryId[] {
   return [...new Set([...recent, ...CATEGORY_CATALOG.map(({ id }) => id)])].filter((id) => id !== "income").slice(0, 5);
