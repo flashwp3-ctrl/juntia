@@ -69,8 +69,8 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 con «Invit
     await expect(page.getByRole("heading", { level: 1, name: copy.auth.firstEntry.greeting("Sara Nueva") })).toBeVisible();
     await expect(page.getByText(copy.auth.firstEntry.noBudget)).toBeVisible();
     // PR B (T034, FR-016): A6 recupera «Invitar a mi pareja» de 04·17; «Empezar por mi cuenta» sigue elegida.
-    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.inviteTitle) })).toHaveAttribute("aria-checked", "false");
-    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.startTitle) })).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.inviteTitle) })).not.toBeChecked();
+    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.startTitle) })).toBeChecked();
     await page.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { level: 1, name: copy.home.greeting("Sara Nueva") })).toBeVisible();

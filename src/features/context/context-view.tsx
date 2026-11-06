@@ -11,8 +11,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import { useContextChoice } from "@/components/shell/context-selector";
-import { UnavailableState } from "@/components/shell/provisional-state";
-import { copy } from "@/lib/copy/es";
+import { UsUnavailable } from "./us-unavailable";
 import { writeContextCookie, type ContextChoice } from "@/lib/context-preference";
 
 type ContextViewProps = { me: ReactNode; server: ContextChoice | null; pending?: ReactNode; us?: ReactNode };
@@ -27,7 +26,7 @@ export function ContextView({ me, server, pending = null, us }: ContextViewProps
     writeContextCookie(value);
     router.refresh();
   }, [hydrated, value, server, router]);
-  const unavailable = us ?? <UnavailableState icon="users-three" title={copy.us.title} description={copy.us.description} />;
+  const unavailable = us ?? <UsUnavailable />;
   if (!hydrated) {
     if (server === "us") return <div key="us">{unavailable}</div>;
     return (
