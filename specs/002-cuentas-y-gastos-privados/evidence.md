@@ -1768,7 +1768,7 @@ con controles en `tests/integration/export.test.ts`.
 `transaction_date`: el año 0000 no es una fecha válida para la función SQL ni para
 `validateDraft`); `clampMonth` lleva un mes al intervalo navegable y `monthNavigation` ya
 no da flechas fuera de él. Actividad y el detalle redirigen un `?mes=` fuera del intervalo
-al límite más cercano. Rojo: [`f44-4-domain-red.txt`](evidence/pr-c/f44-4-domain-red.txt)
+al límite más cercano. Por eso el primer gate de 056bd59 falló en axe: la entrada «Actividad mes vacío» pedía septiembre de 2026, fuera del intervalo de la cuenta sembrada (octubre y el mes en curso), y la página redirigía a octubre en mitad de la auditoría; la entrada pasa a ser el mes en curso, vacío y navegable. Rojo: [`f44-4-domain-red.txt`](evidence/pr-c/f44-4-domain-red.txt)
 (`isSupportedMonth is not a function`); verde: 32 pruebas de dominio.
 
 **Formato de importes.** `formatMoney` quita el espacio que `Intl` pone en es-CO:

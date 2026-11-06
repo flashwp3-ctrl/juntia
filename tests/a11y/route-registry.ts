@@ -52,7 +52,8 @@ export const registry: readonly RouteEntry[] = [
   { route: "/", state: "Inicio vacío", path: "/", session: "user" },
   { route: "/", state: "Nosotros", path: "/", session: "user", data: "current", prepare: "us" },
   { route: "/actividad", state: "Actividad con datos", path: "/actividad?mes=2026-10", session: "user", data: "golden" },
-  { route: "/actividad", state: "Actividad mes vacío", path: "/actividad?mes=2026-09", session: "user", data: "golden" },
+  // Mes vacío dentro del intervalo navegable (F44-4): el mes en curso, sin movimientos, con la flecha hacia octubre.
+  { route: "/actividad", state: "Actividad mes vacío", path: "/actividad", session: "user", data: "golden" },
   { route: "/actividad", state: "Actividad mes futuro", path: "/actividad?mes={future}", session: "user", data: "future" },
   { route: "/actividad", state: "Actividad búsqueda", path: "/actividad?mes=2026-10", session: "user", data: "golden", prepare: "search" },
   { route: "/actividad", state: "Actividad filtros", path: "/actividad?mes=2026-10", session: "user", data: "golden", prepare: "filters" },
