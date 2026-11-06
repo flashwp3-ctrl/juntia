@@ -385,75 +385,75 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 3A — tests primero
 
-- [ ] T061 [P] [US6] Ampliar el test de **dominio** de T009: `monthBounds` con movimientos futuros (llega al más lejano y no más, Q13); `groupByDay`; búsqueda sin distinguir tildes ni mayúsculas
+- [x] T061 [P] [US6] Ampliar el test de **dominio** de T009: `monthBounds` con movimientos futuros (llega al más lejano y no más, Q13); `groupByDay`; búsqueda sin distinguir tildes ni mayúsculas
   - Cumple: FR-046, FR-047; US-6.2–6.4.
   - Terminado cuando: se vio fallar y pasa.
 
-- [ ] T062 [P] [US5] Test de **componentes** en `src/features/home/home.test.tsx`: con las filas del dataset dorado, Inicio muestra **412.900** y el desglose de la tabla (SC-008); no aparece «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras de límite; vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra. Y en `src/features/activity/activity.test.tsx`: con las mismas filas, el **resumen del mes de Actividad** de octubre de 2026 muestra **412.900** y el desglose por categoría de la tabla (SC-008)
+- [x] T062 [P] [US5] Test de **componentes** en `src/features/home/home.test.tsx`: con las filas del dataset dorado, Inicio muestra **412.900** y el desglose de la tabla (SC-008); no aparece «presupuesto», «restante», «excedido», «Tu parte compartida» ni barras de límite; vacío sin «$0»; error con Reintentar; Nosotros sin ninguna cifra. Y en `src/features/activity/activity.test.tsx`: con las mismas filas, el **resumen del mes de Actividad** de octubre de 2026 muestra **412.900** y el desglose por categoría de la tabla (SC-008)
   - Cumple: FR-040, FR-041, FR-042, FR-043, FR-046; US-5.1–5.4, US-5.6, US-6.1; SC-008.
   - Terminado cuando: se vio fallar.
 
-- [ ] T063 [P] [US8] Test de **integración de servidor** en `tests/integration/export.test.ts`, para `format=json` y `format=csv`: en **JSON**, la estructura de [contracts/database.md](contracts/database.md) («Exportación»: `exported_at`, `currency`, `note`, `transactions[]` con sus campos), `amount_minor` como **string** y ningún campo interno (`id`, `version`, `owner_user_id`, `created_by`, `status`); en los dos, solo movimientos activos propios, importes como texto, sin tokens ni identificadores ni anulados; CSV RFC 4180 con BOM y `'` delante de `= + - @`; Tomás nunca recibe filas de Sara; sin sesión, 401; formato no válido, 400 (ADR-011 §2, fila 2)
+- [x] T063 [P] [US8] Test de **integración de servidor** en `tests/integration/export.test.ts`, para `format=json` y `format=csv`: en **JSON**, la estructura de [contracts/database.md](contracts/database.md) («Exportación»: `exported_at`, `currency`, `note`, `transactions[]` con sus campos), `amount_minor` como **string** y ningún campo interno (`id`, `version`, `owner_user_id`, `created_by`, `status`); en los dos, solo movimientos activos propios, importes como texto, sin tokens ni identificadores ni anulados; CSV RFC 4180 con BOM y `'` delante de `= + - @`; Tomás nunca recibe filas de Sara; sin sesión, 401; formato no válido, 400 (ADR-011 §2, fila 2)
   - Cumple: FR-057; US-8.2.
   - Terminado cuando: se vio fallar en el job `db`.
 
-- [ ] T064 [P] [US3] Test de **componentes** en `src/components/ui/expense-row.test.tsx`: la fila de ingreso lleva «+», ficha arena, ícono `arrow-down-left` y tinta, no verde; la de gasto, tinta sin signo; nombre accesible completo; la fila es un enlace al detalle (ADR-011 §2, fila 5)
+- [x] T064 [P] [US3] Test de **componentes** en `src/components/ui/expense-row.test.tsx`: la fila de ingreso lleva «+», ficha arena, ícono `arrow-down-left` y tinta, no verde; la de gasto, tinta sin signo; nombre accesible completo; la fila es un enlace al detalle (ADR-011 §2, fila 5)
   - Cumple: US-3.2; propuesta §15.9 «en tinta» (presentación; se aprueba viendo la pantalla).
   - Terminado cuando: se vio fallar.
 
 ### Grupo 3B — implementación (en serie)
 
-- [ ] T065 Crear `src/components/ui/expense-row.tsx` según `COMPONENT_SPECIFICATIONS.md` §ExpenseRow (variantes gasto e ingreso; estado «nueva» con el resaltado que usará E5 en el PR D)
+- [x] T065 Crear `src/components/ui/expense-row.tsx` según `COMPONENT_SPECIFICATIONS.md` §ExpenseRow (variantes gasto e ingreso; estado «nueva» con el resaltado que usará E5 en el PR D)
   - Claude Design: `02 Componentes`, 02·1.
   - Cumple: US-3.2, US-6.1.
   - Terminado cuando: T064 pasa.
 
-- [ ] T066 [US5] Inicio en `src/features/home/` y `src/app/(app)/page.tsx`: gasto del mes, desglose por categoría y últimos movimientos con ExpenseRow (04·1 INICIO · YO sin bloques compartidos), escritorio de 04·7 sin módulos compartidos, `src/app/(app)/loading.tsx` con el Skeleton de la geometría final; Nosotros «todavía no disponible» en Inicio, Actividad, Metas, Plan y Balance; retirar el aviso de versión base de la 001
+- [x] T066 [US5] Inicio en `src/features/home/` y `src/app/(app)/page.tsx`: gasto del mes, desglose por categoría y últimos movimientos con ExpenseRow (04·1 INICIO · YO sin bloques compartidos), escritorio de 04·7 sin módulos compartidos, `src/app/(app)/loading.tsx` con el Skeleton de la geometría final; Nosotros «todavía no disponible» en Inicio, Actividad, Metas, Plan y Balance; retirar el aviso de versión base de la 001
   - Claude Design: `04 Pantallas`, 04·1, 04·6 y 04·7.
   - Cumple: FR-040–FR-045 (pantallas nuevas de Q5, se aprueban viendo la pantalla); US-5.
   - Terminado cuando: T062 pasa y, con el dataset sembrado por T049 a través de `create_transaction`, Inicio de octubre de 2026 muestra 412.900.
 
-- [ ] T067 [US6] Actividad en `src/features/activity/` y `src/app/(app)/actividad/page.tsx`: `?mes=AAAA-MM`, resumen del mes, flechas con los límites de `monthBounds`, lista por día con ExpenseRow, búsqueda y filtros de tipo y categoría en cliente, tabla de 1440 sin «Pagó·Reparto», vacío con texto privado y error
+- [x] T067 [US6] Actividad en `src/features/activity/` y `src/app/(app)/actividad/page.tsx`: `?mes=AAAA-MM`, resumen del mes, flechas con los límites de `monthBounds`, lista por día con ExpenseRow, búsqueda y filtros de tipo y categoría en cliente, tabla de 1440 sin «Pagó·Reparto», vacío con texto privado y error
   - Claude Design: `04 Pantallas`, 04·1 (ACTIVIDAD), 04·6 y 04·7.
   - Cumple: FR-046–FR-049 (flechas de Q8, se aprueban viendo la pantalla); US-6.
   - Terminado cuando: T061 pasa y la ruta está en el registro de T051.
 
-- [ ] T068 [US4] [US6] Detalle **de solo lectura** del movimiento en `src/app/(app)/actividad/[id]/page.tsx` y `src/app/(app)/actividad/layout.tsx`: en ≥ 1024, panel de 04·7 junto a la tabla; en móvil, solo el detalle; se llega desde la fila de Actividad y de Inicio. Sin «Editar» ni «Eliminar» todavía (entran en el PR D, T082). Un movimiento ajeno o inexistente da el estado de `JT010`
+- [x] T068 [US4] [US6] Detalle **de solo lectura** del movimiento en `src/app/(app)/actividad/[id]/page.tsx` y `src/app/(app)/actividad/layout.tsx`: en ≥ 1024, panel de 04·7 junto a la tabla; en móvil, solo el detalle; se llega desde la fila de Actividad y de Inicio. Sin «Editar» ni «Eliminar» todavía (entran en el PR D, T082). Un movimiento ajeno o inexistente da el estado de `JT010`
   - Claude Design: `04 Pantallas`, 04·1 (DETALLE) y 04·7.
   - Cumple: FR-037 (parte de lectura); US-4.1 (entrada al detalle).
   - Terminado cuando: el detalle abre desde las dos listas y la ruta está en el registro de T051.
 
-- [ ] T069 [US8] Exportación: `src/app/api/export/route.ts` y `src/lib/db/export.ts` según [contracts/database.md](contracts/database.md), «Exportación»; Exportar D2–D5 en `privacidad` con `fetch`, D3, D4 con Descargar y D5 si la respuesta no es 200; la aclaración de que no restaura
+- [x] T069 [US8] Exportación: `src/app/api/export/route.ts` y `src/lib/db/export.ts` según [contracts/database.md](contracts/database.md), «Exportación»; Exportar D2–D5 en `privacidad` con `fetch`, D3, D4 con Descargar y D5 si la respuesta no es 200; la aclaración de que no restaura
   - Claude Design: `04 Pantallas`, 04·16 (D2–D5).
   - Cumple: FR-057; US-8.1, US-8.3.
   - Terminado cuando: T063 pasa.
 
-- [ ] T070 [US8] Añadir a la **spec E2E 1** (`tests/e2e/access-account.e2e.ts`) el caso de **descarga de Exportar**: el archivo llega (evento de descarga, nombre y tamaño), **sin abrir su contenido** (ADR-011 §3, matriz)
+- [x] T070 [US8] Añadir a la **spec E2E 1** (`tests/e2e/access-account.e2e.ts`) el caso de **descarga de Exportar**: el archivo llega (evento de descarga, nombre y tamaño), **sin abrir su contenido** (ADR-011 §3, matriz)
   - Cumple: FR-065; `docs/TESTING.md`, «Matriz de recorridos».
   - Terminado cuando: pasa en el job `e2e`.
 
-- [ ] T071 Añadir al registro de T051 Inicio (Yo y Nosotros), Actividad (mes con datos, vacío y futuro), el detalle a 390 y 1440 y Exportar, con sesión, en los dos temas
+- [x] T071 Añadir al registro de T051 Inicio (Yo y Nosotros), Actividad (mes con datos, vacío y futuro), el detalle a 390 y 1440 y Exportar, con sesión, en los dos temas
   - Cumple: FR-067; SC-002.
   - Terminado cuando: la prueba de cobertura pasa y axe no tiene violaciones serias o críticas en todas las rutas implementadas.
 
 ### Grupo 3C — `[V]` del PR C
 
-- [ ] T072 `[V]` CLS = 0 con el Skeleton en Inicio y Actividad (arnés de `evidence-plan/`, con tema guardado); sin scroll horizontal a 360, 390, 430, 768, 1024, 1280 y 1440 en los dos temas en todas las rutas nuevas; objetivos táctiles ≥ 44 px a 390 y 1440; texto al 200 % sin pérdida
+- [x] T072 `[V]` CLS = 0 con el Skeleton en Inicio y Actividad (arnés de `evidence-plan/`, con tema guardado); sin scroll horizontal a 360, 390, 430, 768, 1024, 1280 y 1440 en los dos temas en todas las rutas nuevas; objetivos táctiles ≥ 44 px a 390 y 1440; texto al 200 % sin pérdida
   - Cumple: SC-001, SC-005; FR-061; maestro §15.7.
   - Terminado cuando: la salida por ruta, ancho y tema está en `evidence.md`, o el umbral que no se cumple con su número real.
 
 ### Grupo 3D — salida del PR C
 
-- [ ] T073 Capturas a **390 y 1440 px en claro y oscuro**: Inicio con datos, vacío, cargando y error; Nosotros; Actividad con datos, mes vacío, mes futuro, búsqueda y filtros; tabla y panel de detalle a 1440 y detalle a 390; Exportar D2–D5
+- [x] T073 Capturas a **390 y 1440 px en claro y oscuro**: Inicio con datos, vacío, cargando y error; Nosotros; Actividad con datos, mes vacío, mes futuro, búsqueda y filtros; tabla y panel de detalle a 1440 y detalle a 390; Exportar D2–D5
   - **Para aprobar viendo la pantalla**: «Gasto, ingreso y liquidación en tinta» (filas de Inicio y Actividad); Inicio sin pareja y sus estados (Q5); Nosotros «todavía no disponible» (Q5); las flechas de mes (Q8).
   - Cumple: SC-001 (C).
   - **Pasada manual a los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas: sin scroll horizontal ni solapamientos, con el resultado por ruta, ancho y tema en `evidence.md`. Las capturas siguen siendo a 390 y 1440.
   - Terminado cuando: la pasada está registrada y las capturas están en `evidence/`.
 
-- [ ] T074 **Pasada fija de Impeccable** sobre las pantallas del PR C, como T058
+- [x] T074 **Pasada fija de Impeccable** sobre las pantallas del PR C, como T058
   - Terminado cuando: la salida y lo corregido están en `evidence.md`.
 
-- [ ] T075 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con la spec 1 y su caso de descarga), como T059
+- [x] T075 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con la spec 1 y su caso de descarga), como T059
   - Terminado cuando: las salidas son del mismo SHA y están en `evidence.md`.
 
 - [ ] T076 Descripción del PR C y **revisión humana**, como T060, con «E2E specs added: 0 (spec 1 gains the export download case); total 1»

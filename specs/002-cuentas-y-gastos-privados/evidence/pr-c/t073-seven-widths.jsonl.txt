@@ -1,0 +1,224 @@
+{"route":"/","state":"Inicio con datos","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio con datos","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Inicio vacío","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Nosotros","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad con datos","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes vacío","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad mes futuro","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad búsqueda","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad filtros","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad","state":"Actividad Nosotros","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle no encontrado","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/metas","state":"Metas Nosotros","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D3 · preparando","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D4 · listo","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/cuenta/privacidad","state":"D5 · error","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}

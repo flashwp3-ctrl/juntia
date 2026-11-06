@@ -1589,29 +1589,150 @@ estado de sesión caducada y «Cuenta reutiliza los fondos de categoría» (prop
 pantallas ese día (confirmado por Alejandro al gestor). La descripción del PR la publica
 el gestor.
 
+### PR C · T061–T070 (tests primero e implementación)
+
+Rama `feat/002-c-home`, PR #44. Salidas literales en
+[`evidence/pr-c/`](evidence/pr-c/). Los tests se vieron fallar antes que el código
+(`docs/TESTING.md` §6), en el commit 9b28809 (más 4550000, que solo cambia un `let`
+por `const` del test de exportación):
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T061 dominio (flechas, búsqueda, días) | [`t061-domain-red.txt`](evidence/pr-c/t061-domain-red.txt): `monthNavigation` y `filterTransactions` no existen | [`t061-domain-green.txt`](evidence/pr-c/t061-domain-green.txt): 31 pruebas de dominio |
+| T062, T064 componentes (Inicio, Actividad, ExpenseRow) | [`t062-t064-components-red.txt`](evidence/pr-c/t062-t064-components-red.txt): módulos inexistentes | [`t062-t064-components-green.txt`](evidence/pr-c/t062-t064-components-green.txt): 12 pruebas, entre ellas **412.900** y el desglose literal en Inicio y en Actividad (SC-008) |
+| T063 integración (`export.test.ts`) | [`t063-integration-red.txt`](evidence/pr-c/t063-integration-red.txt): job `db` del run [42133717139](https://github.com/flashwp3-ctrl/juntia/actions/runs/42133717139), sin route handler | Job `db` del gate (T075): `export.test.ts` 4/4 |
+| T070 spec E2E 1, descarga | — (solo CI) | Job `e2e` del gate (T075): spec 1 con 7 casos en verde, el nuevo incluido (JSON y CSV: evento de descarga, nombre `juntia-movimientos-AAAA-MM-DD.<ext>`, sin fallo y tamaño > 0, sin abrir el contenido) |
+
+**T066, dataset dorado por la función real.** La siembra `seedMovements` crea las
+filas con `create_transaction` y la sesión de la cuenta sembrada (research R8.11).
+Actividad de octubre de 2026 (`?mes=2026-10`, dataset literal) y el Inicio del mes en
+curso (las mismas filas e importes, llevados al mismo día del mes en curso, porque
+Inicio enseña el mes en curso: spec, casos límite) muestran **$ 412.900** en las
+capturas de T073. Ese fixture del mes en curso **no** sustituye al dataset dorado: la
+comprobación literal de octubre está en el test de componentes y en Actividad.
+
+**Interpretación de ejecución.** El panel de detalle junto a la tabla aparece desde
+**1280** y no desde 1024 como dice T068: `RESPONSIVE_SPECIFICATIONS.md` («Actividad en
+modo maestro-detalle desde 1280» y el detalle de 400 fijo a 1440) está por encima de
+`tasks.md` en la jerarquía. Entre 1024 y 1279, Actividad es la lista y el detalle abre
+como pantalla, como en móvil.
+
 ### T071
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5 de noviembre de 2026 · a8621f1.** Registro de `tests/a11y/route-registry.ts` con
+las entradas nuevas, todas con sesión: Inicio con datos, vacío y en Nosotros;
+Actividad con datos, mes vacío, mes futuro, búsqueda, filtros y en Nosotros; el
+detalle y el detalle no encontrado (JT010); Metas en Nosotros; Exportar D3, D4 y D5.
+La prueba de cobertura vio fallar `/actividad/[id]` sin clasificar (verify local antes
+de T071) y pasa. **Axe en el job `e2e` del gate: 128/128** (todas las entradas con
+sesión, a 390 y 1440, en los dos temas); job `app`: 48/48.
+
+El primer gate con las rutas nuevas (run
+[42139515463](https://github.com/flashwp3-ctrl/juntia/actions/runs/42139515463),
+bb56acb) encontró dos fallos reales, corregidos en a8621f1:
+`label-content-name-mismatch` en las filas y en los chips de categoría (el
+`aria-label` decía «50.000 pesos» donde se ve «$ 50.000»; ahora el nombre sale de un
+texto oculto, con lo visible fuera del árbol accesible) y contraste 4,29:1 del texto
+secundario sobre `surface.sunken` en el chip y la fila seleccionados (pasa a tinta,
+también en hover). En el mismo run, `/recuperar` A4b (PR B) dio una vez
+`document-title` y pasó en el reintento: intermitente previo, no de este PR.
 
 ### T072
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5–6 de noviembre de 2026 · a8621f1 · run
+[42141494682](https://github.com/flashwp3-ctrl/juntia/actions/runs/42141494682)**
+(job `evidence`, paso en un solo worker de `tests/evidence/home-states.capture.ts`).
+Mediciones línea a línea en
+[`t072-measurements.jsonl.txt`](evidence/pr-c/t072-measurements.jsonl.txt).
+
+| Medición | Rutas | Casos | Resultado |
+| --- | --- | --- | --- |
+| CLS con el Skeleton retenido (un `lock table … access exclusive` real en la base del runner retiene la lectura; se ve el Skeleton y se suelta) | `/` y `/actividad?mes=2026-10` | 390 y 1440 · claro y oscuro · tema guardado (perfil y cookie) · CPU 6× · 5 cargas | **40/40 con CLS = 0**, el Skeleton visible en las 40 |
+| CLS en carga normal | las mismas | los mismos | **40/40 con CLS = 0** |
+| Objetivos táctiles < 44 px (el `<input>` cuenta por el marco de su `<label>`) | las mismas, con datos | 390 y 1440 · dos temas | **ninguno** |
+| Texto al 200 % (fuente raíz al 200 %) | las mismas | 390 y 1440 · dos temas | **sin scroll horizontal** en las 8 combinaciones; capturas `*--texto-200--*` en [`capturas/`](evidence/pr-c/capturas/) |
+| Sin scroll horizontal a 360, 390, 430, 768, 1024, 1280 y 1440 | las 16 entradas del PR C del registro (Inicio, Actividad, detalle, Metas en Nosotros, Exportar D2–D5) | dos temas | **224/224 sin scroll ni elementos fuera de la ventana** ([`t073-seven-widths.jsonl.txt`](evidence/pr-c/t073-seven-widths.jsonl.txt)); la pasada de todo el registro, 532/532 |
+
+Antes de a8621f1, el texto al 200 % daba 552 px de ancho en Actividad a 390 (el mes
+tenía un ancho mínimo en rem) y la ficha de categoría invadía su columna: corregido en
+bb56acb. **Lo único que el arnés anota sin ser de este PR:** al 200 % y a 390, el
+avatar de `AccountButton` (PR B) desborda su caja 3 px (`a «S» 91/88`); no produce
+scroll.
 
 ### T073
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5–6 de noviembre de 2026 · a8621f1 · run
+[42141494682](https://github.com/flashwp3-ctrl/juntia/actions/runs/42141494682).**
+88 capturas a 390 y 1440 en claro y oscuro, con cuentas sembradas en el runner por
+`create_transaction`, en [`capturas/`](evidence/pr-c/capturas/), nombradas por ruta,
+estado, ancho y tema: Inicio con datos, vacío, cargando (Skeleton retenido) y error
+(lectura denegada de verdad en el runner y devuelta al terminar); Nosotros en Inicio,
+Actividad y Metas; Actividad con datos, mes vacío, mes futuro, búsqueda y filtros; el
+detalle (tabla y panel a 1440, pantalla a 390) y el detalle no encontrado; Exportar
+D2–D5; y el texto al 200 %. La pasada manual de los siete anchos está en T072.
+
+**Para aprobar viendo la pantalla** (propuestas §15.9 y pantallas nuevas): «Gasto,
+ingreso y liquidación en tinta» en las filas de Inicio y Actividad; Inicio sin pareja
+y sus estados (Q5); Nosotros «todavía no disponible» (Q5); las flechas de mes (Q8).
 
 ### T074
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**5 de noviembre de 2026 · 577de4a.** Pasada fija de Impeccable, auditoría y crítica.
+El detector de código no encuentra nada en `src/features/home`,
+`src/features/activity`, `src/features/context`, `expense-row.tsx`,
+`src/app/(app)/actividad`, `src/app/(app)/page.tsx` ni `account-controls.tsx`. El
+detector de página corrió sobre los componentes reales con el dataset dorado, en una
+página local temporal sin Supabase que no se versionó, a 390 y 1440
+([`t074-impeccable-detect.txt`](evidence/pr-c/t074-impeccable-detect.txt)): marca
+`icon-tile-stack` en el vacío y el error de Inicio. Es la ficha de 88 con radio 28 que
+dibuja el comp aprobado 04·6 (handoff, «Auditoría anti-slop»). **No se aplica**, como
+en T058: cambiarla reabriría la dirección (`CLAUDE.md` 7).
+
+Crítica sobre las capturas y lo corregido en este PR: la barra de herramientas de
+Actividad invadía el panel a 1440 (ahora en dos filas); los chips del desglose se
+cortaban con scroll horizontal (ahora se reparten en filas); en Inicio móvil, «Anotar
+gasto» partía el título y las fichas truncaban «Restaurantes» y «Servicios» (ahora la
+pista va a la derecha y la ficha apila ícono y nombre); al 200 % el mes desbordaba y
+la ficha de la fila invadía su columna (T072). **Se reporta y no se corrige:** el
+importe sale «$ 412.900», con el espacio que pone `Intl.NumberFormat("es-CO")` en
+`formatMoney` (dominio del PR A), y el comp dibuja «$412.900».
 
 ### T075
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+**Gate sobre a8621f1:** `npm run verify` local pasó (37,9 s, < 90 s) y el run
+[42140614161](https://github.com/flashwp3-ctrl/juntia/actions/runs/42140614161) tiene
+`app`, `db` y `e2e` en verde
+([`t075-gate-a8621f1.txt`](evidence/pr-c/t075-gate-a8621f1.txt)): `app` 171 s
+(unidad 31, componentes 180, axe 48/48); `db` 244 s (`test:db` 5,49 s < 60;
+integración 32, entre ellas las 4 de exportación; ensayo de restauración); `e2e` 427 s
+(spec 1 7/7 en 15,9 s, humo 16,7 s < 180; axe 128/128 en 212 s).
+
+**Presupuesto superado (aviso; ADR-011 §4 y `docs/TESTING.md` §9):** el job `e2e`
+tardó **427 s frente a < 360 s**. La causa es axe con sesión: 64 auditorías nuevas
+(16 estados × 2 temas × 2 anchos, cada una con su usuario sembrado y, en 12 estados,
+nueve movimientos por `create_transaction`) llevan `test:a11y` a 212 s. No se mueve el
+techo: se reporta a los fundadores para que decidan si se reparte la auditoría o se
+acepta el coste.
+
+**Arreglo de CI incluido.** La instalación de Chromium tiene paso propio en `app`,
+`e2e` y `evidence`. En el run
+[42138118052](https://github.com/flashwp3-ctrl/juntia/actions/runs/42138118052)
+`--with-deps` se volvió a colgar en `e2e` y el límite de 4 min lo cortó (antes consumía
+los 10 del job). Desde bb56acb la descarga (`playwright install --only-shell
+chromium`) y las dependencias del sistema (`playwright install-deps chromium`) van por
+separado, cada una con 150 s y un reintento y la salida a la vista, con el paso en
+6 min como máximo; en el gate, `chromium` tardó 19–21 s. **Sin caché de binarios:**
+`docs/TESTING.md` §9 lo desaconseja expresamente; queda consultado al gestor.
+
+**Nota de `verify` local:** una de seis ejecuciones de `components` falló el 5 de
+noviembre con el equipo cargado (`next dev` y Playwright a la vez) y no se guardó el
+nombre de la prueba; las cinco siguientes, incluida la de este gate, pasaron 180/180.
 
 ### T076
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR C**.
+Descripción del PR C (#44) con capturas, Impeccable, los `[P]` para aprobar y «E2E
+specs added: 0 (spec 1 gains the export download case); total 1». **Pendiente: la
+revisión humana de los dos fundadores.**
 
 ### T079
 
