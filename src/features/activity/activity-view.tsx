@@ -96,13 +96,14 @@ function Summary({ rows, month, filters, onCategory }: { rows: readonly Transact
                 key={category}
                 type="button"
                 aria-pressed={pressed}
-                aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))}
                 onClick={() => onCategory(pressed ? null : category)}
-                className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[13px] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}
+                className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[13px] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}
               >
+                {/* Nombre por texto oculto, no por aria-label (WCAG 2.5.3): «Transporte, 45.000 pesos». */}
+                <span className="sr-only">{copy.activity.categoryChip(copy.categories[category], pesos(amount))}</span>
                 <CategoryIcon kind="category" category={category} size="sm" />
                 <span aria-hidden="true">{copy.categories[category]}</span>
-                <span aria-hidden="true" className="font-medium text-ink-secondary">{pesos(amount)}</span>
+                <span aria-hidden="true" className={`font-medium ${pressed ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{pesos(amount)}</span>
               </button>
             );
           })}
@@ -162,7 +163,7 @@ function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[
                   <span className="truncate">{rowTitle(transaction)}</span>
                 </Link>
               </td>
-              <td className={`${cell} font-mono text-[13px] text-ink-secondary`}>{dayLabel(transaction.transactionDate, today)}</td>
+              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}</td>
               <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
             </tr>
           );
