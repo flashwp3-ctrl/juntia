@@ -30,6 +30,10 @@ on:
         description: "T053/T057: screenshots, seven-width pass and theme harness (PR evidence, not a gate)"
         type: boolean
         default: false
+      evidence_filter:
+        description: "PR D: only capture registry states whose route or state matches this regular expression (empty = all)"
+        type: string
+        default: ""
 permissions:
   contents: read
 concurrency:
@@ -369,15 +373,21 @@ jobs:
           sudo apt-get install -y -qq ttf-mscorefonts-installer > /dev/null
           fc-list | grep -c -i -E "arial|georgia"
       - name: Screenshots, seven-width pass and theme harness
+        env:
+          # PR D: con un filtro, solo los estados nuevos del PR; el resto ya tiene su evidencia en su PR.
+          EVIDENCE_FILTER: ${{ inputs.evidence_filter }}
         run: npx playwright test --project evidence --grep-invert @serial --workers 4 --retries 0 --reporter=line
-      - name: PR C · loading, error, skeleton CLS, touch targets and 200 % text (serial, alters the runner database)
+      - name: Serial evidence (PR C states and CLS, PR D lab INP; alters the runner database)
         if: always()
         # --output propio: Playwright vacía su carpeta de salida al empezar y borraría las capturas del paso anterior.
-        run: npx playwright test --project evidence --grep @serial --workers 1 --retries 0 --reporter=line --output test-results/serial
+        env:
+          # Con filtro (corrida de evidencia del PR D), de lo serial solo el INP de laboratorio (T085).
+          SERIAL_GREP: ${{ inputs.evidence_filter != '' && '@inp' || '@serial' }}
+        run: npx playwright test --project evidence --grep "$SERIAL_GREP" --workers 1 --retries 0 --reporter=line --output test-results/serial
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: evidence-pr-c
+          name: evidence
           path: test-results/evidence/
           if-no-files-found: warn
           retention-days: 7

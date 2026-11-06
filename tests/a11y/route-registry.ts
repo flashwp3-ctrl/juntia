@@ -6,15 +6,17 @@ export const THEMES = ["light", "dark"] as const;
 export type Session = "none" | "user" | "recovery";
 /** Lo que hace el recorrido antes de pasar axe, para llegar al estado. */
 export type Prepare = "networkError" | "invalidCredentials" | "unverified" | "signUpInvalid" | "recoverSent" | "sessionExpired" | "exportSheet"
-  | "us" | "search" | "filters" | "exportPreparing" | "exportReady" | "exportFailed";
+  | "us" | "search" | "filters" | "exportPreparing" | "exportReady" | "exportFailed"
+  | "annotate" | "annotateIncome" | "annotateDetails" | "annotateInvalid" | "annotateSaving" | "annotateFailed" | "annotateSaved" | "edit" | "deleteDialog";
 /**
  * Movimientos de la cuenta sembrada, por la función real `create_transaction` (research R8.11). `golden`: el dataset
  * dorado de octubre de 2026, literal. `current`: las mismas filas e importes con la fecha llevada al mismo día del mes
  * en curso en Bogotá, porque Inicio enseña el mes en curso (spec, casos límite). `future`: el dataset dorado y un
- * movimiento de prueba tres meses después del mes en curso (Q13). En la ruta, `{id}` es el primer movimiento sembrado
+ * movimiento de prueba tres meses después del mes en curso (Q13). `recent` (PR D): como `current`, pero ningún día pasa
+ * de hoy, para que lo anotado en E5 quede arriba en Inicio. En la ruta, `{id}` es el primer movimiento sembrado
  * (Taxi a la oficina), `{future}` el mes futuro.
  */
-export type Data = "golden" | "current" | "future";
+export type Data = "golden" | "current" | "future" | "recent";
 export type RouteEntry = {
   route: string;
   state: string;
@@ -27,6 +29,11 @@ export type RouteEntry = {
   firstEntryPending?: boolean;
   status?: number;
   themes?: readonly (typeof THEMES)[number][];
+  /**
+   * P0-1, PR D (T084, T098): `false` en los estados que solo hacen falta como captura (T098) y no añaden nada que axe no
+   * vea ya en otro estado de la misma hoja: E1 ingreso, E3 y E4. Así el job e2e no paga tres pasadas que se repiten.
+   */
+  axe?: boolean;
 };
 
 export const registry: readonly RouteEntry[] = [
@@ -60,6 +67,17 @@ export const registry: readonly RouteEntry[] = [
   { route: "/actividad", state: "Actividad Nosotros", path: "/actividad?mes=2026-10", session: "user", data: "golden", prepare: "us" },
   { route: "/actividad/[id]", state: "Detalle", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden" },
   { route: "/actividad/[id]", state: "Detalle no encontrado", path: "/actividad/00000000-0000-4000-8000-000000000000", session: "user" },
+  // P0-1, PR D (T084, T098): Anotar en sus estados (hoja a 390, diálogo de 520 a 1440), la edición y el diálogo de
+  // eliminar, con movimientos sembrados por la función real. E5 guarda de verdad por la Server Action.
+  { route: "/", state: "Anotar E1 gasto", path: "/", session: "user", data: "recent", prepare: "annotate" },
+  { route: "/", state: "Anotar E1 ingreso", path: "/", session: "user", data: "recent", prepare: "annotateIncome", axe: false },
+  { route: "/", state: "Anotar E2 detalles", path: "/", session: "user", data: "recent", prepare: "annotateDetails" },
+  { route: "/", state: "Anotar E3 monto no válido", path: "/", session: "user", data: "recent", prepare: "annotateInvalid", axe: false },
+  { route: "/", state: "Anotar E4 guardando", path: "/", session: "user", data: "recent", prepare: "annotateSaving", axe: false },
+  { route: "/", state: "Anotar error de guardado", path: "/", session: "user", data: "recent", prepare: "annotateFailed" },
+  { route: "/", state: "Anotar E5 guardado", path: "/", session: "user", data: "recent", prepare: "annotateSaved" },
+  { route: "/actividad/[id]", state: "Edición", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "edit" },
+  { route: "/actividad/[id]", state: "Diálogo de eliminar", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "deleteDialog" },
   { route: "/metas", state: "Metas", path: "/metas", session: "user" },
   { route: "/metas", state: "Metas Nosotros", path: "/metas", session: "user", prepare: "us" },
   { route: "/plan", state: "Plan", path: "/plan", session: "user" },

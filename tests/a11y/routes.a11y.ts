@@ -17,7 +17,8 @@ import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
-const entries = JOB === "e2e" ? e2eEntries : appEntries;
+// T084: los estados marcados `axe: false` solo se capturan (T098); su hoja ya se audita en otro estado.
+const entries = (JOB === "e2e" ? e2eEntries : appEntries).filter((entry) => entry.axe !== false);
 const INTERNAL = "/interno/primitivos";
 const NOT_FOUND = "/ruta-que-no-existe";
 const PRODUCT = ["/", "/actividad", "/metas", "/plan", "/balance", "/cuenta"] as const;
@@ -95,10 +96,10 @@ async function pressFrames(page: Page, scope: string) {
 // marco y el outline global de :focus-visible en el <input>. Con el foco puesto desde el teclado (Tab), cada campo de
 // texto visible tiene un solo indicador: el <input> sin outline y el marco con el anillo de focus.ring.
 async function fieldFocusRings(page: Page) {
-  const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").count();
+  const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible").count();
   const results: { name: string; focused: boolean; input: string; frame: string }[] = [];
   for (let index = 0; index < count; index++) {
-    const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not([disabled]):visible").nth(index);
+    const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible").nth(index);
     // F43-2: el foco llega por teclado al campo que se mide. Se enfoca el campo, Shift+Tab sale al anterior y Tab vuelve:
     // así :focus-visible es de teclado aunque un envío previo haya dejado el foco en un botón (A1b, A1d). Si el campo es el
     // primero de la página, Shift+Tab sale del documento y Tab vuelve a él. Se comprueba qué elemento quedó enfocado.

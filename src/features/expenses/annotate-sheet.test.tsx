@@ -199,6 +199,33 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
   });
 
+  it("decisión del fundador: tras un fallo ambiguo los campos quedan bloqueados y solo se reintenta lo mismo", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockResolvedValueOnce({ ok: true, value: saved() });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    expect(amount().matches(":disabled")).toBe(true);
+    expect(isDisabled(screen.getByRole("button", { name: copy.categories.restaurants }))).toBe(true);
+    expect(isDisabled(within(screen.getByRole("radiogroup", { name: copy.annotate.type })).getByRole("radio", { name: copy.annotate.income }))).toBe(true);
+    // Guardar sigue disponible: es el mismo reintento que el botón del aviso.
+    await user.click(saveButton());
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
+  });
+
+  it("JT001 no bloquea: el servidor no escribió nada y se puede corregir", async () => {
+    const { user, trigger } = setup(mockActions({ create: vi.fn(async () => ({ ok: false as const, error: "sessionExpired" as const })) }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    expect(amount().matches(":disabled")).toBe(false);
+  });
+
   it("una promesa rechazada (sin red hasta el servidor) se trata como error de red y se puede reintentar", async () => {
     const create = vi.fn<ExpenseActions["create"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ ok: true, value: saved() });
     const { user, trigger } = setup(mockActions({ create }));

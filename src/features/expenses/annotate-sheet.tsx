@@ -9,7 +9,9 @@
 //   E4  «Guardando…» con los campos bloqueados, sin promesa offline.
 //   E5  lo hace el proveedor al recibir `onSaved`: cierra, resalta la fila y muestra el Toast con «Deshacer».
 // Un fallo deja la hoja abierta con lo escrito y un aviso con su propio botón «Reintentar», que reusa la clave de esta
-// apertura (FR-036). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
+// apertura (FR-036). Decisión del fundador (5 nov 2026, revisión del PR D): tras un fallo ambiguo (red, guardado fallido
+// o inesperado) el primer intento pudo llegar al servidor, así que los campos quedan bloqueados para esa apertura: solo
+// se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
 import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -100,6 +102,8 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
   const [details, setDetails] = useState(editing);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirming, setConfirming] = useState(false);
+  // Bloqueo tras un fallo ambiguo: dura lo que dura esta apertura de la hoja.
+  const [locked, setLocked] = useState(false);
   const saving = useRef(false);
   const amountId = `${useId()}-amount`;
   const dateId = `${useId()}-date`;
@@ -142,7 +146,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
     if (result.ok) {
       setStatus({ kind: "idle" });
       onSaved(result.value, mode.kind);
-    } else setStatus({ kind: "error", error: result.error });
+    } else {
+      if (result.error === "network" || result.error === "saveFailed" || result.error === "unexpected") setLocked(true);
+      setStatus({ kind: "error", error: result.error });
+    }
   }, [actions, amount, categoryId, complete, date, description, dirty, editing, idempotencyKey, mode, onSaved, type]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
@@ -214,7 +221,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
         <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
         <span />
       </div>
-      <fieldset disabled={isSaving} className="flex min-w-0 flex-col gap-3.5">
+      <fieldset disabled={isSaving || locked} data-locked={locked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
         {editing ? null : (
           <Segmented<TransactionType>
             role="radiogroup"
