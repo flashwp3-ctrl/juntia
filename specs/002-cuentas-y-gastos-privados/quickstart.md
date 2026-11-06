@@ -44,8 +44,12 @@ commit de prueba y comprueba que el job se pone rojo (TESTING §6, paso 5).
 ## 3. Usar la app en desarrollo: `juntia-dev`
 
 `juntia-dev` (`itfrhnadovezpahikuol`) es un proyecto Free de la segunda
-fundadora, **sin datos reales** y con claves propias (ADR-011 §9.5). No lo usa
-ninguna prueba automatizada. Está en **East US (North Virginia)**, no en la región
+fundadora, **sin datos reales** y con claves propias (ADR-011 §9.5). Desde la
+decisión 18 (6 de noviembre de 2026) es además el entorno desechable donde los
+agentes iteran pgTAP, integración y E2E sin correo con `npm run db:dev:reset`,
+`test:db:dev`, `test:integration:dev` y `e2e:dev`; preparación, guardia y
+límites en `docs/TESTING.md` §2, «Iterar contra `juntia-dev`». Un
+`db:dev:reset` borra los perfiles y movimientos de las cuentas usadas a mano. Está en **East US (North Virginia)**, no en la región
 de producción (São Paulo): la región no se puede cambiar sin recrear el proyecto, y
 los fundadores la aceptaron el 5 de noviembre de 2026 porque dev no guarda datos
 reales y la región no cambia el comportamiento de las migraciones. Las latencias
@@ -110,7 +114,9 @@ npx --yes supabase@2.121.0 db push --linked
   organización, producción incluida; el enlace local solo elige el destino por
   defecto. Por eso la confirmación humana antes de cada escritura es la barrera
   principal, no el enlace.
-- Nunca `--include-seed`: `supabase/seed.sql` es solo para el runner.
+- Nunca `--include-seed` en un `db push`: `supabase/seed.sql` es solo de pruebas.
+  La única excepción es `npm run db:dev:reset`, que reinicia `juntia-dev` con
+  esa semilla porque es desechable (decisión 18); producción no se siembra nunca.
 - Con la CLI v3 la sintaxis es `--remote=<ref>` (ADR-011 §9.5); subir de major es
   un PR propio.
 
