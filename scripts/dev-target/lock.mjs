@@ -76,8 +76,12 @@ export function unlockDevLock(dir, { force = false, isAlive = alive, host = host
 /** Lanza el hijo de forma que su árbol se pueda terminar entero: en POSIX, en su propio grupo de procesos. */
 export const spawnOptionsForTree = () => (process.platform === "win32" ? {} : { detached: true });
 
-/** ¿Queda algún proceso del árbol? En POSIX, el grupo; en Windows, el hijo (taskkill /T ya terminó a los demás). */
-function treeAlive(child) {
+/**
+ * ¿Queda algún proceso del árbol? En POSIX, el grupo del paso, aunque su proceso principal ya haya terminado (F48-2A).
+ * En Windows solo se ve la raíz: si la raíz ya terminó, `taskkill /T` no encuentra a sus descendientes (limitación
+ * documentada en docs/TESTING.md §2).
+ */
+export function treeAlive(child) {
   if (process.platform === "win32") return child.exitCode === null && child.signalCode === null;
   try { process.kill(-child.pid, 0); return true; } catch (error) { return error.code === "EPERM"; }
 }

@@ -15,7 +15,7 @@ import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
-import { openDevSession } from "./session.mjs";
+import { runInSession } from "./session.mjs";
 import { readTap } from "./tap.mjs";
 
 /** Versión de la CLI fijada en el CI (`.github/workflows/ci.yml`) y en el quickstart de la 002. */
@@ -241,23 +241,24 @@ async function main() {
   console.log(`Guardia de destino: ${DEV_REF} (juntia-dev) · .env.test: ${path}`);
   const psqlDir = findPsql();
   if (psqlDir) psqlBin = join(psqlDir, "psql.exe");
-  // F48-2: la sesión toma el bloqueo y es el único punto que lo suelta, cuando el árbol del paso en curso ya no existe.
-  session = openDevSession({
-    lockDir: join(commonDir, "juntia-dev.lock"), branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command,
-    onCancel: (signal) => console.error(`
-${signal}: se cancela ${command}; se termina el árbol del paso en curso y después se suelta el bloqueo.`),
-  });
   const env = childEnv(target, psqlDir);
   let exitCode = 1;
   try {
-    exitCode = command === "reset" ? await reset(target, env)
+    // F48-2: runInSession toma el bloqueo, corre los pasos y, en su finally, espera a session.close(), el único punto
+    // que lo suelta, cuando ya no queda ningún proceso de los pasos.
+    exitCode = await runInSession({
+      lockDir: join(commonDir, "juntia-dev.lock"), branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command,
+      onCancel: (signal) => console.error(`\n${signal}: se cancela ${command}; se terminan los procesos de los pasos y después se suelta el bloqueo.`),
+    }, async (opened) => {
+      session = opened;
+      return command === "reset" ? await reset(target, env)
       // Como el job db: pgTAP corre sobre una base recién reiniciada. Las pruebas suponen tablas vacías (04 y 07 fallan
       // con los usuarios y movimientos que dejan la integración y las E2E en dev).
       : command === "test:db" ? (await reset(target, env)) || await testDb(env)
       : command === "test:integration" ? await testIntegration(env)
       : await e2e(target, env);
+    });
   } finally {
-    await session.close();
     summary(exitCode, started);
   }
   process.exitCode = exitCode;

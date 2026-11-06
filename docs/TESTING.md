@@ -180,8 +180,12 @@ ningún proceso de ese comando. Con Ctrl+C o SIGTERM se termina el **árbol ente
 hijo en curso (Windows: `taskkill /PID <pid> /T /F`; POSIX: el hijo corre en su propio
 grupo y se señala el grupo, con SIGKILL a los 5 s), no empieza ningún paso nuevo, y el
 bloqueo se suelta solo cuando ya no queda ningún proceso. Un único punto lo suelta
-(`scripts/dev-target/session.mjs`): el final normal del comando espera la misma
-cancelación en curso. Si el comando muere sin pasar por ahí (error fatal, SIGKILL), no se
+(`scripts/dev-target/session.mjs`, con el flujo `runInSession` que comparten `run.mjs` y
+su prueba): el final normal del comando espera la misma cancelación en curso, y la
+sesión conserva el grupo de cada paso hasta comprobar que ya no existe, aunque su
+proceso principal haya terminado antes que sus descendientes. **Limitación en Windows:**
+`taskkill /T` necesita la raíz viva para encontrar a sus descendientes; si la raíz de un
+paso ya terminó, un nieto huérfano no se ve. En POSIX el grupo sí se sigue viendo. Si el comando muere sin pasar por ahí (error fatal, SIGKILL), no se
 sabe en qué estado quedó el árbol y el bloqueo se queda huérfano hasta `dev:unlock --force`. **Entre
 equipos no hay mecanismo**: los dos fundadores no usan `juntia-dev` a la vez y se
 avisan antes de un `db:dev:reset`, que además borra los perfiles y movimientos de las
