@@ -6,6 +6,7 @@ import { useActionState, useEffect, useSyncExternalStore } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
+import { clearAllIntentions } from "@/features/expenses/unconfirmed";
 import { resend, signIn, type FormState } from "./actions";
 import { linkNoticeFromHash } from "./confirm";
 import { PasswordInput, SubmitButton, authLink } from "./auth-ui";
@@ -23,6 +24,9 @@ export function SignInForm({ volver, notice }: Props) {
   const [state, action] = useActionState<FormState, FormData>(signIn, {});
   const [resent, resendAction, resending] = useActionState<FormState, FormData>(resend, {});
   const network = state.error === copy.auth.networkError;
+  // Llegar a Entrar es no tener sesión (el proxy aparta de aquí a quien la tiene): cerrada, caducada o nunca abierta. Lo que quedó
+  // sin confirmar lleva importe y descripción de gastos privados, así que no se queda en el dispositivo (ni se reenviará).
+  useEffect(() => { clearAllIntentions(); }, []);
   useEffect(() => {
     if (state.redirectTo) window.location.assign(state.redirectTo);
   }, [state.redirectTo]);

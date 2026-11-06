@@ -4,6 +4,12 @@
 // confirme (`create_transaction` es idempotente: devuelve el resultado original, con el id real, sin crear otro) o las rechace.
 // Nunca se concilia comparando importe, fecha y categoría: dos gastos legítimos pueden coincidir.
 //
+// Privacidad (revisión previa a la 2.ª ronda): cada usuario tiene su propia clave de almacenamiento, con su id de usuario
+// autenticado (nunca el correo), y el proveedor solo lee la del usuario de la sesión actual: una intención de A no se reenvía
+// jamás con la sesión de B (el servidor la crearía como un gasto nuevo de B, porque la clave de idempotencia es por actor). Lo
+// de otro usuario no se lee, no se envía y no se toca. Contiene importe y descripción de gastos privados, así que se borra al
+// cerrar sesión, al llegar a Entrar sin sesión y cuando el servidor dice que la sesión ya no vale.
+//
 // Caducidad: 24 h. `idempotency_records` (supabase/migrations/20261105000200_controlled_tables.sql) no tiene hoy columna de
 // caducidad ni purga: el servidor conserva la clave sin límite, así que no hay retención que acotar. Si alguna vez se añade una
 // purga, tendría que conservar las claves al menos 24 h: pasado ese plazo el cliente suelta la intención sin reenviarla.
@@ -11,7 +17,9 @@ import { CATEGORY_CATALOG, type Transaction } from "@/domain/transactions";
 import { moneyFromPesos } from "@/domain/money";
 import type { CreatePayload, PendingRow } from "./types";
 
-export const UNCONFIRMED_STORAGE_KEY = "juntia:unconfirmed-writes";
+export const UNCONFIRMED_STORAGE_PREFIX = "juntia:unconfirmed-writes:";
+/** La clave de almacenamiento de un usuario: su id de Auth, no su correo. */
+export const unconfirmedStorageKey = (userId: string) => `${UNCONFIRMED_STORAGE_PREFIX}${userId}`;
 export const UNCONFIRMED_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type StoredIntention = { key: string; payload: CreatePayload; savedAt: number };
@@ -33,34 +41,51 @@ const isStored = (value: unknown): value is StoredIntention => {
   return typeof s.key === "string" && typeof s.savedAt === "number" && isPayload(s.payload) && s.payload.idempotencyKey === s.key;
 };
 
-function write(list: readonly StoredIntention[]) {
+function write(userId: string, list: readonly StoredIntention[]) {
   try {
-    if (list.length === 0) window.localStorage.removeItem(UNCONFIRMED_STORAGE_KEY);
-    else window.localStorage.setItem(UNCONFIRMED_STORAGE_KEY, JSON.stringify(list));
+    if (list.length === 0) window.localStorage.removeItem(unconfirmedStorageKey(userId));
+    else window.localStorage.setItem(unconfirmedStorageKey(userId), JSON.stringify(list));
   } catch { /* sin almacenamiento (ventana privada, datos bloqueados): la intención sigue en memoria mientras la pestaña viva */ }
 }
 
-/** Lo guardado y vigente; descarta (y borra) lo caducado o malformado. */
-export function readIntentions(now: number = Date.now()): StoredIntention[] {
+/** Lo guardado y vigente de ESE usuario; descarta (y borra) lo caducado o malformado. */
+export function readIntentions(userId: string, now: number = Date.now()): StoredIntention[] {
   let raw: unknown = null;
-  try { raw = JSON.parse(window.localStorage.getItem(UNCONFIRMED_STORAGE_KEY) ?? "null"); } catch { raw = null; }
+  try { raw = JSON.parse(window.localStorage.getItem(unconfirmedStorageKey(userId)) ?? "null"); } catch { raw = null; }
   const all = Array.isArray(raw) ? raw : [];
   const kept = all.filter((entry): entry is StoredIntention => isStored(entry) && now - entry.savedAt < UNCONFIRMED_TTL_MS);
-  if (kept.length !== all.length) write(kept);
+  if (kept.length !== all.length) write(userId, kept);
   return kept;
 }
 
 /** Guarda la intención (una vez por clave: reenviarla no cambia cuándo nació). */
-export function addIntention(payload: CreatePayload, now: number = Date.now()) {
-  const current = readIntentions(now);
+export function addIntention(userId: string, payload: CreatePayload, now: number = Date.now()) {
+  const current = readIntentions(userId, now);
   if (current.some(({ key }) => key === payload.idempotencyKey)) return;
-  write([...current, { key: payload.idempotencyKey, payload, savedAt: now }]);
+  write(userId, [...current, { key: payload.idempotencyKey, payload, savedAt: now }]);
 }
 
 /** La intención se confirmó o se rechazó: ya no hay nada que reconciliar. */
-export function removeIntention(key: string) {
-  const current = readIntentions();
-  if (current.some((entry) => entry.key === key)) write(current.filter((entry) => entry.key !== key));
+export function removeIntention(userId: string, key: string) {
+  const current = readIntentions(userId);
+  if (current.some((entry) => entry.key === key)) write(userId, current.filter((entry) => entry.key !== key));
+}
+
+/** Borra todas las intenciones de un usuario (la sesión ya no vale). */
+export function clearIntentions(userId: string) {
+  try { window.localStorage.removeItem(unconfirmedStorageKey(userId)); } catch { /* sin almacenamiento */ }
+}
+
+/** Borra las de todos los usuarios de este dispositivo: al cerrar sesión o llegar a Entrar no queda nadie con sesión. */
+export function clearAllIntentions() {
+  try {
+    const keys: string[] = [];
+    for (let index = 0; index < window.localStorage.length; index++) {
+      const key = window.localStorage.key(index);
+      if (key?.startsWith(UNCONFIRMED_STORAGE_PREFIX)) keys.push(key);
+    }
+    for (const key of keys) window.localStorage.removeItem(key);
+  } catch { /* sin almacenamiento */ }
 }
 
 /** La fila temporal de una intención, con el mismo aspecto que la de una creación en vuelo. Su id nunca es el real. */
