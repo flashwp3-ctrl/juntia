@@ -12,6 +12,7 @@
 import { randomUUID } from "node:crypto";
 import { stat } from "node:fs/promises";
 import type { Page } from "@playwright/test";
+import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
 import { confirmLink } from "../support/mailpit";
@@ -99,12 +100,15 @@ test("registro no permitido o de una cuenta existente: la misma pantalla y ningu
 });
 
 test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida", async ({ page }) => {
-  await page.goto("/actividad?mes=2026-10");
-  await expect(page).toHaveURL(/\/entrar\?volver=%2Factividad%3Fmes%3D2026-10$/);
+  // Un mes navegable para una cuenta sin movimientos (el mes en curso): desde F44-4, un mes fuera del intervalo redirige
+  // al límite más cercano, y aquí se prueba que «volver» conserva la ruta y su query, no esa redirección.
+  const month = todayInBogota().slice(0, 7);
+  await page.goto(`/actividad?mes=${month}`);
+  await expect(page).toHaveURL(new RegExp(`/entrar\\?volver=%2Factividad%3Fmes%3D${month}$`));
   // El usuario se siembra después de comprobar la redirección: sin protección, la prueba falla antes de sembrar.
   const user = await seedUser({ role: "volver", index: test.info().parallelIndex });
   await signInWith(page, user.email, user.password);
-  await expect(page).toHaveURL(/\/actividad\?mes=2026-10$/);
+  await expect(page).toHaveURL(new RegExp(`/actividad\\?mes=${month}$`));
   const response = await page.goto("/cuenta");
   expect(response?.status()).toBe(200);
   expect(response?.headers()["cache-control"] ?? "").toMatch(/private/);
