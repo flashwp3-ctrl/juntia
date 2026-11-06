@@ -1,13 +1,11 @@
-// T045, T053 / FR-019, FR-030: Actividad con su estado vacío (ícono «Sin movimientos», DESIGN_SYSTEM.md §3; comp 04·6).
-import { PageHeader } from "@/components/shell/app-shell";
-import { EmptyState } from "@/components/shell/provisional-state";
-import { copy } from "@/lib/copy/es";
+// T067 / FR-046–FR-049; US-6. Actividad del mes de `?mes=AAAA-MM` (o el mes en curso en Bogotá), con flechas, búsqueda,
+// filtros, lista por día y, desde 1280, la tabla con el panel. Sustituye el estado vacío provisional de la 001.
+import { ActivityScreen } from "@/features/activity/activity-screen";
+import { loadMonth, monthParam, today } from "@/features/activity/load";
 
-export default function ActivityPage() {
-  return (
-    <>
-      <PageHeader title={copy.nav.activity} />
-      <EmptyState icon="tray" title={copy.empty.activity.title} description={copy.empty.activity.description} />
-    </>
-  );
+export default async function ActivityPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const now = today();
+  const month = monthParam((await searchParams).mes, now);
+  const data = await loadMonth(month, now, `/actividad?mes=${month}`);
+  return <ActivityScreen data={data} month={month} today={now} />;
 }

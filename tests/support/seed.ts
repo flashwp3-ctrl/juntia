@@ -9,6 +9,8 @@ import { dirname } from "node:path";
 import { createServerClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
+import { moneyFromPesos } from "../../src/domain/money";
+import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { createTransaction } from "../../src/lib/db/transactions";
 
 export type Role = "sara" | "tomas" | (string & {});
@@ -83,11 +85,27 @@ export async function writeStorageState(user: SeededUser, index: number, role: R
  * worker tiene su propia Sara. Lo usan Inicio, Actividad y Exportar en el PR C y la spec E2E 2.
  */
 export async function seedGoldenMovements(user: SeededUser) {
+  return (await seedMovements(user, "golden")).length;
+}
+
+/** Mes futuro del fixture `future` (Q13): tres meses después del mes en curso en Bogotá. */
+export const futureMonth = () => shiftMonth(todayInBogota().slice(0, 7), 3);
+
+/**
+ * Siembra por la función real (PR C, T071). `golden`: el dataset literal. `current`: las mismas filas e importes en el
+ * mismo día del mes en curso, para Inicio, que enseña el mes en curso. `future`: el dataset y un movimiento de prueba en
+ * el mes futuro. Devuelve los movimientos creados, en el orden del dataset.
+ */
+export async function seedMovements(user: SeededUser, data: "golden" | "current" | "future") {
+  const month = todayInBogota().slice(0, 7);
+  const rows = saraPrivateOctober2026.map((row) => ({ ...row, transactionDate: data === "current" ? `${month}-${row.transactionDate.slice(8)}` : row.transactionDate }));
+  const extra = data === "future" ? [{ type: "expense" as const, amount: moneyFromPesos(38000n), categoryId: "transport" as const, transactionDate: `${futureMonth()}-14`, description: "Tiquete de bus" }] : [];
+  const created = [];
   // Por src/lib/db (la misma capa que usará Anotar) y no por SQL directo.
-  for (const { type, amount, categoryId, transactionDate, description } of saraPrivateOctober2026) {
-    await createTransaction(user.client, { idempotencyKey: randomUUID(), type, amount, categoryId, transactionDate, description });
+  for (const { type, amount, categoryId, transactionDate, description } of [...rows, ...extra]) {
+    created.push(await createTransaction(user.client, { idempotencyKey: randomUUID(), type, amount, categoryId, transactionDate, description }));
   }
-  return saraPrivateOctober2026.length;
+  return created;
 }
 
 /** Cuenta sin verificar (A1c): existe y tiene contraseña, pero su correo no está confirmado. */

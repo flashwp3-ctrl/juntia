@@ -4,7 +4,16 @@ import { randomUUID } from "node:crypto";
 import { expect, type Browser, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import type { RouteEntry } from "../a11y/route-registry";
-import { recoveryLink, seedUnconfirmedUser, seedUser } from "./seed";
+import { futureMonth, recoveryLink, seedMovements, seedUnconfirmedUser, seedUser } from "./seed";
+
+const paths = new WeakMap<Page, string>();
+/** La ruta de la entrada con sus marcadores resueltos ({id}, {future}) para la cuenta sembrada de esta página. */
+export const targetPath = (page: Page, entry: RouteEntry) => paths.get(page) ?? entry.path;
+
+async function openExport(page: Page) {
+  await page.getByRole("button", { name: new RegExp(copy.account.privacy.export) }).click();
+  await expect(page.getByRole("dialog", { name: copy.account.export.title })).toBeVisible();
+}
 
 export const fillSignIn = async (page: Page, email: string, password: string) => {
   await page.getByRole("textbox", { name: copy.auth.fields.email }).fill(email);
@@ -47,8 +56,30 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await expect(page.getByText(copy.errors.sessionExpired)).toBeVisible();
       return expect(page.getByRole("textbox", { name: copy.account.profile.nameLabel })).toHaveValue("Sara caducada");
     case "exportSheet":
-      await page.getByRole("button", { name: new RegExp(copy.account.privacy.export) }).click();
-      return expect(page.getByRole("dialog", { name: copy.account.export.title })).toBeVisible();
+      return openExport(page);
+    case "exportPreparing": // D3: la respuesta no llega mientras se audita.
+      await page.route("**/api/export**", () => undefined);
+      await openExport(page);
+      await page.getByRole("button", { name: copy.account.export.prepare }).click();
+      return expect(page.getByText(copy.account.export.preparing)).toBeVisible();
+    case "exportReady": // D4, con el archivo real del servidor.
+      await openExport(page);
+      await page.getByRole("button", { name: copy.account.export.prepare }).click();
+      return expect(page.getByRole("link", { name: copy.account.export.download })).toBeVisible();
+    case "exportFailed": // D5: el servidor responde 500.
+      await page.route("**/api/export**", (route) => route.fulfill({ status: 500, body: "" }));
+      await openExport(page);
+      await page.getByRole("button", { name: copy.account.export.prepare }).click();
+      return expect(page.getByText(copy.account.export.failed)).toBeVisible();
+    case "us": // El contexto recordado es Nosotros (addInitScript en openWithSession).
+      return expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    case "search":
+      await page.getByRole("searchbox", { name: copy.activity.searchLabel }).fill("farmacia");
+      return expect(page.getByText(copy.activity.results(1))).toBeAttached();
+    case "filters":
+      await page.getByRole("radio", { name: copy.activity.expenses }).click();
+      await page.getByRole("button", { name: new RegExp(`^${copy.categories.shopping}, `) }).click();
+      return expect(page.getByText(copy.activity.results(1))).toBeAttached();
     default:
       return undefined;
   }
@@ -67,6 +98,9 @@ export async function openWithSession(browser: Browser, page: Page, entry: Route
   } else if (entry.session === "user") {
     const user = await seedUser({ role: entry.firstEntryPending ? "estado-a6" : "estado", index, firstEntryCompleted: !entry.firstEntryPending });
     await context.addCookies(user.cookies);
+    const created = entry.data ? await seedMovements(user, entry.data) : [];
+    paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()));
+    if (entry.prepare === "us") await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
   }
   return target;
 }

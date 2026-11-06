@@ -6,8 +6,11 @@
 // app y Mailpit): enlace de verificación válido → A1 con aviso, enlace caducado y enlace ya usado → aviso de enlace
 // caducado sin datos de la cuenta, enlace de recuperación válido → A5; cerrar sesión → S3 y ninguna ruta de producto sin
 // volver a entrar».
+// PR C (T070 / FR-057, FR-065; ADR-011 §3, matriz): la descarga de Exportar llega como archivo (evento de descarga,
+// nombre y tamaño), sin abrir su contenido; el contenido lo prueba la integración (T063).
 // Solo Chromium, movimiento reducido y ninguna espera fija (ADR-011 §6). Cada test que cambia una cuenta siembra la suya.
 import { randomUUID } from "node:crypto";
+import { stat } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
@@ -65,7 +68,7 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja 
     await expect(page.getByText("Invitar a mi pareja")).toHaveCount(0);
     await page.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1, name: copy.nav.home })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: copy.home.greeting("Sara Nueva") })).toBeVisible();
 
     // Enlace ya usado: aviso de enlace caducado, sin ningún dato de la cuenta.
     await page.context().clearCookies();
@@ -211,5 +214,23 @@ test("cerrar sesión → S3 y ninguna ruta de producto sin volver a entrar", asy
   for (const route of ["/", "/actividad", "/cuenta", "/cuenta/perfil"]) {
     await page.goto(route);
     await expect(page, route).toHaveURL(/\/entrar\?volver=/);
+  }
+});
+
+test("Exportar: el archivo JSON y el CSV llegan como descarga, con su nombre y un tamaño, sin abrirlos", async ({ page, goldenSara }) => {
+  await signInContext(page.context(), goldenSara);
+  await page.goto("/cuenta/privacidad");
+  for (const format of ["json", "csv"] as const) {
+    await page.getByRole("button", { name: new RegExp(copy.account.privacy.export) }).click();
+    const sheet = page.getByRole("dialog", { name: copy.account.export.title });
+    await sheet.getByRole("radio", { name: new RegExp(`^${copy.account.export[format]}`) }).click();
+    await sheet.getByRole("button", { name: copy.account.export.prepare }).click();
+    await expect(sheet.getByText(copy.account.export.ready)).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent("download"), sheet.getByRole("link", { name: copy.account.export.download }).click()]);
+    expect(download.suggestedFilename()).toMatch(new RegExp(`^juntia-movimientos-\\d{4}-\\d{2}-\\d{2}\\.${format}$`));
+    expect(await download.failure()).toBeNull();
+    expect((await stat(await download.path())).size).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
   }
 });

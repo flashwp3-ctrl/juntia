@@ -1,6 +1,6 @@
 "use client";
 // T059 / FR-028; caso límite «Ruta inexistente o error de render»: estado de error dentro del AppShell (lo pone el
-// layout de (app)), con el aviso de versión base, Reintentar y salida hacia Inicio. Nunca el mensaje técnico crudo
+// layout de (app)), con Reintentar y salida hacia Inicio. Nunca el mensaje técnico crudo
 // (docs/CONVENTIONS.md B.1).
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/app-shell";

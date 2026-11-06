@@ -19,7 +19,7 @@ const refresh = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }), usePathname: () => "/" }));
 
 const wrap = (node: ReactNode) => render(<ContextProvider><AnnotateProvider>{node}</AnnotateProvider></ContextProvider>);
-const october = (rows = saraPrivateOctober2026) => <HomeView displayName="Sara" rows={rows} month="2026-10" today="2026-10-24" />;
+const october = (rows = saraPrivateOctober2026) => <HomeView rows={rows} month="2026-10" today="2026-10-24" />;
 // La tabla de la spec («Dataset dorado de P0-1»), copiada, no recalculada.
 const breakdown = [
   ["transport", "45.000"], ["services", "59.700"], ["restaurants", "62.500"], ["health", "38.400"],

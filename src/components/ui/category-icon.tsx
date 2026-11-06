@@ -41,7 +41,7 @@ export function CategoryIcon(props: CategoryIconProps) {
   // Seleccionado: anillo de 2 px en tinta, sin cambiar el fondo.
   const ring = selected ? "outline-2 outline-offset-2 outline-ink" : "";
   return (
-    <span aria-hidden="true" className={`${box} ${look.shape} ${ring} inline-grid shrink-0 place-items-center`}>
+    <span aria-hidden="true" data-category-chip="" className={`${box} ${look.shape} ${ring} inline-grid shrink-0 place-items-center`}>
       <AppIcon name={look.name} weight="duotone" size={icon} />
     </span>
   );

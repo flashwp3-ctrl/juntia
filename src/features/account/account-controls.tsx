@@ -3,7 +3,7 @@
 // 04·18 (navegación de secciones en la columna de 360). Controles con estado de cliente de Mi cuenta.
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -16,6 +16,10 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { requestPasswordChange } from "./actions";
 import { Tile, type TileTone } from "./account-ui";
 import type { AppIconName } from "@/components/ui/app-icon";
+
+// «Descargar» (D4) es un enlace al Blob con `download`, con la forma del Button primary lg.
+const exportPrimary =
+  "inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-[var(--radius-lg)] bg-[var(--comp-button-primary-bg)] px-5 text-base font-semibold text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed";
 
 function SignOutRowButton() {
   const { pending } = useFormStatus();
@@ -125,10 +129,47 @@ export function AccountSectionsNav() {
   );
 }
 
-/** D1 «Exportar mis datos» → hoja D2 (diálogo de 520 desde 768). La descarga real (D3–D5) llega con el PR C. */
+type ExportState = { status: "idle" | "preparing" | "failed" | "sessionExpired" } | { status: "ready"; url: string; filename: string };
+
+/** El nombre que propone el servidor (Content-Disposition) o, si falta, uno con la fecha y la extensión del formato. */
+function filenameOf(response: Response, format: "json" | "csv") {
+  return /filename="([^"]+)"/.exec(response.headers.get("content-disposition") ?? "")?.[1] ?? `juntia-movimientos.${format}`;
+}
+
+/**
+ * D1 «Exportar mis datos» → hoja D2 (diálogo de 520 desde 768). P0-1, PR C (T069 / FR-057; US-8.1, US-8.3): «Preparar
+ * archivo» pide /api/export con fetch (D3), y con un 200 el archivo queda listo con «Descargar» (D4); cualquier otra
+ * respuesta o un fallo de red es D5, que dice que no se descargó nada. El archivo vive como Blob en este dispositivo
+ * hasta cerrar la hoja o cambiar de formato.
+ */
 export function ExportEntry() {
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<"json" | "csv">("json");
+  const [state, setState] = useState<ExportState>({ status: "idle" });
+  const request = useRef(0);
+  const reset = () => {
+    request.current += 1;
+    setState((previous) => {
+      if (previous.status === "ready") URL.revokeObjectURL(previous.url);
+      return { status: "idle" };
+    });
+  };
+  useEffect(() => () => { if (state.status === "ready") URL.revokeObjectURL(state.url); }, [state]);
+  const prepare = async () => {
+    const id = ++request.current;
+    setState({ status: "preparing" });
+    try {
+      const response = await fetch(`/api/export?format=${format}`, { cache: "no-store", credentials: "same-origin" });
+      if (id !== request.current) return;
+      if (response.status === 401) return setState({ status: "sessionExpired" });
+      if (response.status !== 200) return setState({ status: "failed" });
+      const blob = await response.blob();
+      if (id !== request.current) return;
+      setState({ status: "ready", url: URL.createObjectURL(blob), filename: filenameOf(response, format) });
+    } catch {
+      if (id === request.current) setState({ status: "failed" });
+    }
+  };
   const wide = useMediaQuery("(min-width: 768px)");
   const Container = wide ? Modal : BottomSheet;
   const formats = [
@@ -145,7 +186,7 @@ export function ExportEntry() {
         </span>
         <AppIcon name="caret-right" size={18} className="text-ink-secondary" />
       </button>
-      <Container open={open} onOpenChange={setOpen} title={copy.account.export.title} closeLabel={copy.account.export.close}>
+      <Container open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} closeLabel={copy.account.export.close}>
         <div role="radiogroup" aria-label={copy.account.export.format} className="flex flex-col gap-2">
           {formats.map((option) => {
             const selected = option.value === format;
@@ -156,12 +197,13 @@ export function ExportEntry() {
                 role="radio"
                 aria-checked={selected}
                 tabIndex={selected ? 0 : -1}
-                onClick={() => setFormat(option.value)}
+                onClick={() => { if (option.value !== format) { setFormat(option.value); reset(); } }}
                 onKeyDown={(event) => {
                   if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
                   event.preventDefault();
                   const next = option.value === "json" ? "csv" : "json";
                   setFormat(next);
+                  reset();
                   (event.currentTarget.parentElement?.querySelector(`[data-format="${next}"]`) as HTMLElement | null)?.focus();
                 }}
                 data-format={option.value}
@@ -183,7 +225,37 @@ export function ExportEntry() {
             <li key={text} className="flex items-start gap-2.5 py-[7px]"><AppIcon name={icon as AppIconName} size={18} className="mt-px shrink-0 text-ink" />{text}</li>
           ))}
         </ul>
-        <InlineNotice icon="clock">{copy.account.export.comingSoon}</InlineNotice>
+        {state.status === "ready" ? (
+          <InlineNotice tone="success" icon="check-circle"><strong className="font-semibold">{copy.account.export.ready}</strong> {state.filename}</InlineNotice>
+        ) : null}
+        {state.status === "failed" ? (
+          <InlineNotice tone="danger" icon="warning-circle"><strong className="font-semibold">{copy.account.export.failedLead}</strong> {copy.account.export.failed}</InlineNotice>
+        ) : null}
+        {state.status === "sessionExpired" ? (
+          <InlineNotice tone="danger" icon="warning-circle">
+            {copy.errors.sessionExpired}{" "}
+            <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/privacidad")}`} className="font-semibold underline underline-offset-2">{copy.account.signInAgain}</Link>
+          </InlineNotice>
+        ) : null}
+        <div className="pt-2">
+          {state.status === "ready" ? (
+            <a href={state.url} download={state.filename} className={exportPrimary}>
+              <AppIcon name="download-simple" weight="bold" size={20} />
+              {copy.account.export.download}
+            </a>
+          ) : (
+            <Button
+              size="lg"
+              className="w-full"
+              icon={state.status === "failed" ? "arrow-clockwise" : "file-text"}
+              loading={state.status === "preparing"}
+              loadingLabel={copy.account.export.preparing}
+              onClick={() => void prepare()}
+            >
+              {state.status === "failed" ? copy.account.export.retry : copy.account.export.prepare}
+            </Button>
+          )}
+        </div>
       </Container>
     </>
   );

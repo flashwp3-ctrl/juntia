@@ -6,11 +6,12 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { saraPrivateOctober2026 } from "@/domain/golden/october-2026";
 import { copy } from "@/lib/copy/es";
+import { AnnotateProvider } from "@/components/shell/annotate-notice";
 import { ActivityView } from "./activity-view";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }), usePathname: () => "/actividad" }));
 
-const view = () => render(<ActivityView rows={saraPrivateOctober2026} month="2026-10" today="2026-11-05" navigation={{ previous: null, next: "2026-11" }} />);
+const view = () => render(<AnnotateProvider><ActivityView rows={saraPrivateOctober2026} month="2026-10" today="2026-11-05" navigation={{ previous: null, next: "2026-11" }} /></AnnotateProvider>);
 const breakdown = [
   ["transport", "45.000"], ["services", "59.700"], ["restaurants", "62.500"], ["health", "38.400"],
   ["shopping", "96.000"], ["entertainment", "34.000"], ["market", "27.300"], ["other", "50.000"],
@@ -52,7 +53,9 @@ describe("Actividad (T062)", () => {
   });
 
   it("mes vacío: texto de contexto privado, no el compartido", () => {
-    render(<ActivityView rows={[]} month="2026-09" today="2026-11-05" navigation={{ previous: null, next: "2026-10" }} />);
+    render(<AnnotateProvider><ActivityView rows={[]} month="2026-09" today="2026-11-05" navigation={{ previous: null, next: "2026-10" }} /></AnnotateProvider>);
+    expect(screen.getByRole("button", { name: copy.activity.empty.action })).toBeTruthy();
+    expect(screen.getByRole("link", { name: copy.activity.nextMonth("Octubre 2026") }).getAttribute("href")).toBe("/actividad?mes=2026-10");
     expect(screen.getByRole("heading", { name: copy.activity.empty.title })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/alguno de los dos|compartido/i);
   });

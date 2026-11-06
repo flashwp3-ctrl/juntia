@@ -55,3 +55,16 @@ export async function listRecentCategories(client: SupabaseClient) {
   if (error) throw mapDbError(error);
   return data.map(({ category_id }) => category_id as TransactionTransport["category_id"]);
 }
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Un movimiento activo propio para el detalle (FR-037, lectura). Ajeno, anulado o inexistente dan lo mismo,
+ * `transactionNotFound` (JT010): la RLS no deja distinguirlos y la pantalla tampoco lo intenta.
+ */
+export async function getTransaction(client: SupabaseClient, id: string): Promise<Transaction> {
+  await requireClaims(client);
+  if (!UUID.test(id)) throw new DbError("transactionNotFound");
+  const { data, error } = await client.from("my_transactions").select("*").eq("id", id).maybeSingle();
+  if (error) throw mapDbError(error);
+  if (!data) throw new DbError("transactionNotFound");
+  return transaction(data as TransactionTransport);
+}

@@ -1,0 +1,9 @@
+Run 42133717139 (workflow_dispatch) sobre 4550000 (feat/002-c-home, solo tests de C)
+Job db, paso Test API: rojo esperado antes de T069
+2026-11-06T00:04:51.5687688Z  FAIL   integration  tests/integration/export.test.ts [ tests/integration/export.test.ts ]
+2026-11-06T00:04:51.5690024Z Error: Cannot find module '/src/app/api/export/route' imported from /home/runner/work/juntia/juntia/tests/integration/export.test.ts
+2026-11-06T00:04:51.5696889Z  ❯ tests/integration/export.test.ts:21:17
+2026-11-06T00:04:51.5727397Z  ❯  integration  tests/integration/export.test.ts (0 test)
+2026-11-06T00:04:51.5766380Z  Test Files  1 failed | 7 passed (8)
+2026-11-06T00:04:51.5796489Z ##[error]Error: Cannot find module '/src/app/api/export/route' imported from /home/runner/work/juntia/juntia/tests/integration/export.test.ts
+ ❯ tests/integration/export.test.ts:21:17
