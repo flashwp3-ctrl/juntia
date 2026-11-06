@@ -3,6 +3,7 @@
 // aparecen en otro; el fixture se niega a correr si la URL de Supabase no es la del runner».
 import { readFile, rm } from "node:fs/promises";
 import { afterAll, expect, it } from "vitest";
+import { isDevTarget } from "../support/dev-target";
 import { runnerSupabase, seedGoldenMovements, seedUser, writeStorageState } from "../support/seed";
 
 const paths: string[] = [];
@@ -28,14 +29,19 @@ it("dos workers siembran usuarios y sesiones distintos, y el dataset de uno no a
   expect(other.data).toEqual([]);
 });
 
-it("se niega a sembrar fuera del Supabase del runner", async () => {
+// En el runner, juntia-dev también se rechaza. Con `test:integration:dev` (decisión 18) dev es el destino permitido y el
+// guardia de destino rechaza producción, cualquier otro proyecto y una URL vacía.
+it("se niega a sembrar fuera del destino permitido", async () => {
   const saved = { API_URL: process.env.API_URL, NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL };
+  const refused = isDevTarget()
+    ? { urls: ["https://otroproyectoxxxxxxxx.supabase.co", "https://enwaxmwgldqohfawxhdm.supabase.co", ""], message: /Guardia de destino/ }
+    : { urls: ["https://itfrhnadovezpahikuol.supabase.co", "https://enwaxmwgldqohfawxhdm.supabase.co", ""], message: /Supabase local del runner/ };
   try {
-    for (const url of ["https://itfrhnadovezpahikuol.supabase.co", "https://enwaxmwgldqohfawxhdm.supabase.co", ""]) {
+    for (const url of refused.urls) {
       process.env.API_URL = url;
       process.env.NEXT_PUBLIC_SUPABASE_URL = url;
-      expect(() => runnerSupabase()).toThrow(/Supabase local del runner/);
-      await expect(seedUser({ role: "sara", index: 9 })).rejects.toThrow(/Supabase local del runner/);
+      expect(() => runnerSupabase()).toThrow(refused.message);
+      await expect(seedUser({ role: "sara", index: 9 })).rejects.toThrow(refused.message);
     }
   } finally {
     process.env.API_URL = saved.API_URL;

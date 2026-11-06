@@ -1,8 +1,8 @@
 // T049 / FR-064; ADR-011 §6, reglas 1 y 2; research R8.11. Siembra por base de datos, por worker y por rol: un usuario
 // confirmado con la API de administración del Supabase DEL RUNNER, la sesión creada por @supabase/ssr sobre un almacén de
 // cookies en memoria (el formato de la cookie lo escribe la librería, no un test) y un `storageState` por worker y rol.
-// Solo en el runner: se niega a correr si la URL de Supabase no es local. La clave secreta solo existe aquí y en el
-// runner (FR-011); ningún camino de la app la usa.
+// Solo en el runner o, con `npm run e2e:dev`, en juntia-dev tras el guardia de destino (decisión 18). La clave secreta
+// solo existe aquí, en el runner y en el `.env.test` local (FR-011); ningún camino de la app la usa.
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
@@ -12,21 +12,19 @@ import { saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
 import { moneyFromPesos } from "../../src/domain/money";
 import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { createTransaction } from "../../src/lib/db/transactions";
+import { createSeedUser } from "./admin-user";
+import { assertTestTarget } from "./dev-target";
 
 export type Role = "sara" | "tomas" | (string & {});
 export type StorageCookie = { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Lax" };
 export type SeededUser = { id: string; email: string; password: string; displayName: string; cookies: StorageCookie[]; client: SupabaseClient };
 
-const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
-
-/** URL y claves del Supabase del runner. Falla si apuntan a cualquier otro sitio (juntia-dev o producción). */
+/** URL y claves del Supabase del runner o, en `e2e:dev`, de juntia-dev. Falla con cualquier otro destino. */
 export function runnerSupabase() {
   const url = process.env.API_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const publishableKey = process.env.PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
   const secretKey = process.env.SECRET_KEY ?? "";
-  let host = "";
-  try { host = new URL(url).hostname; } catch { /* vacío o no válido */ }
-  if (!LOCAL_HOSTS.has(host)) throw new Error("La siembra solo corre contra el Supabase local del runner (ADR-011 §9.6)");
+  assertTestTarget(url, "La siembra");
   if (!publishableKey || !secretKey) throw new Error("Faltan las claves del Supabase del runner");
   return { url, publishableKey, secretKey };
 }
@@ -58,7 +56,7 @@ type SeedOptions = { role: Role; index: number; displayName?: string; firstEntry
 export async function seedUser({ role, index, displayName = "Sara", firstEntryCompleted = true }: SeedOptions): Promise<SeededUser> {
   const email = `${role}-${index}-${randomUUID().slice(0, 8)}@seed.test`;
   const password = `Seed-${randomUUID()}`;
-  const created = await adminClient().auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { display_name: displayName } });
+  const created = await createSeedUser(adminClient(), { email, password, email_confirm: true, user_metadata: { display_name: displayName } });
   if (created.error || !created.data.user) throw new Error("No se pudo crear el usuario sembrado");
   const { client, jar } = cookieJarClient();
   const signedIn = await client.auth.signInWithPassword({ email, password });
@@ -116,7 +114,7 @@ export async function seedMovements(user: SeededUser, data: "golden" | "current"
 export async function seedUnconfirmedUser(index: number) {
   const email = `sin-verificar-${index}-${randomUUID().slice(0, 8)}@seed.test`;
   const password = `Seed-${randomUUID()}`;
-  const created = await adminClient().auth.admin.createUser({ email, password, email_confirm: false, user_metadata: { display_name: "Sin verificar" } });
+  const created = await createSeedUser(adminClient(), { email, password, email_confirm: false, user_metadata: { display_name: "Sin verificar" } });
   if (created.error) throw new Error("No se pudo crear la cuenta sin verificar");
   return { email, password };
 }

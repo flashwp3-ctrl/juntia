@@ -1,6 +1,7 @@
 // T014 / ADR-013 [V] 1, 2, 7, 8: «con un JWT real y la API de datos pública»;
 // «Tomás no lee el perfil de Sara» (tasks.md, punto de control 1).
 import { beforeAll, expect, it, vi } from "vitest";
+import { sendsMailOnDev } from "../support/dev-target";
 import { createTestUser } from "./support/users";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
@@ -35,7 +36,8 @@ it("[V1/V8] ensure_profile por HTTP conserva la identidad y es idempotente", asy
   expect((await tomas.client.from("my_profile").select("*")).data).toEqual([{ display_name: "Tomás HTTP", theme: "system", first_entry_completed: false }]);
 });
 // FR-024: la petición real de Auth ejecuta el hook como supabase_auth_admin.
-it("Auth aplica la lista permitida antes de crear la cuenta", async () => {
+// Envía o lee un correo: solo en CI. `test:integration:dev` lo salta y lo declara (decisión 18, ADR-011 §9.9).
+it.skipIf(sendsMailOnDev)("Auth aplica la lista permitida antes de crear la cuenta", async () => {
   const { apiUrl, publishableKey } = runnerEnv();
   const client = createClient(apiUrl, publishableKey, { auth: { persistSession: false } });
   const allowed = await client.auth.signUp({ email: "signup@seed.test", password: "Synthetic-Signup-2026!" });
@@ -65,6 +67,18 @@ it("[V2/V7] POST/PATCH/DELETE directos y perfiles privados no son accesibles", a
   }
   const response = await fetch(`${apiUrl}/rest/v1/rpc/ensure_profile`, { method: "POST", headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json", "Content-Profile": "juntia_private" }, body: "{}" });
   expect((await response.json()).code).toBe("PGRST106");
+});
+// ADR-013 §5.4, enmienda del 6 de noviembre de 2026: el inventario F40-2 excluye las funciones que pertenecen a una
+// extensión porque la API de datos no expone el esquema extensions. Esto lo comprueba, por RPC y por lectura.
+it("[F40-2] la API de datos no expone el esquema extensions", async () => {
+  const { apiUrl, publishableKey } = runnerEnv();
+  for (const token of [publishableKey, sara.token]) {
+    const headers = { apikey: publishableKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+    const rpc = await fetch(`${apiUrl}/rest/v1/rpc/gen_random_uuid`, { method: "POST", headers: { ...headers, "Content-Profile": "extensions" }, body: "{}" });
+    expect((await rpc.json()).code, "RPC en extensions").toBe("PGRST106");
+    const read = await fetch(`${apiUrl}/rest/v1/pg_stat_statements?limit=1`, { headers: { ...headers, "Accept-Profile": "extensions" } });
+    expect((await read.json()).code, "lectura en extensions").toBe("PGRST106");
+  }
 });
 it("[V7] GraphQL no puede exponer datos ni esquemas de Juntia", async () => {
   const { apiUrl, publishableKey } = runnerEnv();

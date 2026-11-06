@@ -1,0 +1,13 @@
+import { checkDevTarget } from "../../scripts/dev-target/guard.mjs";
+export { DEV_REF } from "../../../scripts/dev-target/guard.mjs";
+import "@/../scripts/dev-target/run.mjs";
+export * from "scripts/dev-target/lock.mjs";
+void import("../../scripts/dev-target/lock.mjs");
+void import(`../../scripts/dev-target/${"tap"}.mjs`);
+require("../../scripts/dev-target/tap.mjs");
+require(`../../scripts/${"dev-target"}/tap.mjs`);
+import { copy } from "@/lib/copy/es";
+import { transcript } from "./transcripts/registry";
+export { helper } from "./scripts-helper";
+void import("@/lib/copy/es");
+void [checkDevTarget, copy, transcript];

@@ -71,14 +71,30 @@ const serviceSelectors = [
   { selector: "Identifier[name=/^SUPABASE_(SECRET_KEY|SERVICE_ROLE_KEY)$/]", message: "FR-011: ninguna clave privilegiada en la app." },
   { selector: "Literal[value=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
   { selector: "TemplateElement[value.raw=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
+  // Decisión 18: la clave secreta de juntia-dev vive en .env.test y solo la leen scripts/dev-target y las pruebas.
+  { selector: "Identifier[name=/^(JUNTIA_DEV_|SECRET_KEY$)/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
+  { selector: "Literal[value=/JUNTIA_DEV_|^SECRET_KEY$|sb_secret_|\\.env\\.test/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
+  { selector: "TemplateElement[value.raw=/JUNTIA_DEV_|sb_secret_|\\.env\\.test/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
 ];
+// F48-4 (decisión 18): src/ no importa nada de scripts/ (el runner de juntia-dev y su clave secreta), ni por ruta
+// relativa, ni por alias, ni con export … from, import() o require().
+const SCRIPTS_MSG = "Decisión 18: la app no importa scripts/ (runner y guardia de juntia-dev).";
+const SCRIPTS_PATH = "/(^|[\\/])scripts[\\/]/";
+const scriptSelectors = [
+  { selector: `ImportExpression[source.value=${SCRIPTS_PATH}]`, message: SCRIPTS_MSG },
+  { selector: `ImportExpression > TemplateLiteral[quasis.0.value.raw=${SCRIPTS_PATH}]`, message: SCRIPTS_MSG },
+  { selector: `CallExpression[callee.name='require'] > Literal[value=${SCRIPTS_PATH}]`, message: SCRIPTS_MSG },
+  { selector: `CallExpression[callee.name='require'] > TemplateLiteral[quasis.0.value.raw=${SCRIPTS_PATH}]`, message: SCRIPTS_MSG },
+];
+const scriptImports = { group: ["**/scripts/**", "scripts/**"], message: SCRIPTS_MSG };
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   globalIgnores([".agents/**", ".claude/skills/**", ".claude/worktrees/**", ".next/**", "node_modules/**", "tests/lint-fixtures/**", "next-env.d.ts"]),
   { files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors] } },
-  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors] } },
-  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], ignores: ["src/lib/db/**", "src/lib/supabase/**"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors,
+  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors, ...scriptSelectors],
+    "no-restricted-imports": ["error", { patterns: [scriptImports] }] } },
+  { files: ["src/**/*.{js,jsx,mjs,cjs,ts,tsx}"], ignores: ["src/lib/db/**", "src/lib/supabase/**"], rules: { "no-restricted-syntax": ["error", ...hexSelectors, ...serviceSelectors, ...scriptSelectors,
     { selector: "CallExpression[callee.property.name=/^(rpc|from)$/]", message: "FR-010: el acceso a datos pertenece a src/lib/db o src/lib/supabase." },
   ] } },
   { files: ["tests/**/*.{ts,tsx,js,mjs,cjs}"], rules: { "no-restricted-syntax": ["error", ...hexSelectors,
@@ -93,7 +109,7 @@ export default defineConfig([
     plugins: { juntia: { rules: { "domain-imports": domainImports } } },
     rules: { "juntia/domain-imports": "error", "no-restricted-imports": ["error", {
     paths: ["react", "react-dom", "next", "motion"],
-    patterns: [{ group: ["react/*", "react-dom/*", "next/*", "motion/*", "@phosphor-icons/*", "@radix-ui/*", "@supabase/*", "@/components/*", "@/lib/db/*", "@/lib/supabase/*"], message: "Maestro §7.2: domain no depende de la interfaz ni de SDK de proveedores." }],
+    patterns: [scriptImports, { group: ["react/*", "react-dom/*", "next/*", "motion/*", "@phosphor-icons/*", "@radix-ui/*", "@supabase/*", "@/components/*", "@/lib/db/*", "@/lib/supabase/*"], message: "Maestro §7.2: domain no depende de la interfaz ni de SDK de proveedores." }],
   }] } },
 ]);
 

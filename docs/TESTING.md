@@ -71,8 +71,8 @@ desarrolla, las capas de base de datos se iteran contra `juntia-dev`, que es
 desechable, y no contra el CI: los minutos de GitHub Free no alcanzan para iterar
 en CI. El CI corre solo en los puntos de control del `tasks.md` y en el gate
 final, y solo su salida cuenta como evidencia. Los correos reales y el ensayo de
-restauración siguen solo en CI. Los comandos y el guardia de destino llegan con un
-PR técnico propio.
+restauración siguen solo en CI. Comandos, guardia y límites: «Iterar contra
+`juntia-dev`», al final de esta sección.
 
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
@@ -84,12 +84,118 @@ PR técnico propio.
 | `npm run test:e2e:smoke` | Playwright, specs de humo del PR, solo Chromium | **< 3 min** (job de CI) |
 | `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
 | `npm run test:a11y` | axe sobre las rutas **ya implementadas**, en los dos temas (§3) | PR y nivel 2 |
+| `npm run db:dev:reset` | Reinicia `juntia-dev` con las migraciones de la rama y `supabase/seed.sql` (solo de pruebas). Decisión 18 | — (iteración) |
+| `npm run test:db:dev` | Reinicia `juntia-dev` y corre pgTAP de `supabase/tests`, como el job `db`. Decisión 18 | — (iteración) |
+| `npm run test:integration:dev` | Integración de servidor contra `juntia-dev`, sin las pruebas de correo. Decisión 18 | — (iteración) |
+| `npm run e2e:dev` | Build con `juntia-dev`, E2E sin `@mail` y axe con sesión. Decisión 18 | — (iteración) |
 
 **«Comando» y «job de CI» no miden lo mismo** — ver §9. Un presupuesto de comando
 mide solo la ejecución, con las dependencias ya instaladas; uno de job incluye
 `npm ci`, la instalación del navegador y el arranque de servicios.
 
 Si vas a ejecutar una sola cosa antes de abrir un PR, ejecuta `verify`.
+
+### Iterar contra `juntia-dev` (decisión 18, ADR-011 §9.9)
+
+Mientras desarrollas, las capas de base de datos se iteran contra `juntia-dev`
+(`itfrhnadovezpahikuol`), que es desechable y no guarda datos reales. **Nada de lo
+que sale de aquí es evidencia**: el gate sigue siendo `verify` más los jobs `db` y
+`e2e` del CI sobre el mismo commit, y el CI corre solo en los puntos de control
+del `tasks.md` y en el gate final (ADR-011 §9.8).
+
+**Preparación, una vez por equipo.** Un fundador copia `.env.test.example` como
+`.env.test` en la raíz del clon principal (los worktrees lo encuentran allí) y lo
+rellena desde el panel de `juntia-dev`: URL, clave publicable, una clave secreta
+propia para pruebas y la conexión del pooler de sesión. `.env.test` está en
+`.gitignore` y el runner se niega a usarlo si `git check-ignore` no lo confirma.
+Hace falta `psql` (el cliente de PostgreSQL 17; en Windows se encuentra solo en
+`C:Program FilesPostgreSQL<versión>in`). Sin Docker (decisión 17).
+
+| Comando | Qué corre | Qué se salta, declarado en su resumen |
+| --- | --- | --- |
+| `npm run db:dev:reset` | `supabase db reset --db-url` (CLI 2.121.0, la del CI) con las migraciones de la rama y `supabase/seed.sql`; después comprueba el número de migraciones y el esquema `tests` | No hay semilla de producción: `seed.sql` es solo de pruebas (esquema `tests` y correos `@seed.test`) |
+| `npm run test:db:dev` | Primero `db:dev:reset` (como el job `db`, pgTAP supone la base recién reiniciada); después, cada archivo de `supabase/tests` con `psql`, con las reglas de `pg_prove` (ningún `not ok`, plan exacto, `psql` sin error). `supabase test db` necesita Docker | `db:types:check` (`gen types --local` necesita Docker), el ensayo de restauración y los nueve controles negativos (§9.6), y los artefactos del job `db` |
+| `npm run test:integration:dev` | `vitest --project integration`, con timeouts de 60 s por la latencia hasta East US | Las pruebas que envían o leen un correo (`it.skipIf(sendsMailOnDev)`) y el 40P01 real de `money.test.ts`, cuya carrera de interbloqueo no se reproduce de forma fiable con la latencia de dev; el resumen las lista por nombre |
+| `npm run e2e:dev` | `next build` con la URL y la clave publicable de dev, `--project e2e --grep-invert @mail` y `--project a11y` con `A11Y_JOB=e2e` | Las E2E etiquetadas `@mail` (registro, recuperación, Mailpit), listadas por nombre, y el proyecto `evidence` |
+
+**Diferencia del stack alojado, resuelta el 6 de noviembre de 2026.** En `juntia-dev`, las funciones de
+`pgcrypto`, `uuid-ossp` y `pg_stat_statements` son de `postgres`; en el runner, de `supabase_admin`. Los fundadores
+eligieron excluir del inventario F40-2 solo las funciones que pertenecen a una extensión (`pg_depend`, `deptype = 'e'`),
+igual en CI y en dev, y probar que la API de datos no expone `extensions` (ADR-013 §5.4, nota de esa fecha).
+
+Lo que no cubre dev, en una línea: **correos, ensayo de restauración, tipos
+generados y cualquier evidencia**. Dev no tiene Mailpit, y su correo integrado
+admite 2 envíos por hora y solo a miembros de la organización.
+
+**El guardia de destino** (`scripts/dev-target/guard.mjs`, con su prueba de unidad
+en `tests/dev-target-guard.test.ts`) corre antes de cualquier conexión y se repite
+dentro del proceso de pruebas antes de cada escritura (`tests/support/dev-target.ts`).
+Se niega, con un mensaje que nombra la variable y nunca su valor, si:
+
+- el ref de producción `enwaxmwgldqohfawxhdm` aparece en cualquier variable de
+  `.env.test` o del entorno, también dentro del payload de una clave JWT heredada;
+- la URL no es exactamente `https://itfrhnadovezpahikuol.supabase.co`;
+- la conexión no es la directa de dev ni el pooler de sesión con el usuario
+  `postgres.itfrhnadovezpahikuol` (el pooler de transacción, 6543, se rechaza), o lleva
+  parámetros, fragmento o varios hosts: libpq deja que `?host=`, `?hostaddr=`, `?user=`,
+  `?port=` o `?service=` anulen la cabecera, así que la URL tiene que ser exactamente
+  `postgresql://usuario:contraseña@host:5432/postgres`;
+- una clave no es de Supabase o es una clave JWT de otro proyecto o rol;
+- `supabase/.temp/project-ref` existe y no es dev, en el worktree **o** en el checkout
+  principal (quickstart §3 de la 002).
+
+**Entorno de libpq limpio.** psql (el runner y `tests/integration/support/sql.ts`) y la
+CLI de Supabase no heredan ninguna variable `PG*` (`PGHOSTADDR`, `PGSERVICE`,
+`PGSERVICEFILE`, `PGPASSFILE`, `PGSSLMODE`…): se quitan todas y se ponen solo las que
+salen de la URL validada, con TLS obligatorio (`cleanPgEnv` en el guardia).
+
+**La contraseña de la base no va en la línea de órdenes.** `db:dev:reset` pasa a la
+CLI la URL **sin** contraseña en `--db-url` y la contraseña en `PGPASSWORD`, dentro de ese
+entorno limpio; el lanzador de la CLI 2.121.0 corre con `node` directamente desde la
+caché de npx, sin npm de por medio, así que tampoco hay log de npm con la orden. psql
+nunca recibe la URL como argumento. Riesgo que queda: la contraseña está en el
+entorno de esos procesos hijos, que en Windows y Linux solo puede leer el mismo usuario
+del equipo.
+
+**La clave secreta** solo la leen `scripts/dev-target` y el soporte de pruebas, con
+nombres que la app no usa (`JUNTIA_DEV_*`, nunca `NEXT_PUBLIC_`). El lint prohíbe
+esos nombres, `SECRET_KEY`, `sb_secret_` y `.env.test` en `src/`, y que `src/` importe
+nada de `scripts/` (por ruta, alias, `export … from`, `import()` o `require()`). El build de
+`e2e:dev` y el servidor de la app arrancan sin la clave secreta ni la conexión, y
+Playwright nunca reutiliza un servidor abierto: si el puerto 3000 está ocupado,
+`e2e:dev` se niega. La salida de cada paso pasa por un filtro que oculta la
+clave y la contraseña de la base.
+
+**Un agente a la vez.** Cada comando crea el directorio `juntia-dev.lock` en la
+carpeta común de git (`.git/` del clon principal). `mkdir` es atómico: de dos agentes
+que lo intentan a la vez, solo uno lo crea. Dentro deja `owner.json` con la rama, el
+comando, la hora, el equipo, el PID y un identificador único de la ejecución, escrito
+con un rename para que nunca se lea a medias. Si el dueño está vivo, el comando se
+niega y dice quién. **El bloqueo nunca se recupera solo**: si su dueño murió de golpe
+(SIGKILL, cierre de la terminal, apagón) o los metadatos no se pueden leer, el comando
+se niega igual, porque un descendiente podría seguir escribiendo en dev o el PID pudo
+reutilizarse. Se libera a mano: `npm run dev:unlock` enseña a quién pertenece y no toca
+nada; `npm run dev:unlock -- --force` lo borra, después de comprobar que no queda
+ningún proceso de ese comando. Con Ctrl+C o SIGTERM se termina el **árbol entero** del
+hijo en curso (Windows: `taskkill /PID <pid> /T /F`; POSIX: el hijo corre en su propio
+grupo y se señala el grupo, con SIGKILL a los 5 s; si 10 s después del SIGKILL el
+árbol sigue vivo, el comando falla de forma explícita y el bloqueo se queda huérfano para
+`dev:unlock --force`, nunca se suelta ni se espera para siempre), no empieza ningún paso nuevo, y el
+bloqueo se suelta solo cuando ya no queda ningún proceso. Un único punto lo suelta
+(`scripts/dev-target/session.mjs`, con el flujo `runInSession` que comparten `run.mjs` y
+su prueba): el final normal del comando espera la misma cancelación en curso, y la
+sesión conserva el grupo de cada paso hasta comprobar que ya no existe, aunque su
+proceso principal haya terminado antes que sus descendientes. **Limitación en Windows:**
+`taskkill /T` necesita la raíz viva para encontrar a sus descendientes; si la raíz de un
+paso ya terminó, un nieto huérfano no se ve. En POSIX el grupo sí se sigue viendo. Si el comando muere sin pasar por ahí (error fatal, SIGKILL), no se
+sabe en qué estado quedó el árbol y el bloqueo se queda huérfano hasta `dev:unlock --force`. **Entre
+equipos no hay mecanismo**: los dos fundadores no usan `juntia-dev` a la vez y se
+avisan antes de un `db:dev:reset`, que además borra los perfiles y movimientos de las
+cuentas que se usen a mano en dev (las cuentas de Auth no se borran).
+
+**Antes de `e2e:dev`, una vez**: en `juntia-dev`, Authentication › Rate Limits,
+subir el límite de inicios de sesión. Cada estado de axe con sesión entra con su
+propia cuenta sembrada, y el límite por defecto del Auth alojado se queda corto.
 
 ---
 

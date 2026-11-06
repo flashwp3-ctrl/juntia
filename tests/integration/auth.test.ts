@@ -5,6 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { beforeAll, expect, it } from "vitest";
+import { sendsMailOnDev } from "../support/dev-target";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
 import { createTestUser } from "./support/users";
@@ -21,7 +22,8 @@ it("ensure_profile toma el nombre visible de A2 (user_metadata) y es idempotente
   expect(runnerSql(`select count(*) from juntia_data.profiles where user_id='${sara.id}'`)).toBe("1");
 });
 
-it("F37-7: Auth rechaza por la API cruda una contraseña de 7 caracteres con un correo permitido y no crea el usuario", async () => {
+// Envía o lee un correo: solo en CI. `test:integration:dev` lo salta y lo declara (decisión 18, ADR-011 §9.9).
+it.skipIf(sendsMailOnDev)("F37-7: Auth rechaza por la API cruda una contraseña de 7 caracteres con un correo permitido y no crea el usuario", async () => {
   const { apiUrl, publishableKey } = runnerEnv();
   const email = `weak-${randomUUID()}@seed.test`;
   runnerSql(`insert into juntia_data.signup_allowlist(email) values ('${email}')`);

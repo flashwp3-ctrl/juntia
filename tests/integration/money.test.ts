@@ -2,6 +2,7 @@
 // función real, usando src/lib/db y el dominio (plan PR A, pruebas por capa).
 import { beforeAll, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
+import { isDevTarget } from "../support/dev-target";
 import { createTestUser } from "./support/users";
 import { runnerSql, spawnRunnerSql } from "./support/sql";
 import { createTransaction, updateTransaction, voidTransaction, listTransactions } from "../../src/lib/db/transactions";
@@ -61,7 +62,9 @@ it("el eliminado no se edita y Deshacer conserva el rastro", async () => {
   expect(result.status).toBe("voided");
   await expect(updateTransaction(sara.client,{ ...draft(), transactionId: created.id, expectedVersion: result.version })).rejects.toMatchObject({ kind: "transactionVoided" });
 });
-it("40P01 real se reintenta con la misma clave", async () => {
+// Solo en CI: provocar un 40P01 real depende de una carrera de tiempos que, con la latencia de juntia-dev, no se
+// reproduce de forma fiable (decisión 18; investigación en el PR del runner). `test:integration:dev` la salta y la declara.
+it.skipIf(isDevTarget())("40P01 real se reintenta con la misma clave", async () => {
   const external = spawnRunnerSql();
   const ready = new Promise<void>((resolve,reject) => {
     external.stdout.on("data", (chunk) => { if (String(chunk).includes("external_ready")) resolve(); });
