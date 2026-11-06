@@ -5,6 +5,29 @@ import { setupCoupleFixtures, rpc, expense, hash, snapshot } from "./support/cou
 import { runnerSql, spawnRunnerSql } from "./support/sql";
 const {accounts,couple}=setupCoupleFixtures(2);
 
+it("aceptar revalida la caducidad real después de esperar al grupo",async()=>{
+  const p=await accounts();const tokenHash=hash();
+  const root=await rpc(p.sara.client,"create_invitation",{p_idempotency_key:randomUUID(),p_email:p.email,p_token_hash:tokenHash});
+  const gate=spawnRunnerSql();
+  const ready=new Promise<void>((resolve,reject)=>{gate.stdout.on("data",c=>{if(String(c).includes("expiry_gate_ready")) resolve();});gate.on("error",reject);});
+  const closed=new Promise<void>(resolve=>gate.on("close",()=>resolve()));
+  let pending:Promise<unknown>|undefined;
+  try {
+    gate.stdin.write(`begin; select id from juntia_data.groups where id='${root.group_id}' for update;\n\\echo expiry_gate_ready\n`);
+    await ready;
+    pending=rpc(p.tomas.client,"accept_invitation",{p_idempotency_key:randomUUID(),p_token_hash:tokenHash});void pending.catch(()=>{});
+    await vi.waitFor(()=>expect(Number(runnerSql("select count(*) from pg_stat_activity where wait_event_type='Lock' and query like '%accept_invitation%' and pid<>pg_backend_pid()"))).toBeGreaterThan(0),{timeout:10000});
+    // Caduca durante la espera, después del inicio de la petición. No hay sleeps.
+    gate.stdin.end(`with boundary as materialized (select max(xact_start)+(clock_timestamp()-max(xact_start))/2 as expires from pg_stat_activity where wait_event_type='Lock' and query like '%accept_invitation%' and pid<>pg_backend_pid())
+      update juntia_data.group_invitations set created_at=boundary.expires-interval '7 days',expires_at=boundary.expires from boundary where group_id='${root.group_id}' and status='pending'; commit;\n`);
+    await closed;expect(gate.exitCode).toBe(0);
+    await expect(pending).rejects.toMatchObject({code:"JT104"});
+    expect(runnerSql(`select status from juntia_data.groups where id='${root.group_id}'`)).toBe("provisional");
+    expect(runnerSql(`select count(*) from juntia_data.group_members where group_id='${root.group_id}' and status='active'`)).toBe("1");
+    expect(runnerSql(`select count(*) from juntia_data.idempotency_records where actor_user_id='${p.tomas.id}'`)).toBe("0");
+  } finally {if(gate.exitCode===null) gate.kill();await closed;if(pending) await pending.catch(()=>{});}
+});
+
 // Bloquear la raíz permite ordenar las dos peticiones sin depender de latencias.
 async function ordered(groupId:string, first:()=>Promise<unknown>, second:()=>Promise<unknown>, firstName:string) {
   const gate=spawnRunnerSql();

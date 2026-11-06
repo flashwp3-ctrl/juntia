@@ -163,12 +163,12 @@ begin
  perform pg_advisory_xact_lock(hashtextextended(uid::text,0));
  if exists(select 1 from juntia_data.group_members where user_id=uid and status='active') then raise exception using errcode='JT101',message='alreadyInCouple'; end if;
  -- La invitación se busca por el correo firmado; no se concede lookup global por hash.
- select * into inv from juntia_data.group_invitations where token_hash=p_token_hash and email=juntia_private.current_email() and status='pending' and expires_at>now();
+ select * into inv from juntia_data.group_invitations where token_hash=p_token_hash and email=juntia_private.current_email() and status='pending' and expires_at>clock_timestamp();
  if not found then raise exception using errcode='JT104',message='invitationInvalid'; end if;
  select * into g from juntia_data.groups where id=inv.group_id for update;
  if not found or g.status<>'provisional' then raise exception using errcode='JT104',message='invitationInvalid'; end if;
  -- Releer tras el bloqueo: el dueño pudo reemplazar/anular mientras esperábamos.
- select * into inv from juntia_data.group_invitations where group_id=g.id and token_hash=p_token_hash and email=juntia_private.current_email() and status='pending' and expires_at>now() for update;
+ select * into inv from juntia_data.group_invitations where group_id=g.id and token_hash=p_token_hash and email=juntia_private.current_email() and status='pending' and expires_at>clock_timestamp() for update;
  if not found then raise exception using errcode='JT104',message='invitationInvalid'; end if;
  insert into juntia_data.group_members(group_id,user_id,role,join_order,status) values(g.id,uid,'member',2,'active'); get diagnostics n=row_count; if n<>1 then raise exception using errcode='42501',message='writeDenied'; end if;
  update juntia_data.groups set status='active',activated_at=now(),version=version+1 where id=g.id; get diagnostics n=row_count; if n<>1 then raise exception using errcode='42501',message='writeDenied'; end if;
