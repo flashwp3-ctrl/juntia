@@ -73,12 +73,13 @@ begin
    or p_percents[1] not between 0 and 100 or p_percents[2] not between 0 and 100 or p_percents[1]+p_percents[2]<>100 then raise exception using errcode='JT110',message='invalidSplit'; end if;
  elsif p_percents is not null then raise exception using errcode='JT110',message='invalidSplit';
  end if;
+ -- amount: p_parts es la definición explícita ya validada, nunca un peso.
  if p_mode='amount' then return; end if;
- denominator:=case when p_mode='equal' then positives else 100 end;
+ denominator:=case when p_mode='equal' then 2 else 100 end;
  -- ADR-002 v1: pesos enteros, mayor residuo, desempate por join_order.
  with weights as (
   select join_order,(p_parts->>user_id::text)::bigint as actual,
-   case when p_mode='percent' then p_percents[join_order] when (p_parts->>user_id::text)::bigint>0 then 1 else 0 end as weight
+   case when p_mode='percent' then p_percents[join_order] else 1 end as weight
   from juntia_data.group_members where group_id=p_group and status='active'
  ), shares as (
   select *,floor((p_amount/100)::numeric*weight/denominator) as base,mod((p_amount/100)::numeric*weight,denominator) as remainder from weights

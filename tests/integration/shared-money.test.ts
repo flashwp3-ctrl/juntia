@@ -7,7 +7,67 @@ import { readFileSync } from "node:fs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { moneyFromPesos } from "../../src/domain/money";
 import type { Account } from "./support/couple";
+import {splitAmount,nextSplitOnParticipantsChange,type SplitMode} from "../../src/domain/allocations";
 const {accounts,couple}=setupCoupleFixtures(2);
+
+// F52-1 · FR-019/019a: equal 100/0 y 0/100 se rechazan sin efectos en las tres escrituras.
+for(const operation of ["create_shared_expense","update_shared_expense","reclassify_to_shared"] as const) it(`F52-1 ${operation}: equal validado por servidor, incluido residuo impar`,async()=>{
+  const p=await couple();let version=1;
+  const base=operation==="update_shared_expense"?await rpc(p.sara.client,"create_shared_expense",expense(p)):null;
+  const privateTx=operation==="reclassify_to_shared"?await rpc(p.sara.client,"create_transaction",{p_idempotency_key:randomUUID(),p_type:"expense",p_amount_minor:"10000000",p_category_id:"transport",p_transaction_date:"2026-10-03",p_description:null}):null;
+  const state=()=>snapshot(p.groupId)+runnerSql(`select coalesce(jsonb_agg(i order by actor_user_id,action,idempotency_key),'[]'::jsonb) from juntia_data.idempotency_records i where actor_user_id in('${p.sara.id}','${p.tomas.id}')`);
+  const write=async(amount:string,sara:string,tomas:string)=>{
+    const split={p_split_mode:"equal",p_split_percents:null,p_parts:{[p.sara.id]:sara,[p.tomas.id]:tomas}};
+    if(operation==="reclassify_to_shared") {
+      const source=amount==="10000000"?privateTx:await rpc(p.sara.client,"create_transaction",{p_idempotency_key:randomUUID(),p_type:"expense",p_amount_minor:amount,p_category_id:"transport",p_transaction_date:"2026-10-03",p_description:null});
+      return (await rpc(p.sara.client,operation,{p_idempotency_key:randomUUID(),p_transaction_id:source.id,p_expected_version:1,...split})).shared;
+    }
+    return rpc(p.sara.client,operation,{...expense(p),p_amount_minor:amount,p_payer_user_id:p.tomas.id,...split,...(base?{p_transaction_id:base.id,p_expected_version:version}:{})});
+  };
+  for(const [sara,tomas] of [["10000000","0"],["0","10000000"]]) {
+    const before=state();await expect(write("10000000",sara,tomas)).rejects.toMatchObject({code:"JT110"});expect(state()).toBe(before);
+  }
+  expect((await write("10000000","5000000","5000000")).parts).toEqual({[p.sara.id]:"5000000",[p.tomas.id]:"5000000"});version++;
+  expect((await write("10000100","5000100","5000000")).parts).toEqual({[p.sara.id]:"5000100",[p.tomas.id]:"5000000"});
+});
+
+it("F52-1: SQL acepta exactamente splitAmount para importes, modos y un participante",async()=>{
+  const p=await couple(),members=[{userId:p.sara.id,joinOrder:1},{userId:p.tomas.id,joinOrder:2}];
+  const statements:string[]=[];let checked=0;
+  for(const pesos of [1n,2n,3n,99n,100001n,999999999n]) for(const mode of ["equal","percent","amount","single-sara","single-tomas"] as const) {
+    const selected=mode.startsWith("single-")?[members[mode==="single-sara"?0:1]]:members;
+    const sqlMode=mode.startsWith("single-")?"percent":mode;
+    const percents=mode==="percent"?[33,67]:mode==="single-sara"?[100,0]:mode==="single-tomas"?[0,100]:null;
+    const values=mode==="percent"?{[p.sara.id]:33,[p.tomas.id]:67}:mode==="amount"?{[p.sara.id]:pesos/3n*100n,[p.tomas.id]:(pesos-pesos/3n)*100n}:{};
+    const expected=Object.fromEntries(members.map(m=>[m.userId,"0"]));
+    for(const a of splitAmount(moneyFromPesos(pesos),mode.startsWith("single-")?"equal":mode as SplitMode,selected,values)) expected[a.userId]=a.amount.amountMinor.toString();
+    const call=(parts:Record<string,string>)=>`juntia_private.validate_shared_split('${p.groupId}',${pesos*100n},'${p.tomas.id}','${sqlMode}',${percents?`array[${percents}]::smallint[]`:"null"},'${JSON.stringify(parts)}'::jsonb)`;
+    statements.push(`select ${call(expected)};`);
+    const wrong={...expected};const donor=members.find(m=>BigInt(wrong[m.userId])>0n)!.userId,other=members.find(m=>m.userId!==donor)!.userId;
+    wrong[donor]=(BigInt(wrong[donor])-100n).toString();wrong[other]=(BigInt(wrong[other])+(mode==="amount"?200n:100n)).toString();
+    statements.push(`do $bad$ begin perform ${call(wrong)}; raise exception 'acepto reparto distinto al dominio'; exception when sqlstate 'JT110' then null; end $bad$;`);checked++;
+  }
+  expect(runnerSql(`begin;set local role juntia_writer;set local "request.jwt.claims"='{"sub":"${p.sara.id}","role":"authenticated"}';${statements.join("\n")}select ${checked};rollback;`)).toMatch(/30$/);
+});
+
+it("F52-1: la capa de envio traduce equal de un participante para crear, editar y mover",async()=>{
+  const p=await couple();
+  const {createSharedExpense,updateSharedExpense}=await import("../../src/lib/db/shared-expenses");
+  const {reclassifyToShared}=await import("../../src/lib/db/reclassify");
+  for(const [selected,percents] of [[p.sara.id,[100,0]],[p.tomas.id,[0,100]]] as const) {
+    const selection=nextSplitOnParticipantsChange({mode:"percent",participants:[{userId:p.sara.id,joinOrder:1},{userId:p.tomas.id,joinOrder:2}],values:{[p.sara.id]:55,[p.tomas.id]:45}},[{userId:selected,joinOrder:selected===p.sara.id?1:2}]);
+    const allocations=splitAmount(moneyFromPesos(100001n),selection.mode,selection.participants,selection.values);
+    const draft={idempotencyKey:randomUUID(),amount:moneyFromPesos(100001n),categoryId:"transport" as const,transactionDate:"2026-10-03",description:null,payerUserId:p.tomas.id,splitMode:"equal" as const,splitPercents:null,allocations};
+    const tx=await createSharedExpense(p.sara.client,draft);
+    const edited=await updateSharedExpense(p.sara.client,{...draft,idempotencyKey:randomUUID(),transactionId:tx.id,expectedVersion:1});
+    const source=await rpc(p.sara.client,"create_transaction",{p_idempotency_key:randomUUID(),p_type:"expense",p_amount_minor:"10000100",p_category_id:"transport",p_transaction_date:"2026-10-03",p_description:null});
+    const moved=await reclassifyToShared(p.sara.client,{...draft,idempotencyKey:randomUUID(),transactionId:source.id,expectedVersion:1});
+    for(const result of [tx,edited,moved.shared]) {
+      expect(result.splitMode).toBe("percent");expect(result.splitPercents).toEqual(percents);
+      expect(Object.fromEntries(result.allocations.map(a=>[a.userId,a.amount.amountMinor]))).toEqual({[p.sara.id]:selected===p.sara.id?10000100n:0n,[p.tomas.id]:selected===p.tomas.id?10000100n:0n});
+    }
+  }
+});
 
 async function writeStatus(client:SupabaseClient,action:string,key:string) {
   return (await import("../../src/lib/db/write-status")).writeStatus(client,action,key);

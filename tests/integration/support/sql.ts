@@ -12,10 +12,10 @@ function psqlEnv(): NodeJS.ProcessEnv {
   assertTestTarget(raw, "El SQL de las pruebas");
   return cleanPgEnv(process.env, raw) as NodeJS.ProcessEnv;
 }
-export function runnerSql(sql: string): string {
+export function runnerSql(sql: string, timeout?: number): string {
   // stdin conserva UTF-8 también en Windows; -c convierte argv según la página
   // de códigos del proceso y además exponía todo el SQL en el mensaje de error.
-  return execFileSync("psql", ["-X", "-v", "ON_ERROR_STOP=1", "-qAt", "-f", "-"], { input: sql, encoding: "utf8", env: psqlEnv() }).trim();
+  return execFileSync("psql", ["-X", "-v", "ON_ERROR_STOP=1", "-qAt", "-f", "-"], { input: sql, encoding: "utf8", env: psqlEnv(), ...(timeout===undefined?{}:{timeout}) }).trim();
 }
 export function spawnRunnerSql() {
   return spawn("psql", ["-X", "-v", "ON_ERROR_STOP=1", "-qAt"], { env: psqlEnv() });

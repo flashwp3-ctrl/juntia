@@ -2,7 +2,13 @@
 
 Rama `feat/003-a-database`, base `main` `0c25e8b`. Sin producción ni datos reales.
 
-## Estado final — T027 verde; PR en borrador; T028 humana pendiente
+## Estado de la revisión F52 — preflight verde; borrador
+
+F52-1 y F52-2 corregidos: 723 SQL, 63 integración / 9 omisiones y verify 52,13 s.
+La auditoría de modos, el rojo observado y las esperas reales están al final.
+Se publica un único push; el run final y sus salidas quedan en la descripción
+del PR #52 para evitar otro push documental. T028 humana continúa pendiente.
+## Historial previo — T027 verde sobre e6b30b4; revisión F52 al final
 
 El gestor confirmó que ambos bloqueos pertenecen al esquema de PR A y autorizó
 T026a/T026b dentro de este PR, sin cambiar tasks.md. T027 verde: 42295377639.
@@ -745,3 +751,89 @@ No se tocó producción ni se usaron datos reales o service_role en rutas de app
 
 El commit documental posterior solo incorpora esta evidencia: el código validado
 por verify y CI permanece en e6b30b491ffbe0db40a2805a7b9d63643267ea1f.
+## Revisión de ChatGPT F52 — reparto y prueba de carreras
+
+La revisión recibida se refiere a e6b30b4. Restauración, RLS, privilegios e
+interpretaciones previas aprobadas se conservan. F52-1 cambia únicamente el
+cálculo de equal dentro de validate_shared_split, en la misma migración no
+aplicada a producción. No cambian las firmas públicas ni el modelo de datos.
+
+### F52-1 · aclaración aprobada
+
+«equal es siempre entre los dos integrantes; un solo participante se envía como percent 100/0 o amount total/0 (FR-019a). Confirmado por el gestor; el PR C lo respeta en la hoja de Anotar compartida».
+
+| Modo | Auditoría antes de la corrección | Regla comprobada ahora |
+| --- | --- | --- |
+| equal | pesos/denominador derivados de partes positivas: aceptaba 100/0 o 0/100 | dos integrantes activos, peso 1 cada uno y denominador 2; mayor residuo y join_order; comparar p_parts, JT110 si difiere |
+| percent | pesos tomados de p_split_percents, no de p_parts; no se encontró la debilidad de equal | dos enteros 0–100 que suman 100, cálculo independiente y comparación exacta; 100/0 y 0/100 válidos |
+| amount | p_parts es la definición explícita; no calculaba pesos ni participantes | enteros no negativos, múltiplos de 100, dos integrantes activos, suma exacta y al menos una positiva; ninguna reinterpretación como pesos |
+| update/reclassify | ambos llaman al mismo validador; heredaban el fallo equal | las mismas tres reglas, con regresión de rechazo sin efectos, reparto par y residuo impar |
+
+La capa de envío compartida por create/update/reclassify traduce una selección
+explícita de UNA allocation del dominio a percent 100/0, completando el otro
+integrante y el orden con couple_members. Amount conserva la definición manual.
+Dos allocations equal no se traducen: $1 puede repartirse legítimamente 1/0 por
+redondeo. nextSplitOnParticipantsChange y splitAmount conservan sus firmas; la
+frontera queda documentada en shared-expenses.ts y probada por integración.
+
+Rojo antes del SQL y de la traducción: pgTAP no rechazaba equal 100/0 ni 0/100,
+y se veían cambios en snapshots; el fallo aceptado provocó fallos posteriores de
+fixture/versión. API: 5 regresiones nuevas fallan, 58 tests pasan, 9 omisiones;
+tres rechazos resolvían con éxito, la equivalencia detectaba aceptación distinta
+al dominio y un participante daba invalidSplit. Sin fallos de Auth ni 429.
+
+13_split_validation añade casos de create/update/reclassify y comparación de
+movimientos, partes, versión, auditoría e idempotencia ante rechazo. Sara tiene
+UUID mayor que Tomás y paga Tomás en los casos compartidos: el residuo de
+$100.001 sigue correspondiendo a Sara por join_order. Integración compara 30
+combinaciones de importe/modo, incluyendo extremos, $1 y un solo participante,
+con splitAmount; también prueba la traducción real de la selección del dominio.
+
+### F52-2 · barrera comprobada, sin escenarios nuevos
+
+Se mantienen los 15 casos. La barrera captura su propio pg_backend_pid y solo
+libera tras ver DOS PID distintos esperando en pg_stat_activity, unidos por
+pg_blocking_pids a esa barrera; comprueba nombre de RPC y bloqueo real.
+
+- Raíz de grupo: transactionid/tuple y lock de relación groups.
+- Segunda petición de la misma persona en invitaciones: advisory del UUID de
+  esa persona, con classid/objid/objsubid verificados; sigue la cadena hasta la
+  primera petición que espera el grupo. No se exige un lock de grupo inexistente.
+- Creaciones y aceptaciones cruzadas: barrera de persona, por UUID ordenado,
+  y ambos contendientes observados antes de liberar.
+- Privado→compartido contra editar: barrera de movimiento privado; ambos
+  esperan transactions y se observa una sola fila activa mientras siguen bloqueados.
+
+No hay sleeps; solo polling de estado observable con timeout. Las consultas
+monitorean su cadena de bloqueantes, no un count global que pueda incluir otro
+archivo. Referencia del mecanismo: pg_blocking_pids en PostgreSQL 17,
+https://www.postgresql.org/docs/17/functions-info.html#FUNCTIONS-INFO-SESSION-TABLE.
+
+La primera pasada posterior al fix cortó en el arnés pgTAP: lives_ok no estaba
+visible para writer sin USAGE del esquema de la extensión. 13 aplica el mismo
+grant temporal de 05/10a, dentro de BEGIN/ROLLBACK; no cambia permisos de app.
+Después, test:db:dev pasa: 16 archivos, 723 tests (13: 23), 97,37 s remotos con
+reset/red. El presupuesto definitivo de test:db se mide en el runner.
+
+Una pasada API intermedia confirmó las cinco regresiones F52-1 y 14 de las 15
+carreras, pero un cliente psql de sondeo quedó detenido y el caso de regenerar
+agotó sus 60 s. La inspección de solo lectura, con guardia y nuestro lock activo,
+mostró la barrera idle in transaction y ningún RPC esperando: el sondeo cliente
+no había terminado. Se cerró solo ese hijo psql, validando PID/padre; el arnés
+limpió su barrera y el guardia mantuvo el lock. No se forzó ningún lock ni se
+cambió Auth. El sondeo ahora termina SQL y cliente explícitamente (; y \q),
+tiene timeout de 5 s, y la barrera envía COMMIT/ROLLBACK y \q explícitos.
+El timeout opcional de runnerSql solo se usa aquí; el resto de llamadas conserva
+su comportamiento y el SQL de restauración permanece intacto.
+
+verify del estado final: 52,13 s; dominio 42, componentes 303 / 2 omisiones de
+plataforma; lint y tipos limpios. API final: 63 pasan / 9 omisiones declaradas, 131,71 s de runner, sin 429.
+Los 15 casos de concurrency pasan; 17 barreras registran los dos PID con su
+bloqueo real antes del commit, incluida la misma persona y privado→compartido.
+Se conservan 28 signInWithPassword por ejecución completa dev, sesiones por archivo.
+
+Para respetar el único push de esta revisión, el identificador, resultado y
+salidas del único gate de CI sobre el SHA publicado se registran en la
+[descripción del PR #52](https://github.com/flashwp3-ctrl/juntia/pull/52) y en el
+reporte final del agente. No se hará un segundo push documental tras ese run.
+T028 sigue requiriendo revisión humana antes de marcar listo el borrador.
