@@ -22,7 +22,7 @@ const { GET } = await import("../../src/app/api/export/route");
 
 let sara: Awaited<ReturnType<typeof createTestUser>>;
 let tomas: Awaited<ReturnType<typeof createTestUser>>;
-let saraIds: string[] = [];
+const saraIds: string[] = [];
 let voidedId = "";
 const FORMULAS = ["=SUM(A1:A2)", "+57 300", "-cmd", "@HOY"];
 
