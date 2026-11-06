@@ -123,3 +123,72 @@ test("motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (
   await expect.poll(() => page.evaluate(() => (window as unknown as { __rowAnimations: string[] }).__rowAnimations)).toContain("row-new");
   await context.close();
 });
+
+// UX lote 1, cambio 3. Criterio literal (petición de los fundadores): «guardar → la fila aparece antes de la respuesta → se
+// confirma». La petición de la Server Action se retiene en el navegador hasta que la prueba la suelta: mientras tanto el
+// servidor ni la ve, y la fila ya está en la lista, marcada «Guardando…», sin aviso de guardado. Al soltarla, la fila en
+// vuelo se va, llega la real (una sola) y la base tiene un movimiento más. Es un caso de la spec 2, no una spec nueva.
+test("UX 3: Guardar → la fila aparece antes de la respuesta del servidor → se confirma, una sola vez", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "fila-optimista", index: testInfo.parallelIndex });
+  const seeded = (await seedMovements(user, "recent")).length;
+  await signedInHome(page, user);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let held = 0;
+  await page.route("**/*", async (route) => {
+    if (route.request().method() === "POST" && "next-action" in route.request().headers()) { held += 1; await gate; }
+    await route.continue();
+  });
+
+  const sheet = await annotate(page, "47350");
+  await page.keyboard.press("Enter");
+  // La hoja se oculta y la fila aparece sin que el servidor haya respondido (la petición sigue retenida).
+  await expect(sheet).toBeHidden();
+  const inFlight = page.locator("[data-pending='saving']:visible");
+  await expect(inFlight).toHaveCount(1);
+  await expect(inFlight).toContainText("$47.350");
+  await expect(inFlight).toContainText(copy.row.pending.saving);
+  expect(held).toBe(1);
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toHaveCount(0);
+  expect(await activeCount(user)).toBe(seeded);
+
+  // Se suelta la respuesta: se confirma, la fila en vuelo desaparece y queda la real, una sola vez.
+  release();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  await expect(page.locator("a[data-transaction-id]:visible").filter({ hasText: "$47.350" })).toHaveCount(1);
+  expect(await activeCount(user)).toBe(seeded + 1);
+
+  // Navegar a Actividad no deja ni duplicado ni fantasma.
+  await page.getByRole("link", { name: copy.nav.activity }).first().click();
+  await expect(page).toHaveURL(/\/actividad/);
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  // En Actividad la fila real es un enlace con su nombre accesible completo (lista o tabla, según el ancho).
+  await expect(page.getByRole("link", { name: /47.350 pesos/ })).toHaveCount(1);
+});
+
+// UX lote 1, cambio 5. El cursor computado en un navegador real, en 390 y 1440 px: mano en lo pulsable, not-allowed en lo
+// deshabilitado. (La cobertura de selectores está en src/styles/cursor.test.tsx.)
+for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test(`UX 5: cursor de mano en lo pulsable y not-allowed en lo deshabilitado (${viewport.width} px)`, async ({ page }, testInfo) => {
+    const user = await seedUser({ role: `cursor-${viewport.width}`, index: testInfo.parallelIndex });
+    await page.setViewportSize(viewport);
+    await signedInHome(page, user);
+    const cursorOf = (locator: ReturnType<Page["locator"]>) => locator.evaluate((element) => getComputedStyle(element).cursor);
+
+    const trigger = page.locator("[data-annotate-trigger]:visible").first();
+    expect(await cursorOf(trigger)).toBe("pointer");
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+    await expect(sheet).toBeVisible();
+    expect(await cursorOf(sheet.getByRole("button", { name: copy.annotate.close }))).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first())).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("button", { name: copy.annotate.moreLabel }))).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("radio", { name: copy.annotate.income }))).toBe("pointer");
+    // Guardar sin monto ni categoría está deshabilitado.
+    expect(await cursorOf(sheet.getByRole("button", { name: /^Guardar/ }))).toBe("not-allowed");
+    await sheet.getByRole("button", { name: copy.annotate.close }).click();
+    await expect(sheet).toBeHidden();
+    expect(await cursorOf(page.getByRole("link", { name: copy.nav.activity }).first())).toBe("pointer");
+  });
+}
