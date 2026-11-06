@@ -71,7 +71,7 @@ export const copy = {
       failed: "No se anuló. El enlace sigue activo. Inténtalo de nuevo.", done: "Invitación anulada.",
     },
     invitation: {
-      invalid: "Esta invitación ya no sirve", loading: "Revisando la invitación…",
+      pageTitle: "Invitación", invalid: "Esta invitación ya no sirve", loading: "Revisando la invitación…",
       signedOut: { title: "Tienes una invitación a Juntia", description: "Para verla, entra o crea tu cuenta con el correo al que te invitaron. Después volverás aquí.", signIn: "Entrar", signUp: "Crear cuenta", note: "Antes de entrar no mostramos quién invita ni datos de la pareja." },
       valid: {
         title: (name: string) => `${name} te invitó a ser su pareja en Juntia`,
@@ -140,10 +140,10 @@ export const copy = {
   },
   // P0-1, PR B (02·9–02·10, 04·14–04·19). Copy nuevo para revisión de los fundadores en el PR.
   account: {
-    title: "Mi cuenta", back: "Volver", signInAgain: "Entrar de nuevo", sections: "Secciones de Mi cuenta", editProfile: "Editar perfil",
+    title: "Mi cuenta", withPartner: (name: string) => `Mi cuenta · con ${name}`, back: "Volver", signInAgain: "Entrar de nuevo", sections: "Secciones de Mi cuenta", editProfile: "Editar perfil",
     groups: { mySpace: "Mi espacio", preferences: "Preferencias", privacySecurity: "Privacidad y seguridad" },
     menu: {
-      profile: "Mi perfil", profileHint: "Nombre visible", partner: "Mi pareja", partnerHint: "Llega con la próxima versión",
+      profile: "Mi perfil", profileHint: "Nombre visible", partner: "Mi pareja",
       // PR B (T034): la fila de Mi pareja dice el estado real.
       partnerNone: "Invita a tu pareja", partnerPending: "Invitación pendiente", partnerActive: (name: string) => `Con ${name} · activa`,
       appearance: "Apariencia", privacy: "Privacidad y datos", privacyHint: "Qué es solo tuyo, exportar", security: "Seguridad y sesión", securityHint: "Contraseña y esta sesión",
@@ -155,7 +155,7 @@ export const copy = {
       save: "Guardar cambios", cancel: "Cancelar", saved: "Perfil actualizado.", saveFailed: "No se guardó. Revisa tu conexión e inténtalo de nuevo. Tus cambios siguen aquí.",
       errors: { displayName: "Escribe un nombre de 1 a 60 caracteres, sin saltos de línea." },
     },
-    partner: { title: "Mi pareja", unavailableTitle: "Tu pareja llega con la próxima versión", unavailableDescription: "Por ahora Juntia funciona en tu espacio personal: lo que anotas es solo tuyo. Invitar a tu pareja llega pronto." },
+    partner: { title: "Mi pareja" },
     appearance: { title: "Apariencia", label: "Apariencia", light: "Claro", dark: "Oscuro", system: "Sistema", help: "Sistema sigue la configuración de tu dispositivo. El cambio es inmediato." },
     privacy: {
       title: "Privacidad y datos", whoSees: "Qué ve cada uno", onlyYou: "Solo tú", onlyYouItems: ["Los gastos e ingresos que anotas", "Tu nombre visible y tu correo de acceso"],

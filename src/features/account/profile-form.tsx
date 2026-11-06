@@ -15,7 +15,7 @@ import type { SaveNameResult } from "./types";
 type Status = "editing" | "saved" | "failed" | "sessionExpired";
 type ProfileFormProps = { initialName: string; email: string; save: (displayName: string) => Promise<SaveNameResult> };
 
-export function ProfileForm({ initialName, email, save }: ProfileFormProps) {
+export function ProfileForm({ initialName, email, save, person = 1 }: ProfileFormProps & { person?: 1 | 2 }) {
   const [saved, setSaved] = useState(initialName);
   const [name, setName] = useState(initialName);
   const [touched, setTouched] = useState(false);
@@ -53,7 +53,7 @@ export function ProfileForm({ initialName, email, save }: ProfileFormProps) {
         </InlineNotice>
       ) : null}
       <div className="flex items-center gap-4">
-        <Avatar person={1} initial={invalid ? "?" : initialOf(name)} size={88} />
+        <Avatar person={person} initial={invalid ? "?" : initialOf(name)} size={88} />
         <p className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.account.profile.avatarNote}</p>
       </div>
       <Input

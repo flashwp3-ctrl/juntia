@@ -5,17 +5,18 @@ import type { ReactNode } from "react";
 import { AccountSectionsNav, SignOutRow } from "@/features/account/account-controls";
 import { ProfileHeader } from "@/features/account/account-ui";
 import { loadAccount } from "@/features/account/load-account";
+import { loadCoupleForShell, personOf } from "@/features/couple/load";
 import { copy } from "@/lib/copy/es";
 
 export default async function AccountLayout({ children }: { children: ReactNode }) {
-  const account = await loadAccount();
+  const [account, couple] = await Promise.all([loadAccount(), loadCoupleForShell()]);
   return (
     <div className="mx-auto w-full max-w-[600px] lg:max-w-[680px] xl:max-w-none">
       <p aria-hidden="true" className="hidden pb-7 font-serif text-[52px] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink xl:block">{copy.account.title}</p>
       <div className="xl:grid xl:grid-cols-[360px_minmax(0,680px)] xl:items-start xl:gap-12">
         {account ? (
           <aside aria-label={copy.account.title} className="hidden flex-col gap-[18px] xl:flex">
-            <ProfileHeader displayName={account.profile.displayName} email={account.email} framed />
+            <ProfileHeader displayName={account.profile.displayName} email={account.email} framed person={personOf(couple)} />
             <AccountSectionsNav />
             <SignOutRow />
           </aside>

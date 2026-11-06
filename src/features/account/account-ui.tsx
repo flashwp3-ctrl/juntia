@@ -42,10 +42,11 @@ export function AccountPageTitle({ title, backHref = "/cuenta" }: { title: strin
   );
 }
 
-export function ProfileHeader({ displayName, email, framed = false }: { displayName: string; email: string; framed?: boolean }) {
+/** PR B de la 003 (T035, FR-017): `person` es el color por orden de ingreso a la pareja (1 sin pareja activa). */
+export function ProfileHeader({ displayName, email, framed = false, person = 1 }: { displayName: string; email: string; framed?: boolean; person?: 1 | 2 }) {
   return (
     <div className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-4 ${framed ? "rounded-[24px] bg-raised p-5 shadow-raised" : ""}`}>
-      <Avatar person={1} initial={initialOf(displayName)} size={72} />
+      <Avatar person={person} initial={initialOf(displayName)} size={72} />
       <span className="flex min-w-0 flex-col gap-1.5">
         <span className="font-serif text-[clamp(30px,9vw,40px)] leading-none font-medium tracking-[-0.01em] break-words text-ink">{displayName}</span>
         <span className="text-[14px] [overflow-wrap:anywhere] text-ink-secondary">{email}</span>

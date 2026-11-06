@@ -165,6 +165,7 @@ describe("cuándo se borra desde /invitacion", () => {
     window.history.replaceState(null, "", "/invitacion");
     render(createElement(InvitationScreen, { actions: actions({ inspect: vi.fn().mockResolvedValue({ state: "invalid", reason: "generic" }) }) }));
     await screen.findByRole("heading", { level: 1, name: copy.couple.invitation.invalid });
+    await act(async () => {});
     expect(window.localStorage.getItem(INVITATION_INTENT_KEY)).toBeNull();
   });
 
