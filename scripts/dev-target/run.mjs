@@ -15,7 +15,7 @@ import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
-import { acquireDevLock, createSignalHandler } from "./lock.mjs";
+import { acquireDevLock, createSignalHandler, spawnOptionsForTree } from "./lock.mjs";
 import { readTap } from "./tap.mjs";
 
 /** Versión de la CLI fijada en el CI (`.github/workflows/ci.yml`) y en el quickstart de la 002. */
@@ -78,14 +78,14 @@ function childEnv(target, psqlDir, extra = {}) {
   return { ...env, JUNTIA_TEST_TARGET: "dev", API_URL: target.apiUrl, PUBLISHABLE_KEY: target.publishableKey, SECRET_KEY: target.secretKey, DB_URL: target.dbUrl, ...extra };
 }
 
-/** El hijo en curso: con SIGINT o SIGTERM se le reenvía la señal y el bloqueo se suelta cuando termina (F48-2). */
+/** El hijo en curso: con SIGINT o SIGTERM se termina su árbol entero y el bloqueo se suelta después (F48-2). */
 let currentChild = null;
 
 /** Ejecuta un paso, con la salida filtrada por líneas para que ningún secreto llegue a la terminal. */
 function step(label, file, args, env, { input, capture = false } = {}) {
   const start = performance.now();
   return new Promise((done) => {
-    const child = spawn(file, args, { cwd: ROOT, env, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
+    const child = spawn(file, args, { ...spawnOptionsForTree(), cwd: ROOT, env, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
     currentChild = child;
     let captured = "";
     const pipe = (stream, out) => {
@@ -147,7 +147,7 @@ function psql(env, args, options) {
 async function reset(target, env) {
   // F48-3: la URL va sin contraseña; la contraseña viaja en PGPASSWORD dentro del entorno limpio de libpq, y el
   // lanzador corre con node directamente, sin npx, para que npm no registre la línea de órdenes.
-  const run = await step("supabase db reset (migraciones de la rama + supabase/seed.sql)", process.execPath,
+  const run = await step(`${SUPABASE_CLI} db reset (migraciones de la rama + supabase/seed.sql; contraseña solo en PGPASSWORD)`, process.execPath,
     [supabaseCli(), "db", "reset", "--db-url", dbUrlWithoutPassword(target.dbUrl), "--yes"], cleanPgEnv(env, target.dbUrl));
   if (run.code !== 0) return 1;
   // Comprobación de lectura: las migraciones de la rama y el esquema de pruebas existen en juntia-dev.
@@ -241,7 +241,7 @@ async function main() {
   const psqlDir = findPsql();
   if (psqlDir) psqlBin = join(psqlDir, "psql.exe");
   const release = acquireDevLock(join(commonDir, "juntia-dev.lock"), { branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command });
-  // F48-2: la señal se reenvía al hijo en curso y el bloqueo se suelta solo cuando ese hijo ha terminado.
+  // F48-2: se termina el árbol del hijo en curso y el bloqueo se suelta solo cuando ya no queda ningún proceso.
   const onSignal = createSignalHandler({ release, getChild: () => currentChild, exit: (code) => process.exit(code) });
   for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { void onSignal(signal); });
   const env = childEnv(target, psqlDir);

@@ -169,12 +169,17 @@ clave y la contraseña de la base.
 **Un agente a la vez.** Cada comando crea el directorio `juntia-dev.lock` en la
 carpeta común de git (`.git/` del clon principal). `mkdir` es atómico: de dos agentes
 que lo intentan a la vez, solo uno lo crea. Dentro deja `owner.json` con la rama, el
-comando, la hora, el equipo y el PID, escrito con un rename para que nunca se lea a
-medias. Si otro agente lo tiene, el comando se niega y dice quién. Unos metadatos
-ilegibles o incompletos **no** cuentan como abandono; un bloqueo solo se recupera si
-su PID ya no existe en ese equipo **y** lleva al menos 2 minutos. Con Ctrl+C o
-SIGTERM, la señal se reenvía al hijo en curso (`supabase db reset`, psql, Vitest,
-Playwright) y el bloqueo se suelta solo cuando ese hijo ha terminado. **Entre
+comando, la hora, el equipo, el PID y un identificador único de la ejecución, escrito
+con un rename para que nunca se lea a medias. Si el dueño está vivo, el comando se
+niega y dice quién. **El bloqueo nunca se recupera solo**: si su dueño murió de golpe
+(SIGKILL, cierre de la terminal, apagón) o los metadatos no se pueden leer, el comando
+se niega igual, porque un descendiente podría seguir escribiendo en dev o el PID pudo
+reutilizarse. Se libera a mano: `npm run dev:unlock` enseña a quién pertenece y no toca
+nada; `npm run dev:unlock -- --force` lo borra, después de comprobar que no queda
+ningún proceso de ese comando. Con Ctrl+C o SIGTERM se termina el **árbol entero** del
+hijo en curso (Windows: `taskkill /PID <pid> /T /F`; POSIX: el hijo corre en su propio
+grupo y se señala el grupo, con SIGKILL a los 5 s), y el bloqueo se suelta solo cuando
+ya no queda ningún proceso. **Entre
 equipos no hay mecanismo**: los dos fundadores no usan `juntia-dev` a la vez y se
 avisan antes de un `db:dev:reset`, que además borra los perfiles y movimientos de las
 cuentas que se usen a mano en dev (las cuentas de Auth no se borran).

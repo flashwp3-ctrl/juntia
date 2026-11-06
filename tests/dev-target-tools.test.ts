@@ -2,13 +2,12 @@
 // Decisión 18: piezas de `npm run *:dev` sin red. El lector TAP aplica las reglas de pg_prove (CI) a la salida de psql,
 // y el bloqueo deja a un solo agente usar juntia-dev desde los worktrees de un clon.
 import { spawn } from "node:child_process";
-import { EventEmitter } from "node:events";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { acquireDevLock, createSignalHandler, STALE_AFTER_MS } from "../scripts/dev-target/lock.mjs";
+import { acquireDevLock, alive, createSignalHandler, killTree, spawnOptionsForTree, unlockDevLock } from "../scripts/dev-target/lock.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
 
 describe("lector TAP de test:db:dev", () => {
@@ -37,12 +36,15 @@ describe("bloqueo de un solo agente (F48-2)", () => {
   afterEach(() => { if (dir) rmSync(dir, { recursive: true, force: true }); });
   const lockIn = () => { dir = mkdtempSync(join(tmpdir(), "juntia-lock-")); return join(dir, "juntia-dev.lock"); };
   const owner = (lock: string, data: object) => { mkdirSync(lock); writeFileSync(join(lock, "owner.json"), JSON.stringify(data)); };
+  const orphan = { branch: "vieja", command: "e2e", startedAt: "2026-11-06T10:00:00.000Z", host: "este-equipo", pid: 4242, runId: "11111111-1111-4111-8111-111111111111" };
 
-  it("deja tomarlo una vez, nombra la rama que lo tiene y lo suelta", () => {
+  it("deja tomarlo una vez, nombra rama y ejecución, y lo suelta", () => {
     const lock = lockIn();
     const release = acquireDevLock(lock, { branch: "feat/a", command: "test:db" });
-    expect(JSON.parse(readFileSync(join(lock, "owner.json"), "utf8"))).toMatchObject({ branch: "feat/a", command: "test:db", pid: process.pid });
-    expect(() => acquireDevLock(lock, { branch: "feat/b", command: "e2e" })).toThrow(/juntia-dev está en uso: rama feat\/a, comando test:db/);
+    const meta = JSON.parse(readFileSync(join(lock, "owner.json"), "utf8"));
+    expect(meta).toMatchObject({ branch: "feat/a", command: "test:db", pid: process.pid });
+    expect(meta.runId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(() => acquireDevLock(lock, { branch: "feat/b", command: "e2e" })).toThrow(new RegExp(`en uso: rama feat/a, comando test:db.*ejecución ${meta.runId}`));
     release();
     expect(existsSync(lock)).toBe(false);
     acquireDevLock(lock, { branch: "feat/b", command: "e2e" })();
@@ -64,48 +66,57 @@ process.stdin.resume(); process.stdin.on("end", () => { if (release) release(); 
     expect(existsSync(lock)).toBe(false);
   }, 30_000);
 
-  it("unos metadatos ilegibles o incompletos no cuentan como abandono", () => {
+  it("un bloqueo cuyo dueño murió no se recupera solo: se niega y remite a dev:unlock", () => {
+    const lock = lockIn();
+    owner(lock, orphan);
+    expect(() => acquireDevLock(lock, { branch: "nueva", command: "reset" }, { host: "este-equipo", isAlive: () => false }))
+      .toThrow(/bloqueo huérfano: rama vieja.*ejecución 11111111-1111-4111-8111-111111111111.*npm run dev:unlock -- --force/);
+    expect(JSON.parse(readFileSync(join(lock, "owner.json"), "utf8")).branch).toBe("vieja");
+  });
+
+  it("unos metadatos ilegibles o incompletos tampoco se recuperan", () => {
     const lock = lockIn();
     mkdirSync(lock);
-    expect(() => acquireDevLock(lock, { branch: "mia", command: "reset" })).toThrow(/no tiene metadatos legibles/);
+    expect(() => acquireDevLock(lock, { branch: "mia", command: "reset" })).toThrow(/sin metadatos legibles.*dev:unlock/);
     writeFileSync(join(lock, "owner.json"), JSON.stringify({ branch: "a-medias" }));
-    expect(() => acquireDevLock(lock, { branch: "mia", command: "reset" })).toThrow(/no tiene metadatos legibles/);
+    expect(() => acquireDevLock(lock, { branch: "mia", command: "reset" })).toThrow(/sin metadatos legibles/);
   });
 
-  it("un PID que ya no existe solo es abandono pasado el tiempo prudente", () => {
+  it("dev:unlock enseña el dueño y solo borra con --force", () => {
     const lock = lockIn();
-    const startedAt = "2026-11-06T10:00:00.000Z";
-    owner(lock, { branch: "vieja", command: "e2e", startedAt, host: "este-equipo", pid: 4242 });
-    const options = { host: "este-equipo", isAlive: () => false };
-    expect(() => acquireDevLock(lock, { branch: "nueva", command: "reset" }, { ...options, now: () => Date.parse(startedAt) + STALE_AFTER_MS - 1 })).toThrow(/rama vieja/);
-    expect(() => acquireDevLock(lock, { branch: "nueva", command: "reset" }, { ...options, isAlive: () => true, now: () => Date.parse(startedAt) + 10 * STALE_AFTER_MS })).toThrow(/rama vieja/);
-    const release = acquireDevLock(lock, { branch: "nueva", command: "reset" }, { ...options, now: () => Date.parse(startedAt) + STALE_AFTER_MS });
-    expect(JSON.parse(readFileSync(join(lock, "owner.json"), "utf8")).branch).toBe("nueva");
-    release();
+    expect(unlockDevLock(lock)).toMatchObject({ removed: false, message: expect.stringMatching(/No hay bloqueo/) });
+    owner(lock, orphan);
+    const shown = unlockDevLock(lock, { host: "este-equipo", isAlive: () => false });
+    expect(shown.removed).toBe(false);
+    expect(shown.message).toMatch(/rama vieja.*ejecución 11111111.*ese PID ya no existe.*--force/);
+    expect(existsSync(lock)).toBe(true);
+    expect(unlockDevLock(lock, { force: true, host: "este-equipo", isAlive: () => false }).removed).toBe(true);
+    expect(existsSync(lock)).toBe(false);
   });
 
-  it("no toca el bloqueo de otro equipo, por viejo que sea", () => {
-    const lock = lockIn();
-    owner(lock, { branch: "de-otro", command: "e2e", startedAt: "2026-11-01T00:00:00.000Z", host: "otro-equipo", pid: 1 });
-    expect(() => acquireDevLock(lock, { branch: "mia", command: "reset" }, { isAlive: () => false })).toThrow(/rama de-otro/);
-  });
-
-  it("con SIGTERM reenvía la señal al hijo y mantiene el bloqueo hasta que el hijo termina", async () => {
+  it("con SIGTERM termina el árbol real (hijo y nieto) y solo después suelta el bloqueo", async () => {
     const lock = lockIn();
     const release = acquireDevLock(lock, { branch: "señal", command: "reset" });
-    const child = Object.assign(new EventEmitter(), { exitCode: null as number | null, signalCode: null as string | null, kill: vi.fn() });
+    // El hijo lanza un nieto que no termina solo, imprime el PID del nieto y se queda vivo.
+    const grandchild = "setInterval(() => {}, 1000)";
+    const parent = `const { spawn } = require("node:child_process");
+const g = spawn(process.execPath, ["-e", ${JSON.stringify(grandchild)}], { stdio: "ignore" });
+process.stdout.write(String(g.pid) + "\\n");
+setInterval(() => {}, 1000);`;
+    const child = spawn(process.execPath, ["-e", parent], { ...spawnOptionsForTree(), stdio: ["ignore", "pipe", "inherit"] });
+    const grandchildPid = Number(await new Promise<string>((resolve) => child.stdout.once("data", (chunk) => resolve(String(chunk).trim()))));
+    expect(alive(child.pid!)).toBe(true);
+    expect(alive(grandchildPid)).toBe(true);
     const exit = vi.fn();
-    const handler = createSignalHandler({ release, getChild: () => child as never, exit });
-    const handled = handler("SIGTERM");
-    void handler("SIGTERM");
-    expect(child.kill).toHaveBeenCalledExactlyOnceWith("SIGTERM");
-    expect(existsSync(lock), "el hijo sigue vivo: el bloqueo se mantiene").toBe(true);
-    expect(exit).not.toHaveBeenCalled();
-    child.emit("close", null, "SIGTERM");
-    await handled;
+    let lockDuringKill = false;
+    const terminate = async (target: typeof child, signal: NodeJS.Signals) => { lockDuringKill = existsSync(lock); await killTree(target, signal); };
+    await createSignalHandler({ release, getChild: () => child, exit, terminate })("SIGTERM");
+    expect(lockDuringKill, "el bloqueo sigue mientras se termina el árbol").toBe(true);
+    expect(alive(child.pid!), "el hijo ya no existe").toBe(false);
+    expect(alive(grandchildPid), "el nieto ya no existe").toBe(false);
     expect(existsSync(lock)).toBe(false);
     expect(exit).toHaveBeenCalledExactlyOnceWith(143);
-  });
+  }, 30_000);
 
   it("sin hijo en curso suelta el bloqueo y sale con el código de la señal", async () => {
     const lock = lockIn();

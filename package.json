@@ -26,7 +26,8 @@
     "db:dev:reset": "node scripts/dev-target/run.mjs reset",
     "test:db:dev": "node scripts/dev-target/run.mjs test:db",
     "test:integration:dev": "node scripts/dev-target/run.mjs test:integration",
-    "e2e:dev": "node scripts/dev-target/run.mjs e2e"
+    "e2e:dev": "node scripts/dev-target/run.mjs e2e",
+    "dev:unlock": "node scripts/dev-target/unlock.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",
