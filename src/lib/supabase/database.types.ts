@@ -139,8 +139,20 @@ export type Database = {
                 }
           }
           Functions: {
-            "complete_first_entry":
+            "accept_invitation":
+{ Args: { "p_idempotency_key": string,"p_token_hash": string }; Returns: Json
+                           },
+"cancel_invitation":
+{ Args: { "p_expected_version": number,"p_group_id": string,"p_idempotency_key": string }; Returns: Json
+                           },
+"complete_first_entry":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"create_invitation":
+{ Args: { "p_email": string,"p_idempotency_key": string,"p_token_hash": string }; Returns: Json
+                           },
+"create_shared_expense":
+{ Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_idempotency_key": string,"p_parts": Json,"p_payer_user_id": string,"p_split_mode": string,"p_split_percents": (number)[],"p_transaction_date": string }; Returns: Json
                            },
 "create_transaction":
 { Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_idempotency_key": string,"p_transaction_date": string,"p_type": string }; Returns: Json
@@ -148,17 +160,44 @@ export type Database = {
 "ensure_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"preview_invitation":
+{ Args: { "p_token_hash": string }; Returns: Json
+                           },
+"reclassify_to_shared":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_parts": Json,"p_split_mode": string,"p_split_percents": (number)[],"p_transaction_id": string }; Returns: Json
+                           },
+"regenerate_invitation":
+{ Args: { "p_expected_version": number,"p_group_id": string,"p_idempotency_key": string,"p_token_hash": string }; Returns: Json
+                           },
+"register_settlement":
+{ Args: { "p_amount_minor": string,"p_idempotency_key": string,"p_note": string,"p_settlement_date": string }; Returns: Json
+                           },
 "set_theme":
 { Args: { "p_theme": string }; Returns: Json
+                           },
+"undo_reclassify_to_shared":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_shared_transaction_id": string }; Returns: Json
                            },
 "update_display_name":
 { Args: { "p_display_name": string }; Returns: Json
                            },
+"update_shared_expense":
+{ Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_expected_version": number,"p_idempotency_key": string,"p_parts": Json,"p_payer_user_id": string,"p_split_mode": string,"p_split_percents": (number)[],"p_transaction_date": string,"p_transaction_id": string }; Returns: Json
+                           },
 "update_transaction":
 { Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_expected_version": number,"p_idempotency_key": string,"p_transaction_date": string,"p_transaction_id": string }; Returns: Json
                            },
+"void_settlement":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_settlement_id": string }; Returns: Json
+                           },
+"void_shared_expense":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_transaction_id": string }; Returns: Json
+                           },
 "void_transaction":
 { Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_transaction_id": string }; Returns: Json
+                           },
+"write_status":
+{ Args: { "p_action": string,"p_idempotency_key": string }; Returns: Json
                            }
           }
           Enums: {

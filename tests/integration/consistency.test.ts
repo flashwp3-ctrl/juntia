@@ -2,7 +2,7 @@
 import { expect,it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { setupCoupleFixtures,rpc,expense } from "./support/couple";
-import { sharedOctober2026 } from "../../src/domain/golden/october-2026";
+import { sharedOctober2026,saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
 import { computeBalance } from "../../src/domain/balances";
 import { serializeAmountMinor } from "../../src/domain/money";
 const {couple}=setupCoupleFixtures();
@@ -10,12 +10,16 @@ it("dataset dorado por funciones: 284000000, ±42990000 → ±22990000 y compute
   const p=await couple();const ids={sara:p.sara.id,tomas:p.tomas.id};
   const {listSharedExpenses}=await import("../../src/lib/db/shared-expenses");
   const {listSettlements}=await import("../../src/lib/db/settlements");
+  for(const row of saraPrivateOctober2026) await rpc(p.sara.client,"create_transaction",{p_idempotency_key:randomUUID(),p_type:row.type,p_amount_minor:serializeAmountMinor(row.amount),p_category_id:row.categoryId,p_transaction_date:row.transactionDate,p_description:row.description});
   for(const row of sharedOctober2026) await rpc(p.sara.client,"create_shared_expense",expense(p,{p_amount_minor:serializeAmountMinor(row.amount),p_category_id:row.categoryId,p_transaction_date:row.transactionDate,p_description:row.description,p_payer_user_id:ids[row.payerUserId as keyof typeof ids],p_split_mode:row.splitMode,p_split_percents:row.splitPercents,p_parts:Object.fromEntries(row.allocations.map(a=>[ids[a.userId as keyof typeof ids],serializeAmountMinor(a.amount)]))}));
   const total=await p.sara.client.from("couple_month_summary").select("*").eq("month","2026-10-01").single();expect(total.error).toBeNull();expect(total.data.total_minor).toBe("284000000");
   const check=async(expected:string)=>{
     const balance=await p.sara.client.from("couple_balance").select("*");expect(balance.error).toBeNull();expect(balance.data!.find(r=>r.user_id===p.sara.id).net_minor).toBe(expected);
     const calculated=computeBalance(await listSharedExpenses(p.sara.client),await listSettlements(p.sara.client),[{userId:p.sara.id,joinOrder:1},{userId:p.tomas.id,joinOrder:2}]);
     for(const row of calculated) expect(balance.data!.find(r=>r.user_id===row.userId).net_minor).toBe(serializeAmountMinor(row.net));
+    const me=await p.sara.client.from("me_month_summary").select("private_minor,shared_part_minor,consumption_minor").eq("month","2026-10-01").single();expect(me.error).toBeNull();expect(me.data).toEqual({private_minor:"41290000",shared_part_minor:"150000000",consumption_minor:"191290000"});
+    expect((await p.sara.client.from("my_transactions").select("id")).data).toHaveLength(9);
+    expect((await p.tomas.client.from("my_transactions").select("id")).data).toEqual([]);
   };
   await check("42990000");
   await rpc(p.tomas.client,"register_settlement",{p_idempotency_key:randomUUID(),p_amount_minor:"20000000",p_settlement_date:"2026-10-25",p_note:null});

@@ -41,9 +41,16 @@ export async function readByCursor<T extends CursorKey>(
  * Filtro `or` de PostgREST para «estrictamente después de `key`» en el orden (fecha, creación, id), ascendente o
  * descendente. Los valores con caracteres reservados (`:` y `.` del instante) van entre comillas dobles.
  */
-export function afterFilter(key: CursorKey, direction: "asc" | "desc") {
+export function afterFilter(key: CursorKey, direction: "asc" | "desc", dateColumn: "transaction_date" | "settlement_date" = "transaction_date") {
   const op = direction === "asc" ? "gt" : "lt";
   const date = key.transaction_date;
   const created = `"${key.created_at}"`;
-  return `transaction_date.${op}.${date},and(transaction_date.eq.${date},created_at.${op}.${created}),and(transaction_date.eq.${date},created_at.eq.${created},id.${op}.${key.id})`;
+  return `${dateColumn}.${op}.${date},and(${dateColumn}.eq.${date},created_at.${op}.${created}),and(${dateColumn}.eq.${date},created_at.eq.${created},id.${op}.${key.id})`;
+}
+
+export function monthBounds(month?:string):[string,string]|null {
+  if(!month) return null;
+  if(!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month) || month<"0001-01") throw new DbError("invalidDate");
+  const [year,part]=month.split("-").map(Number);
+  return [`${month}-01`,`${part===12?String(year+1).padStart(4,"0"):String(year).padStart(4,"0")}-${part===12?"01":String(part+1).padStart(2,"0")}-01`];
 }
