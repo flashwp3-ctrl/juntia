@@ -1,0 +1,27 @@
+Impeccable detect sobre las vistas del PR C (componentes reales con el dataset dorado en una página local temporal sin Supabase, no versionada), 5 de noviembre de 2026, commit 577de4a
+== 390x844 home
+== 390x844 empty
+vista: empty
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no anotas nada este mes"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 390x844 error
+vista: error
+  [icon-tile-stack] 88x88px icon tile above h2 "No pudimos cargar tus movimientos"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 390x844 activity
+== 390x844 detail
+== 1440x900 home
+== 1440x900 empty
+vista: empty
+  [icon-tile-stack] 88x88px icon tile above h2 "Todavía no anotas nada este mes"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 1440x900 error
+vista: error
+  [icon-tile-stack] 88x88px icon tile above h2 "No pudimos cargar tus movimientos"
+    → A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.
+1 anti-pattern found.
+== 1440x900 activity
+== 1440x900 detail

@@ -43,9 +43,10 @@ function MonthArrow({ target, direction }: { target: string | null; direction: "
 
 function MonthNav({ month, navigation }: { month: string; navigation: MonthNavigation }) {
   return (
-    <div className="flex items-center gap-2">
+    // Las flechas quedan en los extremos de la fila: no se mueven con el largo del nombre del mes ni con el texto al 200 %.
+    <div className="flex items-center gap-2 xl:max-w-[360px]">
       <MonthArrow target={navigation.previous} direction="previous" />
-      <p className="min-w-[9.5rem] text-center font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink" aria-live="polite">{monthTitle(month)}</p>
+      <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink" aria-live="polite">{monthTitle(month)}</p>
       <MonthArrow target={navigation.next} direction="next" />
     </div>
   );

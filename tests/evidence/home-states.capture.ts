@@ -1,5 +1,5 @@
 // T072 [V], T073 / SC-001, SC-005; FR-042, FR-061; maestro §15.7. Evidencia del PR C, no del gate: solo corre en el job
-// evidence, en serie (@serial) y después de las capturas, porque provoca estados reales en la base del runner que verían
+// evidence, con un solo worker (@serial) y después de las capturas, porque provoca estados reales en la base del runner que verían
 // los demás workers:
 //   · Cargando: un `lock table … access exclusive` en una sesión de psql retiene la lectura de movimientos; la ruta
 //     enseña loading.tsx (el Skeleton) hasta que se suelta el bloqueo. Se captura y se mide CLS hasta el contenido final.
@@ -25,8 +25,6 @@ const OBSERVER = `(() => { const w = window; w.__cls = 0; w.__shifts = [];
   new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (!e.hadRecentInput) { w.__cls += e.value;
     w.__shifts.push(e.value.toFixed(5) + " " + (e.sources || []).map((s) => s.node ? s.node.nodeName + " " + (s.node.textContent || "").slice(0, 30) : "?").join(" | ")); } } })
     .observe({ type: "layout-shift", buffered: true }); })();`;
-
-test.describe.configure({ mode: "serial" });
 
 const record = async (row: object) => {
   await mkdir(OUT, { recursive: true });
@@ -111,7 +109,8 @@ for (const theme of THEMES) {
         const small = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main a, main button, main input, main [role='radio'], nav a, nav button")]
           .filter((node) => node.getClientRects().length > 0 && !node.closest(".sr-only"))
           .map((node) => {
-            const box = node.getBoundingClientRect();
+            // Un campo dentro de su <label>: el objetivo es el marco entero, que enfoca el campo (Input, D-02 de la 001).
+            const box = (node.tagName === "INPUT" ? node.closest("label") ?? node : node).getBoundingClientRect();
             const after = getComputedStyle(node, "::after");
             const extended = after.content !== "none" && after.position === "absolute";
             const label = node.getAttribute("aria-label") ?? node.textContent?.trim().slice(0, 30) ?? node.tagName;
@@ -123,7 +122,8 @@ for (const theme of THEMES) {
         await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
         await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
         const zoom = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth,
-          clipped: [...document.querySelectorAll<HTMLElement>("main h1, main h2, main p, main a, main button")].filter((node) => node.getClientRects().length > 0 && node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).textOverflow !== "ellipsis").length }));
+          clipped: [...document.querySelectorAll<HTMLElement>("main h1, main h2, main p, main a, main button")].filter((node) => node.getClientRects().length > 0 && node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).textOverflow !== "ellipsis")
+            .map((node) => `${node.tagName.toLowerCase()} «${(node.textContent ?? "").trim().slice(0, 40)}» ${node.scrollWidth}/${node.clientWidth}`) }));
         await record({ kind: "text-200", route: route.path, theme, width, ...zoom });
         expect.soft(zoom.scrollWidth, `${route.path} scroll horizontal al 200 %`).toBeLessThanOrEqual(zoom.viewport);
         await shot(page, `${route.name}--texto-200`, width, theme);

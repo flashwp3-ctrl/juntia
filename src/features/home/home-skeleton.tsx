@@ -9,7 +9,7 @@ export function RowsSkeleton({ count }: { count: number }) {
   return (
     <div className="flex flex-col">
       {[...Array(count).keys()].map((index) => (
-        <div key={index} className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_72px] items-center gap-3 py-2.5">
+        <div key={index} className="grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_72px] items-center gap-3 py-2.5">
           <Skeleton width={40} height={40} radius="32%" />
           <div className="flex flex-col gap-1.5"><Skeleton width="62%" height={14} /><Skeleton width="38%" height={11} /></div>
           <Skeleton height={14} />

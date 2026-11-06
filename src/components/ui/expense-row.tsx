@@ -41,7 +41,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, curren
       aria-label={name}
       aria-current={current ? "page" : undefined}
       data-new={isNew ? "" : undefined}
-      className={`-mx-2 grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5 hover:bg-sunken aria-[current=page]:bg-sunken data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.99] ${className}`}
+      className={`-mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5 hover:bg-sunken aria-[current=page]:bg-sunken data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.99] ${className}`}
     >
       <CategoryIcon kind="category" category={transaction.categoryId} />
       <span className="flex min-w-0 flex-col gap-0.5">

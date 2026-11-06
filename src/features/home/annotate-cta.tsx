@@ -15,13 +15,13 @@ export function AnnotateCta() {
       type="button"
       aria-keyshortcuts={copy.nav.shortcut}
       onClick={(event: MouseEvent<HTMLButtonElement>) => openFrom(event.currentTarget)}
-      className="grid min-h-[76px] w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-[var(--radius-xl)] bg-[var(--comp-button-primary-bg)] px-4 py-3 text-left text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] lg:hidden"
+      className="flex min-h-[76px] w-full flex-wrap items-center gap-x-3.5 gap-y-1 rounded-[var(--radius-xl)] bg-[var(--comp-button-primary-bg)] px-4 py-3 text-left text-[var(--comp-button-primary-fg)] shadow-[var(--comp-button-primary-highlight),var(--comp-button-primary-edge)] hover:bg-primary-hover active:bg-primary-pressed motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] lg:hidden"
     >
-      <span aria-hidden="true" className="grid size-11 place-items-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-text-onAction)_14%,transparent)]">
+      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-text-onAction)_14%,transparent)]">
         <AppIcon name="plus" weight="bold" size={22} />
       </span>
-      <span className="font-serif text-[length:var(--title-l-size)] leading-none font-medium tracking-[var(--title-l-tracking)] whitespace-nowrap">{copy.nav.annotateBlock}</span>
-      <span className="max-w-[6.5rem] text-right text-[length:var(--label-s-size)] leading-tight font-medium text-pretty">{copy.home.annotateHint}</span>
+      <span className="font-serif text-[length:var(--title-l-size)] leading-none font-medium tracking-[var(--title-l-tracking)] min-w-0">{copy.nav.annotateBlock}</span>
+      <span className="ml-auto max-w-[6.5rem] text-right text-[length:var(--label-s-size)] leading-tight font-medium text-pretty">{copy.home.annotateHint}</span>
     </button>
   );
 }
