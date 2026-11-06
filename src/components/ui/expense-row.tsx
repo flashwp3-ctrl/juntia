@@ -49,7 +49,8 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, curren
       <CategoryIcon kind="category" category={transaction.categoryId} />
       <span aria-hidden="true" className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
-        <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink">
+        {/* Sobre el fondo savingSubtle de la fila nueva, la meta pasa a tinta (text.secondary da 4,38:1 en claro). */}
+        <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
           <AppIcon name="lock-simple" size={12} className="shrink-0" />
           <span className="truncate">{copy.row.onlyYou} · {dateLabel}</span>
         </span>

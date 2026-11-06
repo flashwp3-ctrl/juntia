@@ -95,11 +95,16 @@ async function pressFrames(page: Page, scope: string) {
 // Hallazgo de la prueba manual del PR B (5 nov 2026): el campo pintaba dos marcos de foco, el anillo del diseño en el
 // marco y el outline global de :focus-visible en el <input>. Con el foco puesto desde el teclado (Tab), cada campo de
 // texto visible tiene un solo indicador: el <input> sin outline y el marco con el anillo de focus.ring.
+// PR D (T084): con un diálogo abierto (Anotar, confirmar), solo cuentan sus campos: lo de detrás queda inerte bajo el
+// diálogo modal y el teclado no puede llegar ahí, como debe ser.
 async function fieldFocusRings(page: Page) {
-  const count = await page.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible").count();
+  const dialogs = page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible');
+  const scope = (await dialogs.count()) > 0 ? dialogs.last() : page.locator("body");
+  const fields = scope.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible");
+  const count = await fields.count();
   const results: { name: string; focused: boolean; input: string; frame: string }[] = [];
   for (let index = 0; index < count; index++) {
-    const input = page.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible").nth(index);
+    const input = fields.nth(index);
     // F43-2: el foco llega por teclado al campo que se mide. Se enfoca el campo, Shift+Tab sale al anterior y Tab vuelve:
     // así :focus-visible es de teclado aunque un envío previo haya dejado el foco en un botón (A1b, A1d). Si el campo es el
     // primero de la página, Shift+Tab sale del documento y Tab vuelve a él. Se comprueba qué elemento quedó enfocado.

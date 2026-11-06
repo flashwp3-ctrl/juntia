@@ -280,6 +280,17 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
   });
 
+  it("FR-035: Enter con el foco en una categoría la elige y guarda (el recorrido N → monto → categoría → Enter)", async () => {
+    const { user, trigger, actions } = setup();
+    await user.click(trigger);
+    await sheet();
+    await user.type(amount(), "45000");
+    screen.getByRole("button", { name: copy.categories.restaurants }).focus();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
+    expect(actions.create.mock.calls[0][0]).toMatchObject({ categoryId: "restaurants", amountPesos: "45000" });
+  });
+
   it("FR-031a de la 001: con cambios sin guardar, cerrar pide confirmación", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);

@@ -19,7 +19,7 @@ test.use({ storageState: anonymous });
 const month = () => todayInBogota().slice(0, 7);
 const activeCount = async (user: SeededUser) => (await listTransactions(user.client, month())).length;
 /** El héroe de Inicio guarda su valor final en `data-counting-amount`: «$412.900» → 412900n pesos. */
-const heroPesos = async (page: Page) => BigInt(((await page.locator("[data-counting-amount]").getAttribute("data-counting-amount")) ?? "").replace(/\D/g, ""));
+const heroPesos = async (page: Page) => BigInt(((await page.locator("[data-counting-amount]:visible").getAttribute("data-counting-amount")) ?? "").replace(/\D/g, ""));
 
 async function signedInHome(page: Page, user: SeededUser) {
   await signInContext(page.context(), user);
@@ -58,8 +58,8 @@ test("N → monto → categoría reciente → Guardar: el total sube, la fila nu
   console.log(`spec 2 · laboratorio: N → monto → categoría → Enter → Toast en ${elapsed} ms`);
 
   const expected = formatMoney(moneyFromPesos(before + 45000n));
-  await expect(page.locator("[data-counting-amount]")).toHaveAttribute("data-counting-amount", expected);
-  const fresh = page.locator("a[data-new]");
+  await expect(page.locator("[data-counting-amount]:visible")).toHaveAttribute("data-counting-amount", expected);
+  const fresh = page.locator("a[data-new]:visible");
   await expect(fresh).toHaveCount(1);
   await expect(fresh).toContainText("$45.000");
   expect(await activeCount(user)).toBe(seeded + 1);
@@ -67,8 +67,8 @@ test("N → monto → categoría reciente → Guardar: el total sube, la fila nu
   // US-2.5: «Deshacer» dentro de los 6 s anula con auditoría; el total vuelve y la fila desaparece.
   await toast.getByRole("button", { name: copy.annotate.undo }).click();
   await expect(page.getByRole("status").filter({ hasText: copy.annotate.undone.expense })).toBeVisible();
-  await expect(page.locator("[data-counting-amount]")).toHaveAttribute("data-counting-amount", formatMoney(moneyFromPesos(before)));
-  await expect(page.locator("a[data-new]")).toHaveCount(0);
+  await expect(page.locator("[data-counting-amount]:visible")).toHaveAttribute("data-counting-amount", formatMoney(moneyFromPesos(before)));
+  await expect(page.locator("a[data-new]:visible")).toHaveCount(0);
   expect(await activeCount(user)).toBe(seeded);
 });
 
@@ -99,7 +99,8 @@ test("motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (
   const before = await heroPesos(page);
   // Cada texto que pinta el contador entre el guardado y el valor final, sin esperas fijas: un MutationObserver.
   await page.evaluate(() => {
-    const target = document.querySelector("[data-counting-amount]")!;
+    // Next conserva copias ocultas de rutas visitadas: la que cuenta es la visible.
+    const target = [...document.querySelectorAll<HTMLElement>("[data-counting-amount]")].find((node) => node.getClientRects().length > 0)!;
     const seen: string[] = [];
     const rows: string[] = [];
     Object.assign(window, { __counter: seen, __rowAnimations: rows });
@@ -111,14 +112,14 @@ test("motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (
   await page.keyboard.press("Enter");
   await expect(sheet).toBeHidden();
   const expected = formatMoney(moneyFromPesos(before + 80000n));
-  await expect(page.locator("[data-counting-amount]")).toHaveText(expected);
+  await expect(page.locator("[data-counting-amount]:visible")).toHaveText(expected);
   const frames = await page.evaluate(() => (window as unknown as { __counter: string[] }).__counter);
   console.log(`spec 2 · motion: ${frames.length} cuadros del contador hasta ${expected}`);
   expect(new Set(frames).size, "el contador pasa por valores intermedios").toBeGreaterThan(2);
   expect(frames.at(-1)).toBe(expected);
   await expect(page.locator("[data-amount-delta]")).toHaveText("+80.000");
   // La fila nueva lleva la animación row-new (savingSubtle → transparente en 1,2 s), solo con motion activo.
-  await expect(page.locator("a[data-new]")).toHaveCount(1);
+  await expect(page.locator("a[data-new]:visible")).toHaveCount(1);
   await expect.poll(() => page.evaluate(() => (window as unknown as { __rowAnimations: string[] }).__rowAnimations)).toContain("row-new");
   await context.close();
 });

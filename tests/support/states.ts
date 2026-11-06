@@ -131,12 +131,18 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await expect(sheet).toBeHidden();
       const undo = page.getByRole("status").getByRole("button", { name: copy.annotate.undo });
       await undo.focus();
-      return expect(page.locator("a[data-new]")).toBeVisible();
+      return expect(page.locator("a[data-new]:visible")).toBeVisible();
     }
     case "edit": {
-      await page.getByRole("button", { name: copy.detail.edit }).click();
+      await page.getByRole("button", { name: copy.detail.edit, exact: true }).click();
       const sheet = page.getByRole("dialog", { name: copy.annotate.editTitle.expense });
-      await sheet.getByRole("textbox", { name: copy.annotate.amount }).fill("47000");
+      await expect(sheet, "la hoja de edición se abre").toBeVisible();
+      const amount = sheet.getByRole("textbox", { name: copy.annotate.amount });
+      await expect(amount, "con el foco en el monto").toBeFocused();
+      // Como lo haría una persona: seleccionar el monto y escribir otro.
+      await page.keyboard.press("ControlOrMeta+a");
+      await page.keyboard.type("47000");
+      await expect(amount).toHaveValue("47.000");
       return expect(sheet.getByRole("button", { name: copy.annotate.saveChanges })).not.toHaveAttribute("aria-disabled", "true");
     }
     case "deleteDialog": {

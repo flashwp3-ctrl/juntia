@@ -1,0 +1,46 @@
+# T077, T078 en verde — c67b660, 2026-11-06T04:16:46Z
+# npx vitest run --project components src/features/expenses --reporter=verbose
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > acepta un gasto válido, convierte pesos a unidades menores y recorta la descripción 6ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > FR-008: rechaza importes que no son texto de dígitos 1ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > FR-014: «Ingresos» solo para ingreso y las demás solo para gasto 0ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > rechaza claves que no son UUID, fechas imposibles y descripciones largas 1ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > Q13: una fecha futura se acepta 0ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > Q14: la edición no acepta `type` y exige id y versión válidos 1ms
+ ✓ |components| src/features/expenses/payload.test.ts > payload de las Server Actions > anular: solo `delete` o `undo`, con clave, id y versión 1ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > es un `alertdialog` con el foco inicial en Cancelar y dice qué se elimina 302ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-2.1: abre con el foco en el monto, con teclado numérico 584ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > US-4.4: Escape cancela sin cambiar nada y el foco vuelve al botón 223ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > US-4.3: Eliminar anula con motivo `delete` y la versión leída, vuelve a Actividad y lo dice, sin Deshacer (Q4) 125ms
+ ✓ |components| src/features/expenses/edit-sheet.test.tsx > Edición de un movimiento (T078) > US-4.1: abre la hoja con los valores del movimiento, sin selector de tipo (Q14) ni texto de pareja 690ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-2.2: Guardar solo se habilita con monto y categoría, sin abrir los detalles 287ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > doble clic en Eliminar envía una sola petición 146ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > monto 0 no se puede guardar y lo dice 185ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > JT012: explica que ya se eliminó 132ms
+ ✓ |components| src/features/expenses/edit-sheet.test.tsx > Edición de un movimiento (T078) > US-4.2: Guardar cambios envía la versión leída y nunca el tipo 304ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-2.3: E2 sin «Pagó», «Participan» ni «Reparto», y el contexto fijo en Yo 151ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > JT011: si otra pestaña lo editó, lo explica y ofrece recargar 135ms
+ ✓ |components| src/features/expenses/delete-dialog.test.tsx > Diálogo de eliminar (T078) > una promesa rechazada ofrece Reintentar con la misma clave 157ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-3.1: el selector «Gasto · Ingreso» cambia título, categoría («Ingresos» elegida) y botón 289ms
+ ✓ |components| src/features/expenses/edit-sheet.test.tsx > Edición de un movimiento (T078) > Q15 / JT011: la segunda edición con versión vieja falla, lo explica y ofrece recargar sin perder lo escrito 342ms
+ ✓ |components| src/features/expenses/edit-sheet.test.tsx > Edición de un movimiento (T078) > JT012: editar un movimiento ya eliminado lo explica 232ms
+ ✓ |components| src/features/expenses/edit-sheet.test.tsx > Edición de un movimiento (T078) > un ingreso se edita como ingreso: título, categoría «Ingresos» y nada de categorías de gasto 64ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > FR-008: el importe sale como texto de dígitos, nunca como number 345ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > E4: mientras guarda, los campos quedan bloqueados y el botón dice «Guardando…» 257ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > FR-036: doble clic en Guardar envía una sola petición 281ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-2.7: un error de guardado deja la hoja abierta con los datos y Reintentar usa la misma clave 311ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > decisión del fundador: tras un fallo ambiguo los campos quedan bloqueados y solo se reintenta lo mismo 301ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > JT001 no bloquea: el servidor no escribió nada y se puede corregir 279ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > una promesa rechazada (sin red hasta el servidor) se trata como error de red y se puede reintentar 312ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > JT001: la sesión caducada se dice sin perder lo escrito 231ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > FR-035: `N` fuera de un campo abre la hoja; dentro de un campo escribe la letra 135ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > FR-035: Enter guarda y Escape cierra la hoja vacía devolviendo el foco 368ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > FR-031a de la 001: con cambios sin guardar, cerrar pide confirmación 378ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > E5: guardar cierra la hoja, resalta la fila nueva y muestra «Gasto guardado» con Deshacer 258ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > US-2.5: Deshacer anula con motivo `undo` y la versión devuelta; dos clics, una petición 314ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > Deshacer después de editar: la versión cambió y se explica, sin anular nada 275ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > un Deshacer rechazado ofrece Reintentar con la misma clave 315ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > orden de respuestas: un Deshacer que responde tarde no pisa el toast del guardado siguiente 604ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > estado que sobrevive a la navegación: el toast y el resaltado siguen, y la hoja siguiente nace vacía con otra clave 600ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > Toast: con acción dura 6 s y se pausa mientras tiene el foco 607ms
+ Test Files  4 passed (4)
+      Tests  42 passed (42)

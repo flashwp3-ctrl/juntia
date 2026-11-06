@@ -1,6 +1,6 @@
 "use server";
 // T081, T082 / FR-006, FR-008, FR-016–FR-018, FR-034, FR-036; contracts/errors.md. Escrituras de Anotar, editar, eliminar
-// y «Deshacer» por las funciones de entrada de src/lib/db, con el cliente de la petición (sin `service_role`, FR-011).
+// y «Deshacer» por las funciones de entrada de src/lib/db, con el cliente de la petición, nunca con la clave secreta (FR-011).
 // Lo que llega del navegador se comprueba antes (payload.ts); la función SQL vuelve a validar todo. La clave de
 // idempotencia la trae el cliente y src/lib/db reintenta 40P01/40001 con ella. Tras escribir, `revalidatePath` del
 // layout: la misma respuesta trae Inicio, Actividad y el detalle con el total y la fila nuevos (E5).

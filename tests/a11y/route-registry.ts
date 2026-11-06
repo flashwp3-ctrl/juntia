@@ -68,13 +68,15 @@ export const registry: readonly RouteEntry[] = [
   { route: "/actividad/[id]", state: "Detalle", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden" },
   { route: "/actividad/[id]", state: "Detalle no encontrado", path: "/actividad/00000000-0000-4000-8000-000000000000", session: "user" },
   // P0-1, PR D (T084, T098): Anotar en sus estados (hoja a 390, diálogo de 520 a 1440), la edición y el diálogo de
-  // eliminar, con movimientos sembrados por la función real. E5 guarda de verdad por la Server Action.
-  { route: "/", state: "Anotar E1 gasto", path: "/", session: "user", data: "recent", prepare: "annotate" },
-  { route: "/", state: "Anotar E1 ingreso", path: "/", session: "user", data: "recent", prepare: "annotateIncome", axe: false },
-  { route: "/", state: "Anotar E2 detalles", path: "/", session: "user", data: "recent", prepare: "annotateDetails" },
-  { route: "/", state: "Anotar E3 monto no válido", path: "/", session: "user", data: "recent", prepare: "annotateInvalid", axe: false },
-  { route: "/", state: "Anotar E4 guardando", path: "/", session: "user", data: "recent", prepare: "annotateSaving", axe: false },
-  { route: "/", state: "Anotar error de guardado", path: "/", session: "user", data: "recent", prepare: "annotateFailed" },
+  // eliminar. E5 guarda de verdad por la Server Action sobre movimientos sembrados por la función real; los demás estados
+  // de la hoja no los necesitan (la hoja tapa Inicio y las recientes se completan con el catálogo), y así el job e2e no
+  // siembra nueve movimientos por cada uno.
+  { route: "/", state: "Anotar E1 gasto", path: "/", session: "user", prepare: "annotate" },
+  { route: "/", state: "Anotar E1 ingreso", path: "/", session: "user", prepare: "annotateIncome", axe: false },
+  { route: "/", state: "Anotar E2 detalles", path: "/", session: "user", prepare: "annotateDetails" },
+  { route: "/", state: "Anotar E3 monto no válido", path: "/", session: "user", prepare: "annotateInvalid", axe: false },
+  { route: "/", state: "Anotar E4 guardando", path: "/", session: "user", prepare: "annotateSaving", axe: false },
+  { route: "/", state: "Anotar error de guardado", path: "/", session: "user", prepare: "annotateFailed" },
   { route: "/", state: "Anotar E5 guardado", path: "/", session: "user", data: "recent", prepare: "annotateSaved" },
   { route: "/actividad/[id]", state: "Edición", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "edit" },
   { route: "/actividad/[id]", state: "Diálogo de eliminar", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "deleteDialog" },

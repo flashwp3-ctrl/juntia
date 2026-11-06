@@ -167,7 +167,7 @@ function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[
                   <span className="truncate">{rowTitle(transaction)}</span>
                 </Link>
               </td>
-              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}</td>
+              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}</td>
               <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
             </tr>
           );

@@ -1,0 +1,8 @@
+# T077, T078 en rojo — commit 20a9c52, 5 nov 2026
+# npx vitest run --project components src/features/expenses
+ FAIL  |components| src/features/expenses/annotate-sheet.test.tsx [ src/features/expenses/annotate-sheet.test.tsx ]
+ FAIL  |components| src/features/expenses/delete-dialog.test.tsx [ src/features/expenses/delete-dialog.test.tsx ]
+ FAIL  |components| src/features/expenses/edit-sheet.test.tsx [ src/features/expenses/edit-sheet.test.tsx ]
+ Test Files  3 failed | 1 passed (4)
+      Tests  7 passed (7)
+# (los tres archivos fallan al importar annotate-provider y transaction-actions, que no existen; payload.test.ts, 7/7, prueba payload.ts escrito antes)

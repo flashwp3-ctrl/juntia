@@ -12,7 +12,7 @@
 // apertura (FR-036). Decisión del fundador (5 nov 2026, revisión del PR D): tras un fallo ambiguo (red, guardado fallido
 // o inesperado) el primer intento pudo llegar al servidor, así que los campos quedan bloqueados para esa apertura: solo
 // se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
-import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -61,6 +61,12 @@ type AnnotateSheetProps = {
   returnFocusTo: { current: HTMLElement | null };
 };
 
+/** Monto entre $1 y $999.999.999, categoría elegida y lo demás válido para el dominio (E1, E3). */
+function isComplete({ type, amount, categoryId, date, description }: Draft) {
+  return amount !== null && amount > 0 && amount <= MAX_PESOS && categoryId !== null
+    && validateDraft({ type, amount: moneyFromPesos(BigInt(amount)), categoryId, transactionDate: date, description: normalizeDescription(description) }).length === 0;
+}
+
 function initialDraft(mode: SheetMode, today: string): Draft {
   if (mode.kind === "edit") {
     const { transaction } = mode;
@@ -69,13 +75,15 @@ function initialDraft(mode: SheetMode, today: string): Draft {
   return { type: "expense", amount: null, categoryId: null, date: today, description: "" };
 }
 
-function CategoryChip({ id, selected, onSelect }: { id: CategoryId; selected: boolean; onSelect: (id: CategoryId) => void }) {
+function CategoryChip({ id, selected, onSelect, onEnter }: { id: CategoryId; selected: boolean; onSelect: (id: CategoryId) => void; onEnter: (id: CategoryId) => void }) {
   const [bg, fg] = categories[id].tone.split(" ");
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(id)}
+      // FR-035: Enter guarda también con el foco en una categoría (la elige y guarda); Espacio solo la elige.
+      onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => { if (event.key === "Enter") { event.preventDefault(); onEnter(id); } }}
       // 02·5: ficha de 40 con radio 14, el fondo de su categoría y el pictograma en una placa clara; elegida, anillo de
       // 2 px en tinta. Deshabilitada (E4) baja su opacidad.
       className={`${hit} flex h-10 shrink-0 items-center gap-[7px] rounded-[14px] pr-3 pl-[5px] text-[13px] font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
@@ -110,13 +118,12 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
 
   const { type, amount, categoryId, date, description } = draft;
   const isSaving = status.kind === "saving";
-  const dirty = (Object.keys(initial) as (keyof Draft)[]).some((key) => initial[key] !== draft[key]);
+  const isDirty = useCallback((value: Draft) => (Object.keys(initial) as (keyof Draft)[]).some((key) => initial[key] !== value[key]), [initial]);
+  const dirty = isDirty(draft);
   const amountInvalid = amount === 0;
   const dateInvalid = !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date);
   const descriptionTooLong = [...description.trim()].length > 140;
-  const complete = amount !== null && amount > 0 && amount <= MAX_PESOS && categoryId !== null
-    && validateDraft({ type, amount: moneyFromPesos(BigInt(amount)), categoryId, transactionDate: date, description: normalizeDescription(description) }).length === 0;
-  const canSave = complete && (!editing || dirty);
+  const canSave = isComplete(draft) && (!editing || dirty);
 
   const update = (patch: Partial<Draft>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -128,16 +135,18 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
     update({ type: next, categoryId: next === "income" ? "income" : null });
   };
 
-  const save = useCallback(async () => {
-    if (saving.current || !complete || (editing && !dirty) || amount === null || categoryId === null) return;
+  // `patch`: Enter en una categoría guarda con la elección recién hecha, sin esperar a que el estado la refleje.
+  const save = useCallback(async (patch: Partial<Draft> = {}) => {
+    const value = { ...draft, ...patch };
+    if (saving.current || !isComplete(value) || (editing && !isDirty(value)) || value.amount === null || value.categoryId === null) return;
     saving.current = true;
     setStatus({ kind: "saving" });
-    const common = { idempotencyKey, amountPesos: toPayloadPesos(amount), categoryId, transactionDate: date, description: normalizeDescription(description) };
+    const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
     let result;
     try {
       result = mode.kind === "edit"
         ? await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version })
-        : await actions.create({ ...common, type });
+        : await actions.create({ ...common, type: value.type });
     } catch {
       // La Server Action no llegó al servidor o su respuesta no volvió: se ofrece reintentar con la misma clave.
       result = { ok: false as const, error: "network" as const };
@@ -150,7 +159,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
       if (result.error === "network" || result.error === "saveFailed" || result.error === "unexpected") setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, amount, categoryId, complete, date, description, dirty, editing, idempotencyKey, mode, onSaved, type]);
+  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
@@ -243,8 +252,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           fieldClassName="!bg-transparent !shadow-none justify-center"
           inputClassName="text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
         />
-        <div role="group" aria-label={details || type === "income" ? copy.annotate.category : copy.annotate.recent} className={details ? "flex flex-wrap gap-2" : "-mx-5 flex gap-2 overflow-x-auto px-5 py-0.5 [scrollbar-width:none]"}>
-          {choices.map((id) => <CategoryChip key={id} id={id} selected={categoryId === id} onSelect={(next) => update({ categoryId: next })} />)}
+        <div role="group" aria-label={details || type === "income" ? copy.annotate.category : copy.annotate.recent} className={details ? "flex flex-wrap gap-2" : `-mx-5 flex gap-2 px-5 py-0.5 [scrollbar-width:none] ${isSaving || locked ? "overflow-hidden" : "overflow-x-auto"}`}>
+          {/* Bloqueada (E4 o tras un fallo ambiguo), la fila deja de desplazarse: sin fichas enfocables, una región con
+              scroll quedaría fuera del teclado (axe, scrollable-region-focusable). */}
+          {choices.map((id) => <CategoryChip key={id} id={id} selected={categoryId === id} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />)}
         </div>
         {details ? (
           <div className="flex flex-col gap-3.5">
@@ -283,7 +294,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           <div className="flex flex-wrap items-center gap-1.5">
             <SummaryChip icon="calendar-blank" onClick={() => { setDetails(true); requestAnimationFrame(() => document.getElementById(dateId)?.focus()); }}>{dayLabel(date, today)}</SummaryChip>
             <SummaryChip icon="lock-simple">{copy.annotate.onlyYou}</SummaryChip>
-            <button type="button" aria-expanded={false} onClick={() => setDetails(true)} className="flex min-h-11 items-center px-1.5 text-[13px] font-semibold text-primary underline-offset-4 hover:underline">
+            <button type="button" aria-expanded={false} onClick={() => setDetails(true)} className="flex min-h-11 items-center px-1.5 text-[13px] font-semibold text-ink underline underline-offset-4">
               {copy.annotate.details}
             </button>
           </div>
