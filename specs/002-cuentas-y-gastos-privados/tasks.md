@@ -567,7 +567,7 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 - [x] T099 **Pasada fija de Impeccable** sobre las pantallas del PR D, como T058
   - Terminado cuando: la salida y lo corregido están en `evidence.md`.
 
-- [ ] T100 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con las specs 1 y 2), como T059
+- [x] T100 **Gate completo sobre el mismo commit** (`verify`, `app`, `db`, `e2e` con las specs 1 y 2), como T059
   - Terminado cuando: las salidas son del mismo SHA y están en `evidence.md`.
 
 - [ ] T101 Descripción del PR D y **revisión humana**, como T060, con «E2E specs added: 1 (spec 2); total 2» y el estado de cada fila de la decisión 12

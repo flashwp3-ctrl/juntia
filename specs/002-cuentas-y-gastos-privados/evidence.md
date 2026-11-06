@@ -2015,7 +2015,17 @@ lo que se vio en local):
 
 ### T100
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Gate sobre 6e49f95** (6 de noviembre de 2026): `npm run verify` local pasó sobre el mismo código
+(e25f0d9; 6e49f95 solo añade evidencia) y el run [42167448465](https://github.com/flashwp3-ctrl/juntia/actions/runs/42167448465)
+tiene `app`, `db` y `e2e` en verde ([`t100-gate-6e49f95.txt`](evidence/pr-d/t100-gate-6e49f95.txt)): `app` 178 s
+(axe sin sesión 48/48); `db` 237 s (`test:db` 9,3 s < 60, integración con `money.test.ts` 10/10, ensayo de
+restauración); `e2e` 445 s (specs 1 y 2, 12/12 en 22,3 s, humo 23,0 s < 180; axe con sesión 152/152 en 231 s).
+Spec 2: N → Toast en 692 ms (laboratorio); motion activo, 16 cuadros del contador hasta el total exacto.
+
+**Presupuesto superado (aviso, no se mueve):** el job `e2e` tardó **445 s** (412 s en el run 42163561120)
+frente a **< 360 s**, como en el PR C (421–427 s). Las opciones medidas van en la descripción del PR para
+que decidan los fundadores. El commit de la dueña (050a769, `AGENTS.md`, preview de T088) está en la rama.
+Si el PR se marca como listo, ese run del evento `pull_request` repite el gate sobre la cabeza.
 
 ### T101
 
