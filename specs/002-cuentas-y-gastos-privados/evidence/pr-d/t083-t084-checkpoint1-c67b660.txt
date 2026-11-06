@@ -1,0 +1,40 @@
+# Punto de control 1 sobre c67b660 — run 42161559890: app y db en verde; e2e cortado por su límite de 10 min
+# https://github.com/flashwp3-ctrl/juntia/actions/runs/42161559890 — hallazgos corregidos en 081fe44
+  1) [e2e] › tests/e2e/annotate.e2e.ts:42:5 › N → monto → categoría reciente → Guardar: el total sube, la fila nueva queda resaltada y Deshacer lo revierte 
+    Error: expect(locator).toBeHidden() failed
+      - Expect "toBeHidden" getByRole('dialog', { name: 'Anotar gasto' }) with timeout 5000ms
+    > 52 |   await expect(sheet).toBeHidden();
+  2) [e2e] › tests/e2e/annotate.e2e.ts:93:5 › motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (momentos L2 de E5) 
+    Error: locator.getAttribute: Error: strict mode violation: locator('[data-counting-amount]') resolved to 2 elements:
+    > 112 |   await expect(sheet).toBeHidden();
+  2 failed
+  10 passed (42.7s)
+  1) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar error de guardado · light · 390px ──────
+    +     "id": "scrollable-region-focusable",
+  2) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar E5 guardado · light · 390px ────────────
+    +     "id": "color-contrast",
+    +               "bgColor": "#d9e5dc",
+    +               "contrastRatio": 4.38,
+    +               "fgColor": "#6c665b",
+    +             "id": "color-contrast",
+  3) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Edición · light · 390px ─────────
+    Test timeout of 30000ms exceeded.
+  4) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar error de guardado · light · 1440px ─────
+  5) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar E5 guardado · light · 1440px ───────────
+  6) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Edición · light · 1440px ────────
+  7) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Diálogo de eliminar · light · 1440px 
+    Error: «search»: recibió el foco con el teclado
+    > 200 |           expect.soft(ring.focused, `«${ring.name}»: recibió el foco con el teclado`).toBe(true);
+      200 |           expect.soft(ring.focused, `«${ring.name}»: recibió el foco con el teclado`).toBe(true);
+  8) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar E1 gasto · dark · 390px ────────────────
+    +               "bgColor": "#1e2125",
+    +               "contrastRatio": 2.64,
+    +               "fgColor": "#3e6b55",
+  9) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar error de guardado · dark · 390px ───────
+  10) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Edición · dark · 390px ─────────
+  11) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar E1 gasto · dark · 1440px ──────────────
+  12) [a11y] › tests/a11y/routes.a11y.ts:170:11 › / · Anotar error de guardado · dark · 1440px ─────
+  13) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Edición · dark · 1440px ────────
+  14) [a11y] › tests/a11y/routes.a11y.ts:170:11 › /actividad/[id] · Diálogo de eliminar · dark · 1440px 
+  14 failed
+  138 passed (9.1m)

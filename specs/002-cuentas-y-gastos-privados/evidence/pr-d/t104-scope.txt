@@ -1,0 +1,76 @@
+# T104 · comprobación final de alcance — e25f0d9, 2026-11-06T05:03:39Z
+
+$ git grep -nE "service_role|SUPABASE_SECRET_KEY" -- src
+exit=1 (1 = sin coincidencias)
+
+$ grep -nE "\"(react-hook-form|zod|@tanstack/react-query|supabase)\"" package.json   # research R8.12
+exit=1 (1 = sin coincidencias)
+
+$ git grep -nE "<correo>" -- supabase | grep -vE "@seed\.test|@example"   # correos reales en supabase/
+supabase/config.toml:113:# admin_email = "admin@email.com"
+supabase/config.toml:248:# admin_email = "admin@email.com"
+(solo los comentarios por defecto de config.toml, admin@email.com, que no es un correo real)
+
+$ ls tests/e2e/*.e2e.ts
+tests/e2e/access-account.e2e.ts
+tests/e2e/annotate.e2e.ts
+
+$ npx vitest list --project domain --project components --project integration --filesOnly
+[components] src/app/(app)/error.test.tsx
+[components] src/app/(app)/product-routes.test.tsx
+[components] src/components/shell/context-selector.test.tsx
+[components] src/components/ui/amount-input.test.tsx
+[components] src/components/ui/expense-row.test.tsx
+[components] src/features/account/account-context.test.tsx
+[components] src/features/account/limit-note.test.tsx
+[components] src/features/account/profile-form.test.tsx
+[components] src/features/account/theme-selector.test.tsx
+[components] src/features/activity/activity.test.tsx
+[components] src/features/auth/auth-errors.test.ts
+[components] src/features/auth/confirm.test.ts
+[components] src/features/auth/recover-form.test.tsx
+[components] src/features/auth/recovery-session.test.ts
+[components] src/features/expenses/annotate-sheet.test.tsx
+[components] src/features/expenses/delete-dialog.test.tsx
+[components] src/features/expenses/edit-sheet.test.tsx
+[components] src/features/expenses/payload.test.ts
+[components] src/features/home/home.test.tsx
+[components] src/lib/context-preference.test.ts
+[components] src/lib/db/errors.test.ts
+[components] src/lib/db/export.test.ts
+[components] src/lib/db/paginate.test.ts
+[components] src/lib/db/types.test.ts
+[components] src/lib/internal-surface.test.ts
+[components] src/lib/theme-script.test.ts
+[components] src/styles/tokens.test.ts
+[components] tests/a11y/route-registry.test.ts
+[components] tests/lint-rules.test.ts
+[domain] src/domain/account/account.test.ts
+[domain] src/domain/golden/october-2026.test.ts
+[domain] src/domain/money/money.test.ts
+[domain] src/domain/transactions/transactions.test.ts
+[integration] tests/integration/auth.test.ts
+[integration] tests/integration/confirm-code.test.ts
+[integration] tests/integration/controlled-tables.test.ts
+[integration] tests/integration/export.test.ts
+[integration] tests/integration/foundation.test.ts
+[integration] tests/integration/money.test.ts
+[integration] tests/integration/seed.test.ts
+[integration] tests/integration/smoke.test.ts
+
+$ npx playwright test --list --project e2e --project a11y | tail -1
+Total: 12 tests in 2 files
+Total: 152 tests in 1 file
+Total: 48 tests in 1 file
+
+$ ls supabase/tests
+00_smoke.test.sql
+01_privileges.test.sql
+02_claims.test.sql
+03_views.test.sql
+04_writer.test.sql
+05_direct_writes.test.sql
+06_profiles.test.sql
+07_transactions.test.sql
+08_money_functions.test.sql
+09_allowlist.test.sql

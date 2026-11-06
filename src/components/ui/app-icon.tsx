@@ -54,6 +54,7 @@ import { FileText } from "@phosphor-icons/react/dist/ssr/FileText";
 import { FunnelSimple } from "@phosphor-icons/react/dist/ssr/FunnelSimple";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { Tag } from "@phosphor-icons/react/dist/ssr/Tag";
+import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
 import type { Icon } from "@phosphor-icons/react/dist/lib/types";
 
 // Mapa semántico de DESIGN_SYSTEM.md §3 que usa la 001, circle-notch (§Button, carga), los diez íconos de
@@ -116,6 +117,8 @@ const icons = {
   "funnel-simple": FunnelSimple,
   "magnifying-glass": MagnifyingGlass,
   tag: Tag,
+  // P0-1, PR D: eliminar (02·1, diálogo «¿Eliminar este gasto?»).
+  trash: Trash,
 } as const satisfies Record<string, Icon>;
 
 export type AppIconName = keyof typeof icons;

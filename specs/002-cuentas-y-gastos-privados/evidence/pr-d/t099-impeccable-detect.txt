@@ -1,0 +1,47 @@
+# T099 · Impeccable (detector), 6 nov 2026, sobre el árbol de trabajo de 081fe44 + correcciones de la evidencia
+# Código: impeccable detect <ruta> (solo regex; las reglas de página no corren aquí)
+== src/features/expenses
+
+16 files scanned with regex matching only (.ts, .tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+== src/components/ui/toast.tsx
+
+1 file scanned with regex matching only (.tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+== src/components/ui/bottom-sheet.tsx
+
+1 file scanned with regex matching only (.tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+== src/components/ui/modal.tsx
+
+1 file scanned with regex matching only (.tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+== src/features/activity/transaction-detail.tsx
+
+1 file scanned with regex matching only (.tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+== src/components/ui/expense-row.tsx
+
+1 file scanned with regex matching only (.tsx).
+Rules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.
+For the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.
+
+# Página: impeccable detect --json --viewport <WxH> sobre una página local temporal, no versionada, con la hoja real
+# montada abierta (sin carga diferida), la edición y el detalle (total que cuenta, Editar, Eliminar); acciones simuladas.
+== hoja (sheet) montada abierta, 390x844
+[]
+== hoja (edit) montada abierta, 390x844
+[]
+== detalle: total que cuenta, Editar y Eliminar, 390x844
+[]
+== hoja (sheet) montada abierta, 1440x900
+[]
+== hoja (edit) montada abierta, 1440x900
+[]
+== detalle: total que cuenta, Editar y Eliminar, 1440x900
+[]

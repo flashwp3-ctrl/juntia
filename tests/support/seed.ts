@@ -94,11 +94,15 @@ export const futureMonth = () => shiftMonth(todayInBogota().slice(0, 7), 3);
 /**
  * Siembra por la función real (PR C, T071). `golden`: el dataset literal. `current`: las mismas filas e importes en el
  * mismo día del mes en curso, para Inicio, que enseña el mes en curso. `future`: el dataset y un movimiento de prueba en
- * el mes futuro. Devuelve los movimientos creados, en el orden del dataset.
+ * el mes futuro. `recent` (PR D, T083, T084): las mismas filas en el mes en curso pero nunca después de hoy (el día se
+ * lleva a hoy si lo pasa), para que lo que se anota hoy quede arriba en Inicio, como en E5. Devuelve los movimientos
+ * creados, en el orden del dataset.
  */
-export async function seedMovements(user: SeededUser, data: "golden" | "current" | "future") {
-  const month = todayInBogota().slice(0, 7);
-  const rows = saraPrivateOctober2026.map((row) => ({ ...row, transactionDate: data === "current" ? `${month}-${row.transactionDate.slice(8)}` : row.transactionDate }));
+export async function seedMovements(user: SeededUser, data: "golden" | "current" | "future" | "recent") {
+  const today = todayInBogota();
+  const month = today.slice(0, 7);
+  const day = (date: string) => (data === "recent" && date.slice(8) > today.slice(8) ? today.slice(8) : date.slice(8));
+  const rows = saraPrivateOctober2026.map((row) => ({ ...row, transactionDate: data === "current" || data === "recent" ? `${month}-${day(row.transactionDate)}` : row.transactionDate }));
   const extra = data === "future" ? [{ type: "expense" as const, amount: moneyFromPesos(38000n), categoryId: "transport" as const, transactionDate: `${futureMonth()}-14`, description: "Tiquete de bus" }] : [];
   const created = [];
   // Por src/lib/db (la misma capa que usará Anotar) y no por SQL directo.

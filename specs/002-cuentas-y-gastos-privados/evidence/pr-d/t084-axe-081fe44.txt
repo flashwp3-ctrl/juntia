@@ -1,0 +1,24 @@
+·light / · Anotar E1 gasto 390px: 0 violaciones, 0 serias o críticas
+·light / · Anotar E2 detalles 390px: 0 violaciones, 0 serias o críticas
+·light / · Anotar error de guardado 390px: 0 violaciones, 0 serias o críticas
+·light / · Anotar E5 guardado 390px: 0 violaciones, 0 serias o críticas
+·light /actividad/[id] · Edición 390px: 0 violaciones, 0 serias o críticas
+·light /actividad/[id] · Diálogo de eliminar 390px: 0 violaciones, 0 serias o críticas
+·light / · Anotar E1 gasto 1440px: 0 violaciones, 0 serias o críticas
+·light / · Anotar E2 detalles 1440px: 0 violaciones, 0 serias o críticas
+·light / · Anotar error de guardado 1440px: 0 violaciones, 0 serias o críticas
+·light / · Anotar E5 guardado 1440px: 0 violaciones, 0 serias o críticas
+·light /actividad/[id] · Edición 1440px: 0 violaciones, 0 serias o críticas
+·light /actividad/[id] · Diálogo de eliminar 1440px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E1 gasto 390px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E2 detalles 390px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar error de guardado 390px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E5 guardado 390px: 0 violaciones, 0 serias o críticas
+·dark /actividad/[id] · Edición 390px: 0 violaciones, 0 serias o críticas
+·dark /actividad/[id] · Diálogo de eliminar 390px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E1 gasto 1440px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E2 detalles 1440px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar error de guardado 1440px: 0 violaciones, 0 serias o críticas
+·dark / · Anotar E5 guardado 1440px: 0 violaciones, 0 serias o críticas
+·dark /actividad/[id] · Edición 1440px: 0 violaciones, 0 serias o críticas
+·dark /actividad/[id] · Diálogo de eliminar 1440px: 0 violaciones, 0 serias o críticas

@@ -1416,8 +1416,15 @@ contenido es el 404. **Resultado: pasa.**
 
 ### T056
 
-**Humana (dueña y gestor), pendiente:** commit propio de la dueña en
-`feat/002-b-access` para el primer preview y 001-T072 parte 2 antes de usarlo.
+**Hecha el 6 de noviembre de 2026, en el PR D** (aplazada desde el PR B), con el preview del commit propio de la
+dueña en `feat/002-d-annotate` (050a769). Lo comunicó el gestor; ningún agente la ejecutó.
+- La dueña añadió en Vercel el dominio `juntia-alias-prueba.vercel.app`, conectado a la rama `feat/002-d-annotate`
+  (entorno Preview), con «Valid Configuration». El dominio de producción `juntia-alpha.vercel.app` no se tocó.
+- Alejandro abrió `https://juntia-alias-prueba.vercel.app/interno/primitivos` en su Chrome con sesión de Vercel:
+  «No encontramos esta página», con el shell de la app y la ruta 404. La superficie interna no se expone por un
+  host no autorizado sobre el preview.
+- Sin sesión, el gestor recibe 302 de la protección de despliegue en ese mismo alias.
+- La dueña borra el alias después de la prueba.
 
 ### T057
 
@@ -1836,94 +1843,304 @@ todavía muestran con espacio, va en la corrección de la revisión del PR #44 (
 La descripción del PR lleva capturas, Impeccable, los `[P]` y «E2E specs added: 0»
 (la spec 1 suma la descarga de Exportar y el caso de privacidad de F44-1); total 1.
 
+### PR D · T077–T083 (tests primero e implementación)
+
+Rama `feat/002-d-annotate`, PR #45. Salidas literales en [`evidence/pr-d/`](evidence/pr-d/).
+Los tests de componentes se vieron fallar antes que el código (`docs/TESTING.md` §6), en el
+commit 20a9c52:
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T077, T078 componentes (hoja, edición, diálogo de eliminar) | [`t077-t078-components-red.txt`](evidence/pr-d/t077-t078-components-red.txt): los tres archivos fallan al importar `annotate-provider` y `transaction-actions`, que no existían | [`t077-t078-components-green.txt`](evidence/pr-d/t077-t078-components-green.txt): 42 pruebas (43 con la de Enter sobre una categoría, 081fe44) |
+| T083 spec E2E 2 | Punto de control 1, run [42161559890](https://github.com/flashwp3-ctrl/juntia/actions/runs/42161559890): 2 de 3 en rojo ([`t083-t084-checkpoint1-c67b660.txt`](evidence/pr-d/t083-t084-checkpoint1-c67b660.txt)) | Run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120) sobre 081fe44: specs 1 y 2, 12/12 |
+
+Además de los criterios literales de T077 y T078, las pruebas de componentes cubren lo que pidió
+la revisión de concurrencia: doble clic y Enter repetido en Guardar (una petición), Reintentar con
+la **misma** clave, promesas rechazadas (error de red con Reintentar), dos clics en Deshacer (una
+petición), Deshacer después de editar (`versionConflict`, se explica y no anula nada), una
+respuesta tardía de Deshacer que no pisa el aviso del guardado siguiente, y el estado que sobrevive
+a una navegación (el aviso y la fila resaltada siguen; la hoja siguiente nace vacía y con otra
+clave). `payload.test.ts` prueba que las Server Actions solo aceptan importes como texto de dígitos
+(FR-008), nunca el tipo en una edición (Q14) y solo `delete` o `undo` al anular.
+
+**Decisión del fundador (5 de noviembre de 2026, Alejandro, en la sesión del PR D).** Tras un fallo
+ambiguo al guardar (red, guardado fallido o inesperado), el primer intento pudo llegar al servidor.
+Si la persona cambiara los datos y reintentara con la misma clave, el servidor lo rechazaría
+(`JT008`) y la interfaz diría «Algo salió mal» con riesgo de duplicado. Se eligió **bloquear los
+campos** de esa apertura: solo se reintenta lo mismo con la misma clave, o se cierra la hoja. Con
+`JT001`, `JT011` y `JT012` el servidor no escribió nada y los campos siguen editables. Pruebas:
+«decisión del fundador: tras un fallo ambiguo…» y «JT001 no bloquea…» en `annotate-sheet.test.tsx`.
+
+**Lo que encontró el punto de control 1** (run 42161559890; [`t083-t084-checkpoint1-c67b660.txt`](evidence/pr-d/t083-t084-checkpoint1-c67b660.txt)),
+corregido en 081fe44:
+- Enter con el foco en una categoría la volvía a elegir y no guardaba: el recorrido de la spec 2
+  (N → monto → categoría → Enter) se quedaba ahí. Ahora la elige y guarda (FR-035).
+- Contraste: la meta de la fila nueva en `text.secondary` sobre `savingSubtle` daba 4,38:1 en
+  claro (pasa a tinta) y «Editar detalles» en bosque daba 2,64:1 en oscuro (pasa a tinta con
+  subrayado).
+- `scrollable-region-focusable`: con los campos bloqueados, la fila de categorías seguía siendo
+  una región con scroll sin nada enfocable; bloqueada, deja de desplazarse.
+- El job `e2e` llegó a su límite de 10 min con los reintentos de esos fallos; no subió artefactos.
+
+### Revisión del PR #45 (ChatGPT): F45-1 y F45-2
+
+Pedir cambios, con 0 bloqueantes y 2 importantes; la parte de dinero e idempotencia, sin hallazgos. Corregido
+en un solo push al borrador, con `verify` local y `next build`
+([`f45-components.txt`](evidence/pr-d/f45-components.txt)).
+
+- **F45-1: el descarte tras un fallo ambiguo afirmaba que no se guardó.** Con los campos bloqueados (decisión
+  del fundador del 5 de noviembre), cerrar abre ahora otra confirmación: «¿Cerrar sin confirmar?» y «No
+  pudimos confirmar si se guardó. Revisa Actividad antes de volver a anotarlo.», con «Reintentar» (la misma
+  clave, con el foco inicial) y «Cerrar». **Copy nuevo para aprobación de los fundadores** en
+  `copy.annotate.uncertain`. Pruebas: el servidor guarda y la respuesta se pierde (promesa rechazada); al
+  cerrar, el diálogo dice el texto nuevo y nunca «no se guardará»; Reintentar reusa la clave; Cerrar no envía
+  otra vez.
+- **F45-2: E5 no se veía si el movimiento quedaba fuera de lo visible.** Tras un guardado correcto, si la
+  pantalla no enseña la fila nueva (otro mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), el
+  proveedor lleva a `/actividad?mes=<mes del movimiento>`; el aviso con «Deshacer» y el resaltado siguen.
+  Si ya está a la vista, no navega (y la acerca con `scrollIntoView`). No cambia el total del mes en curso
+  ni los 5 recientes. Las filas llevan `data-transaction-id` (ExpenseRow y la tabla de Actividad); «a la
+  vista» excluye las copias ocultas de rutas que conserva Next y lo oculto por CSS. La spec y el comp de E5 no
+  definen este caso. Pruebas: un gasto del mes anterior, uno del mes en curso fuera de los 5 recientes y uno
+  ya visible, que no navega.
+
 ### T079
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Citado en lugar de duplicado, y el caso que faltaba añadido.** Ya cubrían el criterio:
+`supabase/tests/08_money_functions.test.sql` («anulado no editable» → `JT012`, y «motivo auditado»
+→ `reason = 'undo'` en SQL) y `tests/integration/money.test.ts`, «el eliminado no se edita y Deshacer
+conserva el rastro» (editar un anulado por `src/lib/db` → `transactionVoided`, PR A). Faltaba
+«Deshacer» **de punta a punta por `src/lib/db`** con la auditoría: se añaden dos casos en
+`money.test.ts` (commit 20a9c52):
+- Deshacer con la versión que devolvió la creación, dos veces a la vez con la misma clave: el mismo
+  resultado, `status = 'voided'`, una sola auditoría `void` con `reason = 'undo'`, fuera de
+  `listTransactions`; Eliminar después → `transactionVoided`.
+- Deshacer después de editar → `versionConflict`; el movimiento sigue activo y sin auditoría `void`.
+
+No se vieron fallar: prueban funciones que existen desde el PR A, y fallarían solo si se rompiera esa
+función. Pasan en el job `db` del run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120)
+(`money.test.ts`, 10 pruebas; [`t100-checkpoint-081fe44.txt`](evidence/pr-d/t100-checkpoint-081fe44.txt)).
 
 ### T084
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+Registro de T051 (`tests/a11y/route-registry.ts`): Anotar E1 gasto, E2 detalles, el error de guardado
+con su Reintentar, E5 guardado (aviso con Deshacer y fila resaltada), la edición y el diálogo de
+eliminar, con sesión y en los dos temas, a 390 (hoja) y 1440 (diálogo de 520). E1 ingreso, E3 y E4
+están en el registro solo para las capturas (`axe: false`): su hoja ya se audita en los demás estados.
+La prueba de cobertura del registro pasa en `verify`. Run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120),
+job `e2e`: 152/152, **0 violaciones serias o críticas** en los 24 estados nuevos
+([`t084-axe-081fe44.txt`](evidence/pr-d/t084-axe-081fe44.txt)).
 
 ### T085
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Laboratorio, no campo** (SC-004; maestro §15.7). `tests/evidence/inp.capture.ts`: Chromium con la CPU
+a 4× (CDP `Emulation.setCPUThrottlingRate`), Event Timing con `durationThreshold: 16`; para cada
+interacción, la mayor duración de sus eventos con el mismo `interactionId`. Cinco aperturas (clic real en
+el disparador visible) y cinco guardados (clic en Guardar; la respuesta del servidor no cuenta para INP),
+con sesión y movimientos sembrados, en serie. Run [42166090433](https://github.com/flashwp3-ctrl/juntia/actions/runs/42166090433)
+sobre e25f0d9 ([`t085-inp-e25f0d9.txt`](evidence/pr-d/t085-inp-e25f0d9.txt)):
+
+| Ancho | Abrir Anotar (ms) | INP abrir | Guardar (ms) | INP guardar | < 200 ms |
+| --- | --- | --- | --- | --- | --- |
+| 390 | 48, 64, 64, 64, 56 | **64** | 24, 32, 24, 16, 16 | **32** | Sí |
+| 1440 | 40, 96, 104, 72, 80 | **104** | 32, 32, 24, 32, 24 | **32** | Sí |
+
+La primera corrida (42164303222, 081fe44) dio 80/32 a 390 y 96/40 a 1440. El valor en un teléfono real
+queda para T087 y la revisión de los fundadores.
 
 ### T086
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). La altura del teclado nativo con la hoja en iPhone (el teclado no tapa el monto ni Guardar; la hoja sube con `visualViewport`, `bottom-sheet.tsx`). La parte de Android (teclado y máscara de COP con un teclado de terceros) entra en la excepción 19.2: ninguno de los dos fundadores tiene Android; la revalidan los fundadores antes del lanzamiento de MVP-1. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T087
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). US-12 en el teléfono de un fundador: al menos 10 gastos habituales, mediana < 10 s y el método. El recorrido de laboratorio de la spec 2 (692 ms en CI) no la sustituye. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T088
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Hecha por Alejandro el 6 de noviembre de 2026** (001-T072 parte 3), en su Chrome con sesión de Vercel; lo
+comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-annotate`, entorno Preview, Ready.
+- URL de rama `https://juntia-git-feat-002-d-annotate-flashwp3-8258.vercel.app/interno/primitivos` → «Superficie
+  interna de revisión» (200).
+- URL de despliegue `https://juntia-g9azqimwg-flashwp3-8258.vercel.app/interno/primitivos` → la misma página (200).
+- Sin sesión de Vercel, la URL de rama responde 302 a la protección de despliegue (petición sin credenciales del
+  gestor).
 
 ### T089
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). 001-T073, contraste de los pares de texto y fondo en un iPhone, en los dos temas. Mientras tanto, axe sin violaciones serias o críticas en las 200 auditorías de este PR (T084) no lo sustituye: mide el color calculado, no la pantalla. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T090
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** 001-T074, sombras táctiles (canto de los botones y elevación) en un Android de gama media.
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que en un Android de gama media la sombra o el canto se vean distintos o con poco contraste; es estético, no afecta a datos ni a acceso.
+- **Mitigación:** capturas a 390 en los dos temas en Chromium (T098) y la emulación de Android de Chrome; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T091
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). 001-T075 · VoiceOver con el Anotar real: apertura (foco en «Monto»), selector Gasto · Ingreso, categorías (botones con estado pulsado), Guardar, el aviso «Gasto guardado» con «Deshacer» y el retorno del foco. Las pruebas de componentes (roles, nombres y foco) y axe no lo sustituyen. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T092
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** 001-T075 · TalkBack con el flujo real de Anotar.
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que TalkBack anuncie distinto que VoiceOver la hoja, el selector, las categorías o el aviso con «Deshacer».
+- **Mitigación:** roles, nombres y foco probados en componentes (T077, T078), axe sin violaciones serias o críticas (T084) y VoiceOver, aplazado a su vez por la 19.1; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T093
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Aplazada por decisión 19** (maestro §15.10, 19.4; los fundadores, 6 de noviembre de 2026, con el riesgo aceptado). CLS = 0 fuera de Chromium, en Firefox y WebKit. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con el gestor de dueño. El arnés R2 mide con la API Layout Instability y el screencast de CDP, que solo existen en Chromium; medirlo en Firefox y WebKit necesita un método nuevo, y sin sesión solo cubriría `/entrar` y la 404. Las rutas con sesión dependerán de `juntia-dev` (decisión 18) o de otro método que se apruebe. No está hecha ni superada.
 
 ### T094
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** CLS en un iPhone real con el inspector web de Safari.
+- **Motivo:** el inspector web de Safari necesita un Mac y los fundadores no tienen uno.
+- **Riesgo residual:** que Safari en iPhone pinte el shell a medio construir; el mecanismo de la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero en un iPhone solo se ha mirado a ojo.
+- **Mitigación:** CLS = 0 medido en Chromium (T053, T072) y el CLS fuera de Chromium de T093, que no entra en esta decisión; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan acceso a un Mac, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T095
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** respaldo tipográfico de Onest en Android (la métrica ajustada sobre Arial de `globals.css`).
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que en Android, sin Arial, el respaldo mida distinto y el texto salte al llegar Onest.
+- **Mitigación:** el respaldo medido en el runner con Arial instalado (T053) y la fuente propia servida por la app; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T096
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Cuatro excepciones aprobadas** por los dos fundadores el 6 de noviembre de 2026 (decisión 19, 19.2), cada una con sus cinco datos y «EXCEPCIÓN APROBADA» en su tarea: T090, T092, T094 y T095. La parte de Android de T086 entra en la misma excepción (ver T086). Ninguna es de seguridad, autorización, aislamiento ni atomicidad.
 
 ### T097
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana, con el momento cambiado por decisión 19** (19.3; los dos fundadores, 6 de noviembre de 2026): la primera copia real de producción con `scripts/backup.sh` y su restauración en PostgreSQL 17 con `scripts/restore-plain.sh` (quickstart §4.1 y §4.3) se hacen **antes del primer movimiento real en producción**, no antes del merge del PR D: producción todavía no tiene datos reales y una copia ahora no protege nada. La hace un fundador con el gestor; ningún agente ve la contraseña de producción. Se pegan el manifiesto y el log con `exit=0`, sin datos. **Sin esta salida, no se anota ningún dato real.**
 
 ### T098
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Capturas a 390 y 1440 en claro y oscuro** ([`evidence/pr-d/t098/`](evidence/pr-d/t098/)), del run
+[42166090433](https://github.com/flashwp3-ctrl/juntia/actions/runs/42166090433) sobre e25f0d9, con la
+entrada `evidence_filter` del job `evidence` para no repetir las capturas de los PR B y C: E1 gasto
+(`inicio--anotar-e1-gasto`), E1 ingreso, E2 detalles, E3 monto no válido, E4 guardando, el error de
+guardado con su Reintentar, E5 con el aviso y la fila resaltada en Inicio (`inicio--anotar-e5-guardado`),
+el detalle con Editar y Eliminar (`actividad_id--detalle`), la edición y el diálogo de eliminar.
+
+**Pasada de los siete anchos** (360, 390, 430, 768, 1024, 1280, 1440) en los dos temas
+([`t098-pasada-anchos-e25f0d9.txt`](evidence/pr-d/t098-pasada-anchos-e25f0d9.txt)): 140 filas, **ninguna con
+scroll horizontal**. En E1, E3, E4 y el error, a 360, 390 y 430, la pasada lista fichas de categoría fuera
+de la ventana: es la fila de recientes con scroll horizontal propio del comp 02·5 (la quinta categoría
+asoma por la derecha), no un desborde de la página; desde 768 las recientes se reparten en filas.
+
+**Para aprobar viendo la pantalla** (revisión de los fundadores, T101): «Gasto, ingreso y liquidación en
+tinta» en la fila nueva y en el ingreso; el selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5;
+y, nuevo en este PR, el bloqueo de los campos tras un fallo ambiguo (decisión del 5 de noviembre).
 
 ### T099
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**6 de noviembre de 2026.** Pasada fija de Impeccable (auditoría y crítica), como T058 y T074
+([`t099-impeccable-detect.txt`](evidence/pr-d/t099-impeccable-detect.txt)).
+
+- **Detector de código** sobre `src/features/expenses`, `toast.tsx`, `bottom-sheet.tsx`, `modal.tsx`,
+  `transaction-detail.tsx` y `expense-row.tsx`: sin hallazgos (solo reglas de texto; las de página no
+  corren sobre archivos).
+- **Detector de página** sobre los componentes reales en una página local temporal sin Supabase, que
+  no se versionó: la hoja montada abierta (E1) y la edición, y el detalle con el total que cuenta y
+  Editar/Eliminar, a 390 y 1440: **0 hallazgos**. La primera pasada dio un error de hidratación que
+  era del arnés temporal (leía el modo distinto en servidor y cliente), no del producto; corregido el
+  arnés, 0.
+
+**Crítica sobre las capturas y lo corregido en este PR** (las capturas de la corrida 42164303222 y
+lo que se vio en local):
+- **El monto escrito no se veía** en la hoja (E1, edición): el marco se encogía a cero al centrar los
+  hijos del `<label>`. Corregido en e25f0d9: «$» y la cifra centrados juntos, en 48 px como máximo.
+- En el diálogo de 520 las recientes se cortaban por la derecha: desde 768 se reparten en filas.
+- Contraste (axe, punto de control 1): meta de la fila nueva y «Editar detalles» en oscuro.
+- **Se reporta y no se corrige:** a menos de 768, la fila de recientes desborda su caja a propósito
+  (scroll horizontal de 02·5, la quinta categoría asoma); la pasada de anchos la lista como
+  «elementos fuera de la ventana» pero no hay scroll de página. La fecha usa el control nativo
+  `type="date"`, que muestra el formato del navegador (en el runner, `MM/DD/AAAA`); en un navegador
+  en español sale `DD/MM/AAAA`. La edición no repite el encabezado grande de 04·1 (ficha e importe):
+  reusa la hoja (T082) y se aprueba viendo la pantalla.
 
 ### T100
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Gate sobre 6e49f95** (6 de noviembre de 2026): `npm run verify` local pasó sobre el mismo código
+(e25f0d9; 6e49f95 solo añade evidencia) y el run [42167448465](https://github.com/flashwp3-ctrl/juntia/actions/runs/42167448465)
+tiene `app`, `db` y `e2e` en verde ([`t100-gate-6e49f95.txt`](evidence/pr-d/t100-gate-6e49f95.txt)): `app` 178 s
+(axe sin sesión 48/48); `db` 237 s (`test:db` 9,3 s < 60, integración con `money.test.ts` 10/10, ensayo de
+restauración); `e2e` 445 s (specs 1 y 2, 12/12 en 22,3 s, humo 23,0 s < 180; axe con sesión 152/152 en 231 s).
+Spec 2: N → Toast en 692 ms (laboratorio); motion activo, 16 cuadros del contador hasta el total exacto.
+
+**Presupuesto del job `e2e`:** tardó **445 s** (412 s en el run 42163561120), como en el PR C (421–427 s),
+frente a los **< 360 s** de entonces. Los fundadores eligieron el 6 de noviembre de 2026 subir ese presupuesto
+a **< 480 s** sin partir el job (maestro §15.10, decisión 19.5): las dos mediciones caben. El commit de la dueña (050a769, `AGENTS.md`, preview de T088) está en la rama.
+Si el PR se marca como listo, ese run del evento `pull_request` repite el gate sobre la cabeza.
 
 ### T101
 
 Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
 
-### T102
+### T102 · Aceptación de la 002
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+Cada criterio con la tarea que lo midió y su salida. Lo que depende de una tarea humana queda
+**pendiente** hasta que su salida esté arriba; ninguna fila se da por cerrada sin ella.
+
+| SC | Medido en | Estado |
+| --- | --- | --- |
+| SC-001 · siete anchos, dos temas, capturas aprobadas | T057 (PR B), T073 (PR C), T098 (este PR) y T072 | Capturas y pasada con salida; **pendiente** la aprobación de los fundadores de las pantallas del PR D (T101) |
+| SC-002 · axe sin violaciones serias o críticas | T051, T071, T084 | Con salida: 152/152 con sesión y 48/48 sin sesión, 0 serias o críticas (T084, T100) |
+| SC-003 · US-12 < 10 s en teléfono real | T087 | **Aplazada por decisión 19** (19.1): criterio obligatorio antes del lanzamiento de MVP-1 |
+| SC-004 · INP < 200 ms | T085 | Con salida, **laboratorio**: 104 ms abrir y 32 ms guardar como máximo (CPU 4×) |
+| SC-005 · CLS = 0 | T053, T072 | Con salida (PR B y C); fuera de Chromium y en iPhone, T093 y T094 **pendientes** |
+| SC-006 · migraciones, RLS y privilegios | T015, T020, T021, T025; research R3 ([V] 10) | Con salida (PR A); job `db` verde en cada gate de este PR |
+| SC-007 · aislamiento entre personas | T019, T025 | Con salida (PR A) |
+| SC-008 · 412.900 exacto | T010, T025, T062 | Con salida (PR A y C) |
+| SC-009 · un solo movimiento por intención | T025, T083 | Con salida: spec 2, doble toque más el mismo envío repetido a mano → una fila en la base |
+| SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana**, antes del primer movimiento real en producción (decisión 19, 19.3) |
+| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | T090, T092, T094 y T095: **EXCEPCIÓN APROBADA** (19.2). T089 y T091: **aplazadas por decisión 19** (19.1). T093: **aplazada por decisión 19** (19.4) |
+| SC-012 · salida interna | T103 | **Pendiente · Humana** |
 
 ### T103
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · Humana (los dos fundadores).** SC-012, salida interna: registran, editan y eliminan movimientos reales y los entienden sin ayuda; aprobación por escrito con fecha y observaciones. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
 
 ### T104
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**6 de noviembre de 2026 · e25f0d9** ([`t104-scope.txt`](evidence/pr-d/t104-scope.txt)): `git grep` de
+`service_role` y `SUPABASE_SECRET_KEY` en `src` vacío; ninguna dependencia de research R8.12 en
+`package.json`; en `supabase/` solo el comentario por defecto `admin@email.com` de `config.toml`, que no
+es un correo real; **dos specs E2E** en `tests/e2e/` (12 casos); axe con sesión, 152 auditorías, y sin
+sesión, 48; diez archivos pgTAP de `00` a `09`.
+
+**Contra el Anexo A**, las pruebas de este PR son las de C8 (`money.test.ts`, T079), C17 (registro de
+axe, T084), C18 (`src/features/expenses/*.test.tsx`, T077 y T078) y C19 (`annotate.e2e.ts`, T083).
+**Una prueba no está en el anexo y se plantea en la revisión** (`AGENTS.md` 13a; `tasks.md`, «Qué no se
+hace»): `src/features/expenses/payload.test.ts`, unidad en el proyecto `components`, que prueba lo que
+las Server Actions aceptan del navegador (importes solo como texto de dígitos, FR-008; sin tipo en la
+edición, Q14; solo `delete` o `undo`). Es la capa más baja que ve ese fallo: la integración no pasa por
+la Server Action. Si el revisor prefiere no tenerla, se retira sin tocar el resto. Las demás diferencias
+con el anexo vienen de los PR B y C (`context-preference`, `paginate`, `confirm`, `recovery-session`,
+`seed`, `confirm-code`) y ya se revisaron allí. Se retira `src/components/shell/annotate-notice.test.tsx`
+(001): probaba el aviso que la hoja real sustituye (FR-030).
 
 ### T105
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Pendiente · gestor**, en un commit documental posterior a T102 y T103: cierre de F0-b y aceptación de la 002 en el maestro §15.1.

@@ -1,0 +1,53 @@
+# Gate de control sobre 081fe44 — run 42163561120 (workflow_dispatch), 6 nov 2026 UTC
+# https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120
+
+## job app
+| Control | Estado | Duración | Presupuesto |
+| --- | --- | --- | --- |
+| ci | pasó | 12.25 s | — |
+| lint | pasó | 5.51 s | — |
+| typecheck | pasó | 4.30 s | — |
+| test:unit | pasó | 0.78 s | < 15 s |
+| test:components | pasó | 21.00 s | — |
+| build | pasó | 13.94 s | — |
+| chromium | pasó | 4.00 s | — |
+| test:a11y | pasó | 39.27 s | — |
+| check:internal-surface | pasó | 1.46 s | — |
+| check:theme-script | pasó | 0.60 s | — |
+| Job app (incluye instalación) | success | 109.47 s | < 360 s |
+| Control | Estado |
+| --- | --- |
+| 3 · Supabase local, migraciones y SQL/RLS | job `db` |
+| 4 · E2E de humo | job `e2e` |
+
+## job db
+| Control | Estado | Duración | Presupuesto |
+| --- | --- | --- | --- |
+| ci | pasó | 23.02 s | — |
+| test:db | pasó | 5.36 s | < 60 s |
+| test:integration | pasó | 11.39 s | — |
+| db:types:check | pasó | 1.28 s | — |
+| db:restore-drill | pasó | 31.27 s | — |
+| Job db (incluye instalación) | success | 260.87 s | < 360 s |
+
+## job e2e
+| Control | Estado | Duración | Presupuesto |
+| --- | --- | --- | --- |
+| ci | pasó | 15.13 s | — |
+| build | pasó | 24.22 s | — |
+| chromium | pasó | 5.00 s | — |
+| test:e2e:smoke | pasó | 23.09 s | < 180 s |
+| test:a11y | pasó | 239.18 s | — |
+| Job e2e (incluye instalación) | success | 412.19 s | < 360 s |
+
+## db · integración (money.test.ts, T079)
+ ✓  integration  tests/integration/money.test.ts (10 tests) 2756ms
+ Test Files  8 passed (8)
+      Tests  37 passed (37)
+
+## e2e · specs 1 y 2
+supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+·········spec 2 · laboratorio: N → monto → categoría → Enter → Toast en 675 ms
+··spec 2 · motion: 15 cuadros del contador hasta $492.900
+  12 passed (22.3s)
+  152 passed (4.0m)

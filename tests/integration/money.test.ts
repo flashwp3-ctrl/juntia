@@ -96,3 +96,25 @@ it("40P01 real se reintenta con la misma clave", async () => {
     runnerSql("drop trigger if exists test_deadlock on juntia_data.transactions; drop function if exists tests.deadlock_gate(); drop table if exists tests.lock_gate; revoke usage on schema tests from juntia_writer;");
   }
 },15000);
+// T079 / FR-018, FR-034; US-2.5 (PR D). Lo que ya cubren 08_money_functions (motivo `undo` en SQL) y el caso anterior
+// («el eliminado no se edita»: JT012 → transactionVoided por src/lib/db) se cita en evidence.md. Aquí, el caso que faltaba:
+// «Deshacer» de punta a punta por src/lib/db con la versión que devolvió la creación, como hace la hoja de Anotar, y las
+// carreras que puede provocar la interfaz (Deshacer dos veces, Deshacer después de editar, Eliminar después de Deshacer).
+it("T079: Deshacer por src/lib/db deja el movimiento anulado, fuera de las listas y auditado con reason = 'undo'", async () => {
+  const created = await createTransaction(sara.client,{ ...draft(), transactionDate: "2027-02-03" });
+  const undo = { idempotencyKey: randomUUID(), transactionId: created.id, expectedVersion: created.version, reason: "undo" as const };
+  const [first, second] = await Promise.all([voidTransaction(sara.client,undo),voidTransaction(sara.client,undo)]);
+  expect(first).toEqual(second);
+  expect(first).toMatchObject({ id: created.id, status: "voided", version: created.version + 1 });
+  expect(runnerSql(`select status from juntia_data.transactions where id='${created.id}'`)).toBe("voided");
+  expect(runnerSql(`select string_agg(reason,',') from juntia_data.audit_events where entity_id='${created.id}' and action='void'`)).toBe("undo");
+  expect((await listTransactions(sara.client,"2027-02")).some(({ id }) => id === created.id)).toBe(false);
+  await expect(voidTransaction(sara.client,{ ...undo, idempotencyKey: randomUUID(), reason: "delete", expectedVersion: first.version })).rejects.toMatchObject({ kind: "transactionVoided" });
+});
+it("T079: Deshacer después de editar falla con versionConflict y el movimiento sigue activo", async () => {
+  const created = await createTransaction(sara.client,draft());
+  await updateTransaction(sara.client,{ ...draft(), transactionId: created.id, expectedVersion: created.version, amount: moneyFromPesos(47000n) });
+  await expect(voidTransaction(sara.client,{ idempotencyKey: randomUUID(), transactionId: created.id, expectedVersion: created.version, reason: "undo" })).rejects.toMatchObject({ kind: "versionConflict" });
+  expect(runnerSql(`select status from juntia_data.transactions where id='${created.id}'`)).toBe("active");
+  expect(runnerSql(`select count(*) from juntia_data.audit_events where entity_id='${created.id}' and action='void'`)).toBe("0");
+});

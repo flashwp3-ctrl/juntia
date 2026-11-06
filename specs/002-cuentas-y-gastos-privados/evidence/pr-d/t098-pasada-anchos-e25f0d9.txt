@@ -1,0 +1,141 @@
+# T098 · pasada de los siete anchos en los dos temas — run 42166090433 sobre e25f0d9
+{"route":"/actividad/[id]","state":"Detalle","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":360,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":390,"theme":"light","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":430,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":360,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":390,"theme":"light","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":430,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":360,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":390,"theme":"light","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":430,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":360,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar error de guardado","width":390,"theme":"light","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar error de guardado","width":430,"theme":"light","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar error de guardado","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":360,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":390,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":430,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":768,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1024,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1280,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1440,"theme":"light","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Detalle","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":360,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":390,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":430,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E1 gasto","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 gasto","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E1 ingreso","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E2 detalles","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":360,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":390,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":430,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E3 monto no válido","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E3 monto no válido","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":360,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":390,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":430,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar E4 guardando","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E4 guardando","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":360,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar error de guardado","width":390,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","span.grid","svg","path","path"]}
+{"route":"/","state":"Anotar error de guardado","width":430,"theme":"dark","horizontalScroll":false,"offenders":["button.relative","button.relative","span.grid","svg","path"]}
+{"route":"/","state":"Anotar error de guardado","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar error de guardado","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/","state":"Anotar E5 guardado","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Edición","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":360,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":390,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":430,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":768,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1024,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1280,"theme":"dark","horizontalScroll":false,"offenders":[]}
+{"route":"/actividad/[id]","state":"Diálogo de eliminar","width":1440,"theme":"dark","horizontalScroll":false,"offenders":[]}

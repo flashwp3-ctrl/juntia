@@ -515,6 +515,7 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
 | **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
+| Job `e2e` (specs E2E y axe con sesión; maestro §15.10, decisión 19.5, 6 nov 2026) | **< 8 min (480 s)** |
 | Nocturno / post-merge | **< 15 min** |
 
 «Mide el job» aplica **solo a esta segunda tabla**.

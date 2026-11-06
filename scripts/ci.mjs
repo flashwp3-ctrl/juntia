@@ -25,8 +25,10 @@ if (mode === "run") {
   const lines = ["| Control | Estado | Duración | Presupuesto |", "| --- | --- | --- | --- |"];
   for (const row of rows) lines.push(`| ${row.command} | ${row.status !== 0 ? "falló" : row.emptyDomain ? "0 pruebas — la 001 no tiene dominio financiero" : "pasó"} | ${row.seconds.toFixed(2)} s | ${budgets[row.command] ? `< ${budgets[row.command]} s` : "—"} |`);
   const duration = (Date.now() - Number(process.env.JOB_STARTED_MS)) / 1000;
-  lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < 360 s |`);
-  if (duration >= 360) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < 360 s`);
+  // Maestro §15.10, decisión 19.5: el job e2e tiene < 480 s; los demás, el < 6 min del gate (ADR-011 §4).
+  const jobBudget = process.env.GITHUB_JOB === "e2e" ? 480 : 360;
+  lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < ${jobBudget} s |`);
+  if (duration >= jobBudget) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < ${jobBudget} s`);
   if (process.env.GITHUB_JOB === "app") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | job `db` |", "| 4 · E2E de humo | job `e2e` |");
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
   console.log(lines.join("\n"));

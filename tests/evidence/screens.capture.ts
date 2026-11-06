@@ -12,7 +12,9 @@ const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
 const SHOT = new Set([390, 1440]);
 const SKIP = new Set(["/interno/primitivos", "/ruta-que-no-existe", "/plan", "/balance"]);
 const withSupabase = Boolean(process.env.API_URL);
-const entries = registry.filter((entry) => !SKIP.has(entry.route) && (withSupabase
+// PR D: `EVIDENCE_FILTER` (entrada del workflow) limita la captura a los estados nuevos; vacío, todo el registro.
+const filter = process.env.EVIDENCE_FILTER ? new RegExp(process.env.EVIDENCE_FILTER, "i") : null;
+const entries = registry.filter((entry) => (!filter || filter.test(`${entry.route} ${entry.state}`)) && !SKIP.has(entry.route) && (withSupabase
   ? entry.prepare !== "networkError"
   : entry.session === "none" && !entry.needsAuthApi));
 

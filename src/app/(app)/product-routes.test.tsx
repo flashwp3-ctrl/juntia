@@ -13,7 +13,9 @@
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { AnnotateProvider } from "@/components/shell/annotate-notice";
+import { AnnotateProvider } from "@/features/expenses/annotate-provider";
+// La hoja de Anotar no se abre en estas pruebas: sus acciones no se llaman.
+const idleActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
 import { AppShell } from "@/components/shell/app-shell";
 import { ContextProvider } from "@/components/shell/context-selector";
 import { AccountProvider } from "@/features/account/account-context";
@@ -32,7 +34,7 @@ function AppLayout({ children }: { children: ReactNode }) {
   return (
     <AccountProvider displayName="Sara" theme="system">
       <ContextProvider>
-        <AnnotateProvider>
+        <AnnotateProvider actions={idleActions}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

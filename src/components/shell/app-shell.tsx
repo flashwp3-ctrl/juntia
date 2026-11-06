@@ -10,7 +10,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AccountButton, SidebarAccount } from "@/features/account/account-button";
 import { copy } from "@/lib/copy/es";
-import { useAnnotate } from "./annotate-notice";
+import { useAnnotate } from "@/features/expenses/annotate-provider";
 import { ContextSelector } from "./context-selector";
 import { ACCOUNT_HREF, isCurrent, navDestinations } from "./nav-destinations";
 import { SHELL_END_ID } from "./shell-end";

@@ -2,16 +2,18 @@
 // escritorio de 04·7 sin los módulos compartidos. Un solo número héroe: el gasto del mes (handoff, «Auditoría anti-slop»).
 // Nada de presupuesto, «restante», «excedido», «te alcanza» ni barras de límite (FR-041; DEC-R01, DEC-R17). Los
 // ingresos no se restan ni se suman al gasto (FR-019): aparecen como filas, nunca en el héroe ni en el desglose.
-// Totales y desglose por el dominio (research R8.9); las filas vienen de la vista my_transactions.
+// Totales y desglose por el dominio (research R8.9); las filas vienen de la vista my_transactions. P0-1, PR D (E5): el
+// total cuenta hacia arriba al guardar y la fila nueva queda resaltada.
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { categories } from "@/components/ui/category-icon";
-import { ExpenseRow } from "@/components/ui/expense-row";
 import { ExitState } from "@/components/shell/provisional-state";
-import { formatMoney, type Money } from "@/domain/money";
+import type { Money } from "@/domain/money";
 import { groupByDay, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
+import { CountingAmount } from "@/features/expenses/counting-amount";
+import { HighlightRow } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
 
 const RECENT = 5;
@@ -54,9 +56,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
           {heroTitle}
         </h2>
         {spent ? (
-          <p className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]">
-            {formatMoney(summary.expenseTotal)}
-          </p>
+          <CountingAmount amountMinor={summary.expenseTotal.amountMinor.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
         ) : null}
       </section>
       <AnnotateCta />
@@ -90,7 +90,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
             {recent.map((transaction) => (
               <li key={transaction.id}>
-                <ExpenseRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />
+                <HighlightRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />
               </li>
             ))}
           </ul>
