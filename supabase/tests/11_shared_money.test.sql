@@ -26,7 +26,9 @@ select throws_ok(format('select tests.shared(%L::jsonb)',j::text),code,null,labe
  ('{"parts":{"11111111-1111-4111-8111-111111111111":"5000","33333333-3333-4333-8333-333333333333":"5000"}}','JT111','participante ajeno')
 ) v(j,code,label);
 select throws_ok(format('select tests.shared(%L::jsonb)',jsonb_build_object('description',repeat('x',141))::text),'JT007',null,'descripción larga');
+select set_config('tests.shared_started',clock_timestamp()::text,true);
 select set_config('tests.shared',tests.shared('{"key":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}')::text,true);
+select ok((current_setting('tests.shared')::jsonb->>'created_at')::timestamptz>=current_setting('tests.shared_started')::timestamptz,'la fecha del compartido se toma al escribir, no al empezar la transacción');
 select is(tests.shared('{"key":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}'),current_setting('tests.shared')::jsonb,'crear compartido idempotente');
 select throws_ok($$select tests.shared('{"key":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","description":"otra"}')$$,'JT008',null,'otra huella');
 select is(public.write_status('create_shared_expense','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),jsonb_build_object('state','completed','result',current_setting('tests.shared')::jsonb),'write_status devuelve resultado guardado');
@@ -48,7 +50,9 @@ select throws_ok(format('select public.update_shared_expense(gen_random_uuid()::
 select throws_ok(format('select public.void_shared_expense(gen_random_uuid()::text,%L::uuid,9,''delete'')',current_setting('tests.shared')::jsonb->>'id'),'JT011',null,'eliminar exige versión');
 select throws_ok($$select public.register_settlement(gen_random_uuid()::text,'5100','2026-10-03',null)$$,'JT107',null,'no supera deuda');
 select throws_ok($$select public.register_settlement(gen_random_uuid()::text,'100',(current_date+1)::text,null)$$,'JT114',null,'fecha futura');
+select set_config('tests.settlement_started',clock_timestamp()::text,true);
 select set_config('tests.settlement',public.register_settlement('cccccccc-cccc-4ccc-8ccc-cccccccccccc','5000','2026-10-03',null)::text,true);
+select ok((current_setting('tests.settlement')::jsonb->>'created_at')::timestamptz>=current_setting('tests.settlement_started')::timestamptz,'la liquidación se fecha después del bloqueo y conserva el orden de dependencias');
 select is(current_setting('tests.settlement')::jsonb->>'from_user_id','22222222-2222-4222-8222-222222222222','dirección derivada: Tomás paga');
 select is(public.register_settlement('cccccccc-cccc-4ccc-8ccc-cccccccccccc','5000','2026-10-03',null),current_setting('tests.settlement')::jsonb,'liquidar idempotente');
 select throws_ok($$select public.register_settlement('cccccccc-cccc-4ccc-8ccc-cccccccccccc','100','2026-10-03',null)$$,'JT008',null,'liquidar misma clave otro importe');
@@ -91,7 +95,7 @@ select throws_ok(format('select public.undo_reclassify_to_shared(gen_random_uuid
 reset role;
 -- Envejecimiento solo de fixture, no se duerme para probar los 60 segundos.
 alter table juntia_data.transactions disable trigger transactions_guard_update;
-update juntia_data.transactions set created_at=now()-interval '61 seconds' where id=(current_setting('tests.move2')::jsonb->'shared'->>'id')::uuid;
+update juntia_data.transactions set created_at=now()+(clock_timestamp()-now())/2-interval '60 seconds' where id=(current_setting('tests.move2')::jsonb->'shared'->>'id')::uuid;
 set constraints all immediate;
 set constraints all deferred;
 alter table juntia_data.transactions enable trigger transactions_guard_update;
@@ -100,7 +104,7 @@ select throws_ok(format('select public.undo_reclassify_to_shared(gen_random_uuid
 select throws_ok(format('select public.void_shared_expense(gen_random_uuid()::text,%L::uuid,1,''undo'')',current_setting('tests.move2')::jsonb->'shared'->>'id'),'JT117',null,'deshacer creación después de 60 segundos');
 reset role;
 alter table juntia_data.transactions disable trigger transactions_guard_update;
-update juntia_data.transactions set created_at=now() where id=(current_setting('tests.move2')::jsonb->'shared'->>'id')::uuid;
+update juntia_data.transactions set created_at=clock_timestamp() where id=(current_setting('tests.move2')::jsonb->'shared'->>'id')::uuid;
 set constraints all immediate;
 set constraints all deferred;
 alter table juntia_data.transactions enable trigger transactions_guard_update;
@@ -108,7 +112,7 @@ set local role authenticated;
 select set_config('tests.dependency',public.register_settlement(gen_random_uuid()::text,'100','2026-10-03',null)::text,true);
 reset role;
 alter table juntia_data.settlements disable trigger settlements_guard;
-update juntia_data.settlements set created_at=now()+interval '1 second' where id=(current_setting('tests.dependency')::jsonb->>'id')::uuid;
+update juntia_data.settlements set created_at=clock_timestamp()+interval '1 second' where id=(current_setting('tests.dependency')::jsonb->>'id')::uuid;
 alter table juntia_data.settlements enable trigger settlements_guard;
 set local role authenticated;
 select throws_ok(format('select public.undo_reclassify_to_shared(gen_random_uuid()::text,%L::uuid,1)',current_setting('tests.move2')::jsonb->'shared'->>'id'),'JT117',null,'liquidación posterior impide deshacer');
@@ -146,7 +150,7 @@ select throws_ok(format('select public.reclassify_to_shared(gen_random_uuid()::t
 -- Fixture separada para que el rechazo sea row_count, no la dependencia anterior.
 reset role;
 alter table juntia_data.settlements disable trigger settlements_guard;
-update juntia_data.settlements set created_at=now()-interval '1 second';
+update juntia_data.settlements set created_at=clock_timestamp()-interval '1 day';
 alter table juntia_data.settlements enable trigger settlements_guard;
 set local role authenticated;
 select throws_ok(format('select public.undo_reclassify_to_shared(gen_random_uuid()::text,%L::uuid,1)',current_setting('tests.move2')::jsonb->'shared'->>'id'),'42501',null,'undo_reclassify_to_shared row_count');
