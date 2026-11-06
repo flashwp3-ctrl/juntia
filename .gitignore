@@ -40,3 +40,5 @@ playwright/.auth/
 *.tsbuildinfo
 supabase/.temp/
 supabase/.branches/
+# Diagnósticos locales de agentes (nunca versionados)
+*.tmp.mjs
