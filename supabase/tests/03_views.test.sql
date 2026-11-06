@@ -1,6 +1,10 @@
 -- ADR-013 [V] 8: «security_invoker = true» y funcionan «sin usage sobre juntia_data».
 begin;
 select no_plan();
+-- 003 T009: proyecciones de pareja sin correo, hash ni preferencias del otro.
+select is(reloptions,array['security_invoker=true'],'invoker '||relname) from pg_class where oid in ('public.my_couple'::regclass,'public.couple_members'::regclass);
+select is((select array_agg(column_name::text order by ordinal_position) from information_schema.columns where table_schema='public' and table_name='couple_members'),array['user_id','display_name','role','join_order'],'couple_members: solo identidad visible');
+select is((select count(*) from information_schema.columns where table_schema='public' and table_name='my_couple' and column_name like '%hash%'),0::bigint,'nunca hash en my_couple');
 select is((select reloptions from pg_class where oid='public.my_profile'::regclass), array['security_invoker=true'], '[V8] my_profile invoker');
 select tests.create_user('11111111-1111-4111-8111-111111111111','sara@seed.test');
 insert into juntia_data.profiles(user_id,display_name) values ('11111111-1111-4111-8111-111111111111','Sara');

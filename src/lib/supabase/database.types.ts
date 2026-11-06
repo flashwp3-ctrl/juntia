@@ -8,7 +8,23 @@ export type Database = {
             [_ in never]: never
           }
           Views: {
-            "my_profile": {
+            "couple_members": {
+                  Row: {
+                    "display_name": string | null,"join_order": number | null,"role": string | null,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"my_couple": {
+                  Row: {
+                    "group_id": string | null,"invitation_email": string | null,"invitation_expired": boolean | null,"invitation_expires_at": string | null,"invitation_id": string | null,"join_order": number | null,"role": string | null,"status": string | null,"version": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"my_profile": {
                   Row: {
                     "display_name": string | null,"first_entry_completed": boolean | null,"theme": string | null
                   }
