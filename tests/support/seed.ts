@@ -8,16 +8,35 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createServerClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { saraPrivateOctober2026 } from "../../src/domain/golden/october-2026";
+import { saraPrivateOctober2026,sharedOctober2026 } from "../../src/domain/golden/october-2026";
 import { moneyFromPesos } from "../../src/domain/money";
 import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { createTransaction } from "../../src/lib/db/transactions";
 import { createSeedUser } from "./admin-user";
 import { assertTestTarget } from "./dev-target";
+import { runnerSql } from "../integration/support/sql";
+import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 
 export type Role = "sara" | "tomas" | (string & {});
 export type StorageCookie = { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Lax" };
 export type SeededUser = { id: string; email: string; password: string; displayName: string; cookies: StorageCookie[]; client: SupabaseClient };
+export type SeededCouple = {groupId:string;sara:SeededUser;tomas:SeededUser};
+
+/** T025: pareja propia del worker, por base de datos, dos sesiones reales por rol. */
+export async function seedCouple({index,golden=false}:{index:number;golden?:boolean}):Promise<SeededCouple> {
+  // Guardia antes de crear usuarios o consultar SQL; nunca acepta otro destino.
+  runnerSupabase();
+  const [sara,tomas]=await Promise.all([seedUser({role:"couple-sara",index,displayName:"Sara"}),seedUser({role:"couple-tomas",index,displayName:"Tomás"})]);
+  const groupId=randomUUID();
+  runnerSql(`select tests.seed_couple('${groupId}','${sara.id}','${tomas.id}')`);
+  if(golden) {
+    const users={sara:sara.id,tomas:tomas.id};
+    for(const row of sharedOctober2026) await createSharedExpense(sara.client,{idempotencyKey:randomUUID(),amount:row.amount,categoryId:row.categoryId,transactionDate:row.transactionDate,description:row.description,
+      payerUserId:users[row.payerUserId as keyof typeof users],splitMode:row.splitMode,splitPercents:row.splitPercents,
+      allocations:row.allocations.map(a=>({userId:users[a.userId as keyof typeof users],amount:a.amount}))});
+  }
+  return {groupId,sara,tomas};
+}
 
 /** URL y claves del Supabase del runner o, en `e2e:dev`, de juntia-dev. Falla con cualquier otro destino. */
 export function runnerSupabase() {
