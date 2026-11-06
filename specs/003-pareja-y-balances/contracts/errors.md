@@ -42,6 +42,7 @@ conserva la clave, bloquea la intención y ofrece «Reintentar» (misma clave) o
 | `JT115` | `moveNotAllowed` | Mover un ingreso, un movimiento ajeno, uno ya anulado o sin pareja activa | `copy.move.errors.notAllowed` | A2/A3 |
 | `JT116` | `moveFundedByGoal` | El privado está financiado con una meta (ADR-001 punto 7). En P0-2 nunca ocurre (no hay metas); la comprobación existe | `copy.move.limit` (LimitNote) | A1 |
 | `JT117` | `undoNotAvailable` | Deshacer Mover a Pareja fuera de la ventana o con una operación dependiente posterior (Q15) | `copy.move.errors.undoNotAvailable` | Toast de A4 |
+| `JT119` | `invalidCoupleTransition` | Trigger `groups_guard_transition` o `groups_check_state`: una transición de la pareja que no está permitida | `copy.errors.unexpected` | Nunca en uso normal: solo una escritura que salta las funciones |
 | `JT118` | `invalidSplitMode` | Modo fuera de `equal`/`percent`/`amount` | `copy.errors.unexpected` | Nunca en uso normal |
 
 `JT011` (`versionConflict`) y `JT012` (`transactionVoided`) de la 002 se reutilizan

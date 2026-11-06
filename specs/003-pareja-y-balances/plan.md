@@ -64,7 +64,7 @@ Enfoque técnico, con lo verificado en [research.md](research.md):
 
 **Constraints**: sin Docker en los equipos; importes nunca como `number`; ningún camino de persona usa `service_role`; nada privado en el HTML, el RSC ni el prefetch de Nosotros; 360–1440 px sin scroll horizontal; 44 px; movimiento reducido; texto al 200 %; todo el copy en `src/lib/copy/es.ts`; job `e2e` < 480 s.
 
-**Scale/Scope**: 2 personas y una pareja. 4 migraciones, 11 funciones de escritura, 2 de lectura con parámetros (`preview_invitation`, `write_status`), 2 de la 002 redefinidas (`update_transaction`, `void_transaction`), 9 vistas nuevas y 3 cambiadas, 1 ruta pública (`/invitacion`), Mi pareja real, Balance real y Anotar, Inicio y Actividad en Nosotros.
+**Scale/Scope**: 2 personas y una pareja. 4 migraciones, 11 funciones de escritura, 2 de lectura con parámetros (`preview_invitation`, `write_status`), 2 de la 002 redefinidas (`update_transaction`, `void_transaction`), 9 vistas nuevas y 4 cambiadas, 1 ruta pública (`/invitacion`), Mi pareja real, Balance real y Anotar, Inicio y Actividad en Nosotros.
 
 ## Constitution Check — comprobación de jerarquía
 
@@ -251,9 +251,8 @@ servidor de US-1, US-2, US-5, US-6, US-7 y US-8.
    funciones). Salida: ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas, sin recursión y
    tercera cuenta sin filas. **En este mismo commit**, `my_profile` pasa a filtrar
    por `auth.uid()` (F49-1; [data-model.md](data-model.md) §3.5), porque es el
-   commit que amplía `profiles_read`; y las políticas de `update` de `groups` son
-   las tres definitivas, con `USING` y `WITH CHECK` separados (F49-5; data-model
-   §5).
+   commit que amplía `profiles_read`; y `groups` tiene su política única de
+   `update` y los dos triggers de transición (F49-5; data-model §2.1 y §5).
 2. **Punto de control 2 — `shared_money_tables`**: cambios de `transactions`,
    `transaction_allocations`, `settlements`, `audit_events`, `idempotency_records`,
    triggers (transiciones de la pareja, partes que suman, solo parejas activas,
@@ -276,7 +275,7 @@ servidor de US-1, US-2, US-5, US-6, US-7 y US-8.
 | Capa | Qué |
 | --- | --- |
 | Dominio | `splitAmount` con propiedades (suma exacta, pesos enteros, determinismo) y los casos de FR-019a; `nextSplitOnParticipantsChange` (55/45 → uno → dos = 55/45; 100/0 → uno → dos = 50/50); `computeBalance` contra `beforeSettlement` (+429.900 / −429.900) y `afterSettlement` (+229.900 / −229.900) y con la propiedad de suma cero; `settlementSuggestion`; `meMonthSummary` = 1.912.900 para Sara; estados de pareja |
-| SQL/RLS (pgTAP) | Privilegios efectivos con `juntia_membership` (nadie lo hereda: `pg_has_role` `MEMBER` y `USAGE` falsos para `anon`, `authenticated` y `juntia_writer`, F49-6) y el inventario sin funciones de extensiones (F40-2); **compatibilidad con la 002** (data-model §3.5): con una pareja activa, las cuatro vistas de la 002 devuelven solo lo propio y privado, y `update_transaction`/`void_transaction` contra un gasto compartido fallan con `JT010` sin efectos; las tres políticas de `update` de `groups` (F49-5: la propietaria descarta su provisional, nadie descarta una activa); regenerar dos veces con la misma versión (F49-3); cada tabla nueva con su RLS para Sara, Tomás y una tercera cuenta; las transiciones de `groups` (también para `juntia_writer`); índices de una pareja por persona y de dos integrantes; partes que suman (trigger diferido); cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella, cada validación y una política rota a propósito que hace fallar la función en vez de devolver éxito (R1) |
+| SQL/RLS (pgTAP) | Privilegios efectivos con `juntia_membership` (nadie lo hereda: `pg_has_role` `MEMBER` y `USAGE` falsos para `anon`, `authenticated` y `juntia_writer`, F49-6) y el inventario sin funciones de extensiones (F40-2); **compatibilidad con la 002** (data-model §3.5): con una pareja activa, las cuatro vistas de la 002 devuelven solo lo propio y privado, y `update_transaction`/`void_transaction` contra un gasto compartido fallan con `JT010` sin efectos; la política única de `update` de `groups` con los triggers `groups_guard_transition` y `groups_check_state` (F49-5: como `juntia_writer` con `update` directo, fallan sin efectos activar una provisional de un solo integrante, descartar una activa y reactivar una descartada; por las funciones, la propietaria descarta su provisional y solo una aceptación válida activa); regenerar dos veces con la misma versión (F49-3); cada tabla nueva con su RLS para Sara, Tomás y una tercera cuenta; las transiciones de `groups` (también para `juntia_writer`); índices de una pareja por persona y de dos integrantes; partes que suman (trigger diferido); cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella, cada validación y una política rota a propósito que hace fallar la función en vez de devolver éxito (R1) |
 | Integración | Las carreras de FR-064 con dos sesiones reales (las sondas del preflight, convertidas en pruebas), más regenerar contra regenerar (F49-3); FR-012a: la respuesta se pierde, reintento con la misma clave, mismo resultado; `write_status` tras una respuesta perdida, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona (F49-4); las RPC antiguas de la 002 contra un gasto compartido, por la API, sin efectos (F49-2); `my_profile` y `couple_members` con dos cuentas emparejadas (F49-1); lecturas consistentes (R4: un total no mezcla dos estados con una inserción concurrente) y `couple_balance` = `computeBalance`; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas; ningún importe es `number` en los tipos generados; HTML/RSC fuera de alcance (no hay pantallas) |
 | E2E | Ninguna nueva; corren las specs 1 y 2 |
 

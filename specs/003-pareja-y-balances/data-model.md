@@ -37,7 +37,9 @@ Todas son **tablas controladas** (ADR-013 §2; spec FR-001): RLS activada,
 | `version` | `integer not null default 1` | Sube en cada cambio de estado **y en cada «Generar enlace nuevo»** (revisión del PR #49, F49-3). Es la `expectedVersion` que M4 envía al regenerar y al anular, leída de `my_couple.version` |
 | `created_at`, `activated_at`, `discarded_at` | `timestamptz` | `activated_at` no nulo ⇔ estado activa o posterior; `discarded_at` no nulo ⇔ descartada |
 
-**Transiciones** (un trigger rechaza cualquier otra, también para `juntia_writer`):
+**Transiciones.** Solo existen las tres del diagrama. Las protegen la RLS, dos
+triggers y las funciones **juntos** (revisión del PR #49, segunda ronda, F49-5);
+ninguno de los tres basta solo:
 
 ```
 create_invitation                 accept_invitation
@@ -46,6 +48,41 @@ create_invitation                 accept_invitation
                        │ cancel_invitation
                        └─────────────────────────▶ discarded (final)
 ```
+
+1. **Trigger `groups_guard_transition`** (`before update`, para cualquier rol,
+   también `juntia_writer`). Ve `OLD` y `NEW` y `current_uid()`, que la RLS no
+   puede comparar entre sí (ver §5). Solo admite:
+   - **provisional → provisional**, cambiando únicamente `version` (regenerar). Solo
+     si quien llama es la propietaria;
+   - **provisional → discarded**, solo si quien llama es la propietaria y no hay otro
+     integrante activo;
+   - **provisional → active**, solo si quien llama **no** es la propietaria, ya tiene
+     su membresía activa con `join_order = 2` en esta pareja, la pareja tiene
+     **exactamente dos** membresías activas (la propietaria con `join_order = 1` y
+     quien llama) y existe una invitación de esta pareja **pendiente, sin vencer y
+     dirigida al correo de quien llama**.
+
+   Cualquier otra transición, o cualquier `update` de una fila `active` o
+   `discarded`, falla con `JT119` (`invalidCoupleTransition`). El `select … for
+   update` de la raíz no dispara triggers de `update`, así que bloquear una pareja
+   activa sigue funcionando.
+2. **Trigger de restricción diferido `groups_check_state`** (`after insert or
+   update` en `groups`, `group_members` y `group_invitations`, `deferrable
+   initially deferred`). Al final de la transacción comprueba, para cada pareja
+   tocada:
+   - `provisional`: exactamente una membresía activa, la de la propietaria;
+   - `active`: exactamente dos membresías activas, con `join_order` 1 (la
+     propietaria) y 2, y **una invitación `accepted` con `accepted_by` igual a la
+     integrante de `join_order` 2**, aceptada en esta misma transacción si la pareja
+     se activó en ella;
+   - `discarded`: ninguna membresía activa y ninguna invitación pendiente.
+
+   Así una activación sin aceptación válida se revierte entera, aunque algo hubiera
+   pasado el primer trigger.
+3. **Funciones.** La única que activa es `accept_invitation`, que inserta la
+   membresía, activa la pareja y marca la invitación como aceptada (con
+   `accepted_by` y `accepted_at`) en ese orden y en una sola transacción. Ninguna
+   otra función escribe `status = 'active'`.
 
 Una pareja `provisional` o `discarded` no tiene movimientos, partes ni
 liquidaciones: lo comprueban las funciones y un `check` por clave foránea
@@ -242,31 +279,48 @@ entrar sin verificar (`enable_confirmations = true`, 002).
 
 | Tabla | `authenticated` (select) | `juntia_writer` |
 | --- | --- | --- |
-| `groups` | `is_group_member(id)` | select: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'`; update: las tres políticas de la tabla siguiente |
-| `group_members` | `is_group_member(group_id)` | select: propia o `is_group_member`; insert y update: solo la fila propia |
+| `groups` | `is_group_member(id)` | select: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'`; update: la política única `groups_writer_update` de la tabla siguiente, con los triggers de §2.1 |
+| `group_members` | `is_group_member(group_id)` | select: propia o `is_group_member`; insert: la fila propia **y** o bien `role = 'owner' and join_order = 1` en una pareja provisional cuya propietaria es quien llama, o bien `role = 'member' and join_order = 2 and is_invited_to(group_id)`; update: solo la fila propia |
 | `group_invitations` | `is_group_member(group_id)` (la propietaria ve la suya; **nunca** el hash fuera de las funciones: la vista no lo expone) | select y update: `is_group_member(group_id) or email = current_email()`; insert: `created_by = current_uid() and is_group_member(group_id)` |
 | `transactions` | `owner_user_id = auth.uid() or (group_id is not null and is_couple_member(group_id))` | Ídem para select; insert y update por rama: privada propia o de grupo con `is_couple_member` |
 | `transaction_allocations` | Existe el movimiento visible (subconsulta sobre `transactions`, que aplica su RLS) | Ídem; insert y delete solo por las funciones de gasto compartido |
 | `settlements` | `is_couple_member(group_id)` | select, insert y update de estado: `is_couple_member(group_id)` |
 
-**`update` de `groups` para `juntia_writer`, con `USING` y `WITH CHECK` separados**
-(revisión del PR #49, F49-5). Postgres exige que la fila pase el `USING` antes del
-cambio y el `WITH CHECK` después; también un `select … for update` exige el
-`USING`. El trigger de transiciones de §2.1 sigue siendo la última barrera.
+**`update` de `groups` para `juntia_writer`: una sola política, que decide
+quién y no qué transición** (revisión del PR #49, F49-5, segunda ronda).
 
-| Política | `USING` (fila antes) | `WITH CHECK` (fila después) | Para |
-| --- | --- | --- | --- |
-| `groups_owner_provisional` | `status = 'provisional' and owner_user_id = current_uid()` | `owner_user_id = current_uid() and status in ('provisional','discarded')` | Regenerar (sube `version`) y **anular: provisional → discarded**. No sirve para una pareja activa: su `USING` exige `provisional` |
-| `groups_accept` | `status = 'provisional' and is_invited_to(id)` | `status = 'active' and is_group_member(id)` | Aceptar. La función **inserta primero** la membresía de quien acepta (para que `is_group_member` sea verdadero), **después** activa el grupo y **al final** marca la invitación como aceptada (mientras sigue pendiente, `is_invited_to` es verdadero) |
-| `groups_couple_lock` | `status = 'active' and is_couple_member(id)` | `status = 'active' and is_couple_member(id)` | El `select … for update` de la raíz en las operaciones de dinero. **Nunca** permite salir de `active` |
+| Política | `USING` (fila antes) | `WITH CHECK` (fila después) |
+| --- | --- | --- |
+| `groups_writer_update` | `owner_user_id = current_uid() or is_group_member(id) or is_invited_to(id)` | La misma expresión |
 
-Así ningún camino descarta una pareja activa: ni la política (ninguna con `USING`
-sobre `active` admite otro estado en el `WITH CHECK`) ni el trigger. Las pruebas
-de anular, aceptar y regenerar corren **estas** políticas, no las simplificadas del
-spike (`with check (true)`, research R1): la propietaria descarta su provisional;
-ni ella ni el integrante pueden descartar ni pasar a provisional una activa (por la
-función ni con `set local role juntia_writer` y `update` directo); quien no está
-invitado no puede activar.
+**Por qué una sola, y no tres ni `RESTRICTIVE`.** PostgreSQL combina con `OR` las
+políticas permisivas de un mismo comando, por separado en `USING` y en `WITH
+CHECK`. Con tres políticas por transición, el `USING` de una y el `WITH CHECK` de
+otra se cruzaban: la propietaria podía pasar su provisional a `active` sin que nadie
+aceptara. Hacerlas `RESTRICTIVE` no lo arregla: siguen sin poder comparar la fila de
+antes con la de después, que es lo que define una transición. **Solo un trigger ve
+`OLD` y `NEW` a la vez.** La opción más simple es, por tanto, que la RLS diga
+**quién** puede tocar la fila (una política que no se cruza con nada) y que el
+trigger `groups_guard_transition` y el trigger diferido `groups_check_state` de §2.1
+digan **qué transición** y con qué membresías e invitación. El `select … for update`
+de las operaciones de dinero también pasa por este `USING`.
+
+**La barrera es la suma de la RLS, los dos triggers y las funciones**, no la RLS
+sola: la RLS limita quién, el primer trigger valida cada transición con quien
+llama, el segundo comprueba el estado final al confirmar y las funciones son el
+único camino que activa. Pruebas (pgTAP) **como `juntia_writer` con `update`
+directo** (`set local role juntia_writer` y los claims de quien llama), que deben
+fallar **sin efectos** (estado, versión, membresías e invitaciones iguales):
+
+1. la propietaria pasa a `active` su pareja provisional con un solo integrante;
+2. cualquiera de los dos integrantes pasa una pareja `active` a `discarded` o a
+   `provisional`;
+3. la propietaria pasa una pareja `discarded` a `provisional` o a `active`.
+
+Y, además, por las funciones con la política y los triggers definitivos (no los
+simplificados del spike, `with check (true)`, research R1): la propietaria
+descarta su provisional; quien no está invitado no puede activar; la aceptación
+válida activa.
 
 El spike R1 demostró que esta combinación no tiene recursión y que una tercera
 cuenta no ve nada.
