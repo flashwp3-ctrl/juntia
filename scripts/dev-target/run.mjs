@@ -11,7 +11,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join, resolve } from "node:path";
+import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
 import { checkDevTarget, DEV_REF } from "./guard.mjs";
@@ -35,6 +35,7 @@ const CI_ONLY = {
   ],
   "test:integration": [
     ["Pruebas que envían o leen correos", "dev no tiene Mailpit y su correo integrado admite 2 envíos por hora; solo en el job db (lista abajo)"],
+    ["40P01 real (money.test.ts)", "la carrera de interbloqueo no se reproduce de forma fiable con la latencia de dev; solo en el job db"],
   ],
   e2e: [
     ["E2E etiquetadas @mail", "registro, recuperación y Mailpit; solo en el job e2e (lista abajo)"],
@@ -152,7 +153,7 @@ async function testIntegration(env) {
     if (existsSync(report)) {
       const results = JSON.parse(readFileSync(report, "utf8")).testResults ?? [];
       for (const file of results) for (const test of file.assertionResults ?? []) {
-        if (["skipped", "pending", "todo"].includes(test.status)) skipped.push(`${file.name.replace(ROOT, "").replace(/^[\\/]/, "")} › ${test.fullName}`);
+        if (["skipped", "pending", "todo"].includes(test.status)) skipped.push(`${relative(ROOT, file.name).split("\\").join("/")} › ${test.fullName}`);
       }
     }
     return run.code;

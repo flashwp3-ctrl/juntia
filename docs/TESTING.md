@@ -115,8 +115,13 @@ Hace falta `psql` (el cliente de PostgreSQL 17; en Windows se encuentra solo en
 | --- | --- | --- |
 | `npm run db:dev:reset` | `supabase db reset --db-url` (CLI 2.121.0, la del CI) con las migraciones de la rama y `supabase/seed.sql`; después comprueba el número de migraciones y el esquema `tests` | No hay semilla de producción: `seed.sql` es solo de pruebas (esquema `tests` y correos `@seed.test`) |
 | `npm run test:db:dev` | Cada archivo de `supabase/tests` con `psql`, con las reglas de `pg_prove` (ningún `not ok`, plan exacto, `psql` sin error). `supabase test db` necesita Docker | `db:types:check` (`gen types --local` necesita Docker), el ensayo de restauración y los nueve controles negativos (§9.6), y los artefactos del job `db` |
-| `npm run test:integration:dev` | `vitest --project integration`, con timeouts de 60 s por la latencia hasta East US | Las pruebas que envían o leen un correo (`it.skipIf(sendsMailOnDev)`); el resumen las lista por nombre |
+| `npm run test:integration:dev` | `vitest --project integration`, con timeouts de 60 s por la latencia hasta East US | Las pruebas que envían o leen un correo (`it.skipIf(sendsMailOnDev)`) y el 40P01 real de `money.test.ts`, cuya carrera de interbloqueo no se reproduce de forma fiable con la latencia de dev; el resumen las lista por nombre |
 | `npm run e2e:dev` | `next build` con la URL y la clave publicable de dev, `--project e2e --grep-invert @mail` y `--project a11y` con `A11Y_JOB=e2e` | Las E2E etiquetadas `@mail` (registro, recuperación, Mailpit), listadas por nombre, y el proyecto `evidence` |
+
+**Diferencia conocida del stack alojado.** En `juntia-dev`, las funciones de `pgcrypto`, `uuid-ossp` y
+`pg_stat_statements` del esquema `extensions` son de `postgres` y ejecutables por `anon` y `authenticated`; en el runner
+son de `supabase_admin`. Por eso el inventario F40-2 de `01_privileges.test.sql` falla en `test:db:dev` (6 aserciones)
+y pasa en CI. No se ha tocado el test: es una decisión del contrato de ADR-013 §5.4, abierta (PR del runner de dev).
 
 Lo que no cubre dev, en una línea: **correos, ensayo de restauración, tipos
 generados y cualquier evidencia**. Dev no tiene Mailpit, y su correo integrado
