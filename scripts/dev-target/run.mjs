@@ -1,7 +1,7 @@
 // Maestro §15.10, decisión 18; ADR-011 §9.9; docs/TESTING.md §2. Iterar las capas de base de datos contra
 // `juntia-dev` en vez de gastar minutos de CI:
 //   npm run db:dev:reset          reinicia juntia-dev con las migraciones de la rama y la semilla de pruebas
-//   npm run test:db:dev           pgTAP (supabase/tests) contra juntia-dev
+//   npm run test:db:dev           reinicia juntia-dev y corre pgTAP (supabase/tests), como el job db
 //   npm run test:integration:dev  integración de servidor contra juntia-dev
 //   npm run e2e:dev               build + E2E + axe con sesión, sin los flujos que leen correos
 // Cada comando pasa el guardia de destino (guard.mjs), toma el bloqueo de un solo agente (lock.mjs) y termina con un
@@ -211,7 +211,9 @@ async function main() {
   let exitCode = 1;
   try {
     exitCode = command === "reset" ? await reset(target, env)
-      : command === "test:db" ? await testDb(env)
+      // Como el job db: pgTAP corre sobre una base recién reiniciada. Las pruebas suponen tablas vacías (04 y 07 fallan
+      // con los usuarios y movimientos que dejan la integración y las E2E en dev).
+      : command === "test:db" ? (await reset(target, env)) || await testDb(env)
       : command === "test:integration" ? await testIntegration(env)
       : await e2e(target, env);
   } finally {

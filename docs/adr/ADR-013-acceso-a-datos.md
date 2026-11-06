@@ -341,6 +341,24 @@ TypeScript como número, en ningún sentido y por ningún camino.
    esos roles requerirá un `GRANT` explícito. Si falta, el resultado será un
    error de permiso visible, nunca una fuga de acceso. Cada función de Juntia
    tiene además su propio `REVOKE` explícito en la migración.
+
+   **Nota · 6 de noviembre de 2026 (F40-2, decisión de los fundadores).** El
+   inventario bloqueante de F40-2 excluye **solo las funciones que pertenecen a
+   una extensión**: las que tienen una dependencia de extensión en `pg_depend`
+   (`deptype = 'e'`). No se excluye nada por nombre ni por esquema; cualquier
+   otra función de `postgres` con `EXECUTE` para `PUBLIC`, `anon` o
+   `authenticated` sigue haciendo fallar la prueba, también si está en
+   `extensions`. La misma exclusión rige en CI y en `juntia-dev`.
+
+   Motivo: en el Supabase alojado, la primera ejecución contra `juntia-dev`
+   (decisión 18) mostró que las funciones de `pgcrypto`, `uuid-ossp` y
+   `pg_stat_statements` del esquema `extensions` son de `postgres` y ejecutables
+   por esos roles; en el runner son de `supabase_admin`. Son funciones gestionadas
+   por Supabase, la API de datos no las alcanza (solo expone `public`), y
+   quitarles permisos podría romper la plataforma o revertirse en una
+   actualización. La garantía de fondo queda probada:
+   `tests/integration/foundation.test.ts`, «la API de datos no expone el
+   esquema extensions», con PGRST106 por RPC y por lectura.
 5. **Secuencias:** las claves son identidades o UUID. `anon` y
    `authenticated` no tienen `usage` ni `update` sobre ninguna secuencia.
 6. **Vistas** de `public`: siempre `security_invoker = true`.

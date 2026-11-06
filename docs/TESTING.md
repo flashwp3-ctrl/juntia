@@ -85,7 +85,7 @@ restauración siguen solo en CI. Comandos, guardia y límites: «Iterar contra
 | `npm run test:e2e` | Playwright, las cinco specs, Chromium + WebKit | nivel 2 |
 | `npm run test:a11y` | axe sobre las rutas **ya implementadas**, en los dos temas (§3) | PR y nivel 2 |
 | `npm run db:dev:reset` | Reinicia `juntia-dev` con las migraciones de la rama y `supabase/seed.sql` (solo de pruebas). Decisión 18 | — (iteración) |
-| `npm run test:db:dev` | pgTAP de `supabase/tests` contra `juntia-dev`. Decisión 18 | — (iteración) |
+| `npm run test:db:dev` | Reinicia `juntia-dev` y corre pgTAP de `supabase/tests`, como el job `db`. Decisión 18 | — (iteración) |
 | `npm run test:integration:dev` | Integración de servidor contra `juntia-dev`, sin las pruebas de correo. Decisión 18 | — (iteración) |
 | `npm run e2e:dev` | Build con `juntia-dev`, E2E sin `@mail` y axe con sesión. Decisión 18 | — (iteración) |
 
@@ -114,14 +114,14 @@ Hace falta `psql` (el cliente de PostgreSQL 17; en Windows se encuentra solo en
 | Comando | Qué corre | Qué se salta, declarado en su resumen |
 | --- | --- | --- |
 | `npm run db:dev:reset` | `supabase db reset --db-url` (CLI 2.121.0, la del CI) con las migraciones de la rama y `supabase/seed.sql`; después comprueba el número de migraciones y el esquema `tests` | No hay semilla de producción: `seed.sql` es solo de pruebas (esquema `tests` y correos `@seed.test`) |
-| `npm run test:db:dev` | Cada archivo de `supabase/tests` con `psql`, con las reglas de `pg_prove` (ningún `not ok`, plan exacto, `psql` sin error). `supabase test db` necesita Docker | `db:types:check` (`gen types --local` necesita Docker), el ensayo de restauración y los nueve controles negativos (§9.6), y los artefactos del job `db` |
+| `npm run test:db:dev` | Primero `db:dev:reset` (como el job `db`, pgTAP supone la base recién reiniciada); después, cada archivo de `supabase/tests` con `psql`, con las reglas de `pg_prove` (ningún `not ok`, plan exacto, `psql` sin error). `supabase test db` necesita Docker | `db:types:check` (`gen types --local` necesita Docker), el ensayo de restauración y los nueve controles negativos (§9.6), y los artefactos del job `db` |
 | `npm run test:integration:dev` | `vitest --project integration`, con timeouts de 60 s por la latencia hasta East US | Las pruebas que envían o leen un correo (`it.skipIf(sendsMailOnDev)`) y el 40P01 real de `money.test.ts`, cuya carrera de interbloqueo no se reproduce de forma fiable con la latencia de dev; el resumen las lista por nombre |
 | `npm run e2e:dev` | `next build` con la URL y la clave publicable de dev, `--project e2e --grep-invert @mail` y `--project a11y` con `A11Y_JOB=e2e` | Las E2E etiquetadas `@mail` (registro, recuperación, Mailpit), listadas por nombre, y el proyecto `evidence` |
 
-**Diferencia conocida del stack alojado.** En `juntia-dev`, las funciones de `pgcrypto`, `uuid-ossp` y
-`pg_stat_statements` del esquema `extensions` son de `postgres` y ejecutables por `anon` y `authenticated`; en el runner
-son de `supabase_admin`. Por eso el inventario F40-2 de `01_privileges.test.sql` falla en `test:db:dev` (6 aserciones)
-y pasa en CI. No se ha tocado el test: es una decisión del contrato de ADR-013 §5.4, abierta (PR del runner de dev).
+**Diferencia del stack alojado, resuelta el 6 de noviembre de 2026.** En `juntia-dev`, las funciones de
+`pgcrypto`, `uuid-ossp` y `pg_stat_statements` son de `postgres`; en el runner, de `supabase_admin`. Los fundadores
+eligieron excluir del inventario F40-2 solo las funciones que pertenecen a una extensión (`pg_depend`, `deptype = 'e'`),
+igual en CI y en dev, y probar que la API de datos no expone `extensions` (ADR-013 §5.4, nota de esa fecha).
 
 Lo que no cubre dev, en una línea: **correos, ensayo de restauración, tipos
 generados y cualquier evidencia**. Dev no tiene Mailpit, y su correo integrado

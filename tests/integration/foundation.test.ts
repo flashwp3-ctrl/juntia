@@ -68,6 +68,18 @@ it("[V2/V7] POST/PATCH/DELETE directos y perfiles privados no son accesibles", a
   const response = await fetch(`${apiUrl}/rest/v1/rpc/ensure_profile`, { method: "POST", headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json", "Content-Profile": "juntia_private" }, body: "{}" });
   expect((await response.json()).code).toBe("PGRST106");
 });
+// ADR-013 §5.4, enmienda del 6 de noviembre de 2026: el inventario F40-2 excluye las funciones que pertenecen a una
+// extensión porque la API de datos no expone el esquema extensions. Esto lo comprueba, por RPC y por lectura.
+it("[F40-2] la API de datos no expone el esquema extensions", async () => {
+  const { apiUrl, publishableKey } = runnerEnv();
+  for (const token of [publishableKey, sara.token]) {
+    const headers = { apikey: publishableKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+    const rpc = await fetch(`${apiUrl}/rest/v1/rpc/gen_random_uuid`, { method: "POST", headers: { ...headers, "Content-Profile": "extensions" }, body: "{}" });
+    expect((await rpc.json()).code, "RPC en extensions").toBe("PGRST106");
+    const read = await fetch(`${apiUrl}/rest/v1/pg_stat_statements?limit=1`, { headers: { ...headers, "Accept-Profile": "extensions" } });
+    expect((await read.json()).code, "lectura en extensions").toBe("PGRST106");
+  }
+});
 it("[V7] GraphQL no puede exponer datos ni esquemas de Juntia", async () => {
   const { apiUrl, publishableKey } = runnerEnv();
   const response = await fetch(`${apiUrl}/graphql/v1`, { method: "POST", headers: { apikey: publishableKey, Authorization: `Bearer ${sara.token}`, "Content-Type": "application/json" }, body: JSON.stringify({ query: "{ __schema { queryType { fields { name } } } }" }) });
