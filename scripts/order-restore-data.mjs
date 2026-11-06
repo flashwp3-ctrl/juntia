@@ -67,7 +67,13 @@ export function orderRestoreData(sql) {
       inserts.push({item,rank,joinOrder,index});seen=true;
     }else {
       if(text&&!/^(?:SET\s|SELECT pg_catalog\.(?:set_config|setval)\s*\(|\\(?:un)?restrict\s)/i.test(text))throw new Error('Sentencia fuera del formato data-only');
-      (seen?after:before).push(item);
+      // pg_dump usa off para no ocultar filas al exportar. Al cargar, los
+      // triggers definer de membership necesitan aplicar sus políticas RLS;
+      // off provoca un error aun cuando esas políticas permiten la lectura.
+      // Solo cambia la copia de carga, nunca el respaldo ni sus valores.
+      const loadItem=/^SET\s+row_security\s*=\s*off\s*;$/i.test(text)
+        ? item.replace(/off(\s*;)\s*$/i,'on$1') : item;
+      (seen?after:before).push(loadItem);
     }
   }
   inserts.sort((a,b)=>a.rank-b.rank||a.joinOrder-b.joinOrder||a.index-b.index);

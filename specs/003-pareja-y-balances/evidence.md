@@ -5,7 +5,7 @@ Rama `feat/003-a-database`, base `main` `0c25e8b`. Sin producción ni datos real
 ## Estado actual — T026a/T026b autorizadas dentro de PR A
 
 El gestor confirmó que ambos bloqueos pertenecen al esquema de PR A y autorizó
-T026a/T026b dentro de este PR, sin cambiar tasks.md. T027 aún no se ha lanzado;
+T026a/T026b dentro de este PR, sin cambiar tasks.md. Primer T027: restore fallido;
 T028 y T029 siguen siendo humanas. Los apartados posteriores conservan el
 historial de rojos y pausas, con su estado a la hora indicada.
 
@@ -600,3 +600,33 @@ punto de extensión o confirmar cómo se cumple FR-035 en este PR sin implementa
 el modelo de P0-3. Pausa por regla 6; tasks/spec/plan no se modifican.
 
 T028 pendiente: revisión de ChatGPT y del SQL por los fundadores antes de marcar listo.
+
+## T027 — primer gate y corrección local de restauración
+
+Run [42292790033](https://github.com/flashwp3-ctrl/juntia/actions/runs/42292790033),
+SHA `8124842d37127b33f7e752e5221abda9b1a7c7db`: app/e2e success, db failure
+solo en restore. SQL: 700 tests / 7,20 s; API: 12 archivos / 23,98 s;
+tipos exactos / 1,55 s. Job db 250,72 s; humo 12 tests / 25,13 s,
+axe 152 / 251,06 s; job e2e 462,83 s (<480 s). Sin 429.
+
+El log del drill terminaba tras el reset porque la salida de psql quedaba en el
+temporal eliminado al salir. Se reprodujo el dump completo de datos sintéticos,
+obtenido de juntia-dev con guardia y lock, en PostgreSQL 17 local efímero,
+ligado a 127.0.0.1, sin Docker. Error exacto:
+
+```
+ERROR: query would be affected by row-level security policy for table "groups"
+CONTEXT: SQL statement "select * from juntia_data.groups where id=gid"
+```
+
+pg_dump emite SET row_security = off. Los triggers definer de juntia_membership
+necesitan aplicar sus políticas, y off hace fallar esas consultas. Regresión
+observada en rojo (1 fallo / 4 verdes) antes del cambio. El cargador cambia solo
+esa directiva a on en la copia temporal; el respaldo y su hash quedan intactos.
+Cinco tests locales verdes y carga completa del dump real sintético en una sola
+transacción, validador y restricciones inmediatas: exit=0. Todas las reglas y
+RLS activas. No se añade un bypass ni se cambia el procedimiento de respaldo.
+
+Repetición API dev para reproducir el estado anterior al dump: 58 pasan / 9
+omisiones, 81,64 s runner, 28 inicios de sesión, sin fallos de Auth. El único
+reintento de T027 queda pendiente de terminar los checks locales de la corrección.

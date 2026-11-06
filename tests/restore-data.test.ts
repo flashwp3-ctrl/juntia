@@ -2,6 +2,12 @@
 // T026a/b: formato del respaldo intacto, literales opacos y orden de carga.
 import {expect,it} from "vitest";
 import {readFileSync} from "node:fs";
+it("T026b: conserva RLS activa en la copia de carga, también para triggers membership",async()=>{
+  const {orderRestoreData}=await import("../scripts/order-restore-data.mjs");
+  const sql=orderRestoreData("SET row_security = off;\nINSERT INTO juntia_data.groups (id) VALUES ('g');");
+  expect(sql).toContain("SET row_security = on;");
+  expect(sql).not.toContain("SET row_security = off;");
+});
 it("T026a: los tres límites del stack local/CI son 1000",()=>{
   const config=readFileSync("supabase/config.toml","utf8").split("[auth.rate_limit]")[1].split("\n[")[0];
   for(const key of ["sign_in_sign_ups","token_refresh","token_verifications"]) expect(config).toMatch(new RegExp(`^${key} = 1000$`,"m"));
