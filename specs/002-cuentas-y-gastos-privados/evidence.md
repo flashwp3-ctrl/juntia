@@ -1816,6 +1816,13 @@ El presupuesto del job `e2e` no se mueve: sigue como aviso para los fundadores (
     se inserta una fila con una clave anterior al cursor y se anula una ya leída; no hay
     duplicados y salen una vez todas las filas que existieron de principio a fin.
 
+**CI, de paso.** Con la salida a la vista, el run 42153365570 mostró por fin la causa del «cuelgue» de la
+instalación de Chromium: no se cuelga, es `apt` bajando las fuentes de `install-deps` a unos 40 KB/s desde el mirror
+del runner (las librerías de Chromium ya vienen en la imagen), y el reintento fallaba porque `timeout` mata `npx` pero
+no su `apt-get`, que retiene el bloqueo de dpkg. Desde 5cdcce3 el paso descarga el navegador (150 s, un reintento) y
+solo ejecuta `install-deps` si Chromium no arranca, matando antes el `apt-get` sobrante; en el run 42154140506 arrancó
+con las librerías del runner y el paso tardó 6–7 s.
+
 El SHA y el run de esta ronda están en la descripción del PR.
 
 ### T076
