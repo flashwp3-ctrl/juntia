@@ -71,6 +71,10 @@ const serviceSelectors = [
   { selector: "Identifier[name=/^SUPABASE_(SECRET_KEY|SERVICE_ROLE_KEY)$/]", message: "FR-011: ninguna clave privilegiada en la app." },
   { selector: "Literal[value=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
   { selector: "TemplateElement[value.raw=/service_role/]", message: "FR-011: ningún rol de servicio en la app." },
+  // Decisión 18: la clave secreta de juntia-dev vive en .env.test y solo la leen scripts/dev-target y las pruebas.
+  { selector: "Identifier[name=/^(JUNTIA_DEV_|SECRET_KEY$)/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
+  { selector: "Literal[value=/JUNTIA_DEV_|^SECRET_KEY$|sb_secret_|\\.env\\.test/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
+  { selector: "TemplateElement[value.raw=/JUNTIA_DEV_|sb_secret_|\\.env\\.test/]", message: "Decisión 18: la clave y la conexión de juntia-dev solo existen en los scripts de prueba." },
 ];
 export default defineConfig([
   ...nextVitals,

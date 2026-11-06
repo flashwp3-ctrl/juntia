@@ -1,6 +1,7 @@
 // T014 / ADR-013 [V] 1, 2, 7, 8: «con un JWT real y la API de datos pública»;
 // «Tomás no lee el perfil de Sara» (tasks.md, punto de control 1).
 import { beforeAll, expect, it, vi } from "vitest";
+import { sendsMailOnDev } from "../support/dev-target";
 import { createTestUser } from "./support/users";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
@@ -35,7 +36,8 @@ it("[V1/V8] ensure_profile por HTTP conserva la identidad y es idempotente", asy
   expect((await tomas.client.from("my_profile").select("*")).data).toEqual([{ display_name: "Tomás HTTP", theme: "system", first_entry_completed: false }]);
 });
 // FR-024: la petición real de Auth ejecuta el hook como supabase_auth_admin.
-it("Auth aplica la lista permitida antes de crear la cuenta", async () => {
+// Envía o lee un correo: solo en CI. `test:integration:dev` lo salta y lo declara (decisión 18, ADR-011 §9.9).
+it.skipIf(sendsMailOnDev)("Auth aplica la lista permitida antes de crear la cuenta", async () => {
   const { apiUrl, publishableKey } = runnerEnv();
   const client = createClient(apiUrl, publishableKey, { auth: { persistSession: false } });
   const allowed = await client.auth.signUp({ email: "signup@seed.test", password: "Synthetic-Signup-2026!" });

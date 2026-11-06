@@ -12,10 +12,13 @@ import { linkNoticeFromHash, resolveConfirm, type ConfirmAuth } from "@/features
 import { isRecentRecovery } from "@/features/auth/recovery-session";
 import { copy } from "@/lib/copy/es";
 import { confirmLink } from "../support/mailpit";
+import { sendsMailOnDev } from "../support/dev-target";
 import { cookieJarClient, seedUser } from "../support/seed";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
 
+// Envía o lee un correo: solo en CI. `test:integration:dev` lo salta y lo declara (decisión 18, ADR-011 §9.9).
+const mailIt = it.skipIf(sendsMailOnDev);
 const SITE = "http://localhost:3000";
 const emails: string[] = [];
 afterAll(() => { for (const email of emails) runnerSql(`delete from juntia_data.signup_allowlist where email='${email}'`); });
@@ -46,7 +49,7 @@ async function followDefaultLink(hash: string, type: "signup" | "recovery", next
   return new URL(response.headers.get("location")!);
 }
 
-it("registro por la plantilla por defecto: code canjeado en el mismo navegador; repetido → caducado; otro navegador → verificado sin sesión", async () => {
+mailIt("registro por la plantilla por defecto: code canjeado en el mismo navegador; repetido → caducado; otro navegador → verificado sin sesión", async () => {
   const email = `code-${randomUUID().slice(0, 8)}@seed.test`;
   emails.push(email);
   runnerSql(`insert into juntia_data.signup_allowlist(email) values ('${email}')`);
@@ -80,7 +83,7 @@ it("registro por la plantilla por defecto: code canjeado en el mismo navegador; 
   }
 });
 
-it("recuperación por la plantilla por defecto: el mismo navegador obtiene la sesión de A5; otro navegador no", async () => {
+mailIt("recuperación por la plantilla por defecto: el mismo navegador obtiene la sesión de A5; otro navegador no", async () => {
   const user = await seedUser({ role: "code-recupera", index: 0 });
   const browser = cookieJarClient();
   expect((await browser.client.auth.resetPasswordForEmail(user.email, { redirectTo: `${SITE}/auth/confirm?next=recovery` })).error).toBeNull();
@@ -106,21 +109,21 @@ async function recoveryLink(next: "signup" | "recovery") {
   return { user, browser, landing: await followDefaultLink(await tokenHash(user.email, "recovery"), "recovery", next) };
 }
 
-it("F43-3: un code de registro con next=recovery sigue el flujo de registro (sin A5)", async () => {
+mailIt("F43-3: un code de registro con next=recovery sigue el flujo de registro (sin A5)", async () => {
   const { browser, landing } = await signUpLink("recovery");
   expect(landing.searchParams.get("next")).toBe("recovery");
   expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/entrar?aviso=verificado", session: "signup" });
   console.log(`amr de la sesión de registro: ${await amrOf(browser.client)}`);
 });
 
-it("F43-3: un code de recuperación con next=signup sigue el flujo de recuperación (A5, sesión conservada)", async () => {
+mailIt("F43-3: un code de recuperación con next=signup sigue el flujo de recuperación (A5, sesión conservada)", async () => {
   const { browser, landing } = await recoveryLink("signup");
   expect(landing.searchParams.get("next")).toBe("signup");
   expect(await resolveConfirm(landing.searchParams, authOf(browser.client))).toEqual({ to: "/nueva-contrasena", session: "recovery" });
   console.log(`amr de la sesión de recuperación: ${await amrOf(browser.client)}`);
 });
 
-it("F43-4: A5 acepta la sesión de recuperación y rechaza una sesión iniciada con contraseña", async () => {
+mailIt("F43-4: A5 acepta la sesión de recuperación y rechaza una sesión iniciada con contraseña", async () => {
   const signedIn = await seedUser({ role: "a5-normal", index: 0 });
   const normal = (await signedIn.client.auth.getClaims()).data?.claims;
   console.log(`amr de una sesión con contraseña: ${JSON.stringify(normal?.amr)}`);
@@ -130,7 +133,7 @@ it("F43-4: A5 acepta la sesión de recuperación y rechaza una sesión iniciada 
   expect(isRecentRecovery((await browser.client.auth.getClaims()).data?.claims)).toBe(true);
 });
 
-it("camino token_hash (plantillas del repo): verifyOtp de recuperación → A5, amr «otp» aceptado por la guarda de A5", async () => {
+mailIt("camino token_hash (plantillas del repo): verifyOtp de recuperación → A5, amr «otp» aceptado por la guarda de A5", async () => {
   const user = await seedUser({ role: "token-recupera", index: 0 });
   const browser = cookieJarClient();
   expect((await browser.client.auth.resetPasswordForEmail(user.email, { redirectTo: `${SITE}/auth/confirm?next=recovery` })).error).toBeNull();

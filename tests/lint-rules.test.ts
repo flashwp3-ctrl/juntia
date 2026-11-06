@@ -20,6 +20,14 @@ it("marca claves privilegiadas y accesos fuera de la capa de datos", async () =>
   }
 }, 30_000);
 
+// Maestro §15.10, decisión 18: la clave secreta de juntia-dev «nunca en un camino de petición de la app».
+it("marca la clave y la conexión de juntia-dev en cualquier archivo de la app", async () => {
+  for (const filePath of ["src/features/fixture.ts", "src/lib/supabase/fixture.ts", "src/app/api/fixture/route.ts"]) {
+    const [result] = await eslint.lintText(await fixture("dev-target.ts"), { filePath });
+    expect(restrictedLines(result.messages)).toEqual([1, 2, 3, 4, 5, 6]);
+  }
+}, 30_000);
+
 it("impide importar ambas capas de datos desde domain", async () => {
   const [result] = await eslint.lintText(await fixture("domain-data.ts"), { filePath: "src/domain/fixture.ts" });
   expect(result.messages.filter(({ ruleId }) => ruleId === "no-restricted-imports").map(({ line }) => line)).toEqual([1, 2]);

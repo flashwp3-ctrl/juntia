@@ -22,7 +22,11 @@
     "test:db": "supabase test db",
     "test:integration": "vitest run --project integration",
     "db:types:check": "node scripts/check-db-types.mjs",
-    "db:restore-drill": "bash scripts/restore-drill.sh"
+    "db:restore-drill": "bash scripts/restore-drill.sh",
+    "db:dev:reset": "node scripts/dev-target/run.mjs reset",
+    "test:db:dev": "node scripts/dev-target/run.mjs test:db",
+    "test:integration:dev": "node scripts/dev-target/run.mjs test:integration",
+    "e2e:dev": "node scripts/dev-target/run.mjs e2e"
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",

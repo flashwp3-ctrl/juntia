@@ -49,7 +49,9 @@ async function signInWith(page: Page, email: string, password: string) {
   await page.getByRole("button", { name: copy.auth.signIn.submit }).click();
 }
 
-test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja → Inicio; el enlace usado ya no sirve", async ({ page }) => {
+// `@mail`: envían o leen un correo (Mailpit o el envío de registro y recuperación). Solo en CI; `e2e:dev` las excluye
+// con --grep-invert y las declara en su resumen (decisión 18, ADR-011 §9.9).
+test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja → Inicio; el enlace usado ya no sirve", { tag: "@mail" }, async ({ page }) => {
   const email = `signup-${randomUUID().slice(0, 8)}@seed.test`;
   const password = `Clave-${randomUUID().slice(0, 8)}`;
   runnerSql(`insert into juntia_data.signup_allowlist(email) values (${sqlText(email)})`);
@@ -83,7 +85,7 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja 
   }
 });
 
-test("registro no permitido o de una cuenta existente: la misma pantalla y ninguna cuenta nueva", async ({ page, sara }) => {
+test("registro no permitido o de una cuenta existente: la misma pantalla y ninguna cuenta nueva", { tag: "@mail" }, async ({ page, sara }) => {
   const allowed = `signup-${randomUUID().slice(0, 8)}@seed.test`;
   runnerSql(`insert into juntia_data.signup_allowlist(email) values (${sqlText(allowed)})`);
   try {
@@ -163,7 +165,7 @@ test("Mi cuenta: perfil, apariencia en oscuro y un segundo dispositivo oscuro an
   await other.close();
 });
 
-test("recuperación uniforme; /auth/confirm caducado → aviso sin datos; enlace válido → A5", async ({ page }) => {
+test("recuperación uniforme; /auth/confirm caducado → aviso sin datos; enlace válido → A5", { tag: "@mail" }, async ({ page }) => {
   await page.goto("/recuperar");
   const email = page.getByRole("textbox", { name: copy.auth.fields.email });
   await email.fill(`nadie-${randomUUID().slice(0, 8)}@seed.test`);

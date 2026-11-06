@@ -11,6 +11,8 @@ build/
 .env
 .env.*
 !.env.example
+# Solo nombres y comentarios; el .env.test real (claves de juntia-dev) nunca se versiona (decisión 18)
+!.env.test.example
 
 # Testing
 coverage/
