@@ -635,12 +635,12 @@ Las pruebas internas con gastos reales empiezan desde P0-1, después de verifica
 | ADR | Tema | Resolución |
 | --- | --- | --- |
 | ADR-001 | Contextos | Conversión privado→grupo no es toggle invisible: crear nuevo gasto compartido y anular el previo con flujo auditado |
-| ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo mayor residuo y desempate estable; moneda única por grupo P0 |
+| ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo mayor residuo y desempate estable; moneda única por grupo P0. Nota de implementación: §15.10, decisión 20.8 |
 | ADR-003 | Historial de miembros | Acceso grupal revocado; snapshot privado mínimo o bloquear la acción de salida/expulsión hasta existir |
 | ADR-004 | Presupuestos | Grupo = gasto completo; personal = gasto privado + partes; **ambos opcionales, ausencia ≠ cero**, totales no aditivos |
 | ADR-005 | IA | Post-MVP, consentimiento, agregados minimizados, salida validada y fallback sin modelo |
 | ADR-006 | Offline | No prometer sin cola idempotente y conflictos resueltos |
-| ADR-007 | Correcciones | Ajustes auditados recalculan balances; liquidaciones inmutables |
+| ADR-007 | Correcciones | Ajustes auditados recalculan balances; liquidaciones inmutables. **Enmienda:** se pueden anular con auditoría, nunca editar ni borrar (§15.10, decisión 20.11) |
 | ADR-008 | Demo | Pública posterior, exclusivamente fixtures aisladas sin acceso a finanzas reales |
 | ADR-009 | Planes | Uso personal no comercial en hosting Hobby; revisar licencia/plan antes de actividad comercial |
 | ADR-010 | Metas | Ledger auditable separado de consumo; usos enlazados a gasto, sin doble contabilización; confirmación para aportes ajenos |
@@ -870,7 +870,7 @@ Barrido de los seis documentos de `docs/design/` (etiqueta literal `[P]` y colum
 
 **Total: 18 elementos distintos.** **11 afectan al alcance** de alguna especificación de P0. **16 requieren aprobación antes de implementarse**; las dos excepciones son el stack de UI (cerrado por §15.2 y §7.1) y el texto ampliado al 200% (requisito ya obligatorio). Los cinco elementos con alcance **No** y aprobación **Sí** —las tres propuestas de paleta, el patrón de personas y la monoespaciada de la decisión 14— son el motivo de que los dos ejes estén separados.
 
-**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado las dos filas del teclado del monto (§15.10, decisión 11) y se ha añadido y cerrado la fila de Spline Sans Mono (§15.10, decisión 14; aprobada el 4 de noviembre de 2026), y se han cerrado Anotar, la sección Cuenta y la persistencia del tema (§15.10, decisión 16; el `[V]` del tema sigue pendiente); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
+**Estado.** La tabla conserva la clasificación original. Desde entonces se han cerrado, con la decisión 20 (§15.10), SharedBalance, ChangePreview (solo en Mover a Pareja) y la versión compartida de Anotar, aprobados en su forma, con la aprobación final en pantalla en los PR de implementación de P0-2. Antes se habían cerrado las dos filas del teclado del monto (§15.10, decisión 11) y se ha añadido y cerrado la fila de Spline Sans Mono (§15.10, decisión 14; aprobada el 4 de noviembre de 2026), y se han cerrado Anotar, la sección Cuenta y la persistencia del tema (§15.10, decisión 16; el `[V]` del tema sigue pendiente); los demás `[P]` siguen abiertos. Los documentos importados de `docs/design/` mantienen su marca `[P]`, como en el caso de Phosphor: prevalece el maestro.
 
 **Conciliación con el barrido.** `grep -rn "\[P\]" docs/design/` devuelve 23 líneas: 17 marcas de elemento (10 en `COMPONENT_SPECIFICATIONS.md`, 4 en `DESIGN_SYSTEM.md`, 3 en `HANDOFF_CLAUDE_CODE.md`), 2 líneas de leyenda (`BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`) y 4 líneas de `docs/design/README.md` que explican la etiqueta. Las 6 filas con columna `P` de la tabla de trazabilidad del handoff (líneas 144, 145, 146, 154, 156, 157) **no añaden elementos nuevos**: son los mismos de `COMPONENT_SPECIFICATIONS.md` y `DESIGN_SYSTEM.md` vistos desde los tokens. La tabla tiene 18 elementos y el barrido, 17 marcas: la fila de Spline Sans Mono está cerrada y ya no tiene marca literal en `DESIGN_SYSTEM.md`. Las dos filas del teclado, también cerradas, sí la conservan, porque su `[P]` venía del paquete importado; el de Spline Sans Mono lo puso la decisión 14 y se quitó al aprobarla.
 
@@ -886,7 +886,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 17 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 20 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -1064,6 +1064,33 @@ Tomada por los dos fundadores el 6 de noviembre de 2026, durante el PR D de la e
 | 19.5 | Presupuesto del job `e2e` | **Sube de < 360 s a < 480 s.** El tope duro del job sigue en 10 minutos y el job no se parte, para no gastar más minutos de CI | Medido en 421–445 s en los PR C y D de la 002: la spec E2E 2 y más de 64 auditorías de axe con sesión, cada una con su cuenta sembrada. Enmienda ADR-011 §4 y `docs/TESTING.md` §9 solo para ese job; el resto de los jobs sigue con < 6 min. Hasta el hito de §9 el presupuesto avisa y no bloquea |
 
 **Lo que no cambia.** Ningún umbral se mueve. Los controles de aislamiento heredados de la decisión 12 no se aplazan: las tres partes de 001-T072 tienen salida real (6 de noviembre de 2026). El orden de la tabla sigue el de las verificaciones; 19.4 y 19.5 se tomaron el mismo día, después de las tres primeras.
+
+#### Decisión 20: alcance de P0-2
+
+Los dos fundadores la tomaron el 6 de noviembre de 2026 sobre las 18 preguntas abiertas de la especificación 003 (`specs/003-pareja-y-balances/spec.md`). Aceptaron todas las recomendaciones tal como estaban propuestas. Alejandro la comunicó al gestor en nombre de los dos, y la segunda fundadora la confirma con el merge del PR de la especificación (#47). La spec 003 la aplica en su sección «Clarifications».
+
+| # | Tema | Elección |
+| --- | --- | --- |
+| 20.1 | Forma | Una especificación, la 003, con cuatro PR de implementación: A, base de datos, seguridad y dinero; B, Mi pareja e invitaciones; C, gastos compartidos y Mover a Pareja; D, Balance, liquidaciones, S1 y S4 |
+| 20.2 | SharedBalance `[P]` | Aprobado en su forma; la aprobación final en pantalla es la revisión visual del PR D |
+| 20.3 | ChangePreview `[P]` | Aprobado en su forma, solo en Mover a Pareja (ADR-001 ya lo describía) |
+| 20.4 | Anotar compartido E1–E5 `[P]` | Aprobado en su forma: contexto, pagó, participan, reparto y «Faltan $X». Completa la 16.2 |
+| 20.5 | Reparto al abrir Anotar en Nosotros | Lo último que usó esa persona, siempre visible; la primera vez, «Pagó: yo» y 50/50 visibles. No es una preferencia configurable |
+| 20.6 | Pagador | Cualquier integrante activo, también el que no anota; la autoría queda visible |
+| 20.7 | Participantes | Al menos uno; quien paga no tiene por qué participar, y una parte de 0 equivale a no participar |
+| 20.8 | Granularidad del reparto | Pesos enteros, desempate estable por orden de ingreso a la pareja y porcentajes enteros. **Nota de implementación de ADR-002** (`docs/adr/ADR-002-dinero-y-repartos.md`) |
+| 20.9 | Saldo | Acumulado desde que existe la pareja; el desglose se filtra por mes |
+| 20.10 | Liquidación | La registra cualquiera de los dos, declarativa y sin confirmación, de deudor a acreedor y por un importe que no supere el saldo pendiente; con fecha de hoy o pasada, nunca futura |
+| 20.11 | Liquidación registrada por error | Se anula con auditoría, nunca se edita ni se borra; «Deshacer» de 6 s. **Enmienda de ADR-007** («liquidaciones inmutables»), en `docs/adr/ADR-007-correcciones.md` |
+| 20.12 | Editar y eliminar un gasto compartido | Cualquiera de los dos, con control de versión; no cambia el contexto; el otro ve «Editado por X · fecha» |
+| 20.13 | Nacimiento de la pareja | Al crear la invitación. Quien es propietaria de una pareja de un solo integrante no acepta otra invitación hasta anular la suya |
+| 20.14 | Invitación y lista permitida | Al crear la invitación no se comprueba el correo contra la lista (no se enumera) |
+| 20.15 | Deshacer de Mover a Pareja | 6 s. Lo bloquea cualquier edición, anulación o liquidación posterior. El importe no cambia al mover, y deshacer restaura el gasto como un registro nuevo |
+| 20.16 | Tiempo real | No en P0-2: los datos se actualizan al navegar, al volver a la pestaña y tras cada escritura propia |
+| 20.17 | Hito de los presupuestos de CI | Bloquean al cierre de P0-2, como dice `docs/TESTING.md`, con tres specs E2E, los balances y `gasto_consumo`; el resto de DEC-G04 llega con P0-3 |
+| 20.18 | Ejemplo de Mover a Pareja | Escenario hipotético que se prueba por diferencias; el dataset dorado de P0-1 no cambia |
+
+Además, el comp 02·5 E5, que muestra una fila privada en Nosotros, se resuelve a favor de la regla de privacidad (§5.5): esa fila no se construye.
 
 #### Dataset dorado: quién lo produce y cuándo
 

@@ -6,15 +6,15 @@
 
 ## Content Quality
 
-- [x] Sin decisiones de implementación nuevas: los mecanismos se citan de ADR-013 y del maestro; lo no decidido va a «Preguntas abiertas» o al plan (FR-002, FR-012)
+- [x] Sin decisiones de implementación nuevas: los mecanismos se citan de ADR-013 y del maestro; lo no decidido se llevó a los fundadores («Clarifications») o queda para el plan (FR-002, FR-012)
 - [x] Centrada en el valor para las dos personas y en las reglas de dinero y privacidad
 - [x] Legible por los fundadores: cada pregunta trae recomendación y consecuencias
 - [x] Todas las secciones obligatorias completas
 
 ## Requirement Completeness
 
-- [ ] No quedan aclaraciones pendientes — **18 preguntas abiertas (Q1–Q18) a propósito**: el encargo pide llevarlas a los fundadores y no resolverlas en la spec. Se cierran en «Clarifications» antes del plan
-- [x] Los requisitos son comprobables y no ambiguos, salvo los que citan una Q, que dicen qué no cambia sea cual sea la respuesta
+- [x] No quedan aclaraciones pendientes: las 18 preguntas (Q1–Q18) se respondieron el 6 de noviembre de 2026 (decisión 20 del maestro) y están en «Clarifications»
+- [x] Los requisitos son comprobables y no ambiguos
 - [x] Los criterios de éxito son medibles (SC-001 a SC-013)
 - [x] Los criterios de éxito no dependen de una tecnología concreta, salvo los nombres de capa que fija ADR-011
 - [x] Escenarios de aceptación en las diez historias
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Tres `[P]` que afectan al alcance (SharedBalance, ChangePreview, Anotar compartido) siguen abiertos como Q2–Q4: según el maestro §15.9 se resuelven antes de escribir el plan.
-- Q18 toca el dataset dorado y también se resuelve antes del plan.
+- Los tres `[P]` que afectan al alcance (SharedBalance, ChangePreview y Anotar compartido) quedaron aprobados en su forma (Q2–Q4). La aprobación final en pantalla es la revisión visual de cada PR de implementación.
+- Q8 se registró como nota de implementación de ADR-002, y Q11 como enmienda de ADR-007. Las dos quedan trazadas en la decisión 20 del maestro.

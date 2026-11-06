@@ -4,24 +4,23 @@
 
 **Created**: 2026-11-06
 
-**Status**: Draft — etapa **Specify**. Tiene **18 preguntas abiertas** (sección «Preguntas abiertas para los fundadores») que pasan a «Clarifications» cuando los fundadores las respondan. No avanza a Plan sin sus respuestas y sin el merge de su PR documental (ADR-012 §3.1).
+**Status**: Draft — Specify y Clarify hechos. Los fundadores respondieron las 18 preguntas (Q1–Q18) el 6 de noviembre de 2026; sus respuestas son la decisión 20 del maestro §15.10. No avanza a Plan sin el merge de su PR documental (ADR-012 §3.1).
 
 **Input**: User description: "Especificación 003 · P0-2 de Juntia, «Pareja y balances con visualización final» (maestro §11): P0-2a grupo de pareja e invitación; P0-2b repartos, liquidaciones y Shared Balance; P0-2c Context Transition con aislamiento de datos. Pareja de exactamente dos, invitación segura, rol y membresía; repartos 50/50, porcentaje e importe; saldos y liquidaciones parciales con auditoría y correcciones; Mover a Pareja (ADR-001); S1 y S4 con datos reales en móvil y escritorio. Acceso a datos según ADR-013. Sin presupuestos, metas ni salida de la pareja."
 
 > **Qué es este documento.** Dice **qué** construye P0-2 y **por qué**. **No
-> decide nada**: cada requisito cita la decisión que aplica, y lo que no está
-> decidido va como **pregunta abierta numerada** con la recomendación del autor y
-> sus consecuencias. Jerarquía: maestro (§15 prevalece) > ADR > paquete de
+> decide nada**: cada requisito cita la decisión que aplica. Lo que no estaba
+> decidido se llevó a los fundadores como pregunta numerada, y su respuesta está en
+> «Clarifications» (decisión 20). Jerarquía: maestro (§15 prevalece) > ADR > paquete de
 > `docs/design/` y `docs/CONVENTIONS.md` > esta spec (`AGENTS.md` §2). En este
 > archivo, `[P]` significa **propuesta** y `[V]` **verificación pendiente**, según
 > el maestro §15.9; no significan «paralelizable» (eso solo ocurre dentro de
 > `tasks.md`, ADR-012 §3.2).
 >
 > **Desviación de la plantilla, a propósito.** La plantilla de Spec Kit limita a
-> tres los `[NEEDS CLARIFICATION]`. Aquí hay 18 preguntas, porque el encargo del
-> gestor pide que todo lo no decidido llegue a los fundadores y no se resuelva en
-> la spec. Los requisitos que dependen de una pregunta la citan («según Q9») y
-> describen lo que no cambia sea cual sea la respuesta.
+> tres los `[NEEDS CLARIFICATION]`. Aquí hubo 18 preguntas, porque el encargo del
+> gestor pedía que todo lo no decidido llegara a los fundadores en lugar de
+> resolverse en la spec. Cada requisito cita la respuesta que aplica (por ejemplo, «Q9»).
 
 ### Fuentes que aplica
 
@@ -36,9 +35,9 @@
 | Maestro §15.10, decisiones 10, 12, 13, 16, 18 y 19, y «Dataset dorado» | Selector sin animación hasta P0-2, verificaciones heredadas ya cerradas o aplazadas, despliegue, alcance de P0-1, iteración contra `juntia-dev` y la parte del dataset dorado de P0-2 |
 | Maestro US-02, US-03, US-05, US-06, US-08, US-10, US-11, US-14, US-15, US-16, US-17 | Historias que P0-2 hace verificables |
 | ADR-001 | Mover a Pareja: atómica, idempotente, auditada, pagador fijo, deshacer condicionado, sin «mover a Yo» |
-| ADR-002 (maestro §12.2) | Unidades menores, mayor residuo con desempate estable, moneda única por grupo |
+| ADR-002 (maestro §12.2; archivo `docs/adr/ADR-002-dinero-y-repartos.md` desde este PR) | Unidades menores, mayor residuo con desempate estable, moneda única por grupo; nota de implementación de Q8 (pesos enteros, desempate por orden de ingreso) |
 | ADR-003 | Sin salir, expulsar ni transferir en P0; LimitNote; una pareja activa de dos, sin carreras |
-| ADR-007 (maestro §12.2) | Correcciones auditadas que recalculan balances; liquidaciones inmutables |
+| ADR-007 (maestro §12.2; archivo `docs/adr/ADR-007-correcciones.md` desde este PR) | Correcciones auditadas que recalculan balances; liquidaciones inmutables, con la enmienda del 6 de noviembre de 2026 (Q11): se pueden anular con auditoría, nunca editar ni borrar |
 | ADR-013 | Tablas controladas (`groups`, `group_members`, `group_invitations` incluidas), `juntia_writer`, concurrencia, importes como texto, auxiliares de membresía sin recursión |
 | ADR-011 y `docs/TESTING.md` (incluida la §9.9 de ADR-011, decisión 18) | Capas, spec E2E 3 y el caso de invitación de la spec 1, siembra de parejas aisladas, `storageState` por rol, presupuestos e iteración contra `juntia-dev` |
 | ADR-012 | Formato, gates por PR documental, `[P]` y `[V]` |
@@ -50,35 +49,37 @@
 | `docs/CONVENTIONS.md` y `docs/GLOSSARY.md` | Idioma por capa, módulo de copy, nombres (§1–§3 del glosario) y palabras prohibidas (§9) |
 | Spec 002 (`spec.md`, `plan.md`, `tasks.md`, `evidence.md`) | Forma y nivel de detalle; lecciones de las revisiones F43, F44 y F45 que aquí pasan a requisitos (FR-060 a FR-068) |
 
-## Preguntas abiertas para los fundadores
+## Clarifications
 
-Ninguna está resuelta en esta spec. Cada una lleva la **recomendación del autor**
-y sus **consecuencias**; los fundadores eligen. Cuatro de ellas (Q2, Q3, Q4 y
-Q18) tocan `[P]` o datos dorados que **afectan al alcance** y, según el maestro
-§15.9, deben resolverse **antes** del plan.
+Las dieciocho respuestas son **decisiones de los fundadores del 6 de noviembre
+de 2026**, que aceptaron las recomendaciones de la etapa Specify tal como se
+propusieron. Alejandro las comunicó en nombre de los dos al gestor, y quedaron
+registradas como **decisión 20** del maestro §15.10. Esta spec las registra y las
+aplica; no las toma. La segunda fundadora las confirma con el merge de este PR
+documental. Cada pregunta conserva su número, porque los requisitos lo citan.
 
-| # | Pregunta | Recomendación | Consecuencias |
-| --- | --- | --- | --- |
-| **Q1** | **Forma de la especificación.** ¿Una spec con cuatro PR de implementación seguidos, como la 002? | **Sí.** A · base de datos, seguridad y dinero (grupos, membresías, invitaciones, repartos, liquidaciones, Mover a Pareja en SQL, RLS y pgTAP); B · Mi pareja e invitaciones (con el caso de invitación de la spec E2E 1); C · gastos compartidos: Anotar con reparto, Nosotros en Inicio y Actividad, editar y eliminar, Mover a Pareja; D · Balance, liquidaciones, S4 Shared Balance y S1 Context Transition (nace la spec E2E 3). Así P0-2a = A+B, P0-2b = C+D y P0-2c cierra en D | Cuatro PR revisables por separado; la spec E2E 3 nace con D porque es el primer PR con el recorrido completo de pareja, reparto y liquidación (`docs/TESTING.md`, «la spec nace con la funcionalidad que prueba»). Alternativa: tres PR (juntar C y D): menos revisiones, pero un PR muy grande con dinero, motion y UI a la vez |
-| **Q2** | **SharedBalance `[P]`** (maestro §15.9, alcance **Sí**). ¿Se aprueba la codificación de la barra (tramo pagado, marca de lo que corresponde, exceso con contorno, hueco punteado, tramo rayado de liquidado, contorno punteado de recibido) para construirla? | **Sí, tal como está en 02·3 y 04·2**, con la aprobación visual final viendo las capturas del PR D | Se construye la barra con la tabla de desglose como alternativa accesible. Alternativa: solo filas de texto («pagó · le corresponde · saldo») sin barra; más simple, pero S4 pierde su visualización y el maestro §6.4 pide una «animación elegante de quién pagó y a quién corresponde» |
-| **Q3** | **ChangePreview `[P]`** (alcance **Sí**). ¿Existe la vista previa «antes → después» en Mover a Pareja (04·10 A3)? | **Sí.** ADR-001 (Aceptado) ya dice en Consecuencias que «la interfaz muestra una vista previa de los balances antes de confirmar (`ChangePreview`)»; el `[P]` del paquete no puede contradecir un ADR aceptado. Se aprueba que exista y se usa **solo** en Mover a Pareja en P0-2 | Mover a Pareja tiene cuatro pasos (A1–A4) y la vista previa solo muestra cifras visibles para quien mira. Si se rechaza, ADR-001 necesita enmienda antes del plan |
-| **Q4** | **Anotar compartido (E1–E5) `[P]`.** La decisión 16.2 aprobó Anotar solo en su versión privada. ¿Se aprueba la versión compartida de 02·5: campo Contexto (Yo · Nosotros), Pagó, Participan, Reparto (50/50 · Porcentaje · Importe), el error E3 «Faltan $X por asignar» y el saldo que se tacha en E5? | **Sí, tal como está en 02·5 y 02·6**, con el texto de los estados nuevos aprobado viendo la pantalla en el PR C | Es el flujo central de P0-2 (maestro §15.5, «Repartos»; handoff, «Anotar registra privado o compartido desde un solo flujo»). Sin esta aprobación no hay forma de crear un gasto compartido salvo Mover a Pareja |
-| **Q5** | **Reparto inicial al abrir Anotar en Nosotros.** El comp dice «pagador, reparto y fecha vienen de lo último usado en ese contexto»; el maestro §15.5 dice «nunca se asume 50/50» y que no hay «reparto por defecto» configurable. ¿Qué aparece preseleccionado? | **Lo último que usó esa persona en Nosotros (pagador y reparto), siempre visible en el resumen de E1; la primera vez, «Pagó: yo» y 50/50 visibles en el resumen.** No es una preferencia configurable, es memoria del último uso, y nunca está oculto | Cumple la ruta de 2 toques (US-12) sin esconder el reparto. Alternativa estricta: sin preselección, obligando a elegir reparto en cada gasto compartido; más explícito, pero rompe la mediana de < 10 s |
-| **Q6** | **Pagador.** ¿Puede una persona anotar un gasto que **pagó la otra** («Pagó Tomás» anotado por Sara, como en 02·5 E1)? | **Sí**, con el pagador limitado a los integrantes activos y la autoría visible («Anotado por Sara · pagó Tomás») | El saldo de Tomás cambia por una acción de Sara, sin confirmación (como en Tricount). Alternativa: solo puede figurar como pagador quien anota; más simple de auditar, pero Tomás tendría que anotar cada cosa que pagó él |
-| **Q7** | **Participantes y partes de cero.** ¿Se permite un gasto compartido en el que participa **solo uno** (100/0, por ejemplo algo que Sara pagó y es solo de Tomás), o una parte de 0 en Importe? | **Sí**, con al menos un participante y el pagador no obligado a participar; una parte de 0 equivale a «no participa» | Permite registrar «te lo compré a ti» sin inventar otra operación. El gasto cuenta completo en el gasto de Nosotros y solo en el consumo de quien participa. Alternativa: exigir a los dos con parte > 0; más simple, pero no cubre ese caso |
-| **Q8** | **Granularidad y desempate del reparto.** COP se anota en pesos enteros, pero se guarda en unidades menores (maestro §5.2). Un 50/50 de $186.401 daría $93.200,50 a cada uno, que la interfaz no muestra. ¿Las partes se calculan en **pesos enteros** o en centavos? ¿Y a quién va el peso sobrante? | **Pesos enteros** (múltiplos de 100 unidades menores), con el mayor residuo de ADR-002 y el desempate estable **por orden de ingreso a la pareja** (la propietaria primero). Porcentajes enteros de 0 a 100 | Toda parte se ve exacta y las partes visibles suman el total visible. Es una lectura de ADR-002 («unidades menores») que conviene dejar escrita: el plan la registra como nota de implementación de ADR-002 si los fundadores la aprueban. Alternativa: centavos; exacto en la base pero la interfaz mostraría partes que no suman a simple vista |
-| **Q9** | **Periodo del saldo.** El comp de Balance dice «Octubre · 6 gastos compartidos» y «quedan al día en octubre»; el maestro §5.1 define `net_owed` del grupo, sin periodo. ¿El saldo es **acumulado** desde que existe la pareja o **por mes**? | **Acumulado** (una sola cifra viva, «Tomás le debe a Sara»), con el desglose filtrable por mes. El rótulo «Octubre» del comp pasa a describir el desglose, no el saldo | Una deuda de septiembre no desaparece al cambiar de mes. El dataset dorado de octubre no cambia, porque no hay historia anterior. Alternativa: saldo mensual; obliga a decidir qué pasa con la deuda que queda al cerrar el mes, algo que ningún documento define |
-| **Q10** | **Liquidación: quién la registra y con qué reglas.** ¿Cualquiera de los dos, sin confirmación del otro? ¿Puede tener fecha futura? | **Cualquiera de los dos, declarativa y sin segunda confirmación** (como los presupuestos, §15.5), siempre deudor → acreedor por un importe ≤ saldo pendiente (§5.1), con fecha **hoy o pasada**, nunca futura | Coherente con «Juntia solo registra la liquidación declarada». El otro la ve con su autoría. Alternativa: que el acreedor confirme; añade un estado pendiente que no está diseñado |
-| **Q11** | **Liquidación registrada por error.** ADR-007 dice «liquidaciones inmutables». ¿Se puede **anular** (no editar) una liquidación? | **Sí: anular con auditoría, sin editar**, por cualquiera de los dos, más el «Deshacer» de 6 s justo después de registrarla. La liquidación anulada sale del saldo y sigue visible en el historial como anulada | Sin esta vía, un error solo se compensa con una liquidación en sentido contrario, que el maestro §5.1 prohíbe porque aumenta el sobrepago. Anular no reescribe la liquidación, pero toca la letra de ADR-007: **necesita la aprobación explícita de los fundadores**, y el plan la registra como nota de ADR-007 o propone un ADR corto si la consideran una decisión nueva |
-| **Q12** | **Editar y eliminar un gasto compartido.** ¿Quién puede, qué campos y qué ve el otro? | **Cualquiera de los dos**, con control de versión (como 16.15), monto, categoría, fecha, descripción, pagador y reparto editables y el contexto fijo (no hay «mover a Yo», ADR-001). El otro ve «Editado por Sara · fecha» en el detalle, no los valores anteriores (que quedan en la auditoría) | El comp de edición ya lo anuncia: «Tomás verá que lo editaste». Alternativa: solo quien lo anotó; protege la autoría pero obliga a pedirle al otro cada corrección |
-| **Q13** | **Cuándo nace la pareja y qué pasa con invitaciones cruzadas.** ¿La pareja se crea al **crear la invitación** (la propietaria sola, M4 «PENDIENTE») o al **aceptarla**? Y si Sara y Tomás se invitan a la vez, ¿qué pasa? | **Al crear la invitación**, con la propietaria como único integrante activo (encaja con «una invitación activa por pareja» y con CoupleStatus PENDIENTE). Una persona que es propietaria de una pareja **de un solo integrante** no puede aceptar otra invitación hasta anular la suya: la aceptación se rechaza con el estado M7 y un texto que lo explica | Nadie queda en dos parejas y no hace falta «cerrar» grupos, que ADR-003 deja fuera de P0. Alternativa: que aceptar anule la invitación propia y cierre la pareja vacía en la misma transacción; más cómodo, pero introduce un cierre de grupo que hoy no existe |
-| **Q14** | **Invitación y lista permitida.** Hasta MVP-1 solo pueden registrarse los correos de la lista (16.9). ¿Se valida el correo invitado contra la lista al **crear** la invitación? | **No.** Crear la invitación no consulta la lista (no se enumera); quien no está en la lista no puede crear la cuenta, como hoy. La lista cambia solo por la operación documentada de la 002 | Cero cambios en el registro. Los dos fundadores ya están en la lista, así que no afecta su uso real |
-| **Q15** | **Deshacer de Mover a Pareja.** ADR-001 lo permite «solo inmediatamente después y solo si el servidor confirma que no hay operaciones dependientes». ¿Qué ventana y qué cuenta como dependiente? ¿El importe se puede cambiar al mover? | **Ventana: el toast de 6 s, como Anotar.** Dependiente: cualquier edición o anulación del compartido, o cualquier liquidación registrada después del movimiento. **El importe no se cambia al mover** (A2 lo muestra fijo): se mueve tal cual y, si hace falta, se edita después | Deshacer es una operación propia, atómica e idempotente: anula el compartido y restaura el privado como **un registro nuevo** que referencia al anulado, nunca reactivando uno anulado. Alternativa: importe editable en A2; mezcla dos operaciones en una y complica la auditoría |
-| **Q16** | **Tiempo real.** Cuando Sara anota, ¿Tomás lo ve sin recargar? | **No en P0-2.** Los datos se actualizan al navegar, al volver a la pestaña y tras cada escritura propia. Ningún documento pide tiempo real y §15.5 excluye notificaciones | Sin suscripciones en vivo ni su RLS adicional. Alternativa: Supabase Realtime; más inmediato, pero añade un canal con su propia superficie de privacidad que habría que probar |
-| **Q17** | **Hito de los presupuestos de tiempo de CI.** `docs/TESTING.md` dice que bloquean «cuando existan tres de las cinco specs E2E y el dominio cubra DEC-G04 y balances. Coincide con el cierre de P0-2». Pero DEC-G04 completo (aportes, retiros, financiado con meta) llega con P0-3 | **Que bloqueen al cierre de P0-2**, con tres specs E2E, balances y `gasto_consumo` de Yo y Nosotros, como dice la frase final; el resto de DEC-G04 entra con P0-3 sin mover el hito | Lo resuelven los fundadores; esta spec no toca `docs/TESTING.md` (otra sesión trabaja en él, decisión 18). Alternativa: aplazar el hito al cierre de P0-3 |
-| **Q18** | **El ejemplo de Mover a Pareja no cabe en el dataset dorado.** El handoff y 04·10 mueven «Farmacia Pasteur 64.000» y dicen «privados 412.900 → 348.900», pero los ocho privados de octubre que la spec 002 fijó (y que ya están completados) no tienen ningún gasto de 64.000 | **Tratarlo como escenario hipotético aparte**, como dice el propio comp («simulación sobre octubre: no altera el fixture aprobado»): las pruebas de Mover a Pareja comprueban las **diferencias** (−64.000 en privados, +32.000 en la parte de Sara, +64.000 en Nosotros, +32.000 en lo que Tomás le debe) sobre el dataset dorado más un gasto privado de 64.000 añadido solo en esa prueba | El dataset dorado de P0-1 no cambia (regla 1 del maestro). Las cifras absolutas de 04·10 (348.900 / 1.532.000 / 2.904.000 / 461.900) no se reproducen tal cual; sí sus diferencias. Alternativa: corregir el comp; no se puede sin cambiar el dataset de P0-1 ya aceptado |
+### Session 2026-11-06
 
-### Lo que ya está decidido y no se pregunta
+- Q1: ¿Cuál es la forma de la especificación? → A: **Una spec con cuatro PR de implementación seguidos.** A: base de datos, seguridad y dinero (grupos, membresías, invitaciones, repartos, liquidaciones y Mover a Pareja en SQL, con RLS y pgTAP). B: Mi pareja e invitaciones, con el caso de invitación de la spec E2E 1. C: gastos compartidos, es decir, Anotar con reparto, Nosotros en Inicio y Actividad, editar y eliminar, y Mover a Pareja. D: Balance, liquidaciones, S4 Shared Balance y S1 Context Transition; con él nace la spec E2E 3.
+- Q2: ¿Se aprueba SharedBalance `[P]`? → A: **Sí, en su forma**: la codificación de la barra de 02·3 y 04·2 (tramo pagado, marca de lo que corresponde, exceso con contorno, hueco punteado, tramo rayado de liquidado y contorno punteado de recibido), con la tabla de desglose como alternativa accesible. La aprobación final en pantalla sigue siendo la revisión visual del PR D.
+- Q3: ¿Existe ChangePreview `[P]` en Mover a Pareja? → A: **Sí, en su forma**, solo en Mover a Pareja (04·10 A3) y solo con cifras visibles para quien mira. ADR-001 ya lo describe en sus Consecuencias. La aprobación final en pantalla es la revisión visual del PR C.
+- Q4: ¿Se aprueba Anotar compartido E1–E5 `[P]`? → A: **Sí, en su forma**, según 02·5 y 02·6: Contexto (Yo · Nosotros), Pagó, Participan, Reparto (50/50 · Porcentaje · Importe), el error E3 «Faltan $X por asignar» y el saldo que se tacha en E5. Completa la decisión 16.2, que aprobó la versión privada. La aprobación final en pantalla es la revisión visual del PR C.
+- Q5: ¿Qué reparto aparece al abrir Anotar en Nosotros? → A: **Lo último que usó esa persona en Nosotros** (pagador y reparto), siempre visible en el resumen de E1. La primera vez, «Pagó: yo» y 50/50, también visibles. Es memoria del último uso y no una preferencia configurable, así que no contradice el «sin reparto por defecto» de §15.5. Y como se ve, no es un 50/50 asumido en silencio.
+- Q6: ¿Se puede anotar un gasto que pagó la otra persona? → A: **Sí.** El pagador es siempre un integrante activo, y la autoría queda visible: «Anotado por Sara · pagó Tomás». Cambia el saldo del otro sin pedir su confirmación.
+- Q7: ¿Se permite un gasto con un solo participante, o una parte de 0? → A: **Sí.** Tiene que haber al menos un participante, y quien paga no tiene por qué participar. Una parte de 0 equivale a no participar. El gasto cuenta completo en Nosotros y en el consumo solo de quien participa.
+- Q8: ¿Con qué granularidad se reparte y cómo se desempata? → A: **En pesos enteros**, es decir, en múltiplos de 100 unidades menores, con el mayor residuo de ADR-002. El residuo se desempata de forma estable **por orden de ingreso a la pareja**, empezando por la propietaria. Los porcentajes son enteros de 0 a 100. Queda escrito como nota de implementación de ADR-002 (`docs/adr/ADR-002-dinero-y-repartos.md`).
+- Q9: ¿El saldo es acumulado o mensual? → A: **Acumulado** desde que existe la pareja: una sola cifra viva, con el desglose filtrable por mes. El rótulo «Octubre» del comp describe el desglose, no el saldo.
+- Q10: ¿Quién registra una liquidación y con qué reglas? → A: **Cualquiera de los dos, de forma declarativa y sin que el otro tenga que confirmarla.** Va siempre del deudor al acreedor, por un importe que no supera el saldo pendiente (§5.1), y con fecha de **hoy o pasada, nunca futura**.
+- Q11: ¿Se puede corregir una liquidación registrada por error? → A: **Sí: se anula con auditoría y nunca se edita ni se borra.** Puede anularla cualquiera de los dos, y además hay un «Deshacer» de 6 s justo después de registrarla. La liquidación anulada sale del saldo y sigue en el historial marcada como anulada. Es una **enmienda de ADR-007** («liquidaciones inmutables»), que queda registrada como nota fechada en `docs/adr/ADR-007-correcciones.md` y en la decisión 20 del maestro.
+- Q12: ¿Quién puede editar y eliminar un gasto compartido, y qué ve el otro? → A: **Cualquiera de los dos, con control de versión.** Se pueden editar el monto, la categoría, la fecha, la descripción, el pagador y el reparto. El contexto no se puede cambiar. El otro ve «Editado por X · fecha» en el detalle, y los valores anteriores quedan en la auditoría.
+- Q13: ¿Cuándo nace la pareja y qué pasa si los dos se invitan a la vez? → A: **La pareja nace al crear la invitación**, con la propietaria como único integrante activo. Quien es propietaria de una pareja con un solo integrante no puede aceptar otra invitación hasta anular la suya: la aceptación se rechaza con M7 y un texto que lo explica. No se cierran grupos.
+- Q14: ¿Se comprueba el correo invitado contra la lista permitida al crear la invitación? → A: **No**, para no enumerar. Quien no está en la lista sigue sin poder crear la cuenta, como en P0-1.
+- Q15: ¿Qué ventana y qué dependencias tiene el «Deshacer» de Mover a Pareja? → A: **La ventana es la del toast, 6 s.** Cuenta como dependiente cualquier edición o anulación del compartido y cualquier liquidación registrada después del movimiento. **El importe no cambia al mover.** Deshacer es una operación propia, atómica e idempotente: restaura el gasto en Yo como un **registro nuevo** que referencia al anulado.
+- Q16: ¿Hay tiempo real? → A: **No en P0-2.** Los datos se actualizan al navegar, al volver a la pestaña y después de cada escritura propia.
+- Q17: ¿Cuándo empiezan a bloquear los presupuestos de tiempo de CI? → A: **Al cierre de P0-2**, con tres specs E2E, los balances y el `gasto_consumo` de Yo y Nosotros, como ya dice `docs/TESTING.md`. El resto de DEC-G04 llega con P0-3, sin mover el hito. `docs/TESTING.md` no cambia.
+- Q18: ¿Cómo se prueba el ejemplo de Mover a Pareja, que no está en el dataset dorado? → A: **Como un escenario hipotético aparte.** Las pruebas comprueban las **diferencias** (−64.000 en privados, +32.000 en la parte de Sara, +64.000 en Nosotros y +32.000 en lo que Tomás le debe) sobre el dataset dorado, al que solo esa prueba añade un gasto privado de 64.000. El dataset de P0-1 no cambia.
+
+### Lo que ya estaba decidido antes de la etapa Specify
 
 Para que la revisión no lo reabra:
 
@@ -93,12 +94,6 @@ Para que la revisión no lo reabra:
 - **Liquidación:** nunca crea una transferencia; sugerencia determinista deudor → acreedor; parciales permitidas; no se registra una que aumente el sobrepago (§5.1, §15.5).
 - **Exportar** gastos compartidos: llega con P0-3 (decisión 16.12, Q12 de la 002).
 - **Visibilidad del otro:** CoupleStatus nunca muestra saldos ni el correo del otro (anatomía aprobada por la decisión 16.6).
-
-## Clarifications
-
-*Vacía hasta que los fundadores respondan las preguntas abiertas. Sus respuestas
-se registran aquí como sesión fechada y, si lo requieren, como decisión del
-maestro §15.10, como se hizo con la decisión 16 en la 002.*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -132,6 +127,7 @@ matriz de recorridos). Las reglas del token, en pgTAP e integración.
 6. **Given** Tomás con sesión verificada con el correo invitado, **When** abre el enlace, **Then** ve M6 («Sara te invitó a ser su pareja en Juntia», qué verán juntos y que Yo sigue siendo solo suyo) y al pulsar «Aceptar invitación» queda como integrante; los dos ven M1 «ACTIVA» (04·15).
 7. **Given** un enlace vencido, usado, anulado o para otro correo, o una persona que ya tiene pareja, **When** se abre con sesión, **Then** ve M7 «Esta invitación ya no sirve», con el mismo texto para todos los motivos (§15.5; 04·15).
 8. **Given** M1, **When** se muestra, **Then** «Salir de la pareja» aparece como LimitNote, sin control (ADR-003).
+9. **Given** Tomás es propietario de una pareja de un solo integrante con una invitación pendiente, **When** intenta aceptar la invitación de Sara, **Then** ve M7 con un texto que le explica que primero anule la suya; no queda en dos parejas (Q13).
 
 ---
 
@@ -142,15 +138,15 @@ guarda: el resumen ya dice «Pagó Tomás · 50/50 · Sara y Tomás». Otro día
 el arriendo con «Porcentaje 55/45». El total de Nosotros sube y el saldo se tacha y
 se actualiza.
 
-**Why this priority**: es US-02 y US-03 y el núcleo de P0-2b. Depende de Q4.
+**Why this priority**: es US-02 y US-03 y el núcleo de P0-2b. Aplica Q4 a Q8.
 
 **Independent Test**: la spec E2E 3 anota un gasto compartido 50/50 y comprueba
 el total y el saldo; los repartos exactos, en dominio puro y en pgTAP.
 
 **Acceptance Scenarios**:
 
-1. **Given** una pareja activa y el contexto Nosotros, **When** Sara abre Anotar, **Then** E1 muestra monto, categorías y un resumen con fecha, pagador y reparto visibles, con el valor inicial de Q5 (02·5).
-2. **Given** E2, **When** abre los detalles, **Then** puede cambiar contexto (Yo · Nosotros), pagador (según Q6), participantes (según Q7) y reparto (50/50 · Porcentaje · Importe) (02·5; §15.5).
+1. **Given** una pareja activa y el contexto Nosotros, **When** Sara abre Anotar, **Then** E1 muestra monto, categorías y un resumen con fecha, pagador y reparto visibles, con el último pagador y reparto que usó esa persona en Nosotros, o «Pagó: yo» y 50/50 la primera vez (Q5; 02·5).
+2. **Given** E2, **When** abre los detalles, **Then** puede cambiar contexto (Yo · Nosotros), pagador (cualquiera de los dos integrantes, Q6), participantes (uno o los dos, Q7) y reparto (50/50 · Porcentaje · Importe) (02·5; §15.5).
 3. **Given** Importe o Porcentaje, **When** las partes no suman el total, **Then** Guardar queda deshabilitado y aparece «Faltan $X por asignar» (o «Sobran $X»), con la cifra exacta (02·5 E3).
 4. **Given** $150.000 al 70/30, **When** se guarda, **Then** las partes son exactamente 105.000 y 45.000 y suman el total (US-03).
 5. **Given** un gasto compartido guardado, **When** el servidor responde, **Then** E5: la hoja se cierra, el total de Nosotros cuenta hacia arriba, la fila nueva queda resaltada, el saldo se tacha y se actualiza, y aparece «Gasto guardado · Deshacer» durante 6 s (02·5).
@@ -216,7 +212,7 @@ entiende sin ayuda: Sara pagó 1.929.900 y le corresponden 1.500.000; Tomás pag
 competencia.
 
 **Why this priority**: es US-16 y la S4 que el maestro §11 pone en P0-2. Depende
-de Q2 y Q9.
+de Q2 (SharedBalance, aprobado en su forma) y Q9 (saldo acumulado).
 
 **Independent Test**: `computeBalance` contra el dataset dorado en dominio puro; la
 pantalla, en componentes y en la spec E2E 3.
@@ -242,7 +238,7 @@ como «no es un gasto». Al final del mes registran el resto y quedan al día.
 
 **Why this priority**: es US-02, el criterio del handoff «Una liquidación parcial
 Tomás → Sara 200.000 deja el consumo en 2.840.000 y el saldo en 229.900» y la mitad
-de la salida interna. Depende de Q10 y Q11.
+de la salida interna. Aplica Q10 y Q11.
 
 **Independent Test**: en dominio puro los dos números; la atomicidad, el límite y
 la concurrencia en pgTAP e integración; el recorrido, en la spec E2E 3.
@@ -256,6 +252,9 @@ la concurrencia en pgTAP e integración; el recorrido, en la spec E2E 3.
 5. **Given** un fallo de red, **When** se registra, **Then** no se anima nada, aparece el toast con Reintentar y reintentar usa la misma clave (MOTION_SYSTEM §3, «Interrupción»; ADR-013 §3).
 6. **Given** dos liquidaciones del total registradas a la vez por los dos, **When** llegan al servidor, **Then** una se registra y la otra se rechaza porque ya no hay saldo pendiente (§5.1; ADR-013 §3).
 7. **Given** una liquidación registrada, **When** después se edita un gasto y el saldo se invierte, **Then** la liquidación no cambia y el balance muestra el saldo invertido con la sugerencia en la nueva dirección (US-10; ADR-007).
+8. **Given** una liquidación recién registrada, **When** se pulsa «Deshacer» dentro de los 6 s, **Then** queda anulada con auditoría y el saldo vuelve al valor anterior (Q11).
+9. **Given** una liquidación registrada por error, **When** cualquiera de los dos la anula desde su detalle y confirma, **Then** sale del saldo, sigue en el historial marcada como anulada y nunca se edita ni se borra (Q11; enmienda de ADR-007).
+10. **Given** la hoja de liquidación, **When** se elige una fecha futura, **Then** no se puede registrar; hoy y fechas pasadas sí (Q10).
 
 ---
 
@@ -265,7 +264,7 @@ Sara anotó la cena con 50/50 pero era 60/40. La abre, cambia el reparto y guard
 el saldo se recalcula y Tomás ve que la editó. Otro gasto quedó repetido: lo elimina.
 
 **Why this priority**: US-06 y la parte «auditoría y correcciones» de P0-2 (§11).
-Depende de Q12.
+Aplica Q12.
 
 **Independent Test**: editar y eliminar con sesión sembrada; auditoría en SQL;
 conflicto de versión entre las dos sesiones en integración.
@@ -287,7 +286,7 @@ detalle, pulsa «Mover a Pareja», elige 50/50, revisa cómo cambian los número
 confirma. Queda un solo gasto, ahora en Nosotros, pagado por Sara.
 
 **Why this priority**: es el flujo de ADR-001 y el punto 1 de §15.6.3, que bloquea
-la aceptación del slice. Depende de Q3, Q15 y Q18.
+la aceptación del slice. Aplica Q3, Q15 y Q18.
 
 **Independent Test**: atomicidad, idempotencia, concurrencia y RLS del registro
 anulado en pgTAP e integración; el recorrido, caso «Mover a Pareja» de la spec E2E 3.
@@ -299,7 +298,7 @@ anulado en pgTAP e integración; el recorrido, caso «Mover a Pareja» de la spe
 3. **Given** A3, **When** se revisa, **Then** ChangePreview muestra, solo con cifras visibles para Sara, sus privados, su parte, el gasto de Nosotros y el saldo, antes y después, más «{otro} verá {descripción} en Nosotros» (Q3; 04·10).
 4. **Given** la confirmación, **When** el servidor responde, **Then** en una sola transacción el privado queda anulado y el compartido creado con referencia al anulado; nunca hay un instante con dos gastos activos (ADR-001 puntos 1 y 3).
 5. **Given** un reintento con la misma clave, **When** llega, **Then** devuelve el mismo resultado y no crea otro gasto (ADR-001 punto 4).
-6. **Given** el resultado A4, **When** Sara pulsa «Deshacer» dentro de la ventana de Q15 y el servidor confirma que no hay dependencias, **Then** el compartido queda anulado y el gasto vuelve a Yo; si hay dependencias, el servidor lo rechaza y lo explica (ADR-001 punto 6).
+6. **Given** el resultado A4, **When** Sara pulsa «Deshacer» dentro de los 6 s del aviso y el servidor confirma que no hubo edición, anulación ni liquidación posterior (Q15), **Then** el compartido queda anulado y el gasto vuelve a Yo; si hay dependencias, el servidor lo rechaza y lo explica (ADR-001 punto 6).
 7. **Given** el registro privado anulado, **When** Tomás consulta cualquier vista o función, **Then** no lo ve; Sara lo ve solo en su historial (ADR-001, Consecuencias; 04·10 «queda solo en tu historial»).
 8. **Given** un error sin conexión, **When** falla, **Then** A5 dice que no se movió, que el gasto sigue en Yo y que no se creó nada en Nosotros, con Reintentar (misma clave) y Cerrar (04·10 A5).
 9. **Given** un gasto privado financiado con una meta, **When** se abre el detalle, **Then** en lugar del botón aparece la LimitNote «No se puede mover este gasto» (ADR-001 punto 7). En P0-2 no hay metas: el requisito queda preparado y su prueba llega con P0-3.
@@ -365,7 +364,7 @@ JWT; concurrencia de aceptación en integración.
 - **Liquidación con saldo cero:** no hay botón «Registrar liquidación»; se ve «Al día».
 - **Liquidación mientras la otra persona edita un gasto que cambia el saldo:** se serializan sobre la pareja; la liquidación se valida contra el saldo vigente en ese instante.
 - **Saldo invertido tras una corrección:** la sugerencia cambia de dirección; ninguna liquidación anterior se reescribe (US-10).
-- **Importe máximo:** $999.999.999 compartido al 50/50 o al 33/67 produce partes exactas que suman el total, según Q8.
+- **Importe máximo:** $999.999.999 compartido al 50/50 o al 33/67 produce partes en pesos enteros que suman exactamente el total, y el peso sobrante se desempata por orden de ingreso (Q8).
 - **Fecha futura en un gasto compartido:** se permite como en privado (16.13) y cuenta en su mes.
 - **Mover a Pareja de un gasto editado en otra pestaña:** falla por versión y no mueve nada.
 - **Mover a Pareja sin pareja activa:** el botón no aparece.
@@ -394,7 +393,7 @@ JWT; concurrencia de aceptación en integración.
 
 #### Pareja e invitaciones (§5.5, §15.5, ADR-003; 04·15)
 
-- **FR-010**: La pareja es un grupo de tipo `couple`, moneda COP y zona `America/Bogota`, con la propietaria (`owner`) y un integrante (`member`). Cuándo se crea, según Q13 (§5.5, §7.3).
+- **FR-010**: La pareja es un grupo de tipo `couple`, moneda COP y zona `America/Bogota`, con la propietaria (`owner`) y un integrante (`member`). La pareja nace al crear la invitación, con la propietaria como único integrante activo. Quien es propietaria de una pareja de un solo integrante no puede aceptar otra invitación hasta anular la suya (Q13; §5.5, §7.3).
 - **FR-011**: Solo la propietaria crea y anula invitaciones; una invitación tiene correo destino normalizado, hash del token, caducidad de 7 días, un solo uso y estado (pendiente, aceptada, anulada, vencida) (§15.5).
 - **FR-012**: El token se genera con un generador criptográfico, se muestra **una sola vez** en el enlace de M3b y nunca se guarda en claro; el enlace no se puede volver a leer del servidor salvo regenerando la invitación según la regla de «una activa» (§5.5). Cómo funciona «Copiar enlace» en M4 sin token en claro lo resuelve el plan, sin guardar el token.
 - **FR-013**: Aceptar es una operación atómica e idempotente que revalida token, correo de una cuenta verificada, caducidad, estado, membresía y disponibilidad de la pareja, añade al integrante y marca la invitación como usada (§7.3, «Operaciones críticas»; handoff).
@@ -405,20 +404,20 @@ JWT; concurrencia de aceptación en integración.
 
 #### Gastos compartidos y repartos (§5.1, §5.2, §15.5; 02·5)
 
-- **FR-018**: Un gasto compartido tiene grupo, pagador (integrante activo, según Q6), importe, categoría, fecha, descripción, partes por integrante y versión; nace con su reparto en una operación atómica e idempotente (§5.4, §7.3).
-- **FR-019**: Los modos de reparto son 50/50, Porcentaje e Importe; las partes se calculan en el dominio con el algoritmo de mayor residuo de ADR-002, con la granularidad y el desempate de Q8, y la función SQL las vuelve a comprobar (ADR-013 §6.2).
+- **FR-018**: Un gasto compartido tiene grupo, pagador (cualquiera de los integrantes activos, también el que no anota, Q6), importe, categoría, fecha, descripción, partes por integrante y versión; nace con su reparto en una operación atómica e idempotente (§5.4, §7.3).
+- **FR-019**: Los modos de reparto son 50/50, Porcentaje e Importe; las partes se calculan en el dominio con el algoritmo de mayor residuo de ADR-002, en pesos enteros (múltiplos de 100 unidades menores), con el residuo desempatado de forma estable por orden de ingreso a la pareja y porcentajes enteros de 0 a 100 (Q8; nota de ADR-002); al menos un participante, y una parte de 0 equivale a no participar (Q7); y la función SQL las vuelve a comprobar (ADR-013 §6.2).
 - **FR-020**: El dominio tiene una función pura de reparto con pruebas de propiedad: para cualquier importe válido, modo y participantes, las partes suman exactamente el importe y el resultado es determinista (§5.2).
-- **FR-021**: Anotar en Nosotros añade contexto, pagador, participantes y reparto con la preselección de Q5, y el error E3 con la cifra exacta que falta o sobra (02·5; Q4).
-- **FR-022**: Editar un gasto compartido usa control de versión y recalcula partes y saldo en la misma operación, con auditoría; quién y qué campos, según Q12. El contexto no cambia (ADR-001 punto 8).
+- **FR-021**: Anotar en Nosotros añade contexto, pagador, participantes y reparto con el último pagador y reparto que usó esa persona en Nosotros, visibles en el resumen (la primera vez, «Pagó: yo» y 50/50) (Q5), y el error E3 con la cifra exacta que falta o sobra (02·5; Q4).
+- **FR-022**: Editar un gasto compartido usa control de versión y recalcula partes y saldo en la misma operación, con auditoría; puede hacerlo cualquiera de los dos y se editan el monto, la categoría, la fecha, la descripción, el pagador y el reparto. El contexto no cambia (Q12; ADR-001 punto 8). El otro ve «Editado por X · fecha».
 - **FR-023**: Eliminar un gasto compartido lo anula con auditoría y lo excluye de totales, listas, saldo y búsquedas; las liquidaciones previas no cambian (§5.4).
 - **FR-024**: «Deshacer» de 6 s tras anotar un gasto compartido lo anula con auditoría, como en P0-1 (spec 002, FR-034).
 
 #### Saldos y liquidaciones (§5.1, §15.5, ADR-007; 02·3, 04·2)
 
-- **FR-025**: `computeBalance(expenses, settlements, members)` es una función pura del dominio que devuelve, por integrante, pagado, le corresponde, liquidaciones enviadas y recibidas y `net_owed`, con `net = pagado − corresponde + enviadas − recibidas`, y la suma de los `net` es cero (§5.1; handoff, «Orden de implementación»; COMPONENT_SPECIFICATIONS, «Cálculo P0»). El periodo, según Q9.
+- **FR-025**: `computeBalance(expenses, settlements, members)` es una función pura del dominio que devuelve, por integrante, pagado, le corresponde, liquidaciones enviadas y recibidas y `net_owed`, con `net = pagado − corresponde + enviadas − recibidas`, y la suma de los `net` es cero (§5.1; handoff, «Orden de implementación»; COMPONENT_SPECIFICATIONS, «Cálculo P0»). El saldo es **acumulado** desde que existe la pareja; el desglose se filtra por mes (Q9).
 - **FR-026**: La sugerencia de liquidación es única y determinista: quien tiene `net < 0` → quien tiene `net > 0` por `|net|`; nunca crea una transferencia (§15.5).
-- **FR-027**: Registrar una liquidación es atómico e idempotente; valida dos integrantes activos distintos, la moneda del grupo, la dirección deudor → acreedor y un importe positivo ≤ saldo pendiente, todo bajo el bloqueo del grupo (§5.1; ADR-013 §3). Quién la registra y su fecha, según Q10.
-- **FR-028**: Una liquidación no se edita; su corrección, según Q11 (ADR-007).
+- **FR-027**: Registrar una liquidación es atómico e idempotente; valida dos integrantes activos distintos, la moneda del grupo, la dirección deudor → acreedor y un importe positivo ≤ saldo pendiente, todo bajo el bloqueo del grupo (§5.1; ADR-013 §3). La registra cualquiera de los dos, sin confirmación del otro, con fecha de hoy o pasada y nunca futura (Q10).
+- **FR-028**: Una liquidación nunca se edita ni se borra. Cualquiera de los dos puede **anularla** con auditoría: la anulación sale del saldo y queda visible en el historial como anulada. Además hay un «Deshacer» de 6 s justo después de registrarla. La anulación es atómica, idempotente y se hace bajo el bloqueo del grupo (Q11; enmienda de ADR-007 del 6 de noviembre de 2026).
 - **FR-029**: Las liquidaciones no cuentan en `gasto_consumo`, `group_total`, categorías ni presupuestos, y se muestran aparte con «Liquidado» y «no es un gasto» (§5.1; handoff, reglas de UI).
 - **FR-030**: Tras cualquier corrección se recalcula el saldo; si se invierte, se muestra invertido y la sugerencia cambia de dirección (US-10).
 
@@ -426,8 +425,8 @@ JWT; concurrencia de aceptación en integración.
 
 - **FR-031**: Mover a Pareja es una sola operación atómica e idempotente que anula el privado y crea el compartido con referencia al anulado, conserva el pagador y la fecha, y escribe auditoría; nunca hay dos gastos activos (ADR-001 puntos 1–5).
 - **FR-032**: Se ofrece desde el detalle de un gasto privado propio (A1) y desde Editar al cambiar Contexto a Nosotros, solo con pareja activa y nunca para ingresos (handoff; COMPONENT_SPECIFICATIONS, «Reclasificar»; §7.3).
-- **FR-033**: A2 con importe y pagador fijos y la elección de participantes y reparto; A3 con ChangePreview (según Q3); A3b con los campos bloqueados; A4 con la fila «movido desde Yo» y el toast con Deshacer; A5 con el error sin conexión (04·10).
-- **FR-034**: Deshacer de Mover a Pareja es una operación propia, atómica e idempotente, disponible según la ventana y las dependencias de Q15; restaura el gasto en Yo como un registro nuevo y conserva toda la auditoría (ADR-001 punto 6).
+- **FR-033**: A2 con importe y pagador fijos y la elección de participantes y reparto; A3 con ChangePreview, aprobado en su forma (Q3); A3b con los campos bloqueados; A4 con la fila «movido desde Yo» y el toast con Deshacer; A5 con el error sin conexión (04·10).
+- **FR-034**: Deshacer de Mover a Pareja es una operación propia, atómica e idempotente, disponible durante los 6 s del aviso y solo si no hubo edición ni anulación del compartido, ni una liquidación registrada después del movimiento (Q15); restaura el gasto en Yo como un registro nuevo y conserva toda la auditoría (ADR-001 punto 6).
 - **FR-035**: El bloqueo por financiación de meta (ADR-001 punto 7) queda como comprobación en la función desde P0-2; su LimitNote y su prueba con datos llegan con P0-3, cuando existan las metas.
 - **FR-036**: El privado anulado sigue invisible para el otro integrante en cualquier vista, función o agregado (ADR-001, Consecuencias).
 
@@ -493,7 +492,7 @@ JWT; concurrencia de aceptación en integración.
 - Salir de la pareja, expulsar, transferir la propiedad y `member_history_snapshots` (ADR-003).
 - Grupos de 3 o más y optimización de liquidaciones para N (P1).
 - «Mover a Yo», ingresos compartidos, multimoneda, reembolsos parciales, adjuntos y recurrentes.
-- Notificaciones, correos propios y tiempo real (§15.5; según Q16).
+- Notificaciones, correos propios y tiempo real (§15.5; Q16). Los datos se actualizan al navegar, al volver a la pestaña y tras cada escritura propia.
 - Eliminar cuenta (bloqueo legal, §15.6.1).
 
 ### Key Entities
@@ -503,7 +502,7 @@ JWT; concurrencia de aceptación en integración.
 - **Invitación**: pareja, correo destino normalizado, hash del token, caducidad, estado, quién la creó, quién la aceptó y cuándo.
 - **Gasto compartido**: movimiento con grupo, pagador, importe, categoría, fecha, descripción, estado, versión y, si viene de Mover a Pareja, la referencia al privado anulado.
 - **Parte**: gasto, integrante e importe exacto; las partes de un gasto suman su importe.
-- **Liquidación**: grupo, de quién, a quién, importe, fecha, nota opcional, autor, estado y, según Q11, su anulación.
+- **Liquidación**: grupo, de quién, a quién, importe, fecha, nota opcional, autor, estado (activa o anulada) y la auditoría de su anulación (Q11).
 - **Saldo**: no se guarda; se deriva con `computeBalance` de gastos, partes y liquidaciones activos.
 - **Registro de auditoría** e **idempotencia**: los de la 002, ampliados a las operaciones nuevas.
 
@@ -531,7 +530,7 @@ JWT; concurrencia de aceptación en integración.
 - **Una pareja activa por persona** desde el primer día; nadie sale en P0 (ADR-003).
 - **Sin datos compartidos anteriores:** la pareja empieza sin historia; los gastos privados anteriores solo pasan a Nosotros con Mover a Pareja.
 - **Anotar en Nosotros** usa el mismo catálogo de categorías que en privado, sin «Ingresos» (§7.3).
-- **La auditoría visible** en el detalle se limita a «Anotado por X · fecha» y «Editado por X · fecha» (04·1); los valores anteriores quedan en `audit_events` (según Q12).
+- **La auditoría visible** en el detalle se limita a «Anotado por X · fecha» y «Editado por X · fecha» (04·1); los valores anteriores quedan en `audit_events` (Q12).
 - **Las pantallas que no están diseñadas** (error de liquidación mayor que el saldo, saldo invertido, Balance sin gastos compartidos, M7 por pareja propia pendiente) se componen con primitivos y patrones aprobados y se aprueban viendo la pantalla en su PR (§15.9).
 - **La revisión visual humana** es el gate de «Visual y motion», fuera de CI (ADR-011 §7), con la pasada de Impeccable de cada PR de implementación.
 - **Las verificaciones de dispositivo** aplazadas por la decisión 19 siguen aplazadas hasta MVP-1; P0-2 no las hereda como bloqueantes.
@@ -570,9 +569,9 @@ Clasificación en los dos ejes del maestro §15.9.
 
 | Elemento `[P]` | ¿Afecta al alcance? | ¿Requiere aprobación antes de implementar? | Situación en P0-2 |
 | --- | --- | --- | --- |
-| SharedBalance · «Balance pagó vs. corresponde» | **Sí** — P0-2 | **Sí** | **Abierto: Q2.** Se resuelve antes del plan |
-| ChangePreview | **Sí** — P0-2 / P0-3 | **Sí** | **Abierto: Q3.** ADR-001 ya lo menciona; se resuelve antes del plan |
-| Anotar gasto (flujo E1–E5), versión compartida | **Sí** | **Sí** | **Abierto: Q4.** La versión privada está aprobada (16.2) |
+| SharedBalance · «Balance pagó vs. corresponde» | **Sí** — P0-2 | **Sí** | **Aprobado en su forma** (Q2; decisión 20). Aprobación final en pantalla en el PR D |
+| ChangePreview | **Sí** — P0-2 / P0-3 | **Sí** | **Aprobado en su forma**, solo en Mover a Pareja (Q3; decisión 20). Aprobación final en pantalla en el PR C |
+| Anotar gasto (flujo E1–E5), versión compartida | **Sí** | **Sí** | **Aprobado en su forma** (Q4; decisión 20); completa la 16.2. Aprobación final en pantalla en el PR C |
 | Sección Cuenta: CoupleStatus, SensitiveActionConfirmation, LimitNote | **Sí** — P0-2 (pareja) | **Sí** | **Aprobada** la anatomía (decisión 16.6); se aprueban las pantallas de Mi pareja viendo el PR B |
 | Personas configurables, escalables a N (+ patrón) | No | **Sí** | P0-2 usa `person.1–2` y sus patrones de tramo en barras y avatares; se aprueba viendo las pantallas del PR D. `person.3–6` no se usan |
 | Sara lila → petróleo y demás paleta | No | **Sí** — viendo la pantalla | Primera vez que se ven dos personas juntas: se aprueba en las capturas de los PR B a D |
@@ -582,8 +581,7 @@ Clasificación en los dos ejes del maestro §15.9.
 No tocados por P0-2: GoalStack, FundingLedger, ConfirmationBadge, PlanningNote,
 persistencia del tema y teclado del monto (ya cerrados) y Spline Sans Mono.
 
-**Tres `[P]` que afectan al alcance quedan abiertos (Q2, Q3, Q4)**: el plan no
-empieza sin su respuesta.
+**Ningún `[P]` que afecte al alcance queda sin resolver.**
 
 ## Inventario de `[V]` que toca P0-2
 
@@ -619,10 +617,10 @@ empieza sin su respuesta.
 
 ## ADR, erratas y conflictos
 
-- **ADR que aplican:** ADR-001, ADR-003 y ADR-013 (archivo), ADR-002 y ADR-007 (maestro §12.2), ADR-011 y ADR-012. **ADR nuevo:** ninguno es necesario si los fundadores responden Q8 y Q11 como recomienda la tabla; si consideran que Q8 (pesos enteros) o Q11 (anular liquidaciones) es una decisión nueva frente a ADR-002 o ADR-007, el plan propone un ADR corto **antes** de implementarla (`AGENTS.md` 17).
+- **ADR que aplican:** ADR-001, ADR-003 y ADR-013 (archivo), ADR-002 y ADR-007 (maestro §12.2, con archivo propio desde este PR), ADR-011 y ADR-012. **ADR nuevo:** ninguno. Q8 queda como nota de implementación de ADR-002 y Q11 como enmienda fechada de ADR-007. Las dos se escriben en archivos propios (`docs/adr/ADR-002-dinero-y-repartos.md` y `docs/adr/ADR-007-correcciones.md`) y quedan trazadas en la decisión 20 del maestro.
 - **Erratas pendientes del paquete:** ninguna (`docs/design/README.md`).
-- **Lecturas registradas para la revisión** (ninguna bloquea; donde hay conflicto, manda el documento superior):
-  1. **02·5 E5 en Nosotros muestra «Didi a Envigado · Privado» en Recientes.** Contradice la regla del handoff y del maestro §5.5: los privados nunca se renderizan en Nosotros. Manda la regla; la fila no se construye (FR-037).
+- **Lecturas registradas para la revisión.** Todas están resueltas: donde hay conflicto manda el documento superior, o lo resolvieron los fundadores en la decisión 20.
+  1. **02·5 E5 en Nosotros muestra «Didi a Envigado · Privado» en Recientes.** Contradice la regla del handoff y del maestro §5.5: los privados nunca se renderizan en Nosotros. Manda la regla y la fila no se construye (FR-037). Los fundadores lo confirmaron el 6 de noviembre de 2026.
   2. **El rótulo «Octubre» del Balance** frente al `net_owed` sin periodo del maestro: Q9.
   3. **«Lo último usado» de 02·5** frente a «nunca se asume 50/50» y «sin reparto por defecto» de §15.5: Q5.
   4. **«Liquidaciones inmutables» (ADR-007)** frente a la necesidad de corregir un error: Q11.
@@ -638,7 +636,7 @@ empieza sin su respuesta.
 | --- | ---: | ---: | ---: |
 | Specs E2E existentes | 2 (1 «Acceso y Mi cuenta», 2 «Anotar gasto, cronometrado») | 1 (spec 3 «Pareja 50/50 y liquidación») | 3 |
 
-| PR (según Q1) | Spec E2E |
+| PR (Q1) | Spec E2E |
 | --- | --- |
 | A · Base de datos, seguridad y dinero | Ninguna; crece la siembra (`seedCouple()`) y el `storageState` por rol |
 | B · Mi pareja e invitaciones | La **spec 1** suma el caso «Invitación → login → volver → aceptar» |
@@ -647,7 +645,7 @@ empieza sin su respuesta.
 
 Quedan **dos plazas** del tope de 4–6: la spec 4 (metas) y la 5 (presupuestos) de
 P0-3, y la sexta libre. Con tres specs, el hito de los presupuestos de tiempo se
-alcanza al cierre de P0-2, según Q17.
+alcanza al cierre de P0-2 (Q17).
 
 ## Criterios de aceptación aplicables
 
@@ -667,7 +665,7 @@ alcanza al cierre de P0-2, según Q17.
 | Ambos integrantes pueden crear, editar y desactivar un presupuesto… | No — P0-3 |
 | Los dos temas pasan axe sin violaciones serias en Inicio, Actividad, Anotar, Balance y Meta. | **Sí**, salvo Meta (P0-3) (SC-002) |
 | Todos los momentos de motion respetan `prefers-reduced-motion`. | **Sí** (SC-011) |
-| Los datos del caso de octubre reproducen exactamente los totales mostrados en el diseño. | **Sí**, la parte de P0-2 (SC-003); el ejemplo de Mover, según Q18 |
+| Los datos del caso de octubre reproducen exactamente los totales mostrados en el diseño. | **Sí**, la parte de P0-2 (SC-003); el ejemplo de Mover se prueba por diferencias (Q18) |
 
 ### Del maestro §15.7 (umbrales que bloquean la aceptación)
 
