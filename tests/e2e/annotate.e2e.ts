@@ -241,7 +241,7 @@ for (const scheme of ["light", "dark"] as const) {
 test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde el chip", async ({ page }, testInfo) => {
   const user = await seedUser({ role: "rejilla-teclado", index: testInfo.parallelIndex });
   await signedInHome(page, user);
-  await page.keyboard.press("n");
+  await page.locator("[data-annotate-trigger]:visible").first().click();
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
   await page.keyboard.type("23400");
@@ -274,4 +274,43 @@ test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde 
   const saved = rows.find((row) => row.transactionDate === day);
   expect(saved?.description).toBe("Pan y café");
   expect(saved?.categoryId).toBe("entertainment");
+});
+
+// Revisión del gestor del PR #51 contra la comp 1c. (1) La hoja móvil abre ajustada al contenido, no a la altura máxima: en 390
+// px el borde inferior de Guardar queda a ≤ 20 px (más el safe area, 0 aquí) del borde inferior de la hoja, y la hoja no ocupa
+// toda la altura. (2) «Guardar sube con el teclado»: con la altura emulada de 544 px, Guardar está visible y se puede pulsar
+// sin desplazar el contenido.
+test("UX 2: la hoja de 390 px abre ajustada al contenido, con Guardar a ≤ 20 px de su borde inferior", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "hoja-ajustada", index: testInfo.parallelIndex });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signedInHome(page, user);
+  await page.locator("[data-annotate-trigger]:visible").first().click();
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("radiogroup", { name: copy.annotate.category })).toBeVisible();
+  await page.waitForFunction(() => { const el = document.querySelector("[data-bottom-sheet]"); return Boolean(el) && getComputedStyle(el!).opacity === "1" && getComputedStyle(el!).transform === "none"; });
+  const panel = page.locator("[data-bottom-sheet] > div");
+  const box = (await panel.boundingBox())!;
+  const save = (await sheet.getByRole("button", { name: /^Guardar/ }).boundingBox())!;
+  expect(box.height, "la hoja no ocupa toda la altura (viewport − 96)").toBeLessThan(844 - 96 - 20);
+  expect(box.y, "queda el saludo a la vista").toBeGreaterThan(96);
+  const gap = box.y + box.height - (save.y + save.height);
+  expect(gap, "Guardar a ≤ 20 px del borde inferior de la hoja (safe area 0)").toBeLessThanOrEqual(20.5);
+  expect(gap).toBeGreaterThanOrEqual(0);
+});
+
+test("UX 2: con el teclado abierto (544 px de alto emulado), Guardar es visible y se pulsa sin desplazar", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "guardar-teclado", index: testInfo.parallelIndex });
+  await page.setViewportSize({ width: 390, height: 544 });
+  await signedInHome(page, user);
+  await page.locator("[data-annotate-trigger]:visible").first().click();
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("18900");
+  await sheet.getByRole("radio", { name: copy.categories.market }).click();
+  const save = sheet.getByRole("button", { name: /^Guardar/ });
+  await expect(save).toBeInViewport({ ratio: 1 });
+  const scrollTop = await save.evaluate((el) => { let node = el.parentElement; while (node && getComputedStyle(node).overflowY !== "auto") node = node.parentElement; return node ? node.scrollTop : -1; });
+  expect(scrollTop, "el contenido no se desplazó para llegar a Guardar").toBe(0);
+  await save.click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
 });

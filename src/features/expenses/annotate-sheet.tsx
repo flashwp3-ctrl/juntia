@@ -341,10 +341,15 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
         </div>
         {dateInvalid ? <p className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
       </fieldset>
-      {errorNotice}
-      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
-        {saveLabel}
-      </Button>
+      {/* «Guardar sube con el teclado» (comp 1c): en la hoja móvil el pie va fijo al fondo del área desplazable, con el fondo de
+          la hoja y el safe area: la hoja «bare» no pone relleno inferior, lo trae este pie. Desde 768 px (diálogo) el pie no es
+          fijo y el relleno es el del diálogo. El aviso de error sube con él. */}
+      <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
+        {errorNotice}
+        <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
+          {saveLabel}
+        </Button>
+      </div>
       {/* F45-1 (revisión del PR #45): tras un fallo ambiguo el primer intento pudo guardarse, así que cerrar no puede
           decir «no se guardará». Se ofrece reintentar lo mismo con la misma clave (la opción segura, con el foco) o
           cerrar, y se pide revisar Actividad antes de volver a anotarlo. */}
@@ -371,5 +376,5 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   );
 
   const props = { open, onOpenChange: requestClose, title, onOpenAutoFocus, onCloseAutoFocus, bare: true };
-  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props} draggable expanded>{body}</BottomSheet>;
+  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props} draggable>{body}</BottomSheet>;
 }

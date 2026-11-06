@@ -270,6 +270,29 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(isDisabled(saveButton())).toBe(true);
   });
 
+  // Revisión del gestor del PR #51 contra la comp 1c: la hoja abre ajustada al contenido (665 px en 390, no a la altura máxima) y
+  // conserva el arrastre hacia arriba; «Guardar sube con el teclado»: va fijo al pie del área desplazable.
+  it("UX 2: la hoja móvil abre ajustada al contenido (parada «content», no «full») y sigue siendo arrastrable", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    await sheet();
+    const bottomSheet = document.querySelector("[data-bottom-sheet]")!;
+    expect(bottomSheet.getAttribute("data-stop")).toBe("content");
+    expect(document.querySelector("[data-sheet-handle]")).toBeTruthy();
+  });
+
+  it("UX 2: Guardar va fijo al pie del área desplazable de la hoja (sticky), con el fondo de la hoja y el safe area", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const dock = saveButton().parentElement!;
+    expect(dock.className).toMatch(/max-md:sticky/);
+    expect(dock.className).toMatch(/max-md:bottom-0/);
+    expect(dock.className).toMatch(/max-md:bg-overlay/);
+    expect(dock.className).toMatch(/safe-area-inset-bottom/);
+    expect(dialog.contains(dock)).toBe(true);
+  });
+
   it("UX 2: «Solo tú» es un indicador con candado, sin interacción ni flechas de desplegable", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
