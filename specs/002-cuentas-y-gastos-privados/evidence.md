@@ -1836,13 +1836,71 @@ todavía muestran con espacio, va en la corrección de la revisión del PR #44 (
 La descripción del PR lleva capturas, Impeccable, los `[P]` y «E2E specs added: 0»
 (la spec 1 suma la descarga de Exportar y el caso de privacidad de F44-1); total 1.
 
+### PR D · T077–T083 (tests primero e implementación)
+
+Rama `feat/002-d-annotate`, PR #45. Salidas literales en [`evidence/pr-d/`](evidence/pr-d/).
+Los tests de componentes se vieron fallar antes que el código (`docs/TESTING.md` §6), en el
+commit 20a9c52:
+
+| Tarea | Rojo | Verde |
+| --- | --- | --- |
+| T077, T078 componentes (hoja, edición, diálogo de eliminar) | [`t077-t078-components-red.txt`](evidence/pr-d/t077-t078-components-red.txt): los tres archivos fallan al importar `annotate-provider` y `transaction-actions`, que no existían | [`t077-t078-components-green.txt`](evidence/pr-d/t077-t078-components-green.txt): 42 pruebas (43 con la de Enter sobre una categoría, 081fe44) |
+| T083 spec E2E 2 | Punto de control 1, run [42161559890](https://github.com/flashwp3-ctrl/juntia/actions/runs/42161559890): 2 de 3 en rojo ([`t083-t084-checkpoint1-c67b660.txt`](evidence/pr-d/t083-t084-checkpoint1-c67b660.txt)) | Run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120) sobre 081fe44: specs 1 y 2, 12/12 |
+
+Además de los criterios literales de T077 y T078, las pruebas de componentes cubren lo que pidió
+la revisión de concurrencia: doble clic y Enter repetido en Guardar (una petición), Reintentar con
+la **misma** clave, promesas rechazadas (error de red con Reintentar), dos clics en Deshacer (una
+petición), Deshacer después de editar (`versionConflict`, se explica y no anula nada), una
+respuesta tardía de Deshacer que no pisa el aviso del guardado siguiente, y el estado que sobrevive
+a una navegación (el aviso y la fila resaltada siguen; la hoja siguiente nace vacía y con otra
+clave). `payload.test.ts` prueba que las Server Actions solo aceptan importes como texto de dígitos
+(FR-008), nunca el tipo en una edición (Q14) y solo `delete` o `undo` al anular.
+
+**Decisión del fundador (5 de noviembre de 2026, Alejandro, en la sesión del PR D).** Tras un fallo
+ambiguo al guardar (red, guardado fallido o inesperado), el primer intento pudo llegar al servidor.
+Si la persona cambiara los datos y reintentara con la misma clave, el servidor lo rechazaría
+(`JT008`) y la interfaz diría «Algo salió mal» con riesgo de duplicado. Se eligió **bloquear los
+campos** de esa apertura: solo se reintenta lo mismo con la misma clave, o se cierra la hoja. Con
+`JT001`, `JT011` y `JT012` el servidor no escribió nada y los campos siguen editables. Pruebas:
+«decisión del fundador: tras un fallo ambiguo…» y «JT001 no bloquea…» en `annotate-sheet.test.tsx`.
+
+**Lo que encontró el punto de control 1** (run 42161559890; [`t083-t084-checkpoint1-c67b660.txt`](evidence/pr-d/t083-t084-checkpoint1-c67b660.txt)),
+corregido en 081fe44:
+- Enter con el foco en una categoría la volvía a elegir y no guardaba: el recorrido de la spec 2
+  (N → monto → categoría → Enter) se quedaba ahí. Ahora la elige y guarda (FR-035).
+- Contraste: la meta de la fila nueva en `text.secondary` sobre `savingSubtle` daba 4,38:1 en
+  claro (pasa a tinta) y «Editar detalles» en bosque daba 2,64:1 en oscuro (pasa a tinta con
+  subrayado).
+- `scrollable-region-focusable`: con los campos bloqueados, la fila de categorías seguía siendo
+  una región con scroll sin nada enfocable; bloqueada, deja de desplazarse.
+- El job `e2e` llegó a su límite de 10 min con los reintentos de esos fallos; no subió artefactos.
+
 ### T079
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+**Citado en lugar de duplicado, y el caso que faltaba añadido.** Ya cubrían el criterio:
+`supabase/tests/08_money_functions.test.sql` («anulado no editable» → `JT012`, y «motivo auditado»
+→ `reason = 'undo'` en SQL) y `tests/integration/money.test.ts`, «el eliminado no se edita y Deshacer
+conserva el rastro» (editar un anulado por `src/lib/db` → `transactionVoided`, PR A). Faltaba
+«Deshacer» **de punta a punta por `src/lib/db`** con la auditoría: se añaden dos casos en
+`money.test.ts` (commit 20a9c52):
+- Deshacer con la versión que devolvió la creación, dos veces a la vez con la misma clave: el mismo
+  resultado, `status = 'voided'`, una sola auditoría `void` con `reason = 'undo'`, fuera de
+  `listTransactions`; Eliminar después → `transactionVoided`.
+- Deshacer después de editar → `versionConflict`; el movimiento sigue activo y sin auditoría `void`.
+
+No se vieron fallar: prueban funciones que existen desde el PR A, y fallarían solo si se rompiera esa
+función. Pasan en el job `db` del run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120)
+(`money.test.ts`, 10 pruebas; [`t100-checkpoint-081fe44.txt`](evidence/pr-d/t100-checkpoint-081fe44.txt)).
 
 ### T084
 
-Fecha, commit, comando/procedimiento y salida: **pendiente: PR D**.
+Registro de T051 (`tests/a11y/route-registry.ts`): Anotar E1 gasto, E2 detalles, el error de guardado
+con su Reintentar, E5 guardado (aviso con Deshacer y fila resaltada), la edición y el diálogo de
+eliminar, con sesión y en los dos temas, a 390 (hoja) y 1440 (diálogo de 520). E1 ingreso, E3 y E4
+están en el registro solo para las capturas (`axe: false`): su hoja ya se audita en los demás estados.
+La prueba de cobertura del registro pasa en `verify`. Run [42163561120](https://github.com/flashwp3-ctrl/juntia/actions/runs/42163561120),
+job `e2e`: 152/152, **0 violaciones serias o críticas** en los 24 estados nuevos
+([`t084-axe-081fe44.txt`](evidence/pr-d/t084-axe-081fe44.txt)).
 
 ### T085
 

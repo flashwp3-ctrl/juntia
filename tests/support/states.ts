@@ -98,10 +98,15 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       return expect(sheet.getByRole("button", { name: /^Guardar/ })).not.toHaveAttribute("aria-disabled", "true");
     }
     case "annotateIncome": { // E1 con «Ingreso» en el selector (Q3).
-      const sheet = await openAnnotate(page);
-      await sheet.getByRole("radio", { name: copy.annotate.income }).click();
-      await page.getByRole("textbox", { name: copy.annotate.amount }).fill("86000");
-      return expect(page.getByRole("dialog", { name: copy.annotate.title.income })).toBeVisible();
+      await openAnnotate(page);
+      await page.keyboard.type("86000");
+      // Del monto al selector (Shift+Tab) y la flecha elige «Ingreso» (radiogroup con foco itinerante).
+      await page.keyboard.press("Shift+Tab");
+      await expect(page.getByRole("radio", { name: copy.annotate.expense, exact: true }), "el foco llega al selector").toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      const sheet = page.getByRole("dialog", { name: copy.annotate.title.income });
+      await expect(sheet, "la hoja pasa a ingreso").toBeVisible();
+      return expect(sheet.getByRole("button", { name: copy.categories.income }), "con «Ingresos» elegida").toHaveAttribute("aria-pressed", "true");
     }
     case "annotateDetails": { // E2: detalles abiertos con descripción.
       const sheet = await fillAnnotate(page);

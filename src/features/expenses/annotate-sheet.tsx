@@ -248,11 +248,14 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           onValueChange={(value) => update({ amount: value })}
           error={amountInvalid ? copy.annotate.errors.amountOutOfRange : undefined}
           enterKeyHint="done"
-          className="items-stretch text-center [&>label]:items-center"
+          // 02·5: «$» y la cifra centrados juntos, en grande, sin el marco hundido. El marco sigue a todo el ancho (el
+          // clamp del tamaño mide su contenedor) y el <input> toma el ancho de lo escrito (field-sizing). Hallazgo de la
+          // primera corrida de evidencia: centrar los hijos del <label> encogía el marco y el monto no se veía.
+          className="text-center"
           fieldClassName="!bg-transparent !shadow-none justify-center"
-          inputClassName="text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
+          inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
         />
-        <div role="group" aria-label={details || type === "income" ? copy.annotate.category : copy.annotate.recent} className={details ? "flex flex-wrap gap-2" : `-mx-5 flex gap-2 px-5 py-0.5 [scrollbar-width:none] ${isSaving || locked ? "overflow-hidden" : "overflow-x-auto"}`}>
+        <div role="group" aria-label={details || type === "income" ? copy.annotate.category : copy.annotate.recent} className={details ? "flex flex-wrap gap-2" : `-mx-5 flex gap-2 px-5 py-0.5 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 ${isSaving || locked ? "overflow-hidden" : "overflow-x-auto"}`}>
           {/* Bloqueada (E4 o tras un fallo ambiguo), la fila deja de desplazarse: sin fichas enfocables, una región con
               scroll quedaría fuera del teclado (axe, scrollable-region-focusable). */}
           {choices.map((id) => <CategoryChip key={id} id={id} selected={categoryId === id} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />)}
