@@ -2,10 +2,10 @@
 
 Rama `feat/003-a-database`, base `main` `0c25e8b`. Sin producción ni datos reales.
 
-## Estado actual — T026a/T026b autorizadas dentro de PR A
+## Estado final — T027 verde; PR en borrador; T028 humana pendiente
 
 El gestor confirmó que ambos bloqueos pertenecen al esquema de PR A y autorizó
-T026a/T026b dentro de este PR, sin cambiar tasks.md. Primer T027: restore fallido;
+T026a/T026b dentro de este PR, sin cambiar tasks.md. T027 verde: 42295377639.
 T028 y T029 siguen siendo humanas. Los apartados posteriores conservan el
 historial de rojos y pausas, con su estado a la hora indicada.
 
@@ -630,3 +630,118 @@ RLS activas. No se añade un bypass ni se cambia el procedimiento de respaldo.
 Repetición API dev para reproducir el estado anterior al dump: 58 pasan / 9
 omisiones, 81,64 s runner, 28 inicios de sesión, sin fallos de Auth. El único
 reintento de T027 queda pendiente de terminar los checks locales de la corrección.
+### Preflight del único reintento T027
+
+Código `e6b30b491ffbe0db40a2805a7b9d63643267ea1f`. Run
+[42295377639](https://github.com/flashwp3-ctrl/juntia/actions/runs/42295377639).
+`verify` sobre ese commit: 70,24 s, 42 dominio, 303 componentes / 2 omisiones.
+El lint inicial vio tres avisos de imports de un helper local ignorado de dump;
+se retiró el helper y se repitió lint: limpio. No eran archivos del PR.
+
+Carga positiva del dump completo en PostgreSQL 17 local: exit=0. N10 usa el
+mutador real del drill; copia alterada cargada en otra base nueva, con todas las
+reglas activas: RESTORE_INVARIANTS: pareja/membresias/invitaciones, rollback y
+cero grupos persistidos. Un intento de vaciar la base local positiva fue
+rechazado por la protección append-only de audit_events (immutableField), sin
+saltársela; por eso N10 se probó en una base nueva. No se debilitó ninguna regla.
+El intento de usar los scripts Bash completos en Windows terminó antes de la
+carga y no cuenta como ensayo de restauración; la prueba SQL de dump completo y
+N10 sí se ejecutó con psql 17. El drill A/B y sus diez controles completos siguen
+siendo responsabilidad del run de CI. El cluster local se detuvo y se eliminaron
+solo sus temporales propios, con las rutas comprobadas. Ningún ajuste alojado.
+
+### Matriz de verificaciones cerrada por T027 (42295377639)
+
+| Verificación | Prueba que la ejercita en T027 |
+| --- | --- |
+| ADR-013 V1 · writer/identidad/RLS | 01_privileges, 04_writer, 10_couple, 11_shared_money; foundation API y llamadas SQL como authenticated |
+| V2 · escritura directa imposible | 05_direct_writes, 10a_couple_tables, 11a_shared_tables; controlled-tables API, JWT real y tres UPDATE writer sin efectos |
+| V3 · atomicidad | 10/11 con política rota, rechazo JT116 sin cambios, RAISE en money API; importación negativa con rollback |
+| V4 · concurrencia e idempotencia | 47 casos de ciclo de pareja, 76 de dinero; 15 carreras API y doble envío/write_status de todas las escrituras |
+| V5 · versión esperada | regenerate version+1, update/void compartido y liquidación; carreras de edición con un ganador |
+| V6 · dinero exacto | parser y límites heredados en 08; API shared-money devuelve 9007199254740993 como texto, tipos monetarios sin number |
+| V7 · privilegios efectivos | 01: 310 comprobaciones; 10a/11a; pg_has_role membership falso para anon/authenticated/writer; FR-035 sin EXECUTE anon/authenticated |
+| V8/V9 · regresión de vistas y claims | 02_claims, 03_views y foundation API; security_invoker y filtro propio en las cuatro vistas de la 002 |
+| Repartos/computeBalance/dorado | 42 tests de dominio; consistency API: 284000000, ±42990000 → ±22990000 y consumo de Yo 191290000 |
+| Liquidación/anulación/conversión | 11_shared_money: versiones, partes, dirección, límite, ventana 60 s, financiación y row_count |
+| Lecturas consistentes | tres consistency API: snapshot, paginación con escrituras y dataset dorado |
+| T026a/T026b | límites locales 1000, sin config push; FK conservadas/diferidas; dump ordenado, RLS on y N10 explícito |
+## T027 — gate corregido (salidas del job db)
+
+Run [42295377639](https://github.com/flashwp3-ctrl/juntia/actions/runs/42295377639),
+SHA de código `e6b30b491ffbe0db40a2805a7b9d63643267ea1f`.
+Único reintento autorizado, tras corregir localmente el primer fallo. App, db y
+e2e success; evidence omitido por diseño. No se lanzaron otros runs.
+
+Salida del job db 128159140545:
+
+```text
+All tests successful.
+Files=15, Tests=700
+Test Files 12 passed (12)
+Tests 67 passed (67)
+database.types.ts coincide con public generado en el runner.
+Camino A: MANIFIESTO COINCIDE; usuario restaurado entra
+Camino B: MANIFIESTO COINCIDE; base temporal borrada
+N1-migration: rechazo esperado, exit=1, sin marca de éxito
+N2-count: rechazo esperado, exit=1, sin marca de éxito
+N3-sha: rechazo esperado, exit=1, sin marca de éxito
+N4-data-hash: rechazo esperado, exit=1, sin marca de éxito
+N5-partial-restore: rechazo esperado, exit=1, sin marca de éxito
+N6-backup: rechazo esperado, exit=1, sin marca de éxito
+N7-existing: rechazo esperado, exit=1, sin marca de éxito
+N8-drop: rechazo esperado, exit=1, sin marca de éxito
+N9-decrypt: rechazo esperado, exit=2, sin marca de éxito
+N10-couple-invariant: rechazo esperado, exit=1, sin marca de éxito
+N10: pareja inválida rechazada por invariantes, con hash de datos correcto
+ENSAYO LISTO: A y B, diez controles negativos rechazados
+```
+
+| Control | Resultado | Duración | Presupuesto |
+| --- | --- | --- | --- |
+| test:db | pasó · 700 | 9,41 s | <60 s |
+| test:integration | pasó · 67 | 22,49 s | — |
+| db:types:check | pasó | 1,34 s | — |
+| db:restore-drill | pasó · A/B + N1–N10 | 37,92 s | — |
+| Job db (incluye instalación) | success | 290,29 s | <360 s |
+
+La etiqueta histórica del step del workflow aún dice nueve negativos; no se
+modificó el workflow. La salida ejecutada demuestra los diez, incluido N10.
+El runner dev también conserva su etiqueta histórica de nueve: sus scripts no
+se tocaron en este PR. Esto no omite ninguna comprobación.
+### Cierre de T027 y límites del entregable
+
+Run 42295377639: **success** sobre e6b30b4. Salidas finales adicionales:
+
+```text
+Dominio: 42 passed
+Componentes en Linux CI: 305 passed
+E2E smoke (specs existentes 1 y 2): 12 passed
+Axe con sesión: 152 passed
+```
+
+| Control | Resultado | Duración | Presupuesto |
+| --- | --- | --- | --- |
+| test:unit | pasó · 42 | 1,92 s | <15 s |
+| test:components | pasó · 305 | 53,32 s | — |
+| Job app (incluye instalación) | success | 192,67 s | <360 s |
+| test:e2e:smoke | pasó · 12 | 24,15 s | <180 s |
+| test:a11y | pasó · 152 | 247,45 s | — |
+| Job e2e (incluye instalación) | success | 460,03 s | <480 s |
+
+Las comprobaciones de la matriz anterior quedan verificadas por estas salidas
+CI y las de db, sobre el mismo commit de código del verify local (70,24 s).
+Los dos casos que se omiten en components local por plataforma pasan en Linux.
+T012: 42264891265. T016: 42270138082. T027: 42295377639; primer intento fallido
+42292790033, diagnosticado y corregido antes del único relanzamiento permitido.
+
+T002–T027, más T005b/T018a y T026a/T026b autorizadas, quedan implementadas y
+verificadas en su alcance de PR A. T028 sigue pendiente: revisión de ChatGPT y
+aprobación del SQL de las cuatro migraciones por los fundadores, registradas
+en el PR antes de marcarlo listo. T029 es del gestor después del merge y no se
+ejecutó. No se modificaron tasks.md, el plan, vitest.config.mts, workflows ni
+scripts del guardia/lock de dev; ninguna funcionalidad de PR B/C/D implementada.
+No se tocó producción ni se usaron datos reales o service_role en rutas de app.
+
+El commit documental posterior solo incorpora esta evidencia: el código validado
+por verify y CI permanece en e6b30b491ffbe0db40a2805a7b9d63643267ea1f.
