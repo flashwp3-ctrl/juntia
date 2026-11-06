@@ -66,6 +66,14 @@ Para probarlos en una rama sin abrir el PR: `gh workflow run ci.yml --ref <rama>
 que ejecuta los mismos jobs que un push. Ninguna función, política o migración
 está probada sin la salida de ese job en ese commit.
 
+**Iterar contra `juntia-dev` (decisión 18, ADR-011 §9.9).** Mientras se
+desarrolla, las capas de base de datos se iteran contra `juntia-dev`, que es
+desechable, y no contra el CI: los minutos de GitHub Free no alcanzan para iterar
+en CI. El CI corre solo en los puntos de control del `tasks.md` y en el gate
+final, y solo su salida cuenta como evidencia. Los correos reales y el ensayo de
+restauración siguen solo en CI. Los comandos y el guardia de destino llegan con un
+PR técnico propio.
+
 | Comando | Qué hace | Presupuesto |
 | --- | --- | --- |
 | `npm run verify` | lint + typecheck + unit de dominio + componentes; los tests SQL/RLS aparecen como «SOLO EN CI — pendiente de resultado» (ADR-011 §9). **El comando por defecto.** | **< 90 s** (comando) |
