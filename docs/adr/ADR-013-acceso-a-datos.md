@@ -543,6 +543,44 @@ con Supabase CLI 2.121.0 y PostgreSQL 17.11. La salida está en
   privilegios. La [V] 1 definitiva sigue siendo del PR A de P0-1, con la primera
   migración.
 
+## Propuesta del 6 de noviembre de 2026 — nota de implementación de §5.1
+
+**Estado: propuesta, pendiente de la aprobación de los fundadores** (gate del PR
+del plan de la 003). No se implementa hasta que la aprueben. **No cambia la
+decisión.** Precisa quién es el dueño de las auxiliares de membresía que §5.1
+permite como `security definer`. Origen: el preflight del plan de P0-2 (ADR-011
+§9.4), runs
+[42233151689](https://github.com/flashwp3-ctrl/juntia/actions/runs/42233151689),
+[42233739213](https://github.com/flashwp3-ctrl/juntia/actions/runs/42233739213) y
+[42234176869](https://github.com/flashwp3-ctrl/juntia/actions/runs/42234176869),
+con Supabase CLI 2.121.0 y PostgreSQL 17.11. La salida está en
+`specs/003-pareja-y-balances/research.md`, R1.
+
+- **El problema.** Las políticas de `groups` y `group_members` necesitan
+  preguntar «¿quien llama es integrante de este grupo?», y esa pregunta lee
+  `group_members`. Si la auxiliar se ejecuta con la RLS de quien llama, la
+  política se llama a sí misma (recursión). Si su dueño es `postgres`, la
+  auxiliar lee sin RLS porque `postgres` tiene `BYPASSRLS`: funciona, pero deja
+  una pieza de la autorización en manos de un rol que se salta toda política, lo
+  contrario de lo que §2 pide para `juntia_writer`.
+- **Cómo se cumple §5.1.** Un rol propio, **`juntia_membership`**, `nologin
+  nobypassrls`, que no es dueño de ninguna tabla y solo tiene `select` sobre
+  `groups`, `group_members` y `group_invitations`, con políticas `for select to
+  juntia_membership using (true)`. Es el dueño de las auxiliares
+  (`is_group_member`, `is_couple_member`, `is_invited_to`, `shares_couple_with`),
+  que son `security definer`, `search_path = ''`, devuelven solo un booleano y se
+  ejecutan solo por `authenticated` y `juntia_writer`. La RLS se le aplica (no es
+  `BYPASSRLS`); simplemente su política es amplia y de solo lectura, sobre tres
+  tablas que no guardan importes.
+- **Lo verificado.** Sin recursión ni para `authenticated` ni para
+  `juntia_writer`; Sara y Tomás ven su pareja, sus dos membresías y su invitación;
+  una tercera cuenta no ve ninguna fila; `juntia_writer` decide, valida y bloquea
+  con esas auxiliares en crear, aceptar, anular y liquidar.
+- **Lo que no cambia.** `juntia_writer` sigue igual; ningún rol nuevo tiene
+  `LOGIN`, `BYPASSRLS`, escritura ni propiedad de tablas; las auxiliares no
+  devuelven datos, solo un booleano; la prueba de privilegios efectivos incluye el
+  rol nuevo.
+
 ## Referencias
 
 - `docs/JUNTIA_MASTER.md` §5, §7.1–7.5, §10.1, §15.6.3 y §15.10 (decisión 1 y el

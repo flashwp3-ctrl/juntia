@@ -1,0 +1,296 @@
+# Data Model — 003 · Pareja y balances (P0-2)
+
+Esquema de base de datos y tipos de dominio que P0-2 añade sobre el de la 002
+(`specs/002-cuentas-y-gastos-privados/data-model.md`). Aplica ADR-013 (con la nota
+de implementación de §5.1 que propone este plan, ver [research.md](research.md)
+R1), ADR-001, ADR-002 (con su nota de implementación de la decisión 20.8), ADR-003
+y ADR-007 (con su enmienda de la decisión 20.11), y el maestro §5 y §7.3.
+Identificadores en inglés y `snake_case` en SQL (`docs/CONVENTIONS.md` A.1). Las
+migraciones de `supabase/migrations/` son la única fuente; esto es su
+especificación, no su código. Lo marcado **decisión del plan** está justificado en
+[research.md](research.md).
+
+## 1. Roles
+
+| Rol | Atributos | Novedad en P0-2 |
+| --- | --- | --- |
+| `juntia_writer` | `nologin nobypassrls`, no es dueño de ninguna tabla | Nuevas funciones y políticas sobre las tablas de pareja |
+| `juntia_membership` | `nologin nobypassrls`, no es dueño de ninguna tabla | **Nuevo** (research R1; nota de implementación de ADR-013 §5.1 que propone este plan). Solo `select` sobre `groups`, `group_members` y `group_invitations`, con políticas `using (true)` para ese rol. Es dueño de las auxiliares de membresía `security definer`, que devuelven solo un booleano. No escribe nada |
+| `authenticated`, `anon`, `supabase_auth_admin` | Los de Supabase | Sin cambios de modelo: `authenticated` lee por vistas y llama a funciones de entrada |
+
+## 2. Tablas nuevas de `juntia_data`
+
+Todas son **tablas controladas** (ADR-013 §2; spec FR-001): RLS activada,
+`revoke all` para `anon` y `authenticated` (incluidos `TRUNCATE`, `REFERENCES` y
+`TRIGGER`), escritas solo por funciones de `juntia_writer`. Claves UUID.
+
+### 2.1 `groups` — la pareja
+
+| Columna | Tipo | Regla |
+| --- | --- | --- |
+| `id` | `uuid` pk | `gen_random_uuid()` |
+| `kind` | `text not null` | `check (kind = 'couple')`. El dominio se modela para N; P0 solo crea parejas (§15.5) |
+| `status` | `text not null` | `check (status in ('provisional','active','discarded'))` (spec FR-010) |
+| `owner_user_id` | `uuid not null` → `auth.users` | Inmutable. La propietaria |
+| `currency` | `text not null default 'COP'` | `check (currency = 'COP')`, inmutable (ADR-002) |
+| `time_zone` | `text not null default 'America/Bogota'` | `check (time_zone = 'America/Bogota')` en P0 |
+| `version` | `integer not null default 1` | Sube en cada cambio de estado |
+| `created_at`, `activated_at`, `discarded_at` | `timestamptz` | `activated_at` no nulo ⇔ estado activa o posterior; `discarded_at` no nulo ⇔ descartada |
+
+**Transiciones** (un trigger rechaza cualquier otra, también para `juntia_writer`):
+
+```
+create_invitation                 accept_invitation
+(nada) ──────────▶ provisional ───────────────────▶ active   (final en P0: ADR-003)
+                       │
+                       │ cancel_invitation
+                       └─────────────────────────▶ discarded (final)
+```
+
+Una pareja `provisional` o `discarded` no tiene movimientos, partes ni
+liquidaciones: lo comprueban las funciones y un `check` por clave foránea
+compuesta no es posible, así que lo protege un trigger en `transactions` y
+`settlements` que exige `groups.status = 'active'` al insertar (spec FR-004).
+
+### 2.2 `group_members`
+
+| Columna | Tipo | Regla |
+| --- | --- | --- |
+| `group_id` | `uuid not null` → `groups` | pk compuesta con `user_id` |
+| `user_id` | `uuid not null` → `auth.users` | |
+| `role` | `text not null` | `check (role in ('owner','member'))` |
+| `status` | `text not null` | `check (status in ('active','released'))`. `released` solo al descartar una pareja provisional |
+| `join_order` | `smallint not null` | `check (join_order in (1,2))`: 1 la propietaria, 2 el integrante. Da el color (`person.1`, `person.2`) y el desempate del reparto (ADR-002, nota de la 20.8) |
+| `joined_at`, `released_at` | `timestamptz` | |
+
+Índices únicos parciales:
+
+- `group_members_one_couple_per_person (user_id) where status = 'active'`: una
+  pareja provisional o activa por persona (spec FR-004).
+- `group_members_max_two (group_id, join_order) where status = 'active'`: como
+  `join_order` solo admite 1 y 2, nunca hay un tercero activo (FR-004, US-10).
+
+Un trigger impide pasar de `released` a `active` y liberar a un integrante de una
+pareja `active` (ADR-003).
+
+### 2.3 `group_invitations`
+
+| Columna | Tipo | Regla |
+| --- | --- | --- |
+| `id` | `uuid` pk | |
+| `group_id` | `uuid not null` → `groups` | |
+| `email` | `text not null` | `check (email = lower(btrim(email)))` |
+| `token_hash` | `text not null unique` | `check (token_hash ~ '^[0-9a-f]{64}$')`: SHA-256 en hex. **El token nunca se guarda** (FR-012, FR-012a; research R3) |
+| `status` | `text not null` | `check (status in ('pending','accepted','cancelled','replaced'))`. «Vencida» no es un estado guardado: es `pending` con `expires_at <= now()`, calculado en el servidor |
+| `expires_at` | `timestamptz not null` | `created_at + 7 days` (§15.5) |
+| `created_by` | `uuid not null` | La propietaria |
+| `inviter_display_name` | `text not null` | Copia del nombre visible de la propietaria al crear o regenerar la invitación. Es lo único de ella que ve quien recibe la invitación antes de aceptar (M6), porque la RLS de `profiles` no le deja leer su perfil. **Decisión del plan** |
+| `accepted_by`, `accepted_at` | `uuid`, `timestamptz` | No nulos ⇔ `accepted` |
+| `replaced_by` | `uuid` → `group_invitations` | No nulo ⇔ `replaced` (Generar enlace nuevo) |
+| `created_at` | `timestamptz` | |
+
+Índice único parcial `group_invitations_one_pending (group_id) where status =
+'pending'`: nunca hay dos enlaces válidos a la vez (FR-012).
+
+### 2.4 `transaction_allocations` — las partes
+
+| Columna | Tipo | Regla |
+| --- | --- | --- |
+| `transaction_id` | `uuid not null` → `transactions` | pk compuesta |
+| `user_id` | `uuid not null` → `auth.users` | Integrante activo del grupo del gasto (función y trigger) |
+| `amount_minor` | `bigint not null` | `check (amount_minor >= 0 and amount_minor % 100 = 0)`: pesos enteros (nota de ADR-002) |
+
+Una fila por integrante, también con parte 0: así la tabla dice quién participa y
+quién no (spec FR-019a). **Trigger de restricción diferido** al final de la
+transacción: para cada gasto de grupo activo, las partes suman exactamente
+`amount_minor` y al menos una es positiva (FR-004, FR-019). Un gasto privado no
+tiene filas.
+
+### 2.5 `settlements` — liquidaciones (tabla propia)
+
+**Decisión del plan** (spec FR-002; research R6): las liquidaciones viven en su
+propia tabla, no en `transactions`. No tienen categoría, pagador ni partes, tienen
+dirección y su propio ciclo de anulación (enmienda de ADR-007); separarlas evita
+que una consulta de gastos las sume por error (FR-029).
+
+| Columna | Tipo | Regla |
+| --- | --- | --- |
+| `id` | `uuid` pk | |
+| `group_id` | `uuid not null` → `groups` | Pareja `active` (trigger) |
+| `from_user_id`, `to_user_id` | `uuid not null` | Integrantes activos y distintos (`check`) |
+| `amount_minor` | `bigint not null` | `check (amount_minor > 0 and amount_minor % 100 = 0)` |
+| `currency` | `text not null default 'COP'` | Igual a la del grupo |
+| `settlement_date` | `date not null` | Hoy o pasada en `America/Bogota` (Q10): la función lo valida |
+| `note` | `text` | Opcional, ≤ 140, mismo `check` que `transactions.description` |
+| `status` | `text not null default 'active'` | `check (status in ('active','voided'))`. Nunca se edita otro campo (trigger) ni se borra (ADR-007, enmienda) |
+| `voided_at`, `voided_by`, `void_reason` | | No nulos ⇔ `voided`; `void_reason in ('void','undo')` |
+| `version` | `integer not null default 1` | `expectedVersion` para anular (FR-057) |
+| `created_by`, `created_at` | | Autor visible para los dos |
+
+## 3. Cambios en tablas de la 002
+
+### 3.1 `transactions`
+
+- Se **retira** `transactions_private_only_p0_1` (spec FR-005).
+- `group_id` gana su clave foránea a `groups`.
+- **Nueva** `payer_user_id uuid` → `auth.users`: obligatoria en los gastos de grupo
+  (`check (group_id is null or payer_user_id is not null)`), nula en los privados.
+  Integrante activo del grupo (función y trigger). Editable (Q12).
+- **Nueva** `moved_from_transaction_id uuid` → `transactions`: en el compartido
+  que crea Mover a Pareja, apunta al privado anulado; **nunca** se expone a quien
+  no es su autora (FR-036, FR-041). `moved_to_transaction_id` en el privado
+  anulado, simétrica. Una restauración de «Deshacer» de Mover a Pareja apunta a su
+  compartido anulado con `restored_from_transaction_id` (Q15).
+- **Nueva** `split_mode text`: `check (split_mode in ('equal','percent','amount'))`
+  en gastos de grupo y nula en los privados. Guarda el modo elegido; los
+  porcentajes elegidos se guardan en `split_percents smallint[]` solo cuando el
+  modo es `percent`. Las partes de `transaction_allocations` son la verdad del
+  dinero; el modo y los porcentajes solo sirven para volver a abrir la edición
+  como estaba (FR-022).
+- `transactions_income_private` y `transactions_private_owner_is_author` se
+  quedan. Nueva `transactions_group_no_owner`: `group_id is null or owner_user_id
+  is null`.
+- El trigger `transactions_guard_update` añade `payer_user_id`, `split_mode` y
+  `split_percents` a lo editable y sigue rechazando el cambio de `group_id`,
+  `owner_user_id` y `type` (no hay «mover a Yo», ADR-001 punto 8).
+
+### 3.2 `audit_events`
+
+`entity_type in ('transaction','settlement','group','invitation')` y `action in
+('create','update','void','move','restore','accept','cancel','regenerate')`.
+`reason` amplía a `('delete','undo','void')`. Sigue siendo de solo inserción. Las
+filas de una pareja las lee **solo** quien las escribió, salvo «Anotado por» y
+«Editado por» de los gastos compartidos, que salen de columnas de `transactions`
+(`created_by`, `updated_by`, `updated_at`), no de la auditoría (spec
+Assumptions; Q12).
+
+`transactions` gana `updated_by uuid` para «Editado por X · fecha».
+
+### 3.3 `idempotency_records`
+
+`action` amplía su `check` con: `create_shared_expense`, `update_shared_expense`,
+`void_shared_expense`, `reclassify_to_shared`, `undo_reclassify_to_shared`,
+`register_settlement`, `void_settlement`, `create_invitation`,
+`regenerate_invitation`, `cancel_invitation` y `accept_invitation`. El protocolo
+`pending → completed` de la 002 no cambia.
+
+### 3.4 `profiles`
+
+La lectura de `authenticated` pasa de «la propia» a «la propia **o** la del otro
+integrante de mi pareja activa» (`juntia_private.shares_couple_with(user_id)`),
+pero solo a través de la vista `couple_members`, que expone `display_name` y
+`join_order` y **nunca** el correo (CoupleStatus; spec «Visibilidad del otro»).
+
+## 4. Auxiliares de membresía (`juntia_private`, dueño `juntia_membership`)
+
+`language sql stable security definer set search_path = ''`, devuelven solo un
+booleano, `execute` solo para `authenticated` y `juntia_writer` (ADR-013 §5.1).
+No tienen recursión porque leen con la política `using (true)` de
+`juntia_membership`, no con la de quien llama (research R1).
+
+| Función | Verdadera cuando |
+| --- | --- |
+| `is_group_member(group_id)` | Quien llama es integrante `active` del grupo, en cualquier estado del grupo salvo `discarded` |
+| `is_couple_member(group_id)` | Ídem y el grupo está `active` |
+| `is_invited_to(group_id)` | Hay una invitación `pending` del grupo para el correo verificado de quien llama |
+| `shares_couple_with(user_id)` | Quien llama y `user_id` son integrantes activos de la misma pareja `active` |
+
+`current_email()` (`security invoker`, de `postgres`) lee el correo de los claims
+del JWT; una sesión de Juntia implica un correo verificado, porque Auth no deja
+entrar sin verificar (`enable_confirmations = true`, 002).
+
+## 5. Políticas
+
+| Tabla | `authenticated` (select) | `juntia_writer` |
+| --- | --- | --- |
+| `groups` | `is_group_member(id)` | select y update: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'` |
+| `group_members` | `is_group_member(group_id)` | select: propia o `is_group_member`; insert y update: solo la fila propia |
+| `group_invitations` | `is_group_member(group_id)` (la propietaria ve la suya; **nunca** el hash fuera de las funciones: la vista no lo expone) | select y update: `is_group_member(group_id) or email = current_email()`; insert: `created_by = current_uid() and is_group_member(group_id)` |
+| `transactions` | `owner_user_id = auth.uid() or (group_id is not null and is_couple_member(group_id))` | Ídem para select; insert y update por rama: privada propia o de grupo con `is_couple_member` |
+| `transaction_allocations` | Existe el movimiento visible (subconsulta sobre `transactions`, que aplica su RLS) | Ídem; insert y delete solo por las funciones de gasto compartido |
+| `settlements` | `is_couple_member(group_id)` | select, insert y update de estado: `is_couple_member(group_id)` |
+
+El spike R1 demostró que esta combinación no tiene recursión y que una tercera
+cuenta no ve nada.
+
+## 6. Vistas de `public` (`security_invoker = true`)
+
+Importes siempre como `text` (ADR-013 §4). Contrato en
+[contracts/database.md](contracts/database.md).
+
+**Cambio obligatorio en las vistas de la 002 (research R2):** `my_transactions`,
+`my_transaction_months` y `my_recent_categories` filtran ahora **explícitamente**
+`owner_user_id = auth.uid() and group_id is null`. Hoy dependen solo de la RLS, y
+el spike demostró que con la rama de grupo de la RLS empezarían a devolver los
+gastos compartidos. Es la lección F44-1 aplicada a las vistas.
+
+| Vista nueva | Filas | Para |
+| --- | --- | --- |
+| `my_couple` | 0 o 1: la pareja provisional o activa de quien llama, con su estado, rol, `join_order` y, para la propietaria de una provisional, el correo invitado y la caducidad de la invitación pendiente | Mi pareja M1–M4, decidir si hay Nosotros |
+| `couple_members` | Los integrantes activos de mi pareja: `user_id`, `display_name`, `role`, `join_order` | Avatares, «Pagó X», CoupleStatus |
+| `couple_expenses` | Gastos activos de mi pareja activa con `payer_user_id`, `split_mode`, `created_by`, `updated_by`, `updated_at`, `version` y las partes agregadas como `jsonb` (`{user_id: amount_text}`) | Actividad y detalle en Nosotros, desglose del Balance |
+| `couple_settlements` | Liquidaciones de mi pareja, activas y anuladas, con su estado | Actividad en Nosotros, historial del Balance |
+| `my_shared_parts` | Gastos activos de mi pareja con mi parte (`my_part_minor` como texto) | Filas «Compartido · tu parte» en Yo |
+| `couple_transaction_months` | Meses con gastos o liquidaciones activos de mi pareja | Flechas de Actividad en Nosotros |
+
+Ninguna vista de pareja tiene una columna de un movimiento privado ni
+`moved_from_transaction_id` (FR-036). `my_transactions` expone a la autora el
+destino de un privado movido para el detalle de su historial («movido a Pareja»).
+
+## 7. Lecturas agregadas: vistas de una sola sentencia
+
+**Decisión del plan** (FR-043; research R4): los totales y el Balance son **vistas
+`security_invoker` de una sola sentencia**, que PostgreSQL ejecuta con una única
+instantánea. Nunca se suman páginas ni se calcula nada en dos lecturas.
+
+- Una función `language sql` normal **no sirve** para leer como `authenticated`:
+  su cuerpo se resuelve al ejecutarse y `authenticated` no tiene `usage` sobre
+  `juntia_data` (ADR-013 §2.1). El spike lo confirmó con `permission denied for
+  schema juntia_data` (research R4).
+- Si una lectura necesita parámetros que una vista no admite, la alternativa
+  verificada es una función con **cuerpo SQL estándar** (`begin atomic … end`), que
+  se resuelve al crearla, como `current_uid()` en la 002. Ninguna lectura de P0-2
+  lo necesita: los meses se filtran sobre la vista.
+- Una función PL/pgSQL que hace varias lecturas debe ser `stable`: así todas usan
+  la instantánea de la llamada. Con `volatile` cada sentencia ve una instantánea
+  nueva (research R4). Las funciones que escriben son `volatile` a propósito: tras
+  esperar el bloqueo del grupo tienen que ver lo que escribió la otra operación.
+
+| Vista | Devuelve | Para |
+| --- | --- | --- |
+| `couple_month_summary` | Una fila por mes: gasto del mes, desglose por categoría y número de gastos, todo como texto | Inicio y Actividad en Nosotros |
+| `me_month_summary` | Una fila por mes: privados, parte compartida y `gasto_consumo` de Yo | Inicio y Actividad en Yo. Sustituye la suma en el servidor de la aplicación de la 002, para que el total de Yo sea consistente |
+| `couple_balance` | Una fila por integrante: pagado, le corresponde, enviadas, recibidas y `net_owed`, como texto | Balance, módulo de Inicio y hoja de liquidación |
+
+`computeBalance` del dominio (FR-025) es la referencia: las pruebas de integración
+comparan `couple_balance` con `computeBalance` sobre los mismos datos, y el
+dataset dorado fija los dos (el spike ya dio Sara +42990000 / Tomás −42990000 en
+`beforeSettlement` y +22990000 / −22990000 en `afterSettlement`).
+
+## 8. Tipos de dominio (`src/domain/`)
+
+| Módulo | Tipos y funciones nuevas |
+| --- | --- |
+| `domain/allocations/` | `SplitMode = 'equal' \| 'percent' \| 'amount'`; `splitAmount(amount: Money, mode, participants: OrderedMember[], values)` → `Allocation[]` en pesos enteros con el mayor residuo y desempate por `joinOrder` (ADR-002, nota de la 20.8); `validateSplit` («Faltan $X», «Sobran $X»); `nextSplitOnParticipantsChange(prev, participants)` con la regla de FR-019a (restaurar solo si las dos partes eran positivas; si no, 50/50). Algoritmo **versión 1** |
+| `domain/balances/` | `computeBalance(expenses, settlements, members)` → por integrante `paid`, `share`, `settledOut`, `settledIn`, `net`; `settlementSuggestion(balance)` deudor → acreedor; invariante «la suma de `net` es 0» |
+| `domain/couple/` | `CoupleStatus = 'none' \| 'provisional' \| 'active'`; `InvitationView` (`pending`, `expired`, …) y `isExpired(invitation, now)` |
+| `domain/transactions/` | `meMonthSummary` añade la parte compartida; `groupByDay` acepta filas de liquidación |
+| `domain/golden/` | `october-2026.ts` añade `sharedOctober2026` (las seis filas de la spec, copiadas), `settlementOctober25` y los estados `beforeSettlement` y `afterSettlement` (spec F47-9) |
+
+## 9. Transiciones de un gasto compartido y de una liquidación
+
+```
+              create_shared_expense / reclassify_to_shared
+   (nada) ──────────────────────────────────────────▶ active (v1)
+                                                         │ update_shared_expense(expected = v)
+                                                         ├────────────────────────────────▶ active (v+1)
+                                                         │ void_shared_expense(expected = v, reason = delete | undo)
+                                                         │ undo_reclassify_to_shared(expected = v)  ── crea un privado nuevo
+                                                         └────────────────────────────────▶ voided (final)
+
+              register_settlement                       void_settlement(expected = v, reason = void | undo)
+   (nada) ──────────────────────▶ active (v1) ─────────────────────────────────────────────▶ voided (final)
+```
+
+Cada flecha escribe su fila de `audit_events` en la misma transacción y bloquea
+la raíz del grupo antes de leer el saldo (FR-006).
