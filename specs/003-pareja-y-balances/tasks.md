@@ -61,9 +61,10 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 | # | Dónde | Lectura | Por qué |
 | --- | --- | --- | --- |
 | I1 | T009, T013 | Las partes «sin funciones» de `10_couple` y `11_shared_money` van en archivos propios (`10a_couple_tables.test.sql`, `11a_shared_tables.test.sql`) para que cada punto de control corra su capa sin pruebas en rojo de funciones que aún no existen | El plan pide en cada punto de control «la parte sin funciones» de esos archivos |
-| I2 | T045 | La infraestructura de los tres resultados de escritura (`ok`/`rejected`/`unknown`) y «Comprobar estado» nace en el PR C y la reutilizan B (retroactivamente en Mi pareja, por T045) y D | En B solo Mi pareja escribe; el plan la describe en contracts/server-actions §1 sin fijar el PR. B usa un `unknown` mínimo con la misma clave hasta T045 |
+| I2 | T031b, T045 | La infraestructura de los tres resultados de escritura (`ok`/`rejected`/`unknown`) y «Comprobar estado» **nace completa en el PR B** (T031b), con las cuatro escrituras de invitación. El PR C la **amplía** a los gastos compartidos y a Mover a Pareja (T045), y el PR D la usa para las liquidaciones. Ningún PR deja a otro una parte por terminar | El plan la describe en contracts/server-actions §1 sin fijar el PR; FR-056 y FR-059 rigen desde la primera escritura compartida, que es la invitación (revisión del PR #50, F50-1) |
 | I3 | T047, T061 | El saldo de una línea de Inicio en Nosotros («POR SALDAR · Tomás le debe a Sara $X · Ver balance», FR-044) entra en C con la vista `couple_balance`; la pantalla de Balance con SharedBalance entra en D | El plan pone Inicio en Nosotros en C y Balance en D |
-| I4 | T038, T055, T069 | Capturas y mediciones a 390 y 1440 px en los dos temas, salvo donde la tarea pida los siete anchos | `CLAUDE.md` 5 hace obligatorios esos dos |
+| I4 | T038, T055, T069 | Las **capturas** para la aprobación humana son a 390 y 1440 px en los dos temas. El **barrido sin scroll horizontal** es en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas, con prueba automática (F50-3) | `CLAUDE.md` 5 hace obligatorios 390 y 1440; FR-054 y SC-001 piden los siete |
+| I5 | T018a, T031c, T044a, T060a | Las pruebas de integración y las E2E se escriben **antes** que el código que prueban y se ven en rojo **contra `juntia-dev`** (`test:integration:dev`, `e2e:dev`). Las tareas que las «hacen pasar» (T022–T024, T036, T051, T065) se quedan donde están, sin runs de CI adicionales | Regla 8; revisión del PR #50, F50-2 |
 
 ---
 
@@ -81,7 +82,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 **Orden obligatorio** (plan, PR A): `couple_foundation` → **punto de control 1** → `shared_money_tables` → **punto de control 2** → `couple_functions` y `shared_money_functions`. **Si las auxiliares de membresía dan recursión o una tercera cuenta ve filas en el punto de control 1, el PR se para** y se reabre la nota de ADR-013 §5.1.
 
-### Grupo 1A — dominio (tests primero; T002 → T003 en serie, T004–T008 en paralelo con ellas)
+### Grupo 1A — dominio (tests primero; T002 → T003 en serie; T004, T005, T006, T007 y T008 en paralelo con ellas; T005b después de T002, T003 y T006)
 
 - [ ] T002 Test de **dominio** en `src/domain/allocations/allocations.test.ts` y después `src/domain/allocations/index.ts`: `SplitMode`, `splitAmount` (algoritmo **versión 1**: pesos enteros, mayor residuo, desempate por `joinOrder`), `validateSplit` («Faltan $X», «Sobran $X») y `nextSplitOnParticipantsChange`
   - Casos: propiedades (para cualquier importe hasta 999.999.999 pesos, modo y participantes, las partes son múltiplos de 100 unidades menores, suman exactamente el importe y el resultado es determinista); $150.000 al 70/30 → 105.000/45.000; $100.001 al 50/50 → Sara 50.001 / Tomás 50.000; $100.001 al 33/67 → 33.000/67.001; Tomás paga $100.001 y solo participa Sara → parte de Sara 100.001; Porcentaje 100/0 ≡ un participante; 55/45 → uno → dos = 55/45; 100/0 → uno → dos = 50/50 con los dos.
@@ -98,7 +99,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-010, FR-011.
   - Itera / prueba: como T002.
 
-- [ ] T005 [P] Test de **dominio** en `src/domain/golden/october-2026.test.ts` y ampliación de `src/domain/golden/october-2026.ts`: `sharedOctober2026` (las seis filas de la spec, **copiadas, no recalculadas**), `settlementOctober25` (Tomás → Sara 200.000, 25 oct) y los estados `beforeSettlement` y `afterSettlement`
+- [ ] T005 [P] Preparar el fixture en `src/domain/golden/october-2026.ts`: `sharedOctober2026` (las seis filas de la spec, **copiadas, no recalculadas**), `settlementOctober25` (Tomás → Sara 200.000, 25 oct) y los estados `beforeSettlement` y `afterSettlement`. Solo datos: no llama a ninguna función de T002, T003 ni T006
+  - Cumple: maestro §15.10, «Dataset dorado», reglas 1 y 2.
+  - Prueba / terminado cuando: `npm run typecheck` pasa y las filas coinciden carácter a carácter con la tabla «Dataset dorado de P0-2» de la spec.
+
+- [ ] T005b Test de **dominio** en `src/domain/golden/october-2026.test.ts` que verifica el fixture de T005 con las funciones de T002, T003 y T006 (**después** de esas tres)
   - Casos: total 2.840.000 y desglose Hogar 1.600.000 · Mercado 640.000 · Servicios 360.000 · Restaurantes 240.000; `beforeSettlement` Sara +429.900 / Tomás −429.900; `afterSettlement` 229.900 con el gasto en 2.840.000; Yo de Sara 1.912.900 (con T006); de Tomás solo su parte compartida, 1.340.000 (precisión F47-9).
   - Cumple: SC-003 (dominio); maestro §15.10, «Dataset dorado», reglas 1, 2 y 4.
   - Prueba / terminado cuando: el test pasa con T002, T003 y T006.
@@ -162,6 +167,10 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-018, FR-022–FR-024, FR-027, FR-028, FR-031, FR-034–FR-036, FR-056, FR-057, FR-063; F49-2, F49-4.
   - Itera / prueba: como T009.
 
+- [ ] T018a Escribir **primero** las pruebas de **integración** de T022, T023 y T024 (`tests/integration/concurrency.test.ts`, `shared-money.test.ts` y `consistency.test.ts`, con todos sus casos) y verlas **en rojo contra `juntia-dev`** con `npm run test:integration:dev`, antes de T019, T020 y T021
+  - Cumple: regla 8; F50-2; interpretación I5.
+  - Prueba / terminado cuando: las pruebas fallan porque faltan las funciones y la capa `src/lib/db/`, no por errores de sintaxis ni de arnés; la salida del rojo queda en `evidence.md`.
+
 - [ ] T019 Migración `2026110x000300_couple_functions.sql` con las cinco funciones de invitación (entrada en `public` y escritura en `juntia_private`, dueño `juntia_writer`, bloqueos persona → grupo, `row_count`, orden de escritura de `accept_invitation`: membresía, activar, aceptar invitación)
   - Cumple: FR-006, FR-010–FR-014; research R3; [contracts/database.md](contracts/database.md).
   - Itera: `db:dev:reset` y `test:db:dev` hasta que T017 pasa.
@@ -174,16 +183,16 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-007, FR-012a, FR-042; [contracts/server-actions.md](contracts/server-actions.md) §1–§2.
   - Itera: `npm run typecheck` y los tests de T022–T024.
 
-- [ ] T022 Test de **integración** `tests/integration/concurrency.test.ts` (dos sesiones reales): dos aceptaciones; anular contra aceptar y generar enlace contra aceptar, en los dos órdenes; regenerar contra regenerar; invitaciones cruzadas; primera creación desde dos pestañas; dos liquidaciones del total; edición contra edición; editar y luego eliminar y eliminar y luego editar; deshacer la creación contra una edición; edición contra liquidación; Mover a Pareja contra edición; ningún instante con dos gastos activos
+- [ ] T022 Hacer pasar la **integración** de `tests/integration/concurrency.test.ts` escrita en T018a (dos sesiones reales): dos aceptaciones; anular contra aceptar y generar enlace contra aceptar, en los dos órdenes; regenerar contra regenerar; invitaciones cruzadas; primera creación desde dos pestañas; dos liquidaciones del total; edición contra edición; editar y luego eliminar y eliminar y luego editar; deshacer la creación contra una edición; edición contra liquidación; Mover a Pareja contra edición; ningún instante con dos gastos activos
   - Cumple: FR-010b, FR-057, FR-064; SC-007, SC-008; §15.6.3 punto 1.
   - Itera: `npm run test:integration:dev`.
   - Prueba / terminado cuando: cada carrera da un ganador y el perdedor no cambia nada (estado, versión, membresías, partes y auditoría comparados antes y después).
 
-- [ ] T023 Test de **integración** `tests/integration/shared-money.test.ts`: doble envío y reintento de **cada** escritura compartida (una sola escritura); FR-012a: respuesta perdida, reintento con la misma clave, mismo resultado y mismo enlace; `write_status` tras una respuesta perdida, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona; las RPC de la 002 contra un gasto compartido **por la API**, sin efectos; `my_profile` y `couple_members` con dos cuentas emparejadas; importes de ida y vuelta con `9007199254740993`; ningún importe es `number` en los tipos generados
+- [ ] T023 Hacer pasar la **integración** de `tests/integration/shared-money.test.ts` escrita en T018a: doble envío y reintento de **cada** escritura compartida (una sola escritura); FR-012a: respuesta perdida, reintento con la misma clave, mismo resultado y mismo enlace; `write_status` tras una respuesta perdida de **cada una de las cuatro escrituras de invitación** (crear, regenerar, anular y aceptar) y de las de dinero, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona; las RPC de la 002 contra un gasto compartido **por la API**, sin efectos; `my_profile` y `couple_members` con dos cuentas emparejadas; importes de ida y vuelta con `9007199254740993`; ningún importe es `number` en los tipos generados
   - Cumple: FR-007, FR-012a, FR-056, FR-059 (servidor); SC-006; F49-1, F49-2, F49-4.
   - Itera / prueba: como T022.
 
-- [ ] T024 Test de **integración** `tests/integration/consistency.test.ts`: un total de `couple_month_summary`, `me_month_summary` o `couple_balance` nunca mezcla dos estados con una inserción concurrente; `couple_balance` = `computeBalance` sobre los mismos datos; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas (ninguna fila dos veces; toda fila que existía de principio a fin, una vez); el dataset dorado sembrado **por las funciones reales** da `beforeSettlement` y `afterSettlement`
+- [ ] T024 Hacer pasar la **integración** de `tests/integration/consistency.test.ts` escrita en T018a: un total de `couple_month_summary`, `me_month_summary` o `couple_balance` nunca mezcla dos estados con una inserción concurrente; `couple_balance` = `computeBalance` sobre los mismos datos; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas (ninguna fila dos veces; toda fila que existía de principio a fin, una vez); el dataset dorado sembrado **por las funciones reales** da `beforeSettlement` y `afterSettlement`
   - Cumple: FR-042, FR-043; SC-003 (integración), SC-009; research R4.
   - Itera / prueba: como T022.
 
@@ -222,7 +231,19 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-012a, FR-014; US-1 escenarios 5 y 10; [contracts/server-actions.md](contracts/server-actions.md) §2–§3; research R5.
   - Itera: como T030.
 
+- [ ] T031a [P] [US1] Tests de **componentes** en `src/features/couple/write-result.test.tsx` para las **cuatro escrituras de invitación** (crear, regenerar, anular y aceptar): `ok`; `rejected` con su `JT`; `unknown` sin afirmar que no se escribió, con los campos bloqueados, «Reintentar» idéntico (misma clave y, en crear y regenerar, el mismo token) y «Comprobar estado» con `write_status` (`completed` lleva al resultado real; `not_found` dice que todavía no consta). Incluye **aceptar con la respuesta perdida**: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez
+  - Cumple: FR-056, FR-059 (B); precisión F47-4; revisión del PR #50, F50-1.
+  - Itera: `npm run test:components -- --changed`.
+
+- [ ] T031c [US1] Escribir **primero** el caso «Invitación → login → volver → aceptar» de la **spec E2E 1** (`tests/e2e/access-account.e2e.ts`) y verlo **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032
+  - Cumple: regla 8; F50-2; interpretación I5.
+  - Prueba / terminado cuando: el caso falla porque faltan Mi pareja e `/invitacion`, no por el arnés; la salida queda en `evidence.md`.
+
 ### Grupo 2B — implementación (en serie: comparten `es.ts` y el shell)
+
+- [ ] T031b [US1] Infraestructura **completa** de resultados de escritura en `src/features/shared/write-result.ts` (`ok`/`rejected`/`unknown`, clave por apertura, bloqueo de la intención, «Reintentar» idéntico y «Comprobar estado» con `write_status` de `src/lib/db/write-status.ts`), conectada a las cuatro escrituras de invitación
+  - Cumple: FR-056, FR-059; [contracts/server-actions.md](contracts/server-actions.md) §1; interpretación I2.
+  - Itera: T031a en verde.
 
 - [ ] T032 [US1] `src/features/couple/` y `src/app/(app)/cuenta/pareja/page.tsx`: Mi pareja M1–M4 sobre `my_couple` y `couple_members`, Server Actions de crear, regenerar y anular (token del navegador, hash en el servidor)
   - Cumple: FR-010–FR-012a, FR-015; US-1.
@@ -242,18 +263,24 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2C — spec E2E 1, axe y salida
 
-- [ ] T036 [US1] **Spec E2E 1** (`tests/e2e/access-account.e2e.ts`): caso «Invitación → login → volver → aceptar», con Tomás entrando por M5; y el HTML de `/invitacion` sin ningún dato de la pareja. axe de Mi pareja (M1–M4) e `/invitacion` (M5–M7) en los dos temas
+- [ ] T036 [US1] Hacer pasar el caso de la **spec E2E 1** escrito en T031c («Invitación → login → volver → aceptar», con Tomás entrando por M5) y comprobar el HTML de `/invitacion` sin ningún dato de la pareja. axe en los dos temas del inventario de estados nuevos del PR B: M1, M2, M3, **M3b** (enlace visible), **M4** (pendiente y vencida), M5, **M6**, **M7** y la **confirmación de anular** (SensitiveActionConfirmation)
   - Cumple: FR-067 (spec 1), FR-068; SC-002 (B); [V] «Retorno tras el login» (prueba ejecutada, responsable implementador, cierre antes del merge del PR B).
   - Itera: `npm run e2e:dev`.
 
 - [ ] T037 Iteración completa del PR B en `juntia-dev`: `e2e:dev` (specs 1 y 2) y `test:integration:dev`
   - Prueba: en verde.
 
-- [ ] T038 Capturas a 390 y 1440 px en los dos temas de M1–M7, A6 y Nosotros sin pareja; pasada de **Impeccable** con hallazgos y correcciones en `evidence.md`; lista de lo que se aprueba viendo la pantalla: Mi pareja (anatomía aprobada, decisión 16.6), el botón «Generar enlace nuevo» y su copy, y la paleta de personas (propuesta §15.9)
-  - Cumple: SC-001 (B).
+- [ ] T038 Responsive y accesibilidad del PR B, con prueba automática en el proyecto `a11y` (`tests/a11y/couple.a11y.ts`), iterada con `e2e:dev` y ejecutada en el gate:
+  - **barrido sin scroll horizontal** (`scrollWidth <= clientWidth`) de Mi pareja (M1–M4), `/invitacion` (M5–M7), A6 y Nosotros sin pareja en **los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas;
+  - **teclado**: «Crear invitación», «Generar enlace nuevo», «Copiar enlace» de M3b, «Anular» con el foco inicial en la opción segura y Escape, y «Aceptar invitación», todo operable sin ratón;
+  - **texto al 200 %** en esas pantallas: sin pérdida de contenido ni solapamientos;
+  - **objetivos de 44 px** en esos controles (`boundingBox`).
 
-- [ ] T039 **Gate final del PR B (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run
-  - Prueba / terminado cuando: verde con las specs 1 y 2.
+  Además, capturas a 390 y 1440 px en los dos temas para la aprobación humana, y pasada de **Impeccable** con hallazgos y correcciones en `evidence.md`. **Impeccable no cuenta como evidencia de FR-054**: la evidencia son las pruebas de arriba. Lista de lo que se aprueba viendo la pantalla: Mi pareja (anatomía aprobada, decisión 16.6), el botón «Generar enlace nuevo» y su copy, y la paleta de personas (propuesta §15.9).
+  - Cumple: FR-054, FR-055, SC-001 (B); F50-3.
+
+- [ ] T039 **Gate final del PR B (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run, la salida del barrido de T038 y el cierre de FR-056 y FR-059 para las cuatro escrituras de invitación (T031a y T023)
+  - Prueba / terminado cuando: verde con las specs 1 y 2 y el proyecto `a11y`.
 
 - [ ] T040 **Humana (fundadores)**: aprobación visual del PR B viendo las capturas
   - Prueba / terminado cuando: aprobación registrada en el PR.
@@ -282,9 +309,13 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: US-8; FR-031–FR-036; precisión F47-4.
   - Itera: como T041.
 
+- [ ] T044a Escribir **primero** los casos de la **spec E2E 3** en `tests/e2e/couple-settle.e2e.ts` (gasto compartido 50/50 con el total de Nosotros; «Cambiar Yo/Nosotros» con el HTML, el RSC y el prefetch sin datos privados con la cookie válida, ausente y no válida; «Mover a Pareja») y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T045
+  - Cumple: regla 8; F50-2; interpretación I5.
+  - Prueba / terminado cuando: los casos fallan porque falta lo que prueban, no por el arnés; la salida queda en `evidence.md`.
+
 ### Grupo 3B — implementación (en serie)
 
-- [ ] T045 Infraestructura de escritura en el cliente: `src/features/expenses/write-result.ts` con `ok`/`rejected`/`unknown`, «Comprobar estado» con `write_status`, la clave por apertura y la extensión del proveedor de Anotar para avisos por operación y por contexto; `router.refresh()` al volver a la pestaña (Q16). Mi pareja (PR B) pasa a usarla
+- [ ] T045 **Ampliar** el módulo común de T031b (`src/features/shared/write-result.ts`) a las escrituras de gasto compartido y de Mover a Pareja, y el proveedor de Anotar a avisos por operación y por contexto; `router.refresh()` al volver a la pestaña (Q16). No completa nada de B: B ya lo tiene entero
   - Cumple: FR-059–FR-061; [contracts/server-actions.md](contracts/server-actions.md) §1 y §6; interpretación I2.
   - Itera: T042 en verde.
 
@@ -310,8 +341,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 3C — spec E2E 3, axe, medición y salida
 
-- [ ] T051 [US3] **Spec E2E 3 nace** en `tests/e2e/couple-settle.e2e.ts`: gasto compartido 50/50 con el total de Nosotros; caso «Cambiar Yo/Nosotros» (HTML, RSC y prefetch sin datos privados con la cookie válida, ausente y no válida); caso «Mover a Pareja» (la vista cambia y el saldo se actualiza). Más axe de Inicio, Actividad y Anotar en Nosotros en los dos temas, agrupado por ruta
-  - Cumple: FR-067 (spec 3), FR-068; SC-002 y SC-005 (C); [V] «Privacidad por ámbito» y «Conversión privado → compartido» (recorrido), responsable CI, cierre antes del merge del PR C.
+- [ ] T051 [US3] **Spec E2E 3 nace**: hacer pasar los casos escritos en T044a. Más, en el proyecto `a11y` (`tests/a11y/couple-shared.a11y.ts`), agrupado por ruta:
+  - **axe** en los dos temas de Inicio, Actividad y Anotar en Nosotros y del **inventario de estados nuevos del PR C**: edición compartida (con el aviso y en conflicto de versión), la **confirmación de eliminar** un gasto compartido, **ChangePreview** (A3) y **A5** de Mover a Pareja en sus dos variantes (rechazo confirmado y resultado desconocido);
+  - **teclado**: el selector de participantes, los modos de reparto, los campos de Importe y Porcentaje, Guardar con Enter y Escape para cerrar, y el flujo A1–A4 de Mover a Pareja;
+  - **texto al 200 %** y **objetivos de 44 px** en esos controles nuevos
+  - Cumple: FR-054, FR-067 (spec 3), FR-068; SC-002 y SC-005 (C); F50-3; [V] «Privacidad por ámbito» y «Conversión privado → compartido» (recorrido), responsable CI, cierre antes del merge del PR C.
   - Itera: `npm run e2e:dev`.
 
 - [ ] T052 Iteración completa del PR C en `juntia-dev`: `e2e:dev` (specs 1, 2 y 3), `test:integration:dev`
@@ -324,8 +358,8 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T054 **Humana (gestor)**: medición en laboratorio de INP al abrir Anotar en Nosotros y al guardar un gasto compartido, y de CLS en las cargas con Skeleton de Inicio y Actividad en Nosotros, reportadas como laboratorio
   - Cumple: SC-010 (C); [V] «Umbrales de §15.7», responsable gestor, cierre antes del merge del PR C.
 
-- [ ] T055 Capturas a 390 y 1440 px en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición con conflicto y A1–A5; pasada de **Impeccable**; lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
-  - Cumple: SC-001 (C).
+- [ ] T055 **Barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición compartida y A1–A5, con la prueba del proyecto `a11y` de T051 y su salida en `evidence.md`. Capturas a 390 y 1440 px en los dos temas para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
+  - Cumple: FR-054, SC-001 (C); F50-3.
 
 - [ ] T056 **Gate final del PR C (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run y la duración del job `e2e`
   - Prueba / terminado cuando: verde con las specs 1, 2 y 3.
@@ -353,6 +387,10 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: US-9; FR-040, FR-050; SC-011 (S1).
   - Itera: como T058.
 
+- [ ] T060a Escribir **primero** los casos de Balance de la **spec E2E 3** (ver el saldo en Balance, registrar la liquidación parcial de 200.000 y comprobar 229.900 con el gasto en 2.840.000) y el test con motion activo de los dos momentos L2, y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T061
+  - Cumple: regla 8; F50-2; interpretación I5.
+  - Prueba / terminado cuando: fallan porque falta Balance, no por el arnés; la salida queda en `evidence.md`.
+
 ### Grupo 4B — implementación (en serie)
 
 - [ ] T061 [US5] Balance en `src/app/(app)/balance/page.tsx` y `src/features/balance/`: pantalla propia en móvil desde Inicio, destino del rail y del sidebar desde 1024 px y módulo de Inicio con barras de 16 px; SharedBalance (aprobado en su forma, decisión 20.2) y el desglose filtrable por mes con `couple_balance` y `couple_expenses`
@@ -373,11 +411,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 4C — spec E2E 3, axe, medición y salida
 
-- [ ] T065 [US6] **Spec E2E 3 crece**: ver el saldo en Balance, registrar la liquidación parcial de 200.000 y comprobar 229.900 con el gasto en 2.840.000 (`afterSettlement`). Un test con **motion activo** para los dos momentos L2 (`docs/TESTING.md` §5, regla 3)
+- [ ] T065 [US6] **Spec E2E 3 crece**: hacer pasar los casos escritos en T060a (saldo en Balance, liquidación parcial de 200.000, 229.900 con el gasto en 2.840.000, `afterSettlement`) y el test con **motion activo** para los dos momentos L2 (`docs/TESTING.md` §5, regla 3)
   - Cumple: FR-067 (spec 3); SC-003 (E2E).
   - Itera: `npm run e2e:dev`.
 
-- [ ] T066 axe de Balance, la hoja de liquidación y el detalle de liquidación en los dos temas
+- [ ] T066 axe en los dos temas de Balance, la hoja de liquidación, el detalle de liquidación y la **confirmación de anular** una liquidación
   - Cumple: FR-068; SC-002 (D).
   - Itera: `npm run e2e:dev`.
 
@@ -387,8 +425,13 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T068 **Humana (gestor)**: medición en laboratorio de CLS en la carga con Skeleton de Balance
   - Cumple: SC-010 (D).
 
-- [ ] T069 Capturas a 390 y 1440 px en los dos temas de Balance (móvil y escritorio), hoja, detalle, saldo invertido, S1 y S4 con movimiento normal y reducido; pasada de **Impeccable**; lista para aprobar viendo la pantalla: SharedBalance (aprobado en su forma), personas y patrones, liquidación en tinta (propuestas §15.9)
-  - Cumple: SC-001 (D).
+- [ ] T069 Responsive y accesibilidad del PR D, con prueba automática en el proyecto `a11y` (`tests/a11y/balance.a11y.ts`):
+  - **barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Balance (pantalla móvil, destino de escritorio y módulo de Inicio), la hoja de liquidación, el detalle con «Anular» y el saldo invertido;
+  - **teclado** en «Registrar liquidación», «Todo»/«Otro», la fecha, «Anular» (foco inicial en la opción segura, Escape) y el selector Yo/Nosotros durante S1;
+  - **texto al 200 %** y **objetivos de 44 px** en esos controles.
+
+  Capturas a 390 y 1440 px en los dos temas, con S1 y S4 con movimiento normal y reducido, para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: SharedBalance (aprobado en su forma), personas y patrones, liquidación en tinta (propuestas §15.9).
+  - Cumple: FR-054, FR-055, SC-001 (D); F50-3.
 
 - [ ] T070 **Gate final del PR D (CI)** sobre el mismo commit que `verify`. **El presupuesto del job `e2e` (< 480 s) pasa a bloquear** con el cierre de P0-2 (Q17)
   - Cumple: [V] «Presupuestos de tiempo», responsable CI, cierre antes del merge del PR D.
@@ -432,7 +475,7 @@ Tests primero y vistos fallar; después la implementación; después la iteraci�
 
 ### Parallel Opportunities
 
-Las `[P]` de un mismo grupo (T004–T008; T030–T031; T041–T043; T058–T060). Ninguna tarea que use `juntia-dev` o el CI es paralela.
+Las `[P]` de un mismo grupo (T004–T008, sin T005b; T030, T031 y T031a; T041–T043; T058–T060). Ninguna tarea que use `juntia-dev` o el CI es paralela.
 
 ---
 
@@ -455,10 +498,10 @@ Task: "T043 Tests de componentes de Inicio y Actividad en Nosotros y de Yo con l
 | PR | Contenido | Tareas | Agente |
 | --- | --- | ---: | --- |
 | Previo | Prerrequisitos de `juntia-dev` | T001 (1) | Gestor |
-| **A** · base de datos, seguridad y dinero (sin interfaz) | T002–T029 | 28 | **Codex o Claude Code** |
-| **B** · Mi pareja e invitaciones | T030–T040 | 11 | **Claude Code** (04·15, 04·17) |
-| **C** · gastos compartidos, Nosotros y Mover a Pareja | T041–T057 | 17 | **Claude Code** (02·5, 02·6, 04·1, 04·7, 04·10, 04·12, 04·13) |
-| **D** · Balance, liquidaciones, S1 y S4, más la aceptación | T058–T074 | 17 | **Claude Code** (02·3, 04·2, 04·5, 04·8, MOTION_SYSTEM) |
+| **A** · base de datos, seguridad y dinero (sin interfaz) | T002–T029, con T005b y T018a | 30 | **Codex o Claude Code** |
+| **B** · Mi pareja e invitaciones | T030–T040, con T031a, T031b y T031c | 14 | **Claude Code** (04·15, 04·17) |
+| **C** · gastos compartidos, Nosotros y Mover a Pareja | T041–T057, con T044a | 18 | **Claude Code** (02·5, 02·6, 04·1, 04·7, 04·10, 04·12, 04·13) |
+| **D** · Balance, liquidaciones, S1 y S4, más la aceptación | T058–T074, con T060a | 18 | **Claude Code** (02·3, 04·2, 04·5, 04·8, MOTION_SYSTEM) |
 
 ### CI por PR (decisión 18: mínimo)
 
@@ -495,11 +538,12 @@ Las tareas de test salen **de la tabla «Pruebas por capa» de cada PR del plan*
 | T007 | `src/lib/db/errors.test.ts` | Dominio | Traducción de errores | Tabla pura |
 | T009, T013 | `supabase/tests/01`, `03`, `05`, `07`, `10a`, `11a` | SQL/RLS | Privilegios, RLS, vistas, invariantes, transiciones | Solo la base detecta una política o un trigger mal escrito |
 | T017, T018 | `supabase/tests/10`, `11` | SQL/RLS | Funciones: éxito, rechazo, idempotencia, validaciones, política rota, compatibilidad con la 002 | La validación vive en la función |
-| T022–T024 | `tests/integration/*` | Integración de servidor | Carreras, doble envío, FR-012a, `write_status`, RPC antiguas por la API, consistencia, cursor | Hacen falta dos sesiones reales o la API |
-| T030, T031, T041–T044, T058–T060 | `src/features/**/*.test.tsx` | Componentes | Estados, textos, selector, resultados de escritura, contexto | Lo que se pinta y la lógica de cliente |
-| T036 | `tests/e2e/access-account.e2e.ts` | E2E (spec 1) | Invitación → login → volver → aceptar | Rodeo por el login y la sesión (matriz de recorridos) |
-| T051, T065 | `tests/e2e/couple-settle.e2e.ts` | E2E (spec 3) | Pareja 50/50, cambio Yo/Nosotros, Mover a Pareja, liquidación | Caché, prefetch y RSC entre rutas (matriz de recorridos) |
-| T036, T051, T066 | axe | Accesibilidad | Sin violaciones serias en los dos temas | Fila 16 de ADR-011 |
+| T018a (rojo), T022–T024 (verde) | `tests/integration/*` | Integración de servidor | Carreras, doble envío, FR-012a, `write_status`, RPC antiguas por la API, consistencia, cursor | Hacen falta dos sesiones reales o la API |
+| T030, T031, T031a, T041–T044, T058–T060 | `src/features/**/*.test.tsx` | Componentes | Estados, textos, selector, resultados de escritura, contexto | Lo que se pinta y la lógica de cliente |
+| T031c (rojo), T036 (verde) | `tests/e2e/access-account.e2e.ts` | E2E (spec 1) | Invitación → login → volver → aceptar | Rodeo por el login y la sesión (matriz de recorridos) |
+| T044a y T060a (rojo), T051 y T065 (verde) | `tests/e2e/couple-settle.e2e.ts` | E2E (spec 3) | Pareja 50/50, cambio Yo/Nosotros, Mover a Pareja, liquidación | Caché, prefetch y RSC entre rutas (matriz de recorridos) |
+| T036, T051, T066 | axe | Accesibilidad | Sin violaciones serias en los dos temas, con el inventario de estados nuevos | Fila 16 de ADR-011 |
+| T038, T051, T055, T069 | `tests/a11y/*.a11y.ts` | Navegador (proyecto `a11y`) | FR-054: sin scroll horizontal en siete anchos, teclado, texto al 200 % y 44 px | Medir el layout real exige un navegador; Impeccable no cuenta como evidencia |
 
 ---
 
@@ -550,11 +594,11 @@ la spec, el plan o sus auxiliares; y la terminología coincide.
 | FR-051 | T063 |
 | FR-052 | T041, T046 |
 | FR-053 | T007, T035, T058 |
-| FR-054, FR-055 | T035, T038, T055, T069 |
-| FR-056 | T017, T018, T023 |
+| FR-054, FR-055 | T035, T038, T051, T055, T069 |
+| FR-056 | T017, T018, T023, T031a, T031b |
 | FR-057 | T018, T022, T042, T047 |
 | FR-058 | T020, T021 |
-| FR-059 | T023, T042, T045 |
+| FR-059 | T023, T031a, T031b, T042, T045 |
 | FR-060–FR-062 | T042, T045 |
 | FR-063 | T009, T013, T017, T018 |
 | FR-064 | T022 |
@@ -569,9 +613,9 @@ la spec, el plan o sus auxiliares; y la terminología coincide.
 
 | SC | Tareas |
 | --- | --- |
-| SC-001 | T038, T055, T069 |
+| SC-001 | T038, T051, T055, T069 |
 | SC-002 | T036, T051, T066 |
-| SC-003 | T005, T024, T051, T065 |
+| SC-003 | T005, T005b, T024, T051, T065 |
 | SC-004 | T002, T003 |
 | SC-005 | T013, T043, T051 |
 | SC-006 | T023, T027 |
@@ -621,6 +665,8 @@ este archivo:
    FR-059 y FR-010b, y las tareas T009, T013, T018, T020 y T023 los nombran por su
    hallazgo.
 2. **La infraestructura de los tres resultados de escritura** no tiene PR fijado
-   en el plan. Se pone en el PR C (T045) con la interpretación I2.
+   en el plan. Nace completa en el PR B (T031b), con las cuatro escrituras de
+   invitación, y el PR C la amplía (T045): interpretación I2, corregida en la
+   revisión del PR #50 (F50-1).
 3. **El PR #48** (comandos de `juntia-dev`) seguía abierto al escribir este
    archivo. T001 lo exige antes del PR A: no se itera contra el CI.
