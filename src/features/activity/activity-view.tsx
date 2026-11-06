@@ -6,7 +6,7 @@
 // Por debajo de 1280, lista por día con ExpenseRow; desde 1280, la tabla de 04·7 (RESPONSIVE_SPECIFICATIONS.md:
 // «Actividad en modo maestro-detalle desde 1280»).
 import Link from "next/link";
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ExpenseRow, rowTitle, signedAmount } from "@/components/ui/expense-row";
@@ -18,7 +18,7 @@ import { filterTransactions, groupByDay, monthKey, monthSummary, type CategoryId
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
-import { useHighlightId, usePendingRows } from "@/features/expenses/annotate-provider";
+import { useConfirmListed, useHighlightId, usePendingRows } from "@/features/expenses/annotate-provider";
 import type { PendingRow } from "@/features/expenses/types";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
 
@@ -117,6 +117,8 @@ function Summary({ rows, month, filters, onCategory }: { rows: readonly Transact
 
 /** Estado de cada creación en vuelo por id (UX lote 1, cambio 3): sus filas no son enlaces y dicen «Guardando…» o «Sin confirmar». */
 type PendingStates = ReadonlyMap<string, PendingRow["state"]>;
+/** Solo las que viajan se pintan «Guardando…»; las confirmadas son filas normales que aún no están en la lista del servidor. */
+const savingOf = (pending: PendingStates, id: string) => (pending.get(id) === "saving" ? ("saving" as const) : undefined);
 
 function DayList({ rows, month, today, selectedId, pending }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates }) {
   const highlightId = useHighlightId();
@@ -135,7 +137,7 @@ function DayList({ rows, month, today, selectedId, pending }: { rows: readonly T
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {transactions.map((transaction) => (
                 <li key={transaction.id}>
-                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={pending.get(transaction.id)} />
+                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} />
                 </li>
               ))}
             </ul>
@@ -167,11 +169,11 @@ function Table({ rows, month, today, selectedId, pending }: { rows: readonly Tra
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
             <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
               <td className={`${cell} rounded-l-[14px]`}>
-                {pending.get(transaction.id) ? (
-                  <span data-pending={pending.get(transaction.id)} aria-busy={pending.get(transaction.id) === "saving" ? true : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                {savingOf(pending, transaction.id) ? (
+                  <span data-pending="saving" aria-busy="true" data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
                     <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
                     <span className="truncate">{rowTitle(transaction)}</span>
-                    <span className="shrink-0 text-[12px] font-medium text-ink-secondary">{copy.row.pending[pending.get(transaction.id)!]}</span>
+                    <span className="shrink-0 text-[12px] font-medium text-ink-secondary">{copy.row.pending.saving}</span>
                   </span>
                 ) : (
                   <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
@@ -197,9 +199,13 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
   // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
+  const confirmListed = useConfirmListed();
+  useEffect(() => confirmListed(rows.map(({ id }) => id)), [rows, confirmListed]);
   const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
-  const pendingStates: PendingStates = new Map(inFlight.map(({ transaction, state }) => [transaction.id, state]));
-  const listed = [...filterTransactions(inFlight.map(({ transaction }) => transaction), { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined }), ...visible];
+  // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
+  const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);
+  const pendingStates: PendingStates = new Map(inFlight.map((row) => [shown(row).id, row.state]));
+  const listed = [...filterTransactions(inFlight.map(shown), { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined }), ...visible];
   if (rows.length === 0 && inFlight.length === 0) {
     return (
       <div className="flex flex-col gap-4 pt-5 lg:pt-8">

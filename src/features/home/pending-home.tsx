@@ -2,10 +2,10 @@
 // UX lote 1, cambio 3 / 04·1 INICIO. Inicio es de servidor; las creaciones en vuelo viven en el proveedor de Anotar (cliente).
 // Estas dos piezas las pintan: arriba de «Últimos movimientos» y, en el primer gasto, en lugar del estado vacío. El gasto del
 // mes y el desglose no las cuentan: esperan a la revalidación, que es la única que sabe si el servidor escribió.
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { monthKey } from "@/domain/transactions";
-import { usePendingRows } from "@/features/expenses/annotate-provider";
+import { useConfirmListed, useHighlightId, usePendingRows } from "@/features/expenses/annotate-provider";
 import { copy } from "@/lib/copy/es";
 import { dayLabel } from "@/lib/format";
 
@@ -16,9 +16,15 @@ function useMonthPending(month: string, knownIds: readonly string[]) {
 
 /** Los `<li>` de las filas en vuelo del mes, para ir dentro de la lista de recientes. */
 export function PendingHomeRows({ month, today, knownIds }: { month: string; today: string; knownIds: readonly string[] }) {
-  return useMonthPending(month, knownIds).map(({ key, state, transaction }) => (
+  const confirmListed = useConfirmListed();
+  const highlightId = useHighlightId();
+  useEffect(() => confirmListed(knownIds), [knownIds, confirmListed]);
+  return useMonthPending(month, knownIds).map(({ key, state, transaction, savedId }) => (
     <li key={key}>
-      <ExpenseRow transaction={transaction} href="" dateLabel={dayLabel(transaction.transactionDate, today)} pending={state} />
+      {/* Confirmada: fila normal con su id real y su detalle, sin «Guardando…» (F51-12). */}
+      {savedId
+        ? <ExpenseRow transaction={{ ...transaction, id: savedId }} href={`/actividad/${savedId}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} isNew={highlightId === savedId} />
+        : <ExpenseRow transaction={transaction} href="" dateLabel={dayLabel(transaction.transactionDate, today)} pending={state === "saving" ? "saving" : undefined} />}
     </li>
   ));
 }

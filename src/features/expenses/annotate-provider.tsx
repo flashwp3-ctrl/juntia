@@ -56,7 +56,9 @@ type AnnotateState = {
 const AnnotateContext = createContext<AnnotateState | null>(null);
 const NO_ROWS: readonly PendingRow[] = [];
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
-const PendingContext = createContext<readonly PendingRow[]>(NO_ROWS);
+const PendingContext = createContext<{ rows: readonly PendingRow[]; confirmListed: (ids: readonly string[]) => void }>({ rows: NO_ROWS, confirmListed: () => {} });
+/** Plazo entre peticiones de revalidación mientras una fila confirmada espera a la real (F51-12). */
+const REFRESH_EVERY_MS = 8000;
 
 type AnnotateProviderProps = {
   children: ReactNode;
@@ -127,10 +129,10 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
         result = { ok: false, error: "network" };
       }
       if (result.ok) {
+        // Confirmada: la fila se queda, con su id real, hasta que la LISTA trae esa fila (`confirmListed`). Nunca se retira por
+        // tiempo: si la revalidación tarda, se pide otra (efecto de abajo) y se sigue esperando, sin hueco (F51-12).
         const savedId = result.value.id;
-        setFlights((current) => current.map((flight) => (flight.key === row.key ? { ...flight, savedId } : flight)));
-        // Red de seguridad: si nada la retiró (la revisión de E5 la retira), no se queda para siempre.
-        window.setTimeout(() => setFlights((current) => current.filter((flight) => flight.savedId !== savedId)), 8000);
+        setFlights((current) => current.map((flight) => (flight.key === row.key ? { ...flight, state: "confirmed", savedId } : flight)));
       } else {
         setFlights((current) => current.filter(({ key }) => key !== row.key));
         setOpen(true);
@@ -138,7 +140,16 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
       resolve(result);
     })();
   }), []);
-  const dropSaved = useCallback((id: string) => setFlights((current) => (current.some((flight) => flight.savedId === id) ? current.filter((flight) => flight.savedId !== id) : current)), []);
+  // Las listas (Inicio, Actividad) avisan de los ids reales que traen: ya llegó la real, así que la temporal sobra.
+  const confirmListed = useCallback((ids: readonly string[]) => setFlights((current) => (current.some((flight) => flight.savedId && ids.includes(flight.savedId)) ? current.filter((flight) => !(flight.savedId && ids.includes(flight.savedId))) : current)), []);
+  // F51-12: mientras alguna fila confirmada espera a la real, se pide una revalidación cada `REFRESH_EVERY_MS` y se sigue esperando.
+  const pendingContext = useMemo(() => ({ rows: pendingRows, confirmListed }), [pendingRows, confirmListed]);
+  const waitingForReal = flights.some((flight) => flight.state === "confirmed");
+  useEffect(() => {
+    if (!waitingForReal) return;
+    const handle = setInterval(() => router.refresh(), REFRESH_EVERY_MS);
+    return () => clearInterval(handle);
+  }, [waitingForReal, router]);
 
   // «Deshacer» (US-2.5; FR-034): anula con `undo` y la versión que devolvió la creación. La clave es una por aviso, así
   // que dos toques o un reintento son la misma intención. Si otro aviso ya ocupó su lugar, la respuesta no lo pisa.
@@ -196,15 +207,16 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
     let handle = 0;
     const check = () => {
       const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]`)].find(isShown);
-      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); dropSaved(reveal.id); return; }
+      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
       if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
       setReveal(null);
-      dropSaved(reveal.id);
+      // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación y se sigue esperando.
+      router.refresh();
       router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
     };
     handle = requestAnimationFrame(check);
     return () => cancelAnimationFrame(handle);
-  }, [reveal, router, dropSaved]);
+  }, [reveal, router]);
 
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));
@@ -227,7 +239,7 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions, track }), [open, openFrom, openEdit, highlightId, notify, actions, track]);
   return (
     <AnnotateContext.Provider value={state}>
-     <PendingContext.Provider value={pendingRows}>
+     <PendingContext.Provider value={pendingContext}>
       {children}
       {mounted ? (
         <Suspense fallback={null}>
@@ -266,7 +278,12 @@ export function useHighlightId() {
 
 /** Las creaciones en vuelo (UX lote 1, cambio 3), o ninguna fuera del proveedor. */
 export function usePendingRows(): readonly PendingRow[] {
-  return useContext(PendingContext);
+  return useContext(PendingContext).rows;
+}
+
+/** Las listas avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12). */
+export function useConfirmListed() {
+  return useContext(PendingContext).confirmListed;
 }
 
 export function useAnnotate() {

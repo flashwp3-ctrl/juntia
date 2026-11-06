@@ -52,7 +52,7 @@ function Trigger() {
 
 // Lo que Inicio y Actividad pintan con las filas en vuelo (UX lote 1, cambio 3).
 function PendingList() {
-  const rows = usePendingRows();
+  const rows = usePendingRows().filter((row) => row.state === "saving");
   return <ul>{rows.map((row) => <li key={row.key} data-testid="pending-row" data-state={row.state} data-amount={row.transaction.amount.amountMinor.toString()}>{copy.row.pending.saving}</li>)}</ul>;
 }
 

@@ -1,9 +1,12 @@
-// F51-8 (segunda ronda de ChatGPT, PR #51) — capa: componentes (Vitest + RTL). Criterio literal: «cada fila optimista vive por su
-// clave, independiente de las demás transiciones. Una petición colgada de A no puede retrasar la retirada de B». Prueba: A
-// colgada, B confirmada y revalidada, B aparece una sola vez como real y A sigue «Guardando…»; y lo mismo con B rechazada.
+// F51-8, F51-11 y F51-12 (rondas 2 y 3 de ChatGPT, PR #51) — capa: componentes (Vitest + RTL).
+// F51-8: «cada fila optimista vive por su clave, independiente de las demás transiciones. Una petición colgada de A no puede
+// retrasar la retirada de B». F51-12: tras confirmarse, la fila temporal no se retira por tiempo: solo cuando la lista trae el
+// UUID real; al agotarse el plazo se pide una revalidación y se sigue esperando, y mientras tanto se muestra como confirmada
+// (sin «Guardando…»). F51-11 (límite conocido): si otra revalidación trae la real antes que la respuesta de la acción, durante
+// ese intervalo se ven la temporal y la real; al llegar la respuesta queda una sola.
 import { act, configure, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ContextProvider } from "@/components/shell/context-selector";
 import { moneyFromPesos } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
@@ -13,7 +16,8 @@ import { AnnotateProvider, useAnnotate } from "./annotate-provider";
 import type { ActionResult, PendingRow, SavedTransaction } from "./types";
 
 configure({ asyncUtilTimeout: 5000 });
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }), usePathname: () => "/actividad" }));
+const router = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/actividad" }));
 
 const NOW = "2026-11-05T15:00:00.000Z";
 const pending = (key: string, description: string): PendingRow => ({
@@ -30,7 +34,7 @@ function Submit({ row, run }: { row: PendingRow; run: () => Promise<ActionResult
   useEffect(() => { void track(row, run); }, [row, run, track]);
   return null;
 }
-/** Actividad con las filas «del servidor»; el botón simula la revalidación, que trae las filas reales. */
+/** Actividad con las filas «del servidor»; el botón simula una revalidación, que trae las filas reales. */
 function Screen({ revalidated }: { revalidated: readonly Transaction[] }) {
   const [rows, setRows] = useState<readonly Transaction[]>([]);
   return (
@@ -42,12 +46,10 @@ function Screen({ revalidated }: { revalidated: readonly Transaction[] }) {
 }
 const revalidate = () => act(() => { screen.getByRole("button", { name: "revalidar" }).click(); });
 const idleActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
-const inFlight = () => [...document.querySelectorAll<HTMLElement>("[data-pending='saving']")];
-const textOf = (el: Element) => el.textContent ?? "";
-// En jsdom se pintan la lista por día y la tabla; cada fila es una sola vez en cada una.
-const pendingTexts = () => inFlight().map(textOf);
-
-beforeEach(() => window.localStorage.clear());
+const savingRows = () => [...document.querySelectorAll<HTMLElement>("[data-pending='saving']")];
+const savingTexts = () => savingRows().map((el) => el.textContent ?? "");
+/** Filas de una creación ya confirmada o real, por su id real (una por vista: lista por día y tabla). */
+const rowsOf = (id: string) => document.querySelectorAll(`[data-transaction-id='${id}']`).length;
 
 function setup(a: () => Promise<ActionResult<SavedTransaction>>, b: () => Promise<ActionResult<SavedTransaction>>, revalidated: readonly Transaction[] = []) {
   render(
@@ -61,52 +63,85 @@ function setup(a: () => Promise<ActionResult<SavedTransaction>>, b: () => Promis
   );
 }
 
+afterEach(() => { vi.useRealTimers(); router.refresh.mockClear(); router.push.mockClear(); });
+
 describe("Cada fila optimista vive por su clave (F51-8)", () => {
   it("A colgada y B confirmada y revalidada: B aparece una sola vez como real y A sigue «Guardando…»", async () => {
     const hung = deferred<ActionResult<SavedTransaction>>(); // A nunca responde
     setup(() => hung.promise, async () => ({ ok: true, value: saved("real-b", "Fila B") }), [real("real-b", "Fila B")]);
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(true));
-    // B se confirmó; mientras llega la revalidación sigue visible (sin hueco), y A no la retrasa ni la mezcla.
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(true));
-    // Llega la revalidación con B real.
+    await waitFor(() => expect(rowsOf("real-b")).toBeGreaterThan(0)); // B confirmada: ya se ve como confirmada, sin «Guardando…»
+    const before = rowsOf("real-b");
+    expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(false);
+    expect(savingTexts().some((t) => t.includes("Fila A"))).toBe(true);
+    // Llega la revalidación con B real: sigue una sola por vista y A no la retrasa ni la mezcla.
     revalidate();
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila B"))).toBe(false));
-    const realRows = [...document.querySelectorAll("[data-transaction-id='real-b']")];
-    expect(realRows.length).toBeGreaterThan(0);
-    // Una sola vez por vista (lista por día y tabla): nunca la real más la temporal de B.
-    expect(inFlight().filter((el) => textOf(el).includes("Fila B"))).toHaveLength(0);
-    // A sigue «Guardando…», con su marca, y nada la retiró.
-    const rowsA = inFlight().filter((el) => textOf(el).includes("Fila A"));
+    expect(rowsOf("real-b")).toBe(before);
+    const rowsA = savingRows().filter((el) => (el.textContent ?? "").includes("Fila A"));
     expect(rowsA.length).toBeGreaterThan(0);
-    for (const el of rowsA) expect(textOf(el)).toContain(copy.row.pending.saving);
+    for (const el of rowsA) expect(el.textContent).toContain(copy.row.pending.saving);
     hung.resolve({ ok: false, error: "sessionExpired" });
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(false));
+    await waitFor(() => expect(savingTexts().some((t) => t.includes("Fila A"))).toBe(false));
   });
 
-  it("A colgada y B rechazada: la fila de B se retira en seguida y A sigue «Guardando…»", async () => {
-    const hung = deferred<ActionResult<SavedTransaction>>();
-    setup(() => hung.promise, async () => ({ ok: false, error: "sessionExpired" }));
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila B"))).toBe(false));
-    expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(true);
-    hung.resolve({ ok: true, value: saved("real-a", "Fila A") });
-  });
+  for (const [name, error] of [["rechazada", "sessionExpired"], ["de resultado desconocido", "network"]] as const) {
+    it(`A colgada y B ${name}: la fila de B se retira en seguida y A sigue «Guardando…»`, async () => {
+      const hung = deferred<ActionResult<SavedTransaction>>();
+      setup(() => hung.promise, async () => ({ ok: false, error }));
+      await waitFor(() => expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(false));
+      expect(savingTexts().some((t) => t.includes("Fila A"))).toBe(true);
+      hung.resolve({ ok: true, value: saved("real-a", "Fila A") });
+    });
+  }
+});
 
-  it("A colgada y B de resultado desconocido: la fila de B se retira en seguida y A sigue «Guardando…»", async () => {
-    const hung = deferred<ActionResult<SavedTransaction>>();
-    setup(() => hung.promise, async () => ({ ok: false, error: "network" }));
-    await waitFor(() => expect(pendingTexts().some((t) => t.includes("Fila B"))).toBe(false));
-    expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(true);
-    hung.resolve({ ok: true, value: saved("real-a", "Fila A") });
-  });
-
-  it("una fila confirmada que aún no llegó revalidada no deja hueco: se ve hasta que aparece la real", async () => {
-    setup(async () => ({ ok: true, value: saved("real-a", "Fila A") }), async () => ({ ok: true, value: saved("real-b", "Fila B") }), [real("real-a", "Fila A"), real("real-b", "Fila B")]);
-    await act(async () => {});
-    expect(pendingTexts().some((t) => t.includes("Fila A"))).toBe(true);
-    expect(pendingTexts().some((t) => t.includes("Fila B"))).toBe(true);
+describe("Tras confirmarse, la fila temporal solo se retira cuando llega la real (F51-12)", () => {
+  it("revalidación retenida más allá del plazo: sigue visible y confirmada, se pide router.refresh y desaparece al llegar la real", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    setup(() => new Promise(() => {}), async () => ({ ok: true, value: saved("real-b", "Fila B") }), [real("real-b", "Fila B")]);
+    await waitFor(() => expect(rowsOf("real-b")).toBeGreaterThan(0));
+    const visible = rowsOf("real-b");
+    await act(async () => {}); // los efectos de la confirmación ya corrieron
+    // La revalidación se retiene mucho más allá de los 8 s: la fila confirmada no se retira (sin hueco) y no vuelve a «Guardando…».
+    await act(async () => { vi.advanceTimersByTime(9000); });
+    expect(router.refresh).toHaveBeenCalled();
+    expect(rowsOf("real-b")).toBe(visible);
+    expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(false);
+    await act(async () => { vi.advanceTimersByTime(30000); });
+    expect(rowsOf("real-b"), "sigue esperando, no se retira por tiempo").toBe(visible);
+    expect(router.refresh.mock.calls.length).toBeGreaterThan(1); // se sigue pidiendo la revalidación
+    // Llega la real: una sola por vista y se deja de pedir la revalidación.
     revalidate();
-    await waitFor(() => expect(inFlight()).toHaveLength(0));
-    expect(screen.queryAllByText(/Fila A/).length).toBeGreaterThan(0);
-    expect(screen.queryAllByText(new RegExp(copy.row.pending.saving))).toHaveLength(0);
+    expect(rowsOf("real-b")).toBe(visible);
+    const calls = router.refresh.mock.calls.length;
+    await act(async () => { vi.advanceTimersByTime(30000); });
+    expect(router.refresh.mock.calls.length).toBe(calls);
+    expect(rowsOf("real-b")).toBe(visible);
+  });
+
+  it("una fila confirmada no deja hueco ni «Guardando…»: es un enlace a su detalle con el id real", async () => {
+    setup(() => new Promise(() => {}), async () => ({ ok: true, value: saved("real-b", "Fila B") }));
+    await waitFor(() => expect(rowsOf("real-b")).toBeGreaterThan(0));
+    const link = document.querySelector<HTMLAnchorElement>("a[data-transaction-id='real-b']")!;
+    expect(link.getAttribute("href")).toBe("/actividad/real-b?mes=2026-11");
+    expect(link.textContent).not.toContain(copy.row.pending.saving);
+  });
+});
+
+describe("Límite conocido F51-11, aceptado por el gestor: la real llega antes que la respuesta", () => {
+  it("con la respuesta de B retenida y la lista ya con B real, se ven la temporal y la real; al llegar la respuesta queda una sola", async () => {
+    const held = deferred<ActionResult<SavedTransaction>>();
+    setup(() => new Promise(() => {}), () => held.promise, [real("real-b", "Fila B")]);
+    await waitFor(() => expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(true));
+    // Una navegación o revalidación independiente trae la real antes que la respuesta de la acción.
+    revalidate();
+    const realOnly = rowsOf("real-b");
+    expect(realOnly).toBeGreaterThan(0);
+    // Documenta el comportamiento actual: durante el intervalo se ven las dos (solo visual; la base no se duplica por idempotencia).
+    expect(savingTexts().some((t) => t.includes("Fila B")), "la temporal sigue «Guardando…»").toBe(true);
+    // Llega la respuesta: la temporal se esconde y se retira; queda una sola fila por vista, sin huérfanas.
+    await act(async () => held.resolve({ ok: true, value: saved("real-b", "Fila B") }));
+    await waitFor(() => expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(false));
+    expect(rowsOf("real-b")).toBe(realOnly);
+    expect(savingRows().filter((el) => (el.textContent ?? "").includes("Fila B"))).toHaveLength(0);
   });
 });

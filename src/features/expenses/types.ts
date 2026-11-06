@@ -37,7 +37,8 @@ export const isAmbiguousError = (error: ExpenseActionError) => error === "networ
  */
 export type PendingRow = {
   key: string;
-  state: "saving";
+  /** `saving`: la petición viaja. `confirmed`: el servidor ya la guardó (`savedId`) y se espera a que la lista traiga la real. */
+  state: "saving" | "confirmed";
   transaction: Transaction;
   /** Id real, cuando el servidor ya confirmó: la fila temporal se esconde en cuanto la lista trae la real (nunca las dos). */
   savedId?: string;
