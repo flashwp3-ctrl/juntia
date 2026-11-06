@@ -2,10 +2,10 @@
 // UX lote 1, cambio 3 / 04·1 INICIO. Inicio es de servidor; las creaciones en vuelo viven en el proveedor de Anotar (cliente).
 // Estas dos piezas las pintan: arriba de «Últimos movimientos» y, en el primer gasto, en lugar del estado vacío. El gasto del
 // mes y el desglose no las cuentan: esperan a la revalidación, que es la única que sabe si el servidor escribió.
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { monthKey } from "@/domain/transactions";
-import { useConfirmListed, useHighlightId, usePendingRows } from "@/features/expenses/annotate-provider";
+import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
 import { copy } from "@/lib/copy/es";
 import { dayLabel } from "@/lib/format";
 
@@ -16,9 +16,7 @@ function useMonthPending(month: string, knownIds: readonly string[]) {
 
 /** Los `<li>` de las filas en vuelo del mes, para ir dentro de la lista de recientes. */
 export function PendingHomeRows({ month, today, knownIds }: { month: string; today: string; knownIds: readonly string[] }) {
-  const confirmListed = useConfirmListed();
   const highlightId = useHighlightId();
-  useEffect(() => confirmListed(knownIds), [knownIds, confirmListed]);
   return useMonthPending(month, knownIds).map(({ key, state, transaction, savedId }) => (
     <li key={key}>
       {/* Confirmada: fila normal con su id real y su detalle, sin «Guardando…» (F51-12). */}
@@ -43,4 +41,10 @@ export function HomeEmpty({ month, today, empty }: { month: string; today: strin
       </section>
     </div>
   );
+}
+
+/** Inicio monta su mes y avisa de los ids reales que trae (F51-12). No pinta nada: vive en los dos estados de Inicio (con y sin movimientos). */
+export function HomeScope({ month, knownIds }: { month: string; knownIds: readonly string[] }) {
+  useListScope(month, knownIds);
+  return null;
 }

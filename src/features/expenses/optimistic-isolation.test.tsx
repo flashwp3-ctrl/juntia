@@ -20,12 +20,12 @@ const router = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/actividad" }));
 
 const NOW = "2026-11-05T15:00:00.000Z";
-const pending = (key: string, description: string): PendingRow => ({
+const pending = (key: string, description: string, transactionDate = "2026-11-05"): PendingRow => ({
   key, state: "saving",
-  transaction: { id: `pending:${key}`, type: "expense", amount: moneyFromPesos(45000n), categoryId: "market", transactionDate: "2026-11-05", description, status: "active", version: 1, createdAt: NOW, updatedAt: NOW },
+  transaction: { id: `pending:${key}`, type: "expense", amount: moneyFromPesos(45000n), categoryId: "market", transactionDate, description, status: "active", version: 1, createdAt: NOW, updatedAt: NOW },
 });
 const real = (id: string, description: string): Transaction => ({ id, type: "expense", amount: moneyFromPesos(45000n), categoryId: "market", transactionDate: "2026-11-05", description, status: "active", version: 1, createdAt: NOW, updatedAt: NOW });
-const saved = (id: string, description: string): SavedTransaction => ({ id, type: "expense", categoryId: "market", transactionDate: "2026-11-05", description, amountMinor: "4500000", version: 1 });
+const saved = (id: string, description: string, transactionDate = "2026-11-05"): SavedTransaction => ({ id, type: "expense", categoryId: "market", transactionDate, description, amountMinor: "4500000", version: 1 });
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((r) => { resolve = r; }); return { promise, resolve }; }
 
 /** Lanza una creación como lo hace la hoja al guardar. */
@@ -37,10 +37,12 @@ function Submit({ row, run }: { row: PendingRow; run: () => Promise<ActionResult
 /** Actividad con las filas «del servidor»; el botón simula una revalidación, que trae las filas reales. */
 function Screen({ revalidated }: { revalidated: readonly Transaction[] }) {
   const [rows, setRows] = useState<readonly Transaction[]>([]);
+  const [month, setMonth] = useState("2026-11");
   return (
     <>
       <button type="button" onClick={() => setRows(revalidated)}>revalidar</button>
-      <ActivityView rows={rows} month="2026-11" today="2026-11-05" navigation={{ previous: null, next: null }} />
+      <button type="button" onClick={() => { setMonth("2026-10"); setRows([]); }}>ir a octubre</button>
+      <ActivityView rows={rows} month={month} today="2026-11-05" navigation={{ previous: null, next: null }} />
     </>
   );
 }
@@ -51,13 +53,13 @@ const savingTexts = () => savingRows().map((el) => el.textContent ?? "");
 /** Filas de una creación ya confirmada o real, por su id real (una por vista: lista por día y tabla). */
 const rowsOf = (id: string) => document.querySelectorAll(`[data-transaction-id='${id}']`).length;
 
-function setup(a: () => Promise<ActionResult<SavedTransaction>>, b: () => Promise<ActionResult<SavedTransaction>>, revalidated: readonly Transaction[] = []) {
+function setup(a: () => Promise<ActionResult<SavedTransaction>>, b: () => Promise<ActionResult<SavedTransaction>>, revalidated: readonly Transaction[] = [], dateB = "2026-11-05") {
   render(
     <ContextProvider>
       <AnnotateProvider actions={idleActions} today="2026-11-05">
         <Screen revalidated={revalidated} />
         <Submit row={pending("A", "Fila A")} run={a} />
-        <Submit row={pending("B", "Fila B")} run={b} />
+        <Submit row={pending("B", "Fila B", dateB)} run={b} />
       </AnnotateProvider>
     </ContextProvider>,
   );
@@ -106,14 +108,14 @@ describe("Tras confirmarse, la fila temporal solo se retira cuando llega la real
     expect(router.refresh).toHaveBeenCalled();
     expect(rowsOf("real-b")).toBe(visible);
     expect(savingTexts().some((t) => t.includes("Fila B"))).toBe(false);
-    await act(async () => { vi.advanceTimersByTime(30000); });
+    await act(async () => { vi.advanceTimersByTime(8000); });
     expect(rowsOf("real-b"), "sigue esperando, no se retira por tiempo").toBe(visible);
-    expect(router.refresh.mock.calls.length).toBeGreaterThan(1); // se sigue pidiendo la revalidación
+    expect(router.refresh.mock.calls.length).toBe(2); // se sigue pidiendo la revalidación, dentro del tope
     // Llega la real: una sola por vista y se deja de pedir la revalidación.
     revalidate();
     expect(rowsOf("real-b")).toBe(visible);
     const calls = router.refresh.mock.calls.length;
-    await act(async () => { vi.advanceTimersByTime(30000); });
+    await act(async () => { vi.advanceTimersByTime(60000); });
     expect(router.refresh.mock.calls.length).toBe(calls);
     expect(rowsOf("real-b")).toBe(visible);
   });
@@ -124,6 +126,67 @@ describe("Tras confirmarse, la fila temporal solo se retira cuando llega la real
     const link = document.querySelector<HTMLAnchorElement>("a[data-transaction-id='real-b']")!;
     expect(link.getAttribute("href")).toBe("/actividad/real-b?mes=2026-11");
     expect(link.textContent).not.toContain(copy.row.pending.saving);
+  });
+});
+
+// Revisión previa a la ronda 4 de ChatGPT: la espera de una fila confirmada no puede pedir refrescos sin fin. Termina con lo primero
+// de: (a) una vista trae el UUID real; (b) una revalidación completada no lo trae y la fila está fuera del alcance de las vistas
+// montadas (otro mes); (c) tope de 3 refrescos, y entonces se retira la temporal (el servidor ya confirmó).
+describe("La espera de una fila confirmada termina siempre (sin bucle de refrescos)", () => {
+  const otherMonth = "2026-10-23";
+  const submitOctober = () => setup(() => new Promise(() => {}), async () => ({ ok: true, value: saved("real-b", "Fila B", otherMonth) }), [], otherMonth);
+  const goToOctober = () => act(() => { screen.getByRole("button", { name: "ir a octubre" }).click(); });
+
+  it("(c) gasto confirmado de otro mes sin ninguna revalidación: como mucho 3 refrescos, y la temporal no se queda", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    submitOctober();
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); }); // la acción responde y se confirma
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(router.refresh.mock.calls.length, "tope de refrescos").toBeLessThanOrEqual(3);
+    expect(router.refresh.mock.calls.length).toBe(3);
+    const calls = router.refresh.mock.calls.length;
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(router.refresh.mock.calls.length, "ni uno más: nada periódico sin límite").toBe(calls);
+    // La fila temporal no se quedó: al mirar octubre sin la real en la lista, no aparece.
+    goToOctober();
+    expect(rowsOf("real-b")).toBe(0);
+    expect(savingRows(), "A (de noviembre) sigue colgada pero no es de octubre").toHaveLength(0);
+  });
+
+  it("(b) una revalidación completada que no la trae y la fila es de otro mes: se retira en seguida, sin pedir más refrescos", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    submitOctober();
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    revalidate(); // llega una revalidación (la lista de noviembre no trae el UUID de una fila de octubre)
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(router.refresh).not.toHaveBeenCalled();
+    goToOctober();
+    expect(rowsOf("real-b")).toBe(0);
+  });
+
+  it("(c) revalidación retenida de una fila del mes mostrado: tras el tope se retira y deja de pedir refrescos", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    setup(() => new Promise(() => {}), async () => ({ ok: true, value: saved("real-b", "Fila B") }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(rowsOf("real-b")).toBeGreaterThan(0);
+    await act(async () => { vi.advanceTimersByTime(8000 * 3); });
+    expect(router.refresh.mock.calls.length).toBe(3);
+    expect(rowsOf("real-b"), "dentro del tope sigue visible").toBeGreaterThan(0);
+    await act(async () => { vi.advanceTimersByTime(8000); });
+    expect(rowsOf("real-b"), "alcanzado el tope se retira la temporal").toBe(0);
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(router.refresh.mock.calls.length, "después del tope deja de pedir refrescos").toBe(3);
+  });
+
+  it("(a) el UUID real llega a una vista montada: se retira sin pedir más refrescos", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    setup(() => new Promise(() => {}), async () => ({ ok: true, value: saved("real-b", "Fila B") }), [real("real-b", "Fila B")]);
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    const visible = rowsOf("real-b");
+    revalidate();
+    expect(rowsOf("real-b")).toBe(visible);
+    await act(async () => { vi.advanceTimersByTime(120000); });
+    expect(router.refresh).not.toHaveBeenCalled();
   });
 });
 

@@ -6,7 +6,7 @@
 // Por debajo de 1280, lista por día con ExpenseRow; desde 1280, la tabla de 04·7 (RESPONSIVE_SPECIFICATIONS.md:
 // «Actividad en modo maestro-detalle desde 1280»).
 import Link from "next/link";
-import { useEffect, useId } from "react";
+import { useId, useMemo } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ExpenseRow, rowTitle, signedAmount } from "@/components/ui/expense-row";
@@ -18,7 +18,7 @@ import { filterTransactions, groupByDay, monthKey, monthSummary, type CategoryId
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
-import { useConfirmListed, useHighlightId, usePendingRows } from "@/features/expenses/annotate-provider";
+import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
 import type { PendingRow } from "@/features/expenses/types";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
 
@@ -199,8 +199,8 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
   // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
-  const confirmListed = useConfirmListed();
-  useEffect(() => confirmListed(rows.map(({ id }) => id)), [rows, confirmListed]);
+  const listedIds = useMemo(() => rows.map(({ id }) => id), [rows]);
+  useListScope(month, listedIds);
   const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
   // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
   const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);

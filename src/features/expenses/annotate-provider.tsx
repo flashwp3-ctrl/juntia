@@ -56,9 +56,17 @@ type AnnotateState = {
 const AnnotateContext = createContext<AnnotateState | null>(null);
 const NO_ROWS: readonly PendingRow[] = [];
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
-const PendingContext = createContext<{ rows: readonly PendingRow[]; confirmListed: (ids: readonly string[]) => void }>({ rows: NO_ROWS, confirmListed: () => {} });
+type ListScope = {
+  /** Una lista monta (o deja de montar) el mes que muestra: sirve para saber si una fila confirmada aún le corresponde a alguien. */
+  enter: (month: string) => () => void;
+  /** Una lista informa de los ids reales que trae; `revalidated`: llegó por una revalidación (filas nuevas del servidor). */
+  report: (month: string, ids: readonly string[], revalidated: boolean) => void;
+};
+const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_ROWS, scope: { enter: () => () => {}, report: () => {} } });
 /** Plazo entre peticiones de revalidación mientras una fila confirmada espera a la real (F51-12). */
 const REFRESH_EVERY_MS = 8000;
+/** Tope de revalidaciones por fila confirmada: pasado, se retira la temporal (el servidor ya confirmó; la real saldrá en la próxima carga). */
+const MAX_REFRESHES = 3;
 
 type AnnotateProviderProps = {
   children: ReactNode;
@@ -140,16 +148,58 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
       resolve(result);
     })();
   }), []);
-  // Las listas (Inicio, Actividad) avisan de los ids reales que traen: ya llegó la real, así que la temporal sobra.
-  const confirmListed = useCallback((ids: readonly string[]) => setFlights((current) => (current.some((flight) => flight.savedId && ids.includes(flight.savedId)) ? current.filter((flight) => !(flight.savedId && ids.includes(flight.savedId))) : current)), []);
-  // F51-12: mientras alguna fila confirmada espera a la real, se pide una revalidación cada `REFRESH_EVERY_MS` y se sigue esperando.
-  const pendingContext = useMemo(() => ({ rows: pendingRows, confirmListed }), [pendingRows, confirmListed]);
+  // F51-12. La espera de una fila confirmada termina con lo primero de: (a) una lista montada trae el UUID real; (b) llega una
+  // revalidación que no lo trae y la fila ya no le corresponde a ninguna lista montada (otro mes): se retira, sin hueco visible,
+  // porque ninguna la mostraba; (c) tope de 3 revalidaciones pedidas: se retira la temporal, el servidor ya confirmó. Nunca hay
+  // revalidaciones periódicas sin límite.
+  const mountedMonths = useRef(new Map<string, number>());
+  const scope = useMemo<ListScope>(() => ({
+    enter: (month) => {
+      mountedMonths.current.set(month, (mountedMonths.current.get(month) ?? 0) + 1);
+      return () => {
+        const left = (mountedMonths.current.get(month) ?? 1) - 1;
+        if (left <= 0) mountedMonths.current.delete(month);
+        else mountedMonths.current.set(month, left);
+      };
+    },
+    report: (_month, ids, revalidated) => setFlights((current) => {
+      const next = current.filter((flight) => {
+        if (flight.state !== "confirmed" || !flight.savedId) return true;
+        if (ids.includes(flight.savedId)) return false; // (a)
+        if (!revalidated) return true;
+        return mountedMonths.current.has(flight.transaction.transactionDate.slice(0, 7)); // (b): fuera del alcance de las listas montadas
+      });
+      return next.length === current.length ? current : next;
+    }),
+  }), []);
+  const pendingContext = useMemo(() => ({ rows: pendingRows, scope }), [pendingRows, scope]);
+  const flightsRef = useRef(flights);
+  useEffect(() => { flightsRef.current = flights; }, [flights]);
+  // Cuántas revalidaciones se han pedido por fila: en una referencia, no en el estado, para que dos peticiones seguidas (antes de
+  // que React pinte) cuenten las dos y el tope de 3 sea de verdad un tope. Las cuentas no se borran al retirar la fila: una clave
+  // confirmada no vuelve a usarse, y borrarla dejaría que una petición aún en cola la contara de nuevo desde cero.
+  const refreshCounts = useRef(new Map<string, number>());
+  /** Pide una revalidación si alguna fila confirmada aún está bajo el tope, y retira las que ya lo alcanzaron (c). */
+  const askRefresh = useCallback(() => {
+    const waiting = flightsRef.current.filter((flight) => flight.state === "confirmed");
+    const exhausted = waiting.filter((flight) => (refreshCounts.current.get(flight.key) ?? 0) >= MAX_REFRESHES).map((flight) => flight.key);
+    const live = waiting.filter((flight) => (refreshCounts.current.get(flight.key) ?? 0) < MAX_REFRESHES).map((flight) => flight.key);
+    if (exhausted.length > 0) {
+      setFlights((current) => current.filter((flight) => !exhausted.includes(flight.key)));
+    }
+    if (live.length > 0) {
+      for (const key of live) refreshCounts.current.set(key, (refreshCounts.current.get(key) ?? 0) + 1);
+      router.refresh();
+    }
+  }, [router]);
+  const askRefreshRef = useRef(askRefresh);
+  useEffect(() => { askRefreshRef.current = askRefresh; }, [askRefresh]);
   const waitingForReal = flights.some((flight) => flight.state === "confirmed");
   useEffect(() => {
     if (!waitingForReal) return;
-    const handle = setInterval(() => router.refresh(), REFRESH_EVERY_MS);
+    const handle = setInterval(() => askRefreshRef.current(), REFRESH_EVERY_MS);
     return () => clearInterval(handle);
-  }, [waitingForReal, router]);
+  }, [waitingForReal]);
 
   // «Deshacer» (US-2.5; FR-034): anula con `undo` y la versión que devolvió la creación. La clave es una por aviso, así
   // que dos toques o un reintento son la misma intención. Si otro aviso ya ocupó su lugar, la respuesta no lo pisa.
@@ -210,8 +260,9 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
       if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
       if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
       setReveal(null);
-      // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación y se sigue esperando.
-      router.refresh();
+      // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación (cuenta para el tope) y se
+      // sigue esperando.
+      askRefreshRef.current();
       router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
     };
     handle = requestAnimationFrame(check);
@@ -281,9 +332,15 @@ export function usePendingRows(): readonly PendingRow[] {
   return useContext(PendingContext).rows;
 }
 
-/** Las listas avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12). */
-export function useConfirmListed() {
-  return useContext(PendingContext).confirmListed;
+/** Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12). */
+export function useListScope(month: string, ids: readonly string[]) {
+  const { scope, rows } = useContext(PendingContext);
+  useEffect(() => scope.enter(month), [scope, month]);
+  // Lo que la lista trae cambió (llegó una revalidación): (a) y (b).
+  useEffect(() => scope.report(month, ids, true), [scope, month, ids]);
+  // Una fila acaba de confirmarse y la lista ya la trae (la real llegó antes que la respuesta): solo (a).
+  const confirmed = rows.filter((row) => row.state === "confirmed").map((row) => row.savedId).join(",");
+  useEffect(() => scope.report(month, ids, false), [scope, month, ids, confirmed]);
 }
 
 export function useAnnotate() {
