@@ -24,11 +24,75 @@ export const copy = {
       category: "Elige una categoría para este movimiento.", date: "Elige una fecha válida.", descriptionTooLong: "Usa hasta 140 caracteres en la descripción.",
     },
   },
-  // 003 T007: claves del contrato de errores; redacción pendiente de revisión humana.
+  // 003 T007: claves del contrato de errores. PR B (T035; 04·15, 04·17): Mi pareja M1–M7, invitación y confirmación de
+  // anular. Copy nuevo para revisión de los fundadores en el PR; «propietaria» sigue a los comps y al glosario §1.
   couple: {
-    errors: { alreadyInCouple: "Ya tienes una pareja. Si tu invitación está pendiente, anúlala antes de aceptar otra.", invitationGone: "No encontramos esta invitación.", alreadyAccepted: "Ya no se puede anular: la invitación se aceptó.", notActive: "Necesitas una pareja activa para continuar." },
-    invitation: { invalid: "Esta invitación ya no sirve." },
-    invite: { errors: { email: "Escribe un correo válido, distinto del tuyo." } },
+    errors: { alreadyInCouple: "Ya tienes una pareja. Si tu invitación está pendiente, anúlala antes de aceptar otra.", invitationGone: "No encontramos esta invitación.", alreadyAccepted: "Ya no se puede anular: la invitación se aceptó.", notActive: "Necesitas una pareja activa para continuar.", versionConflict: "La invitación cambió en otro lugar. Ya ves lo último." },
+    status: { active: "ACTIVA", pending: "PENDIENTE", solo: "SOLO TÚ", invalid: "NO VÁLIDA", label: (title: string) => `Estado de la pareja: ${title}` },
+    active: {
+      title: (owner: string, member: string) => `${owner} y ${member}`, line: "Pareja · 2 de 2 integrantes", members: "Integrantes",
+      owner: "Propietaria", member: "Integrante", you: (role: string) => `Tú · ${role.toLowerCase()}`,
+      howTitle: "Cómo funciona",
+      how: {
+        private: (partner: string) => `Lo que anotas en **Yo** es solo tuyo. ${partner} no lo ve, ni en totales.`,
+        shared: "Lo que anotan en **Nosotros** lo ven los dos, con quién pagó y el reparto.",
+        balance: "El balance y las metas compartidas viven en Nosotros, no aquí.",
+        currency: "Los importes se registran en pesos colombianos (COP).",
+      },
+      leave: { title: "Salir de la pareja", description: "Por ahora no se puede salir de una pareja ni cambiar sus integrantes desde Juntia." },
+    },
+    none: {
+      title: "Sin pareja", line: "Tu espacio personal funciona completo", heading: "Juntia también funciona solo",
+      description: "Tu espacio personal está completo. Cuando quieras, invita a tu pareja para anotar gastos compartidos, ver el balance y ahorrar para metas juntos.",
+      invite: "Invitar a mi pareja", invited: "Si te invitaron, abre el enlace que te enviaron.",
+    },
+    pending: {
+      title: "Invitación enviada", line: (email: string, date: string) => `Para ${email} · vence el ${date}`, expiredLine: (email: string, date: string) => `Para ${email} · venció el ${date}`,
+      description: "Cuando tu pareja abra el enlace y acepte, aparecerá aquí. Hasta entonces, todo sigue en tu espacio personal.",
+      expiredDescription: "El enlace venció. Genera uno nuevo para volver a invitar; el correo sigue siendo el mismo.",
+      regenerate: "Generar enlace nuevo", cancel: "Anular",
+    },
+    invite: {
+      title: "Invitar a mi pareja", regenerateTitle: "Enlace nuevo",
+      lead: "La invitación queda asociada a su correo. Solo podrá aceptarla con una cuenta verificada con ese correo.",
+      readyLead: "Comparte el enlace con tu pareja por donde prefieran, por ejemplo WhatsApp.",
+      regenerateLead: "El enlace anterior deja de funcionar al generar este. Comparte el nuevo con tu pareja.",
+      email: "Correo de tu pareja", emailPlaceholder: "nombre@correo.com",
+      rules: { expiry: "Vence a los 7 días. Solo puede haber una invitación activa.", role: "Se une como integrante. Tú quedas como propietaria.", private: "No verá lo que anotaste en Yo." },
+      create: "Crear invitación", creating: "Creando…", generating: "Generando enlace…",
+      ready: "Enlace listo", readyLine: (date: string) => `Un solo uso · vence el ${date}`, link: "Enlace de invitación",
+      once: "Este enlace solo se muestra ahora. Si lo pierdes, genera uno nuevo desde Mi pareja.",
+      share: "Compartir enlace", copy: "Copiar enlace", copied: "Enlace copiado.", shareText: "Te invito a ser mi pareja en Juntia.",
+      errors: { email: "Escribe un correo válido, distinto del tuyo." },
+    },
+    cancel: {
+      title: "¿Anular la invitación?", description: "El enlace dejará de funcionar. Si tu pareja ya lo abrió, no podrá aceptarlo. Puedes crear otro cuando quieras.",
+      keep: "Mantener", confirm: "Anular invitación", cancelling: "Anulando…",
+      failed: "No se anuló. El enlace sigue activo. Inténtalo de nuevo.", done: "Invitación anulada.",
+    },
+    invitation: {
+      invalid: "Esta invitación ya no sirve", loading: "Revisando la invitación…",
+      signedOut: { title: "Tienes una invitación a Juntia", description: "Para verla, entra o crea tu cuenta con el correo al que te invitaron. Después volverás aquí.", signIn: "Entrar", signUp: "Crear cuenta", note: "Antes de entrar no mostramos quién invita ni datos de la pareja." },
+      valid: {
+        title: (name: string) => `${name} te invitó a ser su pareja en Juntia`,
+        shared: "Verán juntos lo que anoten en **Nosotros**: gastos, balance y metas compartidas.",
+        private: "Lo que anotes en **Yo** sigue siendo solo tuyo.",
+        money: "Juntia no mueve dinero: registra quién pagó y cuánto le toca a cada uno.",
+        line: (email: string, date: string) => `Invitación para ${email} · vence el ${date}.`,
+        accept: "Aceptar invitación", accepting: "Aceptando…", later: "Ahora no",
+      },
+      invalidDescription: "Puede haber vencido, ya se usó, se anuló o es para otro correo. Pide un enlace nuevo a quien te invitó.",
+      invalidNote: "Tampoco se puede aceptar si ya tienes una pareja activa o si la pareja ya tiene dos integrantes.",
+      ownPending: "Tienes una invitación tuya pendiente. Para aceptar esta, primero anula la tuya en Mi pareja.",
+      home: "Ir a mi espacio", toPartner: "Ir a Mi pareja",
+    },
+  },
+  // PR B (T031b; FR-056, FR-059; contracts/server-actions.md §1): resultado desconocido de una escritura compartida.
+  writes: {
+    unknown: "No pudimos confirmar si se hizo. No lo des por hecho: reintenta lo mismo sin riesgo o comprueba el estado.",
+    retry: "Reintentar", check: "Comprobar estado", checking: "Comprobando…",
+    notFound: "Todavía no consta. Reintentar es seguro: no se hace dos veces.",
+    close: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se hizo. Revisa Mi pareja antes de volver a intentarlo.", keep: "Seguir aquí", confirm: "Cerrar" },
   },
   shared: { errors: { versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.` } },
   move: { errors: { notAllowed: "No se puede mover este gasto.", undoNotAvailable: "Ya no se puede deshacer: pasó el plazo o hay cambios posteriores." }, limit: "No se puede mover este gasto porque está financiado con una meta." },
@@ -62,7 +126,7 @@ export const copy = {
       notice: "Juntia es una versión privada de prueba. Todavía no tiene términos de uso publicados.", acknowledge: "Entiendo que es una versión privada de prueba.",
       submit: "Crear cuenta", submitting: "Creando cuenta…", haveAccount: "Ya tengo cuenta", weakPassword: "Usa una contraseña de al menos 8 caracteres.", missing: "Completa los tres campos y confirma el aviso.",
     },
-    firstEntry: { greeting: (name: string) => `Hola, ${name}`, description: "Tu espacio personal ya está listo.", startTitle: "Empezar por mi cuenta", startDescription: "Anota tus gastos e ingresos. Lo que anotas es solo tuyo.", noBudget: "No te pedimos un presupuesto. Si te sirve, podrás crearlo después en Plan.", continue: "Continuar", continuing: "Entrando…" },
+    firstEntry: { howToStart: "Cómo quieres empezar", inviteTitle: "Invitar a mi pareja", inviteDescription: "Crea un enlace de un solo uso.", greeting: (name: string) => `Hola, ${name}`, description: "Tu espacio personal ya está listo.", startTitle: "Empezar por mi cuenta", startDescription: "Anota tus gastos e ingresos. Lo que anotas es solo tuyo.", noBudget: "No te pedimos un presupuesto. Si te sirve, podrás crearlo después en Plan.", continue: "Continuar", continuing: "Entrando…" },
   },
   empty: {
     home: { title: "Tu día a día, aquí", description: "Este será el lugar para ver tus movimientos." },
@@ -80,6 +144,8 @@ export const copy = {
     groups: { mySpace: "Mi espacio", preferences: "Preferencias", privacySecurity: "Privacidad y seguridad" },
     menu: {
       profile: "Mi perfil", profileHint: "Nombre visible", partner: "Mi pareja", partnerHint: "Llega con la próxima versión",
+      // PR B (T034): la fila de Mi pareja dice el estado real.
+      partnerNone: "Invita a tu pareja", partnerPending: "Invitación pendiente", partnerActive: (name: string) => `Con ${name} · activa`,
       appearance: "Apariencia", privacy: "Privacidad y datos", privacyHint: "Qué es solo tuyo, exportar", security: "Seguridad y sesión", securityHint: "Contraseña y esta sesión",
     },
     signOut: { label: "Cerrar sesión", hint: "No borra nada: vuelves a entrar con tu correo.", loading: "Cerrando sesión…" },
@@ -132,7 +198,11 @@ export const copy = {
     empty: { title: "Todavía no anotas nada este mes", description: "Cuando anotes un gasto o un ingreso, aquí verás cuánto llevas y en qué se fue. Solo tú lo ves.", action: "Anotar el primero" },
     loading: "Cargando movimientos",
   },
-  us: { title: "Todavía no disponible", description: "Nosotros aparece cuando exista la pareja. Por ahora, lo que anotas es solo tuyo y lo ves en Yo." },
+  us: { title: "Todavía no disponible", description: "Nosotros aparece cuando exista la pareja. Por ahora, lo que anotas es solo tuyo y lo ves en Yo.",
+    // PR B (T034; FR-016, US-3.7): el acceso a invitar desde Nosotros sin pareja. Los textos de pendiente y activa cubren
+    // el tiempo entre el PR B y el PR C, que trae los gastos compartidos. Copy nuevo para revisión de los fundadores.
+    invite: "Invitar a mi pareja", pendingDescription: "Tu invitación está pendiente. Nosotros aparece cuando tu pareja la acepte.", seeInvitation: "Ver mi invitación",
+    activeDescription: "Ya son pareja. Lo que anoten juntos aparecerá aquí en la próxima versión. Por ahora, lo tuyo sigue en Yo." },
   load: { error: { title: "No pudimos cargar tus movimientos", description: "Revisa tu conexión. Lo que ya estaba guardado sigue a salvo; sin conexión no podemos guardar nada nuevo." } },
   activity: {
     spentIn: (month: string) => `Gasto de ${month}`,

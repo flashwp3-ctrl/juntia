@@ -51,7 +51,7 @@ async function signInWith(page: Page, email: string, password: string) {
 
 // `@mail`: envían o leen un correo (Mailpit o el envío de registro y recuperación). Solo en CI; `e2e:dev` las excluye
 // con --grep-invert y las declara en su resumen (decisión 18, ADR-011 §9.9).
-test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja → Inicio; el enlace usado ya no sirve", { tag: "@mail" }, async ({ page }) => {
+test("registro permitido: Mailpit → A1 con aviso → entrar → A6 con «Invitar a mi pareja» → Inicio; el enlace usado ya no sirve", { tag: "@mail" }, async ({ page }) => {
   const email = `signup-${randomUUID().slice(0, 8)}@seed.test`;
   const password = `Clave-${randomUUID().slice(0, 8)}`;
   runnerSql(`insert into juntia_data.signup_allowlist(email) values (${sqlText(email)})`);
@@ -68,7 +68,9 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 sin pareja 
     await expect(page).toHaveURL(/\/primera-entrada/);
     await expect(page.getByRole("heading", { level: 1, name: copy.auth.firstEntry.greeting("Sara Nueva") })).toBeVisible();
     await expect(page.getByText(copy.auth.firstEntry.noBudget)).toBeVisible();
-    await expect(page.getByText("Invitar a mi pareja")).toHaveCount(0);
+    // PR B (T034, FR-016): A6 recupera «Invitar a mi pareja» de 04·17; «Empezar por mi cuenta» sigue elegida.
+    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.inviteTitle) })).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.startTitle) })).toHaveAttribute("aria-checked", "true");
     await page.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { level: 1, name: copy.home.greeting("Sara Nueva") })).toBeVisible();
@@ -336,5 +338,103 @@ test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; 
     await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
     expect(leaks(await page.locator("main").innerText())).toEqual([]);
     await context.close();
+  }
+});
+
+// T031c / T036 (spec 003, PR B) / FR-012, FR-013, FR-014, FR-067; US-1 escenarios 2, 5 y 6; [V] «Retorno tras el login».
+// Caso de la matriz «Invitación → login → volver → aceptar», con Tomás entrando por M5. Criterio literal (tasks.md,
+// T036): «comprobar el HTML de `/invitacion` sin ningún dato de la pareja». La base guarda solo el hash del token.
+async function createInvitationAsSara(page: Page, email: string) {
+  await page.goto("/cuenta/pareja");
+  await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+  await page.getByRole("button", { name: copy.couple.none.invite }).click();
+  const sheet = page.getByRole("dialog", { name: copy.couple.invite.title });
+  await sheet.getByRole("textbox", { name: copy.couple.invite.email }).fill(email);
+  await sheet.getByRole("button", { name: copy.couple.invite.create }).click();
+  await expect(sheet.getByText(copy.couple.invite.ready)).toBeVisible();
+  const link = await sheet.getByRole("textbox", { name: copy.couple.invite.link }).inputValue();
+  expect(link).toMatch(/\/invitacion#t=[A-Za-z0-9_-]{43}$/);
+  return { link, token: link.split("#t=")[1] };
+}
+
+function assertOnlyHashStored(token: string, groupOwner: string) {
+  const hash = runnerSql(`select encode(sha256(convert_to(${sqlText(token)},'UTF8')),'hex')`);
+  expect(runnerSql(`select count(*) from juntia_data.group_invitations i join juntia_data.groups g on g.id=i.group_id where g.owner_user_id='${groupOwner}' and i.token_hash='${hash}'`)).toBe("1");
+  // El token en claro no está en ninguna columna de texto de las invitaciones ni de la auditoría.
+  expect(runnerSql(`select count(*) from juntia_data.group_invitations i where i::text like ${sqlText(`%${token}%`)}`)).toBe("0");
+  expect(runnerSql(`select count(*) from juntia_data.audit_events e where e::text like ${sqlText(`%${token}%`)}`)).toBe("0");
+}
+
+test("invitación → M5 sin datos → entrar → volver → M6 → aceptar → M1 para los dos", async ({ page, browser, baseURL }) => {
+  const index = test.info().parallelIndex;
+  const [sara, tomas] = await Promise.all([seedUser({ role: "invita", index, displayName: "Sara" }), seedUser({ role: "invitado", index, displayName: "Tomás" })]);
+  await signInContext(page.context(), sara);
+  const { link, token } = await createInvitationAsSara(page, tomas.email.toUpperCase());
+  assertOnlyHashStored(token, sara.id);
+
+  // Tomás, sin sesión, abre el enlace en su dispositivo.
+  const other = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+  const tab = await other.newPage();
+  // El HTML de /invitacion no lleva nada de la pareja ni de quien invita: lo decide el cliente.
+  for (const rsc of [false, true]) {
+    const response = await tab.request.get(rsc ? "/invitacion?_rsc=inv" : "/invitacion", { headers: rsc ? { RSC: "1" } : {} });
+    expect(response.status()).toBe(200);
+    const text = await response.text();
+    for (const marker of ["Sara", sara.email, tomas.email, token]) expect(text.includes(marker), `${rsc ? "RSC" : "HTML"} sin «${marker}»`).toBe(false);
+  }
+  await tab.goto(link);
+  await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.signedOut.title })).toBeVisible();
+  await expect(tab).toHaveURL(/\/invitacion$/);
+  await expect(tab.locator("main")).not.toContainText("Sara");
+  await tab.getByRole("link", { name: copy.couple.invitation.signedOut.signIn }).click();
+  await expect(tab).toHaveURL(/\/entrar\?volver=%2Finvitacion$/);
+  await signInWith(tab, tomas.email, tomas.password);
+
+  // Vuelve a la invitación y la revalida con su sesión.
+  await expect(tab).toHaveURL(/\/invitacion$/);
+  await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
+  await tab.getByRole("button", { name: copy.couple.invitation.valid.accept }).click();
+  await expect(tab).toHaveURL(/\/cuenta\/pareja$/);
+  await expect(tab.getByText(copy.couple.status.active)).toBeVisible();
+  await expect(tab.getByText(copy.couple.active.title("Sara", "Tomás"))).toBeVisible();
+  expect(await tab.evaluate(() => window.localStorage.getItem("juntia:invitation"))).toBeNull();
+
+  // Sara ve M1 al recargar; el enlace usado ya no sirve (M7).
+  await page.reload();
+  await expect(page.getByText(copy.couple.status.active)).toBeVisible();
+  await tab.goto(link);
+  await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeVisible();
+  await other.close();
+});
+
+test("invitación → M5 → crear la cuenta y verificarla → la intención del dispositivo vuelve a /invitacion → aceptar", { tag: "@mail" }, async ({ page, browser, baseURL }) => {
+  const index = test.info().parallelIndex;
+  const sara = await seedUser({ role: "invita-nueva", index, displayName: "Sara" });
+  const email = `invitado-${randomUUID().slice(0, 8)}@seed.test`;
+  const password = `Clave-${randomUUID().slice(0, 8)}`;
+  runnerSql(`insert into juntia_data.signup_allowlist(email) values (${sqlText(email)})`);
+  try {
+    await signInContext(page.context(), sara);
+    const { link } = await createInvitationAsSara(page, email);
+    const other = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+    const tab = await other.newPage();
+    await tab.goto(link);
+    await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.signedOut.title })).toBeVisible();
+    await tab.getByRole("link", { name: copy.couple.invitation.signedOut.signUp }).click();
+    await signUpWith(tab, "Tomás", email, password);
+    // El enlace de verificación no conserva `volver` (research R5): vuelve por la intención guardada en el dispositivo.
+    await tab.goto(await mailLink(email, "signup"));
+    await expect(tab).toHaveURL(/\/entrar\?aviso=verificado$/);
+    await signInWith(tab, email, password);
+    await expect(tab).toHaveURL(/\/primera-entrada/);
+    await tab.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
+    await expect(tab).toHaveURL(/\/invitacion$/);
+    await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
+    await tab.getByRole("button", { name: copy.couple.invitation.valid.accept }).click();
+    await expect(tab).toHaveURL(/\/cuenta\/pareja$/);
+    await expect(tab.getByText(copy.couple.status.active)).toBeVisible();
+    await other.close();
+  } finally {
+    runnerSql(`delete from juntia_data.signup_allowlist where email=${sqlText(email)}`);
   }
 });

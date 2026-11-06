@@ -1,0 +1,246 @@
+// T031d / T036, T038 (spec 003, PR B) / FR-054, FR-055, FR-068; SC-001 (B); F50-2, F50-3, F50-5; interpretación I4.
+// Criterio literal (tasks.md, T038): «barrido sin scroll horizontal (`scrollWidth <= clientWidth`) de Mi pareja (M1–M4),
+// `/invitacion` (M5–M7), A6 y Nosotros sin pareja en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los
+// dos temas; teclado: «Crear invitación», «Generar enlace nuevo», «Copiar enlace» de M3b, «Anular» con el foco inicial
+// en la opción segura y Escape, y «Aceptar invitación», todo operable sin ratón; texto al 200 % en esas pantallas: sin
+// pérdida de contenido ni solapamientos; objetivos de 44 px en esos controles (`boundingBox`)». Y de T036: axe en los dos
+// temas de M6 y M7, que no caben en el registro (route-registry.ts) porque /invitacion ya está en él sin sesión (M5).
+// Regla 10 de tasks.md: lo que necesita sesión o Auth va en un describe que se salta salvo con A11Y_JOB=e2e; M5 (sin
+// sesión, sin red de Auth) corre en el job app. Ninguna espera fija; movimiento reducido por defecto (ADR-011 §6).
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { copy } from "../../src/lib/copy/es";
+import { seedCoupleState, seedInvitation, seedUser, type SeededUser } from "../support/seed";
+import { THEMES } from "./route-registry";
+
+const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
+const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
+const M5_TOKEN = "A".repeat(43);
+
+/** Sin scroll horizontal y sin texto cortado en el `main` (o en el diálogo abierto). */
+async function overflow(page: Page) {
+  return page.evaluate(() => {
+    const root = document.documentElement;
+    const scope = document.querySelector('[role="dialog"], [role="alertdialog"]') ?? document.querySelector("main") ?? document.body;
+    const clipped = [...scope.querySelectorAll<HTMLElement>("h1, h2, h3, p, a, button, label, span")]
+      .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && node.scrollWidth > node.clientWidth + 1
+        && !["ellipsis"].includes(getComputedStyle(node).textOverflow) && getComputedStyle(node).overflow !== "visible")
+      .map((node) => `${node.tagName.toLowerCase()} «${(node.textContent ?? "").trim().slice(0, 40)}»`);
+    return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, clipped };
+  });
+}
+
+/** Barrido de los siete anchos en los dos temas sobre la página ya en su estado. */
+async function sweep(page: Page, label: string) {
+  for (const colorScheme of THEMES) {
+    await page.emulateMedia({ colorScheme });
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 });
+      const result = await overflow(page);
+      console.log(`${label} · ${colorScheme} · ${width}px: scrollWidth ${result.scrollWidth} / clientWidth ${result.clientWidth}${result.clipped.length ? `, cortado: ${result.clipped.join(", ")}` : ""}`);
+      expect.soft(result.scrollWidth, `${label} · ${colorScheme} · ${width}px: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+    }
+  }
+}
+
+/** Texto al 200 % a 390: sin scroll horizontal ni texto cortado. */
+async function largeText(page: Page, label: string) {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  const result = await overflow(page);
+  console.log(`${label} · 200 %: scrollWidth ${result.scrollWidth} / ${result.clientWidth}; cortado: ${result.clipped.length}`);
+  expect.soft(result.scrollWidth, `${label} · 200 %: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+  expect.soft(result.clipped, `${label} · 200 %: sin texto cortado`).toEqual([]);
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+}
+
+/** Objetivo táctil de 44 × 44 con boundingBox. */
+async function target44(page: Page, name: string, role: "button" | "link" = "button") {
+  const box = await page.getByRole(role, { name, exact: true }).first().boundingBox();
+  console.log(`objetivo «${name}»: ${box?.width.toFixed(1)}×${box?.height.toFixed(1)}`);
+  expect.soft(box?.width ?? 0, `«${name}»: ancho`).toBeGreaterThanOrEqual(44);
+  expect.soft(box?.height ?? 0, `«${name}»: alto`).toBeGreaterThanOrEqual(44);
+}
+
+/** Tab hasta el control con ese nombre accesible (sin ratón). */
+async function tabTo(page: Page, name: string, limit = 40) {
+  for (let step = 0; step < limit; step++) {
+    await page.keyboard.press("Tab");
+    const label = await page.evaluate(() => {
+      const element = document.activeElement as HTMLElement | null;
+      return element ? (element.getAttribute("aria-label") ?? element.innerText ?? "").trim() : "";
+    });
+    if (label === name) return;
+  }
+  throw new Error(`El teclado no llega a «${name}»`);
+}
+
+async function signedContext(browser: Browser, baseURL: string, user: SeededUser, colorScheme: "light" | "dark" = "light"): Promise<{ context: BrowserContext; page: Page }> {
+  const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 390, height: 900 } });
+  await context.addCookies(user.cookies);
+  return { context, page: await context.newPage() };
+}
+
+async function axe(page: Page, label: string) {
+  const result = await new AxeBuilder({ page }).analyze();
+  const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
+  console.log(`${label}: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
+  expect(blocking).toEqual([]);
+}
+
+// M5 (sin sesión): el job app no tiene Supabase, y la pantalla no lo necesita sin cookie de sesión.
+// Los casos se definen solo en su job (como routes.a11y.ts): un test.skip seguiría listándolos (job-selection.test.ts).
+if (JOB === "app") test.describe("M5 sin sesión", () => {
+  test("/invitacion · M5 · siete anchos, dos temas, 200 % y 44 px", async ({ page }) => {
+    await page.goto(`/invitacion#t=${M5_TOKEN}`);
+    await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.signedOut.title })).toBeVisible();
+    await sweep(page, "/invitacion M5");
+    await largeText(page, "/invitacion M5");
+    await target44(page, copy.couple.invitation.signedOut.signIn, "link");
+    await target44(page, copy.couple.invitation.signedOut.signUp, "link");
+  });
+});
+
+if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
+  for (const colorScheme of THEMES) {
+    for (const width of [390, 1440]) {
+      test(`/invitacion · M6 y M7 · axe · ${colorScheme} · ${width}px · con sesión`, async ({ browser, baseURL }, testInfo) => {
+        const index = testInfo.parallelIndex;
+        const [sara, tomas] = await Promise.all([seedUser({ role: "axe-invita", index }), seedUser({ role: "axe-invitado", index, displayName: "Tomás" })]);
+        const { token } = await seedInvitation(sara, tomas.email);
+        const { context, page } = await signedContext(browser, baseURL!, tomas, colorScheme);
+        await page.setViewportSize({ width, height: 900 });
+        await page.emulateMedia({ colorScheme });
+        await page.goto(`/invitacion#t=${token}`);
+        await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
+        await axe(page, `${colorScheme} /invitacion M6 ${width}px`);
+        await page.goto(`/invitacion#t=${"Z".repeat(43)}`);
+        await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeVisible();
+        await axe(page, `${colorScheme} /invitacion M7 ${width}px`);
+        await context.close();
+      });
+    }
+  }
+
+  test("barrido de siete anchos y 200 %: Mi pareja M1–M4, /invitacion M6–M7, A6 y Nosotros sin pareja · con sesión", async ({ browser, baseURL }, testInfo) => {
+    const index = testInfo.parallelIndex;
+    // M2, M3 y Nosotros sin pareja, con una cuenta sin pareja.
+    const solo = await seedUser({ role: "barrido-solo", index });
+    {
+      const { context, page } = await signedContext(browser, baseURL!, solo);
+      await page.goto("/cuenta/pareja");
+      await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+      await sweep(page, "Mi pareja M2");
+      await largeText(page, "Mi pareja M2");
+      await page.getByRole("button", { name: copy.couple.none.invite }).click();
+      await expect(page.getByRole("dialog", { name: copy.couple.invite.title })).toBeVisible();
+      await sweep(page, "Mi pareja M3");
+      await largeText(page, "Mi pareja M3");
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+      await context.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL!).hostname, path: "/" }]);
+      await page.goto("/");
+      await expect(page.getByRole("link", { name: copy.us.invite })).toBeVisible();
+      await sweep(page, "Nosotros sin pareja");
+      await largeText(page, "Nosotros sin pareja");
+      await context.close();
+    }
+    // M4 pendiente y vencida, y M1.
+    for (const state of ["pending", "expired", "active"] as const) {
+      const user = await seedUser({ role: `barrido-${state}`, index });
+      await seedCoupleState(user, state, index);
+      const { context, page } = await signedContext(browser, baseURL!, user);
+      await page.goto("/cuenta/pareja");
+      await expect(page.getByText(state === "active" ? copy.couple.status.active : copy.couple.status.pending)).toBeVisible();
+      await sweep(page, `Mi pareja ${state}`);
+      await largeText(page, `Mi pareja ${state}`);
+      await context.close();
+    }
+    // A6 con «Invitar a mi pareja».
+    {
+      const fresh = await seedUser({ role: "barrido-a6", index, firstEntryCompleted: false });
+      const { context, page } = await signedContext(browser, baseURL!, fresh);
+      await page.goto("/primera-entrada");
+      await expect(page.getByRole("radio", { name: new RegExp(copy.auth.firstEntry.inviteTitle) })).toBeVisible();
+      await sweep(page, "A6");
+      await largeText(page, "A6");
+      await context.close();
+    }
+    // M6 y M7.
+    {
+      const [sara, tomas] = await Promise.all([seedUser({ role: "barrido-invita", index }), seedUser({ role: "barrido-invitado", index, displayName: "Tomás" })]);
+      const { token } = await seedInvitation(sara, tomas.email);
+      const { context, page } = await signedContext(browser, baseURL!, tomas);
+      await page.goto(`/invitacion#t=${token}`);
+      await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
+      await sweep(page, "/invitacion M6");
+      await largeText(page, "/invitacion M6");
+      await page.goto(`/invitacion#t=${"Y".repeat(43)}`);
+      await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeVisible();
+      await sweep(page, "/invitacion M7");
+      await largeText(page, "/invitacion M7");
+      await context.close();
+    }
+  });
+
+  test("teclado y 44 px: crear, copiar, generar enlace nuevo, anular con Escape y aceptar · con sesión", async ({ browser, baseURL }, testInfo) => {
+    const index = testInfo.parallelIndex;
+    const [sara, tomas] = await Promise.all([seedUser({ role: "teclado-invita", index }), seedUser({ role: "teclado-invitado", index, displayName: "Tomás" })]);
+    const { context, page } = await signedContext(browser, baseURL!, sara);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/cuenta/pareja");
+    await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+    await target44(page, copy.couple.none.invite);
+
+    // Crear invitación sin ratón.
+    await tabTo(page, copy.couple.none.invite);
+    await page.keyboard.press("Enter");
+    const sheet = page.getByRole("dialog", { name: copy.couple.invite.title });
+    await expect(sheet.getByRole("textbox", { name: copy.couple.invite.email })).toBeFocused();
+    await page.keyboard.type(tomas.email);
+    await target44(page, copy.couple.invite.create);
+    await page.keyboard.press("Enter");
+    await expect(sheet.getByText(copy.couple.invite.ready)).toBeVisible();
+    // Copiar enlace de M3b.
+    await target44(page, copy.couple.invite.copy);
+    await target44(page, copy.couple.invite.share);
+    await sheet.getByRole("button", { name: copy.couple.invite.copy }).focus();
+    await page.keyboard.press("Enter");
+    await expect(sheet.getByText(copy.couple.invite.copied)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+
+    // M4: Generar enlace nuevo y Anular con el foco en la opción segura y Escape.
+    await expect(page.getByText(copy.couple.status.pending)).toBeVisible();
+    await target44(page, copy.couple.pending.regenerate);
+    await target44(page, copy.couple.pending.cancel);
+    await page.getByRole("button", { name: copy.couple.pending.regenerate }).focus();
+    await page.keyboard.press("Enter");
+    const regenerated = page.getByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    await expect(regenerated.getByRole("textbox", { name: copy.couple.invite.link })).toBeVisible();
+    const link = await regenerated.getByRole("textbox", { name: copy.couple.invite.link }).inputValue();
+    await page.keyboard.press("Escape");
+    await expect(regenerated).toBeHidden();
+    await page.getByRole("button", { name: copy.couple.pending.cancel }).focus();
+    await page.keyboard.press("Enter");
+    const confirm = page.getByRole("alertdialog", { name: copy.couple.cancel.title });
+    await expect(confirm.getByRole("button", { name: copy.couple.cancel.keep })).toBeFocused();
+    await target44(page, copy.couple.cancel.keep);
+    await target44(page, copy.couple.cancel.confirm);
+    await page.keyboard.press("Escape");
+    await expect(confirm).toBeHidden();
+    await expect(page.getByText(copy.couple.status.pending)).toBeVisible();
+    await context.close();
+
+    // Aceptar invitación sin ratón, con el enlace nuevo.
+    const invited = await signedContext(browser, baseURL!, tomas);
+    await invited.page.goto(link);
+    await expect(invited.page.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
+    await target44(invited.page, copy.couple.invitation.valid.accept);
+    await target44(invited.page, copy.couple.invitation.valid.later);
+    await tabTo(invited.page, copy.couple.invitation.valid.accept);
+    await invited.page.keyboard.press("Enter");
+    await expect(invited.page).toHaveURL(/\/cuenta\/pareja$/);
+    await expect(invited.page.getByText(copy.couple.status.active)).toBeVisible();
+    await invited.context.close();
+  });
+});

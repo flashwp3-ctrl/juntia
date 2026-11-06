@@ -3,7 +3,7 @@
 // cookies en memoria (el formato de la cookie lo escribe la librería, no un test) y un `storageState` por worker y rol.
 // Solo en el runner o, con `npm run e2e:dev`, en juntia-dev tras el guardia de destino (decisión 18). La clave secreta
 // solo existe aquí, en el runner y en el `.env.test` local (FR-011); ningún camino de la app la usa.
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createServerClient } from "@supabase/ssr";
@@ -143,4 +143,28 @@ export async function recoveryLink(email: string, baseURL: string) {
   const { data, error } = await adminClient().auth.admin.generateLink({ type: "recovery", email });
   if (error || !data.properties?.hashed_token) throw new Error("No se pudo generar el enlace de recuperación");
   return `${baseURL}/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery`;
+}
+
+/**
+ * PR B de la 003 (T031d, T036). Una invitación real de `inviter` para `email`, por `create_invitation` con su sesión: el
+ * token se genera aquí, como lo haría el navegador, y la función solo recibe su hash (contracts/server-actions.md §2).
+ */
+export async function seedInvitation(inviter: SeededUser, email: string) {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const { data, error } = await inviter.client.rpc("create_invitation", { p_idempotency_key: randomUUID(), p_email: email, p_token_hash: tokenHash });
+  if (error || !data) throw new Error("create_invitation falló en la siembra");
+  return { token, groupId: (data as { group_id: string }).group_id };
+}
+
+/** Estado de pareja de una cuenta sembrada: M4 pendiente o vencida, o M1 con un segundo integrante. */
+export async function seedCoupleState(user: SeededUser, state: "pending" | "expired" | "active", index: number) {
+  if (state === "active") {
+    const partner = await seedUser({ role: "estado-pareja", index, displayName: "Tomás" });
+    runnerSql(`select tests.seed_couple('${randomUUID()}','${user.id}','${partner.id}')`);
+    return;
+  }
+  const { groupId } = await seedInvitation(user, `pareja-${index}-${randomUUID().slice(0, 8)}@seed.test`);
+  // Vencida: la caducidad sigue siendo creación + 7 días (restricción de la tabla), un día en el pasado.
+  if (state === "expired") runnerSql(`update juntia_data.group_invitations set created_at=now()-interval '8 days', expires_at=now()-interval '1 day' where group_id='${groupId}' and status='pending'`);
 }

@@ -7,7 +7,8 @@ export type Session = "none" | "user" | "recovery";
 /** Lo que hace el recorrido antes de pasar axe, para llegar al estado. */
 export type Prepare = "networkError" | "invalidCredentials" | "unverified" | "signUpInvalid" | "recoverSent" | "sessionExpired" | "exportSheet"
   | "us" | "search" | "filters" | "exportPreparing" | "exportReady" | "exportFailed"
-  | "annotate" | "annotateIncome" | "annotateDetails" | "annotateInvalid" | "annotateSaving" | "annotateFailed" | "annotateSaved" | "edit" | "deleteDialog";
+  | "annotate" | "annotateIncome" | "annotateDetails" | "annotateInvalid" | "annotateSaving" | "annotateFailed" | "annotateSaved" | "edit" | "deleteDialog"
+  | "inviteSheet" | "inviteReady" | "cancelDialog";
 /**
  * Movimientos de la cuenta sembrada, por la función real `create_transaction` (research R8.11). `golden`: el dataset
  * dorado de octubre de 2026, literal. `current`: las mismas filas e importes con la fecha llevada al mismo día del mes
@@ -25,6 +26,12 @@ export type RouteEntry = {
   needsAuthApi?: boolean;
   prepare?: Prepare;
   data?: Data;
+  /**
+   * PR B de la 003 (T031d): la pareja de la cuenta sembrada, por las funciones reales. `pending`: una invitación creada
+   * con `create_invitation` (M4). `expired`: la misma, vencida (M4 vencida). `active`: pareja de dos con
+   * `tests.seed_couple` y un segundo usuario sembrado (M1).
+   */
+  couple?: "pending" | "expired" | "active";
   /** A6 necesita una cuenta que todavía no completó la primera entrada. */
   firstEntryPending?: boolean;
   status?: number;
@@ -87,7 +94,16 @@ export const registry: readonly RouteEntry[] = [
   { route: "/cuenta", state: "C1", path: "/cuenta", session: "user" },
   { route: "/cuenta/perfil", state: "P1", path: "/cuenta/perfil", session: "user" },
   { route: "/cuenta/perfil", state: "sesión caducada", path: "/cuenta/perfil", session: "user", prepare: "sessionExpired" },
-  { route: "/cuenta/pareja", state: "llega con P0-2", path: "/cuenta/pareja", session: "user" },
+  // PR B de la 003 (T031d, T036): Mi pareja M1–M4, M3b y la confirmación de anular. M6 y M7 necesitan sesión y la
+  // invitación de otra cuenta; como /invitacion ya está aquí sin sesión (M5) y una ruta va en una sola lista, se auditan
+  // en tests/a11y/couple.a11y.ts, solo con A11Y_JOB=e2e (tasks.md, regla 10: «si no caben en el registro»).
+  { route: "/cuenta/pareja", state: "M2 sin pareja", path: "/cuenta/pareja", session: "user" },
+  { route: "/cuenta/pareja", state: "M3 crear invitación", path: "/cuenta/pareja", session: "user", prepare: "inviteSheet" },
+  { route: "/cuenta/pareja", state: "M3b enlace listo", path: "/cuenta/pareja", session: "user", prepare: "inviteReady" },
+  { route: "/cuenta/pareja", state: "M4 pendiente", path: "/cuenta/pareja", session: "user", couple: "pending" },
+  { route: "/cuenta/pareja", state: "M4 vencida", path: "/cuenta/pareja", session: "user", couple: "expired" },
+  { route: "/cuenta/pareja", state: "M4 confirmación de anular", path: "/cuenta/pareja", session: "user", couple: "pending", prepare: "cancelDialog" },
+  { route: "/cuenta/pareja", state: "M1 activa", path: "/cuenta/pareja", session: "user", couple: "active" },
   { route: "/cuenta/apariencia", state: "T1", path: "/cuenta/apariencia", session: "user" },
   { route: "/cuenta/privacidad", state: "D1", path: "/cuenta/privacidad", session: "user" },
   { route: "/cuenta/privacidad", state: "D2 · hoja de exportar", path: "/cuenta/privacidad", session: "user", prepare: "exportSheet" },
@@ -95,6 +111,8 @@ export const registry: readonly RouteEntry[] = [
   { route: "/cuenta/privacidad", state: "D4 · listo", path: "/cuenta/privacidad", session: "user", data: "golden", prepare: "exportReady" },
   { route: "/cuenta/privacidad", state: "D5 · error", path: "/cuenta/privacidad", session: "user", data: "golden", prepare: "exportFailed" },
   { route: "/cuenta/seguridad", state: "G1", path: "/cuenta/seguridad", session: "user" },
+  // PR B de la 003: /invitacion sin sesión (M5). La pantalla la decide el cliente; sin cookie no hay red de Auth.
+  { route: "/invitacion", state: "M5 sin sesión", path: "/invitacion#t=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", session: "none" },
   // Sin sesión, de la 001.
   { route: "/interno/primitivos", state: "superficie interna", path: "/interno/primitivos", session: "none" },
   { route: "/ruta-que-no-existe", state: "no encontrado", path: "/ruta-que-no-existe", session: "none", status: 404 },
