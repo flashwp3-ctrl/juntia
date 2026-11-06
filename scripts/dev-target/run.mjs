@@ -15,7 +15,7 @@ import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
-import { acquireDevLock, createSignalHandler, spawnOptionsForTree } from "./lock.mjs";
+import { openDevSession } from "./session.mjs";
 import { readTap } from "./tap.mjs";
 
 /** Versión de la CLI fijada en el CI (`.github/workflows/ci.yml`) y en el quickstart de la 002. */
@@ -78,15 +78,17 @@ function childEnv(target, psqlDir, extra = {}) {
   return { ...env, JUNTIA_TEST_TARGET: "dev", API_URL: target.apiUrl, PUBLISHABLE_KEY: target.publishableKey, SECRET_KEY: target.secretKey, DB_URL: target.dbUrl, ...extra };
 }
 
-/** El hijo en curso: con SIGINT o SIGTERM se termina su árbol entero y el bloqueo se suelta después (F48-2). */
-let currentChild = null;
+/** Sesión con el bloqueo (session.mjs): arranca los pasos, cancela con SIGINT o SIGTERM y suelta el bloqueo (F48-2). */
+let session = null;
 
 /** Ejecuta un paso, con la salida filtrada por líneas para que ningún secreto llegue a la terminal. */
 function step(label, file, args, env, { input, capture = false } = {}) {
   const start = performance.now();
   return new Promise((done) => {
-    const child = spawn(file, args, { ...spawnOptionsForTree(), cwd: ROOT, env, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
-    currentChild = child;
+    const options = { cwd: ROOT, env, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] };
+    // Con una cancelación en curso no empieza ningún paso nuevo.
+    const child = session ? session.spawn(file, args, options) : spawn(file, args, options);
+    if (!child) { rows.push({ paso: label, resultado: "no empezó: cancelado", duración: "—" }); done({ code: 1, output: "", seconds: "0.00" }); return; }
     let captured = "";
     const pipe = (stream, out) => {
       let pending = "";
@@ -103,7 +105,6 @@ function step(label, file, args, env, { input, capture = false } = {}) {
     if (input !== undefined) child.stdin.end(input);
     child.on("error", (error) => { rows.push({ paso: label, resultado: `falló: ${error.message}`, duración: "—" }); done({ code: 1, output: "" }); });
     child.on("close", (code) => {
-      if (currentChild === child) currentChild = null;
       const seconds = ((performance.now() - start) / 1000).toFixed(2);
       if (!capture) rows.push({ paso: label, resultado: code === 0 ? "pasó" : "falló", duración: `${seconds} s` });
       done({ code: code ?? 1, output: captured, seconds });
@@ -240,10 +241,12 @@ async function main() {
   console.log(`Guardia de destino: ${DEV_REF} (juntia-dev) · .env.test: ${path}`);
   const psqlDir = findPsql();
   if (psqlDir) psqlBin = join(psqlDir, "psql.exe");
-  const release = acquireDevLock(join(commonDir, "juntia-dev.lock"), { branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command });
-  // F48-2: se termina el árbol del hijo en curso y el bloqueo se suelta solo cuando ya no queda ningún proceso.
-  const onSignal = createSignalHandler({ release, getChild: () => currentChild, exit: (code) => process.exit(code) });
-  for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { void onSignal(signal); });
+  // F48-2: la sesión toma el bloqueo y es el único punto que lo suelta, cuando el árbol del paso en curso ya no existe.
+  session = openDevSession({
+    lockDir: join(commonDir, "juntia-dev.lock"), branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command,
+    onCancel: (signal) => console.error(`
+${signal}: se cancela ${command}; se termina el árbol del paso en curso y después se suelta el bloqueo.`),
+  });
   const env = childEnv(target, psqlDir);
   let exitCode = 1;
   try {
@@ -254,7 +257,7 @@ async function main() {
       : command === "test:integration" ? await testIntegration(env)
       : await e2e(target, env);
   } finally {
-    release();
+    await session.close();
     summary(exitCode, started);
   }
   process.exitCode = exitCode;

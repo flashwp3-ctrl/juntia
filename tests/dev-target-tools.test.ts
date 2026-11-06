@@ -7,7 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { acquireDevLock, alive, createSignalHandler, killTree, spawnOptionsForTree, unlockDevLock } from "../scripts/dev-target/lock.mjs";
+import { acquireDevLock, alive, killTree, unlockDevLock } from "../scripts/dev-target/lock.mjs";
+import { openDevSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
 
 describe("lector TAP de test:db:dev", () => {
@@ -94,35 +95,82 @@ process.stdin.resume(); process.stdin.on("end", () => { if (release) release(); 
     expect(existsSync(lock)).toBe(false);
   });
 
-  it("con SIGTERM termina el árbol real (hijo y nieto) y solo después suelta el bloqueo", async () => {
-    const lock = lockIn();
-    const release = acquireDevLock(lock, { branch: "señal", command: "reset" });
-    // El hijo lanza un nieto que no termina solo, imprime el PID del nieto y se queda vivo.
-    const grandchild = "setInterval(() => {}, 1000)";
-    const parent = `const { spawn } = require("node:child_process");
+});
+
+// F48-2 (tercera ronda): la sesión (session.mjs) es el único punto que suelta el bloqueo. Con una señal no empieza
+// ningún paso nuevo y el bloqueo sigue mientras quede algún proceso del árbol del paso en curso.
+describe("sesión de juntia-dev: cancelación y liberación (F48-2)", () => {
+  let dir = "";
+  afterEach(() => { if (dir) rmSync(dir, { recursive: true, force: true }); });
+  const lockIn = () => { dir = mkdtempSync(join(tmpdir(), "juntia-session-")); return join(dir, "juntia-dev.lock"); };
+  const firstLine = (stream: NodeJS.ReadableStream) => new Promise<string>((resolve) => stream.once("data", (chunk) => resolve(String(chunk).trim())));
+  // Hijo que lanza un nieto y se queda vivo; imprime los dos PID.
+  const treeScript = (grandchild: string) => `const { spawn } = require("node:child_process");
 const g = spawn(process.execPath, ["-e", ${JSON.stringify(grandchild)}], { stdio: "ignore" });
-process.stdout.write(String(g.pid) + "\\n");
+process.stdout.write("child:" + process.pid + " grand:" + g.pid + "\\n");
 setInterval(() => {}, 1000);`;
-    const child = spawn(process.execPath, ["-e", parent], { ...spawnOptionsForTree(), stdio: ["ignore", "pipe", "inherit"] });
-    const grandchildPid = Number(await new Promise<string>((resolve) => child.stdout.once("data", (chunk) => resolve(String(chunk).trim()))));
-    expect(alive(child.pid!)).toBe(true);
-    expect(alive(grandchildPid)).toBe(true);
+  const pids = (line: string) => ({ child: Number(/child:(\d+)/.exec(line)![1]), grand: Number(/grand:(\d+)/.exec(line)![1]) });
+
+  it("cancelar termina el árbol real, ningún paso nuevo empieza y close() espera antes de soltar", async () => {
+    const lock = lockIn();
     const exit = vi.fn();
-    let lockDuringKill = false;
-    const terminate = async (target: typeof child, signal: NodeJS.Signals) => { lockDuringKill = existsSync(lock); await killTree(target, signal); };
-    await createSignalHandler({ release, getChild: () => child, exit, terminate })("SIGTERM");
-    expect(lockDuringKill, "el bloqueo sigue mientras se termina el árbol").toBe(true);
-    expect(alive(child.pid!), "el hijo ya no existe").toBe(false);
-    expect(alive(grandchildPid), "el nieto ya no existe").toBe(false);
+    let lockWhileTerminating = false;
+    const session = openDevSession({ lockDir: lock, branch: "s", command: "prueba", exit,
+      terminate: async (child, signal) => { lockWhileTerminating = existsSync(lock); await killTree(child, signal); } });
+    const child = session.spawn(process.execPath, ["-e", treeScript("setInterval(() => {}, 1000)")], { stdio: ["ignore", "pipe", "inherit"] })!;
+    const { grand } = pids(await firstLine(child.stdout!));
+    const cancelled = session.cancel("SIGTERM");
+    expect(session.spawn(process.execPath, ["-e", "0"], {}), "no empieza ningún paso después de la señal").toBeNull();
+    await session.close();
+    await cancelled;
+    expect(lockWhileTerminating).toBe(true);
+    expect(alive(child.pid!)).toBe(false);
+    expect(alive(grand)).toBe(false);
     expect(existsSync(lock)).toBe(false);
     expect(exit).toHaveBeenCalledExactlyOnceWith(143);
   }, 30_000);
 
-  it("sin hijo en curso suelta el bloqueo y sale con el código de la señal", async () => {
+  it("sin señal, close() suelta el bloqueo; sin close() (salida fatal) el bloqueo queda huérfano", async () => {
     const lock = lockIn();
-    const exit = vi.fn();
-    await createSignalHandler({ release: acquireDevLock(lock, { branch: "s", command: "e2e" }), getChild: () => null, exit })("SIGINT");
+    await openDevSession({ lockDir: lock, branch: "s", command: "prueba", exit: vi.fn() }).close();
     expect(existsSync(lock)).toBe(false);
-    expect(exit).toHaveBeenCalledWith(130);
-  });
+    const fatal = `import { openDevSession } from ${JSON.stringify(pathToFileURL(join(process.cwd(), "scripts", "dev-target", "session.mjs")).href)};
+openDevSession({ lockDir: ${JSON.stringify(lock)}, branch: "fatal", command: "prueba" });
+throw new Error("fatal");`;
+    const crashed = spawn(process.execPath, ["--input-type=module", "-e", fatal], { stdio: "ignore" });
+    expect(await new Promise((resolve) => crashed.once("close", resolve))).not.toBe(0);
+    expect(existsSync(lock), "el estado del árbol no se conoce: no se suelta en exit").toBe(true);
+    expect(() => acquireDevLock(lock, { branch: "otra", command: "reset" })).toThrow(/huérfano.*dev:unlock/);
+  }, 30_000);
+
+  // El flujo real del runner con una señal de verdad. Windows no entrega SIGTERM a un manejador de otro proceso
+  // (process.kill lo termina sin más), así que esta variante solo corre en POSIX; en Windows cubre la anterior.
+  it.skipIf(process.platform === "win32")("runner real: SIGTERM con un nieto que ignora SIGTERM; el bloqueo sigue hasta que el árbol termina", async () => {
+    const lock = lockIn();
+    const marker = join(dir, "segundo-paso");
+    const stubborn = "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000); setTimeout(() => process.exit(0), 3000)";
+    const runner = `import { openDevSession } from ${JSON.stringify(pathToFileURL(join(process.cwd(), "scripts", "dev-target", "session.mjs")).href)};
+const session = openDevSession({ lockDir: ${JSON.stringify(lock)}, branch: "runner", command: "prueba" });
+const step = (args) => new Promise((resolve) => {
+  const child = session.spawn(process.execPath, args, { stdio: ["ignore", "pipe", "inherit"] });
+  if (!child) return resolve(false);
+  child.stdout.on("data", (chunk) => process.stdout.write(chunk));
+  child.on("close", () => resolve(true));
+});
+try {
+  await step(["-e", ${JSON.stringify(treeScript(stubborn))}]);
+  await step(["-e", ${JSON.stringify(`require("node:fs").writeFileSync(${JSON.stringify(marker)}, "x")`)}]);
+} finally { await session.close(); }`;
+    const proc = spawn(process.execPath, ["--input-type=module", "-e", runner], { stdio: ["ignore", "pipe", "inherit"] });
+    const { child, grand } = pids(await firstLine(proc.stdout!));
+    const closed = new Promise<number | null>((resolve) => proc.once("close", resolve));
+    proc.kill("SIGTERM");
+    await vi.waitFor(() => expect(alive(child), "el hijo directo termina con la señal").toBe(false), { timeout: 5000, interval: 25 });
+    expect(alive(grand), "el nieto ignora SIGTERM y sigue vivo").toBe(true);
+    expect(existsSync(lock), "con el nieto vivo, el bloqueo sigue").toBe(true);
+    expect(await closed).toBe(143);
+    expect(alive(grand)).toBe(false);
+    expect(existsSync(lock)).toBe(false);
+    expect(existsSync(marker), "ningún paso empezó después de la señal").toBe(false);
+  }, 30_000);
 });

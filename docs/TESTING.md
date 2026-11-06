@@ -178,8 +178,11 @@ reutilizarse. Se libera a mano: `npm run dev:unlock` enseña a quién pertenece 
 nada; `npm run dev:unlock -- --force` lo borra, después de comprobar que no queda
 ningún proceso de ese comando. Con Ctrl+C o SIGTERM se termina el **árbol entero** del
 hijo en curso (Windows: `taskkill /PID <pid> /T /F`; POSIX: el hijo corre en su propio
-grupo y se señala el grupo, con SIGKILL a los 5 s), y el bloqueo se suelta solo cuando
-ya no queda ningún proceso. **Entre
+grupo y se señala el grupo, con SIGKILL a los 5 s), no empieza ningún paso nuevo, y el
+bloqueo se suelta solo cuando ya no queda ningún proceso. Un único punto lo suelta
+(`scripts/dev-target/session.mjs`): el final normal del comando espera la misma
+cancelación en curso. Si el comando muere sin pasar por ahí (error fatal, SIGKILL), no se
+sabe en qué estado quedó el árbol y el bloqueo se queda huérfano hasta `dev:unlock --force`. **Entre
 equipos no hay mecanismo**: los dos fundadores no usan `juntia-dev` a la vez y se
 avisan antes de un `db:dev:reset`, que además borra los perfiles y movimientos de las
 cuentas que se usen a mano en dev (las cuentas de Auth no se borran).

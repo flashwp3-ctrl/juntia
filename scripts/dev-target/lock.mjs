@@ -5,7 +5,8 @@
 // - Nunca se recupera solo (F48-2, segunda ronda): si el dueño murió de golpe (SIGKILL, apagón), un descendiente suyo
 //   podría seguir escribiendo en juntia-dev, y un PID reutilizado haría creer que sigue vivo. El comando se niega y
 //   explica cómo liberarlo a mano con `npm run dev:unlock -- --force`, que antes enseña a quién pertenece.
-// - Con SIGINT o SIGTERM se termina el ÁRBOL del hijo en curso y el bloqueo se suelta cuando ya no queda nadie.
+// - Con SIGINT o SIGTERM se termina el ÁRBOL del hijo en curso y el bloqueo se suelta cuando ya no queda nadie
+//   (session.mjs, el único punto que lo suelta).
 // Entre equipos distintos (los dos fundadores) no hay carpeta común: esa parte es una regla de docs/TESTING.md §2.
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -54,9 +55,8 @@ export function acquireDevLock(dir, { branch, command }, { host = hostname(), is
   writeFileSync(temporary, JSON.stringify(entry, null, 2));
   renameSync(temporary, join(dir, "owner.json"));
   let released = false;
-  const release = () => { if (!released) { released = true; rmSync(dir, { recursive: true, force: true }); } };
-  process.once("exit", release);
-  return release;
+  // Sin liberación en `exit` (F48-2): la suelta solo session.mjs, cuando sabe que el árbol del paso terminó.
+  return () => { if (!released) { released = true; rmSync(dir, { recursive: true, force: true }); } };
 }
 
 /**
@@ -99,20 +99,4 @@ export async function killTree(child, signal) {
     await pause(50);
   }
   if (child.exitCode === null && child.signalCode === null) await new Promise((resolve) => child.once("close", resolve));
-}
-
-/**
- * F48-2: con SIGINT o SIGTERM termina el árbol del hijo en curso y, solo cuando ya no queda ninguno, suelta el
- * bloqueo y sale. Una segunda señal no repite nada.
- */
-export function createSignalHandler({ release, getChild, exit, terminate = killTree }) {
-  let handling = false;
-  return async (signal) => {
-    if (handling) return;
-    handling = true;
-    const child = getChild();
-    if (child) await terminate(child, signal);
-    release();
-    exit(signal === "SIGINT" ? 130 : 143);
-  };
 }
