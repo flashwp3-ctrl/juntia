@@ -28,7 +28,7 @@ create table juntia_data.group_invitations (
  status text not null check(status in ('pending','accepted','cancelled','replaced')),
  created_at timestamptz not null default now(),expires_at timestamptz not null default(now()+interval '7 days'),
  created_by uuid not null references auth.users(id),inviter_display_name text not null,
- accepted_by uuid references auth.users(id),accepted_at timestamptz,replaced_by uuid references juntia_data.group_invitations(id),
+ accepted_by uuid references auth.users(id),accepted_at timestamptz,replaced_by uuid references juntia_data.group_invitations(id) deferrable initially deferred,
  check((status='accepted')=(accepted_by is not null and accepted_at is not null)),
  check((status='replaced')=(replaced_by is not null)),check(expires_at=created_at+interval '7 days')
 );

@@ -2,9 +2,9 @@
 alter table juntia_data.transactions drop constraint transactions_private_only_p0_1;
 alter table juntia_data.transactions add foreign key(group_id) references juntia_data.groups(id),
  add column payer_user_id uuid references auth.users(id),
- add column moved_from_transaction_id uuid references juntia_data.transactions(id),
- add column moved_to_transaction_id uuid references juntia_data.transactions(id),
- add column restored_from_transaction_id uuid references juntia_data.transactions(id),
+ add column moved_from_transaction_id uuid references juntia_data.transactions(id) deferrable initially deferred,
+ add column moved_to_transaction_id uuid references juntia_data.transactions(id) deferrable initially deferred,
+ add column restored_from_transaction_id uuid references juntia_data.transactions(id) deferrable initially deferred,
  add column split_mode text, add column split_percents smallint[], add column updated_by uuid references auth.users(id),
  add constraint transactions_group_no_owner check(group_id is null or owner_user_id is null),
  add constraint transactions_payer_required check(group_id is null or payer_user_id is not null),

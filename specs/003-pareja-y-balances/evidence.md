@@ -2,7 +2,69 @@
 
 Rama `feat/003-a-database`, base `main` `0c25e8b`. Sin producción ni datos reales.
 
-## Estado actual — pausa por regla 6 (6 de noviembre, 15:16 Bogotá)
+## Estado actual — T026a/T026b autorizadas dentro de PR A
+
+El gestor confirmó que ambos bloqueos pertenecen al esquema de PR A y autorizó
+T026a/T026b dentro de este PR, sin cambiar tasks.md. T027 aún no se ha lanzado;
+T028 y T029 siguen siendo humanas. Los apartados posteriores conservan el
+historial de rojos y pausas, con su estado a la hora indicada.
+
+### T026 / preflight T027 · resultados de la iteración final
+
+`npm run test:db:dev`: 15 archivos, **700 comprobaciones pasan**, incluidas las
+cuatro de 12_restore_schema; total remoto 75,37 s (con red y reset). Sin fallos.
+El presupuesto de test:db <60 s corresponde al runner y se medirá allí.
+
+`npm run test:integration:dev` pasa, incluida la carrera de caducidad tras esperar
+el bloqueo y los cinco casos de restauración. Sin 429 ni fallos de autenticación;
+se mantienen 28 signInWithPassword para la ejecución completa dev. Los casos
+nuevos de restauración usan SQL dentro de transacciones de prueba, sin sesiones Auth.
+
+`npm run e2e:dev` pasa: build 19,54 s; E2E sin correo 29,18 s; axe con sesión
+152 casos verdes en 426,45 s, sin violaciones; total 476,96 s. Las tres rutas de
+correo siguen declaradas como exclusivas de CI. No se añadieron specs E2E.
+
+`npm run verify` pasa en 78,44 s: lint 22,11 s, tipos 12,39 s, dominio 42 tests
+(1,70 s de comando), componentes 302 pasan / 2 omitidos (42,24 s). Presupuestos
+locales respetados; los presupuestos SQL y de jobs se medirán en T027.
+
+### T026a · límites locales y CI
+
+Rojo observado: el test esperaba 1000 y encontraba 30. Verde: los tres límites
+sign_in_sign_ups, token_refresh y token_verifications son 1000 en config.toml.
+Comentario añadido literalmente: «Solo stack local/CI; nunca se aplica al alojado
+(no usamos supabase config push). Los límites de juntia-dev y de producción se
+gestionan en el panel». Búsqueda en scripts y .github: ninguna llamada a
+supabase config push. Ningún ajuste alojado modificado.
+
+### T026b · restauración con garantías conservadas
+
+Rojo observado antes del cambio: las dos comprobaciones pgTAP de las FK diferidas
+fallaban; los casos de importación fallaban por ausencia del validador. Las tres
+FK de trazabilidad y la FK replaced_by de invitaciones se conservan y pasan a
+DEFERRABLE INITIALLY DEFERRED. Una FK huérfana sigue dando 23503 al comprobarla.
+
+El respaldo cifrado, data.sql, manifiesto y hash mantienen su formato. El
+restaurador ordena una copia temporal: grupos, membresías por join_order,
+invitaciones, movimientos, partes y liquidaciones. Carga y comprobación explícita
+de invariantes en una sola transacción, con todos los triggers activos. No se usa
+session_replication_role en la restauración ni se requiere superusuario. Los
+backups antiguos siguen usando las migraciones y el cargador de su propio SHA.
+
+La integración pasa con postgres de juntia-dev y verifica rolsuper=false: parejas
+provisionales, activas y descartadas, ciclo privado↔compartido y texto UTF-8.
+Cuatro negativos rechazan partes incorrectas, vínculos huérfanos, más de dos
+miembros y una provisional inconsistente, sin datos persistidos. runnerSql usa
+stdin UTF-8 en lugar de argv para conservar texto en Windows y evitar incluir SQL
+en mensajes de error. Los cuatro tests locales del ordenamiento/configuración
+pasan, incluidos literales con comillas, saltos de línea y contenido similar a SQL.
+
+Los nueve negativos del drill se conservan. N10 elimina solo la segunda membresía
+de una pareja sintética dedicada y recalcula el hash del data.sql alterado: debe
+rechazarse por RESTORE_INVARIANTS, no por el hash. La ejecución completa del drill
+y la evidencia definitiva de restauración corresponden a T027 en CI.
+
+## Historial — bloqueo comunicado y resuelto por autorización posterior (15:16 Bogotá)
 
 El preflight de importación demostró una incompatibilidad con el restaurador
 actual. No se lanza T027 ni se cambian los mecanismos de restauración o Auth sin
