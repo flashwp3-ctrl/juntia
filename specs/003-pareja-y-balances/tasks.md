@@ -50,9 +50,10 @@ Se enuncian una vez. Una tarea que las incumpla no está terminada.
 7. **Los elementos propuestos se construyen tal como se aprobaron** (decisiones 16.6 y 20.2–20.4; maestro §15.9). Los que solo requieren aprobación viendo la pantalla se listan en la tarea de capturas de su PR.
 8. **Los tests se escriben antes que el código que prueban y se ven fallar** (`docs/TESTING.md` §6). Cada test copia como comentario el criterio literal que cubre, con su referencia. En pgTAP, la identidad se fija **solo** con `set local role …` y `set local "request.jwt.claims" = '{"sub":"…","role":"authenticated","email":"…"}'`.
 9. **Toda `update` dentro de una función que escribe comprueba `row_count`** (research R1), y cada función tiene una prueba con una política rota a propósito que debe hacerla fallar.
-10. **Ninguna espera fija** en pruebas de navegador; `reducedMotion: 'reduce'` por defecto; `retries` 0/1; solo Chromium (ADR-011 §6).
-11. **Ninguna afirmación sin salida real** (`AGENTS.md` 12 y 18). Un `[V]` se cierra pegando su salida en `specs/003-pareja-y-balances/evidence.md`.
-12. **Producción**: las migraciones a producción las aplica el **gestor** en el equipo de un fundador, con su «sí» antes de cada paso de escritura, y solo con la copia semanal al día (decisión 16.11; ADR-011 §9.5).
+10. **Cada archivo a11y nuevo respeta `A11Y_JOB`** (revisión del PR #50, F50-5). `playwright.config.ts` descubre todos los `tests/a11y/*.a11y.ts`, y el job `app` los corre con `A11Y_JOB=app` y sin un Supabase accesible. Por eso los casos que necesitan sesión o la respuesta real de Auth se declaran en `tests/a11y/route-registry.ts` como entradas de `e2eEntries`, o, si no caben en el registro, van dentro de un `test.describe` que se salta salvo con `A11Y_JOB=e2e`. Con `A11Y_JOB=app` no se lista ningún caso con sesión. No se tocan los workflows.
+11. **Ninguna espera fija** en pruebas de navegador; `reducedMotion: 'reduce'` por defecto; `retries` 0/1; solo Chromium (ADR-011 §6).
+12. **Ninguna afirmación sin salida real** (`AGENTS.md` 12 y 18). Un `[V]` se cierra pegando su salida en `specs/003-pareja-y-balances/evidence.md`.
+13. **Producción**: las migraciones a producción las aplica el **gestor** en el equipo de un fundador, con su «sí» antes de cada paso de escritura, y solo con la copia semanal al día (decisión 16.11; ADR-011 §9.5).
 
 ## Interpretaciones de ejecución
 
@@ -64,7 +65,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 | I2 | T031b, T045 | La infraestructura de los tres resultados de escritura (`ok`/`rejected`/`unknown`) y «Comprobar estado» **nace completa en el PR B** (T031b), con las cuatro escrituras de invitación. El PR C la **amplía** a los gastos compartidos y a Mover a Pareja (T045), y el PR D la usa para las liquidaciones. Ningún PR deja a otro una parte por terminar | El plan la describe en contracts/server-actions §1 sin fijar el PR; FR-056 y FR-059 rigen desde la primera escritura compartida, que es la invitación (revisión del PR #50, F50-1) |
 | I3 | T047, T061 | El saldo de una línea de Inicio en Nosotros («POR SALDAR · Tomás le debe a Sara $X · Ver balance», FR-044) entra en C con la vista `couple_balance`; la pantalla de Balance con SharedBalance entra en D | El plan pone Inicio en Nosotros en C y Balance en D |
 | I4 | T038, T055, T069 | Las **capturas** para la aprobación humana son a 390 y 1440 px en los dos temas. El **barrido sin scroll horizontal** es en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) en los dos temas, con prueba automática (F50-3) | `CLAUDE.md` 5 hace obligatorios 390 y 1440; FR-054 y SC-001 piden los siete |
-| I5 | T018a, T031c, T044a, T060a | Las pruebas de integración y las E2E se escriben **antes** que el código que prueban y se ven en rojo **contra `juntia-dev`** (`test:integration:dev`, `e2e:dev`). Las tareas que las «hacen pasar» (T022–T024, T036, T051, T065) se quedan donde están, sin runs de CI adicionales | Regla 8; revisión del PR #50, F50-2 |
+| I5 | T018a, T031c, T031d, T044a, T044b, T060a, T060b | Las pruebas de integración, las E2E y las comprobaciones a11y (axe, barrido de anchos, teclado, texto al 200 % y 44 px) se escriben **antes** que el código que prueban y se ven en rojo **contra `juntia-dev`** (`test:integration:dev`, `e2e:dev`). Las tareas que las «hacen pasar» (T022–T024, T036, T038, T051, T055, T065, T066, T069) se quedan donde están, sin runs de CI adicionales | Regla 8; revisión del PR #50, F50-2 |
 
 ---
 
@@ -212,7 +213,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T028 **Humana (fundadores)**: revisión del SQL de las cuatro migraciones en el PR A antes del merge
   - Prueba / terminado cuando: aprobación registrada en el PR.
 
-- [ ] T029 **Humana (gestor)**: después del merge del PR A, aplicar las cuatro migraciones a **producción** con la confirmación del fundador en cada paso de escritura y la copia semanal al día (regla 12); comprobar el `project-ref` antes de empezar y desenlazar al terminar
+- [ ] T029 **Humana (gestor)**: después del merge del PR A, aplicar las cuatro migraciones a **producción** con la confirmación del fundador en cada paso de escritura y la copia semanal al día (regla 13); comprobar el `project-ref` antes de empezar y desenlazar al terminar
   - Prueba / terminado cuando: `evidence.md` registra las migraciones aplicadas, sin claves.
 
 ---
@@ -239,6 +240,13 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: el caso falla porque faltan Mi pareja e `/invitacion`, no por el arnés; la salida queda en `evidence.md`.
 
+- [ ] T031d [US1] Escribir **primero** las comprobaciones a11y del PR B y verlas **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032:
+  - las entradas axe del inventario de estados de T036 (M1–M7, M3b, M4 pendiente y vencida y la confirmación de anular) en `tests/a11y/route-registry.ts`, como `e2eEntries` las que necesitan sesión;
+  - `tests/a11y/couple.a11y.ts` con el barrido de los siete anchos, el teclado, el texto al 200 % y los 44 px de T038, con sus casos con sesión solo bajo `A11Y_JOB=e2e` (regla 10);
+  - la **prueba de descubrimiento** `tests/a11y/job-selection.test.ts` (Vitest `components`, entorno `node`, como `route-registry.test.ts`): ejecuta `npx playwright test --project a11y --list` con `A11Y_JOB=app` y con `A11Y_JOB=e2e` y comprueba que con `app` no aparece **ningún** caso con sesión o Auth de los archivos nuevos y con `e2e` sí aparecen. Sirve también para los archivos de C y D
+  - Cumple: regla 8 y 10; F50-2, F50-5; interpretación I5.
+  - Prueba / terminado cuando: las comprobaciones fallan porque faltan las pantallas, no por el arnés; la prueba de descubrimiento pasa ya en este punto (no depende de las pantallas); la salida queda en `evidence.md`.
+
 ### Grupo 2B — implementación (en serie: comparten `es.ts` y el shell)
 
 - [ ] T031b [US1] Infraestructura **completa** de resultados de escritura en `src/features/shared/write-result.ts` (`ok`/`rejected`/`unknown`, clave por apertura, bloqueo de la intención, «Reintentar» idéntico y «Comprobar estado» con `write_status` de `src/lib/db/write-status.ts`), conectada a las cuatro escrituras de invitación
@@ -263,14 +271,14 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2C — spec E2E 1, axe y salida
 
-- [ ] T036 [US1] Hacer pasar el caso de la **spec E2E 1** escrito en T031c («Invitación → login → volver → aceptar», con Tomás entrando por M5) y comprobar el HTML de `/invitacion` sin ningún dato de la pareja. axe en los dos temas del inventario de estados nuevos del PR B: M1, M2, M3, **M3b** (enlace visible), **M4** (pendiente y vencida), M5, **M6**, **M7** y la **confirmación de anular** (SensitiveActionConfirmation)
+- [ ] T036 [US1] Hacer pasar el caso de la **spec E2E 1** escrito en T031c y las entradas axe de T031d («Invitación → login → volver → aceptar», con Tomás entrando por M5) y comprobar el HTML de `/invitacion` sin ningún dato de la pareja. axe en los dos temas del inventario de estados nuevos del PR B: M1, M2, M3, **M3b** (enlace visible), **M4** (pendiente y vencida), M5, **M6**, **M7** y la **confirmación de anular** (SensitiveActionConfirmation)
   - Cumple: FR-067 (spec 1), FR-068; SC-002 (B); [V] «Retorno tras el login» (prueba ejecutada, responsable implementador, cierre antes del merge del PR B).
   - Itera: `npm run e2e:dev`.
 
 - [ ] T037 Iteración completa del PR B en `juntia-dev`: `e2e:dev` (specs 1 y 2) y `test:integration:dev`
   - Prueba: en verde.
 
-- [ ] T038 Responsive y accesibilidad del PR B, con prueba automática en el proyecto `a11y` (`tests/a11y/couple.a11y.ts`), iterada con `e2e:dev` y ejecutada en el gate:
+- [ ] T038 Responsive y accesibilidad del PR B: hacer pasar `tests/a11y/couple.a11y.ts`, escrita en T031d, iterada con `e2e:dev` y ejecutada en el gate:
   - **barrido sin scroll horizontal** (`scrollWidth <= clientWidth`) de Mi pareja (M1–M4), `/invitacion` (M5–M7), A6 y Nosotros sin pareja en **los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas;
   - **teclado**: «Crear invitación», «Generar enlace nuevo», «Copiar enlace» de M3b, «Anular» con el foco inicial en la opción segura y Escape, y «Aceptar invitación», todo operable sin ratón;
   - **texto al 200 %** en esas pantallas: sin pérdida de contenido ni solapamientos;
@@ -313,6 +321,10 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: los casos fallan porque falta lo que prueban, no por el arnés; la salida queda en `evidence.md`.
 
+- [ ] T044b Escribir **primero** las comprobaciones a11y del PR C y verlas **en rojo contra `juntia-dev`**, antes de T045: las entradas axe del inventario de T051 (Inicio, Actividad y Anotar en Nosotros, edición compartida, confirmación de eliminar, ChangePreview y A5 en sus dos variantes) en `route-registry.ts`, y `tests/a11y/couple-shared.a11y.ts` con el teclado, el texto al 200 % y los 44 px de T051 y el barrido de los siete anchos de T055, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
+  - Cumple: regla 8 y 10; F50-2, F50-5; interpretación I5.
+  - Prueba / terminado cuando: fallan porque falta lo que prueban; `job-selection.test.ts` sigue en verde con el archivo nuevo.
+
 ### Grupo 3B — implementación (en serie)
 
 - [ ] T045 **Ampliar** el módulo común de T031b (`src/features/shared/write-result.ts`) a las escrituras de gasto compartido y de Mover a Pareja, y el proveedor de Anotar a avisos por operación y por contexto; `router.refresh()` al volver a la pestaña (Q16). No completa nada de B: B ya lo tiene entero
@@ -341,7 +353,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 3C — spec E2E 3, axe, medición y salida
 
-- [ ] T051 [US3] **Spec E2E 3 nace**: hacer pasar los casos escritos en T044a. Más, en el proyecto `a11y` (`tests/a11y/couple-shared.a11y.ts`), agrupado por ruta:
+- [ ] T051 [US3] **Spec E2E 3 nace**: hacer pasar los casos escritos en T044a. Más, hacer pasar las comprobaciones a11y escritas en T044b (`tests/a11y/couple-shared.a11y.ts` y el registro), agrupadas por ruta:
   - **axe** en los dos temas de Inicio, Actividad y Anotar en Nosotros y del **inventario de estados nuevos del PR C**: edición compartida (con el aviso y en conflicto de versión), la **confirmación de eliminar** un gasto compartido, **ChangePreview** (A3) y **A5** de Mover a Pareja en sus dos variantes (rechazo confirmado y resultado desconocido);
   - **teclado**: el selector de participantes, los modos de reparto, los campos de Importe y Porcentaje, Guardar con Enter y Escape para cerrar, y el flujo A1–A4 de Mover a Pareja;
   - **texto al 200 %** y **objetivos de 44 px** en esos controles nuevos
@@ -358,7 +370,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T054 **Humana (gestor)**: medición en laboratorio de INP al abrir Anotar en Nosotros y al guardar un gasto compartido, y de CLS en las cargas con Skeleton de Inicio y Actividad en Nosotros, reportadas como laboratorio
   - Cumple: SC-010 (C); [V] «Umbrales de §15.7», responsable gestor, cierre antes del merge del PR C.
 
-- [ ] T055 **Barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición compartida y A1–A5, con la prueba del proyecto `a11y` de T051 y su salida en `evidence.md`. Capturas a 390 y 1440 px en los dos temas para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
+- [ ] T055 **Barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición compartida y A1–A5: hacer pasar la prueba escrita en T044b, con su salida en `evidence.md`. Capturas a 390 y 1440 px en los dos temas para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
   - Cumple: FR-054, SC-001 (C); F50-3.
 
 - [ ] T056 **Gate final del PR C (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run y la duración del job `e2e`
@@ -391,6 +403,10 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: fallan porque falta Balance, no por el arnés; la salida queda en `evidence.md`.
 
+- [ ] T060b Escribir **primero** las comprobaciones a11y del PR D y verlas **en rojo contra `juntia-dev`**, antes de T061: las entradas axe de T066 (Balance, hoja de liquidación, detalle y confirmación de anular) en `route-registry.ts`, y `tests/a11y/balance.a11y.ts` con el barrido de los siete anchos, el teclado, el texto al 200 % y los 44 px de T069, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
+  - Cumple: regla 8 y 10; F50-2, F50-5; interpretación I5.
+  - Prueba / terminado cuando: fallan porque falta Balance; `job-selection.test.ts` sigue en verde.
+
 ### Grupo 4B — implementación (en serie)
 
 - [ ] T061 [US5] Balance en `src/app/(app)/balance/page.tsx` y `src/features/balance/`: pantalla propia en móvil desde Inicio, destino del rail y del sidebar desde 1024 px y módulo de Inicio con barras de 16 px; SharedBalance (aprobado en su forma, decisión 20.2) y el desglose filtrable por mes con `couple_balance` y `couple_expenses`
@@ -415,7 +431,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   - Cumple: FR-067 (spec 3); SC-003 (E2E).
   - Itera: `npm run e2e:dev`.
 
-- [ ] T066 axe en los dos temas de Balance, la hoja de liquidación, el detalle de liquidación y la **confirmación de anular** una liquidación
+- [ ] T066 Hacer pasar las entradas axe escritas en T060b: los dos temas de Balance, la hoja de liquidación, el detalle de liquidación y la **confirmación de anular** una liquidación
   - Cumple: FR-068; SC-002 (D).
   - Itera: `npm run e2e:dev`.
 
@@ -425,7 +441,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T068 **Humana (gestor)**: medición en laboratorio de CLS en la carga con Skeleton de Balance
   - Cumple: SC-010 (D).
 
-- [ ] T069 Responsive y accesibilidad del PR D, con prueba automática en el proyecto `a11y` (`tests/a11y/balance.a11y.ts`):
+- [ ] T069 Responsive y accesibilidad del PR D: hacer pasar `tests/a11y/balance.a11y.ts`, escrita en T060b:
   - **barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Balance (pantalla móvil, destino de escritorio y módulo de Inicio), la hoja de liquidación, el detalle con «Anular» y el saldo invertido;
   - **teclado** en «Registrar liquidación», «Todo»/«Otro», la fecha, «Anular» (foco inicial en la opción segura, Escape) y el selector Yo/Nosotros durante S1;
   - **texto al 200 %** y **objetivos de 44 px** en esos controles.
@@ -499,9 +515,9 @@ Task: "T043 Tests de componentes de Inicio y Actividad en Nosotros y de Yo con l
 | --- | --- | ---: | --- |
 | Previo | Prerrequisitos de `juntia-dev` | T001 (1) | Gestor |
 | **A** · base de datos, seguridad y dinero (sin interfaz) | T002–T029, con T005b y T018a | 30 | **Codex o Claude Code** |
-| **B** · Mi pareja e invitaciones | T030–T040, con T031a, T031b y T031c | 14 | **Claude Code** (04·15, 04·17) |
-| **C** · gastos compartidos, Nosotros y Mover a Pareja | T041–T057, con T044a | 18 | **Claude Code** (02·5, 02·6, 04·1, 04·7, 04·10, 04·12, 04·13) |
-| **D** · Balance, liquidaciones, S1 y S4, más la aceptación | T058–T074, con T060a | 18 | **Claude Code** (02·3, 04·2, 04·5, 04·8, MOTION_SYSTEM) |
+| **B** · Mi pareja e invitaciones | T030–T040, con T031a, T031b, T031c y T031d | 15 | **Claude Code** (04·15, 04·17) |
+| **C** · gastos compartidos, Nosotros y Mover a Pareja | T041–T057, con T044a y T044b | 19 | **Claude Code** (02·5, 02·6, 04·1, 04·7, 04·10, 04·12, 04·13) |
+| **D** · Balance, liquidaciones, S1 y S4, más la aceptación | T058–T074, con T060a y T060b | 19 | **Claude Code** (02·3, 04·2, 04·5, 04·8, MOTION_SYSTEM) |
 
 ### CI por PR (decisión 18: mínimo)
 
@@ -542,8 +558,8 @@ Las tareas de test salen **de la tabla «Pruebas por capa» de cada PR del plan*
 | T030, T031, T031a, T041–T044, T058–T060 | `src/features/**/*.test.tsx` | Componentes | Estados, textos, selector, resultados de escritura, contexto | Lo que se pinta y la lógica de cliente |
 | T031c (rojo), T036 (verde) | `tests/e2e/access-account.e2e.ts` | E2E (spec 1) | Invitación → login → volver → aceptar | Rodeo por el login y la sesión (matriz de recorridos) |
 | T044a y T060a (rojo), T051 y T065 (verde) | `tests/e2e/couple-settle.e2e.ts` | E2E (spec 3) | Pareja 50/50, cambio Yo/Nosotros, Mover a Pareja, liquidación | Caché, prefetch y RSC entre rutas (matriz de recorridos) |
-| T036, T051, T066 | axe | Accesibilidad | Sin violaciones serias en los dos temas, con el inventario de estados nuevos | Fila 16 de ADR-011 |
-| T038, T051, T055, T069 | `tests/a11y/*.a11y.ts` | Navegador (proyecto `a11y`) | FR-054: sin scroll horizontal en siete anchos, teclado, texto al 200 % y 44 px | Medir el layout real exige un navegador; Impeccable no cuenta como evidencia |
+| T031d, T044b y T060b (rojo), T036, T051 y T066 (verde) | axe | Accesibilidad | Sin violaciones serias en los dos temas, con el inventario de estados nuevos | Fila 16 de ADR-011 |
+| T031d, T044b y T060b (rojo), T038, T051, T055 y T069 (verde) | `tests/a11y/*.a11y.ts` | Navegador (proyecto `a11y`) | FR-054: sin scroll horizontal en siete anchos, teclado, texto al 200 % y 44 px | Medir el layout real exige un navegador; Impeccable no cuenta como evidencia |
 
 ---
 
@@ -605,7 +621,7 @@ la spec, el plan o sus auxiliares; y la terminología coincide.
 | FR-065 | T002, T003, T005 |
 | FR-066 | T025 |
 | FR-067 | T036, T051, T065 |
-| FR-068 | T036, T051, T066 |
+| FR-068 | T031d, T036, T044b, T051, T060b, T066 |
 
 **Todos los FR tienen al menos una tarea.**
 
@@ -636,7 +652,7 @@ auxiliares. Las cuatro que podrían parecerlo tienen su origen:
 
 - T001: prerrequisito de la decisión 18.
 - T008: glosario, que el plan pide en el PR A.
-- T029: migraciones a producción, regla 12.
+- T029: migraciones a producción, regla 13.
 - T074: cierre del slice.
 
 ### B.4 Terminología
