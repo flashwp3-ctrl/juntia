@@ -107,6 +107,8 @@ export const copy = {
   },
   row: {
     onlyYou: "Solo tú",
+    // UX lote 1, cambio 3 (fila optimista). Copy nuevo para revisión de los fundadores: ninguna de las dos afirma que se guardó ni que no.
+    pending: { saving: "Guardando…", unknown: "Sin confirmar" },
     accessibleName: ({ title, amount, income, category, date }: { title: string; amount: string; income: boolean; category: string; date: string }) =>
       `${title}, ${income ? "más " : ""}${amount} pesos, ${category}, ${date}`,
   },

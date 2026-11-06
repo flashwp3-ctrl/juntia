@@ -15,6 +15,7 @@ import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/for
 import { CountingAmount } from "@/features/expenses/counting-amount";
 import { HighlightRow } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
+import { HomeEmpty, PendingHomeRows } from "./pending-home";
 
 const RECENT = 5;
 // El ancho de cada ficha del desglose crece con su importe (en pesos), como en 04·1.
@@ -39,9 +40,11 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
   const recent = groupByDay(rows).flatMap(({ transactions }) => transactions).slice(0, RECENT);
   if (recent.length === 0) {
     return (
-      <div className="flex flex-col gap-6 pt-2">
-        <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
-      </div>
+      <HomeEmpty month={month} today={today} empty={
+        <div className="flex flex-col gap-6 pt-2">
+          <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
+        </div>
+      } />
     );
   }
   const spentBy = (Object.entries(summary.byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
@@ -88,6 +91,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
+            <PendingHomeRows month={month} today={today} />
             {recent.map((transaction) => (
               <li key={transaction.id}>
                 <HighlightRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />

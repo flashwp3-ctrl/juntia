@@ -5,6 +5,7 @@
 // reglas de la capa base y comprueba con `matches()` que cada control principal cae en la lista de pulsables y que los
 // deshabilitados caen en la regla posterior. El cursor computado en un navegador real lo comprueba la E2E de Anotar.
 import { render, screen } from "@testing-library/react";
+import Link from "next/link";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -40,7 +41,7 @@ describe("Cursor de mano en lo pulsable (UX lote 1, cambio 5)", () => {
       <>
         <Button>Guardar</Button>
         <button type="button" aria-pressed="false">Mercado</button>
-        <a href="/actividad/1">Fila</a>
+        <Link href="/actividad/1">Fila</Link>
         <details><summary>Más</summary></details>
         <label htmlFor="x">Campo</label>
         <input id="x" />

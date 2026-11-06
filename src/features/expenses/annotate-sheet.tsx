@@ -29,7 +29,7 @@ import { dayLabel } from "@/lib/format";
 import { ConfirmDialog } from "./confirm-dialog";
 import type { SheetMode } from "./annotate-provider";
 import { normalizeDescription, toPayloadPesos } from "./payload";
-import type { ExpenseActionError, ExpenseActions, SavedTransaction } from "./types";
+import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
 
 const WIDE = "(min-width: 768px)";
 function subscribeWide(onChange: () => void) {
@@ -58,6 +58,9 @@ type AnnotateSheetProps = {
   actions: Pick<ExpenseActions, "create" | "update">;
   onClose: () => void;
   onSaved: (saved: SavedTransaction, kind: SheetMode["kind"]) => void;
+  /** UX lote 1, cambio 3: la creación viaja por el proveedor, que oculta la hoja y enseña la fila al instante. */
+  onTrack: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
+  onAbandon: (key: string) => void;
   returnFocusTo: { current: HTMLElement | null };
 };
 
@@ -117,7 +120,7 @@ function SummaryChip({ icon, children, onClick }: { icon: "calendar-blank" | "lo
   return onClick ? <button type="button" onClick={onClick} className={`${hit} ${look} disabled:cursor-not-allowed`}>{content}</button> : <span className={look}>{content}</span>;
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, recent, today, actions, onClose, onSaved, returnFocusTo }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, recent, today, actions, onClose, onSaved, onTrack, onAbandon, returnFocusTo }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit";
   const [initial] = useState(() => initialDraft(mode, today));
@@ -159,9 +162,20 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
     const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
     let result;
     try {
-      result = mode.kind === "edit"
-        ? await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version })
-        : await actions.create({ ...common, type: value.type });
+      if (mode.kind === "edit") result = await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
+      else {
+        // Se guarda por el proveedor: oculta la hoja y la fila aparece ya; si falla, la hoja vuelve con esto mismo.
+        const now = new Date().toISOString();
+        const row: PendingRow = {
+          key: idempotencyKey,
+          state: "saving",
+          transaction: {
+            id: `pending:${idempotencyKey}`, type: value.type, amount: moneyFromPesos(BigInt(value.amount)), categoryId: value.categoryId,
+            transactionDate: value.date, description: common.description, status: "active", version: 1, createdAt: now, updatedAt: now,
+          },
+        };
+        result = await onTrack(row, () => actions.create({ ...common, type: value.type }));
+      }
     } catch {
       // La Server Action no llegó al servidor o su respuesta no volvió: se ofrece reintentar con la misma clave.
       result = { ok: false as const, error: "network" as const };
@@ -171,10 +185,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
       setStatus({ kind: "idle" });
       onSaved(result.value, mode.kind);
     } else {
-      if (result.error === "network" || result.error === "saveFailed" || result.error === "unexpected") setLocked(true);
+      if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved]);
+  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved, onTrack]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
@@ -334,7 +348,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           title={copy.annotate.uncertain.title}
           description={copy.annotate.uncertain.description}
           cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); void save(); }}>{copy.annotate.uncertain.retry}</Button>}
-          confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
+          confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onAbandon(idempotencyKey); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
         />
       ) : (
         <ConfirmDialog

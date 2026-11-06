@@ -1,0 +1,39 @@
+"use client";
+// UX lote 1, cambio 3 / 04·1 INICIO. Inicio es de servidor; las creaciones en vuelo viven en el proveedor de Anotar (cliente).
+// Estas dos piezas las pintan: arriba de «Últimos movimientos» y, en el primer gasto, en lugar del estado vacío. El gasto del
+// mes y el desglose no las cuentan: esperan a la revalidación, que es la única que sabe si el servidor escribió.
+import type { ReactNode } from "react";
+import { ExpenseRow } from "@/components/ui/expense-row";
+import { monthKey } from "@/domain/transactions";
+import { usePendingRows } from "@/features/expenses/annotate-provider";
+import { copy } from "@/lib/copy/es";
+import { dayLabel } from "@/lib/format";
+
+function useMonthPending(month: string) {
+  return usePendingRows().filter(({ transaction }) => monthKey(transaction.transactionDate) === month);
+}
+
+/** Los `<li>` de las filas en vuelo del mes, para ir dentro de la lista de recientes. */
+export function PendingHomeRows({ month, today }: { month: string; today: string }) {
+  return useMonthPending(month).map(({ key, state, transaction }) => (
+    <li key={key}>
+      <ExpenseRow transaction={transaction} href="" dateLabel={dayLabel(transaction.transactionDate, today)} pending={state} />
+    </li>
+  ));
+}
+
+/** El estado vacío de Inicio, salvo que ya haya una creación en vuelo: entonces, esa fila. */
+export function HomeEmpty({ month, today, empty }: { month: string; today: string; empty: ReactNode }) {
+  const pending = useMonthPending(month);
+  if (pending.length === 0) return empty;
+  return (
+    <div className="flex flex-col gap-6 pt-5 lg:pt-8">
+      <section aria-labelledby="home-recent" className="flex flex-col gap-1">
+        <h2 id="home-recent" className="pb-1 font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
+        <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
+          <PendingHomeRows month={month} today={today} />
+        </ul>
+      </section>
+    </div>
+  );
+}

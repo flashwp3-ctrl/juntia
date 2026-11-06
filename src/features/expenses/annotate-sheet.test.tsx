@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
-import { AnnotateProvider, useAnnotate } from "./annotate-provider";
+import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
 
 // La hoja llega en un chunk aparte en su primera apertura (como el aviso de la 001).
@@ -50,6 +50,12 @@ function Trigger() {
   );
 }
 
+// Lo que Inicio y Actividad pintan con las filas en vuelo (UX lote 1, cambio 3).
+function PendingList() {
+  const rows = usePendingRows();
+  return <ul>{rows.map((row) => <li key={row.key} data-testid="pending-row" data-state={row.state} data-amount={row.transaction.amount.amountMinor.toString()}>{row.state === "saving" ? copy.row.pending.saving : copy.row.pending.unknown}</li>)}</ul>;
+}
+
 // Simula una navegación del App Router: el layout (y el proveedor) persisten y cambia la página que envuelven.
 // `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`).
 function Pages({ rows = [] }: { rows?: string[] }) {
@@ -58,6 +64,7 @@ function Pages({ rows = [] }: { rows?: string[] }) {
     <>
       <Trigger />
       <p>{page}</p>
+      <PendingList />
       <button type="button" onClick={() => setPage("actividad")}>{copy.nav.activity}</button>
       <input aria-label={copy.activity.searchLabel} />
       {rows.map((id) => <a key={id} href={`/actividad/${id}`} data-transaction-id={id}>{id}</a>)}
@@ -207,16 +214,23 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(payload.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it("E4: mientras guarda, los campos quedan bloqueados y el botón dice «Guardando…»", async () => {
+  // UX lote 1, cambio 3 sustituye a E4 en la creación: ya no se espera al servidor con la hoja a la vista. Al guardar, la
+  // hoja se oculta, la fila aparece al instante marcada «Guardando…» y nada se puede enviar dos veces. E4 sigue igual al editar.
+  it("E4 (creación, UX lote 1): al guardar la hoja se oculta y la fila aparece al instante, marcada «Guardando…»", async () => {
     const pending = deferred<ActionResult<SavedTransaction>>();
-    const { user, trigger } = setup(mockActions({ create: vi.fn(() => pending.promise) }));
+    const { user, trigger, actions } = setup(mockActions({ create: vi.fn(() => pending.promise) }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
-    expect(amount().matches(":disabled")).toBe(true);
-    expect(isDisabled(screen.getByRole("button", { name: copy.categories.restaurants }))).toBe(true);
-    expect(screen.getByRole("button", { name: copy.annotate.saving }).getAttribute("aria-busy")).toBe("true");
+    expect(actions.create).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.annotate.title.expense })).toBeNull());
+    const row = await screen.findByTestId("pending-row");
+    expect(row.getAttribute("data-state")).toBe("saving");
+    expect(row.textContent).toContain(copy.row.pending.saving);
+    // Todavía no se afirma que se guardó: ni aviso de guardado ni resaltado.
+    expect(screen.queryByText(copy.annotate.saved.expense)).toBeNull();
+    expect(screen.getByTestId("highlight").textContent).toBe("");
     await act(async () => pending.resolve({ ok: true, value: saved() }));
   });
 
@@ -540,6 +554,162 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     act(() => undo.blur());
     await act(async () => { vi.advanceTimersByTime(6100); });
     await waitFor(() => expect(screen.queryByRole("button", { name: copy.annotate.undo })).toBeNull());
+  });
+});
+
+// UX lote 1, cambio 3 — fila optimista. Criterios literales (petición de los fundadores): «al guardar un gasto, aparece al
+// instante en la lista (Inicio y Actividad) sin esperar a que el servidor revalide. Respeta el contrato de escrituras de la
+// 002 (idempotencia y versión): si el servidor rechaza, la fila desaparece y se muestra el error de siempre; si el resultado
+// es desconocido, la fila queda marcada como pendiente y nunca se afirma que se guardó o que no se guardó; nunca debe
+// quedar una fila duplicada ni fantasma al navegar».
+describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
+  const pendingRows = () => screen.queryAllByTestId("pending-row");
+
+  it("confirmada: la fila en vuelo desaparece (la real llega con la revalidación), con el aviso y el resaltado de E5", async () => {
+    const pending = deferred<ActionResult<SavedTransaction>>();
+    const { user, trigger } = setup(mockActions({ create: vi.fn(() => pending.promise) }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    expect(await screen.findAllByTestId("pending-row")).toHaveLength(1);
+    expect(pendingRows()[0].getAttribute("data-amount")).toBe("4500000");
+    await act(async () => pending.resolve({ ok: true, value: saved() }));
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+    expect(await screen.findByText(copy.annotate.saved.expense)).toBeTruthy();
+    expect(screen.getByTestId("highlight").textContent).toBe(saved().id);
+  });
+
+  it("rechazada (sesión caducada): la fila desaparece, la hoja vuelve con lo escrito y el aviso de siempre", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "sessionExpired" });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(copy.errors.sessionExpired);
+    // React descarta la fila en vuelo cuando termina la transición, un instante después de la respuesta.
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+    expect(screen.getByRole("dialog", { name: copy.annotate.title.expense })).toBeTruthy();
+    expect((amount() as HTMLInputElement).value).toBe("45.000");
+    expect(screen.queryByText(copy.annotate.saved.expense)).toBeNull();
+  });
+
+  it("desconocida (red): la fila queda «Sin confirmar», la hoja vuelve bloqueada y nunca se dice «guardado» ni «no se guardó»", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(copy.errors.network);
+    const row = await screen.findByTestId("pending-row");
+    expect(row.getAttribute("data-state")).toBe("unknown");
+    expect(row.textContent).toBe(copy.row.pending.unknown);
+    expect(amount().matches(":disabled")).toBe(true);
+    const text = document.body.textContent ?? "";
+    expect(text).not.toContain(copy.annotate.saved.expense);
+    expect(text).not.toMatch(/no se guard/i);
+    expect(screen.getByTestId("highlight").textContent).toBe("");
+  });
+
+  it("desconocida y luego reintentada con la misma clave: una sola fila, sin duplicado, y se confirma", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockResolvedValueOnce({ ok: true, value: saved() });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    expect(pendingRows()).toHaveLength(1);
+    await user.click(within(screen.getByRole("alert")).getByRole("button", { name: copy.annotate.retry }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+    expect(await screen.findByText(copy.annotate.saved.expense)).toBeTruthy();
+  });
+
+  it("durante el reintento la fila vuelve a «Guardando…» y sigue siendo una sola", async () => {
+    const retry = deferred<ActionResult<SavedTransaction>>();
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "network" }).mockImplementationOnce(() => retry.promise);
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    await user.click(within(screen.getByRole("alert")).getByRole("button", { name: copy.annotate.retry }));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(pendingRows().map((row) => row.getAttribute("data-state"))).toEqual(["saving"]));
+    await act(async () => retry.resolve({ ok: true, value: saved() }));
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+  });
+
+  it("«Cerrar» en la confirmación incierta retira la fila sin confirmar, sin afirmar nada y sin otro envío", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: false, error: "saveFailed" });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: copy.annotate.close }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(pendingRows()).toHaveLength(0);
+    expect(document.body.textContent).not.toMatch(/no se guard/i);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("la fila en vuelo sobrevive a la navegación (el proveedor vive en el layout) y no se duplica", async () => {
+    const pending = deferred<ActionResult<SavedTransaction>>();
+    const { user, trigger } = setup(mockActions({ create: vi.fn(() => pending.promise) }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByTestId("pending-row");
+    await user.click(screen.getByRole("button", { name: copy.nav.activity }));
+    expect(screen.getByText("actividad")).toBeTruthy();
+    expect(pendingRows()).toHaveLength(1);
+    await act(async () => pending.resolve({ ok: true, value: saved() }));
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+  });
+
+  it("doble envío (clic doble y Enter): una sola petición y una sola fila", async () => {
+    const pending = deferred<ActionResult<SavedTransaction>>();
+    const create = vi.fn(() => pending.promise);
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.dblClick(saveButton());
+    await user.keyboard("{Enter}");
+    expect(create).toHaveBeenCalledTimes(1);
+    await screen.findByTestId("pending-row");
+    expect(pendingRows()).toHaveLength(1);
+    await act(async () => pending.resolve({ ok: true, value: saved() }));
+  });
+
+  it("editar no usa fila optimista: conserva E4 con la hoja a la vista", async () => {
+    const pending = deferred<ActionResult<SavedTransaction>>();
+    const actions = mockActions({ update: vi.fn(() => pending.promise) });
+    const user = userEvent.setup();
+    function EditTrigger() {
+      const { openEdit } = useAnnotate();
+      return <button type="button" onClick={(event) => openEdit(saved(), event.currentTarget, () => {})}>editar</button>;
+    }
+    render(<AnnotateProvider actions={actions} today="2026-11-05"><EditTrigger /><PendingList /></AnnotateProvider>);
+    await user.click(screen.getByRole("button", { name: "editar" }));
+    await screen.findByRole("dialog", { name: copy.annotate.editTitle.expense });
+    await user.type(amount(), "0");
+    await user.click(screen.getByRole("button", { name: copy.annotate.saveChanges }));
+    expect(amount().matches(":disabled")).toBe(true);
+    expect(screen.getByRole("dialog", { name: copy.annotate.editTitle.expense })).toBeTruthy();
+    expect(pendingRows()).toHaveLength(0);
+    await act(async () => pending.resolve({ ok: true, value: saved({ version: 2 }) }));
   });
 });
 

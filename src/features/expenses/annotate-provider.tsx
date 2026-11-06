@@ -6,11 +6,11 @@
 // idempotencia, que nace al abrir y se reusa en cada reintento (FR-036); al cerrar, la siguiente apertura nace vacía.
 import { AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, lazy, startTransition, Suspense, useCallback, useContext, useEffect, useMemo, useOptimistic, useRef, useState, type ReactNode } from "react";
 import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota, type CategoryId } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
-import type { ExpenseActions, SavedTransaction } from "./types";
+import { isAmbiguousError, type ActionResult, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
 import { newIdempotencyKey } from "./idempotency";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
@@ -48,9 +48,16 @@ type AnnotateState = {
   highlightId: string | null;
   notify: (notice: Notice) => void;
   actions: ExpenseActions;
+  /** UX lote 1, cambio 3: oculta la hoja, enseña la fila al instante y envía; si falla, la hoja vuelve (ver `track`). */
+  track: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
+  /** Retira la fila sin confirmar de una hoja que se cierra sin reintentar (no se afirma nada sobre ella). */
+  abandon: (key: string) => void;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
+const NO_ROWS: readonly PendingRow[] = [];
+/** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
+const PendingContext = createContext<readonly PendingRow[]>(NO_ROWS);
 
 type AnnotateProviderProps = {
   children: ReactNode;
@@ -76,6 +83,17 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
   const router = useRouter();
   // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
   const [reveal, setReveal] = useState<SavedTransaction | null>(null);
+  // UX lote 1, cambio 3. `optimistic` vive solo mientras dura la acción (useOptimistic): al terminar, React lo descarta en el
+  // mismo commit que trae las filas revalidadas, así que la fila real y la de vuelo nunca se ven juntas. `unknown` es lo único
+  // que sobrevive a la acción: filas cuyo resultado no se sabe, hasta que un reintento (misma clave) las resuelva.
+  const [unknown, setUnknown] = useState<readonly PendingRow[]>(NO_ROWS);
+  const [optimistic, addOptimistic] = useOptimistic<readonly PendingRow[], PendingRow>(NO_ROWS, (current, row) => [...current.filter(({ key }) => key !== row.key), row]);
+  const pendingRows = useMemo(() => {
+    if (unknown.length === 0) return optimistic;
+    // Un resultado desconocido manda sobre la fila en vuelo de la misma clave, que React retira un instante después.
+    const known = new Set(unknown.map(({ key }) => key));
+    return [...unknown, ...optimistic.filter(({ key }) => !known.has(key))];
+  }, [optimistic, unknown]);
   const actionsRef = useRef(actions);
   useEffect(() => { actionsRef.current = actions; });
 
@@ -100,6 +118,31 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
     openRef.current = false;
     setOpen(false);
   }, []);
+
+  // UX lote 1, cambio 3: la creación no espera al servidor con la hoja a la vista. La hoja se oculta (sigue montada, con lo
+  // escrito, su clave y su estado), la fila nace «Guardando…» y la petición viaja dentro de una transición. Si el servidor
+  // rechaza (sin sesión, inválido), la fila se va y la hoja vuelve con el aviso de siempre; si el resultado es desconocido, la
+  // fila queda «Sin confirmar» y la hoja vuelve bloqueada para reintentar lo mismo con la misma clave (FR-036). Si se
+  // confirma, la hoja ya no vuelve y `onSaved` hace E5. La hoja sigue ocupada (`openRef`) hasta entonces: una sola a la vez.
+  const track = useCallback((row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => new Promise<ActionResult<SavedTransaction>>((resolve) => {
+    setOpen(false);
+    // Un reintento vuelve a «Guardando…»: la marca de desconocida se retira al empezar, no al terminar.
+    setUnknown((current) => (current.some(({ key }) => key === row.key) ? current.filter(({ key }) => key !== row.key) : current));
+    startTransition(async () => {
+      addOptimistic({ ...row, state: "saving" });
+      let result: ActionResult<SavedTransaction>;
+      try {
+        result = await run();
+      } catch {
+        result = { ok: false, error: "network" };
+      }
+      if (!result.ok && isAmbiguousError(result.error)) setUnknown((current) => [...current.filter(({ key }) => key !== row.key), { ...row, state: "unknown" }]);
+      else setUnknown((current) => (current.some(({ key }) => key === row.key) ? current.filter(({ key }) => key !== row.key) : current));
+      if (!result.ok) setOpen(true);
+      resolve(result);
+    });
+  }), [addOptimistic]);
+  const abandon = useCallback((key: string) => setUnknown((current) => current.filter((row) => row.key !== key)), []);
 
   // «Deshacer» (US-2.5; FR-034): anula con `undo` y la versión que devolvió la creación. La clave es una por aviso, así
   // que dos toques o un reintento son la misma intención. Si otro aviso ya ocupó su lugar, la respuesta no lo pisa.
@@ -184,9 +227,10 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions }), [open, openFrom, openEdit, highlightId, notify, actions]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions, track, abandon }), [open, openFrom, openEdit, highlightId, notify, actions, track, abandon]);
   return (
     <AnnotateContext.Provider value={state}>
+     <PendingContext.Provider value={pendingRows}>
       {children}
       {mounted ? (
         <Suspense fallback={null}>
@@ -200,6 +244,8 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
             actions={actions}
             onClose={close}
             onSaved={onSaved}
+            onTrack={track}
+            onAbandon={abandon}
             returnFocusTo={returnFocusTo}
           />
         </Suspense>
@@ -213,6 +259,7 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
           </AnimatePresence>
         </div>
       </div>
+     </PendingContext.Provider>
     </AnnotateContext.Provider>
   );
 }
@@ -220,6 +267,11 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
 /** La fila resaltada de E5, o `null` fuera del proveedor (una vista que se pinta también sin Anotar). */
 export function useHighlightId() {
   return useContext(AnnotateContext)?.highlightId ?? null;
+}
+
+/** Las creaciones en vuelo (UX lote 1, cambio 3), o ninguna fuera del proveedor. */
+export function usePendingRows(): readonly PendingRow[] {
+  return useContext(PendingContext);
 }
 
 export function useAnnotate() {
