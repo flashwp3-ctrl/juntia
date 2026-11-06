@@ -31,10 +31,17 @@ export type ActionResult<T> = { ok: true; value: T } | { ok: false; error: Expen
 export const isAmbiguousError = (error: ExpenseActionError) => error === "network" || error === "saveFailed" || error === "unexpected";
 
 /**
- * Una creación en vuelo que Inicio y Actividad pintan al instante (UX lote 1, cambio 3). `saving`: la petición sigue en
- * camino. `unknown`: no se sabe si llegó; ni se afirma que se guardó ni que no. Vive en el proveedor, nunca en la base.
+ * Una creación en vuelo que Inicio y Actividad pintan al instante (UX lote 1, cambio 3), marcada «Guardando…». Solo existe
+ * mientras la petición viaja: si el servidor rechaza o el resultado se desconoce, la fila se retira y vuelve la hoja. Vive en
+ * el proveedor, con estado propio por clave; nunca en la base ni en el almacenamiento del navegador.
  */
-export type PendingRow = { key: string; state: "saving" | "unknown"; transaction: Transaction; payload: CreatePayload };
+export type PendingRow = {
+  key: string;
+  state: "saving";
+  transaction: Transaction;
+  /** Id real, cuando el servidor ya confirmó: la fila temporal se esconde en cuanto la lista trae la real (nunca las dos). */
+  savedId?: string;
+};
 
 export type ExpenseActions = {
   create: (payload: CreatePayload) => Promise<ActionResult<SavedTransaction>>;

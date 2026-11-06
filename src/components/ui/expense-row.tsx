@@ -8,7 +8,7 @@
 // Estado «nueva» (`isNew`): el fondo savingSubtle que se desvanece en 1,2 s (E5, PR D); con movimiento reducido el
 // resaltado se mantiene sin desvanecerse (MOTION_SYSTEM.md §2, «Reduced motion»).
 // Estado en vuelo (`pending`, UX lote 1, cambio 3): la fila de una creación que aún no tiene detalle. No es un enlace; dice
-// «Guardando…» o «Sin confirmar» en la meta y en su nombre accesible, y nunca afirma que se guardó ni que no.
+// «Guardando…» en la meta y en su nombre accesible, y nunca afirma que se guardó.
 import Link from "next/link";
 import { formatMoney } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
@@ -23,8 +23,8 @@ type ExpenseRowProps = {
   /** «Hoy», «Ayer» o «3 oct»: lo calcula quien conoce el día de hoy en Bogotá. */
   dateLabel: string;
   isNew?: boolean;
-  /** Creación en vuelo: `saving` mientras responde el servidor, `unknown` si no se sabe si llegó. */
-  pending?: "saving" | "unknown";
+  /** Creación en vuelo: `saving` mientras responde el servidor. */
+  pending?: "saving";
   /** Fila seleccionada en el panel de detalle de escritorio. */
   current?: boolean;
   className?: string;
@@ -41,7 +41,7 @@ export function signedAmount(transaction: Transaction) {
 export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pending, current = false, className = "" }: ExpenseRowProps) {
   const income = transaction.type === "income";
   const title = rowTitle(transaction);
-  const pendingLabel = pending ? copy.row.pending[pending] : null;
+  const pendingLabel = pending ? copy.row.pending.saving : null;
   const name = copy.row.accessibleName({ title, amount: pesos(transaction.amount), income, category: copy.categories[transaction.categoryId], date: dateLabel }) + (pendingLabel ? `, ${pendingLabel}` : "");
   const content = (
     <>

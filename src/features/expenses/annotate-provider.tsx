@@ -5,14 +5,13 @@
 // «Deshacer», la fila resaltada de E5 y la hoja abierta. Cada apertura es una sesión de la hoja con su propia clave de
 // idempotencia, que nace al abrir y se reusa en cada reintento (FR-036); al cerrar, la siguiente apertura nace vacía.
 import { AnimatePresence } from "motion/react";
-import { usePathname, useRouter } from "next/navigation";
-import { createContext, lazy, startTransition, Suspense, useCallback, useContext, useEffect, useMemo, useOptimistic, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
-import { isAmbiguousError, type ActionResult, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
+import type { ActionResult, ExpenseActions, PendingRow, SavedTransaction } from "./types";
 import { newIdempotencyKey } from "./idempotency";
-import { addIntention, clearIntentions, readIntentions, removeIntention, rowFromPayload } from "./unconfirmed";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
@@ -51,8 +50,7 @@ type AnnotateState = {
   actions: ExpenseActions;
   /** UX lote 1, cambio 3: oculta la hoja, enseña la fila al instante y envía; si falla, la hoja vuelve (ver `track`). */
   track: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
-  /** La hoja se cierra con una intención sin confirmar: no se suelta, se reconcilia en seguida con la misma clave (F51-1). */
-  release: (key: string) => void;
+
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -63,16 +61,11 @@ const PendingContext = createContext<readonly PendingRow[]>(NO_ROWS);
 type AnnotateProviderProps = {
   children: ReactNode;
   actions: ExpenseActions;
-  /**
-   * Id de Auth del usuario de la sesión. Las intenciones sin confirmar se guardan y se leen solo bajo este id: una intención de
-   * otro usuario nunca se reenvía con esta sesión. Sin id (pruebas de la 001, sin cuenta) no se guarda ni se reconcilia nada.
-   */
-  userId?: string;
   /** Hoy en Bogotá, que calcula el servidor; por defecto, el del dispositivo llevado a Bogotá. */
   today?: string;
 };
 
-export function AnnotateProvider({ children, actions, userId, today }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today }: AnnotateProviderProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<SheetMode>({ kind: "create" });
@@ -80,10 +73,6 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
   const [toast, setToast] = useState<ToastState | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const openRef = useRef(false);
-  const sessionKeyRef = useRef("");
-  // F51-1: las intenciones en vuelo y las sin confirmar, para reconciliarlas sin depender del render.
-  const inFlight = useRef(new Set<string>());
-  const unknownRef = useRef<readonly PendingRow[]>([]);
   const returnFocusTo = useRef<HTMLElement | null>(null);
   // Cada aviso nuevo invalida las respuestas tardías del anterior (orden de respuestas).
   const toastGeneration = useRef(0);
@@ -91,21 +80,13 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
   const router = useRouter();
   // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
   const [reveal, setReveal] = useState<SavedTransaction | null>(null);
-  // UX lote 1, cambio 3. `optimistic` vive solo mientras dura la acción (useOptimistic): al terminar, React lo descarta en el
-  // mismo commit que trae las filas revalidadas, así que la fila real y la de vuelo nunca se ven juntas. `unknown` es lo único
-  // que sobrevive a la acción: filas cuyo resultado no se sabe, hasta que un reintento (misma clave) las resuelva.
-  const [unknown, setUnknown] = useState<readonly PendingRow[]>(NO_ROWS);
-  const [optimistic, addOptimistic] = useOptimistic<readonly PendingRow[], PendingRow>(NO_ROWS, (current, row) => [...current.filter(({ key }) => key !== row.key), row]);
-  const pendingRows = useMemo(() => {
-    if (unknown.length === 0) return optimistic;
-    // Un resultado desconocido manda sobre la fila en vuelo de la misma clave, que React retira un instante después.
-    const known = new Set(unknown.map(({ key }) => key));
-    return [...unknown, ...optimistic.filter(({ key }) => !known.has(key))];
-  }, [optimistic, unknown]);
+  // UX lote 1, cambio 3, simplificado por decisión de los fundadores (7 nov 2026). Cada creación en vuelo es una fila temporal
+  // con estado propio, por su clave: una petición colgada no retrasa la retirada de otra (F51-8). Nada de esto se guarda en el
+  // navegador: si se recarga la página, no queda rastro (el resultado desconocido se resuelve en la hoja, con «Reintentar»).
+  const [flights, setFlights] = useState<readonly PendingRow[]>(NO_ROWS);
+  const pendingRows = flights;
   const actionsRef = useRef(actions);
   useEffect(() => { actionsRef.current = actions; });
-  useEffect(() => { unknownRef.current = unknown; }, [unknown]);
-  const pathname = usePathname();
 
   const notify = useCallback((notice: Notice) => {
     toastGeneration.current += 1;
@@ -117,9 +98,7 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
     returnFocusTo.current = trigger;
     openRef.current = true;
     setMode(next);
-    const key = newIdempotencyKey();
-    sessionKeyRef.current = key;
-    setSessionKey(key);
+    setSessionKey(newIdempotencyKey());
     setMounted(true);
     setOpen(true);
   }, []);
@@ -132,44 +111,34 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
   }, []);
 
   // UX lote 1, cambio 3: la creación no espera al servidor con la hoja a la vista. La hoja se oculta (sigue montada, con lo
-  // escrito, su clave y su estado), la fila nace «Guardando…» y la petición viaja dentro de una transición. Si el servidor
-  // rechaza (sin sesión, inválido), la fila se va y la hoja vuelve con el aviso de siempre; si el resultado es desconocido, la
-  // fila queda «Sin confirmar» y la hoja vuelve bloqueada para reintentar lo mismo con la misma clave (FR-036). Si se
-  // confirma, la hoja ya no vuelve y `onSaved` hace E5. La hoja sigue ocupada (`openRef`) hasta entonces: una sola a la vez.
-  // F51-1: la intención (clave y payload) se guarda en localStorage al enviar y se borra solo al confirmarse o rechazarse; una
-  // reconciliación (`reopen: false`) reenvía lo mismo sin tocar la hoja que haya abierta.
-  const track = useCallback((row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>, options: { reopen?: boolean; persist?: boolean } = {}) => new Promise<ActionResult<SavedTransaction>>((resolve) => {
-    const reopen = options.reopen !== false;
-    if (reopen) setOpen(false);
-    inFlight.current.add(row.key);
-    // Una reconciliación reenvía lo que ya está guardado: no se vuelve a guardar (si se borró entre tanto, no resucita).
-    if (userId && options.persist !== false) addIntention(userId, row.payload);
-    // Un reintento vuelve a «Guardando…»: la marca de desconocida se retira al empezar, no al terminar.
-    setUnknown((current) => (current.some(({ key }) => key === row.key) ? current.filter(({ key }) => key !== row.key) : current));
-    startTransition(async () => {
-      addOptimistic({ ...row, state: "saving" });
+  // escrito, su clave y su estado), la fila nace «Guardando…» y se envía. Rechazo confirmado (sin sesión, inválido): la fila
+  // se va y la hoja vuelve con lo escrito y el aviso de siempre. Resultado desconocido (red, guardado fallido o inesperado): la
+  // fila se va y la hoja vuelve BLOQUEADA, con la misma clave para «Reintentar», como la E4 desconocida de la 002 (FR-036). Si se
+  // confirma, la hoja ya no vuelve, `onSaved` hace E5 y la fila temporal se queda (con su id real) hasta que la lista trae la
+  // real: sin hueco y sin duplicado. La hoja sigue ocupada (`openRef`) hasta entonces: una sola a la vez.
+  const track = useCallback((row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => new Promise<ActionResult<SavedTransaction>>((resolve) => {
+    setOpen(false);
+    setFlights((current) => [...current.filter(({ key }) => key !== row.key), { ...row, state: "saving", savedId: undefined }]);
+    void (async () => {
       let result: ActionResult<SavedTransaction>;
       try {
         result = await run();
       } catch {
         result = { ok: false, error: "network" };
       }
-      inFlight.current.delete(row.key);
-      if (!result.ok && isAmbiguousError(result.error)) setUnknown((current) => [...current.filter(({ key }) => key !== row.key), { ...row, state: "unknown" }]);
-      else if (!result.ok && result.error === "sessionExpired") {
-        // Error de autorización (sin sesión o sesión de otro usuario): no se reintenta nunca. La sesión ya no vale, así que
-        // tampoco quedan las demás intenciones de este usuario (importe y descripción de gastos privados) ni sus filas.
-        if (userId) clearIntentions(userId);
-        unknownRef.current = [];
-        setUnknown(NO_ROWS);
+      if (result.ok) {
+        const savedId = result.value.id;
+        setFlights((current) => current.map((flight) => (flight.key === row.key ? { ...flight, savedId } : flight)));
+        // Red de seguridad: si nada la retiró (la revisión de E5 la retira), no se queda para siempre.
+        window.setTimeout(() => setFlights((current) => current.filter((flight) => flight.savedId !== savedId)), 8000);
       } else {
-        if (userId) removeIntention(userId, row.key);
-        setUnknown((current) => (current.some(({ key }) => key === row.key) ? current.filter(({ key }) => key !== row.key) : current));
+        setFlights((current) => current.filter(({ key }) => key !== row.key));
+        setOpen(true);
       }
-      if (!result.ok && reopen) setOpen(true);
       resolve(result);
-    });
-  }), [addOptimistic, userId]);
+    })();
+  }), []);
+  const dropSaved = useCallback((id: string) => setFlights((current) => (current.some((flight) => flight.savedId === id) ? current.filter((flight) => flight.savedId !== id) : current)), []);
 
   // «Deshacer» (US-2.5; FR-034): anula con `undo` y la versión que devolvió la creación. La clave es una por aviso, así
   // que dos toques o un reintento son la misma intención. Si otro aviso ya ocupó su lugar, la respuesta no lo pisa.
@@ -204,62 +173,17 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
     }
   }; }, [notify, undo]);
 
-  const afterSaved = useCallback((saved: SavedTransaction) => {
-    setHighlightId(saved.id);
-    setReveal(saved);
-    const key = newIdempotencyKey();
-    notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
-  }, [notify, undo]);
-  const afterSavedRef = useRef(afterSaved);
-  useEffect(() => { afterSavedRef.current = afterSaved; }, [afterSaved]);
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
     if (kind === "edit") {
       notify({ tone: "success", message: copy.annotate.saved.edit });
       return;
     }
-    afterSaved(saved);
-  }, [close, notify, afterSaved]);
-
-  // F51-1: reconciliación por intención. Una intención «Sin confirmar» se reenvía TAL CUAL, con su clave de idempotencia:
-  // `create_transaction` devuelve el resultado original (con el id real) sin crear otro. Nunca se compara importe, fecha ni
-  // categoría y nunca nace otra clave. Se reanuda al montar el proveedor (tras recargar), al volver la conexión (`online`) y
-  // al navegar; antes de que la respuesta traiga la revalidación, que ya viene en esa misma respuesta.
-  const reconcileOne = useCallback((row: PendingRow) => {
-    if (inFlight.current.has(row.key)) return;
-    void track(row, () => actionsRef.current.create(row.payload), { reopen: false, persist: false }).then((result) => {
-      if (result.ok) {
-        // Si la hoja abierta es la que dio origen a esta intención, ya no tiene nada que reintentar.
-        if (openRef.current && sessionKeyRef.current === row.key) close();
-        afterSavedRef.current(result.value);
-      } else if (!isAmbiguousError(result.error)) {
-        notify({ tone: "error", message: result.error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected });
-      }
-    });
-  }, [track, close, notify]);
-  const reconcileAll = useCallback((force = false) => {
-    if (!force && typeof navigator !== "undefined" && navigator.onLine === false) return;
-    for (const row of unknownRef.current) if (row.state === "unknown") reconcileOne(row);
-  }, [reconcileOne]);
-  const release = useCallback((key: string) => {
-    const row = unknownRef.current.find((candidate) => candidate.key === key);
-    if (row) reconcileOne(row);
-  }, [reconcileOne]);
-  useEffect(() => {
-    // Solo las de ESTE usuario: la clave de almacenamiento lleva su id, y las de otro usuario ni se leen ni se envían.
-    const stored = (userId ? readIntentions(userId) : []).map(({ payload }) => rowFromPayload(payload, "unknown"));
-    if (stored.length === 0) return;
-    const fresh = stored.filter((row) => !unknownRef.current.some(({ key }) => key === row.key) && !inFlight.current.has(row.key));
-    unknownRef.current = [...unknownRef.current, ...fresh];
-    setUnknown((current) => [...current, ...fresh.filter((row) => !current.some(({ key }) => key === row.key))]);
-    if (typeof navigator === "undefined" || navigator.onLine !== false) for (const row of fresh) reconcileOne(row);
-  }, [reconcileOne, userId]);
-  useEffect(() => {
-    const onOnline = () => reconcileAll(true);
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, [reconcileAll]);
-  useEffect(() => { reconcileAll(); }, [pathname, reconcileAll]);
+    setHighlightId(saved.id);
+    setReveal(saved);
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
+  }, [close, notify, undo]);
 
   // F45-2: E5 resalta la fila nueva «en la misma pantalla» (MOTION_SYSTEM.md §2). Si la pantalla no la enseña (otro
   // mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), se lleva a la persona a Actividad del mes del
@@ -272,14 +196,15 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
     let handle = 0;
     const check = () => {
       const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]`)].find(isShown);
-      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
+      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); dropSaved(reveal.id); return; }
       if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
       setReveal(null);
+      dropSaved(reveal.id);
       router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
     };
     handle = requestAnimationFrame(check);
     return () => cancelAnimationFrame(handle);
-  }, [reveal, router]);
+  }, [reveal, router, dropSaved]);
 
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));
@@ -299,7 +224,7 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions, track, release }), [open, openFrom, openEdit, highlightId, notify, actions, track, release]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions, track }), [open, openFrom, openEdit, highlightId, notify, actions, track]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingRows}>
@@ -316,7 +241,6 @@ export function AnnotateProvider({ children, actions, userId, today }: AnnotateP
             onClose={close}
             onSaved={onSaved}
             onTrack={track}
-            onRelease={release}
             returnFocusTo={returnFocusTo}
           />
         </Suspense>

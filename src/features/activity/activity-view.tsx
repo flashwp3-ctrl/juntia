@@ -195,7 +195,9 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
   const visible = filterTransactions(rows, { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined });
   const filtering = filters.query.trim() !== "" || filters.type !== "all" || filters.categoryId !== null;
   // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
-  const inFlight = usePendingRows().filter(({ transaction }) => monthKey(transaction.transactionDate) === month);
+  // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
+  const known = new Set(rows.map(({ id }) => id));
+  const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
   const pendingStates: PendingStates = new Map(inFlight.map(({ transaction, state }) => [transaction.id, state]));
   const listed = [...filterTransactions(inFlight.map(({ transaction }) => transaction), { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined }), ...visible];
   if (rows.length === 0 && inFlight.length === 0) {

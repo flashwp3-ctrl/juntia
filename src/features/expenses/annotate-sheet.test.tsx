@@ -8,7 +8,7 @@
 import { act, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
@@ -53,7 +53,7 @@ function Trigger() {
 // Lo que Inicio y Actividad pintan con las filas en vuelo (UX lote 1, cambio 3).
 function PendingList() {
   const rows = usePendingRows();
-  return <ul>{rows.map((row) => <li key={row.key} data-testid="pending-row" data-state={row.state} data-amount={row.transaction.amount.amountMinor.toString()}>{row.state === "saving" ? copy.row.pending.saving : copy.row.pending.unknown}</li>)}</ul>;
+  return <ul>{rows.map((row) => <li key={row.key} data-testid="pending-row" data-state={row.state} data-amount={row.transaction.amount.amountMinor.toString()}>{copy.row.pending.saving}</li>)}</ul>;
 }
 
 // Simula una navegación del App Router: el layout (y el proveedor) persisten y cambia la página que envuelven.
@@ -88,9 +88,7 @@ async function fillMinimum(user: ReturnType<typeof userEvent.setup>, pesos = "45
   await user.click(screen.getByRole("radio", { name: copy.categories.market }));
 }
 
-// Cada creación guarda su intención en localStorage (F51-1): que no pase de una prueba a la siguiente.
-beforeEach(() => window.localStorage.clear());
-afterEach(() => { vi.useRealTimers(); router.push.mockReset(); window.localStorage.clear(); });
+afterEach(() => { vi.useRealTimers(); router.push.mockReset(); });
 
 // La primera apertura importa el chunk de la hoja; con la suite en paralelo puede pasar de los 5 s por defecto.
 describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
@@ -345,6 +343,34 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(date.value).toBe("2026-11-05");
   });
 
+  // F51-10 (segunda ronda de ChatGPT): Enter y Espacio solo cancelan la acción nativa si showPicker() existe y no lanza.
+  it("F51-10: con showPicker, Enter y Espacio se cancelan (abrieron el selector)", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    Object.defineProperty(date, "showPicker", { configurable: true, value: vi.fn() });
+    for (const key of ["Enter", " "]) expect(fireEvent.keyDown(date, { key }), `${key}: cancelado`).toBe(false);
+  });
+
+  it("F51-10: sin showPicker, Enter y Espacio conservan su acción nativa", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    expect("showPicker" in date).toBe(false);
+    for (const key of ["Enter", " "]) expect(fireEvent.keyDown(date, { key }), `${key}: sin cancelar`).toBe(true);
+  });
+
+  it("F51-10: si showPicker lanza, Enter y Espacio conservan su acción nativa", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    Object.defineProperty(date, "showPicker", { configurable: true, value: vi.fn(() => { throw new DOMException("sin gesto", "NotAllowedError"); }) });
+    for (const key of ["Enter", " "]) expect(fireEvent.keyDown(date, { key }), `${key}: sin cancelar`).toBe(true);
+  });
+
   it("UX 2: «Solo tú» es un indicador con candado, sin interacción ni flechas de desplegable", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
@@ -477,9 +503,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  // F51-1: cerrar la confirmación incierta ya no suelta la intención: la hoja se cierra y el proveedor la reenvía tal cual, con la
-  // misma clave (nunca otra intención ni otra clave).
-  it("F45-1 + F51-1: «Cerrar» en la confirmación incierta cierra la hoja y la intención se reenvía con la misma clave", async () => {
+  it("F45-1: «Cerrar» en la confirmación incierta cierra la hoja sin otro envío", async () => {
     const create = vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: false, error: "saveFailed" });
     const { user, trigger } = setup(mockActions({ create }));
     await user.click(trigger);
@@ -490,8 +514,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: copy.annotate.close }));
     await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
-    expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 
   it("F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado", async () => {
@@ -793,7 +816,9 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
     expect(screen.queryByText(copy.annotate.saved.expense)).toBeNull();
   });
 
-  it("desconocida (red): la fila queda «Sin confirmar», la hoja vuelve bloqueada y nunca se dice «guardado» ni «no se guardó»", async () => {
+  // Resultado desconocido, decisión del 7 nov 2026: la fila desaparece y la hoja vuelve BLOQUEADA, con la misma clave para
+  // «Reintentar», como la E4 desconocida de la 002. No hay fila «Sin confirmar» ni nada guardado en el navegador.
+  it("desconocida (red): la fila desaparece, la hoja vuelve bloqueada con lo escrito y nunca se dice «guardado» ni «no se guardó»", async () => {
     const create = vi.fn<ExpenseActions["create"]>().mockRejectedValueOnce(new TypeError("Failed to fetch"));
     const { user, trigger } = setup(mockActions({ create }));
     await user.click(trigger);
@@ -802,64 +827,34 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
     await user.click(saveButton());
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(copy.errors.network);
-    const row = await screen.findByTestId("pending-row");
-    expect(row.getAttribute("data-state")).toBe("unknown");
-    expect(row.textContent).toBe(copy.row.pending.unknown);
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
+    expect(screen.getByRole("dialog", { name: copy.annotate.title.expense })).toBeTruthy();
+    expect((amount() as HTMLInputElement).value).toBe("45.000");
     expect(amount().matches(":disabled")).toBe(true);
     const text = document.body.textContent ?? "";
     expect(text).not.toContain(copy.annotate.saved.expense);
-    expect(text).not.toMatch(/no se guard/i);
+    expect(text).not.toMatch(/no se guard|sin confirmar/i);
     expect(screen.getByTestId("highlight").textContent).toBe("");
   });
 
-  it("desconocida y luego reintentada con la misma clave: una sola fila, sin duplicado, y se confirma", async () => {
-    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockResolvedValueOnce({ ok: true, value: saved() });
+  it("desconocida y luego reintentada con la misma clave: una sola fila en vuelo y se confirma", async () => {
+    const retry = deferred<ActionResult<SavedTransaction>>();
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockImplementationOnce(() => retry.promise);
     const { user, trigger } = setup(mockActions({ create }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
     await screen.findByRole("alert");
-    expect(pendingRows()).toHaveLength(1);
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
     await user.click(within(screen.getByRole("alert")).getByRole("button", { name: copy.annotate.retry }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
     expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
-    await waitFor(() => expect(pendingRows()).toHaveLength(0));
-    expect(await screen.findByText(copy.annotate.saved.expense)).toBeTruthy();
-  });
-
-  it("durante el reintento la fila vuelve a «Guardando…» y sigue siendo una sola", async () => {
-    const retry = deferred<ActionResult<SavedTransaction>>();
-    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "network" }).mockImplementationOnce(() => retry.promise);
-    const { user, trigger } = setup(mockActions({ create }));
-    await user.click(trigger);
-    await sheet();
-    await fillMinimum(user);
-    await user.click(saveButton());
-    await screen.findByRole("alert");
-    await user.click(within(screen.getByRole("alert")).getByRole("button", { name: copy.annotate.retry }));
-    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
     await waitFor(() => expect(pendingRows().map((row) => row.getAttribute("data-state"))).toEqual(["saving"]));
     await act(async () => retry.resolve({ ok: true, value: saved() }));
-    await waitFor(() => expect(pendingRows()).toHaveLength(0));
-  });
-
-  it("«Cerrar» en la confirmación incierta conserva la fila, la reconcilia con la misma clave y no afirma nada mientras tanto", async () => {
-    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: false, error: "saveFailed" }).mockResolvedValueOnce({ ok: true, value: saved() });
-    const { user, trigger } = setup(mockActions({ create }));
-    await user.click(trigger);
-    await sheet();
-    await fillMinimum(user);
-    await user.click(saveButton());
-    await screen.findByRole("alert");
-    expect(document.body.textContent).not.toMatch(/no se guard/i);
-    await user.click(screen.getByRole("button", { name: copy.annotate.close }));
-    await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
-    expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
-    await waitFor(() => expect(pendingRows()).toHaveLength(0));
     expect(await screen.findByText(copy.annotate.saved.expense)).toBeTruthy();
+    await waitFor(() => expect(pendingRows()).toHaveLength(0));
   });
 
   it("la fila en vuelo sobrevive a la navegación (el proveedor vive en el layout) y no se duplica", async () => {

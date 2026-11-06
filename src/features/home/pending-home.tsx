@@ -9,13 +9,14 @@ import { usePendingRows } from "@/features/expenses/annotate-provider";
 import { copy } from "@/lib/copy/es";
 import { dayLabel } from "@/lib/format";
 
-function useMonthPending(month: string) {
-  return usePendingRows().filter(({ transaction }) => monthKey(transaction.transactionDate) === month);
+function useMonthPending(month: string, knownIds: readonly string[]) {
+  // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
+  return usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && knownIds.includes(savedId)));
 }
 
 /** Los `<li>` de las filas en vuelo del mes, para ir dentro de la lista de recientes. */
-export function PendingHomeRows({ month, today }: { month: string; today: string }) {
-  return useMonthPending(month).map(({ key, state, transaction }) => (
+export function PendingHomeRows({ month, today, knownIds }: { month: string; today: string; knownIds: readonly string[] }) {
+  return useMonthPending(month, knownIds).map(({ key, state, transaction }) => (
     <li key={key}>
       <ExpenseRow transaction={transaction} href="" dateLabel={dayLabel(transaction.transactionDate, today)} pending={state} />
     </li>
@@ -24,14 +25,14 @@ export function PendingHomeRows({ month, today }: { month: string; today: string
 
 /** El estado vacío de Inicio, salvo que ya haya una creación en vuelo: entonces, esa fila. */
 export function HomeEmpty({ month, today, empty }: { month: string; today: string; empty: ReactNode }) {
-  const pending = useMonthPending(month);
+  const pending = useMonthPending(month, []);
   if (pending.length === 0) return empty;
   return (
     <div className="flex flex-col gap-6 pt-5 lg:pt-8">
       <section aria-labelledby="home-recent" className="flex flex-col gap-1">
         <h2 id="home-recent" className="pb-1 font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
         <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
-          <PendingHomeRows month={month} today={today} />
+          <PendingHomeRows month={month} today={today} knownIds={[]} />
         </ul>
       </section>
     </div>

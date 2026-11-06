@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Modal } from "@/components/ui/modal";
 import { signOut, type FormState } from "@/features/auth/actions";
-import { clearAllIntentions } from "@/features/expenses/unconfirmed";
 import { copy } from "@/lib/copy/es";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { requestPasswordChange } from "./actions";
@@ -41,7 +40,7 @@ export function SignOutRow() {
   const [state, action] = useActionState<FormState, FormData>(signOut, {});
   return (
     <div className="mt-[30px] border-t-[length:var(--border-strong)] border-border-emphasis pt-1.5 xl:mt-2">
-      <form action={action} onSubmit={clearAllIntentions}><SignOutRowButton /></form>
+      <form action={action}><SignOutRowButton /></form>
       {state.error ? <InlineNotice tone="danger" icon="warning-circle">{state.error}</InlineNotice> : null}
     </div>
   );
@@ -57,7 +56,7 @@ export function SignOutGhost() {
   const [state, action] = useActionState<FormState, FormData>(signOut, {});
   return (
     <div className="flex flex-col items-start gap-3 pt-3">
-      <form action={action} onSubmit={clearAllIntentions}><SignOutGhostButton /></form>
+      <form action={action}><SignOutGhostButton /></form>
       {state.error ? <InlineNotice tone="danger" icon="warning-circle" className="self-stretch">{state.error}</InlineNotice> : null}
     </div>
   );

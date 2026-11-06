@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <AccountProvider displayName={account.profile.displayName} theme={account.profile.theme}>
       <ContextProvider>
-        <AnnotateProvider actions={actions} userId={account.userId} today={todayInBogota()}>
+        <AnnotateProvider actions={actions} today={todayInBogota()}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

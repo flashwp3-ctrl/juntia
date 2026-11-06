@@ -91,7 +91,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
-            <PendingHomeRows month={month} today={today} />
+            <PendingHomeRows month={month} today={today} knownIds={rows.map(({ id }) => id)} />
             {recent.map((transaction) => (
               <li key={transaction.id}>
                 <HighlightRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />

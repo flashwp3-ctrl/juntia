@@ -4,7 +4,7 @@
 // (rechazo, resultado desconocido, reintento) está en annotate-sheet.test.tsx.
 import { act, render, screen, within } from "@testing-library/react";
 import { useEffect, type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { saraPrivateOctober2026 } from "@/domain/golden/october-2026";
 import { moneyFromPesos } from "@/domain/money";
 import { ActivityView } from "@/features/activity/activity-view";
@@ -17,13 +17,10 @@ import type { ActionResult, PendingRow, SavedTransaction } from "./types";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }), usePathname: () => "/" }));
 
-// Cada creación en vuelo guarda su intención (F51-1): que no pase de una prueba a la siguiente.
-beforeEach(() => window.localStorage.clear());
 const idleActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
 const NOW = "2026-11-05T15:00:00.000Z";
 const row = (overrides: Partial<PendingRow["transaction"]> = {}, state: PendingRow["state"] = "saving"): PendingRow => ({
   key: "k1", state,
-  payload: { idempotencyKey: "k1", type: "expense", amountPesos: "45000", categoryId: "market", transactionDate: "2026-11-05", description: "Mercado de la esquina" },
   transaction: { id: "pending:k1", type: "expense", amount: moneyFromPesos(45000n), categoryId: "market", transactionDate: "2026-11-05", description: "Mercado de la esquina", status: "active", version: 1, createdAt: NOW, updatedAt: NOW, ...overrides },
 });
 
@@ -46,13 +43,6 @@ describe("ExpenseRow en vuelo (UX lote 1, cambio 3)", () => {
     expect(el.getAttribute("aria-busy")).toBe("true");
     expect(el.textContent).toContain(copy.row.pending.saving);
     expect(el.textContent).toContain("45.000");
-  });
-  it("«Sin confirmar»: no afirma que se guardó ni que no", () => {
-    render(<ExpenseRow transaction={transaction} href="/x" dateLabel="Hoy" pending="unknown" />);
-    const el = document.querySelector<HTMLElement>("[data-pending]")!;
-    expect(el.textContent).toContain(copy.row.pending.unknown);
-    expect(el.textContent).not.toMatch(/guardado|no se guard/i);
-    expect(el.hasAttribute("aria-busy")).toBe(false);
   });
 });
 
@@ -84,25 +74,18 @@ describe("Actividad con una fila en vuelo", () => {
     expect(screen.queryByRole("heading", { name: copy.activity.empty.title })).toBeNull();
   });
 
-  it("una fila «Sin confirmar» se pinta como tal y las demás filas siguen siendo enlaces", async () => {
-    mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} outcome={{ ok: false, error: "network" }} />{view("2026-10")}</>);
-    await vi.waitFor(() => expect(pendingRows().some((el) => el.getAttribute("data-pending") === "unknown")).toBe(true));
-    expect(screen.getAllByRole("link", { name: /pesos/ }).length).toBeGreaterThanOrEqual(9);
-  });
 });
 
-// F51-2: el subtotal del día solo suma lo que el servidor ya confirmó; las filas en vuelo se listan, pero no cuentan.
 describe("Subtotal diario con filas en vuelo (F51-2)", () => {
   const subtotal = (date: string) => document.getElementById(`day-${date}`)!.parentElement!.querySelector("span")!.textContent;
   const view = () => <ActivityView rows={saraPrivateOctober2026} month="2026-10" today="2026-11-05" navigation={{ previous: null, next: null }} />;
 
-  for (const [state, outcome] of [["saving", undefined], ["unknown", { ok: false, error: "network" } as const]] as const) {
+  for (const [state, outcome] of [["saving", undefined]] as const) {
     it(`una fila «${state}» está en la lista del día pero no entra en su subtotal`, async () => {
       const baseline = render(<ContextProvider><AnnotateProvider actions={idleActions}>{view()}</AnnotateProvider></ContextProvider>);
       const before = subtotal("2026-10-23");
       expect(before).toMatch(/\d/);
       baseline.unmount();
-      window.localStorage.clear();
       mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} outcome={outcome} />{view()}</>);
       await vi.waitFor(() => expect(pendingRows().some((el) => el.getAttribute("data-pending") === state)).toBe(true));
       expect(subtotal("2026-10-23")).toBe(before);
