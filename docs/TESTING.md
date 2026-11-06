@@ -178,7 +178,9 @@ reutilizarse. Se libera a mano: `npm run dev:unlock` enseña a quién pertenece 
 nada; `npm run dev:unlock -- --force` lo borra, después de comprobar que no queda
 ningún proceso de ese comando. Con Ctrl+C o SIGTERM se termina el **árbol entero** del
 hijo en curso (Windows: `taskkill /PID <pid> /T /F`; POSIX: el hijo corre en su propio
-grupo y se señala el grupo, con SIGKILL a los 5 s), no empieza ningún paso nuevo, y el
+grupo y se señala el grupo, con SIGKILL a los 5 s; si 10 s después del SIGKILL el
+árbol sigue vivo, el comando falla de forma explícita y el bloqueo se queda huérfano para
+`dev:unlock --force`, nunca se suelta ni se espera para siempre), no empieza ningún paso nuevo, y el
 bloqueo se suelta solo cuando ya no queda ningún proceso. Un único punto lo suelta
 (`scripts/dev-target/session.mjs`, con el flujo `runInSession` que comparten `run.mjs` y
 su prueba): el final normal del comando espera la misma cancelación en curso, y la

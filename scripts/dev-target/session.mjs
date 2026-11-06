@@ -19,6 +19,7 @@ export function openDevSession({ lockDir, branch, command, terminate = killTree,
   /** Grupos de los pasos que pueden seguir vivos, por PID de su proceso principal (= PGID en POSIX). */
   const groups = new Map();
   let cancelling = null;
+  let failure = null;
   let released = false;
   const release = () => { if (!released) { released = true; releaseLock(); } };
   const terminateAll = async (signal) => {
@@ -28,9 +29,14 @@ export function openDevSession({ lockDir, branch, command, terminate = killTree,
   const cancel = (signal) => {
     if (!cancelling) {
       onCancel(signal);
+      // Si el árbol no termina (TreeStillAliveError), no se suelta el bloqueo: se queda huérfano y se sale con error.
       cancelling = terminateAll(signal).then(() => {
         release();
         exit(signal === "SIGINT" ? 130 : 143);
+      }, (error) => {
+        failure = error;
+        console.error(error instanceof Error ? error.message : String(error));
+        exit(1);
       });
     }
     return cancelling;
@@ -50,9 +56,10 @@ export function openDevSession({ lockDir, branch, command, terminate = killTree,
     },
     cancelled: () => cancelling !== null,
     cancel,
-    /** Fin del flujo: espera la cancelación en curso o termina los grupos que sigan vivos; después suelta. */
+    /** Fin del flujo: espera la cancelación en curso o termina los grupos que sigan vivos; después suelta. Si un árbol
+     * no termina, lanza y el bloqueo se queda huérfano. */
     async close() {
-      if (cancelling) await cancelling;
+      if (cancelling) { await cancelling; if (failure) throw failure; }
       else if (groups.size) await terminateAll("SIGTERM");
       for (const [signal, handler] of handlers) process.off(signal, handler);
       release();

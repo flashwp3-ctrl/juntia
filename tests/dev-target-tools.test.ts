@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { acquireDevLock, alive, killTree, unlockDevLock } from "../scripts/dev-target/lock.mjs";
+import { acquireDevLock, alive, killTree, TreeStillAliveError, unlockDevLock } from "../scripts/dev-target/lock.mjs";
 import { runInSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
 
@@ -164,65 +164,96 @@ throw new Error("fatal");`;
     expect(() => acquireDevLock(lock, { branch: "otra", command: "reset" })).toThrow(/huérfano.*dev:unlock/);
   }, 30_000);
 
+  it("killTree falla de forma explícita si el árbol sigue vivo después del límite; la sesión conserva el bloqueo", async () => {
+    const immortal = { pid: 2 ** 22 + 11, exitCode: null, signalCode: null, once: () => immortal };
+    await expect(killTree(immortal as never, "SIGTERM", { sigkillAfterMs: 0, giveUpAfterMs: 100, isAlive: () => true })).rejects.toBeInstanceOf(TreeStillAliveError);
+    const lock = lockIn();
+    const exit = vi.fn();
+    const failing = runInSession({ lockDir: lock, branch: "s", command: "prueba", exit,
+      terminate: async (child, signal) => { await killTree(child, signal); throw new TreeStillAliveError(child.pid!); } }, async (session) => {
+      const step = session.spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" })!;
+      await session.cancel("SIGTERM");
+      return step.pid;
+    });
+    await expect(failing).rejects.toBeInstanceOf(TreeStillAliveError);
+    expect(exit).toHaveBeenCalledExactlyOnceWith(1);
+    expect(existsSync(lock), "el árbol no terminó: el bloqueo se conserva como huérfano").toBe(true);
+    // Su dueño (este proceso) sigue vivo: nadie entra; cuando muera, quedará huérfano para dev:unlock --force.
+    expect(() => acquireDevLock(lock, { branch: "otra", command: "reset" })).toThrow(/en uso: rama s, comando prueba/);
+  }, 30_000);
+
   // Runner real (runInSession, el mismo flujo de run.mjs) con una señal de verdad y un nieto que ignora SIGTERM y no
-  // sale nunca por su cuenta: solo killTree lo termina, escalando a SIGKILL. Windows no entrega SIGTERM a un manejador
+  // sale nunca por su cuenta: solo el SIGKILL de killTree al grupo lo termina. Windows no entrega SIGTERM a un manejador
   // de otro proceso y `taskkill /T` no encuentra a los descendientes de una raíz que ya terminó: solo POSIX.
+  const runnerScript = (lock: string, child: string, afterFirstStep: string, closedMarker: string, treeMarker: string, readyFile: string, second: string) => `import { readFileSync, writeFileSync } from "node:fs";
+import { killTree } from ${JSON.stringify(pathToFileURL(join(process.cwd(), "scripts", "dev-target", "lock.mjs")).href)};
+import { runInSession } from ${sessionModule()};
+// Vida real del nieto en el momento en que killTree termina, antes de que la sesión suelte el bloqueo.
+const grandAlive = () => { try { const pid = readFileSync(${JSON.stringify(readyFile)}, "utf8").trim(); const stat = readFileSync("/proc/" + pid + "/stat", "utf8"); return stat.slice(stat.lastIndexOf(")") + 2)[0] !== "Z"; } catch { return false; } };
+await runInSession({ lockDir: ${JSON.stringify(lock)}, branch: "runner", command: "prueba",
+  terminate: async (target, signal) => { await killTree(target, signal); writeFileSync(${JSON.stringify(treeMarker)}, JSON.stringify({ grandAlive: grandAlive(), lock: ${JSON.stringify(lock)} })); } }, async (session) => {
+  const step = (args, marker) => new Promise((resolve) => {
+    const proc = session.spawn(process.execPath, args, { stdio: ["ignore", "inherit", "inherit"] });
+    if (!proc) return resolve(false);
+    proc.on("close", () => { if (marker) writeFileSync(marker, "x"); resolve(true); });
+  });
+  await step(["-e", ${JSON.stringify(child)}], ${JSON.stringify(closedMarker)});
+  ${afterFirstStep}
+  await step(["-e", ${JSON.stringify(`require("node:fs").writeFileSync(${JSON.stringify(second)}, "x")`)}]);
+});`;
+
   it.skipIf(process.platform === "win32").each([
     ["F48-2B: el hijo directo sigue vivo cuando llega la señal", false],
-    ["F48-2A: el hijo directo termina primero y el nieto sigue vivo en su grupo", true],
+    ["F48-2A: el hijo directo ya terminó (close registrado) y el nieto sigue vivo en su grupo", true],
   ])("runner real · %s", async (_, childExitsFirst) => {
     const lock = lockIn();
+    const readyFile = join(dir, "nieto-ready");
     const sigterm = join(dir, "nieto-recibio-sigterm");
+    const closedMarker = join(dir, "hijo-close");
+    const treeMarker = join(dir, "arbol-terminado");
     const second = join(dir, "segundo-paso");
+    const childFile = join(dir, "hijo-pid");
+    // El nieto: sin stdio heredado (no retrasa el close del hijo), en el grupo del hijo (detached: false), manejador de
+    // SIGTERM instalado ANTES de escribir READY, y nunca sale por su cuenta.
     const grandchild = `const fs = require("node:fs");
 process.on("SIGTERM", () => { fs.writeFileSync(${JSON.stringify(sigterm)}, "x"); });
 setInterval(() => {}, 1000);
-process.stdout.write("READY " + process.pid + "\\n");`;
-    const child = `const { spawn } = require("node:child_process");
-spawn(process.execPath, ["-e", ${JSON.stringify(grandchild)}], { stdio: ["ignore", "inherit", "inherit"] });
-process.stdout.write("CHILD " + process.pid + "\\n");
-${childExitsFirst ? "process.exitCode = 0;" : "setInterval(() => {}, 1000);"}`;
-    const runner = `import { runInSession } from ${sessionModule()};
-await runInSession({ lockDir: ${JSON.stringify(lock)}, branch: "runner", command: "prueba" }, async (session) => {
-  const step = (args) => new Promise((resolve) => {
-    const proc = session.spawn(process.execPath, args, { stdio: ["ignore", "inherit", "inherit"] });
-    if (!proc) return resolve(false);
-    proc.on("close", () => resolve(true));
-  });
-  await step(["-e", ${JSON.stringify(child)}]);
-  ${childExitsFirst ? "setInterval(() => {}, 1000); await new Promise(() => {});" : ""}
-  await step(["-e", ${JSON.stringify(`require("node:fs").writeFileSync(${JSON.stringify(second)}, "x")`)}]);
-});`;
-    const proc = spawn(process.execPath, ["--input-type=module", "-e", runner], { stdio: ["ignore", "pipe", "inherit"] });
-    let output = "";
-    proc.stdout!.on("data", (chunk) => { output += String(chunk); });
+fs.writeFileSync(${JSON.stringify(readyFile)}, String(process.pid));`;
+    // El hijo: lanza el nieto y, si es la variante F48-2A, sale con process.exit(0) en cuanto ve READY.
+    const child = `const fs = require("node:fs");
+const { spawn } = require("node:child_process");
+const g = spawn(process.execPath, ["-e", ${JSON.stringify(grandchild)}], { stdio: "ignore", detached: false });
+g.unref();
+fs.writeFileSync(${JSON.stringify(childFile)}, String(process.pid));
+const wait = setInterval(() => { if (fs.existsSync(${JSON.stringify(readyFile)})) { ${childExitsFirst ? "process.exit(0);" : "clearInterval(wait); setInterval(() => {}, 1000);"} } }, 20);`;
+    const afterFirstStep = childExitsFirst ? "setInterval(() => {}, 1000); await new Promise(() => {});" : "";
+    const proc = spawn(process.execPath, ["--input-type=module", "-e", runnerScript(lock, child, afterFirstStep, closedMarker, treeMarker, readyFile, second)], { stdio: ["ignore", "inherit", "inherit"] });
     const closed = new Promise<number | null>((resolve) => proc.once("close", resolve));
-    let childPid = 0;
     let grandPid = 0;
     try {
-      await vi.waitFor(() => expect(output).toMatch(/READY \d+/), { timeout: 10_000, interval: 25 });
-      await vi.waitFor(() => expect(output).toMatch(/CHILD \d+/), { timeout: 10_000, interval: 25 });
-      grandPid = Number(/READY (\d+)/.exec(output)![1]);
-      childPid = Number(/CHILD (\d+)/.exec(output)![1]);
+      await vi.waitFor(() => expect(existsSync(readyFile), "READY del nieto").toBe(true), { timeout: 10_000, interval: 25 });
+      grandPid = Number(readFileSync(readyFile, "utf8"));
       if (childExitsFirst) {
-        await vi.waitFor(() => expect(reallyAlive(childPid), "el hijo directo ya terminó").toBe(false), { timeout: 10_000, interval: 25 });
-        expect(reallyAlive(grandPid)).toBe(true);
-        expect(existsSync(lock), "el grupo sigue vivo sin su proceso principal: el bloqueo sigue").toBe(true);
+        await vi.waitFor(() => expect(existsSync(closedMarker), "el runner recibió el close del hijo").toBe(true), { timeout: 10_000, interval: 25 });
+        expect(reallyAlive(grandPid), "el nieto sigue vivo, sin su proceso principal").toBe(true);
+        expect(existsSync(lock), "el grupo sigue vivo: el bloqueo sigue").toBe(true);
+      } else {
+        expect(existsSync(closedMarker), "el hijo directo sigue vivo").toBe(false);
       }
-      // La señal, solo después de READY: el manejador del nieto ya está instalado.
+      // La señal, solo ahora: READY (manejador instalado) y, en F48-2A, el close del hijo ya observado.
       proc.kill("SIGTERM");
       await vi.waitFor(() => expect(existsSync(sigterm), "el nieto recibió SIGTERM").toBe(true), { timeout: 10_000, interval: 25 });
-      expect(reallyAlive(grandPid), "el nieto ignora SIGTERM y sigue vivo").toBe(true);
+      expect(reallyAlive(grandPid), "el nieto ignora SIGTERM y sigue vivo hasta el SIGKILL").toBe(true);
       expect(existsSync(lock), "con el nieto vivo, el bloqueo sigue").toBe(true);
       expect(await closed, "el runner sale con el código de SIGTERM").toBe(143);
-      expect(reallyAlive(grandPid), "killTree terminó el nieto (SIGKILL al grupo)").toBe(false);
-      expect(reallyAlive(childPid)).toBe(false);
+      expect(JSON.parse(readFileSync(treeMarker, "utf8")), "cuando killTree terminó, antes de soltar el bloqueo, el nieto ya no vivía").toMatchObject({ grandAlive: false });
+      expect(reallyAlive(grandPid)).toBe(false);
       expect(existsSync(lock), "el bloqueo se suelta cuando el grupo ya no existe").toBe(false);
       expect(existsSync(second), "ningún paso empezó después de la señal").toBe(false);
     } finally {
       killQuietly(proc.pid);
-      killQuietly(childPid, true);
+      if (existsSync(childFile)) killQuietly(Number(readFileSync(childFile, "utf8")), true);
       killQuietly(grandPid);
     }
-  }, 30_000);
+  }, 40_000);
 });

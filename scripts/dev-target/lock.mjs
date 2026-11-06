@@ -92,15 +92,31 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Termina el árbol entero del hijo y resuelve cuando ya no queda ninguno. Windows: `taskkill /PID <pid> /T /F`.
  * POSIX: la señal al grupo (`process.kill(-pid)`); si a los 5 s sigue vivo, SIGKILL al grupo.
  */
-export async function killTree(child, signal) {
-  if (process.platform === "win32") {
+export async function killTree(child, signal, { sigkillAfterMs = 5000, giveUpAfterMs = 10_000, isAlive = treeAlive } = {}) {
+  const windows = process.platform === "win32";
+  if (windows) {
     spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" });
   } else {
     try { process.kill(-child.pid, signal); } catch { /* el grupo ya no existe */ }
   }
-  for (let waited = 0; treeAlive(child); waited += 50) {
-    if (waited === 5000 && process.platform !== "win32") { try { process.kill(-child.pid, "SIGKILL"); } catch { /* ya terminó */ } }
+  // Windows ya terminó a la fuerza (/F); en POSIX, SIGKILL al grupo a los 5 s. Después, como mucho 10 s más: si el
+  // árbol sigue vivo, se falla de forma explícita y el bloqueo se queda como huérfano (nunca se suelta ni se espera
+  // para siempre). F48-2, quinta ronda.
+  let killedAt = windows ? 0 : null;
+  for (let waited = 0; isAlive(child); waited += 50) {
+    if (killedAt === null && waited >= sigkillAfterMs) { try { process.kill(-child.pid, "SIGKILL"); } catch { /* ya terminó */ } killedAt = waited; }
+    if (killedAt !== null && waited - killedAt >= giveUpAfterMs) throw new TreeStillAliveError(child.pid);
     await pause(50);
   }
-  if (child.exitCode === null && child.signalCode === null) await new Promise((resolve) => child.once("close", resolve));
+  if (child.exitCode === null && child.signalCode === null) {
+    const closed = new Promise((resolve) => child.once("close", () => resolve(true)));
+    if (!(await Promise.race([closed, pause(giveUpAfterMs).then(() => false)]))) throw new TreeStillAliveError(child.pid);
+  }
+}
+
+export class TreeStillAliveError extends Error {
+  constructor(pid) {
+    super(`El árbol del paso ${pid} sigue vivo después de SIGKILL y del tiempo de espera. El bloqueo de juntia-dev se conserva como huérfano: comprueba que no queda ningún proceso y libéralo con npm run dev:unlock -- --force.`);
+    this.name = "TreeStillAliveError";
+  }
 }
