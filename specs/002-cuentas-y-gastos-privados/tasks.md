@@ -515,10 +515,12 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [ ] T086 `[V]` **Humana** (fundadores): altura del teclado nativo con la hoja en iPhone (el teclado no tapa el monto ni Guardar); en Android, la misma comprobación y la máscara de COP con al menos un teclado de terceros (§15.6.2, 3), **o** una excepción formal con el formato de T096 si no hay Android
   - Cumple: `RESPONSIVE_SPECIFICATIONS.md` `[V]`; decisión 11.
   - Terminado cuando: el resultado por dispositivo, o la excepción aprobada, está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** aplazada con el riesgo aceptado (19.1): criterio obligatorio antes del lanzamiento de MVP-1; la parte de Android, con excepción aprobada (19.2). Queda «aplazada por decisión 19», no hecha.
 
 - [ ] T087 `[V]` **Humana** (fundadores): mediana de US-12 en el teléfono real de un fundador tras A6, con al menos 10 registros de gastos habituales y el método (cronómetro o grabación), en producción después de T097 o contra `juntia-dev`
   - Cumple: SC-003; US-2.8.
   - Terminado cuando: los tiempos, la mediana y el método están en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** aplazada con el riesgo aceptado (19.1): criterio obligatorio antes del lanzamiento de MVP-1. Queda «aplazada por decisión 19», no hecha.
 
 ### Grupo 4D — verificaciones heredadas de la decisión 12
 
@@ -529,34 +531,42 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 
 - [ ] T089 **Humana** (fundadores): **001-T073**, contraste de los pares de texto y fondo en un iPhone, en los dos temas. Se puede adelantar desde el PR B; a más tardar aquí. Sin excepción posible
   - Terminado cuando: los valores medidos y la herramienta están en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** aplazada con el riesgo aceptado (19.1): criterio obligatorio antes del lanzamiento de MVP-1. Queda «aplazada por decisión 19», no hecha.
 
-- [ ] T090 **Humana** (fundadores): **001-T074**, sombras táctiles en un Android de gama media. Admite excepción formal (T096) si no hay Android
+- [x] T090 **Humana** (fundadores): **001-T074**, sombras táctiles en un Android de gama media. Admite excepción formal (T096) si no hay Android
   - Terminado cuando: el dispositivo y la observación, o la excepción aprobada, están en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** EXCEPCIÓN APROBADA por los dos fundadores (19.2); los cinco datos, en `evidence.md` (T096).
 
 - [ ] T091 **Humana** (fundadores): **001-T075 · VoiceOver** con el flujo real de Anotar (apertura, campos, guardado, Toast y Deshacer, retorno del foco). Sin excepción posible
   - Terminado cuando: lo que anunció el lector, por punto, está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** aplazada con el riesgo aceptado (19.1): criterio obligatorio antes del lanzamiento de MVP-1. Queda «aplazada por decisión 19», no hecha.
 
-- [ ] T092 **Humana** (fundadores): **001-T075 · TalkBack** con el flujo real de Anotar. Admite excepción formal si no hay Android
+- [x] T092 **Humana** (fundadores): **001-T075 · TalkBack** con el flujo real de Anotar. Admite excepción formal si no hay Android
   - Terminado cuando: el resultado, o la excepción aprobada, está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** EXCEPCIÓN APROBADA por los dos fundadores (19.2); los cinco datos, en `evidence.md` (T096).
 
 - [ ] T093 **Humana** (gestor): **CLS = 0 fuera de Chromium**, Firefox y WebKit con el arnés de R2, en local con `npx playwright install firefox webkit` (sin Docker). Sin excepción posible
   - Terminado cuando: la salida por ruta y navegador está en `evidence.md`.
 
-- [ ] T094 **Humana** (fundadores): **CLS en un iPhone real** con el inspector web de Safari. Admite excepción formal si no hay Mac
+- [x] T094 **Humana** (fundadores): **CLS en un iPhone real** con el inspector web de Safari. Admite excepción formal si no hay Mac
   - Terminado cuando: la medición, o la excepción aprobada, está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** EXCEPCIÓN APROBADA por los dos fundadores (19.2); los cinco datos, en `evidence.md` (T096).
 
-- [ ] T095 **Humana** (fundadores): **respaldo tipográfico de Onest en Android**. Admite excepción formal si no hay Android
+- [x] T095 **Humana** (fundadores): **respaldo tipográfico de Onest en Android**. Admite excepción formal si no hay Android
   - Terminado cuando: la observación con captura, o la excepción aprobada, está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** EXCEPCIÓN APROBADA por los dos fundadores (19.2); los cinco datos, en `evidence.md` (T096).
 
-- [ ] T096 Registrar cada **excepción formal** que se use (solo T086 en su parte de Android, T090, T092, T094 y T095) en `evidence.md` con sus cinco datos y el estado **«EXCEPCIÓN APROBADA»**, nunca «verificado»: la verificación que no se ejecutó; el motivo; el riesgo residual; la mitigación (por ejemplo, axe y la emulación de Android en Chrome, que no la sustituyen); quién la revalida y cuándo, a más tardar antes del lanzamiento MVP-1. La aprueban **los dos fundadores** antes de aceptar P0-1 (decisión 12)
+- [x] T096 Registrar cada **excepción formal** que se use (solo T086 en su parte de Android, T090, T092, T094 y T095) en `evidence.md` con sus cinco datos y el estado **«EXCEPCIÓN APROBADA»**, nunca «verificado»: la verificación que no se ejecutó; el motivo; el riesgo residual; la mitigación (por ejemplo, axe y la emulación de Android en Chrome, que no la sustituyen); quién la revalida y cuándo, a más tardar antes del lanzamiento MVP-1. La aprueban **los dos fundadores** antes de aceptar P0-1 (decisión 12)
   - Cumple: SC-011; ADR-011 §8.
   - Terminado cuando: cada excepción tiene los cinco datos y la aprobación de los dos fundadores, o no hay ninguna.
+  - **Decisión 19 (6 nov 2026):** T090, T092, T094 y T095 con excepción aprobada por los dos fundadores (19.2), registradas en `evidence.md`.
 
 ### Grupo 4E — datos reales y salida del PR D
 
 - [ ] T097 **Humana** (un fundador), **antes del primer movimiento real** (se puede hacer en cuanto producción tiene las migraciones y pasó T035, y el camino B tiene salida verde del job `db`, T030; en cualquier caso antes del merge del PR D): primera copia real con `scripts/backup.sh` (quickstart §4.1, modo producción, etiqueta `db-prod-*`) y su **restauración real en un PostgreSQL 17 normal** del equipo con `scripts/restore-plain.sh` (quickstart §4.3); se pegan el manifiesto y el log, sin datos. Después, la copia semanal con el mismo comando. **Sin esta salida, no se anota ningún dato real**
   - Cumple: FR-059; US-10.1–10.4; SC-010; Q11.
   - Terminado cuando: el manifiesto, el log con `exit=0` y la base temporal borrada están en `evidence.md` con fecha anterior al primer movimiento real.
+  - **Decisión 19 (6 nov 2026):** cambia el momento (19.3): antes del **primer movimiento real en producción**, no antes del merge del PR D. La hace un fundador con el gestor; ningún agente ve la contraseña de producción.
 
 - [x] T098 Capturas a **390 y 1440 px en claro y oscuro**: E1 gasto, E1 ingreso, E2, E3, E4, E5 con el Toast y la fila resaltada en Inicio, detalle con Editar y Eliminar, edición y diálogo de eliminar
   - **Para aprobar viendo la pantalla**: «Gasto, ingreso y liquidación en tinta» (fila nueva e ingreso); el selector «Gasto · Ingreso» (Q3); la versión privada de E1–E5.

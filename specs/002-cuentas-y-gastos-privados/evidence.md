@@ -1928,11 +1928,13 @@ queda para T087 y la revisión de los fundadores.
 
 ### T086
 
-**Pendiente · Humana (fundadores).** Teclado nativo con la hoja en iPhone (no tapa el monto ni Guardar; la hoja sube con `visualViewport`, `bottom-sheet.tsx`) y, en Android, lo mismo más la máscara de COP con un teclado de terceros, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). La altura del teclado nativo con la hoja en iPhone (el teclado no tapa el monto ni Guardar; la hoja sube con `visualViewport`, `bottom-sheet.tsx`). La parte de Android (teclado y máscara de COP con un teclado de terceros) entra en la excepción 19.2: ninguno de los dos fundadores tiene Android; la revalidan los fundadores antes del lanzamiento de MVP-1. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T087
 
-**Pendiente · Humana (fundadores).** US-12 en el teléfono de un fundador tras A6: al menos 10 gastos habituales, mediana < 10 s y el método. El tiempo de la spec 2 es de laboratorio y no lo sustituye. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). US-12 en el teléfono de un fundador: al menos 10 gastos habituales, mediana < 10 s y el método. El recorrido de laboratorio de la spec 2 (692 ms en CI) no la sustituye. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T088
 
@@ -1946,19 +1948,35 @@ comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-anno
 
 ### T089
 
-**Pendiente · Humana (fundadores).** 001-T073: contraste de los pares de texto y fondo en un iPhone, en los dos temas, con la herramienta y los valores. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). 001-T073, contraste de los pares de texto y fondo en un iPhone, en los dos temas. Mientras tanto, axe sin violaciones serias o críticas en las 200 auditorías de este PR (T084) no lo sustituye: mide el color calculado, no la pantalla. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T090
 
-**Pendiente · Humana (fundadores).** 001-T074: sombras táctiles en un Android de gama media, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** 001-T074, sombras táctiles (canto de los botones y elevación) en un Android de gama media.
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que en un Android de gama media la sombra o el canto se vean distintos o con poco contraste; es estético, no afecta a datos ni a acceso.
+- **Mitigación:** capturas a 390 en los dos temas en Chromium (T098) y la emulación de Android de Chrome; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T091
 
-**Pendiente · Humana (fundadores).** 001-T075 · VoiceOver con el Anotar real: apertura (foco en «Monto»), selector Gasto · Ingreso, categorías (botones con estado pulsado), Guardar, el aviso «Gasto guardado» con «Deshacer» y el retorno del foco al disparador. Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Aplazada por decisión 19** (maestro §15.10, 19.1; los dos fundadores, 6 de noviembre de 2026, con el riesgo aceptado). 001-T075 · VoiceOver con el Anotar real: apertura (foco en «Monto»), selector Gasto · Ingreso, categorías (botones con estado pulsado), Guardar, el aviso «Gasto guardado» con «Deshacer» y el retorno del foco. Las pruebas de componentes (roles, nombres y foco) y axe no lo sustituyen. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con dueños los fundadores (ADR-011 §8). No está hecha ni superada: queda «aplazada por decisión 19» hasta tener salida real.
+
 
 ### T092
 
-**Pendiente · Humana (fundadores).** 001-T075 · TalkBack con el Anotar real, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** 001-T075 · TalkBack con el flujo real de Anotar.
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que TalkBack anuncie distinto que VoiceOver la hoja, el selector, las categorías o el aviso con «Deshacer».
+- **Mitigación:** roles, nombres y foco probados en componentes (T077, T078), axe sin violaciones serias o críticas (T084) y VoiceOver, aplazado a su vez por la 19.1; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T093
 
@@ -1966,19 +1984,33 @@ comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-anno
 
 ### T094
 
-**Pendiente · Humana (fundadores).** CLS en un iPhone real con el inspector web de Safari, o excepción T096 si no hay Mac. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** CLS en un iPhone real con el inspector web de Safari.
+- **Motivo:** el inspector web de Safari necesita un Mac y los fundadores no tienen uno.
+- **Riesgo residual:** que Safari en iPhone pinte el shell a medio construir; el mecanismo de la 001 (`<link rel="expect" blocking="render">`) lo soporta Safari desde la 18.2, pero en un iPhone solo se ha mirado a ojo.
+- **Mitigación:** CLS = 0 medido en Chromium (T053, T072) y el CLS fuera de Chromium de T093, que no entra en esta decisión; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan acceso a un Mac, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T095
 
-**Pendiente · Humana (fundadores).** Respaldo tipográfico de Onest en Android, con captura, o excepción T096. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**EXCEPCIÓN APROBADA — Alejandro y la segunda fundadora, 6 de noviembre de 2026** (decisión 19, 19.2; T096). No es «verificado».
+
+- **Verificación que no se ejecutó:** respaldo tipográfico de Onest en Android (la métrica ajustada sobre Arial de `globals.css`).
+- **Motivo:** ninguno de los dos fundadores tiene un Android.
+- **Riesgo residual:** que en Android, sin Arial, el respaldo mida distinto y el texto salte al llegar Onest.
+- **Mitigación:** el respaldo medido en el runner con Arial instalado (T053) y la fuente propia servida por la app; no la sustituyen.
+- **Quién la revalida y cuándo:** los fundadores, en cuanto tengan el dispositivo, y a más tardar antes del lanzamiento de MVP-1.
+
 
 ### T096
 
-**Ninguna excepción registrada todavía.** Si los fundadores usan alguna (solo T086 en su parte de Android, T090, T092, T094 o T095), va aquí con sus cinco datos —verificación no ejecutada, motivo, riesgo residual, mitigación, quién la revalida y cuándo— y el estado «EXCEPCIÓN APROBADA» con la aprobación de los dos fundadores, nunca «verificado».
+**Cuatro excepciones aprobadas** por los dos fundadores el 6 de noviembre de 2026 (decisión 19, 19.2), cada una con sus cinco datos y «EXCEPCIÓN APROBADA» en su tarea: T090, T092, T094 y T095. La parte de Android de T086 entra en la misma excepción (ver T086). Ninguna es de seguridad, autorización, aislamiento ni atomicidad.
 
 ### T097
 
-**Pendiente · Humana (un fundador).** Primera copia real de producción con `scripts/backup.sh` y su restauración en PostgreSQL 17 con `scripts/restore-plain.sh` (quickstart §4.1 y §4.3); se pegan el manifiesto y el log con `exit=0`, sin datos, **antes del primer movimiento real** y antes del merge de este PR. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Pendiente · Humana, con el momento cambiado por decisión 19** (19.3; los dos fundadores, 6 de noviembre de 2026): la primera copia real de producción con `scripts/backup.sh` y su restauración en PostgreSQL 17 con `scripts/restore-plain.sh` (quickstart §4.1 y §4.3) se hacen **antes del primer movimiento real en producción**, no antes del merge del PR D: producción todavía no tiene datos reales y una copia ahora no protege nada. La hace un fundador con el gestor; ningún agente ve la contraseña de producción. Se pegan el manifiesto y el log con `exit=0`, sin datos. **Sin esta salida, no se anota ningún dato real.**
 
 ### T098
 
@@ -2053,15 +2085,15 @@ Cada criterio con la tarea que lo midió y su salida. Lo que depende de una tare
 | --- | --- | --- |
 | SC-001 · siete anchos, dos temas, capturas aprobadas | T057 (PR B), T073 (PR C), T098 (este PR) y T072 | Capturas y pasada con salida; **pendiente** la aprobación de los fundadores de las pantallas del PR D (T101) |
 | SC-002 · axe sin violaciones serias o críticas | T051, T071, T084 | Con salida: 152/152 con sesión y 48/48 sin sesión, 0 serias o críticas (T084, T100) |
-| SC-003 · US-12 < 10 s en teléfono real | T087 | **Pendiente · Humana** |
+| SC-003 · US-12 < 10 s en teléfono real | T087 | **Aplazada por decisión 19** (19.1): criterio obligatorio antes del lanzamiento de MVP-1 |
 | SC-004 · INP < 200 ms | T085 | Con salida, **laboratorio**: 104 ms abrir y 32 ms guardar como máximo (CPU 4×) |
 | SC-005 · CLS = 0 | T053, T072 | Con salida (PR B y C); fuera de Chromium y en iPhone, T093 y T094 **pendientes** |
 | SC-006 · migraciones, RLS y privilegios | T015, T020, T021, T025; research R3 ([V] 10) | Con salida (PR A); job `db` verde en cada gate de este PR |
 | SC-007 · aislamiento entre personas | T019, T025 | Con salida (PR A) |
 | SC-008 · 412.900 exacto | T010, T025, T062 | Con salida (PR A y C) |
 | SC-009 · un solo movimiento por intención | T025, T083 | Con salida: spec 2, doble toque más el mismo envío repetido a mano → una fila en la base |
-| SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana** |
-| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | **Pendiente · Humana**: T089–T095 en dispositivos; T096 sin excepciones todavía |
+| SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana**, antes del primer movimiento real en producción (decisión 19, 19.3) |
+| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | T090, T092, T094 y T095: **EXCEPCIÓN APROBADA** (19.2). T089 y T091: **aplazadas por decisión 19** (19.1). T093 (CLS fuera de Chromium): **pendiente**, fuera de la decisión 19 |
 | SC-012 · salida interna | T103 | **Pendiente · Humana** |
 
 ### T103
