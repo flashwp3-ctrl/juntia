@@ -6,9 +6,8 @@ export const copy = {
   annotate: {
     title: { expense: "Anotar gasto", income: "Anotar ingreso" }, editTitle: { expense: "Editar gasto", income: "Editar ingreso" },
     type: "Tipo de movimiento", expense: "Gasto", income: "Ingreso",
-    amount: "Monto", category: "Categoría", recent: "Categorías recientes", allCategories: "Todas las categorías",
-    details: "Editar detalles", hideDetails: "Ocultar detalles", more: "Más…", moreLabel: "Más… todas las categorías, nota y fecha",
-    description: "Descripción", descriptionPlaceholder: "Cómo lo reconoces", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú", onlyYou: "Solo tú",
+    amount: "Monto", category: "Categoría",
+    description: "Descripción (opcional)", descriptionPlaceholder: "Descripción (opcional)", date: "Fecha", onlyYou: "Solo tú",
     save: { expense: "Guardar", income: "Guardar ingreso" }, saveWithAmount: (label: string, amount: string) => `${label} · ${amount}`,
     saveChanges: "Guardar cambios", saving: "Guardando…", close: "Cerrar",
     // F45-1 (revisión del PR #45): cerrar tras un fallo ambiguo. Copy nuevo para revisión de los fundadores.
@@ -48,7 +47,7 @@ export const copy = {
       otherBrowser: "Abre el enlace en el mismo navegador donde lo pediste o pide uno nuevo." },
     newPassword: { title: "Crea una contraseña nueva", label: "Contraseña nueva", repeat: "Repítela", repeatPlaceholder: "Repite la contraseña", help: "Usa al menos 8 caracteres.", mismatch: "Las dos contraseñas no coinciden.", submit: "Guardar contraseña", submitting: "Guardando…", weak: "Usa una contraseña de al menos 8 caracteres.", same: "Elige una contraseña distinta de la anterior." },
     signUp: {
-      title: "Crea tu cuenta", nameLabel: "Nombre visible", nameHelp: "Así aparecerás en Juntia.", namePlaceholder: "Tu nombre", passwordPlaceholder: "Crea una contraseña", passwordHelp: "Al menos 8 caracteres. Usa una que no uses en otro sitio.",
+      title: "Crea tu cuenta", nameLabel: "¿Cómo quieres que te llamemos?", nameHelp: "Así te saludamos y así te verá tu pareja.", namePlaceholder: "Ej.: Alejandro", passwordPlaceholder: "Crea una contraseña", passwordHelp: "Al menos 8 caracteres. Usa una que no uses en otro sitio.",
       // Q9 / FR-025: aviso de versión privada de prueba, sin enlaces ni texto legal inventado.
       notice: "Juntia es una versión privada de prueba. Todavía no tiene términos de uso publicados.", acknowledge: "Entiendo que es una versión privada de prueba.",
       submit: "Crear cuenta", submitting: "Creando cuenta…", haveAccount: "Ya tengo cuenta", weakPassword: "Usa una contraseña de al menos 8 caracteres.", missing: "Completa los tres campos y confirma el aviso.",
@@ -72,7 +71,7 @@ export const copy = {
     },
     signOut: { label: "Cerrar sesión", hint: "No borra nada: vuelves a entrar con tu correo.", loading: "Cerrando sesión…" },
     profile: {
-      title: "Mi perfil", avatarNote: "Tu avatar usa tu inicial y el color que Juntia te asigna.", nameLabel: "Nombre visible", namePlaceholder: "Tu nombre",
+      title: "Mi perfil", avatarNote: "Tu avatar usa tu inicial y el color que Juntia te asigna.", nameLabel: "¿Cómo quieres que te llamemos?", nameHelp: "Así te saludamos y así te verá tu pareja.", namePlaceholder: "Ej.: Alejandro",
       emailLabel: "Correo de acceso", emailHelp: "No se puede cambiar desde Juntia.", authorshipNote: "Cambiar tu nombre no cambia quién registró cada movimiento.",
       save: "Guardar cambios", cancel: "Cancelar", saved: "Perfil actualizado.", saveFailed: "No se guardó. Revisa tu conexión e inténtalo de nuevo. Tus cambios siguen aquí.",
       errors: { displayName: "Escribe un nombre de 1 a 60 caracteres, sin saltos de línea." },

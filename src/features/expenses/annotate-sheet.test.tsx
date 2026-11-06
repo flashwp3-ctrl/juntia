@@ -5,7 +5,7 @@
 // JT001 muestra la sesión caducada sin perder lo escrito; N fuera de un campo, Enter guarda, Escape cierra; confirmación
 // de cambios sin guardar». Y los casos de concurrencia del PR D: doble envío, Deshacer dos veces, Deshacer después de
 // editar, promesas rechazadas, respuestas fuera de orden y estado que sobrevive a la navegación.
-import { act, configure, render, screen, waitFor, within } from "@testing-library/react";
+import { act, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -85,7 +85,7 @@ const isDisabled = (element: HTMLElement) => element.getAttribute("aria-disabled
 
 async function fillMinimum(user: ReturnType<typeof userEvent.setup>, pesos = "45000") {
   await user.type(amount(), pesos);
-  await user.click(screen.getByRole("button", { name: copy.categories.market }));
+  await user.click(screen.getByRole("radio", { name: copy.categories.market }));
 }
 
 afterEach(() => { vi.useRealTimers(); router.push.mockReset(); });
@@ -107,7 +107,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(isDisabled(saveButton())).toBe(true);
     await user.type(amount(), "45000");
     expect(isDisabled(saveButton())).toBe(true);
-    await user.click(screen.getByRole("button", { name: copy.categories.market }));
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
     expect(isDisabled(saveButton())).toBe(false);
     expect(saveButton().textContent).toContain("$45.000");
     // El resumen dice la fecha (hoy) y que es solo tuyo; nada de pareja (Q2).
@@ -119,19 +119,20 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(trigger);
     await sheet();
     await user.type(amount(), "0");
-    await user.click(screen.getByRole("button", { name: copy.categories.market }));
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
     expect(isDisabled(saveButton())).toBe(true);
     expect(screen.getByText(copy.annotate.errors.amountOutOfRange)).toBeTruthy();
   });
 
-  it("US-2.3: E2 sin «Pagó», «Participan» ni «Reparto», y el contexto fijo en Yo", async () => {
+  it("US-2.3: la hoja trae todo a la vista, sin «Pagó», «Participan» ni «Reparto», y el contexto fijo en Yo", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
     const dialog = await sheet();
-    await user.click(within(dialog).getByRole("button", { name: copy.annotate.details }));
+    // Sin «Editar detalles» ni «Más…»: descripción, fecha y contexto ya están (comp 06, opción 1c).
+    expect(within(dialog).queryByRole("button", { name: /Editar detalles|Más/ })).toBeNull();
     expect(within(dialog).getByRole("textbox", { name: copy.annotate.description })).toBeTruthy();
     expect(within(dialog).getByLabelText(copy.annotate.date)).toBeTruthy();
-    expect(within(dialog).getByText(copy.annotate.contextValue)).toBeTruthy();
+    expect(within(dialog).getByText(copy.annotate.onlyYou)).toBeTruthy();
     for (const word of [/Pagó/, /Participan/, /Reparto/, new RegExp(copy.context.us)]) expect(within(dialog).queryByText(word)).toBeNull();
     // El contexto no es un control: no hay radios ni botones de Yo/Nosotros dentro de la hoja.
     expect(within(dialog).queryByRole("radio", { name: copy.context.me })).toBeNull();
@@ -155,34 +156,130 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.annotate.title.expense })).toBeNull());
   });
 
-  // UX lote 1, cambio 2. Propuesta por defecto de la petición: «un chip «Más…» al final de la fila de categorías rápidas,
-  // que abre los detalles con todas las categorías». Las 9 categorías de gasto, «Otra» incluida, y la nota.
-  it("UX 2: el chip «Más…» va al final de las categorías rápidas y abre las 9 categorías, «Otra» y la nota", async () => {
+  // UX lote 1, cambio 2 (definitivo, aprobado el 6 nov 2026: comp «06 Categoría en Anotar gasto», opción 1c «Rejilla fija de
+  // 3 × 3»). Las 9 categorías siempre visibles, en el mismo orden y casilla; la rejilla es un grupo de radio; debajo, SIEMPRE
+  // la descripción de una línea; la fecha («Hoy») abre el selector de fecha y «Solo tú» es solo un indicador.
+  const ORDER = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"] as const;
+  const grid = (dialog: HTMLElement) => within(dialog).getByRole("radiogroup", { name: copy.annotate.category });
+  const cells = (dialog: HTMLElement) => within(grid(dialog)).getAllByRole("radio");
+
+  it("UX 2: las 9 categorías están a la vista sin interactuar, en la rejilla de 3 × 3 y en el orden de la comp", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
     const dialog = await sheet();
-    const quick = within(dialog).getByRole("group", { name: copy.annotate.recent });
-    const more = within(quick).getByRole("button", { name: copy.annotate.moreLabel });
-    expect(more.textContent).toBe(copy.annotate.more);
-    expect(quick.lastElementChild?.contains(more)).toBe(true);
-    expect(within(dialog).queryByRole("button", { name: copy.categories.other })).toBeNull();
-    expect(within(dialog).queryByRole("textbox", { name: copy.annotate.description })).toBeNull();
-    await user.click(more);
-    const all = within(dialog).getByRole("group", { name: copy.annotate.category });
-    const names = within(all).getAllByRole("button").map((button) => button.textContent);
-    expect(names).toHaveLength(9);
-    expect(names).toContain(copy.categories.other);
-    expect(within(dialog).getByRole("textbox", { name: copy.annotate.description })).toBeTruthy();
-    expect(within(dialog).queryByRole("button", { name: copy.annotate.moreLabel })).toBeNull();
+    expect(cells(dialog).map((cell) => cell.textContent)).toEqual(ORDER.map((id) => copy.categories[id]));
+    expect(grid(dialog).className).toMatch(/grid-cols-3/);
+    expect(grid(dialog).className).toMatch(/auto-rows-\[64px\]/); // 3 × 64 + 2 × 8 = 208 px
+    expect(grid(dialog).className).not.toMatch(/overflow-x-auto|flex-wrap/);
+    // Cada celda: icono encima y nombre debajo, con el color de su categoría; ninguna seleccionada al abrir.
+    for (const cell of cells(dialog)) {
+      expect(cell.className).toMatch(/flex-col/);
+      expect(cell.querySelector("[data-icon]")).toBeTruthy();
+      expect(cell.getAttribute("aria-checked")).toBe("false");
+    }
+    expect(within(dialog).queryByRole("button", { name: /Editar detalles|Más/ })).toBeNull();
   });
 
-  it("UX 2: elegir una categoría rápida antes de «Más…» no se pierde al abrir los detalles", async () => {
+  it("UX 2: «Otra» no usa el icono ··· (se lee como «más»): usa Tag de Phosphor", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
     const dialog = await sheet();
-    await user.click(within(dialog).getByRole("button", { name: copy.categories.restaurants }));
-    await user.click(within(dialog).getByRole("button", { name: copy.annotate.moreLabel }));
-    expect(within(dialog).getByRole("button", { name: copy.categories.restaurants }).getAttribute("aria-pressed")).toBe("true");
+    const other = within(grid(dialog)).getByRole("radio", { name: copy.categories.other });
+    expect(other.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("tag");
+    expect(dialog.innerHTML).not.toMatch(/dots-three/);
+  });
+
+  it("UX 2: es un grupo de radio: Tab entra en la elegida y las flechas, Inicio y Fin se mueven por la rejilla", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const radio = (id: (typeof ORDER)[number]) => within(grid(dialog)).getByRole("radio", { name: copy.categories[id] });
+    const stops = () => cells(dialog).filter((cell) => cell.tabIndex === 0).map((cell) => cell.textContent);
+    // Sin elegir, la rejilla entra por la primera.
+    expect(stops()).toEqual([copy.categories.market]);
+    await user.click(radio("home"));
+    expect(radio("home").getAttribute("aria-checked")).toBe("true");
+    expect(stops()).toEqual([copy.categories.home]); // Tab entra en la categoría elegida
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(radio("transport"));
+    expect(radio("transport").getAttribute("aria-checked")).toBe("true");
+    await user.keyboard("{ArrowDown}"); // +3: Transporte → Compras (misma columna)
+    expect(document.activeElement).toBe(radio("shopping"));
+    await user.keyboard("{ArrowDown}"); // sin fila debajo: se queda
+    expect(document.activeElement).toBe(radio("shopping"));
+    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(radio("transport"));
+    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(radio("market"));
+    await user.keyboard("{ArrowUp}"); // sin fila arriba: se queda
+    expect(document.activeElement).toBe(radio("market"));
+    await user.keyboard("{ArrowLeft}"); // da la vuelta: Mercado → Otra
+    expect(document.activeElement).toBe(radio("other"));
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(radio("market"));
+    await user.keyboard("{End}");
+    expect(document.activeElement).toBe(radio("other"));
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(radio("market"));
+    expect(radio("market").getAttribute("aria-checked")).toBe("true");
+    expect(stops()).toEqual([copy.categories.market]);
+  });
+
+  it("UX 2: la descripción está siempre a la vista, se guarda y no es obligatoria", async () => {
+    const { user, trigger, actions } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const field = within(dialog).getByRole("textbox", { name: copy.annotate.description });
+    expect(field.getAttribute("placeholder")).toBe(copy.annotate.descriptionPlaceholder);
+    await fillMinimum(user);
+    // Sin descripción se puede guardar.
+    expect(isDisabled(saveButton())).toBe(false);
+    await user.type(field, "Mercado de la esquina");
+    await user.click(saveButton());
+    await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
+    expect(actions.create.mock.calls[0][0]).toMatchObject({ categoryId: "market", description: "Mercado de la esquina" });
+  });
+
+  it("UX 2 (fecha): el chip muestra la fecha, cambiarla desde el chip la guarda", async () => {
+    const { user, trigger, actions } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const date = within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement;
+    expect(date.type).toBe("date");
+    expect(date.value).toBe("2026-11-05");
+    const chip = date.closest("label")!;
+    expect(chip.textContent).toContain(copy.dates.today);
+    fireEvent.change(date, { target: { value: "2026-11-04" } });
+    expect(chip.textContent).toContain(copy.dates.yesterday);
+    fireEvent.change(date, { target: { value: "2026-10-04" } });
+    expect(chip.textContent).toContain("4 oct");
+    fireEvent.change(date, { target: { value: "2026-11-04" } });
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
+    expect(actions.create.mock.calls[0][0].transactionDate).toBe("2026-11-04");
+  });
+
+  it("UX 2 (fecha): vaciar la fecha muestra «Elige una fecha válida.» y no deja guardar", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    await fillMinimum(user);
+    fireEvent.change(within(dialog).getByLabelText(copy.annotate.date), { target: { value: "" } });
+    expect(within(dialog).getByText(copy.annotate.errors.date)).toBeTruthy();
+    expect(isDisabled(saveButton())).toBe(true);
+  });
+
+  it("UX 2: «Solo tú» es un indicador con candado, sin interacción ni flechas de desplegable", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    const label = within(dialog).getByText(copy.annotate.onlyYou);
+    const chip = label.closest("span")!;
+    expect(chip.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("lock-simple");
+    expect(label.closest("button")).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: copy.annotate.onlyYou })).toBeNull();
+    expect(dialog.innerHTML).not.toMatch(/caret-down/);
   });
 
   it("US-3.1: el selector «Gasto · Ingreso» cambia título, categoría («Ingresos» elegida) y botón", async () => {
@@ -192,8 +289,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const group = screen.getByRole("radiogroup", { name: copy.annotate.type });
     await user.click(within(group).getByRole("radio", { name: copy.annotate.income }));
     expect(await screen.findByRole("dialog", { name: copy.annotate.title.income })).toBeTruthy();
-    expect(screen.getByRole("button", { name: copy.categories.income }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.queryByRole("button", { name: copy.categories.market })).toBeNull();
+    expect(screen.getByRole("radio", { name: copy.categories.income }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.queryByRole("radio", { name: copy.categories.market })).toBeNull();
     await user.type(amount(), "86000");
     expect(saveButton().textContent).toContain(copy.annotate.save.income);
     await user.click(saveButton());
@@ -275,7 +372,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(saveButton());
     await screen.findByRole("alert");
     expect(amount().matches(":disabled")).toBe(true);
-    expect(isDisabled(screen.getByRole("button", { name: copy.categories.restaurants }))).toBe(true);
+    expect(isDisabled(screen.getByRole("radio", { name: copy.categories.restaurants }))).toBe(true);
     expect(isDisabled(within(screen.getByRole("radiogroup", { name: copy.annotate.type })).getByRole("radio", { name: copy.annotate.income }))).toBe(true);
     // Guardar sigue disponible: es el mismo reintento que el botón del aviso.
     await user.click(saveButton());
@@ -389,7 +486,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const link = within(alert).getByRole("link", { name: copy.account.signInAgain });
     expect(link.getAttribute("target")).toBe("_blank");
     expect((amount() as HTMLInputElement).value).toBe("45.000");
-    expect(screen.getByRole("button", { name: copy.categories.market }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("radio", { name: copy.categories.market }).getAttribute("aria-checked")).toBe("true");
   });
 
   it("FR-035: `N` fuera de un campo abre la hoja; dentro de un campo escribe la letra", async () => {
@@ -422,7 +519,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(trigger);
     await sheet();
     await user.type(amount(), "45000");
-    screen.getByRole("button", { name: copy.categories.restaurants }).focus();
+    screen.getByRole("radio", { name: copy.categories.restaurants }).focus();
     await user.keyboard("{Enter}");
     await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
     expect(actions.create.mock.calls[0][0]).toMatchObject({ categoryId: "restaurants", amountPesos: "45000" });
@@ -533,7 +630,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: copy.nav.annotate }));
     await sheet();
     expect((amount() as HTMLInputElement).value).toBe("");
-    expect(screen.getByRole("button", { name: copy.categories.market }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("radio", { name: copy.categories.market }).getAttribute("aria-checked")).toBe("false");
     await fillMinimum(user, "1000");
     await user.click(saveButton());
     await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(2));

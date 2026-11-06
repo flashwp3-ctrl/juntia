@@ -35,7 +35,7 @@ async function annotate(page: Page, pesos: string) {
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
   await page.keyboard.type(pesos);
-  await sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first().click();
+  await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
   return sheet;
 }
 
@@ -182,8 +182,8 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
     const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
     await expect(sheet).toBeVisible();
     expect(await cursorOf(sheet.getByRole("button", { name: copy.annotate.close }))).toBe("pointer");
-    expect(await cursorOf(sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first())).toBe("pointer");
-    expect(await cursorOf(sheet.getByRole("button", { name: copy.annotate.moreLabel }))).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first())).toBe("pointer");
+    expect(await cursorOf(sheet.getByLabel(copy.annotate.date))).toBe("pointer");
     expect(await cursorOf(sheet.getByRole("radio", { name: copy.annotate.income }))).toBe("pointer");
     // Guardar sin monto ni categoría está deshabilitado.
     expect(await cursorOf(sheet.getByRole("button", { name: /^Guardar/ }))).toBe("not-allowed");
@@ -192,3 +192,86 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
     expect(await cursorOf(page.getByRole("link", { name: copy.nav.activity }).first())).toBe("pointer");
   });
 }
+
+// UX lote 1, cambio 2 (definitivo; comp 06, opción 1c «Rejilla fija de 3 × 3»). Las 9 categorías a la vista sin interactuar, en
+// la misma casilla en 360, 390 y 1440 px, en los dos temas: 3 columnas × 3 filas, 208 px de alto, objetivos de al menos 44 px y
+// ninguna superposición entre celdas ni con la descripción, la fecha o «Solo tú».
+for (const scheme of ["light", "dark"] as const) {
+  for (const width of [360, 390, 1440]) {
+    test(`UX 2: rejilla de 3 × 3 fija, sin superposiciones (${width} px, ${scheme})`, async ({ browser, baseURL }, testInfo) => {
+      const user = await seedUser({ role: `rejilla-${scheme}-${width}`, index: testInfo.parallelIndex });
+      const context = await browser.newContext({ baseURL, colorScheme: scheme, viewport: { width, height: width < 700 ? 844 : 900 }, reducedMotion: "reduce" });
+      const page = await context.newPage();
+      await signedInHome(page, user);
+      await page.locator("[data-annotate-trigger]:visible").first().click();
+      const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+      const group = sheet.getByRole("radiogroup", { name: copy.annotate.category });
+      await expect(group).toBeVisible();
+      const radios = group.getByRole("radio");
+      await expect(radios).toHaveCount(9);
+      const order = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"] as const;
+      await expect(radios).toHaveText(order.map((id) => copy.categories[id]));
+      for (const radio of await radios.all()) await expect(radio).toBeVisible();
+      const box = async (locator: ReturnType<Page["locator"]>) => (await locator.boundingBox())!;
+      const cells = await Promise.all((await radios.all()).map(box));
+      const grid = await box(group);
+      expect(Math.abs(grid.height - 208), "la rejilla mide 208 px de alto").toBeLessThanOrEqual(1);
+      cells.forEach((cell, index) => {
+        expect(cell.height, `alto de la celda ${index}`).toBeGreaterThanOrEqual(44);
+        expect(cell.width, `ancho de la celda ${index}`).toBeGreaterThanOrEqual(44);
+        // Misma casilla: columna y fila salen del orden, no del contenido.
+        expect(Math.abs(cell.x - cells[index % 3].x), `columna de la celda ${index}`).toBeLessThanOrEqual(1);
+        expect(Math.abs(cell.y - cells[Math.floor(index / 3) * 3].y), `fila de la celda ${index}`).toBeLessThanOrEqual(1);
+        expect(cell.x + cell.width).toBeLessThanOrEqual(width + 0.5);
+      });
+      const others = [group.locator("xpath=following::label[1]"), sheet.getByLabel(copy.annotate.date).locator("xpath=.."), sheet.getByText(copy.annotate.onlyYou)];
+      const all = [...cells, ...(await Promise.all(others.map(box)))];
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+        const apart = all[i].x + all[i].width <= all[j].x + 0.5 || all[j].x + all[j].width <= all[i].x + 0.5 || all[i].y + all[i].height <= all[j].y + 0.5 || all[j].y + all[j].height <= all[i].y + 0.5;
+        expect(apart, `el elemento ${i} se superpone al ${j}`).toBe(true);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "sin scroll horizontal").toBe(true);
+      await context.close();
+    });
+  }
+}
+
+// Teclado de la rejilla (grupo de radio) y los dos campos que ya no viven tras «Editar detalles»: la descripción se guarda y la
+// fecha se cambia desde el chip.
+test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde el chip", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "rejilla-teclado", index: testInfo.parallelIndex });
+  await signedInHome(page, user);
+  await page.keyboard.press("n");
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("23400");
+  const radio = (id: keyof typeof copy.categories) => sheet.getByRole("radio", { name: copy.categories[id] });
+  await radio("home").click();
+  await page.keyboard.press("ArrowRight");
+  await expect(radio("transport")).toBeChecked();
+  await expect(radio("transport")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(radio("shopping")).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(radio("other")).toBeChecked();
+  await page.keyboard.press("Home");
+  await expect(radio("market")).toBeChecked();
+  await page.keyboard.press("ArrowLeft"); // da la vuelta
+  await expect(radio("other")).toBeFocused();
+  await page.keyboard.press("ArrowUp"); // Otra (8) − 3 = Entretenimiento (5)
+  await expect(radio("entertainment")).toBeFocused();
+
+  await sheet.getByRole("textbox", { name: copy.annotate.description }).fill("Pan y café");
+  const yesterday = new Date(`${todayInBogota()}T00:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const day = yesterday.toISOString().slice(0, 10);
+  const date = sheet.getByLabel(copy.annotate.date);
+  await date.fill(day);
+  await expect(sheet.getByText(copy.dates.yesterday)).toBeVisible();
+  await sheet.getByRole("button", { name: /^Guardar/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  const rows = await listTransactions(user.client, day.slice(0, 7));
+  const saved = rows.find((row) => row.transactionDate === day);
+  expect(saved?.description).toBe("Pan y café");
+  expect(saved?.categoryId).toBe("entertainment");
+});

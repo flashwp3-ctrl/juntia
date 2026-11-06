@@ -38,12 +38,12 @@ describe("Edición de un movimiento (T078)", { timeout: 15000 }, () => {
     expect(within(dialog).queryByRole("radiogroup", { name: copy.annotate.type })).toBeNull();
     expect(within(dialog).queryByRole("radio", { name: copy.annotate.income })).toBeNull();
     expect((amount() as HTMLInputElement).value).toBe("45.000");
-    expect(within(dialog).getByRole("button", { name: copy.categories.market }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(dialog).getByRole("radio", { name: copy.categories.market }).getAttribute("aria-checked")).toBe("true");
     expect((within(dialog).getByRole("textbox", { name: copy.annotate.description }) as HTMLInputElement).value).toBe("Carulla Laureles");
     expect((within(dialog).getByLabelText(copy.annotate.date) as HTMLInputElement).value).toBe("2026-10-03");
     expect(within(dialog).queryByText(/tu pareja|Tomás verá/i)).toBeNull();
     // Un ingreso no ofrece categorías de gasto: el tipo sigue fijo.
-    expect(within(dialog).queryByRole("button", { name: copy.categories.income })).toBeNull();
+    expect(within(dialog).queryByRole("radio", { name: copy.categories.income })).toBeNull();
   });
 
   it("US-4.2: Guardar cambios envía la versión leída y nunca el tipo", async () => {
@@ -91,7 +91,7 @@ describe("Edición de un movimiento (T078)", { timeout: 15000 }, () => {
     const { user, trigger } = setup(undefined, { ...expense, type: "income", categoryId: "income", description: "Reembolso" });
     await user.click(trigger);
     const dialog = await screen.findByRole("dialog", { name: copy.annotate.editTitle.income });
-    expect(within(dialog).getByRole("button", { name: copy.categories.income }).getAttribute("aria-pressed")).toBe("true");
-    expect(within(dialog).queryByRole("button", { name: copy.categories.market })).toBeNull();
+    expect(within(dialog).getByRole("radio", { name: copy.categories.income }).getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog).queryByRole("radio", { name: copy.categories.market })).toBeNull();
   });
 });

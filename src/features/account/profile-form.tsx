@@ -62,6 +62,7 @@ export function ProfileForm({ initialName, email, save }: ProfileFormProps) {
         autoComplete="nickname"
         maxLength={120}
         placeholder={copy.account.profile.namePlaceholder}
+        help={copy.account.profile.nameHelp}
         value={name}
         onChange={(event) => { setName(event.target.value); if (status !== "editing") setStatus("editing"); }}
         onBlur={() => setTouched(true)}

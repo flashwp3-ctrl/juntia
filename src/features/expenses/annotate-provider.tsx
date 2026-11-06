@@ -62,13 +62,13 @@ const PendingContext = createContext<readonly PendingRow[]>(NO_ROWS);
 type AnnotateProviderProps = {
   children: ReactNode;
   actions: ExpenseActions;
-  /** Categorías recientes de `my_recent_categories`; se completan con el catálogo (`fillRecentCategories`). */
+  /** Ya no se usa: desde la comp 06 (opción 1c) las 9 categorías van siempre a la vista, en orden fijo. */
   recentCategories?: readonly CategoryId[];
   /** Hoy en Bogotá, que calcula el servidor; por defecto, el del dispositivo llevado a Bogotá. */
   today?: string;
 };
 
-export function AnnotateProvider({ children, actions, recentCategories = [], today }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today }: AnnotateProviderProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<SheetMode>({ kind: "create" });
@@ -239,7 +239,6 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
             open={open}
             mode={mode}
             idempotencyKey={sessionKey}
-            recent={recentCategories}
             today={today ?? todayInBogota()}
             actions={actions}
             onClose={close}

@@ -25,8 +25,8 @@ async function openAnnotate(page: Page) {
 async function fillAnnotate(page: Page, amount = "45000") {
   const sheet = await openAnnotate(page);
   await page.keyboard.type(amount);
-  // La primera de las recientes (2 toques más el monto, 02·5): cuál es depende de lo sembrado.
-  await sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first().click();
+  // La primera categoría de la rejilla (2 toques más el monto, 02·5).
+  await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
   return sheet;
 }
 /** Peticiones de Server Action (POST con la cabecera `next-action`): las intercepta E4 (sin respuesta) y el error. */
@@ -106,13 +106,12 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await page.keyboard.press("ArrowRight");
       const sheet = page.getByRole("dialog", { name: copy.annotate.title.income });
       await expect(sheet, "la hoja pasa a ingreso").toBeVisible();
-      return expect(sheet.getByRole("button", { name: copy.categories.income }), "con «Ingresos» elegida").toHaveAttribute("aria-pressed", "true");
+      return expect(sheet.getByRole("radio", { name: copy.categories.income }), "con «Ingresos» elegida").toHaveAttribute("aria-checked", "true");
     }
-    case "annotateDetails": { // E2: detalles abiertos con descripción.
+    case "annotateDetails": { // E2: con descripción escrita; la rejilla, la fecha y «Solo tú» ya están a la vista (comp 06, 1c).
       const sheet = await fillAnnotate(page);
-      await sheet.getByRole("button", { name: copy.annotate.details }).click();
       await sheet.getByRole("textbox", { name: copy.annotate.description }).fill("Carulla Laureles");
-      return expect(sheet.getByText(copy.annotate.contextValue)).toBeVisible();
+      return expect(sheet.getByText(copy.annotate.onlyYou)).toBeVisible();
     }
     case "annotateInvalid": { // E3: monto 0.
       await fillAnnotate(page, "0");
