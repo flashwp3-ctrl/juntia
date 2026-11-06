@@ -14,7 +14,7 @@ import { ActivityView } from "./activity-view";
 import type { MonthData } from "./load";
 
 type ActivityScreenProps = {
-  server: ContextChoice;
+  server: ContextChoice | null;
   data: { ok: true; value: MonthData } | { ok: false } | null;
   today: string;
   selectedId?: string;

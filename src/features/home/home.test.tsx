@@ -94,6 +94,24 @@ describe("Inicio en Yo (T062)", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
+  // F44-1, segunda ronda: sin cookie (o con una no válida) el servidor no construye la vista privada (`server` null).
+  it("F44-1: sin cookie y Nosotros en el dispositivo: el estado no disponible, cookie «us» y una recarga", () => {
+    window.localStorage.setItem("juntia:context", "us");
+    const { container } = wrap(<ContextView server={null} me={null} pending={<p>cargando</p>} />);
+    expect(screen.getByRole("heading", { name: copy.us.title })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/cargando|[0-9]/);
+    expect(document.cookie).toContain("juntia_context=us");
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("F44-1: sin cookie ni preferencia en el dispositivo: Yo (la 001) con su Skeleton, cookie «me» y una recarga", () => {
+    const { container } = wrap(<ContextView server={null} me={null} pending={<p>cargando</p>} />);
+    expect(screen.getByText("cargando")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/[0-9]|\$/);
+    expect(document.cookie).toContain("juntia_context=me");
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
   it("F44-1: con el mismo contexto en los dos lados no hay recarga", () => {
     wrap(<ContextView server="me" me={october()} />);
     expect(screen.getByRole("region", { name: copy.home.spentIn("octubre") })).toBeTruthy();

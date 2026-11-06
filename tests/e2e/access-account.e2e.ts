@@ -268,3 +268,71 @@ test("Nosotros no lleva datos privados ni en el HTML ni en el payload RSC; Yo s�
     }
   }
 });
+
+// F44-1, segunda ronda: «con localStorage=us y la cookie ausente, y también con la cookie inválida, el HTML y el RSC
+// iniciales no contienen datos del dataset. Después del refresco se ve "Nosotros". Con localStorage=me y sin cookie,
+// primero aparece el esqueleto y después los datos». Y el prefetch: con enlaces precargados en Yo, se cambia a Nosotros
+// y se navega; la vista nueva no muestra datos privados.
+test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; el cliente resuelve y recarga", async ({ browser, baseURL }) => {
+  const user = await seedUser({ role: "sin-cookie", index: test.info().parallelIndex });
+  const [first] = await seedMovements(user, "current");
+  const month = first.transactionDate.slice(0, 7);
+  const host = new URL(baseURL!).hostname;
+  const markers = ["Taxi a la oficina", "Reembolso EPS", "Regalo de cumpleaños", "412.900", "41290000", "45.000", "4500000"];
+  const leaks = (text: string) => markers.filter((marker) => text.includes(marker));
+  const open = async (stored: "me" | "us" | null, cookie: string | null) => {
+    const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+    await context.addCookies(user.cookies);
+    if (cookie !== null) await context.addCookies([{ name: "juntia_context", value: cookie, domain: host, path: "/" }]);
+    if (stored) await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), stored);
+    return { context, page: await context.newPage() };
+  };
+
+  for (const cookie of [null, "nosotros"]) {
+    // Respuestas iniciales, sin ejecutar la página: HTML y RSC de las tres rutas.
+    const { context, page } = await open("us", cookie);
+    for (const path of ["/", `/actividad?mes=${month}`, `/actividad/${first.id}?mes=${month}`]) {
+      for (const rsc of [false, true]) {
+        const url = rsc ? `${path}${path.includes("?") ? "&" : "?"}_rsc=f44b` : path;
+        const response = await page.request.get(url, { headers: rsc ? { RSC: "1" } : {} });
+        expect(response.status(), url).toBe(200);
+        expect(leaks(await response.text()), `${cookie ?? "sin cookie"} ${url} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+      }
+    }
+    // En el navegador, con Nosotros recordado: el documento inicial no trae nada y después se ve Nosotros.
+    const document = await page.goto("/");
+    expect(leaks(await document!.text()), `${cookie ?? "sin cookie"}: documento inicial`).toEqual([]);
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    await expect.poll(async () => (await context.cookies()).find(({ name }) => name === "juntia_context")?.value).toBe("us");
+    expect(leaks(await page.locator("main").innerText())).toEqual([]);
+    await context.close();
+  }
+
+  // Yo recordado y sin cookie: primero el Skeleton (el documento no trae datos), después los datos.
+  {
+    const { context, page } = await open("me", null);
+    const document = await page.goto("/");
+    const html = await document!.text();
+    expect(leaks(html)).toEqual([]);
+    expect(html).toContain('aria-busy="true"');
+    await expect(page.getByText("Regalo de cumpleaños")).toBeVisible();
+    await expect.poll(async () => (await context.cookies()).find(({ name }) => name === "juntia_context")?.value).toBe("me");
+    await context.close();
+  }
+
+  // Prefetch: en Yo, con los enlaces de Inicio a la vista (y precargados), se cambia a Nosotros y se navega a Actividad.
+  {
+    const { context, page } = await open("me", "me");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await expect(page.getByText("Regalo de cumpleaños")).toBeVisible();
+    await page.getByRole("link", { name: copy.home.seeAll }).hover();
+    await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
+    await expect(page).toHaveURL(/\/actividad$/);
+    await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
+    expect(leaks(await page.locator("main").innerText())).toEqual([]);
+    await context.close();
+  }
+});

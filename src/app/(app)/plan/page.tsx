@@ -11,7 +11,8 @@ export default async function PlanPage() {
   return (
     <>
       <PageHeader title={copy.nav.plan} />
-      <ContextView server={context} me={<EmptyState icon="chart-pie-slice" title={copy.empty.plan.title} description={copy.empty.plan.description} />} />
+      {/* Sin datos privados: sin cookie se pinta Yo y el cliente corrige el contexto (F44-1). */}
+      <ContextView server={context ?? "me"} me={<EmptyState icon="chart-pie-slice" title={copy.empty.plan.title} description={copy.empty.plan.description} />} />
     </>
   );
 }

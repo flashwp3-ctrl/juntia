@@ -3,7 +3,7 @@ import { parseAmountMinor, serializeAmountMinor } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
 import type { CreateTransactionInput, UpdateTransactionInput, VoidTransactionInput, VoidResult, TransactionTransport } from "./types";
 import { DbError, mapDbError } from "./errors";
-import { PAGE_SIZE, readAllPages } from "./paginate";
+import { afterFilter, readByCursor, type PageOptions } from "./paginate";
 import { withRetry } from "./retry";
 import { requireClaims } from "./session";
 function transaction(row: TransactionTransport): Transaction {
@@ -32,10 +32,11 @@ export async function voidTransaction(client: SupabaseClient, input: VoidTransac
   return withRetry<VoidResult>(() => client.rpc("void_transaction", params));
 }
 /**
- * Movimientos activos propios, del mes si se pide, del más reciente al más antiguo. F44-2: todas las páginas, con un
- * orden total estable (fecha, `created_at`, `id`); el total del mes nunca se calcula sobre una lectura cortada.
+ * Movimientos activos propios, del mes si se pide, del más reciente al más antiguo. F44-2: todas las páginas, por cursor
+ * sobre el orden total (fecha, `created_at`, `id`); el total del mes nunca se calcula sobre una lectura cortada. La
+ * garantía con escrituras concurrentes está en paginate.ts.
  */
-export async function listTransactions(client: SupabaseClient, month?: string, { pageSize = PAGE_SIZE }: { pageSize?: number } = {}): Promise<Transaction[]> {
+export async function listTransactions(client: SupabaseClient, month?: string, options: PageOptions = {}): Promise<Transaction[]> {
   await requireClaims(client);
   let range: [string, string] | null = null;
   if (month) {
@@ -44,12 +45,12 @@ export async function listTransactions(client: SupabaseClient, month?: string, {
     const next = part === 12 ? `${String(year + 1).padStart(4, "0")}-01` : `${String(year).padStart(4, "0")}-${String(part + 1).padStart(2, "0")}`;
     range = [`${month}-01`, `${next}-01`];
   }
-  const rows = await readAllPages<TransactionTransport>((from, to) => {
-    let query = client.from("my_transactions").select("*")
-      .order("transaction_date", { ascending: false }).order("created_at", { ascending: false }).order("id", { ascending: false });
+  const rows = await readByCursor<TransactionTransport>((after, limit) => {
+    let query = client.from("my_transactions").select("*");
     if (range) query = query.gte("transaction_date", range[0]).lt("transaction_date", range[1]);
-    return query.range(from, to);
-  }, pageSize);
+    if (after) query = query.or(afterFilter(after, "desc"));
+    return query.order("transaction_date", { ascending: false }).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);
+  }, options);
   return rows.map(transaction);
 }
 export async function listTransactionMonths(client: SupabaseClient): Promise<string[]> {

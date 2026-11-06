@@ -156,3 +156,36 @@ it("F44-2: si la lectura falla, 500 y ningún archivo", async () => {
     expect(await response.text()).toBe("");
   }
 });
+
+// F44-2, segunda ronda: «con páginas de 2 filas, intercala una inserción con una clave anterior al cursor y una anulación
+// de una fila ya leída entre dos páginas. Comprueba que no hay duplicados ni filas omitidas de las que existían de
+// principio a fin». Sobre la consulta real, para la lectura del mes (descendente) y para la exportación (ascendente).
+it("F44-2: por cursor, con escrituras entre páginas, sin duplicados ni saltos de las filas que existieron siempre", async () => {
+  const ana = await createTestUser("Ana cursor");
+  const create = (transactionDate: string, description: string) =>
+    createTransaction(ana.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(1000n), categoryId: "other", transactionDate, description });
+  const rows: Awaited<ReturnType<typeof create>>[] = [];
+  for (let day = 1; day <= 7; day++) rows.push(await create(`2027-02-0${day}`, `día ${day}`));
+  const voidOf = (row: (typeof rows)[number]) => voidTransaction(ana.client, { idempotencyKey: randomUUID(), transactionId: row.id, expectedVersion: row.version, reason: "delete" });
+
+  // Mes, descendente: la primera página trae los días 7 y 6. Entre páginas, una fila nueva con una clave ya recorrida
+  // (día 8, antes del cursor en este orden) y la anulación del día 7, ya leído.
+  const month = await listTransactions(ana.client, "2027-02", {
+    pageSize: 2,
+    onPage: async (index) => { if (index === 1) { await create("2027-02-08", "insertada antes del cursor"); await voidOf(rows[6]); } },
+  });
+  const monthIds = month.map(({ id }) => id);
+  expect(new Set(monthIds).size).toBe(monthIds.length);
+  for (const row of rows.slice(0, 6)) expect(monthIds.filter((id) => id === row.id), row.description!).toHaveLength(1);
+
+  // Exportación, ascendente: la primera página trae los días 1 y 2. Entre páginas, una fila del 31 de enero (antes del
+  // cursor en este orden) y la anulación del día 1, ya leído.
+  const file = await exportTransactions(ana.client, "json", new Date(), {
+    pageSize: 2,
+    onPage: async (index) => { if (index === 1) { await create("2027-01-31", "insertada antes del cursor (asc)"); await voidOf(rows[0]); } },
+  });
+  const descriptions: string[] = JSON.parse(file.body).transactions.map(({ description }: { description: string }) => description);
+  expect(new Set(descriptions).size).toBe(descriptions.length);
+  for (const day of [2, 3, 4, 5, 6]) expect(descriptions.filter((text) => text === `día ${day}`), `día ${day}`).toHaveLength(1);
+  expect(descriptions).toContain("insertada antes del cursor");
+});

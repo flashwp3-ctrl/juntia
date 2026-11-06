@@ -1,20 +1,49 @@
-// F44-2 (revisión del PR #44). PostgREST corta cada respuesta en su máximo de filas (1.000 en Supabase) y devuelve 200:
-// una lectura sin paginar puede quedarse corta sin que nadie lo note. Aquí se lee página a página con `.range()` sobre
-// un orden total estable (quien llama lo fija: fecha, `created_at`, `id`) hasta una página vacía, avanzando lo que de
-// verdad llegó (así un máximo del servidor menor que la página no salta filas). Si una página falla, la lectura entera
-// falla: nunca se devuelve un resultado parcial.
+// F44-2 (revisión del PR #44, dos rondas). PostgREST corta cada respuesta en su máximo de filas (1.000 en Supabase) y
+// devuelve 200: una lectura sin paginar puede quedarse corta sin que nadie lo note. Se lee **por cursor** sobre un orden
+// total estable, `transaction_date`, `created_at`, `id` (el `id` desempata): cada página pide las filas estrictamente
+// posteriores a la última clave leída, hasta una página vacía.
+//
+// Garantía, con escrituras concurrentes y sin instantánea de la base: ninguna fila sale dos veces y no se salta ninguna
+// de las que existen durante toda la lectura (sus claves no cambian: la fecha y la creación de un movimiento activo solo
+// cambian al editarlo, y entonces la fila no «existió igual» de principio a fin). Una fila insertada o anulada mientras
+// se lee puede aparecer o no. Si una página falla, la lectura entera falla: nunca se devuelve un resultado parcial.
 import { DbError, mapDbError } from "./errors";
 
 export const PAGE_SIZE = 500;
 
-export async function readAllPages<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>, pageSize = PAGE_SIZE): Promise<T[]> {
+export type CursorKey = { transaction_date: string; created_at: string; id: string };
+export type PageOptions = {
+  pageSize?: number;
+  /** Solo pruebas: se llama antes de pedir cada página a partir de la segunda (para intercalar escrituras). */
+  onPage?: (index: number) => Promise<void>;
+};
+
+export async function readByCursor<T extends CursorKey>(
+  page: (after: CursorKey | null, limit: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  { pageSize = PAGE_SIZE, onPage }: PageOptions = {},
+): Promise<T[]> {
   if (!Number.isInteger(pageSize) || pageSize < 1) throw new DbError("unexpected");
   const rows: T[] = [];
-  for (;;) {
-    const { data, error } = await page(rows.length, rows.length + pageSize - 1);
+  let after: CursorKey | null = null;
+  for (let index = 0; ; index++) {
+    if (index > 0 && onPage) await onPage(index);
+    const { data, error } = await page(after, pageSize);
     if (error) throw mapDbError(error);
     if (!Array.isArray(data)) throw new DbError("unexpected");
     if (data.length === 0) return rows;
     rows.push(...data);
+    const last = data[data.length - 1];
+    after = { transaction_date: last.transaction_date, created_at: last.created_at, id: last.id };
   }
+}
+
+/**
+ * Filtro `or` de PostgREST para «estrictamente después de `key`» en el orden (fecha, creación, id), ascendente o
+ * descendente. Los valores con caracteres reservados (`:` y `.` del instante) van entre comillas dobles.
+ */
+export function afterFilter(key: CursorKey, direction: "asc" | "desc") {
+  const op = direction === "asc" ? "gt" : "lt";
+  const date = key.transaction_date;
+  const created = `"${key.created_at}"`;
+  return `transaction_date.${op}.${date},and(transaction_date.eq.${date},created_at.${op}.${created}),and(transaction_date.eq.${date},created_at.eq.${created},id.${op}.${key.id})`;
 }

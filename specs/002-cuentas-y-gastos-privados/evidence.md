@@ -1780,6 +1780,44 @@ pueden volver a capturar con un run de evidencia si los fundadores lo piden.
 
 El presupuesto del job `e2e` no se mueve: sigue como aviso para los fundadores (T075).
 
+**Segunda ronda (F44-1 y F44-2, cerradas en un solo push).**
+
+- **F44-1, cookie ausente o no válida.** `serverContext()` devuelve `null` sin cookie o
+  con un valor no válido, y entonces Inicio, Actividad y el detalle **no leen movimientos
+  ni construyen la vista privada**: pintan el Skeleton con la geometría final y, al lado,
+  el estado de Nosotros (CSS enseña uno según `<html data-context>`). El cliente resuelve
+  la preferencia (`localStorage` o, sin ella, Yo, el valor de la 001), escribe la cookie y
+  pide la página otra vez. Metas y Plan no tienen datos privados: sin cookie pintan Yo y el
+  cliente corrige igual. **Regresión corregida:** la expresión de `readContextCookie()`
+  tenía `;s*` en lugar de `;\s*` y fallaba cuando `juntia_context` no era la primera
+  cookie. Rojo:
+  [`f44-1-cookie-regex-red.txt`](evidence/pr-c/f44-1-cookie-regex-red.txt); verde en
+  `src/lib/context-preference.test.ts` (cookie en varias posiciones, otra cookie con el
+  mismo final, valor no válido). Pruebas nuevas: dos casos de componentes con `server`
+  nulo y un caso de la spec E2E 1. Ese caso cubre, sin cookie y con la cookie
+  `nosotros` (no válida) y Nosotros en `localStorage`, el HTML y el RSC iniciales de las
+  tres rutas y el documento inicial del navegador sin ningún dato del dataset; después
+  del refresco se ve Nosotros y la cookie queda en `us`. Con Yo y sin cookie, el
+  documento trae el Skeleton (`aria-busy`) y no los datos, que llegan después. Y el
+  prefetch: en Yo a 1440, con «Ver todo» precargado, se cambia a Nosotros y se navega a
+  Actividad; `main` no enseña ningún dato privado.
+- **F44-2, paginación por cursor.** `readByCursor` (`src/lib/db/paginate.ts`) sustituye
+  al desplazamiento: orden total (`transaction_date`, `created_at`, `id`) y cada página
+  pide lo estrictamente posterior a la última clave leída, con un filtro `or` de
+  PostgREST (`afterFilter`, el instante entre comillas). **Garantía, escrita en el
+  código:** ninguna fila sale dos veces y no se salta ninguna de las que existen durante
+  toda la lectura. Una fila insertada o anulada mientras se lee puede aparecer o no. No
+  hay instantánea de la base. Pruebas:
+  - unidad, con una fuente ordenada que se modifica entre páginas (inserción antes y
+    después del cursor, baja de una fila ya leída y de otra sin leer), un máximo del
+    servidor menor que la página y un fallo a mitad;
+  - integración sobre la consulta real con páginas de 2 filas: en la lectura del mes
+    (descendente) y en la exportación (ascendente), entre la primera y la segunda página
+    se inserta una fila con una clave anterior al cursor y se anula una ya leída; no hay
+    duplicados y salen una vez todas las filas que existieron de principio a fin.
+
+El SHA y el run de esta ronda están en la descripción del PR.
+
 ### T076
 
 **Aprobado por los dos fundadores el 6 de noviembre de 2026** (SC-001), viendo las

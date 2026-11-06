@@ -52,7 +52,7 @@ export function writeContextCookie(value: ContextChoice) {
 }
 
 export function readContextCookie(): ContextChoice | null {
-  const match = document.cookie.match(/(?:^|;s*)juntia_context=([^;]*)/);
+  const match = document.cookie.match(/(?:^|;\s*)juntia_context=([^;]*)/);
   return parseContextChoice(match?.[1]);
 }
 

@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CategoryId, TransactionType } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { DbError } from "./errors";
-import { PAGE_SIZE, readAllPages } from "./paginate";
+import { afterFilter, readByCursor, type PageOptions } from "./paginate";
 import { requireClaims } from "./session";
 
 export type ExportFormat = "json" | "csv";
@@ -31,17 +31,18 @@ export function csvCell(value: string | null) {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-export async function exportTransactions(client: SupabaseClient, format: ExportFormat, now = new Date(), { pageSize = PAGE_SIZE }: { pageSize?: number } = {}) {
+export async function exportTransactions(client: SupabaseClient, format: ExportFormat, now = new Date(), options: PageOptions = {}) {
   await requireClaims(client);
-  // F44-2: todas las páginas, con orden total estable; el `id` ordena pero no sale en el archivo. Si una página falla,
-  // no hay archivo (el route handler responde 500): nunca uno parcial con 200.
-  const data = await readAllPages<Row & { id: string }>((from, to) => client
-    .from("my_transactions")
-    .select("id, transaction_date, type, category_id, description, amount_minor, currency, created_at, updated_at")
-    .order("transaction_date", { ascending: true })
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .range(from, to), pageSize);
+  // F44-2: todas las páginas, por cursor sobre el orden total (fecha, `created_at`, `id`); el `id` ordena pero no sale
+  // en el archivo. Garantía con escrituras concurrentes: paginate.ts. Si una página falla, no hay archivo (el route
+  // handler responde 500): nunca uno parcial con 200.
+  const data = await readByCursor<Row & { id: string }>((after, limit) => {
+    let query = client
+      .from("my_transactions")
+      .select("id, transaction_date, type, category_id, description, amount_minor, currency, created_at, updated_at");
+    if (after) query = query.or(afterFilter(after, "asc"));
+    return query.order("transaction_date", { ascending: true }).order("created_at", { ascending: true }).order("id", { ascending: true }).limit(limit);
+  }, options);
   const rows: ExportRow[] = data.map((row) => {
     if (typeof row.amount_minor !== "string" || !/^[0-9]+$/.test(row.amount_minor)) throw new DbError("unexpected");
     return {

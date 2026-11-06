@@ -100,11 +100,11 @@ export async function openWithSession(browser: Browser, page: Page, entry: Route
     await context.addCookies(user.cookies);
     const created = entry.data ? await seedMovements(user, entry.data) : [];
     paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()));
-    // Nosotros recordado en el dispositivo: localStorage y la cookie que lee el servidor (F44-1).
-    if (entry.prepare === "us") {
-      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
-      await context.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL).hostname, path: "/" }]);
-    }
+    // El contexto recordado en el dispositivo: localStorage y la cookie que lee el servidor (F44-1). Sin cookie, el
+    // servidor pinta el Skeleton y el cliente recarga; los estados se auditan con la preferencia ya resuelta.
+    const choice = entry.prepare === "us" ? "us" : "me";
+    await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), choice);
+    await context.addCookies([{ name: "juntia_context", value: choice, domain: new URL(baseURL).hostname, path: "/" }]);
   }
   return target;
 }

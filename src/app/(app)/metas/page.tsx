@@ -11,7 +11,8 @@ export default async function GoalsPage() {
   return (
     <>
       <PageHeader title={copy.nav.goals} />
-      <ContextView server={context} me={<EmptyState icon="flag-banner" title={copy.empty.goals.title} description={copy.empty.goals.description} />} />
+      {/* Sin datos privados: sin cookie se pinta Yo y el cliente corrige el contexto (F44-1). */}
+      <ContextView server={context ?? "me"} me={<EmptyState icon="flag-banner" title={copy.empty.goals.title} description={copy.empty.goals.description} />} />
     </>
   );
 }

@@ -40,7 +40,7 @@ async function sessionContext(browser: import("@playwright/test").Browser, baseU
   // Tema guardado: el perfil y la cookie dicen lo mismo, como tras elegirlo en Apariencia.
   await user.client.rpc("set_theme", { p_theme: theme });
   const context = await browser.newContext({ baseURL, viewport: { width, height: 900 }, colorScheme: theme === "light" ? "dark" : "light", reducedMotion: "reduce" });
-  await context.addCookies([...user.cookies, { name: "juntia_theme", value: theme, domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" }]);
+  await context.addCookies([...user.cookies, { name: "juntia_theme", value: theme, domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" }, { name: "juntia_context", value: "me", domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" }]);
   return context;
 }
 

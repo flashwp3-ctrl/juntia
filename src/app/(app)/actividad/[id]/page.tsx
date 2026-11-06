@@ -1,7 +1,7 @@
 // T068 / FR-037 (lectura); US-4.1. Detalle de solo lectura de un movimiento propio, al que se llega desde la fila de
 // Actividad y de Inicio. En móvil, solo el detalle con «Volver»; desde 1280, el panel de 04·7 junto a la tabla del mes
 // del movimiento. Ajeno, anulado o inexistente: el estado de JT010 («No encontramos este movimiento»). Editar y
-// Eliminar llegan con el PR D (T082). F44-1: en Nosotros no se lee el movimiento ni el mes. F44-4: el mes se valida y
+// Eliminar llegan con el PR D (T082). F44-1: solo con la cookie de contexto en Yo se lee el movimiento y el mes. F44-4: el mes se valida y
 // se lleva al intervalo navegable.
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -19,9 +19,8 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<str
 export default async function TransactionPage({ params, searchParams }: Props) {
   const [{ id }, query, context] = await Promise.all([params, searchParams, serverContext()]);
   const now = today();
-  if (context === "us") {
-    return <ActivityScreen server="us" data={null} today={now} />;
-  }
+  // F44-1: sin cookie, con una no válida o en Nosotros, ni el movimiento ni el mes se leen.
+  if (context !== "me") return <ActivityScreen server={context} data={null} today={now} />;
   const loaded = await loadTransaction(id, `/actividad/${id}`);
   const transaction = loaded.ok ? loaded.value : null;
   const requested = typeof query.mes === "string" ? monthParam(query.mes, now) : (transaction?.transactionDate.slice(0, 7) ?? now.slice(0, 7));
