@@ -1,0 +1,9 @@
+# Revisión del PR #45 (ChatGPT): F45-1 y F45-2 — 2026-11-06T05:40:48Z
+# npx vitest run --project components src/features/expenses/annotate-sheet.test.tsx -t F45 --reporter=verbose
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > F45-1: tras un fallo ambiguo, cerrar no afirma que no se guardó; ofrece Reintentar (misma clave) o Cerrar 867ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > F45-1: «Cerrar» en la confirmación incierta cierra la hoja sin otro envío 404ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado 1552ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > F45-2: un gasto del mes en curso que no entra en los 5 recientes lleva a Actividad del mes 1521ms
+ ✓ |components| src/features/expenses/annotate-sheet.test.tsx > Hoja de Anotar (T077) > F45-2: si la fila nueva ya está a la vista, no se navega 1783ms
+ Test Files  1 passed (1)
+      Tests  5 passed | 24 skipped (29)

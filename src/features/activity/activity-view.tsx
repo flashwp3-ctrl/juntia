@@ -162,7 +162,7 @@ function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
             <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
               <td className={`${cell} rounded-l-[14px]`}>
-                <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
                   <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
                   <span className="truncate">{rowTitle(transaction)}</span>
                 </Link>

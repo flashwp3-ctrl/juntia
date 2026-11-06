@@ -5,6 +5,7 @@
 // «Deshacer», la fila resaltada de E5 y la hoja abierta. Cada apertura es una sesión de la hoja con su propia clave de
 // idempotencia, que nace al abrir y se reusa en cada reintento (FR-036); al cerrar, la siguiente apertura nace vacía.
 import { AnimatePresence } from "motion/react";
+import { useRouter } from "next/navigation";
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota, type CategoryId } from "@/domain/transactions";
@@ -23,6 +24,16 @@ function isEditable(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable || target.closest("[contenteditable]:not([contenteditable='false'])")) return true;
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+}
+
+/** Cuadros que se espera a que la fila nueva aparezca antes de llevar a Actividad (~1 s a 60 Hz). */
+const REVEAL_FRAMES = 60;
+/** Visible para la persona: ni ella ni ningún antepasado con `display: none` (copias ocultas de rutas, `xl:hidden`). */
+function isShown(node: HTMLElement) {
+  for (let current: HTMLElement | null = node; current; current = current.parentElement) {
+    if (current.hidden || getComputedStyle(current).display === "none") return false;
+  }
+  return true;
 }
 
 export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void };
@@ -62,6 +73,9 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
   // Cada aviso nuevo invalida las respuestas tardías del anterior (orden de respuestas).
   const toastGeneration = useRef(0);
   const undoing = useRef(new Set<string>());
+  const router = useRouter();
+  // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
+  const [reveal, setReveal] = useState<SavedTransaction | null>(null);
   const actionsRef = useRef(actions);
   useEffect(() => { actionsRef.current = actions; });
 
@@ -127,9 +141,30 @@ export function AnnotateProvider({ children, actions, recentCategories = [], tod
       return;
     }
     setHighlightId(saved.id);
+    setReveal(saved);
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
   }, [close, notify, undo]);
+
+  // F45-2: E5 resalta la fila nueva «en la misma pantalla» (MOTION_SYSTEM.md §2). Si la pantalla no la enseña (otro
+  // mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), se lleva a la persona a Actividad del mes del
+  // movimiento; el aviso y el resaltado viven en el proveedor y siguen allí. Si ya la enseña, no se navega. Se mira
+  // durante unos cuadros: la respuesta de la Server Action trae Inicio y Actividad revalidados, y React los aplica en
+  // una transición. No cambia el total del mes en curso ni los 5 recientes.
+  useEffect(() => {
+    if (!reveal) return;
+    let frames = 0;
+    let handle = 0;
+    const check = () => {
+      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]`)].find(isShown);
+      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
+      if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
+      setReveal(null);
+      router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
+    };
+    handle = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(handle);
+  }, [reveal, router]);
 
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));

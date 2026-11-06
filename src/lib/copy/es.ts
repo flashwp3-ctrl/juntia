@@ -11,6 +11,8 @@ export const copy = {
     description: "Descripción", descriptionPlaceholder: "Cómo lo reconoces", date: "Fecha", context: "Contexto", contextValue: "Yo · solo tú", onlyYou: "Solo tú",
     save: { expense: "Guardar", income: "Guardar ingreso" }, saveWithAmount: (label: string, amount: string) => `${label} · ${amount}`,
     saveChanges: "Guardar cambios", saving: "Guardando…", close: "Cerrar",
+    // F45-1 (revisión del PR #45): cerrar tras un fallo ambiguo. Copy nuevo para revisión de los fundadores.
+    uncertain: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se guardó. Revisa Actividad antes de volver a anotarlo.", retry: "Reintentar", close: "Cerrar" },
     discard: { expense: "¿Descartar este gasto?", income: "¿Descartar este ingreso?", edit: "¿Descartar los cambios?", description: "Lo que escribiste no se guardará.", keep: "Seguir editando", confirm: "Descartar" },
     saved: { expense: "Gasto guardado", income: "Ingreso guardado", edit: "Cambios guardados" },
     undo: "Deshacer", undone: { expense: "Gasto deshecho", income: "Ingreso deshecho" },

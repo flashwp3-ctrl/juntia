@@ -1882,6 +1882,28 @@ corregido en 081fe44:
   una región con scroll sin nada enfocable; bloqueada, deja de desplazarse.
 - El job `e2e` llegó a su límite de 10 min con los reintentos de esos fallos; no subió artefactos.
 
+### Revisión del PR #45 (ChatGPT): F45-1 y F45-2
+
+Pedir cambios, con 0 bloqueantes y 2 importantes; la parte de dinero e idempotencia, sin hallazgos. Corregido
+en un solo push al borrador, con `verify` local y `next build`
+([`f45-components.txt`](evidence/pr-d/f45-components.txt)).
+
+- **F45-1: el descarte tras un fallo ambiguo afirmaba que no se guardó.** Con los campos bloqueados (decisión
+  del fundador del 5 de noviembre), cerrar abre ahora otra confirmación: «¿Cerrar sin confirmar?» y «No
+  pudimos confirmar si se guardó. Revisa Actividad antes de volver a anotarlo.», con «Reintentar» (la misma
+  clave, con el foco inicial) y «Cerrar». **Copy nuevo para aprobación de los fundadores** en
+  `copy.annotate.uncertain`. Pruebas: el servidor guarda y la respuesta se pierde (promesa rechazada); al
+  cerrar, el diálogo dice el texto nuevo y nunca «no se guardará»; Reintentar reusa la clave; Cerrar no envía
+  otra vez.
+- **F45-2: E5 no se veía si el movimiento quedaba fuera de lo visible.** Tras un guardado correcto, si la
+  pantalla no enseña la fila nueva (otro mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), el
+  proveedor lleva a `/actividad?mes=<mes del movimiento>`; el aviso con «Deshacer» y el resaltado siguen.
+  Si ya está a la vista, no navega (y la acerca con `scrollIntoView`). No cambia el total del mes en curso
+  ni los 5 recientes. Las filas llevan `data-transaction-id` (ExpenseRow y la tabla de Actividad); «a la
+  vista» excluye las copias ocultas de rutas que conserva Next y lo oculto por CSS. La spec y el comp de E5 no
+  definen este caso. Pruebas: un gasto del mes anterior, uno del mes en curso fuera de los 5 recientes y uno
+  ya visible, que no navega.
+
 ### T079
 
 **Citado en lugar de duplicado, y el caso que faltaba añadido.** Ya cubrían el criterio:

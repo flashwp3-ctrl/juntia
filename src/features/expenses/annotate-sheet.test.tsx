@@ -16,6 +16,10 @@ import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, Voi
 // La hoja llega en un chunk aparte en su primera apertura (como el aviso de la 001).
 configure({ asyncUtilTimeout: 5000 });
 
+// F45-2: el proveedor lleva a Actividad cuando la fila nueva no está a la vista.
+const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
+
 const saved = (overrides: Partial<SavedTransaction> = {}): SavedTransaction => ({
   id: "7d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10", type: "expense", categoryId: "market", transactionDate: "2026-11-05",
   description: null, amountMinor: "4500000", version: 1, ...overrides,
@@ -47,7 +51,8 @@ function Trigger() {
 }
 
 // Simula una navegación del App Router: el layout (y el proveedor) persisten y cambia la página que envuelven.
-function Pages() {
+// `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`).
+function Pages({ rows = [] }: { rows?: string[] }) {
   const [page, setPage] = useState("inicio");
   return (
     <>
@@ -55,13 +60,14 @@ function Pages() {
       <p>{page}</p>
       <button type="button" onClick={() => setPage("actividad")}>{copy.nav.activity}</button>
       <input aria-label={copy.activity.searchLabel} />
+      {rows.map((id) => <a key={id} href={`/actividad/${id}`} data-transaction-id={id}>{id}</a>)}
     </>
   );
 }
 
-function setup(actions = mockActions()) {
+function setup(actions = mockActions(), rows: string[] = []) {
   const user = userEvent.setup();
-  render(<AnnotateProvider actions={actions} recentCategories={["market", "restaurants"]} today="2026-11-05"><Pages /></AnnotateProvider>);
+  render(<AnnotateProvider actions={actions} recentCategories={["market", "restaurants"]} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
   return { user, actions, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
 }
 
@@ -75,7 +81,7 @@ async function fillMinimum(user: ReturnType<typeof userEvent.setup>, pesos = "45
   await user.click(screen.getByRole("button", { name: copy.categories.market }));
 }
 
-afterEach(() => { vi.useRealTimers(); });
+afterEach(() => { vi.useRealTimers(); router.push.mockReset(); });
 
 // La primera apertura importa el chunk de la hoja; con la suite en paralelo puede pasar de los 5 s por defecto.
 describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
@@ -214,6 +220,76 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(saveButton());
     await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
     expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
+  });
+
+  it("F45-1: tras un fallo ambiguo, cerrar no afirma que no se guardó; ofrece Reintentar (misma clave) o Cerrar", async () => {
+    // El servidor guardó y la respuesta se perdió: para la hoja es un error de red.
+    const create = vi.fn<ExpenseActions["create"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ ok: true, value: saved() });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    await user.keyboard("{Escape}");
+    const confirm = await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title });
+    expect(confirm.textContent).toContain(copy.annotate.uncertain.description);
+    expect(confirm.textContent).not.toContain(copy.annotate.discard.description);
+    expect(document.body.textContent).not.toContain("no se guardará");
+    const retry = within(confirm).getByRole("button", { name: copy.annotate.uncertain.retry });
+    await waitFor(() => expect(document.activeElement).toBe(retry));
+    await user.click(retry);
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    expect(create.mock.calls[1][0].idempotencyKey).toBe(create.mock.calls[0][0].idempotencyKey);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("F45-1: «Cerrar» en la confirmación incierta cierra la hoja sin otro envío", async () => {
+    const create = vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: false, error: "saveFailed" });
+    const { user, trigger } = setup(mockActions({ create }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: copy.annotate.close }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: copy.annotate.uncertain.title })).getByRole("button", { name: copy.annotate.uncertain.close }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado", async () => {
+    const previous = saved({ transactionDate: "2026-10-20" });
+    const { user, trigger } = setup(mockActions({ create: vi.fn(async () => ({ ok: true as const, value: previous })) }));
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-10"));
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status").textContent).toContain(copy.annotate.saved.expense);
+    expect(screen.getByTestId("highlight").textContent).toBe(previous.id);
+  });
+
+  it("F45-2: un gasto del mes en curso que no entra en los 5 recientes lleva a Actividad del mes", async () => {
+    const { user, trigger } = setup(mockActions(), ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"]);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
+  });
+
+  it("F45-2: si la fila nueva ya está a la vista, no se navega", async () => {
+    const { user, trigger } = setup(mockActions(), [saved().id]);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    // Más que los cuadros que espera el proveedor (60) antes de decidir.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it("JT001 no bloquea: el servidor no escribió nada y se puede corregir", async () => {

@@ -166,7 +166,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
   // Escape, la ×, el scrim y el arrastre pasan por aquí: con cambios sin guardar se confirma antes de descartar.
   const requestClose = (next: boolean) => {
     if (next || saving.current) return;
-    if (dirty) setConfirming(true);
+    if (dirty || locked) setConfirming(true);
     else onClose();
   };
 
@@ -307,14 +307,28 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
       <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
         {saveLabel}
       </Button>
-      <ConfirmDialog
-        open={confirming}
-        onOpenChange={setConfirming}
-        title={editing ? copy.annotate.discard.edit : copy.annotate.discard[type]}
-        description={copy.annotate.discard.description}
-        cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirming(false)}>{copy.annotate.discard.keep}</Button>}
-        confirm={<Button variant="danger" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.discard.confirm}</Button>}
-      />
+      {/* F45-1 (revisión del PR #45): tras un fallo ambiguo el primer intento pudo guardarse, así que cerrar no puede
+          decir «no se guardará». Se ofrece reintentar lo mismo con la misma clave (la opción segura, con el foco) o
+          cerrar, y se pide revisar Actividad antes de volver a anotarlo. */}
+      {locked ? (
+        <ConfirmDialog
+          open={confirming}
+          onOpenChange={setConfirming}
+          title={copy.annotate.uncertain.title}
+          description={copy.annotate.uncertain.description}
+          cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); void save(); }}>{copy.annotate.uncertain.retry}</Button>}
+          confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
+        />
+      ) : (
+        <ConfirmDialog
+          open={confirming}
+          onOpenChange={setConfirming}
+          title={editing ? copy.annotate.discard.edit : copy.annotate.discard[type]}
+          description={copy.annotate.discard.description}
+          cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirming(false)}>{copy.annotate.discard.keep}</Button>}
+          confirm={<Button variant="danger" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.discard.confirm}</Button>}
+        />
+      )}
     </form>
   );
 
