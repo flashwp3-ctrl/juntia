@@ -2,7 +2,7 @@
 
 Esquema de base de datos y tipos de dominio que P0-2 añade sobre el de la 002
 (`specs/002-cuentas-y-gastos-privados/data-model.md`). Aplica ADR-013 (con la nota
-de implementación de §5.1 que propone este plan, ver [research.md](research.md)
+de implementación de §5.1, aprobada por los fundadores el 6 de noviembre de 2026; ver [research.md](research.md)
 R1), ADR-001, ADR-002 (con su nota de implementación de la decisión 20.8), ADR-003
 y ADR-007 (con su enmienda de la decisión 20.11), y el maestro §5 y §7.3.
 Identificadores en inglés y `snake_case` en SQL (`docs/CONVENTIONS.md` A.1). Las
@@ -15,7 +15,7 @@ especificación, no su código. Lo marcado **decisión del plan** está justific
 | Rol | Atributos | Novedad en P0-2 |
 | --- | --- | --- |
 | `juntia_writer` | `nologin nobypassrls`, no es dueño de ninguna tabla | Nuevas funciones y políticas sobre las tablas de pareja |
-| `juntia_membership` | `nologin nobypassrls`, no es dueño de ninguna tabla | **Nuevo** (research R1; nota de implementación de ADR-013 §5.1 que propone este plan). Solo `select` sobre `groups`, `group_members` y `group_invitations`, con políticas `using (true)` para ese rol. Es dueño de las auxiliares de membresía `security definer`, que devuelven solo un booleano. No escribe nada |
+| `juntia_membership` | `nologin nobypassrls`, no es dueño de ninguna tabla | **Nuevo** (research R1; nota de implementación de ADR-013 §5.1, aprobada el 6 de noviembre de 2026). Solo `select` sobre `groups`, `group_members` y `group_invitations`, con políticas `using (true)` para ese rol. Es dueño de las auxiliares de membresía `security definer`, que devuelven solo un booleano. No escribe nada |
 | `authenticated`, `anon`, `supabase_auth_admin` | Los de Supabase | Sin cambios de modelo: `authenticated` lee por vistas y llama a funciones de entrada |
 
 ## 2. Tablas nuevas de `juntia_data`

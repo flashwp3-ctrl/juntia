@@ -106,8 +106,8 @@ comprobación de filas; el resultado ya es el correcto (R3, sonda 11).
 ### Decisión
 
 - **Dueño de las auxiliares: `juntia_membership`.** Es la **nota de implementación
-  de ADR-013 §5.1** que propone este plan (añadida a ADR-013 en esta rama, con
-  estado «propuesta, pendiente de los fundadores»). La alternativa sin rol nuevo,
+  de ADR-013 §5.1** que propuso este plan, **aprobada por los fundadores el 6 de
+  noviembre de 2026** («Aprobamos»). La alternativa sin rol nuevo,
   auxiliares de `postgres`, también funciona, pero deja la decisión de membresía en
   un rol con `BYPASSRLS`.
 - **Toda `update` dentro de una función que escribe comprueba `row_count`** y

@@ -52,9 +52,10 @@ solo si la siembra no crece en proporción.** Por eso (research R8):
   `juntia-dev`, la reinicia y ejecuta pgTAP, integración y las E2E que no leen
   correos contra ella, con el guardia de destino `itfrhnadovezpahikuol` y **un solo
   agente a la vez** (ADR-011 §9.9). Esto depende del PR técnico de la decisión 18
-  (PR #48); si todavía no está en `main` cuando empiece el PR A, el agente itera
-  como en la 002, con el workflow lanzado a mano en los puntos de control, y lo
-  dice en la evidencia.
+  (PR #48). **Ningún spike ni verificación corre en runners o workflows de GitHub
+  Actions** (regla del gestor del 6 de noviembre de 2026): si `juntia-dev` está
+  ocupado por otra sesión, el agente **espera** a que libere el lock. El preflight
+  de este plan en un runner efímero (research) fue el último de ese tipo.
 - **El CI corre solo** en los puntos de control que pide cada PR de este plan y en
   el gate final (`AGENTS.md` 15a). La evidencia de una `[V]` o de un punto de
   control sale **solo del CI**, nunca de `juntia-dev` (ADR-011 §9.8).

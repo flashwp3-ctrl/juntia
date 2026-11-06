@@ -23,11 +23,10 @@ propia, Balance con S4, liquidaciones declarativas y anulables, Mover a Pareja
 
 Enfoque técnico, con lo verificado en [research.md](research.md):
 
-- **ADR-013 tal cual**, con una **nota de implementación de §5.1 propuesta** en
-  esta rama: las auxiliares de membresía son de un rol propio de solo lectura,
-  `juntia_membership`, sin `BYPASSRLS`. El preflight demostró que no hay recursión
-  y que una tercera cuenta no ve nada (R1). **Necesita la aprobación de los
-  fundadores.**
+- **ADR-013 tal cual**, con una **nota de implementación de §5.1**, aprobada por
+  los fundadores el 6 de noviembre de 2026: las auxiliares de membresía son de un
+  rol propio de solo lectura, `juntia_membership`, sin `BYPASSRLS`. El preflight
+  demostró que no hay recursión y que una tercera cuenta no ve nada (R1).
 - **Tres estados de la pareja** (`provisional`, `active`, `discarded`) en `groups`,
   con índices únicos parciales que garantizan una pareja por persona y nunca un
   tercer integrante ([data-model.md](data-model.md) §2).
@@ -116,7 +115,7 @@ afectado.
 | ADR-007 + enmienda de la decisión 20.11 | Liquidaciones anulables, nunca editables | Aceptado | No |
 | ADR-011 | Capas, specs E2E, presupuestos, iteración en `juntia-dev`, preflight en el runner | Aceptado | No |
 | ADR-013 | Acceso a datos | Aceptado | No |
-| **ADR-013, nota de implementación de §5.1** (`juntia_membership`) | Dueño de las auxiliares de membresía | **Propuesta en esta rama** | **Sí, hasta que los fundadores la aprueben**. Se aprueba con el merge de este PR; si la rechazan, la alternativa verificada es que el dueño sea `postgres` (R1), y eso necesita su propia decisión, porque `postgres` tiene `BYPASSRLS` |
+| **ADR-013, nota de implementación de §5.1** (`juntia_membership`) | Dueño de las auxiliares de membresía | **Aprobada por los fundadores el 6 de noviembre de 2026** («Aprobamos»); la segunda fundadora la confirma con el merge de este PR | No |
 
 ### Erratas que afectan al slice
 
@@ -131,9 +130,8 @@ Ninguna pendiente (`docs/design/README.md`).
 | 04·15 M4 «Copiar enlace» | Comp frente al token guardado como hash | Manda la spec (precisión F47-3) | No hace falta | No |
 | `docs/GLOSSARY.md` propone `reclassifyToShared()` | Glosario frente a este plan | Se usa el del glosario: `reclassifyToShared` en TypeScript y `reclassify_to_shared` en SQL. **Este slice aprueba la propuesta**; el PR A quita la marca en el glosario | PR A | No |
 
-**Resultado del gate**: **BLOQUEADO solo por la nota de implementación de ADR-013
-§5.1**, que se resuelve con la aprobación de los fundadores en este mismo PR. El
-resto pasa.
+**Resultado del gate**: **PASA.** La nota de implementación de ADR-013 §5.1, que
+lo bloqueaba, está aprobada por los fundadores desde el 6 de noviembre de 2026.
 
 ## Project Structure
 
@@ -244,8 +242,8 @@ servidor de US-1, US-2, US-5, US-6, US-7 y US-8.
 
 **Orden obligatorio:**
 
-0. **La nota de ADR-013 §5.1 está aprobada** (merge de este plan). Sin ella, el PR A
-   no empieza.
+0. **La nota de ADR-013 §5.1 está aprobada** (fundadores, 6 de noviembre de 2026;
+   la confirma el merge de este plan).
 1. **Punto de control 1 — `couple_foundation`**: `juntia_membership`, `groups`,
    `group_members`, `group_invitations`, auxiliares, RLS, `my_couple`,
    `couple_members` y la lectura del perfil del otro integrante. **Ninguna tabla de
@@ -391,9 +389,10 @@ fundadores (SC-012)**.
 
 - **Presupuesto del job `e2e`.** Con la spec 3 y el axe de pareja puede superar
   480 s. Mitigación en R8; si ocurre, se para y se lleva a los fundadores.
-- **`juntia-dev` ocupado o el PR #48 sin fusionar.** Se itera con el workflow
-  lanzado a mano en los puntos de control, como en la 002, y se dice en la
-  evidencia ([contracts/ci.md](contracts/ci.md)).
+- **`juntia-dev` ocupado por otra sesión.** Se espera a que libere el lock. **No
+  se usan runners ni workflows de GitHub Actions para spikes ni verificaciones**
+  (regla del gestor del 6 de noviembre de 2026); el CI solo corre en los puntos de
+  control de `tasks.md` y en el gate final ([contracts/ci.md](contracts/ci.md)).
 - **No-op silencioso por RLS.** Mitigado con la comprobación de `row_count` y las
   pruebas de política rota (R1).
 - **La intención de invitación en `localStorage`.** Riesgo bajo y acotado (R5);
@@ -404,28 +403,31 @@ fundadores (SC-012)**.
 - Ningún requisito de la spec queda sin dueño en un PR (tabla anterior y FR de cada
   PR).
 - Ninguna decisión nueva significativa se toma en el plan sin pasar por los
-  fundadores: la única es la nota de ADR-013 §5.1, propuesta y marcada como
-  bloqueante. Las decisiones del plan (R3 token, R5 intención, R6 tabla de
+  fundadores: la única es la nota de ADR-013 §5.1, aprobada el 6 de noviembre de
+  2026. Las decisiones del plan (R3 token, R5 intención, R6 tabla de
   liquidaciones, R7 ventana de 60 s, R8 siembra) son locales y reversibles antes de
   tener datos.
 - Ningún `[P]` que afecta al alcance queda abierto.
 - `docs/TESTING.md`, `AGENTS.md`, `scripts/` y `package.json` no se tocan en esta
   rama.
 
-**Resultado:** **PASA, condicionado a la aprobación de la nota de ADR-013 §5.1.**
+**Resultado:** **PASA.**
 
 ## Para los fundadores
 
-**Gate de este PR — necesita su aprobación explícita:**
+**Aprobado el 6 de noviembre de 2026** («Aprobamos», comunicado por el gestor en
+nombre de los dos; la segunda fundadora lo confirma con el merge de este PR): los
+cinco puntos de abajo, tal como están.
 
-1. **Nota de implementación de ADR-013 §5.1: el rol `juntia_membership`.** Un rol
+**Gate de este PR:**
+
+1. **Nota de implementación de ADR-013 §5.1: el rol `juntia_membership`.** **Aprobada.** Un rol
    nuevo de solo lectura, sin `LOGIN` ni `BYPASSRLS`, dueño de las cuatro
    auxiliares que responden «¿es integrante?». Verificado en el preflight.
    Alternativa: que el dueño sea `postgres`, que funciona pero se salta toda RLS.
-   Recomendación: aprobarla.
+   Aprobada tal cual.
 
-**Decisiones del plan que conviene que vean** (locales y reversibles; se pueden
-objetar en la revisión):
+**Decisiones del plan, aprobadas junto con la nota:**
 
 2. **El token de invitación en el dispositivo.** Va en el fragmento de la URL y,
    hasta aceptar, en `localStorage` del dispositivo de quien recibe la invitación

@@ -543,10 +543,11 @@ con Supabase CLI 2.121.0 y PostgreSQL 17.11. La salida está en
   privilegios. La [V] 1 definitiva sigue siendo del PR A de P0-1, con la primera
   migración.
 
-## Propuesta del 6 de noviembre de 2026 — nota de implementación de §5.1
+## Nota de implementación de §5.1 — 6 de noviembre de 2026
 
-**Estado: propuesta, pendiente de la aprobación de los fundadores** (gate del PR
-del plan de la 003). No se implementa hasta que la aprueben. **No cambia la
+**Estado: aprobada por los fundadores el 6 de noviembre de 2026** («Aprobamos»,
+comunicado por el gestor en nombre de los dos), en el gate del PR del plan de la
+003 (#49). La segunda fundadora la confirma con el merge de ese PR. **No cambia la
 decisión.** Precisa quién es el dueño de las auxiliares de membresía que §5.1
 permite como `security definer`. Origen: el preflight del plan de P0-2 (ADR-011
 §9.4), runs
