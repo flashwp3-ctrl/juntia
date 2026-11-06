@@ -222,6 +222,7 @@ mira el PR y ve cuánto tarda en ponerse verde.
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
 | **Gate de PR completo** (el más lento de los jobs en paralelo) | **< 6 min** |
+| Job `e2e`: specs E2E y axe con sesión (enmienda del 6 de noviembre de 2026, maestro §15.10, decisión 19.5) | **< 8 min (480 s)** |
 | Nocturno / post-merge | **< 15 min** |
 
 La frase «mide el job» aplica **solo a esta segunda tabla**.

@@ -547,6 +547,7 @@ Copiadas de la tabla de la spec (y del plan). Ninguna se presenta como superada 
 
 - [ ] T093 **Humana** (gestor): **CLS = 0 fuera de Chromium**, Firefox y WebKit con el arnés de R2, en local con `npx playwright install firefox webkit` (sin Docker). Sin excepción posible
   - Terminado cuando: la salida por ruta y navegador está en `evidence.md`.
+  - **Decisión 19 (6 nov 2026):** aplazada con el riesgo aceptado (19.4): criterio obligatorio antes del lanzamiento de MVP-1, con el gestor de dueño. Queda «aplazada por decisión 19», no hecha.
 
 - [x] T094 **Humana** (fundadores): **CLS en un iPhone real** con el inspector web de Safari. Admite excepción formal si no hay Mac
   - Terminado cuando: la medición, o la excepción aprobada, está en `evidence.md`.

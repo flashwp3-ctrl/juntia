@@ -1980,7 +1980,7 @@ comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-anno
 
 ### T093
 
-**Pendiente · Humana (gestor).** CLS = 0 fuera de Chromium, Firefox y WebKit, con el arnés R2 en local (`npx playwright install firefox webkit`, sin Docker). Sin excepción posible. Preparada por el agente en la nota de tareas humanas del gestor; ningún agente la ejecuta ni la da por hecha.
+**Aplazada por decisión 19** (maestro §15.10, 19.4; los fundadores, 6 de noviembre de 2026, con el riesgo aceptado). CLS = 0 fuera de Chromium, en Firefox y WebKit. Pasa a ser **criterio de aceptación obligatorio antes del lanzamiento de MVP-1**, con el gestor de dueño. El arnés R2 mide con la API Layout Instability y el screencast de CDP, que solo existen en Chromium; medirlo en Firefox y WebKit necesita un método nuevo, y sin sesión solo cubriría `/entrar` y la 404. Las rutas con sesión dependerán de `juntia-dev` (decisión 18) o de otro método que se apruebe. No está hecha ni superada.
 
 ### T094
 
@@ -2067,9 +2067,9 @@ tiene `app`, `db` y `e2e` en verde ([`t100-gate-6e49f95.txt`](evidence/pr-d/t100
 restauración); `e2e` 445 s (specs 1 y 2, 12/12 en 22,3 s, humo 23,0 s < 180; axe con sesión 152/152 en 231 s).
 Spec 2: N → Toast en 692 ms (laboratorio); motion activo, 16 cuadros del contador hasta el total exacto.
 
-**Presupuesto superado (aviso, no se mueve):** el job `e2e` tardó **445 s** (412 s en el run 42163561120)
-frente a **< 360 s**, como en el PR C (421–427 s). Las opciones medidas van en la descripción del PR para
-que decidan los fundadores. El commit de la dueña (050a769, `AGENTS.md`, preview de T088) está en la rama.
+**Presupuesto del job `e2e`:** tardó **445 s** (412 s en el run 42163561120), como en el PR C (421–427 s),
+frente a los **< 360 s** de entonces. Los fundadores eligieron el 6 de noviembre de 2026 subir ese presupuesto
+a **< 480 s** sin partir el job (maestro §15.10, decisión 19.5): las dos mediciones caben. El commit de la dueña (050a769, `AGENTS.md`, preview de T088) está en la rama.
 Si el PR se marca como listo, ese run del evento `pull_request` repite el gate sobre la cabeza.
 
 ### T101
@@ -2093,7 +2093,7 @@ Cada criterio con la tarea que lo midió y su salida. Lo que depende de una tare
 | SC-008 · 412.900 exacto | T010, T025, T062 | Con salida (PR A y C) |
 | SC-009 · un solo movimiento por intención | T025, T083 | Con salida: spec 2, doble toque más el mismo envío repetido a mano → una fila en la base |
 | SC-010 · copia y restauración antes del primer dato real | T097 | **Pendiente · Humana**, antes del primer movimiento real en producción (decisión 19, 19.3) |
-| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | T090, T092, T094 y T095: **EXCEPCIÓN APROBADA** (19.2). T089 y T091: **aplazadas por decisión 19** (19.1). T093 (CLS fuera de Chromium): **pendiente**, fuera de la decisión 19 |
+| SC-011 · verificaciones heredadas | T055 (PR B), T056 y T088 (con salida, 6 nov 2026); T089–T096 | T090, T092, T094 y T095: **EXCEPCIÓN APROBADA** (19.2). T089 y T091: **aplazadas por decisión 19** (19.1). T093: **aplazada por decisión 19** (19.4) |
 | SC-012 · salida interna | T103 | **Pendiente · Humana** |
 
 ### T103
