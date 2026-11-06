@@ -67,8 +67,12 @@ function assertApiUrl(value) {
  * bloqueos de las pruebas de integración y `supabase db reset` necesitan una sesión propia.
  */
 function assertDbUrl(value) {
+  // F48-1: libpq acepta parámetros de URI (?host=, ?hostaddr=, ?user=, ?port=, ?service=…) y varios hosts separados por
+  // comas, que anulan la cabecera. La URL tiene que ser exactamente usuario:contraseña@host[:puerto]/postgres.
+  if (!/^postgres(ql)?:\/\/[^@/?#,\s]+@[^@/?#,:\s]+(:\d+)?\/postgres$/.test(value)) fail(`${DEV_VARS.dbUrl} debe ser exactamente postgresql://usuario:contraseña@host:5432/postgres, sin parámetros, fragmento ni varios hosts`);
   let url;
   try { url = new URL(value); } catch { fail(`${DEV_VARS.dbUrl} no es una URL de conexión válida`); }
+  if (url.search || url.hash) fail(`${DEV_VARS.dbUrl} no admite parámetros ni fragmento`);
   if (url.protocol !== "postgresql:" && url.protocol !== "postgres:") fail(`${DEV_VARS.dbUrl} debe empezar por postgresql://`);
   if (!url.password) fail(`${DEV_VARS.dbUrl} no lleva contraseña`);
   const user = decodeURIComponent(url.username);
@@ -86,14 +90,15 @@ function assertDbUrl(value) {
 
 /**
  * Valida `.env.test` (`fileEnv`) y el entorno del proceso (`processEnv`). Devuelve el destino normalizado o lanza
- * `DevTargetError`. `linkedRef` es el contenido de `supabase/.temp/project-ref` si existe: una carpeta enlazada a otro
- * proyecto es la señal de una sesión con producción a medias (quickstart §3 de la 002), y entonces no se sigue.
- * @param {{ fileEnv: Record<string, string | undefined>, processEnv?: Record<string, string | undefined>, linkedRef?: string | null }} options
+ * `DevTargetError`. `linkedRefs` son los `supabase/.temp/project-ref` que existan, del worktree y del checkout principal
+ * (F48-5): una carpeta enlazada a otro proyecto es la señal de una sesión con producción a medias (quickstart §3 de la
+ * 002), y entonces no se sigue.
+ * @param {{ fileEnv: Record<string, string | undefined>, processEnv?: Record<string, string | undefined>, linkedRefs?: { where: string, ref: string }[] }} options
  */
-export function checkDevTarget({ fileEnv, processEnv = {}, linkedRef = null }) {
+export function checkDevTarget({ fileEnv, processEnv = {}, linkedRefs = [] }) {
   assertNoProductionRef(fileEnv, ".env.test");
   assertNoProductionRef(processEnv, "el entorno del proceso");
-  if (linkedRef !== null && linkedRef.trim() !== DEV_REF) fail(`supabase/.temp/project-ref no es ${DEV_REF}; desenlaza y vuelve a enlazar juntia-dev (quickstart §3 de la 002)`);
+  for (const { where, ref } of linkedRefs) if (ref.trim() !== DEV_REF) fail(`supabase/.temp/project-ref de ${where} no es ${DEV_REF}; desenlaza y vuelve a enlazar juntia-dev (quickstart §3 de la 002)`);
   const missing = Object.values(DEV_VARS).filter((name) => !fileEnv[name]?.trim());
   if (missing.length) fail(`faltan en .env.test: ${missing.join(", ")}`);
   const value = (name) => fileEnv[name].trim();
@@ -114,4 +119,27 @@ export function checkDevProcessEnv(env) {
     fileEnv: { [DEV_VARS.url]: env.API_URL, [DEV_VARS.publishableKey]: env.PUBLISHABLE_KEY, [DEV_VARS.secretKey]: env.SECRET_KEY, [DEV_VARS.dbUrl]: env.DB_URL },
     processEnv: env,
   });
+}
+
+/**
+ * F48-1: entorno de libpq para psql y la CLI de Supabase. Quita todas las variables PG* heredadas (PGHOSTADDR,
+ * PGSERVICE, PGSERVICEFILE, PGPASSFILE, PGSSLMODE, PGOPTIONS…), que podrían cambiar el destino o las credenciales, y
+ * pone solo las que salen de la URL validada, con la contraseña en PGPASSWORD. TLS obligatorio fuera de localhost.
+ * @param {Record<string, string | undefined>} env
+ * @param {string} dbUrl
+ * @returns {Record<string, string | undefined>}
+ */
+export function cleanPgEnv(env, dbUrl) {
+  const url = new URL(dbUrl);
+  const clean = Object.fromEntries(Object.entries(env).filter(([name]) => !/^PG[A-Z0-9_]+$/i.test(name)));
+  const local = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+  return { ...clean, PGHOST: url.hostname, PGPORT: url.port || "5432", PGUSER: decodeURIComponent(url.username),
+    PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: url.pathname.slice(1), PGSSLMODE: local ? "disable" : "require" };
+}
+
+/** F48-3: la misma URL sin contraseña, para pasarla en argv; la contraseña viaja en PGPASSWORD (cleanPgEnv). */
+export function dbUrlWithoutPassword(dbUrl) {
+  const url = new URL(dbUrl);
+  url.password = "";
+  return url.toString();
 }

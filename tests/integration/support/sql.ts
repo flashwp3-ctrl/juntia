@@ -1,14 +1,16 @@
 import { execFileSync, spawn } from "node:child_process";
+import { cleanPgEnv } from "../../../scripts/dev-target/guard.mjs";
 import { assertTestTarget } from "../../support/dev-target";
 import { runnerEnv } from "./env";
-/** Variables de libpq para DB_URL: la base del runner o, en un comando `*:dev`, juntia-dev con TLS obligatorio. */
-function psqlEnv() {
+/**
+ * Variables de libpq para DB_URL: la base del runner o, en un comando `*:dev`, juntia-dev con TLS obligatorio. Ninguna
+ * PG* heredada pasa a psql (F48-1): solo las que salen de la URL ya comprobada.
+ */
+function psqlEnv(): NodeJS.ProcessEnv {
   runnerEnv();
   const raw = process.env.DB_URL ?? "";
   assertTestTarget(raw, "El SQL de las pruebas");
-  const url = new URL(raw);
-  return { ...process.env, PGHOST: url.hostname, PGPORT: url.port || "5432", PGUSER: decodeURIComponent(url.username),
-    PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: url.pathname.slice(1), ...(url.hostname === "127.0.0.1" ? {} : { PGSSLMODE: "require" }) };
+  return cleanPgEnv(process.env, raw) as NodeJS.ProcessEnv;
 }
 export function runnerSql(sql: string): string {
   return execFileSync("psql", ["-X", "-v", "ON_ERROR_STOP=1", "-qAt", "-c", sql], { encoding: "utf8", env: psqlEnv() }).trim();

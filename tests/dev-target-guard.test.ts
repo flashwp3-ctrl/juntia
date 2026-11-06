@@ -3,7 +3,7 @@
 // itfrhnadovezpahikuol» y se niega con cualquier otro, y con el ref de producción en cualquier variable. Valores
 // sintéticos: ninguna clave real aparece en esta prueba.
 import { describe, expect, it } from "vitest";
-import { checkDevProcessEnv, checkDevTarget, DEV_REF, PROD_REF } from "../scripts/dev-target/guard.mjs";
+import { checkDevProcessEnv, checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF, PROD_REF } from "../scripts/dev-target/guard.mjs";
 
 const jwt = (payload: object) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.firma`;
 const valid = {
@@ -12,15 +12,16 @@ const valid = {
   JUNTIA_DEV_SECRET_KEY: "sb_secret_sintetica",
   JUNTIA_DEV_DB_URL: `postgresql://postgres.${DEV_REF}:clave%40sintetica@aws-1-us-east-1.pooler.supabase.com:5432/postgres`,
 };
-const refuse = (fileEnv: Record<string, string>, processEnv: Record<string, string> = {}, linkedRef: string | null = null) =>
-  () => checkDevTarget({ fileEnv, processEnv, linkedRef });
+const refuse = (fileEnv: Record<string, string>, processEnv: Record<string, string> = {}, linkedRefs: { where: string; ref: string }[] = []) =>
+  () => checkDevTarget({ fileEnv, processEnv, linkedRefs });
+const POOLER = "aws-1-us-east-1.pooler.supabase.com";
 
 describe("guardia de destino de los comandos *:dev", () => {
   it("acepta juntia-dev por el pooler de sesión y por la conexión directa", () => {
     expect(checkDevTarget({ fileEnv: valid }).ref).toBe(DEV_REF);
     expect(checkDevTarget({ fileEnv: valid }).apiUrl).toBe(`https://${DEV_REF}.supabase.co`);
     const direct = { ...valid, JUNTIA_DEV_DB_URL: `postgresql://postgres:clave@db.${DEV_REF}.supabase.co:5432/postgres` };
-    expect(checkDevTarget({ fileEnv: direct, linkedRef: `${DEV_REF}\n` }).dbUrl).toBe(direct.JUNTIA_DEV_DB_URL);
+    expect(checkDevTarget({ fileEnv: direct, linkedRefs: [{ where: "el worktree", ref: `${DEV_REF}\n` }, { where: "el checkout principal", ref: DEV_REF }] }).dbUrl).toBe(direct.JUNTIA_DEV_DB_URL);
   });
 
   it("acepta las claves JWT heredadas solo si su ref es dev y su rol es el esperado", () => {
@@ -50,9 +51,37 @@ describe("guardia de destino de los comandos *:dev", () => {
     expect(refuse({ ...valid, ...change })).toThrow(message);
   });
 
+  // F48-1: libpq deja que los parámetros de la URI y las variables PG* anulen la cabecera de la URL.
+  it.each([
+    ["?host=", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres?host=db.${PROD_REF.slice(0, 4)}x.supabase.co`],
+    ["?hostaddr=", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres?hostaddr=10.0.0.1`],
+    ["?user=", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres?user=postgres.otroproyectoxxxxxxxx`],
+    ["?port=", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres?port=6543`],
+    ["?service=", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres?service=produccion`],
+    ["un fragmento", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432/postgres#otra`],
+    ["varios hosts", `postgresql://postgres.${DEV_REF}:x@${POOLER}:5432,db.otroproyectoxxxxxxxx.supabase.co:5432/postgres`],
+  ])("se niega con una conexión que cambia de destino por %s", (_, url) => {
+    expect(refuse({ ...valid, JUNTIA_DEV_DB_URL: url })).toThrow(/JUNTIA_DEV_DB_URL debe ser exactamente/);
+  });
+
+  it("el entorno de psql y de la CLI quita todas las PG* heredadas y solo pone las de la URL validada", () => {
+    const inherited = { PATH: "/bin", PGHOSTADDR: "10.0.0.1", PGSERVICE: "produccion", PGSERVICEFILE: "/tmp/s", PGPASSFILE: "/tmp/p", PGSSLMODE: "disable", PGOPTIONS: "-c role=otro", PGHOST: "otro", PGUSER: "otro", pgport: "6543", PG: "no-es-de-libpq" };
+    const env = cleanPgEnv(inherited, valid.JUNTIA_DEV_DB_URL);
+    expect(Object.keys(env).filter((name) => /^PG/i.test(name)).sort()).toEqual(["PG", "PGDATABASE", "PGHOST", "PGPASSWORD", "PGPORT", "PGSSLMODE", "PGUSER"]);
+    expect(env).toMatchObject({ PATH: "/bin", PGHOST: POOLER, PGPORT: "5432", PGUSER: `postgres.${DEV_REF}`, PGPASSWORD: "clave@sintetica", PGDATABASE: "postgres", PGSSLMODE: "require" });
+  });
+
+  it("la URL para argv no lleva la contraseña", () => {
+    const bare = dbUrlWithoutPassword(valid.JUNTIA_DEV_DB_URL);
+    expect(bare).toBe(`postgresql://postgres.${DEV_REF}@${POOLER}:5432/postgres`);
+    expect(bare).not.toContain("sintetica");
+  });
+
   it("se niega si el entorno del proceso o el enlace de la CLI apuntan a otro proyecto", () => {
     expect(refuse(valid, { NEXT_PUBLIC_SUPABASE_URL: `https://${PROD_REF}.supabase.co` })).toThrow(/NEXT_PUBLIC_SUPABASE_URL de el entorno del proceso contiene el ref de producción/);
-    expect(refuse(valid, {}, PROD_REF)).toThrow(/supabase\/\.temp\/project-ref no es itfrhnadovezpahikuol/);
+    // F48-5: el project-ref del worktree y el del checkout principal, cada uno por separado.
+    expect(refuse(valid, {}, [{ where: "el worktree", ref: DEV_REF }, { where: "el checkout principal", ref: PROD_REF }])).toThrow(/project-ref de el checkout principal no es itfrhnadovezpahikuol/);
+    expect(refuse(valid, {}, [{ where: "el worktree", ref: "otroproyectoxxxxxxxx" }, { where: "el checkout principal", ref: DEV_REF }])).toThrow(/project-ref de el worktree no es/);
   });
 
   it("nunca incluye un valor en el mensaje de error", () => {

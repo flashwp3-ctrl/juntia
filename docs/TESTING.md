@@ -136,22 +136,45 @@ Se niega, con un mensaje que nombra la variable y nunca su valor, si:
   `.env.test` o del entorno, también dentro del payload de una clave JWT heredada;
 - la URL no es exactamente `https://itfrhnadovezpahikuol.supabase.co`;
 - la conexión no es la directa de dev ni el pooler de sesión con el usuario
-  `postgres.itfrhnadovezpahikuol` (el pooler de transacción, 6543, se rechaza);
+  `postgres.itfrhnadovezpahikuol` (el pooler de transacción, 6543, se rechaza), o lleva
+  parámetros, fragmento o varios hosts: libpq deja que `?host=`, `?hostaddr=`, `?user=`,
+  `?port=` o `?service=` anulen la cabecera, así que la URL tiene que ser exactamente
+  `postgresql://usuario:contraseña@host:5432/postgres`;
 - una clave no es de Supabase o es una clave JWT de otro proyecto o rol;
-- `supabase/.temp/project-ref` existe y no es dev (quickstart §3 de la 002).
+- `supabase/.temp/project-ref` existe y no es dev, en el worktree **o** en el checkout
+  principal (quickstart §3 de la 002).
+
+**Entorno de libpq limpio.** psql (el runner y `tests/integration/support/sql.ts`) y la
+CLI de Supabase no heredan ninguna variable `PG*` (`PGHOSTADDR`, `PGSERVICE`,
+`PGSERVICEFILE`, `PGPASSFILE`, `PGSSLMODE`…): se quitan todas y se ponen solo las que
+salen de la URL validada, con TLS obligatorio (`cleanPgEnv` en el guardia).
+
+**La contraseña de la base no va en la línea de órdenes.** `db:dev:reset` pasa a la
+CLI la URL **sin** contraseña en `--db-url` y la contraseña en `PGPASSWORD`, dentro de ese
+entorno limpio; el lanzador de la CLI 2.121.0 corre con `node` directamente desde la
+caché de npx, sin npm de por medio, así que tampoco hay log de npm con la orden. psql
+nunca recibe la URL como argumento. Riesgo que queda: la contraseña está en el
+entorno de esos procesos hijos, que en Windows y Linux solo puede leer el mismo usuario
+del equipo.
 
 **La clave secreta** solo la leen `scripts/dev-target` y el soporte de pruebas, con
 nombres que la app no usa (`JUNTIA_DEV_*`, nunca `NEXT_PUBLIC_`). El lint prohíbe
-esos nombres, `SECRET_KEY`, `sb_secret_` y `.env.test` en `src/`. El build de
+esos nombres, `SECRET_KEY`, `sb_secret_` y `.env.test` en `src/`, y que `src/` importe
+nada de `scripts/` (por ruta, alias, `export … from`, `import()` o `require()`). El build de
 `e2e:dev` y el servidor de la app arrancan sin la clave secreta ni la conexión, y
 Playwright nunca reutiliza un servidor abierto: si el puerto 3000 está ocupado,
 `e2e:dev` se niega. La salida de cada paso pasa por un filtro que oculta la
 clave y la contraseña de la base.
 
-**Un agente a la vez.** Cada comando toma `juntia-dev.lock` en la carpeta común de
-git (`.git/` del clon principal) con la rama, el comando, la hora, el equipo y el
-PID, y lo suelta al terminar. Si otro agente lo tiene, el comando se niega y dice
-quién; un bloqueo de un proceso que ya no existe en ese equipo se recupera solo. **Entre
+**Un agente a la vez.** Cada comando crea el directorio `juntia-dev.lock` en la
+carpeta común de git (`.git/` del clon principal). `mkdir` es atómico: de dos agentes
+que lo intentan a la vez, solo uno lo crea. Dentro deja `owner.json` con la rama, el
+comando, la hora, el equipo y el PID, escrito con un rename para que nunca se lea a
+medias. Si otro agente lo tiene, el comando se niega y dice quién. Unos metadatos
+ilegibles o incompletos **no** cuentan como abandono; un bloqueo solo se recupera si
+su PID ya no existe en ese equipo **y** lleva al menos 2 minutos. Con Ctrl+C o
+SIGTERM, la señal se reenvía al hijo en curso (`supabase db reset`, psql, Vitest,
+Playwright) y el bloqueo se suelta solo cuando ese hijo ha terminado. **Entre
 equipos no hay mecanismo**: los dos fundadores no usan `juntia-dev` a la vez y se
 avisan antes de un `db:dev:reset`, que además borra los perfiles y movimientos de las
 cuentas que se usen a mano en dev (las cuentas de Auth no se borran).

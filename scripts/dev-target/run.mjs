@@ -14,8 +14,8 @@ import { tmpdir } from "node:os";
 import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
-import { checkDevTarget, DEV_REF } from "./guard.mjs";
-import { acquireDevLock } from "./lock.mjs";
+import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
+import { acquireDevLock, createSignalHandler } from "./lock.mjs";
 import { readTap } from "./tap.mjs";
 
 /** Versión de la CLI fijada en el CI (`.github/workflows/ci.yml`) y en el quickstart de la 002. */
@@ -71,17 +71,22 @@ function findPsql() {
 }
 
 function childEnv(target, psqlDir, extra = {}) {
-  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("JUNTIA_DEV_") && !name.startsWith("NEXT_PUBLIC_SUPABASE_")));
+  // F48-1: ninguna PG* heredada llega a un hijo; psql y la CLI reciben las suyas de cleanPgEnv.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("JUNTIA_DEV_") && !name.startsWith("NEXT_PUBLIC_SUPABASE_") && !/^PG[A-Z0-9_]+$/i.test(name)));
   const pathKey = Object.keys(env).find((name) => name.toUpperCase() === "PATH") ?? "PATH";
   if (psqlDir) env[pathKey] = `${psqlDir}${delimiter}${env[pathKey] ?? ""}`;
   return { ...env, JUNTIA_TEST_TARGET: "dev", API_URL: target.apiUrl, PUBLISHABLE_KEY: target.publishableKey, SECRET_KEY: target.secretKey, DB_URL: target.dbUrl, ...extra };
 }
+
+/** El hijo en curso: con SIGINT o SIGTERM se le reenvía la señal y el bloqueo se suelta cuando termina (F48-2). */
+let currentChild = null;
 
 /** Ejecuta un paso, con la salida filtrada por líneas para que ningún secreto llegue a la terminal. */
 function step(label, file, args, env, { input, capture = false } = {}) {
   const start = performance.now();
   return new Promise((done) => {
     const child = spawn(file, args, { cwd: ROOT, env, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
+    currentChild = child;
     let captured = "";
     const pipe = (stream, out) => {
       let pending = "";
@@ -98,6 +103,7 @@ function step(label, file, args, env, { input, capture = false } = {}) {
     if (input !== undefined) child.stdin.end(input);
     child.on("error", (error) => { rows.push({ paso: label, resultado: `falló: ${error.message}`, duración: "—" }); done({ code: 1, output: "" }); });
     child.on("close", (code) => {
+      if (currentChild === child) currentChild = null;
       const seconds = ((performance.now() - start) / 1000).toFixed(2);
       if (!capture) rows.push({ paso: label, resultado: code === 0 ? "pasó" : "falló", duración: `${seconds} s` });
       done({ code: code ?? 1, output: captured, seconds });
@@ -107,17 +113,42 @@ function step(label, file, args, env, { input, capture = false } = {}) {
 
 const node = (script, args, env, options) => (label) => step(label, process.execPath, [join(ROOT, script), ...args], env, options);
 const npx = () => join(dirname(process.env.npm_execpath ?? join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js")), "npx-cli.js");
+
+/**
+ * F48-3: el lanzador de la CLI fijada (`node_modules/supabase/dist/supabase.js` de la caché de npx), para ejecutarlo
+ * con node y sin npm de por medio. Si no está en caché, se descarga con `npx --yes supabase@2.121.0 --version`, sin
+ * ningún secreto en la línea de órdenes.
+ */
+function supabaseCli() {
+  const version = SUPABASE_CLI.split("@")[1];
+  const find = () => {
+    const cache = spawnSync(process.execPath, [join(dirname(npx()), "npm-cli.js"), "config", "get", "cache"], { encoding: "utf8" }).stdout?.trim();
+    const base = join(cache ?? "", "_npx");
+    if (!cache || !existsSync(base)) return null;
+    for (const entry of readdirSync(base)) {
+      const pkg = join(base, entry, "node_modules", "supabase");
+      try { if (JSON.parse(readFileSync(join(pkg, "package.json"), "utf8")).version === version) return join(pkg, "dist", "supabase.js"); } catch { /* no es este */ }
+    }
+    return null;
+  };
+  let launcher = find();
+  if (!launcher) { spawnSync(process.execPath, [npx(), "--yes", SUPABASE_CLI, "--version"], { stdio: "ignore" }); launcher = find(); }
+  if (!launcher) throw new Error(`No se encuentra ${SUPABASE_CLI} en la caché de npx`);
+  return launcher;
+}
+
 let psqlBin = "psql";
 /** psql contra DB_URL con las variables de libpq, como tests/integration/support/sql.ts, y TLS obligatorio. */
 function psql(env, args, options) {
-  const url = new URL(env.DB_URL);
-  const pgEnv = { ...env, PGHOST: url.hostname, PGPORT: url.port || "5432", PGUSER: decodeURIComponent(url.username), PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: url.pathname.slice(1), PGSSLMODE: "require", PGAPPNAME: "juntia-dev-tests" };
+  const pgEnv = { ...cleanPgEnv(env, env.DB_URL), PGAPPNAME: "juntia-dev-tests" };
   return (label) => step(label, psqlBin, ["-X", "-v", "ON_ERROR_STOP=1", "-qAt", ...args], pgEnv, options);
 }
 
 async function reset(target, env) {
+  // F48-3: la URL va sin contraseña; la contraseña viaja en PGPASSWORD dentro del entorno limpio de libpq, y el
+  // lanzador corre con node directamente, sin npx, para que npm no registre la línea de órdenes.
   const run = await step("supabase db reset (migraciones de la rama + supabase/seed.sql)", process.execPath,
-    [npx(), "--yes", SUPABASE_CLI, "db", "reset", "--db-url", target.dbUrl, "--yes"], env);
+    [supabaseCli(), "db", "reset", "--db-url", dbUrlWithoutPassword(target.dbUrl), "--yes"], cleanPgEnv(env, target.dbUrl));
   if (run.code !== 0) return 1;
   // Comprobación de lectura: las migraciones de la rama y el esquema de pruebas existen en juntia-dev.
   const check = await psql(env, ["-c", "select (select count(*) from supabase_migrations.schema_migrations)||' migraciones; esquema tests: '||(to_regnamespace('tests') is not null)"], { capture: true })("comprobación");
@@ -198,15 +229,21 @@ async function main() {
   if (!CI_ONLY[command]) throw new Error("Uso: node scripts/dev-target/run.mjs reset|test:db|test:integration|e2e");
   const started = performance.now();
   const { path, commonDir, fileEnv } = loadEnvTest();
-  const linkedPath = join(ROOT, "supabase", ".temp", "project-ref");
-  const target = checkDevTarget({ fileEnv, processEnv: process.env, linkedRef: existsSync(linkedPath) ? readFileSync(linkedPath, "utf8") : null });
+  // F48-5: el enlace de la CLI se lee en el worktree y en el checkout principal; cualquiera que no sea dev para el comando.
+  const linkedRefs = [["el worktree", ROOT], ["el checkout principal", dirname(commonDir)]]
+    .map(([where, dir]) => ({ where, path: join(dir, "supabase", ".temp", "project-ref") }))
+    .filter(({ path }, index, all) => existsSync(path) && all.findIndex((other) => other.path === path) === index)
+    .map(({ where, path }) => ({ where, ref: readFileSync(path, "utf8") }));
+  const target = checkDevTarget({ fileEnv, processEnv: process.env, linkedRefs });
   const db = new URL(target.dbUrl);
   secrets = [target.secretKey, target.dbUrl, db.password, decodeURIComponent(db.password), encodeURIComponent(decodeURIComponent(db.password))].filter((value) => value && value.length >= 6);
   console.log(`Guardia de destino: ${DEV_REF} (juntia-dev) · .env.test: ${path}`);
   const psqlDir = findPsql();
   if (psqlDir) psqlBin = join(psqlDir, "psql.exe");
   const release = acquireDevLock(join(commonDir, "juntia-dev.lock"), { branch: git("branch", "--show-current") || git("rev-parse", "--short", "HEAD"), command });
-  for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { release(); process.exit(130); });
+  // F48-2: la señal se reenvía al hijo en curso y el bloqueo se suelta solo cuando ese hijo ha terminado.
+  const onSignal = createSignalHandler({ release, getChild: () => currentChild, exit: (code) => process.exit(code) });
+  for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { void onSignal(signal); });
   const env = childEnv(target, psqlDir);
   let exitCode = 1;
   try {
