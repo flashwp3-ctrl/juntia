@@ -179,7 +179,10 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   // que React pinte) cuenten las dos y el tope de 3 sea de verdad un tope. Las cuentas no se borran al retirar la fila: una clave
   // confirmada no vuelve a usarse, y borrarla dejaría que una petición aún en cola la contara de nuevo desde cero.
   const refreshCounts = useRef(new Map<string, number>());
-  /** Pide una revalidación si alguna fila confirmada aún está bajo el tope, y retira las que ya lo alcanzaron (c). */
+  /**
+   * Pide una revalidación si alguna fila confirmada aún está bajo el tope, y retira las que ya lo alcanzaron (c). Tras el tercer
+   * refresco la fila NO provoca una cuarta petición: se retira en el siguiente ciclo (8 s después), dándole tiempo a la tercera.
+   */
   const askRefresh = useCallback(() => {
     const waiting = flightsRef.current.filter((flight) => flight.state === "confirmed");
     const exhausted = waiting.filter((flight) => (refreshCounts.current.get(flight.key) ?? 0) >= MAX_REFRESHES).map((flight) => flight.key);
@@ -256,7 +259,7 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
     let frames = 0;
     let handle = 0;
     const check = () => {
-      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]`)].find(isShown);
+      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
       if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
       if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
       setReveal(null);

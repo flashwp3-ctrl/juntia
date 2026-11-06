@@ -21,7 +21,7 @@ export function PendingHomeRows({ month, today, knownIds }: { month: string; tod
     <li key={key}>
       {/* Confirmada: fila normal con su id real y su detalle, sin «Guardando…» (F51-12). */}
       {savedId
-        ? <ExpenseRow transaction={{ ...transaction, id: savedId }} href={`/actividad/${savedId}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} isNew={highlightId === savedId} />
+        ? <ExpenseRow transaction={{ ...transaction, id: savedId }} href={`/actividad/${savedId}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} isNew={highlightId === savedId} temporary />
         : <ExpenseRow transaction={transaction} href="" dateLabel={dayLabel(transaction.transactionDate, today)} pending={state === "saving" ? "saving" : undefined} />}
     </li>
   ));

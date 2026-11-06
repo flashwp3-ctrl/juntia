@@ -137,7 +137,7 @@ function DayList({ rows, month, today, selectedId, pending }: { rows: readonly T
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {transactions.map((transaction) => (
                 <li key={transaction.id}>
-                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} />
+                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} temporary={pending.get(transaction.id) === "confirmed"} />
                 </li>
               ))}
             </ul>
@@ -176,7 +176,7 @@ function Table({ rows, month, today, selectedId, pending }: { rows: readonly Tra
                     <span className="shrink-0 text-[12px] font-medium text-ink-secondary">{copy.row.pending.saving}</span>
                   </span>
                 ) : (
-                  <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                  <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-temp={pending.get(transaction.id) === "confirmed" ? "" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
                     <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
                     <span className="truncate">{rowTitle(transaction)}</span>
                   </Link>

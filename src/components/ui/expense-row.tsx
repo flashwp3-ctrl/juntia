@@ -25,6 +25,8 @@ type ExpenseRowProps = {
   isNew?: boolean;
   /** Creación en vuelo: `saving` mientras responde el servidor. */
   pending?: "saving";
+  /** Fila temporal ya confirmada (lleva el UUID real, pero no viene del servidor): el revelado de E5 no la cuenta como visible (F51-13). */
+  temporary?: boolean;
   /** Fila seleccionada en el panel de detalle de escritorio. */
   current?: boolean;
   className?: string;
@@ -38,7 +40,7 @@ export function signedAmount(transaction: Transaction) {
   return `${transaction.type === "income" ? "+" : ""}${formatMoney(transaction.amount)}`;
 }
 
-export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pending, current = false, className = "" }: ExpenseRowProps) {
+export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pending, temporary = false, current = false, className = "" }: ExpenseRowProps) {
   const income = transaction.type === "income";
   const title = rowTitle(transaction);
   const pendingLabel = pending ? copy.row.pending.saving : null;
@@ -73,6 +75,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
       href={href}
       aria-current={current ? "page" : undefined}
       data-new={isNew ? "" : undefined}
+      data-temp={temporary ? "" : undefined}
       data-transaction-id={transaction.id}
       className={`${layout} hover:bg-sunken aria-[current=page]:bg-sunken data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.99] ${className}`}
     >
