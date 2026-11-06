@@ -15,12 +15,12 @@ contradice al maestro, manda el maestro.
 | ADR | Tema | Resolución (maestro §12.2) | Archivo |
 | --- | --- | --- | --- |
 | ADR-001 | Contextos | Conversión privado→grupo no es un toggle invisible: crear nuevo gasto compartido y anular el previo con flujo auditado | [ADR-001](ADR-001-conversion-privado-compartido.md) |
-| ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo de mayor residuo con desempate estable; moneda única por grupo en P0 | — |
+| ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo de mayor residuo con desempate estable; moneda única por grupo en P0. **Nota de implementación del 6 nov 2026** (maestro §15.10, decisión 20.8): partes en pesos enteros, desempate por orden de ingreso a la pareja | [ADR-002](ADR-002-dinero-y-repartos.md) |
 | ADR-003 | Historial de miembros | Acceso grupal revocado; snapshot privado mínimo o bloquear la salida/expulsión hasta que exista | [ADR-003](ADR-003-salida-y-expulsion-de-miembros.md) |
 | ADR-004 | Presupuestos | Grupo = gasto completo; personal = gasto privado + partes; ambos opcionales, ausencia ≠ cero, totales no aditivos | — |
 | ADR-005 | IA | Post-MVP, con consentimiento, agregados minimizados, salida validada y fallback sin modelo | — |
 | ADR-006 | Offline | No prometer sin cola idempotente y resolución de conflictos | — |
-| ADR-007 | Correcciones | Ajustes auditados que recalculan balances; liquidaciones inmutables | — |
+| ADR-007 | Correcciones | Ajustes auditados que recalculan balances; liquidaciones inmutables. **Enmienda del 6 nov 2026** (maestro §15.10, decisión 20.11): una liquidación se puede anular con auditoría; nunca se edita ni se borra | [ADR-007](ADR-007-correcciones.md) |
 | ADR-008 | Demo | Pública posterior, exclusivamente con fixtures aisladas, sin acceso a finanzas reales | — |
 | ADR-009 | Planes | Uso personal no comercial en hosting Hobby; revisar licencia y plan antes de actividad comercial | — |
 | ADR-010 | Metas | Ledger auditable separado del consumo; usos enlazados a gasto, sin doble contabilización; confirmación para aportes ajenos | — |
