@@ -45,7 +45,7 @@ describe("payload de las Server Actions", () => {
   });
 
   it("Q14: la edición no acepta `type` y exige id y versión válidos", () => {
-    const { type: _type, ...rest } = create;
+    const rest = Object.fromEntries(Object.entries(create).filter(([field]) => field !== "type"));
     const update = { ...rest, transactionId: id, expectedVersion: 2 };
     expect(parseUpdatePayload(update)).toMatchObject({ transactionId: id, expectedVersion: 2, categoryId: "market" });
     expect(parseUpdatePayload({ ...update, type: "income" })).toBeNull();

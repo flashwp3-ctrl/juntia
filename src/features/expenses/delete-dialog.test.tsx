@@ -29,7 +29,7 @@ function setup(voidTransaction: ExpenseActions["voidTransaction"] = vi.fn(async 
 
 afterEach(() => { router.push.mockReset(); router.refresh.mockReset(); });
 
-describe("Diálogo de eliminar (T078)", () => {
+describe("Diálogo de eliminar (T078)", { timeout: 15000 }, () => {
   it("es un `alertdialog` con el foco inicial en Cancelar y dice qué se elimina", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);

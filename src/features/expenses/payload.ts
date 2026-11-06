@@ -48,8 +48,8 @@ export function parseUpdatePayload(input: unknown): (Omit<TransactionDraft, "typ
   if (!isUuid(input.idempotencyKey) || !isUuid(input.transactionId) || !isVersion(input.expectedVersion)) return null;
   const draft = draftFrom(input, input.categoryId === "income" ? "income" : "expense");
   if (!draft) return null;
-  const { type: _type, ...rest } = draft;
-  return { ...rest, idempotencyKey: input.idempotencyKey, transactionId: input.transactionId, expectedVersion: input.expectedVersion };
+  return { amount: draft.amount, categoryId: draft.categoryId, transactionDate: draft.transactionDate, description: draft.description,
+    idempotencyKey: input.idempotencyKey, transactionId: input.transactionId, expectedVersion: input.expectedVersion };
 }
 
 export function parseVoidPayload(input: unknown): VoidPayload | null {

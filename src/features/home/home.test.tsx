@@ -7,7 +7,9 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AnnotateProvider } from "@/components/shell/annotate-notice";
+import { AnnotateProvider } from "@/features/expenses/annotate-provider";
+// La hoja de Anotar no se abre en estas pruebas: sus acciones no se llaman.
+const idleActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
 import { ContextProvider } from "@/components/shell/context-selector";
 import { saraPrivateOctober2026 } from "@/domain/golden/october-2026";
 import { copy } from "@/lib/copy/es";
@@ -18,7 +20,7 @@ import { HomeView } from "./home-view";
 const refresh = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }), usePathname: () => "/" }));
 
-const wrap = (node: ReactNode) => render(<ContextProvider><AnnotateProvider>{node}</AnnotateProvider></ContextProvider>);
+const wrap = (node: ReactNode) => render(<ContextProvider><AnnotateProvider actions={idleActions}>{node}</AnnotateProvider></ContextProvider>);
 const october = (rows = saraPrivateOctober2026) => <HomeView rows={rows} month="2026-10" today="2026-10-24" />;
 // La tabla de la spec («Dataset dorado de P0-1»), copiada, no recalculada.
 const breakdown = [

@@ -1,9 +1,8 @@
 "use client";
 // T066 / FR-040; 04·1 INICIO · YO: el bloque «Anotar gasto · Monto y categoría» de Inicio en móvil y tablet (en ≥ 1024
-// Anotar vive en el rail y el sidebar). Abre lo mismo que el + de la barra: hasta el PR D, el aviso de la 001; con el
-// PR D, la hoja real. «Anotar el primero» del estado vacío usa el mismo disparador.
+// Anotar vive en el rail y el sidebar). Abre lo mismo que el + de la barra: la hoja de Anotar (PR D, T081). «Anotar el primero» del estado vacío usa el mismo disparador.
 import type { MouseEvent } from "react";
-import { useAnnotate } from "@/components/shell/annotate-notice";
+import { useAnnotate } from "@/features/expenses/annotate-provider";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/lib/copy/es";

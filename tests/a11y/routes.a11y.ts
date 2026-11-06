@@ -304,7 +304,7 @@ for (const colorScheme of JOB === "e2e" ? THEMES : []) {
       if (barVisible) {
         await expect(bar).toBeVisible();
         await bar.click();
-        await expect(page.getByRole("dialog", { name: copy.annotate.title })).toBeVisible();
+        await expect(page.getByRole("dialog", { name: copy.annotate.title.expense })).toBeVisible();
         await page.keyboard.press("Escape");
         await expect(page.getByRole("dialog")).toHaveCount(0);
       } else {

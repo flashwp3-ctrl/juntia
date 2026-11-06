@@ -5,8 +5,8 @@
 // nombre sale de un texto oculto y no de aria-label, y lo visible queda fuera del árbol accesible: así el nombre puede
 // decir «50.000 pesos» donde se ve «$ 50.000» sin romper «el texto visible está en el nombre» (WCAG 2.5.3, axe
 // label-content-name-mismatch).
-// Estado «nueva» (`isNew`): el fondo savingSubtle que se desvanece en 1,2 s lo usa E5 en el PR D; con movimiento
-// reducido queda el color final sin animación.
+// Estado «nueva» (`isNew`): el fondo savingSubtle que se desvanece en 1,2 s (E5, PR D); con movimiento reducido el
+// resaltado se mantiene sin desvanecerse (MOTION_SYSTEM.md §2, «Reduced motion»).
 import Link from "next/link";
 import { formatMoney } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
@@ -43,7 +43,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, curren
       href={href}
       aria-current={current ? "page" : undefined}
       data-new={isNew ? "" : undefined}
-      className={`group -mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5 hover:bg-sunken aria-[current=page]:bg-sunken data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.99] ${className}`}
+      className={`group -mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5 hover:bg-sunken aria-[current=page]:bg-sunken data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle motion-safe:transition-[background-color,scale] motion-safe:duration-[var(--duration-instant)] motion-safe:active:scale-[.99] ${className}`}
     >
       <span className="sr-only">{name}</span>
       <CategoryIcon kind="category" category={transaction.categoryId} />

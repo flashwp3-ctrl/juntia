@@ -1,12 +1,14 @@
 // T068 / FR-037 (lectura); US-4.1 (entrada al detalle); 04·1 DETALLE DE GASTO y el panel de 04·7, en su versión privada:
-// sin «Pagó», «Reparto» ni «A quién le corresponde», que son de pareja. **De solo lectura**: Editar y «Eliminar gasto»
-// llegan con el PR D (T082) sobre este mismo detalle. En móvil es una pantalla con «Volver»; desde 1280, el panel de 400
+// sin «Pagó», «Reparto» ni «A quién le corresponde», que son de pareja. P0-1, PR D (T082): Editar y «Eliminar gasto» o
+// «Eliminar ingreso» al pie, sobre este mismo detalle (FR-037). En móvil es una pantalla con «Volver»; desde 1280, el panel de 400
 // junto a la tabla, con «Cerrar».
 import Link from "next/link";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { rowTitle, signedAmount } from "@/components/ui/expense-row";
 import type { Transaction } from "@/domain/transactions";
+import { TransactionActions } from "@/features/expenses/transaction-actions";
+import { toSavedTransaction } from "@/features/expenses/saved";
 import { copy } from "@/lib/copy/es";
 import { instantInBogota, shortDate } from "@/lib/format";
 
@@ -66,6 +68,7 @@ export function TransactionDetail({ transaction, closeHref }: { transaction: Tra
       <p className="text-[length:var(--body-s-size)] leading-[var(--body-s-line)] text-ink-secondary">
         {copy.detail.noted(instantInBogota(transaction.createdAt), transaction.version > 1)}
       </p>
+      <TransactionActions transaction={toSavedTransaction(transaction)} backHref={closeHref} />
     </article>
   );
 }

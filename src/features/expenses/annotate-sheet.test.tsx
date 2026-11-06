@@ -27,12 +27,12 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+// Cada acción es un mock que delega en la implementación del caso (o en la de éxito por defecto).
 function mockActions(overrides: Partial<ExpenseActions> = {}) {
   return {
-    create: vi.fn<ExpenseActions["create"]>(async () => ({ ok: true, value: saved() })),
-    update: vi.fn<ExpenseActions["update"]>(async () => ({ ok: true, value: saved({ version: 2 }) })),
-    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ ok: true, value: { id: saved().id, version: 2 } })),
-    ...overrides,
+    create: vi.fn<ExpenseActions["create"]>(overrides.create ?? (async () => ({ ok: true, value: saved() }))),
+    update: vi.fn<ExpenseActions["update"]>(overrides.update ?? (async () => ({ ok: true, value: saved({ version: 2 }) }))),
+    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(overrides.voidTransaction ?? (async () => ({ ok: true, value: { id: saved().id, version: 2 } }))),
   };
 }
 
@@ -41,7 +41,7 @@ function Trigger() {
   return (
     <>
       <button type="button" onClick={(event) => openFrom(event.currentTarget)}>{copy.nav.annotate}</button>
-      <output data-testid="highlight">{highlightId ?? ""}</output>
+      <span data-testid="highlight">{highlightId ?? ""}</span>
     </>
   );
 }
@@ -77,7 +77,8 @@ async function fillMinimum(user: ReturnType<typeof userEvent.setup>, pesos = "45
 
 afterEach(() => { vi.useRealTimers(); });
 
-describe("Hoja de Anotar (T077)", () => {
+// La primera apertura importa el chunk de la hoja; con la suite en paralelo puede pasar de los 5 s por defecto.
+describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   it("US-2.1: abre con el foco en el monto, con teclado numérico", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);

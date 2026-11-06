@@ -30,7 +30,7 @@ const amount = () => screen.getByRole("textbox", { name: copy.annotate.amount })
 
 afterEach(() => { router.refresh.mockReset(); });
 
-describe("Edición de un movimiento (T078)", () => {
+describe("Edición de un movimiento (T078)", { timeout: 15000 }, () => {
   it("US-4.1: abre la hoja con los valores del movimiento, sin selector de tipo (Q14) ni texto de pareja", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);

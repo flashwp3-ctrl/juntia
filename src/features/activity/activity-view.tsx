@@ -18,6 +18,7 @@ import { filterTransactions, groupByDay, monthSummary, type CategoryId, type Tra
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
+import { useHighlightId } from "@/features/expenses/annotate-provider";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
 
 export type MonthNavigation = { previous: string | null; next: string | null };
@@ -114,6 +115,7 @@ function Summary({ rows, month, filters, onCategory }: { rows: readonly Transact
 }
 
 function DayList({ rows, month, today, selectedId }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string }) {
+  const highlightId = useHighlightId();
   return (
     <div className="flex flex-col gap-4 xl:hidden">
       {groupByDay(rows).map(({ date, transactions }) => {
@@ -128,7 +130,7 @@ function DayList({ rows, month, today, selectedId }: { rows: readonly Transactio
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {transactions.map((transaction) => (
                 <li key={transaction.id}>
-                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} />
+                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} />
                 </li>
               ))}
             </ul>
@@ -141,6 +143,7 @@ function DayList({ rows, month, today, selectedId }: { rows: readonly Transactio
 
 function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string }) {
   const sorted = groupByDay(rows).flatMap(({ transactions }) => transactions);
+  const highlightId = useHighlightId();
   const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
   return (
     <table className="hidden w-full border-collapse text-left xl:table">
@@ -156,7 +159,8 @@ function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[
         {sorted.map((transaction) => {
           const current = transaction.id === selectedId;
           return (
-            <tr key={transaction.id} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"}`}>
+            // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
+            <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
               <td className={`${cell} rounded-l-[14px]`}>
                 <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
                   <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
