@@ -77,9 +77,12 @@ export function BalancePanel({ balance, members, today, variant = "screen" }: Pr
   }, [router]);
   const onDone = useCallback((saved: SavedSettlement) => {
     const base = shownRef.current;
-    const before = suggestion(base)?.amount.amountMinor ?? 0n;
-    // Solo si lo que se ve es el saldo del que partió la función; si no, lo que traiga el servidor.
-    const next = before.toString() === saved.pendingBeforeMinor ? applySettlement(base, saved) : null;
+    const visible = suggestion(base);
+    // Solo si lo que se ve es el saldo del que partió la función: el mismo importe y la misma dirección (F60-2). Si no, nada
+    // local: manda la lectura revalidada del servidor.
+    const same = visible !== null && visible.amount.amountMinor.toString() === saved.pendingBeforeMinor
+      && visible.fromUserId === saved.fromUserId && visible.toUserId === saved.toUserId;
+    const next = same ? applySettlement(base, saved) : null;
     inFlight.current = false;
     setPinned(next);
     setCelebrate((value) => value + 1);

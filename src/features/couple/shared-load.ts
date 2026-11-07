@@ -14,7 +14,7 @@ import type { MeSummary, SharedPartRow } from "@/features/home/home-view";
 import { lastFromSaved } from "@/features/expenses/split-state";
 import { toSavedShared } from "@/features/expenses/shared-payload";
 import type { CoupleForSheet } from "@/features/expenses/shared-types";
-import { getCoupleBalance, getCoupleMonthSummary, getLastSharedExpenseBy, getMeMonthSummary, getSharedExpense, listCoupleMonths, listMySharedParts } from "@/lib/db/couple-reads";
+import { getCoupleBalance, getCoupleMonthSummary, getLastSharedExpenseBy, getMeMonthSummary, getSharedExpense, listBalanceMonths, listCoupleMonths, listMySharedParts } from "@/lib/db/couple-reads";
 import { DbError, mapDbError } from "@/lib/db/errors";
 import { getSettlement, listSettlements } from "@/lib/db/settlements";
 import { toSettlementView } from "@/features/balance/saved";
@@ -122,7 +122,8 @@ export type BalanceData = {
 export async function loadBalance(requested: string, current: string, volver: string): Promise<Loaded<BalanceData>> {
   return guard(async () => {
     const client = await createClient();
-    const months = await listCoupleMonths(client);
+    // F60-1: también los meses que solo tienen liquidaciones anuladas (siguen en el historial, Q11).
+    const months = await listBalanceMonths(client);
     const month = clampMonth(months, current.slice(0, 7), requested);
     const [balance, expenses, totals, settlements] = await Promise.all([getCoupleBalance(client), listSharedExpenses(client, month), getCoupleMonthSummary(client, month), listSettlements(client, month)]);
     return {

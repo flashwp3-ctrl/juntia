@@ -175,6 +175,25 @@ describe("S4 · solo con la confirmación del servidor (T063, FR-051)", () => {
   });
 });
 
+// F60-2 (ChatGPT, PR #60): el saldo local solo se adelanta si la liquidación confirmada coincide en importe Y dirección con
+// la sugerencia visible; si el saldo se invirtió con el mismo importe, manda la lectura revalidada del servidor.
+describe("S4 · la confirmación tiene que ser del saldo que se ve (F60-2)", () => {
+  it("mismo importe en la dirección opuesta: no se pinta un saldo inventado", async () => {
+    const user = userEvent.setup();
+    const flipped = golden.map((row) => ({ ...row, net: { ...row.net, amountMinor: -row.net.amountMinor } }));
+    // El servidor confirma Tomás → Sara por 429.900, pero lo que se ve es «Sara le debe a Tomás $429.900».
+    const writes = actions({ settle: vi.fn(async () => ({ status: "ok" as const, value: saved(429900n) })) });
+    render(<AnnotateProvider actions={{ create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() }} sharedActions={writes} couple={{ members, last: null }}><BalancePanel balance={flipped} members={members} today="2026-10-26" /></AnnotateProvider>);
+    expect(screen.getByRole("heading", { name: copy.balance.owes("Sara", "Tomás") })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.balance.actions.settle }));
+    await user.click(within(screen.getByRole("dialog", { name: copy.balance.settle.title })).getByRole("button", { name: copy.balance.settle.submit("$429.900") }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.balance.settle.title })).toBeNull());
+    expect(screen.getByRole("heading", { name: copy.balance.owes("Sara", "Tomás") })).toBeTruthy();
+    expect(document.querySelector("[data-balance-amount]")?.getAttribute("data-balance-amount")).toBe("$429.900");
+    expect(screen.queryByText(copy.balance.settledBadge)).toBeNull();
+  });
+});
+
 describe("Cerrar con un registro sin confirmar (revisión del gestor del PR #60, 2)", () => {
   it("cerrar confirmándolo pide la página otra vez: el saldo que se ve puede ser viejo", async () => {
     const user = userEvent.setup();

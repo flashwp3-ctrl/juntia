@@ -1638,3 +1638,21 @@ fila y lleva a Actividad, donde no hay número héroe (lógica F45-2). Se ve con
 latencia de `juntia-dev`; en CI la E2E conserva su reintento. Las capturas de
 `evidence/pr-d/` son anteriores a esta ronda: muestran «Liquidaciones» bajo el saldo y
 no en la columna del desglose.
+
+## Revisión de ChatGPT F60 (sobre `57a3352`)
+
+0 bloqueantes y 2 importantes. Un commit, sin CI.
+
+| # | Hallazgo | Qué se hizo | Prueba (primero en rojo) |
+| --- | --- | --- | --- |
+| F60-2 | `applySettlement` se aplicaba si coincidía el importe de `pending_before`, sin mirar la dirección: con el saldo invertido por el mismo importe, la interfaz habría pintado un saldo falso | El saldo local solo se adelanta si coinciden el importe **y** el deudor y el acreedor de la sugerencia visible con `fromUserId`/`toUserId` de la liquidación confirmada; si no, nada local y manda la página revalidada | `settle.test.tsx` «S4 · la confirmación tiene que ser del saldo que se ve (F60-2)»: «Sara le debe a Tomás $429.900» y el servidor confirma Tomás → Sara por 429.900; sigue «Sara le debe a Tomás $429.900», sin LIQUIDADO |
+| F60-1 | `couple_transaction_months` solo cuenta lo activo: un mes cuya única liquidación se anuló quedaba fuera de las flechas y de `clampMonth`, y la anulada, inaccesible desde Balance (Q11) | **Sin migración** (la vista está en producción): `listBalanceMonths` en `src/lib/db/couple-reads.ts` suma a esos meses el de la liquidación más antigua y el de la más reciente de `couple_settlements` (activas y anuladas; dos lecturas `limit 1`). Basta con los extremos: las flechas recorren el intervalo mes a mes. Solo para la navegación del desglose y del historial de Balance; saldos y totales no cambian | `tests/integration/balance-months.test.ts` (nuevo): en rojo contra `juntia-dev`, «expected ['2026-10'] to include '2026-08'»; después, agosto entra en las flechas y en `clampMonth` y su liquidación se lee como anulada |
+
+Pasadas: `npm run verify` en verde (56,10 s). En `juntia-dev`: `test:integration:dev`
+**64 pasan, 9 omitidas** declaradas (127,99 s); spec 3 «Balance y liquidación
+parcial» y axe ligero de Balance en verde.
+
+Nota: Actividad en Nosotros sigue navegando con `couple_transaction_months`. El enlace
+de una anulada de agosto desde Balance abre su detalle en `/actividad/[id]`, que se
+lee por id; la tabla de al lado se ajusta al mes navegable más cercano. No se cambió
+en esta ronda, que pedía la navegación de Balance.
