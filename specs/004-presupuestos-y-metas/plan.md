@@ -436,19 +436,24 @@ aprobada por los dos fundadores (SC-012)**.
 
 ## Para los fundadores
 
+**Aprobado el 7 de noviembre de 2026** («Aprobamos», comunicado por el gestor en
+nombre de los dos; la segunda fundadora lo confirma con el merge de este PR): los
+puntos 1 a 4 de abajo, tal como están. El punto 5 es la mitigación pedida por el gestor
+en su revisión del plan y no necesita una decisión de los fundadores salvo que llegue al
+paso (c).
+
 Nada de este plan es una decisión nueva y difícil de revertir: no hace falta ningún
-ADR. Para aprobar con el merge de este PR, las decisiones del plan que tocan cómo se ve
-o se comporta algo:
+ADR. Las decisiones del plan que tocan cómo se ve o se comporta algo:
 
 1. **«Quitar el uso» de un gasto ya anulado falla** con un mensaje, en lugar de decir
-   «quitado» (research R3).
+   «quitado» (research R3). **Aprobado.**
 2. **Deshacer acepta hasta 60 s en el servidor** para aportes, retiros y gastos con
-   meta, aunque el aviso dure 6 s, como en la 003 (research R8).
+   meta, aunque el aviso dure 6 s, como en la 003 (research R8). **Aprobado.**
 3. **Tipos de meta** para el ícono del fallback: viaje, vivienda, boda, vehículo,
-   educación, emergencias y otra (data-model §2.3). Se aprueban viendo la pantalla del
-   PR C.
+   educación, emergencias y otra (data-model §2.3). **Aprobados**; la aprobación final
+   es en pantalla, en el PR C.
 4. **Una solicitud aprobada cuyo uso se quita después** se muestra como «Uso quitado»,
-   no como pendiente (research R3).
+   no como pendiente (research R3). **Aprobado.**
 5. **El presupuesto del job `e2e` se defiende sin subir el tope**: primero workers de
    Playwright (medidos en el PR A), después no repetir casos entre specs, y solo si
    las dos cosas no bastan se les pregunta ([contracts/ci.md](contracts/ci.md)). El
