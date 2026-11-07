@@ -2,6 +2,15 @@
 -- TRUNCATE, REFERENCES, TRIGGER, secuencias, usage y create (spec.md; ADR-013 [V] 7).
 begin;
 select no_plan();
+-- 004 T015: exactamente el contrato invoker -> definer de writer sin BYPASSRLS.
+select ok(p.prosecdef and p.proowner='juntia_writer'::regrole and p.proconfig=array['search_path=""']
+ and not has_function_privilege('anon',p.oid,'EXECUTE') and has_function_privilege('authenticated',p.oid,'EXECUTE'),
+ '004 definer controlado: '||p.proname)
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and p.proname in
+ ('create_budget','update_budget','create_goal','update_goal','complete_goal','archive_goal','contribute_to_goal','withdraw_from_goal','void_goal_entry','create_expense_with_goal','approve_usage_request','reject_usage_request','cancel_usage_request','remove_goal_usage');
+select ok(not has_function_privilege(r,p.oid,'EXECUTE'),'004 trigger interno sin EXECUTE '||r||'.'||p.proname)
+ from pg_proc p join pg_namespace n on n.oid=p.pronamespace cross join unnest(array['anon','authenticated','juntia_writer']) r
+ where n.nspname='juntia_private' and p.prorettype='trigger'::regtype and (p.proname like 'goal%' or p.proname like 'planning_%');
 -- 004 T012 / FR-001: seis tablas controladas, RLS y SELECT sin escritura directa.
 select ok(c.relrowsecurity and c.relowner<>'juntia_writer'::regrole,'004 RLS y dueño separado: '||c.relname)
 from pg_class c where c.oid in (select to_regclass('juntia_data.'||t) from unnest(array['budgets','budget_versions','savings_goals','goal_ledger_entries','goal_usage_allocations','goal_usage_confirmations']) t);
@@ -44,9 +53,9 @@ select is(has_table_privilege(r, 'juntia_data.' || t, 'SELECT'), r = 'authentica
 from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist','transactions','audit_events','idempotency_records']) t;
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosecdef), 0::bigint, '[V7] ningún definer en public');
 select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
-  '["accept_invitation","cancel_invitation","complete_first_entry","create_invitation","create_shared_expense","create_transaction","ensure_profile","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","set_theme","undo_reclassify_to_shared","update_display_name","update_shared_expense","update_transaction","void_settlement","void_shared_expense","void_transaction","write_status"]'::jsonb, '[V7] lista exacta de entradas authenticated');
+  '["accept_invitation","approve_usage_request","archive_goal","cancel_invitation","cancel_usage_request","complete_first_entry","complete_goal","contribute_to_goal","create_budget","create_expense_with_goal","create_goal","create_invitation","create_shared_expense","create_transaction","ensure_profile","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","reject_usage_request","remove_goal_usage","set_theme","undo_reclassify_to_shared","update_budget","update_display_name","update_goal","update_shared_expense","update_transaction","void_goal_entry","void_settlement","void_shared_expense","void_transaction","withdraw_from_goal","write_status"]'::jsonb, '[V7] lista exacta de entradas authenticated');
 select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
-  '["accept_invitation","cancel_invitation","complete_first_entry","create_invitation","create_shared_expense","create_transaction","ensure_profile","is_couple_member","is_group_member","is_invited_to","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","set_theme","shares_couple_with","undo_reclassify_to_shared","update_display_name","update_shared_expense","update_transaction","void_settlement","void_shared_expense","void_transaction","write_status"]'::jsonb, '[V7] implementaciones y cuatro auxiliares accesibles por SQL');
+  '["accept_invitation","approve_usage_request","archive_goal","cancel_invitation","cancel_usage_request","complete_first_entry","complete_goal","contribute_to_goal","create_budget","create_expense_with_goal","create_goal","create_invitation","create_shared_expense","create_transaction","ensure_profile","is_couple_member","is_group_member","is_invited_to","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","reject_usage_request","remove_goal_usage","set_theme","shares_couple_with","undo_reclassify_to_shared","update_budget","update_display_name","update_goal","update_shared_expense","update_transaction","void_goal_entry","void_settlement","void_shared_expense","void_transaction","withdraw_from_goal","write_status"]'::jsonb, '[V7] implementaciones y cuatro auxiliares accesibles por SQL');
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','juntia_private') and has_function_privilege('anon',p.oid,'EXECUTE')), 0::bigint, '[V7] anon sin funciones');
 select ok(not has_sequence_privilege(r,c.oid,p), '[V7] sin secuencias ' || r || '.' || c.relname || '.' || p)
 from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join unnest(array['anon','authenticated']) r cross join unnest(array['USAGE','SELECT','UPDATE']) p
@@ -84,7 +93,21 @@ where p.proowner=(select oid from pg_roles where rolname='postgres') and n.nspna
     'public.undo_reclassify_to_shared(text,uuid,integer)'::regprocedure,
     'public.register_settlement(text,text,text,text)'::regprocedure,
     'public.void_settlement(text,uuid,integer,text)'::regprocedure,
-    'public.write_status(text,text)'::regprocedure
+    'public.write_status(text,text)'::regprocedure,
+    'public.create_budget(text,text,text,text)'::regprocedure,
+    'public.update_budget(text,uuid,integer,text)'::regprocedure,
+    'public.create_goal(text,text,text,text,text,text)'::regprocedure,
+    'public.update_goal(text,uuid,integer,text,text,text,text)'::regprocedure,
+    'public.complete_goal(text,uuid,integer)'::regprocedure,
+    'public.archive_goal(text,uuid,integer)'::regprocedure,
+    'public.contribute_to_goal(text,uuid,text,text,text)'::regprocedure,
+    'public.withdraw_from_goal(text,uuid,text,text,text)'::regprocedure,
+    'public.void_goal_entry(text,uuid,text)'::regprocedure,
+    'public.create_expense_with_goal(text,text,text,text,text,text,uuid,text,smallint[],jsonb,uuid,text,text,text)'::regprocedure,
+    'public.approve_usage_request(text,uuid,integer)'::regprocedure,
+    'public.reject_usage_request(text,uuid,integer)'::regprocedure,
+    'public.cancel_usage_request(text,uuid,integer)'::regprocedure,
+    'public.remove_goal_usage(text,uuid,integer)'::regprocedure
   ]::oid[])
   and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.refclassid='pg_extension'::regclass and d.deptype='e')
   and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE')

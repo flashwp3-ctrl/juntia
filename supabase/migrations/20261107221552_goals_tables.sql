@@ -145,6 +145,14 @@ create function juntia_private.goal_ledger_guard() returns trigger language plpg
 declare g juntia_data.savings_goals;original juntia_data.goal_ledger_entries;available numeric;
 begin
  -- BEFORE: el mismo bloqueo que las RPC; nunca un saldo comprobado solo al final.
+ -- El primer bloqueo de un uso es el movimiento (nivel 3), antes de la meta.
+ -- También serializa dos INSERT directos que pretendan metas distintas para él.
+ if new.kind='usage' then
+  perform id from juntia_data.transactions where id=new.transaction_id for update;
+ elsif new.kind='void' then
+  select * into original from juntia_data.goal_ledger_entries where id=new.voids_entry_id;
+  if original.kind='usage' then perform id from juntia_data.transactions where id=original.transaction_id for update;end if;
+ end if;
  select * into g from juntia_data.savings_goals where id=new.goal_id for update;
  if not found then raise exception using errcode='JT201',message='goalNotFound'; end if;
  if new.kind='void' then
@@ -224,7 +232,7 @@ revoke all on function juntia_private.goal_usage_transaction_check() from public
 create constraint trigger goal_usage_transaction_check after update of status,amount_minor on juntia_data.transactions deferrable initially deferred for each row execute function juntia_private.goal_usage_transaction_check();
 
 create function juntia_private.goal_void_reactivate() returns trigger language plpgsql security invoker set search_path='' as $$
-declare g juntia_data.savings_goals;u juntia_data.goal_ledger_entries;changed integer;
+declare g juntia_data.savings_goals;u juntia_data.goal_ledger_entries;changed integer;returned numeric;
 begin
  if new.kind<>'void' then return null; end if;
  select * into u from juntia_data.goal_ledger_entries where id=new.voids_entry_id;
@@ -234,7 +242,9 @@ begin
  update juntia_data.savings_goals set status='active',archived_at=null,version=version+1,updated_by=new.created_by,updated_at=clock_timestamp() where id=g.id;
  get diagnostics changed=row_count;
  if changed<>1 then raise exception using errcode='JT201',message='goalNotFound'; end if;
- insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action,"before","after") values(new.created_by,'goal',g.id,'reactivate',jsonb_build_object('status','archived'),jsonb_build_object('status','active','transaction_id',u.transaction_id,'returned_minor',u.amount_minor::text));
+ select sum(e.amount_minor) into returned from juntia_data.goal_ledger_entries v join juntia_data.goal_ledger_entries e on e.id=v.voids_entry_id
+  where e.goal_id=g.id and e.transaction_id=u.transaction_id and e.kind='usage' and pg_xact_status(v.xmin::text::xid8)='in progress';
+ insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action,"before","after") values(new.created_by,'goal',g.id,'reactivate',jsonb_build_object('status','archived'),jsonb_build_object('status','active','transaction_id',u.transaction_id,'returned_minor',returned::text));
  return null;
 end $$;
 revoke all on function juntia_private.goal_void_reactivate() from public,anon,authenticated,juntia_writer;
@@ -248,7 +258,8 @@ begin
   if row(new.id,new.goal_id,new.transaction_id,new.requested_by,new.member_user_id,new.amount_minor,new.created_at) is distinct from row(old.id,old.goal_id,old.transaction_id,old.requested_by,old.member_user_id,old.amount_minor,old.created_at) then raise exception using errcode='JT013',message='immutableField'; end if;
   return new;
  end if;
- select * into g from juntia_data.savings_goals where id=new.goal_id;
+ perform id from juntia_data.transactions where id=new.transaction_id for update;
+ select * into g from juntia_data.savings_goals where id=new.goal_id for update;
  if g.group_id is null then raise exception using errcode='JT203',message='goalContextMismatch'; end if;
  if g.status='archived' then raise exception using errcode='JT202',message='goalNotOpen'; end if;
  perform juntia_private.goal_check_expense(g.id,new.transaction_id);

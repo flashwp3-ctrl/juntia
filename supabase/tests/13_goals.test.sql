@@ -69,6 +69,7 @@ select throws_ok($$select public.withdraw_from_goal('20000000-0000-4000-8000-000
 select throws_ok($$select public.void_goal_entry('20000000-0000-4000-8000-000000000017',(select id from public.goal_entries where goal_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and kind='contribution' and not voided limit 1),'void')$$,null,null,'anular: política rota');
 reset role;
 select is((select count(*) from juntia_data.idempotency_records where idempotency_key::text like '20000000-0000-4000-8000-00000000001%'),0::bigint,'siete fallos revierten idempotencia');
+alter policy goal_ledger_insert on juntia_data.goal_ledger_entries with check(created_by=(select auth.uid()) and (member_user_id is null or member_user_id=(select auth.uid())) and exists(select 1 from juntia_data.savings_goals g where g.id=goal_id));
 set local role authenticated;
 set local "request.jwt.claims"='{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}';
 select throws_ok($$select public.create_goal(gen_random_uuid()::text,'us','No','travel','10000',null)$$,'JT105',null,'tercero no crea meta compartida');
@@ -128,7 +129,7 @@ select lives_ok($$select public.remove_goal_usage('30000000-0000-4000-8000-00000
 select lives_ok($$select public.remove_goal_usage('30000000-0000-4000-8000-000000000005','50000000-0000-4000-8000-000000000001',1)$$,'quitar uso idempotente');
 select throws_ok($$select public.remove_goal_usage('30000000-0000-4000-8000-000000000005','50000000-0000-4000-8000-000000000001',2)$$,'JT008',null,'quitar uso otra huella');
 select lives_ok($$select public.void_transaction('30000000-0000-4000-8000-000000000006','50000000-0000-4000-8000-000000000002',1,'delete')$$,'regresión: anular privado quita uso');
-select lives_ok($$select public.void_shared_expense('30000000-0000-4000-8000-000000000007','40000000-0000-4000-8000-000000000004',1,'void')$$,'regresión: anular compartido quita uso y solicitud');
+select lives_ok($$select public.void_shared_expense('30000000-0000-4000-8000-000000000007','40000000-0000-4000-8000-000000000004',1,'delete')$$,'regresión: anular compartido quita uso y solicitud');
 select throws_ok($$select public.remove_goal_usage(gen_random_uuid()::text,'50000000-0000-4000-8000-000000000002',2)$$,'JT012',null,'quitar uso sobre anulado falla');
 reset role;
 set local role juntia_writer;
@@ -141,5 +142,31 @@ select throws_ok($$select public.reject_usage_request(gen_random_uuid()::text,'6
 select throws_ok($$select public.cancel_usage_request(gen_random_uuid()::text,'60000000-0000-4000-8000-000000000005',1)$$,'JT210',null,'tercero no cancela');
 select throws_ok($$select public.remove_goal_usage(gen_random_uuid()::text,'50000000-0000-4000-8000-000000000003',1)$$,'JT010',null,'tercero no quita uso');
 reset role;
+-- Sin consentimiento: atacar la tabla no usa el botón ni la RPC.
+set local "request.jwt.claims"='{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+set local role juntia_writer;
+select throws_ok($$insert into juntia_data.goal_ledger_entries(id,goal_id,kind,amount_minor,transaction_id,created_by) values('80000000-0000-4000-8000-000000000001','99999999-9999-4999-8999-999999999999','usage',1000,'40000000-0000-4000-8000-000000000006','11111111-1111-4111-8111-111111111111'); insert into juntia_data.goal_usage_allocations(entry_id,member_user_id,amount_minor) values('80000000-0000-4000-8000-000000000001','22222222-2222-4222-8222-222222222222',1000)$$,'JT223',null,'no uso directo de fondos ajenos sin aprobación');
+select throws_ok($$insert into juntia_data.goal_ledger_entries(goal_id,kind,member_user_id,amount_minor,entry_date,funding_mode,created_by) values('99999999-9999-4999-8999-999999999999','contribution','22222222-2222-4222-8222-222222222222',100,'2026-10-02','reserved','11111111-1111-4111-8111-111111111111')$$,null,null,'no aportar a nombre de otra persona');
+select throws_ok($$insert into juntia_data.goal_ledger_entries(goal_id,kind,member_user_id,amount_minor,entry_date,reason,created_by) values('99999999-9999-4999-8999-999999999999','withdrawal','22222222-2222-4222-8222-222222222222',100,'2026-10-02','reasignar','11111111-1111-4111-8111-111111111111')$$,null,null,'no retirar aportes ajenos');
+reset role;
+alter policy goal_allocations_insert on juntia_data.goal_usage_allocations with check(false);
+set local role authenticated;
+select throws_ok($$select public.create_expense_with_goal('30000000-0000-4000-8000-000000000011','us','20000','transport','2026-11-03',null,'22222222-2222-4222-8222-222222222222','equal',null,'{"11111111-1111-4111-8111-111111111111":"10000","22222222-2222-4222-8222-222222222222":"10000"}','99999999-9999-4999-8999-999999999999','1000','0')$$,null,null,'gasto con meta: política rota revierte todo');
+set local "request.jwt.claims"='{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}';
+select throws_ok($$select public.approve_usage_request('30000000-0000-4000-8000-000000000012','60000000-0000-4000-8000-000000000005',1)$$,null,null,'aprobar: política rota');
+reset role;
+alter policy goal_allocations_insert on juntia_data.goal_usage_allocations with check(exists(select 1 from juntia_data.goal_ledger_entries e where e.id=entry_id));
+alter policy goal_confirmations_update on juntia_data.goal_usage_confirmations using(false);
+set local role authenticated;
+select throws_ok($$select public.reject_usage_request('30000000-0000-4000-8000-000000000013','60000000-0000-4000-8000-000000000005',1)$$,null,null,'rechazar: política rota');
+set local "request.jwt.claims"='{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+select throws_ok($$select public.cancel_usage_request('30000000-0000-4000-8000-000000000014','60000000-0000-4000-8000-000000000005',1)$$,null,null,'cancelar: política rota');
+reset role;
+alter policy goal_confirmations_update on juntia_data.goal_usage_confirmations using(exists(select 1 from juntia_data.savings_goals g where g.id=goal_id));
+alter policy goal_ledger_insert on juntia_data.goal_ledger_entries with check(false);
+set local role authenticated;
+select throws_ok($$select public.remove_goal_usage('30000000-0000-4000-8000-000000000015','50000000-0000-4000-8000-000000000003',1)$$,null,null,'quitar uso: política rota');
+reset role;
+select is((select count(*) from juntia_data.idempotency_records where idempotency_key::text like '30000000-0000-4000-8000-00000000001%'),0::bigint,'cinco fallos revierten idempotencia');
 select * from finish();
 rollback;
