@@ -29,6 +29,18 @@ function source(initial: Row[], cap = Infinity) {
 }
 
 describe("readByCursor (F44-2)", () => {
+  // 004 FR-096, F64-4: «clave declarada por lista ... una o dos columnas ... id único al final».
+  it.each([["effective_date","created_at"],["changed_at"],["created_at"]])("004: clave %s, más de 500 filas sin saltos",async(...columns)=>{
+    const fields=columns as string[];
+    const initial=Array.from({length:1101},(_,i)=>Object.fromEntries([...fields.map(c=>[c,"2026-10-01T12:00:00Z"]),["id",String(i).padStart(5,"0")]])) as (Record<string,string>&{id:string})[];
+    const page=async(after:Record<string,string>|null,limit:number)=>({data:initial.filter(r=>!after || r.id>after.id).slice(0,limit),error:null});
+    const rows=await readByCursor(page,{columns:fields});
+    expect(rows).toHaveLength(1101);expect(new Set(rows.map(r=>r.id)).size).toBe(1101);
+    const filter=afterFilter(initial[0],"desc",fields);
+    expect(filter).toContain(`${fields[0]}.lt.`);
+    expect(filter).not.toContain("transaction_date");
+    expect(filter).toContain('id.lt."00000"');
+  });
   const initial = [row(3, "a"), row(5, "b"), row(5, "c"), row(8, "d"), row(11, "e"), row(14, "f"), row(18, "g")];
 
   it("lee todas las filas en orden, una vez, hasta una página vacía", async () => {

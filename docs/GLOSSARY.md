@@ -224,6 +224,35 @@ paquete de diseño.
 
 ## 11. Cómo se mantiene
 
+### Identificadores incorporados por la 004 (PR A)
+
+Fuente de todas las filas: spec 004, `data-model.md` §§2–9 y `contracts/database.md`.
+
+| Término | Identificador | Interfaz / precisión |
+| --- | --- | --- |
+| Versiones del presupuesto | `budget_versions` | Historial; límite vigente por mes, `null` al desactivar |
+| Categoría presupuestable | `category_kind = 'expense'` | Solo categorías de gasto; discriminador de la FK |
+| Tipo visual de meta | `goal_type` | Viaje, vivienda, boda, vehículo, educación, emergencias, otra |
+| Aporte registrado | `contribution` | Aporte a meta, nunca consumo |
+| Retiro propio | `withdrawal` | Retiro de meta · reasignación |
+| Uso aplicado | `usage` | Uso de meta vinculado a un gasto real |
+| Asiento de anulación | `void`, `voids_entry_id` | Anulado; no cambia ni borra el asiento original |
+| Asignación de un uso | `entry_kind = 'usage'` | Fondos por aportante; discriminador de la FK |
+| Estado de solicitud | `goal_usage_confirmations.status` | `pending`, `approved`, `rejected`, `cancelled`; no vence |
+| Propiedad de la meta | `goal_scope` | `personal` / `shared`; distinto del contexto de presentación |
+| Contexto de presentación | `context` | `me` / `us`; Yo / Nosotros, sin sumar vistas |
+| Presupuesto del mes | `budget_months` | Límite, consumo y restante; sin límite fabricado |
+| Historial de presupuesto | `budget_history` | Autor, vigencia, anterior y nuevo |
+| Metas visibles | `goals_overview` | Una fila por meta, con `goal_scope` |
+| Totales de metas | `goals_totals` | Una fila por `goal_scope`; nunca suma personales y compartidas |
+| Disponible por aportante | `goal_member_balances` | Aportado, retirado, usado y disponible |
+| Historial de meta | `goal_entries` | Aportes, retiros y usos; anulación marcada, no fila de consumo |
+| Actividad de metas | `goal_activity` | Asientos por contexto y mes |
+| Solicitudes visibles | `usage_requests` | Uso ajeno pendiente o resuelto |
+| Financiación del gasto | `expense_goal_funding` | Uso aplicado y solicitud; independiente del reparto |
+| Métricas mensuales | `metric_months` | Las cinco métricas DEC-G04, en una lectura consistente |
+| Meta reactivada | `reactivated_goals`, `reactivate` | Fondos devueltos al quitar o anular un uso archivado |
+
 - Un término de negocio nuevo entra al código **con su fila aquí**, no después.
 - Si el maestro o un documento de `docs/design/` ya da un identificador, se usa
   **tal cual**; este glosario no renombra nada.

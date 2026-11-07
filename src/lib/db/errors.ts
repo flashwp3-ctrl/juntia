@@ -1,4 +1,11 @@
 const kinds = {
+  JT201: "goalNotFound", JT202: "goalNotOpen", JT203: "goalContextMismatch", JT204: "insufficientMemberFunds",
+  JT205: "entryNotFound", JT206: "entryNotVoidable", JT207: "entryAlreadyVoided", JT208: "invalidEntryDate",
+  JT209: "usageExceedsExpense", JT210: "requestNotFound", JT211: "notRequestParty", JT212: "requestResolved",
+  JT213: "amountBelowGoalUsage", JT214: "goalTransitionNotAllowed", JT215: "invalidGoal", JT216: "invalidFundingMode",
+  JT217: "withdrawalReasonRequired", JT218: "budgetNotFound", JT219: "budgetAlreadyExists", JT220: "goalNegative",
+  JT221: "invalidBudget", JT222: "appendOnly", JT223: "invalidUsageAllocation", JT224: "oneGoalPerExpense",
+  JT225: "goalUndoNotAvailable", JT226: "nothingToRemove",
   JT101: "alreadyInCouple", JT102: "invitationNotFound", JT103: "invitationAlreadyAccepted", JT104: "invitationInvalid",
   JT105: "coupleNotActive", JT106: "nothingToSettle", JT107: "settlementExceedsPending", JT108: "invalidEmail",
   JT109: "invalidTokenHash", JT110: "invalidSplit", JT111: "notCoupleMember", JT112: "settlementNotFound",
@@ -20,6 +27,10 @@ export function mapDbError(error: unknown): DbError {
   if (error instanceof TypeError || (error instanceof Error && error.name === "AbortError")) return new DbError("network");
   if (typeof error === "object" && error !== null) {
     if ("status" in error && error.status === 401) return new DbError("notAuthenticated");
+    if ("code" in error && error.code === "23505" && "message" in error && typeof error.message === "string") {
+      if (/unique constraint "budgets_one_per_key"/.test(error.message)) return new DbError("budgetAlreadyExists");
+      if (/unique constraint "goal_usage_confirmations_one_pending"/.test(error.message)) return new DbError("requestResolved");
+    }
     if ("code" in error && error.code === "23505" && "message" in error && typeof error.message === "string"
       && /unique constraint "(?:group_members_one_couple_per_person|group_invitations_one_pending)"/.test(error.message)) return new DbError("alreadyInCouple");
     if ("code" in error && typeof error.code === "string" && Object.hasOwn(kinds, error.code)) return new DbError(kinds[error.code as keyof typeof kinds]);

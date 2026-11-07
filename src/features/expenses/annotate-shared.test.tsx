@@ -130,7 +130,9 @@ describe("Subhoja «Reparto» (2a): Pagó, Reparto y Participan", () => {
     summary().focus();
     await user.keyboard("{Enter}");
     await screen.findByRole("heading", { name: copy.shared.split.title });
-    expect(document.activeElement).toBe(within(screen.getByRole("radiogroup", { name: copy.shared.split.payer })).getByRole("radio", { name: /Sara/ }));
+    // T011: el heading se monta antes del requestAnimationFrame que mueve el foco.
+    // Esperar al heading no espera ese frame; se observa la condición accesible final.
+    await waitFor(() => expect(document.activeElement).toBe(within(screen.getByRole("radiogroup", { name: copy.shared.split.payer })).getByRole("radio", { name: /Sara/ })));
     await user.keyboard("{Escape}");
     expect(dialog).toBeTruthy();
     expect(summary()).toBeTruthy();

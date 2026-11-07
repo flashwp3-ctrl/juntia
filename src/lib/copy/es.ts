@@ -1,4 +1,29 @@
 export const copy = {
+  // 004 PR A: claves del contrato JT201–JT226; redacción para revisión humana.
+  goals: {
+    errors: {
+      notFound: "Esta meta no está disponible.", notOpen: "Esta meta no admite esta operación.",
+      insufficient: (amount:string) => `Puedes retirar hasta ${amount}.`,
+      fundsChanged: (amount:string,goal:string) => `Tus aportes cambiaron: ahora tienes ${amount} en ${goal}.`,
+      entryNotFound: "Este aporte no está disponible.", alreadyVoided: "Este aporte ya está anulado.",
+      date: "Elige hoy o una fecha pasada, desde la creación de la meta.",
+      cannotArchive: "Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.",
+      cannotComplete: "No se puede dar por lograda esta meta.",
+      versionConflict: (name:string) => `${name} cambió esta meta.`,
+      undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
+    },
+    form: {errors:{name:"Escribe un nombre de hasta 60 caracteres.",type:"Elige un tipo de meta.",target:"Escribe un objetivo entre $1 y $999.999.999.",month:"Elige un mes válido."}},
+    withdraw: {errors:{reason:"Escribe un motivo de hasta 140 caracteres."}},
+  },
+  goalExpense: {errors:{
+    exceedsExpense:"El uso de la meta no puede superar el monto del gasto.",
+    requestGone:"Esta solicitud no está disponible.",resolved:"Esta solicitud ya se resolvió.",
+    removeUsageFirst:"Primero quita el uso de la meta o usa menos.",
+    allocation:"Revisa los fondos: deben sumar el uso y estar disponibles por aportante.",
+    nothingToRemove:"Este gasto no tiene uso de meta ni solicitud que quitar.",
+    versionConflict:"La solicitud cambió. Revisa su estado.",
+  }},
+  plan: {errors:{notFound:"Este presupuesto no está disponible.",alreadyExists:(name:string)=>`${name} ya creó este presupuesto.`,versionConflict:(name:string)=>`${name} cambió este presupuesto.`},form:{errors:{limit:"Elige una categoría de gasto y un límite entre $1 y $999.999.999."}}},
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
