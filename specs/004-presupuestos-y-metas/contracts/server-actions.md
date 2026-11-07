@@ -53,13 +53,20 @@ Se reutiliza la máquina del PR C y D de la 003 sin cambiar sus reglas (F57-8, F
 
 - La cookie `juntia_context` y la comprobación de pareja activa de la 003 deciden la
   rama del servidor.
-- **En Nosotros** el servidor lee solo `goals_overview`, `goal_activity`,
-  `budget_months` y `metric_months` con `scope = 'us'`, y `expense_goal_funding` de
-  gastos compartidos. **Nunca** filtra filas personales después de leerlas: no las
-  pide. El selector de metas de B1 en Nosotros lee solo metas con `scope = 'us'`, sin
+- **En Nosotros** el servidor lee `goals_overview` y `goals_totals` con
+  `goal_scope = 'shared'`, `goal_activity`, `budget_months` y `metric_months` con
+  `context = 'us'`, y `expense_goal_funding` de gastos compartidos. **Nunca** filtra filas personales después de leerlas: no las
+  pide. El selector de metas de B1 en Nosotros lee solo metas con `goal_scope = 'shared'`, sin
   ninguna consulta a metas personales, ni para pintarlas deshabilitadas (F63-3).
-- **En Yo** lee `scope = 'me'`. Las metas compartidas en Yo muestran «Tus aportes»
-  (decisión 22.11) y su saldo total, que los dos ya ven.
+- **En Yo** lee las vistas de contexto con `context = 'me'` y `goals_overview` entera en
+  **una consulta**, que la interfaz separa por `goal_scope`: «Tus metas» (`personal`) y,
+  aparte, «Metas compartidas» con «Tus aportes» = `my_available_minor` (decisión 22.11).
+  El total de «Tus metas» sale de `goals_totals` con `goal_scope = 'personal'` y nunca
+  incluye una compartida. El selector de B1 en Yo ofrece solo `goal_scope = 'personal'`.
+- **Pruebas de F64-3**, en integración y componentes: en Yo aparecen **todas** las metas
+  personales de quien mira y **todas** las compartidas de su pareja activa, cada una una
+  sola vez (completitud); ningún importe de una compartida entra en el total de las
+  personales, ni al revés, y ninguna meta sale dos veces (no duplicar).
 - Los `<Link>` de Metas, Plan, Análisis y la meta inmersiva siguen la regla de
   prefetch de la 003 (§4): sin prefetch dependiente de contexto, o invalidado al
   cambiar la cookie. Las specs 4 y 5 comprueban HTML, RSC y prefetch.
@@ -69,6 +76,33 @@ Se reutiliza la máquina del PR C y D de la 003 sin cambiar sus reglas (F57-8, F
 
 - Listas por cursor (`readByCursor`): `goal_entries`, `goal_activity`,
   `budget_history`, `usage_requests`.
+- **El paginador se generaliza** (revisión del PR #64, F64-4). Hoy `readByCursor` y
+  `afterFilter` (`src/lib/db/paginate.ts`) solo admiten la clave
+  `(transaction_date | settlement_date, created_at, id)`. El PR A los cambia, sin
+  romper sus llamadas actuales, a una **clave declarada por lista**: una o dos columnas
+  de orden y siempre un **id único** al final como desempate, con la misma garantía
+  (ninguna fila dos veces; toda fila que existía de principio a fin, una vez; una página
+  que falla hace fallar la lectura). Cada vista expone las columnas de su clave y un
+  índice que la cubre:
+
+  | Lista | Clave de orden (descendente) | Id único |
+  | --- | --- | --- |
+  | Gastos y liquidaciones (002, 003) | `transaction_date` o `settlement_date`, `created_at` | `id` |
+  | `goal_entries`, `goal_activity` | `effective_date`, `created_at` | `id` del asiento |
+  | `budget_history` | `changed_at` | `id` de `budget_versions` |
+  | `usage_requests` | `created_at` | `id` de la solicitud |
+
+  En `goal_entries`, la `effective_date` de un uso es la `transaction_date` de su
+  gasto, que cambia si se edita la fecha: esa fila no «existió igual» de principio a fin
+  y puede salir o no, como ya ocurre con un gasto editado en la 002.
+- **`budget_history`** expone el `id` de `budget_versions`, y su
+  `previous_limit_minor` es `lag(limit_minor) over (partition by budget_id order by
+  changed_at, id)`: el límite anterior es siempre el del mismo presupuesto.
+- **Pruebas del paginador** (integración, PR A): más de 500 filas por lista (más de una
+  página de `PAGE_SIZE`), muchas filas con la misma fecha y el mismo `created_at`
+  (desempate por id), e inserciones y anulaciones entre páginas, para `goal_entries`,
+  `budget_history` y `usage_requests`; y las pruebas actuales de la 002 y la 003
+  siguen pasando con la firma nueva.
 - Totales de una sola sentencia: `budget_months`, `goals_overview`,
   `goal_member_balances`, `metric_months`, `expense_goal_funding`. El servidor de la
   aplicación nunca suma páginas ni recalcula estos totales; el dominio solo los

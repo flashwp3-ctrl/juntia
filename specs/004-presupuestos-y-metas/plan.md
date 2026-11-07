@@ -64,7 +64,7 @@ Enfoque técnico, con lo verificado contra `juntia-dev` en [research.md](researc
 
 **Constraints**: sin Docker en los equipos; importes nunca como `number`; ningún camino de persona usa `service_role`; nada personal en el HTML, el RSC ni el prefetch de Nosotros; 360–1440 px sin scroll horizontal; 44 px; movimiento reducido; texto al 200 %; copy en `src/lib/copy/es.ts`; job `e2e` < 480 s bloqueante; **migraciones nuevas, nunca editar las ya aplicadas en producción**.
 
-**Scale/Scope**: 2 personas y una pareja. 4 migraciones nuevas; 6 tablas; 14 funciones de escritura; 4 de la 002 y la 003 redefinidas más `transaction_goal_funded`; 9 vistas; rutas `/plan`, `/plan/analisis`, `/metas`, `/metas/[id]`; Inicio, Actividad y Anotar ampliados.
+**Scale/Scope**: 2 personas y una pareja. 4 migraciones nuevas; 6 tablas; 14 funciones de escritura; 4 de la 002 y la 003 redefinidas más `transaction_goal_funded`; 10 vistas; rutas `/plan`, `/plan/analisis`, `/metas`, `/metas/[id]`; Inicio, Actividad y Anotar ampliados.
 
 ## Constitution Check — comprobación de jerarquía
 
@@ -204,12 +204,12 @@ son los que el maestro §7.2 ya prevé (`budgets`, `goals`) más `metrics` y
 | Parte | Cómo | Fuente |
 | --- | --- | --- |
 | Presupuestos | `create_budget`, `update_budget` (desactivar = `null`); vistas `budget_months` y `budget_history`; mes de vigencia fijado por el servidor | data-model §2.1–§2.2; R4, R7 |
-| Metas | `create_goal`, `update_goal`, `complete_goal`, `archive_goal`; `goals_overview` | data-model §2.3 |
+| Metas | `create_goal`, `update_goal`, `complete_goal`, `archive_goal`; `goals_overview` y `goals_totals` por `goal_scope` | data-model §2.3, §7 |
 | Ledger | `contribute_to_goal`, `withdraw_from_goal`, `void_goal_entry`; asientos `void`; solo inserción; trigger de saldo que bloquea la meta | R1, R2; data-model §2.4, §3 |
 | Gasto con meta | `create_expense_with_goal` (punto 5 de §15.6.3); `approve_usage_request` (punto 6), `reject_usage_request`, `cancel_usage_request`; `remove_goal_usage` | R3; contracts/database.md |
 | Funciones de antes | `void_*` y `update_*` redefinidas; `transaction_goal_funded` conectado | data-model §6 |
 | Métricas | `metric_months`, una sola sentencia; el dominio las reproduce y las prueba con las siete filas | R5; FR-060 |
-| Lecturas | Vistas de una sola sentencia para totales; `readByCursor` para listas; filtro por `scope` en el servidor | R5, R6 |
+| Lecturas | Vistas de una sola sentencia para totales; `readByCursor` generalizado para listas; filtro por `context` (Yo/Nosotros) o por `goal_scope` (de quién es la meta) en el servidor | R5, R6; data-model §7 |
 | Escrituras en el cliente | `ok` / `rejected` / `unknown`, 15 s, `write_status`, nada en el navegador, un deshacer | contracts/server-actions.md |
 | S3 y S5 | Motion for React; View Transitions con respaldo; solo con datos o confirmación del servidor | R10 |
 
@@ -261,7 +261,7 @@ entera y la mitad de servidor de US-2, US-5, US-6, US-7 y US-8.
 | --- | --- |
 | Dominio | Las siete filas de DEC-G04 con `test.each`, «No disponible» distinto de 0, negativos sin `Math.max`; vistas que concilian sin sumarse (−120.000 + 120.000 = 0); saldo y disponible por aportante con propiedades (≥ 0); `budgetState` con comparación exacta y consumo 0 (estado «dentro», 0 %); `displayedPercent` truncado (92 %, 46 %, 65 %); `limitInForce`; `proposeFunding` (mayor residuo, suma exacta); `goalPace` (6.660.000 en 6 meses → 1.110.000); `monthComparison`; el dataset dorado de P0-3 y su prueba cronológica (F63-1) |
 | SQL/RLS (pgTAP) | Privilegios efectivos de tablas, funciones y triggers nuevos; cada tabla con su RLS para Sara, Tomás y una tercera cuenta; metas y presupuestos personales invisibles para el otro, también anulados y por agregados; solo inserción para cualquier rol; **el trigger de saldo con un `insert` directo como `juntia_writer`** de un retiro, una asignación y un `void` que anula un aporte, cada uno por encima del disponible, que fallan con `JT220`; cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella y cada validación (aporte a nombre de otro, aprobar la propia solicitud, uso sin aprobación, retiro ajeno, archivar con saldo); `transaction_goal_funded` con datos; una política rota a propósito que hace fallar la función |
-| Integración | Las carreras de FR-112 con `raceUnderLock` en los dos órdenes (aprobar contra cancelar, retirar, quitar el uso y anular el gasto; dos usos; dos aprobaciones; editar contra desactivar presupuesto; dos creaciones de la misma clave; **dos anulaciones del mismo aporte o de dos aportes de la misma persona, y anular un aporte contra retirar**, con el disponible ≥ 0 en todos los casos) con la invariante «ningún uso vivo en un gasto no activo» y sin interbloqueos; idempotencia y `write_status` de cada escritura nueva; las cuatro funciones redefinidas contra gastos con y sin meta; lectura consistente de `metric_months` y `budget_months`; `readByCursor` sobre `goal_entries`; importes de ida y vuelta (`9007199254740993`); exportación con lo nuevo, sin personales del otro ni duplicados |
+| Integración | Las carreras de FR-112 con `raceUnderLock` en los dos órdenes (aprobar contra cancelar, retirar, quitar el uso y anular el gasto; dos usos; dos aprobaciones; editar contra desactivar presupuesto; dos creaciones de la misma clave; **dos anulaciones del mismo aporte o de dos aportes de la misma persona, y anular un aporte contra retirar**, con el disponible ≥ 0 en todos los casos) con la invariante «ningún uso vivo en un gasto no activo» y sin interbloqueos; idempotencia y `write_status` de cada escritura nueva; las cuatro funciones redefinidas contra gastos con y sin meta; lectura consistente de `metric_months` y `budget_months`; el paginador generalizado (F64-4) con más de 500 filas, fechas repetidas y escrituras entre páginas sobre `goal_entries`, `budget_history` y `usage_requests`, más las pruebas de la 002 y la 003 con la firma nueva; completitud y no duplicar de las metas en Yo (F64-3); importes de ida y vuelta (`9007199254740993`); exportación con lo nuevo, sin personales del otro ni duplicados |
 | E2E | Ninguna nueva; corren las specs 1, 2 y 3 |
 
 **`[V]` que cierra:** ADR-013 [V] 1–7 sobre lo nuevo; `goal_usage_confirmations`;
@@ -278,6 +278,11 @@ rechaza `--workers`. Se registra en la evidencia si los usuarios y parejas
 sembrados por worker aíslan los datos (cero fallos, cero lecturas cruzadas) y cuánto
 baja el tiempo. El número de workers que use el job `e2e` sale de esa medición.
 
+**Integración obligatoria de F64-1:** aportar, gastar todo con la meta, archivarla y
+anular el gasto: la anulación se aplica, los fondos vuelven, la meta queda `active` con
+su auditoría y el resultado trae `reactivated_goals`. Lo mismo con «Quitar el uso» y con
+un gasto privado y su meta personal. Archivar con saldo sigue fallando con `JT214`.
+
 **Criterios de salida:** job `db` verde en el último commit, con las salidas de los dos
 puntos de control; la medición de workers en la evidencia; dataset dorado de P0-3 en dominio e integración; cero accesos
 cruzados; cero duplicados; cero usos vivos en gastos no activos; revisión humana del
@@ -287,7 +292,10 @@ SQL.
 
 **Alcance.** Plan en Yo y Nosotros (resumen, BudgetIndicator con sus estados, «sin
 presupuesto · Crear», texto de presupuestos opcionales), hoja de crear y editar con
-desactivar, historial y conflicto de versión. **Nace la spec E2E 5.**
+desactivar, historial y conflicto de versión. **Nace la spec E2E 5.** Además, por ser el
+primer PR con una spec nueva: el **selector de specs por área** integrado en el job
+`e2e`, con su prueba (F64-5), y, si la medición del PR A lo permite, los workers del job
+con las dos pasadas de `@serial` (F64-6) ([contracts/ci.md](contracts/ci.md)).
 
 **FR y US:** FR-010–FR-018 (interfaz), FR-020, FR-085–FR-087 (Plan), FR-090–FR-095,
 FR-100–FR-103, FR-113 (BudgetIndicator), FR-114 (spec 5), FR-115; US-1 (Plan) y US-2.
@@ -442,6 +450,16 @@ puntos 1 a 4 de abajo, tal como están. El punto 5 es la mitigación pedida por 
 en su revisión del plan y no necesita una decisión de los fundadores salvo que llegue al
 paso (c).
 
+**Precisión de las decisiones 22.15 y 22.17, aprobada el 7 de noviembre de 2026**
+(revisión del PR #64, F64-1; Alejandro, en nombre de los dos: «a»; la segunda
+fundadora la confirma con el merge de este PR). Anular un gasto financiado por una meta,
+o quitarle el uso, **siempre se permite**, también si la meta ya está archivada: el
+`void` del uso se inserta, los fondos vuelven a cada aportante y la meta vuelve sola a
+`active` en la misma transacción, con auditoría y el aviso «La meta {nombre} volvió a
+estar activa: se devolvieron $X». La regla de archivar (saldo 0 y sin solicitudes
+pendientes) no cambia. Detalle en data-model §2.3 y contracts/database.md; la prueba
+de integración obligatoria está en el PR A.
+
 Nada de este plan es una decisión nueva y difícil de revertir: no hace falta ningún
 ADR. Las decisiones del plan que tocan cómo se ve o se comporta algo:
 
@@ -466,5 +484,5 @@ ADR. Las decisiones del plan que tocan cómo se ve o se comporta algo:
 | Trigger `before insert` que bloquea la meta | Saldo ≥ 0 por aportante por cualquier camino | Trigger diferido: la prueba lo vio fallar con −40.000 (R2) |
 | Asientos `void` en el ledger | Solo inserción, nunca se edita un importe | Columna `status` mutable: rompe «solo inserción» (R1) |
 | `budget_versions` aparte | Vigencia mensual e historial con autor, valor anterior y nuevo | Una fila por mes: copiar límites y decidir meses vacíos (R7) |
-| Vistas con `scope` y `month` en lugar de funciones con parámetros | Lecturas consistentes que `authenticated` puede ejecutar | Funciones invoker: `permission denied for schema juntia_data` (R6) |
+| Vistas con `context`, `goal_scope` y `month` en lugar de funciones con parámetros | Lecturas consistentes que `authenticated` puede ejecutar | Funciones invoker: `permission denied for schema juntia_data` (R6) |
 | Redefinir cuatro funciones de la 002 y la 003 | Ningún uso vivo en un gasto anulado ni por encima de su importe (Q17) | Un trigger solo: daría el error, pero no quitaría el uso en la misma operación |

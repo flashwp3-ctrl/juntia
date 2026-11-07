@@ -39,7 +39,8 @@ all` para `anon` y `authenticated` (incluidos `TRUNCATE`, `REFERENCES` y `TRIGGE
 | `id` | `uuid` pk | |
 | `owner_user_id` | `uuid` → `auth.users` | Presupuesto de Yo. **XOR** con `group_id` |
 | `group_id` | `uuid` → `groups` | Presupuesto de Nosotros. Solo parejas `active` (trigger, como `transactions_check_group`) |
-| `category_id` | `text not null` | FK compuesta a `categories(id, kind)` con `kind = 'expense'`: nunca «Ingresos» (decisión 22.8) |
+| `category_id` | `text not null` | Con `category_kind`, FK compuesta `(category_id, category_kind) → categories(id, kind)`: nunca «Ingresos» (decisión 22.8) |
+| `category_kind` | `text not null default 'expense'` | `check (category_kind = 'expense')`. Columna discriminadora: una FK no admite constantes, así que el tipo se fija en una columna local que solo puede valer `expense` (revisión del PR #64, F64-2) |
 | `currency` | `text not null default 'COP'` | `check (currency = 'COP')` |
 | `version` | `integer not null default 1` | Sube en cada cambio; es la `expectedVersion` |
 | `created_by`, `created_at`, `updated_by`, `updated_at` | | Auditoría visible |
@@ -81,8 +82,21 @@ ninguna, o es `null`, el mes no tiene presupuesto (`budget: null`).
 
 Transiciones (decisión 22.15): `active → completed` («Dar por lograda»), `active →
 archived` y `completed → archived` (solo con saldo 0 y sin solicitudes pendientes).
-No se vuelve atrás desde `archived`. Un trigger `goals_guard_transition` rechaza
-cualquier otra con `JT214`.
+La persona no puede volver atrás desde `archived`. Un trigger `goals_guard_transition`
+rechaza cualquier otra transición con `JT214`, salvo una.
+
+**Reactivación automática** (revisión del PR #64, F64-1; precisión de las decisiones 22.15 y
+22.17, aprobada por los fundadores el 7 de noviembre de 2026, opción (a)). Archivar exige saldo 0, pero un gasto
+financiado por la meta puede anularse después, o se le puede quitar el uso. **Anular
+siempre se permite**: el `void` del uso se inserta aunque la meta esté `archived`, los
+fondos vuelven a cada aportante y, en la misma transacción, la meta pasa sola a
+`active` (`archived_at` a `null`, `version` + 1). Solo lo hacen
+`void_shared_expense`, `void_transaction` y `remove_goal_usage`, y el trigger solo admite
+`archived → active` cuando en la misma transacción se insertó un `void` de un uso de esa
+meta. Queda en `audit_events` (`entity_type = 'goal'`, `action = 'reactivate'`, con el
+gasto y el importe devuelto), y la respuesta de la función lo devuelve para el aviso
+«La meta {nombre} volvió a estar activa: se devolvieron $X». **La regla de archivar no
+cambia.**
 
 ### 2.4 `goal_ledger_entries` — el ledger (solo inserción)
 
@@ -109,7 +123,8 @@ Un asiento está **vivo** si ningún `void` lo apunta. Un `void` solo apunta a u
 
 | Columna | Tipo | Regla |
 | --- | --- | --- |
-| `entry_id` | `uuid not null` → `goal_ledger_entries` (`kind = 'usage'`) | pk con `member_user_id` |
+| `entry_id` | `uuid not null` | pk con `member_user_id`. Con `entry_kind`, FK compuesta `(entry_id, entry_kind) → goal_ledger_entries(id, kind)`, que exige un índice único `(id, kind)` en el ledger |
+| `entry_kind` | `text not null default 'usage'` | `check (entry_kind = 'usage')`: una asignación solo puede colgar de un asiento de uso (F64-2) |
 | `member_user_id` | `uuid not null` | Aportante de la meta (integrante activo si es compartida; el dueño si es personal) |
 | `amount_minor` | `bigint not null` | `> 0`, múltiplo de 100 |
 
@@ -138,16 +153,23 @@ solicitud pendiente por gasto (pareja de dos, una meta por gasto). Solo `update`
 columna (`status`, `usage_entry_id`, `resolved_by`, `resolved_at`, `version`), y un
 trigger que solo admite `pending →` otro estado.
 
+### 2.7 Cambios en tablas de la 002 y la 003
+
+- **`audit_events`**: el `check` de `entity_type` añade `budget`, `goal`, `goal_entry` y `usage_request`, y el de `action` añade `complete`, `archive`, `approve`, `reject`, `remove_usage` y `reactivate` (F64-1) (se reemplazan los `check` con nombre que dejó la 003). Toda escritura de P0-3 deja su evento con actor, instante, valor anterior y nuevo; los asientos del ledger guardan el asiento, no un antes y después.
+- **`idempotency_records`**: el `check` de `action` añade las catorce acciones de [contracts/database.md](contracts/database.md), «Estado de una escritura».
+- **`transactions`**: un trigger de restricción diferido nuevo (§3, «Ningún uso vivo en un gasto no activo»). Ninguna columna nueva.
+
 ## 3. Invariantes que no dependen de la función (ADR-013 §2.4)
 
 | Invariante | Mecanismo |
 | --- | --- |
+| Presupuestos solo de categorías de gasto; asignaciones solo de asientos de uso | Columnas discriminadoras con `check` y FK compuestas (§2.1, §2.5). pgTAP: un `insert` directo como `juntia_writer` de un presupuesto de `income` y de una asignación sobre un aporte fallan (`23503`/`23514`) |
 | Ledger, asignaciones y versiones de presupuesto de solo inserción | Trigger `before update or delete` que falla con `JT222` para **cualquier** rol (research R1) |
 | Saldo ≥ 0 por aportante | Trigger `before insert` que **bloquea la meta** y comprueba que, después del asiento, `disponible(g, m) ≥ 0`; si no, `JT220` (research R2). Cubre los tres asientos que reducen el disponible: un **retiro** en `goal_ledger_entries`, una **asignación de uso** en `goal_usage_allocations` y un **`void` que anula un aporte** (el aportante `m` es el `member_user_id` del aporte anulado). Anular un retiro o un uso solo aumenta el disponible y no se comprueba. Así la regla no depende de la función (ADR-013 §2.4) |
 | Una meta por gasto; meta y gasto del mismo contexto y moneda | Trigger `before insert` en usos y solicitudes: todos los usos y solicitudes de un `transaction_id` comparten `goal_id`, y el contexto del gasto es el de la meta (DEC-G06); `JT203`/`JT224` |
 | Uso ≤ gasto | Trigger `before insert` en `goal_usage_allocations`: la suma de usos vivos del gasto no supera su importe; `JT209`. Las funciones ya lo comprueban bajo el bloqueo del movimiento |
 | Ningún uso vivo en un gasto no activo (F63-4) | Trigger de restricción diferido en `transactions` (`after update of status, amount_minor`): si el gasto queda anulado con usos vivos, o su importe queda por debajo de lo usado, falla con `JT213` |
-| Aportes solo a metas `active`; nada en `archived` | Trigger `before insert` en el ledger; `JT202` |
+| Aportes solo a metas `active`; en `archived`, solo el `void` de un uso | Trigger `before insert` en el ledger; `JT202`. El `void` de un uso en una meta archivada se admite y la reactiva (§2.3, F64-1) |
 | Un presupuesto por clave | Índice único de §2.1 |
 | Límite nunca 0 | `check` de §2.2 |
 
@@ -198,19 +220,27 @@ niveles 4 y 5 del orden global (research R3).
 ## 7. Vistas de `public` (`security_invoker = true`, importes como texto)
 
 Detalle en [contracts/database.md](contracts/database.md). Todas de **una sola
-sentencia**; las que agregan llevan columnas de filtro (`scope`, `month`,
+sentencia**; las que agregan llevan columnas de filtro (`context`, `month`,
 `goal_id`) en lugar de parámetros (research R5 y R6).
+
+**Dos conceptos que no se mezclan** (revisión del PR #64, F64-3):
+
+- **`context`** (`me`/`us`) es el **contexto de presentación**, el del selector Yo/Nosotros. Lo llevan las vistas que agregan por contexto: `budget_months`, `goal_activity` y `metric_months`.
+- **`goal_scope`** (`personal`/`shared`) es **de quién es la meta**: `personal` si tiene `owner_user_id`, `shared` si tiene `group_id`. Lo llevan `goals_overview` y `goals_totals`, que **no** tienen `context`.
+
+Una pantalla elige metas por `goal_scope`, con **una sola consulta**: en Nosotros, `goal_scope = 'shared'`; en Yo, todas las visibles, que la interfaz separa en «Tus metas» (`personal`) y «Metas compartidas» (`shared`, con «Tus aportes» = `my_available_minor`). Los totales salen de `goals_totals` por `goal_scope`: el total de las personales nunca incluye una compartida, y el «Apartado en metas compartidas» de Nosotros nunca incluye una personal.
 
 | Vista | Qué |
 | --- | --- |
-| `budget_months` | Por contexto (`scope`), categoría y mes: límite vigente (o `null`), consumo, restante, estado (`none`/`within`/`near`/`over`), `budget_id` y `version`. Yo consume privados más la parte propia de lo compartido; Nosotros, el total del grupo (ADR-004) |
+| `budget_months` | Por contexto (`context`), categoría y mes: límite vigente (o `null`), consumo, restante, estado (`none`/`within`/`near`/`over`), `budget_id` y `version`. Yo consume privados más la parte propia de lo compartido; Nosotros, el total del grupo (ADR-004) |
 | `budget_history` | Cambios de un presupuesto: mes desde el que rige, límite anterior y nuevo, autor y fecha |
-| `goals_overview` | Metas visibles con saldo, progreso, `target_month`, estado, versión, `has_pending_request` y, en Yo, `my_available_minor` de las compartidas |
+| `goals_overview` | Una fila por meta visible, con `goal_scope`, saldo, progreso, `target_month`, estado, versión, `has_pending_request` y `my_available_minor` (lo disponible de quien mira; en las personales coincide con el saldo). Sin `context` |
+| `goals_totals` | Una fila por `goal_scope` con las metas activas visibles: saldo total, disponible de quien mira y número de metas |
 | `goal_member_balances` | Por meta y aportante: aportado, retirado, usado y disponible |
 | `goal_entries` | Asientos de una meta (vivos y anulados, marcados), con el gasto vinculado de los usos. Orden total para el cursor: `(effective_date desc, created_at desc, id desc)` |
 | `usage_requests` | Solicitudes con su gasto, meta, cantidad y estado, visibles para los dos |
 | `goal_activity` | Asientos para Actividad, por contexto y mes, con el mismo orden total |
-| `metric_months` | Las cinco métricas DEC-G04 por `scope` (`me`/`us`) y mes (FR-060 a FR-063) |
+| `metric_months` | Las cinco métricas DEC-G04 por `context` (`me`/`us`) y mes (FR-060 a FR-063) |
 | `expense_goal_funding` | Por gasto visible: meta, usado, pendiente y si se puede mover (para el detalle, B4 y la LimitNote) |
 
 ## 8. Tipos de dominio (`src/domain/`)

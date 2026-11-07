@@ -280,7 +280,7 @@ incluye sus 70.000 personales y sus 500.000 a Japón; Yo de Tomás, solo sus 400
   goal_id)`) funciona, como las políticas de la 003.
 
 **Decisión.** Todas las lecturas nuevas son **vistas** `security_invoker` con
-columnas por las que filtrar (`month`, `scope`, `goal_id`), como `couple_month_summary`
+columnas por las que filtrar (`month`, `context`, `goal_scope`, `goal_id`), como `couple_month_summary`
 de la 003. Ninguna política llama a una función invoker que lea tablas de
 `juntia_data`; las únicas auxiliares en políticas siguen siendo las booleanas
 `security definer` de `juntia_membership` (nota de ADR-013 §5.1). Es la aplicación
