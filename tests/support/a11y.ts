@@ -98,6 +98,8 @@ export async function axe(page: Page, label: string) {
   await page.mouse.move(0, 0);
   // Y con los diálogos ya visibles del todo: a mitad de su aparición, axe mide colores con opacidad parcial.
   await expect.poll(() => page.evaluate(() => [...document.querySelectorAll("[role=dialog], [role=alertdialog]")].every((node) => getComputedStyle(node).opacity === "1"))).toBe(true);
+  // Como en routes.a11y.ts: con el <title> ya puesto (Next lo vuelve a transmitir tras una Server Action).
+  await expect(page).toHaveTitle(/\S/);
   const result = await new AxeBuilder({ page }).analyze();
   const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
   console.log(`${label}: ${result.violations.length} violaciones, ${blocking.length} serias o críticas${blocking.length ? ` (${blocking.map(({ id }) => id).join(", ")})` : ""}`);

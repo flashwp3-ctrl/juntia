@@ -173,7 +173,8 @@ async function fieldCorners(page: Page, scope: string) {
 for (const colorScheme of THEMES) {
   for (const width of [390, 1440]) {
     for (const entry of entries) {
-      test(`${entry.route} · ${entry.state} · ${colorScheme} · ${width}px`, async ({ page: base, browser, baseURL }, testInfo) => {
+      // Decisión 21: el nivel ligero de cada PR es 390; 1440 es parte del barrido completo (@sweep, a mano).
+      test(`${entry.route} · ${entry.state} · ${colorScheme} · ${width}px`, width === 390 ? {} : { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
         const page = await openWithSession(browser, base, entry, colorScheme, width, testInfo.parallelIndex, baseURL!);
         const route = entry.route;
         await page.setViewportSize({ width, height: 900 });
@@ -194,6 +195,10 @@ for (const colorScheme of THEMES) {
         await reach(page, entry, testInfo.parallelIndex);
         // Los momentos de motion de las rutas de producto se miden en su estado base, no con una hoja o un aviso abiertos.
         const isProduct = (PRODUCT as readonly string[]).includes(route) && !entry.prepare;
+        // Flake del PR C («/recuperar · A4b · dark · 390», document-title intermitente): tras la respuesta de una Server Action,
+        // Next vuelve a transmitir los metadatos y axe podía auditar el instante sin <title>. Se audita el estado en reposo, con
+        // el título ya puesto; si de verdad faltara, esta espera falla igual.
+        await expect(page).toHaveTitle(/\S/);
         const result = await new AxeBuilder({ page }).analyze();
         const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
         console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
@@ -299,7 +304,7 @@ for (const colorScheme of THEMES) {
 // Con sesión: solo en el job e2e (T051).
 for (const colorScheme of JOB === "e2e" ? THEMES : []) {
   for (const [width, barVisible] of [[390, false], [768, true]] as const) {
-    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, async ({ browser, baseURL }, testInfo) => {
+    test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, width === 390 ? {} : { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
       const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
       await context.addCookies((await seedUser({ role: "axe-barra", index: testInfo.parallelIndex })).cookies);
       const page = await context.newPage();

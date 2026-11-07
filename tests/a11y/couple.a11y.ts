@@ -19,7 +19,7 @@ const M5_TOKEN = "A".repeat(43);
 // M5 (sin sesión): el job app no tiene Supabase, y la pantalla no lo necesita sin cookie de sesión.
 // Los casos se definen solo en su job (como routes.a11y.ts): un test.skip seguiría listándolos (job-selection.test.ts).
 if (JOB === "app") test.describe("M5 sin sesión", () => {
-  test("/invitacion · M5 · siete anchos, dos temas, 200 % y 44 px", async ({ page }) => {
+  test("/invitacion · M5 · siete anchos, dos temas, 200 % y 44 px", { tag: "@sweep" }, async ({ page }) => {
     await page.goto(`/invitacion#t=${M5_TOKEN}`);
     await expect(page.getByRole("heading", { level: 1, name: copy.couple.invitation.signedOut.title })).toBeVisible();
     await sweep(page, "/invitacion M5");
@@ -32,7 +32,7 @@ if (JOB === "app") test.describe("M5 sin sesión", () => {
 if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
   for (const colorScheme of THEMES) {
     for (const width of [390, 1440]) {
-      test(`/invitacion · M6 y M7 · axe · ${colorScheme} · ${width}px · con sesión`, async ({ browser, baseURL }, testInfo) => {
+      test(`/invitacion · M6 y M7 · axe · ${colorScheme} · ${width}px · con sesión`, width === 390 ? {} : { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
         const index = testInfo.parallelIndex;
         const [sara, tomas] = await Promise.all([seedUser({ role: "axe-invita", index }), seedUser({ role: "axe-invitado", index, displayName: "Tomás" })]);
         const { token } = await seedInvitation(sara, tomas.email);
@@ -50,7 +50,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     }
   }
 
-  test("barrido de siete anchos y 200 %: Mi pareja M1–M4, /invitacion M6–M7, A6 y Nosotros sin pareja · con sesión", async ({ browser, baseURL }, testInfo) => {
+  test("barrido de siete anchos y 200 %: Mi pareja M1–M4, /invitacion M6–M7, A6 y Nosotros sin pareja · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const index = testInfo.parallelIndex;
     // M2, M3 y Nosotros sin pareja, con una cuenta sin pareja.
     const solo = await seedUser({ role: "barrido-solo", index });
@@ -110,7 +110,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     }
   });
 
-  test("teclado y 44 px: crear, copiar, generar enlace nuevo, anular con Escape y aceptar · con sesión", async ({ browser, baseURL }, testInfo) => {
+  test("teclado y 44 px: crear, copiar, generar enlace nuevo, anular con Escape y aceptar · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const index = testInfo.parallelIndex;
     const [sara, tomas] = await Promise.all([seedUser({ role: "teclado-invita", index }), seedUser({ role: "teclado-invitado", index, displayName: "Tomás" })]);
     const { context, page } = await signedContext(browser, baseURL!, sara);
