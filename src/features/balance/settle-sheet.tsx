@@ -121,9 +121,14 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
           <Avatar person={creditor.joinOrder} initial={initialOf(creditor.name)} size={40} />
         </span>
         <p className="text-[length:var(--body-m-size)] font-medium text-ink">{copy.balance.settle.direction(debtor.name, creditor.name)}</p>
-        <p aria-hidden="true" className="rounded-[18px] px-4 py-1 text-[clamp(32px,9vw,40px)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums shadow-[0_0_0_2px_var(--color-border-strong)]">
-          {formatMoney(amount ?? { amountMinor: 0n, currency: "COP" })}
-        </p>
+        {mode === "all" ? (
+          <p aria-hidden="true" className="rounded-[18px] px-4 py-1 text-[clamp(32px,9vw,40px)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums shadow-[0_0_0_2px_var(--color-border-strong)]">
+            {formatMoney(amount ?? { amountMinor: 0n, currency: "COP" })}
+          </p>
+        ) : (
+          // «Otro»: el monto se escribe en el mismo lugar (04·2), en pesos enteros, a lo ancho de la hoja.
+          <AmountInput label={copy.balance.settle.otherAmount} value={other} onValueChange={(next) => { setOther(next); setInvalid(null); }} disabled={locked} className="w-full self-stretch text-left" fieldClassName="w-full" />
+        )}
         <p className="text-[12px] leading-[1.4] text-pretty text-ink-secondary">{copy.balance.settle.pending(formatMoney(pending))}</p>
       </div>
       <div className="flex flex-col items-center gap-3">
@@ -135,9 +140,6 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
           onValueChange={(next) => { setMode(next); setInvalid(null); }}
           disabled={locked}
         />
-        {mode === "other" ? (
-          <AmountInput label={copy.balance.settle.otherAmount} value={other} onValueChange={(next) => { setOther(next); setInvalid(null); }} disabled={locked} fieldClassName="w-full" />
-        ) : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Input label={copy.balance.settle.date} type="date" value={date} max={today} disabled={locked} onChange={(event) => { setDate(event.target.value); setInvalid(null); }} />

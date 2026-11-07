@@ -74,7 +74,8 @@ test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros lle
   const [privateRows, sharedRows] = await Promise.all([seedMovements(pair.sara, "current"), seedSharedMovements(pair, "recent")]);
   const privateId = privateRows[0].id;
   const sharedId = sharedRows[0].id;
-  const routes = ["/", `/actividad?mes=${month()}`, `/actividad/${sharedId}?mes=${month()}`, `/actividad/${privateId}?mes=${month()}`];
+  // PR D (FR-041; [V] «Privacidad por ámbito», se repite en el PR D): Balance tampoco lleva privados.
+  const routes = ["/", `/actividad?mes=${month()}`, `/actividad/${sharedId}?mes=${month()}`, `/actividad/${privateId}?mes=${month()}`, "/balance", `/balance?mes=${month()}`];
 
   for (const cookie of ["us", null, "nosotros"]) {
     const { context, page } = await open(browser, baseURL!, pair.sara, "us", cookie);

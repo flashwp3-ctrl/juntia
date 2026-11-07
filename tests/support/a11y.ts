@@ -19,7 +19,13 @@ export async function overflow(page: Page) {
       .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && node.getBoundingClientRect().width > 1 && node.scrollWidth > node.clientWidth + 1
         && !["ellipsis"].includes(getComputedStyle(node).textOverflow) && getComputedStyle(node).overflow !== "visible")
       .map((node) => `${node.tagName.toLowerCase()} «${(node.textContent ?? "").trim().slice(0, 40)}»`);
-    return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, clipped };
+    // Lo que se sale por la derecha, para saber qué arreglar cuando hay scroll horizontal (los cinco más anchos).
+    const wide = root.scrollWidth > root.clientWidth
+      ? [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getClientRects().length > 0 && node.getBoundingClientRect().right > root.clientWidth + 1)
+        .sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right).slice(0, 5)
+        .map((node) => `${node.tagName.toLowerCase()}.${String(node.className).split(" ").slice(0, 3).join(".")} «${(node.textContent ?? "").trim().slice(0, 30)}» → ${Math.round(node.getBoundingClientRect().right)}`)
+      : [];
+    return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, clipped, wide };
   });
 }
 
@@ -41,7 +47,7 @@ export async function largeText(page: Page, label: string) {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
   const result = await overflow(page);
-  console.log(`${label} · 200 %: scrollWidth ${result.scrollWidth} / ${result.clientWidth}; cortado: ${result.clipped.length}`);
+  console.log(`${label} · 200 %: scrollWidth ${result.scrollWidth} / ${result.clientWidth}; cortado: ${result.clipped.length}${result.wide.length ? `; se sale: ${result.wide.join(" | ")}` : ""}`);
   expect.soft(result.scrollWidth, `${label} · 200 %: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
   expect.soft(result.clipped, `${label} · 200 %: sin texto cortado`).toEqual([]);
   await page.evaluate(() => { document.documentElement.style.fontSize = ""; });

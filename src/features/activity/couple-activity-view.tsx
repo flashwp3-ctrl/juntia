@@ -148,13 +148,13 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                       {/* PR D (T062): la liquidación lleva a su detalle, con «Anular»; anulada, sigue en el historial y lo dice. */}
                       <td className={`${cell} rounded-l-[14px]`}>
                         <Link href={detailHref(item.row.id, month)} aria-current={item.row.id === selectedId ? "page" : undefined} data-settlement-id={item.row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
-                          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink-secondary"><AppIcon name="arrows-left-right" size={15} /></span>
+                          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink"><AppIcon name="arrows-left-right" size={15} /></span>
                           <span className={`truncate ${item.row.status === "voided" ? "line-through" : ""}`}>{copy.shared.row.settlementTitle(memberName(members, item.row.fromUserId), memberName(members, item.row.toUserId))}</span>
                         </Link>
                       </td>
-                      <td className={`${cell} text-[13px] text-ink-secondary`}>{item.row.status === "voided" ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement}</td>
-                      <td className={`${cell} font-mono text-[13px] text-ink-secondary`}>{dayLabel(item.row.settlementDate, today)}</td>
-                      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap text-ink-secondary`}>{formatMoney(item.row.amount)}</td>
+                      <td className={`${cell} text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{item.row.status === "voided" ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement}</td>
+                      <td className={`${cell} font-mono text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{dayLabel(item.row.settlementDate, today)}</td>
+                      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{formatMoney(item.row.amount)}</td>
                     </tr>
                   );
                 }

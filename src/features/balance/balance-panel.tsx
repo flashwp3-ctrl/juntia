@@ -88,7 +88,8 @@ export function BalancePanel({ balance, members, today, variant = "screen" }: Pr
   }, [annotate, byId]);
 
   const settleButton = current && actions?.settle ? (
-    <Button ref={trigger} size="lg" icon="arrows-left-right" className={variant === "screen" ? "flex-1" : "w-full"} onClick={() => setSheetKey(newIdempotencyKey())}>{copy.balance.actions.settle}</Button>
+    <Button ref={trigger} size="lg" icon="arrows-left-right" // Texto al 200 % (FR-054): la etiqueta puede partirse en dos líneas en lugar de empujar la página.
+    className={`min-h-[52px] !h-auto !shrink py-2.5 !whitespace-normal leading-tight ${variant === "screen" ? "min-w-0 flex-[1_1_12rem]" : "w-full"}`} onClick={() => setSheetKey(newIdempotencyKey())}>{copy.balance.actions.settle}</Button>
   ) : null;
   const breakdownLink = variant === "screen"
     ? <Link href="#desglose" className="inline-flex h-[52px] items-center justify-center rounded-[var(--radius-lg)] bg-raised px-4 text-base font-semibold text-ink shadow-raised hover:bg-sunken">{copy.balance.actions.breakdown}</Link>
@@ -98,7 +99,7 @@ export function BalancePanel({ balance, members, today, variant = "screen" }: Pr
     <>
       <SharedBalance balance={shown} members={members} size={variant} celebrate={celebrate} headerAction={variant === "module" ? breakdownLink : undefined}>
         {variant === "screen" ? (
-          settleButton ? <div className="flex gap-2">{settleButton}{breakdownLink}</div> : null
+          settleButton ? <div className="flex flex-wrap gap-2">{settleButton}{breakdownLink}</div> : null
         ) : settleButton}
       </SharedBalance>
       <p aria-live="polite" data-settle-announce="" className="sr-only">{announcement}</p>

@@ -60,7 +60,8 @@ export function SharedRow({ row, members, href, dateLabel, current = false }: Sh
 export function SettlementRow({ settlement, members, dateLabel, href, current = false }: { settlement: Settlement & { id: string }; members: readonly MemberRef[]; dateLabel: string; href?: string; current?: boolean }) {
   const title = copy.shared.row.settlementTitle(memberName(members, settlement.fromUserId), memberName(members, settlement.toUserId));
   const voided = settlement.status === "voided";
-  const meta = voided ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement;
+  // Anulada primero: a 390 la línea se corta y lo que no puede perderse es que ya no cuenta.
+  const meta = voided ? `${copy.balance.settlements.voided} · ${copy.shared.row.settlement}` : copy.shared.row.settlement;
   const body = (
     <>
       <span aria-hidden="true" className="grid size-10 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink-secondary">
@@ -68,15 +69,15 @@ export function SettlementRow({ settlement, members, dateLabel, href, current = 
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className={`truncate text-[15px] leading-[1.3] font-semibold text-ink ${voided ? "line-through" : ""}`}>{title}</span>
-        <span className="truncate text-[12px] leading-[1.35] text-ink-secondary"><span>{meta}</span>{` · ${dateLabel}`}</span>
+        <span className="truncate text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink"><span>{meta}</span>{` · ${dateLabel}`}</span>
       </span>
-      <span className={`text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-ink-secondary ${voided ? "line-through" : ""}`}>{formatMoney(settlement.amount)}</span>
+      <span className={`text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-ink-secondary ${voided ? "line-through" : ""} group-hover:text-ink group-aria-[current=page]:text-ink`}>{formatMoney(settlement.amount)}</span>
     </>
   );
   const layout = "grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2";
   if (!href) return <div data-settlement-id={settlement.id} className={layout}>{body}</div>;
   return (
-    <Link href={href} aria-current={current ? "page" : undefined} data-settlement-id={settlement.id} className={`${layout} rounded-[14px] aria-[current=page]:bg-sunken hover:bg-sunken`}>
+    <Link href={href} aria-current={current ? "page" : undefined} data-settlement-id={settlement.id} className={`${layout} group rounded-[14px] aria-[current=page]:bg-sunken hover:bg-sunken`}>
       {body}
     </Link>
   );
