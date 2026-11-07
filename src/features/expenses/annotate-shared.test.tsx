@@ -141,7 +141,7 @@ describe("Subhoja «Reparto» (2a): Pagó, Reparto y Participan", () => {
     await openSplit(user);
     await user.click(participant("Tomás"));
     expect(screen.getByText(copy.shared.split.singleNote("Sara"))).toBeTruthy();
-    expect((screen.getByRole("radio", { name: copy.shared.mode.equal }) as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByRole("radio", { name: copy.shared.mode.equal })).matches(":disabled")).toBe(true);
     await back(user);
     expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Sara", "Sara"));
     await openSplit(user);
@@ -312,7 +312,7 @@ describe("Resultado desconocido al guardar en Nosotros (FR-059)", () => {
     const alert = await screen.findByRole("alert");
     expect(alert?.textContent ?? "").toContain(copy.writes.unknown);
     expect(document.body.textContent ?? "").not.toMatch(/no se guardó/i);
-    expect((amount() as HTMLInputElement).disabled).toBe(true);
+    expect((amount()).matches(":disabled")).toBe(true);
     await user.click(within(alert).getByRole("button", { name: copy.writes.retry }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
     expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
@@ -329,7 +329,7 @@ describe("Resultado desconocido al guardar en Nosotros (FR-059)", () => {
     await user.click(screen.getByRole("radio", { name: copy.categories.market }));
     await user.click(saveButton());
     expect(await screen.findByText(copy.annotate.split.errors.invalid)).toBeTruthy();
-    expect((amount() as HTMLInputElement).disabled).toBe(false);
+    expect((amount()).matches(":disabled")).toBe(false);
   });
 
   it("cerrar con el resultado desconocido pregunta «¿Cerrar sin confirmar?»", async () => {

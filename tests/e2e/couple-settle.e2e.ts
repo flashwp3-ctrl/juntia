@@ -50,7 +50,7 @@ test("gasto compartido 50/50: Sara lo anota en 2 toques y el total de Nosotros s
   await expect(sheet).toBeHidden();
   await expect(sara.page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
   await expect(hero(sara.page)).toHaveAttribute("data-counting-amount", "$186.400");
-  await expect(sara.page.locator("[data-balance-line]:visible")).toContainText(`${copy.couple.home.owes("Tomás", "Sara")} $93.200`);
+  await expect(sara.page.locator("[data-balance-line]:visible")).toContainText([copy.couple.home.owes("Tomás", "Sara"), "$93.200"].join(""));
 
   // La base: un solo gasto, pagó Sara, 93.200 cada uno; lo ve Tomás con su propia sesión.
   const rows = await listSharedExpenses(pair.tomas.client, month());
@@ -61,7 +61,7 @@ test("gasto compartido 50/50: Sara lo anota en 2 toques y el total de Nosotros s
   const tomas = await open(browser, baseURL!, pair.tomas, "us");
   await tomas.page.goto("/");
   await expect(hero(tomas.page)).toHaveAttribute("data-counting-amount", "$186.400");
-  await expect(tomas.page.locator("[data-balance-line]:visible")).toContainText(`${copy.couple.home.owes("Tomás", "Sara")} $93.200`);
+  await expect(tomas.page.locator("[data-balance-line]:visible")).toContainText([copy.couple.home.owes("Tomás", "Sara"), "$93.200"].join(""));
   await Promise.all([sara.context.close(), tomas.context.close()]);
 });
 
@@ -111,7 +111,7 @@ test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros lle
   const afterSwitch = prefetched.length;
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
   await expect(page).toHaveURL(/\/actividad/);
-  await expect(page.getByText("Carulla Laureles").first()).toBeVisible();
+  await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
   for (const body of prefetched.slice(afterSwitch)) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
   await context.close();
@@ -123,7 +123,8 @@ test("Mover a Pareja: Farmacia Pasteur pasa a Nosotros en una operación, con «
   const pharmacy = await createTransaction(pair.sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(64000n), categoryId: "health", transactionDate: today, description: "Farmacia Pasteur" });
   const { context, page } = await open(browser, baseURL!, pair.sara, "me");
   await page.goto(`/actividad/${pharmacy.id}?mes=${month()}`);
-  await expect(page.getByText(copy.move.explain("Tomás"))).toBeVisible();
+  // .filter({ visible }): React deja una copia oculta (#S:n, hidden) del segmento en streaming hasta hidratar.
+  await expect(page.getByText(copy.move.explain("Tomás")).filter({ visible: true })).toBeVisible();
   await page.getByRole("button", { name: copy.move.action }).click();
   const dialog = page.getByRole("dialog", { name: copy.move.action });
   await expect(dialog.getByText("$64.000")).toBeVisible();

@@ -24,8 +24,8 @@ export type WriteStatusOutcome<T> = { state: "completed"; value: T } | { state: 
 /** Acciones de `idempotency_records` que el PR B consulta con `write_status`. El PR C añade las suyas. */
 export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation"
   | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared";
-/** Andamio de T045: la lista se completa con la implementación. */
-export const SHARED_WRITE_ACTIONS: readonly WriteAction[] = [];
+/** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
+export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 
 const UNKNOWN: ReadonlySet<DbErrorKind> = new Set(["network", "retryable", "retryExhausted", "unexpected"]);
 const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
@@ -36,6 +36,21 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   invalidEmail: "invalidEmail",
   versionConflict: "versionConflict",
   notAuthenticated: "sessionExpired",
+  // T045 (PR C): gasto compartido y Mover a Pareja (contracts/errors.md).
+  transactionVoided: "alreadyDeleted",
+  transactionNotFound: "notFound",
+  invalidSplit: "invalidSplit",
+  invalidSplitMode: "invalidSplit",
+  notCoupleMember: "invalidSplit",
+  coupleNotActive: "coupleNotActive",
+  moveNotAllowed: "moveNotAllowed",
+  moveFundedByGoal: "moveNotAllowed",
+  undoNotAvailable: "undoNotAvailable",
+  invalidAmount: "invalid",
+  amountOutOfRange: "invalid",
+  invalidCategory: "invalid",
+  invalidDate: "invalid",
+  descriptionTooLong: "invalid",
 };
 
 /**

@@ -28,7 +28,7 @@ export const copy = {
   couple: {
     // PR C de la 003 (04·1 INICIO · NOSOTROS, 04·6 SIN ACTIVIDAD; FR-044; interpretación I3).
     home: {
-      spentIn: (month: string) => `En ${month} gastaron juntos`, pending: "POR SALDAR",
+      spentIn: (month: string) => `En ${month} gastaron juntos`, pending: "POR SALDAR", settledBadge: "AL DÍA",
       owes: (debtor: string, creditor: string) => `${debtor} le debe a ${creditor}`, settled: "Al día", seeBalance: "Ver balance",
       balanceTitle: "Saldo de la pareja", recentTitle: "Recientes",
       empty: { title: "Aún no hay gastos este mes", description: "Cuando alguno de los dos anote un gasto compartido, aparecerá aquí con quién pagó y cómo se reparte.", action: "Anotar el primero" },
@@ -118,7 +118,6 @@ export const copy = {
       both: (first: string, second: string) => `${first} y ${second}`,
       each: (names: string, amount: string) => `${names} · ${amount} cada uno`,
       parts: (parts: readonly (readonly [string, string])[]) => parts.map(([name, amount]) => `${name} ${amount}`).join(" · "),
-      label: (first: string, second: string) => `Reparto: ${first}. ${second}`,
     },
     split: {
       title: "Reparto", back: "Volver al gasto", subtitle: (category: string, amount: string) => `${category} · ${amount}`,
@@ -278,7 +277,8 @@ export const copy = {
     // PR B (T034; FR-016, US-3.7): el acceso a invitar desde Nosotros sin pareja. Los textos de pendiente y activa cubren
     // el tiempo entre el PR B y el PR C, que trae los gastos compartidos. Copy nuevo para revisión de los fundadores.
     invite: "Invitar a mi pareja", pendingDescription: "Tu invitación está pendiente. Nosotros aparece cuando tu pareja la acepte.", seeInvitation: "Ver mi invitación",
-    activeDescription: "Ya son pareja. Lo que anoten juntos aparecerá aquí en la próxima versión. Por ahora, lo tuyo sigue en Yo." },
+    // PR C: Nosotros ya tiene gastos compartidos en Inicio y Actividad; Metas y Plan siguen provisionales hasta P0-3 (FR-048).
+    activeDescription: "Las metas y el plan de los dos llegan en una próxima versión. Los gastos compartidos ya están en Inicio y Actividad." },
   load: { error: { title: "No pudimos cargar tus movimientos", description: "Revisa tu conexión. Lo que ya estaba guardado sigue a salvo; sin conexión no podemos guardar nada nuevo." } },
   activity: {
     spentIn: (month: string) => `Gasto de ${month}`,

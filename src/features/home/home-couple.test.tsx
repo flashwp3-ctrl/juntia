@@ -15,6 +15,12 @@ import { ContextView } from "@/features/context/context-view";
 import type { SharedTransaction } from "@/lib/db/types";
 import { BalanceLine, CoupleHomeView, type CoupleMemberView } from "./couple-home-view";
 import { HomeView } from "./home-view";
+import { AnnotateProvider } from "@/features/expenses/annotate-provider";
+import type { ReactNode } from "react";
+
+const idle = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
+// Como home.test.tsx: Inicio vive dentro del proveedor de Anotar (el bloque «Anotar gasto» y «Anotar el primero»).
+const wrap = (node: ReactNode) => render(<AnnotateProvider actions={idle}>{node}</AnnotateProvider>);
 
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
@@ -28,9 +34,9 @@ const balance = computeBalance(beforeSettlement.expenses, beforeSettlement.settl
 
 describe("Inicio en Nosotros con beforeSettlement (US-3.1)", () => {
   it("héroe $2.840.000, desglose de octubre y saldo «Tomás le debe a Sara $429.900»", () => {
-    render(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
+    wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
     expect(screen.getByRole("heading", { name: copy.couple.home.spentIn("octubre") })).toBeTruthy();
-    expect(screen.getByText("$2.840.000")).toBeTruthy();
+    expect(screen.getAllByText("$2.840.000").length).toBeGreaterThan(0);
     for (const [category, value] of [["home", "1.600.000"], ["market", "640.000"], ["services", "360.000"], ["restaurants", "240.000"]] as const) {
       expect(screen.getByLabelText(copy.activity.categoryChip(copy.categories[category], value))).toBeTruthy();
     }
@@ -39,25 +45,25 @@ describe("Inicio en Nosotros con beforeSettlement (US-3.1)", () => {
   });
 
   it("no pinta ningún movimiento privado ni presupuesto (FR-041, FR-049)", () => {
-    const { container } = render(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
     for (const row of saraPrivateOctober2026) expect(container.textContent).not.toContain(row.description!);
     expect(container.textContent).not.toMatch(/restante|excedido|te alcanza|presupuesto/i);
   });
 
   it("las filas recientes dicen quién pagó y el reparto («Pagó Tomás · 50/50»)", () => {
-    render(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
+    wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={goldenShared} members={members} />);
     expect(screen.getAllByText(copy.shared.row.meta("Tomás", copy.shared.mode.equal)).length).toBeGreaterThan(0);
   });
 
   it("sin gastos compartidos en el mes: el estado vacío de 04·6 con «Anotar el primero», sin «Al día $0»", () => {
-    render(<CoupleHomeView month="2026-11" today="2026-11-05" summary={null} balance={[]} rows={[]} members={members} />);
+    wrap(<CoupleHomeView month="2026-11" today="2026-11-05" summary={null} balance={[]} rows={[]} members={members} />);
     expect(screen.getByText(copy.couple.home.empty.title)).toBeTruthy();
     expect(screen.queryByText(/\$0\b/)).toBeNull();
   });
 
   it("al día: el saldo dice «Al día» sin cifra", () => {
     const even = computeBalance([], [], beforeSettlement.members);
-    render(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={even} rows={goldenShared} members={members} />);
+    wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={even} rows={goldenShared} members={members} />);
     expect(screen.getByText(copy.couple.home.settled)).toBeTruthy();
   });
 });
@@ -78,19 +84,19 @@ describe("Yo con la parte compartida (US-4.1, US-4.2)", () => {
   const meSummary = { privateMinor: "41290000", sharedPartMinor: "150000000", consumptionMinor: "191290000" };
 
   it("Sara ve $1.912.900 con «Solo tuyos $412.900» y «Tu parte compartida $1.500.000»", () => {
-    render(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" shared={{ parts, summary: meSummary }} />);
-    expect(screen.getByText("$1.912.900")).toBeTruthy();
+    wrap(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" shared={{ parts, summary: meSummary }} />);
+    expect(screen.getAllByText("$1.912.900").length).toBeGreaterThan(0);
     expect(screen.getByText(copy.home.onlyYours).closest("div")?.textContent ?? "").toContain("$412.900");
     expect(screen.getByText(copy.home.sharedPart).closest("div")?.textContent ?? "").toContain("$1.500.000");
   });
 
   it("las filas compartidas dicen «Compartido · tu parte $X» con el importe completo", () => {
-    render(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" shared={{ parts, summary: meSummary }} />);
+    wrap(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" shared={{ parts, summary: meSummary }} />);
     expect(screen.getAllByText(copy.row.sharedPart("$93.200")).length).toBeGreaterThan(0);
   });
 
   it("sin pareja, Inicio en Yo sigue como en P0-1: sin «Tu parte compartida»", () => {
-    render(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" />);
+    wrap(<HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" />);
     expect(screen.queryByText(/Tu parte compartida/)).toBeNull();
   });
 });

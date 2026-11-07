@@ -52,6 +52,11 @@ export function useContextChoice() {
   return state;
 }
 
+/** PR C de la 003: el contexto de la app donde no siempre hay ContextProvider (pruebas de componentes, superficie interna). */
+export function useOptionalContextChoice() {
+  return useContext(ContextChoiceContext);
+}
+
 const options = [
   { value: "me", label: copy.context.me },
   { value: "us", label: copy.context.us },

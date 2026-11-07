@@ -4,6 +4,11 @@
 // el layout de producto, así que lo que tiene que sobrevivir a una navegación vive aquí y no en la página: el Toast con
 // «Deshacer», la fila resaltada de E5 y la hoja abierta. Cada apertura es una sesión de la hoja con su propia clave de
 // idempotencia, que nace al abrir y se reusa en cada reintento (FR-036); al cerrar, la siguiente apertura nace vacía.
+// PR C de la 003 (T045; FR-059–FR-062; contracts/server-actions.md §6): el proveedor lleva además la pareja activa para la
+// hoja (con lo último que usó la persona en Nosotros, en memoria), las escrituras compartidas, la edición de un compartido y
+// el diálogo de Mover a Pareja. Los avisos con «Deshacer» de gasto compartido y de Mover a Pareja viven aquí, uno por
+// operación: una respuesta tardía solo toca el suyo. El resaltado guarda su contexto y no se ve en el otro (FR-040). Al
+// volver a la pestaña se pide la página otra vez para traer lo que anotó la otra persona (Q16).
 import { AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -11,15 +16,19 @@ import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import type { ActionResult, ExpenseActions, PendingRow, SavedTransaction } from "./types";
-import type { CoupleForSheet, SavedShared, SharedActions } from "./shared-types";
+import type { CoupleForSheet, LastSplit, MoveResult, SavedShared, SharedActions } from "./shared-types";
 import type { ContextChoice } from "@/lib/context-preference";
+import { useOptionalContextChoice } from "@/components/shell/context-selector";
 import { newIdempotencyKey } from "./idempotency";
+import { lastFromSaved } from "./split-state";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
 // animación de salida y el retorno del foco.
 const loadSheet = () => import("./annotate-sheet");
 const AnnotateSheet = lazy(loadSheet);
+const loadMove = () => import("./reclassify-dialog");
+const MoveDialog = lazy(loadMove);
 
 // `N` escribe la letra en cualquier campo editable; solo fuera de ellos abre la hoja.
 function isEditable(target: EventTarget | null) {
@@ -38,7 +47,10 @@ function isShown(node: HTMLElement) {
   return true;
 }
 
-export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void };
+export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void }
+  | { kind: "editShared"; expense: SavedShared; onReload: () => void };
+/** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
+type Reveal = { id: string; transactionDate: string };
 type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction };
 type Notice = Omit<ToastState, "id">;
 
@@ -52,8 +64,13 @@ type AnnotateState = {
   actions: ExpenseActions;
   /** UX lote 1, cambio 3: oculta la hoja, enseña la fila al instante y envía; si falla, la hoja vuelve (ver `track`). */
   track: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
-  /** PR C (andamio de T047): editar un gasto compartido. */
+  /** PR C (T047): editar un gasto compartido con la versión leída. */
   openEditShared: (expense: SavedShared, trigger: HTMLElement | null, onReload: () => void) => void;
+  /** PR C (T050): Mover a Pareja de un privado propio (A1, o Editar → Nosotros). */
+  openMove: (transaction: SavedTransaction, trigger: HTMLElement | null) => void;
+  /** La pareja activa, o `null`: decide si hay Nosotros en la hoja y si hay «Mover a Pareja». */
+  couple: CoupleForSheet | null;
+  sharedActions: SharedActions | null;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -76,19 +93,35 @@ type AnnotateProviderProps = {
   actions: ExpenseActions;
   /** Hoy en Bogotá, que calcula el servidor; por defecto, el del dispositivo llevado a Bogotá. */
   today?: string;
-  /** PR C (andamio de T046): la pareja activa para la hoja, sus escrituras y el contexto de la app. */
+  /** PR C (T046): la pareja activa para la hoja (con lo último que usó la persona en Nosotros) y sus escrituras. */
   couple?: CoupleForSheet | null;
   sharedActions?: SharedActions;
+  /** El contexto de la app; por defecto, el del selector (ContextProvider). Las pruebas lo fijan aquí. */
   context?: ContextChoice;
 };
 
-export function AnnotateProvider({ children, actions, today }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, context }: AnnotateProviderProps) {
+  const appContext = useOptionalContextChoice();
+  const currentContext: ContextChoice = context ?? appContext?.value ?? "me";
+  // Q5, decisión 1: lo último que usó esta persona en Nosotros. Nace de lo que leyó el layout y se actualiza en memoria al
+  // guardar; nunca va al almacenamiento del navegador.
+  const [lastSplit, setLastSplit] = useState<LastSplit | null>(couple?.last ?? null);
+  const coupleForSheet = useMemo(() => (couple ? { members: couple.members, last: lastSplit } : null), [couple, lastSplit]);
+  const [moveTarget, setMoveTarget] = useState<{ transaction: SavedTransaction; key: string } | null>(null);
+  const moveTrigger = useRef<HTMLElement | null>(null);
+  const [highlight, setHighlight] = useState<{ id: string; context: ContextChoice } | null>(null);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<SheetMode>({ kind: "create" });
   const [sessionKey, setSessionKey] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const highlightId = highlight && highlight.context === currentContext ? highlight.id : null;
+  const setHighlightId = useCallback((next: string | null | ((current: string | null) => string | null), where: ContextChoice = "me") => {
+    setHighlight((current) => {
+      const value = typeof next === "function" ? next(current?.id ?? null) : next;
+      return value === null ? null : { id: value, context: typeof next === "function" ? (current?.context ?? where) : where };
+    });
+  }, []);
   const openRef = useRef(false);
   const returnFocusTo = useRef<HTMLElement | null>(null);
   // Cada aviso nuevo invalida las respuestas tardías del anterior (orden de respuestas).
@@ -96,7 +129,7 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   const undoing = useRef(new Set<string>());
   const router = useRouter();
   // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
-  const [reveal, setReveal] = useState<SavedTransaction | null>(null);
+  const [reveal, setReveal] = useState<Reveal | null>(null);
   // UX lote 1, cambio 3, simplificado por decisión de los fundadores (7 nov 2026). Cada creación en vuelo es una fila temporal
   // con estado propio, por su clave: una petición colgada no retrasa la retirada de otra (F51-8). Nada de esto se guarda en el
   // navegador: si se recarga la página, no queda rastro (el resultado desconocido se resuelve en la hoja, con «Reintentar»).
@@ -121,6 +154,7 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   }, []);
   const openFrom = useCallback((trigger: HTMLElement | null) => begin({ kind: "create" }, trigger), [begin]);
   const openEdit = useCallback((transaction: SavedTransaction, trigger: HTMLElement | null, onReload: () => void) => begin({ kind: "edit", transaction, onReload }, trigger), [begin]);
+  const openEditShared = useCallback((expense: SavedShared, trigger: HTMLElement | null, onReload: () => void) => begin({ kind: "editShared", expense, onReload }, trigger), [begin]);
 
   const close = useCallback(() => {
     openRef.current = false;
@@ -242,7 +276,72 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
     } else {
       notify({ tone: "error", message: copy.annotate.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undo(transaction, idempotencyKey) } });
     }
-  }; }, [notify, undo]);
+  }; }, [notify, undo, setHighlightId]);
+
+  // «Deshacer» de un gasto compartido recién anotado (FR-024): anula con `undo` y la versión de la creación; si el otro ya lo
+  // editó, el servidor responde con conflicto y no anula nada. La clave es una por aviso.
+  const sharedRef = useRef(sharedActions);
+  useEffect(() => { sharedRef.current = sharedActions; });
+  const undoSharedRef = useRef<(saved: SavedShared, idempotencyKey: string) => Promise<void>>(async () => {});
+  const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => undoSharedRef.current(saved, idempotencyKey), []);
+  useEffect(() => { undoSharedRef.current = async (saved: SavedShared, idempotencyKey: string) => {
+    const writes = sharedRef.current;
+    if (!writes || undoing.current.has(saved.id)) return;
+    undoing.current.add(saved.id);
+    const generation = toastGeneration.current;
+    setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
+    let result;
+    try {
+      result = await writes.voidShared({ idempotencyKey, transactionId: saved.id, expectedVersion: saved.version, reason: "undo" });
+    } catch {
+      result = { status: "unknown" as const };
+    }
+    undoing.current.delete(saved.id);
+    if (generation !== toastGeneration.current) return;
+    if (result.status === "ok") {
+      setHighlightId((current) => (current === saved.id ? null : current));
+      notify({ tone: "success", message: copy.annotate.undone.expense });
+    } else if (result.status === "rejected" && result.error === "versionConflict") {
+      notify({ tone: "error", message: copy.annotate.undoChanged });
+    } else if (result.status === "rejected" && (result.error === "alreadyDeleted" || result.error === "notFound")) {
+      setHighlightId((current) => (current === saved.id ? null : current));
+      notify({ tone: "error", message: copy.transaction.errors.alreadyDeleted });
+    } else if (result.status === "rejected" && result.error === "sessionExpired") {
+      notify({ tone: "error", message: copy.errors.sessionExpired });
+    } else {
+      notify({ tone: "error", message: copy.annotate.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undoShared(saved, idempotencyKey) } });
+    }
+  }; }, [notify, undoShared, setHighlightId]);
+
+  // «Deshacer» de Mover a Pareja (FR-034): operación propia con la versión del compartido; el servidor la rechaza si hubo una
+  // edición, una anulación o una liquidación después (JT117), y se explica.
+  const undoMoveRef = useRef<(result: MoveResult, idempotencyKey: string) => Promise<void>>(async () => {});
+  const undoMove = useCallback((result: MoveResult, idempotencyKey: string) => undoMoveRef.current(result, idempotencyKey), []);
+  useEffect(() => { undoMoveRef.current = async (result: MoveResult, idempotencyKey: string) => {
+    const writes = sharedRef.current;
+    if (!writes?.undoReclassify || undoing.current.has(result.shared.id)) return;
+    undoing.current.add(result.shared.id);
+    const generation = toastGeneration.current;
+    setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
+    let outcome;
+    try {
+      outcome = await writes.undoReclassify({ idempotencyKey, sharedTransactionId: result.shared.id, expectedVersion: result.shared.version });
+    } catch {
+      outcome = { status: "unknown" as const };
+    }
+    undoing.current.delete(result.shared.id);
+    if (generation !== toastGeneration.current) return;
+    if (outcome.status === "ok") {
+      setHighlightId((current) => (current === result.shared.id ? null : current));
+      notify({ tone: "success", message: copy.move.undone });
+    } else if (outcome.status === "rejected" && (outcome.error === "undoNotAvailable" || outcome.error === "versionConflict")) {
+      notify({ tone: "error", message: copy.move.errors.undoNotAvailable });
+    } else if (outcome.status === "rejected" && outcome.error === "sessionExpired") {
+      notify({ tone: "error", message: copy.errors.sessionExpired });
+    } else {
+      notify({ tone: "error", message: copy.move.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undoMove(result, idempotencyKey) } });
+    }
+  }; }, [notify, undoMove, setHighlightId]);
 
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
@@ -250,11 +349,50 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
       notify({ tone: "success", message: copy.annotate.saved.edit });
       return;
     }
-    setHighlightId(saved.id);
-    setReveal(saved);
+    setHighlightId(saved.id, "me");
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
-  }, [close, notify, undo]);
+  }, [close, notify, undo, setHighlightId]);
+
+  // E5 de un gasto compartido (02·5): la hoja se cierra, la fila nueva queda resaltada en Nosotros y el aviso ofrece
+  // «Deshacer» 6 s. La siguiente apertura recuerda lo que se usó (Q5).
+  const onSharedSaved = useCallback((saved: SavedShared, kind: "create" | "editShared") => {
+    close();
+    if (couple) setLastSplit(lastFromSaved(saved, couple.members));
+    if (kind === "editShared") {
+      notify({ tone: "success", message: copy.annotate.saved.edit });
+      return;
+    }
+    setHighlightId(saved.id, "us");
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message: copy.annotate.saved.expense, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
+  }, [close, couple, notify, undoShared, setHighlightId]);
+
+  // Mover a Pareja (T050). El diálogo vive aquí para que A4 (el aviso con «Deshacer» y el resaltado) sobreviva a la
+  // navegación; al confirmarse se pasa a Nosotros y se lleva a Actividad del mes del gasto, con la fila «movido desde Yo».
+  const openMove = useCallback((transaction: SavedTransaction, trigger: HTMLElement | null) => {
+    if (!couple || transaction.type !== "expense") return;
+    moveTrigger.current = trigger;
+    close();
+    setMoveTarget({ transaction, key: newIdempotencyKey() });
+  }, [close, couple]);
+  const onMoved = useCallback((result: MoveResult, message: string) => {
+    setMoveTarget(null);
+    appContext?.choose("us");
+    setHighlightId(result.shared.id, "us");
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message, action: { label: copy.annotate.undo, onAction: () => void undoMove(result, key) } });
+    router.push(`/actividad?mes=${result.shared.transactionDate.slice(0, 7)}`);
+  }, [appContext, notify, router, undoMove, setHighlightId]);
+
+  // Q16: sin tiempo real; al volver a la pestaña se pide la página otra vez para traer lo que anotó la otra persona.
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === "visible") router.refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [router]);
 
   // F45-2: E5 resalta la fila nueva «en la misma pantalla» (MOTION_SYSTEM.md §2). Si la pantalla no la enseña (otro
   // mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), se lleva a la persona a Actividad del mes del
@@ -297,8 +435,8 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const openEditShared = useCallback((expense: SavedShared, trigger: HTMLElement | null, onReload: () => void) => { void expense; void trigger; void onReload; }, []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, highlightId, notify, actions, track }), [open, openFrom, openEdit, openEditShared, highlightId, notify, actions, track]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track }),
+    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>
@@ -316,6 +454,24 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
             onSaved={onSaved}
             onTrack={track}
             returnFocusTo={returnFocusTo}
+            couple={coupleForSheet}
+            sharedActions={sharedActions}
+            initialContext={currentContext}
+            onSharedSaved={onSharedSaved}
+            onMove={(transaction) => openMove(transaction, returnFocusTo.current)}
+          />
+        </Suspense>
+      ) : null}
+      {moveTarget && coupleForSheet && sharedActions ? (
+        <Suspense fallback={null}>
+          <MoveDialog
+            key={moveTarget.key}
+            transaction={moveTarget.transaction}
+            idempotencyKey={moveTarget.key}
+            members={coupleForSheet.members}
+            actions={sharedActions}
+            onClose={() => { setMoveTarget(null); moveTrigger.current?.focus?.(); }}
+            onDone={onMoved}
           />
         </Suspense>
       ) : null}

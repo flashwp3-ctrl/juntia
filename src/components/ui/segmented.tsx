@@ -17,11 +17,13 @@ type SegmentedProps<T extends string> = {
   onValueChange: (value: T) => void;
   /** Ocupa todo el ancho con segmentos iguales. */
   stretch?: boolean;
+  /** PR C de la 003: el reparto se deshabilita con un solo participante (FR-019a). */
+  disabled?: boolean;
 };
 
 const knobClass = "absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised";
 
-export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false }: SegmentedProps<T>) {
+export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false, disabled = false }: SegmentedProps<T>) {
   const reduced = useReducedMotion();
   const knobId = `${useId()}-knob`;
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -40,7 +42,8 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
     <div
       role={role}
       aria-label={label}
-      className={`${stretch ? "flex" : "inline-flex"} rounded-[var(--radius-md)] bg-sunken p-[3px] shadow-[var(--comp-field-inset)]`}
+      aria-disabled={disabled || undefined}
+      className={`${stretch ? "flex" : "inline-flex"} rounded-[var(--radius-md)] bg-sunken p-[3px] shadow-[var(--comp-field-inset)] ${disabled ? "opacity-60" : ""}`}
     >
       {options.map((option, index) => {
         const selected = option.value === value;
@@ -56,6 +59,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
             aria-checked={role === "radiogroup" ? selected : undefined}
             aria-selected={role === "tablist" ? selected : undefined}
             tabIndex={selected ? 0 : -1}
+            disabled={disabled}
             onClick={() => onValueChange(option.value)}
             onKeyDown={(event) => move(event, index)}
             className={`relative isolate inline-flex min-h-[38px] min-w-[44px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} text-ink after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}

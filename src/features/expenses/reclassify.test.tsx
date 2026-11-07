@@ -141,7 +141,7 @@ describe("A5 en sus dos variantes (US-8.8, US-8.9; F47-4)", () => {
     await toPreview(user);
     await user.click(screen.getByRole("button", { name: copy.move.confirm }));
     expect(await screen.findByText(copy.move.rejected("Farmacia Pasteur"))).toBeTruthy();
-    expect(screen.getByRole("button", { name: copy.annotate.close })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: copy.annotate.close }).length).toBeGreaterThan(0);
   });
 
   it("resultado desconocido: nunca afirma que no se movió; Reintentar idéntico y Comprobar estado con completed lleva a A4", async () => {

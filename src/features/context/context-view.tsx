@@ -8,15 +8,20 @@
 // - Si la elección del dispositivo no coincide con lo que pintó el servidor (cookie de otra pestaña, enlace precargado
 //   en el otro contexto), se reescribe la cookie y se pide la página otra vez; mientras tanto, Yo enseña `pending`.
 //   Nosotros nunca enseña lo que trajo una respuesta de Yo.
+// PR C de la 003 (T048; FR-037–FR-040): con la pareja activa, Nosotros tiene datos. `us` es lo que el servidor construyó
+// para Nosotros y solo se enseña si el servidor pintó Nosotros (cookie `us` y membresía activa comprobada); si no (cookie
+// ausente, no válida o de Yo), Nosotros enseña su Skeleton hasta que llega el RSC nuevo, nunca cifras del otro contexto.
+// Sin pareja activa, Nosotros sigue «todavía no disponible», que no tiene datos.
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import { useContextChoice } from "@/components/shell/context-selector";
 import { UsUnavailable } from "./us-unavailable";
+import { useAccount } from "@/features/account/account-context";
 import { writeContextCookie, type ContextChoice } from "@/lib/context-preference";
 
-type ContextViewProps = { me: ReactNode; server: ContextChoice | null; pending?: ReactNode; us?: ReactNode };
+type ContextViewProps = { me: ReactNode; server: ContextChoice | null; pending?: ReactNode; us?: ReactNode; usPending?: ReactNode };
 
-export function ContextView({ me, server, pending = null, us }: ContextViewProps) {
+export function ContextView({ me, server, pending = null, us, usPending }: ContextViewProps) {
   const { value, hydrated } = useContextChoice();
   const router = useRouter();
   const asked = useRef<ContextChoice | null>(null);
@@ -26,7 +31,10 @@ export function ContextView({ me, server, pending = null, us }: ContextViewProps
     writeContextCookie(value);
     router.refresh();
   }, [hydrated, value, server, router]);
-  const unavailable = us ?? <UsUnavailable />;
+  const active = useAccount()?.couple === "active";
+  // Lo que el servidor construyó para Nosotros solo vale si el servidor pintó Nosotros; si no, el Skeleton (o, sin pareja,
+  // el estado sin datos).
+  const unavailable = server === "us" ? (us ?? <UsUnavailable />) : active ? (usPending ?? pending) : <UsUnavailable />;
   if (!hydrated) {
     if (server === "us") return <div key="us">{unavailable}</div>;
     return (

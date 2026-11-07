@@ -11,6 +11,9 @@ import type { SharedTransaction } from "@/lib/db/types";
 import { ActivityFiltersProvider } from "./activity-filters";
 import { CoupleActivityView, type CoupleSettlementView } from "./couple-activity-view";
 import { SharedDetail } from "./shared-detail";
+import { AnnotateProvider } from "@/features/expenses/annotate-provider";
+
+const idle = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
 
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/actividad" }));
@@ -21,9 +24,9 @@ const settlements: CoupleSettlementView[] = [{ ...settlementOctober25, note: nul
 
 function view(props: Partial<Parameters<typeof CoupleActivityView>[0]> = {}) {
   return render(
-    <ActivityFiltersProvider>
+    <AnnotateProvider actions={idle}><ActivityFiltersProvider>
       <CoupleActivityView expenses={expenses} settlements={settlements} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: "2026-11" }} members={members} {...props} />
-    </ActivityFiltersProvider>,
+    </ActivityFiltersProvider></AnnotateProvider>,
   );
 }
 
@@ -74,7 +77,7 @@ describe("Actividad en Nosotros (US-3.4)", () => {
 describe("Detalle de un gasto compartido (04·1 DETALLE, panel de 04·7)", () => {
   it("«A quién le corresponde» con la parte de cada uno, «Anotado por Sara · pagó Tomás» y «Editado por»", () => {
     const row = { ...expenses[1], createdBy: "sara", updatedBy: "tomas", version: 2, updatedAt: "2026-10-20T15:00:00.000Z" };
-    render(<SharedDetail expense={row} members={members} closeHref="/actividad?mes=2026-10" />);
+    render(<AnnotateProvider actions={idle}><SharedDetail expense={row} members={members} closeHref="/actividad?mes=2026-10" /></AnnotateProvider>);
     const owed = screen.getByRole("region", { name: copy.shared.detail.owed });
     expect(within(owed).getByText("Sara")).toBeTruthy();
     expect(within(owed).getAllByText("$226.800")).toHaveLength(2);
@@ -83,7 +86,7 @@ describe("Detalle de un gasto compartido (04·1 DETALLE, panel de 04·7)", () =>
   });
 
   it("un gasto movido desde Yo lo dice a su autora", () => {
-    render(<SharedDetail expense={{ ...expenses[0], movedFromMe: true }} members={members} closeHref="/actividad?mes=2026-10" />);
+    render(<AnnotateProvider actions={idle}><SharedDetail expense={{ ...expenses[0], movedFromMe: true }} members={members} closeHref="/actividad?mes=2026-10" /></AnnotateProvider>);
     expect(screen.getByText(copy.move.movedFromMe)).toBeTruthy();
   });
 });

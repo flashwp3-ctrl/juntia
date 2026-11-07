@@ -14,20 +14,29 @@ import { loadAccount } from "@/features/account/load-account";
 import { InvitationReturn } from "@/features/couple/invitation-return";
 import { loadCoupleForShell, partnerOf, personOf } from "@/features/couple/load";
 import { createTransactionAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
+import { createSharedExpenseAction, previewMoveAction, reclassifyAction, sharedWriteStatusAction, undoReclassifyAction, updateSharedExpenseAction, voidSharedExpenseAction } from "@/features/expenses/shared-actions";
+import { loadCoupleForSheet } from "@/features/couple/shared-load";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
 import { todayInBogota } from "@/domain/transactions";
 
 const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
+// PR C de la 003 (T045–T050): escrituras de gasto compartido y de Mover a Pareja, con los tres resultados y «Comprobar estado».
+const sharedActions = {
+  create: createSharedExpenseAction, update: updateSharedExpenseAction, voidShared: voidSharedExpenseAction, check: sharedWriteStatusAction,
+  reclassify: reclassifyAction, undoReclassify: undoReclassifyAction, previewMove: previewMoveAction,
+};
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const [account, couple] = await Promise.all([loadAccount(), loadCoupleForShell()]);
   if (!account) redirect("/entrar");
   if (!account.profile.firstEntryCompleted) redirect("/primera-entrada");
+  // La pareja activa para la hoja de Anotar y Mover a Pareja, con lo último que usó esta persona en Nosotros (Q5).
+  const sheetCouple = await loadCoupleForSheet(couple?.status === "active" ? couple.members.map(({ userId, name, joinOrder, isMe }) => ({ userId, name, joinOrder, isMe })) : null);
   return (
     <AccountProvider displayName={account.profile.displayName} theme={account.profile.theme} person={personOf(couple)} partnerName={partnerOf(couple)} couple={couple?.status ?? null}>
       <InvitationReturn />
       <ContextProvider>
-        <AnnotateProvider actions={actions} today={todayInBogota()}>
+        <AnnotateProvider actions={actions} today={todayInBogota()} couple={sheetCouple} sharedActions={sharedActions}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

@@ -82,7 +82,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
         await expect(page.getByRole("dialog")).toHaveCount(0);
 
         await page.goto(`/actividad?mes=${month()}`);
-        await expect(page.getByText("Carulla Laureles").first()).toBeVisible();
+        await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();
         await axe(page, label("Actividad en Nosotros"));
 
         const detail = `/actividad/${shared[5].id}?mes=${month()}`;
@@ -147,7 +147,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     await sweep(page, "Inicio en Nosotros");
     await largeText(page, "Inicio en Nosotros");
     await page.goto(`/actividad?mes=${month()}`);
-    await expect(page.getByText("Carulla Laureles").first()).toBeVisible();
+    await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();
     await sweep(page, "Actividad en Nosotros");
     await largeText(page, "Actividad en Nosotros");
     await page.goto("/");
@@ -169,7 +169,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
 
     const me = await signedContext(browser, baseURL!, pair.sara, "light", "me");
     await me.page.goto("/");
-    await expect(me.page.getByText(copy.home.sharedPart)).toBeVisible();
+    await expect(me.page.getByText(copy.home.sharedPart).filter({ visible: true })).toBeVisible();
     await sweep(me.page, "Yo con la parte compartida");
     await largeText(me.page, "Yo con la parte compartida");
     await me.page.goto(`/actividad/${pharmacy.id}?mes=${month()}`);
@@ -200,25 +200,34 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     await target44(page, new RegExp(`^${copy.shared.summary.open}`));
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: copy.shared.split.title })).toBeVisible();
-    await expect(page.getByRole("radiogroup", { name: copy.shared.split.payer }).getByRole("radio", { name: /Sara/ })).toBeFocused();
+    // El foco en «Pagó», en quien pagó la última vez (Q5: aquí Tomás, que pagó el último gasto sembrado).
+    const payer = page.getByRole("radiogroup", { name: copy.shared.split.payer });
+    await expect(payer.getByRole("radio", { checked: true })).toBeFocused();
+    const before = await payer.getByRole("radio", { checked: true }).innerText();
     // Pagó con flechas.
     await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("radiogroup", { name: copy.shared.split.payer }).getByRole("radio", { name: /Tomás/ })).toHaveAttribute("aria-checked", "true");
+    await expect(payer.getByRole("radio", { checked: true })).not.toHaveText(before);
     // Modos de reparto con flechas: 50/50 → Porcentaje.
     await tabTo(page, copy.shared.mode.equal);
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("radio", { name: copy.shared.mode.percent })).toHaveAttribute("aria-checked", "true");
     for (const name of [copy.shared.mode.equal, copy.shared.mode.percent, copy.shared.mode.amount]) await target44(page, name, "radio");
     // Porcentaje: teclear 60 y 40.
-    await tabTo(page, copy.shared.split.percentOf("Sara"));
+    await tabTo(page, new RegExp(`^${copy.shared.split.percentOf("Sara")}`));
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("60");
-    await tabTo(page, copy.shared.split.percentOf("Tomás"));
+    // Del campo de Sara: Tab a la casilla de Tomás y Tab a su campo.
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("checkbox", { name: /^Tomás/ })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("textbox", { name: copy.shared.split.percentOf("Tomás") })).toBeFocused();
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("40");
     await target44(page, copy.shared.split.percentOf("Sara"), "textbox");
     // Participantes: Espacio en la casilla de Tomás la quita y la vuelve a poner.
-    await tabTo(page, new RegExp(`^Tomás`));
+    // Del campo de Tomás, Shift+Tab vuelve a su casilla.
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.getByRole("checkbox", { name: /^Tomás/ })).toBeFocused();
     await target44(page, /^Tomás/, "checkbox");
     await page.keyboard.press("Space");
     await expect(page.getByText(copy.shared.split.singleNote("Sara"))).toBeVisible();
@@ -226,7 +235,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     // Importe: el modo y un campo.
     await page.getByRole("radio", { name: copy.shared.mode.amount }).focus();
     await page.keyboard.press("Enter");
-    await tabTo(page, copy.shared.split.amountOf("Sara"));
+    await tabTo(page, new RegExp(`^${copy.shared.split.amountOf("Sara")}`));
     await target44(page, copy.shared.split.amountOf("Sara"), "textbox");
     // Escape vuelve al resumen; Guardar con Enter desde el monto.
     await page.keyboard.press("Escape");
