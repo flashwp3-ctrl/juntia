@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 // Control negativo del [V] de tema (spec 002, research R7). /control aplica la cookie juntia_theme_ctl en un
 // useEffect, después de hidratar: con el sistema en claro y la cookie en oscuro DEBE pintar primero claro y
 // después oscuro. Si el detector no viera esas dos fases, no probaría nada sobre el script bloqueante.
-const BASE = process.env.BASE_URL ?? "http://localhost:3200";
+const BASE = process.env.BASE_URL ?? process.env.BASE ?? "http://localhost:3400";
 const LIGHT = [247, 243, 235]; // surface.canvas claro
 const DARK = [18, 20, 22]; // surface.canvas oscuro
 // Superficie del navegador antes del documento (blanca con el sistema en claro).

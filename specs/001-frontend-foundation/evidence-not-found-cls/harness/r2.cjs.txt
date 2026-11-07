@@ -2,7 +2,7 @@
 // descarga fuera de la red emulada y anula la limitación de CPU y red de R2.
 const fs=require('node:fs');
 const root=process.cwd();const req=require('node:module').createRequire(root+'/package.json');const {chromium}=req('playwright');const sharp=req('sharp');
-const out=root+'/specs/001-frontend-foundation/evidence/';const product=['/','/actividad','/metas','/plan','/balance','/cuenta','/ruta-que-no-existe'];const routes=[...product,'/interno/primitivos'];const base=process.env.BASE||'http://localhost:3100';const ITER=+(process.env.ITER||1);
+const out=root+'/specs/001-frontend-foundation/evidence/';const product=['/','/actividad','/metas','/plan','/balance','/cuenta','/ruta-que-no-existe'];const routes=[...product,'/interno/primitivos'];const base=process.env.BASE||'http://localhost:3400';const ITER=+(process.env.ITER||1);
 const log=(kind,data)=>console.log(kind+' '+JSON.stringify(data));
 async function ready(p){await p.evaluate(()=>document.fonts.ready);await p.locator('[data-context-selector][data-hydrated]').first().waitFor({state:'attached'}).catch(()=>{});}
 (async()=>{const browser=await chromium.launch();
