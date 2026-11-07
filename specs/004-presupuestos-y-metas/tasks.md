@@ -43,7 +43,7 @@ Se enuncian una vez. Una tarea que las incumpla no está terminada.
 1. **Pruebas primero y en rojo** (`docs/TESTING.md` §6). Unitarias, pgTAP, integración, E2E y a11y se escriben **antes** que el código que prueban, se ven fallar **contra `juntia-dev`** (o en local, las de dominio y componentes) y solo después se escribe el código. Cada test copia como comentario el criterio literal que cubre, con su referencia. En pgTAP la identidad se fija solo con `set local role …` y `set local "request.jwt.claims" = '…'`.
 2. **Iterar contra `juntia-dev`, nunca contra el CI** (decisión 18; [contracts/ci.md](contracts/ci.md)): `npm run db:dev:reset`, `npm run test:db:dev`, `npm run test:integration:dev` y `npm run e2e:dev`, con su guardia y su **lock**; un solo agente a la vez; si otra sesión tiene el lock, se espera y nunca se fuerza un lock ajeno. **Solo las pruebas afectadas** mientras se itera (`npm run e2e:dev -- tests/e2e/<archivo>.e2e.ts`, `-- tests/a11y/<archivo>.a11y.ts`, `--grep`, `--only-changed`) y **`npm run e2e:dev` completo una vez, justo antes del push final** de cada PR.
 3. **CI: una sola pasada por PR, la de marcarlo listo** (`ready_for_review`), que lanza el **gestor** después de la revisión de ChatGPT con el PR en borrador. **Ninguna pasada manual** salvo el **único punto de control del PR A** (T024, justificado en la interpretación I1). Las correcciones de una revisión se juntan en **un solo push** (`AGENTS.md` 15a). Nada de runners ni workflows para spikes ni verificaciones.
-4. **Toda evidencia de un `[V]` sale del CI** sobre el commit que se fusiona, nunca de `juntia-dev` (ADR-011 §9.8); `juntia-dev` sirve para iterar.
+4. **Las verificaciones automatizadas acreditan su resultado en CI** sobre el commit que se fusiona, nunca en `juntia-dev` (ADR-011 §9.8); `juntia-dev` sirve para iterar. **Las verificaciones humanas o de laboratorio** (T052 View Transitions, T054 rendimiento de GoalStack, los umbrales de §15.7, la revisión visual) dejan en `evidence.md` una **salida reproducible** —qué se ejecutó, con qué versión, navegador o dispositivo, comandos y resultado— y **no se atribuyen a un runner**.
 5. **Migraciones nuevas, nunca editar las aplicadas** en producción; las funciones de la 002 y la 003 se redefinen con `create or replace` en una migración nueva (data-model §6).
 6. **Importes nunca como `number`** (FR-005; ADR-013 §4). **Ningún camino que atiende a una persona usa `service_role`** (FR-006). **El servidor recalcula toda cifra de dinero** (FR-090).
 7. **Escrituras en el cliente** (FR-093–FR-095; [contracts/server-actions.md](contracts/server-actions.md)): `ok` / `rejected` / `unknown`, **15 s**, «Comprobar estado» con `write_status`, **nada en `localStorage`, `sessionStorage` ni IndexedDB**, y **un solo «Deshacer» pendiente** con la máquina de la 003.
@@ -63,7 +63,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 | --- | --- | --- | --- |
 | I1 | T024 | El plan nombra **dos** puntos de control de CI en el PR A (tras las tablas y tras `goal_funding`). Se **juntan en uno**, después de las cuatro migraciones y antes de la interfaz del dominio en `src/lib/db/`. Se conserva uno porque el job `db` comprueba lo que `juntia-dev` no puede: `db:types:check`, el ensayo de restauración, los controles negativos de §9.6 y el Supabase limpio del runner (la propiedad de las funciones de extensiones, F40-2, ya difirió entre los dos). Fallar ahí a mitad de PR es más barato que fallar en el gate final, que también es un run completo | Regla del gestor (mínimo de CI); `docs/TESTING.md` §2 |
 | I2 | T039, T056 | El plan pide en los PR B y C un `gh workflow run` «al nacer la spec» para medir el job `e2e`. **No se lanza**: la medición se hace con la pasada `ready_for_review` (el gate), que ya corre el job completo. Si supera 480 s, el PR no se fusiona y se aplica la mitigación de [contracts/ci.md](contracts/ci.md) en orden (a → b → c) | Regla del gestor: ninguna pasada manual fuera del PR A |
-| I3 | T020 | La generalización del paginador (F64-4) va en el PR A, con las listas nuevas, y mantiene las llamadas de la 002 y la 003 sin cambios de comportamiento | contracts/server-actions.md §5 |
+| I3 | T010 | La generalización del paginador (F64-4) va en el PR A, con las listas nuevas, y mantiene las llamadas de la 002 y la 003 sin cambios de comportamiento | contracts/server-actions.md §5 |
 | I4 | T076 | La exportación cambia de **contenido** en el PR A (servidor, FR-080 y FR-081) y en el PR E solo se comprueba que la descarga de la spec 1 sigue y se aprueba el texto de «qué incluye» de la hoja de Exportar | plan, PR A y PR E |
 | I5 | T011 | El arreglo de la prueba intermitente de la 003 va en el PR A por encargo del gestor (primer PR de código posterior); no cambia comportamiento | Nota del gestor; run 42392865487 del PR #58 |
 
@@ -177,7 +177,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
   - Prueba / terminado cuando: ningún campo de importe es `number` en los tipos generados de `public` (prueba existente ampliada).
 
 - [ ] T020 Siembra de la parte P0-3 del dataset **por SQL** dentro de `seedCouple()` (`tests/e2e/fixtures.ts`, `tests/integration/support/`), una vez por worker, con la opción de dataset dorado como en la 003
-  - Cumple: FR-117; `docs/TESTING.md` §5, reglas 1 y 2; interpretación I3.
+  - Cumple: FR-117; `docs/TESTING.md` §5, reglas 1 y 2.
   - Itera: `npm run test:integration:dev` (la prueba de `seed.test.ts` ampliada: dos workers no se ven las metas ni los presupuestos).
   - Prueba / terminado cuando: el aislamiento entre workers se cumple también para lo nuevo.
 
@@ -209,7 +209,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 - [ ] T027 **Humana (gestor)**: marcar el PR A como listo (la única pasada del gate), comprobar el job `db` y `e2e` verdes en el último commit, y pedir el merge a la dueña
   - Cumple: criterios de salida del PR A; regla 3.
 
-- [ ] T028 **Humana (gestor, con el «sí» de un fundador antes de cada paso)**: aplicar las cuatro migraciones a producción desde un worktree desechable (dry-run, `migration list`, etiqueta), con la copia de la decisión 19.3 primero si ya hay datos reales
+- [ ] T028 **Humana (gestor, con el «sí» de un fundador antes de cada paso)**: aplicar las cuatro migraciones a producción **solo después del merge confirmado del PR A** y de comprobar que `main` contiene **exactamente** las cuatro migraciones revisadas (`git log` del merge y `supabase/migrations/` frente al diff aprobado), desde un worktree desechable (dry-run, `migration list`, etiqueta), con el «sí» de un fundador antes de cada paso de escritura y la copia de la decisión 19.3 primero si ya hay datos reales
   - Cumple: regla 14; patrón de T029 de la 003.
   - Prueba / terminado cuando: `migration list` en producción coincide con `main`, salida en `evidence.md`.
 
@@ -219,26 +219,28 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 
 **Purpose**: Plan en Yo y Nosotros con BudgetIndicator, la hoja de presupuesto, el historial y el conflicto de versión; **nace la spec E2E 5**; el **selector de specs por área** y, si T023 lo permite, los workers del job `e2e` con las dos pasadas de `@serial`. Corren las specs existentes que diga el selector (en este PR, por tocar el workflow: 1, 2, 3 y 5, con la 4 anotada como «todavía no existe»).
 
-### Grupo 2A — tests primero (`[P]` entre sí)
+### Grupo 2A — tests primero (escribirlas puede ir `[P]`; ejecutarlas, en T032a)
 
-- [ ] T029 [P] [US1] [US2] Tests de **componentes** en `src/features/plan/`: BudgetIndicator (dentro, cerca, excedido con rayado e ícono, consumo 0 con «Quedan $X · 0 %», **sin presupuesto nunca dice 0 %**), la hoja (límite no válido, `unknown` con campos bloqueados y «Comprobar estado», conflicto «{nombre} cambió este presupuesto» con el valor vigente), el historial (autor, fecha, anterior y nuevo) y Plan sin presupuesto (sin «$0», «excedido», «te alcanza»)
-  - Cumple: FR-015–FR-018, FR-020, FR-093, FR-100; FR-113; US-1 escenarios 1–5; US-2 escenarios 2, 6 y 7.
+- [ ] T029 [P] [US1] [US2] Tests de **componentes** en `src/features/plan/`: BudgetIndicator (dentro, cerca, excedido con rayado e ícono, consumo 0 con «Quedan $X · 0 %», **sin presupuesto nunca dice 0 %**), la hoja (límite no válido, `unknown` con campos bloqueados y «Comprobar estado», conflicto «{nombre} cambió este presupuesto» con el valor vigente), el historial (autor, fecha, anterior y nuevo) Plan sin presupuesto (sin «$0», «excedido», «te alcanza») y los **iconos del mapa semántico** por su identificador exacto en `AppIcon`: `chart-pie-slice` (Plan), `warning` (cerca del límite) y `warning-circle` (excedido), siempre con texto
+  - Cumple: FR-015–FR-018, FR-020, FR-093, FR-100, FR-103; FR-113; US-1 escenarios 1–5; US-2 escenarios 2, 6 y 7.
 
-- [ ] T030 [P] [US2] **Spec E2E 5** `tests/e2e/budgets.e2e.ts`, en rojo contra `juntia-dev`: crear Restaurantes en Nosotros, editar con conflicto entre Sara y Tomás (dos `storageState`), desactivar y volver a «sin presupuesto»; HTML, RSC y prefetch de Plan en Nosotros sin presupuestos personales de ninguno
+- [ ] T030 [P] [US2] Escribir la **spec E2E 5** `tests/e2e/budgets.e2e.ts`: crear Restaurantes en Nosotros, editar con conflicto entre Sara y Tomás (dos `storageState`), desactivar y volver a «sin presupuesto»; HTML, RSC y prefetch de Plan en Nosotros sin presupuestos personales de ninguno
   - Cumple: FR-114 (spec 5); FR-085; US-2.
-  - Itera: `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`.
 
-- [ ] T031 [P] **a11y** `tests/a11y/plan.a11y.ts`: nivel ligero (Plan en Yo y Nosotros, con y sin presupuesto, la hoja, el conflicto, el historial; 390 px, dos temas) y `@sweep` (siete anchos, 200 %, teclado, 44 px), en rojo
+- [ ] T031 [P] Escribir **a11y** `tests/a11y/plan.a11y.ts`: nivel ligero (Plan en Yo y Nosotros, con y sin presupuesto, la hoja, el conflicto, el historial; 390 px, dos temas) y `@sweep` (siete anchos, 200 %, teclado, 44 px)
   - Cumple: FR-101, FR-102; FR-115.
-  - Itera: `npm run e2e:dev -- tests/a11y/plan.a11y.ts`.
 
 - [ ] T032 [P] Tests del **selector** de specs (prueba de `scripts/`, como la del guardia): las fixtures de [contracts/ci.md](contracts/ci.md) (PR B con y sin selector, C, D, E, exportación aislada, Anotar aislado, `src/components/`, solo documentación, sin clasificar, base ausente) y la regla de **specs que todavía no existen** (no se pasan; el resumen las anota)
   - Cumple: F64-5.
 
+- [ ] T032a **Ejecutar en rojo** contra `juntia-dev`, **en serie y bajo el lock** (sin `[P]`: comparten servidor, puerto y siembra), las pruebas escritas en T030 y T031: `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` y después `npm run e2e:dev -- tests/a11y/plan.a11y.ts`
+  - Cumple: regla 1; regla 2.
+  - Prueba / terminado cuando: cada prueba falla por la ausencia de la funcionalidad (no por la siembra ni por el entorno), con la salida en `evidence.md`.
+
 ### Grupo 2B — implementación (en serie: comparten `es.ts` y el shell)
 
 - [ ] T033 [US1] [US2] Plan en `src/app/(app)/plan/page.tsx` y `src/features/plan/`: resumen del mes, presupuestos con BudgetIndicator, categorías con gasto y sin presupuesto («$X · sin presupuesto · Crear»), texto de presupuestos opcionales, «Último cambio», lecturas de `budget_months` por `context` sin consultar nada personal en Nosotros
-  - Cumple: FR-017, FR-018, FR-020, FR-085–FR-087; US-1, US-2.
+  - Cumple: FR-017, FR-018, FR-020, FR-085–FR-087, FR-103 (`chart-pie-slice`, `warning`, `warning-circle`); US-1, US-2.
   - Itera: componentes de T029 y `e2e:dev -- tests/e2e/budgets.e2e.ts`.
 
 - [ ] T034 [US2] Hoja de presupuesto (crear, editar, desactivar) con la máquina de escritura de la 003: clave al abrir, 15 s, `unknown`, «Comprobar estado», nada en el navegador, un solo «Deshacer»; conflicto `JT011` y `JT219` con «Revisar»
@@ -257,7 +259,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 - [ ] T038 Capturas de 390 y 1440 px en los dos temas (Plan en Yo y Nosotros, con y sin presupuesto, hoja, conflicto, historial) y pasada de Impeccable; evidencia «PR B»
   - Cumple: SC-001; plan, paso fijo de B a E.
 
-- [ ] T039 **Humana (gestor)**: lanzar el **barrido completo de accesibilidad** (`@sweep`, decisión 21.2) y marcar el PR listo (gate, que mide el job `e2e`, I2); si el job pasa de 480 s, no se fusiona y se aplica la mitigación en orden
+- [ ] T039 **Humana (gestor)**: lanzar el **barrido completo de accesibilidad** (`@sweep`, decisión 21.2): una **pasada especializada, distinta del gate**, que corre solo el proyecto a11y con «Run workflow» y la entrada del barrido, porque este PR añade o cambia el diseño de pantallas. **No es una segunda pasada del gate.** Después, marcar el PR listo (la única pasada del gate, que mide el job `e2e`, I2); si el job pasa de 480 s, no se fusiona y se aplica la mitigación en orden
   - Cumple: SC-002; FR-115, FR-116; decisión 19.5.
 
 - [ ] T040 **Humana (gestor, laboratorio)**: CLS = 0 en la carga con Skeleton de Plan; reportado como laboratorio
@@ -272,28 +274,31 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 
 **Purpose**: Metas en Yo y Nosotros, GoalStack, GoalCard con el fallback, la meta inmersiva con Goal Journey, crear, editar, lograr y archivar, aportes, retiros, anulaciones, historial, ritmo, Inicio y Actividad; **nace la spec E2E 4**. Corren las specs 1, 2, 3 y 4.
 
-### Grupo 3A — tests primero (`[P]` entre sí)
+### Grupo 3A — tests primero (escribirlas puede ir `[P]`; ejecutarlas, en T044a)
 
-- [ ] T042 [P] [US4] [US5] [US6] [US9] Tests de **componentes** en `src/features/goals/`, `src/features/home/` y `src/features/activity/`: GoalCard (fallback por `goal_type`, «Lo lograron» como sugerencia, excedente neutro), GoalStack (0, 1, 2, 3 y más; «Ver todas» siempre; lista para lector de pantalla), Registrar aporte (**sin «¿Quién aporta?»**, vista previa 11.840.000 · 65 %, modo y fecha nunca futura), Retirar (máximo, motivo), **la fila de retiro nunca se presenta como ingreso** (signo, ficha, etiqueta), historial (anulados marcados, filtros por persona), Metas en Yo separadas por `goal_scope` sin sumar compartidas en el total personal, el **deshacer único** con tres orígenes, Inicio con «Apartado para metas» aparte del héroe, y la inmersiva con movimiento reducido
-  - Cumple: FR-032–FR-037, FR-040–FR-044, FR-070, FR-071, FR-076, FR-095, FR-100; FR-113; US-4, US-5, US-6, US-9.
+- [ ] T042 [P] [US4] [US5] [US6] [US9] Tests de **componentes** en `src/features/goals/`, `src/features/home/` y `src/features/activity/`: GoalCard (fallback por `goal_type`, «Lo lograron» como sugerencia, excedente neutro), GoalStack (0, 1, 2, 3 y más; «Ver todas» siempre; lista para lector de pantalla), Registrar aporte (**sin «¿Quién aporta?»**, vista previa 11.840.000 · 65 %, modo y fecha nunca futura), Retirar (máximo, motivo), **la fila de retiro nunca se presenta como ingreso** (signo, ficha, etiqueta), historial (anulados marcados, filtros por persona), Metas en Yo separadas por `goal_scope` sin sumar compartidas en el total personal, el **deshacer único** con tres orígenes, Inicio con «Apartado para metas» aparte del héroe, la inmersiva con movimiento reducido, y los **iconos del mapa semántico** por su identificador exacto en `AppIcon`: `flag-banner` (Metas y su vacío), `piggy-bank` (aportar), `arrow-u-up-left` (retirar) y `flag-checkered` (meta lograda)
+  - Cumple: FR-032–FR-037, FR-040–FR-044, FR-070, FR-071, FR-076, FR-095, FR-100, FR-103; FR-113; US-4, US-5, US-6, US-9.
 
-- [ ] T043 [P] [US4] [US5] [US6] **Spec E2E 4** `tests/e2e/goals.e2e.ts`, en rojo: crear una meta compartida, aportar y comprobar que el número héroe de Inicio no cambia, retirar; HTML, RSC y prefetch de Metas en Nosotros sin metas personales
+- [ ] T043 [P] [US4] [US5] [US6] Escribir la **spec E2E 4** `tests/e2e/goals.e2e.ts`: crear una meta compartida, aportar y comprobar que el número héroe de Inicio no cambia, retirar; HTML, RSC y prefetch de Metas en Nosotros sin metas personales
   - Cumple: FR-114 (spec 4); FR-085.
-  - Itera: `npm run e2e:dev -- tests/e2e/goals.e2e.ts`.
 
-- [ ] T044 [P] **a11y** `tests/a11y/goals.a11y.ts`: ligero (Metas vacío y con metas en Yo y Nosotros, inmersiva, hojas de meta, aporte, retiro, historial, error) y `@sweep`, en rojo
+- [ ] T044 [P] Escribir **a11y** `tests/a11y/goals.a11y.ts`: ligero (Metas vacío y con metas en Yo y Nosotros, inmersiva, hojas de meta, aporte, retiro, historial, error) y `@sweep`
   - Cumple: FR-101, FR-102; FR-115.
+
+- [ ] T044a **Ejecutar en rojo** contra `juntia-dev`, **en serie y bajo el lock** (sin `[P]`: comparten servidor, puerto y siembra), las pruebas escritas en T043 y T044: `npm run e2e:dev -- tests/e2e/goals.e2e.ts` y después `npm run e2e:dev -- tests/a11y/goals.a11y.ts`
+  - Cumple: regla 1; regla 2.
+  - Prueba / terminado cuando: cada prueba falla por la ausencia de la funcionalidad (no por la siembra ni por el entorno), con la salida en `evidence.md`.
 
 ### Grupo 3B — implementación (en serie)
 
 - [ ] T045 [US4] Metas en `src/app/(app)/metas/page.tsx` y `src/features/goals/`: una consulta de `goals_overview` y `goals_totals` por pantalla (Nosotros `shared`; Yo todas, separadas por `goal_scope`), GoalStack con pila y abanico desde lg (aprobado en su forma, decisión 22.2), GoalCard con el fallback y los siete `goal_type` (aprobados, decisión del plan 3), estados vacío y de error
-  - Cumple: FR-035, FR-036; FR-085–FR-087; US-4.
+  - Cumple: FR-035, FR-036; FR-085–FR-087; FR-103 (`flag-banner`, `flag-checkered`); US-4.
 
 - [ ] T046 [US4] Hojas de crear, editar, «Dar por lograda» y archivar meta, con la máquina de escritura (15 s, `unknown`, `write_status`, nada en el navegador)
   - Cumple: FR-030–FR-033, FR-093, FR-094.
 
 - [ ] T047 [US5] [US6] Registrar aporte, Retirar, «Deshacer» de 6 s y «Anular aporte» desde el historial, con el deshacer único de la 003
-  - Cumple: FR-040–FR-042, FR-095, FR-098.
+  - Cumple: FR-040–FR-042, FR-095, FR-098; FR-103 (`piggy-bank`, `arrow-u-up-left`).
 
 - [ ] T048 [US5] Historial de una meta con filtros por persona, leído con el paginador generalizado
   - Cumple: FR-043, FR-096.
@@ -307,11 +312,11 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 ### Grupo 3C — salida
 
 - [ ] T051 Iterar hasta verde T042–T044; `npm run e2e:dev` completo una vez y `npm run verify` antes del push final
-- [ ] T052 **[V] View Transitions con App Router** (§15.6.2 punto 1): comprobar Goal Journey con y sin la API (respaldo `layoutId`) en Chromium y WebKit locales; el back-swipe en iPhone queda con los aplazados de la decisión 19.1. Salida en `evidence.md`
+- [ ] T052 **[V] View Transitions con App Router** (§15.6.2 punto 1): comprobar Goal Journey con y sin la API (respaldo `layoutId`) en Chromium y WebKit locales; el back-swipe en iPhone queda con los aplazados de la decisión 19.1. Salida reproducible en `evidence.md` (navegadores y versiones, pasos y resultado), sin atribuirla a un runner (regla 4)
 - [ ] T053 Capturas de 390 y 1440 px en los dos temas (Metas en Yo y Nosotros, pila y abanico, inmersiva, hojas, historial, Inicio, Actividad) y Impeccable; evidencia «PR C»
-- [ ] T054 **Humana (gestor, laboratorio)**: **[V] rendimiento de GoalStack y del abanico** con 6 metas en gama media emulada (decisión 22.2); si falla, el PR cae a la lista y vuelve a los fundadores. Y CLS = 0 en la carga con Skeleton de Metas
+- [ ] T054 **Humana (gestor, laboratorio)**: **[V] rendimiento de GoalStack y del abanico** con 6 metas en gama media emulada (decisión 22.2); si falla, el PR cae a la lista y vuelve a los fundadores. Y CLS = 0 en la carga con Skeleton de Metas. Salida reproducible en `evidence.md` (perfil de CPU y red emulados, versión del navegador, pasos y medición), sin atribuirla a un runner (regla 4)
   - Cumple: SC-010 (Metas); §15.6.2 punto 4.
-- [ ] T055 **Humana (gestor)**: barrido completo de accesibilidad y marcar el PR listo (gate y medición del job `e2e`, I2)
+- [ ] T055 **Humana (gestor)**: lanzar el **barrido completo de accesibilidad** (`@sweep`, decisión 21.2): una **pasada especializada, distinta del gate**, que corre solo el proyecto a11y con «Run workflow» y la entrada del barrido, porque este PR añade o cambia el diseño de pantallas. **No es una segunda pasada del gate.** Después, marcar el PR listo (la única pasada del gate, que mide el job `e2e`, I2)
   - Cumple: SC-002; FR-116.
 - [ ] T056 **Humana (fundadores)**: aprobar en pantalla GoalStack, los tipos de meta, las personas con su patrón y la tinta junto al verde del ahorro
   - Cumple: SC-001; decisiones 22.2 y del plan 3.
@@ -322,15 +327,19 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 
 **Purpose**: «Cómo se pagó» en Anotar, B1–B7, FundingLedger, la solicitud en las dos sesiones, «Quitar el uso», anular y editar un gasto con meta, la LimitNote de Mover a Pareja; **la spec E2E 4 crece**. Corren las specs 1, 2, 3 y 4.
 
-### Grupo 4A — tests primero (`[P]` entre sí)
+### Grupo 4A — tests primero (escribirlas puede ir `[P]`; ejecutarlas, en T059a)
 
 - [ ] T057 [P] [US7] [US8] Tests de **componentes** en `src/features/expenses/goal-funding/` y `src/features/expenses/annotate-sheet.tsx`: «Dinero del mes» por defecto (ruta mínima intacta), B1 **solo con metas del contexto** (en Nosotros ninguna personal, ni deshabilitada), FundingLedger (propuesta proporcional, topes, «Suman $X de $Y», Guardar bloqueado), B3 con «ahora» y «si aprueba», ConfirmationBadge en sus cinco estados («NO SE REGISTRÓ» solo con rechazo confirmado), la tarjeta pendiente con «No vence» y «Cancelar solicitud», «Uso quitado», la LimitNote de Mover a Pareja, la confirmación de eliminar que avisa del uso y el aviso de reactivación «La meta {nombre} volvió a estar activa: se devolvieron $X»
   - Cumple: FR-050–FR-053, FR-056, FR-057, FR-059, FR-072; FR-113; US-7, US-8; F64-1.
 
-- [ ] T058 [P] [US7] **Spec E2E 4 (crece)** en `tests/e2e/goals.e2e.ts`, en rojo: el caso de la matriz «Financiación ajena → aprobar/rechazar» con **dos contextos autenticados** (Sara pide, Tomás aprueba en un caso y rechaza en otro; los estados se ven en las dos sesiones al navegar), y el **caso de privacidad de B1** (F63-3): Sara con metas personales, Tomás sin ellas, nada personal en el HTML, el RSC ni el prefetch de Anotar en Nosotros
+- [ ] T058 [P] [US7] Escribir la ampliación de la **spec E2E 4** en `tests/e2e/goals.e2e.ts`: el caso de la matriz «Financiación ajena → aprobar/rechazar» con **dos contextos autenticados** (Sara pide, Tomás aprueba en un caso y rechaza en otro; los estados se ven en las dos sesiones al navegar), y el **caso de privacidad de B1** (F63-3): Sara con metas personales, Tomás sin ellas, nada personal en el HTML, el RSC ni el prefetch de Anotar en Nosotros
   - Cumple: FR-114 (dos sesiones); FR-085; SC-009 (recorrido).
 
-- [ ] T059 [P] **a11y** `tests/a11y/goal-expense.a11y.ts`: ligero (B1–B7, la tarjeta pendiente, la LimitNote) y `@sweep`, en rojo
+- [ ] T059 [P] Escribir **a11y** `tests/a11y/goal-expense.a11y.ts`: ligero (B1–B7, la tarjeta pendiente, la LimitNote) y `@sweep`
+
+- [ ] T059a **Ejecutar en rojo** contra `juntia-dev`, **en serie y bajo el lock** (sin `[P]`: comparten servidor, puerto y siembra), las pruebas escritas en T058 y T059: `npm run e2e:dev -- tests/e2e/goals.e2e.ts` y después `npm run e2e:dev -- tests/a11y/goal-expense.a11y.ts`
+  - Cumple: regla 1; regla 2.
+  - Prueba / terminado cuando: cada prueba falla por la ausencia de la funcionalidad (no por la siembra ni por el entorno), con la salida en `evidence.md`.
 
 ### Grupo 4B — implementación (en serie)
 
@@ -355,7 +364,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 - [ ] T066 Capturas de 390 y 1440 px en los dos temas (B1–B7 en las dos sesiones, LimitNote, quitar el uso, reactivación) e Impeccable; evidencia «PR D»
 - [ ] T067 **Humana (gestor, laboratorio)**: INP < 200 ms al abrir Anotar y al guardar un gasto con meta
   - Cumple: SC-010 (Anotar con meta); §15.7.
-- [ ] T068 **Humana (gestor)**: barrido completo de accesibilidad y marcar el PR listo (gate)
+- [ ] T068 **Humana (gestor)**: lanzar el **barrido completo de accesibilidad** (`@sweep`, decisión 21.2): una **pasada especializada, distinta del gate**, que corre solo el proyecto a11y con «Run workflow» y la entrada del barrido, porque este PR añade o cambia el diseño de pantallas. **No es una segunda pasada del gate.** Después, marcar el PR listo (la única pasada del gate)
 - [ ] T069 **Humana (fundadores)**: aprobar en pantalla FundingLedger, ConfirmationBadge, B3 y el copy de la solicitud y de «Uso quitado»
   - Cumple: SC-001; decisión 22.3.
 
@@ -365,15 +374,19 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 
 **Purpose**: Análisis (S3) en `/plan/analisis`, PlanningNote, el acceso desde Plan e Inicio, la comprobación de la exportación; **la spec E2E 5 crece**; aceptación de P0-3. Corren las cinco specs (métricas: las dos áreas).
 
-### Grupo 5A — tests primero (`[P]` entre sí)
+### Grupo 5A — tests primero (escribirlas puede ir `[P]`; ejecutarlas, en T072a)
 
 - [ ] T070 [P] [US3] Tests de **componentes** en `src/features/analysis/`: los cuatro capítulos con el dataset (2.840.000; desglose; «$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.»), comparación (sin mes anterior no hay «+X %»), Chart (nunca apila ahorro y gasto; tabla equivalente), **PlanningNote** (3.740.000; negativo con «Negativo: liberaron de metas más de lo que destinaron»; «Cómo se calcula» con `aria-expanded` y signos con texto; nunca «Total gastado» ni número héroe) y movimiento reducido
   - Cumple: FR-021–FR-025, FR-063; FR-113; US-3; SC-011.
 
-- [ ] T071 [P] [US3] **Spec E2E 5 (crece)** en `tests/e2e/budgets.e2e.ts`, en rojo: Análisis con y sin presupuesto (con presupuesto muestra límite y desviación; sin presupuesto, ninguna barra fingida); HTML, RSC y prefetch de Análisis en Nosotros sin datos personales
+- [ ] T071 [P] [US3] Escribir la ampliación de la **spec E2E 5** en `tests/e2e/budgets.e2e.ts`: Análisis con y sin presupuesto (con presupuesto muestra límite y desviación; sin presupuesto, ninguna barra fingida); HTML, RSC y prefetch de Análisis en Nosotros sin datos personales
   - Cumple: FR-114 (Análisis); FR-085.
 
-- [ ] T072 [P] **a11y** `tests/a11y/analysis.a11y.ts`: ligero (Análisis en Yo y Nosotros, con y sin presupuesto, PlanningNote abierta) y `@sweep`, en rojo
+- [ ] T072 [P] Escribir **a11y** `tests/a11y/analysis.a11y.ts`: ligero (Análisis en Yo y Nosotros, con y sin presupuesto, PlanningNote abierta) y `@sweep`
+
+- [ ] T072a **Ejecutar en rojo** contra `juntia-dev`, **en serie y bajo el lock** (sin `[P]`: comparten servidor, puerto y siembra), las pruebas escritas en T071 y T072: `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` y después `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`
+  - Cumple: regla 1; regla 2.
+  - Prueba / terminado cuando: cada prueba falla por la ausencia de la funcionalidad (no por la siembra ni por el entorno), con la salida en `evidence.md`.
 
 ### Grupo 5B — implementación (en serie)
 
@@ -480,10 +493,10 @@ Task: "T006 Fixture del dataset dorado de P0-3 en src/domain/golden/"
 | PR | Fases | Tareas | Specs E2E que corre |
 | --- | --- | --- | --- |
 | A | 0 y 1 | T001–T028 | 1, 2, 3 |
-| B | 2 | T029–T041 | Las que diga el selector: 1, 2, 3 y 5 (la 4 todavía no existe) |
-| C | 3 | T042–T056 | 1, 2, 3, 4 |
-| D | 4 | T057–T069 | 1, 2, 3, 4 |
-| E | 5 y 6 | T070–T085 | 1–5 |
+| B | 2 | T029–T041 y T032a | Las que diga el selector: 1, 2, 3 y 5 (la 4 todavía no existe) |
+| C | 3 | T042–T056 y T044a | 1, 2, 3, 4 |
+| D | 4 | T057–T069 y T059a | 1, 2, 3, 4 |
+| E | 5 y 6 | T070–T085 y T072a | 1–5 |
 
 ### CI por PR (mínimo)
 
@@ -518,7 +531,7 @@ barrido de cierre corren a mano al cerrar P0-3 (T082). No hay nocturno ni push a
 | T016 | `tests/integration/*.test.ts` | Integración | Carreras, atomicidad, idempotencia, lecturas, exportación, F64-1 | Dos escritores y la base real (filas 2, 12, 13) |
 | T020, T022, T032 | `seed.test.ts`, prueba de `scripts/` | Integración / unidad | Aislamiento por worker, variable de workers, selector | Infraestructura de pruebas |
 | T029, T042, T057, T070 | `src/features/**.test.tsx` | Componentes | «Se presenta»: signo, ficha, etiqueta, estados, PlanningNote | El dominio puede acertar y la fila pintar mal (fila 5) |
-| T030, T043, T058, T071 | `tests/e2e/budgets.e2e.ts`, `goals.e2e.ts` | E2E (specs 5 y 4) | Recorridos, dos sesiones, HTML/RSC/prefetch | Lo que ninguna capa inferior ve (matriz de recorridos) |
+| T030, T043, T058, T071 (escribir); T032a, T044a, T059a, T072a (ejecutar en rojo) | `tests/e2e/budgets.e2e.ts`, `goals.e2e.ts` | E2E (specs 5 y 4) | Recorridos, dos sesiones, HTML/RSC/prefetch | Lo que ninguna capa inferior ve (matriz de recorridos) |
 | T031, T044, T059, T072 | `tests/a11y/*.a11y.ts` | Accesibilidad | axe ligero y `@sweep` | Fila 16 de ADR-011; decisión 21 |
 
 No hay tests redundantes: lo que cubre la integración (saldos, versiones,
@@ -586,7 +599,7 @@ menos una tarea; ninguna tarea carece de respaldo; y la terminología coincide.
 | FR-098, FR-099 | T034, T047 |
 | FR-100 | T008, T029; regla 8 |
 | FR-101, FR-102 | T031, T044, T059, T072; T038, T053, T066, T078 |
-| FR-103 | T045, T053 |
+| FR-103 | T029, T033, T042, T045, T047 |
 | FR-110 | T002–T005, T007 |
 | FR-111 | T012, T015 |
 | FR-112 | T016 |
