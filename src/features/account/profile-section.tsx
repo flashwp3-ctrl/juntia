@@ -5,12 +5,12 @@ import { AccountPageTitle } from "./account-ui";
 import type { Account } from "./load-account";
 import { ProfileForm } from "./profile-form";
 
-export function ProfileSection({ account }: { account: Account }) {
+export function ProfileSection({ account, person = 1 }: { account: Account; person?: 1 | 2 }) {
   return (
     <>
       <AccountPageTitle title={copy.account.profile.title} />
       <div className="mt-[18px]">
-        <ProfileForm initialName={account.profile.displayName} email={account.email} save={saveDisplayName} />
+        <ProfileForm initialName={account.profile.displayName} email={account.email} save={saveDisplayName} person={person} />
       </div>
     </>
   );

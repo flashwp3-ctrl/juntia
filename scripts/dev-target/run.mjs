@@ -4,6 +4,8 @@
 //   npm run test:db:dev           reinicia juntia-dev y corre pgTAP (supabase/tests), como el job db
 //   npm run test:integration:dev  integración de servidor contra juntia-dev
 //   npm run e2e:dev               build + E2E + axe con sesión, sin los flujos que leen correos
+//   npm run e2e:dev -- <args>     build + solo lo que digan los argumentos (un archivo, --grep, --only-changed), que se
+//                                 reenvían a Playwright; ver e2e-plan.mjs. El completo, una vez antes de cada push
 // Cada comando pasa el guardia de destino (guard.mjs), toma el bloqueo de un solo agente (lock.mjs) y termina con un
 // resumen que dice qué corrió, qué se saltó y por qué. Lo que se salta solo corre en CI. Nada de esto es evidencia:
 // el gate sigue siendo `verify` más los jobs de CI sobre el mismo commit (ADR-011 §9.8).
@@ -14,6 +16,7 @@ import { tmpdir } from "node:os";
 import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
+import { planE2E } from "./e2e-plan.mjs";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
 import { runInSession } from "./session.mjs";
 import { readTap } from "./tap.mjs";
@@ -199,7 +202,7 @@ function portFree(port) {
   });
 }
 
-async function e2e(target, env) {
+async function e2e(target, env, plan) {
   if (!(await portFree(3000))) throw new Error("El puerto 3000 está ocupado. e2e:dev no reutiliza un servidor abierto (podría apuntar a otro proyecto): ciérralo y vuelve a lanzar.");
   // La app se construye con la URL y la clave publicable de dev, sin la clave secreta ni la conexión.
   const appEnv = { ...env, NEXT_PUBLIC_SUPABASE_URL: target.apiUrl, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: target.publishableKey, SITE_URL: "http://localhost:3000" };
@@ -208,9 +211,12 @@ async function e2e(target, env) {
   const playwright = "node_modules/@playwright/test/cli.js";
   const listed = await node(playwright, ["test", "--project", "e2e", "--grep", "@mail", "--list"], appEnv, { capture: true })("lista @mail");
   for (const line of listed.output.split("\n")) if (/@mail|›/.test(line) && /\.e2e\.ts/.test(line)) skipped.push(line.trim());
-  const smoke = await node(playwright, ["test", "--project", "e2e", "--grep-invert", "@mail", "--reporter=list"], appEnv)("E2E (sin @mail)");
-  const axe = await node(playwright, ["test", "--project", "a11y", "--grep-invert", "@mail", "--reporter=list"], { ...appEnv, A11Y_JOB: "e2e" })("axe con sesión (A11Y_JOB=e2e)");
-  return smoke.code || axe.code;
+  let code = 0;
+  for (const step of plan) {
+    const result = await node(playwright, step.args, step.a11yJob ? { ...appEnv, A11Y_JOB: step.a11yJob } : appEnv)(step.label);
+    code ||= result.code;
+  }
+  return code;
 }
 
 function summary(exitCode, started) {
@@ -227,8 +233,11 @@ function summary(exitCode, started) {
 }
 
 async function main() {
-  if (!CI_ONLY[command]) throw new Error("Uso: node scripts/dev-target/run.mjs reset|test:db|test:integration|e2e");
+  if (!CI_ONLY[command]) throw new Error("Uso: node scripts/dev-target/run.mjs reset|test:db|test:integration|e2e [-- argumentos de Playwright]");
   const started = performance.now();
+  // Los argumentos se validan antes del guardia y del bloqueo: uno que cambiaría el destino o la configuración no llega a nada.
+  const plan = command === "e2e" ? planE2E(process.argv.slice(3)) : null;
+  if (plan && process.argv.length > 3) console.log(`e2e:dev dirigido: ${plan.map((step) => step.label).join(" · ")}. El completo, una vez antes de cada push.`);
   const { path, commonDir, fileEnv } = loadEnvTest();
   // F48-5: el enlace de la CLI se lee en el worktree y en el checkout principal; cualquiera que no sea dev para el comando.
   const linkedRefs = [["el worktree", ROOT], ["el checkout principal", dirname(commonDir)]]
@@ -256,7 +265,7 @@ async function main() {
       // con los usuarios y movimientos que dejan la integración y las E2E en dev).
       : command === "test:db" ? (await reset(target, env)) || await testDb(env)
       : command === "test:integration" ? await testIntegration(env)
-      : await e2e(target, env);
+      : await e2e(target, env, plan);
     });
   } finally {
     summary(exitCode, started);

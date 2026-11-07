@@ -179,6 +179,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y postgresql-17 postgresql-client-17
           sudo pg_createcluster 17 juntia --port 55432 --start
+          # PR #52: el cluster rechazó conexiones unos 25 s después de crearlo. Se espera a que acepte (hasta 60 s) y, si
+          # no, se imprime su log antes de fallar.
+          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p 55432 -q && break; sleep 1; done
+          pg_isready -h 127.0.0.1 -p 55432 || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
           password=$(openssl rand -hex 24)
           echo "::add-mask::$password"
           sudo -u postgres psql -p 55432 -q -v ON_ERROR_STOP=1 -c "alter user postgres password '$password'"
@@ -187,7 +191,14 @@ jobs:
           echo "PG=$connection" >> "$GITHUB_ENV"
           echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
       - name: Restore drill and nine negative controls
-        run: node scripts/ci.mjs run db:restore-drill
+        shell: bash
+        run: |
+          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p 55432 -q && break; sleep 1; done
+          pg_isready -h 127.0.0.1 -p 55432 || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
+          node scripts/ci.mjs run db:restore-drill
+      - name: Plain PostgreSQL log on failure
+        if: failure() && steps.plain.outcome == 'success'
+        run: sudo cat /var/log/postgresql/postgresql-17-juntia.log
       - name: Stop plain PostgreSQL
         if: always() && steps.plain.outcome == 'success'
         run: sudo pg_dropcluster --stop 17 juntia

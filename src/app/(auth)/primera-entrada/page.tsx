@@ -1,4 +1,4 @@
-// T045 / FR-022; US-1.7; 04·17 A6 solo con «Empezar por mi cuenta», sin «Invitar a mi pareja» y sin presupuesto (Q6).
+// T045 / FR-022; US-1.7; 04·17 A6 sin presupuesto. PR B de la 003 (FR-016): con «Invitar a mi pareja».
 import { redirect } from "next/navigation";
 import { safeReturnPath } from "@/domain/account";
 import { FirstEntry } from "@/features/auth/first-entry";

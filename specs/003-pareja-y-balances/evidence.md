@@ -837,3 +837,270 @@ salidas del único gate de CI sobre el SHA publicado se registran en la
 [descripción del PR #52](https://github.com/flashwp3-ctrl/juntia/pull/52) y en el
 reporte final del agente. No se hará un segundo push documental tras ese run.
 T028 sigue requiriendo revisión humana antes de marcar listo el borrador.
+---
+
+# Evidencia — 003 PR B · Mi pareja e invitaciones
+
+Rama `claude/feat-003-b-couple-f0d9d2`, base `main` `623bc3c` (PR A mergeado). Sin
+producción ni datos reales. Todo lo de esta sección es **iteración contra
+`juntia-dev`** (decisión 18) o local: **no es evidencia de ninguna `[V]`**
+(ADR-011 §9.8). El único gate es T039, en CI, después de la revisión.
+
+## Estado
+
+- T030–T038 hechas e iteradas en verde; T039 (CI) pendiente tras la revisión de
+  ChatGPT; T040 (aprobación visual de los fundadores) pendiente.
+- `[V]` «Retorno tras el login»: la prueba existe y pasa en `juntia-dev` (caso
+  sin correo); se cierra con la salida del job `e2e` de T039, que corre además el
+  caso `@mail` (crear la cuenta y verificarla).
+
+## Tarea → commit → prueba
+
+| Tarea | Commit | Prueba |
+| --- | --- | --- |
+| T030, T031, T031a, T031c, T031d (tests primero) | `85bf19c` | `src/features/couple/{couple.test.tsx,intent.test.ts,write-result.test.tsx}`; `tests/e2e/access-account.e2e.ts` (2 casos nuevos); `tests/a11y/{couple.a11y.ts,job-selection.test.ts}`, `route-registry.ts`, `tests/support/{seed,states}.ts` |
+| Robustez del job `db` (pedido del gestor) | `01b2ca1` | `pg_isready` tras `pg_createcluster` y antes del ensayo; log del cluster si falla. Se comprueba en T039 |
+| T031b | `7149682`, `1f694fe` | `write-result.test.tsx` (clasificación y las cuatro escrituras) |
+| T032, T035 | `c19fbb9` | `couple.test.tsx` (M1–M4, CoupleStatus, patrones); axe del registro M1–M4 |
+| T033 | `8a5ad82` | `couple.test.tsx` (M5–M7); `intent.test.ts`; E2E de invitación |
+| T034 | `ba8f27f` | `intent.test.ts` (retorno y borrado); E2E `@mail`; axe A6 y Nosotros |
+| T036–T038 (iteración e Impeccable) | `ecaf703`, `77ec256`, `5d49d45` | `e2e:dev`, `test:integration:dev`, `couple.a11y.ts` |
+
+## Rojo antes del código (regla 8; I5)
+
+- **Componentes** (18:32): los tres archivos fallan al resolver
+  `./partner-screen`, `./invitation-screen`, `./couple-status`, `./intent`,
+  `./invitation-return` y `@/features/shared/write-result`. La prueba de
+  descubrimiento `job-selection.test.ts` **pasa ya** en este punto (no depende de
+  las pantallas); `route-registry.test.ts` falla solo porque `/invitacion` no
+  tiene `page.tsx`.
+- **E2E y axe contra `juntia-dev`**, sobre el commit de pruebas `85bf19c` en un
+  worktree aparte (el código del PR ya avanzaba en el otro, sin tocar ese
+  commit). `next build` comprueba tipos de los tests de componentes, cuyos
+  módulos no existían, así que ese worktree los quitó **sin commitear** para
+  poder construir la app; las E2E y axe son las del commit. Resultado de
+  `npm run e2e:dev`:
+  - E2E: **1 falla, 9 pasan**. Falla «invitación → M5 sin datos → entrar →
+    volver → M6 → aceptar → M1 para los dos», esperando `getByText('SOLO TÚ')`
+    en `/cuenta/pareja` (la página era «llega con P0-2»).
+  - axe con sesión: **18 fallan, 164 pasan**. Fallan M6/M7 (4), el barrido de
+    anchos y 200 % (espera `SOLO TÚ`), el de teclado y 44 px (espera «Invitar a
+    mi pareja») y M3, M3b y la confirmación de anular en los dos temas y anchos
+    (12, sin el botón que abre la hoja). Las entradas de M2, M4 y M1 del
+    registro **pasaban** en rojo: no tienen `prepare` y auditaban la pantalla
+    vieja, que tenía axe limpio. Su contenido lo prueban los componentes y el
+    barrido, no esa entrada.
+
+## Verde en `juntia-dev` (T036, T037)
+
+Cinco pasadas completas de `npm run e2e:dev` (y, desde `0a6f276`, pasadas dirigidas, por ejemplo `npm run e2e:dev -- tests/e2e/access-account.e2e.ts --grep invitación`: 1 de 1 en 33,5 s):
+
+| Pasada | Commit | E2E (sin `@mail`) | axe con sesión | Qué se corrigió |
+| --- | --- | --- | --- | --- |
+| 1 | `1f694fe` | 10 de 11 (falla solo la captura temporal) | 171 de 182 | Contraste 4,29:1 del texto secundario sobre `surface.sunken` (M3b, M6 a 1440); los radios nuevos de A6 entraban en la comprobación de foco de campos de texto; el barrido contaba como texto cortado el «Volver» `sr-only`; M7 tras M6 era solo un cambio de fragmento sin recarga (`hashchange`) → `ecaf703` |
+| 2 | `ecaf703` | **11 de 11** | **182 de 182** | — |
+| 3 | `5d49d45` | **11 de 11** | 181 de 182 | Falla `/recuperar · A4b · dark · 1440px` por `document-title` (pantalla de la 002, no tocada; pasó en la pasada 2). Se anota como intermitente y se mira en T039 |
+| 4 | `0a6f276` | **10 de 10** (sin la captura temporal) | **182 de 182** | Pasada completa antes del push, tras la mejora de `e2e:dev` dirigido. A4b no se repitió |
+| 5 | `0a99fa6` | **24 de 24** (23 tras el merge de #51 + la captura temporal) | **182 de 182** | Merge de `main` con el PR #51 (`a4478fe`): conflicto solo en `src/app/(app)/layout.tsx`. Desde #51 la hoja `bare` deja al contenido su relleno inferior y el safe area, así que la hoja de invitar lo pone en móvil (`0a99fa6`). Las 48 capturas se rehicieron: a 1440 ya no aparece «Atajo N» |
+
+La 11.ª E2E es una spec **temporal, sin commitear**, que hace las capturas de
+abajo dentro del arnés guardado de `e2e:dev`.
+
+- `npm run test:integration:dev`: **63 pasan, 9 omitidas** (las de correo y el
+  `40P01` real, declaradas por el comando), 132,98 s. El PR B no añade
+  integración: las reglas del token y las carreras son del PR A.
+- `npm run verify` local: lint, typecheck, dominio y **370 componentes** en
+  verde, 61,07 s (< 90 s).
+- Job `app` de axe reproducido en local (build con la URL inaccesible del job,
+  `A11Y_JOB=app`): **53 de 53**, incluidos M5 en el registro y su barrido.
+
+## T038 · barrido, teclado, 200 % y 44 px
+
+Salida de `tests/a11y/couple.a11y.ts` (pasada 2 en `juntia-dev`; M5 en local
+con `A11Y_JOB=app`):
+
+- **Sin scroll horizontal** en 360, 390, 430, 768, 1024, 1280 y 1440, en claro y
+  oscuro, para Mi pareja M2, M3, M4 pendiente, M4 vencida y M1, `/invitacion` M5,
+  M6 y M7, A6 y Nosotros sin pareja: 140 mediciones con `scrollWidth ==
+  clientWidth` (126 con sesión + 14 de M5).
+- **Texto al 200 %** a 390: las diez pantallas sin scroll horizontal y con
+  `cortado: 0`.
+- **Teclado**: «Invitar a mi pareja» → hoja con foco en el correo → Enter crea;
+  «Copiar enlace» con Enter («Enlace copiado.»); Escape cierra; «Generar enlace
+  nuevo» con Enter; «Anular» abre con el foco en «Mantener» y Escape cancela sin
+  anular; Tomás acepta con Tab + Enter y llega a M1.
+- **44 px** (`boundingBox`): Invitar a mi pareja 350×52 · Crear invitación 350×52
+  · Compartir enlace 350×52 · Copiar enlace 350×52 · Generar enlace nuevo
+  247,1×44 · Anular 94,9×44 · Mantener 114,8×44 · Anular invitación 131,3×44 ·
+  Aceptar invitación 342×52 · Ahora no 342×48 · Entrar y Crear cuenta (M5)
+  ≥ 44.
+- **axe** M6 y M7: 0 violaciones en los dos temas a 390 y 1440; el registro
+  audita M1–M4, M3b, la confirmación de anular, M5, A6 y Nosotros.
+
+## Impeccable (T038; no es evidencia de FR-054)
+
+Revisión de acabado sobre 18 de las 48 capturas contra el comp 04·15 a 390:
+M1, M3, M3b, M4, M5, M6 y M7 coinciden; el oscuro se sostiene. Hallazgos:
+
+| # | Hallazgo | Qué se hizo |
+| --- | --- | --- |
+| 1 | M4 vencida conserva PENDIENTE e «Invitación enviada»; solo la línea dice «venció» | **No se cambia**: el badge y el título son de los fundadores (los cuatro badges de CoupleStatus están fijados). Va a la lista de aprobación |
+| 2 | El segundo título de M2 corta «solo» en una línea a 390 | `clamp(26px,7.4vw,30px)` y `text-balance` (`77ec256`) |
+| 3 | Con un correo largo, «vence el 13 nov» se parte | Espacios duros en la fecha (`77ec256`, `5d49d45`) |
+| 4 | §CoupleStatus dice «nunca el correo del otro», y M4 (comp y build) muestra «Para tomas@…» | Sin cambio de código: es el correo que escribió la propietaria, no el de un integrante. Se lleva a los fundadores para fijar la redacción del documento |
+
+También: la línea del sidebar «Mi cuenta · con To…» se cortaba a 1440 y ahora
+pasa a dos líneas (`77ec256`).
+
+## Capturas para T040 (390 y 1440, claro y oscuro)
+
+48 PNG en `specs/003-pareja-y-balances/evidence/pr-b/`, de `juntia-dev`
+(cuentas `@seed.test`, por eso los correos largos): M1, M2, M3, M3b, M4
+pendiente, M4 vencida, confirmación de anular, M5, M6, M7, A6 y Nosotros sin
+pareja.
+
+**Para aprobar viendo la pantalla** (plan, PR B; maestro §15.9): Mi pareja
+(anatomía aprobada, 16.6); el botón «Generar enlace nuevo» y su copy; la paleta
+de personas con el patrón rayado de la persona 2 (token nuevo
+`--person-2-stripe`, valor de `pfill` del comp); el copy nuevo de todo el PR
+(`src/lib/copy/es.ts`, incluidos «propietaria» y los textos de Nosotros con
+pareja pendiente o activa); la composición de escritorio de `/invitacion`
+(marco de las pantallas de acceso) y de A6 con dos tarjetas.
+
+## Lecturas de ejecución (no decisiones; se cambian si el revisor las objeta)
+
+1. **M6 y M7 fuera del registro de axe.** Una ruta va en una sola lista
+   (002, contracts/ci.md) y `/invitacion` ya está sin sesión por M5. M6 y M7
+   van en `couple.a11y.ts` solo con `A11Y_JOB=e2e` (regla 10, «si no caben en
+   el registro»). El barrido de M5 corre en el job `app`.
+2. **«Generar enlace nuevo»** escribe al abrir su hoja (operación explícita,
+   F47-3), con la clave y el token nacidos en ese clic; la hoja muestra el enlace
+   una vez, como M3b.
+3. **El par (clave, token) de quien invita vive solo en memoria** mientras la hoja
+   está abierta. **Reanudación tras recarga retirada por decisión del gestor
+   (F55-5/F55-6)**, el 7 de noviembre de 2026. Esto se aparta de contracts/server-actions.md §2,
+   que dice que el navegador guarda el par en `sessionStorage` mientras dura la
+   intención. La spec no se edita en este PR: queda para el PR documental de
+   después del PR B.
+4. **M7 borra la intención también en el caso «primero anula la tuya»**, como
+   dice T031; para aceptar después, Tomás vuelve a abrir el enlace.
+5. **A6 con «Invitar a mi pareja»** completa la primera entrada y abre M3 con
+   `/cuenta/pareja?invitar=1`.
+6. **Nosotros** con pareja pendiente o activa, hasta el PR C, dice que la
+   invitación está pendiente o que ya son pareja, en vez del «aparece cuando
+   exista la pareja» de P0-1.
+7. **«Comprobar estado»** consulta `write_status` por una Server Action que solo
+   admite las cuatro acciones de invitación; un fallo al comprobar deja el
+   estado desconocido como estaba, sin decir «no consta».
+
+## Revisión de ChatGPT F55 (sobre `e34ec6c`)
+
+0 bloqueantes, 2 importantes, corregidos en un solo commit, `7365ffc`. Las
+pruebas se escribieron antes y se vieron fallar: 15 de F55-1 y 2 de F55-2.
+
+- **F55-1** · `scripts/dev-target/e2e-plan.mjs` pasa de lista negra a **lista
+  blanca**. Se admiten archivos de `tests/` terminados en `.e2e.ts` o `.a11y.ts`,
+  `--grep`/`-g` (separado, con `=` o pegado) con un patrón que no empieza por
+  `-`, `--only-changed [ref]` con la ref validada y `--project e2e|a11y`. Se
+  rechazan antes del bloqueo `-carchivo`, `-c=`, `--config=`, `-G`, `-Gpatrón`,
+  `--grep-invert=`, `--project=otro`, cualquier flag desconocido y las rutas
+  fuera de `tests/` o con `..`. Una prueba comprueba que el plan solo lleva los
+  argumentos internos del runner más los autorizados. `tests/dev-target-tools.test.ts`:
+  47 pasan, 2 omitidas.
+- **F55-2** · Con una escritura en curso, la hoja de invitar no se cierra: la ×
+  queda `aria-disabled` y Escape y el arrastre no hacen nada. La confirmación de
+  anular ignora Escape mientras dice «Anulando…». `useWrite` abre una generación
+  nueva en cada envío y en cada `reset`, e ignora la respuesta de una generación
+  anterior (ni `setState` ni `onOk`). El resultado `ok` lleva su clave, y el
+  enlace de una sola vez solo se pinta si esa clave coincide con el par de esta
+  apertura. Lo prueban dos casos con promesas retenidas: regenerar A sin poder
+  cerrar, ver el token de A y que B no muestre ningún enlace hasta su respuesta;
+  y, en `useWrite`, una respuesta tardía de A ignorada después del `reset`.
+
+Comprobaciones: `verify` verde (53,95 s). Pasada dirigida `npm run e2e:dev --
+tests/a11y/couple.a11y.ts -g teclado`: 1 de 1 en 11,46 s. `e2e:dev` completo
+antes del push: **E2E 23/23** y **axe 182/182**.
+
+## Segunda ronda F55 (sobre `fda0f17`)
+
+F55-1 y F55-2 quedan cerrados. Corregidos en un solo commit, `24ef841`, con las
+pruebas escritas antes y vistas en rojo: 8 de F55-3 y 3 de F55-4.
+
+- **F55-3 · tiempo agotado.** El contrato dice «tiempo agotado» sin cifra
+  (contracts/server-actions.md §1; errors.md), así que el límite es **15 s**
+  (`WRITE_TIMEOUT_MS`). Una escritura colgada pasa a `unknown` con la misma
+  clave y la misma carga, y la respuesta tardía se ignora. «Comprobar estado»
+  colgado vuelve a `unknown` y se puede comprobar otra vez.
+- **F55-3 · reanudar tras recargar.** La carga enviada (clave, token, correo o
+  grupo y versión) se guarda en `sessionStorage` y solo se borra con un ok o un
+  rechazo; cerrar con un resultado desconocido la conserva. Al abrir otra vez la
+  hoja de la misma acción y la misma pareja, se reanuda como `unknown`, sin
+  escribir, y «Reintentar» usa la misma clave y el mismo token. Un par de 7 días
+  o más, o ilegible, se descarta al leerlo; cerrar sesión borra los dos pares.
+- **F55-4.** `e2e-plan.mjs` rechaza un `.e2e.ts` con `--project a11y` y un
+  `.a11y.ts` con `--project e2e`. También (opcional) resuelve cada archivo con
+  `realpath`: tiene que existir y seguir dentro de `tests/`.
+
+Comprobaciones: `verify` verde (51,34 s); componentes de pareja 72/72;
+`dev-target-tools` 50 pasan, 2 omitidas. Pasada dirigida `npm run e2e:dev --
+tests/a11y/couple.a11y.ts tests/e2e/access-account.e2e.ts -g "teclado|invitación"`:
+la E2E de invitación y los seis casos de `couple.a11y.ts` en verde. El
+`e2e:dev` completo antes del push va en el mensaje de entrega.
+
+## Tercera ronda F55 (sobre `ca852f9`)
+
+El límite de espera de F55-3 y F55-4 quedan cerrados. La reanudación tras
+recargar abrió dos problemas:
+
+- **F55-5 (bloqueante).** Las claves `juntia:invitation-write:*` no llevaban el
+  usuario: otra cuenta en la misma pestaña podía reanudar la intención de Sara,
+  ver su correo y crear una invitación nueva.
+- **F55-6 (importante).** Una intención vieja devolvía por idempotencia un
+  éxito histórico, aunque su enlace ya se hubiera reemplazado o descartado.
+
+**Reanudación tras recarga retirada por decisión del gestor (F55-5/F55-6).**
+Corregido en un solo commit (SHA en el mensaje de entrega y en la descripción
+del PR):
+
+- Desaparecen las claves `juntia:invitation-write:*`, la lectura al abrir, su
+  caducidad de 7 días y su borrado en S3. La intención del receptor en
+  `localStorage` (spec) no cambia.
+- Se mantiene F55-3 en memoria: 15 s y luego `unknown` con la misma clave y la
+  misma carga, la respuesta tardía ignorada y «Comprobar estado» con límite. Al
+  recargar, la intención en curso se pierde y Mi pareja muestra el estado real:
+  M4 si la escritura se confirmó y M2 si no.
+- **F55-6 dentro de la pestaña.** Un ok de crear o regenerar que llega por
+  «Reintentar» o «Comprobar estado» se revalida con `currentInvitationAction`
+  (`my_couple`, solo el `invitation_id`, nunca el hash). El enlace se muestra
+  solo si el `invitation_id` del resultado sigue siendo el de la invitación
+  pendiente. Si cambió, o no se pudo leer, se muestra el aviso neutro
+  `copy.couple.invite.changed` y se relee Mi pareja. La primera respuesta ok,
+  sin `unknown` antes, no relee.
+- Pruebas, escritas antes y vistas en rojo (4): recargar con una escritura
+  `unknown` no reanuda nada ni muestra el correo; A `unknown`, otra pestaña
+  regenera B y Reintentar de A da ok, sin enlace y con aviso; crear `unknown`,
+  otra pestaña lo anula y Comprobar estado da ok, sin enlace; con `my_couple`
+  ilegible, tampoco hay enlace. También se comprueba que el primer ok no relee.
+  Se retiraron las pruebas de la reanudación.
+
+## Cuarta ronda F55 (sobre `1d7f1a3`)
+
+F55-5 queda cerrado; F55-3 se mantiene y la comprobación de vigencia de F55-6 se
+da por buena. Queda una carrera:
+
+- **F55-7 (importante).** La comprobación de vigencia lanzada desde `onOk` no
+  estaba atada a su intención: una respuesta vieja de A podía poner «vigente» o
+  «cambiada» sobre el ok de B. Ahora `linkCheck` es `{ key, state }`, con la
+  clave de la intención. La respuesta solo lo actualiza si esa clave sigue siendo
+  la de la comprobación en curso; cerrar la hoja o empezar otra intención la
+  invalida. El enlace y el aviso exigen que la clave coincida con la del ok que
+  se pinta.
+- Pruebas de regresión con promesas retenidas, en dos variantes, escritas antes
+  y vistas en rojo por la carrera descrita. En las dos, A llega a ok tras un
+  resultado desconocido y su comprobación queda retenida; se cierra A, se abre B
+  y B llega a ok igual, también con la comprobación retenida.
+  - A se resuelve vigente y B no muestra enlace; B se resuelve cambiada y solo
+    aparece el aviso.
+  - A se resuelve cambiada y B vigente: se ve el enlace de B, sin aviso.
+
+Comprobaciones de F55-7: `verify` verde (49,17 s); pareja 76/76; dirigida (E2E de invitación y `couple.a11y.ts`) 7/7. `e2e:dev` completo: E2E 23/23 y axe 180/182. Fallan `/actividad · Actividad mes futuro · light · 390` (`fetch failed` hacia juntia-dev al sembrar en `seedMovements`) y `/recuperar · A4b · dark · 390` (`document-title`, la intermitencia ya anotada). Son pantallas de la 002, no tocadas. Repetidas con `npm run e2e:dev -- tests/a11y/routes.a11y.ts -g "Actividad mes futuro|A4b"`: 8/8.

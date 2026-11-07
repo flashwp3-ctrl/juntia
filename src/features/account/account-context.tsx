@@ -8,17 +8,20 @@ import { initialOf } from "@/domain/account";
 import { applyTheme, readThemeCookie, writeThemeCookie, type Theme } from "@/lib/theme";
 import { themeController } from "./theme-controller";
 
-export type ShellAccount = { displayName: string; initial: string };
+/** PR B de la 003 (T035, FR-017): el color sale del orden de ingreso a la pareja; sin pareja activa, la persona 1. */
+export type ShellAccount = { displayName: string; initial: string; person: 1 | 2; partnerName: string | null; couple: "none" | "provisional" | "active" | null };
 const AccountContext = createContext<ShellAccount | null>(null);
 
-export function AccountProvider({ displayName, theme, children }: { displayName: string; theme: Theme; children: ReactNode }) {
+type ProviderProps = { displayName: string; theme: Theme; children: ReactNode; person?: 1 | 2; partnerName?: string | null; couple?: ShellAccount["couple"] };
+
+export function AccountProvider({ displayName, theme, children, person = 1, partnerName = null, couple = null }: ProviderProps) {
   useEffect(() => {
     // F43-1, tercera ronda: con una elección hecha en esta página, manda el controlador (el perfil puede venir desfasado).
     if (themeController().hasChoice()) return;
     if (readThemeCookie() !== theme) writeThemeCookie(theme);
     applyTheme(theme);
   }, [theme]);
-  return <AccountContext.Provider value={{ displayName, initial: initialOf(displayName) }}>{children}</AccountContext.Provider>;
+  return <AccountContext.Provider value={{ displayName, initial: initialOf(displayName), person, partnerName, couple }}>{children}</AccountContext.Provider>;
 }
 
 export const useAccount = () => useContext(AccountContext);

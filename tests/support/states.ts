@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { expect, type Browser, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import type { RouteEntry } from "../a11y/route-registry";
-import { futureMonth, recoveryLink, seedMovements, seedUnconfirmedUser, seedUser } from "./seed";
+import { futureMonth, recoveryLink, seedCoupleState, seedMovements, seedUnconfirmedUser, seedUser } from "./seed";
 
 const paths = new WeakMap<Page, string>();
 /** La ruta de la entrada con sus marcadores resueltos ({id}, {future}) para la cuenta sembrada de esta página. */
@@ -154,6 +154,20 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await page.getByRole("button", { name: copy.remove.action.expense }).click();
       return expect(page.getByRole("alertdialog", { name: copy.remove.title.expense })).toBeVisible();
     }
+    case "inviteSheet": { // M3: la hoja con el campo del correo.
+      await page.getByRole("button", { name: copy.couple.none.invite }).click();
+      return expect(page.getByRole("dialog", { name: copy.couple.invite.title }).getByRole("textbox", { name: copy.couple.invite.email })).toBeVisible();
+    }
+    case "inviteReady": { // M3b: invitación real creada por la Server Action; el enlace se ve una vez.
+      await page.getByRole("button", { name: copy.couple.none.invite }).click();
+      const sheet = page.getByRole("dialog", { name: copy.couple.invite.title });
+      await sheet.getByRole("textbox", { name: copy.couple.invite.email }).fill(`pareja-${randomUUID().slice(0, 8)}@seed.test`);
+      await sheet.getByRole("button", { name: copy.couple.invite.create }).click();
+      return expect(sheet.getByText(copy.couple.invite.ready)).toBeVisible();
+    }
+    case "cancelDialog": // SensitiveActionConfirmation, con el foco en «Mantener».
+      await page.getByRole("button", { name: copy.couple.pending.cancel }).click();
+      return expect(page.getByRole("alertdialog", { name: copy.couple.cancel.title }).getByRole("button", { name: copy.couple.cancel.keep })).toBeFocused();
     case "us": // El contexto recordado es Nosotros (addInitScript en openWithSession).
       return expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
     case "search":
@@ -182,6 +196,7 @@ export async function openWithSession(browser: Browser, page: Page, entry: Route
     const user = await seedUser({ role: entry.firstEntryPending ? "estado-a6" : "estado", index, firstEntryCompleted: !entry.firstEntryPending });
     await context.addCookies(user.cookies);
     const created = entry.data ? await seedMovements(user, entry.data) : [];
+    if (entry.couple) await seedCoupleState(user, entry.couple, index);
     paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()));
     // El contexto recordado en el dispositivo: localStorage y la cookie que lee el servidor (F44-1). Sin cookie, el
     // servidor pinta el Skeleton y el cliente recarga; los estados se auditan con la preferencia ya resuelta.

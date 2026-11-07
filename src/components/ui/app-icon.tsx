@@ -1,5 +1,14 @@
 // FR-008; DESIGN_SYSTEM.md §3; maestro §15.2: Phosphor con wrapper tipado e imports individuales (SSR).
 import { ArrowDownLeft } from "@phosphor-icons/react/dist/ssr/ArrowDownLeft";
+import { Copy } from "@phosphor-icons/react/dist/ssr/Copy";
+import { CurrencyCircleDollar } from "@phosphor-icons/react/dist/ssr/CurrencyCircleDollar";
+import { EnvelopeOpen } from "@phosphor-icons/react/dist/ssr/EnvelopeOpen";
+import { HourglassMedium } from "@phosphor-icons/react/dist/ssr/HourglassMedium";
+import { Link } from "@phosphor-icons/react/dist/ssr/Link";
+import { LinkBreak } from "@phosphor-icons/react/dist/ssr/LinkBreak";
+import { MinusCircle } from "@phosphor-icons/react/dist/ssr/MinusCircle";
+import { ShareNetwork } from "@phosphor-icons/react/dist/ssr/ShareNetwork";
+import { UserPlus } from "@phosphor-icons/react/dist/ssr/UserPlus";
 import { ArrowsLeftRight } from "@phosphor-icons/react/dist/ssr/ArrowsLeftRight";
 import { CaretLeft } from "@phosphor-icons/react/dist/ssr/CaretLeft";
 import { CarProfile } from "@phosphor-icons/react/dist/ssr/CarProfile";
@@ -121,6 +130,16 @@ const icons = {
   tag: Tag,
   // P0-1, PR D: eliminar (02·1, diálogo «¿Eliminar este gasto?»).
   trash: Trash,
+  // PR B de la 003: Mi pareja e invitación (04·15, 04·17), con los nombres de los comps.
+  copy: Copy,
+  "currency-circle-dollar": CurrencyCircleDollar,
+  "envelope-open": EnvelopeOpen,
+  "hourglass-medium": HourglassMedium,
+  link: Link,
+  "link-break": LinkBreak,
+  "minus-circle": MinusCircle,
+  "share-network": ShareNetwork,
+  "user-plus": UserPlus,
 } as const satisfies Record<string, Icon>;
 
 export type AppIconName = keyof typeof icons;

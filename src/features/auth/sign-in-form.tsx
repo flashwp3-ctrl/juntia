@@ -6,6 +6,7 @@ import { useActionState, useEffect, useSyncExternalStore } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
+import { ForgetInvitationIntent } from "@/features/couple/invitation-return";
 import { resend, signIn, type FormState } from "./actions";
 import { linkNoticeFromHash } from "./confirm";
 import { PasswordInput, SubmitButton, authLink } from "./auth-ui";
@@ -40,7 +41,8 @@ export function SignInForm({ volver, notice }: Props) {
         <span className="size-[9px] rounded-[3px] bg-primary" />
         {copy.shell.brand}
       </p>
-      {notice === "sesion-cerrada" ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice> : null}
+      {/* PR B de la 003 (contracts/server-actions.md §3, punto 6): al cerrar sesión se borra la invitación guardada. */}
+      {notice === "sesion-cerrada" ? <><ForgetInvitationIntent /><InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice></> : null}
       {notice === "verificado" || linkNotice === copy.auth.signIn.verified ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}
       {linkNotice === copy.auth.recover.linkExpired ? <InlineNotice tone="danger" icon="warning-circle">{copy.auth.recover.linkExpired}</InlineNotice> : null}
       <h1 className={`font-serif text-[clamp(34px,calc((100vw-48px)*0.128),46px)] leading-[0.98] lg:text-[44px] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>

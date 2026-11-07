@@ -62,7 +62,8 @@ export function EmptyState(props: Omit<Props, "actions">) {
   return <StateBlock {...props} tone="empty" />;
 }
 
-export function UnavailableState(props: Omit<Props, "actions">) {
+/** PR B de la 003 (FR-016): Nosotros sin pareja lleva una salida que sí funciona, «Invitar a mi pareja». */
+export function UnavailableState(props: Props) {
   return <StateBlock {...props} tone="unavailable" />;
 }
 

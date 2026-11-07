@@ -58,6 +58,7 @@
   --color-skeleton: var(--skel);
   --color-person-1: var(--person-1);
   --color-person-2: var(--person-2);
+  --color-person-2-stripe: var(--person-2-stripe);
   --shadow-raised: var(--elevation-raised);
   --shadow-float: var(--elevation-float);
   --shadow-overlay: var(--elevation-overlay);

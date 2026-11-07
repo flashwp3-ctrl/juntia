@@ -246,6 +246,8 @@
   --category-other-fg: #4F4B44;
   --person-1: #6F98A8;
   --person-2: #D3B07A;
+  /* PR B de la 003 (FR-017; DESIGN_SYSTEM §1.2, patrón de tramo de la persona 2: rayado 135°, 4/3 px). Valor del comp 02·9 (pfill). */
+  --person-2-stripe: #E6CDA2;
   --elevation-raised: inset 0 1px 0 rgba(255,255,255,.75), 0 2px 0 rgba(26,28,26,.09);
   --elevation-float: 0 6px 18px rgba(26,28,26,.12);
   --elevation-overlay: 0 18px 40px rgba(26,28,26,.22);
@@ -322,6 +324,7 @@
   --category-other-fg: #C8C3BA;
   --person-1: #8FB3C1;
   --person-2: #E0C08C;
+  --person-2-stripe: #B79C6F;
   --elevation-raised: inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #2C3135;
   --elevation-float: 0 8px 24px rgba(0,0,0,.5), 0 0 0 1px #2C3135;
   --elevation-overlay: 0 24px 56px rgba(0,0,0,.6), 0 0 0 1px #3A4045;
@@ -399,6 +402,7 @@
     --category-other-fg: #C8C3BA;
     --person-1: #8FB3C1;
     --person-2: #E0C08C;
+    --person-2-stripe: #B79C6F;
     --elevation-raised: inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #2C3135;
     --elevation-float: 0 8px 24px rgba(0,0,0,.5), 0 0 0 1px #2C3135;
     --elevation-overlay: 0 24px 56px rgba(0,0,0,.6), 0 0 0 1px #3A4045;
