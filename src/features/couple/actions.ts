@@ -28,7 +28,7 @@ async function written<T>(outcome: WriteOutcome<T>): Promise<WriteOutcome<T>> {
   return outcome;
 }
 
-export async function createInvitationAction(input: unknown): Promise<WriteOutcome<{ expiresAt: string }>> {
+export async function createInvitationAction(input: unknown): Promise<WriteOutcome<{ expiresAt: string; invitationId: string }>> {
   if (!isRecord(input)) return malformed;
   const idempotencyKey = text(input.idempotencyKey, 64);
   const email = text(input.email, 320);
@@ -36,11 +36,11 @@ export async function createInvitationAction(input: unknown): Promise<WriteOutco
   const tokenHash = await hashInvitationToken(input.token);
   return written(await runWrite(async () => {
     const result = await createInvitation(await createClient(), { idempotencyKey, email, tokenHash });
-    return { expiresAt: result.expires_at };
+    return { expiresAt: result.expires_at, invitationId: result.invitation_id };
   }));
 }
 
-export async function regenerateInvitationAction(input: unknown): Promise<WriteOutcome<{ expiresAt: string }>> {
+export async function regenerateInvitationAction(input: unknown): Promise<WriteOutcome<{ expiresAt: string; invitationId: string }>> {
   if (!isRecord(input)) return malformed;
   const idempotencyKey = text(input.idempotencyKey, 64);
   const groupId = text(input.groupId, 64);
@@ -49,7 +49,7 @@ export async function regenerateInvitationAction(input: unknown): Promise<WriteO
   const tokenHash = await hashInvitationToken(input.token);
   return written(await runWrite(async () => {
     const result = await regenerateInvitation(await createClient(), { idempotencyKey, groupId, expectedVersion, tokenHash });
-    return { expiresAt: result.expires_at };
+    return { expiresAt: result.expires_at, invitationId: result.invitation_id };
   }));
 }
 
@@ -115,10 +115,23 @@ export async function checkInvitationWriteAction(input: unknown): Promise<{ stat
     const result = (isRecord(status.result) ? status.result : {}) as Record<string, unknown>;
     refresh();
     switch (input.action as WriteAction) {
-      case "create_invitation": case "regenerate_invitation": return { state: "completed", value: { expiresAt: String(result.expires_at ?? "") } };
+      case "create_invitation": case "regenerate_invitation": return { state: "completed", value: { expiresAt: String(result.expires_at ?? ""), invitationId: String(result.invitation_id ?? "") } };
       case "cancel_invitation": return { state: "completed", value: { status: "discarded" } };
       default: return { state: "completed", value: { groupId: String(result.group_id ?? "") } };
     }
+  } catch {
+    return { state: "error" };
+  }
+}
+
+/**
+ * F55-6 (tercera ronda del PR #55): la invitación pendiente vigente de la propietaria, para comprobar que un ok que llegó
+ * por «Reintentar» o «Comprobar estado» sigue siendo la invitación de ahora. Solo el identificador, nunca el hash.
+ */
+export async function currentInvitationAction(): Promise<{ state: "read"; invitationId: string | null } | { state: "error" }> {
+  try {
+    const couple = await getMyCouple(await createClient());
+    return { state: "read", invitationId: couple?.status === "provisional" ? couple.invitation_id : null };
   } catch {
     return { state: "error" };
   }

@@ -3,14 +3,14 @@
 // desde A6 o desde Nosotros sin pareja (FR-016).
 import { AccountPageTitle } from "@/features/account/account-ui";
 import { loadAccount } from "@/features/account/load-account";
-import { cancelInvitationAction, checkInvitationWriteAction, createInvitationAction, regenerateInvitationAction } from "@/features/couple/actions";
+import { cancelInvitationAction, checkInvitationWriteAction, createInvitationAction, currentInvitationAction, regenerateInvitationAction } from "@/features/couple/actions";
 import { loadCouple } from "@/features/couple/load";
 import { PartnerScreen, type PartnerView } from "@/features/couple/partner-screen";
 import { copy } from "@/lib/copy/es";
 
 export const metadata = { title: `${copy.account.partner.title} · ${copy.shell.brand}` };
 
-const actions = { create: createInvitationAction, regenerate: regenerateInvitationAction, cancel: cancelInvitationAction, checkStatus: checkInvitationWriteAction };
+const actions = { create: createInvitationAction, regenerate: regenerateInvitationAction, cancel: cancelInvitationAction, checkStatus: checkInvitationWriteAction, currentInvitation: currentInvitationAction };
 
 type Props = { searchParams: Promise<{ invitar?: string | string[] }> };
 

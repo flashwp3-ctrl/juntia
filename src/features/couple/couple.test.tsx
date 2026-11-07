@@ -31,10 +31,11 @@ const pending = (expired = false): PartnerView => ({ kind: "pending", me: { name
 
 function actions(overrides: Partial<CoupleActions> = {}): CoupleActions {
   return {
-    create: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } }),
-    regenerate: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } }),
+    create: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }),
+    regenerate: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }),
     cancel: vi.fn().mockResolvedValue({ status: "ok", value: { status: "discarded" } }),
     checkStatus: vi.fn().mockResolvedValue({ state: "not_found" }),
+    currentInvitation: vi.fn().mockResolvedValue({ state: "read", invitationId: "inv-1" }),
     ...overrides,
   };
 }

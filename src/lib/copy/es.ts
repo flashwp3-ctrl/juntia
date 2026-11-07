@@ -61,6 +61,8 @@ export const copy = {
       create: "Crear invitación", creating: "Creando…", generating: "Generando enlace…",
       ready: "Enlace listo", readyLine: (date: string) => `Un solo uso · vence\u00A0el\u00A0${date}`, link: "Enlace de invitación",
       once: "Este enlace solo se muestra ahora. Si lo pierdes, genera uno nuevo desde Mi pareja.",
+      // F55-6: el resultado confirmado ya no es la invitación vigente (otra pestaña la cambió) o no se pudo comprobar.
+      changed: "La invitación cambió desde otro lugar o no pudimos comprobar que siga vigente. Revisa Mi pareja y, si hace falta, genera un enlace nuevo.",
       share: "Compartir enlace", copy: "Copiar enlace", copied: "Enlace copiado.", shareText: "Te invito a ser mi pareja en Juntia.",
       errors: { email: "Escribe un correo válido, distinto del tuyo." },
     },

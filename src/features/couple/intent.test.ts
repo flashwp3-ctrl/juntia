@@ -46,34 +46,18 @@ describe("token e intención (FR-012a, contracts §2)", () => {
     expect(invitationLink("https://juntia.app", TOKEN)).toBe(`https://juntia.app/invitacion#t=${TOKEN}`);
   });
 
-  it("el par (clave, token) nace en memoria; se guarda en sessionStorage al enviar y se borra con un resultado definitivo (F55-3)", () => {
-    const intent = tokenIntent("create");
-    const pair = intent.begin();
+  it("el par (clave, token) de quien invita vive solo en memoria: nada se guarda en sessionStorage (F55-5, decisión del gestor)", () => {
+    const pair = tokenIntent().begin();
     expect(pair.key).toMatch(/^[0-9a-f-]{36}$/);
     expect(pair.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(intent.pending()).toBeNull();
-    const payload = { idempotencyKey: pair.key, token: pair.token, email: "tomas@correo.com" };
-    intent.save(payload);
-    expect(window.sessionStorage.getItem("juntia:invitation-write:create")).toContain(pair.key);
-    expect(intent.pending()?.payload).toEqual(payload);
-    intent.end();
-    expect(intent.pending()).toBeNull();
-    expect(window.sessionStorage.getItem("juntia:invitation-write:create")).toBeNull();
-    expect(tokenIntent("create").begin().key).not.toBe(pair.key);
-  });
-
-  it("un par pendiente de 7 días o más, o ilegible, se descarta al leerlo (F55-3)", () => {
-    window.sessionStorage.setItem("juntia:invitation-write:regenerate", JSON.stringify({ savedAt: Date.now() - 8 * DAY, payload: { idempotencyKey: "k", token: TOKEN, groupId: "g", expectedVersion: 1 } }));
-    expect(tokenIntent("regenerate").pending()).toBeNull();
-    expect(window.sessionStorage.getItem("juntia:invitation-write:regenerate")).toBeNull();
-    window.sessionStorage.setItem("juntia:invitation-write:create", "{roto");
-    expect(tokenIntent("create").pending()).toBeNull();
+    expect(tokenIntent().begin().key).not.toBe(pair.key);
+    expect(window.sessionStorage.length).toBe(0);
   });
 
   it("unknown y el reintento con la misma clave muestran el mismo enlace (US-1.10a)", async () => {
     const user = userEvent.setup();
-    const create = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES } });
-    const actions: CoupleActions = { create, regenerate: vi.fn(), cancel: vi.fn(), checkStatus: vi.fn() };
+    const create = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
+    const actions: CoupleActions = { create, regenerate: vi.fn(), cancel: vi.fn(), checkStatus: vi.fn(), currentInvitation: vi.fn().mockResolvedValue({ state: "read", invitationId: "inv-1" }) };
     render(createElement(PartnerScreen, { view: { kind: "none", me: { name: "Sara" } }, actions }));
     await user.click(screen.getByRole("button", { name: copy.couple.none.invite }));
     const dialog = screen.getByRole("dialog", { name: copy.couple.invite.title });
@@ -136,12 +120,10 @@ describe("intención del lado de quien recibe (contracts §3, F49-7)", () => {
     expect(window.localStorage.getItem(INVITATION_INTENT_KEY)).toBeNull();
   });
 
-  it("al cerrar sesión se borra (aviso S3), también los pares pendientes de quien invita (F55-3)", () => {
+  it("al cerrar sesión se borra (aviso S3)", () => {
     save(Date.now());
-    tokenIntent("create").save({ idempotencyKey: "k", token: TOKEN, email: "t@c.com" });
     render(createElement(ForgetInvitationIntent));
     expect(window.localStorage.getItem(INVITATION_INTENT_KEY)).toBeNull();
-    expect(tokenIntent("create").pending()).toBeNull();
   });
 });
 

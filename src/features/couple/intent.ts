@@ -1,7 +1,7 @@
 // T031, T033, T034 / FR-012, FR-012a, FR-014; contracts/server-actions.md §2–§3; research R3 y R5. Lo que el navegador
 // guarda de una invitación:
-// - Quien invita: la pareja (clave, token) de cada intención de «Crear invitación» o «Generar enlace nuevo», en
-//   sessionStorage mientras dura. El token lo genera el navegador (32 bytes, base64url); la Server Action solo calcula su
+// - Quien invita: la pareja (clave, token) de cada intención de «Crear invitación» o «Generar enlace nuevo», solo en
+//   memoria mientras la hoja está abierta (F55-5: no se guarda en el navegador). El token lo genera el navegador (32 bytes, base64url); la Server Action solo calcula su
 //   SHA-256 y la base guarda solo el hash. Un reintento con la misma clave manda el mismo token y muestra el mismo enlace.
 // - Quien recibe: `localStorage["juntia:invitation"]` = {token, savedAt}, leído del fragmento `#t=…`, que el navegador
 //   nunca envía al servidor. Se borra al aceptar, al ver M7, con «Ahora no», al cerrar sesión y con 7 días o más.
@@ -25,58 +25,19 @@ export const isInvitationToken = (value: unknown): value is string => typeof val
 export const invitationLink = (origin: string, token: string) => `${origin}/invitacion#t=${token}`;
 
 export type TokenPair = { key: string; token: string };
-const pairKey = (kind: "create" | "regenerate") => `juntia:invitation-write:${kind}`;
-
-export type CreatePayload = { idempotencyKey: string; email: string; token: string };
-export type RegeneratePayload = { idempotencyKey: string; groupId: string; expectedVersion: number; token: string };
-type PayloadOf<K extends "create" | "regenerate"> = K extends "create" ? CreatePayload : RegeneratePayload;
-
-function validPayload(kind: "create" | "regenerate", value: unknown): boolean {
-  if (typeof value !== "object" || value === null) return false;
-  const payload = value as Record<string, unknown>;
-  if (typeof payload.idempotencyKey !== "string" || !isInvitationToken(payload.token)) return false;
-  return kind === "create" ? typeof payload.email === "string" : typeof payload.groupId === "string" && Number.isInteger(payload.expectedVersion);
-}
-
 /**
- * La intención de quien invita (crear o regenerar). F55-3 (segunda ronda del PR #55):
- * - `begin` crea en memoria una clave y un token nuevos para una apertura de la hoja;
- * - `save` guarda en sessionStorage la carga enviada (clave, token y lo demás) mientras no haya resultado definitivo;
- * - `pending` devuelve esa carga para reanudarla tras recargar, como `unknown`; con 7 días o más (el token ya no
- *   serviría) o ilegible, se borra al leerla;
- * - `end` la borra, con un resultado definitivo (ok o rechazo) o al cerrar sin haber enviado nada.
- * Cerrar sesión borra las dos (ForgetInvitationIntent).
+ * La clave y el token de una apertura de la hoja de quien invita («Crear invitación» o «Generar enlace nuevo»). Viven solo
+ * en memoria: F55-5 y F55-6 (tercera ronda del PR #55) y decisión del gestor del 7 de noviembre de 2026, que retira la
+ * reanudación tras recargar. Una clave guardada sin el usuario podía reanudarse con otra cuenta en la misma pestaña, y una
+ * intención vieja devolvía por idempotencia un éxito ya reemplazado. Perder un enlace al recargar es barato: «Generar
+ * enlace nuevo» invalida el anterior, y Mi pareja muestra el estado real del servidor.
  */
-export function tokenIntent<K extends "create" | "regenerate">(kind: K) {
-  const end = () => { try { window.sessionStorage.removeItem(pairKey(kind)); } catch { /* nada que borrar */ } };
+export function tokenIntent() {
   return {
     begin(): TokenPair {
       return { key: newIdempotencyKey(), token: newInvitationToken() };
     },
-    save(payload: PayloadOf<K>) {
-      try { window.sessionStorage.setItem(pairKey(kind), JSON.stringify({ savedAt: Date.now(), payload })); } catch { /* sin almacenamiento: vive en memoria */ }
-    },
-    pending(now = Date.now()): { payload: PayloadOf<K> } | null {
-      let raw: string | null = null;
-      try { raw = window.sessionStorage.getItem(pairKey(kind)); } catch { return null; }
-      if (raw === null) return null;
-      try {
-        const record = JSON.parse(raw) as { savedAt?: unknown; payload?: unknown };
-        if (typeof record.savedAt === "number" && now - record.savedAt < INTENT_MAX_AGE_MS && validPayload(kind, record.payload)) {
-          return { payload: record.payload as PayloadOf<K> };
-        }
-      } catch { /* ilegible */ }
-      end();
-      return null;
-    },
-    end,
   };
-}
-
-/** Cerrar sesión: ningún par de quien invita sobrevive en esta pestaña. */
-export function clearInvitationWrites() {
-  tokenIntent("create").end();
-  tokenIntent("regenerate").end();
 }
 
 /** Lee `#t=` de la URL actual, lo guarda con su fecha y limpia el fragmento sin navegar. */

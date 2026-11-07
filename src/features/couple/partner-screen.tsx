@@ -26,7 +26,7 @@ import { copy } from "@/lib/copy/es";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { CoupleStatus } from "./couple-status";
 import { invitationDay } from "./dates";
-import { invitationLink, tokenIntent, type CreatePayload, type RegeneratePayload, type TokenPair } from "./intent";
+import { invitationLink, tokenIntent, type TokenPair } from "./intent";
 import { RichText } from "./rich-text";
 import { SensitiveActionConfirmation } from "./sensitive-confirmation";
 
@@ -36,7 +36,7 @@ export type PartnerView =
   | { kind: "pending"; me: { name: string }; groupId: string; version: number; email: string; expiresAt: string; expired: boolean }
   | { kind: "active"; members: Member[] };
 
-type Issued = { expiresAt: string };
+type Issued = { expiresAt: string; invitationId: string };
 type CreateInput = { idempotencyKey: string; email: string; token: string };
 type RegenerateInput = { idempotencyKey: string; groupId: string; expectedVersion: number; token: string };
 type CancelInput = { idempotencyKey: string; groupId: string; expectedVersion: number };
@@ -45,6 +45,8 @@ export type CoupleActions = {
   regenerate: (input: RegenerateInput) => Promise<WriteOutcome<Issued>>;
   cancel: (input: CancelInput) => Promise<WriteOutcome<{ status: "discarded" }>>;
   checkStatus: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<unknown>>;
+  /** F55-6: la invitación pendiente vigente, para revalidar un ok que llegó por «Reintentar» o «Comprobar estado». */
+  currentInvitation: () => Promise<{ state: "read"; invitationId: string | null } | { state: "error" }>;
 };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -177,14 +179,12 @@ type SheetProps = {
   open: boolean;
   /** La clave y el token de esta apertura (FR-059: nacen al abrir la hoja; contracts §2: el token, en el navegador). */
   pair: TokenPair | null;
-  /** F55-3: la carga de una intención sin resultado que quedó guardada (tras recargar); se reanuda como `unknown`. */
-  resume: CreatePayload | RegeneratePayload | null;
   onClose: () => void;
   view: PartnerView;
   actions: CoupleActions;
 };
 
-function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: SheetProps) {
+function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const Container = wide ? Modal : BottomSheet;
@@ -195,41 +195,46 @@ function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: Sheet
   const [confirmClose, setConfirmClose] = useState(false);
   const pendingEmail = view.kind === "pending" ? view.email : "";
 
-  // F55-3: con un resultado definitivo (ok o rechazo) el par guardado se descarta; con `unknown` se conserva.
-  const onOk = useCallback(() => { tokenIntent(mode).end(); router.refresh(); }, [router, mode]);
+  // F55-6: un ok que llega después de un resultado desconocido (por «Reintentar» o «Comprobar estado») puede ser de una
+  // invitación que otra pestaña ya regeneró o anuló. Antes de mostrar el enlace se relee my_couple: solo se muestra si la
+  // invitación del resultado sigue siendo la pendiente; si no, o si no se puede leer, se avisa y se relee Mi pareja.
+  const afterUnknown = useRef(false);
+  const [linkCheck, setLinkCheck] = useState<"fresh" | "checking" | "valid" | "changed">("fresh");
+  const onOk = useCallback((value: Issued) => {
+    router.refresh();
+    if (!afterUnknown.current) { setLinkCheck("fresh"); return; }
+    setLinkCheck("checking");
+    actions.currentInvitation().then(
+      (current) => setLinkCheck(current.state === "read" && current.invitationId === value.invitationId ? "valid" : "changed"),
+      () => setLinkCheck("changed"),
+    );
+  }, [router, actions]);
   const onRejected = useCallback((error: WriteError) => {
-    tokenIntent(mode).end();
     if (error === "invalidEmail") setFieldError(copy.couple.invite.errors.email);
     else setNotice(rejectedMessage(error));
     if (STALE.has(error)) router.refresh();
-  }, [router, mode]);
+  }, [router]);
   const check = useCallback((input: { action: WriteAction; idempotencyKey: string }) => actions.checkStatus(input) as Promise<WriteStatusOutcome<Issued>>, [actions]);
   const create = useWrite<CreateInput, Issued>({ action: "create_invitation", run: actions.create, check, onOk, onRejected });
   const regenerate = useWrite<RegenerateInput, Issued>({ action: "regenerate_invitation", run: actions.regenerate, check, onOk, onRejected });
   const write = mode === "create" ? create : regenerate;
   const { state, locked } = write;
 
-  // Una intención guardada sin resultado se reanuda como `unknown` (F55-3): «Reintentar» y «Comprobar estado», sin escribir.
-  // Si no, «Generar enlace nuevo» escribe en cuanto se abre la hoja: es una operación explícita (precisión F47-3).
+  // «Generar enlace nuevo» escribe en cuanto se abre la hoja: es una operación explícita (precisión F47-3).
   useEffect(() => {
     if (!open || !pair || started.current) return;
     started.current = true;
-    if (resume) {
-      if (mode === "create") create.resume(resume as CreatePayload);
-      else regenerate.resume(resume as RegeneratePayload);
-      return;
-    }
     if (mode === "regenerate" && view.kind === "pending") {
-      const payload = { idempotencyKey: pair.key, groupId: view.groupId, expectedVersion: view.version, token: pair.token };
-      tokenIntent("regenerate").save(payload);
-      void regenerate.submit(payload);
+      void regenerate.submit({ idempotencyKey: pair.key, groupId: view.groupId, expectedVersion: view.version, token: pair.token });
     }
-  }, [open, pair, resume, mode, view, create, regenerate]);
+  }, [open, pair, mode, view, regenerate]);
+  // Desde que una escritura de esta apertura quedó desconocida, su ok se revalida (F55-6).
+  useEffect(() => { if (state.phase === "unknown") afterUnknown.current = true; }, [state.phase]);
 
   const finish = () => {
-    // Cerrar con un resultado desconocido conserva el par para reanudarlo; en cualquier otro caso se descarta.
-    if (!locked) tokenIntent(mode).end();
     started.current = false;
+    afterUnknown.current = false;
+    setLinkCheck("fresh");
     create.reset();
     regenerate.reset();
     setEmail("");
@@ -250,13 +255,12 @@ function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: Sheet
     setNotice(null);
     if (!EMAIL.test(value)) { setFieldError(copy.couple.invite.errors.email); return; }
     setFieldError(undefined);
-    const payload = { idempotencyKey: pair.key, email: value, token: pair.token };
-    tokenIntent("create").save(payload);
-    void create.submit(payload);
+    void create.submit({ idempotencyKey: pair.key, email: value, token: pair.token });
   };
 
   // El enlace solo se pinta si el resultado es de esta misma intención (misma clave que el token de esta apertura).
-  const issued = state.phase === "ok" && pair && state.key === pair.key ? { link: invitationLink(window.location.origin, pair.token), expiresAt: state.value.expiresAt } : null;
+  const linkAllowed = linkCheck === "fresh" || linkCheck === "valid";
+  const issued = state.phase === "ok" && pair && state.key === pair.key && linkAllowed ? { link: invitationLink(window.location.origin, pair.token), expiresAt: state.value.expiresAt } : null;
   const title = mode === "create" ? copy.couple.invite.title : copy.couple.invite.regenerateTitle;
   const lead = issued ? (mode === "create" ? copy.couple.invite.readyLead : copy.couple.invite.regenerateLead) : mode === "create" ? copy.couple.invite.lead : copy.couple.invite.regenerateLead;
   const busy = state.phase === "pending";
@@ -289,7 +293,7 @@ function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: Sheet
             autoCapitalize="none"
             spellCheck={false}
             placeholder={copy.couple.invite.emailPlaceholder}
-            value={mode === "create" ? (resume && "email" in resume ? resume.email : email) : pendingEmail}
+            value={mode === "create" ? email : pendingEmail}
             onChange={(event) => { setEmail(event.target.value); setFieldError(undefined); }}
             disabled={mode === "regenerate" || locked || busy || Boolean(issued)}
             error={fieldError}
@@ -303,6 +307,13 @@ function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: Sheet
             </p>
           ) : null}
           {notice ? <InlineNotice tone="danger" icon="warning-circle">{notice}</InlineNotice> : null}
+          {state.phase === "ok" && linkCheck === "checking" ? (
+            <p role="status" className="flex items-center gap-2 text-[14px] text-ink-secondary">
+              <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
+              {copy.writes.checking}
+            </p>
+          ) : null}
+          {state.phase === "ok" && linkCheck === "changed" ? <InlineNotice icon="info">{copy.couple.invite.changed}</InlineNotice> : null}
           {state.phase === "unknown" ? <WriteUnknown checking={state.checking} notFound={state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} /> : null}
           {issued ? <IssuedLink link={issued.link} expiresAt={issued.expiresAt}>{rules}</IssuedLink> : rules}
           {mode === "create" && !issued && !locked ? (
@@ -385,16 +396,9 @@ function CancelInvitation({ view, actions, onDone }: { view: Extract<PartnerView
 
 export function PartnerScreen({ view, actions, openInvite = false }: { view: PartnerView; actions: CoupleActions; openInvite?: boolean }) {
   // Abrir una hoja abre su intención: la clave y el token nacen aquí, en el navegador, y se reutilizan en cada reintento.
-  // F55-3: si esta pestaña guarda una intención sin resultado para esta acción y esta pareja, se reanuda con su clave y su
-  // token (no se llama a `begin`); si no, la apertura empieza una nueva.
-  type Sheet = { mode: "create" | "regenerate"; pair: TokenPair; resume: CreatePayload | RegeneratePayload | null };
-  const opening = (mode: "create" | "regenerate"): Sheet => {
-    const stored = mode === "create" ? tokenIntent("create").pending() : tokenIntent("regenerate").pending();
-    const matches = stored && (mode === "create" ? view.kind === "none" : view.kind === "pending" && (stored.payload as RegeneratePayload).groupId === view.groupId);
-    return matches
-      ? { mode, pair: { key: stored.payload.idempotencyKey, token: stored.payload.token }, resume: stored.payload }
-      : { mode, pair: tokenIntent(mode).begin(), resume: null };
-  };
+  // La clave y el token de cada apertura nacen aquí, en memoria (F55-5): al recargar no se reanuda nada.
+  type Sheet = { mode: "create" | "regenerate"; pair: TokenPair };
+  const opening = (mode: "create" | "regenerate"): Sheet => ({ mode, pair: tokenIntent().begin() });
   const [sheet, setSheet] = useState<Sheet | null>(() => (openInvite && view.kind === "none" ? opening("create") : null));
   const open = (mode: "create" | "regenerate") => setSheet(opening(mode));
   const [announcement, setAnnouncement] = useState("");
@@ -430,8 +434,8 @@ export function PartnerScreen({ view, actions, openInvite = false }: { view: Par
           </div>
         </>
       ) : null}
-      <InviteSheet mode="create" open={sheet?.mode === "create"} pair={sheet?.mode === "create" ? sheet.pair : null} resume={sheet?.mode === "create" ? sheet.resume : null} onClose={() => setSheet(null)} view={view} actions={actions} />
-      <InviteSheet mode="regenerate" open={sheet?.mode === "regenerate"} pair={sheet?.mode === "regenerate" ? sheet.pair : null} resume={sheet?.mode === "regenerate" ? sheet.resume : null} onClose={() => setSheet(null)} view={view} actions={actions} />
+      <InviteSheet mode="create" open={sheet?.mode === "create"} pair={sheet?.mode === "create" ? sheet.pair : null} onClose={() => setSheet(null)} view={view} actions={actions} />
+      <InviteSheet mode="regenerate" open={sheet?.mode === "regenerate"} pair={sheet?.mode === "regenerate" ? sheet.pair : null} onClose={() => setSheet(null)} view={view} actions={actions} />
       <p aria-live="polite" className="sr-only">{announcement}</p>
     </div>
   );

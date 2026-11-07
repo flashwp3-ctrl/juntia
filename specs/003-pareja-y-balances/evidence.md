@@ -976,11 +976,12 @@ pareja pendiente o activa); la composición de escritorio de `/invitacion`
 2. **«Generar enlace nuevo»** escribe al abrir su hoja (operación explícita,
    F47-3), con la clave y el token nacidos en ese clic; la hoja muestra el enlace
    una vez, como M3b.
-3. **El par (clave, token) en `sessionStorage`** (contracts §2). Desde F55-3 se
-   guarda al enviar, con su carga, y solo se borra con un resultado definitivo o
-   al cerrar sin haber enviado nada. Si la pestaña se recarga con un `unknown`
-   pendiente, la hoja de esa acción y esa pareja lo reanuda con la misma clave y
-   el mismo token. Ver «Segunda ronda F55».
+3. **El par (clave, token) de quien invita vive solo en memoria** mientras la hoja
+   está abierta. **Reanudación tras recarga retirada por decisión del gestor
+   (F55-5/F55-6)**, el 7 de noviembre de 2026. Esto se aparta de contracts/server-actions.md §2,
+   que dice que el navegador guarda el par en `sessionStorage` mientras dura la
+   intención. La spec no se edita en este PR: queda para el PR documental de
+   después del PR B.
 4. **M7 borra la intención también en el caso «primero anula la tuya»**, como
    dice T031; para aceptar después, Tomás vuelve a abrir el enlace.
 5. **A6 con «Invitar a mi pareja»** completa la primera entrada y abre M3 con
@@ -1045,3 +1046,39 @@ Comprobaciones: `verify` verde (51,34 s); componentes de pareja 72/72;
 tests/a11y/couple.a11y.ts tests/e2e/access-account.e2e.ts -g "teclado|invitación"`:
 la E2E de invitación y los seis casos de `couple.a11y.ts` en verde. El
 `e2e:dev` completo antes del push va en el mensaje de entrega.
+
+## Tercera ronda F55 (sobre `ca852f9`)
+
+El límite de espera de F55-3 y F55-4 quedan cerrados. La reanudación tras
+recargar abrió dos problemas:
+
+- **F55-5 (bloqueante).** Las claves `juntia:invitation-write:*` no llevaban el
+  usuario: otra cuenta en la misma pestaña podía reanudar la intención de Sara,
+  ver su correo y crear una invitación nueva.
+- **F55-6 (importante).** Una intención vieja devolvía por idempotencia un
+  éxito histórico, aunque su enlace ya se hubiera reemplazado o descartado.
+
+**Reanudación tras recarga retirada por decisión del gestor (F55-5/F55-6).**
+Corregido en un solo commit (SHA en el mensaje de entrega y en la descripción
+del PR):
+
+- Desaparecen las claves `juntia:invitation-write:*`, la lectura al abrir, su
+  caducidad de 7 días y su borrado en S3. La intención del receptor en
+  `localStorage` (spec) no cambia.
+- Se mantiene F55-3 en memoria: 15 s y luego `unknown` con la misma clave y la
+  misma carga, la respuesta tardía ignorada y «Comprobar estado» con límite. Al
+  recargar, la intención en curso se pierde y Mi pareja muestra el estado real:
+  M4 si la escritura se confirmó y M2 si no.
+- **F55-6 dentro de la pestaña.** Un ok de crear o regenerar que llega por
+  «Reintentar» o «Comprobar estado» se revalida con `currentInvitationAction`
+  (`my_couple`, solo el `invitation_id`, nunca el hash). El enlace se muestra
+  solo si el `invitation_id` del resultado sigue siendo el de la invitación
+  pendiente. Si cambió, o no se pudo leer, se muestra el aviso neutro
+  `copy.couple.invite.changed` y se relee Mi pareja. La primera respuesta ok,
+  sin `unknown` antes, no relee.
+- Pruebas, escritas antes y vistas en rojo (4): recargar con una escritura
+  `unknown` no reanuda nada ni muestra el correo; A `unknown`, otra pestaña
+  regenera B y Reintentar de A da ok, sin enlace y con aviso; crear `unknown`,
+  otra pestaña lo anula y Comprobar estado da ok, sin enlace; con `my_couple`
+  ilegible, tampoco hay enlace. También se comprueba que el primer ok no relee.
+  Se retiraron las pruebas de la reanudación.

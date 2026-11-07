@@ -3,7 +3,7 @@
 // escribió, con los campos bloqueados, «Reintentar» idéntico (misma clave y, en crear y regenerar, el mismo token) y
 // «Comprobar estado» con `write_status` (`completed` lleva al resultado real; `not_found` dice que todavía no consta).
 // Incluye aceptar con la respuesta perdida: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez».
-import { act, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
@@ -24,10 +24,11 @@ const NEVER_SAVED = /no se (guardó|creó|anuló|aceptó)|no se hizo/i;
 
 function coupleActions(overrides: Partial<CoupleActions>): CoupleActions {
   return {
-    create: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } }),
-    regenerate: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } }),
+    create: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }),
+    regenerate: vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }),
     cancel: vi.fn().mockResolvedValue({ status: "ok", value: { status: "discarded" } }),
     checkStatus: vi.fn().mockResolvedValue({ state: "not_found" }),
+    currentInvitation: vi.fn().mockResolvedValue({ state: "read", invitationId: "inv-1" }),
     ...overrides,
   };
 }
@@ -82,7 +83,7 @@ describe("crear invitación", () => {
   });
 
   it("unknown → Reintentar: misma clave, mismo correo y mismo token", async () => {
-    const create = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES } });
+    const create = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
     const { user, dialog } = await openCreate(coupleActions({ create }));
     await user.click(await within(dialog).findByRole("button", { name: copy.writes.retry }));
     expect(create.mock.calls[1][0]).toEqual(create.mock.calls[0][0]);
@@ -91,7 +92,7 @@ describe("crear invitación", () => {
 
   it("unknown → Comprobar estado completed: M3b con el enlace de esa intención", async () => {
     const create = vi.fn().mockResolvedValue({ status: "unknown" });
-    const checkStatus = vi.fn().mockResolvedValue({ state: "completed", value: { expiresAt: EXPIRES } });
+    const checkStatus = vi.fn().mockResolvedValue({ state: "completed", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
     const { user, dialog } = await openCreate(coupleActions({ create, checkStatus }));
     await user.click(await within(dialog).findByRole("button", { name: copy.writes.check }));
     expect(checkStatus).toHaveBeenCalledWith({ action: "create_invitation", idempotencyKey: create.mock.calls[0][0].idempotencyKey });
@@ -136,7 +137,7 @@ describe("generar enlace nuevo", () => {
   });
 
   it("unknown → Reintentar con la misma clave y el mismo token; ok muestra ese enlace", async () => {
-    const regenerate = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES } });
+    const regenerate = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
     const { user, dialog } = await openRegenerate(coupleActions({ regenerate }));
     expect(await within(dialog).findByText(copy.writes.unknown)).toBeTruthy();
     await user.click(within(dialog).getByRole("button", { name: copy.writes.retry }));
@@ -147,7 +148,7 @@ describe("generar enlace nuevo", () => {
 
   it("unknown → Comprobar estado completed con la acción regenerate_invitation", async () => {
     const regenerate = vi.fn().mockResolvedValue({ status: "unknown" });
-    const checkStatus = vi.fn().mockResolvedValue({ state: "completed", value: { expiresAt: EXPIRES } });
+    const checkStatus = vi.fn().mockResolvedValue({ state: "completed", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
     const { user, dialog } = await openRegenerate(coupleActions({ regenerate, checkStatus }));
     await user.click(await within(dialog).findByRole("button", { name: copy.writes.check }));
     expect(checkStatus).toHaveBeenCalledWith({ action: "regenerate_invitation", idempotencyKey: regenerate.mock.calls[0][0].idempotencyKey });
@@ -259,7 +260,7 @@ describe("una intención pendiente no se pierde ni se mezcla con otra (F55-2)", 
     await user.keyboard("{Escape}");
     expect(screen.getByRole("dialog", { name: copy.couple.invite.regenerateTitle })).toBe(dialogA);
     const tokenA = regenerate.mock.calls[0][0].token;
-    await act(async () => resolveA({ status: "ok", value: { expiresAt: EXPIRES } }));
+    await act(async () => resolveA({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }));
     expect(((await within(dialogA).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement).value.endsWith(`#t=${tokenA}`)).toBe(true);
     await user.click(within(dialogA).getByRole("button", { name: copy.primitives.close }));
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -269,7 +270,7 @@ describe("una intención pendiente no se pierde ni se mezcla con otra (F55-2)", 
     const tokenB = regenerate.mock.calls[1][0].token;
     expect(tokenB).not.toBe(tokenA);
     expect(within(dialogB).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
-    await act(async () => resolveB({ status: "ok", value: { expiresAt: EXPIRES } }));
+    await act(async () => resolveB({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }));
     expect(((await within(dialogB).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement).value.endsWith(`#t=${tokenB}`)).toBe(true);
   });
 
@@ -298,7 +299,7 @@ describe("una intención pendiente no se pierde ni se mezcla con otra (F55-2)", 
 
 // F55-3 (segunda ronda de ChatGPT del PR #55): «una petición que no termina deja la hoja bloqueada para siempre». Límite
 // de 15 s (el contrato dice «tiempo agotado» sin cifra) en la escritura y en «Comprobar estado», y reanudación tras recargar.
-describe("tiempo agotado y reanudación (F55-3)", () => {
+describe("tiempo agotado (F55-3)", () => {
   afterEach(() => vi.useRealTimers());
 
   it("useWrite: run() colgado → a los 15 s, unknown con la misma carga; la respuesta tardía no cambia nada", async () => {
@@ -356,45 +357,69 @@ describe("tiempo agotado y reanudación (F55-3)", () => {
     expect(within(dialog).getByRole("button", { name: copy.writes.check }).getAttribute("aria-disabled")).toBeNull();
     await user.click(within(dialog).getByRole("button", { name: copy.primitives.close }));
     expect(screen.getByRole("alertdialog", { name: copy.writes.close.title })).toBeTruthy();
-    await act(async () => resolveOld({ status: "ok", value: { expiresAt: EXPIRES } }));
+    await act(async () => resolveOld({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } }));
     expect(within(dialog).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
   });
 
-  it("tras recargar con un par pendiente, abrir la hoja lo reanuda como unknown: no escribe solo y Reintentar usa la misma clave y el mismo token", async () => {
-    const user = userEvent.setup();
-    const stored = { idempotencyKey: "44444444-4444-4444-8444-444444444444", token: TOKEN, groupId: GROUP, expectedVersion: 4 };
-    window.sessionStorage.setItem("juntia:invitation-write:regenerate", JSON.stringify({ savedAt: Date.now(), payload: stored }));
-    const regenerate = vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } });
-    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
-    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
-    const dialog = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
-    expect(within(dialog).getByText(copy.writes.unknown)).toBeTruthy();
-    expect(regenerate).not.toHaveBeenCalled();
-    await user.click(within(dialog).getByRole("button", { name: copy.writes.retry }));
-    expect(regenerate).toHaveBeenCalledWith(stored);
-    const link = (await within(dialog).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement;
-    expect(link.value.endsWith(`#t=${TOKEN}`)).toBe(true);
-    // Con un resultado definitivo, el par se descarta y la próxima apertura empieza otro.
-    expect(window.sessionStorage.getItem("juntia:invitation-write:regenerate")).toBeNull();
-  });
+});
 
-  it("un par pendiente de crear se reanuda con su correo; uno de otra pareja no se reanuda", async () => {
+// F55-5 y F55-6 (tercera ronda del PR #55). Decisión del gestor: se retira la reanudación tras recargar (la intención de
+// quien invita vive solo en memoria), y dentro de la pestaña un ok que llega por «Reintentar» o «Comprobar estado» se
+// revalida contra my_couple antes de mostrar el enlace.
+describe("sin reanudación tras recargar y revalidación del enlace (F55-5, F55-6)", () => {
+  it("recargar con una escritura unknown no reanuda nada ni muestra el correo anterior", async () => {
+    const create = vi.fn().mockResolvedValue({ status: "unknown" });
+    await openCreate(coupleActions({ create }));
+    await screen.findByText(copy.writes.unknown);
+    cleanup(); // recargar: se desmonta todo y la pantalla vuelve a montarse con lo que trae el servidor
+    expect(Object.keys(window.sessionStorage).filter((key) => key.startsWith("juntia:invitation-write"))).toEqual([]);
     const user = userEvent.setup();
-    window.sessionStorage.setItem("juntia:invitation-write:create", JSON.stringify({ savedAt: Date.now(), payload: { idempotencyKey: "55555555-5555-4555-8555-555555555555", token: TOKEN, email: "tomas@correo.com" } }));
-    window.sessionStorage.setItem("juntia:invitation-write:regenerate", JSON.stringify({ savedAt: Date.now(), payload: { idempotencyKey: "k", token: TOKEN, groupId: "otra", expectedVersion: 1 } }));
-    const create = vi.fn();
-    const { unmount } = render(<PartnerScreen view={none} actions={coupleActions({ create })} />);
+    render(<PartnerScreen view={none} actions={coupleActions({ create })} />);
     await user.click(screen.getByRole("button", { name: copy.couple.none.invite }));
     const dialog = screen.getByRole("dialog", { name: copy.couple.invite.title });
-    expect((within(dialog).getByRole("textbox", { name: copy.couple.invite.email }) as HTMLInputElement).value).toBe("tomas@correo.com");
-    expect(within(dialog).getByText(copy.writes.unknown)).toBeTruthy();
-    expect(create).not.toHaveBeenCalled();
-    unmount();
-    const regenerate = vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } });
-    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
+    expect((within(dialog).getByRole("textbox", { name: copy.couple.invite.email }) as HTMLInputElement).value).toBe("");
+    expect(within(dialog).queryByText(copy.writes.unknown)).toBeNull();
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("A queda unknown, otra pestaña regenera B, Reintentar de A da ok: no se muestra el enlace de A sino el aviso", async () => {
+    const user = userEvent.setup();
+    const regenerate = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "A" } });
+    const currentInvitation = vi.fn().mockResolvedValue({ state: "read", invitationId: "B" });
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate, currentInvitation })} />);
     await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
-    await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
-    expect(regenerate).toHaveBeenCalledTimes(1);
-    expect(regenerate.mock.calls[0][0].token).not.toBe(TOKEN);
+    const dialog = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    await user.click(await within(dialog).findByRole("button", { name: copy.writes.retry }));
+    expect(await within(dialog).findByText(copy.couple.invite.changed)).toBeTruthy();
+    expect(currentInvitation).toHaveBeenCalled();
+    expect(within(dialog).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+    expect(document.body.textContent).not.toContain(regenerate.mock.calls[0][0].token);
+    expect(router.refresh).toHaveBeenCalled();
+  });
+
+  it("crear en unknown, otra pestaña lo anula, Comprobar estado da ok: no se muestra el enlace", async () => {
+    const create = vi.fn().mockResolvedValue({ status: "unknown" });
+    const checkStatus = vi.fn().mockResolvedValue({ state: "completed", value: { expiresAt: EXPIRES, invitationId: "X" } });
+    const currentInvitation = vi.fn().mockResolvedValue({ state: "read", invitationId: null });
+    const { user, dialog } = await openCreate(coupleActions({ create, checkStatus, currentInvitation }));
+    await user.click(await within(dialog).findByRole("button", { name: copy.writes.check }));
+    expect(await within(dialog).findByText(copy.couple.invite.changed)).toBeTruthy();
+    expect(within(dialog).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+    expect(document.body.textContent).not.toContain(create.mock.calls[0][0].token);
+  });
+
+  it("si no se puede leer my_couple, tampoco se muestra el enlace", async () => {
+    const create = vi.fn().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "inv-1" } });
+    const { user, dialog } = await openCreate(coupleActions({ create, currentInvitation: vi.fn().mockResolvedValue({ state: "error" }) }));
+    await user.click(await within(dialog).findByRole("button", { name: copy.writes.retry }));
+    expect(await within(dialog).findByText(copy.couple.invite.changed)).toBeTruthy();
+    expect(within(dialog).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+  });
+
+  it("la primera respuesta ok, sin unknown antes, muestra el enlace sin releer my_couple", async () => {
+    const currentInvitation = vi.fn();
+    const { dialog } = await openCreate(coupleActions({ currentInvitation }));
+    expect(await within(dialog).findByRole("textbox", { name: copy.couple.invite.link })).toBeTruthy();
+    expect(currentInvitation).not.toHaveBeenCalled();
   });
 });
