@@ -160,8 +160,8 @@ export function summaryLines(draft: SplitDraft, status: SplitStatus, members: re
   const people = ordered(members).filter((m) => draft.participants.includes(m.userId));
   const message = splitMessage(status);
   if (people.length === 1) {
-    const second = status.kind === "ok" ? copy.shared.summary.parts([[people[0].name, formatMoney(status.allocations[0].amount)]]) : people[0].name;
-    return { first: copy.shared.summary.single(payer, people[0].name), second, invalid: false };
+    const second = status.kind === "ok" ? copy.shared.summary.one(people[0].name, formatMoney(status.allocations[0].amount)) : people[0].name;
+    return { first: copy.shared.summary.single(payer), second, invalid: false };
   }
   const first = copy.shared.summary.paid(payer, modeLabel(draft, members));
   if (message) return { first, second: message, invalid: true };

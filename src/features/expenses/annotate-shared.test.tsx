@@ -114,10 +114,12 @@ describe("E1 en Nosotros (US-2.1, Q5; decisión 1 de los fundadores)", () => {
     expect(summary()?.textContent ?? "").toContain(copy.shared.summary.paid("Tomás", copy.shared.mode.percentOf([55, 45])));
   });
 
-  it("recuerda también un solo participante: «Pagó Tomás · 100 % · Sara» (decisión 4)", async () => {
+  it("recuerda también un solo participante: «Pagó Tomás · 100 %» sobre «Sara» (decisión 4; comp 02·5 N3)", async () => {
     const { user } = setup({ last: { payerUserId: TOMAS, splitMode: "percent", percents: { [SARA]: 100, [TOMAS]: 0 }, participants: [SARA] } });
     await open(user);
-    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Tomás", "Sara"));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Tomás"));
+    // Comp 02·5 N3 (2a oficial): la segunda línea dice quién asume el gasto.
+    expect(summary()?.textContent ?? "").toContain("Sara");
   });
 });
 
@@ -143,7 +145,8 @@ describe("Subhoja «Reparto» (2a): Pagó, Reparto y Participan", () => {
     expect(screen.getByText(copy.shared.split.singleNote("Sara"))).toBeTruthy();
     expect((screen.getByRole("radio", { name: copy.shared.mode.equal })).matches(":disabled")).toBe(true);
     await back(user);
-    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Sara", "Sara"));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Sara"));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.one("Sara", "$186.400"));
     await openSplit(user);
     await user.click(participant("Tomás"));
     await back(user);

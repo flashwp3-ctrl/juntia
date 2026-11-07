@@ -114,7 +114,8 @@ export const copy = {
     summary: {
       open: "Reparto",
       paid: (name: string, mode: string) => `Pagó ${name} · ${mode}`,
-      single: (payer: string, participant: string) => `Pagó ${payer} · 100 % · ${participant}`,
+      // Decisión 4 tal como la dibuja el comp 02·5 N3 (2a oficial): «Pagó Tomás · 100 %» sobre «Sara · $186.400».
+      single: (payer: string) => `Pagó ${payer} · 100 %`, one: (name: string, amount: string) => `${name} · ${amount}`,
       both: (first: string, second: string) => `${first} y ${second}`,
       each: (names: string, amount: string) => `${names} · ${amount} cada uno`,
       parts: (parts: readonly (readonly [string, string])[]) => parts.map(([name, amount]) => `${name} ${amount}`).join(" · "),

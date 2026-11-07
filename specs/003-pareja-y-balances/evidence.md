@@ -1279,6 +1279,16 @@ oscuro de la errata F16-1 (3 nov 2026): el marcador de posición usa
 sobre `#22262A`, **5,59:1** en oscuro; «Ingreso» sin elegir va en tinta. axe no
 encuentra ningún `color-contrast` en las hojas. No se cambia ningún token.
 
+**Comps actualizados por Claude Design (7 nov 2026, aviso del gestor).** El 06 fija
+`#48443C` para «Ingreso» sin elegir y para el marcador de posición, en claro y en
+Yo. El marcador ya usa ese tono. «Ingreso» sin elegir va en tinta `#1A1C1A`,
+más oscuro, por la errata de Segmented del 3 nov 2026 («etiqueta en tinta en
+todos los segmentos»), que vale para todos los Segmented de la app: no se cambia
+dentro de este PR y se lleva al gestor. En «02 Componentes», 02·5/02·6 «Modo
+Nosotros · 2a oficial» N1–N4: N1, N2 y N4 coinciden con lo construido; N3 dibuja
+la decisión 4 en dos líneas («Pagó Tomás · 100 %» sobre «Sara · $186.400») y el
+resumen se alineó con él (test primero, visto en rojo).
+
 ## Capturas para T057 (390 y 1440, claro y oscuro)
 
 76 PNG en `specs/003-pareja-y-balances/evidence/pr-c/`: Anotar en Nosotros E1, E2
