@@ -637,13 +637,13 @@ Las pruebas internas con gastos reales empiezan desde P0-1, después de verifica
 | ADR-001 | Contextos | Conversión privado→grupo no es toggle invisible: crear nuevo gasto compartido y anular el previo con flujo auditado |
 | ADR-002 | Dinero/splits | Unidades menores ISO + algoritmo mayor residuo y desempate estable; moneda única por grupo P0. Nota de implementación: §15.10, decisión 20.8 |
 | ADR-003 | Historial de miembros | Acceso grupal revocado; snapshot privado mínimo o bloquear la acción de salida/expulsión hasta existir |
-| ADR-004 | Presupuestos | Grupo = gasto completo; personal = gasto privado + partes; **ambos opcionales, ausencia ≠ cero**, totales no aditivos |
+| ADR-004 | Presupuestos | Grupo = gasto completo; personal = gasto privado + partes; **ambos opcionales, ausencia ≠ cero**, totales no aditivos. Nota de implementación: §15.10, decisión 22.7 |
 | ADR-005 | IA | Post-MVP, consentimiento, agregados minimizados, salida validada y fallback sin modelo |
 | ADR-006 | Offline | No prometer sin cola idempotente y conflictos resueltos |
 | ADR-007 | Correcciones | Ajustes auditados recalculan balances; liquidaciones inmutables. **Enmienda:** se pueden anular con auditoría, nunca editar ni borrar (§15.10, decisión 20.11) |
 | ADR-008 | Demo | Pública posterior, exclusivamente fixtures aisladas sin acceso a finanzas reales |
 | ADR-009 | Planes | Uso personal no comercial en hosting Hobby; revisar licencia/plan antes de actividad comercial |
-| ADR-010 | Metas | Ledger auditable separado de consumo; usos enlazados a gasto, sin doble contabilización; confirmación para aportes ajenos |
+| ADR-010 | Metas | Ledger auditable separado de consumo; usos enlazados a gasto, sin doble contabilización; confirmación para aportes ajenos. Notas de implementación: §15.10, decisiones 22.13 y 22.17 |
 
 ### 12.3 Riesgos y mitigaciones
 
@@ -1104,6 +1104,34 @@ Los dos fundadores la tomaron el 7 de noviembre de 2026, después del PR C de la
 | 21.4 | Presupuesto | Con el nivel ligero, el job `e2e` vuelve por debajo de los 480 s de la 19.5, que sigue vigente y pasa a bloquear desde el PR D de la 003 (20.17) |
 
 Enmienda `docs/TESTING.md` §3 («Qué rutas pasa axe en un PR») y la tabla de presupuestos. El cambio del workflow y de los archivos `*.a11y.ts` va en el primer PR de código posterior (el PR D de la 003).
+
+#### Decisión 22: alcance de P0-3
+
+Los dos fundadores la tomaron el 7 de noviembre de 2026 sobre las 19 preguntas abiertas de la especificación 004 (`specs/004-presupuestos-y-metas/spec.md`). Aceptaron todas las recomendaciones tal como estaban propuestas («Aceptamos»). Alejandro la comunicó al gestor en nombre de los dos, y la segunda fundadora la confirma con el merge del PR de la especificación (#63). La spec 004 la aplica en su sección «Clarifications».
+
+| # | Tema | Elección |
+| --- | --- | --- |
+| 22.1 | Forma | Una especificación, la 004, con cinco PR de implementación: A, base de datos, seguridad y dominio; B, Plan y presupuestos (nace la spec E2E 5); C, metas, aportes, retiros y S5 (nace la spec E2E 4); D, gasto con meta y confirmaciones (amplía la spec 4 con dos sesiones); E, Análisis, PlanningNote, exportación y cierre (amplía la spec 5). B y C pueden ir en paralelo después de A |
+| 22.2 | GoalStack `[P]` | Aprobado en su forma: pila en móvil y abanico desde lg, con «Ver todas» siempre visible. Si falla el rendimiento del abanico con 6 metas en gama media, se cae a la lista y vuelve a los fundadores. Aprobación final en pantalla en el PR C |
+| 22.3 | FundingLedger, ConfirmationBadge `[P]` y ChangePreview en B3 | Aprobados en su forma; «NO SE REGISTRÓ» solo con un rechazo confirmado. Aprobación final en pantalla en el PR D |
+| 22.4 | PlanningNote `[P]` | Aprobada en su forma, solo en Análisis. Aprobación final en pantalla en el PR E |
+| 22.5 | Análisis (S3) | Ruta hija de Plan, con acceso desde Plan y desde «En qué se fue» de Inicio; sin destino de navegación nuevo |
+| 22.6 | Fotos de las metas | **Fuera de P0-3**: se usa el fallback aprobado de GoalCard. La subida de fotos necesitará un ADR propio (**ADR-014**, Storage privado de fotos de metas) antes de P0-4 |
+| 22.7 | Vigencia del presupuesto | Rige cada mes hasta que se edita o se desactiva; una edición rige desde el mes en que se hace y los meses anteriores conservan su límite. **Nota de implementación de ADR-004** (`docs/adr/ADR-004-presupuestos.md`) |
+| 22.8 | Alcance del presupuesto | Solo por categoría de gasto (las nueve, incluida «Otra»), nunca «Ingresos»; sin total del mes |
+| 22.9 | Ritmo y proyecciones | Solo aritmética descriptiva, sin extrapolar; sin «próximo aporte planeado» |
+| 22.10 | Comparación con el mes anterior | Solo si el mes anterior tiene gastos en ese contexto; hasta dos categorías con mayor aumento, nunca un gasto concreto ni una causa |
+| 22.11 | Metas en Yo y en Nosotros | Nosotros, solo compartidas; Yo, las personales y aparte las compartidas con «Tus aportes», sin un total que las sume |
+| 22.12 | Fecha y modo de aportes y retiros | Fecha de hoy o pasada, nunca futura; «Apartado en Juntia» por defecto, con transferencia declarada opcional |
+| 22.13 | Corregir un aporte | Se anula con auditoría («Deshacer» de 6 s y «Anular aporte» mientras los fondos sigan disponibles), nunca se edita ni se borra; el retiro queda para reasignaciones reales. **Nota de ADR-010** (`docs/adr/ADR-010-metas.md`) |
+| 22.14 | Retiro de aportes ajenos | No en P0: solo aportes propios |
+| 22.15 | Editar, lograr y archivar una meta | Edita cualquiera de los dos con versión y auditoría; «Dar por lograda» es manual; archivar exige saldo 0 y ninguna solicitud pendiente; nada con historia se borra |
+| 22.16 | Alcance del gasto con meta | Una meta por gasto, elegida al anotar; uso ≤ gasto; propuesta de fondos proporcional a lo disponible, editable |
+| 22.17 | Editar o anular un gasto con meta | «Quitar el uso de la meta» como operación propia; anular el gasto quita el uso en la misma operación; no se baja el monto por debajo de lo usado. **Nota de ADR-010** |
+| 22.18 | Mes de `gasto_financiado_con_meta` | El mes del gasto (`transaction_date`), también para lo aprobado después |
+| 22.19 | Dataset dorado de P0-3 | Aprobadas las filas que define la spec 004; los casos de noviembre son escenarios hipotéticos que se prueban por diferencias, como la 20.18 |
+
+Además, tres lecturas del paquete de diseño se resuelven a favor del documento superior, sin pregunta: el selector «¿Quién aporta?» de 04·3 no se construye (DEC-G06: aporta quien registra), el «Aporte a Boda» de 04·7 es a Japón (dataset dorado) y el texto «el dinero sigue en la cuenta de Sara» se sustituye por el del handoff, «sigue donde lo tengan».
 
 #### Dataset dorado: quién lo produce y cuándo
 

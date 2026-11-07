@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-07
 
-**Status**: Draft — etapa Specify. **Clarify pendiente:** las 19 preguntas (Q1–Q19) esperan la respuesta de los fundadores. Cada una lleva contexto, opciones y la recomendación del redactor; los requisitos que dependen de una respuesta citan la pregunta y están escritos con la recomendación, marcados «(según Q#)». No avanza a Plan sin las respuestas y el merge de su PR documental (ADR-012 §3.1).
+**Status**: Draft — Specify y Clarify hechos. Los fundadores respondieron las 19 preguntas (Q1–Q19) el 7 de noviembre de 2026 aceptando todas las recomendaciones; sus respuestas son la decisión 22 del maestro §15.10. Los requisitos que aplican una respuesta la citan como «(según Q#)». No avanza a Plan sin el merge de su PR documental (ADR-012 §3.1).
 
 **Input**: User description: "Especificación 004 · P0-3 de Juntia, «Presupuestos opcionales, metas y Spending Story real» (maestro §11): P0-3a presupuesto opt-in y modelo de atribución; P0-3b Spending Story con y sin presupuesto; P0-3c modelo y API de metas privadas y compartidas, ledger y RLS; P0-3d UI de metas y S5 Goal Journey, aportes y retiros; P0-3e usar una meta para financiar un gasto sin doble conteo. Métricas `gasto_consumo`, `aporte_a_metas`, `retiro_de_metas`, `gasto_financiado_con_meta` y `total_destinado_neto`. Conecta el punto de extensión FR-035 de la 003 (`juntia_private.transaction_goal_funded`). Plan y Metas dejan su estado provisional. Exportación de alcance global. Acceso a datos según ADR-013. Sin banca, aportes programados, presupuestos sugeridos ni IA."
 
@@ -18,9 +18,9 @@
 > `tasks.md`, ADR-012 §3.2).
 >
 > **Desviación de la plantilla, a propósito.** Como en la 003, la plantilla de Spec
-> Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hay 19 preguntas, porque el
-> encargo del gestor pide que todo lo no decidido llegue a los fundadores en lugar
-> de resolverse en la spec.
+> Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hubo 19 preguntas, porque el
+> encargo del gestor pedía que todo lo no decidido llegara a los fundadores en lugar
+> de resolverse en la spec. Cada requisito cita la respuesta que aplica.
 
 ### Fuentes que aplica
 
@@ -35,7 +35,8 @@
 | Maestro §7.3, §7.4 | `budgets`, `savings_goals`, `goal_ledger_entries`, `goal_usage_allocations`, `goal_usage_confirmations`; contrato por tipo; operaciones atómicas; privacidad de metas |
 | Maestro §15.3, §15.4, §15.5, §15.6, §15.7 | Navegación, fórmula de DEC-G04 y su presentación, presupuestos sin segunda aprobación con ediciones concurrentes protegidas, gasto con meta, verificaciones 3 a 7 de §15.6.3, dependencias técnicas de §15.6.2 y umbrales |
 | Maestro §15.9 | Inventario de `[P]`: GoalStack, FundingLedger, ConfirmationBadge, PlanningNote, ChangePreview |
-| Maestro §15.10, decisiones 16.12, 18, 19, 20 y 21, y «Dataset dorado» | Exportación, iteración contra `juntia-dev`, verificaciones aplazadas, alcance de P0-2, accesibilidad en dos niveles y la parte del dataset dorado de P0-3 |
+| Maestro §15.10, decisiones 16.12, 18, 19, 20, 21 y 22, y «Dataset dorado» | Exportación, iteración contra `juntia-dev`, verificaciones aplazadas, alcance de P0-2, accesibilidad en dos niveles, **alcance de P0-3 (decisión 22, respuestas a Q1–Q19)** y la parte del dataset dorado de P0-3 |
+| ADR-004 y ADR-010 (maestro §12.2; archivos `docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md` desde este PR) | Presupuestos opcionales y no aditivos, con la nota de vigencia mensual (Q7); ledger de metas, con las notas de anulación de aportes (Q13) y reversión del uso (Q17) |
 | Maestro US-01, US-04, US-08, US-09, US-13, US-17, US-18 a US-23 | Historias que P0-3 hace verificables |
 | ADR-001 punto 7 | Mover a Pareja bloqueado si el gasto privado está financiado con una meta personal |
 | ADR-002, ADR-007 | Unidades menores, pesos enteros, anulaciones auditadas |
@@ -51,6 +52,37 @@
 | Spec 003 (`spec.md`, `contracts/server-actions.md`, `evidence.md`) | Forma y nivel de detalle; lecciones F44, F47, F55 y F57 que aquí pasan a requisitos (FR-090 a FR-099) |
 
 ## Clarifications
+
+Las diecinueve respuestas son **decisiones de los fundadores del 7 de noviembre
+de 2026**, que aceptaron las recomendaciones de la etapa Specify tal como se
+propusieron («Aceptamos»). Alejandro las comunicó en nombre de los dos al gestor,
+y quedaron registradas como **decisión 22** del maestro §15.10. Esta spec las
+registra y las aplica; no las toma. La segunda fundadora las confirma con el merge
+de este PR documental. Cada pregunta conserva su número, porque los requisitos lo
+citan; el contexto y las opciones de cada una siguen abajo, en «Contexto y opciones
+de cada pregunta».
+
+### Session 2026-11-07
+
+- Q1: ¿Cuál es la forma de la especificación? → A: **Una spec con cinco PR de implementación:** A, base de datos, seguridad y dominio; B, Plan y presupuestos (nace la spec E2E 5); C, metas, aportes, retiros y S5 (nace la spec E2E 4); D, gasto con meta y confirmaciones (amplía la 4 con dos sesiones); E, Análisis (S3), PlanningNote, exportación y cierre (amplía la 5). B y C pueden ir en paralelo después de A; A se puede partir en A1 y A2 si resulta demasiado grande.
+- Q2: ¿Se aprueba GoalStack `[P]`? → A: **Sí, la pila** en móvil y el abanico desde lg, con «Ver todas» siempre visible. Si la `[V]` de rendimiento del abanico con 6 metas falla en gama media emulada, el PR C cae a la lista editorial y lo trae a los fundadores. Aprobación final en pantalla en el PR C.
+- Q3: ¿Se aprueban FundingLedger `[P]`, ConfirmationBadge `[P]` y la ChangePreview de B3? → A: **Sí, en su forma**: dos bloques (reparto ≠ fondos), los cinco estados del badge y B3 con «ahora» y «si aprueba». «NO SE REGISTRÓ» solo con un rechazo confirmado. Aprobación final en pantalla en el PR D.
+- Q4: ¿Se aprueba PlanningNote `[P]`? → A: **Sí, en su forma**, solo en Análisis. Aprobación final en pantalla en el PR E.
+- Q5: ¿Dónde vive Análisis? → A: **Ruta hija de Plan** (`/plan/analisis`), con acceso desde Plan y desde «En qué se fue» de Inicio; sin destino de navegación nuevo.
+- Q6: ¿Fotos de las metas en P0-3? → A: **No.** La subida de fotos queda **fuera de P0-3**: toda GoalCard usa el fallback aprobado. Subir fotos necesitará **un ADR propio (ADR-014, Storage privado de fotos de metas) antes de P0-4**; sin ese ADR no se implementa.
+- Q7: ¿Un presupuesto mensual se repite cada mes? → A: **Sí:** rige cada mes hasta que se edita o se desactiva; una edición rige desde el mes en que se hace; los meses anteriores conservan su límite. **Nota de implementación de ADR-004** (`docs/adr/ADR-004-presupuestos.md`).
+- Q8: ¿Alcance de un presupuesto? → A: **Solo por categoría**, las nueve categorías de gasto (incluida «Otra»), nunca «Ingresos»; sin total del mes.
+- Q9: ¿Ritmo y proyecciones? → A: **Solo aritmética descriptiva, sin extrapolar:** días que quedan y marca de mes transcurrido en presupuestos; «Faltan $X en {n} meses · $Y al mes» y la marca de ritmo en metas con fecha; sin «próximo aporte planeado».
+- Q10: ¿Comparación con el mes anterior? → A: **Solo si el mes anterior tiene gastos** en ese contexto: diferencia en pesos y porcentaje entero, y hasta dos categorías con mayor aumento; nunca un gasto concreto ni una causa.
+- Q11: ¿Qué se ve de las metas en Yo y en Nosotros? → A: **Nosotros:** solo compartidas. **Yo:** las personales y, aparte, las compartidas con «Tus aportes $X», sin un total que las sume.
+- Q12: ¿Fecha y modo de un aporte o retiro? → A: **Fecha elegible, hoy o pasada, nunca futura;** modo «Apartado en Juntia» por defecto, con la opción de transferencia declarada.
+- Q13: ¿Cómo se corrige un aporte mal registrado? → A: **Se anula, no se edita:** «Deshacer» de 6 s y «Anular aporte» desde el historial mientras esos fondos sigan disponibles; el retiro queda para reasignaciones reales. **Nota de ADR-010** (`docs/adr/ADR-010-metas.md`).
+- Q14: ¿Se retiran aportes del otro? → A: **No en P0:** solo aportes propios; la función rechaza el retiro ajeno.
+- Q15: ¿Editar, dar por lograda y archivar? → A: **Edita cualquiera de los dos** con versión y auditoría; «Dar por lograda» es manual (la app solo lo sugiere); una meta lograda admite usos y retiros, no aportes; **archivar exige saldo 0 y ninguna solicitud pendiente;** nada con historia se borra.
+- Q16: ¿Alcance del gasto con meta? → A: **Una meta por gasto, elegida al anotar**, con uso ≤ gasto; FundingLedger propone un reparto **proporcional a lo disponible**, en pesos enteros con mayor residuo y editable. «Dinero del mes» es el valor inicial.
+- Q17: ¿Editar o anular un gasto con meta? → A: **«Quitar el uso de la meta»** existe como operación propia; anular el gasto quita el uso en la misma operación; bajar el monto por debajo de lo usado se rechaza; una solicitud pendiente se revalida al aprobar. **Nota de ADR-010.**
+- Q18: ¿A qué mes cuenta `gasto_financiado_con_meta`? → A: **Al mes del gasto** (`transaction_date`), también lo aprobado después.
+- Q19: ¿Se aprueban las filas del dataset dorado que define esta spec? → A: **Sí**, con los casos de noviembre como escenarios hipotéticos que se prueban por diferencias.
 
 ### Lo que ya estaba decidido antes de la etapa Specify
 
@@ -71,11 +103,12 @@ Para que la revisión no lo reabra:
 - **Sin tiempo real:** los datos se actualizan al navegar, al volver a la pestaña y tras cada escritura propia (decisión 20.16). Lo mismo vale para las solicitudes de fondos.
 - **Fuera de P0:** aportes programados, presupuestos sugeridos (DEC-R01-S), metas con rendimiento, banca, multimoneda, categorías propias, grupos N (§3, §5.6).
 
-### Preguntas abiertas para los fundadores
+### Contexto y opciones de cada pregunta
 
-Cada pregunta: **contexto**, **opciones** y **recomendación**. Los requisitos citan
-el número. Las marcadas «ADR» necesitan, si se aprueban, una nota o un archivo de
-ADR en el mismo PR de Clarify, como hizo la 003 con ADR-002 y ADR-007.
+Lo que se presentó a los fundadores en la etapa Specify: **contexto**, **opciones**
+y **recomendación**. Todas las recomendaciones se aceptaron (sesión del 7 de
+noviembre, arriba). Las marcadas «ADR» quedan como notas en
+`docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md`, creados en este PR.
 
 #### Q1 · Forma de la especificación y reparto en PR
 
@@ -501,7 +534,7 @@ puntos 3 y 4.
 - **FR-033**: Archivar exige saldo 0 y ninguna solicitud pendiente; una meta archivada es de solo lectura y aparece en «Archivadas». Ninguna meta con historia se borra (según Q15; DEC-G02).
 - **FR-034**: `goal_balance` y el disponible por aportante se derivan del ledger (`Σ aportes − Σ retiros − Σ usos aplicados`, sin anulados) en funciones puras del dominio y se recalculan en SQL; `progress = goal_balance / target`, mostrado como entero truncado; con saldo > objetivo se muestra el excedente de forma neutra (DEC-G05).
 - **FR-035**: Metas en Nosotros muestra solo metas compartidas, con «Apartado en metas compartidas» (suma de los saldos de las compartidas activas) y «Es dinero apartado, no gastado. Sigue donde lo tengan.»; en Yo, las personales y, aparte, las compartidas con «Tus aportes $X», sin un total que sume las dos (04·3; según Q11).
-- **FR-036**: Sin fotos subidas en P0-3: toda GoalCard usa el fallback aprobado (según Q6). Si Q6 cambia, este requisito se reescribe con su ADR.
+- **FR-036**: Sin fotos subidas en P0-3: toda GoalCard, la pila y la meta inmersiva usan el fallback aprobado (según Q6). La subida de fotos necesita su propio ADR (ADR-014) antes de P0-4; ningún PR de P0-3 añade Storage ni campos de foto.
 - **FR-037**: El ritmo de una meta con fecha sigue Q9: «Faltan $X en {n} meses · $Y al mes», marcado como estimación con el patrón punteado, y la marca de ritmo; sin «próximo aporte planeado».
 
 #### Aportes, retiros y anulaciones (DEC-G02, DEC-G03; 04·3)
@@ -722,17 +755,17 @@ con las pruebas que las consumen (regla 4).
 
 ## Inventario de `[P]` que toca P0-3
 
-Clasificación en los dos ejes del maestro §15.9. **Los cuatro que afectan al alcance
-se resuelven antes del plan** (Q2, Q3, Q4); ninguno se cierra dentro de un PR de
-código.
+Clasificación en los dos ejes del maestro §15.9. **Los que afectan al alcance
+quedaron resueltos antes del plan** (Q2, Q3, Q4; decisión 22); ninguno se cierra
+dentro de un PR de código sin la aprobación final en pantalla de su PR.
 
 | Elemento `[P]` | ¿Afecta al alcance? | ¿Requiere aprobación antes de implementar? | Situación en P0-3 |
 | --- | --- | --- | --- |
-| GoalStack · pila tipo Wallet | **Sí** — P0-3 | **Sí** | **Abierto: Q2.** Aprobación final en pantalla en el PR C |
-| FundingLedger (reparto ≠ fondos) | **Sí** — P0-3 | **Sí** | **Abierto: Q3.** Aprobación final en pantalla en el PR D |
-| ConfirmationBadge y solicitud pendiente | **Sí** — P0-3 | **Sí** | **Abierto: Q3.** Aprobación final en pantalla en el PR D |
-| ChangePreview (efecto B3 «ahora y si aprueba») | **Sí** — P0-2 / P0-3 | **Sí** | Aprobado solo en Mover a Pareja (decisión 20.3). **Abierto para B3: Q3** |
-| PlanningNote (destinado neto) | **Sí** — P0-3 | **Sí** | **Abierto: Q4.** Aprobación final en pantalla en el PR E |
+| GoalStack · pila tipo Wallet | **Sí** — P0-3 | **Sí** | **Aprobado en su forma** (Q2; decisión 22), con la caída a lista si falla el rendimiento. Aprobación final en pantalla en el PR C |
+| FundingLedger (reparto ≠ fondos) | **Sí** — P0-3 | **Sí** | **Aprobado en su forma** (Q3; decisión 22). Aprobación final en pantalla en el PR D |
+| ConfirmationBadge y solicitud pendiente | **Sí** — P0-3 | **Sí** | **Aprobado en su forma** (Q3; decisión 22). Aprobación final en pantalla en el PR D |
+| ChangePreview (efecto B3 «ahora y si aprueba») | **Sí** — P0-2 / P0-3 | **Sí** | Aprobado en Mover a Pareja (decisión 20.3) y **en B3** (Q3; decisión 22). Aprobación final en pantalla en el PR D |
+| PlanningNote (destinado neto) | **Sí** — P0-3 | **Sí** | **Aprobado en su forma**, solo en Análisis (Q4; decisión 22). Aprobación final en pantalla en el PR E |
 | Personas, escalables a N (+ patrón) | No | **Sí** — viendo la pantalla | `person.1–2` en cintas y desgloses de aportes; se aprueba en los PR C y D |
 | Gasto, ingreso y liquidación en tinta | No | **Sí** — viendo la pantalla | Primera vez junto a aportes, retiros y usos (verde de ahorro): se aprueba en el PR C |
 | Texto ampliado hasta 200 % | No | **No** — requisito obligatorio | Se aplica y se prueba (FR-101) |
@@ -774,7 +807,7 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
 | `transaction_goal_funded` conectado | FR-035 de la 003 | FR-007 con datos, más la LimitNote | CI (pgTAP; componentes) | PR A (función); PR D (pantalla) |
 | View Transitions con App Router y back-swipe de iOS | §15.6.2 punto 1; MOTION_SYSTEM | Goal Journey con respaldo `layoutId` | Implementador | Antes del merge del PR C; el back-swipe en iPhone, fundadores, antes de MVP-1 (decisión 19.1) |
 | Rendimiento de GoalStack y del abanico | §15.6.2 punto 4; RESPONSIVE | Abanico con 6 metas en gama media emulada | Gestor (laboratorio) | Antes del merge del PR C (según Q2) |
-| Luminancia del scrim de fotos | §15.6.2 punto 2; 04·4 | Solo si Q6 elige subir fotos | Implementador | Con el PR que traiga fotos |
+| Luminancia del scrim de fotos | §15.6.2 punto 2; 04·4 | No aplica a P0-3: la subida de fotos queda fuera (Q6) | Implementador del PR que traiga fotos | Con el ADR-014, antes de P0-4 |
 | Privacidad por ámbito | FR-085 a FR-087 | HTML, RSC y prefetch de Nosotros; nada personal para el otro | CI (componentes y specs 4 y 5) | Antes del merge de los PR B a E |
 | Umbrales de §15.7 | Maestro §15.7 | SC-010 y FR-101 | Gestor (laboratorio) | Antes del merge de los PR B, C y E |
 | Presupuesto del job `e2e` | Decisión 19.5; FR-116 | < 480 s con las specs 4 y 5 | CI | Antes del merge de los PR B a E |
@@ -797,7 +830,7 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
 ## ADR, erratas y conflictos
 
 - **ADR que aplican:** ADR-001 (punto 7), ADR-002, ADR-007, ADR-011, ADR-012 y ADR-013 (archivo); ADR-004 y ADR-010 (maestro §12.2, sin archivo hoy).
-- **ADR nuevo:** ninguno con las recomendaciones. **Si Q6 elige subir fotos**, hace falta **ADR-014 (Storage privado de fotos de metas)** antes del plan. Las respuestas a Q7 (ADR-004) y a Q13 y Q17 (ADR-010) se escriben como notas fechadas en archivos propios, `docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md`, en el PR de Clarify, como hizo la 003 con ADR-002 y ADR-007.
+- **ADR nuevo:** ninguno en P0-3. La subida de fotos de metas queda fuera de P0-3 (Q6) y necesitará **ADR-014 (Storage privado de fotos de metas)** antes de P0-4. Las respuestas a Q7 (ADR-004) y a Q13 y Q17 (ADR-010) quedan como notas fechadas en archivos propios, `docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md`, creados en este PR, como hizo la 003 con ADR-002 y ADR-007, y trazadas en la decisión 22 del maestro.
 - **Erratas pendientes del paquete:** ninguna en `docs/design/README.md`.
 - **Lecturas registradas para la revisión** (donde hay conflicto, manda el documento superior o lo resuelve una pregunta):
   1. **04·3 «¿Quién aporta? Sara · Tomás»** en Registrar aporte contradice DEC-G06 («el cliente no puede crear aportes a nombre de terceros») y 05·7. Manda el maestro: el selector no se construye y aporta quien registra (FR-040).
@@ -873,9 +906,9 @@ salida interna aprobada por los dos (SC-012). Con P0-3 quedan cubiertas en códi
 historias US-18 a US-23 y US-04; el release gate de MVP-1 (§10.4) sigue siendo de
 P0-4.
 
-## Propuesta de reparto en PR (recomendación, Q1)
+## Reparto en PR (Q1; decisión 22.1)
 
-Solo una recomendación: la decide Q1 y la concreta `tasks.md`.
+Aprobado por los fundadores (Q1); `tasks.md` lo concreta.
 
 | PR | Contenido | Spec E2E | Depende de |
 | --- | --- | --- | --- |
