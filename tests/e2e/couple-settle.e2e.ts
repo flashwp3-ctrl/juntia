@@ -37,7 +37,7 @@ test("gasto compartido 50/50: Sara lo anota en 2 toques y el total de Nosotros s
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   const sara = await open(browser, baseURL!, pair.sara, "us");
   await sara.page.goto("/");
-  await expect(sara.page.getByText(copy.couple.home.empty.title)).toBeVisible();
+  await expect(sara.page.getByText(copy.couple.home.empty.title).filter({ visible: true })).toBeVisible();
 
   await sara.page.locator("body").focus();
   await sara.page.keyboard.press("n");
@@ -133,7 +133,7 @@ test("Mover a Pareja: Farmacia Pasteur pasa a Nosotros en una operación, con «
   await dialog.getByRole("button", { name: copy.move.confirm }).click();
   await expect(page.getByRole("status").filter({ hasText: copy.move.donePrefix })).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`/actividad\\?mes=${month()}`));
-  await expect(page.getByText(new RegExp(copy.move.movedFromMe)).first()).toBeVisible();
+  await expect(page.getByText(new RegExp(copy.move.movedFromMe)).filter({ visible: true }).first()).toBeVisible();
 
   // La base: un solo gasto activo, ahora compartido; el privado sale de Yo.
   expect((await listTransactions(pair.sara.client, month())).map((row) => row.id)).not.toContain(pharmacy.id);
