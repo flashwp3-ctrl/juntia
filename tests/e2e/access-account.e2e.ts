@@ -103,7 +103,7 @@ test("registro no permitido o de una cuenta existente: la misma pantalla y ningu
   }
 });
 
-test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida", async ({ page }) => {
+test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché compartida", async ({ page, baseURL }) => {
   // Un mes navegable para una cuenta sin movimientos (el mes en curso): desde F44-4, un mes fuera del intervalo redirige
   // al límite más cercano, y aquí se prueba que «volver» conserva la ruta y su query, no esa redirección.
   const month = todayInBogota().slice(0, 7);
@@ -124,7 +124,7 @@ test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché co
   await page.context().clearCookies();
   await page.goto(`/entrar?volver=${encodeURIComponent("//evil.example")}`);
   await signInWith(page, user.email, user.password);
-  await expect(page).toHaveURL(/^http:\/\/localhost:3000\/$/);
+  await expect(page).toHaveURL(new URL("/", baseURL).href);
 });
 
 test("Mi cuenta: perfil, apariencia en oscuro y un segundo dispositivo oscuro antes de <body>", async ({ page, browser, baseURL }) => {

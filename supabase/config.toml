@@ -158,12 +158,12 @@ enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
 # P0-1 PR B (T052): el mismo origen que usa Playwright (baseURL), para que el enlace del correo y la sesión compartan
-# cookies. Solo el Supabase local y el del runner; los proyectos alojados se configuran en su panel (quickstart §3).
-site_url = "http://localhost:3000"
+# cookies; puerto 3400, scripts/app-port.mjs y tests/app-port.test.ts. Solo el Supabase local y el del runner; los proyectos alojados se configuran en su panel (quickstart §3).
+site_url = "http://localhost:3400"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:3000", "http://127.0.0.1:3000"]
+additional_redirect_urls = ["http://localhost:3400", "http://127.0.0.1:3400"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -195,7 +195,7 @@ password_requirements = ""
 # [auth.webauthn]
 # rp_display_name = "Supabase"
 # rp_id = "localhost"
-# rp_origins = ["http://127.0.0.1:3000"]
+# rp_origins = ["http://127.0.0.1:3400"]
 
 [auth.rate_limit]
 # Solo stack local/CI; nunca se aplica al alojado (no usamos supabase config push). Los límites de juntia-dev y de producción se gestionan en el panel

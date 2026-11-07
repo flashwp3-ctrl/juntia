@@ -11,11 +11,11 @@
 // el gate sigue siendo `verify` más los jobs de CI sobre el mismo commit (ADR-011 §9.8).
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
+import { appOrigin, appPort, assertPortFree } from "../app-port.mjs";
 import { planE2E } from "./e2e-plan.mjs";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
 import { runInSession } from "./session.mjs";
@@ -195,17 +195,12 @@ async function testIntegration(env) {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
-function portFree(port) {
-  return new Promise((done) => {
-    const server = createServer().once("error", () => done(false)).once("listening", () => server.close(() => done(true)));
-    server.listen(port, "127.0.0.1");
-  });
-}
-
 async function e2e(target, env, plan) {
-  if (!(await portFree(3000))) throw new Error("El puerto 3000 está ocupado. e2e:dev no reutiliza un servidor abierto (podría apuntar a otro proyecto): ciérralo y vuelve a lanzar.");
+  // Puerto de la app: PORT, 3400 por defecto (scripts/app-port.mjs). e2e:dev no reutiliza un servidor abierto (podría
+  // ser otro proyecto u otra rama): si el puerto está ocupado, se niega con el PID y no cierra nada.
+  await assertPortFree(appPort(env));
   // La app se construye con la URL y la clave publicable de dev, sin la clave secreta ni la conexión.
-  const appEnv = { ...env, NEXT_PUBLIC_SUPABASE_URL: target.apiUrl, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: target.publishableKey, SITE_URL: "http://localhost:3000" };
+  const appEnv = { ...env, NEXT_PUBLIC_SUPABASE_URL: target.apiUrl, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: target.publishableKey, SITE_URL: appOrigin(env) };
   const buildEnv = { ...appEnv, SECRET_KEY: "", DB_URL: "" };
   if ((await node("node_modules/next/dist/bin/next", ["build"], buildEnv)("next build (juntia-dev)")).code !== 0) return 1;
   const playwright = "node_modules/@playwright/test/cli.js";
