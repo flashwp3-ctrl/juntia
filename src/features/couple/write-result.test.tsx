@@ -239,3 +239,59 @@ describe("aceptar", () => {
     expect(router.replace).not.toHaveBeenCalled();
   });
 });
+
+// F55-2 (revisión de ChatGPT del PR #55): «Durante `pending` se puede cerrar la hoja: `finish()` borra el par clave/token
+// y el token de esa regeneración se pierde. Además, una respuesta tardía puede mezclarse con una apertura posterior».
+describe("una intención pendiente no se pierde ni se mezcla con otra (F55-2)", () => {
+  it("regenerar A retenida: la hoja no se cierra; al resolver A se ve su token; B nunca muestra un enlace hasta su propia respuesta", async () => {
+    const user = userEvent.setup();
+    let resolveA!: (value: unknown) => void;
+    let resolveB!: (value: unknown) => void;
+    const regenerate = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveA = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveB = resolve; }));
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialogA = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    const close = within(dialogA).getByRole("button", { name: copy.primitives.close });
+    expect(close.getAttribute("aria-disabled")).toBe("true");
+    await user.click(close);
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("dialog", { name: copy.couple.invite.regenerateTitle })).toBe(dialogA);
+    const tokenA = regenerate.mock.calls[0][0].token;
+    await act(async () => resolveA({ status: "ok", value: { expiresAt: EXPIRES } }));
+    expect(((await within(dialogA).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement).value.endsWith(`#t=${tokenA}`)).toBe(true);
+    await user.click(within(dialogA).getByRole("button", { name: copy.primitives.close }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialogB = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    const tokenB = regenerate.mock.calls[1][0].token;
+    expect(tokenB).not.toBe(tokenA);
+    expect(within(dialogB).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+    await act(async () => resolveB({ status: "ok", value: { expiresAt: EXPIRES } }));
+    expect(((await within(dialogB).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement).value.endsWith(`#t=${tokenB}`)).toBe(true);
+  });
+
+  it("useWrite: una respuesta de una intención anterior (antes de reset) se ignora: ni estado ni onOk", async () => {
+    const { renderHook } = await import("@testing-library/react");
+    const { useWrite } = await import("@/features/shared/use-write");
+    let resolveA!: (value: unknown) => void;
+    let resolveB!: (value: unknown) => void;
+    const run = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveA = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveB = resolve; }));
+    const onOk = vi.fn();
+    const { result } = renderHook(() => useWrite<{ idempotencyKey: string }, { n: string }>({ action: "regenerate_invitation", run, check: vi.fn(), onOk }));
+    act(() => { void result.current.submit({ idempotencyKey: "A" }); });
+    act(() => result.current.reset());
+    act(() => { void result.current.submit({ idempotencyKey: "B" }); });
+    await act(async () => resolveA({ status: "ok", value: { n: "A" } }));
+    expect(result.current.state.phase).toBe("pending");
+    expect(onOk).not.toHaveBeenCalled();
+    await act(async () => resolveB({ status: "ok", value: { n: "B" } }));
+    expect(result.current.state).toEqual({ phase: "ok", value: { n: "B" }, key: "B" });
+    expect(onOk).toHaveBeenCalledTimes(1);
+    expect(onOk.mock.calls[0][0]).toEqual({ n: "B" });
+  });
+});

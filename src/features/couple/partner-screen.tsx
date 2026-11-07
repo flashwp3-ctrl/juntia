@@ -225,7 +225,10 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
     setConfirmClose(false);
     onClose();
   };
-  const requestClose = () => (locked ? setConfirmClose(true) : finish());
+  // F55-2 (revisión del PR #55): con la escritura en curso la hoja no se cierra (×, Escape ni arrastre). Así la intención,
+  // con su clave y su token, se conserva hasta tener resultado; después, con `unknown`, cerrar pregunta antes (FR-059).
+  const inFlight = write.pending;
+  const requestClose = () => { if (inFlight) return; if (locked) setConfirmClose(true); else finish(); };
 
   const submitCreate = (event: FormEvent) => {
     event.preventDefault();
@@ -237,7 +240,8 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
     void create.submit({ idempotencyKey: pair.key, email: value, token: pair.token });
   };
 
-  const issued = state.phase === "ok" && pair ? { link: invitationLink(window.location.origin, pair.token), expiresAt: state.value.expiresAt } : null;
+  // El enlace solo se pinta si el resultado es de esta misma intención (misma clave que el token de esta apertura).
+  const issued = state.phase === "ok" && pair && state.key === pair.key ? { link: invitationLink(window.location.origin, pair.token), expiresAt: state.value.expiresAt } : null;
   const title = mode === "create" ? copy.couple.invite.title : copy.couple.invite.regenerateTitle;
   const lead = issued ? (mode === "create" ? copy.couple.invite.readyLead : copy.couple.invite.regenerateLead) : mode === "create" ? copy.couple.invite.lead : copy.couple.invite.regenerateLead;
   const busy = state.phase === "pending";
@@ -255,7 +259,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
         <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center">
           <span />
           <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
-          <button type="button" onClick={requestClose} aria-label={copy.primitives.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
+          <button type="button" onClick={requestClose} aria-label={copy.primitives.close} aria-disabled={inFlight || undefined} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken aria-disabled:bg-sunken aria-disabled:text-ink-secondary aria-disabled:shadow-none">
             <AppIcon name="x" weight="bold" size={16} />
           </button>
         </div>
@@ -336,6 +340,8 @@ function CancelInvitation({ view, actions, onDone }: { view: Extract<PartnerView
   });
   const close = () => { cancel.reset(); key.current = null; setMessage(null); setConfirmClose(false); setOpen(false); };
   const onOpenChange = (next: boolean) => {
+    // F55-2: mientras «Anulando…» está en curso, Escape no cierra la confirmación.
+    if (!next && cancel.pending) return;
     if (next) { key.current = newIdempotencyKey(); setMessage(null); cancel.reset(); setOpen(true); return; }
     if (cancel.locked) setConfirmClose(true); else close();
   };

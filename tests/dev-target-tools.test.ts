@@ -291,15 +291,53 @@ describe("e2e:dev dirigido (planE2E)", () => {
   });
 
   it("archivos de los dos proyectos: un paso por proyecto, cada uno con sus archivos y los mismos flags", () => {
-    expect(planE2E(["couple.a11y.ts", "access-account.e2e.ts", "--grep", "pareja"]).map(({ project, args }) => [project, args.slice(6)])).toEqual([
-      ["e2e", ["access-account.e2e.ts", "--grep", "pareja"]],
-      ["a11y", ["couple.a11y.ts", "--grep", "pareja"]],
+    expect(planE2E(["tests/a11y/couple.a11y.ts", "tests/e2e/access-account.e2e.ts", "--grep", "pareja"]).map(({ project, args }) => [project, args.slice(6)])).toEqual([
+      ["e2e", ["tests/e2e/access-account.e2e.ts", "--grep", "pareja"]],
+      ["a11y", ["tests/a11y/couple.a11y.ts", "--grep", "pareja"]],
     ]);
   });
 
   it("--project e2e o a11y explícito elige ese proyecto", () => {
     expect(planE2E(["--project", "a11y", "--grep", "M6"]).map(({ project, a11yJob }) => [project, a11yJob])).toEqual([["a11y", "e2e"]]);
     expect(planE2E(["--project=e2e", "--grep", "x"]).map(({ project }) => project)).toEqual(["e2e"]);
+  });
+
+  it("acepta solo la lista blanca: -g pegado o separado, --grep=, --only-changed con ref y rutas de tests/ (F55-1)", () => {
+    expect(planE2E(["-ginvitación"])[0].args.slice(6)).toEqual(["-ginvitación"]);
+    expect(planE2E(["-g", "M6"])[0].args.slice(6)).toEqual(["-g", "M6"]);
+    expect(planE2E(["--grep=pareja"])[0].args.slice(6)).toEqual(["--grep=pareja"]);
+    expect(planE2E(["--only-changed=origin/main"])[0].args.slice(6)).toEqual(["--only-changed=origin/main"]);
+    expect(planE2E(["--only-changed", "HEAD~1"])[0].args.slice(6)).toEqual(["--only-changed", "HEAD~1"]);
+    expect(planE2E(["tests\\e2e\\access-account.e2e.ts"])[0].args.slice(6)).toEqual(["tests/e2e/access-account.e2e.ts"]);
+  });
+
+  it("el plan contiene solo los argumentos internos del runner más los autorizados (F55-1)", () => {
+    const allowed = ["tests/e2e/access-account.e2e.ts", "tests/a11y/couple.a11y.ts", "--grep", "pareja", "--only-changed"];
+    for (const step of planE2E(allowed)) {
+      expect(step.args.slice(0, 6)).toEqual(["test", "--project", step.project, "--grep-invert", "@mail", "--reporter=list"]);
+      for (const arg of step.args.slice(6)) expect(allowed).toContain(arg);
+    }
+  });
+
+  it.each([
+    [["-carchivo.config.ts"]],
+    [["-c=archivo.config.ts"]],
+    [["-G"]],
+    [["-Gpatrón"]],
+    [["--grep-invert=@nada"]],
+    [["--project=otro"]],
+    [["--workers", "8"]],
+    [["--ui"]],
+    [["-g", "-x"]],
+    [["--grep"]],
+    [["--only-changed=--evil"]],
+    [["--only-changed=../x"]],
+    [["../fuera.e2e.ts"]],
+    [["tests/../playwright.config.ts"]],
+    [["otro/sitio.e2e.ts"]],
+    [["tests/e2e/fixtures.ts"]],
+  ])("rechaza %j: no está en la lista blanca (F55-1)", (args) => {
+    expect(() => planE2E(args)).toThrow(/e2e:dev/);
   });
 
   it.each([
