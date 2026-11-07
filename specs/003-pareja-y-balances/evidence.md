@@ -893,13 +893,14 @@ producción ni datos reales. Todo lo de esta sección es **iteración contra
 
 ## Verde en `juntia-dev` (T036, T037)
 
-Tres pasadas de `npm run e2e:dev`:
+Cuatro pasadas completas de `npm run e2e:dev` (y, desde `0a6f276`, pasadas dirigidas, por ejemplo `npm run e2e:dev -- tests/e2e/access-account.e2e.ts --grep invitación`: 1 de 1 en 33,5 s):
 
 | Pasada | Commit | E2E (sin `@mail`) | axe con sesión | Qué se corrigió |
 | --- | --- | --- | --- | --- |
 | 1 | `1f694fe` | 10 de 11 (falla solo la captura temporal) | 171 de 182 | Contraste 4,29:1 del texto secundario sobre `surface.sunken` (M3b, M6 a 1440); los radios nuevos de A6 entraban en la comprobación de foco de campos de texto; el barrido contaba como texto cortado el «Volver» `sr-only`; M7 tras M6 era solo un cambio de fragmento sin recarga (`hashchange`) → `ecaf703` |
 | 2 | `ecaf703` | **11 de 11** | **182 de 182** | — |
 | 3 | `5d49d45` | **11 de 11** | 181 de 182 | Falla `/recuperar · A4b · dark · 1440px` por `document-title` (pantalla de la 002, no tocada; pasó en la pasada 2). Se anota como intermitente y se mira en T039 |
+| 4 | `0a6f276` | **10 de 10** (sin la captura temporal) | **182 de 182** | Pasada completa antes del push, tras la mejora de `e2e:dev` dirigido. A4b no se repitió |
 
 La 11.ª E2E es una spec **temporal, sin commitear**, que hace las capturas de
 abajo dentro del arnés guardado de `e2e:dev`.
