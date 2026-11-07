@@ -893,7 +893,7 @@ producción ni datos reales. Todo lo de esta sección es **iteración contra
 
 ## Verde en `juntia-dev` (T036, T037)
 
-Cuatro pasadas completas de `npm run e2e:dev` (y, desde `0a6f276`, pasadas dirigidas, por ejemplo `npm run e2e:dev -- tests/e2e/access-account.e2e.ts --grep invitación`: 1 de 1 en 33,5 s):
+Cinco pasadas completas de `npm run e2e:dev` (y, desde `0a6f276`, pasadas dirigidas, por ejemplo `npm run e2e:dev -- tests/e2e/access-account.e2e.ts --grep invitación`: 1 de 1 en 33,5 s):
 
 | Pasada | Commit | E2E (sin `@mail`) | axe con sesión | Qué se corrigió |
 | --- | --- | --- | --- | --- |
@@ -901,6 +901,7 @@ Cuatro pasadas completas de `npm run e2e:dev` (y, desde `0a6f276`, pasadas dirig
 | 2 | `ecaf703` | **11 de 11** | **182 de 182** | — |
 | 3 | `5d49d45` | **11 de 11** | 181 de 182 | Falla `/recuperar · A4b · dark · 1440px` por `document-title` (pantalla de la 002, no tocada; pasó en la pasada 2). Se anota como intermitente y se mira en T039 |
 | 4 | `0a6f276` | **10 de 10** (sin la captura temporal) | **182 de 182** | Pasada completa antes del push, tras la mejora de `e2e:dev` dirigido. A4b no se repitió |
+| 5 | `0a99fa6` | **24 de 24** (23 tras el merge de #51 + la captura temporal) | **182 de 182** | Merge de `main` con el PR #51 (`a4478fe`): conflicto solo en `src/app/(app)/layout.tsx`. Desde #51 la hoja `bare` deja al contenido su relleno inferior y el safe area, así que la hoja de invitar lo pone en móvil (`0a99fa6`). Las 48 capturas se rehicieron: a 1440 ya no aparece «Atajo N» |
 
 La 11.ª E2E es una spec **temporal, sin commitear**, que hace las capturas de
 abajo dentro del arnés guardado de `e2e:dev`.
