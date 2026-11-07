@@ -182,7 +182,10 @@ libre; si no lo está, se niegan con el PID y el nombre del proceso que lo tiene
 cierran nada: ciérralo tú si es tuyo o espera. En `juntia-dev`, Authentication › URL
 Configuration necesita `http://localhost:3400` como Site URL y `http://localhost:3400/**`
 en las Redirect URLs solo para los enlaces de correo de una prueba manual con
-`npm run dev`; `e2e:dev` no lo necesita, porque salta las pruebas `@mail`.
+`npm run dev`; `e2e:dev` no lo necesita, porque salta las pruebas `@mail`. Un segundo
+servidor en `PORT=3500` necesita su propia redirección permitida en Auth
+(`http://localhost:3500/**`) para las pruebas manuales de correo. `npm run dev` y
+`npm run start` rechazan `-p`/`--port` en los argumentos: el puerto se fija solo con `PORT`.
 
 **Un agente a la vez.** Cada comando crea el directorio `juntia-dev.lock` en la
 carpeta común de git (`.git/` del clon principal). `mkdir` es atómico: de dos agentes

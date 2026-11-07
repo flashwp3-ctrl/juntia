@@ -2,11 +2,12 @@
 // Puerto local de Juntia: una sola fuente (PORT, 3400 por defecto) para `next dev`/`next start`, Playwright y
 // `e2e:dev`, fuera del 3000 y el 3100 de otro proyecto del mismo equipo. Nunca se reutiliza lo que haya en el puerto
 // y, si está ocupado, se dice qué PID lo tiene y no se cierra nada.
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:net";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { appOrigin, appPort, assertPortFree, DEFAULT_PORT, listeningPids, parseNetstat, parseSs, portInUse, webServer } from "../scripts/app-port.mjs";
+import { appOrigin, appPort, assertPortFree, DEFAULT_PORT, listeningPids, nextArgs, parseNetstat, parseSs, portInUse, webServer } from "../scripts/app-port.mjs";
 
 describe("appPort y appOrigin", () => {
   it("usan 3400 sin PORT o con PORT vacío", () => {
@@ -21,6 +22,23 @@ describe("appPort y appOrigin", () => {
   });
   it.each(["abc", "3400x", "34.5", "0", "80", "70000", "-1"])("rechazan PORT=%s nombrando la variable", (value) => {
     expect(() => appPort({ PORT: value })).toThrow(/PORT/);
+  });
+});
+
+describe("argumentos de next (F58-1)", () => {
+  it.each([["-p", "3000"], ["--port", "3000"], ["--port=3000"], ["-p3000"], ["-p=3000"], ["--turbo", "-p", "3000"]])("rechaza %s pidiendo la variable PORT", (...args) => {
+    expect(() => nextArgs("dev", args, {})).toThrow(/PORT/);
+  });
+  it("con PORT=3500 o sin PORT fija el puerto comprobado y conserva el resto", () => {
+    expect(nextArgs("dev", ["--turbo"], { PORT: "3500" })).toEqual(["dev", "--port", "3500", "--turbo"]);
+    expect(nextArgs("start", [], {})).toEqual(["start", "--port", "3400"]);
+    expect(nextArgs("start", ["--hostname", "127.0.0.1", "--keepAliveTimeout", "5000"], {})).toEqual(["start", "--port", "3400", "--hostname", "127.0.0.1", "--keepAliveTimeout", "5000"]);
+  });
+  it("el lanzador se niega antes de arrancar Next", () => {
+    const result = spawnSync(process.execPath, [join(process.cwd(), "scripts", "next.mjs"), "dev", "--port", "3000"], { encoding: "utf8", timeout: 15_000 });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/PORT/);
+    expect(result.stdout).not.toMatch(/Next\.js|Ready/);
   });
 });
 

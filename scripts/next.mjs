@@ -2,7 +2,7 @@
 // en el 3000 de otro proyecto. Si el puerto está ocupado, dice qué PID lo tiene y no arranca ni cierra nada.
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { appPort, assertPortFree } from "./app-port.mjs";
+import { appPort, assertPortFree, nextArgs } from "./app-port.mjs";
 
 const [mode, ...rest] = process.argv.slice(2);
 if (mode !== "dev" && mode !== "start") {
@@ -10,10 +10,12 @@ if (mode !== "dev" && mode !== "start") {
   process.exit(1);
 }
 try {
+  // F58-1: un -p/--port en los argumentos se rechaza antes de comprobar el puerto y de arrancar Next.
+  const args = nextArgs(mode, rest);
   const port = appPort();
   await assertPortFree(port);
   const next = createRequire(import.meta.url).resolve("next/dist/bin/next");
-  const child = spawn(process.execPath, [next, mode, "--port", String(port), ...rest], { stdio: "inherit", env: { ...process.env, PORT: String(port) } });
+  const child = spawn(process.execPath, [next, ...args], { stdio: "inherit", env: { ...process.env, PORT: String(port) } });
   for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill(signal));
   child.on("exit", (code, signal) => process.exit(code ?? (signal ? 1 : 0)));
 } catch (error) {

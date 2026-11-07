@@ -24,6 +24,17 @@ export function appPort(env = process.env) {
 /** @param {Env} [env] */
 export const appOrigin = (env = process.env) => `http://localhost:${appPort(env)}`;
 
+/**
+ * Argumentos de `next dev|start` con el puerto comprobado (F58-1). Rechaza cualquier otro puerto (`-p`, `--port`,
+ * `--port=…`, `-p3000`, `-p=…`): el puerto que se comprueba tiene que ser el que usa Next.
+ * @param {"dev" | "start"} mode @param {string[]} rest @param {Env} [env]
+ */
+export function nextArgs(mode, rest, env = process.env) {
+  const portArg = rest.find((arg) => /^(?:-p|--port)(?:$|=|\d)/.test(arg));
+  if (portArg) throw new Error(`No se acepta «${portArg}»: el puerto de Juntia se fija con la variable PORT (por ejemplo, PORT=3500 npm run dev), para que el puerto comprobado sea el que usa Next.`);
+  return [mode, "--port", String(appPort(env)), ...rest];
+}
+
 /** El webServer de Playwright: el mismo puerto que la app y nunca un servidor ya abierto. @param {Env} [env] */
 export function webServer(env = process.env) {
   return { command: "npm run start", url: `${appOrigin(env)}/entrar`, reuseExistingServer: false, env: { PORT: String(appPort(env)) } };
