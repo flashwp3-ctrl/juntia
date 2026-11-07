@@ -138,7 +138,7 @@ export default function MoveDialog({ transaction, idempotencyKey, members, actio
   const choose = (
     <>
       <p className="text-center text-[length:var(--body-s-size)] text-[var(--comp-field-muted-fg)]">{copy.move.lead}</p>
-      <div className="flex min-h-11 items-center justify-between gap-3 rounded-[14px] bg-sunken px-3.5 shadow-[var(--comp-field-inset)]">
+      <div className="flex min-h-11 items-center justify-between gap-3 border-b-[length:var(--border-hairline)] border-border">
         <span className="text-[12px] font-medium text-ink-secondary">{copy.move.amount}</span>
         <span className="flex items-center gap-2"><span className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney(amount)}</span><span className="text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span></span>
       </div>

@@ -183,6 +183,12 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     await expect(dialog.getByRole("list")).toBeVisible();
     await sweep(me.page, "A3");
     await largeText(me.page, "A3");
+    // A5 rechazo confirmado: otra pestaña cambió el privado (versión antigua). A4 es Actividad en Nosotros, ya barrida.
+    await updateTransaction(pair.sara.client, { idempotencyKey: randomUUID(), transactionId: pharmacy.id, expectedVersion: pharmacy.version, amount: pharmacy.amount, categoryId: "health", transactionDate: pharmacy.transactionDate, description: "Farmacia Pasteur" });
+    await dialog.getByRole("button", { name: copy.move.confirm }).click();
+    await expect(dialog.getByText(copy.move.rejected("Farmacia Pasteur"))).toBeVisible();
+    await sweep(me.page, "A5");
+    await largeText(me.page, "A5");
     await me.context.close();
   });
 

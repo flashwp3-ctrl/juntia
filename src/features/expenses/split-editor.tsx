@@ -157,7 +157,7 @@ export function SplitEditor({ members, draft, onChange, amountPesos, statusId, p
       <div className="flex flex-col gap-2">
         <span aria-hidden="true" className={label}>{copy.shared.split.payer}</span>
         {payerFixed ? (
-          <div className="flex min-h-11 items-center gap-2.5 rounded-[14px] bg-sunken px-3 shadow-[var(--comp-field-inset)]">
+          <div className="flex min-h-11 items-center gap-2.5 border-b-[length:var(--border-hairline)] border-border">
             <Avatar person={payer.joinOrder} initial={initialOf(payer.name)} size={24} />
             <span className="flex-1 text-[15px] font-semibold text-ink">{payer.name}</span>
             <span className="text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span>

@@ -1165,3 +1165,153 @@ PR de documentación.
 - `contracts/server-actions.md` §2: sin reanudación tras recargar, límite de 15 s y
   vigencia del enlace.
 - `docs/TESTING.md`: la pasada final de un PR es la de marcarlo listo.
+
+---
+
+# Evidencia — 003 PR C · Gastos compartidos, Nosotros y Mover a Pareja
+
+Rama `claude/feat-003-c-shared-f566ae`, base `main` `4da10b1` (PR A y PR B
+mergeados). Sin producción ni datos reales: cuentas `@seed.test` en
+`juntia-dev`. Todo lo de esta sección es **iteración contra `juntia-dev`** o
+local y **no es evidencia de ninguna `[V]`** (ADR-011 §9.8): T053 (punto de
+control) y T056 (gate al marcar listo) son los runs de CI.
+
+## Estado
+
+- T041–T052 y T055 hechas e iteradas en verde en `juntia-dev`.
+- T053: run de CI tras el push; su duración del job `e2e` se registra abajo.
+- T054 (gestor, laboratorio INP/CLS), T056 (gate al marcar listo) y T057
+  (aprobación visual de los fundadores): pendientes.
+
+## Tarea → commit → prueba
+
+| Tarea | Commit | Prueba |
+| --- | --- | --- |
+| T041–T044, T044a, T044b (tests primero) | `f764eeb` | `src/features/expenses/{annotate-shared,shared-edit,write-result,reclassify}.test.tsx`, `src/features/home/home-couple.test.tsx`, `src/features/activity/activity-couple.test.tsx`; `tests/e2e/couple-settle.e2e.ts` (spec E2E 3, 3 casos); `tests/a11y/couple-shared.a11y.ts`; `tests/a11y/job-selection.test.ts`; `tests/support/{a11y,seed}.ts` |
+| T045 | `fef1cc6` | `write-result.test.tsx` (clasificación y `SHARED_WRITE_ACTIONS`); `shared-edit.test.tsx` (avisos por operación, navegación, FR-062) |
+| T046 | `fef1cc6` | `annotate-shared.test.tsx`; spec 3 «gasto compartido 50/50» |
+| T047 | `fef1cc6` | `shared-edit.test.tsx`; axe de edición, conflicto y eliminar |
+| T048, T049 | `fef1cc6` | `home-couple.test.tsx`, `activity-couple.test.tsx`; spec 3 «Cambiar Yo/Nosotros» |
+| T050 | `fef1cc6` | `reclassify.test.tsx`; spec 3 «Mover a Pareja»; axe de A3 y A5 (dos variantes) |
+| T051, T052, T055 (iteración, Impeccable, capturas) | commit de evidencia | `e2e:dev`, `test:integration:dev`, `verify`; 76 PNG en `evidence/pr-c/` |
+| Ride-along del gestor: `AGENTS.md` 15a → `docs/TESTING.md` §3 | `f764eeb` | — |
+
+## Rojo antes del código (regla 8; I5)
+
+- **Componentes**: 71 fallan y 12 pasan de 83. Las que pasan en rojo son
+  negativas que ya cumplían los andamios vacíos (sin botón en un ingreso o sin
+  pareja; sin presupuesto; «Solo tú» informativo sin pareja) o la clasificación
+  del módulo del PR B (`versionConflict`, `network`…).
+- **`next build` comprueba los tipos de los tests**: para que la app compile, el
+  commit de tests trae los tipos (`shared-types.ts`), el copy nuevo y andamios que
+  devuelven `null`, sin comportamiento.
+- **E2E y axe contra `juntia-dev`** (`npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts tests/a11y/couple-shared.a11y.ts`,
+  build verde): spec 3, **3 de 3 fallan** («Aún no hay gastos este mes» no
+  aparece; el control positivo de Nosotros no encuentra «Carulla Laureles»; no hay
+  «Mover a Pareja»). axe, **6 de 6 fallan** (sin `[data-balance-line]`; el teclado
+  no llega a «Reparto»).
+
+## Verde en `juntia-dev` (T051, T052)
+
+| Pasada | Qué | Resultado |
+| --- | --- | --- |
+| Dirigidas | spec 3 + `couple-shared.a11y.ts` | Corrigieron: `rowMode` exportado desde un módulo `"use client"` y llamado por el detalle de servidor; nombre accesible del resumen (`label-content-name-mismatch`) y título de la hoja en la subhoja (`aria-dialog-name`); axe midiendo a mitad del fundido de un diálogo; un `/\s+/` del arnés que había quedado en `/s+/` y borraba las «s» de los nombres (afectaba también a `couple.a11y.ts`) |
+| Completa 1 | `npm run e2e:dev` | E2E 27 de 30 (3 por la copia oculta `#S:n` del streaming de React, solo de prueba), **axe 188 de 188** (453,75 s) |
+| Completa 2 | `npm run e2e:dev` | **E2E 26 de 26, axe 188 de 188** (459,41 s; total 525,09 s) |
+| Completa 3 | `npm run e2e:dev` antes del push, tras los arreglos de Impeccable | ver «Pasada antes del push» |
+
+- `npm run test:integration:dev`: la primera pasada tuvo 3 hooks de 10 s vencidos
+  al crear cuentas y un `PGRST202` de la sonda V9 (caché de esquema de PostgREST),
+  sin relación con el PR (no toca SQL); repetida: **63 pasan, 9 omitidas** (correo
+  y `40P01` real, declaradas), 117,66 s.
+- `npm run verify`: lint, typecheck, dominio y componentes en verde, 59,98 s.
+
+## T051 · axe, teclado, 200 % y 44 px
+
+- **axe**, 0 violaciones serias o críticas en los dos temas a 390 y 1440: Inicio,
+  Actividad y Anotar en Nosotros, Reparto con «Faltan», edición compartida con el
+  aviso y en conflicto de versión, confirmación de eliminar, ChangePreview (A3) y
+  A5 en sus dos variantes (40 auditorías).
+- **Teclado**: Tab llega al resumen y Enter abre «Reparto» con el foco en el
+  pagador (el último usado); flechas en Pagó y en el modo; Porcentaje e Importe se
+  teclean; Espacio quita y vuelve a poner a Tomás («Sara asume el 100 %»); Escape
+  vuelve al resumen; Enter guarda; Escape cierra una hoja sin cambios; A1–A4 de
+  Mover a Pareja con Enter.
+- **44 px**: resumen 350×60 · 50/50, Porcentaje e Importe 114,7×44 (con el
+  `::after` de F17-2) · campos de Porcentaje e Importe 132×44 · casilla de Tomás
+  206×44 · Mover a Pareja 322×52 · Revisar cambios 350×52.
+- **200 %** a 390: Inicio y Actividad en Nosotros, Anotar E1, Reparto, edición, Yo
+  con la parte, A1, A2 y A3 sin scroll horizontal y con `cortado: 0`.
+
+## T055 · barrido sin scroll horizontal
+
+360, 390, 430, 768, 1024, 1280 y 1440 px en claro y oscuro: Inicio en Nosotros,
+Actividad en Nosotros (también A4), Anotar en Nosotros E1, Reparto en Porcentaje,
+edición compartida, Yo con la parte compartida, A1, A2 y A3: 126 mediciones con
+`scrollWidth == clientWidth`. A5 (rechazo confirmado) se añadió al barrido después:
+14 mediciones más en la pasada antes del push.
+
+## Impeccable (T055; no es evidencia de FR-054)
+
+Revisión de acabado sobre las capturas contra el resumen de 2a, 04·1, 04·7 y
+04·10. Coinciden: E2 (cabecera, Pagó con avatares, modos, barra sólida y rayada
+con hueco punteado, «Faltan $20.000», Guardar deshabilitado), E3, E5, Inicio en
+Nosotros, Actividad a 1440 con «Pagó · Reparto» y panel, detalle con «A quién le
+corresponde», A3, A4 a 1440 y A5 en sus dos variantes; el oscuro se sostiene.
+
+| # | Hallazgo | Qué se hizo |
+| --- | --- | --- |
+| 1 | Capturas de edición y A2 tomadas a mitad del fundido | Recapturadas tras esperar animaciones y opacidad 1 |
+| 2 | A4 a 390: «movido desde Yo» cortado | Va en su propia línea en la fila |
+| 3 | A2: Importe y Pagó fijos con aspecto de campo | Filas planas con «Se mantiene» |
+| 4 | E1 abre con «Pagó Tomás» | **Sin cambio**: decisión 1 de los fundadores (se recuerda lo último usado; aquí el último gasto sembrado lo pagó Tomás) |
+| 5 | La subhoja «Reparto» es más baja que la hoja | **Sin cambio**: así es en el comp 2a (552 px frente a 736) |
+| 6 | Selector de contexto de 38 px | **Sin cambio**: Segmented llega a 44 con su `::after` (F17-2), medido arriba |
+| 7 | «Antes de mover» sobra | **Sin cambio**: está en el comp 04·10 |
+| 8 | Fichas de categoría de Actividad apiladas a 390 | **Fuera de alcance**: disposición de la 002 |
+| 9 | Inicio Yo: las filas compartidas no salen en los cinco recientes de la captura | **Sin cambio de código**: con el mismo día, ordenan detrás de los privados; lo prueban los componentes |
+
+## Decisión 5 de los fundadores (contraste de la 1c)
+
+El 4,30:1 del comp es `#6C665B` sobre `#E7DFD0`. La app ya pinta el tono más
+oscuro de la errata F16-1 (3 nov 2026): el marcador de posición usa
+`--comp-field-muted-fg` = `linen-800` `#48443C`, **7,32:1** en claro, y `#A29C92`
+sobre `#22262A`, **5,59:1** en oscuro; «Ingreso» sin elegir va en tinta. axe no
+encuentra ningún `color-contrast` en las hojas. No se cambia ningún token.
+
+## Capturas para T057 (390 y 1440, claro y oscuro)
+
+76 PNG en `specs/003-pareja-y-balances/evidence/pr-c/`: Anotar en Nosotros E1, E2
+(Reparto con «Faltan»), E3 (un participante), E4 (pagó la otra persona), E5
+(resumen inválido) y guardado; Anotar en Yo con pareja; Inicio en Nosotros e
+Inicio en Yo con la parte compartida; Actividad en Nosotros; detalle compartido;
+edición compartida; eliminar; Mover a Pareja A1, A2, A3, A4, A5 rechazo y A5
+desconocido. Las capturas de página completa a 390 dibujan la barra inferior a
+media página y a 1440 cortan el sidebar en 900 px: es el `fullPage` de Playwright
+con `position: fixed`. Las hizo una spec temporal, sin commitear, dentro del arnés
+de `e2e:dev`.
+
+**Para aprobar viendo la pantalla** (decisiones 20.3 y 20.4): Anotar compartido
+(2a) y ChangePreview; el copy nuevo del PR (`src/lib/copy/es.ts`), incluido el
+texto nuevo de Nosotros para Metas y Plan con pareja activa.
+
+## Lecturas de ejecución (no decisiones; se cambian si el revisor las objeta)
+
+| # | Lectura | Por qué |
+| --- | --- | --- |
+| C1 | Las entradas axe de T044b van en `tests/a11y/couple-shared.a11y.ts` y no en `route-registry.ts`: una pareja por tema y ancho que recorre todos los estados | Necesitan dos cuentas emparejadas y compartidos sembrados, que el registro de una sola cuenta no siembra (como M6/M7 en el PR B); así no se paga una siembra por estado en el job `e2e` |
+| C2 | «Lo último que usó» sale del último gasto compartido que anotó la persona (`couple_expenses`, leído por el layout) y se actualiza en memoria al guardar | Q5 y decisión 1 sin almacenamiento del navegador (lección de #51/#55) |
+| C3 | En Importe, mientras no se toque un campo, las partes siguen al 50/50 del monto actual | Recordar importes de otro gasto no tiene sentido; recordar el modo sí |
+| C4 | Una parte de 0 en Porcentaje o Importe se envía tal cual (100/0 o total/0) y el resumen la muestra como un participante | FR-019a y la precisión de contracts/database.md |
+| C5 | Las filas compartidas de Inicio en Yo no son enlace | El detalle compartido vive en Nosotros; un enlace desde Yo abriría «no encontrado» |
+| C6 | ChangePreview pide las cifras de antes con una Server Action al abrir A3 | contracts/server-actions.md §4: con Yo, la página no lee `couple_month_summary` |
+| C7 | Sin fila optimista para el gasto compartido; la hoja queda con «Guardando…» | #53 no cae de forma natural aquí: los tres resultados con «Comprobar estado» necesitan la hoja a la vista |
+| C8 | Mover a Pareja confirmado pasa la app a Nosotros y lleva a Actividad del mes | Así se ve la fila «movido desde Yo» de A4 |
+
+## Pasada antes del push
+
+`npm run e2e:dev` completo sobre el código que se empuja: **E2E 26 de 26** (46,4 s) y **axe con sesión 188 de 188** (457,83 s); total 518,76 s. A5 en el barrido: 14 de 14 sin scroll horizontal y 200 % con `cortado: 0`. **Aviso para T053**: el paso de axe con sesión ya ocupa unos 458 s contra `juntia-dev`, así que el job `e2e` del CI puede superar los 480 s.
+
+## T053 · punto de control intermedio (CI)
+
+Pendiente: se registra aquí tras el run.

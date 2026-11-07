@@ -42,8 +42,10 @@ export function SharedRow({ row, members, href, dateLabel, current = false }: Sh
         <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
         <span className="flex min-w-0 items-center gap-1.5 text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
           {payer ? <Avatar person={payer.joinOrder} initial={initialOf(payer.name)} size={16} /> : null}
-          <span className="truncate"><span>{meta}</span>{moved}{` · ${dateLabel}`}</span>
+          <span className="truncate"><span>{meta}</span>{` · ${dateLabel}`}</span>
         </span>
+        {/* «movido desde Yo» en su propia línea: es la señal de A4 y no puede quedar cortada a 390. */}
+        {row.movedFromMe ? <span className="text-[12px] leading-[1.35] font-medium text-ink-secondary group-data-[new]:text-ink">{copy.move.movedFromMe}</span> : null}
       </span>
       <span aria-hidden="true" data-row-amount="" className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
     </Link>
