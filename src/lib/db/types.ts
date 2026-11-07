@@ -20,7 +20,7 @@ export type TransactionTransport = {
 export type CreateTransactionInput = TransactionDraft & { idempotencyKey: string };
 export type UpdateTransactionInput = Omit<CreateTransactionInput, "type"> & { transactionId: string; expectedVersion: number };
 export type VoidTransactionInput = { idempotencyKey: string; transactionId: string; expectedVersion: number; reason: "delete" | "undo" };
-export type VoidResult = { id: string; status: "voided"; version: number };
+export type VoidResult = { id: string; status: "voided"; version: number; reactivated_goals?:ReactivatedGoal[] };
 export type Profile = { displayName: string; theme: "light" | "dark" | "system"; firstEntryCompleted: boolean };
 
 // 004: frontera monetaria pública. Solo texto; conversión a bigint en dominio.

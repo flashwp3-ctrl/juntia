@@ -281,7 +281,7 @@ create view public.goal_member_balances with(security_invoker=true) as
   (sum(contributed)-sum(withdrawn)-sum(used))::text as available_minor,sum(contributions) as contribution_count from values_by_member group by goal_id,user_id;
 create view public.goals_overview with(security_invoker=true) as
  select g.id,case when g.group_id is null then 'personal' else 'shared' end as goal_scope,g.name,g.goal_type,g.target_minor::text,g.target_month,g.status,g.version,
- coalesce(b.balance,0)::text as balance_minor,trunc(coalesce(b.balance,0)*100/g.target_minor)::integer as progress_percent,
+ coalesce(b.balance,0)::text as balance_minor,trunc(coalesce(b.balance,0)*100/g.target_minor) as progress_percent,
  exists(select 1 from juntia_data.goal_usage_confirmations c where c.goal_id=g.id and c.status='pending') as has_pending_request,
  coalesce(b.mine,0)::text as my_available_minor,g.created_at
  from juntia_data.savings_goals g left join lateral(

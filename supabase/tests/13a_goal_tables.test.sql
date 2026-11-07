@@ -52,5 +52,13 @@ reset role;
 select throws_ok($$update juntia_data.goal_ledger_entries set amount_minor=100$$,'JT222',null,'ledger inmutable incluso para dueño');
 select throws_ok($$delete from juntia_data.goal_ledger_entries$$,'JT222',null,'ledger no se borra');
 select lives_ok('set constraints all immediate','asignaciones y gasto reconciliados al confirmar');
+-- Los importes admitidos pueden superar el rango int4 al expresarse como porcentaje.
+update juntia_data.savings_goals set target_minor=100 where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+insert into juntia_data.goal_ledger_entries(goal_id,kind,member_user_id,amount_minor,entry_date,funding_mode,created_by)
+values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','contribution','11111111-1111-4111-8111-111111111111',99999999900,'2026-10-04','reserved','11111111-1111-4111-8111-111111111111');
+set local "request.jwt.claims"='{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+set local role authenticated;
+select results_eq($$select progress_percent::text from public.goals_overview where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'$$,array['100009999900']::text[],'progreso truncado sin overflow con importes válidos');
+reset role;
 select * from finish();
 rollback;
