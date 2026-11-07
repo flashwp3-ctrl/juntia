@@ -7,9 +7,11 @@
 // espera fija, movimiento reducido (ADR-011 §6).
 import { randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
-import { moneyFromPesos } from "../../src/domain/money";
+import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
+import { getCoupleBalance, getCoupleMonthSummary } from "../../src/lib/db/couple-reads";
+import { listSettlements } from "../../src/lib/db/settlements";
 import { listSharedExpenses } from "../../src/lib/db/shared-expenses";
 import { createTransaction, listTransactions } from "../../src/lib/db/transactions";
 import { seedCouple, seedMovements, seedSharedMovements, type SeededUser } from "../support/seed";
@@ -116,6 +118,111 @@ test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros lle
   await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
   for (const body of prefetched.slice(afterSwitch)) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
+  await context.close();
+});
+
+// T060a / T065 (spec 003, PR D) / FR-025–FR-029, FR-047, FR-067 (spec 3 crece); US-5, US-6; SC-003 (E2E).
+// Criterio literal (tasks.md, T060a): «ver el saldo en Balance, registrar la liquidación parcial de 200.000 y comprobar
+// 229.900 con el gasto en 2.840.000». Es el paso `beforeSettlement` → `afterSettlement` del dataset dorado, con la fecha
+// que fija la spec (25 de octubre). Los dos leen lo mismo: Tomás ve el saldo nuevo con su propia sesión.
+test("Balance y liquidación parcial: Tomás le debe a Sara 429.900; tras 200.000, 229.900 y el gasto sigue en 2.840.000", async ({ browser, baseURL }, testInfo) => {
+  const pair = await seedCouple({ index: testInfo.parallelIndex });
+  await seedSharedMovements(pair, "golden");
+  const sara = await open(browser, baseURL!, pair.sara, "us");
+  await sara.page.goto("/balance");
+  const balance = sara.page.locator("[data-shared-balance]:visible");
+  await expect(balance.getByRole("heading", { name: copy.balance.owes("Tomás", "Sara") })).toBeVisible();
+  await expect(balance.locator("[data-balance-amount]")).toHaveAttribute("data-balance-amount", "$429.900");
+  await expect(balance.getByText(copy.balance.paidLine("1.929.900", "1.500.000"))).toBeVisible();
+  await expect(balance.getByText(copy.balance.paidLine("910.100", "1.340.000"))).toBeVisible();
+  await expect(balance.getByRole("img", { name: "Tomás pagó 910.100; le corresponden 1.340.000; debe 429.900" })).toBeVisible();
+
+  await sara.page.getByRole("button", { name: copy.balance.actions.settle }).click();
+  const sheet = sara.page.getByRole("dialog", { name: copy.balance.settle.title });
+  await expect(sheet.getByText(copy.balance.settle.direction("Tomás", "Sara"))).toBeVisible();
+  await sheet.getByRole("radio", { name: copy.balance.settle.other }).click();
+  await sheet.getByRole("textbox", { name: copy.balance.settle.otherAmount }).fill("200000");
+  await sheet.getByLabel(copy.balance.settle.date).fill("2026-10-25");
+  await sheet.getByRole("button", { name: copy.balance.settle.submit("$200.000") }).click();
+  await expect(sheet).toBeHidden();
+  await expect(sara.page.getByRole("status").filter({ hasText: copy.balance.settle.done })).toBeVisible();
+  await expect(balance.locator("[data-balance-amount]")).toHaveAttribute("data-balance-amount", "$229.900");
+
+  // La base, con la sesión de Tomás: saldo 229.900 en una sola lectura (`couple_balance`), el gasto de octubre intacto.
+  const rows = await getCoupleBalance(pair.tomas.client);
+  expect(Object.fromEntries(rows.map((row) => [row.userId, row.net.amountMinor]))).toEqual({ [pair.sara.id]: 22990000n, [pair.tomas.id]: -22990000n });
+  expect((await getCoupleMonthSummary(pair.tomas.client, "2026-10"))?.total.amountMinor).toBe(284000000n);
+  const [settlement] = await listSettlements(pair.tomas.client, "2026-10");
+  expect(settlement).toMatchObject({ fromUserId: pair.tomas.id, toUserId: pair.sara.id, settlementDate: "2026-10-25", status: "active" });
+  expect(settlement.amount.amountMinor).toBe(20000000n);
+
+  // Actividad de octubre: la liquidación aparte, «Liquidado · no es un gasto», y el gasto del mes sigue en 2.840.000.
+  await sara.page.goto("/actividad?mes=2026-10");
+  await expect(sara.page.getByRole("link", { name: new RegExp(`^${copy.shared.row.settlementTitle("Tomás", "Sara")}`) }).filter({ visible: true }).first()).toContainText(copy.shared.row.settlement);
+  await expect(sara.page.getByText("$2.840.000").filter({ visible: true }).first()).toBeVisible();
+
+  const tomas = await open(browser, baseURL!, pair.tomas, "us");
+  await tomas.page.goto("/balance");
+  await expect(tomas.page.locator("[data-shared-balance]:visible [data-balance-amount]")).toHaveAttribute("data-balance-amount", "$229.900");
+  await Promise.all([sara.context.close(), tomas.context.close()]);
+});
+
+// T060a / T065 (spec 003, PR D) / FR-051, FR-052; `docs/TESTING.md` §5, regla 3: **un** test con motion activo para los dos
+// momentos L2 (MOTION_SYSTEM, «Contención»): E5 al guardar un gasto compartido (el total cuenta hacia arriba) y S4 al
+// liquidar (el saldo cuenta hasta «Al día», el badge pasa a LIQUIDADO). Los dos solo con la confirmación del servidor.
+test("motion activo: E5 al anotar en Nosotros y S4 al liquidar el total (los dos momentos L2)", async ({ browser, baseURL }, testInfo) => {
+  const pair = await seedCouple({ index: testInfo.parallelIndex });
+  await seedSharedMovements(pair, "recent");
+  const context = await browser.newContext({ baseURL, reducedMotion: "no-preference", viewport: { width: 390, height: 844 } });
+  await context.addCookies([...pair.sara.cookies, { name: "juntia_context", value: "us", domain: new URL(baseURL!).hostname, path: "/" }]);
+  await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(hero(page)).toHaveAttribute("data-counting-amount", "$2.840.000");
+  // E5: cada texto que pinta el contador entre el guardado y el valor final, sin esperas fijas.
+  await page.evaluate(() => {
+    const target = [...document.querySelectorAll<HTMLElement>("[data-counting-amount]")].find((node) => node.getClientRects().length > 0)!;
+    const seen: string[] = [];
+    Object.assign(window, { __e5: seen });
+    new MutationObserver(() => seen.push(target.textContent ?? "")).observe(target, { childList: true, characterData: true, subtree: true });
+  });
+  await page.locator("body").focus();
+  await page.keyboard.press("n");
+  const annotate = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(annotate.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("100000");
+  await annotate.getByRole("radio", { name: copy.categories.market }).click();
+  await page.keyboard.press("Enter");
+  await expect(annotate).toBeHidden();
+  await expect(hero(page)).toHaveText("$2.940.000");
+  const e5 = await page.evaluate(() => (window as unknown as { __e5: string[] }).__e5);
+  console.log(`spec 3 · motion E5: ${e5.length} cuadros del contador hasta $2.940.000`);
+  expect(new Set(e5).size, "E5: el total pasa por valores intermedios").toBeGreaterThan(2);
+
+  // S4: liquidar el total. Antes de confirmar el servidor, nada se mueve; después, el saldo cuenta hasta «Al día».
+  await page.goto("/balance");
+  const balance = page.locator("[data-shared-balance]:visible");
+  // El pagador del gasto nuevo es el que Sara usó la última vez (Q5); el saldo pendiente se lee de la base (FR-043).
+  const pending = (await getCoupleBalance(pair.sara.client)).find((row) => row.userId === pair.sara.id)!.net;
+  expect(pending.amountMinor > 0n).toBe(true);
+  const owed = formatMoney(pending);
+  await expect(balance.locator("[data-balance-amount]")).toHaveAttribute("data-balance-amount", owed);
+  await page.evaluate(() => {
+    const target = [...document.querySelectorAll<HTMLElement>("[data-shared-balance]")].find((node) => node.getClientRects().length > 0)!;
+    const seen: string[] = [];
+    Object.assign(window, { __s4: seen });
+    new MutationObserver(() => seen.push(`${target.getAttribute("data-s4") ?? ""}|${target.querySelector("[data-balance-counter]")?.textContent ?? ""}`)).observe(target, { childList: true, characterData: true, subtree: true, attributes: true });
+  });
+  await page.getByRole("button", { name: copy.balance.actions.settle }).click();
+  const sheet = page.getByRole("dialog", { name: copy.balance.settle.title });
+  await sheet.getByRole("button", { name: copy.balance.settle.submit(owed) }).click();
+  await expect(balance.getByText(copy.balance.settledBadge)).toBeVisible();
+  await expect(balance.getByRole("heading", { name: copy.balance.settled })).toBeVisible();
+  const s4 = await page.evaluate(() => (window as unknown as { __s4: string[] }).__s4);
+  console.log(`spec 3 · motion S4: ${s4.length} cambios; animando: ${s4.filter((frame) => frame.startsWith("animating")).length}`);
+  expect(s4.some((frame) => frame.startsWith("animating")), "S4 anima con la confirmación").toBe(true);
+  expect(new Set(s4.map((frame) => frame.split("|")[1])).size, "S4: el saldo pasa por valores intermedios").toBeGreaterThan(2);
+  await expect(page.locator('[aria-live="polite"][data-settle-announce]:visible, [aria-live="polite"][data-settle-announce]').first()).toHaveText(copy.balance.settle.announceSettled("Tomás", "Sara"));
   await context.close();
 });
 
