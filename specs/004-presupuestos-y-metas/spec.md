@@ -343,7 +343,7 @@ de otro); métricas en dominio puro con el dataset; el recorrido en la spec E2E 
 
 **Acceptance Scenarios**:
 
-1. **Given** Registrar aporte (04·3), **When** Sara escribe $500.000, **Then** ve «Con este aporte $11.840.000 · 66 %» y el texto «Un aporte aparta dinero para la meta. No es un gasto ni una transferencia: el dinero sigue donde lo tengan.»; **no** hay selector «¿Quién aporta?»: aporta quien registra (DEC-G06).
+1. **Given** Japón en el estado final del dataset (11.340.000 · 63 %, con el aporte de Sara del 22 de octubre ya incluido) y Registrar aporte (04·3) abierto para un aporte **hipotético posterior** a ese estado, **When** Sara escribe $500.000, **Then** ve «Con este aporte $11.840.000 · 65 %» (porcentaje truncado, FR-034; el «66 %» del comp redondea) y el texto «Un aporte aparta dinero para la meta. No es un gasto ni una transferencia: el dinero sigue donde lo tengan.»; **no** hay selector «¿Quién aporta?»: aporta quien registra (DEC-G06).
 2. **Given** el aporte guardado, **When** el servidor confirma, **Then** el progreso sube con la cinta (spring `gentle`), Actividad muestra «Aporte a Japón · Sara · ahorro, no es consumo · +$500.000» con la ficha redonda de ahorro, y `gasto_consumo` no cambia (US-18; ExpenseRow, variante aporte).
 3. **Given** un aporte, **When** se elige el modo, **Then** «Apartado en Juntia» o «Transferencia declarada», nunca «Depositado» ni «verificada» (según Q12; DEC-G03; US-21).
 4. **Given** una fecha futura, **When** se intenta registrar, **Then** no se puede; hoy y fechas pasadas sí (según Q12).
@@ -388,7 +388,8 @@ concurrencia, meta ≥ 0); dominio (filas 5 a 7 de DEC-G04); el caso de dos sesi
 
 **Acceptance Scenarios**:
 
-1. **Given** Anotar en Nosotros, **When** se elige «Con una meta», **Then** B1 lista las metas compartidas activas con su saldo; las personales aparecen deshabilitadas con «Personal: solo para gastos de Yo»; «Dinero del mes» es el valor inicial y la ruta mínima no cambia (04·11 B1; según Q16).
+1. **Given** Anotar en Nosotros, **When** se elige «Con una meta», **Then** B1 lista **solo** las metas compartidas activas con su saldo; puede mostrar una explicación genérica («Las metas personales solo se usan en gastos de Yo»), pero **no consulta ni pinta ninguna meta personal**, ni deshabilitada; en Yo, solo son elegibles las metas personales; «Dinero del mes» es el valor inicial y la ruta mínima no cambia (según Q16; FR-085; lectura 12 de «ADR, erratas y conflictos»).
+1a. **Given** Sara con metas personales (Bicicleta) y Tomás sin ninguna, **When** cualquiera de los dos abre B1 en Nosotros, **Then** ni el HTML, ni el payload RSC, ni ningún prefetch de Anotar o de B1 contienen el nombre, el saldo ni el identificador de una meta personal de Sara, y lo que ve Sara en B1 es igual a lo que ve Tomás (FR-085, FR-086).
 2. **Given** B2, **When** se reparte el uso, **Then** FundingLedger muestra el reparto del gasto (50/50, «Define el balance entre ustedes. No cambia con la meta.») separado de los fondos por aportante, cada campo con tope en lo disponible, «Suman $X de $Y» y Guardar bloqueado si no suman o si el uso supera el gasto (FundingLedger; según Q3 y Q16).
 3. **Given** B3, **When** se revisa, **Then** «Japón ahora 11.340.000 → 9.720.000» y «si Tomás aprueba 9.720.000 → 8.340.000», el gasto +3.000.000 como compra real y «Juntia no mueve dinero» (04·11 B3; según Q3).
 4. **Given** «Registrar y pedir a Tomás», **When** el servidor confirma, **Then** en **una sola operación atómica e idempotente**: el gasto existe una vez con su reparto, el uso de Sara (1.620.000) está aplicado y la solicitud de 1.380.000 queda pendiente; Japón queda en 9.720.000; Sara 4.500.000 disponibles; Tomás sigue en 5.220.000 (§15.6.3 punto 5).
@@ -466,7 +467,7 @@ puntos 3 y 4.
 
 ### Edge Cases
 
-- **Meta personal en un gasto de Nosotros o compartida en Yo:** no se ofrece y la función lo rechaza (DEC-G06).
+- **Meta personal en un gasto de Nosotros o compartida en Yo:** no se ofrece (en Nosotros ni siquiera se consulta ni se pinta) y la función lo rechaza (DEC-G06; FR-085).
 - **Uso mayor que el gasto o mayor que lo disponible de un aportante:** Guardar bloqueado y la función lo rechaza.
 - **Dos usos concurrentes de la misma meta** (Sara anota un gasto con Japón mientras Tomás retira): se serializan sobre la meta; el segundo se valida contra el saldo vigente y, si no cabe, falla sin cambiar nada (ADR-013 §3).
 - **Aprobar mientras la solicitante cancela:** gana una de forma atómica; la otra falla con su texto («La solicitud ya se canceló» / «Ya se aprobó») y no cambia nada.
@@ -483,6 +484,7 @@ puntos 3 y 4.
 - **Gasto de un mes con presupuesto desactivado después:** ese mes conserva su límite en el historial; el mes en curso queda sin presupuesto (según Q7).
 - **Gasto con fecha futura (16.13) en una categoría con presupuesto:** cuenta en su mes, no en el actual.
 - **Gasto compartido de un solo participante en Yo con presupuesto:** consume solo la parte de quien participa (FR-019a de la 003).
+- **Presupuesto activo con consumo 0** (creado en una categoría sin gastos en el mes): «0 de $X · Quedan $X · 0 %», barra vacía de un presupuesto **real**; es distinto de «sin presupuesto», que nunca muestra 0 % (DEC-R01). Tiene su prueba explícita (FR-110, FR-113).
 - **Consumo exactamente igual al límite:** «Quedan $0», sin EXCEDIDO; el porcentaje mostrado nunca dice 100 % antes de llegar ni 85 % antes de llegar al 85 % (comparación exacta en unidades menores).
 - **Meta sin fecha:** sin ritmo ni «al mes» (según Q9).
 - **Meta cuya fecha ya pasó:** sin ritmo; texto neutro, sin culpa («La fecha era {mes}»).
@@ -500,7 +502,7 @@ puntos 3 y 4.
 - **FR-001**: Las tablas de P0-3 (`budgets`, `savings_goals`, `goal_ledger_entries`, `goal_usage_allocations`, `goal_usage_confirmations` y las auxiliares que el plan necesite, como el historial de presupuestos) viven en `juntia_data`, con RLS en todas, y son **tablas controladas**: solo las escriben funciones `security definer` de `juntia_private` propiedad de `juntia_writer` (ADR-013 §1, §2). Una tabla nueva que guarde importes no queda fuera de esa lista.
 - **FR-002**: `goal_ledger_entries` es de **solo inserción**: un trigger rechaza `update` y `delete` incluso para `juntia_writer`; una anulación (aporte anulado, uso quitado) es un asiento o un estado nuevo, nunca una reescritura de importe (ADR-013 §2.4; §7.3). El plan decide la forma exacta antes de migrar.
 - **FR-003**: Restricciones e índices protegen por cualquier camino: meta privada XOR compartida; objetivo positivo; moneda de la meta igual a la del grupo (COP); importes positivos; `funding_mode` obligatorio en aportes y solo en aportes; asientos solo de integrantes activos en metas compartidas; un uso solo enlaza un gasto activo del **mismo contexto y moneda**; suma de `goal_usage_allocations` = importe del uso (trigger diferido); **saldo ≥ 0 por meta y por aportante**; un presupuesto activo por (contexto, categoría, moneda); límite > 0 (DEC-R01; DEC-G01; DEC-G06; ADR-013 §2.4).
-- **FR-004**: Toda operación que cambia el saldo de una meta bloquea la **meta** como raíz antes de leer saldos; la que cambia un presupuesto bloquea el **presupuesto**; el gasto con meta bloquea el gasto y la meta, y la aprobación bloquea la solicitud y la meta, en el orden determinista que fije el plan (ADR-013 §3.2 y §3.3).
+- **FR-004**: Toda operación que cambia el saldo de una meta bloquea la **meta** como raíz antes de leer saldos; la que cambia un presupuesto bloquea el **presupuesto**; el gasto con meta bloquea el gasto y la meta, y la aprobación bloquea la solicitud y la meta, en el orden determinista que fije el plan (ADR-013 §3.2 y §3.3). **El plan documenta un orden global de bloqueos** que extiende, sin contradecirlo, el de las funciones de P0-2 (persona → grupo → movimiento), con el lugar de la meta, la solicitud y el presupuesto, y lo aplican todas las funciones de P0-3 y las de P0-2 que tocan metas (Mover a Pareja, editar y anular un gasto). Ninguna combinación de operaciones concurrentes produce un interbloqueo permanente: un `40P01` ocasional se reintenta (FR-097) y termina.
 - **FR-005**: Los importes cruzan la frontera como texto (límites, consumidos, aportes, saldos, usos, métricas), con la prueba de ida y vuelta de `9007199254740993` en las vistas y funciones nuevas (ADR-013 §4).
 - **FR-006**: Ningún camino que atiende a una persona usa `service_role` (ADR-013 §5.8). Las funciones nuevas añaden sus códigos de error a la tabla existente y su copy a `src/lib/copy/es.ts` (ADR-013 §6.3).
 - **FR-007**: `juntia_private.transaction_goal_funded(uuid)` deja de devolver `false`: su cuerpo consulta si el movimiento tiene **algún uso de meta aplicado y no anulado**. Conserva su firma, `stable`, `search_path = ''` y `execute` solo para `juntia_writer`, de modo que Mover a Pareja (`JT116`, `moveFundedByGoal`) queda conectado sin tocar su función (FR-035 de la 003; ADR-001 punto 7).
@@ -584,7 +586,7 @@ puntos 3 y 4.
 
 #### Privacidad de lectura (lecciones F44-1 y F47-6)
 
-- **FR-085**: En Nosotros el servidor **no consulta** metas, asientos ni presupuestos personales; ni el HTML, ni el payload RSC, ni ningún prefetch de una ruta de Nosotros (Metas, Plan, Análisis, Inicio, Actividad, meta inmersiva) contienen nombres, importes o identificadores de metas o presupuestos personales de ninguno de los dos, con la cookie de contexto válida, ausente o no válida (FR-037 a FR-039 de la 003).
+- **FR-085**: En Nosotros el servidor **no consulta** metas, asientos ni presupuestos personales; ni el HTML, ni el payload RSC, ni ningún prefetch de una ruta de Nosotros (Metas, Plan, Análisis, Inicio, Actividad, meta inmersiva y Anotar con su selector de metas B1) contienen nombres, importes o identificadores de metas o presupuestos personales de ninguno de los dos, con la cookie de contexto válida, ausente o no válida (FR-037 a FR-039 de la 003).
 - **FR-086**: El otro integrante nunca recibe un dato de una meta o presupuesto personal por ninguna vía: vistas, funciones, errores, auditoría visible, exportación o el detalle de un gasto compartido (DEC-G06).
 - **FR-087**: Cambiar de contexto nunca muestra, ni un fotograma, metas o presupuestos del contexto anterior bajo títulos del nuevo; la caché del cliente de un contexto no se reutiliza en el otro (US-14; FR-040 de la 003).
 
@@ -610,10 +612,10 @@ puntos 3 y 4.
 
 #### Pruebas y CI (ADR-011, `docs/TESTING.md`)
 
-- **FR-110**: Dominio puro: las siete filas de DEC-G04 con `test.each`, saldo por meta y por aportante, consumo y estado de presupuestos, reparto proporcional de FundingLedger, ritmo (Q9) y comparación (Q10), contra el dataset dorado de P0-3 y con pruebas de propiedad (saldo ≥ 0; asignaciones de uso que suman el uso; vistas que no se suman: Sara −120.000 + Tomás +120.000 = Nosotros 0) (ADR-011 filas 1, 3 y 7).
+- **FR-110**: Dominio puro: las siete filas de DEC-G04 con `test.each`, saldo por meta y por aportante, consumo y estado de presupuestos, reparto proporcional de FundingLedger, ritmo (Q9) y comparación (Q10), contra el dataset dorado de P0-3 y con pruebas de propiedad (saldo ≥ 0; asignaciones de uso que suman el uso; vistas que no se suman: Sara −120.000 + Tomás +120.000 = Nosotros 0), la prueba cronológica de las fixtures (parte A del dataset) y un presupuesto activo con consumo 0 (estado «dentro», 0 %, distinto de `budget: null`) (ADR-011 filas 1, 3 y 7).
 - **FR-111**: pgTAP para cada función nueva: éxito, rechazo con una tercera cuenta, repetición idempotente, misma clave con otra huella, cada validación, aporte a nombre de otro, uso sin confirmación, aprobar la propia solicitud, y `transaction_goal_funded` con datos (ADR-011 fila 8; §15.6.3 puntos 3 y 4).
-- **FR-112**: Integración de servidor: gasto con meta atómico (un gasto, usos que suman, meta ≥ 0); aprobación separada con revalidación; aprobar contra cancelar; aprobar contra retirar; dos usos concurrentes de una meta; dos aprobaciones; ediciones concurrentes de presupuesto en los dos órdenes (editar/desactivar); creación concurrente de la misma clave de presupuesto; quitar el uso y anular un gasto con meta; exportación sin privados ni duplicados (ADR-011 filas 2, 12 y 13; §15.6.3 puntos 5 a 7).
-- **FR-113**: Componentes (RTL selectivo): un retiro nunca se presenta como ingreso (signo, ficha y etiqueta); BudgetIndicator sin presupuesto nunca muestra 0 %; PlanningNote con valor negativo y su texto; FundingLedger bloquea Guardar si no suma (ADR-011 fila 5).
+- **FR-112**: Integración de servidor: gasto con meta atómico (un gasto, usos que suman, meta ≥ 0); aprobación separada con revalidación; aprobar contra cancelar; aprobar contra retirar; dos usos concurrentes de una meta; dos aprobaciones; ediciones concurrentes de presupuesto en los dos órdenes (editar/desactivar); creación concurrente de la misma clave de presupuesto; quitar el uso y anular un gasto con meta; **aprobar contra «Quitar el uso de la meta»** y **aprobar contra anular el gasto asociado**, en los dos órdenes, con la invariante **«ningún uso aplicado queda asociado a un gasto anulado o desvinculado de la meta»** y sin interbloqueos permanentes (FR-004); exportación sin privados ni duplicados (ADR-011 filas 2, 12 y 13; §15.6.3 puntos 5 a 7).
+- **FR-113**: Componentes (RTL selectivo): un retiro nunca se presenta como ingreso (signo, ficha y etiqueta); BudgetIndicator sin presupuesto nunca muestra 0 %, y con un presupuesto activo de consumo 0 muestra «Quedan $X · 0 %» con su barra; PlanningNote con valor negativo y su texto; FundingLedger bloquea Guardar si no suma (ADR-011 fila 5).
 - **FR-114**: **Spec E2E 5** «Presupuesto activado/desactivado» **nace en el PR B** (crear, editar con conflicto, desactivar y volver al estado sin presupuesto) y el PR E la amplía con Análisis con y sin presupuesto. **Spec E2E 4** «Meta con aportes y uso» **nace en el PR C** (crear meta, aportar, ver que el héroe no cambia, retirar) y el PR D la amplía con el caso de la matriz «Financiación ajena → aprobar/rechazar» con **dos contextos autenticados** (Sara y Tomás, `storageState` por worker y por rol). Ningún PR fusiona una funcionalidad sin su E2E obligatoria (`docs/TESTING.md`, «Tope», «Matriz», «Mientras las specs todavía no existen»).
 - **FR-115**: axe en su **nivel ligero** en cada PR (cada pantalla y estado nuevo, una vez, a 390 px, en los dos temas, con sesión en el job `e2e`), y el **barrido completo** a mano al cierre de P0-3 y en los PR que añaden pantallas (decisión 21). Pantallas nuevas: Plan, Análisis, Metas, meta inmersiva, Registrar aporte, Historial, Retirar, gasto con meta B1–B7, solicitud pendiente y sus estados vacíos y de error.
 - **FR-116**: El job `e2e` sigue por debajo de 480 s con las specs 4 y 5 (decisión 19.5, bloqueante desde el PR D de la 003). Si la medición lo supera, el hallazgo es la suite, no el techo (cláusula anticliquet, `docs/TESTING.md` §9).
@@ -679,8 +681,28 @@ define esta spec (regla 2; según Q19) y suman exactamente lo que el diseño da.
 Copiado de `COMPONENT_SPECIFICATIONS.md` («Datos de referencia») y 04·3: objetivo
 **18.000.000**, fecha **abril de 2027**, compartida; saldo al 31 de octubre
 **11.340.000** (**Sara 6.120.000 en 11 aportes · Tomás 5.220.000 en 10 aportes**);
-**63 %**; faltan **6.660.000 en 6 meses → 1.110.000 al mes**. Creada por Sara el 1
-de diciembre de 2025 (definido aquí). Todos los aportes, `reserved`.
+**63 %**; faltan **6.660.000 en 6 meses → 1.110.000 al mes**. Todos los aportes,
+`reserved`.
+
+**Fechas técnicas de la pareja y de Japón** (definidas aquí, coherentes con la
+decisión 20.13: la pareja nace al crear la invitación y se activa al aceptarla; una
+meta compartida exige pareja activa):
+
+| Fecha | Hecho |
+| --- | --- |
+| 2025-11-30 | Sara crea la invitación: nace la pareja, **provisional** |
+| 2025-12-01 | Tomás acepta: la pareja pasa a **activa** |
+| 2025-12-01 | Sara crea Japón, **después** de la activación |
+| 2025-12-27 | Primer aporte a Japón (Sara) |
+
+Octubre de 2026 sigue siendo el **primer mes con movimientos compartidos**: antes de
+octubre la pareja solo tiene aportes a Japón, que no son gastos ni liquidaciones. Las
+cifras de P0-2 (429.900 en `beforeSettlement`, 229.900 en `afterSettlement` y
+2.840.000) no cambian. Las fixtures tipadas de `src/domain/golden/` incluyen estas
+fechas y las de Bicicleta (parte D), y una **prueba cronológica** comprueba el orden:
+invitación ≤ activación ≤ creación de cada meta compartida ≤ su primer aporte; creación
+de cada meta personal ≤ su primer aporte; ningún asiento posterior al 31 de octubre en
+la parte A; y ningún gasto ni liquidación compartidos antes de octubre de 2026.
 
 | Fecha | Aportante | Importe | Origen |
 | --- | --- | ---: | --- |
@@ -735,7 +757,7 @@ los escenarios de la parte D.
 No modifican octubre (como la decisión 20.18). Cada prueba parte del dataset y añade
 solo su escenario.
 
-- **Retiro de Bicicleta.** Meta **personal** de Sara «Bicicleta de ruta», objetivo 3.000.000 y sin fecha (definido aquí), con aportes de Sara de 600.000 el 5 de agosto y 450.000 el 5 de septiembre (definido aquí): saldo **1.050.000**. Sara retira **200.000** en noviembre → **850.000** (05·7). Tomás nunca ve esta meta.
+- **Retiro de Bicicleta.** Meta **personal** de Sara «Bicicleta de ruta», creada por Sara el **1 de agosto de 2026**, objetivo 3.000.000 y sin fecha (definido aquí), con aportes de Sara de 600.000 el 5 de agosto y 450.000 el 5 de septiembre (definido aquí): saldo **1.050.000**. Sara retira **200.000** en noviembre → **850.000** (05·7). Tomás nunca ve esta meta.
 - **Tiquetes a Tokio.** 3 de noviembre, **3.000.000**, Transporte, **pagó Tomás, 50/50**, anotado por Sara con Japón: usa **1.620.000** de Sara (aplicado al registrar) y pide **1.380.000** a Tomás. Estados con nombre:
   - `ticketsPending`: Japón **9.720.000** (54 %); Sara disponible **4.500.000**; Tomás **5.220.000**; Nosotros `gasto_financiado_con_meta` 1.620.000;
   - `ticketsApproved`: Japón **8.340.000** (46 %); Tomás **3.840.000**; Nosotros financiado 3.000.000 (fila 5);
@@ -787,7 +809,7 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
 | --- | --- | --- | --- | --- |
 | Ledger de solo inserción con anulaciones | FR-002; ADR-013 §2.4 | Prototipo en `juntia-dev`: trigger que rechaza `update`/`delete` para `juntia_writer` y forma de la anulación | Implementador del plan | Antes de cerrar el plan |
 | Saldo ≥ 0 por aportante bajo concurrencia | DEC-G06; ADR-013 §3 | Que dos usos o un uso y un retiro concurrentes se serializan con el bloqueo de la meta y el segundo falla sin cambiar nada | Implementador del plan | Antes de cerrar el plan |
-| Orden de bloqueo del gasto con meta | FR-004 | Gasto + meta al registrar; solicitud + meta al aprobar; sin interbloqueo con quitar el uso | Implementador del plan | Antes de cerrar el plan |
+| Orden global de bloqueos | FR-004 | Orden documentado que extiende el de P0-2 (persona → grupo → movimiento) con meta, solicitud y presupuesto; prototipo de gasto + meta al registrar, solicitud + meta al aprobar, y aprobar contra quitar el uso y contra anular el gasto sin interbloqueo permanente | Implementador del plan | Antes de cerrar el plan |
 | Vigencia mensual del presupuesto | FR-013; Q7 | Modelo (fila por cambio con mes de inicio, o equivalente) que responda «¿qué límite regía en {mes}?» en una vista de una sola sentencia | Implementador del plan | Antes de cerrar el plan |
 | Lectura consistente de métricas y saldos | FR-096 | Que las cinco métricas, saldos y consumos salen de una sola lectura con vistas `security_invoker` | Implementador del plan | Antes de cerrar el plan |
 
@@ -801,6 +823,8 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
 | RLS de metas privadas y compartidas | §15.6.3 punto 4 | US-10 completa | CI (pgTAP) | Antes del merge del PR A |
 | Registro inicial del gasto con meta | §15.6.3 punto 5 | FR-052: una operación, sin esperar aprobación | CI (integración) | Antes del merge del PR A |
 | Autorización posterior de fondos ajenos | §15.6.3 punto 6 | FR-054, FR-055: operación separada, revalidación, meta ≥ 0, el gasto permanece | CI (integración) | Antes del merge del PR A |
+| Aprobar contra quitar el uso y contra anular el gasto | FR-004, FR-112 | Las dos carreras en los dos órdenes: ningún uso aplicado queda asociado a un gasto anulado o desvinculado; sin interbloqueo permanente | CI (integración) | Antes del merge del PR A |
+| Dataset dorado en orden cronológico | Parte A y D del dataset | Prueba cronológica de las fixtures tipadas (fechas de la pareja, de las metas y de los aportes) | CI (dominio) | Antes del merge del PR A |
 | Ediciones concurrentes de presupuesto | §15.6.3 punto 7; BudgetIndicator «Conflicto» | FR-011 en los dos órdenes | CI (integración) | Antes del merge del PR A; el aviso en pantalla, antes del merge del PR B |
 | Idempotencia de las escrituras que mueven dinero | §15.6.3 punto 2 | FR-091 | CI | Antes del merge de cada PR que añade la escritura |
 | Las siete filas de DEC-G04 | Handoff; 05·7 «Función pura» | FR-060 | CI (dominio) | Antes del merge del PR A |
@@ -829,7 +853,7 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
 
 ## ADR, erratas y conflictos
 
-- **ADR que aplican:** ADR-001 (punto 7), ADR-002, ADR-007, ADR-011, ADR-012 y ADR-013 (archivo); ADR-004 y ADR-010 (maestro §12.2, sin archivo hoy).
+- **ADR que aplican:** ADR-001 (punto 7), ADR-002, ADR-007, ADR-011, ADR-012 y ADR-013 (archivo); ADR-004 y ADR-010 (maestro §12.2; archivos `docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md`, creados en este PR con las notas de la decisión 22).
 - **ADR nuevo:** ninguno en P0-3. La subida de fotos de metas queda fuera de P0-3 (Q6) y necesitará **ADR-014 (Storage privado de fotos de metas)** antes de P0-4. Las respuestas a Q7 (ADR-004) y a Q13 y Q17 (ADR-010) quedan como notas fechadas en archivos propios, `docs/adr/ADR-004-presupuestos.md` y `docs/adr/ADR-010-metas.md`, creados en este PR, como hizo la 003 con ADR-002 y ADR-007, y trazadas en la decisión 22 del maestro.
 - **Erratas pendientes del paquete:** ninguna en `docs/design/README.md`.
 - **Lecturas registradas para la revisión** (donde hay conflicto, manda el documento superior o lo resuelve una pregunta):
@@ -844,6 +868,7 @@ no para cerrar). Una `[V]` sin salida a su hora bloquea ese momento.
   9. **«Desactivar» (US-04, §15.5, handoff) y «archivar» (§5.3)** nombran la misma operación sobre un presupuesto; la interfaz dice «Desactivar» y el estado es el (c) de DEC-R01.
   10. **El aviso de conflicto de presupuesto «al otro integrante»** (handoff, Pendiente) sin tiempo real: lo ve quien guarda segundo, al guardar (decisión 20.16; FR-011).
   11. **FR-048 de la 003** («Metas y Plan siguen con su estado provisional hasta P0-3») queda sustituido por FR-020 y FR-035.
+  12. **04·11 B1 y el flujo «Gasto con meta» de `COMPONENT_SPECIFICATIONS.md`** muestran en Nosotros la meta personal «Bicicleta de ruta» deshabilitada. Eso pintaría en Nosotros, y en la sesión de la otra persona, una meta personal (DEC-G06; §7.4: «no exponer metas privadas vía agregados o actividad compartida»). Manda el maestro, como con la fila privada de 02·5 en la 003: B1 en Nosotros lista solo metas compartidas y, como mucho, una explicación genérica (US-7, escenarios 1 y 1a; FR-085). Señalado en la revisión del PR #63 (F63-3).
 
 ## Specs E2E que añade P0-3
 
@@ -908,7 +933,7 @@ P0-4.
 
 ## Reparto en PR (Q1; decisión 22.1)
 
-Aprobado por los fundadores (Q1); `tasks.md` lo concreta.
+Aprobado por los fundadores (Q1); `tasks.md` lo concretará durante la etapa Tasks.
 
 | PR | Contenido | Spec E2E | Depende de |
 | --- | --- | --- | --- |
