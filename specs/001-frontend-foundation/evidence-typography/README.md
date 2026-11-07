@@ -2,6 +2,8 @@
 
 Fecha: 4 de noviembre de 2026. Build de producción servido con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100` (el 3000 lo ocupaba otro proceso). La línea base de `main` (`f6ef453`, con Geist) se compiló en un worktree aparte y se sirvió en el 3200 con el mismo comando. Chromium de Playwright 1.64.1 en Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/) como `.cjs.txt`, para que no entren en el lint; no forman parte de `tests/`. Para ejecutarlos, cópialos fuera del repositorio sin la extensión `.txt`.
 
+> **Para volver a ejecutarlos (desde el 7 de noviembre de 2026):** el 3000 y el 3100 son de otro proyecto de esta máquina; Juntia nunca los usa. Sirve el build con `JUNTIA_INTERNAL_SURFACE=1 npm run start` (puerto `PORT`, por defecto 3400; la línea base, en un segundo servidor con `PORT=3500`) y pasa el origen con `BASE=http://localhost:3400`, que también es el valor por defecto de los arneses. Las URL con 3100 y 3200 de las salidas guardadas son el registro de aquella ejecución.
+
 ## Aprobación de los fundadores
 
 Aprobado por los dos fundadores el 4 de noviembre de 2026: las 32 capturas, Spline Sans Mono para `meta.mono` y los tamaños de montos del código (40 px en móvil, 52 px en escritorio). Los comps de Claude Design, que redujeron los montos un 7 %, se alinearán con el código al diseñar P0-1.

@@ -2,7 +2,9 @@
 
 Fecha: 4 de noviembre de 2026. Corrige el pendiente declarado en [`../evidence-typography/README.md`](../evidence-typography/README.md): con Onest, la descripción de «no encontrado» se movía al llegar la fuente a 362, 363, 384 y 385 px (CLS 0,001625 y 0,000826 en carga fría). El maestro §15.7 exige CLS = 0 exacto.
 
-Build de producción servido con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100`, Chromium de Playwright 1.64.1, Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/).
+Build de producción servido entonces con `JUNTIA_INTERNAL_SURFACE=1 next start -p 3100`, Chromium de Playwright 1.64.1, Windows 11. Los arneses son desechables y se copian en [`harness/`](harness/).
+
+> **Para volver a ejecutarlos (desde el 7 de noviembre de 2026):** el 3000 y el 3100 son de otro proyecto de esta máquina; Juntia nunca los usa. Sirve el build con `JUNTIA_INTERNAL_SURFACE=1 npm run start` (puerto `PORT`, por defecto 3400; un segundo servidor, `PORT=3500`) y pasa el origen a los arneses con `BASE=http://localhost:3400`, que también es su valor por defecto. Las URL con 3100 de las salidas guardadas son el registro de aquella ejecución.
 
 ## Causa
 

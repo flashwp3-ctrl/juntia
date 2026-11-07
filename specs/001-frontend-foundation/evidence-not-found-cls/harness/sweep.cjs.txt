@@ -1,9 +1,9 @@
-// Barrido fuente frente a respaldo. Uso: node sweep.cjs <base> <rutas,separadas,por,coma> [tamaño raíz, p. ej. 200%]
+// Barrido fuente frente a respaldo. Uso: node sweep.cjs <base, o vacío para BASE / http://localhost:3400> <rutas,separadas,por,coma> [tamaño raíz, p. ej. 200%]
 // Fuerza el respaldo con html.fb, que redefine las variables de next/font (especificidad 0,1,1 frente a 0,1,0).
 // Antes de medir comprueba, en cada ruta, que la clase cambia de verdad la familia calculada de un <p>.
 const req=require('node:module').createRequire(process.cwd()+'/package.json');const{chromium}=req('playwright');
 const CSS='html.fb{--font-onest:"Onest Fallback";--font-brygada:"Brygada Fallback"}';
-const [,,base,routesArg,root='100%']=process.argv;const routes=routesArg.split(',');
+const [,,baseArg,routesArg,root='100%']=process.argv;const base=baseArg||process.env.BASE||'http://localhost:3400';const routes=routesArg.split(',');
 console.log('# CSS='+CSS+' ROOT='+root);
 (async()=>{const b=await chromium.launch();for(const route of routes){const p=await b.newPage({viewport:{width:390,height:900}});await p.goto(base+route);await p.evaluate(()=>document.fonts.ready);
 await p.evaluate(([c,r])=>{const s=document.createElement('style');s.textContent=c;document.head.append(s);document.documentElement.style.fontSize=r},[CSS,root]);

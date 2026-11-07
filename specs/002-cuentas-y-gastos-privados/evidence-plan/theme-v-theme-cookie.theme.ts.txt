@@ -11,7 +11,7 @@ const PALETTE = {
 // Superficie del navegador antes de que llegue el documento: blanca con el sistema en claro y #121212 con el sistema
 // en oscuro. No es de la página ni depende del tema de Juntia; el arnés comprueba que solo aparece antes de first-paint.
 const BLANKS = ["[255,255,255]", "[18,18,18]"];
-const BASE = process.env.BASE_URL ?? "http://localhost:3200";
+const BASE = process.env.BASE_URL ?? process.env.BASE ?? "http://localhost:3400";
 
 const OBSERVER = `(() => {
   const w = window;
