@@ -989,3 +989,31 @@ pareja pendiente o activa); la composición de escritorio de `/invitacion`
 7. **«Comprobar estado»** consulta `write_status` por una Server Action que solo
    admite las cuatro acciones de invitación; un fallo al comprobar deja el
    estado desconocido como estaba, sin decir «no consta».
+
+## Revisión de ChatGPT F55 (sobre `e34ec6c`)
+
+0 bloqueantes, 2 importantes, corregidos en un solo commit, `7365ffc`. Las
+pruebas se escribieron antes y se vieron fallar: 15 de F55-1 y 2 de F55-2.
+
+- **F55-1** · `scripts/dev-target/e2e-plan.mjs` pasa de lista negra a **lista
+  blanca**. Se admiten archivos de `tests/` terminados en `.e2e.ts` o `.a11y.ts`,
+  `--grep`/`-g` (separado, con `=` o pegado) con un patrón que no empieza por
+  `-`, `--only-changed [ref]` con la ref validada y `--project e2e|a11y`. Se
+  rechazan antes del bloqueo `-carchivo`, `-c=`, `--config=`, `-G`, `-Gpatrón`,
+  `--grep-invert=`, `--project=otro`, cualquier flag desconocido y las rutas
+  fuera de `tests/` o con `..`. Una prueba comprueba que el plan solo lleva los
+  argumentos internos del runner más los autorizados. `tests/dev-target-tools.test.ts`:
+  47 pasan, 2 omitidas.
+- **F55-2** · Con una escritura en curso, la hoja de invitar no se cierra: la ×
+  queda `aria-disabled` y Escape y el arrastre no hacen nada. La confirmación de
+  anular ignora Escape mientras dice «Anulando…». `useWrite` abre una generación
+  nueva en cada envío y en cada `reset`, e ignora la respuesta de una generación
+  anterior (ni `setState` ni `onOk`). El resultado `ok` lleva su clave, y el
+  enlace de una sola vez solo se pinta si esa clave coincide con el par de esta
+  apertura. Lo prueban dos casos con promesas retenidas: regenerar A sin poder
+  cerrar, ver el token de A y que B no muestre ningún enlace hasta su respuesta;
+  y, en `useWrite`, una respuesta tardía de A ignorada después del `reset`.
+
+Comprobaciones: `verify` verde (53,95 s). Pasada dirigida `npm run e2e:dev --
+tests/a11y/couple.a11y.ts -g teclado`: 1 de 1 en 11,46 s. `e2e:dev` completo
+antes del push: **E2E 23/23** y **axe 182/182**.
