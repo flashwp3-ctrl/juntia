@@ -5,9 +5,10 @@ import { DbError,mapDbError } from "./errors";
 import { requireClaims } from "./session";
 import { withRetry } from "./retry";
 import { afterFilter,monthBounds,readByCursor,type PageOptions } from "./paginate";
-function settlement(row:SettlementTransport) {
+export function settlement(row:SettlementTransport) {
   if(typeof row.amount_minor!=="string") throw new DbError("unexpected");
   return {id:row.id,settlementDate:row.settlement_date,fromUserId:row.from_user_id,toUserId:row.to_user_id,amount:parseAmountMinor(row.amount_minor),note:row.note,status:row.status,version:row.version,createdAt:row.created_at,
+    createdBy:row.created_by??"",voidedBy:row.voided_by??null,voidedAt:row.voided_at??null,
     pendingBefore:row.pending_before===undefined?undefined:parseAmountMinor(row.pending_before),pendingAfter:row.pending_after===undefined?undefined:parseAmountMinor(row.pending_after)};
 }
 export async function registerSettlement(client:SupabaseClient,input:{idempotencyKey:string;amount:Money;settlementDate:string;note:string|null}) {
@@ -24,4 +25,13 @@ export async function listSettlements(client:SupabaseClient,month?:string,option
     if(error) throw mapDbError(error);
     return {data:(data as SettlementTransport[]).map(row=>({...row,transaction_date:row.settlement_date})),error:null};
   },options);return rows.map(settlement);
+}
+
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** PR D (T062): una liquidación de mi pareja activa, activa o anulada, o `null` (ajena o inexistente dan lo mismo). */
+export async function getSettlement(client:SupabaseClient,id:string) {
+  await requireClaims(client);if(!UUID.test(id)) return null;
+  const {data,error}=await client.from("couple_settlements").select("*").eq("id",id).maybeSingle();
+  if(error) throw mapDbError(error);
+  return data?settlement(data as SettlementTransport):null;
 }

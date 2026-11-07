@@ -17,6 +17,7 @@ import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import type { ActionResult, ExpenseActions, PendingRow, SavedTransaction } from "./types";
 import type { CoupleForSheet, LastSplit, MoveResult, SavedShared, SharedActions } from "./shared-types";
+import type { SavedSettlement } from "@/features/balance/types";
 import type { ContextChoice } from "@/lib/context-preference";
 import { useOptionalContextChoice } from "@/components/shell/context-selector";
 import { newIdempotencyKey } from "./idempotency";
@@ -77,6 +78,8 @@ type AnnotateState = {
   /** La pareja activa, o `null`: decide si hay Nosotros en la hoja y si hay «Mover a Pareja». */
   couple: CoupleForSheet | null;
   sharedActions: SharedActions | null;
+  /** PR D (T062; FR-028, FR-060): el aviso «Liquidación registrada» con «Deshacer» de 6 s, que sobrevive a la navegación. */
+  offerSettlementUndo: (saved: SavedSettlement) => void;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -292,7 +295,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const sharedRef = useRef(sharedActions);
   useEffect(() => { sharedRef.current = sharedActions; });
   type UndoIntent = {
-    action: "void_shared_expense" | "undo_reclassify_to_shared"; id: string; idempotencyKey: string;
+    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement"; id: string; idempotencyKey: string;
     send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
   };
   // F57-6 (revisión del PR #57): mientras un deshacer sigue desconocido o sin constar, su aviso no caduca. Vive aquí, en
@@ -369,6 +372,20 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     onOk: () => setHighlightId((current) => (current === result.shared.id ? null : current)),
     rejected: (error) => (error === "undoNotAvailable" || error === "versionConflict" ? copy.move.errors.undoNotAvailable : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
   }, "send"), [runUndo, setHighlightId]);
+
+  // PR D (T062; Q11): «Deshacer» de una liquidación recién registrada, con la misma máquina y la misma regla de un deshacer a
+  // la vez. Anula con `undo` y la versión que devolvió el registro; la función exige además que tenga menos de 60 s.
+  const undoSettlement = useCallback((saved: SavedSettlement, idempotencyKey: string) => runUndo({
+    action: "void_settlement", id: saved.id, idempotencyKey, done: copy.balance.settle.undone,
+    send: () => sharedRef.current!.voidSettlement!({ idempotencyKey, settlementId: saved.id, expectedVersion: saved.version, reason: "undo" }),
+    onOk: () => {},
+    rejected: (error) => (error === "undoNotAvailable" || error === "versionConflict" ? copy.move.errors.undoNotAvailable : error === "alreadyVoided" ? copy.balance.settlement.errors.alreadyVoided
+      : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+  }, "send"), [runUndo]);
+  const offerSettlementUndo = useCallback((saved: SavedSettlement) => {
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message: copy.balance.settle.done, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoSettlement(saved, key) } });
+  }, [notify, undoSettlement]);
 
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
@@ -462,8 +479,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track }),
-    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo }),
+    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>
@@ -556,6 +573,11 @@ export function useListScope(month: string, ids: readonly string[]) {
   // Una fila acaba de confirmarse y la lista ya la trae (la real llegó antes que la respuesta): solo (a).
   const confirmed = rows.filter((row) => row.state === "confirmed").map((row) => row.savedId).join(",");
   useEffect(() => scope.report(month, ids, false), [scope, month, ids, confirmed]);
+}
+
+/** PR D: el proveedor, o `null` fuera de él (el detalle de liquidación se pinta también en pruebas sin Anotar). */
+export function useOptionalAnnotate() {
+  return useContext(AnnotateContext);
 }
 
 export function useAnnotate() {

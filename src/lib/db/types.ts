@@ -11,7 +11,7 @@ export type SharedExpenseTransport = { id:string; transaction_date:string; creat
  amount_minor:string; payer_user_id:string; split_mode:SplitMode; split_percents:number[]|null; parts:Record<string,string>; created_by:string; updated_by:string|null; version:number; moved_from_me:boolean };
 export type SharedTransaction = SharedExpense & { id:string; transactionDate:string; createdAt:string; updatedAt:string; categoryId:CategoryId; description:string|null;
  splitMode:SplitMode; splitPercents:readonly number[]|null; version:number; createdBy:string; updatedBy:string|null; movedFromMe:boolean };
-export type SettlementTransport = {id:string;settlement_date:string;from_user_id:string;to_user_id:string;amount_minor:string;note:string|null;status:"active"|"voided";version:number;created_at:string;pending_before?:string;pending_after?:string};
+export type SettlementTransport = {id:string;settlement_date:string;from_user_id:string;to_user_id:string;amount_minor:string;note:string|null;status:"active"|"voided";version:number;created_at:string;created_by?:string;voided_by?:string|null;voided_at?:string|null;pending_before?:string;pending_after?:string};
 export type TransactionTransport = {
   id: string; type: TransactionType; category_id: CategoryId; transaction_date: string;
   description: string | null; amount_minor: string; currency: "COP"; version: number;

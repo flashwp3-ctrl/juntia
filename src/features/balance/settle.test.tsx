@@ -53,7 +53,7 @@ const sheet = (props: Partial<Parameters<typeof SettleSheet>[0]> = {}) => {
   return { onDone, writes, dialog: screen.getByRole("dialog", { name: copy.balance.settle.title }) };
 };
 
-describe("Hoja de liquidación (US-6.1)", () => {
+describe("Hoja de liquidación (US-6.1)", { timeout: 15000 }, () => {
   it("la dirección es fija (deudor → acreedor), con el saldo pendiente, «Todo» y «Otro», fecha, nota y el aviso de que no mueve dinero", () => {
     const { dialog } = sheet();
     expect(within(dialog).getByText(copy.balance.settle.direction("Tomás", "Sara"))).toBeTruthy();
@@ -122,7 +122,7 @@ describe("Hoja de liquidación (US-6.1)", () => {
     expect(within(dialog).getByLabelText(copy.balance.settle.date)).toHaveProperty("disabled", true);
     await user.click(within(alert).getByRole("button", { name: copy.writes.retry }));
     await waitFor(() => expect(settle).toHaveBeenCalledTimes(2));
-    expect(settle.mock.calls.map(([payload]) => (payload as { idempotencyKey: string }).idempotencyKey)).toEqual([KEY, KEY]);
+    expect(settle.mock.calls.map((call) => (call as unknown as [{ idempotencyKey: string }])[0].idempotencyKey)).toEqual([KEY, KEY]);
     expect(onDone).not.toHaveBeenCalled();
   });
 

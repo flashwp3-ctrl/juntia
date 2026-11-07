@@ -160,7 +160,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 type PageHeaderProps = {
   /** Sin título visible en el encabezado: el estado de la pantalla lleva el `h1` (no encontrado, error). */
   title?: string;
-  variant?: "destination" | "account";
+  /** `back` (PR D de la 003, 04·2): Balance en móvil y tablet, pantalla propia desde Inicio, con «Volver» y el selector. */
+  variant?: "destination" | "account" | "back";
   /** Destino de «Volver» en la pantalla apilada de Mi cuenta: Inicio desde /cuenta, /cuenta desde sus secciones. */
   backHref?: string;
 };
@@ -170,10 +171,11 @@ type PageHeaderProps = {
 // Si no caben en una línea (texto al 200 %), el selector baja de línea y sigue a la derecha: nunca se monta sobre el título.
 export function PageHeader({ title, variant = "destination", backHref = "/" }: PageHeaderProps) {
   const account = variant === "account";
+  const back = variant === "back";
   return (
     <header className={`flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-3 pt-4 lg:gap-x-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
-      {account ? (
-        <Link href={backHref} className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken md:hidden`}>
+      {account || back ? (
+        <Link href={backHref} className={`${hitSquare} -ml-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink hover:bg-sunken ${back ? "lg:hidden" : "md:hidden"}`}>
           <AppIcon name="caret-left" weight="bold" size={22} />
           <span className="sr-only">{copy.account.back}</span>
         </Link>

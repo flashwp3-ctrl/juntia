@@ -14,7 +14,9 @@ export type WriteError =
   | "alreadyInCouple" | "invitationGone" | "alreadyAccepted" | "invalid" | "invalidEmail" | "versionConflict"
   | "sessionExpired" | "unexpected"
   // PR C (T045): gasto compartido y Mover a Pareja.
-  | "alreadyDeleted" | "notFound" | "invalidSplit" | "coupleNotActive" | "moveNotAllowed" | "undoNotAvailable";
+  | "alreadyDeleted" | "notFound" | "invalidSplit" | "coupleNotActive" | "moveNotAllowed" | "undoNotAvailable"
+  // PR D (T062): liquidaciones (contracts/errors.md, JT106, JT107, JT112–JT114).
+  | "nothingToSettle" | "exceedsPending" | "settlementDate" | "alreadyVoided";
 export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError } | { status: "unknown" };
 /**
  * Lo que devuelve «Comprobar estado», ya normalizado por la Server Action. `error`: no se pudo comprobar (red); el
@@ -23,7 +25,8 @@ export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected";
 export type WriteStatusOutcome<T> = { state: "completed"; value: T } | { state: "not_found" } | { state: "error" };
 /** Acciones de `idempotency_records` que el PR B consulta con `write_status`. El PR C añade las suyas. */
 export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation"
-  | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared";
+  | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared"
+  | "register_settlement" | "void_settlement";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
 export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 
@@ -51,6 +54,12 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   invalidCategory: "invalid",
   invalidDate: "invalid",
   descriptionTooLong: "invalid",
+  // PR D (T062): liquidaciones. Una liquidación inexistente o de otra pareja y una ya anulada son rechazos confirmados.
+  nothingToSettle: "nothingToSettle",
+  settlementExceedsPending: "exceedsPending",
+  invalidSettlementDate: "settlementDate",
+  settlementNotFound: "notFound",
+  settlementVoided: "alreadyVoided",
 };
 
 /**

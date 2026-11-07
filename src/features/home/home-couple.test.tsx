@@ -40,7 +40,8 @@ describe("Inicio en Nosotros con beforeSettlement (US-3.1)", () => {
     for (const [category, value] of [["home", "1.600.000"], ["market", "640.000"], ["services", "360.000"], ["restaurants", "240.000"]] as const) {
       expect(screen.getByLabelText(copy.activity.categoryChip(copy.categories[category], value))).toBeTruthy();
     }
-    expect(screen.getByText(copy.couple.home.owes("Tomás", "Sara")).closest("[data-balance-line]")?.textContent ?? "").toContain("$429.900");
+    // PR D: la línea (móvil) y el módulo de escritorio dicen lo mismo; CSS enseña uno según el ancho.
+    for (const node of screen.getAllByText(copy.couple.home.owes("Tomás", "Sara"))) expect(node.closest("[data-balance-line]")?.textContent ?? "").toContain("$429.900");
     expect((screen.getByRole("link", { name: copy.couple.home.seeBalance }))?.getAttribute("href")).toBe("/balance");
   });
 

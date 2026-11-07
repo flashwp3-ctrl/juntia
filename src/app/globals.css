@@ -149,6 +149,39 @@ html:not([data-context="us"]) [data-context-view="us"] { display: none; }
   to { transform: rotate(360deg); }
 }
 
+/* PR D de la 003. S4 Shared Balance (MOTION_SYSTEM.md §3), solo con data-s4="animating", que pone SharedBalance cuando el
+   servidor confirmó una liquidación y el movimiento no está reducido. Las barras persisten: lo que ya estaba cambia de
+   ancho (contain: layout); lo que nace (liquidó, recibió) crece desde su inicio. El exceso del acreedor se devuelve de
+   200 a 620 ms y el badge pasa a LIQUIDADO de 620 a 900 ms. */
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes badge-in {
+  from { opacity: 0; transform: scale(.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+[data-s4="animating"] [data-segment] { transition: left 420ms cubic-bezier(.3, 0, 0, 1), width 420ms cubic-bezier(.3, 0, 0, 1); }
+[data-s4="animating"] [data-segment="over"] { transition-delay: 200ms; }
+[data-s4="animating"] [data-segment][data-new-segment] { transform-origin: left; animation: bar-grow 420ms cubic-bezier(.3, 0, 0, 1) both; }
+[data-s4="animating"] [data-segment="received"][data-new-segment] { animation-delay: 200ms; }
+[data-s4="animating"] [data-balance-badge="settled"] { animation: badge-in 280ms cubic-bezier(.2, .8, .2, 1) 620ms both; }
+
+/* S1 Context Transition (MOTION_SYSTEM.md §1): los bloques del contexto nuevo entran con y 8 → 0 y opacidad, en stagger
+   de 40 ms (máximo 4), cuando sus datos ya llegaron. Solo con data-s1="entering", que ContextView no pone con movimiento
+   reducido. */
+@keyframes s1-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+[data-s1="entering"] > * > * { animation: s1-enter 240ms cubic-bezier(.2, .8, .2, 1) both; }
+[data-s1="entering"] > * > :nth-child(2) { animation-delay: 40ms; }
+[data-s1="entering"] > * > :nth-child(3) { animation-delay: 80ms; }
+[data-s1="entering"] > * > :nth-child(n + 4) { animation-delay: 120ms; }
+@media (prefers-reduced-motion: reduce) {
+  [data-s4] [data-segment], [data-s4] [data-balance-badge], [data-s1] * { transition: none !important; animation: none !important; }
+}
+
 /* Research R5 / FR-026: antes de hidratar, React pinta «Yo» (instantánea del servidor) y la perilla visible sale de
    <html data-context>, que el script de tema fija antes del body. Así la primera pintura ya es la correcta y la perilla
    no se desliza al cargar. Tras hidratar, el selector se vuelve a montar con la perilla ya en «Nosotros». */

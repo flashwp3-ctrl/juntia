@@ -1,7 +1,7 @@
 // T048 (spec 003, PR C) / FR-037, FR-041, FR-044, FR-048, FR-049; US-3.1, US-3.2, US-3.6; interpretación I3; 04·1 INICIO ·
 // NOSOTROS y el escritorio de 04·7, sin los bloques de metas ni «apartaron» (P0-3). Un solo número héroe: el gasto
 // compartido del mes (`couple_month_summary`, una sola sentencia). El saldo de una línea («POR SALDAR · Tomás le debe a
-// Sara $X · Ver balance») sale de `couple_balance`; la pantalla de Balance llega con el PR D. Nada privado de ninguno de los
+// Sara $X · Ver balance») sale de `couple_balance`; desde 1024, el módulo de Balance del PR D. Nada privado de ninguno de los
 // dos: todo lo que pinta llega de vistas de grupo. Nada de presupuesto, «restante», «excedido» ni «te alcanza».
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -17,6 +17,7 @@ import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/for
 import type { SharedTransaction } from "@/lib/db/types";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
 import { BalanceLine } from "./balance-line";
+import { BalancePanel } from "@/features/balance/balance-panel";
 import { categoryFg, tileBg } from "./home-view";
 
 export { BalanceLine } from "./balance-line";
@@ -53,7 +54,10 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members }
       </section>
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-10">
         <div className="flex flex-col gap-6 lg:order-2">
-          <BalanceLine balance={balance} members={members} />
+          {/* PR D (T061; 04·7, RESPONSIVE «Shared Balance»): por debajo de 1024, la línea de saldo con «Ver balance»; desde
+              1024, el módulo con barras de 16 px, «Desglose» y «Registrar liquidación». */}
+          <div className="lg:hidden"><BalanceLine balance={balance} members={members} /></div>
+          <div data-balance-line="" className="hidden lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
           <AnnotateCta />
           {spentBy.length > 0 ? (
             <section aria-labelledby="couple-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
