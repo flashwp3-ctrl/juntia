@@ -280,6 +280,18 @@ Tres reglas, sin excepción:
 
 #### Qué rutas pasa axe en un PR
 
+**Dos niveles desde el 7 de noviembre de 2026 (maestro §15.10, decisión 21).**
+
+- **En cada PR de código, nivel ligero:** cada pantalla y cada estado registrado,
+  **una vez**, a 390 px, en los dos temas. Sin sesión en el job `app` y con sesión
+  en el job `e2e`. Una violación seria o crítica rompe el PR.
+- **Barrido completo, a mano:** los siete anchos, el texto al 200 %, el teclado
+  completo y los objetivos de 44 px. Corre con «Run workflow» al cerrar cada etapa
+  (fin de P0-2, fin de P0-3, antes de MVP-1) y en todo PR que cambie el diseño de
+  una pantalla existente o añada una. Lo lanza el gestor, y sus fallos bloquean el
+  cierre de la etapa. Los archivos `*.a11y.ts` separan los dos niveles (por
+  ejemplo, con una etiqueta `@sweep` excluida de la pasada del PR).
+
 La intención es correr axe **sobre las rutas que el PR toca**. Eso necesita un
 mapa de ruta tocada —qué rutas afecta un cambio— y **ese mapa todavía no existe**.
 
@@ -654,7 +666,8 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
 | **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
-| Job `e2e` (specs E2E y axe con sesión; maestro §15.10, decisión 19.5, 6 nov 2026) | **< 8 min (480 s)** |
+| Job `e2e` (specs E2E y axe con sesión en su nivel ligero; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026) | **< 8 min (480 s)** |
+| Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 10 min |
 | Nocturno / post-merge | **< 15 min** |
 
 «Mide el job» aplica **solo a esta segunda tabla**.

@@ -1092,6 +1092,19 @@ Los dos fundadores la tomaron el 6 de noviembre de 2026 sobre las 18 preguntas a
 
 Además, el comp 02·5 E5, que muestra una fila privada en Nosotros, se resuelve a favor de la regla de privacidad (§5.5): esa fila no se construye.
 
+#### Decisión 21: accesibilidad en dos niveles de CI
+
+Los dos fundadores la tomaron el 7 de noviembre de 2026, después del PR C de la 003, cuyo job `e2e` tardó **524 s** frente al tope de 480 s de la decisión 19.5. De esos 524 s, 280 s eran el barrido de accesibilidad con sesión. Alejandro la comunicó al gestor en nombre de los dos («Punto medio»).
+
+| # | Tema | Elección |
+| --- | --- | --- |
+| 21.1 | axe en cada PR de código | **Nivel ligero:** cada pantalla y cada estado registrado se audita **una vez**, a 390 px, en los dos temas, sin sesión en el job `app` y con sesión en el job `e2e`. Sigue siendo bloqueante: una violación seria o crítica rompe el PR |
+| 21.2 | Barrido completo | Los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440), el texto al 200 %, el recorrido completo con teclado y los objetivos táctiles de 44 px salen del PR y corren **a mano** con «Run workflow»: al cerrar cada etapa (fin de P0-2, fin de P0-3, antes de MVP-1) y en todo PR que cambie el diseño de una pantalla existente o añada una nueva. Lo lanza el gestor; sus fallos bloquean el cierre de la etapa |
+| 21.3 | Lo que no cambia | WCAG AA sigue siendo obligatorio; los criterios de aceptación (FR-054, SC-001, FR-068 y equivalentes) se cumplen igual, solo cambia **cuándo** se comprueban. El gate visual humano no cambia |
+| 21.4 | Presupuesto | Con el nivel ligero, el job `e2e` vuelve por debajo de los 480 s de la 19.5, que sigue vigente y pasa a bloquear desde el PR D de la 003 (20.17) |
+
+Enmienda `docs/TESTING.md` §3 («Qué rutas pasa axe en un PR») y la tabla de presupuestos. El cambio del workflow y de los archivos `*.a11y.ts` va en el primer PR de código posterior (el PR D de la 003).
+
 #### Dataset dorado: quién lo produce y cuándo
 
 El caso de octubre de `docs/design/COMPONENT_SPECIFICATIONS.md` y la tabla de DEC-G04 de `docs/design/HANDOFF_CLAUDE_CODE.md` son el **dataset dorado** de la suite (ADR-011). Retirarlo de las pantallas de la 001 no lo hace opcional. Vive en **un único módulo tipado del dominio**, que crece por slice:
