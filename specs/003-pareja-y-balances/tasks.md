@@ -290,7 +290,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 - [x] T039 **Gate final del PR B (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run, la salida del barrido de T038 y el cierre de FR-056 y FR-059 para las cuatro escrituras de invitación (T031a y T023)
   - Prueba / terminado cuando: verde con las specs 1 y 2 y el proyecto `a11y`.
 
-- [ ] T040 **Humana (fundadores)**: aprobación visual del PR B viendo las capturas
+- [x] T040 **Humana (fundadores)**: aprobación visual del PR B viendo las capturas
   - Prueba / terminado cuando: aprobación registrada en el PR.
 
 ---
@@ -301,82 +301,82 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 3A — tests primero
 
-- [ ] T041 [P] [US2] Tests de **componentes** en `src/features/expenses/annotate-shared.test.tsx`: E1 en Nosotros con el último pagador y reparto de esa persona (o «Pagó: yo» y 50/50 la primera vez), siempre visibles; el selector de participantes (FR-019a: de dos a uno pasa al 100 %; de uno a dos restaura solo un reparto con las dos partes positivas, si no 50/50); Porcentaje e Importe; E3 «Faltan $X» y «Sobran $X»; E5 con el saldo tachado; la ruta mínima de 2 toques; Anotar en Yo sin Pagó, Participan ni Reparto
+- [x] T041 [P] [US2] Tests de **componentes** en `src/features/expenses/annotate-shared.test.tsx`: E1 en Nosotros con el último pagador y reparto de esa persona (o «Pagó: yo» y 50/50 la primera vez), siempre visibles; el selector de participantes (FR-019a: de dos a uno pasa al 100 %; de uno a dos restaura solo un reparto con las dos partes positivas, si no 50/50); Porcentaje e Importe; E3 «Faltan $X» y «Sobran $X»; E5 con el saldo tachado; la ruta mínima de 2 toques; Anotar en Yo sin Pagó, Participan ni Reparto
   - Cumple: US-2 escenarios 1–5, 4a–4f, 7–8; FR-019a, FR-021.
   - Itera: `npm run test:components -- --changed`.
 
-- [ ] T042 [P] [US7] Tests de **componentes** en `src/features/expenses/shared-edit.test.tsx` y `src/features/expenses/write-result.test.tsx`: edición compartida con el aviso y los campos de Q12; conflicto de versión con «{nombre} cambió este gasto antes» y «{nombre} ya lo eliminó»; `ok`/`rejected`/`unknown` (con `unknown` nunca se afirma que no se escribió; «Comprobar estado» con `completed` y con `not_found`); el aviso con «Deshacer» y el resaltado sobreviven a la navegación, y una respuesta tardía no pisa otro aviso; la hoja guarda su contexto aunque cambie el selector (FR-062)
+- [x] T042 [P] [US7] Tests de **componentes** en `src/features/expenses/shared-edit.test.tsx` y `src/features/expenses/write-result.test.tsx`: edición compartida con el aviso y los campos de Q12; conflicto de versión con «{nombre} cambió este gasto antes» y «{nombre} ya lo eliminó»; `ok`/`rejected`/`unknown` (con `unknown` nunca se afirma que no se escribió; «Comprobar estado» con `completed` y con `not_found`); el aviso con «Deshacer» y el resaltado sobreviven a la navegación, y una respuesta tardía no pisa otro aviso; la hoja guarda su contexto aunque cambie el selector (FR-062)
   - Cumple: US-7; FR-057, FR-059–FR-062.
   - Itera: como T041.
 
-- [ ] T043 [P] [US3] Tests de **componentes** en `src/features/home/home-couple.test.tsx` y `src/features/activity/activity-couple.test.tsx`: Inicio y Actividad en Nosotros con el dataset `beforeSettlement` (2.840.000, desglose, «Tomás le debe a Sara $429.900»); sin ningún privado; con el servidor en contexto nulo o sin pareja activa no se pintan datos; Yo con «Solo tuyos» y «Tu parte compartida» y las filas «Compartido · tu parte»; estados vacío, cargando y error
+- [x] T043 [P] [US3] Tests de **componentes** en `src/features/home/home-couple.test.tsx` y `src/features/activity/activity-couple.test.tsx`: Inicio y Actividad en Nosotros con el dataset `beforeSettlement` (2.840.000, desglose, «Tomás le debe a Sara $429.900»); sin ningún privado; con el servidor en contexto nulo o sin pareja activa no se pintan datos; Yo con «Solo tuyos» y «Tu parte compartida» y las filas «Compartido · tu parte»; estados vacío, cargando y error
   - Cumple: US-3, US-4; FR-037–FR-041, FR-044–FR-046, FR-048–FR-049.
   - Itera: como T041.
 
-- [ ] T044 [US8] Tests de **componentes** en `src/features/expenses/reclassify.test.tsx`: A1 sin el botón en un ingreso ni sin pareja activa; A2 con importe y pagador fijos; A3 con ChangePreview solo con cifras de Sara; A4 con «movido desde Yo» y «Deshacer»; A5 en sus dos variantes (rechazo confirmado frente a resultado desconocido con «Comprobar estado»)
+- [x] T044 [US8] Tests de **componentes** en `src/features/expenses/reclassify.test.tsx`: A1 sin el botón en un ingreso ni sin pareja activa; A2 con importe y pagador fijos; A3 con ChangePreview solo con cifras de Sara; A4 con «movido desde Yo» y «Deshacer»; A5 en sus dos variantes (rechazo confirmado frente a resultado desconocido con «Comprobar estado»)
   - Cumple: US-8; FR-031–FR-036; precisión F47-4.
   - Itera: como T041.
 
-- [ ] T044a Escribir **primero** los casos de la **spec E2E 3** en `tests/e2e/couple-settle.e2e.ts` (gasto compartido 50/50 con el total de Nosotros; «Cambiar Yo/Nosotros» con el HTML, el RSC y el prefetch sin datos privados con la cookie válida, ausente y no válida; «Mover a Pareja») y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T045
+- [x] T044a Escribir **primero** los casos de la **spec E2E 3** en `tests/e2e/couple-settle.e2e.ts` (gasto compartido 50/50 con el total de Nosotros; «Cambiar Yo/Nosotros» con el HTML, el RSC y el prefetch sin datos privados con la cookie válida, ausente y no válida; «Mover a Pareja») y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T045
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: los casos fallan porque falta lo que prueban, no por el arnés; la salida queda en `evidence.md`.
 
-- [ ] T044b Escribir **primero** las comprobaciones a11y del PR C y verlas **en rojo contra `juntia-dev`**, antes de T045: las entradas axe del inventario de T051 (Inicio, Actividad y Anotar en Nosotros, edición compartida, confirmación de eliminar, ChangePreview y A5 en sus dos variantes) en `route-registry.ts`, y `tests/a11y/couple-shared.a11y.ts` con el teclado, el texto al 200 % y los 44 px de T051 y el barrido de los siete anchos de T055, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
+- [x] T044b Escribir **primero** las comprobaciones a11y del PR C y verlas **en rojo contra `juntia-dev`**, antes de T045: las entradas axe del inventario de T051 (Inicio, Actividad y Anotar en Nosotros, edición compartida, confirmación de eliminar, ChangePreview y A5 en sus dos variantes) en `route-registry.ts`, y `tests/a11y/couple-shared.a11y.ts` con el teclado, el texto al 200 % y los 44 px de T051 y el barrido de los siete anchos de T055, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
   - Cumple: regla 8 y 10; F50-2, F50-5; interpretación I5.
   - Prueba / terminado cuando: fallan porque falta lo que prueban; `job-selection.test.ts` sigue en verde con el archivo nuevo.
 
 ### Grupo 3B — implementación (en serie)
 
-- [ ] T045 **Ampliar** el módulo común de T031b (`src/features/shared/write-result.ts`) a las escrituras de gasto compartido y de Mover a Pareja, y el proveedor de Anotar a avisos por operación y por contexto; `router.refresh()` al volver a la pestaña (Q16). No completa nada de B: B ya lo tiene entero
+- [x] T045 **Ampliar** el módulo común de T031b (`src/features/shared/write-result.ts`) a las escrituras de gasto compartido y de Mover a Pareja, y el proveedor de Anotar a avisos por operación y por contexto; `router.refresh()` al volver a la pestaña (Q16). No completa nada de B: B ya lo tiene entero
   - Cumple: FR-059–FR-061; [contracts/server-actions.md](contracts/server-actions.md) §1 y §6; interpretación I2.
   - Itera: T042 en verde.
 
-- [ ] T046 [US2] Anotar compartido en `src/features/expenses/`: contexto, pagó, participan, reparto con `splitAmount`, E3, E5 con el saldo tachado (Anotar compartido aprobado en su forma, decisión 20.4)
+- [x] T046 [US2] Anotar compartido en `src/features/expenses/`: contexto, pagó, participan, reparto con `splitAmount`, E3, E5 con el saldo tachado (Anotar compartido aprobado en su forma, decisión 20.4)
   - Cumple: FR-018–FR-021, FR-052; US-2.
   - Itera: T041 en verde; `npm run e2e:dev`.
 
-- [ ] T047 [US7] Edición y eliminación compartidas con `expectedVersion`, «Editado por X · fecha» y el «Deshacer» de la creación
+- [x] T047 [US7] Edición y eliminación compartidas con `expectedVersion`, «Editado por X · fecha» y el «Deshacer» de la creación
   - Cumple: FR-022–FR-024, FR-057; US-7.
   - Itera: T042 en verde.
 
-- [ ] T048 [US3] `src/lib/server-context.ts` (membresía activa además de la cookie), Inicio en Nosotros con `couple_month_summary` y la línea de saldo de `couple_balance` (interpretación I3), y Yo con `me_month_summary` y `my_shared_parts`; prefetch sin datos del otro contexto y cachés por contexto
+- [x] T048 [US3] `src/lib/server-context.ts` (membresía activa además de la cookie), Inicio en Nosotros con `couple_month_summary` y la línea de saldo de `couple_balance` (interpretación I3), y Yo con `me_month_summary` y `my_shared_parts`; prefetch sin datos del otro contexto y cachés por contexto
   - Cumple: FR-037–FR-041, FR-044, FR-045, FR-048, FR-049; US-3, US-4.
   - Itera: T043 en verde.
 
-- [ ] T049 [US3] Actividad en Nosotros con `couple_expenses` y `couple_settlements` por cursor, filtros, buscador, flechas de mes (`couple_transaction_months`), detalle con «A quién le corresponde» y tabla de escritorio con «Pagó · Reparto»
+- [x] T049 [US3] Actividad en Nosotros con `couple_expenses` y `couple_settlements` por cursor, filtros, buscador, flechas de mes (`couple_transaction_months`), detalle con «A quién le corresponde» y tabla de escritorio con «Pagó · Reparto»
   - Cumple: FR-042, FR-046; US-3 escenarios 4–6.
   - Itera: T043 en verde.
 
-- [ ] T050 [US8] Mover a Pareja A1–A5 en `src/features/expenses/reclassify-*.tsx`, desde el detalle y desde Editar, con ChangePreview (aprobado en su forma, decisión 20.3) y el deshacer
+- [x] T050 [US8] Mover a Pareja A1–A5 en `src/features/expenses/reclassify-*.tsx`, desde el detalle y desde Editar, con ChangePreview (aprobado en su forma, decisión 20.3) y el deshacer
   - Cumple: FR-031–FR-036; US-8.
   - Itera: T044 en verde; `npm run e2e:dev`.
 
 ### Grupo 3C — spec E2E 3, axe, medición y salida
 
-- [ ] T051 [US3] **Spec E2E 3 nace**: hacer pasar los casos escritos en T044a. Más, hacer pasar las comprobaciones a11y escritas en T044b (`tests/a11y/couple-shared.a11y.ts` y el registro), agrupadas por ruta:
+- [x] T051 [US3] **Spec E2E 3 nace**: hacer pasar los casos escritos en T044a. Más, hacer pasar las comprobaciones a11y escritas en T044b (`tests/a11y/couple-shared.a11y.ts` y el registro), agrupadas por ruta:
   - **axe** en los dos temas de Inicio, Actividad y Anotar en Nosotros y del **inventario de estados nuevos del PR C**: edición compartida (con el aviso y en conflicto de versión), la **confirmación de eliminar** un gasto compartido, **ChangePreview** (A3) y **A5** de Mover a Pareja en sus dos variantes (rechazo confirmado y resultado desconocido);
   - **teclado**: el selector de participantes, los modos de reparto, los campos de Importe y Porcentaje, Guardar con Enter y Escape para cerrar, y el flujo A1–A4 de Mover a Pareja;
   - **texto al 200 %** y **objetivos de 44 px** en esos controles nuevos
   - Cumple: FR-054, FR-067 (spec 3), FR-068; SC-002 y SC-005 (C); F50-3; [V] «Privacidad por ámbito» y «Conversión privado → compartido» (recorrido), responsable CI, cierre antes del merge del PR C.
   - Itera: `npm run e2e:dev`.
 
-- [ ] T052 Iteración completa del PR C en `juntia-dev`: `e2e:dev` (specs 1, 2 y 3), `test:integration:dev`
+- [x] T052 Iteración completa del PR C en `juntia-dev`: `e2e:dev` (specs 1, 2 y 3), `test:integration:dev`
   - Prueba: en verde.
 
-- [ ] T053 **Punto de control intermedio (CI)**: `gh workflow run ci.yml --ref <rama>` en cuanto T051 está en verde en `juntia-dev`, para **medir el job `e2e`** con la spec 3. Duración en `evidence.md`
+- [x] T053 **Punto de control intermedio (CI)**: `gh workflow run ci.yml --ref <rama>` en cuanto T051 está en verde en `juntia-dev`, para **medir el job `e2e`** con la spec 3. Duración en `evidence.md`
   - Cumple: decisión 19.5; research R8; plan, PR C.
   - Prueba / terminado cuando: la duración está registrada. **Si supera 480 s, el PR se para** y el gestor lo lleva a los fundadores (aprobado el 6 de noviembre de 2026); el presupuesto no se mueve.
 
 - [ ] T054 **Humana (gestor)**: medición en laboratorio de INP al abrir Anotar en Nosotros y al guardar un gasto compartido, y de CLS en las cargas con Skeleton de Inicio y Actividad en Nosotros, reportadas como laboratorio
   - Cumple: SC-010 (C); [V] «Umbrales de §15.7», responsable gestor, cierre antes del merge del PR C.
 
-- [ ] T055 **Barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición compartida y A1–A5: hacer pasar la prueba escrita en T044b, con su salida en `evidence.md`. Capturas a 390 y 1440 px en los dos temas para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
+- [x] T055 **Barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte compartida, edición compartida y A1–A5: hacer pasar la prueba escrita en T044b, con su salida en `evidence.md`. Capturas a 390 y 1440 px en los dos temas para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: Anotar compartido y ChangePreview (aprobados en su forma)
   - Cumple: FR-054, SC-001 (C); F50-3.
 
-- [ ] T056 **Gate final del PR C (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run y la duración del job `e2e`
+- [x] T056 **Gate final del PR C (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run y la duración del job `e2e`
   - Prueba / terminado cuando: verde con las specs 1, 2 y 3.
 
-- [ ] T057 **Humana (fundadores)**: aprobación visual del PR C viendo las capturas
+- [x] T057 **Humana (fundadores)**: aprobación visual del PR C viendo las capturas
   - Prueba / terminado cuando: aprobación registrada en el PR.
 
 ---
@@ -387,61 +387,61 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 4A — tests primero
 
-- [ ] T058 [P] [US5] Tests de **componentes** en `src/features/balance/shared-balance.test.tsx`: estados por saldar, al día, sin gastos compartidos (nunca «Al día $0»), cargando, error e invertido; filas «Pagó X · le corresponden Y»; `role="img"` con el `aria-label` de cifras completas; tabla de desglose; «le debe», nunca «está en deuda»
+- [x] T058 [P] [US5] Tests de **componentes** en `src/features/balance/shared-balance.test.tsx`: estados por saldar, al día, sin gastos compartidos (nunca «Al día $0»), cargando, error e invertido; filas «Pagó X · le corresponden Y»; `role="img"` con el `aria-label` de cifras completas; tabla de desglose; «le debe», nunca «está en deuda»
   - Cumple: US-5; FR-025, FR-026, FR-030, FR-047, FR-053.
   - Itera: `npm run test:components -- --changed`.
 
-- [ ] T059 [P] [US6] Tests de **componentes** en `src/features/balance/settle.test.tsx`: hoja con la dirección fija, «Todo» y «Otro», el máximo en el error, fecha futura rechazada; `unknown` sin animación y sin afirmar nada; detalle con «Anular» y el «Deshacer» de 6 s; la liquidación como «Liquidado · no es un gasto» en Actividad
+- [x] T059 [P] [US6] Tests de **componentes** en `src/features/balance/settle.test.tsx`: hoja con la dirección fija, «Todo» y «Otro», el máximo en el error, fecha futura rechazada; `unknown` sin animación y sin afirmar nada; detalle con «Anular» y el «Deshacer» de 6 s; la liquidación como «Liquidado · no es un gasto» en Actividad
   - Cumple: US-6; FR-027–FR-029; precisión F47-4.
   - Itera: como T058.
 
-- [ ] T060 [P] [US9] Tests de **componentes** en `src/features/context/context-transition.test.tsx`: el Skeleton del contexto nuevo hasta que llega el RSC, nunca cifras del anterior; la interrupción invierte la animación; con movimiento reducido, cambio inmediato con el valor final y el anuncio `aria-live`
+- [x] T060 [P] [US9] Tests de **componentes** en `src/features/context/context-transition.test.tsx`: el Skeleton del contexto nuevo hasta que llega el RSC, nunca cifras del anterior; la interrupción invierte la animación; con movimiento reducido, cambio inmediato con el valor final y el anuncio `aria-live`
   - Cumple: US-9; FR-040, FR-050; SC-011 (S1).
   - Itera: como T058.
 
-- [ ] T060a Escribir **primero** los casos de Balance de la **spec E2E 3** (ver el saldo en Balance, registrar la liquidación parcial de 200.000 y comprobar 229.900 con el gasto en 2.840.000) y el test con motion activo de los dos momentos L2, y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T061
+- [x] T060a Escribir **primero** los casos de Balance de la **spec E2E 3** (ver el saldo en Balance, registrar la liquidación parcial de 200.000 y comprobar 229.900 con el gasto en 2.840.000) y el test con motion activo de los dos momentos L2, y verlos **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T061
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: fallan porque falta Balance, no por el arnés; la salida queda en `evidence.md`.
 
-- [ ] T060b Escribir **primero** las comprobaciones a11y del PR D y verlas **en rojo contra `juntia-dev`**, antes de T061: las entradas axe de T066 (Balance, hoja de liquidación, detalle y confirmación de anular) en `route-registry.ts`, y `tests/a11y/balance.a11y.ts` con el barrido de los siete anchos, el teclado, el texto al 200 % y los 44 px de T069, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
+- [x] T060b Escribir **primero** las comprobaciones a11y del PR D y verlas **en rojo contra `juntia-dev`**, antes de T061: las entradas axe de T066 (Balance, hoja de liquidación, detalle y confirmación de anular) en `route-registry.ts`, y `tests/a11y/balance.a11y.ts` con el barrido de los siete anchos, el teclado, el texto al 200 % y los 44 px de T069, con los casos con sesión solo bajo `A11Y_JOB=e2e`. La prueba de descubrimiento de T031d cubre este archivo
   - Cumple: regla 8 y 10; F50-2, F50-5; interpretación I5.
   - Prueba / terminado cuando: fallan porque falta Balance; `job-selection.test.ts` sigue en verde.
 
 ### Grupo 4B — implementación (en serie)
 
-- [ ] T061 [US5] Balance en `src/app/(app)/balance/page.tsx` y `src/features/balance/`: pantalla propia en móvil desde Inicio, destino del rail y del sidebar desde 1024 px y módulo de Inicio con barras de 16 px; SharedBalance (aprobado en su forma, decisión 20.2) y el desglose filtrable por mes con `couple_balance` y `couple_expenses`
+- [x] T061 [US5] Balance en `src/app/(app)/balance/page.tsx` y `src/features/balance/`: pantalla propia en móvil desde Inicio, destino del rail y del sidebar desde 1024 px y módulo de Inicio con barras de 16 px; SharedBalance (aprobado en su forma, decisión 20.2) y el desglose filtrable por mes con `couple_balance` y `couple_expenses`
   - Cumple: FR-025, FR-026, FR-030, FR-047; US-5.
   - Itera: T058 en verde; `npm run e2e:dev`.
 
-- [ ] T062 [US6] Hoja de liquidación, detalle de liquidación con «Anular» (SensitiveActionConfirmation) y «Deshacer» de 6 s, con `register_settlement` y `void_settlement`
+- [x] T062 [US6] Hoja de liquidación, detalle de liquidación con «Anular» (SensitiveActionConfirmation) y «Deshacer» de 6 s, con `register_settlement` y `void_settlement`
   - Cumple: FR-027, FR-028; US-6; enmienda de ADR-007.
   - Itera: T059 en verde.
 
-- [ ] T063 [US6] S4 Shared Balance: anima solo con `ok`; barras persistentes (`layoutId` por persona), contador al saldo nuevo, morph del badge; con `rejected` o `unknown`, nada; movimiento reducido con el estado final
+- [x] T063 [US6] S4 Shared Balance: anima solo con `ok`; barras persistentes (`layoutId` por persona), contador al saldo nuevo, morph del badge; con `rejected` o `unknown`, nada; movimiento reducido con el estado final
   - Cumple: FR-051; MOTION_SYSTEM §3; SC-011 (S4).
   - Itera: T059 en verde.
 
-- [ ] T064 [US9] S1 Context Transition en `src/features/context/`: coreografía de MOTION_SYSTEM §1 tras el RSC nuevo, interrupción reversible y movimiento reducido
+- [x] T064 [US9] S1 Context Transition en `src/features/context/`: coreografía de MOTION_SYSTEM §1 tras el RSC nuevo, interrupción reversible y movimiento reducido
   - Cumple: FR-050; US-9; MOTION_SYSTEM §1.
   - Itera: T060 en verde.
 
 ### Grupo 4C — spec E2E 3, axe, medición y salida
 
-- [ ] T065 [US6] **Spec E2E 3 crece**: hacer pasar los casos escritos en T060a (saldo en Balance, liquidación parcial de 200.000, 229.900 con el gasto en 2.840.000, `afterSettlement`) y el test con **motion activo** para los dos momentos L2 (`docs/TESTING.md` §5, regla 3)
+- [x] T065 [US6] **Spec E2E 3 crece**: hacer pasar los casos escritos en T060a (saldo en Balance, liquidación parcial de 200.000, 229.900 con el gasto en 2.840.000, `afterSettlement`) y el test con **motion activo** para los dos momentos L2 (`docs/TESTING.md` §5, regla 3)
   - Cumple: FR-067 (spec 3); SC-003 (E2E).
   - Itera: `npm run e2e:dev`.
 
-- [ ] T066 Hacer pasar las entradas axe escritas en T060b: los dos temas de Balance, la hoja de liquidación, el detalle de liquidación y la **confirmación de anular** una liquidación
+- [x] T066 Hacer pasar las entradas axe escritas en T060b: los dos temas de Balance, la hoja de liquidación, el detalle de liquidación y la **confirmación de anular** una liquidación
   - Cumple: FR-068; SC-002 (D).
   - Itera: `npm run e2e:dev`.
 
-- [ ] T067 Iteración completa del PR D en `juntia-dev`: `e2e:dev` (specs 1, 2 y 3) y `test:integration:dev`
+- [x] T067 Iteración completa del PR D en `juntia-dev`: `e2e:dev` (specs 1, 2 y 3) y `test:integration:dev`
   - Prueba: en verde.
 
 - [ ] T068 **Humana (gestor)**: medición en laboratorio de CLS en la carga con Skeleton de Balance
   - Cumple: SC-010 (D).
 
-- [ ] T069 Responsive y accesibilidad del PR D: hacer pasar `tests/a11y/balance.a11y.ts`, escrita en T060b:
+- [x] T069 Responsive y accesibilidad del PR D: hacer pasar `tests/a11y/balance.a11y.ts`, escrita en T060b:
   - **barrido sin scroll horizontal** en los siete anchos (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas de Balance (pantalla móvil, destino de escritorio y módulo de Inicio), la hoja de liquidación, el detalle con «Anular» y el saldo invertido;
   - **teclado** en «Registrar liquidación», «Todo»/«Otro», la fecha, «Anular» (foco inicial en la opción segura, Escape) y el selector Yo/Nosotros durante S1;
   - **texto al 200 %** y **objetivos de 44 px** en esos controles.
@@ -449,11 +449,11 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   Capturas a 390 y 1440 px en los dos temas, con S1 y S4 con movimiento normal y reducido, para la aprobación humana; pasada de **Impeccable** (no cuenta como evidencia de FR-054); lista para aprobar viendo la pantalla: SharedBalance (aprobado en su forma), personas y patrones, liquidación en tinta (propuestas §15.9).
   - Cumple: FR-054, FR-055, SC-001 (D); F50-3.
 
-- [ ] T070 **Gate final del PR D (CI)** sobre el mismo commit que `verify`. **El presupuesto del job `e2e` (< 480 s) pasa a bloquear** con el cierre de P0-2 (Q17)
+- [x] T070 **Gate final del PR D (CI)** sobre el mismo commit que `verify`. **El presupuesto del job `e2e` (< 480 s) pasa a bloquear** con el cierre de P0-2 (Q17)
   - Cumple: [V] «Presupuestos de tiempo», responsable CI, cierre antes del merge del PR D.
   - Prueba / terminado cuando: verde con las specs 1, 2 y 3 dentro del presupuesto.
 
-- [ ] T071 **Humana (fundadores)**: aprobación visual del PR D viendo las capturas
+- [x] T071 **Humana (fundadores)**: aprobación visual del PR D viendo las capturas
   - Prueba / terminado cuando: aprobación registrada en el PR.
 
 ---

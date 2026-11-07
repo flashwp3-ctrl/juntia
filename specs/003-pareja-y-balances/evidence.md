@@ -1656,3 +1656,33 @@ Nota: Actividad en Nosotros sigue navegando con `couple_transaction_months`. El 
 de una anulada de agosto desde Balance abre su detalle en `/actividad/[id]`, que se
 lee por id; la tabla de al lado se ajusta al mes navegable más cercano. No se cambió
 en esta ronda, que pedía la navegación de Balance.
+
+## Cierre del gestor de los PR C y D y aprobaciones (7 de noviembre de 2026)
+
+### Aprobaciones visuales de los fundadores
+
+- **T040 (PR B, #55), T057 (PR C, #57) y T071 (PR D, #60):** aprobadas por los dos fundadores el 7 de noviembre de 2026 sobre las capturas de cada PR. Alejandro lo comunicó al gestor («aprobamos pantallas»).
+
+### Gates de CI de P0-2
+
+| PR | Run | Jobs | Job `e2e` |
+| --- | --- | --- | --- |
+| C (#57) | 42389653589 (`ready_for_review`, `0603d49`) | app, db, e2e en verde | 524 s; el presupuesto todavía avisaba. Motivó la decisión 21 |
+| D (#60) | 42403310781 (`ready_for_review`, `b132ad6`) | app 282 s, db 271 s, e2e 420 s, en verde | **420 s < 480 s**, ya bloqueante (20.17); axe con sesión 144 s frente a 280 s del PR C |
+
+**T053** (punto de control intermedio del PR C) no se lanzó a mano: el gestor lo fusionó con el gate del PR C para no gastar una pasada más; la medición es la del run 42389653589.
+
+### Barrido completo de accesibilidad de fin de P0-2 (decisión 21.2)
+
+Run **42404714123** (`workflow_dispatch` con `a11y_sweep=true` sobre `main`, `68cc602`), lanzado por el gestor el 7 de noviembre de 2026: **en verde**. Job `app` (estados sin sesión) 124 s; job `e2e` (estados con sesión) 425 s, de ellos 189 s de axe. Siete anchos, texto al 200 %, teclado y objetivos de 44 px, sin violaciones bloqueantes.
+
+### Incidencia de CI conocida
+
+El gate del PR #58 (run 42392865487) falló en una prueba de componentes del PR C (`annotate-shared.test.tsx` › «Enter en el resumen abre la subhoja con el foco en…»): el foco cayó en el contenedor de la hoja. La misma prueba pasó en el gate del PR D. Es intermitente y se corregirá en el próximo PR de código.
+
+### Pendiente para cerrar el slice
+
+- **T054 y T068:** mediciones de laboratorio de INP y CLS (gestor).
+- **T072:** tabla de cierre de todos los `[V]` (gestor).
+- **T073:** salida interna con cuentas reales. Exige antes la **copia completa de producción y su restauración** (decisión 16.11; T097 de la 002; T029 se aplicó sin copia por decisión de los fundadores).
+- **T074:** cierre del slice, cuando estén las anteriores.
