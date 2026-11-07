@@ -86,3 +86,15 @@ it("valida el mes contra el dominio de fechas y lleva los meses lejanos al inter
   expect(monthNavigation(months, "2026-11", "2100-06")).toEqual({ previous: "2027-02", next: null });
   expect(monthNavigation([], "2026-11", "1990-01")).toEqual({ previous: null, next: null });
 });
+// 003 T006 · FR-045: «privados más parte compartida»; FR-029: «las liquidaciones no cuentan en gasto_consumo».
+import { meMonthSummary } from ".";
+it("suma la parte propia sin duplicar el gasto y agrupa liquidaciones por su fecha", () => {
+  const privateRows = [row({ amount: moneyFromPesos(10n) }), row({ type: "income", categoryId: "income", amount: moneyFromPesos(900n) })];
+  const shared = [{ ...row({ id: "shared", amount: moneyFromPesos(100n) }), myPart: moneyFromPesos(30n) }];
+  const summary = meMonthSummary(privateRows, shared, "2026-10");
+  expect(summary.privateTotal).toEqual(moneyFromPesos(10n));
+  expect(summary.sharedPartTotal).toEqual(moneyFromPesos(30n));
+  expect(summary.gasto_consumo).toEqual(moneyFromPesos(40n));
+  const payment = { id: "payment", settlementDate: "2026-10-25", status: "active" as const, createdAt: "2026-10-25T12:00:00Z" };
+  expect(groupByDay([privateRows[0], payment]).map(g => g.date)).toEqual(["2026-10-25", "2026-10-03"]);
+});

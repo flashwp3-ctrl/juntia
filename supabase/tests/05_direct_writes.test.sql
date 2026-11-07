@@ -9,6 +9,14 @@ values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','expense','11111111-1111-4111-8111
 insert into juntia_data.audit_events(id,actor_user_id,entity_type,entity_id,action)
 values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','11111111-1111-4111-8111-111111111111','transaction','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','create');
 set local role authenticated;
+-- 003 T013: ni partes ni liquidaciones permiten escritura directa.
+select throws_ok('insert into juntia_data.'||t||' default values','42501',null,'no INSERT '||t) from unnest(array['transaction_allocations','settlements']) t;
+select throws_ok('update juntia_data.'||t||' set amount_minor=100','42501',null,'no UPDATE '||t) from unnest(array['transaction_allocations','settlements']) t;
+select throws_ok('delete from juntia_data.'||t,'42501',null,'no DELETE '||t) from unnest(array['transaction_allocations','settlements']) t;
+-- 003 T009: tablas de membresía controladas, incluso filas propias.
+select throws_ok('insert into juntia_data.'||t||' default values','42501',null,'no INSERT '||t) from unnest(array['groups','group_members','group_invitations']) t;
+select throws_ok('update juntia_data.'||t||' set '||c,'42501',null,'no UPDATE '||t) from (values ('groups','currency=''USD'''),('group_members','role=''owner'''),('group_invitations','status=''accepted''')) v(t,c);
+select throws_ok('delete from juntia_data.'||t,'42501',null,'no DELETE '||t) from unnest(array['groups','group_members','group_invitations']) t;
 set local "request.jwt.claims" = '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
 select throws_ok('insert into juntia_data.transactions default values','42501',null,'[V2] no INSERT directo');
 select throws_ok('insert into juntia_data.audit_events default values','42501',null,'[V2] no INSERT auditoría');

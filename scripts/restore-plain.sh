@@ -66,7 +66,17 @@ for migration in "$MIGRATIONS"/*.sql; do
   name=$(basename "$migration"); version=${name%%_*}; [[ $version =~ ^[0-9]{14}$ ]]
   psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -q -c "insert into supabase_migrations.schema_migrations(version) values('$version')" > "$WORK/registry.log" 2>&1
 done
-psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql" > "$WORK/data.log" 2>&1
+# Conserva data.sql y su hash: solo se ordena una copia temporal para la carga.
+load_files=(-f "$WORK/data.sql")
+if [[ -f "$SRC/scripts/order-restore-data.mjs" ]]; then
+  node "$SRC/scripts/order-restore-data.mjs" "$WORK/data.sql" "$WORK/ordered.sql"
+  load_files=(-f "$WORK/ordered.sql" -f "$SRC/supabase/restore/check-invariants.sql" -c 'set constraints all immediate')
+fi
+if ! psql "$PG/$DBNAME" -X -v ON_ERROR_STOP=1 -1 "${load_files[@]}" > "$WORK/data.log" 2>&1; then
+  # Solo el marcador constante del validador; nunca SQL/valores de una copia real.
+  grep -m1 'ERROR:.*RESTORE_INVARIANTS:' "$WORK/data.log" >&2 || echo 'Importación rechazada por SQL o restricciones' >&2
+  exit 1
+fi
 ref=(--sha "$SHA")
 if [[ $MODE = production ]]; then ref=(--tag "$(sed -n 's/^tag=//p' "$WORK/manifest.txt")"); fi
 bash "$ROOT/scripts/backup-manifest.sh" --verify --mode "$MODE" "${ref[@]}" --manifest "$WORK/manifest.txt" --migrations "$SRC/supabase/migrations" --db "$PG/$DBNAME" --data "$WORK/data.sql" | tee -a "$LOG"

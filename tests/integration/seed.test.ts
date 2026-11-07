@@ -9,6 +9,19 @@ import { runnerSupabase, seedGoldenMovements, seedUser, writeStorageState } from
 const paths: string[] = [];
 afterAll(async () => { await Promise.all(paths.map((path) => rm(path, { force: true }))); });
 
+it("003 T025: dos workers siembran parejas aisladas y storageState por rol, con dorado opcional",async()=>{
+  const {seedCouple}=await import("../support/seed");
+  const first=await seedCouple({index:20,golden:true});
+  const second=await seedCouple({index:21});
+  expect(first.groupId).not.toBe(second.groupId);
+  expect(new Set([first.sara.id,first.tomas.id,second.sara.id,second.tomas.id]).size).toBe(4);
+  for(const [pair,index] of [[first,20],[second,21]] as const) for(const role of ["sara","tomas"] as const) paths.push(await writeStorageState(pair[role],index,role));
+  expect((await first.sara.client.from("couple_month_summary").select("total_minor").eq("month","2026-10-01").single()).data?.total_minor).toBe("284000000");
+  expect((await first.tomas.client.from("couple_expenses").select("id")).data).toHaveLength(6);
+  expect((await second.sara.client.from("couple_expenses").select("id")).data).toEqual([]);
+  expect((await second.tomas.client.from("couple_expenses").select("id")).data).toEqual([]);
+});
+
 it("dos workers siembran usuarios y sesiones distintos, y el dataset de uno no aparece en el otro", async () => {
   const [first, second] = await Promise.all([seedUser({ role: "sara", index: 0 }), seedUser({ role: "sara", index: 1 })]);
   expect(first.id).not.toBe(second.id);

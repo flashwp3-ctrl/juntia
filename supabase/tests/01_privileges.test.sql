@@ -2,6 +2,25 @@
 -- TRUNCATE, REFERENCES, TRIGGER, secuencias, usage y create (spec.md; ADR-013 [V] 7).
 begin;
 select no_plan();
+-- 003 T009 / F49-6: nadie de la app hereda el rol de lectura amplia.
+select is((select rolcanlogin or rolbypassrls or rolsuper from pg_roles where rolname='juntia_membership'),false,'membership sin privilegios globales');
+select is(pg_has_role(r,'juntia_membership',p),false,'sin herencia membership '||r||' '||p)
+from unnest(array['anon','authenticated','juntia_writer']) r cross join unnest(array['MEMBER','USAGE']) p;
+select is(pg_has_role(r,'juntia_writer',p),false,'sin herencia writer '||r||' '||p)
+from unnest(array['anon','authenticated']) r cross join unnest(array['MEMBER','USAGE']) p;
+select is((select count(*) from pg_class where relowner='juntia_membership'::regrole and relkind in ('r','p')),0::bigint,'membership no posee tablas');
+select is(has_table_privilege('juntia_membership',c.oid,p),p='SELECT' and c.relname in ('groups','group_members','group_invitations'),'membership privilegio exacto '||c.relname||' '||p)
+from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p where n.nspname='juntia_data' and c.relkind='r';
+select is((select jsonb_agg(proname::text order by proname) from pg_proc where proowner='juntia_membership'::regrole and prorettype='boolean'::regtype),
+ '["is_couple_member","is_group_member","is_invited_to","shares_couple_with"]'::jsonb,'membership: exactamente cuatro auxiliares booleanas');
+select ok(prosecdef and proconfig=array['search_path=""'] and not has_function_privilege('anon',oid,'EXECUTE')
+ and has_function_privilege('authenticated',oid,'EXECUTE') and has_function_privilege('juntia_writer',oid,'EXECUTE'),
+ 'auxiliar segura: '||proname) from pg_proc where proowner='juntia_membership'::regrole and prorettype='boolean'::regtype;
+select ok(not has_function_privilege(r,p.oid,'EXECUTE'),'trigger interno sin EXECUTE: '||r||'.'||p.proname)
+ from pg_proc p cross join unnest(array['anon','authenticated','juntia_writer']) r where p.proowner='juntia_membership'::regrole and p.prorettype='trigger'::regtype;
+select is(has_schema_privilege('juntia_membership',s,'CREATE'),false,'membership sin CREATE en '||s) from unnest(array['public','juntia_data','juntia_private']) s;
+select is(has_table_privilege(r,'juntia_data.'||t,p),false,'sin escritura directa '||r||'.'||t||' '||p)
+from unnest(array['anon','authenticated']) r cross join unnest(array['groups','group_members','group_invitations']) t cross join unnest(array['INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p;
 select has_schema('juntia_data');
 select has_schema('juntia_private');
 select is((select count(*) from pg_extension where extname = 'pg_graphql'), 0::bigint, '[V7] pg_graphql ausente');
@@ -19,9 +38,9 @@ select is(has_table_privilege(r, 'juntia_data.' || t, 'SELECT'), r = 'authentica
 from unnest(array['anon','authenticated']) r cross join unnest(array['profiles','categories','signup_allowlist','transactions','audit_events','idempotency_records']) t;
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosecdef), 0::bigint, '[V7] ningún definer en public');
 select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
-  '["complete_first_entry","create_transaction","ensure_profile","set_theme","update_display_name","update_transaction","void_transaction"]'::jsonb, '[V7] lista exacta de entradas authenticated');
+  '["accept_invitation","cancel_invitation","complete_first_entry","create_invitation","create_shared_expense","create_transaction","ensure_profile","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","set_theme","undo_reclassify_to_shared","update_display_name","update_shared_expense","update_transaction","void_settlement","void_shared_expense","void_transaction","write_status"]'::jsonb, '[V7] lista exacta de entradas authenticated');
 select is((select jsonb_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='juntia_private' and has_function_privilege('authenticated',p.oid,'EXECUTE')),
-  '["complete_first_entry","create_transaction","ensure_profile","set_theme","update_display_name","update_transaction","void_transaction"]'::jsonb, '[V7] solo las siete implementaciones accesibles por SQL');
+  '["accept_invitation","cancel_invitation","complete_first_entry","create_invitation","create_shared_expense","create_transaction","ensure_profile","is_couple_member","is_group_member","is_invited_to","preview_invitation","reclassify_to_shared","regenerate_invitation","register_settlement","set_theme","shares_couple_with","undo_reclassify_to_shared","update_display_name","update_shared_expense","update_transaction","void_settlement","void_shared_expense","void_transaction","write_status"]'::jsonb, '[V7] implementaciones y cuatro auxiliares accesibles por SQL');
 select is((select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','juntia_private') and has_function_privilege('anon',p.oid,'EXECUTE')), 0::bigint, '[V7] anon sin funciones');
 select ok(not has_sequence_privilege(r,c.oid,p), '[V7] sin secuencias ' || r || '.' || c.relname || '.' || p)
 from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join unnest(array['anon','authenticated']) r cross join unnest(array['USAGE','SELECT','UPDATE']) p
@@ -46,7 +65,20 @@ where p.proowner=(select oid from pg_roles where rolname='postgres') and n.nspna
     'public.complete_first_entry()'::regprocedure,'public.create_transaction(text,text,text,text,text,text)'::regprocedure,
     'public.ensure_profile()'::regprocedure,'public.set_theme(text)'::regprocedure,
     'public.update_display_name(text)'::regprocedure,'public.update_transaction(text,uuid,integer,text,text,text,text)'::regprocedure,
-    'public.void_transaction(text,uuid,integer,text)'::regprocedure,'tests.authenticate_as(uuid)'::regprocedure
+    'public.void_transaction(text,uuid,integer,text)'::regprocedure,'tests.authenticate_as(uuid)'::regprocedure,
+    'public.create_invitation(text,text,text)'::regprocedure,
+    'public.regenerate_invitation(text,uuid,integer,text)'::regprocedure,
+    'public.cancel_invitation(text,uuid,integer)'::regprocedure,
+    'public.preview_invitation(text)'::regprocedure,
+    'public.accept_invitation(text,text)'::regprocedure,
+    'public.create_shared_expense(text,text,text,text,text,uuid,text,smallint[],jsonb)'::regprocedure,
+    'public.update_shared_expense(text,uuid,integer,text,text,text,text,uuid,text,smallint[],jsonb)'::regprocedure,
+    'public.void_shared_expense(text,uuid,integer,text)'::regprocedure,
+    'public.reclassify_to_shared(text,uuid,integer,text,smallint[],jsonb)'::regprocedure,
+    'public.undo_reclassify_to_shared(text,uuid,integer)'::regprocedure,
+    'public.register_settlement(text,text,text,text)'::regprocedure,
+    'public.void_settlement(text,uuid,integer,text)'::regprocedure,
+    'public.write_status(text,text)'::regprocedure
   ]::oid[])
   and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.refclassid='pg_extension'::regclass and d.deptype='e')
   and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE')

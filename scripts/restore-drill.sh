@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# T029–T030 / FR-059: dos restauraciones vacías y nueve fallos que deben ser rechazados.
+# T029–T030 / FR-059 y T026b: dos restauraciones vacías y diez fallos rechazados.
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel)
 for required in backup-manifest.sh backup.sh restore-plain.sh; do
@@ -42,7 +42,8 @@ gpg --batch --pinentry-mode loopback --passphrase-fd 3 -d -o "$WORK/copy.tar" "$
 tar -xf "$WORK/copy.tar" -C "$WORK"
 # Camino A: db reset destruye los datos anteriores; nunca usa la semilla.
 supabase db reset --no-seed
-psql "$DB_URL" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/data.sql" > "$WORK/path-a-sql.log" 2>&1
+node "$ROOT/scripts/order-restore-data.mjs" "$WORK/data.sql" "$WORK/ordered.sql"
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 -1 -f "$WORK/ordered.sql" -f "$ROOT/supabase/restore/check-invariants.sql" -c 'set constraints all immediate' > "$WORK/path-a-sql.log" 2>&1
 bash "$ROOT/scripts/backup-manifest.sh" --verify --mode ci --sha "$GITHUB_SHA" --manifest "$WORK/manifest.txt" --migrations "$ROOT/supabase/migrations" --db "$DB_URL" --data "$WORK/data.sql"
 node "$ROOT/tests/support/restore-user.mjs" login
 echo 'Camino A: MANIFIESTO COINCIDE; usuario restaurado entra'
@@ -135,5 +136,15 @@ mkdir "$WORK/corrupt"
   test -z "$(find . -mindepth 1 -maxdepth 1)"
 )
 echo 'N9-cleanup: sin archivos publicados ni temporales'
+cp "$WORK/data.sql" "$WORK/altered/data.sql"
+cp "$WORK/manifest.txt" "$WORK/altered/manifest.txt"
+node "$ROOT/tests/support/corrupt-restore-couple.mjs" "$WORK/altered/data.sql" "$DRILL_USER_FILE"
+bad_hash=$(sha256sum "$WORK/altered/data.sql" | cut -d' ' -f1)
+sed -i "s/^data_sha256=.*/data_sha256=$bad_hash/" "$WORK/altered/manifest.txt"
+pack
+negative N10-couple-invariant restore_negative
+grep -F 'RESTORE_INVARIANTS:' "$WORK/N10-couple-invariant.log"
 no_database
-echo 'ENSAYO LISTO: A y B, nueve controles negativos rechazados'
+echo 'N10: pareja inválida rechazada por invariantes, con hash de datos correcto'
+no_database
+echo 'ENSAYO LISTO: A y B, diez controles negativos rechazados'

@@ -1,4 +1,17 @@
 import type { CategoryId, TransactionDraft, TransactionType } from "@/domain/transactions";
+import type { Money } from "@/domain/money";
+import type { Allocation, SplitMode } from "@/domain/allocations";
+import type { SharedExpense } from "@/domain/balances";
+export type CoupleTransport={group_id:string;status:"provisional"|"active";role:"owner"|"member";join_order:1|2;version:number;
+ invitation_id:string|null;invitation_email:string|null;invitation_expires_at:string|null;invitation_expired:boolean|null};
+export type CoupleMemberTransport={user_id:string;display_name:string;role:"owner"|"member";join_order:1|2};
+export type SharedExpenseInput = { idempotencyKey:string; amount:Money; categoryId:CategoryId; transactionDate:string; description:string|null;
+  payerUserId:string; splitMode:SplitMode; splitPercents:readonly number[]|null; allocations:readonly Allocation[] };
+export type SharedExpenseTransport = { id:string; transaction_date:string; created_at:string; updated_at:string; category_id:CategoryId; description:string|null;
+ amount_minor:string; payer_user_id:string; split_mode:SplitMode; split_percents:number[]|null; parts:Record<string,string>; created_by:string; updated_by:string|null; version:number; moved_from_me:boolean };
+export type SharedTransaction = SharedExpense & { id:string; transactionDate:string; createdAt:string; updatedAt:string; categoryId:CategoryId; description:string|null;
+ splitMode:SplitMode; splitPercents:readonly number[]|null; version:number; createdBy:string; updatedBy:string|null; movedFromMe:boolean };
+export type SettlementTransport = {id:string;settlement_date:string;from_user_id:string;to_user_id:string;amount_minor:string;note:string|null;status:"active"|"voided";version:number;created_at:string;pending_before?:string;pending_after?:string};
 export type TransactionTransport = {
   id: string; type: TransactionType; category_id: CategoryId; transaction_date: string;
   description: string | null; amount_minor: string; currency: "COP"; version: number;

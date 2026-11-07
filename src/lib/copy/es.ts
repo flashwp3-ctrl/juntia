@@ -4,6 +4,7 @@ export const copy = {
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
   // P0-1, PR D (02·5, 02·6, 02·1, 04·1). Copy nuevo para revisión de los fundadores en el PR.
   annotate: {
+    split: { errors: { invalid: "Revisa el reparto: las partes deben sumar el monto." } },
     title: { expense: "Anotar gasto", income: "Anotar ingreso" }, editTitle: { expense: "Editar gasto", income: "Editar ingreso" },
     type: "Tipo de movimiento", expense: "Gasto", income: "Ingreso",
     amount: "Monto", category: "Categoría",
@@ -22,6 +23,14 @@ export const copy = {
       category: "Elige una categoría para este movimiento.", date: "Elige una fecha válida.", descriptionTooLong: "Usa hasta 140 caracteres en la descripción.",
     },
   },
+  // 003 T007: claves del contrato de errores; redacción pendiente de revisión humana.
+  couple: {
+    errors: { alreadyInCouple: "Ya tienes una pareja. Si tu invitación está pendiente, anúlala antes de aceptar otra.", invitationGone: "No encontramos esta invitación.", alreadyAccepted: "Ya no se puede anular: la invitación se aceptó.", notActive: "Necesitas una pareja activa para continuar." },
+    invitation: { invalid: "Esta invitación ya no sirve." },
+    invite: { errors: { email: "Escribe un correo válido, distinto del tuyo." } },
+  },
+  shared: { errors: { versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.` } },
+  move: { errors: { notAllowed: "No se puede mover este gasto.", undoNotAvailable: "Ya no se puede deshacer: pasó el plazo o hay cambios posteriores." }, limit: "No se puede mover este gasto porque está financiado con una meta." },
   remove: {
     action: { expense: "Eliminar gasto", income: "Eliminar ingreso" }, title: { expense: "¿Eliminar este gasto?", income: "¿Eliminar este ingreso?" },
     description: (title: string, amount: string) => `${title} · ${amount}. Sale de tus totales, de Actividad y de la exportación.`,
@@ -60,7 +69,10 @@ export const copy = {
     goals: { title: "Un lugar para tus metas", description: "Aquí podrás seguir lo que quieres construir." },
     plan: { title: "Planifica a tu manera", description: "Los presupuestos serán opcionales. Podrás registrar gastos sin crear uno." },
   },
-  balance: { title: "Todavía no disponible", description: "El balance aparece cuando exista la pareja." },
+  balance: { title: "Todavía no disponible", description: "El balance aparece cuando exista la pareja.",
+    settle: { errors: { nothingToSettle: "No hay saldo pendiente por saldar.", exceedsPending: (maximum: string) => `Puedes registrar hasta ${maximum}.`, date: "Elige una fecha de hoy o pasada." } },
+    settlement: { errors: { notFound: "No encontramos esta liquidación.", alreadyVoided: "Esta liquidación ya se anuló." } },
+  },
   // P0-1, PR B (02·9–02·10, 04·14–04·19). Copy nuevo para revisión de los fundadores en el PR.
   account: {
     title: "Mi cuenta", back: "Volver", signInAgain: "Entrar de nuevo", sections: "Secciones de Mi cuenta", editProfile: "Editar perfil",
