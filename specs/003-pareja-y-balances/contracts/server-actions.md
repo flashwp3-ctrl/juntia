@@ -33,13 +33,25 @@ resultado.
   invitación» o «Generar enlace nuevo», el navegador genera, junto con la clave,
   un **token de 32 bytes aleatorios** (`crypto.getRandomValues`, base64url). La
   Server Action recibe el token, calcula su SHA-256 en hex y llama a la función
-  **solo con el hash**. El navegador guarda el par (clave, token) en
-  `sessionStorage` mientras dura la intención, con la hoja abierta o con un
-  resultado `unknown` pendiente, y lo borra al confirmar o al cerrar. Un reintento
-  con la misma clave envía el mismo token, recibe el mismo resultado guardado y
-  vuelve a mostrar **el mismo enlace**, que sigue valiendo, porque es el token cuyo
-  hash quedó en la base. El servidor y la base nunca guardan el token, y la Server
-  Action no lo registra ni lo devuelve.
+  **solo con el hash**. El navegador conserva el par (clave, token) **solo en
+  memoria**, mientras la hoja está abierta o con un resultado `unknown` pendiente,
+  y lo descarta al confirmar o al cerrar. Un reintento con la misma clave envía el
+  mismo token, recibe el mismo resultado guardado y vuelve a mostrar **el mismo
+  enlace**, que sigue valiendo, porque es el token cuyo hash quedó en la base. El
+  servidor y la base nunca guardan el token, y la Server Action no lo registra ni
+  lo devuelve.
+- **Sin reanudación tras recargar (decisión del gestor, PR B, hallazgos F55-5 y
+  F55-6).** La primera versión guardaba el par en `sessionStorage`; la revisión
+  mostró que podía reanudarse con otra cuenta en la misma pestaña o devolver como
+  válido un enlace ya reemplazado. Al recargar, la intención se pierde y Mi pareja
+  muestra el estado del servidor: si la escritura se confirmó, M4 ofrece «Generar
+  enlace nuevo», que invalida el anterior. Perder un enlace es barato.
+- **Límite de espera y vigencia.** Una escritura o un «Comprobar estado» que no
+  responde en **15 s** pasa a `unknown` con la misma clave y la misma carga (FR-059,
+  «tiempo agotado»), y una respuesta tardía se ignora. Un `ok` de crear o regenerar
+  que llega después de un `unknown` se revalida contra `my_couple`: el enlace solo
+  se muestra si su `invitation_id` sigue siendo la invitación pendiente; si no, la
+  hoja avisa de que la invitación cambió (`copy.couple.invite.changed`).
 - Formato del enlace: `https://<host>/invitacion#t=<token>`. El token va en el
   **fragmento**, que el navegador no envía en ninguna petición: no aparece en
   registros de Vercel, en `Referer` ni en el payload RSC (spec, caso límite «El

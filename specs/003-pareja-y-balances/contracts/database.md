@@ -68,6 +68,18 @@ de 100, que hay al menos una positiva, que cada `user_id` es integrante activo y
 que el modo y los porcentajes son coherentes. Un trigger diferido lo vuelve a
 comprobar (ADR-013 §6.2).
 
+**Validación del reparto (precisión tras el PR A, hallazgo F52-1).** El servidor
+recalcula siempre las partes a partir del modo y nunca de `p_parts`: `equal`
+reparte **siempre entre los dos integrantes activos** (peso 1 cada uno,
+denominador 2); `percent` usa `p_split_percents` validados (enteros de 0 a 100 que
+suman 100); `amount` toma `p_parts` como definición explícita (enteros no
+negativos, múltiplos de 100, suma exacta y al menos una positiva). En `equal` y
+`percent`, `p_parts` tiene que coincidir exactamente con el cálculo (mayor residuo,
+desempate por `join_order`, ADR-002) o se rechaza con `JT110`. **Un solo
+participante** (FR-019a) se envía como `percent` 100/0 o `amount` total/0, nunca
+como `equal`; `src/lib/db/shared-expenses.ts` hace esa traducción, y el PR C la
+respeta en la hoja de Anotar compartida.
+
 **Ventana de «Deshacer».** `undo_reclassify_to_shared`, `void_shared_expense` con
 `undo` y `void_settlement` con `undo` exigen que la operación tenga menos de
 **60 s** en el servidor (`created_at`), además de la versión esperada. La ventana

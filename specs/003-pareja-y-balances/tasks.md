@@ -71,7 +71,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ## Phase 0: Prerrequisitos
 
-- [ ] T001 **Humana (gestor)**: comprobar, antes de empezar el PR A, que el PR #48 (comandos de `juntia-dev`, guardia y lock) está en `main`, que el `.env.test` del equipo apunta a `juntia-dev` con su clave secreta y que no hay ninguna clave de producción en él. **Si el PR #48 no está en `main`, el PR A no empieza**: no se itera contra el CI.
+- [x] T001 **Humana (gestor)**: comprobar, antes de empezar el PR A, que el PR #48 (comandos de `juntia-dev`, guardia y lock) está en `main`, que el `.env.test` del equipo apunta a `juntia-dev` con su clave secreta y que no hay ninguna clave de producción en él. **Si el PR #48 no está en `main`, el PR A no empieza**: no se itera contra el CI.
   - Cumple: decisión 18; regla 1 y 2.
   - Prueba / terminado cuando: `npm run db:dev:reset` se niega con un destino que no es `itfrhnadovezpahikuol` y funciona con `juntia-dev` (salida pegada sin claves en `evidence.md`).
 
@@ -85,135 +85,135 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 1A — dominio (tests primero; T002 → T003 en serie; T004, T005, T006, T007 y T008 en paralelo con ellas; T005b después de T002, T003 y T006)
 
-- [ ] T002 Test de **dominio** en `src/domain/allocations/allocations.test.ts` y después `src/domain/allocations/index.ts`: `SplitMode`, `splitAmount` (algoritmo **versión 1**: pesos enteros, mayor residuo, desempate por `joinOrder`), `validateSplit` («Faltan $X», «Sobran $X») y `nextSplitOnParticipantsChange`
+- [x] T002 Test de **dominio** en `src/domain/allocations/allocations.test.ts` y después `src/domain/allocations/index.ts`: `SplitMode`, `splitAmount` (algoritmo **versión 1**: pesos enteros, mayor residuo, desempate por `joinOrder`), `validateSplit` («Faltan $X», «Sobran $X») y `nextSplitOnParticipantsChange`
   - Casos: propiedades (para cualquier importe hasta 999.999.999 pesos, modo y participantes, las partes son múltiplos de 100 unidades menores, suman exactamente el importe y el resultado es determinista); $150.000 al 70/30 → 105.000/45.000; $100.001 al 50/50 → Sara 50.001 / Tomás 50.000; $100.001 al 33/67 → 33.000/67.001; Tomás paga $100.001 y solo participa Sara → parte de Sara 100.001; Porcentaje 100/0 ≡ un participante; 55/45 → uno → dos = 55/45; 100/0 → uno → dos = 50/50 con los dos.
   - Cumple: FR-019, FR-019a, FR-020; SC-004 (reparto); nota de ADR-002 (decisión 20.8).
   - Itera: `npm run test:unit -- --changed`.
   - Prueba / terminado cuando: el test se vio fallar y después pasa en `npm run test:unit`.
 
-- [ ] T003 Test de **dominio** en `src/domain/balances/balances.test.ts` y después `src/domain/balances/index.ts`: `computeBalance(expenses, settlements, members)` y `settlementSuggestion`
+- [x] T003 Test de **dominio** en `src/domain/balances/balances.test.ts` y después `src/domain/balances/index.ts`: `computeBalance(expenses, settlements, members)` y `settlementSuggestion`
   - Casos: propiedad «la suma de `net` es 0»; sugerencia única deudor → acreedor por `|net|`; saldo invertido tras una corrección cambia la dirección; las liquidaciones anuladas no cuentan.
   - Cumple: FR-025, FR-026, FR-030; SC-004 (saldo).
   - Itera / prueba: como T002.
 
-- [ ] T004 [P] Test de **dominio** en `src/domain/couple/couple.test.ts` y después `src/domain/couple/index.ts`: estados `none | provisional | active`, `InvitationView` e `isExpired(invitation, now)` (vencida exactamente a los 7 días)
+- [x] T004 [P] Test de **dominio** en `src/domain/couple/couple.test.ts` y después `src/domain/couple/index.ts`: estados `none | provisional | active`, `InvitationView` e `isExpired(invitation, now)` (vencida exactamente a los 7 días)
   - Cumple: FR-010, FR-011.
   - Itera / prueba: como T002.
 
-- [ ] T005 [P] Preparar el fixture en `src/domain/golden/october-2026.ts`: `sharedOctober2026` (las seis filas de la spec, **copiadas, no recalculadas**), `settlementOctober25` (Tomás → Sara 200.000, 25 oct) y los estados `beforeSettlement` y `afterSettlement`. Solo datos: no llama a ninguna función de T002, T003 ni T006
+- [x] T005 [P] Preparar el fixture en `src/domain/golden/october-2026.ts`: `sharedOctober2026` (las seis filas de la spec, **copiadas, no recalculadas**), `settlementOctober25` (Tomás → Sara 200.000, 25 oct) y los estados `beforeSettlement` y `afterSettlement`. Solo datos: no llama a ninguna función de T002, T003 ni T006
   - Cumple: maestro §15.10, «Dataset dorado», reglas 1 y 2.
   - Prueba / terminado cuando: `npm run typecheck` pasa y las filas coinciden carácter a carácter con la tabla «Dataset dorado de P0-2» de la spec.
 
-- [ ] T005b Test de **dominio** en `src/domain/golden/october-2026.test.ts` que verifica el fixture de T005 con las funciones de T002, T003 y T006 (**después** de esas tres)
+- [x] T005b Test de **dominio** en `src/domain/golden/october-2026.test.ts` que verifica el fixture de T005 con las funciones de T002, T003 y T006 (**después** de esas tres)
   - Casos: total 2.840.000 y desglose Hogar 1.600.000 · Mercado 640.000 · Servicios 360.000 · Restaurantes 240.000; `beforeSettlement` Sara +429.900 / Tomás −429.900; `afterSettlement` 229.900 con el gasto en 2.840.000; Yo de Sara 1.912.900 (con T006); de Tomás solo su parte compartida, 1.340.000 (precisión F47-9).
   - Cumple: SC-003 (dominio); maestro §15.10, «Dataset dorado», reglas 1, 2 y 4.
   - Prueba / terminado cuando: el test pasa con T002, T003 y T006.
 
-- [ ] T006 [P] Test de **dominio** en `src/domain/transactions/transactions.test.ts` y ampliación de `src/domain/transactions/`: `meMonthSummary` con la parte compartida y `groupByDay` con filas de liquidación
+- [x] T006 [P] Test de **dominio** en `src/domain/transactions/transactions.test.ts` y ampliación de `src/domain/transactions/`: `meMonthSummary` con la parte compartida y `groupByDay` con filas de liquidación
   - Cumple: FR-045 (dominio); DEC-G04 `gasto_consumo` de Yo.
   - Itera / prueba: como T002.
 
-- [ ] T007 [P] Ampliar `src/lib/db/errors.ts` y `src/lib/db/errors.test.ts` (Vitest `domain`) con `JT101`–`JT119` y sus errores de dominio, y añadir sus claves a `src/lib/copy/es.ts` según [contracts/errors.md](contracts/errors.md); `23505` sobre los índices de pareja se traduce a `JT101`
+- [x] T007 [P] Ampliar `src/lib/db/errors.ts` y `src/lib/db/errors.test.ts` (Vitest `components`, como en la 002, fila C10; errata corregida tras el PR A) con `JT101`–`JT119` y sus errores de dominio, y añadir sus claves a `src/lib/copy/es.ts` según [contracts/errors.md](contracts/errors.md); `23505` sobre los índices de pareja se traduce a `JT101`
   - Cumple: FR-009, FR-053.
   - Prueba / terminado cuando: cada código de [contracts/errors.md](contracts/errors.md) tiene su error y su clave; `npm run typecheck` pasa; la redacción queda listada en el PR para los fundadores.
 
-- [ ] T008 [P] Actualizar `docs/GLOSSARY.md`: quitar la marca **[propuesta]** de `reclassifyToShared()` (aprobada por este slice, plan, «Conflictos») y añadir las filas de `juntia_membership`, `settlements`, `split_mode`, `join_order`, los estados de pareja (`provisional`, `active`, `discarded`) y `write_status`, citando la 003
+- [x] T008 [P] Actualizar `docs/GLOSSARY.md`: quitar la marca **[propuesta]** de `reclassifyToShared()` (aprobada por este slice, plan, «Conflictos») y añadir las filas de `juntia_membership`, `settlements`, `split_mode`, `join_order`, los estados de pareja (`provisional`, `active`, `discarded`) y `write_status`, citando la 003
   - Cumple: `docs/GLOSSARY.md` §11; plan, PR A.
   - Prueba / terminado cuando: cada identificador nuevo de [data-model.md](data-model.md) que nombra un concepto de negocio tiene su fila.
 
 ### Grupo 1B — `couple_foundation` y punto de control 1 (en serie)
 
-- [ ] T009 Tests **SQL/RLS (pgTAP)** antes de la migración: auxiliares de dos sesiones en `supabase/seed.sql` (esquema `tests`); `supabase/tests/01_privileges.test.sql` (rol `juntia_membership` `nologin nobypassrls`, solo `select` en tres tablas, dueño de exactamente las cuatro auxiliares; `pg_has_role(r, 'juntia_membership', 'MEMBER')` y `'USAGE'` falsos para `anon`, `authenticated` y `juntia_writer`; inventario de funciones ejecutables **sin las de extensiones**, F40-2); `03_views.test.sql` (`my_profile` con Sara y Tomás emparejados devuelve solo el propio; `my_couple`; `couple_members` solo con `display_name`, `role` y `join_order`); `05_direct_writes.test.sql` (escritura directa imposible en `groups`, `group_members` y `group_invitations`); `10a_couple_tables.test.sql` (RLS con Sara, Tomás y una tercera cuenta; índices de una pareja por persona y de dos integrantes; política única de `update` de `groups` y triggers `groups_guard_transition` y `groups_check_state`: **como `juntia_writer` con `update` directo** fallan sin efectos activar una provisional de un solo integrante, descartar una activa o devolverla a provisional y reactivar una descartada; política de `insert` de `group_members`)
+- [x] T009 Tests **SQL/RLS (pgTAP)** antes de la migración: auxiliares de dos sesiones en `supabase/seed.sql` (esquema `tests`); `supabase/tests/01_privileges.test.sql` (rol `juntia_membership` `nologin nobypassrls`, solo `select` en tres tablas, dueño de exactamente las cuatro auxiliares; `pg_has_role(r, 'juntia_membership', 'MEMBER')` y `'USAGE'` falsos para `anon`, `authenticated` y `juntia_writer`; inventario de funciones ejecutables **sin las de extensiones**, F40-2); `03_views.test.sql` (`my_profile` con Sara y Tomás emparejados devuelve solo el propio; `my_couple`; `couple_members` solo con `display_name`, `role` y `join_order`); `05_direct_writes.test.sql` (escritura directa imposible en `groups`, `group_members` y `group_invitations`); `10a_couple_tables.test.sql` (RLS con Sara, Tomás y una tercera cuenta; índices de una pareja por persona y de dos integrantes; política única de `update` de `groups` y triggers `groups_guard_transition` y `groups_check_state`: **como `juntia_writer` con `update` directo** fallan sin efectos activar una provisional de un solo integrante, descartar una activa o devolverla a provisional y reactivar una descartada; política de `insert` de `group_members`)
   - Cumple: FR-001, FR-003, FR-004 (pareja), FR-010; F49-1, F49-5, F49-6; [data-model.md](data-model.md) §2.1, §2.2, §3.4, §3.5 y §5.
   - Itera: `npm run test:db:dev` (deben fallar: no hay migración).
   - Prueba / terminado cuando: los tests fallan por la ausencia de los objetos, no por errores de sintaxis.
 
-- [ ] T010 Migración `supabase/migrations/2026110x000100_couple_foundation.sql` según [data-model.md](data-model.md) §1–§5: `juntia_membership`, `groups`, `group_members`, `group_invitations` (con `inviter_display_name`), índices, auxiliares (`is_group_member`, `is_couple_member`, `is_invited_to`, `shares_couple_with`) y `current_email()`, RLS y políticas, `groups_writer_update`, triggers de transición y de estado, la ampliación de `profiles_read` **y en el mismo commit** `my_profile` con `where user_id = (select auth.uid())`, vistas `my_couple` y `couple_members`. Cada `security definer` lleva su comentario de justificación (ADR-013 §5.7). Regenerar `src/lib/supabase/database.types.ts`
+- [x] T010 Migración `supabase/migrations/2026110x000100_couple_foundation.sql` según [data-model.md](data-model.md) §1–§5: `juntia_membership`, `groups`, `group_members`, `group_invitations` (con `inviter_display_name`), índices, auxiliares (`is_group_member`, `is_couple_member`, `is_invited_to`, `shares_couple_with`) y `current_email()`, RLS y políticas, `groups_writer_update`, triggers de transición y de estado, la ampliación de `profiles_read` **y en el mismo commit** `my_profile` con `where user_id = (select auth.uid())`, vistas `my_couple` y `couple_members`. Cada `security definer` lleva su comentario de justificación (ADR-013 §5.7). Regenerar `src/lib/supabase/database.types.ts`
   - Cumple: FR-001, FR-003, FR-004, FR-010; nota de ADR-013 §5.1.
   - Itera: `npm run db:dev:reset` y `npm run test:db:dev` hasta que T009 pasa.
   - Prueba / terminado cuando: T009 pasa en `juntia-dev`.
 
-- [ ] T011 Iteración del punto de control 1 en `juntia-dev`: además de T009, `npm run test:integration:dev` con las pruebas de la 002 (ninguna se rompe con `my_profile` filtrado)
+- [x] T011 Iteración del punto de control 1 en `juntia-dev`: además de T009, `npm run test:integration:dev` con las pruebas de la 002 (ninguna se rompe con `my_profile` filtrado)
   - Itera / prueba: los dos comandos en verde en `juntia-dev`, salida sin claves.
 
-- [ ] T012 **Punto de control 1 (CI)**: `gh workflow run ci.yml --ref <rama>` sobre el commit de T010, en un commit propio
+- [x] T012 **Punto de control 1 (CI)**: `gh workflow run ci.yml --ref <rama>` sobre el commit de T010, en un commit propio
   - Cumple: ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas; auxiliar sin recursión; tercera cuenta sin filas (spec, «Inventario de `[V]`»: responsable CI, cierre antes del merge del PR A).
   - Prueba / terminado cuando: el job `db` está en verde y su salida, con el enlace al run, está en `evidence.md`.
 
 ### Grupo 1C — `shared_money_tables` y punto de control 2 (en serie)
 
-- [ ] T013 Tests **pgTAP** antes de la migración: `03_views.test.sql` (con Sara y Tomás emparejados y gastos compartidos sembrados, las **cuatro vistas de la 002** devuelven solo lo propio y privado; las vistas de pareja no exponen ningún movimiento privado ni `moved_from_transaction_id`; `couple_month_summary`, `me_month_summary` y `couple_balance` reproducen `beforeSettlement`); `05_direct_writes.test.sql` (escritura directa imposible en `transaction_allocations` y `settlements`); `07_transactions.test.sql` (`payer_user_id` obligatorio en grupo, `transactions_group_no_owner`, partes que suman con el trigger diferido, partes múltiplos de 100, solo parejas `active` admiten movimientos y liquidaciones); `11a_shared_tables.test.sql` (liquidaciones: dirección distinta, inmutables salvo la anulación, nunca se borran)
+- [x] T013 Tests **pgTAP** antes de la migración: `03_views.test.sql` (con Sara y Tomás emparejados y gastos compartidos sembrados, las **cuatro vistas de la 002** devuelven solo lo propio y privado; las vistas de pareja no exponen ningún movimiento privado ni `moved_from_transaction_id`; `couple_month_summary`, `me_month_summary` y `couple_balance` reproducen `beforeSettlement`); `05_direct_writes.test.sql` (escritura directa imposible en `transaction_allocations` y `settlements`); `07_transactions.test.sql` (`payer_user_id` obligatorio en grupo, `transactions_group_no_owner`, partes que suman con el trigger diferido, partes múltiplos de 100, solo parejas `active` admiten movimientos y liquidaciones); `11a_shared_tables.test.sql` (liquidaciones: dirección distinta, inmutables salvo la anulación, nunca se borran)
   - Cumple: FR-002, FR-004, FR-005, FR-037, FR-043 (vistas); F49-1; research R2 y R4; [data-model.md](data-model.md) §2.4, §2.5, §3, §6 y §7.
   - Itera / prueba: como T009.
 
-- [ ] T014 Migración `2026110x000200_shared_money_tables.sql`: cambios de `transactions` (retirar `transactions_private_only_p0_1`, clave foránea de grupo, `payer_user_id`, `moved_*`, `restored_from_transaction_id`, `split_mode`, `split_percents`, `updated_by`), `transaction_allocations`, `settlements`, ampliación de `audit_events` e `idempotency_records`, triggers, **la rama de grupo de la RLS de `transactions` en el mismo commit que el filtro explícito de `my_transactions`, `my_transaction_months` y `my_recent_categories`**, vistas `couple_expenses`, `couple_settlements`, `couple_transaction_months`, `my_shared_parts` y las tres de resumen de una sola sentencia. Regenerar los tipos
+- [x] T014 Migración `2026110x000200_shared_money_tables.sql`: cambios de `transactions` (retirar `transactions_private_only_p0_1`, clave foránea de grupo, `payer_user_id`, `moved_*`, `restored_from_transaction_id`, `split_mode`, `split_percents`, `updated_by`), `transaction_allocations`, `settlements`, ampliación de `audit_events` e `idempotency_records`, triggers, **la rama de grupo de la RLS de `transactions` en el mismo commit que el filtro explícito de `my_transactions`, `my_transaction_months` y `my_recent_categories`**, vistas `couple_expenses`, `couple_settlements`, `couple_transaction_months`, `my_shared_parts` y las tres de resumen de una sola sentencia. Regenerar los tipos
   - Cumple: FR-002, FR-004, FR-005, FR-029, FR-037, FR-042, FR-043; research R2, R4 y R6.
   - Itera: `npm run db:dev:reset` y `npm run test:db:dev` hasta que T013 pasa.
   - Prueba / terminado cuando: T013 pasa en `juntia-dev`.
 
-- [ ] T015 Iteración del punto de control 2 en `juntia-dev`: `test:db:dev` y `test:integration:dev` completos (la 002 sigue en verde)
+- [x] T015 Iteración del punto de control 2 en `juntia-dev`: `test:db:dev` y `test:integration:dev` completos (la 002 sigue en verde)
   - Prueba: los dos comandos en verde.
 
-- [ ] T016 **Punto de control 2 (CI)**: `gh workflow run ci.yml --ref <rama>` sobre el commit de T014
+- [x] T016 **Punto de control 2 (CI)**: `gh workflow run ci.yml --ref <rama>` sobre el commit de T014
   - Cumple: vistas de Yo sin compartidos; ninguna vista de pareja con datos privados; escritura directa imposible.
   - Prueba / terminado cuando: el job `db` está en verde y su salida está en `evidence.md`.
 
 ### Grupo 1D — funciones, `src/lib/db/` e integración (solo después de T016)
 
-- [ ] T017 Tests **pgTAP** `supabase/tests/10_couple.test.sql`: `create_invitation`, `regenerate_invitation`, `cancel_invitation`, `preview_invitation` y `accept_invitation`, cada una con éxito, rechazo con una tercera cuenta, repetición idempotente (**mismo resultado**, FR-012a), misma clave con otra huella (`JT008`), cada validación (`JT101`–`JT104`, `JT108`, `JT109`), regenerar sube `version` y una segunda regeneración con la misma versión da `JT011` sin reemplazar (F49-3), el hash es lo único guardado y una política rota a propósito que hace fallar la función (regla 9)
+- [x] T017 Tests **pgTAP** `supabase/tests/10_couple.test.sql`: `create_invitation`, `regenerate_invitation`, `cancel_invitation`, `preview_invitation` y `accept_invitation`, cada una con éxito, rechazo con una tercera cuenta, repetición idempotente (**mismo resultado**, FR-012a), misma clave con otra huella (`JT008`), cada validación (`JT101`–`JT104`, `JT108`, `JT109`), regenerar sube `version` y una segunda regeneración con la misma versión da `JT011` sin reemplazar (F49-3), el hash es lo único guardado y una política rota a propósito que hace fallar la función (regla 9)
   - Cumple: FR-010–FR-014, FR-056, FR-063; precisiones F47-2 y F47-3.
   - Itera / prueba: como T009.
 
-- [ ] T018 Tests **pgTAP** `supabase/tests/11_shared_money.test.sql`: `create_shared_expense`, `update_shared_expense`, `void_shared_expense`, `reclassify_to_shared`, `undo_reclassify_to_shared`, `register_settlement`, `void_settlement` y `write_status`, con los mismos casos que T017 más: versión esperada en editar, eliminar y deshacer la creación (`JT011`, `JT012`); ventana de 60 s y dependencias del deshacer (`JT117`); dirección derivada y límite del saldo (`JT106`, `JT107`), fecha futura (`JT114`); `write_status` de otra persona da `not_found`. **Compatibilidad con la 002** (F49-2): `update_transaction` y `void_transaction` contra un gasto compartido, con la cuenta de cada integrante, fallan con `JT010` sin cambiar el gasto, sus partes, su versión ni la auditoría; las siete funciones de la 002 que escriben fallan con una política rota
+- [x] T018 Tests **pgTAP** `supabase/tests/11_shared_money.test.sql`: `create_shared_expense`, `update_shared_expense`, `void_shared_expense`, `reclassify_to_shared`, `undo_reclassify_to_shared`, `register_settlement`, `void_settlement` y `write_status`, con los mismos casos que T017 más: versión esperada en editar, eliminar y deshacer la creación (`JT011`, `JT012`); ventana de 60 s y dependencias del deshacer (`JT117`); dirección derivada y límite del saldo (`JT106`, `JT107`), fecha futura (`JT114`); `write_status` de otra persona da `not_found`. **Compatibilidad con la 002** (F49-2): `update_transaction` y `void_transaction` contra un gasto compartido, con la cuenta de cada integrante, fallan con `JT010` sin cambiar el gasto, sus partes, su versión ni la auditoría; las siete funciones de la 002 que escriben fallan con una política rota
   - Cumple: FR-018, FR-022–FR-024, FR-027, FR-028, FR-031, FR-034–FR-036, FR-056, FR-057, FR-063; F49-2, F49-4.
   - Itera / prueba: como T009.
 
-- [ ] T018a Escribir **primero** las pruebas de **integración** de T022, T023 y T024 (`tests/integration/concurrency.test.ts`, `shared-money.test.ts` y `consistency.test.ts`, con todos sus casos) y verlas **en rojo contra `juntia-dev`** con `npm run test:integration:dev`, antes de T019, T020 y T021
+- [x] T018a Escribir **primero** las pruebas de **integración** de T022, T023 y T024 (`tests/integration/concurrency.test.ts`, `shared-money.test.ts` y `consistency.test.ts`, con todos sus casos) y verlas **en rojo contra `juntia-dev`** con `npm run test:integration:dev`, antes de T019, T020 y T021
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: las pruebas fallan porque faltan las funciones y la capa `src/lib/db/`, no por errores de sintaxis ni de arnés; la salida del rojo queda en `evidence.md`.
 
-- [ ] T019 Migración `2026110x000300_couple_functions.sql` con las cinco funciones de invitación (entrada en `public` y escritura en `juntia_private`, dueño `juntia_writer`, bloqueos persona → grupo, `row_count`, orden de escritura de `accept_invitation`: membresía, activar, aceptar invitación)
+- [x] T019 Migración `2026110x000300_couple_functions.sql` con las cinco funciones de invitación (entrada en `public` y escritura en `juntia_private`, dueño `juntia_writer`, bloqueos persona → grupo, `row_count`, orden de escritura de `accept_invitation`: membresía, activar, aceptar invitación)
   - Cumple: FR-006, FR-010–FR-014; research R3; [contracts/database.md](contracts/database.md).
   - Itera: `db:dev:reset` y `test:db:dev` hasta que T017 pasa.
 
-- [ ] T020 Migración `2026110x000400_shared_money_functions.sql` con las ocho funciones de dinero compartido y `write_status`, y la **redefinición de `update_transaction` y `void_transaction` de la 002** (solo privados propios) con `row_count` en las seis funciones de la 002 que escriben y en `ensure_profile` ([data-model.md](data-model.md) §3.5)
+- [x] T020 Migración `2026110x000400_shared_money_functions.sql` con las siete escrituras de dinero compartido de [contracts/database.md](contracts/database.md) y `write_status` (errata «ocho» corregida tras el PR A), y la **redefinición de `update_transaction` y `void_transaction` de la 002** (solo privados propios) con `row_count` en las seis funciones de la 002 que escriben y en `ensure_profile` ([data-model.md](data-model.md) §3.5)
   - Cumple: FR-006, FR-018–FR-028, FR-031–FR-036, FR-056–FR-058; F49-2, F49-4.
   - Itera: `db:dev:reset` y `test:db:dev` hasta que T018 pasa.
 
-- [ ] T021 `src/lib/db/`: `couple.ts`, `shared-expenses.ts`, `settlements.ts`, `reclassify.ts`, `invitation-token.ts` (SHA-256 con `crypto.subtle`, nunca registra ni devuelve el token), `write-status.ts`, y ampliación de `types.ts` (importes `string`) y de `paginate.ts` para `couple_expenses` y `couple_settlements`
+- [x] T021 `src/lib/db/`: `couple.ts`, `shared-expenses.ts`, `settlements.ts`, `reclassify.ts`, `invitation-token.ts` (SHA-256 con `crypto.subtle`, nunca registra ni devuelve el token), `write-status.ts`, y ampliación de `types.ts` (importes `string`) y de `paginate.ts` para `couple_expenses` y `couple_settlements`
   - Cumple: FR-007, FR-012a, FR-042; [contracts/server-actions.md](contracts/server-actions.md) §1–§2.
   - Itera: `npm run typecheck` y los tests de T022–T024.
 
-- [ ] T022 Hacer pasar la **integración** de `tests/integration/concurrency.test.ts` escrita en T018a (dos sesiones reales): dos aceptaciones; anular contra aceptar y generar enlace contra aceptar, en los dos órdenes; regenerar contra regenerar; invitaciones cruzadas; primera creación desde dos pestañas; dos liquidaciones del total; edición contra edición; editar y luego eliminar y eliminar y luego editar; deshacer la creación contra una edición; edición contra liquidación; Mover a Pareja contra edición; ningún instante con dos gastos activos
+- [x] T022 Hacer pasar la **integración** de `tests/integration/concurrency.test.ts` escrita en T018a (dos sesiones reales): dos aceptaciones; anular contra aceptar y generar enlace contra aceptar, en los dos órdenes; regenerar contra regenerar; invitaciones cruzadas; primera creación desde dos pestañas; dos liquidaciones del total; edición contra edición; editar y luego eliminar y eliminar y luego editar; deshacer la creación contra una edición; edición contra liquidación; Mover a Pareja contra edición; ningún instante con dos gastos activos
   - Cumple: FR-010b, FR-057, FR-064; SC-007, SC-008; §15.6.3 punto 1.
   - Itera: `npm run test:integration:dev`.
   - Prueba / terminado cuando: cada carrera da un ganador y el perdedor no cambia nada (estado, versión, membresías, partes y auditoría comparados antes y después).
 
-- [ ] T023 Hacer pasar la **integración** de `tests/integration/shared-money.test.ts` escrita en T018a: doble envío y reintento de **cada** escritura compartida (una sola escritura); FR-012a: respuesta perdida, reintento con la misma clave, mismo resultado y mismo enlace; `write_status` tras una respuesta perdida de **cada una de las cuatro escrituras de invitación** (crear, regenerar, anular y aceptar) y de las de dinero, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona; las RPC de la 002 contra un gasto compartido **por la API**, sin efectos; `my_profile` y `couple_members` con dos cuentas emparejadas; importes de ida y vuelta con `9007199254740993`; ningún importe es `number` en los tipos generados
+- [x] T023 Hacer pasar la **integración** de `tests/integration/shared-money.test.ts` escrita en T018a: doble envío y reintento de **cada** escritura compartida (una sola escritura); FR-012a: respuesta perdida, reintento con la misma clave, mismo resultado y mismo enlace; `write_status` tras una respuesta perdida de **cada una de las cuatro escrituras de invitación** (crear, regenerar, anular y aceptar) y de las de dinero, sin reejecutar ni duplicar, y `not_found` con la clave de otra persona; las RPC de la 002 contra un gasto compartido **por la API**, sin efectos; `my_profile` y `couple_members` con dos cuentas emparejadas; importes de ida y vuelta con `9007199254740993`; ningún importe es `number` en los tipos generados
   - Cumple: FR-007, FR-012a, FR-056, FR-059 (servidor); SC-006; F49-1, F49-2, F49-4.
   - Itera / prueba: como T022.
 
-- [ ] T024 Hacer pasar la **integración** de `tests/integration/consistency.test.ts` escrita en T018a: un total de `couple_month_summary`, `me_month_summary` o `couple_balance` nunca mezcla dos estados con una inserción concurrente; `couple_balance` = `computeBalance` sobre los mismos datos; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas (ninguna fila dos veces; toda fila que existía de principio a fin, una vez); el dataset dorado sembrado **por las funciones reales** da `beforeSettlement` y `afterSettlement`
+- [x] T024 Hacer pasar la **integración** de `tests/integration/consistency.test.ts` escrita en T018a: un total de `couple_month_summary`, `me_month_summary` o `couple_balance` nunca mezcla dos estados con una inserción concurrente; `couple_balance` = `computeBalance` sobre los mismos datos; `readByCursor` sobre `couple_expenses` con inserciones y anulaciones entre páginas (ninguna fila dos veces; toda fila que existía de principio a fin, una vez); el dataset dorado sembrado **por las funciones reales** da `beforeSettlement` y `afterSettlement`
   - Cumple: FR-042, FR-043; SC-003 (integración), SC-009; research R4.
   - Itera / prueba: como T022.
 
-- [ ] T025 `tests/support/seed.ts` y `tests/e2e/fixtures.ts`: `seedCouple()` por base de datos (una pareja aislada por worker, con el dataset dorado opcional) y un `storageState` por worker y por rol, Sara y Tomás
+- [x] T025 `tests/support/seed.ts` y `tests/e2e/fixtures.ts`: `seedCouple()` por base de datos (una pareja aislada por worker, con el dataset dorado opcional) y un `storageState` por worker y por rol, Sara y Tomás
   - Cumple: FR-066; `docs/TESTING.md` §5, reglas 1 y 2; research R8.
   - Itera: `npm run e2e:dev` con las specs 1 y 2, que siguen en verde.
 
-- [ ] T026 Iteración completa del PR A en `juntia-dev`: `test:db:dev`, `test:integration:dev` y `e2e:dev` en verde
+- [x] T026 Iteración completa del PR A en `juntia-dev`: `test:db:dev`, `test:integration:dev` y `e2e:dev` en verde
   - Prueba: los tres comandos en verde, salida sin claves.
 
 ### Grupo 1E — salida del PR A
 
-- [ ] T027 **Gate final del PR A (CI)**: `verify` local más el run de CI sobre el mismo commit; `evidence.md` con las salidas de T012, T016 y este run, y el cierre de cada `[V]` del PR A con su salida: ADR-013 [V] 1–7 sobre lo nuevo, ciclo de vida y carreras, propiedades del reparto, `computeBalance`, anulación de liquidaciones (SQL), conversión privado → compartido (SQL), idempotencia (SQL) y versión esperada; presupuesto de `test:db` (< 60 s) medido
+- [x] T027 **Gate final del PR A (CI)**: `verify` local más el run de CI sobre el mismo commit; `evidence.md` con las salidas de T012, T016 y este run, y el cierre de cada `[V]` del PR A con su salida: ADR-013 [V] 1–7 sobre lo nuevo, ciclo de vida y carreras, propiedades del reparto, `computeBalance`, anulación de liquidaciones (SQL), conversión privado → compartido (SQL), idempotencia (SQL) y versión esperada; presupuesto de `test:db` (< 60 s) medido
   - Cumple: SC-006–SC-009, SC-013 (PR A).
   - Prueba / terminado cuando: el gate está en verde y cada `[V]` tiene su salida.
 
-- [ ] T028 **Humana (fundadores)**: revisión del SQL de las cuatro migraciones en el PR A antes del merge
+- [x] T028 **Humana (fundadores)**: revisión del SQL de las cuatro migraciones en el PR A antes del merge
   - Prueba / terminado cuando: aprobación registrada en el PR.
 
-- [ ] T029 **Humana (gestor)**: después del merge del PR A, aplicar las cuatro migraciones a **producción** con la confirmación del fundador en cada paso de escritura y la copia semanal al día (regla 13); comprobar el `project-ref` antes de empezar y desenlazar al terminar
+- [x] T029 **Humana (gestor)**: después del merge del PR A, aplicar las cuatro migraciones a **producción** con la confirmación del fundador en cada paso de escritura y la copia semanal al día (regla 13); comprobar el `project-ref` antes de empezar y desenlazar al terminar
   - Prueba / terminado cuando: `evidence.md` registra las migraciones aplicadas, sin claves.
 
 ---
@@ -224,23 +224,23 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2A — tests primero
 
-- [ ] T030 [P] [US1] Tests de **componentes** en `src/features/couple/couple.test.tsx`: M1–M7 con CoupleStatus (ACTIVA, PENDIENTE, SOLO TÚ, NO VÁLIDA), sin el correo del otro ni saldos; M4 con «Generar enlace nuevo» y «Anular» (SensitiveActionConfirmation con el foco en la opción segura), nunca «Copiar enlace»; M3b y la respuesta de regenerar muestran el enlace una sola vez; la LimitNote de «Salir de la pareja» sin control; `JT103` lleva a M1
+- [x] T030 [P] [US1] Tests de **componentes** en `src/features/couple/couple.test.tsx`: M1–M7 con CoupleStatus (ACTIVA, PENDIENTE, SOLO TÚ, NO VÁLIDA), sin el correo del otro ni saldos; M4 con «Generar enlace nuevo» y «Anular» (SensitiveActionConfirmation con el foco en la opción segura), nunca «Copiar enlace»; M3b y la respuesta de regenerar muestran el enlace una sola vez; la LimitNote de «Salir de la pareja» sin control; `JT103` lleva a M1
   - Cumple: US-1 escenarios 1–4, 8–11; FR-012, FR-015; precisiones F47-2 y F47-3.
   - Itera: `npm run test:components -- --changed`.
 
-- [ ] T031 [P] [US1] Tests de **componentes** en `src/features/couple/intent.test.ts`: el token se genera en el navegador con la clave; un resultado `unknown` y el reintento con la misma clave muestran **el mismo enlace**; la intención de `localStorage["juntia:invitation"]` se borra al aceptar, al ver M7, con «Ahora no», al cerrar sesión y **cuando tiene 7 días o más** (F49-7); el fragmento se limpia con `history.replaceState`; al montar con sesión y una intención vigente se va a `/invitacion`
+- [x] T031 [P] [US1] Tests de **componentes** en `src/features/couple/intent.test.ts`: el token se genera en el navegador con la clave; un resultado `unknown` y el reintento con la misma clave muestran **el mismo enlace**; la intención de `localStorage["juntia:invitation"]` se borra al aceptar, al ver M7, con «Ahora no», al cerrar sesión y **cuando tiene 7 días o más** (F49-7); el fragmento se limpia con `history.replaceState`; al montar con sesión y una intención vigente se va a `/invitacion`
   - Cumple: FR-012a, FR-014; US-1 escenarios 5 y 10; [contracts/server-actions.md](contracts/server-actions.md) §2–§3; research R5.
   - Itera: como T030.
 
-- [ ] T031a [P] [US1] Tests de **componentes** en `src/features/couple/write-result.test.tsx` para las **cuatro escrituras de invitación** (crear, regenerar, anular y aceptar): `ok`; `rejected` con su `JT`; `unknown` sin afirmar que no se escribió, con los campos bloqueados, «Reintentar» idéntico (misma clave y, en crear y regenerar, el mismo token) y «Comprobar estado» con `write_status` (`completed` lleva al resultado real; `not_found` dice que todavía no consta). Incluye **aceptar con la respuesta perdida**: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez
+- [x] T031a [P] [US1] Tests de **componentes** en `src/features/couple/write-result.test.tsx` para las **cuatro escrituras de invitación** (crear, regenerar, anular y aceptar): `ok`; `rejected` con su `JT`; `unknown` sin afirmar que no se escribió, con los campos bloqueados, «Reintentar» idéntico (misma clave y, en crear y regenerar, el mismo token) y «Comprobar estado» con `write_status` (`completed` lleva al resultado real; `not_found` dice que todavía no consta). Incluye **aceptar con la respuesta perdida**: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez
   - Cumple: FR-056, FR-059 (B); precisión F47-4; revisión del PR #50, F50-1.
   - Itera: `npm run test:components -- --changed`.
 
-- [ ] T031c [US1] Escribir **primero** el caso «Invitación → login → volver → aceptar» de la **spec E2E 1** (`tests/e2e/access-account.e2e.ts`) y verlo **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032
+- [x] T031c [US1] Escribir **primero** el caso «Invitación → login → volver → aceptar» de la **spec E2E 1** (`tests/e2e/access-account.e2e.ts`) y verlo **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032
   - Cumple: regla 8; F50-2; interpretación I5.
   - Prueba / terminado cuando: el caso falla porque faltan Mi pareja e `/invitacion`, no por el arnés; la salida queda en `evidence.md`.
 
-- [ ] T031d [US1] Escribir **primero** las comprobaciones a11y del PR B y verlas **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032:
+- [x] T031d [US1] Escribir **primero** las comprobaciones a11y del PR B y verlas **en rojo contra `juntia-dev`** con `npm run e2e:dev`, antes de T032:
   - las entradas axe del inventario de estados de T036 (M1–M7, M3b, M4 pendiente y vencida y la confirmación de anular) en `tests/a11y/route-registry.ts`, como `e2eEntries` las que necesitan sesión;
   - `tests/a11y/couple.a11y.ts` con el barrido de los siete anchos, el teclado, el texto al 200 % y los 44 px de T038, con sus casos con sesión solo bajo `A11Y_JOB=e2e` (regla 10);
   - la **prueba de descubrimiento** `tests/a11y/job-selection.test.ts` (Vitest `components`, entorno `node`, como `route-registry.test.ts`): ejecuta `npx playwright test --project a11y --list` con `A11Y_JOB=app` y con `A11Y_JOB=e2e` y comprueba que con `app` no aparece **ningún** caso con sesión o Auth de los archivos nuevos y con `e2e` sí aparecen. Sirve también para los archivos de C y D
@@ -249,36 +249,36 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
 
 ### Grupo 2B — implementación (en serie: comparten `es.ts` y el shell)
 
-- [ ] T031b [US1] Infraestructura **completa** de resultados de escritura en `src/features/shared/write-result.ts` (`ok`/`rejected`/`unknown`, clave por apertura, bloqueo de la intención, «Reintentar» idéntico y «Comprobar estado» con `write_status` de `src/lib/db/write-status.ts`), conectada a las cuatro escrituras de invitación
+- [x] T031b [US1] Infraestructura **completa** de resultados de escritura en `src/features/shared/write-result.ts` (`ok`/`rejected`/`unknown`, clave por apertura, bloqueo de la intención, «Reintentar» idéntico y «Comprobar estado» con `write_status` de `src/lib/db/write-status.ts`), conectada a las cuatro escrituras de invitación
   - Cumple: FR-056, FR-059; [contracts/server-actions.md](contracts/server-actions.md) §1; interpretación I2.
   - Itera: T031a en verde.
 
-- [ ] T032 [US1] `src/features/couple/` y `src/app/(app)/cuenta/pareja/page.tsx`: Mi pareja M1–M4 sobre `my_couple` y `couple_members`, Server Actions de crear, regenerar y anular (token del navegador, hash en el servidor)
+- [x] T032 [US1] `src/features/couple/` y `src/app/(app)/cuenta/pareja/page.tsx`: Mi pareja M1–M4 sobre `my_couple` y `couple_members`, Server Actions de crear, regenerar y anular (token del navegador, hash en el servidor)
   - Cumple: FR-010–FR-012a, FR-015; US-1.
   - Itera: T030 en verde; `npm run e2e:dev` para probar a mano en `juntia-dev`.
 
-- [ ] T033 [US1] `src/app/invitacion/page.tsx` y `src/lib/routes.ts`: ruta **pública** sin datos en el servidor; M5 sin sesión (con `volver=/invitacion`), M6 con `preview_invitation`, M7 con el mismo texto para todos los motivos, aceptar
+- [x] T033 [US1] `src/app/invitacion/page.tsx` y `src/lib/routes.ts`: ruta **pública** sin datos en el servidor; M5 sin sesión (con `volver=/invitacion`), M6 con `preview_invitation`, M7 con el mismo texto para todos los motivos, aceptar
   - Cumple: FR-013, FR-014; US-1 escenarios 5–7 y 9.
   - Itera: T031 en verde.
 
-- [ ] T034 [US1] Retorno y puntos de entrada: redirección a `/invitacion` con una intención vigente; «Invitar a mi pareja» en A6 (04·17) y en el estado de Nosotros sin pareja
+- [x] T034 [US1] Retorno y puntos de entrada: redirección a `/invitacion` con una intención vigente; «Invitar a mi pareja» en A6 (04·17) y en el estado de Nosotros sin pareja
   - Cumple: FR-014, FR-016; US-3 escenario 7.
   - Itera: componentes y `e2e:dev`.
 
-- [ ] T035 [US1] Colores de persona por `join_order` (`person.1`, `person.2` y sus patrones) en Avatar y CoupleStatus, y el copy de pareja en `src/lib/copy/es.ts`
+- [x] T035 [US1] Colores de persona por `join_order` (`person.1`, `person.2` y sus patrones) en Avatar y CoupleStatus, y el copy de pareja en `src/lib/copy/es.ts`
   - Cumple: FR-017, FR-053, FR-054.
   - Prueba: componentes; revisión visual en T038.
 
 ### Grupo 2C — spec E2E 1, axe y salida
 
-- [ ] T036 [US1] Hacer pasar el caso de la **spec E2E 1** escrito en T031c y las entradas axe de T031d («Invitación → login → volver → aceptar», con Tomás entrando por M5) y comprobar el HTML de `/invitacion` sin ningún dato de la pareja. axe en los dos temas del inventario de estados nuevos del PR B: M1, M2, M3, **M3b** (enlace visible), **M4** (pendiente y vencida), M5, **M6**, **M7** y la **confirmación de anular** (SensitiveActionConfirmation)
+- [x] T036 [US1] Hacer pasar el caso de la **spec E2E 1** escrito en T031c y las entradas axe de T031d («Invitación → login → volver → aceptar», con Tomás entrando por M5) y comprobar el HTML de `/invitacion` sin ningún dato de la pareja. axe en los dos temas del inventario de estados nuevos del PR B: M1, M2, M3, **M3b** (enlace visible), **M4** (pendiente y vencida), M5, **M6**, **M7** y la **confirmación de anular** (SensitiveActionConfirmation)
   - Cumple: FR-067 (spec 1), FR-068; SC-002 (B); [V] «Retorno tras el login» (prueba ejecutada, responsable implementador, cierre antes del merge del PR B).
   - Itera: `npm run e2e:dev`.
 
-- [ ] T037 Iteración completa del PR B en `juntia-dev`: `e2e:dev` (specs 1 y 2) y `test:integration:dev`
+- [x] T037 Iteración completa del PR B en `juntia-dev`: `e2e:dev` (specs 1 y 2) y `test:integration:dev`
   - Prueba: en verde.
 
-- [ ] T038 Responsive y accesibilidad del PR B: hacer pasar `tests/a11y/couple.a11y.ts`, escrita en T031d, iterada con `e2e:dev` y ejecutada en el gate:
+- [x] T038 Responsive y accesibilidad del PR B: hacer pasar `tests/a11y/couple.a11y.ts`, escrita en T031d, iterada con `e2e:dev` y ejecutada en el gate:
   - **barrido sin scroll horizontal** (`scrollWidth <= clientWidth`) de Mi pareja (M1–M4), `/invitacion` (M5–M7), A6 y Nosotros sin pareja en **los siete anchos** (360, 390, 430, 768, 1024, 1280 y 1440) y en los dos temas;
   - **teclado**: «Crear invitación», «Generar enlace nuevo», «Copiar enlace» de M3b, «Anular» con el foco inicial en la opción segura y Escape, y «Aceptar invitación», todo operable sin ratón;
   - **texto al 200 %** en esas pantallas: sin pérdida de contenido ni solapamientos;
@@ -287,7 +287,7 @@ No son decisiones: son lecturas necesarias para ejecutar una tarea donde el plan
   Además, capturas a 390 y 1440 px en los dos temas para la aprobación humana, y pasada de **Impeccable** con hallazgos y correcciones en `evidence.md`. **Impeccable no cuenta como evidencia de FR-054**: la evidencia son las pruebas de arriba. Lista de lo que se aprueba viendo la pantalla: Mi pareja (anatomía aprobada, decisión 16.6), el botón «Generar enlace nuevo» y su copy, y la paleta de personas (propuesta §15.9).
   - Cumple: FR-054, FR-055, SC-001 (B); F50-3.
 
-- [ ] T039 **Gate final del PR B (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run, la salida del barrido de T038 y el cierre de FR-056 y FR-059 para las cuatro escrituras de invitación (T031a y T023)
+- [x] T039 **Gate final del PR B (CI)** sobre el mismo commit que `verify`; `evidence.md` con el run, la salida del barrido de T038 y el cierre de FR-056 y FR-059 para las cuatro escrituras de invitación (T031a y T023)
   - Prueba / terminado cuando: verde con las specs 1 y 2 y el proyecto `a11y`.
 
 - [ ] T040 **Humana (fundadores)**: aprobación visual del PR B viendo las capturas
