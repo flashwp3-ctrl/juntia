@@ -118,7 +118,7 @@ function Valid({ screen, token, actions }: { screen: Extract<Screen, { kind: "va
         </span>
       </div>
       <Title>{copy.couple.invitation.valid.title(screen.inviterName)}</Title>
-      <ul className="flex flex-col rounded-[18px] bg-raised px-4 py-3.5 shadow-raised lg:bg-sunken lg:shadow-none">
+      <ul className="flex flex-col rounded-[18px] bg-raised px-4 py-3.5 shadow-raised lg:bg-overlay lg:shadow-none">
         <HowRow icon="users-three" text={copy.couple.invitation.valid.shared} />
         <HowRow icon="lock-simple" text={copy.couple.invitation.valid.private} />
         <HowRow icon="scales" text={copy.couple.invitation.valid.money} />
@@ -176,6 +176,13 @@ export function InvitationScreen({ actions }: { actions: InvitationActions }) {
     });
     return () => { live = false; };
   }, [actions, attempt]);
+
+  // Otro enlace pegado con /invitacion ya abierta solo cambia el fragmento: se vuelve a leer y a revalidar.
+  useEffect(() => {
+    const again = () => { setScreen({ kind: "loading" }); setAttempt((value) => value + 1); };
+    window.addEventListener("hashchange", again);
+    return () => window.removeEventListener("hashchange", again);
+  }, []);
 
   if (screen.kind === "loading") {
     return (

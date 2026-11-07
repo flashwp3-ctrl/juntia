@@ -8,7 +8,7 @@
 // Tras cada escritura confirmada, `router.refresh()` trae el estado real del servidor (Q16).
 // Decisión de los fundadores (6–7 nov 2026): la × de cerrar va a la derecha en todas las hojas y diálogos.
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { Avatar } from "@/components/ui/avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -73,7 +73,7 @@ function HowRow({ icon, text }: { icon: AppIconName; text: string }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-[26px] flex flex-col">
       <h2 className="pb-0.5 font-serif text-[24px] leading-tight font-normal text-ink">{title}</h2>
@@ -127,8 +127,11 @@ function ActiveCouple({ members }: { members: Member[] }) {
   );
 }
 
-/** El enlace de una sola vez (M3b y la respuesta de «Generar enlace nuevo»), con Compartir y Copiar. */
-function IssuedLink({ link, expiresAt }: { link: string; expiresAt: string }) {
+/**
+ * El enlace de una sola vez (M3b y la respuesta de «Generar enlace nuevo»), con Compartir y Copiar al pie, como el comp:
+ * el aviso «Enlace listo», el enlace (seleccionable, para copiarlo a mano si no hay portapapeles), las reglas y las acciones.
+ */
+function IssuedLink({ link, expiresAt, children }: { link: string; expiresAt: string; children: ReactNode }) {
   const [copied, setCopied] = useState(false);
   const field = useRef<HTMLInputElement>(null);
   const copyLink = async () => {
@@ -154,10 +157,12 @@ function IssuedLink({ link, expiresAt }: { link: string; expiresAt: string }) {
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[15px] font-semibold text-ink">{copy.couple.invite.ready}</span>
-          <span className="text-[12px] text-ink-secondary">{copy.couple.invite.readyLine(invitationDay(expiresAt))}</span>
+          {/* Sobre surface.sunken, el texto secundario usa el tono de campo (text.secondary daría 4,29:1 en claro). */}
+          <span className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.couple.invite.readyLine(invitationDay(expiresAt))}</span>
         </span>
       </div>
       <Input ref={field} label={copy.couple.invite.link} value={link} readOnly onFocus={(event) => event.currentTarget.select()} inputClassName="text-[14px] text-ellipsis" help={copy.couple.invite.once} />
+      {children}
       <div role="status" className="empty:hidden">{copied ? <InlineNotice tone="success" icon="check-circle">{copy.couple.invite.copied}</InlineNotice> : null}</div>
       <div className="flex flex-col gap-2">
         <Button size="lg" icon="share-network" onClick={share}>{copy.couple.invite.share}</Button>
@@ -236,6 +241,13 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   const title = mode === "create" ? copy.couple.invite.title : copy.couple.invite.regenerateTitle;
   const lead = issued ? (mode === "create" ? copy.couple.invite.readyLead : copy.couple.invite.regenerateLead) : mode === "create" ? copy.couple.invite.lead : copy.couple.invite.regenerateLead;
   const busy = state.phase === "pending";
+  const rules = (
+    <ul className="flex flex-col">
+      <HowRow icon="clock" text={copy.couple.invite.rules.expiry} />
+      <HowRow icon="user" text={copy.couple.invite.rules.role} />
+      <HowRow icon="lock-simple" text={copy.couple.invite.rules.private} />
+    </ul>
+  );
 
   return (
     <>
@@ -263,7 +275,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
             error={fieldError}
             autoFocus={mode === "create" && !issued}
           />
-          {issued ? <IssuedLink link={issued.link} expiresAt={issued.expiresAt} /> : null}
+
           {mode === "regenerate" && busy ? (
             <p role="status" className="flex items-center gap-2 text-[14px] text-ink-secondary">
               <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
@@ -272,11 +284,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
           ) : null}
           {notice ? <InlineNotice tone="danger" icon="warning-circle">{notice}</InlineNotice> : null}
           {state.phase === "unknown" ? <WriteUnknown checking={state.checking} notFound={state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} /> : null}
-          <ul className="flex flex-col">
-            <HowRow icon="clock" text={copy.couple.invite.rules.expiry} />
-            <HowRow icon="user" text={copy.couple.invite.rules.role} />
-            <HowRow icon="lock-simple" text={copy.couple.invite.rules.private} />
-          </ul>
+          {issued ? <IssuedLink link={issued.link} expiresAt={issued.expiresAt}>{rules}</IssuedLink> : rules}
           {mode === "create" && !issued && !locked ? (
             <Button type="submit" size="lg" icon="link" loading={busy} loadingLabel={copy.couple.invite.creating}>{copy.couple.invite.create}</Button>
           ) : null}

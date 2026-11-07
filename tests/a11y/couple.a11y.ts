@@ -23,7 +23,8 @@ async function overflow(page: Page) {
     const root = document.documentElement;
     const scope = document.querySelector('[role="dialog"], [role="alertdialog"]') ?? document.querySelector("main") ?? document.body;
     const clipped = [...scope.querySelectorAll<HTMLElement>("h1, h2, h3, p, a, button, label, span")]
-      .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && node.scrollWidth > node.clientWidth + 1
+      // Fuera lo oculto a propósito para lectores de pantalla (sr-only: 1 px recortado), que no es texto perdido.
+      .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && node.getBoundingClientRect().width > 1 && node.scrollWidth > node.clientWidth + 1
         && !["ellipsis"].includes(getComputedStyle(node).textOverflow) && getComputedStyle(node).overflow !== "visible")
       .map((node) => `${node.tagName.toLowerCase()} «${(node.textContent ?? "").trim().slice(0, 40)}»`);
     return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, clipped };
@@ -129,7 +130,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     {
       const { context, page } = await signedContext(browser, baseURL!, solo);
       await page.goto("/cuenta/pareja");
-      await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+      await expect(page.getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
       await sweep(page, "Mi pareja M2");
       await largeText(page, "Mi pareja M2");
       await page.getByRole("button", { name: copy.couple.none.invite }).click();
@@ -188,7 +189,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     const { context, page } = await signedContext(browser, baseURL!, sara);
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/cuenta/pareja");
-    await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+    await expect(page.getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
     await target44(page, copy.couple.none.invite);
 
     // Crear invitación sin ratón.
@@ -210,7 +211,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     await expect(sheet).toBeHidden();
 
     // M4: Generar enlace nuevo y Anular con el foco en la opción segura y Escape.
-    await expect(page.getByText(copy.couple.status.pending)).toBeVisible();
+    await expect(page.getByText(copy.couple.status.pending, { exact: true })).toBeVisible();
     await target44(page, copy.couple.pending.regenerate);
     await target44(page, copy.couple.pending.cancel);
     await page.getByRole("button", { name: copy.couple.pending.regenerate }).focus();
@@ -228,7 +229,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     await target44(page, copy.couple.cancel.confirm);
     await page.keyboard.press("Escape");
     await expect(confirm).toBeHidden();
-    await expect(page.getByText(copy.couple.status.pending)).toBeVisible();
+    await expect(page.getByText(copy.couple.status.pending, { exact: true })).toBeVisible();
     await context.close();
 
     // Aceptar invitación sin ratón, con el enlace nuevo.
@@ -240,7 +241,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     await tabTo(invited.page, copy.couple.invitation.valid.accept);
     await invited.page.keyboard.press("Enter");
     await expect(invited.page).toHaveURL(/\/cuenta\/pareja$/);
-    await expect(invited.page.getByText(copy.couple.status.active)).toBeVisible();
+    await expect(invited.page.getByText(copy.couple.status.active, { exact: true })).toBeVisible();
     await invited.context.close();
   });
 });

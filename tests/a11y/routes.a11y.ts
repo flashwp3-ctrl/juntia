@@ -100,7 +100,8 @@ async function pressFrames(page: Page, scope: string) {
 async function fieldFocusRings(page: Page) {
   const dialogs = page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible');
   const scope = (await dialogs.count()) > 0 ? dialogs.last() : page.locator("body");
-  const fields = scope.locator("label input:not([type=hidden]):not([type=checkbox]):not(:disabled):visible");
+  // PR B de la 003: los radios de A6 (tarjetas con el radio nativo oculto) no son campos de texto; su foco es la tarjeta.
+  const fields = scope.locator("label input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not(:disabled):visible");
   const count = await fields.count();
   const results: { name: string; focused: boolean; input: string; frame: string }[] = [];
   for (let index = 0; index < count; index++) {

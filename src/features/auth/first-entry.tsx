@@ -15,7 +15,7 @@ const INVITE_PATH = "/cuenta/pareja?invitar=1";
 function Choice({ value, checked, onChange, icon, tone, title, description }: { value: string; checked: boolean; onChange: () => void; icon: AppIconName; tone: string; title: string; description: string }) {
   return (
     <label className={`grid cursor-pointer grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-[20px] p-4 has-[:focus-visible]:outline-[length:var(--border-focus)] has-[:focus-visible]:outline-offset-[var(--focus-offset)] has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-solid ${checked ? "bg-raised shadow-[inset_0_0_0_2px_var(--color-text-primary),var(--elevation-raised)] lg:bg-overlay" : "shadow-[0_0_0_1.5px_var(--color-border)]"}`}>
-      <input type="radio" name="start" value={value} checked={checked} onChange={onChange} className="sr-only" />
+      <input type="radio" name="start" value={value} checked={checked} onChange={onChange} className="sr-only focus-visible:outline-none" />
       <span aria-hidden="true" className={`grid size-11 place-items-center rounded-[14px] ${tone}`}>
         <AppIcon name={icon} weight="duotone" size={22} />
       </span>

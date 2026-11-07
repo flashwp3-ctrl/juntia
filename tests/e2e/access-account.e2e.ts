@@ -346,7 +346,7 @@ test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; 
 // T036): «comprobar el HTML de `/invitacion` sin ningún dato de la pareja». La base guarda solo el hash del token.
 async function createInvitationAsSara(page: Page, email: string) {
   await page.goto("/cuenta/pareja");
-  await expect(page.getByText(copy.couple.status.solo)).toBeVisible();
+  await expect(page.getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: copy.couple.none.invite }).click();
   const sheet = page.getByRole("dialog", { name: copy.couple.invite.title });
   await sheet.getByRole("textbox", { name: copy.couple.invite.email }).fill(email);
@@ -395,13 +395,13 @@ test("invitación → M5 sin datos → entrar → volver → M6 → aceptar → 
   await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
   await tab.getByRole("button", { name: copy.couple.invitation.valid.accept }).click();
   await expect(tab).toHaveURL(/\/cuenta\/pareja$/);
-  await expect(tab.getByText(copy.couple.status.active)).toBeVisible();
+  await expect(tab.getByText(copy.couple.status.active, { exact: true })).toBeVisible();
   await expect(tab.getByText(copy.couple.active.title("Sara", "Tomás"))).toBeVisible();
   expect(await tab.evaluate(() => window.localStorage.getItem("juntia:invitation"))).toBeNull();
 
   // Sara ve M1 al recargar; el enlace usado ya no sirve (M7).
   await page.reload();
-  await expect(page.getByText(copy.couple.status.active)).toBeVisible();
+  await expect(page.getByText(copy.couple.status.active, { exact: true })).toBeVisible();
   await tab.goto(link);
   await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeVisible();
   await other.close();
@@ -432,7 +432,7 @@ test("invitación → M5 → crear la cuenta y verificarla → la intención del
     await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeVisible();
     await tab.getByRole("button", { name: copy.couple.invitation.valid.accept }).click();
     await expect(tab).toHaveURL(/\/cuenta\/pareja$/);
-    await expect(tab.getByText(copy.couple.status.active)).toBeVisible();
+    await expect(tab.getByText(copy.couple.status.active, { exact: true })).toBeVisible();
     await other.close();
   } finally {
     runnerSql(`delete from juntia_data.signup_allowlist where email=${sqlText(email)}`);
