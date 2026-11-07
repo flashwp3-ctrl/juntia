@@ -25,12 +25,13 @@ export function appPort(env = process.env) {
 export const appOrigin = (env = process.env) => `http://localhost:${appPort(env)}`;
 
 /**
- * Argumentos de `next dev|start` con el puerto comprobado (F58-1). Rechaza cualquier otro puerto (`-p`, `--port`,
- * `--port=…`, `-p3000`, `-p=…`): el puerto que se comprueba tiene que ser el que usa Next.
+ * Argumentos de `next dev|start` con el puerto comprobado (F58-1). Rechaza cualquier argumento que empiece por `-p`
+ * (`-p 3000`, `-p3000`, `-p=3000`, `-p+3000`: Commander acepta el valor pegado y Next lo pasa por parseInt), además de
+ * `--port` y `--port=…`: el puerto que se comprueba tiene que ser el que usa Next.
  * @param {"dev" | "start"} mode @param {string[]} rest @param {Env} [env]
  */
 export function nextArgs(mode, rest, env = process.env) {
-  const portArg = rest.find((arg) => /^(?:-p|--port)(?:$|=|\d)/.test(arg));
+  const portArg = rest.find((arg) => arg.startsWith("-p") || arg === "--port" || arg.startsWith("--port="));
   if (portArg) throw new Error(`No se acepta «${portArg}»: el puerto de Juntia se fija con la variable PORT (por ejemplo, PORT=3500 npm run dev), para que el puerto comprobado sea el que usa Next.`);
   return [mode, "--port", String(appPort(env)), ...rest];
 }

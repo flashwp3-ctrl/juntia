@@ -26,7 +26,7 @@ describe("appPort y appOrigin", () => {
 });
 
 describe("argumentos de next (F58-1)", () => {
-  it.each([["-p", "3000"], ["--port", "3000"], ["--port=3000"], ["-p3000"], ["-p=3000"], ["--turbo", "-p", "3000"]])("rechaza %s pidiendo la variable PORT", (...args) => {
+  it.each([["-p", "3000"], ["--port", "3000"], ["--port=3000"], ["-p3000"], ["-p=3000"], ["-p+3000"], ["--turbo", "-p", "3000"]])("rechaza %s pidiendo la variable PORT", (...args) => {
     expect(() => nextArgs("dev", args, {})).toThrow(/PORT/);
   });
   it("con PORT=3500 o sin PORT fija el puerto comprobado y conserva el resto", () => {
