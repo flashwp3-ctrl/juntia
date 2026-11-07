@@ -20,6 +20,9 @@ import type { CoupleForSheet, LastSplit, MoveResult, SavedShared, SharedActions 
 import type { ContextChoice } from "@/lib/context-preference";
 import { useOptionalContextChoice } from "@/components/shell/context-selector";
 import { newIdempotencyKey } from "./idempotency";
+import { ConfirmDialog } from "./confirm-dialog";
+import { Button } from "@/components/ui/button";
+import { WriteUnknown } from "@/features/shared/write-unknown";
 import { lastFromSaved } from "./split-state";
 import { TIMED_OUT, withTimeout } from "@/features/shared/use-write";
 import type { WriteError, WriteOutcome } from "@/features/shared/write-result";
@@ -291,14 +294,21 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     action: "void_shared_expense" | "undo_reclassify_to_shared"; id: string; idempotencyKey: string;
     send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
   };
-  const runUndoRef = useRef<(intent: UndoIntent, mode: "send" | "check") => Promise<void>>(async () => {});
-  const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check") => runUndoRef.current(intent, mode), []);
-  useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check") => {
+  // F57-6 (revisión del PR #57): mientras un deshacer sigue desconocido o sin constar, su aviso no caduca. Vive aquí, en
+  // memoria (nunca en el navegador), con «Reintentar» y «Comprobar estado» sobre la intención original; cerrarlo se confirma.
+  const [pendingUndo, setPendingUndo] = useState<{ intent: UndoIntent; notFound: boolean; checking: boolean } | null>(null);
+  const [confirmingDismiss, setConfirmingDismiss] = useState(false);
+  const pendingRef = useRef(pendingUndo);
+  useEffect(() => { pendingRef.current = pendingUndo; }, [pendingUndo]);
+  const runUndoRef = useRef<(intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => Promise<void>>(async () => {});
+  const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending" = "toast") => runUndoRef.current(intent, mode, source), []);
+  useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => {
     const writes = sharedRef.current;
     if (!writes || undoing.current.has(intent.id)) return;
     undoing.current.add(intent.id);
     const generation = toastGeneration.current;
-    setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
+    if (source === "pending") setPendingUndo((current) => (current && current.intent === intent ? { ...current, checking: true } : current));
+    else setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
     let outcome: { kind: "ok" } | { kind: "rejected"; error: WriteError } | { kind: "unknown" } | { kind: "notFound" };
     try {
       if (mode === "send") {
@@ -312,16 +322,16 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       outcome = { kind: "unknown" };
     }
     undoing.current.delete(intent.id);
-    if (generation !== toastGeneration.current) return;
-    if (outcome.kind === "ok") {
-      intent.onOk();
-      notify({ tone: "success", message: intent.done });
-    } else if (outcome.kind === "rejected") {
-      notify({ tone: "error", message: intent.rejected(outcome.error) });
-    } else if (outcome.kind === "notFound") {
-      notify({ tone: "error", message: copy.writes.notFound, action: { label: copy.writes.retry, onAction: () => void runUndo(intent, "send") } });
+    // Una respuesta tardía no pisa nada: la del aviso de «Deshacer», si otro aviso ocupó su lugar; la del aviso fijo, si ya no es esta intención.
+    if (source === "toast" ? generation !== toastGeneration.current : pendingRef.current?.intent !== intent) return;
+    if (outcome.kind === "ok" || outcome.kind === "rejected") {
+      setPendingUndo(null);
+      if (outcome.kind === "ok") { intent.onOk(); notify({ tone: "success", message: intent.done }); }
+      else notify({ tone: "error", message: intent.rejected(outcome.error) });
     } else {
-      notify({ tone: "error", message: copy.writes.undoUnknown, action: { label: copy.writes.check, onAction: () => void runUndo(intent, "check") } });
+      // Desconocido o sin constar: el aviso con «Deshacer» se retira y queda el aviso fijo, que no caduca.
+      if (source === "toast") setToast(null);
+      setPendingUndo({ intent, notFound: outcome.kind === "notFound", checking: false });
     }
   }; }, [notify, runUndo]);
 
@@ -478,12 +488,32 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       {/* Por encima de la barra inferior en móvil; en escritorio, centrado en el contenido, a la derecha del rail o del
           sidebar. Un solo aviso a la vez: el nuevo reemplaza al anterior. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[var(--z-toast)] flex justify-center px-3.5 lg:bottom-6 lg:pl-[calc(76px+28px)] xl:pl-[calc(248px+40px)]">
-        <div className="w-full max-w-[440px]">
+        <div className="flex w-full max-w-[440px] flex-col gap-2">
+          {pendingUndo ? (
+            <div className="pointer-events-auto shadow-raised rounded-[16px]">
+              <WriteUnknown
+                message={copy.writes.undoUnknown}
+                checking={pendingUndo.checking}
+                notFound={pendingUndo.notFound}
+                onRetry={() => void runUndo(pendingUndo.intent, "send", "pending")}
+                onCheck={() => void runUndo(pendingUndo.intent, "check", "pending")}
+                onDismiss={() => setConfirmingDismiss(true)}
+              />
+            </div>
+          ) : null}
           <AnimatePresence>
             {toast ? <Toast key={toast.id} tone={toast.tone} message={toast.message} action={toast.action} onTimeout={() => dismissToast(toast.id)} /> : null}
           </AnimatePresence>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmingDismiss}
+        onOpenChange={setConfirmingDismiss}
+        title={copy.writes.close.title}
+        description={copy.writes.undoCloseDescription}
+        cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingDismiss(false)}>{copy.writes.close.keep}</Button>}
+        confirm={<Button variant="secondary" onClick={() => { setConfirmingDismiss(false); setPendingUndo(null); }}>{copy.writes.close.confirm}</Button>}
+      />
      </PendingContext.Provider>
     </AnnotateContext.Provider>
   );

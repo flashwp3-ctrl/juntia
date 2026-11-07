@@ -102,6 +102,8 @@ export const copy = {
     notFound: "Todavía no consta. Reintentar es seguro: no se hace dos veces.",
     // F57-4: «Deshacer» sin respuesta (red, 15 s o respuesta perdida). Nunca dice que no se deshizo.
     undoUnknown: "No pudimos confirmar si se deshizo. No lo des por hecho: comprueba el estado o reintenta sin riesgo.",
+    // F57-6: el aviso de un deshacer sin confirmar no caduca; cerrarlo es explícito y se confirma.
+    dismiss: "Cerrar aviso", undoCloseDescription: "No pudimos confirmar si se deshizo. Revisa Actividad antes de volver a intentarlo.",
     close: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se hizo. Revisa Mi pareja antes de volver a intentarlo.", keep: "Seguir aquí", confirm: "Cerrar" },
   },
   // PR C de la 003 (T046–T050; 02·5 y 02·6 con la opción 2a de «07 Nosotros en Anotar gasto», 04·1, 04·7, 04·10). Copy
@@ -294,6 +296,8 @@ export const copy = {
     table: { caption: "Movimientos del mes", description: "Descripción", date: "Fecha", amount: "Monto", paidSplit: "Pagó · Reparto" },
     // PR C de la 003 (04·1 ACTIVIDAD en Nosotros, 04·6 SIN ACTIVIDAD).
     spentTogether: (month: string) => `Gasto compartido de ${month}`,
+    // F57-7: el resumen del mes dice que hay gastos y la lista llegó vacía. Copy nuevo para revisión de los fundadores.
+    coupleStale: { text: "La lista de este mes no se cargó completa. Vuelve a cargarla para ver los gastos.", action: "Volver a cargar" },
     coupleEmpty: { title: "Aún no hay gastos este mes", description: "Cuando alguno de los dos anote un gasto compartido, aparecerá aquí con quién pagó y cómo se reparte.", action: "Anotar el primero" },
     empty: { title: "Aún no hay movimientos este mes", description: "Cuando anotes un gasto o un ingreso con fecha de este mes, aparecerá aquí. Solo tú lo ves.", action: "Anotar el primero" },
     noResults: { title: "Nada coincide", description: "Prueba con otra palabra o quita los filtros.", clear: "Quitar filtros" },

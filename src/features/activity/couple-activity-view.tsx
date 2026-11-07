@@ -6,6 +6,7 @@
 // filtro de categoría en cliente sobre lo compartido; nada privado llega aquí. Flechas de mes como en Yo
 // (`couple_transaction_months`). Desde 1280, la tabla con el panel de detalle a la derecha (lo pone ActivityScreen).
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useId, useMemo } from "react";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ExitState } from "@/components/shell/provisional-state";
@@ -34,6 +35,7 @@ const detailHref = (id: string, month: string) => `/actividad/${id}?mes=${month}
 
 export function CoupleActivityView({ expenses, settlements, month, today, navigation, members, summary, selectedId }: Props) {
   const filters = useActivityFilters(month);
+  const router = useRouter();
   const titleId = useId();
   const highlightId = useHighlightId();
   const filtering = filters.query.trim() !== "" || filters.categoryId !== null;
@@ -46,7 +48,10 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
   const chips = (Object.entries(summary?.byCategory ?? {}) as [CategoryId, string][]).map(([category, value]) => [category, BigInt(value)] as const)
     .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
 
-  if (expenses.length === 0 && settlements.length === 0) {
+  // F57-7 (revisión del PR #57): el vacío de 04·6 solo si el resumen tampoco tiene gastos. Si el resumen dice que hay y la
+  // lista llegó vacía, se ve el resumen y la lista dice, sin cifras inventadas, que no se cargó.
+  const stale = expenses.length === 0 && settlements.length === 0 && (summary?.count ?? 0) > 0;
+  if (expenses.length === 0 && settlements.length === 0 && !stale) {
     return (
       <div className="flex flex-col gap-4 pt-5 lg:pt-8">
         <MonthNav month={month} navigation={navigation} />
@@ -91,7 +96,12 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         ) : null}
       </section>
       <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(visibleExpenses.length) : ""}</p>
-      {items.length === 0 ? (
+      {stale ? (
+        <div role="status" className="flex flex-col items-start gap-3 rounded-[16px] bg-sunken px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+          <span>{copy.activity.coupleStale.text}</span>
+          <Button variant="secondary" icon="arrow-clockwise" onClick={() => router.refresh()}>{copy.activity.coupleStale.action}</Button>
+        </div>
+      ) : items.length === 0 ? (
         <ExitState icon="magnifying-glass" title={copy.activity.noResults.title} description={copy.activity.noResults.description} actions={<Button variant="secondary" onClick={filters.clear}>{copy.activity.noResults.clear}</Button>} />
       ) : (
         <>

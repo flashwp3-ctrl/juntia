@@ -76,6 +76,13 @@ describe("Actividad en Nosotros (US-3.4)", () => {
     expect((screen.getByRole("link", { name: copy.activity.nextMonth("Noviembre 2026") }))?.getAttribute("href")).toBe("/actividad?mes=2026-11");
   });
 
+  it("F57-7: lista vacía con el resumen en 1: se ve el resumen y un aviso neutro, no el estado vacío", () => {
+    view({ expenses: [], settlements: [], summary: { totalMinor: "18640000", count: 1, byCategory: { market: "18640000" } } });
+    expect(screen.getByText("$186.400")).toBeTruthy();
+    expect(screen.getByText(copy.activity.coupleStale.text)).toBeTruthy();
+    expect(screen.queryByText(copy.activity.coupleEmpty.title)).toBeNull();
+  });
+
   it("vacío: 04·6 «Aún no hay gastos este mes» con «Anotar el primero»", () => {
     view({ expenses: [], settlements: [], summary: null });
     expect(screen.getByText(copy.activity.coupleEmpty.title)).toBeTruthy();

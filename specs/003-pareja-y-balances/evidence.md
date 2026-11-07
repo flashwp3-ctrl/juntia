@@ -1341,3 +1341,23 @@ rojo** antes del código (las de 100/0 y de una parte de importe en 0 ya pasaban
 | F57-4 | «Deshacer» de un compartido y de Mover a Pareja llamaba directo, sin límite, sin `write_status` y con «No pudimos deshacer» | La máquina del PR B en el proveedor: 15 s y después desconocido, texto neutro (`copy.writes.undoUnknown`), «Comprobar estado» con `void_shared_expense` o `undo_reclassify_to_shared`, «Reintentar» con la misma clave si todavía no consta; la respuesta tardía no pisa nada | respuesta perdida con `completed`; `not_found` y reintento idéntico; promesa colgada más de 15 s; Mover a Pareja |
 
 Iteración: componentes 326 de 326 (las dos suites de F57 y de edición, tres veces seguidas sin fallos). `verify` 72,21 s; una primera pasada de `verify` con carga en el equipo falló en componentes (97,11 s) y no se reprodujo. `npm run e2e:dev` completo antes del push: **E2E 26 de 26 y axe 188 de 188** (axe 493,31 s; total 554,83 s). La pasada anterior perdió el caso de privacidad de la spec 3 por el límite de 30 s de Playwright en dev (~30 peticiones HTML y RSC); ese caso lleva ahora `test.slow()`.
+
+## Segunda ronda F57 (sobre `1c6e32e`)
+
+Cierra F57-3; F57-1, F57-2 y F57-4 correctos en su núcleo; acepta `test.slow()`.
+Tres importantes, restos de los anteriores, en un solo commit sin migraciones.
+Pruebas primero: **4 en rojo** antes del código.
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| F57-5 | `rowMode()` usaba las partes positivas: «100 %» para un equal de $1 o un 99/1 sobre $50 | Sale del modo: `equal` «50/50»; `percent` los porcentajes declarados (100/0 → «100 %»); `amount` «100 %» solo con una única parte positiva | equal $1, 99/1 sobre $50, 100/0 sobre $80.000 y dos casos de importe |
+| F57-6 | El desconocido y el «todavía no consta» de Deshacer iban en un toast que caducaba a los 6 s | Aviso fijo en el proveedor, en memoria (`WriteUnknown` con el texto del deshacer): no caduca, «Reintentar» y «Comprobar estado» sobre la intención original, y «Cerrar aviso» pide «¿Cerrar sin confirmar?» | desconocido + 7 s y reintento con la clave original; `not_found` + 7 s, cerrar con «Seguir aquí» y con «Cerrar» |
+| F57-7 | El vacío de Actividad en Nosotros se decidía solo con la lista | Con `couple_month_summary.count > 0` y la lista vacía se ve el resumen y un aviso neutro con «Volver a cargar» (`copy.activity.coupleStale`, copy nuevo) | lista vacía y resumen con 1 gasto |
+
+Iteración: componentes 330 de 330 (las suites de F57, edición y Actividad, tres
+veces seguidas sin fallos); `verify` 66,54 s. `npm run e2e:dev` completo antes
+del push: **E2E 26 de 26** y **axe 187 de 188**, total 593,78 s (axe 518,99 s). El
+único fallo fue `/recuperar · A4b · light · 1440px` por `document-title`, el
+intermitente de la 002 ya anotado en el PR B (pasada 3), en una pantalla que este PR
+no toca; repetido aparte (`npm run e2e:dev -- tests/a11y/routes.a11y.ts -g A4b`):
+**4 de 4**.

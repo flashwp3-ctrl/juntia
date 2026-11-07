@@ -12,6 +12,8 @@ import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate } from "./annotate-provider";
 import { SharedTransactionActions } from "./shared-transaction-actions";
 import { lastFromSaved, splitFromSaved } from "./split-state";
+import { rowMode } from "@/features/shared/shared-format";
+import { parseAmountMinor } from "@/domain/money";
 import type { ExpenseActions } from "./types";
 import type { CoupleForSheet, MoveResult, SavedShared, SharedActions } from "./shared-types";
 
@@ -102,6 +104,17 @@ describe("F57-3: borrar con resultado desconocido", () => {
   });
 });
 
+describe("F57-5: el reparto que se muestra sale del modo", () => {
+  const row = (saved: SavedShared) => ({ splitMode: saved.splitMode, splitPercents: saved.splitPercents, allocations: Object.entries(saved.parts).map(([userId, value]) => ({ userId, amount: parseAmountMinor(value) })) });
+  it("equal de $1 → «50/50»; 99/1 sobre $50 → «99/1»; 100/0 sobre $80.000 → «100 %»; amount con una parte positiva → «100 %»", () => {
+    expect(rowMode(row(expense()))).toBe(copy.shared.mode.equal);
+    expect(rowMode(row(expense({ amountMinor: "5000", splitMode: "percent", splitPercents: [99, 1], parts: { [SARA]: "5000", [TOMAS]: "0" } })))).toBe(copy.shared.mode.percentOf([99, 1]));
+    expect(rowMode(row(expense({ amountMinor: "8000000", splitMode: "percent", splitPercents: [100, 0], parts: { [SARA]: "8000000", [TOMAS]: "0" } })))).toBe("100 %");
+    expect(rowMode(row(expense({ amountMinor: "8000000", splitMode: "amount", parts: { [SARA]: "8000000", [TOMAS]: "0" } })))).toBe("100 %");
+    expect(rowMode(row(expense({ amountMinor: "8000000", splitMode: "amount", parts: { [SARA]: "5000000", [TOMAS]: "3000000" } })))).toBe(copy.shared.mode.amount);
+  });
+});
+
 describe("F57-4: «Deshacer» con los tres resultados", () => {
   function Annotate() {
     const { openFrom } = useAnnotate();
@@ -151,6 +164,37 @@ describe("F57-4: «Deshacer» con los tres resultados", () => {
     await act(async () => { resolveLate({ status: "ok", value: { id: "aa1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10", version: 2 } }); });
     expect(screen.queryByText(copy.annotate.undone.expense)).toBeNull();
     expect(screen.getByText(copy.writes.undoUnknown)).toBeTruthy();
+  });
+
+  it("F57-6: el aviso de un deshacer desconocido no caduca: 7 s después siguen «Comprobar estado» y el reintento con la clave original", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const voidShared = vi.fn<SharedActions["voidShared"]>().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValueOnce({ status: "ok", value: { id: "aa1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10", version: 2 } });
+    const user = await saveShared(sharedActions({ voidShared }));
+    await screen.findByText(copy.writes.undoUnknown);
+    await act(async () => { vi.advanceTimersByTime(7_000); });
+    expect(screen.getByRole("button", { name: copy.writes.check })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.retry }));
+    await waitFor(() => expect(voidShared).toHaveBeenCalledTimes(2));
+    expect(voidShared.mock.calls[1][0]).toEqual(voidShared.mock.calls[0][0]);
+    expect(await screen.findByText(copy.annotate.undone.expense)).toBeTruthy();
+  });
+
+  it("F57-6: después de not_found tampoco caduca; cerrar pide «¿Cerrar sin confirmar?»", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const voidShared = vi.fn(async () => ({ status: "unknown" as const }));
+    const user = await saveShared(sharedActions({ voidShared }));
+    await user.click(await screen.findByRole("button", { name: copy.writes.check }));
+    await screen.findByText(copy.writes.notFound);
+    await act(async () => { vi.advanceTimersByTime(7_000); });
+    expect(screen.getByRole("button", { name: copy.writes.retry })).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.writes.check })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.dismiss }));
+    const confirm = await screen.findByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(confirm).getByRole("button", { name: copy.writes.close.keep }));
+    expect(screen.getByRole("button", { name: copy.writes.check })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.dismiss }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: copy.writes.close.title })).getByRole("button", { name: copy.writes.close.confirm }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: copy.writes.check })).toBeNull());
   });
 
   it("«Deshacer» de Mover a Pareja con la respuesta perdida consulta undo_reclassify_to_shared", async () => {
