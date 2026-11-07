@@ -34,6 +34,9 @@ describe("selección de casos a11y por job (T031d)", () => {
 
   it("con A11Y_JOB=e2e aparecen los casos con sesión de los archivos nuevos y las entradas de e2eEntries", () => {
     expect(e2e.filter((line) => line.includes("couple.a11y.ts") && sessionTitle(line)).length).toBeGreaterThan(0);
+    // PR C de la 003 (T044b): el archivo de Nosotros con pareja activa, solo en e2e.
+    expect(e2e.filter((line) => line.includes("couple-shared.a11y.ts") && sessionTitle(line)).length).toBeGreaterThan(0);
+    expect(app.filter((line) => line.includes("couple-shared.a11y.ts"))).toEqual([]);
     for (const entry of e2eEntries.filter((item) => item.axe !== false)) expect(e2e.some((line) => line.includes(entryTitle(entry))), `${entry.route} · ${entry.state}`).toBe(true);
   });
 

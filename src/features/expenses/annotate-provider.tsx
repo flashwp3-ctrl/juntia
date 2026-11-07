@@ -11,6 +11,8 @@ import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import type { ActionResult, ExpenseActions, PendingRow, SavedTransaction } from "./types";
+import type { CoupleForSheet, SavedShared, SharedActions } from "./shared-types";
+import type { ContextChoice } from "@/lib/context-preference";
 import { newIdempotencyKey } from "./idempotency";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
@@ -50,7 +52,8 @@ type AnnotateState = {
   actions: ExpenseActions;
   /** UX lote 1, cambio 3: oculta la hoja, enseña la fila al instante y envía; si falla, la hoja vuelve (ver `track`). */
   track: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
-
+  /** PR C (andamio de T047): editar un gasto compartido. */
+  openEditShared: (expense: SavedShared, trigger: HTMLElement | null, onReload: () => void) => void;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -73,6 +76,10 @@ type AnnotateProviderProps = {
   actions: ExpenseActions;
   /** Hoy en Bogotá, que calcula el servidor; por defecto, el del dispositivo llevado a Bogotá. */
   today?: string;
+  /** PR C (andamio de T046): la pareja activa para la hoja, sus escrituras y el contexto de la app. */
+  couple?: CoupleForSheet | null;
+  sharedActions?: SharedActions;
+  context?: ContextChoice;
 };
 
 export function AnnotateProvider({ children, actions, today }: AnnotateProviderProps) {
@@ -290,7 +297,8 @@ export function AnnotateProvider({ children, actions, today }: AnnotateProviderP
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, highlightId, notify, actions, track }), [open, openFrom, openEdit, highlightId, notify, actions, track]);
+  const openEditShared = useCallback((expense: SavedShared, trigger: HTMLElement | null, onReload: () => void) => { void expense; void trigger; void onReload; }, []);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, highlightId, notify, actions, track }), [open, openFrom, openEdit, openEditShared, highlightId, notify, actions, track]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>

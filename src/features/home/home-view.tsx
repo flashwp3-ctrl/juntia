@@ -32,7 +32,10 @@ const categoryFg: Record<CategoryId, string> = {
   services: "text-category-services-fg", income: "text-category-income-fg", other: "text-category-other-fg",
 };
 
-type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string };
+/** PR C (andamio de T048): la parte compartida de Yo (my_shared_parts) y el resumen de me_month_summary. */
+export type SharedPartRow = { id: string; transactionDate: string; categoryId: CategoryId; description: string | null; amount: Money; myPart: Money; payerUserId: string };
+export type MeSummary = { privateMinor: string; sharedPartMinor: string; consumptionMinor: string };
+type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string; shared?: { parts: readonly SharedPartRow[]; summary: MeSummary } };
 
 export function HomeView({ rows, month, today }: HomeViewProps) {
   const name = monthName(month);

@@ -12,7 +12,9 @@ import { DbError, mapDbError, type DbErrorKind } from "@/lib/db/errors";
 /** Errores de dominio que la interfaz sabe decir (contracts/errors.md); el resto cae en `unexpected`. */
 export type WriteError =
   | "alreadyInCouple" | "invitationGone" | "alreadyAccepted" | "invalid" | "invalidEmail" | "versionConflict"
-  | "sessionExpired" | "unexpected";
+  | "sessionExpired" | "unexpected"
+  // PR C (T045): gasto compartido y Mover a Pareja.
+  | "alreadyDeleted" | "notFound" | "invalidSplit" | "coupleNotActive" | "moveNotAllowed" | "undoNotAvailable";
 export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError } | { status: "unknown" };
 /**
  * Lo que devuelve «Comprobar estado», ya normalizado por la Server Action. `error`: no se pudo comprobar (red); el
@@ -20,7 +22,10 @@ export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected";
  */
 export type WriteStatusOutcome<T> = { state: "completed"; value: T } | { state: "not_found" } | { state: "error" };
 /** Acciones de `idempotency_records` que el PR B consulta con `write_status`. El PR C añade las suyas. */
-export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation";
+export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation"
+  | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared";
+/** Andamio de T045: la lista se completa con la implementación. */
+export const SHARED_WRITE_ACTIONS: readonly WriteAction[] = [];
 
 const UNKNOWN: ReadonlySet<DbErrorKind> = new Set(["network", "retryable", "retryExhausted", "unexpected"]);
 const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {

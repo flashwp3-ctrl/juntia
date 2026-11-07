@@ -38,6 +38,21 @@ export async function seedCouple({index,golden=false}:{index:number;golden?:bool
   return {groupId,sara,tomas};
 }
 
+/**
+ * PR C de la 003 (T044a, T044b): las seis filas compartidas del dataset dorado por la función real, con la sesión de Sara.
+ * `golden`: las fechas literales de octubre. `recent`: el mismo día del mes en curso, nunca después de hoy (como
+ * `seedMovements`), para Inicio en Nosotros, que enseña el mes en curso. Devuelve los gastos creados.
+ */
+export async function seedSharedMovements(pair:SeededCouple,data:"golden"|"recent") {
+  const today=todayInBogota();const users={sara:pair.sara.id,tomas:pair.tomas.id};
+  const date=(value:string)=>data==="golden"?value:`${today.slice(0,7)}-${value.slice(8)>today.slice(8)?today.slice(8):value.slice(8)}`;
+  const created=[];
+  for(const row of sharedOctober2026) created.push(await createSharedExpense(pair.sara.client,{idempotencyKey:randomUUID(),amount:row.amount,categoryId:row.categoryId,transactionDate:date(row.transactionDate),description:row.description,
+    payerUserId:users[row.payerUserId as keyof typeof users],splitMode:row.splitMode,splitPercents:row.splitPercents,
+    allocations:row.allocations.map(a=>({userId:users[a.userId as keyof typeof users],amount:a.amount}))}));
+  return created;
+}
+
 /** URL y claves del Supabase del runner o, en `e2e:dev`, de juntia-dev. Falla con cualquier otro destino. */
 export function runnerSupabase() {
   const url = process.env.API_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
