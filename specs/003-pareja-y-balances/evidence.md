@@ -1416,3 +1416,28 @@ A, el bloqueo se libera. Lo mismo con «Deshacer» de Mover a Pareja.
 Iteración: componentes de `src/features/expenses` 167 de 167 (F57 y edición, tres
 veces seguidas sin fallos); `verify` 62,17 s; E2E dirigidas
 (`annotate.e2e.ts` y `couple-settle.e2e.ts`) **19 de 19**.
+
+## Quinta ronda F57 (sobre `a4fb4ea`)
+
+Confirma la exclusión mutua, la recuperación de A con su clave y el límite de 15 s.
+Queda un detalle de F57-9: al resolverse A desde el aviso fijo, su `notify()`
+sustituía el aviso de B, que esperaba con su «Deshacer» bloqueado, y B perdía su
+oportunidad de deshacer.
+
+Corrección mínima: el resultado de una recuperación (aviso fijo) **nunca** usa
+`notify()` ni toca el aviso ordinario. Se muestra un momento en el sitio del aviso
+fijo (un Toast propio, con su rol `status` o `alert`, que se anuncia y se retira solo)
+con el copy que ya existía («Gasto deshecho», «Volvió a Yo.» o el rechazo). El aviso de
+B se queda y, al liberarse la reserva, su «Deshacer» se habilita con su propia clave.
+Desde el aviso con «Deshacer», un resultado solo usa `notify()` si nadie ocupó su
+lugar: una respuesta vieja no pisa un mensaje más nuevo.
+
+Pruebas (`review-f57.test.tsx`, primero en rojo), para `voidShared` y `undoMove`: A
+desconocido, se guarda B con su «Deshacer» bloqueado, «Comprobar estado» de A da
+`completed`; el aviso de B sigue, se habilita y deshace B con una clave distinta de la
+de A. Y un `write_status` de A retenido mientras aparece el aviso de B: al resolverse
+no lo sustituye.
+
+Iteración: componentes de `src/features/expenses` 170 de 170 (F57 y edición, tres
+veces seguidas sin fallos); `verify` 55,07 s; E2E dirigidas (`annotate.e2e.ts` y
+`couple-settle.e2e.ts`) **19 de 19**.

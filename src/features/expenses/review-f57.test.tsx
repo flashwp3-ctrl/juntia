@@ -307,6 +307,83 @@ describe("F57-8: un deshacer pendiente a la vez", () => {
     expect(undoReclassify).toHaveBeenCalledTimes(1);
   }, 30_000);
 
+  // Quinta ronda: la recuperación de A (aviso fijo) nunca usa el aviso ordinario: el de B se queda y se habilita con su clave.
+  it("F57-9: A se resuelve desde el aviso fijo y el aviso de B sigue, se habilita y deshace B con su propia clave", async () => {
+    let n = 0;
+    const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));
+    const voidShared = vi.fn<SharedActions["voidShared"]>().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValue({ status: "ok", value: { id: ids[1], version: 2 } });
+    const check = vi.fn<SharedActions["check"]>(async () => ({ state: "completed", value: { id: ids[0], version: 2 } }));
+    const user = userEvent.setup();
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ create, voidShared, check })} couple={couple} context="us" today="2026-11-05"><Pages /></AnnotateProvider>);
+    await user.click(await annotate(user));
+    await screen.findByText(copy.writes.undoUnknown);
+    const undoB = await annotate(user);
+    expect(undoB.getAttribute("aria-disabled")).toBe("true");
+    await user.click(screen.getByRole("button", { name: copy.writes.check }));
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    // El aviso de B no se sustituyó: sigue ahí y ya se puede usar.
+    expect(screen.getByText(copy.annotate.saved.expense)).toBeTruthy();
+    const enabled = screen.getByRole("button", { name: copy.annotate.undo });
+    expect(enabled.getAttribute("aria-disabled")).toBeNull();
+    await user.click(enabled);
+    await waitFor(() => expect(voidShared).toHaveBeenCalledTimes(2));
+    expect(voidShared.mock.calls[1][0]).toMatchObject({ transactionId: ids[1], reason: "undo" });
+    expect(voidShared.mock.calls[1][0].idempotencyKey).not.toBe(voidShared.mock.calls[0][0].idempotencyKey);
+  }, 20_000);
+
+  it("F57-9: un write_status de A retenido no sustituye el aviso nuevo de B al resolverse", async () => {
+    let n = 0;
+    const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));
+    const voidShared = vi.fn<SharedActions["voidShared"]>(async () => ({ status: "unknown" }));
+    let release!: (value: Awaited<ReturnType<SharedActions["check"]>>) => void;
+    const check = vi.fn<SharedActions["check"]>(() => new Promise((resolve) => { release = resolve; }));
+    const user = userEvent.setup();
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ create, voidShared, check })} couple={couple} context="us" today="2026-11-05"><Pages /></AnnotateProvider>);
+    await user.click(await annotate(user));
+    await user.click(await screen.findByRole("button", { name: copy.writes.check }));
+    await annotate(user);
+    await act(async () => { release({ state: "completed", value: { id: ids[0], version: 2 } }); });
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    expect(screen.getByText(copy.annotate.saved.expense)).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.annotate.undo }).getAttribute("aria-disabled")).toBeNull();
+  }, 20_000);
+
+  it("F57-9: con Mover a Pareja, A se resuelve desde el aviso fijo y B deshace con su propia clave", async () => {
+    const shared = (id: string) => expense({ id, version: 1, movedFromMe: true, amountMinor: "6400000", parts: { [SARA]: "3200000", [TOMAS]: "3200000" } });
+    let n = 0;
+    const reclassify = vi.fn(async () => ({ status: "ok" as const, value: { voidedPrivateId: "5d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a1" + n, shared: shared(ids[n++]) } }));
+    const undoReclassify = vi.fn<NonNullable<SharedActions["undoReclassify"]>>().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValue({ status: "ok", value: { restoredPrivateId: "8d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10" } });
+    let release!: (value: Awaited<ReturnType<SharedActions["check"]>>) => void;
+    const check = vi.fn<SharedActions["check"]>(() => new Promise((resolve) => { release = resolve; }));
+    const previewMove = vi.fn(async () => ({ ok: true as const, value: { month: "2026-11", privateMinor: "12800000", sharedPartMinor: "0", coupleTotalMinor: "0", balance: [{ userId: SARA, netMinor: "0" }, { userId: TOMAS, netMinor: "0" }] } }));
+    const user = userEvent.setup();
+    function Move() {
+      const { openMove } = useAnnotate();
+      return <button type="button" onClick={(event) => openMove({ id: "7d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a1" + n, type: "expense", categoryId: "health", transactionDate: "2026-11-05", description: "Farmacia", amountMinor: "6400000", version: 1 }, event.currentTarget)}>{copy.move.action}</button>;
+    }
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ reclassify, undoReclassify, check, previewMove })} couple={couple} context="me" today="2026-11-05"><Move /></AnnotateProvider>);
+    const move = async () => {
+      await user.click(screen.getByRole("button", { name: copy.move.action }));
+      const dialog = await screen.findByRole("dialog", { name: copy.move.action });
+      await user.click(within(dialog).getByRole("button", { name: copy.move.review }));
+      await within(dialog).findByRole("list");
+      await user.click(within(dialog).getByRole("button", { name: copy.move.confirm }));
+      return screen.findByRole("button", { name: copy.annotate.undo });
+    };
+    await user.click(await move());
+    await user.click(await screen.findByRole("button", { name: copy.writes.check }));
+    const undoB = await move();
+    expect(undoB.getAttribute("aria-disabled")).toBe("true");
+    await act(async () => { release({ state: "completed", value: { restoredPrivateId: "8d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10" } }); });
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    const enabled = screen.getByRole("button", { name: copy.annotate.undo });
+    expect(enabled.getAttribute("aria-disabled")).toBeNull();
+    await user.click(enabled);
+    await waitFor(() => expect(undoReclassify).toHaveBeenCalledTimes(2));
+    expect(undoReclassify.mock.calls[1][0]).toMatchObject({ sharedTransactionId: ids[1] });
+    expect(undoReclassify.mock.calls[1][0].idempotencyKey).not.toBe(undoReclassify.mock.calls[0][0].idempotencyKey);
+  }, 20_000);
+
   it("con A desconocido, el Deshacer de B está deshabilitado, A sigue recuperable al navegar y, resuelto A, vuelve el Deshacer", async () => {
     let n = 0;
     const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));

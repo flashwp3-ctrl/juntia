@@ -304,6 +304,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   type ActiveUndo = { intent: UndoIntent; phase: "running" | "unknown" | "notFound"; checking: boolean };
   const [activeUndo, setActiveUndoState] = useState<ActiveUndo | null>(null);
   const [confirmingDismiss, setConfirmingDismiss] = useState(false);
+  const [recoveryNote, setRecoveryNote] = useState<{ id: number; tone: ToastTone; message: string } | null>(null);
+  const recoveryNoteId = useRef(0);
   const activeRef = useRef<ActiveUndo | null>(null);
   // La referencia cambia en el acto (un segundo toque en el mismo cuadro ya ve la reserva); el estado pinta.
   const setActiveUndo = useCallback((next: ActiveUndo | null) => { activeRef.current = next; setActiveUndoState(next); }, []);
@@ -334,12 +336,15 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     undoing.current.delete(intent.id);
     // Se aplica por la identidad: si la reserva ya no es esta intención (se cerró confirmándolo), la respuesta no toca nada.
     if (activeRef.current?.intent !== intent) return;
-    // Un mensaje ordinario solo sale si nadie ocupó el lugar del aviso de esta intención.
-    const visible = source === "pending" || generation === toastGeneration.current;
     if (outcome.kind === "ok" || outcome.kind === "rejected") {
       setActiveUndo(null);
       if (outcome.kind === "ok") intent.onOk();
-      if (visible) notify(outcome.kind === "ok" ? { tone: "success", message: intent.done } : { tone: "error", message: intent.rejected(outcome.error) });
+      const result = outcome.kind === "ok" ? { tone: "success" as const, message: intent.done } : { tone: "error" as const, message: intent.rejected(outcome.error) };
+      // Quinta ronda F57-9: el resultado de una recuperación (aviso fijo) nunca usa el aviso ordinario, que puede ser el de B
+      // esperando con su «Deshacer»: se muestra un momento en el sitio del aviso fijo y se retira. Desde el aviso con
+      // «Deshacer», solo si nadie ocupó su lugar (una respuesta vieja no pisa un mensaje más nuevo).
+      if (source === "pending") { recoveryNoteId.current += 1; setRecoveryNote({ id: recoveryNoteId.current, ...result }); }
+      else if (generation === toastGeneration.current) notify(result);
     } else {
       // Desconocido o sin constar: queda el aviso fijo, que no caduca; el aviso con «Deshacer» de esta intención se retira.
       if (source === "toast" && generation === toastGeneration.current) setToast(null);
@@ -501,6 +506,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
           sidebar. Un solo aviso a la vez: el nuevo reemplaza al anterior. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[var(--z-toast)] flex justify-center px-3.5 lg:bottom-6 lg:pl-[calc(76px+28px)] xl:pl-[calc(248px+40px)]">
         <div className="flex w-full max-w-[440px] flex-col gap-2">
+          {recoveryNote ? <Toast key={`recuperacion-${recoveryNote.id}`} tone={recoveryNote.tone} message={recoveryNote.message} onTimeout={() => setRecoveryNote((current) => (current?.id === recoveryNote.id ? null : current))} /> : null}
           {pendingUndo ? (
             <div className="pointer-events-auto shadow-raised rounded-[16px]">
               <WriteUnknown
