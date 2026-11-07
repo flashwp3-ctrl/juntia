@@ -1282,9 +1282,8 @@ encuentra ningún `color-contrast` en las hojas. No se cambia ningún token.
 **Comps actualizados por Claude Design (7 nov 2026, aviso del gestor).** El 06 fija
 `#48443C` para «Ingreso» sin elegir y para el marcador de posición, en claro y en
 Yo. El marcador ya usa ese tono. «Ingreso» sin elegir va en tinta `#1A1C1A`,
-más oscuro, por la errata de Segmented del 3 nov 2026 («etiqueta en tinta en
-todos los segmentos»), que vale para todos los Segmented de la app: no se cambia
-dentro de este PR y se lleva al gestor. En «02 Componentes», 02·5/02·6 «Modo
+más oscuro: la comp 06 pide #48443C; la app mantiene la tinta del Segmented
+(errata del 3 nov), con más contraste, decisión del gestor. En «02 Componentes», 02·5/02·6 «Modo
 Nosotros · 2a oficial» N1–N4: N1, N2 y N4 coinciden con lo construido; N3 dibuja
 la decisión 4 en dos líneas («Pagó Tomás · 100 %» sobre «Sara · $186.400») y el
 resumen se alineó con él (test primero, visto en rojo).
@@ -1324,4 +1323,4 @@ texto nuevo de Nosotros para Metas y Plan con pareja activa.
 
 ## T053 · punto de control intermedio (CI)
 
-Pendiente: se registra aquí tras el run.
+T053 se fusiona con el gate por decisión del gestor (minutos de CI): no se lanza `gh workflow run`. La duración del job `e2e` frente a los 480 s se mide en la pasada de `ready_for_review` (T056), que es la única de este PR. Si supera 480 s, el gestor lo lleva a los fundadores antes del merge.
