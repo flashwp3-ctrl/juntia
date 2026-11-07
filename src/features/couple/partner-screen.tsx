@@ -198,15 +198,21 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   // F55-6: un ok que llega después de un resultado desconocido (por «Reintentar» o «Comprobar estado») puede ser de una
   // invitación que otra pestaña ya regeneró o anuló. Antes de mostrar el enlace se relee my_couple: solo se muestra si la
   // invitación del resultado sigue siendo la pendiente; si no, o si no se puede leer, se avisa y se relee Mi pareja.
+  // F55-7 (cuarta ronda del PR #55): la comprobación va atada a la clave de su intención. Su respuesta solo cambia
+  // `linkCheck` si esa clave sigue siendo la de la comprobación en curso de esta hoja; cerrar o empezar otra intención
+  // la invalida. El enlace exige además que la clave coincida con la del ok que se pinta.
   const afterUnknown = useRef(false);
-  const [linkCheck, setLinkCheck] = useState<"fresh" | "checking" | "valid" | "changed">("fresh");
-  const onOk = useCallback((value: Issued) => {
+  type LinkCheck = { key: string | null; state: "fresh" | "checking" | "valid" | "changed" };
+  const [linkCheck, setLinkCheck] = useState<LinkCheck>({ key: null, state: "fresh" });
+  const onOk = useCallback((value: Issued, payload: { idempotencyKey: string }) => {
     router.refresh();
-    if (!afterUnknown.current) { setLinkCheck("fresh"); return; }
-    setLinkCheck("checking");
+    const key = payload.idempotencyKey;
+    if (!afterUnknown.current) { setLinkCheck({ key, state: "fresh" }); return; }
+    setLinkCheck({ key, state: "checking" });
+    const settle = (next: "valid" | "changed") => setLinkCheck((current) => (current.key === key && current.state === "checking" ? { key, state: next } : current));
     actions.currentInvitation().then(
-      (current) => setLinkCheck(current.state === "read" && current.invitationId === value.invitationId ? "valid" : "changed"),
-      () => setLinkCheck("changed"),
+      (current) => settle(current.state === "read" && current.invitationId === value.invitationId ? "valid" : "changed"),
+      () => settle("changed"),
     );
   }, [router, actions]);
   const onRejected = useCallback((error: WriteError) => {
@@ -234,7 +240,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   const finish = () => {
     started.current = false;
     afterUnknown.current = false;
-    setLinkCheck("fresh");
+    setLinkCheck({ key: null, state: "fresh" });
     create.reset();
     regenerate.reset();
     setEmail("");
@@ -259,7 +265,9 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   };
 
   // El enlace solo se pinta si el resultado es de esta misma intención (misma clave que el token de esta apertura).
-  const linkAllowed = linkCheck === "fresh" || linkCheck === "valid";
+  const okKey = state.phase === "ok" ? state.key : null;
+  const checkOfThisOk = okKey !== null && linkCheck.key === okKey;
+  const linkAllowed = checkOfThisOk && (linkCheck.state === "fresh" || linkCheck.state === "valid");
   const issued = state.phase === "ok" && pair && state.key === pair.key && linkAllowed ? { link: invitationLink(window.location.origin, pair.token), expiresAt: state.value.expiresAt } : null;
   const title = mode === "create" ? copy.couple.invite.title : copy.couple.invite.regenerateTitle;
   const lead = issued ? (mode === "create" ? copy.couple.invite.readyLead : copy.couple.invite.regenerateLead) : mode === "create" ? copy.couple.invite.lead : copy.couple.invite.regenerateLead;
@@ -307,13 +315,13 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
             </p>
           ) : null}
           {notice ? <InlineNotice tone="danger" icon="warning-circle">{notice}</InlineNotice> : null}
-          {state.phase === "ok" && linkCheck === "checking" ? (
+          {checkOfThisOk && linkCheck.state === "checking" ? (
             <p role="status" className="flex items-center gap-2 text-[14px] text-ink-secondary">
               <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
               {copy.writes.checking}
             </p>
           ) : null}
-          {state.phase === "ok" && linkCheck === "changed" ? <InlineNotice icon="info">{copy.couple.invite.changed}</InlineNotice> : null}
+          {checkOfThisOk && linkCheck.state === "changed" ? <InlineNotice icon="info">{copy.couple.invite.changed}</InlineNotice> : null}
           {state.phase === "unknown" ? <WriteUnknown checking={state.checking} notFound={state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} /> : null}
           {issued ? <IssuedLink link={issued.link} expiresAt={issued.expiresAt}>{rules}</IssuedLink> : rules}
           {mode === "create" && !issued && !locked ? (

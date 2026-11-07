@@ -1082,3 +1082,25 @@ del PR):
   otra pestaña lo anula y Comprobar estado da ok, sin enlace; con `my_couple`
   ilegible, tampoco hay enlace. También se comprueba que el primer ok no relee.
   Se retiraron las pruebas de la reanudación.
+
+## Cuarta ronda F55 (sobre `1d7f1a3`)
+
+F55-5 queda cerrado; F55-3 se mantiene y la comprobación de vigencia de F55-6 se
+da por buena. Queda una carrera:
+
+- **F55-7 (importante).** La comprobación de vigencia lanzada desde `onOk` no
+  estaba atada a su intención: una respuesta vieja de A podía poner «vigente» o
+  «cambiada» sobre el ok de B. Ahora `linkCheck` es `{ key, state }`, con la
+  clave de la intención. La respuesta solo lo actualiza si esa clave sigue siendo
+  la de la comprobación en curso; cerrar la hoja o empezar otra intención la
+  invalida. El enlace y el aviso exigen que la clave coincida con la del ok que
+  se pinta.
+- Pruebas de regresión con promesas retenidas, en dos variantes, escritas antes
+  y vistas en rojo por la carrera descrita. En las dos, A llega a ok tras un
+  resultado desconocido y su comprobación queda retenida; se cierra A, se abre B
+  y B llega a ok igual, también con la comprobación retenida.
+  - A se resuelve vigente y B no muestra enlace; B se resuelve cambiada y solo
+    aparece el aviso.
+  - A se resuelve cambiada y B vigente: se ve el enlace de B, sin aviso.
+
+Comprobaciones de F55-7: `verify` verde (49,17 s); pareja 76/76; dirigida (E2E de invitación y `couple.a11y.ts`) 7/7. `e2e:dev` completo: E2E 23/23 y axe 180/182. Fallan `/actividad · Actividad mes futuro · light · 390` (`fetch failed` hacia juntia-dev al sembrar en `seedMovements`) y `/recuperar · A4b · dark · 390` (`document-title`, la intermitencia ya anotada). Son pantallas de la 002, no tocadas. Repetidas con `npm run e2e:dev -- tests/a11y/routes.a11y.ts -g "Actividad mes futuro|A4b"`: 8/8.

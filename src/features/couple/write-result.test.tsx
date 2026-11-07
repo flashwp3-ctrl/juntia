@@ -3,7 +3,7 @@
 // escribió, con los campos bloqueados, «Reintentar» idéntico (misma clave y, en crear y regenerar, el mismo token) y
 // «Comprobar estado» con `write_status` (`completed` lleva al resultado real; `not_found` dice que todavía no consta).
 // Incluye aceptar con la respuesta perdida: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez».
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
@@ -421,5 +421,56 @@ describe("sin reanudación tras recargar y revalidación del enlace (F55-5, F55-
     const { dialog } = await openCreate(coupleActions({ currentInvitation }));
     expect(await within(dialog).findByRole("textbox", { name: copy.couple.invite.link })).toBeTruthy();
     expect(currentInvitation).not.toHaveBeenCalled();
+  });
+});
+
+// F55-7 (cuarta ronda del PR #55): la comprobación de vigencia de una intención no puede pintar el resultado de otra.
+describe("la comprobación de vigencia va atada a su intención (F55-7)", () => {
+  async function twoIntentions(resolveAWith: string, resolveBWith: string) {
+    const user = userEvent.setup();
+    let resolveA!: (value: unknown) => void;
+    let resolveB!: (value: unknown) => void;
+    const regenerate = vi.fn()
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "A" } })
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValueOnce({ status: "ok", value: { expiresAt: EXPIRES, invitationId: "B" } });
+    const currentInvitation = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveA = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveB = resolve; }));
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate, currentInvitation })} />);
+
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialogA = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    await user.click(await within(dialogA).findByRole("button", { name: copy.writes.retry }));
+    await waitFor(() => expect(currentInvitation).toHaveBeenCalledTimes(1));
+    await user.click(within(dialogA).getByRole("button", { name: copy.primitives.close }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialogB = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    await user.click(await within(dialogB).findByRole("button", { name: copy.writes.retry }));
+    await waitFor(() => expect(currentInvitation).toHaveBeenCalledTimes(2));
+    const tokenB = regenerate.mock.calls[2][0].token;
+
+    await act(async () => resolveA({ state: "read", invitationId: resolveAWith }));
+    expect(within(dialogB).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+    expect(within(dialogB).queryByText(copy.couple.invite.changed)).toBeNull();
+    await act(async () => resolveB({ state: "read", invitationId: resolveBWith }));
+    return { dialogB, tokenB };
+  }
+
+  it("A se resuelve vigente y B cambiada: B nunca muestra el enlace, solo el aviso", async () => {
+    const { dialogB, tokenB } = await twoIntentions("A", "Z");
+    expect(await within(dialogB).findByText(copy.couple.invite.changed)).toBeTruthy();
+    expect(within(dialogB).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+    expect(document.body.textContent).not.toContain(tokenB);
+  });
+
+  it("A se resuelve cambiada y B vigente: B muestra su propio enlace y ningún aviso", async () => {
+    const { dialogB, tokenB } = await twoIntentions("X", "B");
+    const link = (await within(dialogB).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement;
+    expect(link.value.endsWith(`#t=${tokenB}`)).toBe(true);
+    expect(within(dialogB).queryByText(copy.couple.invite.changed)).toBeNull();
   });
 });
