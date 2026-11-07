@@ -35,7 +35,7 @@ async function annotate(page: Page, pesos: string) {
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
   await page.keyboard.type(pesos);
-  await sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first().click();
+  await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
   return sheet;
 }
 
@@ -122,4 +122,240 @@ test("motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (
   await expect(page.locator("a[data-new]:visible")).toHaveCount(1);
   await expect.poll(() => page.evaluate(() => (window as unknown as { __rowAnimations: string[] }).__rowAnimations)).toContain("row-new");
   await context.close();
+});
+
+// UX lote 1, cambio 3. Criterio literal (petición de los fundadores): «guardar → la fila aparece antes de la respuesta → se
+// confirma». La petición de la Server Action se retiene en el navegador hasta que la prueba la suelta: mientras tanto el
+// servidor ni la ve, y la fila ya está en la lista, marcada «Guardando…», sin aviso de guardado. Al soltarla, la fila en
+// vuelo se va, llega la real (una sola) y la base tiene un movimiento más. Es un caso de la spec 2, no una spec nueva.
+test("UX 3: Guardar → la fila aparece antes de la respuesta del servidor → se confirma, una sola vez", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "fila-optimista", index: testInfo.parallelIndex });
+  const seeded = (await seedMovements(user, "recent")).length;
+  await signedInHome(page, user);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let held = 0;
+  await page.route("**/*", async (route) => {
+    if (route.request().method() === "POST" && "next-action" in route.request().headers()) { held += 1; await gate; }
+    await route.continue();
+  });
+
+  const sheet = await annotate(page, "47350");
+  await page.keyboard.press("Enter");
+  // La hoja se oculta y la fila aparece sin que el servidor haya respondido (la petición sigue retenida).
+  await expect(sheet).toBeHidden();
+  const inFlight = page.locator("[data-pending='saving']:visible");
+  await expect(inFlight).toHaveCount(1);
+  await expect(inFlight).toContainText("$47.350");
+  await expect(inFlight).toContainText(copy.row.pending.saving);
+  expect(held).toBe(1);
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toHaveCount(0);
+  expect(await activeCount(user)).toBe(seeded);
+
+  // Se suelta la respuesta: se confirma, la fila en vuelo desaparece y queda la real, una sola vez.
+  release();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  await expect(page.locator("a[data-transaction-id]:visible").filter({ hasText: "$47.350" })).toHaveCount(1);
+  expect(await activeCount(user)).toBe(seeded + 1);
+
+  // Navegar a Actividad no deja ni duplicado ni fantasma.
+  await page.getByRole("link", { name: copy.nav.activity }).first().click();
+  await expect(page).toHaveURL(/\/actividad/);
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  // En Actividad la fila real es un enlace con su nombre accesible completo (a 1280 px la tabla; debajo, la lista).
+  await expect(page.locator("tbody tr:visible, [data-transaction-id]:visible").filter({ hasText: "47.350" })).toHaveCount(1);
+});
+
+// UX lote 1, cambio 5. El cursor computado en un navegador real, en 390 y 1440 px: mano en lo pulsable, not-allowed en lo
+// deshabilitado. (La cobertura de selectores está en src/styles/cursor.test.tsx.)
+for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test(`UX 5: cursor de mano en lo pulsable y not-allowed en lo deshabilitado (${viewport.width} px)`, async ({ page }, testInfo) => {
+    const user = await seedUser({ role: `cursor-${viewport.width}`, index: testInfo.parallelIndex });
+    await page.setViewportSize(viewport);
+    await signedInHome(page, user);
+    const cursorOf = (locator: ReturnType<Page["locator"]>) => locator.evaluate((element) => getComputedStyle(element).cursor);
+
+    const trigger = page.locator("[data-annotate-trigger]:visible").first();
+    expect(await cursorOf(trigger)).toBe("pointer");
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+    await expect(sheet).toBeVisible();
+    expect(await cursorOf(sheet.getByRole("button", { name: copy.annotate.close }))).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first())).toBe("pointer");
+    expect(await cursorOf(sheet.getByLabel(copy.annotate.date))).toBe("pointer");
+    expect(await cursorOf(sheet.getByRole("radio", { name: copy.annotate.income }))).toBe("pointer");
+    // Guardar sin monto ni categoría está deshabilitado.
+    expect(await cursorOf(sheet.getByRole("button", { name: /^Guardar/ }))).toBe("not-allowed");
+    await sheet.getByRole("button", { name: copy.annotate.close }).click();
+    await expect(sheet).toBeHidden();
+    expect(await cursorOf(page.getByRole("link", { name: copy.nav.activity }).first())).toBe("pointer");
+  });
+}
+
+// UX lote 1, cambio 2 (definitivo; comp 06, opción 1c «Rejilla fija de 3 × 3»). Las 9 categorías a la vista sin interactuar, en
+// la misma casilla en 360, 390 y 1440 px, en los dos temas: 3 columnas × 3 filas, 208 px de alto, objetivos de al menos 44 px y
+// ninguna superposición entre celdas ni con la descripción, la fecha o «Solo tú».
+for (const scheme of ["light", "dark"] as const) {
+  for (const width of [360, 390, 1440]) {
+    test(`UX 2: rejilla de 3 × 3 fija, sin superposiciones (${width} px, ${scheme})`, async ({ browser, baseURL }, testInfo) => {
+      const user = await seedUser({ role: `rejilla-${scheme}-${width}`, index: testInfo.parallelIndex });
+      const context = await browser.newContext({ baseURL, colorScheme: scheme, viewport: { width, height: width < 700 ? 844 : 900 }, reducedMotion: "reduce" });
+      const page = await context.newPage();
+      await signedInHome(page, user);
+      await page.locator("[data-annotate-trigger]:visible").first().click();
+      const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+      const group = sheet.getByRole("radiogroup", { name: copy.annotate.category });
+      await expect(group).toBeVisible();
+      const radios = group.getByRole("radio");
+      await expect(radios).toHaveCount(9);
+      const order = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"] as const;
+      await expect(radios).toHaveText(order.map((id) => copy.categories[id]));
+      for (const radio of await radios.all()) await expect(radio).toBeVisible();
+      const box = async (locator: ReturnType<Page["locator"]>) => (await locator.boundingBox())!;
+      const cells = await Promise.all((await radios.all()).map(box));
+      const grid = await box(group);
+      expect(Math.abs(grid.height - 208), "la rejilla mide 208 px de alto").toBeLessThanOrEqual(1);
+      cells.forEach((cell, index) => {
+        expect(cell.height, `alto de la celda ${index}`).toBeGreaterThanOrEqual(44);
+        expect(cell.width, `ancho de la celda ${index}`).toBeGreaterThanOrEqual(44);
+        // Misma casilla: columna y fila salen del orden, no del contenido.
+        expect(Math.abs(cell.x - cells[index % 3].x), `columna de la celda ${index}`).toBeLessThanOrEqual(1);
+        expect(Math.abs(cell.y - cells[Math.floor(index / 3) * 3].y), `fila de la celda ${index}`).toBeLessThanOrEqual(1);
+        expect(cell.x + cell.width).toBeLessThanOrEqual(width + 0.5);
+      });
+      const others = [group.locator("xpath=following::label[1]"), sheet.getByLabel(copy.annotate.date).locator("xpath=.."), sheet.getByText(copy.annotate.onlyYou)];
+      const all = [...cells, ...(await Promise.all(others.map(box)))];
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+        const apart = all[i].x + all[i].width <= all[j].x + 0.5 || all[j].x + all[j].width <= all[i].x + 0.5 || all[i].y + all[i].height <= all[j].y + 0.5 || all[j].y + all[j].height <= all[i].y + 0.5;
+        expect(apart, `el elemento ${i} se superpone al ${j}`).toBe(true);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "sin scroll horizontal").toBe(true);
+      await context.close();
+    });
+  }
+}
+
+// Teclado de la rejilla (grupo de radio) y los dos campos que ya no viven tras «Editar detalles»: la descripción se guarda y la
+// fecha se cambia desde el chip.
+test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde el chip", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "rejilla-teclado", index: testInfo.parallelIndex });
+  await signedInHome(page, user);
+  await page.locator("[data-annotate-trigger]:visible").first().click();
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("23400");
+  const radio = (id: keyof typeof copy.categories) => sheet.getByRole("radio", { name: copy.categories[id] });
+  await radio("home").click();
+  await page.keyboard.press("ArrowRight");
+  await expect(radio("transport")).toBeChecked();
+  await expect(radio("transport")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(radio("shopping")).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(radio("other")).toBeChecked();
+  await page.keyboard.press("Home");
+  await expect(radio("market")).toBeChecked();
+  await page.keyboard.press("ArrowLeft"); // da la vuelta
+  await expect(radio("other")).toBeFocused();
+  await page.keyboard.press("ArrowUp"); // Otra (8) − 3 = Entretenimiento (5)
+  await expect(radio("entertainment")).toBeFocused();
+
+  await sheet.getByRole("textbox", { name: copy.annotate.description }).fill("Pan y café");
+  const yesterday = new Date(`${todayInBogota()}T00:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const day = yesterday.toISOString().slice(0, 10);
+  const date = sheet.getByLabel(copy.annotate.date);
+  await date.fill(day);
+  await expect(sheet.getByText(copy.dates.yesterday)).toBeVisible();
+  await sheet.getByRole("button", { name: /^Guardar/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  const rows = await listTransactions(user.client, day.slice(0, 7));
+  const saved = rows.find((row) => row.transactionDate === day);
+  expect(saved?.description).toBe("Pan y café");
+  expect(saved?.categoryId).toBe("entertainment");
+});
+
+// Revisión del gestor del PR #51 contra la comp 1c. (1) La hoja móvil abre ajustada al contenido, no a la altura máxima: en 390
+// px el borde inferior de Guardar queda a ≤ 20 px (más el safe area, 0 aquí) del borde inferior de la hoja, y la hoja no ocupa
+// toda la altura. (2) «Guardar sube con el teclado»: con la altura emulada de 544 px, Guardar está visible y se puede pulsar
+// sin desplazar el contenido.
+test("UX 2: la hoja de 390 px abre ajustada al contenido, con Guardar a ≤ 20 px de su borde inferior", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "hoja-ajustada", index: testInfo.parallelIndex });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signedInHome(page, user);
+  await page.locator("[data-annotate-trigger]:visible").first().click();
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("radiogroup", { name: copy.annotate.category })).toBeVisible();
+  await page.waitForFunction(() => { const el = document.querySelector("[data-bottom-sheet]"); return Boolean(el) && getComputedStyle(el!).opacity === "1" && getComputedStyle(el!).transform === "none"; });
+  const panel = page.locator("[data-bottom-sheet] > div");
+  const box = (await panel.boundingBox())!;
+  const save = (await sheet.getByRole("button", { name: /^Guardar/ }).boundingBox())!;
+  expect(box.height, "la hoja no ocupa toda la altura (viewport − 96)").toBeLessThan(844 - 96 - 20);
+  expect(box.y, "queda el saludo a la vista").toBeGreaterThan(96);
+  const gap = box.y + box.height - (save.y + save.height);
+  expect(gap, "Guardar a ≤ 20 px del borde inferior de la hoja (safe area 0)").toBeLessThanOrEqual(20.5);
+  expect(gap).toBeGreaterThanOrEqual(0);
+});
+
+test("UX 2: con el teclado abierto (544 px de alto emulado), Guardar es visible y se pulsa sin desplazar", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "guardar-teclado", index: testInfo.parallelIndex });
+  await page.setViewportSize({ width: 390, height: 544 });
+  await signedInHome(page, user);
+  await page.locator("[data-annotate-trigger]:visible").first().click();
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("18900");
+  await sheet.getByRole("radio", { name: copy.categories.market }).click();
+  const save = sheet.getByRole("button", { name: /^Guardar/ });
+  await expect(save).toBeInViewport({ ratio: 1 });
+  const scrollTop = await save.evaluate((el) => { let node = el.parentElement; while (node && getComputedStyle(node).overflowY !== "auto") node = node.parentElement; return node ? node.scrollTop : -1; });
+  expect(scrollTop, "el contenido no se desplazó para llegar a Guardar").toBe(0);
+  await save.click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+});
+
+// Resultado desconocido (decisión de los fundadores, 7 nov 2026): la fila desaparece y la hoja vuelve BLOQUEADA con lo escrito, con
+// la misma clave para «Reintentar», como la E4 desconocida de la 002. Aquí la petición llega al servidor (que escribe) y el
+// navegador no ve la respuesta; «Reintentar» reenvía lo mismo con la misma clave y el servidor devuelve el resultado original:
+// una sola transacción en la base y una sola fila en Actividad. Nada se guarda en el navegador.
+test("desconocido: respuesta perdida tras el commit → fila fuera, hoja bloqueada, Reintentar con la misma clave y una sola transacción", async ({ page }, testInfo) => {
+  const user = await seedUser({ role: "respuesta-perdida", index: testInfo.parallelIndex });
+  const seeded = (await seedMovements(user, "recent")).length;
+  await signedInHome(page, user);
+  const bodies: string[] = [];
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && "next-action" in request.headers()) {
+      bodies.push(request.postData() ?? "");
+      if (bodies.length === 1) {
+        await route.fetch(); // la petición llega y el servidor escribe…
+        await route.abort("failed"); // …pero el navegador no ve la respuesta
+        return;
+      }
+    }
+    await route.continue();
+  });
+
+  const sheet = await annotate(page, "61250");
+  await page.keyboard.press("Enter");
+  // La hoja vuelve bloqueada con lo escrito; no hay fila «Sin confirmar» ni aviso de guardado.
+  await expect(sheet.getByRole("alert")).toBeVisible();
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeDisabled();
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toHaveCount(0);
+  expect(await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.includes("unconfirmed")))).toEqual([]);
+  expect(await activeCount(user), "el servidor sí guardó aunque el navegador no lo sepa").toBe(seeded + 1);
+
+  // Reintentar: misma intención y misma clave (mismo cuerpo); el servidor devuelve el original, sin crear otra.
+  await sheet.getByRole("alert").getByRole("button", { name: copy.annotate.retry }).click();
+  await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
+  expect(bodies).toHaveLength(2);
+  expect(bodies[1], "el reintento lleva la misma intención y la misma clave").toBe(bodies[0]);
+  expect(await activeCount(user), "una sola transacción más en la base").toBe(seeded + 1);
+  await expect(page.locator("[data-pending]")).toHaveCount(0);
+
+  await page.getByRole("link", { name: copy.nav.activity }).first().click();
+  await expect(page).toHaveURL(/actividad/);
+  await expect(page.locator("tbody tr:visible, [data-transaction-id]:visible").filter({ hasText: "61.250" })).toHaveCount(1);
 });

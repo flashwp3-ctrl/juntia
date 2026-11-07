@@ -69,7 +69,7 @@ for (const width of [390, 1440]) {
       last = open.id;
       opens.push(open.duration);
       await page.keyboard.type(String(1000 + run));
-      await sheet.getByRole("group", { name: copy.annotate.recent }).getByRole("button").first().click();
+      await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
       // Las interacciones intermedias (teclas y categoría) se descartan: solo cuentan abrir y guardar.
       last = await page.evaluate(() => Math.max(0, ...(window as unknown as { __inp: { id: number }[] }).__inp.map((entry) => entry.id)));
       await sheet.getByRole("button", { name: /^Guardar/ }).click();

@@ -42,7 +42,7 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
       </button>
     );
   }
-  // 04·9 (rail): botón de 48 al final de los destinos. 04·7 (sidebar): bloque bosque con el atajo N visible.
+  // 04·9 (rail): botón de 48 al final de los destinos. 04·7 (sidebar): bloque bosque. El atajo N no se rotula (decisión de los fundadores, UX lote 1): sigue activo y se anuncia con aria-keyshortcuts.
   return (
     <button
       {...common}
@@ -53,9 +53,6 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
         <AppIcon name="plus" weight="bold" size={22} />
       </span>
       <span className="sr-only font-serif text-[length:var(--title-l-size)] leading-none font-medium tracking-[var(--title-l-tracking)] xl:not-sr-only">{annotateName}</span>
-      <span aria-hidden="true" className="hidden text-[length:var(--label-s-size)] font-medium xl:block">
-        {copy.nav.shortcutLabel} {copy.nav.shortcut}
-      </span>
     </button>
   );
 }

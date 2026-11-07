@@ -15,6 +15,7 @@ import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/for
 import { CountingAmount } from "@/features/expenses/counting-amount";
 import { HighlightRow } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
+import { HomeEmpty, HomeScope, PendingHomeRows } from "./pending-home";
 
 const RECENT = 5;
 // El ancho de cada ficha del desglose crece con su importe (en pesos), como en 04·1.
@@ -39,9 +40,14 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
   const recent = groupByDay(rows).flatMap(({ transactions }) => transactions).slice(0, RECENT);
   if (recent.length === 0) {
     return (
-      <div className="flex flex-col gap-6 pt-2">
-        <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
-      </div>
+      <>
+      <HomeScope month={month} knownIds={rows.map(({ id }) => id)} />
+      <HomeEmpty month={month} today={today} empty={
+        <div className="flex flex-col gap-6 pt-2">
+          <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
+        </div>
+      } />
+      </>
     );
   }
   const spentBy = (Object.entries(summary.byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
@@ -50,6 +56,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
   const heroTitle = spent ? copy.home.spentIn(name) : copy.home.noExpenses(name);
   return (
     <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
+      <HomeScope month={month} knownIds={rows.map(({ id }) => id)} />
       <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
         <h2 id="home-hero" className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">
@@ -88,6 +95,7 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
+            <PendingHomeRows month={month} today={today} knownIds={rows.map(({ id }) => id)} />
             {recent.map((transaction) => (
               <li key={transaction.id}>
                 <HighlightRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />

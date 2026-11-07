@@ -15,20 +15,19 @@ import { InvitationReturn } from "@/features/couple/invitation-return";
 import { loadCoupleForShell, partnerOf, personOf } from "@/features/couple/load";
 import { createTransactionAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
-import { loadRecentCategories } from "@/features/expenses/load";
 import { todayInBogota } from "@/domain/transactions";
 
 const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const [account, recentCategories, couple] = await Promise.all([loadAccount(), loadRecentCategories(), loadCoupleForShell()]);
+  const [account, couple] = await Promise.all([loadAccount(), loadCoupleForShell()]);
   if (!account) redirect("/entrar");
   if (!account.profile.firstEntryCompleted) redirect("/primera-entrada");
   return (
     <AccountProvider displayName={account.profile.displayName} theme={account.profile.theme} person={personOf(couple)} partnerName={partnerOf(couple)} couple={couple?.status ?? null}>
       <InvitationReturn />
       <ContextProvider>
-        <AnnotateProvider actions={actions} recentCategories={recentCategories} today={todayInBogota()}>
+        <AnnotateProvider actions={actions} today={todayInBogota()}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

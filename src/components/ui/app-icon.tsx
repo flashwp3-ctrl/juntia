@@ -47,6 +47,7 @@ import { GearSix } from "@phosphor-icons/react/dist/ssr/GearSix";
 import { Info } from "@phosphor-icons/react/dist/ssr/Info";
 import { Key } from "@phosphor-icons/react/dist/ssr/Key";
 import { Moon } from "@phosphor-icons/react/dist/ssr/Moon";
+import { NotePencil } from "@phosphor-icons/react/dist/ssr/NotePencil";
 import { PaperPlaneTilt } from "@phosphor-icons/react/dist/ssr/PaperPlaneTilt";
 import { PencilSimple } from "@phosphor-icons/react/dist/ssr/PencilSimple";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
@@ -82,6 +83,7 @@ const icons = {
   "check-circle": CheckCircle,
   clock: Clock,
   "lock-simple": LockSimple,
+  "note-pencil": NotePencil,
   tray: Tray,
   "circle-notch": CircleNotch,
   "shopping-cart-simple": ShoppingCartSimple,

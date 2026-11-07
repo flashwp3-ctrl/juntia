@@ -4,7 +4,7 @@
 // junto a la tabla, con «Cerrar».
 import Link from "next/link";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
-import { CategoryIcon } from "@/components/ui/category-icon";
+import { categories, CategoryIcon } from "@/components/ui/category-icon";
 import { rowTitle, signedAmount } from "@/components/ui/expense-row";
 import type { Transaction } from "@/domain/transactions";
 import { TransactionActions } from "@/features/expenses/transaction-actions";
@@ -61,7 +61,7 @@ export function TransactionDetail({ transaction, closeHref }: { transaction: Tra
         </p>
       </div>
       <dl className="flex flex-col">
-        <Fact icon="tag" label={copy.detail.category} value={copy.categories[transaction.categoryId]} />
+        <Fact icon={categories[transaction.categoryId].icon} label={copy.detail.category} value={copy.categories[transaction.categoryId]} />
         <Fact icon="calendar-blank" label={copy.detail.date} value={date} />
         <Fact icon="lock-simple" label={copy.detail.context} value={copy.detail.contextValue} />
       </dl>

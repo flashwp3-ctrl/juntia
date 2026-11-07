@@ -25,7 +25,7 @@ type BottomSheetProps = {
   onCloseAutoFocus?: (event: Event) => void;
   /** Para llevar el foco inicial a un control propio (el monto de Anotar). */
   onOpenAutoFocus?: (event: Event) => void;
-  /** Sin título ni pie propios: el contenido trae `DialogTitle` y sus controles (hoja de Anotar, 02·5). */
+  /** Sin título ni pie propios: el contenido trae `DialogTitle` y sus controles (hoja de Anotar, 02·5), y también su relleno inferior y el safe area (para fijar su pie al fondo). */
   bare?: boolean;
   /** Paradas y arrastre desde el asa (Expense Flow). */
   draggable?: boolean;
@@ -134,7 +134,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
                 </div>
                 <div
                   style={{ maxHeight: max, height: draggable && expanded ? max : undefined }}
-                  className={`flex min-h-0 flex-col overflow-y-auto overscroll-contain px-5 pb-[calc(20px+env(safe-area-inset-bottom))] ${bare ? "gap-3.5 pt-0" : "gap-4 pt-0"}`}
+                  className={`flex min-h-0 flex-col overflow-y-auto overscroll-contain px-5 ${bare ? "gap-3.5 pt-0" : "gap-4 pt-0 pb-[calc(20px+env(safe-area-inset-bottom))]"}`}
                 >
                   {bare ? children : (
                     <>
