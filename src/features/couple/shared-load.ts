@@ -116,14 +116,15 @@ export type BalanceData = {
 /**
  * PR D (T061; FR-025, FR-042, FR-043, FR-047; Q9): Balance. El saldo acumulado sale de `couple_balance` (una sola
  * sentencia); el desglose es el mes pedido (`couple_expenses` por cursor y el total de `couple_month_summary`), con las
- * flechas de `couple_transaction_months`; el historial, todas las liquidaciones (activas y anuladas) por cursor.
+ * flechas de `couple_transaction_months`; las liquidaciones (activas y anuladas) del mismo mes, por cursor. Revisión del
+ * gestor del PR #60 (4): no se lee todo el historial en cada visita; el de otros meses está a una flecha, como en Actividad.
  */
 export async function loadBalance(requested: string, current: string, volver: string): Promise<Loaded<BalanceData>> {
   return guard(async () => {
     const client = await createClient();
     const months = await listCoupleMonths(client);
     const month = clampMonth(months, current.slice(0, 7), requested);
-    const [balance, expenses, totals, settlements] = await Promise.all([getCoupleBalance(client), listSharedExpenses(client, month), getCoupleMonthSummary(client, month), listSettlements(client)]);
+    const [balance, expenses, totals, settlements] = await Promise.all([getCoupleBalance(client), listSharedExpenses(client, month), getCoupleMonthSummary(client, month), listSettlements(client, month)]);
     return {
       balance, month, navigation: monthNavigation(months, current.slice(0, 7), month), expenses,
       totalMinor: totals ? minorText(totals.total) : null, settlements: settlements.map(toSettlementView),

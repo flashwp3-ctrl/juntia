@@ -126,12 +126,15 @@ describe("Hoja de liquidación (US-6.1)", { timeout: 15000 }, () => {
     expect(onDone).not.toHaveBeenCalled();
   });
 
-  it("rechazo confirmado: dice que no se registró y los campos siguen editables", async () => {
+  // Revisión del gestor del PR #60 (3): con el rechazo por saldo, el pendiente que se ve puede ser viejo: el aviso no da cifra.
+  it("rechazo confirmado: dice que no se registró, sin un máximo viejo, y los campos siguen editables", async () => {
     const user = userEvent.setup();
     const settle = vi.fn(async () => ({ status: "rejected" as const, error: "exceedsPending" as const }));
     const { dialog } = sheet({ actions: actions({ settle }) });
     await user.click(within(dialog).getByRole("button", { name: copy.balance.settle.submit("$429.900") }));
-    expect(await within(dialog).findByText(copy.balance.settle.errors.exceedsPending("$429.900"))).toBeTruthy();
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toBe(copy.balance.settle.errors.changed);
+    expect(alert.textContent).not.toContain("$");
     expect(within(dialog).getByRole("radio", { name: copy.balance.settle.other })).toHaveProperty("disabled", false);
     // El saldo pudo cambiar: se pide la página otra vez para traer el máximo vigente.
     expect(router.refresh).toHaveBeenCalled();
@@ -166,9 +169,28 @@ describe("S4 · solo con la confirmación del servidor (T063, FR-051)", () => {
 
   it("con `rejected`: nada se anima y el saldo sigue igual", async () => {
     await settleFrom(actions({ settle: vi.fn(async () => ({ status: "rejected" as const, error: "nothingToSettle" as const })) }));
-    await screen.findByText(copy.balance.settle.errors.nothingToSettle);
+    await screen.findByText(copy.balance.settle.errors.changed);
     expect(balanceRoot().getAttribute("data-s4")).toBeNull();
     expect(document.querySelector("[data-balance-amount]")?.getAttribute("data-balance-amount")).toBe("$429.900");
+  });
+});
+
+describe("Cerrar con un registro sin confirmar (revisión del gestor del PR #60, 2)", () => {
+  it("cerrar confirmándolo pide la página otra vez: el saldo que se ve puede ser viejo", async () => {
+    const user = userEvent.setup();
+    router.refresh.mockClear();
+    const writes = actions({ settle: vi.fn(async () => ({ status: "unknown" as const })) });
+    render(<AnnotateProvider actions={{ create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() }} sharedActions={writes} couple={{ members, last: null }}><BalancePanel balance={golden} members={members} today="2026-10-26" /></AnnotateProvider>);
+    await user.click(screen.getByRole("button", { name: copy.balance.actions.settle }));
+    const dialog = screen.getByRole("dialog", { name: copy.balance.settle.title });
+    await user.click(within(dialog).getByRole("button", { name: copy.balance.settle.submit("$429.900") }));
+    await within(dialog).findByRole("alert");
+    expect(router.refresh).not.toHaveBeenCalled();
+    await user.click(within(dialog).getByRole("button", { name: copy.annotate.close }));
+    const close = screen.getByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(close).getByRole("button", { name: copy.writes.close.confirm }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.balance.settle.title })).toBeNull());
+    expect(router.refresh).toHaveBeenCalled();
   });
 });
 
@@ -221,6 +243,31 @@ describe("Detalle de liquidación con «Anular» (US-6.9, enmienda de ADR-007)",
     render(<SettlementDetail settlement={{ ...view, status: "voided", voidedBy: TOMAS, voidedAt: "2026-10-26T15:00:00.000Z", version: 2 }} members={members} actions={actions()} closeHref="/balance" />);
     expect(screen.getByText(copy.balance.settlement.voidedBadge)).toBeTruthy();
     expect(screen.queryByRole("button", { name: copy.balance.settlement.void.action })).toBeNull();
+  });
+
+  // Revisión del gestor del PR #60 (1), como F57-3: con la anulación sin confirmar, «Cancelar» y Escape no tiran la intención.
+  it("con la anulación sin confirmar, cerrar pregunta antes; «Seguir aquí» conserva la clave para reintentar", async () => {
+    const user = userEvent.setup();
+    router.refresh.mockClear();
+    const voidSettlement = vi.fn(async () => ({ status: "unknown" as const }));
+    render(<SettlementDetail settlement={view} members={members} actions={actions({ voidSettlement })} closeHref="/balance" />);
+    await user.click(screen.getByRole("button", { name: copy.balance.settlement.void.action }));
+    const confirm = screen.getByRole("alertdialog", { name: copy.balance.settlement.void.title });
+    await user.click(within(confirm).getByRole("button", { name: copy.balance.settlement.void.confirm }));
+    await within(confirm).findByRole("alert");
+    await user.click(within(confirm).getByRole("button", { name: copy.balance.settlement.void.keep }));
+    const close = screen.getByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(close).getByRole("button", { name: copy.writes.close.keep }));
+    const still = screen.getByRole("alertdialog", { name: copy.balance.settlement.void.title });
+    await user.click(within(still).getByRole("button", { name: copy.writes.retry }));
+    await waitFor(() => expect(voidSettlement).toHaveBeenCalledTimes(2));
+    const keys = voidSettlement.mock.calls.map((call) => (call as unknown as [{ idempotencyKey: string }])[0].idempotencyKey);
+    expect(keys[0]).toBe(keys[1]);
+    // Cerrar confirmándolo: se va el diálogo y se pide la página (la anulación pudo haberse hecho).
+    await user.keyboard("{Escape}");
+    await user.click(within(screen.getByRole("alertdialog", { name: copy.writes.close.title })).getByRole("button", { name: copy.writes.close.confirm }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(router.refresh).toHaveBeenCalled();
   });
 
   it("anular con resultado desconocido no afirma nada y ofrece comprobar el estado", async () => {

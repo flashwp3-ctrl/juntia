@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { initialOf } from "@/domain/account";
 import { formatMoney } from "@/domain/money";
 import { SensitiveActionConfirmation } from "@/features/couple/sensitive-confirmation";
+import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
 import { useOptionalAnnotate } from "@/features/expenses/annotate-provider";
 import { newIdempotencyKey } from "@/features/expenses/idempotency";
 import type { SharedActions } from "@/features/expenses/shared-types";
@@ -31,6 +32,9 @@ export function SettlementDetail({ settlement, members, actions: given, closeHre
   const actions = given ?? annotate?.sharedActions ?? null;
   const router = useRouter();
   const [key, setKey] = useState<string | null>(null);
+  // Revisión del gestor del PR #60 (1), como F57-3 del PR C: con la anulación sin confirmar, cerrar pregunta antes y
+  // «Seguir aquí» conserva la intención (la misma clave para «Reintentar» y «Comprobar estado»).
+  const [confirmingClose, setConfirmingClose] = useState(false);
   const name = (userId: string | null) => members.find((member) => member.userId === userId)?.name ?? "";
   const from = members.find((member) => member.userId === settlement.fromUserId);
   const to = members.find((member) => member.userId === settlement.toUserId);
@@ -53,9 +57,17 @@ export function SettlementDetail({ settlement, members, actions: given, closeHre
 
   const open = (next: boolean) => {
     if (next) return;
-    if (write.state.phase === "pending") return;
+    if (write.pending) return;
+    if (write.locked) { setConfirmingClose(true); return; }
     setKey(null);
     write.reset();
+  };
+  const closeUnconfirmed = () => {
+    setConfirmingClose(false);
+    setKey(null);
+    write.reset();
+    // La anulación pudo haberse hecho: la página vuelve a leer el estado del servidor.
+    router.refresh();
   };
   const row = "flex min-h-12 items-center justify-between gap-3 border-b-[length:var(--border-hairline)] border-border py-2";
   return (
@@ -106,6 +118,14 @@ export function SettlementDetail({ settlement, members, actions: given, closeHre
         {write.state.phase === "unknown" ? (
           <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
         ) : null}
+        <ConfirmDialog
+          open={confirmingClose}
+          onOpenChange={setConfirmingClose}
+          title={copy.writes.close.title}
+          description={copy.balance.settlement.void.closeUnconfirmed}
+          cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingClose(false)}>{copy.writes.close.keep}</Button>}
+          confirm={<Button variant="secondary" onClick={closeUnconfirmed}>{copy.writes.close.confirm}</Button>}
+        />
       </SensitiveActionConfirmation>
     </article>
   );

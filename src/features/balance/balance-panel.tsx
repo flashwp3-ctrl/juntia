@@ -7,6 +7,7 @@
 // - El aviso «Liquidación registrada» con «Deshacer» de 6 s vive en el proveedor de Anotar (sobrevive a la navegación).
 // - aria-live anuncia el resultado («Liquidación registrada. Tomás y Sara quedan al día»), también con movimiento reducido.
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ type Props = { balance: readonly MemberBalance[]; members: readonly BalanceMembe
 
 export function BalancePanel({ balance, members, today, variant = "screen" }: Props) {
   const annotate = useOptionalAnnotate();
+  const router = useRouter();
   const actions = annotate?.sharedActions ?? null;
   const [pinned, setPinned] = useState<readonly MemberBalance[] | null>(null);
   const [celebrate, setCelebrate] = useState(0);
@@ -64,12 +66,15 @@ export function BalancePanel({ balance, members, today, variant = "screen" }: Pr
     if (waiting && !inFlight.current) setPinned(shownRef.current);
     inFlight.current = waiting;
   }, []);
-  const close = useCallback(() => {
+  const close = useCallback((options?: { unconfirmed: boolean }) => {
     setSheetKey(null);
     inFlight.current = false;
     setPinned(null);
+    // Revisión del gestor del PR #60 (2): cerrada con el registro sin confirmar, la liquidación pudo haberse guardado; se
+    // pide la página para no seguir enseñando el saldo de antes.
+    if (options?.unconfirmed) router.refresh();
     trigger.current?.focus();
-  }, []);
+  }, [router]);
   const onDone = useCallback((saved: SavedSettlement) => {
     const base = shownRef.current;
     const before = suggestion(base)?.amount.amountMinor ?? 0n;

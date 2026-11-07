@@ -40,7 +40,8 @@ const DATE = /^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  /** `unconfirmed`: se cerró con un registro sin confirmar (la liquidación pudo haberse guardado). */
+  onClose: (options?: { unconfirmed: boolean }) => void;
   debtor: BalanceMember;
   creditor: BalanceMember;
   /** El saldo pendiente que se ve (de `couple_balance`); tras un rechazo se pide la página y llega el vigente. */
@@ -54,10 +55,12 @@ type Props = {
   onPendingChange?: (pending: boolean) => void;
 };
 
-function rejectedMessage(error: WriteError, pending: Money) {
+function rejectedMessage(error: WriteError) {
   switch (error) {
-    case "exceedsPending": return copy.balance.settle.errors.exceedsPending(formatMoney(pending));
-    case "nothingToSettle": return copy.balance.settle.errors.nothingToSettle;
+    // Revisión del gestor del PR #60 (3): el servidor rechazó por el saldo vigente; el que se ve puede ser viejo hasta que
+    // llegue la página nueva (se pide al rechazar). El aviso no da cifra; «Saldo pendiente» se actualiza solo.
+    case "exceedsPending":
+    case "nothingToSettle": return copy.balance.settle.errors.changed;
     case "settlementDate": return copy.balance.settle.errors.date;
     case "coupleNotActive": return copy.couple.errors.notActive;
     case "sessionExpired": return copy.errors.sessionExpired;
@@ -104,7 +107,7 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
   };
 
   const remaining = amount && amount.amountMinor <= pending.amountMinor ? pending.amountMinor - amount.amountMinor : null;
-  const message = invalid ?? (write.state.phase === "rejected" ? rejectedMessage(write.state.error, pending) : null);
+  const message = invalid ?? (write.state.phase === "rejected" ? rejectedMessage(write.state.error) : null);
   const body = (
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
       <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
@@ -171,7 +174,7 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
         title={copy.writes.close.title}
         description={copy.annotate.uncertain.description}
         cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirmingClose(false); void write.retry(); }}>{copy.writes.retry}</Button>}
-        confirm={<Button variant="secondary" onClick={() => { setConfirmingClose(false); onClose(); }}>{copy.writes.close.confirm}</Button>}
+        confirm={<Button variant="secondary" onClick={() => { setConfirmingClose(false); onClose({ unconfirmed: true }); }}>{copy.writes.close.confirm}</Button>}
       />
     </form>
   );

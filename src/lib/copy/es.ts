@@ -236,7 +236,7 @@ export const copy = {
       total: "Gasto compartido del mes", empty: (month: string) => `En ${month} no hay gastos compartidos.`,
     },
     settlements: {
-      title: "Liquidaciones", note: "Las liquidaciones no son gastos: no suman al consumo ni a las categorías.", empty: "Todavía no han registrado liquidaciones.",
+      title: (month: string) => `Liquidaciones de ${month}`, note: "Las liquidaciones no son gastos: no suman al consumo ni a las categorías.", empty: (month: string) => `En ${month} no registraron liquidaciones.`,
       registered: (date: string) => `registrada el ${date}`, voided: "Anulada",
       accessibleName: (title: string, amount: string, meta: string) => `${title}, ${amount} pesos, ${meta}`,
     },
@@ -254,7 +254,9 @@ export const copy = {
       announceSettled: (first: string, second: string) => `Liquidación registrada. ${first} y ${second} quedan al día.`,
       announcePending: (debtor: string, creditor: string, amount: string) => `Liquidación registrada. ${debtor} le debe ${amount} a ${creditor}.`,
       rejected: "No se registró la liquidación.",
-      errors: { nothingToSettle: "No hay saldo pendiente por saldar.", exceedsPending: (maximum: string) => `Puedes registrar hasta ${maximum}.`, date: "Elige una fecha de hoy o pasada.", amount: "Escribe un monto en pesos enteros mayor que cero.", noteTooLong: "Usa hasta 140 caracteres en la nota." },
+      errors: { nothingToSettle: "No hay saldo pendiente por saldar.", exceedsPending: (maximum: string) => `Puedes registrar hasta ${maximum}.`, date: "Elige una fecha de hoy o pasada.",
+        // Revisión del gestor del PR #60 (3): el servidor rechazó por el saldo; el pendiente que se ve puede ser viejo.
+        changed: "El saldo cambió mientras registrabas. Revisa el saldo pendiente y vuelve a intentarlo.", amount: "Escribe un monto en pesos enteros mayor que cero.", noteTooLong: "Usa hasta 140 caracteres en la nota." },
     },
     settlement: {
       title: "Liquidación", date: "Fecha", note: "Nota",
@@ -264,6 +266,7 @@ export const copy = {
         action: "Anular liquidación", title: "¿Anular esta liquidación?",
         description: (title: string, amount: string) => `${title} · ${amount}. Sale del saldo y queda en el historial como anulada. No se borra.`,
         keep: "Cancelar", confirm: "Anular", loading: "Anulando…", done: "Liquidación anulada", rejected: "No se anuló: el saldo sigue igual.",
+        closeUnconfirmed: "No pudimos confirmar si se anuló. Revisa la liquidación en Balance antes de volver a intentarlo.",
       },
       errors: { notFound: "No encontramos esta liquidación.", alreadyVoided: "Esta liquidación ya se anuló.", versionConflict: (name: string) => `${name} cambió esta liquidación antes. Ya ves lo último.` },
     },

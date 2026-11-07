@@ -1615,3 +1615,26 @@ aserción web-first; si de verdad faltara, la espera falla igual.
 | D8 | Solo el presupuesto del job `e2e` pasa a bloquear | T070 lo pide así; Q17 habla de «los presupuestos». **Pregunta al gestor** si el del job `app` (360 s) y los de comando también deben bloquear ya |
 | D9 | `/balance` sale de `product-routes.test.tsx` (rutas sin datos) | Ahora lee datos reales; lo cubren los componentes, la spec 3 y `balance.a11y.ts`, como Inicio y Actividad en P0-1 |
 | D10 | El «Deshacer» de una liquidación usa la máquina del PR C (un deshacer pendiente a la vez, en memoria, 15 s y «Comprobar estado») | Regla 4 del encargo; nada en el almacenamiento del navegador |
+
+## Primera revisión del gestor (sobre `779fd77`)
+
+Un commit, sin CI. Respuestas del gestor: solo el job `e2e` bloquea por presupuesto
+(T070); `app` y los de comando siguen avisando. Lecturas D1–D10 aprobadas.
+
+| # | Hallazgo | Qué se hizo | Prueba (primero en rojo) |
+| --- | --- | --- | --- |
+| 1 | Con la anulación en `unknown`, «Cancelar» o Escape cerraban y tiraban la clave (como F57-3) | Con `write.locked`, cerrar abre «¿Cerrar sin confirmar?»; «Seguir aquí» conserva la intención; «Cerrar» la suelta y pide la página (la anulación pudo hacerse) | `settle.test.tsx` «con la anulación sin confirmar, cerrar pregunta antes…»: reintento con la misma clave y `router.refresh` al cerrar confirmándolo |
+| 2 | Cerrar la hoja con un registro sin confirmar dejaba el saldo de antes | `SettleSheet` avisa `onClose({ unconfirmed: true })` y `BalancePanel` pide la página | `settle.test.tsx` «cerrar confirmándolo pide la página otra vez» |
+| 3 | El rechazo por saldo (`exceedsPending`, `nothingToSettle`) decía un máximo viejo | Aviso sin cifra: «El saldo cambió mientras registrabas. Revisa el saldo pendiente y vuelve a intentarlo.»; «Saldo pendiente» se actualiza con la página que se pide al rechazar | `settle.test.tsx` «rechazo confirmado… sin un máximo viejo» y S4 con `rejected` |
+| 4 | `loadBalance` leía todo el historial de liquidaciones en cada visita | Las liquidaciones son las **del mes del desglose** (por cursor); las flechas mueven los dos. La spec no pide el historial completo en Balance: FR-042 pide que esa lista se lea por cursor, y Q9 hace mensual el desglose. La sección pasa a la columna del desglose: «Liquidaciones de {mes}» | Componentes y `balance.a11y.ts` (nivel ligero) en verde |
+| 5 | El barrido a mano gastaba minutos en lint, build y unitarias del job `app` | Con `a11y_sweep`, `app` solo instala, construye y corre `test:a11y` (barrido sin sesión). Esos estados necesitan el build de `app` con Supabase inalcanzable, así que no se mueven a `e2e` | — (workflow; sin run, como pidió el gestor) |
+| 6 | Con el presupuesto bloqueante, un reintento podía tumbar el gate | `retries: 0` solo en el proyecto `a11y` (axe es determinista y el flake de A4b está resuelto); la E2E conserva 1 en CI | — |
+
+Pasadas: `npm run verify` en verde (64,63 s). En `juntia-dev`: spec 3 **4 de 5** a la
+primera y el que falló, «gasto compartido 50/50», **pasa solo** (9,2 s); axe ligero de
+Balance 2 de 2. Ese caso es del PR C y no lo toca esta ronda: tras el primer guardado
+desde el estado vacío, si la página revalidada tarda más de ~1 s, E5 no encuentra la
+fila y lleva a Actividad, donde no hay número héroe (lógica F45-2). Se ve con la
+latencia de `juntia-dev`; en CI la E2E conserva su reintento. Las capturas de
+`evidence/pr-d/` son anteriores a esta ronda: muestran «Liquidaciones» bajo el saldo y
+no en la columna del desglose.

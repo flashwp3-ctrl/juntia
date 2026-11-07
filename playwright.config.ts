@@ -19,7 +19,10 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   use: { reducedMotion: "reduce", baseURL: appOrigin() },
   projects: [
-    { name: "a11y", testDir: "tests/a11y", testMatch: "**/*.a11y.ts", ...a11yLevel, use: { ...devices["Desktop Chrome"] } },
+    // Revisión del gestor del PR #60 (6): el presupuesto del job e2e bloquea desde el PR D; axe no se reintenta (es
+    // determinista y su flake conocido, A4b, está resuelto), así un reintento no puede tumbar el gate por tiempo. La E2E
+    // conserva su reintento en CI (ADR-011 §6, retries 0/1).
+    { name: "a11y", testDir: "tests/a11y", testMatch: "**/*.a11y.ts", ...a11yLevel, retries: 0, use: { ...devices["Desktop Chrome"] } },
     { name: "e2e", testDir: "tests/e2e", testMatch: "**/*.e2e.ts", use: { ...devices["Desktop Chrome"] } },
     // Evidencia del PR (T053, T057): capturas, pasada de anchos y arnés de tema. Solo bajo demanda; no es del gate.
     { name: "evidence", testDir: "tests/evidence", testMatch: "**/*.capture.ts", use: { ...devices["Desktop Chrome"] } },
