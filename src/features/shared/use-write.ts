@@ -18,9 +18,9 @@ export type WriteState<T> =
  * `unknown` con la misma clave y la misma carga, y se abre una generación nueva: la respuesta tardía no toca nada.
  */
 export const WRITE_TIMEOUT_MS = 15_000;
-const TIMED_OUT = Symbol("timedOut");
+export const TIMED_OUT = Symbol("timedOut");
 
-function withTimeout<V>(promise: Promise<V>): Promise<V | typeof TIMED_OUT> {
+export function withTimeout<V>(promise: Promise<V>): Promise<V | typeof TIMED_OUT> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<typeof TIMED_OUT>((resolve) => { timer = setTimeout(() => resolve(TIMED_OUT), WRITE_TIMEOUT_MS); });
   return Promise.race([promise, limit]).finally(() => clearTimeout(timer));

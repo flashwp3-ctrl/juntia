@@ -7,87 +7,14 @@
 // temas de M6 y M7, que no caben en el registro (route-registry.ts) porque /invitacion ya está en él sin sesión (M5).
 // Regla 10 de tasks.md: lo que necesita sesión o Auth va en un describe que se salta salvo con A11Y_JOB=e2e; M5 (sin
 // sesión, sin red de Auth) corre en el job app. Ninguna espera fija; movimiento reducido por defecto (ADR-011 §6).
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
-import { seedCoupleState, seedInvitation, seedUser, type SeededUser } from "../support/seed";
+import { seedCoupleState, seedInvitation, seedUser } from "../support/seed";
+import { axe, largeText, signedContext, sweep, tabTo, target44 } from "../support/a11y";
 import { THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
-const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
 const M5_TOKEN = "A".repeat(43);
-
-/** Sin scroll horizontal y sin texto cortado en el `main` (o en el diálogo abierto). */
-async function overflow(page: Page) {
-  return page.evaluate(() => {
-    const root = document.documentElement;
-    const scope = document.querySelector('[role="dialog"], [role="alertdialog"]') ?? document.querySelector("main") ?? document.body;
-    const clipped = [...scope.querySelectorAll<HTMLElement>("h1, h2, h3, p, a, button, label, span")]
-      // Fuera lo oculto a propósito para lectores de pantalla (sr-only: 1 px recortado), que no es texto perdido.
-      .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && node.getBoundingClientRect().width > 1 && node.scrollWidth > node.clientWidth + 1
-        && !["ellipsis"].includes(getComputedStyle(node).textOverflow) && getComputedStyle(node).overflow !== "visible")
-      .map((node) => `${node.tagName.toLowerCase()} «${(node.textContent ?? "").trim().slice(0, 40)}»`);
-    return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, clipped };
-  });
-}
-
-/** Barrido de los siete anchos en los dos temas sobre la página ya en su estado. */
-async function sweep(page: Page, label: string) {
-  for (const colorScheme of THEMES) {
-    await page.emulateMedia({ colorScheme });
-    for (const width of WIDTHS) {
-      await page.setViewportSize({ width, height: 900 });
-      const result = await overflow(page);
-      console.log(`${label} · ${colorScheme} · ${width}px: scrollWidth ${result.scrollWidth} / clientWidth ${result.clientWidth}${result.clipped.length ? `, cortado: ${result.clipped.join(", ")}` : ""}`);
-      expect.soft(result.scrollWidth, `${label} · ${colorScheme} · ${width}px: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
-    }
-  }
-}
-
-/** Texto al 200 % a 390: sin scroll horizontal ni texto cortado. */
-async function largeText(page: Page, label: string) {
-  await page.setViewportSize({ width: 390, height: 900 });
-  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-  const result = await overflow(page);
-  console.log(`${label} · 200 %: scrollWidth ${result.scrollWidth} / ${result.clientWidth}; cortado: ${result.clipped.length}`);
-  expect.soft(result.scrollWidth, `${label} · 200 %: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
-  expect.soft(result.clipped, `${label} · 200 %: sin texto cortado`).toEqual([]);
-  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
-}
-
-/** Objetivo táctil de 44 × 44 con boundingBox. */
-async function target44(page: Page, name: string, role: "button" | "link" = "button") {
-  const box = await page.getByRole(role, { name, exact: true }).first().boundingBox();
-  console.log(`objetivo «${name}»: ${box?.width.toFixed(1)}×${box?.height.toFixed(1)}`);
-  expect.soft(box?.width ?? 0, `«${name}»: ancho`).toBeGreaterThanOrEqual(44);
-  expect.soft(box?.height ?? 0, `«${name}»: alto`).toBeGreaterThanOrEqual(44);
-}
-
-/** Tab hasta el control con ese nombre accesible (sin ratón). */
-async function tabTo(page: Page, name: string, limit = 40) {
-  for (let step = 0; step < limit; step++) {
-    await page.keyboard.press("Tab");
-    const label = await page.evaluate(() => {
-      const element = document.activeElement as HTMLElement | null;
-      return element ? (element.getAttribute("aria-label") ?? element.innerText ?? "").trim() : "";
-    });
-    if (label === name) return;
-  }
-  throw new Error(`El teclado no llega a «${name}»`);
-}
-
-async function signedContext(browser: Browser, baseURL: string, user: SeededUser, colorScheme: "light" | "dark" = "light"): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 390, height: 900 } });
-  await context.addCookies(user.cookies);
-  return { context, page: await context.newPage() };
-}
-
-async function axe(page: Page, label: string) {
-  const result = await new AxeBuilder({ page }).analyze();
-  const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
-  console.log(`${label}: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
-  expect(blocking).toEqual([]);
-}
 
 // M5 (sin sesión): el job app no tiene Supabase, y la pantalla no lo necesita sin cookie de sesión.
 // Los casos se definen solo en su job (como routes.a11y.ts): un test.skip seguiría listándolos (job-selection.test.ts).

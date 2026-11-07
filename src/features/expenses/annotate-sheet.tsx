@@ -12,7 +12,16 @@
 // apertura (FR-036). Decisión del fundador (5 nov 2026, revisión del PR D): tras un fallo ambiguo (red, guardado fallido
 // o inesperado) el primer intento pudo llegar al servidor, así que los campos quedan bloqueados para esa apertura: solo
 // se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
-import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
+// PR C de la 003 (T046, T047; FR-018–FR-024, FR-059, FR-062): con la pareja activa, el chip «Solo tú» es el selector
+// Yo/Nosotros de la hoja (decisión 6 de los fundadores, 7 nov 2026), que nace con el contexto de la app y no cambia si el
+// selector de la app cambia con la hoja abierta (FR-062). En Nosotros, la opción 2a de «07 Nosotros en Anotar gasto»: una
+// fila resumen de 60 px bajo la rejilla (Pagó · Reparto · Participan, siempre visible, con lo último que usó la persona)
+// que abre la subhoja «Reparto» en la misma hoja; Guardar queda en el mismo sitio y fijo al pie en las dos vistas. Un
+// reparto inválido marca el resumen en rojo y deshabilita Guardar. La escritura compartida usa los tres resultados del
+// módulo común (`ok`, `rejected`, `unknown` con «Reintentar» y «Comprobar estado»), sin fila optimista. La misma hoja
+// edita un gasto compartido (Q12): monto, categoría, fecha, descripción, pagador y reparto, con el aviso de recálculo; el
+// contexto se ve y no se cambia. En Yo, una edición con pareja activa ofrece pasar a Nosotros: es Mover a Pareja (FR-032).
+import { useCallback, useId, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -25,9 +34,17 @@ import { formatMoney, moneyFromPesos } from "@/domain/money";
 import { CATEGORY_CATALOG, validateDraft, type CategoryId, type TransactionType } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel } from "@/lib/format";
+import { InlineNotice } from "@/components/ui/inline-notice";
+import { useWrite } from "@/features/shared/use-write";
+import { WriteUnknown } from "@/features/shared/write-unknown";
+import type { WriteError } from "@/features/shared/write-result";
+import type { ContextChoice } from "@/lib/context-preference";
 import { ConfirmDialog } from "./confirm-dialog";
 import type { SheetMode } from "./annotate-provider";
 import { normalizeDescription, toPayloadPesos } from "./payload";
+import { SplitEditor, SplitSummary, splitSubtitle } from "./split-editor";
+import { evaluateSplit, initialSplit, splitFromSaved, splitPayload, summaryLines, type SplitDraft } from "./split-state";
+import type { CoupleForSheet, SavedShared, SharedActions, SharedCreatePayload, SharedUpdatePayload } from "./shared-types";
 import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
 
 const WIDE = "(min-width: 768px)";
@@ -57,6 +74,13 @@ type AnnotateSheetProps = {
   /** UX lote 1, cambio 3: la creación viaja por el proveedor, que oculta la hoja y enseña la fila al instante. */
   onTrack: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
   returnFocusTo: { current: HTMLElement | null };
+  /** PR C: la pareja activa (o `null`), sus escrituras y el contexto de la app al abrir la hoja (FR-062). */
+  couple?: CoupleForSheet | null;
+  sharedActions?: SharedActions;
+  initialContext?: ContextChoice;
+  onSharedSaved?: (saved: SavedShared, kind: "create" | "editShared") => void;
+  /** Editar un privado con pareja activa y elegir Nosotros: Mover a Pareja (FR-032). */
+  onMove?: (transaction: SavedTransaction) => void;
 };
 
 /** Monto entre $1 y $999.999.999, categoría elegida y lo demás válido para el dominio (E1, E3). */
@@ -69,6 +93,10 @@ function initialDraft(mode: SheetMode, today: string): Draft {
   if (mode.kind === "edit") {
     const { transaction } = mode;
     return { type: transaction.type, amount: pesosOf(transaction.amountMinor), categoryId: transaction.categoryId, date: transaction.transactionDate, description: transaction.description ?? "" };
+  }
+  if (mode.kind === "editShared") {
+    const { expense } = mode;
+    return { type: "expense", amount: pesosOf(expense.amountMinor), categoryId: expense.categoryId, date: expense.transactionDate, description: expense.description ?? "" };
   }
   return { type: "expense", amount: null, categoryId: null, date: today, description: "" };
 }
@@ -157,45 +185,106 @@ function DateChip({ value, today, invalid, errorId, onChange }: { value: string;
   );
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo }: AnnotateSheetProps) {
+
+/** PR C: lo que dice la hoja ante un rechazo confirmado de una escritura compartida (contracts/errors.md). */
+function sharedRejection(error: WriteError, partner: string) {
+  switch (error) {
+    case "invalidSplit": return copy.annotate.split.errors.invalid;
+    case "versionConflict": return copy.shared.errors.versionConflict(partner);
+    case "alreadyDeleted": case "notFound": return copy.shared.errors.alreadyDeleted(partner);
+    case "coupleNotActive": return copy.shared.errors.notActive;
+    case "sessionExpired": return copy.errors.sessionExpired;
+    default: return copy.errors.unexpected;
+  }
+}
+
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
-  const editing = mode.kind === "edit";
+  const editing = mode.kind === "edit" || mode.kind === "editShared";
+  const editingShared = mode.kind === "editShared";
+  const members = useMemo(() => couple?.members ?? [], [couple]);
+  const partner = members.find((member) => !member.isMe)?.name ?? "";
   const [initial] = useState(() => initialDraft(mode, today));
   const [draft, setDraft] = useState<Draft>(initial);
+  // FR-062: el contexto de esta apertura nace con el de la app y no lo cambia el selector de la app.
+  const [sheetContext, setSheetContext] = useState<ContextChoice>(() => (editingShared ? "us" : mode.kind === "edit" || !couple ? "me" : initialContext));
+  const [initialSplitDraft] = useState<SplitDraft | null>(() => (!couple ? null : mode.kind === "editShared" ? splitFromSaved(mode.expense, couple.members) : initialSplit(couple.members, couple.last)));
+  const [split, setSplit] = useState<SplitDraft | null>(initialSplitDraft);
+  const [view, setView] = useState<"main" | "split">("main");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirming, setConfirming] = useState(false);
+  const [confirmingMove, setConfirmingMove] = useState(false);
   // Bloqueo tras un fallo ambiguo: dura lo que dura esta apertura de la hoja.
   const [locked, setLocked] = useState(false);
   const saving = useRef(false);
+  const summaryRef = useRef<HTMLDivElement | null>(null);
+  const payerRef = useRef<HTMLButtonElement | null>(null);
   const amountId = `${useId()}-amount`;
   const dateErrorId = `${useId()}-date-error`;
+  const splitStatusId = `${useId()}-split`;
+
+  const shared = sheetContext === "us" && couple !== null && split !== null && sharedActions !== undefined;
+  const sharedRun = useCallback((payload: SharedCreatePayload | SharedUpdatePayload) => ("transactionId" in payload ? sharedActions!.update(payload) : sharedActions!.create(payload)), [sharedActions]);
+  const sharedCheck = useCallback((input: Parameters<SharedActions["check"]>[0]) => sharedActions!.check(input), [sharedActions]);
+  const sharedOk = useCallback((saved: SavedShared) => onSharedSaved?.(saved, editingShared ? "editShared" : "create"), [editingShared, onSharedSaved]);
+  const sharedWrite = useWrite<SharedCreatePayload | SharedUpdatePayload, SavedShared>({ action: editingShared ? "update_shared_expense" : "create_shared_expense", run: sharedRun, check: sharedCheck, onOk: sharedOk });
 
   const { type, amount, categoryId, date, description } = draft;
-  const isSaving = status.kind === "saving";
+  const isSaving = status.kind === "saving" || sharedWrite.pending;
+  const isLocked = locked || sharedWrite.locked;
   const isDirty = useCallback((value: Draft) => (Object.keys(initial) as (keyof Draft)[]).some((key) => initial[key] !== value[key]), [initial]);
-  const dirty = isDirty(draft);
+  const splitStatus = split ? evaluateSplit(split, amount, members) : null;
+  const payload = split && splitStatus ? splitPayload(split, splitStatus, members) : null;
+  const initialPayload = useMemo(() => (initialSplitDraft && mode.kind === "editShared" ? JSON.stringify(splitPayload(initialSplitDraft, evaluateSplit(initialSplitDraft, pesosOf(mode.expense.amountMinor), members), members)) : null), [initialSplitDraft, members, mode]);
+  const splitDirty = editingShared && JSON.stringify(payload) !== initialPayload;
+  const dirty = isDirty(draft) || splitDirty;
   const amountInvalid = amount === 0;
   const dateInvalid = !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date);
   const descriptionTooLong = [...description.trim()].length > 140;
-  const canSave = isComplete(draft) && (!editing || dirty);
+  const splitInvalid = shared && splitStatus !== null && splitStatus.kind !== "ok" && splitStatus.kind !== "noAmount";
+  const canSave = isComplete(draft) && (!editing || dirty) && (!shared || payload !== null);
+  const lines = shared && split && splitStatus ? summaryLines(split, splitStatus, members) : null;
 
   const update = (patch: Partial<Draft>) => {
     setDraft((current) => ({ ...current, ...patch }));
     // Lo escrito después de un error lo deja atrás; el siguiente Guardar es el reintento con la misma clave.
     setStatus((current) => (current.kind === "error" ? { kind: "idle" } : current));
+    if (sharedWrite.state.phase === "rejected") sharedWrite.reset();
+  };
+  const changeSplit = (next: SplitDraft) => {
+    setSplit(next);
+    if (sharedWrite.state.phase === "rejected") sharedWrite.reset();
   };
   const setType = (next: TransactionType) => {
     if (next === type) return;
     update({ type: next, categoryId: next === "income" ? "income" : null });
+    if (next === "income") setSheetContext("me");
+  };
+  const chooseContext = (next: ContextChoice) => {
+    if (next === sheetContext) return;
+    if (mode.kind === "edit") {
+      // FR-032: desde Editar, pasar a Nosotros es Mover a Pareja; con cambios sin guardar se confirma antes.
+      if (isDirty(draft)) setConfirmingMove(true);
+      else onMove?.(mode.transaction);
+      return;
+    }
+    setSheetContext(next);
   };
 
   // `patch`: Enter en una categoría guarda con la elección recién hecha, sin esperar a que el estado la refleje.
   const save = useCallback(async (patch: Partial<Draft> = {}) => {
     const value = { ...draft, ...patch };
-    if (saving.current || !isComplete(value) || (editing && !isDirty(value)) || value.amount === null || value.categoryId === null) return;
+    if (saving.current || !isComplete(value) || (editing && !isDirty(value) && !splitDirty) || value.amount === null || value.categoryId === null) return;
+    const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
+    if (shared) {
+      const splitNow = split ? splitPayload(split, evaluateSplit(split, value.amount, members), members) : null;
+      if (!splitNow) return;
+      if (mode.kind === "editShared") await sharedWrite.submit({ ...common, ...splitNow, transactionId: mode.expense.id, expectedVersion: mode.expense.version });
+      else await sharedWrite.submit({ ...common, ...splitNow });
+      return;
+    }
     saving.current = true;
     setStatus({ kind: "saving" });
-    const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
     let result;
     try {
       if (mode.kind === "edit") result = await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
@@ -219,20 +308,35 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     saving.current = false;
     if (result.ok) {
       setStatus({ kind: "idle" });
-      onSaved(result.value, mode.kind);
+      onSaved(result.value, mode.kind === "edit" ? "edit" : "create");
     } else {
       if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved, onTrack]);
+  }, [actions, draft, editing, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
-  // Escape, la ×, el scrim y el arrastre pasan por aquí: con cambios sin guardar se confirma antes de descartar.
-  const requestClose = (next: boolean) => {
-    if (next || saving.current) return;
-    if (dirty || locked) setConfirming(true);
+  const openSplit = () => {
+    setView("split");
+    requestAnimationFrame(() => payerRef.current?.focus());
+  };
+  const closeSplit = () => {
+    setView("main");
+    requestAnimationFrame(() => summaryRef.current?.querySelector<HTMLButtonElement>("[data-split-summary]")?.focus());
+  };
+
+  // Con cambios sin guardar (o tras un resultado desconocido) se confirma antes de cerrar.
+  const closeSheet = () => {
+    if (saving.current || (sharedWrite.pending && !sharedWrite.locked)) return;
+    if (dirty || isLocked) setConfirming(true);
     else onClose();
+  };
+  // Escape, el scrim y el arrastre pasan por aquí: en la subhoja, Escape vuelve al resumen (2a).
+  const requestClose = (next: boolean) => {
+    if (next) return;
+    if (view === "split") { closeSplit(); return; }
+    closeSheet();
   };
 
   const onOpenAutoFocus = (event: Event) => {
@@ -276,99 +380,157 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     }
   })() : null;
 
+  const sharedNotice = sharedWrite.state.phase === "rejected" ? (
+    <Toast tone="error" message={sharedRejection(sharedWrite.state.error, partner)}
+      action={sharedWrite.state.error === "versionConflict" && mode.kind === "editShared" ? { label: copy.annotate.reload, onAction: () => { onClose(); mode.onReload(); } } : undefined} />
+  ) : sharedWrite.state.phase === "unknown" ? (
+    <WriteUnknown checking={sharedWrite.state.checking} notFound={sharedWrite.state.notFound} onRetry={() => void sharedWrite.retry()} onCheck={() => void sharedWrite.checkStatus()} />
+  ) : null;
+
+  const closeButton = (
+    <button
+      type="button"
+      onClick={closeSheet}
+      aria-label={copy.annotate.close}
+      className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken"
+    >
+      <AppIcon name="x" weight="bold" size={16} />
+    </button>
+  );
+
+  // Contexto: sin pareja activa, «Solo tú» solo informa (P0-1). Con pareja, es el selector de la hoja (decisión 6); al
+  // editar un compartido, «Nosotros» se ve y no se cambia (Q12).
+  const contextControl = !couple || type === "income" ? (
+    <span className={chip}><AppIcon name="lock-simple" size={17} className="text-ink-secondary" />{copy.annotate.onlyYou}</span>
+  ) : editingShared ? (
+    <span className={chip}><AppIcon name="users-three" size={17} className="text-ink-secondary" />{copy.context.us}</span>
+  ) : (
+    <Segmented<ContextChoice>
+      role="radiogroup"
+      label={copy.shared.context}
+      value={sheetContext}
+      onValueChange={chooseContext}
+      options={[{ value: "me", label: copy.annotate.onlyYou }, { value: "us", label: copy.context.us }]}
+    />
+  );
+
+  const footer = (
+    // «Guardar sube con el teclado» (comp 1c y 2a): en la hoja móvil el pie va fijo al fondo del área desplazable, en las
+    // dos vistas. Desde 768 px (diálogo) el pie no es fijo y el relleno es el del diálogo. El aviso de error sube con él.
+    <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
+      {errorNotice}
+      {sharedNotice}
+      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} aria-describedby={splitInvalid ? splitStatusId : undefined} className="w-full">
+        {saveLabel}
+      </Button>
+    </div>
+  );
+
+  const splitView = shared && split ? (
+    <div className="flex flex-col gap-3.5">
+      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+        <button type="button" onClick={closeSplit} aria-label={copy.shared.split.back} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
+          <AppIcon name="caret-left" weight="bold" size={16} />
+        </button>
+        <div className="flex min-w-0 flex-col items-center text-center">
+          {/* La hoja conserva su nombre («Anotar gasto») en la subhoja; «Reparto» es el encabezado visible. */}
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.shared.split.title}</h2>
+          <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{splitSubtitle(categoryId ? copy.categories[categoryId] : null, amount)}</p>
+        </div>
+        {closeButton}
+      </div>
+      <SplitEditor members={members} draft={split} onChange={changeSplit} amountPesos={amount} statusId={splitStatusId} payerRef={payerRef} disabled={isSaving || isLocked} />
+    </div>
+  ) : null;
+
   const body = (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3.5">
-      {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
-          izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
-        <span />
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
-        <button
-          type="button"
-          onClick={() => requestClose(false)}
-          aria-label={copy.annotate.close}
-          className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken"
-        >
-          <AppIcon name="x" weight="bold" size={16} />
-        </button>
-      </div>
-      <fieldset disabled={isSaving || locked} data-locked={locked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
-        {editing ? null : (
-          <Segmented<TransactionType>
-            role="radiogroup"
-            label={copy.annotate.type}
-            stretch
-            value={type}
-            onValueChange={setType}
-            options={[{ value: "expense", label: copy.annotate.expense }, { value: "income", label: copy.annotate.income }]}
-          />
-        )}
-        <AmountInput
-          id={amountId}
-          label={copy.annotate.amount}
-          value={amount}
-          onValueChange={(value) => update({ amount: value })}
-          error={amountInvalid ? copy.annotate.errors.amountOutOfRange : undefined}
-          enterKeyHint="done"
-          // 02·5: «$» y la cifra centrados juntos, en grande, sin el marco hundido. El marco sigue a todo el ancho (el
-          // clamp del tamaño mide su contenedor) y el <input> toma el ancho de lo escrito (field-sizing). Hallazgo de la
-          // primera corrida de evidencia: centrar los hijos del <label> encogía el marco y el monto no se veía.
-          className="text-center"
-          fieldClassName="!bg-transparent !shadow-none justify-center"
-          inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
-        />
-        <div className="flex flex-col gap-2">
-          <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.annotate.category}</span>
-          <CategoryGrid ids={choices} value={categoryId} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />
-        </div>
-        {/* Siempre a la vista: la descripción de una línea (opcional). */}
-        <div className="flex flex-col gap-1.5">
-          <label className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-sunken px-3.5 text-[15px] font-medium text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">
-            <AppIcon name="note-pencil" size={18} className="shrink-0 text-ink-secondary" />
-            <span className="sr-only">{copy.annotate.description}</span>
-            <input
-              type="text"
-              value={description}
-              placeholder={copy.annotate.descriptionPlaceholder}
-              maxLength={200}
-              autoComplete="off"
+      {view === "split" && splitView ? splitView : (
+        <>
+          {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
+              izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
+          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+            <span />
+            <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+            {closeButton}
+          </div>
+          <fieldset disabled={isSaving || isLocked} data-locked={isLocked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
+            {editing ? null : (
+              <Segmented<TransactionType>
+                role="radiogroup"
+                label={copy.annotate.type}
+                stretch
+                value={type}
+                onValueChange={setType}
+                options={[{ value: "expense", label: copy.annotate.expense }, { value: "income", label: copy.annotate.income }]}
+              />
+            )}
+            {editingShared ? <InlineNotice icon="info">{copy.shared.edit.notice(partner)}</InlineNotice> : null}
+            <AmountInput
+              id={amountId}
+              label={copy.annotate.amount}
+              value={amount}
+              onValueChange={(value) => update({ amount: value })}
+              error={amountInvalid ? copy.annotate.errors.amountOutOfRange : undefined}
               enterKeyHint="done"
-              aria-invalid={descriptionTooLong || undefined}
-              onChange={(event) => update({ description: event.target.value })}
-              className="min-w-0 flex-1 bg-transparent placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed"
+              // 02·5: «$» y la cifra centrados juntos, en grande, sin el marco hundido. El marco sigue a todo el ancho (el
+              // clamp del tamaño mide su contenedor) y el <input> toma el ancho de lo escrito (field-sizing). Hallazgo de la
+              // primera corrida de evidencia: centrar los hijos del <label> encogía el marco y el monto no se veía.
+              className="text-center"
+              fieldClassName="!bg-transparent !shadow-none justify-center"
+              inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
             />
-          </label>
-          {descriptionTooLong ? <p className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.descriptionTooLong}</p> : null}
-        </div>
-        {/* La fecha abre el selector; «Solo tú» (P0-1: el contexto es siempre Yo) solo informa, con su candado y sin flechas. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <DateChip value={date} today={today} invalid={dateInvalid} errorId={dateErrorId} onChange={(next) => update({ date: next })} />
-          <span className={chip}>
-            <AppIcon name="lock-simple" size={17} className="text-ink-secondary" />
-            {copy.annotate.onlyYou}
-          </span>
-        </div>
-        {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
-      </fieldset>
-      {/* «Guardar sube con el teclado» (comp 1c): en la hoja móvil el pie va fijo al fondo del área desplazable, con el fondo de
-          la hoja y el safe area: la hoja «bare» no pone relleno inferior, lo trae este pie. Desde 768 px (diálogo) el pie no es
-          fijo y el relleno es el del diálogo. El aviso de error sube con él. */}
-      <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
-        {errorNotice}
-        <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
-          {saveLabel}
-        </Button>
-      </div>
+            <div className="flex flex-col gap-2">
+              <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.annotate.category}</span>
+              <CategoryGrid ids={choices} value={categoryId} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />
+            </div>
+            {/* Siempre a la vista: la descripción de una línea (opcional). */}
+            <div className="flex flex-col gap-1.5">
+              <label className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-sunken px-3.5 text-[15px] font-medium text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">
+                <AppIcon name="note-pencil" size={18} className="shrink-0 text-ink-secondary" />
+                <span className="sr-only">{copy.annotate.description}</span>
+                <input
+                  type="text"
+                  value={description}
+                  placeholder={copy.annotate.descriptionPlaceholder}
+                  maxLength={200}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                  aria-invalid={descriptionTooLong || undefined}
+                  onChange={(event) => update({ description: event.target.value })}
+                  className="min-w-0 flex-1 bg-transparent placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed"
+                />
+              </label>
+              {descriptionTooLong ? <p className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.descriptionTooLong}</p> : null}
+            </div>
+            {/* La fecha abre el selector; al lado, el contexto (decisión 6 de los fundadores). */}
+            <div className="flex flex-wrap items-center gap-2">
+              <DateChip value={date} today={today} invalid={dateInvalid} errorId={dateErrorId} onChange={(next) => update({ date: next })} />
+              {contextControl}
+            </div>
+            {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
+          </fieldset>
+          {/* 2a: la fila resumen de 60 px bajo «Hoy · Nosotros», siempre a la vista. */}
+          {lines && split ? (
+            <div ref={summaryRef}>
+              <SplitSummary payer={members.find((member) => member.userId === split.payerUserId) ?? members[0]} first={lines.first} second={lines.second} invalid={lines.invalid} onOpen={openSplit} disabled={isSaving} />
+              {splitInvalid ? <p id={splitStatusId} className="sr-only">{lines.second}</p> : null}
+            </div>
+          ) : null}
+        </>
+      )}
+      {footer}
       {/* F45-1 (revisión del PR #45): tras un fallo ambiguo el primer intento pudo guardarse, así que cerrar no puede
           decir «no se guardará». Se ofrece reintentar lo mismo con la misma clave (la opción segura, con el foco) o
           cerrar, y se pide revisar Actividad antes de volver a anotarlo. */}
-      {locked ? (
+      {isLocked ? (
         <ConfirmDialog
           open={confirming}
           onOpenChange={setConfirming}
           title={copy.annotate.uncertain.title}
           description={copy.annotate.uncertain.description}
-          cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); void save(); }}>{copy.annotate.uncertain.retry}</Button>}
+          cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); if (sharedWrite.locked) void sharedWrite.retry(); else void save(); }}>{copy.annotate.uncertain.retry}</Button>}
           confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
         />
       ) : (
@@ -381,6 +543,16 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
           confirm={<Button variant="danger" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.discard.confirm}</Button>}
         />
       )}
+      {mode.kind === "edit" ? (
+        <ConfirmDialog
+          open={confirmingMove}
+          onOpenChange={setConfirmingMove}
+          title={copy.annotate.discard.edit}
+          description={copy.annotate.discard.description}
+          cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingMove(false)}>{copy.annotate.discard.keep}</Button>}
+          confirm={<Button variant="danger" onClick={() => { setConfirmingMove(false); onMove?.(mode.transaction); }}>{copy.annotate.discard.confirm}</Button>}
+        />
+      ) : null}
     </form>
   );
 

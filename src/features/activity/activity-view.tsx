@@ -43,7 +43,7 @@ function MonthArrow({ target, direction }: { target: string | null; direction: "
   );
 }
 
-function MonthNav({ month, navigation }: { month: string; navigation: MonthNavigation }) {
+export function MonthNav({ month, navigation }: { month: string; navigation: MonthNavigation }) {
   return (
     // Las flechas quedan en los extremos de la fila: no se mueven con el largo del nombre del mes ni con el texto al 200 %.
     <div className="flex items-center gap-2 xl:max-w-[360px]">
@@ -54,7 +54,7 @@ function MonthNav({ month, navigation }: { month: string; navigation: MonthNavig
   );
 }
 
-function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const id = useId();
   return (
     <label className="flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-md)] bg-sunken px-[14px] text-[length:var(--body-m-size)] text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">

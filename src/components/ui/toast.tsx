@@ -7,12 +7,13 @@
 // así que el Reintentar de un guardado fallido vive dentro de la hoja).
 import * as m from "motion/react-m";
 import { useIsPresent, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { gentle } from "@/lib/motion/tokens";
 import { AppIcon } from "./app-icon";
 
 export type ToastTone = "success" | "error";
-export type ToastAction = { label: string; onAction: () => void; busy?: boolean; busyLabel?: string };
+/** `blocked` (PR C, F57-8): la acción no se puede usar ahora; el texto dice por qué y el botón queda con aria-disabled. */
+export type ToastAction = { label: string; onAction: () => void; busy?: boolean; busyLabel?: string; blocked?: string };
 
 type ToastProps = {
   tone?: ToastTone;
@@ -45,6 +46,7 @@ export function Toast({ tone = "success", message, action, onTimeout, durationMs
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const paused = hovered || focused || Boolean(action?.busy);
+  const blockedId = useId();
   // Tiempo que queda: la pausa lo congela y el contador sigue desde ahí, no desde cero.
   const remaining = useRef(durationMs ?? (action ? TOAST_WITH_ACTION_MS : TOAST_PLAIN_MS));
   const timeout = useRef(onTimeout);
@@ -78,15 +80,19 @@ export function Toast({ tone = "success", message, action, onTimeout, durationMs
       className={`pointer-events-auto flex w-full min-w-0 items-center gap-3 rounded-[16px] py-2 pr-2 pl-4 ${action ? "" : "min-h-12 pr-4"} ${looks[tone]} ${className}`}
     >
       <AppIcon name={tone === "error" ? "warning-circle" : "check-circle"} weight="fill" size={20} className={`shrink-0 ${tone === "error" ? "text-danger" : ""}`} />
-      <span className="min-w-0 flex-1 py-1.5 text-[14px] leading-[1.4] font-medium text-pretty">{message}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 text-[14px] leading-[1.4] font-medium text-pretty">
+        <span>{message}</span>
+        {action?.blocked ? <span id={blockedId} className="text-[12px] leading-[1.35] font-medium">{action.blocked}</span> : null}
+      </span>
       {action ? (
         // Botón propio de 44 de alto (área táctil); el canto visual es el de 02·5: 13/600, radio 10.
         <button
           type="button"
-          onClick={() => { if (!action.busy) action.onAction(); }}
-          aria-disabled={action.busy || undefined}
+          onClick={() => { if (!action.busy && !action.blocked) action.onAction(); }}
+          aria-disabled={action.busy || action.blocked ? true : undefined}
+          aria-describedby={action.blocked ? blockedId : undefined}
           aria-busy={action.busy || undefined}
-          className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-3 text-[13px] font-semibold whitespace-nowrap motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${actionLooks[tone]} ${action.busy ? "cursor-progress" : ""}`}
+          className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-3 text-[13px] font-semibold whitespace-nowrap motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${actionLooks[tone]} ${action.busy ? "cursor-progress" : action.blocked ? "cursor-not-allowed opacity-60" : ""}`}
         >
           {action.busy ? <AppIcon name="circle-notch" weight="bold" size={15} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" /> : null}
           {action.busy ? (action.busyLabel ?? action.label) : action.label}

@@ -1165,3 +1165,279 @@ PR de documentación.
 - `contracts/server-actions.md` §2: sin reanudación tras recargar, límite de 15 s y
   vigencia del enlace.
 - `docs/TESTING.md`: la pasada final de un PR es la de marcarlo listo.
+
+---
+
+# Evidencia — 003 PR C · Gastos compartidos, Nosotros y Mover a Pareja
+
+Rama `claude/feat-003-c-shared-f566ae`, base `main` `4da10b1` (PR A y PR B
+mergeados). Sin producción ni datos reales: cuentas `@seed.test` en
+`juntia-dev`. Todo lo de esta sección es **iteración contra `juntia-dev`** o
+local y **no es evidencia de ninguna `[V]`** (ADR-011 §9.8): T053 (punto de
+control) y T056 (gate al marcar listo) son los runs de CI.
+
+## Estado
+
+- T041–T052 y T055 hechas e iteradas en verde en `juntia-dev`.
+- T053: run de CI tras el push; su duración del job `e2e` se registra abajo.
+- T054 (gestor, laboratorio INP/CLS), T056 (gate al marcar listo) y T057
+  (aprobación visual de los fundadores): pendientes.
+
+## Tarea → commit → prueba
+
+| Tarea | Commit | Prueba |
+| --- | --- | --- |
+| T041–T044, T044a, T044b (tests primero) | `f764eeb` | `src/features/expenses/{annotate-shared,shared-edit,write-result,reclassify}.test.tsx`, `src/features/home/home-couple.test.tsx`, `src/features/activity/activity-couple.test.tsx`; `tests/e2e/couple-settle.e2e.ts` (spec E2E 3, 3 casos); `tests/a11y/couple-shared.a11y.ts`; `tests/a11y/job-selection.test.ts`; `tests/support/{a11y,seed}.ts` |
+| T045 | `fef1cc6` | `write-result.test.tsx` (clasificación y `SHARED_WRITE_ACTIONS`); `shared-edit.test.tsx` (avisos por operación, navegación, FR-062) |
+| T046 | `fef1cc6` | `annotate-shared.test.tsx`; spec 3 «gasto compartido 50/50» |
+| T047 | `fef1cc6` | `shared-edit.test.tsx`; axe de edición, conflicto y eliminar |
+| T048, T049 | `fef1cc6` | `home-couple.test.tsx`, `activity-couple.test.tsx`; spec 3 «Cambiar Yo/Nosotros» |
+| T050 | `fef1cc6` | `reclassify.test.tsx`; spec 3 «Mover a Pareja»; axe de A3 y A5 (dos variantes) |
+| T051, T052, T055 (iteración, Impeccable, capturas) | commit de evidencia | `e2e:dev`, `test:integration:dev`, `verify`; 76 PNG en `evidence/pr-c/` |
+| Ride-along del gestor: `AGENTS.md` 15a → `docs/TESTING.md` §3 | `f764eeb` | — |
+
+## Rojo antes del código (regla 8; I5)
+
+- **Componentes**: 71 fallan y 12 pasan de 83. Las que pasan en rojo son
+  negativas que ya cumplían los andamios vacíos (sin botón en un ingreso o sin
+  pareja; sin presupuesto; «Solo tú» informativo sin pareja) o la clasificación
+  del módulo del PR B (`versionConflict`, `network`…).
+- **`next build` comprueba los tipos de los tests**: para que la app compile, el
+  commit de tests trae los tipos (`shared-types.ts`), el copy nuevo y andamios que
+  devuelven `null`, sin comportamiento.
+- **E2E y axe contra `juntia-dev`** (`npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts tests/a11y/couple-shared.a11y.ts`,
+  build verde): spec 3, **3 de 3 fallan** («Aún no hay gastos este mes» no
+  aparece; el control positivo de Nosotros no encuentra «Carulla Laureles»; no hay
+  «Mover a Pareja»). axe, **6 de 6 fallan** (sin `[data-balance-line]`; el teclado
+  no llega a «Reparto»).
+
+## Verde en `juntia-dev` (T051, T052)
+
+| Pasada | Qué | Resultado |
+| --- | --- | --- |
+| Dirigidas | spec 3 + `couple-shared.a11y.ts` | Corrigieron: `rowMode` exportado desde un módulo `"use client"` y llamado por el detalle de servidor; nombre accesible del resumen (`label-content-name-mismatch`) y título de la hoja en la subhoja (`aria-dialog-name`); axe midiendo a mitad del fundido de un diálogo; un `/\s+/` del arnés que había quedado en `/s+/` y borraba las «s» de los nombres (afectaba también a `couple.a11y.ts`) |
+| Completa 1 | `npm run e2e:dev` | E2E 27 de 30 (3 por la copia oculta `#S:n` del streaming de React, solo de prueba), **axe 188 de 188** (453,75 s) |
+| Completa 2 | `npm run e2e:dev` | **E2E 26 de 26, axe 188 de 188** (459,41 s; total 525,09 s) |
+| Completa 3 | `npm run e2e:dev` antes del push, tras los arreglos de Impeccable | ver «Pasada antes del push» |
+
+- `npm run test:integration:dev`: la primera pasada tuvo 3 hooks de 10 s vencidos
+  al crear cuentas y un `PGRST202` de la sonda V9 (caché de esquema de PostgREST),
+  sin relación con el PR (no toca SQL); repetida: **63 pasan, 9 omitidas** (correo
+  y `40P01` real, declaradas), 117,66 s.
+- `npm run verify`: lint, typecheck, dominio y componentes en verde, 59,98 s.
+
+## T051 · axe, teclado, 200 % y 44 px
+
+- **axe**, 0 violaciones serias o críticas en los dos temas a 390 y 1440: Inicio,
+  Actividad y Anotar en Nosotros, Reparto con «Faltan», edición compartida con el
+  aviso y en conflicto de versión, confirmación de eliminar, ChangePreview (A3) y
+  A5 en sus dos variantes (40 auditorías).
+- **Teclado**: Tab llega al resumen y Enter abre «Reparto» con el foco en el
+  pagador (el último usado); flechas en Pagó y en el modo; Porcentaje e Importe se
+  teclean; Espacio quita y vuelve a poner a Tomás («Sara asume el 100 %»); Escape
+  vuelve al resumen; Enter guarda; Escape cierra una hoja sin cambios; A1–A4 de
+  Mover a Pareja con Enter.
+- **44 px**: resumen 350×60 · 50/50, Porcentaje e Importe 114,7×44 (con el
+  `::after` de F17-2) · campos de Porcentaje e Importe 132×44 · casilla de Tomás
+  206×44 · Mover a Pareja 322×52 · Revisar cambios 350×52.
+- **200 %** a 390: Inicio y Actividad en Nosotros, Anotar E1, Reparto, edición, Yo
+  con la parte, A1, A2 y A3 sin scroll horizontal y con `cortado: 0`.
+
+## T055 · barrido sin scroll horizontal
+
+360, 390, 430, 768, 1024, 1280 y 1440 px en claro y oscuro: Inicio en Nosotros,
+Actividad en Nosotros (también A4), Anotar en Nosotros E1, Reparto en Porcentaje,
+edición compartida, Yo con la parte compartida, A1, A2 y A3: 126 mediciones con
+`scrollWidth == clientWidth`. A5 (rechazo confirmado) se añadió al barrido después:
+14 mediciones más en la pasada antes del push.
+
+## Impeccable (T055; no es evidencia de FR-054)
+
+Revisión de acabado sobre las capturas contra el resumen de 2a, 04·1, 04·7 y
+04·10. Coinciden: E2 (cabecera, Pagó con avatares, modos, barra sólida y rayada
+con hueco punteado, «Faltan $20.000», Guardar deshabilitado), E3, E5, Inicio en
+Nosotros, Actividad a 1440 con «Pagó · Reparto» y panel, detalle con «A quién le
+corresponde», A3, A4 a 1440 y A5 en sus dos variantes; el oscuro se sostiene.
+
+| # | Hallazgo | Qué se hizo |
+| --- | --- | --- |
+| 1 | Capturas de edición y A2 tomadas a mitad del fundido | Recapturadas tras esperar animaciones y opacidad 1 |
+| 2 | A4 a 390: «movido desde Yo» cortado | Va en su propia línea en la fila |
+| 3 | A2: Importe y Pagó fijos con aspecto de campo | Filas planas con «Se mantiene» |
+| 4 | E1 abre con «Pagó Tomás» | **Sin cambio**: decisión 1 de los fundadores (se recuerda lo último usado; aquí el último gasto sembrado lo pagó Tomás) |
+| 5 | La subhoja «Reparto» es más baja que la hoja | **Sin cambio**: así es en el comp 2a (552 px frente a 736) |
+| 6 | Selector de contexto de 38 px | **Sin cambio**: Segmented llega a 44 con su `::after` (F17-2), medido arriba |
+| 7 | «Antes de mover» sobra | **Sin cambio**: está en el comp 04·10 |
+| 8 | Fichas de categoría de Actividad apiladas a 390 | **Fuera de alcance**: disposición de la 002 |
+| 9 | Inicio Yo: las filas compartidas no salen en los cinco recientes de la captura | **Sin cambio de código**: con el mismo día, ordenan detrás de los privados; lo prueban los componentes |
+
+## Decisión 5 de los fundadores (contraste de la 1c)
+
+El 4,30:1 del comp es `#6C665B` sobre `#E7DFD0`. La app ya pinta el tono más
+oscuro de la errata F16-1 (3 nov 2026): el marcador de posición usa
+`--comp-field-muted-fg` = `linen-800` `#48443C`, **7,32:1** en claro, y `#A29C92`
+sobre `#22262A`, **5,59:1** en oscuro; «Ingreso» sin elegir va en tinta. axe no
+encuentra ningún `color-contrast` en las hojas. No se cambia ningún token.
+
+**Comps actualizados por Claude Design (7 nov 2026, aviso del gestor).** El 06 fija
+`#48443C` para «Ingreso» sin elegir y para el marcador de posición, en claro y en
+Yo. El marcador ya usa ese tono. «Ingreso» sin elegir va en tinta `#1A1C1A`,
+más oscuro: la comp 06 pide #48443C; la app mantiene la tinta del Segmented
+(errata del 3 nov), con más contraste, decisión del gestor. En «02 Componentes», 02·5/02·6 «Modo
+Nosotros · 2a oficial» N1–N4: N1, N2 y N4 coinciden con lo construido; N3 dibuja
+la decisión 4 en dos líneas («Pagó Tomás · 100 %» sobre «Sara · $186.400») y el
+resumen se alineó con él (test primero, visto en rojo).
+
+## Capturas para T057 (390 y 1440, claro y oscuro)
+
+76 PNG en `specs/003-pareja-y-balances/evidence/pr-c/`: Anotar en Nosotros E1, E2
+(Reparto con «Faltan»), E3 (un participante), E4 (pagó la otra persona), E5
+(resumen inválido) y guardado; Anotar en Yo con pareja; Inicio en Nosotros e
+Inicio en Yo con la parte compartida; Actividad en Nosotros; detalle compartido;
+edición compartida; eliminar; Mover a Pareja A1, A2, A3, A4, A5 rechazo y A5
+desconocido. Las capturas de página completa a 390 dibujan la barra inferior a
+media página y a 1440 cortan el sidebar en 900 px: es el `fullPage` de Playwright
+con `position: fixed`. Las hizo una spec temporal, sin commitear, dentro del arnés
+de `e2e:dev`.
+
+**Para aprobar viendo la pantalla** (decisiones 20.3 y 20.4): Anotar compartido
+(2a) y ChangePreview; el copy nuevo del PR (`src/lib/copy/es.ts`), incluido el
+texto nuevo de Nosotros para Metas y Plan con pareja activa.
+
+## Lecturas de ejecución (no decisiones; se cambian si el revisor las objeta)
+
+| # | Lectura | Por qué |
+| --- | --- | --- |
+| C1 | Las entradas axe de T044b van en `tests/a11y/couple-shared.a11y.ts` y no en `route-registry.ts`: una pareja por tema y ancho que recorre todos los estados | Necesitan dos cuentas emparejadas y compartidos sembrados, que el registro de una sola cuenta no siembra (como M6/M7 en el PR B); así no se paga una siembra por estado en el job `e2e` |
+| C2 | «Lo último que usó» sale del último gasto compartido que anotó la persona (`couple_expenses`, leído por el layout) y se actualiza en memoria al guardar | Q5 y decisión 1 sin almacenamiento del navegador (lección de #51/#55) |
+| C3 | En Importe, mientras no se toque un campo, las partes siguen al 50/50 del monto actual | Recordar importes de otro gasto no tiene sentido; recordar el modo sí |
+| C4 | Una parte de 0 en Porcentaje o Importe se envía tal cual (100/0 o total/0) y el resumen la muestra como un participante | FR-019a y la precisión de contracts/database.md |
+| C5 | Las filas compartidas de Inicio en Yo no son enlace | El detalle compartido vive en Nosotros; un enlace desde Yo abriría «no encontrado» |
+| C6 | ChangePreview pide las cifras de antes con una Server Action al abrir A3 | contracts/server-actions.md §4: con Yo, la página no lee `couple_month_summary` |
+| C7 | Sin fila optimista para el gasto compartido; la hoja queda con «Guardando…» | #53 no cae de forma natural aquí: los tres resultados con «Comprobar estado» necesitan la hoja a la vista |
+| C8 | Mover a Pareja confirmado pasa la app a Nosotros y lleva a Actividad del mes | Así se ve la fila «movido desde Yo» de A4 |
+
+## Pasada antes del push
+
+`npm run e2e:dev` completo sobre el código que se empuja: **E2E 26 de 26** (46,4 s) y **axe con sesión 188 de 188** (457,83 s); total 518,76 s. A5 en el barrido: 14 de 14 sin scroll horizontal y 200 % con `cortado: 0`. **Aviso para T053**: el paso de axe con sesión ya ocupa unos 458 s contra `juntia-dev`, así que el job `e2e` del CI puede superar los 480 s.
+
+## T053 · punto de control intermedio (CI)
+
+T053 se fusiona con el gate por decisión del gestor (minutos de CI): no se lanza `gh workflow run`. La duración del job `e2e` frente a los 480 s se mide en la pasada de `ready_for_review` (T056), que es la única de este PR. Si supera 480 s, el gestor lo lleva a los fundadores antes del merge.
+
+## Revisión de ChatGPT F57 (sobre `6c2cbbd`)
+
+0 bloqueantes y 4 importantes; aprueba la privacidad, el cálculo en servidor,
+Inicio, Mover a Pareja, la ChangePreview, el alcance y la línea de `AGENTS.md`.
+Un solo commit, sin migraciones. Pruebas primero en
+`src/features/expenses/review-f57.test.tsx` y `activity-couple.test.tsx`: **9 en
+rojo** antes del código (las de 100/0 y de una parte de importe en 0 ya pasaban).
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| F57-1 | `lastFromSaved()` y `splitFromSaved()` deducían los participantes de las partes positivas: un equal de $1 (Sara $1, Tomás $0) volvía como un participante y se guardaba como percent 100/0 | Se reconstruye desde el modo guardado: `equal`, siempre los dos; `percent`, quien tiene porcentaje > 0; `amount`, quien tiene parte > 0 (FR-019a). `couple_expenses` ya expone `split_percents` (sin migración) | equal de $1 y percent 99/1 de $50 siguen siendo de los dos; editar la descripción del equal de $1 envía `equal` con los dos |
+| F57-2 | Actividad en Nosotros sumaba la lista paginada para el total, las categorías y el conteo | Salen de `couple_month_summary` del mes (FR-043), leído en `loadCoupleMonth`; la lista solo pinta, filtra y busca | con dos filas en la lista, la cifra, el conteo y las fichas son las del resumen |
+| F57-3 | Con un borrado en `unknown`, «Cerrar sin confirmar» cerraba sin preguntar | Abre «¿Cerrar sin confirmar?»; «Seguir aquí» conserva la intención | flujo completo y «Comprobar estado» con la misma clave |
+| F57-4 | «Deshacer» de un compartido y de Mover a Pareja llamaba directo, sin límite, sin `write_status` y con «No pudimos deshacer» | La máquina del PR B en el proveedor: 15 s y después desconocido, texto neutro (`copy.writes.undoUnknown`), «Comprobar estado» con `void_shared_expense` o `undo_reclassify_to_shared`, «Reintentar» con la misma clave si todavía no consta; la respuesta tardía no pisa nada | respuesta perdida con `completed`; `not_found` y reintento idéntico; promesa colgada más de 15 s; Mover a Pareja |
+
+Iteración: componentes 326 de 326 (las dos suites de F57 y de edición, tres veces seguidas sin fallos). `verify` 72,21 s; una primera pasada de `verify` con carga en el equipo falló en componentes (97,11 s) y no se reprodujo. `npm run e2e:dev` completo antes del push: **E2E 26 de 26 y axe 188 de 188** (axe 493,31 s; total 554,83 s). La pasada anterior perdió el caso de privacidad de la spec 3 por el límite de 30 s de Playwright en dev (~30 peticiones HTML y RSC); ese caso lleva ahora `test.slow()`.
+
+## Segunda ronda F57 (sobre `1c6e32e`)
+
+Cierra F57-3; F57-1, F57-2 y F57-4 correctos en su núcleo; acepta `test.slow()`.
+Tres importantes, restos de los anteriores, en un solo commit sin migraciones.
+Pruebas primero: **4 en rojo** antes del código.
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| F57-5 | `rowMode()` usaba las partes positivas: «100 %» para un equal de $1 o un 99/1 sobre $50 | Sale del modo: `equal` «50/50»; `percent` los porcentajes declarados (100/0 → «100 %»); `amount` «100 %» solo con una única parte positiva | equal $1, 99/1 sobre $50, 100/0 sobre $80.000 y dos casos de importe |
+| F57-6 | El desconocido y el «todavía no consta» de Deshacer iban en un toast que caducaba a los 6 s | Aviso fijo en el proveedor, en memoria (`WriteUnknown` con el texto del deshacer): no caduca, «Reintentar» y «Comprobar estado» sobre la intención original, y «Cerrar aviso» pide «¿Cerrar sin confirmar?» | desconocido + 7 s y reintento con la clave original; `not_found` + 7 s, cerrar con «Seguir aquí» y con «Cerrar» |
+| F57-7 | El vacío de Actividad en Nosotros se decidía solo con la lista | Con `couple_month_summary.count > 0` y la lista vacía se ve el resumen y un aviso neutro con «Volver a cargar» (`copy.activity.coupleStale`, copy nuevo) | lista vacía y resumen con 1 gasto |
+
+Iteración: componentes 330 de 330 (las suites de F57, edición y Actividad, tres
+veces seguidas sin fallos); `verify` 66,54 s. `npm run e2e:dev` completo antes
+del push: **E2E 26 de 26** y **axe 187 de 188**, total 593,78 s (axe 518,99 s). El
+único fallo fue `/recuperar · A4b · light · 1440px` por `document-title`, el
+intermitente de la 002 ya anotado en el PR B (pasada 3), en una pantalla que este PR
+no toca; repetido aparte (`npm run e2e:dev -- tests/a11y/routes.a11y.ts -g A4b`):
+**4 de 4**.
+
+## Tercera ronda F57 (sobre `1953cc7`)
+
+Cierra F57-5 y F57-7; F57-6 bueno en el caso individual. Queda F57-8.
+
+**F57-8: un deshacer pendiente a la vez, decisión del gestor.** Con un solo aviso
+fijo, un segundo «Deshacer» (B) que terminara en ok, rechazo o desconocido borraba o
+sustituía la recuperación de A. Mientras exista un deshacer sin resolver
+(desconocido o sin constar), no se puede iniciar otro: el «Deshacer» de los avisos
+nuevos de gasto compartido y de Mover a Pareja queda con `aria-disabled`, descrito
+por «Resuelve primero el deshacer pendiente.» (`copy.writes.undoBlocked`, copy
+nuevo; `ToastAction.blocked`), y `runUndo` no empieza ni toca otra intención
+mientras haya una pendiente. Solo cierran la recuperación de A su propio resultado
+(ok o rechazo, por «Reintentar» o «Comprobar estado») o su cierre confirmado: las
+tres únicas llamadas a `setPendingUndo` están en esos caminos.
+
+Prueba (`review-f57.test.tsx`, primero en rojo): A en desconocido; el «Deshacer» de
+B está deshabilitado, pulsarlo no llama a nada y A sigue recuperable; navegar entre
+páginas lo conserva; A se resuelve por `write_status` con su clave y el «Deshacer»
+de C vuelve a estar disponible.
+
+Iteración (regla del fundador para rondas de corrección: `verify` y pruebas
+dirigidas): `verify` 72,11 s; componentes 331 de 331 en la última pasada completa.
+El equipo tenía carga de otras sesiones (`next dev` y navegadores): en pasadas con
+carga hubo tiempos agotados de 5 s por prueba que variaban entre pasadas y tocaban
+también suites del PR B; la prueba de F57-8, con tres recorridos de Anotar, lleva
+20 s de límite. E2E dirigidas por el cambio del Toast
+(`npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`):
+**19 de 19**.
+
+## Cuarta ronda F57 (sobre `94c41a2`)
+
+Da por bueno el bloqueo de F57-8 con A ya desconocido o sin constar. Queda
+**F57-9**, la ventana anterior: con el deshacer de A en vuelo no había reserva; si se
+guardaba B, su aviso sustituía al de A y subía la generación, y cuando A llegaba a
+desconocido (15 s) la comprobación de generación descartaba su resultado: A perdía su
+recuperación y el «Deshacer» de B quedaba habilitado.
+
+Corrección, dentro de la regla de un deshacer a la vez: la intención se reserva
+desde que **empieza** (`activeUndo` con fase «en curso», en una referencia que cambia
+en el acto y en el estado que pinta); mientras exista, en curso o sin resolver, los
+«Deshacer» de los avisos nuevos quedan bloqueados igual que en F57-8 (el aviso de la
+propia intención no). Su resultado se aplica por la identidad de la intención, no por
+la generación: un desconocido pasa al aviso fijo aunque su aviso ya se haya
+sustituido. ok o rechazo liberan la reserva. La generación del aviso solo decide si
+se muestra un mensaje ordinario (no se pisa el aviso de B con el de A).
+
+Pruebas (`review-f57.test.tsx`, primero en rojo): deshacer de A retenido; B se guarda
+antes de que A responda y su «Deshacer» está bloqueado, también con Enter y Espacio
+desde el teclado; a los 15 s A pasa al aviso fijo y se comprueba con su clave; resuelto
+A, el bloqueo se libera. Lo mismo con «Deshacer» de Mover a Pareja.
+
+Iteración: componentes de `src/features/expenses` 167 de 167 (F57 y edición, tres
+veces seguidas sin fallos); `verify` 62,17 s; E2E dirigidas
+(`annotate.e2e.ts` y `couple-settle.e2e.ts`) **19 de 19**.
+
+## Quinta ronda F57 (sobre `a4fb4ea`)
+
+Confirma la exclusión mutua, la recuperación de A con su clave y el límite de 15 s.
+Queda un detalle de F57-9: al resolverse A desde el aviso fijo, su `notify()`
+sustituía el aviso de B, que esperaba con su «Deshacer» bloqueado, y B perdía su
+oportunidad de deshacer.
+
+Corrección mínima: el resultado de una recuperación (aviso fijo) **nunca** usa
+`notify()` ni toca el aviso ordinario. Se muestra un momento en el sitio del aviso
+fijo (un Toast propio, con su rol `status` o `alert`, que se anuncia y se retira solo)
+con el copy que ya existía («Gasto deshecho», «Volvió a Yo.» o el rechazo). El aviso de
+B se queda y, al liberarse la reserva, su «Deshacer» se habilita con su propia clave.
+Desde el aviso con «Deshacer», un resultado solo usa `notify()` si nadie ocupó su
+lugar: una respuesta vieja no pisa un mensaje más nuevo.
+
+Pruebas (`review-f57.test.tsx`, primero en rojo), para `voidShared` y `undoMove`: A
+desconocido, se guarda B con su «Deshacer» bloqueado, «Comprobar estado» de A da
+`completed`; el aviso de B sigue, se habilita y deshace B con una clave distinta de la
+de A. Y un `write_status` de A retenido mientras aparece el aviso de B: al resolverse
+no lo sustituye.
+
+Iteración: componentes de `src/features/expenses` 170 de 170 (F57 y edición, tres
+veces seguidas sin fallos); `verify` 55,07 s; E2E dirigidas (`annotate.e2e.ts` y
+`couple-settle.e2e.ts`) **19 de 19**.

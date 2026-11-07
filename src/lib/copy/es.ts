@@ -26,6 +26,13 @@ export const copy = {
   // 003 T007: claves del contrato de errores. PR B (T035; 04·15, 04·17): Mi pareja M1–M7, invitación y confirmación de
   // anular. Copy nuevo para revisión de los fundadores en el PR; «propietaria» sigue a los comps y al glosario §1.
   couple: {
+    // PR C de la 003 (04·1 INICIO · NOSOTROS, 04·6 SIN ACTIVIDAD; FR-044; interpretación I3).
+    home: {
+      spentIn: (month: string) => `En ${month} gastaron juntos`, pending: "POR SALDAR", settledBadge: "AL DÍA",
+      owes: (debtor: string, creditor: string) => `${debtor} le debe a ${creditor}`, settled: "Al día", seeBalance: "Ver balance",
+      balanceTitle: "Saldo de la pareja", recentTitle: "Recientes",
+      empty: { title: "Aún no hay gastos este mes", description: "Cuando alguno de los dos anote un gasto compartido, aparecerá aquí con quién pagó y cómo se reparte.", action: "Anotar el primero" },
+    },
     errors: { alreadyInCouple: "Ya tienes una pareja. Si tu invitación está pendiente, anúlala antes de aceptar otra.", invitationGone: "No encontramos esta invitación.", alreadyAccepted: "Ya no se puede anular: la invitación se aceptó.", notActive: "Necesitas una pareja activa para continuar.", versionConflict: "La invitación cambió en otro lugar. Ya ves lo último." },
     status: { active: "ACTIVA", pending: "PENDIENTE", solo: "SOLO TÚ", invalid: "NO VÁLIDA", label: (title: string) => `Estado de la pareja: ${title}` },
     active: {
@@ -93,10 +100,78 @@ export const copy = {
     unknown: "No pudimos confirmar si se hizo. No lo des por hecho: reintenta lo mismo sin riesgo o comprueba el estado.",
     retry: "Reintentar", check: "Comprobar estado", checking: "Comprobando…",
     notFound: "Todavía no consta. Reintentar es seguro: no se hace dos veces.",
+    // F57-4: «Deshacer» sin respuesta (red, 15 s o respuesta perdida). Nunca dice que no se deshizo.
+    undoUnknown: "No pudimos confirmar si se deshizo. No lo des por hecho: comprueba el estado o reintenta sin riesgo.",
+    // F57-6: el aviso de un deshacer sin confirmar no caduca; cerrarlo es explícito y se confirma.
+    // F57-8: un deshacer pendiente a la vez (decisión del gestor). Copy nuevo para revisión de los fundadores.
+    undoBlocked: "Resuelve primero el deshacer pendiente.",
+    dismiss: "Cerrar aviso", undoCloseDescription: "No pudimos confirmar si se deshizo. Revisa Actividad antes de volver a intentarlo.",
     close: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se hizo. Revisa Mi pareja antes de volver a intentarlo.", keep: "Seguir aquí", confirm: "Cerrar" },
   },
-  shared: { errors: { versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.` } },
-  move: { errors: { notAllowed: "No se puede mover este gasto.", undoNotAvailable: "Ya no se puede deshacer: pasó el plazo o hay cambios posteriores." }, limit: "No se puede mover este gasto porque está financiado con una meta." },
+  // PR C de la 003 (T046–T050; 02·5 y 02·6 con la opción 2a de «07 Nosotros en Anotar gasto», 04·1, 04·7, 04·10). Copy
+  // nuevo para revisión de los fundadores en el PR; los textos de los comps se copian tal cual.
+  shared: {
+    errors: {
+      versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.`,
+      notActive: "Necesitas una pareja activa para anotar en Nosotros.",
+    },
+    context: "Contexto del gasto",
+    mode: { equal: "50/50", percent: "Porcentaje", amount: "Importe", percentOf: ([first, second]: readonly number[]) => `${first}/${second}` },
+    summary: {
+      open: "Reparto",
+      paid: (name: string, mode: string) => `Pagó ${name} · ${mode}`,
+      // Decisión 4 tal como la dibuja el comp 02·5 N3 (2a oficial): «Pagó Tomás · 100 %» sobre «Sara · $186.400».
+      single: (payer: string) => `Pagó ${payer} · 100 %`, one: (name: string, amount: string) => `${name} · ${amount}`,
+      both: (first: string, second: string) => `${first} y ${second}`,
+      each: (names: string, amount: string) => `${names} · ${amount} cada uno`,
+      parts: (parts: readonly (readonly [string, string])[]) => parts.map(([name, amount]) => `${name} ${amount}`).join(" · "),
+    },
+    split: {
+      title: "Reparto", back: "Volver al gasto", subtitle: (category: string, amount: string) => `${category} · ${amount}`,
+      payer: "Pagó", mode: "Reparto", participants: "Participan", you: "(tú)",
+      percentOf: (name: string) => `Porcentaje de ${name}`, amountOf: (name: string) => `Importe de ${name}`,
+      notParticipating: "No participa", bar: "Cómo se reparte el gasto",
+      singleNote: (name: string) => `${name} asume el 100 %. El reparto vuelve al añadir a la otra persona.`,
+      missing: (amount: string) => `Faltan ${amount} por asignar`, excess: (amount: string) => `Sobran ${amount}`,
+      missingPercent: (amount: string, percent: number) => `Faltan ${amount} (${percent} %)`, excessPercent: (amount: string, percent: number) => `Sobran ${amount} (${percent} %)`,
+    },
+    row: {
+      meta: (payer: string, mode: string) => `Pagó ${payer} · ${mode}`, table: (payer: string, mode: string) => `${payer} · ${mode}`,
+      settlement: "Liquidado · no es un gasto", settlementTitle: (from: string, to: string) => `${from} → ${to}`,
+      accessibleName: ({ title, amount, category, date, meta }: { title: string; amount: string; category: string; date: string; meta: string }) => `${title}, ${amount} pesos, ${category}, ${meta}, ${date}`,
+    },
+    detail: {
+      context: "Nosotros", payer: "Pagó", split: "Reparto", owed: "A quién le corresponde",
+      notedBy: (author: string, payer: string) => `Anotado por ${author} · pagó ${payer}`,
+      editedBy: (name: string, date: string) => `Editado por ${name} · ${date}`,
+      owesLine: (debtor: string, creditor: string, amount: string) => `En este gasto, ${debtor} le debe ${amount} a ${creditor}. Ya está incluido en el balance.`,
+      evenLine: "En este gasto cada uno pagó lo que le corresponde.",
+    },
+    edit: { notice: (name: string) => `Si cambias el monto o el reparto, el balance del mes se recalcula y ${name} verá que lo editaste.` },
+    remove: { description: (title: string, amount: string, partner: string) => `${title} · ${amount}. Sale de los totales de Nosotros y del balance. ${partner} verá que lo eliminaste.` },
+  },
+  move: {
+    errors: { notAllowed: "No se puede mover este gasto.", undoNotAvailable: "Ya no se puede deshacer: pasó el plazo o hay cambios posteriores." },
+    limit: "No se puede mover este gasto porque está financiado con una meta.",
+    action: "Mover a Pareja", explain: (partner: string) => `Pasa a Nosotros con ${partner}. Se crea el gasto compartido y este se anula: sigue habiendo un solo gasto.`,
+    lead: "Revisa cómo queda en Nosotros. Nada cambia hasta que confirmes.",
+    amount: "Importe", payer: "Pagó", kept: "Se mantiene", review: "Revisar cambios", back: "Volver",
+    preview: {
+      eyebrow: "Antes de mover", title: (month: string) => `Así cambian los números de ${month}`,
+      private: "Tus gastos privados · Yo", sharedPart: "Tu parte compartida · Yo", couple: "Gasto compartido · Nosotros",
+      owes: (debtor: string, creditor: string) => `${debtor} le debe a ${creditor}`, settled: "Saldo de la pareja",
+      row: (label: string, before: string, after: string) => `${label}: antes ${before}, después ${after}`,
+      paidNote: (payer: string, amount: string, share: string) => `${payer} pagó ${amount} y le corresponden ${share}.`,
+      visibility: (partner: string, title: string) => `${partner} verá ${title} en Nosotros. El registro privado anulado queda solo en tu historial.`,
+      atomic: "Es una sola operación: se crea el compartido y se anula el privado a la vez. Si algo falla, no cambia nada.",
+      loading: "Calculando los cambios…", failed: "No pudimos calcular los cambios. Revisa tu conexión e inténtalo de nuevo.",
+    },
+    confirm: "Mover a Pareja", moving: "Moviendo…",
+    donePrefix: "Movido a Pareja", done: (debtor: string, creditor: string, amount: string) => `Movido a Pareja. ${debtor} ahora le debe ${amount} a ${creditor}.`, doneSettled: "Movido a Pareja. Quedan al día.",
+    undone: "Volvió a Yo.", undoFailed: "No pudimos deshacer el movimiento.",
+    rejected: (title: string) => `No se movió. ${title} sigue en Yo y no se creó nada en Nosotros.`,
+    movedFromMe: "movido desde Yo",
+  },
   remove: {
     action: { expense: "Eliminar gasto", income: "Eliminar ingreso" }, title: { expense: "¿Eliminar este gasto?", income: "¿Eliminar este ingreso?" },
     description: (title: string, amount: string) => `${title} · ${amount}. Sale de tus totales, de Actividad y de la exportación.`,
@@ -188,6 +263,8 @@ export const copy = {
     onlyYou: "Solo tú",
     // UX lote 1, cambio 3 (fila optimista; copy aprobado por los fundadores el 6 nov 2026): no afirma que se guardó.
     pending: { saving: "Guardando…" },
+    // PR C de la 003 (04·1 INICIO · YO): la fila de un gasto compartido en Yo; cuenta solo por la parte.
+    sharedPart: (amount: string) => `Compartido · tu parte ${amount}`,
     accessibleName: ({ title, amount, income, category, date }: { title: string; amount: string; income: boolean; category: string; date: string }) =>
       `${title}, ${income ? "más " : ""}${amount} pesos, ${category}, ${date}`,
   },
@@ -198,6 +275,8 @@ export const copy = {
     dateLine: (date: string, left: number) => `${date} · ${left === 0 ? "último día del mes" : left === 1 ? "queda 1 día del mes" : `quedan ${left} días del mes`}`,
     annotateHint: "Monto y categoría",
     breakdownTitle: "En qué se fue", recentTitle: "Tus movimientos", seeAll: "Ver todo",
+    // PR C de la 003 (04·1 INICIO · YO; FR-045): `gasto_consumo` de Yo, privados más la parte compartida.
+    onlyYours: "Solo tuyos", sharedPart: "Tu parte compartida",
     empty: { title: "Todavía no anotas nada este mes", description: "Cuando anotes un gasto o un ingreso, aquí verás cuánto llevas y en qué se fue. Solo tú lo ves.", action: "Anotar el primero" },
     loading: "Cargando movimientos",
   },
@@ -205,7 +284,8 @@ export const copy = {
     // PR B (T034; FR-016, US-3.7): el acceso a invitar desde Nosotros sin pareja. Los textos de pendiente y activa cubren
     // el tiempo entre el PR B y el PR C, que trae los gastos compartidos. Copy nuevo para revisión de los fundadores.
     invite: "Invitar a mi pareja", pendingDescription: "Tu invitación está pendiente. Nosotros aparece cuando tu pareja la acepte.", seeInvitation: "Ver mi invitación",
-    activeDescription: "Ya son pareja. Lo que anoten juntos aparecerá aquí en la próxima versión. Por ahora, lo tuyo sigue en Yo." },
+    // PR C: Nosotros ya tiene gastos compartidos en Inicio y Actividad; Metas y Plan siguen provisionales hasta P0-3 (FR-048).
+    activeDescription: "Las metas y el plan de los dos llegan en una próxima versión. Los gastos compartidos ya están en Inicio y Actividad." },
   load: { error: { title: "No pudimos cargar tus movimientos", description: "Revisa tu conexión. Lo que ya estaba guardado sigue a salvo; sin conexión no podemos guardar nada nuevo." } },
   activity: {
     spentIn: (month: string) => `Gasto de ${month}`,
@@ -215,7 +295,12 @@ export const copy = {
     searchLabel: "Buscar por descripción", searchPlaceholder: "Buscar", type: "Tipo", all: "Todos", expenses: "Gastos", incomes: "Ingresos",
     categoryFilter: "Filtrar por categoría", categoryChip: (category: string, amount: string) => `${category}, ${amount} pesos`,
     results: (count: number) => (count === 1 ? "1 movimiento coincide" : `${count} movimientos coinciden`),
-    table: { caption: "Movimientos del mes", description: "Descripción", date: "Fecha", amount: "Monto" },
+    table: { caption: "Movimientos del mes", description: "Descripción", date: "Fecha", amount: "Monto", paidSplit: "Pagó · Reparto" },
+    // PR C de la 003 (04·1 ACTIVIDAD en Nosotros, 04·6 SIN ACTIVIDAD).
+    spentTogether: (month: string) => `Gasto compartido de ${month}`,
+    // F57-7: el resumen del mes dice que hay gastos y la lista llegó vacía. Copy nuevo para revisión de los fundadores.
+    coupleStale: { text: "La lista de este mes no se cargó completa. Vuelve a cargarla para ver los gastos.", action: "Volver a cargar" },
+    coupleEmpty: { title: "Aún no hay gastos este mes", description: "Cuando alguno de los dos anote un gasto compartido, aparecerá aquí con quién pagó y cómo se reparte.", action: "Anotar el primero" },
     empty: { title: "Aún no hay movimientos este mes", description: "Cuando anotes un gasto o un ingreso con fecha de este mes, aparecerá aquí. Solo tú lo ves.", action: "Anotar el primero" },
     noResults: { title: "Nada coincide", description: "Prueba con otra palabra o quita los filtros.", clear: "Quitar filtros" },
     loading: "Cargando movimientos",

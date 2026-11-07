@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { categories } from "@/components/ui/category-icon";
 import { ExitState } from "@/components/shell/provisional-state";
-import type { Money } from "@/domain/money";
+import { formatMoney, type Money } from "@/domain/money";
 import { groupByDay, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
@@ -21,24 +21,54 @@ const RECENT = 5;
 // El ancho de cada ficha del desglose crece con su importe (en pesos), como en 04·1.
 const weight = (amount: Money) => Number(amount.amountMinor) / 100;
 // Fondos de categoría como clases estáticas (Tailwind no ve clases compuestas en tiempo de ejecución).
-const tileBg: Record<CategoryId, string> = {
+export const tileBg: Record<CategoryId, string> = {
   market: "bg-category-market-bg", restaurants: "bg-category-restaurants-bg", home: "bg-category-home-bg", transport: "bg-category-transport-bg",
   health: "bg-category-health-bg", entertainment: "bg-category-entertainment-bg", shopping: "bg-category-shopping-bg",
   services: "bg-category-services-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
 };
-const categoryFg: Record<CategoryId, string> = {
+export const categoryFg: Record<CategoryId, string> = {
   market: "text-category-market-fg", restaurants: "text-category-restaurants-fg", home: "text-category-home-fg", transport: "text-category-transport-fg",
   health: "text-category-health-fg", entertainment: "text-category-entertainment-fg", shopping: "text-category-shopping-fg",
   services: "text-category-services-fg", income: "text-category-income-fg", other: "text-category-other-fg",
 };
 
-type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string };
+/**
+ * PR C de la 003 (T048; FR-045; US-4): con la pareja activa, Yo enseña `gasto_consumo`: sus privados más su parte de lo
+ * compartido (`me_month_summary`, una sola sentencia), con «Solo tuyos» y «Tu parte compartida», y las filas compartidas
+ * con «Compartido · tu parte $X» y el importe completo (`my_shared_parts`). Nunca se suma Yo + Nosotros.
+ */
+export type SharedPartRow = { id: string; transactionDate: string; categoryId: CategoryId; description: string | null; amount: Money; myPart: Money; payerUserId: string };
+export type MeSummary = { privateMinor: string; sharedPartMinor: string; consumptionMinor: string; byCategory?: Partial<Record<CategoryId, string>> };
+type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string; shared?: { parts: readonly SharedPartRow[]; summary: MeSummary } };
+type RecentItem = { kind: "private"; row: Transaction } | { kind: "shared"; row: SharedPartRow };
 
-export function HomeView({ rows, month, today }: HomeViewProps) {
+/** La fila de un gasto compartido en Yo: cuenta solo por la parte; el importe completo a la derecha (04·1 INICIO · YO). */
+function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
+  const title = row.description ?? copy.categories[row.categoryId];
+  const date = dayLabel(row.transactionDate, today);
+  return (
+    <div data-shared-part="" className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+      <span className={`grid size-10 place-items-center rounded-[12px] ${tileBg[row.categoryId]}`}><AppIcon name={categories[row.categoryId].icon} weight="duotone" size={20} className={categoryFg[row.categoryId]} /></span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
+        <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary">
+          <AppIcon name="users-three" size={12} className="shrink-0" />
+          <span className="truncate"><span>{copy.row.sharedPart(formatMoney(row.myPart))}</span>{` · ${date}`}</span>
+        </span>
+      </span>
+      <span className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
+    </div>
+  );
+}
+
+export function HomeView({ rows, month, today, shared }: HomeViewProps) {
   const name = monthName(month);
   const summary = monthSummary(rows, month);
-  const recent = groupByDay(rows).flatMap(({ transactions }) => transactions).slice(0, RECENT);
-  if (recent.length === 0) {
+  const recentItems: RecentItem[] = [
+    ...groupByDay(rows).flatMap(({ transactions }) => transactions).map((row) => ({ kind: "private" as const, row })),
+    ...(shared?.parts ?? []).map((row) => ({ kind: "shared" as const, row })),
+  ].sort((a, b) => (a.row.transactionDate === b.row.transactionDate ? 0 : a.row.transactionDate > b.row.transactionDate ? -1 : 1)).slice(0, RECENT);
+  if (recentItems.length === 0) {
     return (
       <>
       <HomeScope month={month} knownIds={rows.map(({ id }) => id)} />
@@ -50,9 +80,13 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
       </>
     );
   }
-  const spentBy = (Object.entries(summary.byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
+  const byCategory = shared?.summary.byCategory
+    ? Object.fromEntries(Object.entries(shared.summary.byCategory).map(([category, value]) => [category, { amountMinor: BigInt(value as string), currency: "COP" as const }]))
+    : summary.byCategory;
+  const spentBy = (Object.entries(byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
     .sort(([, a], [, b]) => (b.amountMinor > a.amountMinor ? 1 : b.amountMinor < a.amountMinor ? -1 : 0));
-  const spent = summary.expenseTotal.amountMinor > 0n;
+  const heroMinor = shared ? BigInt(shared.summary.consumptionMinor) : summary.expenseTotal.amountMinor;
+  const spent = heroMinor > 0n;
   const heroTitle = spent ? copy.home.spentIn(name) : copy.home.noExpenses(name);
   return (
     <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
@@ -63,7 +97,19 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
           {heroTitle}
         </h2>
         {spent ? (
-          <CountingAmount amountMinor={summary.expenseTotal.amountMinor.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
+          <CountingAmount amountMinor={heroMinor.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
+        ) : null}
+        {shared ? (
+          <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.onlyYours}</p>
+              <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(shared.summary.privateMinor), currency: "COP" })}</p>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.sharedPart}</p>
+              <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(shared.summary.sharedPartMinor), currency: "COP" })}</p>
+            </div>
+          </div>
         ) : null}
       </section>
       <AnnotateCta />
@@ -96,9 +142,11 @@ export function HomeView({ rows, month, today }: HomeViewProps) {
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
             <PendingHomeRows month={month} today={today} knownIds={rows.map(({ id }) => id)} />
-            {recent.map((transaction) => (
-              <li key={transaction.id}>
-                <HighlightRow transaction={transaction} href={`/actividad/${transaction.id}?mes=${month}`} dateLabel={dayLabel(transaction.transactionDate, today)} />
+            {recentItems.map((item) => (
+              <li key={`${item.kind}-${item.row.id}`}>
+                {item.kind === "private"
+                  ? <HighlightRow transaction={item.row} href={`/actividad/${item.row.id}?mes=${month}`} dateLabel={dayLabel(item.row.transactionDate, today)} />
+                  : <SharedPartItem row={item.row} today={today} />}
               </li>
             ))}
           </ul>

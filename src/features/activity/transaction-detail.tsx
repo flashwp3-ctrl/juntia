@@ -8,6 +8,7 @@ import { categories, CategoryIcon } from "@/components/ui/category-icon";
 import { rowTitle, signedAmount } from "@/components/ui/expense-row";
 import type { Transaction } from "@/domain/transactions";
 import { TransactionActions } from "@/features/expenses/transaction-actions";
+import { MoveToCouple } from "@/features/expenses/reclassify-move";
 import { toSavedTransaction } from "@/features/expenses/saved";
 import { copy } from "@/lib/copy/es";
 import { instantInBogota, shortDate } from "@/lib/format";
@@ -68,6 +69,8 @@ export function TransactionDetail({ transaction, closeHref }: { transaction: Tra
       <p className="text-[length:var(--body-s-size)] leading-[var(--body-s-line)] text-ink-secondary">
         {copy.detail.noted(instantInBogota(transaction.createdAt), transaction.version > 1)}
       </p>
+      {/* PR C de la 003 (T050; FR-032): A1, solo con la pareja activa y nunca en un ingreso. */}
+      <MoveToCouple transaction={toSavedTransaction(transaction)} />
       <TransactionActions transaction={toSavedTransaction(transaction)} backHref={closeHref} />
     </article>
   );
