@@ -42,3 +42,19 @@ Ningún run de CI lanzado por el agente. Producción no se utiliza.
   `05`, `12a` y `13a`: `relation juntia_data.budgets does not exist` / `savings_goals
   does not exist`; `has_table` falla en las seis tablas. Total `89.90 s`.
   Las pruebas nuevas no fallaron por sintaxis. Lock liberado por el runner.
+
+## Iteración de tablas · T013–T014
+
+- Se crearon los archivos con la CLI fijada (`supabase@2.121.0 migration new`),
+  sin editar las siete migraciones previas.
+- Presupuestos: `12a_budget_tables.test.sql` → `pasó (13)` en `juntia-dev`.
+- Primera pasada de ambas tablas: `01_privileges` → `pasó (442)`,
+  `05_direct_writes` → `pasó (84)`, y las suites previas pasan.
+  `13a` detectó correctamente un fallo de reactivación: la comparación de `xmin`
+  con el xid superior no reconocía el subxid de `lives_ok` (savepoint). También
+  detectó el acceso a un campo de `NEW` de la otra tabla del trigger diferido.
+  Se corrigieron ambos; pasada posterior: **salida 0**, `106.05 s` en dev.
+  `12a_budget_tables` → `pasó (13)` y `13a_goal_tables` → `pasó (24)`.
+  Todas las suites SQL previas pasan. Esta salida no cierra [V] de CI.
+- Lint: 0 errores, 1 aviso preexistente en `balance-panel.tsx:61`.
+- Typecheck: salida 0 antes de las migraciones (solo SQL después).

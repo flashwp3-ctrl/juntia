@@ -2,6 +2,12 @@
 -- TRUNCATE, REFERENCES, TRIGGER, secuencias, usage y create (spec.md; ADR-013 [V] 7).
 begin;
 select no_plan();
+-- 004 T012 / FR-001: seis tablas controladas, RLS y SELECT sin escritura directa.
+select ok(c.relrowsecurity and c.relowner<>'juntia_writer'::regrole,'004 RLS y dueño separado: '||c.relname)
+from pg_class c where c.oid in (select to_regclass('juntia_data.'||t) from unnest(array['budgets','budget_versions','savings_goals','goal_ledger_entries','goal_usage_allocations','goal_usage_confirmations']) t);
+select is(has_table_privilege(r,'juntia_data.'||t,p),r='authenticated' and p='SELECT','004 grant exacto '||r||' '||t||' '||p)
+from unnest(array['anon','authenticated']) r cross join unnest(array['budgets','budget_versions','savings_goals','goal_ledger_entries','goal_usage_allocations','goal_usage_confirmations']) t
+cross join unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p;
 -- 003 T009 / F49-6: nadie de la app hereda el rol de lectura amplia.
 select is((select rolcanlogin or rolbypassrls or rolsuper from pg_roles where rolname='juntia_membership'),false,'membership sin privilegios globales');
 select is(pg_has_role(r,'juntia_membership',p),false,'sin herencia membership '||r||' '||p)
