@@ -695,8 +695,10 @@ meta compartida exige pareja activa):
 | 2025-12-01 | Sara crea Japón, **después** de la activación |
 | 2025-12-27 | Primer aporte a Japón (Sara) |
 
-Octubre de 2026 sigue siendo el **primer mes con movimientos compartidos**: antes de
-octubre la pareja solo tiene aportes a Japón, que no son gastos ni liquidaciones. Las
+Octubre de 2026 es el **primer mes con gastos compartidos o liquidaciones**; la
+actividad de aportes a la meta compartida Japón comienza en diciembre de 2025. La
+navegación histórica de Actividad en Nosotros incorporará esos aportes anteriores a
+octubre (FR-044), así que no se recorta en octubre. Las
 cifras de P0-2 (429.900 en `beforeSettlement`, 229.900 en `afterSettlement` y
 2.840.000) no cambian. Las fixtures tipadas de `src/domain/golden/` incluyen estas
 fechas y las de Bicicleta (parte D), y una **prueba cronológica** comprueba el orden:
