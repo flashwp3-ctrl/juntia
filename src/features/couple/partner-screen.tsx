@@ -259,7 +259,8 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
             <AppIcon name="x" weight="bold" size={16} />
           </button>
         </div>
-        <form noValidate onSubmit={submitCreate} className="flex min-w-0 flex-col gap-3.5">
+        {/* Desde #51, la hoja sin pie propio (bare) deja al contenido su relleno inferior y el safe area; el diálogo de escritorio ya lo trae. */}
+        <form noValidate onSubmit={submitCreate} className={`flex min-w-0 flex-col gap-3.5 ${wide ? "" : "pb-[calc(20px+env(safe-area-inset-bottom))]"}`}>
           <p className="text-[14px] leading-[1.5] text-pretty text-ink-secondary">{lead}</p>
           <Input
             label={copy.couple.invite.email}
