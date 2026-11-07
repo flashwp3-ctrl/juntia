@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { acquireDevLock, alive, killTree, TreeStillAliveError, unlockDevLock } from "../scripts/dev-target/lock.mjs";
 import { runInSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
+import { planE2E } from "../scripts/dev-target/e2e-plan.mjs";
 
 describe("lector TAP de test:db:dev", () => {
   it("pasa con todas las pruebas ok y el plan al final (no_plan) o al principio (plan)", () => {
@@ -256,4 +257,61 @@ const wait = setInterval(() => { if (fs.existsSync(${JSON.stringify(readyFile)})
       killQuietly(grandPid);
     }
   }, 40_000);
+});
+
+// Pedido del gestor (7 nov 2026, fuera de las tareas del PR B de la 003): `npm run e2e:dev -- <args>` corre solo las
+// pruebas afectadas. Sin argumentos, lo mismo que antes. Los argumentos nunca cambian el destino, la configuración ni el
+// entorno, y @mail sigue fuera.
+describe("e2e:dev dirigido (planE2E)", () => {
+  const full = [
+    { label: "E2E (sin @mail)", project: "e2e", args: ["test", "--project", "e2e", "--grep-invert", "@mail", "--reporter=list"] },
+    { label: "axe con sesión (A11Y_JOB=e2e)", project: "a11y", a11yJob: "e2e", args: ["test", "--project", "a11y", "--grep-invert", "@mail", "--reporter=list"] },
+  ];
+
+  it("sin argumentos corre lo mismo que antes: todo el proyecto e2e y todo el a11y con A11Y_JOB=e2e", () => {
+    expect(planE2E([])).toEqual(full);
+  });
+
+  it("reenvía un archivo .e2e.ts al proyecto e2e, sin el pase a11y", () => {
+    expect(planE2E(["tests/e2e/access-account.e2e.ts"])).toEqual([
+      { label: "E2E dirigido (sin @mail)", project: "e2e", args: ["test", "--project", "e2e", "--grep-invert", "@mail", "--reporter=list", "tests/e2e/access-account.e2e.ts"] },
+    ]);
+  });
+
+  it("reenvía --grep y --only-changed tal cual, solo al proyecto e2e", () => {
+    expect(planE2E(["--grep", "invitación", "--only-changed"])).toEqual([
+      { label: "E2E dirigido (sin @mail)", project: "e2e", args: ["test", "--project", "e2e", "--grep-invert", "@mail", "--reporter=list", "--grep", "invitación", "--only-changed"] },
+    ]);
+  });
+
+  it("un archivo .a11y.ts corre en el proyecto a11y con A11Y_JOB=e2e", () => {
+    expect(planE2E(["tests/a11y/couple.a11y.ts"])).toEqual([
+      { label: "axe dirigido (A11Y_JOB=e2e)", project: "a11y", a11yJob: "e2e", args: ["test", "--project", "a11y", "--grep-invert", "@mail", "--reporter=list", "tests/a11y/couple.a11y.ts"] },
+    ]);
+  });
+
+  it("archivos de los dos proyectos: un paso por proyecto, cada uno con sus archivos y los mismos flags", () => {
+    expect(planE2E(["couple.a11y.ts", "access-account.e2e.ts", "--grep", "pareja"]).map(({ project, args }) => [project, args.slice(6)])).toEqual([
+      ["e2e", ["access-account.e2e.ts", "--grep", "pareja"]],
+      ["a11y", ["couple.a11y.ts", "--grep", "pareja"]],
+    ]);
+  });
+
+  it("--project e2e o a11y explícito elige ese proyecto", () => {
+    expect(planE2E(["--project", "a11y", "--grep", "M6"]).map(({ project, a11yJob }) => [project, a11yJob])).toEqual([["a11y", "e2e"]]);
+    expect(planE2E(["--project=e2e", "--grep", "x"]).map(({ project }) => project)).toEqual(["e2e"]);
+  });
+
+  it.each([
+    [["--config", "otro.config.ts"]],
+    [["--config=otro.config.ts"]],
+    [["-c", "otro.config.ts"]],
+    [["--project", "evidence"]],
+    [["--project=chromium"]],
+    [["NEXT_PUBLIC_SUPABASE_URL=https://prod.example"]],
+    [["API_URL=https://x"]],
+    [["--grep-invert", "nada"]],
+  ])("rechaza %j: cambiaría la config, el proyecto, el destino o la exclusión de @mail", (args) => {
+    expect(() => planE2E(args)).toThrow(/e2e:dev/);
+  });
 });
