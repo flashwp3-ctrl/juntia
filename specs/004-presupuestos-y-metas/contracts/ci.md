@@ -2,8 +2,11 @@
 
 Aplica ADR-011 §3, §4 y §9 (decisiones 17, 18, 19.5 y 21) y `docs/TESTING.md`. Parte
 de `specs/003-pareja-y-balances/contracts/ci.md` y dice solo lo que cambia. **Nada de
-esto está implementado.** `docs/TESTING.md`, `.github/` y `scripts/` no se tocan desde
-este slice: si P0-3 necesitara cambiarlos, sería en un PR técnico aparte.
+esto está implementado.** `docs/TESTING.md` no cambia. Las únicas excepciones previstas
+en `.github/`, `playwright.config.ts` y `scripts/dev-target/` son las de la mitigación
+(a) de abajo: la variable de workers del PR A, para medir, y la combinación fijada en el
+job `e2e` en el PR B, si la medición la da por segura. Las dos van en PR de código que
+ya corren CI y se revisan como cualquier cambio de pruebas.
 
 ## Jobs
 
@@ -29,9 +32,41 @@ Línea base: **420 s** en el gate del PR #60 (research R9). Margen: 60 s.
 - Los estados de axe nuevos se agrupan por ruta, con los dos temas en el mismo
   contexto, como en la 003.
 - **Puntos de control con medición:** el PR B y el PR C lanzan `gh workflow run` una
-  vez, cuando nace su spec, para medir el job y registrarlo en la evidencia. Si supera
-  480 s, el PR se para y va a los fundadores. El techo no se mueve por una medición
-  (cláusula anticliquet).
+  vez, cuando nace su spec, para medir el job y registrarlo en la evidencia. El techo
+  no se mueve por una medición (cláusula anticliquet).
+
+### Mitigación prevista, en este orden y sin subir el tope
+
+Con 60 s de margen, dos specs nuevas probablemente no caben tal como está el job. Para
+no bloquear a mitad del PR B o el C, la mitigación queda decidida aquí:
+
+1. **(a) Más paralelismo de Playwright en el job `e2e`.** Hoy `playwright.config.ts` no
+   fija `workers` ni `fullyParallel`: Playwright usa su valor por defecto (la mitad de
+   las CPU) y reparte **archivos**, no casos dentro de un archivo, así que una spec
+   larga corre entera en un solo worker. La siembra ya es por worker: `tests/e2e/fixtures.ts` siembra con scope `worker`, por
+   `parallelIndex`, la Sara privada, la Sara del dataset y la pareja (Sara y Tomás),
+   cada una con su `storageState` propio (`docs/TESTING.md` §5, reglas 1 y 2; el
+   aislamiento entre workers lo prueba `tests/integration/seed.test.ts`). La medición
+   T054 de la 002 no repartía trabajo porque había un solo archivo.
+   - **El PR A mide si es seguro**, sin CI extra, con `npm run e2e:dev` contra
+     `juntia-dev`: 1, 2 y 4 workers, con y sin `fullyParallel`, sobre las specs y el
+     axe existentes. Criterio: cero fallos, cero datos de un worker en otro y el tiempo
+     de cada combinación. `e2e:dev` rechaza hoy `--workers` (lista blanca de F55-1), así
+     que el PR A añade el mínimo para medir: `playwright.config.ts` lee el número de
+     workers y `fullyParallel` de una variable con el valor actual por defecto, y
+     `e2e:dev` la reenvía. Va en el PR A porque es un PR de código que ya corre CI.
+   - Si es seguro, el PR B fija en el job `e2e` la combinación medida. Si no lo es, se
+     registra por qué y se pasa a (b).
+   - Lo que de verdad no puede ir en paralelo (por ejemplo, el test con motion activo
+     o un caso que cambie algo global) se marca `@serial`, como ya hace el proyecto
+     `evidence`.
+2. **(b) No repetir casos.** Las specs 4 y 5 no repiten lo que ya cubre otra spec o una
+   capa inferior: el número héroe ya lo comprueba la spec 3; la privacidad de Nosotros
+   se comprueba una vez por ruta nueva; las validaciones de importes, versiones y
+   saldos viven en integración y pgTAP. Cada caso E2E justifica qué rompería sin que
+   ninguna capa inferior se entere (`docs/TESTING.md` §4).
+3. **(c) Solo si (a) y (b) no bastan**, el PR se para y va a los fundadores con la
+   medición. El tope de 480 s no se mueve por una medición.
 
 ## Barrido completo de accesibilidad (decisión 21.2)
 

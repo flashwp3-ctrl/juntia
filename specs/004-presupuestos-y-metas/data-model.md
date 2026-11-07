@@ -143,7 +143,7 @@ trigger que solo admite `pending →` otro estado.
 | Invariante | Mecanismo |
 | --- | --- |
 | Ledger, asignaciones y versiones de presupuesto de solo inserción | Trigger `before update or delete` que falla con `JT222` para **cualquier** rol (research R1) |
-| Saldo ≥ 0 por aportante | Trigger `before insert` en `goal_ledger_entries` (retiros) y `goal_usage_allocations` que **bloquea la meta** y comprueba el disponible; `JT220` (research R2). Las anulaciones de aportes los comprueban las funciones bajo el mismo bloqueo |
+| Saldo ≥ 0 por aportante | Trigger `before insert` que **bloquea la meta** y comprueba que, después del asiento, `disponible(g, m) ≥ 0`; si no, `JT220` (research R2). Cubre los tres asientos que reducen el disponible: un **retiro** en `goal_ledger_entries`, una **asignación de uso** en `goal_usage_allocations` y un **`void` que anula un aporte** (el aportante `m` es el `member_user_id` del aporte anulado). Anular un retiro o un uso solo aumenta el disponible y no se comprueba. Así la regla no depende de la función (ADR-013 §2.4) |
 | Una meta por gasto; meta y gasto del mismo contexto y moneda | Trigger `before insert` en usos y solicitudes: todos los usos y solicitudes de un `transaction_id` comparten `goal_id`, y el contexto del gasto es el de la meta (DEC-G06); `JT203`/`JT224` |
 | Uso ≤ gasto | Trigger `before insert` en `goal_usage_allocations`: la suma de usos vivos del gasto no supera su importe; `JT209`. Las funciones ya lo comprueban bajo el bloqueo del movimiento |
 | Ningún uso vivo en un gasto no activo (F63-4) | Trigger de restricción diferido en `transactions` (`after update of status, amount_minor`): si el gasto queda anulado con usos vivos, o su importe queda por debajo de lo usado, falla con `JT213` |

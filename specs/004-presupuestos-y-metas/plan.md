@@ -260,8 +260,8 @@ entera y la mitad de servidor de US-2, US-5, US-6, US-7 y US-8.
 | Capa | Qué |
 | --- | --- |
 | Dominio | Las siete filas de DEC-G04 con `test.each`, «No disponible» distinto de 0, negativos sin `Math.max`; vistas que concilian sin sumarse (−120.000 + 120.000 = 0); saldo y disponible por aportante con propiedades (≥ 0); `budgetState` con comparación exacta y consumo 0 (estado «dentro», 0 %); `displayedPercent` truncado (92 %, 46 %, 65 %); `limitInForce`; `proposeFunding` (mayor residuo, suma exacta); `goalPace` (6.660.000 en 6 meses → 1.110.000); `monthComparison`; el dataset dorado de P0-3 y su prueba cronológica (F63-1) |
-| SQL/RLS (pgTAP) | Privilegios efectivos de tablas, funciones y triggers nuevos; cada tabla con su RLS para Sara, Tomás y una tercera cuenta; metas y presupuestos personales invisibles para el otro, también anulados y por agregados; solo inserción para cualquier rol; cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella y cada validación (aporte a nombre de otro, aprobar la propia solicitud, uso sin aprobación, retiro ajeno, archivar con saldo); `transaction_goal_funded` con datos; una política rota a propósito que hace fallar la función |
-| Integración | Las carreras de FR-112 con `raceUnderLock` en los dos órdenes (aprobar contra cancelar, retirar, quitar el uso y anular el gasto; dos usos; dos aprobaciones; editar contra desactivar presupuesto; dos creaciones de la misma clave) con la invariante «ningún uso vivo en un gasto no activo» y sin interbloqueos; idempotencia y `write_status` de cada escritura nueva; las cuatro funciones redefinidas contra gastos con y sin meta; lectura consistente de `metric_months` y `budget_months`; `readByCursor` sobre `goal_entries`; importes de ida y vuelta (`9007199254740993`); exportación con lo nuevo, sin personales del otro ni duplicados |
+| SQL/RLS (pgTAP) | Privilegios efectivos de tablas, funciones y triggers nuevos; cada tabla con su RLS para Sara, Tomás y una tercera cuenta; metas y presupuestos personales invisibles para el otro, también anulados y por agregados; solo inserción para cualquier rol; **el trigger de saldo con un `insert` directo como `juntia_writer`** de un retiro, una asignación y un `void` que anula un aporte, cada uno por encima del disponible, que fallan con `JT220`; cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella y cada validación (aporte a nombre de otro, aprobar la propia solicitud, uso sin aprobación, retiro ajeno, archivar con saldo); `transaction_goal_funded` con datos; una política rota a propósito que hace fallar la función |
+| Integración | Las carreras de FR-112 con `raceUnderLock` en los dos órdenes (aprobar contra cancelar, retirar, quitar el uso y anular el gasto; dos usos; dos aprobaciones; editar contra desactivar presupuesto; dos creaciones de la misma clave; **dos anulaciones del mismo aporte o de dos aportes de la misma persona, y anular un aporte contra retirar**, con el disponible ≥ 0 en todos los casos) con la invariante «ningún uso vivo en un gasto no activo» y sin interbloqueos; idempotencia y `write_status` de cada escritura nueva; las cuatro funciones redefinidas contra gastos con y sin meta; lectura consistente de `metric_months` y `budget_months`; `readByCursor` sobre `goal_entries`; importes de ida y vuelta (`9007199254740993`); exportación con lo nuevo, sin personales del otro ni duplicados |
 | E2E | Ninguna nueva; corren las specs 1, 2 y 3 |
 
 **`[V]` que cierra:** ADR-013 [V] 1–7 sobre lo nuevo; `goal_usage_confirmations`;
@@ -269,8 +269,17 @@ RLS de metas; registro inicial y autorización posterior del gasto con meta (pun
 6 de §15.6.3, SQL); ediciones concurrentes de presupuesto (SQL); idempotencia (SQL);
 las siete filas; `transaction_goal_funded` (función); dataset en orden cronológico.
 
+**Medición de workers (mitigación a de [contracts/ci.md](contracts/ci.md)):** contra
+`juntia-dev`, sin CI extra, `npm run e2e:dev` con 1, 2 y 4 workers, con y sin
+`fullyParallel`, sobre las specs 1, 2 y 3 y su axe con sesión. Para poder medir, el PR A
+hace que `playwright.config.ts` lea el número de workers y `fullyParallel` de una
+variable (por defecto, lo de hoy) y que `e2e:dev` la reenvíe, porque su lista blanca
+rechaza `--workers`. Se registra en la evidencia si los usuarios y parejas
+sembrados por worker aíslan los datos (cero fallos, cero lecturas cruzadas) y cuánto
+baja el tiempo. El número de workers que use el job `e2e` sale de esa medición.
+
 **Criterios de salida:** job `db` verde en el último commit, con las salidas de los dos
-puntos de control; dataset dorado de P0-3 en dominio e integración; cero accesos
+puntos de control; la medición de workers en la evidencia; dataset dorado de P0-3 en dominio e integración; cero accesos
 cruzados; cero duplicados; cero usos vivos en gastos no activos; revisión humana del
 SQL.
 
@@ -397,8 +406,12 @@ aprobada por los dos fundadores (SC-012)**.
 
 ## Riesgos
 
-- **Presupuesto del job `e2e`.** 60 s de margen sobre la línea base de 420 s (R9). Se
-  mide al nacer cada spec; si se supera, el PR se para y va a los fundadores.
+- **Presupuesto del job `e2e`.** 60 s de margen sobre la línea base de 420 s (R9)
+  probablemente no alcanzan para dos specs nuevas. La mitigación está prevista en
+  [contracts/ci.md](contracts/ci.md), en orden y sin subir el tope: (a) workers de
+  Playwright en el job `e2e`, cuya seguridad se mide en el PR A contra `juntia-dev`;
+  (b) no repetir en las specs 4 y 5 lo que ya cubre otra capa o spec; (c) solo si las
+  dos no bastan, los fundadores.
 - **Redefinir funciones en producción.** Las cuatro funciones de anular y editar ya
   atienden datos. La migración las sustituye con la misma firma y el mismo contrato;
   sus pruebas de la 002 y la 003 siguen corriendo sin cambios, y se añaden las de gasto
@@ -436,8 +449,10 @@ o se comporta algo:
    PR C.
 4. **Una solicitud aprobada cuyo uso se quita después** se muestra como «Uso quitado»,
    no como pendiente (research R3).
-5. **Si una spec E2E lleva el job `e2e` por encima de 480 s**, el PR se para y se les
-   pregunta. El presupuesto no se mueve solo.
+5. **El presupuesto del job `e2e` se defiende sin subir el tope**: primero workers de
+   Playwright (medidos en el PR A), después no repetir casos entre specs, y solo si
+   las dos cosas no bastan se les pregunta ([contracts/ci.md](contracts/ci.md)). El
+   tope no se mueve solo.
 
 ## Complexity Tracking
 

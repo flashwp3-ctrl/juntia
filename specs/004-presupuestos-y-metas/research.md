@@ -114,9 +114,13 @@ concurrencia.
 - **Toda función que cambia el saldo de una meta la bloquea** (`select … for
   update` sobre `savings_goals`) antes de leer saldos (FR-004; ADR-013 §3.2).
 - **Defensa en profundidad que sí serializa:** un trigger `before insert` en
-  `goal_ledger_entries` (retiros) y en `goal_usage_allocations` toma el mismo
-  bloqueo de la meta y comprueba el disponible del aportante; falla con `JT220`
-  (`goalNegative`). Funciona aunque una escritura salte las funciones. **Decisión
+  `goal_ledger_entries` y en `goal_usage_allocations` toma el mismo bloqueo de la
+  meta y comprueba que el disponible del aportante sigue ≥ 0 después del asiento;
+  falla con `JT220` (`goalNegative`). Cubre los tres asientos que lo reducen: el
+  retiro, la asignación de un uso y el `void` que anula un aporte (revisión del
+  gestor del plan: la spike solo probó los dos primeros; el tercero se prueba en el
+  PR A con un `insert` directo como `juntia_writer` y con dos carreras, data-model
+  §3). Funciona aunque una escritura salte las funciones. **Decisión
   del plan** (ADR-013 §2.4 pide que las invariantes no dependan solo de la función;
   este es el mecanismo que la prueba demostró).
 - No se usa un trigger diferido para este saldo: la prueba mostró que no protege.
