@@ -19,6 +19,8 @@ const SARA = "11111111-1111-4111-8111-111111111111";
 const TOMAS = "22222222-2222-4222-8222-222222222222";
 const GROUP = "33333333-3333-4333-8333-333333333333";
 const EXPIRES = "2026-11-10T15:00:00.000Z";
+// El copy une «vence el 10 nov» con espacios duros; Testing Library normaliza el texto del DOM a espacios simples.
+const spaced = (text: string) => text.replace(/\s+/g, " ");
 
 const active: PartnerView = { kind: "active", members: [
   { userId: SARA, name: "Sara", role: "owner", joinOrder: 1, isMe: true },
@@ -135,7 +137,7 @@ describe("Mi pareja M4 · pendiente", () => {
   it("PENDIENTE con correo y caducidad, «Generar enlace nuevo» y «Anular», nunca «Copiar enlace»", () => {
     render(<PartnerScreen view={pending()} actions={actions()} />);
     expect(screen.getByText(copy.couple.status.pending)).toBeTruthy();
-    expect(screen.getByText(copy.couple.pending.line("tomas@correo.com", "10 nov"))).toBeTruthy();
+    expect(screen.getByText(spaced(copy.couple.pending.line("tomas@correo.com", "10 nov")))).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.couple.pending.regenerate })).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.couple.pending.cancel })).toBeTruthy();
     expect(screen.queryByRole("button", { name: copy.couple.invite.copy })).toBeNull();
@@ -144,7 +146,7 @@ describe("Mi pareja M4 · pendiente", () => {
 
   it("M4 vencida: lo dice y ofrece las mismas dos acciones", () => {
     render(<PartnerScreen view={pending(true)} actions={actions()} />);
-    expect(screen.getByText(copy.couple.pending.expiredLine("tomas@correo.com", "10 nov"))).toBeTruthy();
+    expect(screen.getByText(spaced(copy.couple.pending.expiredLine("tomas@correo.com", "10 nov")))).toBeTruthy();
     expect(screen.getByText(copy.couple.pending.expiredDescription)).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.couple.pending.regenerate })).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.couple.pending.cancel })).toBeTruthy();
@@ -251,7 +253,7 @@ describe("/invitacion M5–M7", () => {
     openLink();
     render(<InvitationScreen actions={acts} />);
     expect(await screen.findByRole("heading", { level: 1, name: copy.couple.invitation.valid.title("Sara") })).toBeTruthy();
-    expect(screen.getByText(copy.couple.invitation.valid.line("tomas@correo.com", "10 nov"))).toBeTruthy();
+    expect(screen.getByText(spaced(copy.couple.invitation.valid.line("tomas@correo.com", "10 nov")))).toBeTruthy();
     expect(acts.inspect).toHaveBeenCalledWith({ token: TOKEN });
     await user.click(screen.getByRole("button", { name: copy.couple.invitation.valid.accept }));
     expect(acts.accept).toHaveBeenCalledWith(expect.objectContaining({ token: TOKEN }));

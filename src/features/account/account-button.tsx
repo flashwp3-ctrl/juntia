@@ -49,7 +49,7 @@ export function SidebarAccount({ current }: { current: boolean }) {
       )}
       <span className="sr-only flex min-w-0 flex-col xl:not-sr-only">
         <span className="truncate text-[14px] leading-5 font-semibold text-ink">{name}</span>
-        {account ? <span className="truncate text-[12px] leading-4 text-[var(--comp-field-muted-fg)]">{account.partnerName ? copy.account.withPartner(account.partnerName) : copy.nav.account}</span> : null}
+        {account ? <span className="text-[12px] leading-4 break-words text-[var(--comp-field-muted-fg)]">{account.partnerName ? copy.account.withPartner(account.partnerName) : copy.nav.account}</span> : null}
       </span>
       <AppIcon name="caret-right" size={18} className="ml-auto hidden shrink-0 text-ink-secondary xl:block" />
     </Link>

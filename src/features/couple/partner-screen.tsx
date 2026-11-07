@@ -374,7 +374,7 @@ export function PartnerScreen({ view, actions, openInvite = false }: { view: Par
         <>
           <CoupleStatus state="solo" title={copy.couple.none.title} line={copy.couple.none.line} me={{ initial: initialOf(myName) }} />
           <div className="mt-[26px] flex flex-col gap-3.5">
-            <h2 className="font-serif text-[30px] leading-[1.1] font-normal text-ink">{copy.couple.none.heading}</h2>
+            <h2 className="font-serif text-[clamp(26px,7.4vw,30px)] leading-[1.1] font-normal text-balance text-ink">{copy.couple.none.heading}</h2>
             <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">{copy.couple.none.description}</p>
             <Button size="lg" icon="user-plus" onClick={() => open("create")}>{copy.couple.none.invite}</Button>
             <p className="text-[13px] leading-[1.45] text-ink-secondary">{copy.couple.none.invited}</p>
