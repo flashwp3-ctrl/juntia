@@ -56,7 +56,8 @@ export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedT
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
 type Reveal = { id: string; transactionDate: string };
-type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction };
+/** `undo`: el aviso ofrece «Deshacer» de un gasto compartido o de Mover a Pareja (F57-8: uno pendiente a la vez). */
+type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: boolean };
 type Notice = Omit<ToastState, "id">;
 
 type AnnotateState = {
@@ -304,6 +305,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending" = "toast") => runUndoRef.current(intent, mode, source), []);
   useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => {
     const writes = sharedRef.current;
+    // F57-8 (decisión del gestor): un deshacer pendiente a la vez. Con otra intención sin resolver, ni se empieza esta ni se toca aquella.
+    if (pendingRef.current && pendingRef.current.intent !== intent) return;
     if (!writes || undoing.current.has(intent.id)) return;
     undoing.current.add(intent.id);
     const generation = toastGeneration.current;
@@ -377,7 +380,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     setHighlightId(saved.id, "us");
     setReveal({ id: saved.id, transactionDate: saved.transactionDate });
     const key = newIdempotencyKey();
-    notify({ tone: "success", message: copy.annotate.saved.expense, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
+    notify({ tone: "success", message: copy.annotate.saved.expense, undo: true, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
 
   // Mover a Pareja (T050). El diálogo vive aquí para que A4 (el aviso con «Deshacer» y el resaltado) sobreviva a la
@@ -393,7 +396,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     appContext?.choose("us");
     setHighlightId(result.shared.id, "us");
     const key = newIdempotencyKey();
-    notify({ tone: "success", message, action: { label: copy.annotate.undo, onAction: () => void undoMove(result, key) } });
+    notify({ tone: "success", message, undo: true, action: { label: copy.annotate.undo, onAction: () => void undoMove(result, key) } });
     router.push(`/actividad?mes=${result.shared.transactionDate.slice(0, 7)}`);
   }, [appContext, notify, router, undoMove, setHighlightId]);
 
@@ -502,7 +505,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             </div>
           ) : null}
           <AnimatePresence>
-            {toast ? <Toast key={toast.id} tone={toast.tone} message={toast.message} action={toast.action} onTimeout={() => dismissToast(toast.id)} /> : null}
+            {toast ? <Toast key={toast.id} tone={toast.tone} message={toast.message} action={toast.undo && toast.action && pendingUndo ? { ...toast.action, blocked: copy.writes.undoBlocked } : toast.action} onTimeout={() => dismissToast(toast.id)} /> : null}
           </AnimatePresence>
         </div>
       </div>

@@ -103,6 +103,8 @@ export const copy = {
     // F57-4: «Deshacer» sin respuesta (red, 15 s o respuesta perdida). Nunca dice que no se deshizo.
     undoUnknown: "No pudimos confirmar si se deshizo. No lo des por hecho: comprueba el estado o reintenta sin riesgo.",
     // F57-6: el aviso de un deshacer sin confirmar no caduca; cerrarlo es explícito y se confirma.
+    // F57-8: un deshacer pendiente a la vez (decisión del gestor). Copy nuevo para revisión de los fundadores.
+    undoBlocked: "Resuelve primero el deshacer pendiente.",
     dismiss: "Cerrar aviso", undoCloseDescription: "No pudimos confirmar si se deshizo. Revisa Actividad antes de volver a intentarlo.",
     close: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se hizo. Revisa Mi pareja antes de volver a intentarlo.", keep: "Seguir aquí", confirm: "Cerrar" },
   },

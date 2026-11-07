@@ -7,6 +7,7 @@
 //        neutro, «Comprobar estado» con `write_status` y reintento con la misma clave; nunca «No pudimos deshacer».
 import { act, configure, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate } from "./annotate-provider";
@@ -220,4 +221,63 @@ describe("F57-4: «Deshacer» con los tres resultados", () => {
     await waitFor(() => expect(check).toHaveBeenCalledWith({ action: "undo_reclassify_to_shared", idempotencyKey: (undoReclassify.mock.calls[0] as unknown as [{ idempotencyKey: string }])[0].idempotencyKey }));
     expect(await screen.findByText(copy.move.undone)).toBeTruthy();
   });
+});
+
+// F57-8 (tercera ronda): un deshacer pendiente a la vez, decisión del gestor. Mientras A siga sin resolver (desconocido o
+// sin constar), el «Deshacer» de un aviso nuevo queda deshabilitado de forma accesible y la recuperación de A no se toca.
+describe("F57-8: un deshacer pendiente a la vez", () => {
+  const ids = ["a1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10", "b1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10", "c1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10"].map((id) => "a" + id);
+  function Pages() {
+    const { openFrom } = useAnnotate();
+    const [page, setPage] = useState("inicio");
+    return (
+      <>
+        <p data-testid="page">{page}</p>
+        <button type="button" onClick={(event) => openFrom(event.currentTarget)}>{copy.nav.annotate}</button>
+        <button type="button" onClick={() => setPage(page === "inicio" ? "actividad" : "inicio")}>{copy.nav.activity}</button>
+      </>
+    );
+  }
+  async function annotate(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: copy.nav.annotate }));
+    await screen.findByRole("dialog", { name: copy.annotate.title.expense });
+    await user.type(screen.getByRole("textbox", { name: copy.annotate.amount }), "45000");
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    return screen.findByRole("button", { name: copy.annotate.undo });
+  }
+
+  it("con A desconocido, el Deshacer de B está deshabilitado, A sigue recuperable al navegar y, resuelto A, vuelve el Deshacer", async () => {
+    let n = 0;
+    const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));
+    const voidShared = vi.fn<SharedActions["voidShared"]>().mockResolvedValueOnce({ status: "unknown" }).mockResolvedValue({ status: "ok", value: { id: ids[2], version: 2 } });
+    const check = vi.fn<SharedActions["check"]>(async () => ({ state: "completed", value: { id: ids[0], version: 2 } }));
+    const user = userEvent.setup();
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ create, voidShared, check })} couple={couple} context="us" today="2026-11-05"><Pages /></AnnotateProvider>);
+    await user.click(await annotate(user));
+    await screen.findByText(copy.writes.undoUnknown);
+
+    // B: su Deshacer no se puede usar mientras A siga pendiente.
+    const undoB = await annotate(user);
+    expect(undoB.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText(copy.writes.undoBlocked)).toBeTruthy();
+    await user.click(undoB);
+    expect(voidShared).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(copy.writes.undoUnknown)).toBeTruthy();
+
+    // Navegar no toca la recuperación de A.
+    await user.click(screen.getByRole("button", { name: copy.nav.activity }));
+    expect(screen.getByTestId("page").textContent).toBe("actividad");
+    expect(screen.getByRole("button", { name: copy.writes.check })).toBeTruthy();
+
+    // A se resuelve por write_status con su propia clave; después, el Deshacer de C vuelve a estar disponible.
+    await user.click(screen.getByRole("button", { name: copy.writes.check }));
+    await waitFor(() => expect(check).toHaveBeenCalledWith({ action: "void_shared_expense", idempotencyKey: voidShared.mock.calls[0][0].idempotencyKey }));
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    const undoC = await annotate(user);
+    expect(undoC.getAttribute("aria-disabled")).toBeNull();
+    await user.click(undoC);
+    await waitFor(() => expect(voidShared).toHaveBeenCalledTimes(2));
+    expect(voidShared.mock.calls[1][0]).toMatchObject({ transactionId: ids[2], reason: "undo" });
+  }, 20_000); // Tres recorridos de Anotar completos: más que los 5 s por defecto con la suite en paralelo.
 });

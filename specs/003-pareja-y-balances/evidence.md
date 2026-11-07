@@ -1361,3 +1361,32 @@ del push: **E2E 26 de 26** y **axe 187 de 188**, total 593,78 s (axe 518,99 s). 
 intermitente de la 002 ya anotado en el PR B (pasada 3), en una pantalla que este PR
 no toca; repetido aparte (`npm run e2e:dev -- tests/a11y/routes.a11y.ts -g A4b`):
 **4 de 4**.
+
+## Tercera ronda F57 (sobre `1953cc7`)
+
+Cierra F57-5 y F57-7; F57-6 bueno en el caso individual. Queda F57-8.
+
+**F57-8: un deshacer pendiente a la vez, decisión del gestor.** Con un solo aviso
+fijo, un segundo «Deshacer» (B) que terminara en ok, rechazo o desconocido borraba o
+sustituía la recuperación de A. Mientras exista un deshacer sin resolver
+(desconocido o sin constar), no se puede iniciar otro: el «Deshacer» de los avisos
+nuevos de gasto compartido y de Mover a Pareja queda con `aria-disabled`, descrito
+por «Resuelve primero el deshacer pendiente.» (`copy.writes.undoBlocked`, copy
+nuevo; `ToastAction.blocked`), y `runUndo` no empieza ni toca otra intención
+mientras haya una pendiente. Solo cierran la recuperación de A su propio resultado
+(ok o rechazo, por «Reintentar» o «Comprobar estado») o su cierre confirmado: las
+tres únicas llamadas a `setPendingUndo` están en esos caminos.
+
+Prueba (`review-f57.test.tsx`, primero en rojo): A en desconocido; el «Deshacer» de
+B está deshabilitado, pulsarlo no llama a nada y A sigue recuperable; navegar entre
+páginas lo conserva; A se resuelve por `write_status` con su clave y el «Deshacer»
+de C vuelve a estar disponible.
+
+Iteración (regla del fundador para rondas de corrección: `verify` y pruebas
+dirigidas): `verify` 72,11 s; componentes 331 de 331 en la última pasada completa.
+El equipo tenía carga de otras sesiones (`next dev` y navegadores): en pasadas con
+carga hubo tiempos agotados de 5 s por prueba que variaban entre pasadas y tocaban
+también suites del PR B; la prueba de F57-8, con tres recorridos de Anotar, lleva
+20 s de límite. E2E dirigidas por el cambio del Toast
+(`npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`):
+**19 de 19**.
