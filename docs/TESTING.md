@@ -216,6 +216,18 @@ Los controles 1, 2 y 5 van **en un solo job (`app`), en serie y por orden de cos
    Chromium
 5. **axe en los dos temas** — ver la regla justo debajo
 
+**La pasada final de un PR es la de marcarlo listo (regla del gestor, 7 de
+noviembre de 2026).** El workflow corre en `pull_request` con los tipos
+`opened`, `synchronize`, `reopened` y `ready_for_review`, así que lanzar «Run
+workflow» a mano y luego marcar el PR como listo cuesta **dos pasadas
+completas** (pasó en los PR #52 y #51). El orden es: iterar contra `juntia-dev`
+con las pruebas afectadas, `e2e:dev` completo una vez antes de cada push, revisión
+de ChatGPT con el PR en borrador y, al aprobarse, **marcarlo listo: esa es la
+única pasada**. «Run workflow» queda solo para los puntos de control intermedios
+que pida `tasks.md` en un PR largo (como T012 y T016 del PR A de la 003). Si la
+pasada falla por la infraestructura del runner y no por el código, se relanza
+solo el job fallido.
+
 **Gate de PR completo: < 6 min, medido como job de CI. Superar el presupuesto del
 humo falla el build** (a partir del hito de §9).
 

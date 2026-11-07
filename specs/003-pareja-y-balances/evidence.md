@@ -1104,3 +1104,64 @@ da por buena. Queda una carrera:
   - A se resuelve cambiada y B vigente: se ve el enlace de B, sin aviso.
 
 Comprobaciones de F55-7: `verify` verde (49,17 s); pareja 76/76; dirigida (E2E de invitación y `couple.a11y.ts`) 7/7. `e2e:dev` completo: E2E 23/23 y axe 180/182. Fallan `/actividad · Actividad mes futuro · light · 390` (`fetch failed` hacia juntia-dev al sembrar en `seedMovements`) y `/recuperar · A4b · dark · 390` (`document-title`, la intermitencia ya anotada). Son pantallas de la 002, no tocadas. Repetidas con `npm run e2e:dev -- tests/a11y/routes.a11y.ts -g "Actividad mes futuro|A4b"`: 8/8.
+
+## Cierre del gestor tras los PR A y B (7 de noviembre de 2026)
+
+### T028 · Revisión humana del SQL del PR A
+
+Aprobada por los fundadores el 7 de noviembre de 2026, sobre el resumen en lenguaje
+claro que el gestor preparó de las cuatro migraciones (`57bfae1`). ChatGPT aprobó
+el PR #52 en su segunda ronda (F52-1, reparto `equal` recalculado en el servidor;
+F52-2, barreras de concurrencia verificadas). La aprobación quedó también en la
+descripción del PR #52.
+
+### T029 · Migraciones del PR A en producción
+
+Aplicadas por el gestor el 7 de noviembre de 2026, con el «sí» de los fundadores
+antes de cada paso de escritura:
+
+- Se trabajó desde un worktree aparte en `623bc3c` (merge del PR #52), para que el
+  checkout principal siguiera enlazado a `juntia-dev`.
+- `supabase link --project-ref enwaxmwgldqohfawxhdm` en ese worktree.
+- `db push --linked --dry-run`: las cuatro migraciones `20261106000100` a
+  `20261106000400`, sin semilla ni roles.
+- `db push --linked`: las cuatro aplicadas sin errores.
+- `migration list --linked`: 7/7 migraciones aplicadas, locales y remotas
+  iguales. `https://juntia-alpha.vercel.app/entrar` respondió 200.
+- Etiqueta `db-prod-2026-11-07` sobre `623bc3c`, subida a GitHub. Worktree
+  desenlazado y eliminado; el checkout principal sigue en
+  `itfrhnadovezpahikuol`.
+
+**Sin copia de seguridad previa, por decisión de los fundadores.** Producción solo
+tenía datos de prueba que se van a borrar, y la decisión 16.11 pide la copia
+completa cifrada **antes del primer dato real**; la decisión 19 movió esa primera
+copia (T097 de la 002) a «antes del primer movimiento real». Esa copia, con su
+restauración de prueba, sigue pendiente y es obligatoria antes de usar Juntia con
+datos reales.
+
+### T039 · Gate del PR B
+
+Única pasada de CI del PR #55: run 42338185106, `ready_for_review` sobre
+`b7d36f3`, con `app`, `db` y `e2e` en verde. Las pasadas anteriores del PR fueron
+borradores (jobs saltados), así que no gastaron minutos. ChatGPT revisó el PR en
+cinco rondas (F55-1 a F55-7).
+
+**Desviación del contrato aceptada por el gestor (F55-5 y F55-6).** El par
+(clave, token) de las escrituras de invitación vive solo en memoria y no se
+reanuda tras recargar; `contracts/server-actions.md` §2 se corrigió en este mismo
+PR de documentación.
+
+### Erratas y precisiones corregidas en este PR de documentación
+
+- `tasks.md` T007: `errors.test.ts` corre en el proyecto `components`, no en
+  `domain` (como en la 002, fila C10).
+- `tasks.md` T020: siete escrituras de dinero compartido más `write_status`, no
+  «ocho».
+- `data-model.md` §2.1: las descartadas son invisibles para `juntia_writer` y
+  `JT119` queda como defensa en profundidad.
+- `data-model.md` §5: el SELECT de `groups` incluye la provisional propia.
+- `contracts/database.md`: validación del reparto (`equal` siempre entre los dos;
+  un solo participante como `percent` 100/0 o `amount` total/0).
+- `contracts/server-actions.md` §2: sin reanudación tras recargar, límite de 15 s y
+  vigencia del enlace.
+- `docs/TESTING.md`: la pasada final de un PR es la de marcarlo listo.

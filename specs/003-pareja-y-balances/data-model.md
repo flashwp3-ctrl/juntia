@@ -66,6 +66,14 @@ create_invitation                 accept_invitation
    `discarded`, falla con `JT119` (`invalidCoupleTransition`). El `select … for
    update` de la raíz no dispara triggers de `update`, así que bloquear una pareja
    activa sigue funcionando.
+
+   **Precisión tras el PR A (T010, interpretación del gestor).** Una pareja
+   `discarded` no es visible para `juntia_writer` por RLS (`is_group_member` es
+   falso y ya no es la provisional propia): un `update` directo sobre ella afecta a
+   **0 filas** sin efectos, y las funciones lo convierten en error al comprobar
+   `row_count`. `JT119` sobre una descartada queda como **defensa en
+   profundidad** para cualquier `update` que llegue al trigger (por ejemplo, como
+   dueño de la tabla), y pgTAP lo ejerce así.
 2. **Trigger de restricción diferido `groups_check_state`** (`after insert or
    update` en `groups`, `group_members` y `group_invitations`, `deferrable
    initially deferred`). Al final de la transacción comprueba, para cada pareja
@@ -279,7 +287,7 @@ entrar sin verificar (`enable_confirmations = true`, 002).
 
 | Tabla | `authenticated` (select) | `juntia_writer` |
 | --- | --- | --- |
-| `groups` | `is_group_member(id)` | select: `is_group_member(id) or is_invited_to(id)`; insert: `owner_user_id = current_uid() and status = 'provisional'`; update: la política única `groups_writer_update` de la tabla siguiente, con los triggers de §2.1 |
+| `groups` | `is_group_member(id)` | select: `is_group_member(id) or is_invited_to(id) or (owner_user_id = current_uid() and status = 'provisional')` (la última rama, precisada en el PR A, deja que la primera creación inserte la membresía de la propietaria; las descartadas siguen invisibles); insert: `owner_user_id = current_uid() and status = 'provisional'`; update: la política única `groups_writer_update` de la tabla siguiente, con los triggers de §2.1 |
 | `group_members` | `is_group_member(group_id)` | select: propia o `is_group_member`; insert: la fila propia **y** o bien `role = 'owner' and join_order = 1` en una pareja provisional cuya propietaria es quien llama, o bien `role = 'member' and join_order = 2 and is_invited_to(group_id)`; update: solo la fila propia |
 | `group_invitations` | `is_group_member(group_id)` (la propietaria ve la suya; **nunca** el hash fuera de las funciones: la vista no lo expone) | select y update: `is_group_member(group_id) or email = current_email()`; insert: `created_by = current_uid() and is_group_member(group_id)` |
 | `transactions` | `owner_user_id = auth.uid() or (group_id is not null and is_couple_member(group_id))` | Ídem para select; insert y update por rama: privada propia o de grupo con `is_couple_member` |
