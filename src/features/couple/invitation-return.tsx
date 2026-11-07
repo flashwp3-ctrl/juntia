@@ -4,7 +4,7 @@
 // guarda una invitación vigente, se vuelve a /invitacion. Una vencida se borra sin abrir nada (F49-7).
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { clearInvitationIntent, readInvitationIntent } from "./intent";
+import { clearInvitationIntent, clearInvitationWrites, readInvitationIntent } from "./intent";
 
 export function InvitationReturn() {
   const router = useRouter();
@@ -14,8 +14,8 @@ export function InvitationReturn() {
   return null;
 }
 
-/** S3 (sesión cerrada): la intención de invitación de este dispositivo no sobrevive al cierre de sesión. */
+/** S3 (sesión cerrada): ni la invitación recibida ni los pares pendientes de quien invita sobreviven al cierre de sesión. */
 export function ForgetInvitationIntent() {
-  useEffect(() => clearInvitationIntent(), []);
+  useEffect(() => { clearInvitationIntent(); clearInvitationWrites(); }, []);
   return null;
 }

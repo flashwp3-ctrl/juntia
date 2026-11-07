@@ -976,9 +976,11 @@ pareja pendiente o activa); la composición de escritorio de `/invitacion`
 2. **«Generar enlace nuevo»** escribe al abrir su hoja (operación explícita,
    F47-3), con la clave y el token nacidos en ese clic; la hoja muestra el enlace
    una vez, como M3b.
-3. **El par (clave, token) en `sessionStorage`** se escribe al abrir y se borra
-   al cerrar o confirmar (contracts §2). Si la pestaña se recarga con un
-   `unknown` pendiente, no se reanuda: la hoja nueva es otra intención.
+3. **El par (clave, token) en `sessionStorage`** (contracts §2). Desde F55-3 se
+   guarda al enviar, con su carga, y solo se borra con un resultado definitivo o
+   al cerrar sin haber enviado nada. Si la pestaña se recarga con un `unknown`
+   pendiente, la hoja de esa acción y esa pareja lo reanuda con la misma clave y
+   el mismo token. Ver «Segunda ronda F55».
 4. **M7 borra la intención también en el caso «primero anula la tuya»**, como
    dice T031; para aceptar después, Tomás vuelve a abrir el enlace.
 5. **A6 con «Invitar a mi pareja»** completa la primera entrada y abre M3 con
@@ -1017,3 +1019,29 @@ pruebas se escribieron antes y se vieron fallar: 15 de F55-1 y 2 de F55-2.
 Comprobaciones: `verify` verde (53,95 s). Pasada dirigida `npm run e2e:dev --
 tests/a11y/couple.a11y.ts -g teclado`: 1 de 1 en 11,46 s. `e2e:dev` completo
 antes del push: **E2E 23/23** y **axe 182/182**.
+
+## Segunda ronda F55 (sobre `fda0f17`)
+
+F55-1 y F55-2 quedan cerrados. Corregidos en un solo commit, `24ef841`, con las
+pruebas escritas antes y vistas en rojo: 8 de F55-3 y 3 de F55-4.
+
+- **F55-3 · tiempo agotado.** El contrato dice «tiempo agotado» sin cifra
+  (contracts/server-actions.md §1; errors.md), así que el límite es **15 s**
+  (`WRITE_TIMEOUT_MS`). Una escritura colgada pasa a `unknown` con la misma
+  clave y la misma carga, y la respuesta tardía se ignora. «Comprobar estado»
+  colgado vuelve a `unknown` y se puede comprobar otra vez.
+- **F55-3 · reanudar tras recargar.** La carga enviada (clave, token, correo o
+  grupo y versión) se guarda en `sessionStorage` y solo se borra con un ok o un
+  rechazo; cerrar con un resultado desconocido la conserva. Al abrir otra vez la
+  hoja de la misma acción y la misma pareja, se reanuda como `unknown`, sin
+  escribir, y «Reintentar» usa la misma clave y el mismo token. Un par de 7 días
+  o más, o ilegible, se descarta al leerlo; cerrar sesión borra los dos pares.
+- **F55-4.** `e2e-plan.mjs` rechaza un `.e2e.ts` con `--project a11y` y un
+  `.a11y.ts` con `--project e2e`. También (opcional) resuelve cada archivo con
+  `realpath`: tiene que existir y seguir dentro de `tests/`.
+
+Comprobaciones: `verify` verde (51,34 s); componentes de pareja 72/72;
+`dev-target-tools` 50 pasan, 2 omitidas. Pasada dirigida `npm run e2e:dev --
+tests/a11y/couple.a11y.ts tests/e2e/access-account.e2e.ts -g "teclado|invitación"`:
+la E2E de invitación y los seis casos de `couple.a11y.ts` en verde. El
+`e2e:dev` completo antes del push va en el mensaje de entrega.

@@ -8,6 +8,9 @@
 // Todo lo demás (`-c…`, `--config`, `-G…`, `--grep-invert`, `--workers`, variables, rutas fuera de `tests/`) se
 // rechaza antes del guardia y del bloqueo. La configuración y la exclusión de @mail las pone siempre el runner.
 // Sin argumentos, lo de siempre: todo el proyecto `e2e` y todo el `a11y` con A11Y_JOB=e2e, los dos sin @mail.
+import { realpathSync } from "node:fs";
+import { isAbsolute, join, relative, sep } from "node:path";
+
 const BASE = (project) => ["test", "--project", project, "--grep-invert", "@mail", "--reporter=list"];
 const PROJECTS = new Set(["e2e", "a11y"]);
 const TEST_FILE = /^tests\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(e2e|a11y)\.ts$/;
@@ -28,8 +31,18 @@ function testFile(arg) {
   return match ? { path, project: match[1] } : null;
 }
 
+/** F55-4: el archivo existe y, resueltos los enlaces, sigue dentro de `tests/` del repositorio. */
+function insideTests(path, root) {
+  try {
+    const within = relative(realpathSync(join(root, "tests")), realpathSync(join(root, path)));
+    return within !== "" && !isAbsolute(within) && !within.split(sep).includes("..");
+  } catch {
+    return false;
+  }
+}
+
 /** Pasos de Playwright para `e2e:dev` con estos argumentos. Lanza con cualquier argumento fuera de la lista blanca. */
-export function planE2E(args) {
+export function planE2E(args, root = process.cwd()) {
   if (args.length === 0) {
     return [
       { label: "E2E (sin @mail)", project: "e2e", args: BASE("e2e") },
@@ -42,7 +55,11 @@ export function planE2E(args) {
   for (let index = 0; index < args.length; index++) {
     const arg = String(args[index]);
     const file = testFile(arg);
-    if (file) { files[file.project].push(file.path); continue; }
+    if (file) {
+      if (!insideTests(file.path, root)) reject(arg, "no existe o no está dentro de tests/");
+      files[file.project].push(file.path);
+      continue;
+    }
     if (arg === "--grep" || arg === "-g") {
       const value = args[index + 1];
       if (!validPattern(value)) reject(arg, "necesita un patrón que no empiece por «-»");
@@ -82,7 +99,12 @@ export function planE2E(args) {
   const step = (name) => (name === "a11y"
     ? { label: "axe dirigido (A11Y_JOB=e2e)", project: "a11y", a11yJob: "e2e", args: [...BASE("a11y"), ...files.a11y, ...flags] }
     : { label: "E2E dirigido (sin @mail)", project: "e2e", args: [...BASE("e2e"), ...files.e2e, ...flags] });
-  if (project) return [step(project)];
+  if (project) {
+    // F55-4: un archivo de un proyecto no se corre con --project del otro.
+    const other = project === "e2e" ? "a11y" : "e2e";
+    if (files[other].length > 0) reject(`--project ${project}`, `${files[other][0]} es del proyecto ${other}`);
+    return [step(project)];
+  }
   const steps = [];
   if (files.e2e.length > 0 || files.a11y.length === 0) steps.push(step("e2e"));
   if (files.a11y.length > 0) steps.push(step("a11y"));

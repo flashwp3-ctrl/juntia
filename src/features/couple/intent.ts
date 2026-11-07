@@ -27,27 +27,56 @@ export const invitationLink = (origin: string, token: string) => `${origin}/invi
 export type TokenPair = { key: string; token: string };
 const pairKey = (kind: "create" | "regenerate") => `juntia:invitation-write:${kind}`;
 
-/** La pareja (clave, token) de una intención de quien invita. `begin` abre una intención nueva; `end` la cierra. */
-export function tokenIntent(kind: "create" | "regenerate") {
+export type CreatePayload = { idempotencyKey: string; email: string; token: string };
+export type RegeneratePayload = { idempotencyKey: string; groupId: string; expectedVersion: number; token: string };
+type PayloadOf<K extends "create" | "regenerate"> = K extends "create" ? CreatePayload : RegeneratePayload;
+
+function validPayload(kind: "create" | "regenerate", value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const payload = value as Record<string, unknown>;
+  if (typeof payload.idempotencyKey !== "string" || !isInvitationToken(payload.token)) return false;
+  return kind === "create" ? typeof payload.email === "string" : typeof payload.groupId === "string" && Number.isInteger(payload.expectedVersion);
+}
+
+/**
+ * La intención de quien invita (crear o regenerar). F55-3 (segunda ronda del PR #55):
+ * - `begin` crea en memoria una clave y un token nuevos para una apertura de la hoja;
+ * - `save` guarda en sessionStorage la carga enviada (clave, token y lo demás) mientras no haya resultado definitivo;
+ * - `pending` devuelve esa carga para reanudarla tras recargar, como `unknown`; con 7 días o más (el token ya no
+ *   serviría) o ilegible, se borra al leerla;
+ * - `end` la borra, con un resultado definitivo (ok o rechazo) o al cerrar sin haber enviado nada.
+ * Cerrar sesión borra las dos (ForgetInvitationIntent).
+ */
+export function tokenIntent<K extends "create" | "regenerate">(kind: K) {
+  const end = () => { try { window.sessionStorage.removeItem(pairKey(kind)); } catch { /* nada que borrar */ } };
   return {
     begin(): TokenPair {
-      const pair = { key: newIdempotencyKey(), token: newInvitationToken() };
-      try { window.sessionStorage.setItem(pairKey(kind), JSON.stringify(pair)); } catch { /* sin almacenamiento: vive en memoria */ }
-      return pair;
+      return { key: newIdempotencyKey(), token: newInvitationToken() };
     },
-    current(): TokenPair | null {
+    save(payload: PayloadOf<K>) {
+      try { window.sessionStorage.setItem(pairKey(kind), JSON.stringify({ savedAt: Date.now(), payload })); } catch { /* sin almacenamiento: vive en memoria */ }
+    },
+    pending(now = Date.now()): { payload: PayloadOf<K> } | null {
+      let raw: string | null = null;
+      try { raw = window.sessionStorage.getItem(pairKey(kind)); } catch { return null; }
+      if (raw === null) return null;
       try {
-        const raw = window.sessionStorage.getItem(pairKey(kind));
-        const pair = raw ? (JSON.parse(raw) as Partial<TokenPair>) : null;
-        return pair && typeof pair.key === "string" && isInvitationToken(pair.token) ? { key: pair.key, token: pair.token } : null;
-      } catch {
-        return null;
-      }
+        const record = JSON.parse(raw) as { savedAt?: unknown; payload?: unknown };
+        if (typeof record.savedAt === "number" && now - record.savedAt < INTENT_MAX_AGE_MS && validPayload(kind, record.payload)) {
+          return { payload: record.payload as PayloadOf<K> };
+        }
+      } catch { /* ilegible */ }
+      end();
+      return null;
     },
-    end() {
-      try { window.sessionStorage.removeItem(pairKey(kind)); } catch { /* nada que borrar */ }
-    },
+    end,
   };
+}
+
+/** Cerrar sesión: ningún par de quien invita sobrevive en esta pestaña. */
+export function clearInvitationWrites() {
+  tokenIntent("create").end();
+  tokenIntent("regenerate").end();
 }
 
 /** Lee `#t=` de la URL actual, lo guarda con su fecha y limpia el fragmento sin navegar. */

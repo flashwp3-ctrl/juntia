@@ -12,6 +12,20 @@ export type WriteState<T> =
   | { phase: "rejected"; error: WriteError }
   | { phase: "unknown"; checking: boolean; notFound: boolean };
 
+/**
+ * F55-3 (segunda ronda del PR #55): ninguna escritura ni «Comprobar estado» espera para siempre. El contrato habla de
+ * «tiempo agotado» sin cifra (contracts/server-actions.md §1), así que el límite es 15 s. Al vencer, el resultado es
+ * `unknown` con la misma clave y la misma carga, y se abre una generación nueva: la respuesta tardía no toca nada.
+ */
+export const WRITE_TIMEOUT_MS = 15_000;
+const TIMED_OUT = Symbol("timedOut");
+
+function withTimeout<V>(promise: Promise<V>): Promise<V | typeof TIMED_OUT> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<typeof TIMED_OUT>((resolve) => { timer = setTimeout(() => resolve(TIMED_OUT), WRITE_TIMEOUT_MS); });
+  return Promise.race([promise, limit]).finally(() => clearTimeout(timer));
+}
+
 type UseWriteOptions<P, T> = {
   action: WriteAction;
   run: (payload: P) => Promise<WriteOutcome<T>>;
@@ -39,13 +53,18 @@ export function useWrite<P extends { idempotencyKey: string }, T>({ action, run,
     last.current = payload;
     const mine = ++generation.current;
     setState({ phase: "pending" });
-    let outcome: WriteOutcome<T>;
+    let outcome: WriteOutcome<T> | typeof TIMED_OUT;
     try {
-      outcome = await run(payload);
+      outcome = await withTimeout(run(payload));
     } catch {
       outcome = { status: "unknown" };
     }
     if (mine !== generation.current) return;
+    if (outcome === TIMED_OUT) {
+      // Tiempo agotado: desconocido, con la misma carga para «Reintentar», y una generación nueva para la respuesta tardía.
+      generation.current++;
+      outcome = { status: "unknown" };
+    }
     busy.current = false;
     if (outcome.status === "ok") {
       setState({ phase: "ok", value: outcome.value, key: payload.idempotencyKey });
@@ -68,13 +87,18 @@ export function useWrite<P extends { idempotencyKey: string }, T>({ action, run,
     busy.current = true;
     const mine = ++generation.current;
     setState({ phase: "unknown", checking: true, notFound: false });
-    let result: WriteStatusOutcome<T> | null = null;
+    let result: WriteStatusOutcome<T> | typeof TIMED_OUT | null = null;
     try {
-      result = await check({ action, idempotencyKey: payload.idempotencyKey });
+      result = await withTimeout(check({ action, idempotencyKey: payload.idempotencyKey }));
     } catch {
       result = null;
     }
     if (mine !== generation.current) return;
+    if (result === TIMED_OUT) {
+      // Comprobar tampoco espera para siempre: sigue desconocido y se puede volver a comprobar.
+      generation.current++;
+      result = null;
+    }
     busy.current = false;
     if (result?.state === "completed") {
       setState({ phase: "ok", value: result.value, key: payload.idempotencyKey });
@@ -85,6 +109,14 @@ export function useWrite<P extends { idempotencyKey: string }, T>({ action, run,
     }
   }, [action, check, onOk]);
 
+  /** F55-3: reanuda una intención que quedó sin resultado (tras recargar) como `unknown`, con su carga, sin enviar nada. */
+  const resume = useCallback((payload: P) => {
+    generation.current++;
+    last.current = payload;
+    busy.current = false;
+    setState({ phase: "unknown", checking: false, notFound: false });
+  }, []);
+
   const reset = useCallback(() => {
     generation.current++;
     last.current = null;
@@ -92,5 +124,5 @@ export function useWrite<P extends { idempotencyKey: string }, T>({ action, run,
     setState({ phase: "idle" });
   }, []);
 
-  return { state, locked, pending: state.phase === "pending" || (state.phase === "unknown" && state.checking), submit, retry, checkStatus, reset };
+  return { state, locked, pending: state.phase === "pending" || (state.phase === "unknown" && state.checking), submit, retry, checkStatus, resume, reset };
 }

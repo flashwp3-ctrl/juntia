@@ -5,7 +5,7 @@
 // Incluye aceptar con la respuesta perdida: «Comprobar estado» da `completed` y lleva a M1 sin aceptar otra vez».
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { DbError } from "@/lib/db/errors";
 import { InvitationScreen, type InvitationActions } from "./invitation-screen";
@@ -293,5 +293,108 @@ describe("una intención pendiente no se pierde ni se mezcla con otra (F55-2)", 
     expect(result.current.state).toEqual({ phase: "ok", value: { n: "B" }, key: "B" });
     expect(onOk).toHaveBeenCalledTimes(1);
     expect(onOk.mock.calls[0][0]).toEqual({ n: "B" });
+  });
+});
+
+// F55-3 (segunda ronda de ChatGPT del PR #55): «una petición que no termina deja la hoja bloqueada para siempre». Límite
+// de 15 s (el contrato dice «tiempo agotado» sin cifra) en la escritura y en «Comprobar estado», y reanudación tras recargar.
+describe("tiempo agotado y reanudación (F55-3)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("useWrite: run() colgado → a los 15 s, unknown con la misma carga; la respuesta tardía no cambia nada", async () => {
+    vi.useFakeTimers();
+    const { renderHook } = await import("@testing-library/react");
+    const { useWrite, WRITE_TIMEOUT_MS } = await import("@/features/shared/use-write");
+    expect(WRITE_TIMEOUT_MS).toBe(15_000);
+    let resolveOld!: (value: unknown) => void;
+    const run = vi.fn().mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; })).mockResolvedValueOnce({ status: "ok", value: { n: 2 } });
+    const onOk = vi.fn();
+    const { result } = renderHook(() => useWrite<{ idempotencyKey: string }, { n: number }>({ action: "create_invitation", run, check: vi.fn(), onOk }));
+    act(() => { void result.current.submit({ idempotencyKey: "K" }); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(14_999); });
+    expect(result.current.state.phase).toBe("pending");
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(result.current.state).toEqual({ phase: "unknown", checking: false, notFound: false });
+    expect(result.current.locked).toBe(true);
+    await act(async () => resolveOld({ status: "ok", value: { n: 1 } }));
+    expect(result.current.state.phase).toBe("unknown");
+    expect(onOk).not.toHaveBeenCalled();
+    await act(async () => { await result.current.retry(); });
+    expect(run.mock.calls[1][0]).toEqual({ idempotencyKey: "K" });
+    expect(result.current.state).toEqual({ phase: "ok", value: { n: 2 }, key: "K" });
+  });
+
+  it("useWrite: «Comprobar estado» colgado → a los 15 s vuelve a unknown y se puede comprobar otra vez", async () => {
+    vi.useFakeTimers();
+    const { renderHook } = await import("@testing-library/react");
+    const { useWrite } = await import("@/features/shared/use-write");
+    let resolveCheck!: (value: unknown) => void;
+    const check = vi.fn().mockImplementationOnce(() => new Promise((resolve) => { resolveCheck = resolve; })).mockResolvedValueOnce({ state: "not_found" });
+    const { result } = renderHook(() => useWrite<{ idempotencyKey: string }, { n: number }>({ action: "create_invitation", run: vi.fn().mockResolvedValue({ status: "unknown" }), check }));
+    await act(async () => { await result.current.submit({ idempotencyKey: "K" }); });
+    act(() => { void result.current.checkStatus(); });
+    expect(result.current.state).toEqual({ phase: "unknown", checking: true, notFound: false });
+    await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+    expect(result.current.state).toEqual({ phase: "unknown", checking: false, notFound: false });
+    await act(async () => resolveCheck({ state: "completed", value: { n: 1 } }));
+    expect(result.current.state.phase).toBe("unknown");
+    await act(async () => { await result.current.checkStatus(); });
+    expect(result.current.state).toEqual({ phase: "unknown", checking: false, notFound: true });
+  });
+
+  it("hoja de invitar: con la petición colgada, a los 15 s aparece «no pudimos confirmar», Reintentar y Comprobar estado, y cerrar pide confirmación", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveOld!: (value: unknown) => void;
+    const regenerate = vi.fn().mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialog = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+    expect(await within(dialog).findByText(copy.writes.unknown)).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: copy.writes.retry }).getAttribute("aria-disabled")).toBeNull();
+    expect(within(dialog).getByRole("button", { name: copy.writes.check }).getAttribute("aria-disabled")).toBeNull();
+    await user.click(within(dialog).getByRole("button", { name: copy.primitives.close }));
+    expect(screen.getByRole("alertdialog", { name: copy.writes.close.title })).toBeTruthy();
+    await act(async () => resolveOld({ status: "ok", value: { expiresAt: EXPIRES } }));
+    expect(within(dialog).queryByRole("textbox", { name: copy.couple.invite.link })).toBeNull();
+  });
+
+  it("tras recargar con un par pendiente, abrir la hoja lo reanuda como unknown: no escribe solo y Reintentar usa la misma clave y el mismo token", async () => {
+    const user = userEvent.setup();
+    const stored = { idempotencyKey: "44444444-4444-4444-8444-444444444444", token: TOKEN, groupId: GROUP, expectedVersion: 4 };
+    window.sessionStorage.setItem("juntia:invitation-write:regenerate", JSON.stringify({ savedAt: Date.now(), payload: stored }));
+    const regenerate = vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } });
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    const dialog = await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    expect(within(dialog).getByText(copy.writes.unknown)).toBeTruthy();
+    expect(regenerate).not.toHaveBeenCalled();
+    await user.click(within(dialog).getByRole("button", { name: copy.writes.retry }));
+    expect(regenerate).toHaveBeenCalledWith(stored);
+    const link = (await within(dialog).findByRole("textbox", { name: copy.couple.invite.link })) as HTMLInputElement;
+    expect(link.value.endsWith(`#t=${TOKEN}`)).toBe(true);
+    // Con un resultado definitivo, el par se descarta y la próxima apertura empieza otro.
+    expect(window.sessionStorage.getItem("juntia:invitation-write:regenerate")).toBeNull();
+  });
+
+  it("un par pendiente de crear se reanuda con su correo; uno de otra pareja no se reanuda", async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.setItem("juntia:invitation-write:create", JSON.stringify({ savedAt: Date.now(), payload: { idempotencyKey: "55555555-5555-4555-8555-555555555555", token: TOKEN, email: "tomas@correo.com" } }));
+    window.sessionStorage.setItem("juntia:invitation-write:regenerate", JSON.stringify({ savedAt: Date.now(), payload: { idempotencyKey: "k", token: TOKEN, groupId: "otra", expectedVersion: 1 } }));
+    const create = vi.fn();
+    const { unmount } = render(<PartnerScreen view={none} actions={coupleActions({ create })} />);
+    await user.click(screen.getByRole("button", { name: copy.couple.none.invite }));
+    const dialog = screen.getByRole("dialog", { name: copy.couple.invite.title });
+    expect((within(dialog).getByRole("textbox", { name: copy.couple.invite.email }) as HTMLInputElement).value).toBe("tomas@correo.com");
+    expect(within(dialog).getByText(copy.writes.unknown)).toBeTruthy();
+    expect(create).not.toHaveBeenCalled();
+    unmount();
+    const regenerate = vi.fn().mockResolvedValue({ status: "ok", value: { expiresAt: EXPIRES } });
+    render(<PartnerScreen view={pending} actions={coupleActions({ regenerate })} />);
+    await user.click(screen.getByRole("button", { name: copy.couple.pending.regenerate }));
+    await screen.findByRole("dialog", { name: copy.couple.invite.regenerateTitle });
+    expect(regenerate).toHaveBeenCalledTimes(1);
+    expect(regenerate.mock.calls[0][0].token).not.toBe(TOKEN);
   });
 });

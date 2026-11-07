@@ -26,7 +26,7 @@ import { copy } from "@/lib/copy/es";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { CoupleStatus } from "./couple-status";
 import { invitationDay } from "./dates";
-import { invitationLink, tokenIntent, type TokenPair } from "./intent";
+import { invitationLink, tokenIntent, type CreatePayload, type RegeneratePayload, type TokenPair } from "./intent";
 import { RichText } from "./rich-text";
 import { SensitiveActionConfirmation } from "./sensitive-confirmation";
 
@@ -177,12 +177,14 @@ type SheetProps = {
   open: boolean;
   /** La clave y el token de esta apertura (FR-059: nacen al abrir la hoja; contracts §2: el token, en el navegador). */
   pair: TokenPair | null;
+  /** F55-3: la carga de una intención sin resultado que quedó guardada (tras recargar); se reanuda como `unknown`. */
+  resume: CreatePayload | RegeneratePayload | null;
   onClose: () => void;
   view: PartnerView;
   actions: CoupleActions;
 };
 
-function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
+function InviteSheet({ mode, open, pair, resume, onClose, view, actions }: SheetProps) {
   const router = useRouter();
   const wide = useMediaQuery("(min-width: 768px)");
   const Container = wide ? Modal : BottomSheet;
@@ -193,29 +195,40 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   const [confirmClose, setConfirmClose] = useState(false);
   const pendingEmail = view.kind === "pending" ? view.email : "";
 
-  const onOk = useCallback(() => router.refresh(), [router]);
+  // F55-3: con un resultado definitivo (ok o rechazo) el par guardado se descarta; con `unknown` se conserva.
+  const onOk = useCallback(() => { tokenIntent(mode).end(); router.refresh(); }, [router, mode]);
   const onRejected = useCallback((error: WriteError) => {
+    tokenIntent(mode).end();
     if (error === "invalidEmail") setFieldError(copy.couple.invite.errors.email);
     else setNotice(rejectedMessage(error));
     if (STALE.has(error)) router.refresh();
-  }, [router]);
+  }, [router, mode]);
   const check = useCallback((input: { action: WriteAction; idempotencyKey: string }) => actions.checkStatus(input) as Promise<WriteStatusOutcome<Issued>>, [actions]);
   const create = useWrite<CreateInput, Issued>({ action: "create_invitation", run: actions.create, check, onOk, onRejected });
   const regenerate = useWrite<RegenerateInput, Issued>({ action: "regenerate_invitation", run: actions.regenerate, check, onOk, onRejected });
   const write = mode === "create" ? create : regenerate;
   const { state, locked } = write;
 
-  // «Generar enlace nuevo» escribe en cuanto se abre la hoja: es una operación explícita (precisión F47-3).
+  // Una intención guardada sin resultado se reanuda como `unknown` (F55-3): «Reintentar» y «Comprobar estado», sin escribir.
+  // Si no, «Generar enlace nuevo» escribe en cuanto se abre la hoja: es una operación explícita (precisión F47-3).
   useEffect(() => {
     if (!open || !pair || started.current) return;
     started.current = true;
-    if (mode === "regenerate" && view.kind === "pending") {
-      void regenerate.submit({ idempotencyKey: pair.key, groupId: view.groupId, expectedVersion: view.version, token: pair.token });
+    if (resume) {
+      if (mode === "create") create.resume(resume as CreatePayload);
+      else regenerate.resume(resume as RegeneratePayload);
+      return;
     }
-  }, [open, pair, mode, view, regenerate]);
+    if (mode === "regenerate" && view.kind === "pending") {
+      const payload = { idempotencyKey: pair.key, groupId: view.groupId, expectedVersion: view.version, token: pair.token };
+      tokenIntent("regenerate").save(payload);
+      void regenerate.submit(payload);
+    }
+  }, [open, pair, resume, mode, view, create, regenerate]);
 
   const finish = () => {
-    tokenIntent(mode).end();
+    // Cerrar con un resultado desconocido conserva el par para reanudarlo; en cualquier otro caso se descarta.
+    if (!locked) tokenIntent(mode).end();
     started.current = false;
     create.reset();
     regenerate.reset();
@@ -237,7 +250,9 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
     setNotice(null);
     if (!EMAIL.test(value)) { setFieldError(copy.couple.invite.errors.email); return; }
     setFieldError(undefined);
-    void create.submit({ idempotencyKey: pair.key, email: value, token: pair.token });
+    const payload = { idempotencyKey: pair.key, email: value, token: pair.token };
+    tokenIntent("create").save(payload);
+    void create.submit(payload);
   };
 
   // El enlace solo se pinta si el resultado es de esta misma intención (misma clave que el token de esta apertura).
@@ -274,7 +289,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
             autoCapitalize="none"
             spellCheck={false}
             placeholder={copy.couple.invite.emailPlaceholder}
-            value={mode === "create" ? email : pendingEmail}
+            value={mode === "create" ? (resume && "email" in resume ? resume.email : email) : pendingEmail}
             onChange={(event) => { setEmail(event.target.value); setFieldError(undefined); }}
             disabled={mode === "regenerate" || locked || busy || Boolean(issued)}
             error={fieldError}
@@ -370,8 +385,18 @@ function CancelInvitation({ view, actions, onDone }: { view: Extract<PartnerView
 
 export function PartnerScreen({ view, actions, openInvite = false }: { view: PartnerView; actions: CoupleActions; openInvite?: boolean }) {
   // Abrir una hoja abre su intención: la clave y el token nacen aquí, en el navegador, y se reutilizan en cada reintento.
-  const [sheet, setSheet] = useState<{ mode: "create" | "regenerate"; pair: TokenPair } | null>(() => (openInvite && view.kind === "none" ? { mode: "create", pair: tokenIntent("create").begin() } : null));
-  const open = (mode: "create" | "regenerate") => setSheet({ mode, pair: tokenIntent(mode).begin() });
+  // F55-3: si esta pestaña guarda una intención sin resultado para esta acción y esta pareja, se reanuda con su clave y su
+  // token (no se llama a `begin`); si no, la apertura empieza una nueva.
+  type Sheet = { mode: "create" | "regenerate"; pair: TokenPair; resume: CreatePayload | RegeneratePayload | null };
+  const opening = (mode: "create" | "regenerate"): Sheet => {
+    const stored = mode === "create" ? tokenIntent("create").pending() : tokenIntent("regenerate").pending();
+    const matches = stored && (mode === "create" ? view.kind === "none" : view.kind === "pending" && (stored.payload as RegeneratePayload).groupId === view.groupId);
+    return matches
+      ? { mode, pair: { key: stored.payload.idempotencyKey, token: stored.payload.token }, resume: stored.payload }
+      : { mode, pair: tokenIntent(mode).begin(), resume: null };
+  };
+  const [sheet, setSheet] = useState<Sheet | null>(() => (openInvite && view.kind === "none" ? opening("create") : null));
+  const open = (mode: "create" | "regenerate") => setSheet(opening(mode));
   const [announcement, setAnnouncement] = useState("");
   const myName = view.kind === "active" ? view.members.find((member) => member.isMe)?.name ?? "" : view.me.name;
   return (
@@ -405,8 +430,8 @@ export function PartnerScreen({ view, actions, openInvite = false }: { view: Par
           </div>
         </>
       ) : null}
-      <InviteSheet mode="create" open={sheet?.mode === "create"} pair={sheet?.mode === "create" ? sheet.pair : null} onClose={() => setSheet(null)} view={view} actions={actions} />
-      <InviteSheet mode="regenerate" open={sheet?.mode === "regenerate"} pair={sheet?.mode === "regenerate" ? sheet.pair : null} onClose={() => setSheet(null)} view={view} actions={actions} />
+      <InviteSheet mode="create" open={sheet?.mode === "create"} pair={sheet?.mode === "create" ? sheet.pair : null} resume={sheet?.mode === "create" ? sheet.resume : null} onClose={() => setSheet(null)} view={view} actions={actions} />
+      <InviteSheet mode="regenerate" open={sheet?.mode === "regenerate"} pair={sheet?.mode === "regenerate" ? sheet.pair : null} resume={sheet?.mode === "regenerate" ? sheet.resume : null} onClose={() => setSheet(null)} view={view} actions={actions} />
       <p aria-live="polite" className="sr-only">{announcement}</p>
     </div>
   );

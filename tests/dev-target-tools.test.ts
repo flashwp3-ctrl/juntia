@@ -320,6 +320,17 @@ describe("e2e:dev dirigido (planE2E)", () => {
   });
 
   it.each([
+    [["tests/e2e/access-account.e2e.ts", "--project", "a11y"]],
+    [["--project=e2e", "tests/a11y/couple.a11y.ts"]],
+  ])("rechaza un archivo de un proyecto con --project del otro: %j (F55-4)", (args) => {
+    expect(() => planE2E(args)).toThrow(/e2e:dev/);
+  });
+
+  it("un archivo que no existe dentro de tests/ (o sale de tests/ por un enlace) se rechaza (F55-4, realpath)", () => {
+    expect(() => planE2E(["tests/e2e/no-existe.e2e.ts"])).toThrow(/e2e:dev/);
+  });
+
+  it.each([
     [["-carchivo.config.ts"]],
     [["-c=archivo.config.ts"]],
     [["-G"]],
