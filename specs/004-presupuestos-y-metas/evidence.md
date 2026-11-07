@@ -58,3 +58,49 @@ Ningún run de CI lanzado por el agente. Producción no se utiliza.
   Todas las suites SQL previas pasan. Esta salida no cierra [V] de CI.
 - Lint: 0 errores, 1 aviso preexistente en `balance-panel.tsx:61`.
 - Typecheck: salida 0 antes de las migraciones (solo SQL después).
+
+## T015–T016 · en curso, sin implementación de funciones
+
+- PgTAP de funciones, primera pasada en rojo: `npm run test:db:dev`,
+  total `113.87 s`; `create_budget`, `update_budget` y las funciones de metas
+  no existen (`42883`). Las suites de tablas y las anteriores siguen pasando.
+  Después se añadieron más casos de financiación: todavía no ejecutados.
+- Integración nueva escrita en `budgets.test.ts`, `goals.test.ts`,
+  `goal-races.test.ts`, `metrics.test.ts`, con soporte de preparación SQL.
+  Primera pasada finalizada, salida 1: `24 failed | 55 passed | 16 skipped (95)`;
+  `6 failed | 10 passed | 1 skipped (17)` archivos; `131.91 s` Vitest,
+  `132.76 s` total del runner. Los RPC nuevos y `metric_months` no existen
+  (`PGRST202` / `PGRST205`); las carreras sin RPC no llegan a la barrera.
+  También fallan cuatro regresiones de movimientos privados con `forbidden` y
+  el `beforeAll` de exportación (sus siete casos no llegaron a ejecutarse).
+  Esos siete no se confunden con las nueve omisiones previstas de correo/40P01.
+  Las redefiniciones de T018 siguen pendientes; no se declara el código listo.
+- No existen todavía `goal_functions` ni `goal_funding`; no se ha implementado
+  T017–T018 ni las capas siguientes.
+
+## Discrepancia pendiente de precisión humana · DEC-G04
+
+El plan, PR A, orden obligatorio 3, pide «las siete filas de DEC-G04 en dominio y
+en `metric_months`». Pero `docs/TESTING.md` §6 define «Octubre · Yo, Tomás» como
+«No disponible» porque la fixture no define sus gastos privados, y prohíbe
+interpretarlo como cero. La vista autenticada como Tomás conoce los registros
+persistidos de Tomás; el esquema no define una marca de datos incompletos.
+No se añade esa marca ni se fabrica un `null` en SQL.
+
+Se pidió precisión al gestor: siete filas en dominio; las seis con importes
+definidos en integración SQL; y el caso «No disponible» en dominio más las
+pruebas de privacidad/RLS. Pendiente de respuesta. Detención según la regla 6
+del encargo. La ejecución en curso termina normalmente para liberar su lock.
+
+## Mapa parcial de tareas y commits
+
+| Tarea | Commit | Prueba / estado |
+| --- | --- | --- |
+| T002–T007 | `e7bdb31` | Dominio 78/78; rojo previo y control cronológico registrados arriba |
+| T008–T010 | `e7bdb31` | Errores/paginador 81/81; glosario incorporado; transportes posteriores pendientes |
+| T011 | `e7bdb31` | 30/30 tras esperar la condición de foco |
+| T012–T014 | `247aa63` | pgTAP completo verde en dev; tipos generados pendientes, con T019 según precisión de T024 |
+| T015–T016 | Trabajo en curso | Pruebas en rojo; cobertura aún en construcción, no se declaran terminadas |
+| T017–T023 | Pendiente | Sin implementación de funciones ni capas posteriores |
+| T024 | Gestor | No listo: T021 no está verde |
+| T027–T028 | Gestor | No ejecutadas; sin operaciones en producción |
