@@ -56,7 +56,8 @@ excluir.
      `metas/[id]/`), `src/features/goals/**`, `src/features/expenses/goal-funding/**`
      (los componentes del gasto con meta: FundingLedger, B3, ConfirmationBadge, la
      tarjeta de solicitud y «Quitar el uso» viven en esa carpeta, no sueltos en
-     `expenses/`), `src/domain/goals/**`, `src/lib/db/goals.ts` y `goal-usage.ts`,
+     `expenses/`), `src/features/expenses/annotate-sheet.tsx` **mientras aloje la
+     integración B1–B3** («Cómo se pagó»), `src/domain/goals/**`, `src/lib/db/goals.ts` y `goal-usage.ts`,
      `tests/e2e/goals.e2e.ts` y las migraciones y pruebas SQL de metas (nombres
      `*_goal*`).
   3. **Área de presupuestos → añade la 5:** `src/app/(app)/plan/**` (incluida
@@ -68,15 +69,16 @@ excluir.
      `src/lib/db/metrics.ts` (las métricas alimentan Inicio, Metas y Análisis).
   5. **Neutros** (no añaden nada, porque los cubren las specs 1–3, que corren siempre, o
      una capa inferior): `**/*.md`, `docs/**`, `specs/**`, `src/features/expenses/**`
-     fuera de `goal-funding/`, `src/features/home/**`, `src/features/activity/**`,
+     fuera de `goal-funding/` y de `annotate-sheet.tsx`, `src/features/home/**`, `src/features/activity/**`,
      `src/features/balance/**`, `src/features/couple/**`, `src/features/account/**`,
-     `src/lib/db/export.ts`, y los archivos que **todo** PR de P0-3 toca por
+     y los archivos que **todo** PR de P0-3 toca por
      construcción y que no cambian una ruta: `src/lib/copy/es.ts`,
      `src/lib/db/errors.ts`, `src/lib/db/types.ts` y `src/lib/supabase/database.types.ts`.
      Riesgo aceptado del plan: un cambio de copy de metas en un PR que no toca ningún
      archivo de metas no correría la spec 4; se mitiga en la revisión y en la pasada
      completa de cierre de etapa.
-  6. **Las cinco**, solo con lo compartido o lo desconocido: `src/components/**`, el
+  6. **Las cinco**, solo con lo compartido o lo desconocido: `src/lib/db/export.ts` (la
+     exportación cruza todas las áreas), `src/components/**`, el
      resto de `src/app/` (layout, raíz, `not-found`, API), `src/lib/` fuera de lo
      anterior (`supabase/`, `routes.ts`, contexto, sesión), `src/proxy.ts`,
      `playwright.config.ts`, `tests/e2e/fixtures.ts` y `tests/support/`,
@@ -87,8 +89,14 @@ excluir.
 - **Integrado en el comando real del workflow**: el paso del job `e2e` que hoy ejecuta
   `node scripts/ci.mjs run test:e2e:smoke` pasa a ejecutarlo con los archivos que
   devuelve el selector, e imprime en el resumen del job qué specs corrieron y por qué.
+- **Specs que todavía no existen.** El selector solo pasa a Playwright los archivos de
+  spec que **existen** en el commit. Si una regla pide una spec que aún no existe (la 4
+  antes del PR C, la 5 antes del PR B), no se pasa, no se da por aprobada ni por fallida, y
+  el resumen del job la registra como «Spec N: todavía no existe». La opción conservadora
+  (regla 6) es «todas las specs **existentes**», con la misma anotación para las previstas
+  que faltan.
   El checkout del job `e2e` trae la historia necesaria para la base (`fetch-depth`
-  suficiente); si no la trae, regla 4.
+  suficiente); si no la trae, regla 6.
 - **Prueba del selector** (una prueba de `scripts/`, como la del guardia): una tabla de
   listas de archivos y su resultado esperado. Además de los casos sueltos (solo
   documentación, un neutro, uno sin clasificar, la base ausente), **listas completas
@@ -96,12 +104,14 @@ excluir.
 
   | Fixture | Archivos (resumen) | Specs esperadas |
   | --- | --- | --- |
-  | PR B | `src/app/(app)/plan/page.tsx`, `src/features/plan/*`, `src/domain/budgets/*`, `src/lib/db/budgets.ts`, `src/lib/copy/es.ts`, `src/lib/db/errors.ts`, `tests/e2e/budgets.e2e.ts`, **`scripts/e2e-select.mjs` y `.github/workflows/ci.yml`** | **1–5**: el PR B introduce el selector y toca el workflow, así que corre las cinco por la regla 6 |
+  | PR B (con la spec 4 todavía sin crear) | `src/app/(app)/plan/page.tsx`, `src/features/plan/*`, `src/domain/budgets/*`, `src/lib/db/budgets.ts`, `src/lib/copy/es.ts`, `src/lib/db/errors.ts`, `tests/e2e/budgets.e2e.ts`, **`scripts/e2e-select.mjs` y `.github/workflows/ci.yml`** | **1, 2, 3 y 5**; la regla 6 pide las cinco, pero la 4 aún no existe y el resumen la anota como «todavía no existe» |
   | PR B sin el selector (una corrección posterior del área) | Lo mismo, sin `scripts/` ni `.github/` | 1, 2, 3, **5** |
   | PR C | `src/app/(app)/metas/page.tsx`, `src/app/(app)/metas/[id]/page.tsx`, `src/features/goals/*`, `src/domain/goals/*`, `src/lib/db/goals.ts`, `src/features/home/*`, `src/features/activity/*`, `src/lib/copy/es.ts`, `tests/e2e/goals.e2e.ts` | 1, 2, 3, **4** |
   | PR D | `src/features/expenses/goal-funding/*`, `src/features/expenses/annotate-sheet.tsx`, `src/lib/db/goal-usage.ts`, `src/lib/db/errors.ts`, `src/lib/copy/es.ts`, `tests/e2e/goals.e2e.ts` | 1, 2, 3, **4** |
   | PR E | `src/app/(app)/plan/analisis/page.tsx`, `src/features/analysis/*`, `src/domain/analysis/*`, `src/domain/metrics/*`, `src/lib/db/export.ts`, `src/lib/copy/es.ts`, `tests/e2e/budgets.e2e.ts` | **1–5** (métricas: las dos áreas) |
-  | Un cambio en `src/components/` dentro de cualquiera de ellos | — | **1–5** |
+  | Un cambio en `src/components/` dentro de cualquiera de ellos | — | **1–5** (las existentes) |
+  | Exportación aislada | `src/lib/db/export.ts` | **1–5** (las existentes): la exportación es compartida |
+  | Anotar aislado | `src/features/expenses/annotate-sheet.tsx` | 1, 2, 3 y **4** |
 
   Si un PR real no da lo que su fixture espera, se corrige el mapa del selector o el
   fixture en ese PR, nunca a mano en el workflow.
@@ -162,7 +172,7 @@ de 44 px, con la etiqueta `@sweep`. Sus fallos bloquean el cierre de la etapa.
 | PR | Specs E2E | Puntos de control de CI |
 | --- | --- | --- |
 | A | 1, 2, 3 (no hay pantallas nuevas) | Dos: tras las tablas (`db`) y tras las funciones (`db`); y el gate |
-| B | 1–5 en su pasada (introduce el selector y toca el workflow, regla 6); la medición del job se hace con 1, 2, 3 y **5** | Uno al nacer la spec 5 (medición `e2e`); y el gate |
+| B | Las existentes por la regla 6 (introduce el selector y toca el workflow): 1, 2, 3 y **5**, con la 4 anotada como «todavía no existe» | Uno al nacer la spec 5 (medición `e2e`); y el gate |
 | C | 1, 2, 3, **4** | Uno al nacer la spec 4 (medición `e2e`); y el gate |
 | D | 1, 2, 3, 4 | Solo el gate |
 | E | 1, 2, 3, 4, 5 | Solo el gate |
