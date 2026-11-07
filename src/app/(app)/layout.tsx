@@ -17,6 +17,7 @@ import { createTransactionAction, updateTransactionAction, voidTransactionAction
 import { createSharedExpenseAction, previewMoveAction, reclassifyAction, sharedWriteStatusAction, undoReclassifyAction, updateSharedExpenseAction, voidSharedExpenseAction } from "@/features/expenses/shared-actions";
 import { loadCoupleForSheet } from "@/features/couple/shared-load";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
+import { settleAction, voidSettlementAction } from "@/features/balance/actions";
 import { todayInBogota } from "@/domain/transactions";
 
 const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
@@ -24,6 +25,8 @@ const actions = { create: createTransactionAction, update: updateTransactionActi
 const sharedActions = {
   create: createSharedExpenseAction, update: updateSharedExpenseAction, voidShared: voidSharedExpenseAction, check: sharedWriteStatusAction,
   reclassify: reclassifyAction, undoReclassify: undoReclassifyAction, previewMove: previewMoveAction,
+  // PR D de la 003 (T062): liquidaciones, con los tres resultados y «Comprobar estado».
+  settle: settleAction, voidSettlement: voidSettlementAction,
 };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {

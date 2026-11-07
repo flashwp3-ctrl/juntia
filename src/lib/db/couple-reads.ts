@@ -92,3 +92,20 @@ export async function getLastSharedExpenseBy(client: SupabaseClient, userId: str
   if (error) throw mapDbError(error);
   return data ? sharedTransaction(data as SharedExpenseTransport) : null;
 }
+
+/**
+ * F60-1 (ChatGPT, PR #60; Q11): los meses navegables de Balance. `couple_transaction_months` solo cuenta lo activo, así que
+ * un mes cuya única liquidación se anuló quedaba fuera de las flechas y la anulada, inaccesible. Sin migración (la vista
+ * está en producción): se suman el mes de la liquidación más antigua y el de la más reciente, activas o anuladas (dos
+ * lecturas de una fila). Basta con los extremos: las flechas recorren el intervalo mes a mes. Solo para la navegación del
+ * desglose y del historial; ni saldos ni totales cambian.
+ */
+export async function listBalanceMonths(client: SupabaseClient): Promise<string[]> {
+  const edge = async (ascending: boolean) => {
+    const { data, error } = await client.from("couple_settlements").select("settlement_date").order("settlement_date", { ascending }).limit(1).maybeSingle();
+    if (error) throw mapDbError(error);
+    return data ? String(data.settlement_date).slice(0, 7) : null;
+  };
+  const [months, oldest, newest] = await Promise.all([listCoupleMonths(client), edge(true), edge(false)]);
+  return [...new Set([...months, ...[oldest, newest].filter((month): month is string => month !== null)])].sort();
+}

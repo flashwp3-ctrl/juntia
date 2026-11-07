@@ -1441,3 +1441,218 @@ no lo sustituye.
 Iteración: componentes de `src/features/expenses` 170 de 170 (F57 y edición, tres
 veces seguidas sin fallos); `verify` 55,07 s; E2E dirigidas (`annotate.e2e.ts` y
 `couple-settle.e2e.ts`) **19 de 19**.
+
+---
+
+# Evidencia — 003 PR D · Balance, liquidaciones, S1 y S4
+
+Rama `claude/feat-003-d-balance-a40b39`, base `main` `b7cf6cd` (PR A, B y C
+mergeados; migraciones del PR A en producción). Sin producción ni datos reales:
+cuentas `@seed.test` en `juntia-dev`. Todo lo de esta sección es **iteración
+contra `juntia-dev`** o local y **no es evidencia de ninguna `[V]`** (ADR-011
+§9.8): el gate es la única pasada de CI, al marcar el PR como listo (T070).
+
+## Estado
+
+- T058–T066 y T069 hechas, vistas en rojo antes del código e iteradas en verde en
+  `juntia-dev` con las pruebas afectadas.
+- A petición del gestor, en este PR: **decisión 21** (accesibilidad en dos niveles
+  de CI) y el **flake de `/recuperar · A4b · dark · 390`** (`document-title`).
+- T067: `test:integration:dev` en verde (abajo). El `e2e:dev` completo se corre
+  **una sola vez**, cuando el gestor lo pida, justo antes de marcar listo.
+- Pendientes humanos: T068 (gestor, CLS de laboratorio de la carga de Balance), T070
+  (gate al marcar listo; el job `e2e` < 480 s **bloquea** desde este PR), T071
+  (aprobación visual), T072 (tabla de cierre de `[V]`), T073 (salida interna de los
+  fundadores) y T074 (cierre del slice).
+
+## Tarea → commit → prueba
+
+| Tarea | Commit | Prueba |
+| --- | --- | --- |
+| T058, T059, T060, T060a, T060b (tests primero) | `2e928f1` | `src/features/balance/{shared-balance,settle}.test.tsx`, `src/features/context/context-transition.test.tsx`; spec E2E 3 (`tests/e2e/couple-settle.e2e.ts`, 2 casos nuevos); `tests/a11y/balance.a11y.ts` |
+| Decisión 21 y flake de A4b | `5440cb6` | `tests/a11y/job-selection.test.ts` (los dos niveles con `--list`); `playwright.config.ts`, `.github/workflows/ci.yml`, `scripts/ci.mjs` |
+| T061 Balance, desglose y módulo de Inicio | `200c05a` | `shared-balance.test.tsx`; spec 3 «Balance y liquidación parcial»; axe de Balance |
+| T062 hoja, detalle con «Anular» y «Deshacer» | `200c05a` | `settle.test.tsx`; axe de la hoja, el detalle y la confirmación de anular |
+| T063 S4 | `200c05a` | `settle.test.tsx` («S4 · solo con la confirmación del servidor»); spec 3 «motion activo» |
+| T064 S1 | `200c05a` | `context-transition.test.tsx`; spec 3 «motion activo» (E5) y «Cambiar Yo/Nosotros» |
+| T065, T066, T069 (iteración, barrido, revisión de diseño, capturas) | `9a367ce`, `391c35a` | `e2e:dev` dirigido; barrido `@sweep` de `balance.a11y.ts`; 76 PNG en `evidence/pr-d/` |
+
+## Rojo antes del código (regla 8; I5)
+
+- **Componentes** (`npx vitest run --project components src/features/balance src/features/context/context-transition.test.tsx`):
+  `shared-balance.test.tsx` y `settle.test.tsx` no cargan (faltan `./bar-geometry`,
+  `./balance-panel` y el resto de `src/features/balance`); S1, **2 de 5 fallan**
+  (sin `data-s1="entering"`; el contador de Nosotros no cuenta desde el de Yo). Las 3
+  que pasan en rojo son el Skeleton hasta el RSC (ya era del PR C), volver a tocar
+  antes de los datos y el caso de movimiento reducido, que no pide animación.
+- **`next build` comprueba los tipos de los tests**: para ver en rojo las E2E y axe
+  nuevas, los tres archivos de componentes se apartaron durante esa pasada (sin
+  andamios en `src`).
+- **E2E y axe contra `juntia-dev`** (`npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts tests/a11y/balance.a11y.ts -g "Balance|motion activo: E5"`,
+  build verde): spec 3, **2 de 2 fallan** porque falta Balance (el «motion activo»
+  pasa la parte E5 y falla al buscar `[data-shared-balance]`); axe, **2 de 2
+  fallan** (no hay «Tomás le debe a Sara» en `/balance`).
+
+## Verde en `juntia-dev` (T065, T066, T067)
+
+| Pasada | Qué | Resultado |
+| --- | --- | --- |
+| Dirigida | spec 3 + `balance.a11y.ts` (nivel ligero) | **E2E 5 de 5** (70,08 s), axe **2 de 2** con 0 violaciones en Balance, hoja, hoja con el máximo, detalle y confirmación de anular, en claro y oscuro a 390 (total 140,73 s) |
+| Motion activo | spec 3 «E5 y S4» | E5: 16 cuadros del contador hasta $2.940.000; S4: 10 cambios, 8 con `data-s4="animating"`; el saldo cuenta hasta «Al día» y aria-live anuncia «Liquidación registrada. Tomás y Sara quedan al día.» |
+| Barrido a mano | `A11Y_LEVEL=sweep … balance.a11y.ts` | 4 de 4 tras los arreglos de abajo |
+| Integración | `npm run test:integration:dev` | **63 pasan, 9 omitidas** declaradas (correo y `40P01` real), 121,87 s |
+
+- Local: `eslint` y `tsc` limpios; dominio y componentes **683 pasan, 2 omitidas**
+  (las de siempre). `tests/lint-rules.test.ts` venció su límite de 32 s una vez con
+  la máquina ocupada por `e2e:dev`; sola, 13 de 13.
+- Privacidad (FR-041; `[V]` «Privacidad por ámbito», «se repite en el PR D»): el caso
+  «Cambiar Yo/Nosotros» de la spec 3 incluye ahora `/balance` y `/balance?mes=…` en
+  HTML y RSC con la cookie válida, ausente y no válida, y para Tomás. Se añadió
+  después de la implementación (`9a367ce`); Balance solo lee vistas de grupo. **Se
+  ejecuta en la pasada completa** que pida el gestor.
+
+## T069 · barrido, teclado, 200 % y 44 px (nivel `@sweep`, a mano)
+
+- **Siete anchos** (360–1440) × claro y oscuro en Balance, Inicio en Nosotros con el
+  módulo, la hoja, el detalle con «Anular» y el saldo invertido: **70 de 70** con
+  `scrollWidth == clientWidth`.
+- **axe a 1440** en los dos temas: encontró `color-contrast` en el detalle y la
+  confirmación de anular (claro): la fila de liquidación **seleccionada** de la
+  tabla de Actividad dejaba `text.secondary` sobre `surface.sunken` (el par 4,30:1).
+  Arreglado como en las filas de gasto: tinta al estar seleccionada. Después, **0**.
+- **200 %** a 390: Balance, la hoja y el saldo invertido daban 682 px de ancho:
+  «Registrar liquidación» y «Desglose» en una sola fila y el botón sin poder partir su
+  texto (su relleno es en rem). Ahora la fila se parte y el botón admite dos líneas:
+  **390 / 390** en los cuatro estados, `cortado: 0`. El arnés registra ahora los cinco
+  elementos que más se salen cuando hay scroll horizontal.
+- **Teclado**: Tab hasta «Registrar liquidación» y Enter abre la hoja con el foco en
+  «Todo»; flecha a «Otro»; se teclea el monto; Tab a la fecha y a «Registrar»;
+  Escape cierra sin registrar (el saldo sigue en $329.900). «Anular liquidación» con
+  Enter abre la confirmación con el foco en «Cancelar»; Escape la cierra. El
+  selector Yo/Nosotros con flechas anuncia «Ahora ves: Yo» y vuelve a Nosotros.
+- **44 px**: «Registrar liquidación» 240,4×52 · «Todo» 54,5×44 · «Otro» 51,4×44 ·
+  fecha 350×69,6 · «Registrar $50.000» 350×52 · «Anular liquidación» 164,8×44 ·
+  «Cancelar» 109,6×44 · «Anular» 121,1×44.
+
+## Revisión de diseño contra 02·3, 04·2 y 04·7 (no es evidencia de FR-054)
+
+Sobre las capturas, contra los comps del proyecto «Juntia: Responsive design y
+design system» (02·3 Shared Balance, 04·2 BALANCE COMPARTIDO y REGISTRAR
+LIQUIDACIÓN, 04·5 oscuro, 04·7 módulo de escritorio). Coinciden: badge POR SALDAR,
+titular serif, importe, tarjeta con una fila por persona (avatar, «Le deben» /
+«Debe», barra de 28 px con la marca en tinta, «Pagó X · le corresponden Y»),
+leyenda, «Registrar liquidación» y «Desglose»; el estado al día de 02·3 (LIQUIDADO,
+tramo rayado «liquidó» hasta la marca y contorno punteado «recibió»); la hoja con
+T → S, «Tomás le pagó a Sara», saldo pendiente, Todo/Otro, fecha, nota, «Después de
+esto quedan al día» y el aviso de que Juntia no mueve dinero, con la × a la derecha;
+el módulo de 1440 (badge, «Desglose», T → S, importe, barras de 16 px, leyenda corta y
+el botón). Escala común verificada con las cifras del comp (marca de Sara en 77,72 %,
+la de Tomás en 69,43 %, lo pagado por Tomás en 47,16 %).
+
+| # | Hallazgo | Qué se hizo |
+| --- | --- | --- |
+| 1 | El desglose a 390 cortaba importes (tabla de 5 columnas desplazable dentro de su caja) | Por debajo de 768 cada fila se apila como el desglose de 02·3 (gasto e importe; quién pagó y el reparto; la parte de cada uno con su inicial), con roles de tabla explícitos |
+| 2 | «Otro» abría un campo estrecho que cortaba «$200.000» | El monto se edita en el lugar del importe, a lo ancho de la hoja (04·2) |
+| 3 | Una liquidación anulada cortaba «Anulada» al final de su línea a 390 | «Anulada» va primero |
+| 4 | El subtítulo del comp («Octubre · 6 gastos compartidos · arriendo a 55/45…») | **Sin cambio**: el saldo es acumulado (Q9); el subtítulo dice eso y el mes va en el desglose |
+| 5 | El comp muestra un tercer chip «$200.000» en la hoja | **Sin cambio**: la spec y US-6.1 piden «Todo» y «Otro»; el chip del comp es un dato de ejemplo |
+| 6 | La fila del historial del comp lleva el badge LIQUIDADO bajo el importe | **Sin cambio**: se usa la variante de liquidación de ExpenseRow de Actividad («Liquidado · no es un gasto»), la misma en las dos pantallas |
+
+## Capturas para T071 (390 y 1440, claro y oscuro)
+
+76 PNG en `specs/003-pareja-y-balances/evidence/pr-d/`: Balance por saldar, la hoja
+(Todo, Otro con 200.000 y el máximo), la liquidación parcial (229.900), Actividad
+con la liquidación, su detalle, la confirmación de anular, la anulada, al día,
+invertido y vacío; Inicio en Nosotros con el módulo; **S1** (un cuadro a mitad de la
+entrada, con el contador contando) y **S4** (un cuadro a mitad de la animación y el
+final) con movimiento normal y reducido. Las de página completa a 390 dibujan la
+barra inferior a media página (`fullPage` de Playwright con `position: fixed`). Las
+hizo una spec temporal, sin commitear, dentro del arnés de `e2e:dev`; la de «anulada»
+se repitió (`391c35a`) porque la primera fotografió la confirmación aún cerrándose.
+
+**Para aprobar viendo la pantalla** (decisión 20.2 y propuestas §15.9): SharedBalance
+(aprobado en su forma), personas y patrones (persona 1 sólido, persona 2 rayado),
+liquidación en tinta, y el copy nuevo (`copy.balance` en `src/lib/copy/es.ts`),
+incluido «El balance está en Nosotros» para Balance en Yo con pareja.
+
+## Decisión 21 en este PR
+
+- **Nivel ligero** (cada PR): cada estado una vez, a 390, en los dos temas; casos
+  sin sesión en el job `app` y con sesión en el `e2e`. Sigue bloqueando.
+- **Barrido completo** (`@sweep`): 1440, siete anchos, 200 %, teclado y 44 px.
+  `playwright.config.ts` lo elige con `A11Y_LEVEL` (por defecto el ligero; `sweep`,
+  solo el barrido). En CI, «Run workflow» con el input `a11y_sweep`: corre `app`
+  (con su axe sin sesión en barrido) y en `e2e` solo axe con sesión, sin la E2E ni el
+  job `db`; tope duro del job, 10 min.
+- **Recuento** (`--list`): job `e2e` 94 casos en el nivel ligero (en `main`, 188) y
+  100 en el barrido; job `app` 26 y 27.
+- `job-selection.test.ts` comprueba con `--list` que la pasada del PR no lista nada de
+  1440, barridos, teclado ni 200 %; que cada estado del registro y de los archivos de
+  pareja y Balance sale una vez a 390 en cada tema; y que el barrido solo lista lo
+  que el PR no corre, de los cuatro archivos.
+- **Presupuesto**: `scripts/ci.mjs summary` hace fallar el job `e2e` si dura 480 s o
+  más (decisión 20.17; T070), salvo en el barrido a mano. Los demás presupuestos
+  siguen avisando (ver D8).
+
+## Flake `/recuperar · A4b · dark · 390` (`document-title`)
+
+Tras la respuesta de la Server Action, Next vuelve a transmitir los metadatos y axe
+podía auditar el instante sin `<title>`. Cada pasada de axe (`routes.a11y.ts` y el
+`axe()` de `tests/support/a11y.ts`) espera ahora un `<title>` no vacío con una
+aserción web-first; si de verdad faltara, la espera falla igual.
+
+## Lecturas de ejecución (no decisiones; se cambian si el revisor las objeta)
+
+| # | Lectura | Por qué |
+| --- | --- | --- |
+| D1 | Las entradas axe de T060b van en `tests/a11y/balance.a11y.ts` y no en `route-registry.ts` | Como C1: necesitan una pareja con gastos y una liquidación sembrados por las funciones reales |
+| D2 | S1: lo exclusivo de Yo sale en el acto, sin el fundido de 140 ms | FR-040: ni un cuadro de cifras del contexto anterior bajo el nuevo; la perilla, la entrada en stagger y el contador sí siguen MOTION_SYSTEM §1 |
+| D3 | S1: la «interrupción reversible» es volver a la vista anterior en el acto si sus datos siguen siendo los del servidor, y el contador continúa desde el valor que pintaba (HeroMemory, en memoria) | Es lo que se puede cumplir sin mezclar datos de dos contextos |
+| D4 | S4: mientras el servidor responde, el saldo que se ve queda quieto; con `ok`, se aplica la liquidación confirmada a ese saldo (si coincide con `pending_before`) y S4 anima; después manda la página del servidor | La respuesta de la Server Action puede traer la página nueva antes o después de su resultado; así S4 nunca depende del orden ni anima sin confirmación |
+| D5 | El detalle de una liquidación vive en `/actividad/[id]` (como el de un gasto compartido); las filas de Actividad y del historial de Balance llevan a él | Mismo panel maestro-detalle desde 1280 y la misma ruta en móvil |
+| D6 | Balance en Yo con pareja muestra «El balance está en Nosotros» sin leer nada; sin pareja, el «todavía no disponible» de P0-1 | contracts/server-actions §4: con Yo no se leen vistas de grupo para la página |
+| D7 | La fila de total del desglose usa solo el total del mes de `couple_month_summary`; no hay suma por persona del mes | FR-043: los totales salen de una sola lectura, nunca de sumar la lista |
+| D8 | Solo el presupuesto del job `e2e` pasa a bloquear | T070 lo pide así; Q17 habla de «los presupuestos». **Pregunta al gestor** si el del job `app` (360 s) y los de comando también deben bloquear ya |
+| D9 | `/balance` sale de `product-routes.test.tsx` (rutas sin datos) | Ahora lee datos reales; lo cubren los componentes, la spec 3 y `balance.a11y.ts`, como Inicio y Actividad en P0-1 |
+| D10 | El «Deshacer» de una liquidación usa la máquina del PR C (un deshacer pendiente a la vez, en memoria, 15 s y «Comprobar estado») | Regla 4 del encargo; nada en el almacenamiento del navegador |
+
+## Primera revisión del gestor (sobre `779fd77`)
+
+Un commit, sin CI. Respuestas del gestor: solo el job `e2e` bloquea por presupuesto
+(T070); `app` y los de comando siguen avisando. Lecturas D1–D10 aprobadas.
+
+| # | Hallazgo | Qué se hizo | Prueba (primero en rojo) |
+| --- | --- | --- | --- |
+| 1 | Con la anulación en `unknown`, «Cancelar» o Escape cerraban y tiraban la clave (como F57-3) | Con `write.locked`, cerrar abre «¿Cerrar sin confirmar?»; «Seguir aquí» conserva la intención; «Cerrar» la suelta y pide la página (la anulación pudo hacerse) | `settle.test.tsx` «con la anulación sin confirmar, cerrar pregunta antes…»: reintento con la misma clave y `router.refresh` al cerrar confirmándolo |
+| 2 | Cerrar la hoja con un registro sin confirmar dejaba el saldo de antes | `SettleSheet` avisa `onClose({ unconfirmed: true })` y `BalancePanel` pide la página | `settle.test.tsx` «cerrar confirmándolo pide la página otra vez» |
+| 3 | El rechazo por saldo (`exceedsPending`, `nothingToSettle`) decía un máximo viejo | Aviso sin cifra: «El saldo cambió mientras registrabas. Revisa el saldo pendiente y vuelve a intentarlo.»; «Saldo pendiente» se actualiza con la página que se pide al rechazar | `settle.test.tsx` «rechazo confirmado… sin un máximo viejo» y S4 con `rejected` |
+| 4 | `loadBalance` leía todo el historial de liquidaciones en cada visita | Las liquidaciones son las **del mes del desglose** (por cursor); las flechas mueven los dos. La spec no pide el historial completo en Balance: FR-042 pide que esa lista se lea por cursor, y Q9 hace mensual el desglose. La sección pasa a la columna del desglose: «Liquidaciones de {mes}» | Componentes y `balance.a11y.ts` (nivel ligero) en verde |
+| 5 | El barrido a mano gastaba minutos en lint, build y unitarias del job `app` | Con `a11y_sweep`, `app` solo instala, construye y corre `test:a11y` (barrido sin sesión). Esos estados necesitan el build de `app` con Supabase inalcanzable, así que no se mueven a `e2e` | — (workflow; sin run, como pidió el gestor) |
+| 6 | Con el presupuesto bloqueante, un reintento podía tumbar el gate | `retries: 0` solo en el proyecto `a11y` (axe es determinista y el flake de A4b está resuelto); la E2E conserva 1 en CI | — |
+
+Pasadas: `npm run verify` en verde (64,63 s). En `juntia-dev`: spec 3 **4 de 5** a la
+primera y el que falló, «gasto compartido 50/50», **pasa solo** (9,2 s); axe ligero de
+Balance 2 de 2. Ese caso es del PR C y no lo toca esta ronda: tras el primer guardado
+desde el estado vacío, si la página revalidada tarda más de ~1 s, E5 no encuentra la
+fila y lleva a Actividad, donde no hay número héroe (lógica F45-2). Se ve con la
+latencia de `juntia-dev`; en CI la E2E conserva su reintento. Las capturas de
+`evidence/pr-d/` son anteriores a esta ronda: muestran «Liquidaciones» bajo el saldo y
+no en la columna del desglose.
+
+## Revisión de ChatGPT F60 (sobre `57a3352`)
+
+0 bloqueantes y 2 importantes. Un commit, sin CI.
+
+| # | Hallazgo | Qué se hizo | Prueba (primero en rojo) |
+| --- | --- | --- | --- |
+| F60-2 | `applySettlement` se aplicaba si coincidía el importe de `pending_before`, sin mirar la dirección: con el saldo invertido por el mismo importe, la interfaz habría pintado un saldo falso | El saldo local solo se adelanta si coinciden el importe **y** el deudor y el acreedor de la sugerencia visible con `fromUserId`/`toUserId` de la liquidación confirmada; si no, nada local y manda la página revalidada | `settle.test.tsx` «S4 · la confirmación tiene que ser del saldo que se ve (F60-2)»: «Sara le debe a Tomás $429.900» y el servidor confirma Tomás → Sara por 429.900; sigue «Sara le debe a Tomás $429.900», sin LIQUIDADO |
+| F60-1 | `couple_transaction_months` solo cuenta lo activo: un mes cuya única liquidación se anuló quedaba fuera de las flechas y de `clampMonth`, y la anulada, inaccesible desde Balance (Q11) | **Sin migración** (la vista está en producción): `listBalanceMonths` en `src/lib/db/couple-reads.ts` suma a esos meses el de la liquidación más antigua y el de la más reciente de `couple_settlements` (activas y anuladas; dos lecturas `limit 1`). Basta con los extremos: las flechas recorren el intervalo mes a mes. Solo para la navegación del desglose y del historial de Balance; saldos y totales no cambian | `tests/integration/balance-months.test.ts` (nuevo): en rojo contra `juntia-dev`, «expected ['2026-10'] to include '2026-08'»; después, agosto entra en las flechas y en `clampMonth` y su liquidación se lee como anulada |
+
+Pasadas: `npm run verify` en verde (56,10 s). En `juntia-dev`: `test:integration:dev`
+**64 pasan, 9 omitidas** declaradas (127,99 s); spec 3 «Balance y liquidación
+parcial» y axe ligero de Balance en verde.
+
+Nota: Actividad en Nosotros sigue navegando con `couple_transaction_months`. El enlace
+de una anulada de agosto desde Balance abre su detalle en `/actividad/[id]`, que se
+lee por id; la tabla de al lado se ajusta al mes navegable más cercano. No se cambió
+en esta ronda, que pedía la navegación de Balance.

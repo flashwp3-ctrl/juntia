@@ -54,7 +54,7 @@ async function openMove(page: Page, pair: SeededCouple, id: string) {
 if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
   for (const colorScheme of THEMES) {
     for (const width of [390, 1440]) {
-      test(`Nosotros · axe de Inicio, Actividad, Anotar, Reparto, edición, eliminar, ChangePreview y A5 · ${colorScheme} · ${width}px · con sesión`, async ({ browser, baseURL }, testInfo) => {
+      test(`Nosotros · axe de Inicio, Actividad, Anotar, Reparto, edición, eliminar, ChangePreview y A5 · ${colorScheme} · ${width}px · con sesión`, width === 390 ? {} : { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
         const { pair, shared, pharmacy } = await seedState(testInfo.parallelIndex);
         const label = (state: string) => `${colorScheme} ${width}px · ${state}`;
         const { context, page } = await signedContext(browser, baseURL!, pair.sara, colorScheme, "us");
@@ -138,7 +138,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     }
   }
 
-  test("barrido de siete anchos y 200 %: Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte, edición y A1–A3 · con sesión", async ({ browser, baseURL }, testInfo) => {
+  test("barrido de siete anchos y 200 %: Anotar compartido, Inicio y Actividad en Nosotros, Yo con la parte, edición y A1–A3 · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const { pair, shared, pharmacy } = await seedState(testInfo.parallelIndex);
     const us = await signedContext(browser, baseURL!, pair.sara, "light", "us");
     const page = us.page;
@@ -192,7 +192,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     await me.context.close();
   });
 
-  test("teclado y 44 px: participantes, modos de reparto, Importe y Porcentaje, Enter, Escape y Mover a Pareja A1–A4 · con sesión", async ({ browser, baseURL }, testInfo) => {
+  test("teclado y 44 px: participantes, modos de reparto, Importe y Porcentaje, Enter, Escape y Mover a Pareja A1–A4 · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const { pair, pharmacy } = await seedState(testInfo.parallelIndex);
     const us = await signedContext(browser, baseURL!, pair.sara, "light", "us");
     const page = us.page;

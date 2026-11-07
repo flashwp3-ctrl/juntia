@@ -34,6 +34,14 @@ on:
         description: "PR D: only capture registry states whose route or state matches this regular expression (empty = all)"
         type: string
         default: ""
+      a11y_sweep:
+        description: "Decision 21.2: full accessibility sweep (seven widths, 200 % text, keyboard, 44 px; tests tagged @sweep). Manual, launched by the manager"
+        type: boolean
+        default: false
+# Maestro §15.10, decisión 21: en cada PR, el nivel ligero de accesibilidad (cada estado una vez, a 390, en los dos temas);
+# con «Run workflow» y a11y_sweep, solo el barrido completo (@sweep; playwright.config.ts). Sin el input (pull_request), vacío.
+env:
+  A11Y_LEVEL: ${{ inputs.a11y_sweep && 'sweep' || '' }}
 permissions:
   contents: read
 concurrency:
@@ -56,7 +64,9 @@ jobs:
           node-version: 24
           cache: npm
       - name: Install, lint, typecheck and unit and component tests
-        run: node scripts/ci.mjs run ci lint typecheck test:unit test:components
+        # Decisión 21.2: el barrido a mano (a11y_sweep) solo instala; lo demás ya pasó en el PR. Los estados sin sesión del
+        # barrido necesitan el build de este job (Supabase inalcanzable a propósito), así que el barrido no sale de aquí.
+        run: node scripts/ci.mjs run ${{ inputs.a11y_sweep && 'ci' || 'ci lint typecheck test:unit test:components' }}
       - name: Build once with the unreachable Supabase URL
         # T051/T052 (002, PR B): axe solo de los estados sin sesión. Este job no tiene Supabase: la URL apunta a un puerto
         # local donde no escucha nadie, así que el acceso responde con el error de red real (A1d). No es una clave.
@@ -90,7 +100,7 @@ jobs:
           A11Y_JOB: app
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_unreachable-in-app-job
-        run: node scripts/ci.mjs run test:a11y check:internal-surface check:theme-script
+        run: node scripts/ci.mjs run ${{ inputs.a11y_sweep && 'test:a11y' || 'test:a11y check:internal-surface check:theme-script' }}
       - name: Publish timings and non-applicable controls
         if: always()
         env:
@@ -98,8 +108,9 @@ jobs:
         run: node scripts/ci.mjs summary
 
   db:
-    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate; el barrido de accesibilidad (a11y_sweep)
+    # tampoco necesita las pruebas SQL.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -276,9 +287,11 @@ jobs:
           echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
       - name: E2E smoke (spec 1)
         id: smoke
+        # Decisión 21.2: el barrido a mano solo corre la accesibilidad.
+        if: '!inputs.a11y_sweep'
         run: node scripts/ci.mjs run test:e2e:smoke
       - name: Axe of the states that need a session or the Auth API
-        if: always() && steps.smoke.outcome != 'skipped'
+        if: always() && (steps.smoke.outcome != 'skipped' || inputs.a11y_sweep)
         env:
           A11Y_JOB: e2e
         run: node scripts/ci.mjs run test:a11y

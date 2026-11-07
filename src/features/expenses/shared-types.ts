@@ -6,6 +6,7 @@
 import type { SplitMode } from "@/domain/allocations";
 import type { CategoryId } from "@/domain/transactions";
 import type { WriteAction, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
+import type { SavedSettlement, SettlePayload, VoidSettlementPayload } from "@/features/balance/types";
 
 /** Un integrante de la pareja activa tal como lo ve la hoja: nombre visible y orden de ingreso, nunca el correo. */
 export type SheetMember = { userId: string; name: string; joinOrder: 1 | 2; isMe: boolean };
@@ -57,4 +58,7 @@ export type SharedActions = {
   reclassify?: (payload: ReclassifyPayload) => Promise<WriteOutcome<MoveResult>>;
   undoReclassify?: (payload: UndoReclassifyPayload) => Promise<WriteOutcome<{ restoredPrivateId: string }>>;
   previewMove?: (input: { transactionId: string }) => Promise<{ ok: true; value: MovePreviewBase } | { ok: false }>;
+  /** PR D (T062): registrar y anular una liquidación. */
+  settle?: (payload: SettlePayload) => Promise<WriteOutcome<SavedSettlement>>;
+  voidSettlement?: (payload: VoidSettlementPayload) => Promise<WriteOutcome<{ id: string; version: number }>>;
 };

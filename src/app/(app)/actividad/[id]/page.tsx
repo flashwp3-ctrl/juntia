@@ -13,7 +13,8 @@ import { ActivityScreen } from "@/features/activity/activity-screen";
 import { loadMonth, loadTransaction, monthParam, today } from "@/features/activity/load";
 import { SharedDetail } from "@/features/activity/shared-detail";
 import { DetailHeader, TransactionDetail } from "@/features/activity/transaction-detail";
-import { activeCouple, loadCoupleMonth, loadSharedExpense } from "@/features/couple/shared-load";
+import { activeCouple, loadCoupleMonth, loadSettlement, loadSharedExpense } from "@/features/couple/shared-load";
+import { SettlementDetail } from "@/features/balance/settlement-detail";
 import { LoadError } from "@/features/context/load-error";
 import { copy } from "@/lib/copy/es";
 import { serverContext } from "@/lib/server-context";
@@ -39,12 +40,17 @@ export default async function TransactionPage({ params, searchParams }: Props) {
     if (!members) return <ActivityScreen server="us" data={null} today={now} couple={null} />;
     const loaded = await loadSharedExpense(id, `/actividad/${id}`);
     const expense = loaded.ok ? loaded.value : null;
-    const requested = typeof query.mes === "string" ? monthParam(query.mes, now) : (expense?.transactionDate.slice(0, 7) ?? now.slice(0, 7));
+    // PR D (T062): una liquidación tiene el mismo lugar que un gasto compartido, con «Anular».
+    const settled = loaded.ok && !expense ? await loadSettlement(id, `/actividad/${id}`) : null;
+    const settlement = settled?.ok ? settled.value : null;
+    const requested = typeof query.mes === "string" ? monthParam(query.mes, now) : (expense?.transactionDate.slice(0, 7) ?? settlement?.settlementDate.slice(0, 7) ?? now.slice(0, 7));
     const data = await loadCoupleMonth(requested, now, `/actividad?mes=${requested}`);
     if (data.ok && typeof query.mes === "string" && data.value.month !== query.mes) redirect(`/actividad/${encodeURIComponent(id)}?mes=${data.value.month}`);
     const back = `/actividad?mes=${data.ok ? data.value.month : requested}`;
-    const detail = !loaded.ok ? <LoadError /> : expense ? <SharedDetail expense={expense} members={members} closeHref={back} /> : <NotFound back={back} />;
-    return <ActivityScreen server="us" data={null} today={now} couple={{ data, members }} selectedId={expense?.id} detail={detail} mobileHeader={<DetailHeader title={copy.detail.expense} backHref={back} />} />;
+    const detail = !loaded.ok || (settled && !settled.ok) ? <LoadError /> : expense ? <SharedDetail expense={expense} members={members} closeHref={back} />
+      : settlement ? <SettlementDetail settlement={settlement} members={members} closeHref={back} /> : <NotFound back={back} />;
+    const title = settlement ? copy.balance.settlement.title : copy.detail.expense;
+    return <ActivityScreen server="us" data={null} today={now} couple={{ data, members }} selectedId={expense?.id ?? settlement?.id} detail={detail} mobileHeader={<DetailHeader title={title} backHref={back} />} />;
   }
   // F44-1: sin cookie o con una no válida, ni el movimiento ni el mes se leen.
   if (context !== "me") return <ActivityScreen server={context} data={null} today={now} />;

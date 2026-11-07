@@ -6,6 +6,7 @@
 // filtro de categoría en cliente sobre lo compartido; nada privado llega aquí. Flechas de mes como en Yo
 // (`couple_transaction_months`). Desde 1280, la tabla con el panel de detalle a la derecha (lo pone ActivityScreen).
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/app-icon";
 import { useRouter } from "next/navigation";
 import { useId, useMemo } from "react";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -120,7 +121,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                       <li key={item.row.id}>
                         {item.kind === "expense"
                           ? <SharedRow row={item.row} members={members} href={detailHref(item.row.id, month)} dateLabel={label} current={item.row.id === selectedId} />
-                          : <SettlementRow settlement={item.row} members={members} dateLabel={label} />}
+                          : <SettlementRow settlement={item.row} members={members} dateLabel={label} href={detailHref(item.row.id, month)} current={item.row.id === selectedId} />}
                       </li>
                     ))}
                   </ul>
@@ -143,11 +144,17 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                 const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
                 if (item.kind === "settlement") {
                   return (
-                    <tr key={item.row.id} className={item.row.status === "voided" ? "opacity-60" : undefined}>
-                      <td className={`${cell} pl-3`}><span className="flex min-h-[54px] items-center gap-3.5 text-[15px] font-semibold text-ink">{copy.shared.row.settlementTitle(memberName(members, item.row.fromUserId), memberName(members, item.row.toUserId))}</span></td>
-                      <td className={`${cell} text-[13px] text-ink-secondary`}>{copy.shared.row.settlement}</td>
-                      <td className={`${cell} font-mono text-[13px] text-ink-secondary`}>{dayLabel(item.row.settlementDate, today)}</td>
-                      <td className={`${cell} pr-3 text-right text-[15px] font-semibold whitespace-nowrap text-ink-secondary`}>{formatMoney(item.row.amount)}</td>
+                    <tr key={item.row.id} className={item.row.id === selectedId ? "bg-sunken" : "hover:bg-sunken"}>
+                      {/* PR D (T062): la liquidación lleva a su detalle, con «Anular»; anulada, sigue en el historial y lo dice. */}
+                      <td className={`${cell} rounded-l-[14px]`}>
+                        <Link href={detailHref(item.row.id, month)} aria-current={item.row.id === selectedId ? "page" : undefined} data-settlement-id={item.row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink"><AppIcon name="arrows-left-right" size={15} /></span>
+                          <span className={`truncate ${item.row.status === "voided" ? "line-through" : ""}`}>{copy.shared.row.settlementTitle(memberName(members, item.row.fromUserId), memberName(members, item.row.toUserId))}</span>
+                        </Link>
+                      </td>
+                      <td className={`${cell} text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{item.row.status === "voided" ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement}</td>
+                      <td className={`${cell} font-mono text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{dayLabel(item.row.settlementDate, today)}</td>
+                      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{formatMoney(item.row.amount)}</td>
                     </tr>
                   );
                 }

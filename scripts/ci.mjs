@@ -1,4 +1,6 @@
-// Medición de comandos y jobs: ADR-011 §4. Los presupuestos solo generan avisos.
+// Medición de comandos y jobs: ADR-011 §4. Los presupuestos de comando generan avisos. El del job `e2e` (< 480 s, maestro
+// §15.10, decisiones 19.5 y 21.4) bloquea desde el PR D de la 003 (decisión 20.17, Q17; tasks.md T070), salvo en el barrido
+// de accesibilidad a mano (A11Y_LEVEL=sweep), que tiene su propio tope duro de 10 min (docs/TESTING.md §9).
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -28,7 +30,11 @@ if (mode === "run") {
   // Maestro §15.10, decisión 19.5: el job e2e tiene < 480 s; los demás, el < 6 min del gate (ADR-011 §4).
   const jobBudget = process.env.GITHUB_JOB === "e2e" ? 480 : 360;
   lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < ${jobBudget} s |`);
-  if (duration >= jobBudget) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < ${jobBudget} s`);
+  const blocking = process.env.GITHUB_JOB === "e2e" && process.env.A11Y_LEVEL !== "sweep";
+  if (duration >= jobBudget && blocking) {
+    console.log(`::error::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO; ${duration.toFixed(2)} s / < ${jobBudget} s (bloquea desde el cierre de P0-2)`);
+    process.exitCode = 1;
+  } else if (duration >= jobBudget) console.log(`::warning::Job ${process.env.GITHUB_JOB}: SUPERA EL PRESUPUESTO (aviso); ${duration.toFixed(2)} s / < ${jobBudget} s`);
   if (process.env.GITHUB_JOB === "app") lines.push("", "| Control | Estado |", "| --- | --- |", "| 3 · Supabase local, migraciones y SQL/RLS | job `db` |", "| 4 · E2E de humo | job `e2e` |");
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
   console.log(lines.join("\n"));

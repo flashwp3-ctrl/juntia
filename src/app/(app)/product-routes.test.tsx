@@ -1,5 +1,6 @@
 // P0-1, PR C (T066; FR-043, FR-044 de la 002): Inicio y Actividad ya leen datos reales y se prueban en
-// src/features/home y src/features/activity; aquí quedan Metas, Plan y Balance, que siguen sin datos. El aviso de versión
+// src/features/home y src/features/activity; aquí quedan Metas y Plan, que siguen sin datos. Balance lee datos reales desde
+// el PR D de la 003 y se prueba en src/features/balance, en la spec E2E 3 y en tests/a11y/balance.a11y.ts. El aviso de versión
 // base desaparece (FR-044): la prueba que exigía verlo pasa a exigir que no esté en ninguna ruta.
 // T050 / FR-028, FR-029; SC-004; US-2, escenarios 1 y 3 — capa: componente (Vitest + RTL), con `next/navigation`
 // simulado (usePathname).
@@ -21,7 +22,6 @@ import { ContextProvider } from "@/components/shell/context-selector";
 import { AccountProvider } from "@/features/account/account-context";
 import GoalsPage from "./metas/page";
 import PlanPage from "./plan/page";
-import BalancePage from "./balance/page";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useRouter: () => ({ refresh: vi.fn() }) }));
@@ -47,7 +47,6 @@ function AppLayout({ children }: { children: ReactNode }) {
 const routes: readonly [string, () => ReactNode | Promise<ReactNode>][] = [
   ["/metas", GoalsPage],
   ["/plan", PlanPage],
-  ["/balance", BalancePage],
 ];
 
 // Dígitos, signo de pesos, porcentaje y las dos afirmaciones de saldo que §15.10 prohíbe sin datos.

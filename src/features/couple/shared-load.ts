@@ -14,9 +14,11 @@ import type { MeSummary, SharedPartRow } from "@/features/home/home-view";
 import { lastFromSaved } from "@/features/expenses/split-state";
 import { toSavedShared } from "@/features/expenses/shared-payload";
 import type { CoupleForSheet } from "@/features/expenses/shared-types";
-import { getCoupleBalance, getCoupleMonthSummary, getLastSharedExpenseBy, getMeMonthSummary, getSharedExpense, listCoupleMonths, listMySharedParts } from "@/lib/db/couple-reads";
+import { getCoupleBalance, getCoupleMonthSummary, getLastSharedExpenseBy, getMeMonthSummary, getSharedExpense, listBalanceMonths, listCoupleMonths, listMySharedParts } from "@/lib/db/couple-reads";
 import { DbError, mapDbError } from "@/lib/db/errors";
-import { listSettlements } from "@/lib/db/settlements";
+import { getSettlement, listSettlements } from "@/lib/db/settlements";
+import { toSettlementView } from "@/features/balance/saved";
+import type { SettlementView } from "@/features/balance/types";
 import { listSharedExpenses } from "@/lib/db/shared-expenses";
 import type { SharedTransaction } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/server";
@@ -104,4 +106,37 @@ export async function loadCoupleForSheet(members: readonly CoupleMemberView[] | 
   } catch {
     return { members: [...members], last: null };
   }
+}
+
+export type BalanceData = {
+  balance: MemberBalance[]; month: string; navigation: { previous: string | null; next: string | null };
+  expenses: SharedTransaction[]; totalMinor: string | null; settlements: SettlementView[];
+};
+
+/**
+ * PR D (T061; FR-025, FR-042, FR-043, FR-047; Q9): Balance. El saldo acumulado sale de `couple_balance` (una sola
+ * sentencia); el desglose es el mes pedido (`couple_expenses` por cursor y el total de `couple_month_summary`), con las
+ * flechas de `couple_transaction_months`; las liquidaciones (activas y anuladas) del mismo mes, por cursor. Revisión del
+ * gestor del PR #60 (4): no se lee todo el historial en cada visita; el de otros meses está a una flecha, como en Actividad.
+ */
+export async function loadBalance(requested: string, current: string, volver: string): Promise<Loaded<BalanceData>> {
+  return guard(async () => {
+    const client = await createClient();
+    // F60-1: también los meses que solo tienen liquidaciones anuladas (siguen en el historial, Q11).
+    const months = await listBalanceMonths(client);
+    const month = clampMonth(months, current.slice(0, 7), requested);
+    const [balance, expenses, totals, settlements] = await Promise.all([getCoupleBalance(client), listSharedExpenses(client, month), getCoupleMonthSummary(client, month), listSettlements(client, month)]);
+    return {
+      balance, month, navigation: monthNavigation(months, current.slice(0, 7), month), expenses,
+      totalMinor: totals ? minorText(totals.total) : null, settlements: settlements.map(toSettlementView),
+    };
+  }, volver);
+}
+
+/** PR D (T062): una liquidación de la pareja (activa o anulada), o `null`. */
+export async function loadSettlement(id: string, volver: string): Promise<Loaded<SettlementView | null>> {
+  return guard(async () => {
+    const row = await getSettlement(await createClient(), id);
+    return row ? toSettlementView(row) : null;
+  }, volver);
 }

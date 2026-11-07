@@ -14,7 +14,8 @@ import { getCoupleBalance, getCoupleMonthSummary, getMeMonthSummary } from "@/li
 import { reclassifyToShared, undoReclassifyToShared } from "@/lib/db/reclassify";
 import { createSharedExpense, sharedTransaction, updateSharedExpense, voidSharedExpense } from "@/lib/db/shared-expenses";
 import { getTransaction } from "@/lib/db/transactions";
-import type { SharedExpenseTransport } from "@/lib/db/types";
+import type { SettlementTransport, SharedExpenseTransport } from "@/lib/db/types";
+import { savedFromTransport } from "@/features/balance/saved";
 import { writeStatus } from "@/lib/db/write-status";
 import { createClient } from "@/lib/supabase/server";
 import { allocationsFor, parseReclassify, parseSharedCreate, parseSharedUpdate, parseSharedVoid, parseUndoReclassify, toSavedShared } from "./shared-payload";
@@ -87,7 +88,8 @@ export async function undoReclassifyAction(input: unknown): Promise<WriteOutcome
   return outcome;
 }
 
-const ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const;
+// PR D (T062): también las liquidaciones; «Comprobar estado» devuelve lo mismo que el reintento.
+const ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared", "register_settlement", "void_settlement"] as const;
 type Action = (typeof ACTIONS)[number];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -107,6 +109,9 @@ export async function sharedWriteStatusAction(input: unknown): Promise<WriteStat
     switch (action as Action) {
       case "create_shared_expense": case "update_shared_expense":
         return { state: "completed", value: toSavedShared(sharedTransaction(result as unknown as SharedExpenseTransport)) };
+      case "register_settlement":
+        return { state: "completed", value: savedFromTransport(result as unknown as SettlementTransport) };
+      case "void_settlement":
       case "void_shared_expense":
         return { state: "completed", value: { id: String(result.id), version: Number(result.version) } };
       case "reclassify_to_shared":
