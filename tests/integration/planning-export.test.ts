@@ -18,6 +18,10 @@ it("T016: JSON/CSV globales, autorización bidireccional y sin duplicados",async
   expect(sara.goals).toHaveLength(2);expect(sara.goal_entries.length).toBeGreaterThanOrEqual(4);
   expect(sara.usage_requests).toHaveLength(1);expect(sara.budgets).toHaveLength(1);
   expect(sara.transactions.filter((r:{description:string})=>r.description==="Compartido único")).toHaveLength(1);
+  for(const collection of ["transactions","settlements","goals","goal_entries","usage_requests","budgets"]){for(const record of sara[collection]){expect(["me","us"]).toContain(record.context);for(const field of ["id","version","created_by","owner_user_id","group_id","budget_id","goal_id","transaction_id"])expect(record).not.toHaveProperty(field);}}
+  const exportedShared=sara.transactions.find((r:{description:string})=>r.description==="Compartido único");
+  expect(exportedShared.context).toBe("us");expect(exportedShared.parts).toHaveLength(2);
+  expect(exportedShared.parts.reduce((sum:bigint,p:{amount_minor:string})=>sum+BigInt(p.amount_minor),0n)).toBe(BigInt(exportedShared.amount_minor));
   const text=JSON.stringify(sara);expect(text).toContain("Solo Sara");expect(text).not.toContain("Solo Tomás");expect(text).not.toContain("6789000");
   expect(text).not.toContain("idempotency");expect(text).not.toContain("token_hash");
   expect(sara.budgets[0]).toHaveProperty("context","me");

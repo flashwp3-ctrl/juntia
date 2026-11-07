@@ -18,6 +18,11 @@ it("003 T025: dos workers siembran parejas aisladas y storageState por rol, con 
   for(const [pair,index] of [[first,20],[second,21]] as const) for(const role of ["sara","tomas"] as const) paths.push(await writeStorageState(pair[role],index,role));
   expect((await first.sara.client.from("couple_month_summary").select("total_minor").eq("month","2026-10-01").single()).data?.total_minor).toBe("284000000");
   expect((await first.tomas.client.from("couple_expenses").select("id")).data).toHaveLength(6);
+  const goals=(await first.sara.client.from("goals_overview").select("*")).data;
+  expect(goals).toHaveLength(2);expect(goals?.find(g=>g.name==="Japón")).toMatchObject({balance_minor:"1134000000",progress_percent:63,goal_scope:"shared"});
+  expect((await first.tomas.client.from("goals_overview").select("*")).data).toHaveLength(1);
+  expect((await first.sara.client.from("budget_months").select("*").eq("context","us").eq("month","2026-10-01")).data?.filter(r=>r.limit_minor!==null)).toHaveLength(3);
+  for(const role of ["sara","tomas"] as const){expect((await second[role].client.from("goals_overview").select("id")).data).toEqual([]);expect((await second[role].client.from("budget_months").select("*")).data).toEqual([]);}
   expect((await second.sara.client.from("couple_expenses").select("id")).data).toEqual([]);
   expect((await second.tomas.client.from("couple_expenses").select("id")).data).toEqual([]);
 });

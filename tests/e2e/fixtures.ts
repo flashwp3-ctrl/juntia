@@ -5,7 +5,7 @@ import { test as base, type BrowserContext } from "@playwright/test";
 import { seedGoldenMovements, seedUser, seedCouple, writeStorageState, type SeededUser } from "../support/seed";
 
 type PairedUsers={groupId:string;sara:SeededUser&{statePath:string};tomas:SeededUser&{statePath:string}};
-type WorkerFixtures = { sara: SeededUser & { statePath: string }; goldenSara: SeededUser & { statePath: string; movements: number }; couple:PairedUsers };
+type WorkerFixtures = { sara: SeededUser & { statePath: string }; goldenSara: SeededUser & { statePath: string; movements: number }; couple:PairedUsers;goldenCouple:PairedUsers };
 
 export const test = base.extend<object, WorkerFixtures>({
   couple: [async ({},use,workerInfo)=>{
@@ -13,6 +13,12 @@ export const test = base.extend<object, WorkerFixtures>({
     await use({groupId:pair.groupId,
       sara:{...pair.sara,statePath:await writeStorageState(pair.sara,workerInfo.parallelIndex,"couple-sara")},
       tomas:{...pair.tomas,statePath:await writeStorageState(pair.tomas,workerInfo.parallelIndex,"couple-tomas")}});
+  },{scope:"worker"}],
+  goldenCouple: [async ({},use,workerInfo)=>{
+    const pair=await seedCouple({index:workerInfo.parallelIndex,golden:true});
+    await use({groupId:pair.groupId,
+      sara:{...pair.sara,statePath:await writeStorageState(pair.sara,workerInfo.parallelIndex,"golden-couple-sara")},
+      tomas:{...pair.tomas,statePath:await writeStorageState(pair.tomas,workerInfo.parallelIndex,"golden-couple-tomas")}});
   },{scope:"worker"}],
   sara: [async ({}, use, workerInfo) => {
     const user = await seedUser({ role: "sara", index: workerInfo.parallelIndex, displayName: "Sara" });
