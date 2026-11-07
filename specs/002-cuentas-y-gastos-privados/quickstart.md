@@ -61,7 +61,7 @@ medidas en dev no representan a producción.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` y Vercel | URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `.env.local` y Vercel | Clave publicable (`sb_publishable_…`) |
-| `SITE_URL` | `.env.local` y Vercel | Base de los enlaces de correo (`http://localhost:3000` en local) |
+| `SITE_URL` | `.env.local` y Vercel | Base de los enlaces de correo (`http://localhost:3400` en local; el puerto, en `docs/TESTING.md` §2) |
 | `JUNTIA_INTERNAL_SURFACE` | Solo local o CI | De la 001 |
 
 **Ninguna clave de servicio ni secreta** en `.env.local`, en Vercel ni en ninguna
@@ -138,7 +138,7 @@ npx --yes supabase@2.121.0 db push --linked
    lleva a Entrar, y la recuperación pide un enlace nuevo. El SMTP propio sigue
    previsto antes de MVP-1 (decisión 16.10).
 2. **URL del sitio y de redirección:** producción → su dominio; `juntia-dev` →
-   `http://localhost:3000` y los previews de Vercel. Las Redirect URLs tienen que
+   `http://localhost:3400` (3000 hasta el 7 de noviembre de 2026) y los previews de Vercel. Las Redirect URLs tienen que
    cubrir `<origen>/auth/confirm?next=…` (con `/**` basta).
 3. **Hook Before User Created** → Postgres → `juntia_private.before_user_created_hook`.
 4. **API › Exposed schemas:** solo `public`.

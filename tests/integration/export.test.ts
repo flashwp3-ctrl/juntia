@@ -15,6 +15,7 @@ import { exportTransactions } from "../../src/lib/db/export";
 import { copy } from "../../src/lib/copy/es";
 import { runnerEnv } from "./support/env";
 import { createTestUser } from "./support/users";
+import { appOrigin } from "../../scripts/app-port.mjs";
 
 vi.mock("server-only", () => ({}));
 const current = vi.hoisted(() => ({ client: null as unknown }));
@@ -51,7 +52,7 @@ beforeAll(async () => {
 
 const call = async (client: unknown, format: string) => {
   current.client = client;
-  return GET(new Request(`http://localhost:3000/api/export?format=${encodeURIComponent(format)}`));
+  return GET(new Request(`${appOrigin()}/api/export?format=${encodeURIComponent(format)}`));
 };
 const forbidden = (text: string) => {
   for (const id of [...saraIds, voidedId, sara.id, tomas.id]) expect(text).not.toContain(id);

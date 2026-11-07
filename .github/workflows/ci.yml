@@ -219,7 +219,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      SITE_URL: http://localhost:3000
+      SITE_URL: http://localhost:3400
     steps:
       - name: Start job clock
         run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
@@ -320,7 +320,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      SITE_URL: http://localhost:3000
+      SITE_URL: http://localhost:3400
     steps:
       - name: Start job clock
         run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"

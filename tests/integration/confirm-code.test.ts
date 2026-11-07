@@ -16,10 +16,11 @@ import { sendsMailOnDev } from "../support/dev-target";
 import { cookieJarClient, seedUser } from "../support/seed";
 import { runnerEnv } from "./support/env";
 import { runnerSql } from "./support/sql";
+import { appOrigin } from "../../scripts/app-port.mjs";
 
 // Envía o lee un correo: solo en CI. `test:integration:dev` lo salta y lo declara (decisión 18, ADR-011 §9.9).
 const mailIt = it.skipIf(sendsMailOnDev);
-const SITE = "http://localhost:3000";
+const SITE = appOrigin();
 const emails: string[] = [];
 afterAll(() => { for (const email of emails) runnerSql(`delete from juntia_data.signup_allowlist where email='${email}'`); });
 

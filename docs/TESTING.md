@@ -165,9 +165,24 @@ nombres que la app no usa (`JUNTIA_DEV_*`, nunca `NEXT_PUBLIC_`). El lint prohí
 esos nombres, `SECRET_KEY`, `sb_secret_` y `.env.test` en `src/`, y que `src/` importe
 nada de `scripts/` (por ruta, alias, `export … from`, `import()` o `require()`). El build de
 `e2e:dev` y el servidor de la app arrancan sin la clave secreta ni la conexión, y
-Playwright nunca reutiliza un servidor abierto: si el puerto 3000 está ocupado,
+Playwright nunca reutiliza un servidor abierto: si el puerto de la app está ocupado,
 `e2e:dev` se niega. La salida de cada paso pasa por un filtro que oculta la
 clave y la contraseña de la base.
+
+**Puerto de la app: 3400** (7 de noviembre de 2026). El 3000 y el 3100 son de otro
+proyecto del mismo equipo. Una sola fuente, `scripts/app-port.mjs`: la variable `PORT`
+del shell (no la de `.env.local`), 3400 por defecto; un segundo servidor usa `PORT=3500`.
+La leen `npm run dev` y `npm run start` (por `scripts/next.mjs`), `playwright.config.ts`
+(`baseURL` y `webServer`) y `e2e:dev` (`SITE_URL`). El `SITE_URL` del CI y el `site_url`
+de `supabase/config.toml` no pueden leerla y fijan 3400; `tests/app-port.test.ts` falla si
+se separan. Playwright **nunca** reutiliza un servidor (`reuseExistingServer: false`): uno
+abierto podría ser de otro proyecto o de otra rama de Juntia. Antes de arrancar,
+`next.mjs`, la configuración de Playwright y `e2e:dev` comprueban que el puerto esté
+libre; si no lo está, se niegan con el PID y el nombre del proceso que lo tiene y no
+cierran nada: ciérralo tú si es tuyo o espera. En `juntia-dev`, Authentication › URL
+Configuration necesita `http://localhost:3400` como Site URL y `http://localhost:3400/**`
+en las Redirect URLs solo para los enlaces de correo de una prueba manual con
+`npm run dev`; `e2e:dev` no lo necesita, porque salta las pruebas `@mail`.
 
 **Un agente a la vez.** Cada comando crea el directorio `juntia-dev.lock` en la
 carpeta común de git (`.git/` del clon principal). `mkdir` es atómico: de dos agentes
