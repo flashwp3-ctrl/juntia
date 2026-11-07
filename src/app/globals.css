@@ -103,6 +103,15 @@ body {
    ganaba a las utilidades de Tailwind, que viven en @layer utilities, y el focus-visible:outline-none del <input> de
    Input nunca se aplicaba. Se veían dos marcos: el anillo del diseño en el marco del campo y este en el <input>. */
 @layer base {
+  /* UX lote 1, cambio 5: Tailwind v4 deja los botones en `cursor: default`. La mano se declara una sola vez para todo lo que
+     se pulsa; con where la regla queda sin especificidad, así que una utilidad (cursor-grab, cursor-progress) o la regla de
+     deshabilitados, que va después, la sustituyen sin pelear. */
+  :where(button, [role="button"], a[href], summary, label[for], [role="tab"], [role="option"], [role="radio"], [role="switch"], [role="menuitem"], input:is([type="checkbox"], [type="radio"]), select) {
+    cursor: pointer;
+  }
+  :where(:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
   :focus-visible { outline: var(--border-focus) solid var(--color-focus-ring); outline-offset: var(--focus-offset); }
   /* Autocompletado del navegador: sin el fondo propio de Chrome dentro del marco del campo, con el texto en tinta. */
   input:-webkit-autofill,

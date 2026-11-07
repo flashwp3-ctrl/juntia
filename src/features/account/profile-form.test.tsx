@@ -16,6 +16,19 @@ function setup(save = vi.fn().mockResolvedValue({ ok: true, displayName: "Sara G
 }
 
 describe("ProfileForm (T040)", () => {
+  // UX lote 1, cambio 6: el campo pregunta cómo quiere que lo llamen, sin recortar el nombre (nombres compuestos).
+  it("UX 6: etiqueta, placeholder y ayuda del nombre; un nombre compuesto se envía tal cual", async () => {
+    const { user, save, name, submit } = setup();
+    expect(screen.getByRole("textbox", { name: "¿Cómo quieres que te llamemos?" })).toBe(name);
+    expect(name.getAttribute("placeholder")).toBe("Ej.: Alejandro");
+    expect(screen.getByText("Así te saludamos y así te verá tu pareja.")).toBeTruthy();
+    expect(name.getAttribute("aria-describedby")).toBeTruthy();
+    await user.clear(name);
+    await user.type(name, "María José");
+    await submit();
+    expect(save).toHaveBeenCalledWith("María José");
+  });
+
   it("P1: nombre editable y correo de solo lectura", () => {
     const { name } = setup();
     expect((name as HTMLInputElement).value).toBe("Sara");

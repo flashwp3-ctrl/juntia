@@ -12,7 +12,7 @@ export const categories = {
   shopping: { icon: "shopping-bag", tone: "bg-category-shopping-bg text-category-shopping-fg" },
   services: { icon: "wifi-high", tone: "bg-category-services-bg text-category-services-fg" },
   income: { icon: "arrow-down-left", tone: "bg-category-income-bg text-category-income-fg" },
-  other: { icon: "dots-three-outline", tone: "bg-category-other-bg text-category-other-fg" },
+  other: { icon: "tag", tone: "bg-category-other-bg text-category-other-fg" },
 } as const satisfies Record<string, { icon: AppIconName; tone: string }>;
 
 export type Category = keyof typeof categories;

@@ -6,7 +6,7 @@
 // Por debajo de 1280, lista por día con ExpenseRow; desde 1280, la tabla de 04·7 (RESPONSIVE_SPECIFICATIONS.md:
 // «Actividad en modo maestro-detalle desde 1280»).
 import Link from "next/link";
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ExpenseRow, rowTitle, signedAmount } from "@/components/ui/expense-row";
@@ -14,11 +14,12 @@ import { Segmented } from "@/components/ui/segmented";
 import { ExitState } from "@/components/shell/provisional-state";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/domain/money";
-import { filterTransactions, groupByDay, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
+import { filterTransactions, groupByDay, monthKey, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
-import { useHighlightId } from "@/features/expenses/annotate-provider";
+import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
+import type { PendingRow } from "@/features/expenses/types";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
 
 export type MonthNavigation = { previous: string | null; next: string | null };
@@ -114,13 +115,19 @@ function Summary({ rows, month, filters, onCategory }: { rows: readonly Transact
   );
 }
 
-function DayList({ rows, month, today, selectedId }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string }) {
+/** Estado de cada creación en vuelo por id (UX lote 1, cambio 3): sus filas no son enlaces y dicen «Guardando…» o «Sin confirmar». */
+type PendingStates = ReadonlyMap<string, PendingRow["state"]>;
+/** Solo las que viajan se pintan «Guardando…»; las confirmadas son filas normales que aún no están en la lista del servidor. */
+const savingOf = (pending: PendingStates, id: string) => (pending.get(id) === "saving" ? ("saving" as const) : undefined);
+
+function DayList({ rows, month, today, selectedId, pending }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates }) {
   const highlightId = useHighlightId();
   return (
     <div className="flex flex-col gap-4 xl:hidden">
       {groupByDay(rows).map(({ date, transactions }) => {
         const label = dayLabel(date, today);
-        const spent = transactions.reduce((total, row) => (row.type === "expense" ? total + row.amount.amountMinor : total), 0n);
+        // F51-2: el subtotal del día solo suma lo confirmado; las filas en vuelo o sin confirmar se listan, pero no cuentan.
+        const spent = transactions.reduce((total, row) => (row.type === "expense" && !pending.has(row.id) ? total + row.amount.amountMinor : total), 0n);
         return (
           <section key={date} aria-labelledby={`day-${date}`} className="flex flex-col">
             <div className="flex items-baseline justify-between gap-3 border-b-[length:var(--border-hairline)] border-border pb-1.5">
@@ -130,7 +137,7 @@ function DayList({ rows, month, today, selectedId }: { rows: readonly Transactio
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {transactions.map((transaction) => (
                 <li key={transaction.id}>
-                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} />
+                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} temporary={pending.get(transaction.id) === "confirmed"} />
                 </li>
               ))}
             </ul>
@@ -141,7 +148,7 @@ function DayList({ rows, month, today, selectedId }: { rows: readonly Transactio
   );
 }
 
-function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string }) {
+function Table({ rows, month, today, selectedId, pending }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates }) {
   const sorted = groupByDay(rows).flatMap(({ transactions }) => transactions);
   const highlightId = useHighlightId();
   const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
@@ -162,10 +169,18 @@ function Table({ rows, month, today, selectedId }: { rows: readonly Transaction[
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
             <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
               <td className={`${cell} rounded-l-[14px]`}>
-                <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
-                  <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
-                  <span className="truncate">{rowTitle(transaction)}</span>
-                </Link>
+                {savingOf(pending, transaction.id) ? (
+                  <span data-pending="saving" aria-busy="true" data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                    <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
+                    <span className="truncate">{rowTitle(transaction)}</span>
+                    <span className="shrink-0 text-[12px] font-medium text-ink-secondary">{copy.row.pending.saving}</span>
+                  </span>
+                ) : (
+                  <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-temp={pending.get(transaction.id) === "confirmed" ? "" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                    <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
+                    <span className="truncate">{rowTitle(transaction)}</span>
+                  </Link>
+                )}
               </td>
               <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}</td>
               <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
@@ -181,7 +196,17 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
   const filters = useActivityFilters(month);
   const visible = filterTransactions(rows, { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined });
   const filtering = filters.query.trim() !== "" || filters.type !== "all" || filters.categoryId !== null;
-  if (rows.length === 0) {
+  // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
+  // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
+  const known = new Set(rows.map(({ id }) => id));
+  const listedIds = useMemo(() => rows.map(({ id }) => id), [rows]);
+  useListScope(month, listedIds);
+  const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
+  // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
+  const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);
+  const pendingStates: PendingStates = new Map(inFlight.map((row) => [shown(row).id, row.state]));
+  const listed = [...filterTransactions(inFlight.map(shown), { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined }), ...visible];
+  if (rows.length === 0 && inFlight.length === 0) {
     return (
       <div className="flex flex-col gap-4 pt-5 lg:pt-8">
         <MonthNav month={month} navigation={navigation} />
@@ -205,8 +230,8 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
         </div>
       </div>
       <Summary rows={rows} month={month} filters={filters} onCategory={(category) => filters.setCategory(category, month)} />
-      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(visible.length) : ""}</p>
-      {visible.length === 0 ? (
+      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(listed.length) : ""}</p>
+      {listed.length === 0 ? (
         <ExitState
           icon="magnifying-glass"
           title={copy.activity.noResults.title}
@@ -215,8 +240,8 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
         />
       ) : (
         <>
-          <DayList rows={visible} month={month} today={today} selectedId={selectedId} />
-          <Table rows={visible} month={month} today={today} selectedId={selectedId} />
+          <DayList rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} />
+          <Table rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} />
         </>
       )}
     </div>

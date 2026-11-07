@@ -12,24 +12,23 @@
 // apertura (FR-036). Decisión del fundador (5 nov 2026, revisión del PR D): tras un fallo ambiguo (red, guardado fallido
 // o inesperado) el primer intento pudo llegar al servidor, así que los campos quedan bloqueados para esa apertura: solo
 // se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
-import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useId, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { categories } from "@/components/ui/category-icon";
-import { Input } from "@/components/ui/input";
 import { DialogTitle, Modal } from "@/components/ui/modal";
 import { Segmented } from "@/components/ui/segmented";
 import { Toast } from "@/components/ui/toast";
 import { formatMoney, moneyFromPesos } from "@/domain/money";
-import { CATEGORY_CATALOG, fillRecentCategories, validateDraft, type CategoryId, type TransactionType } from "@/domain/transactions";
+import { CATEGORY_CATALOG, validateDraft, type CategoryId, type TransactionType } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel } from "@/lib/format";
 import { ConfirmDialog } from "./confirm-dialog";
 import type { SheetMode } from "./annotate-provider";
 import { normalizeDescription, toPayloadPesos } from "./payload";
-import type { ExpenseActionError, ExpenseActions, SavedTransaction } from "./types";
+import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
 
 const WIDE = "(min-width: 768px)";
 function subscribeWide(onChange: () => void) {
@@ -43,8 +42,6 @@ const readWide = () => typeof window.matchMedia === "function" && window.matchMe
 const MAX_PESOS = 999_999_999;
 const pesosOf = (amountMinor: string) => Number(BigInt(amountMinor) / 100n);
 const expenseCategories = CATEGORY_CATALOG.filter(({ kind }) => kind === "expense").map(({ id }) => id);
-// Área táctil de 44 sin cambiar la geometría visible (F17-2): el ::after cubre la caja completa.
-const hit = "relative after:absolute after:-inset-[2px] after:content-['']";
 
 type Draft = { type: TransactionType; amount: number | null; categoryId: CategoryId | null; date: string; description: string };
 type Status = { kind: "idle" } | { kind: "saving" } | { kind: "error"; error: ExpenseActionError };
@@ -53,11 +50,12 @@ type AnnotateSheetProps = {
   open: boolean;
   mode: SheetMode;
   idempotencyKey: string;
-  recent: readonly CategoryId[];
   today: string;
   actions: Pick<ExpenseActions, "create" | "update">;
   onClose: () => void;
   onSaved: (saved: SavedTransaction, kind: SheetMode["kind"]) => void;
+  /** UX lote 1, cambio 3: la creación viaja por el proveedor, que oculta la hoja y enseña la fila al instante. */
+  onTrack: (row: PendingRow, run: () => Promise<ActionResult<SavedTransaction>>) => Promise<ActionResult<SavedTransaction>>;
   returnFocusTo: { current: HTMLElement | null };
 };
 
@@ -75,46 +73,102 @@ function initialDraft(mode: SheetMode, today: string): Draft {
   return { type: "expense", amount: null, categoryId: null, date: today, description: "" };
 }
 
-function CategoryChip({ id, selected, onSelect, onEnter }: { id: CategoryId; selected: boolean; onSelect: (id: CategoryId) => void; onEnter: (id: CategoryId) => void }) {
-  const [bg, fg] = categories[id].tone.split(" ");
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={() => onSelect(id)}
+// Comp 06 «Categoría en Anotar gasto», opción 1c «Rejilla fija de 3 × 3» (aprobada el 6 nov 2026): las 9 categorías siempre a
+// la vista, en la misma casilla en todos los anchos, 3 × 64 + 2 × 8 = 208 px. Cada celda: icono encima, nombre debajo, con el
+// color de su categoría; la elegida, anillo de 2 px en tinta. Es un grupo de radio: Tab entra en la elegida (o en la primera) y
+// las flechas la cambian y mueven el foco (← → de a una, con vuelta; ↑ ↓ de a fila; Inicio y Fin a los extremos).
+const COLUMNS = 3;
+function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly CategoryId[]; value: CategoryId | null; onSelect: (id: CategoryId) => void; onEnter: (id: CategoryId) => void }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const stop = Math.max(0, ids.findIndex((id) => id === value));
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = ids.length - 1;
+    let next: number;
+    switch (event.key) {
+      case "ArrowRight": next = index === last ? 0 : index + 1; break;
+      case "ArrowLeft": next = index === 0 ? last : index - 1; break;
+      case "ArrowDown": next = index + COLUMNS <= last ? index + COLUMNS : index; break;
+      case "ArrowUp": next = index - COLUMNS >= 0 ? index - COLUMNS : index; break;
+      case "Home": next = 0; break;
+      case "End": next = last; break;
       // FR-035: Enter guarda también con el foco en una categoría (la elige y guarda); Espacio solo la elige.
-      onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => { if (event.key === "Enter") { event.preventDefault(); onEnter(id); } }}
-      // 02·5: ficha de 40 con radio 14, el fondo de su categoría y el pictograma en una placa clara; elegida, anillo de
-      // 2 px en tinta. Deshabilitada (E4) baja su opacidad.
-      className={`${hit} flex h-10 shrink-0 items-center gap-[7px] rounded-[14px] pr-3 pl-[5px] text-[13px] font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
-    >
-      <span aria-hidden="true" className="grid size-[30px] place-items-center rounded-[10px] bg-[color-mix(in_srgb,var(--color-surface-overlay)_55%,transparent)]">
-        <AppIcon name={categories[id].icon} weight="duotone" size={17} className={fg} />
-      </span>
-      {copy.categories[id]}
-    </button>
+      case "Enter": event.preventDefault(); onEnter(ids[index]); return;
+      default: return;
+    }
+    event.preventDefault();
+    onSelect(ids[next]);
+    refs.current[next]?.focus();
+  };
+  return (
+    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-3 gap-2">
+      {ids.map((id, index) => {
+        const [bg, fg] = categories[id].tone.split(" ");
+        const selected = value === id;
+        return (
+          <button
+            key={id}
+            ref={(node) => { refs.current[index] = node; }}
+            type="button"
+            lang="es"
+            role="radio"
+            aria-checked={selected}
+            tabIndex={index === stop ? 0 : -1}
+            onClick={() => onSelect(id)}
+            onKeyDown={(event) => onKeyDown(event, index)}
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[12px] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
+          >
+            <AppIcon name={categories[id].icon} weight="duotone" size={22} className={fg} />
+            <span>{copy.categories[id]}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-function SummaryChip({ icon, children, onClick }: { icon: "calendar-blank" | "lock-simple"; children: ReactNode; onClick?: () => void }) {
-  const look = "flex h-[34px] items-center gap-1.5 rounded-[11px] bg-sunken px-[11px] text-[13px] font-semibold text-ink";
-  const content = <><AppIcon name={icon} size={15} className="text-ink-secondary" />{children}</>;
-  return onClick ? <button type="button" onClick={onClick} className={`${hit} ${look} disabled:cursor-not-allowed`}>{content}</button> : <span className={look}>{content}</span>;
+const chip = "flex h-11 items-center gap-2 rounded-[14px] bg-sunken px-3 text-[14px] font-medium text-ink shadow-[var(--comp-field-inset)]";
+
+/** El chip de fecha es un selector nativo: un `input type="date"` transparente cubre el chip, así que el toque (o Enter) abre el selector del sistema. */
+function DateChip({ value, today, invalid, errorId, onChange }: { value: string; today: string; invalid: boolean; errorId: string; onChange: (value: string) => void }) {
+  // showPicker() abre el calendario del sistema (con un gesto del usuario). Devuelve si lo abrió: donde no existe o lanza, el campo
+  // nativo sigue ahí y su acción por defecto no se toca.
+  const openPicker = (input: HTMLInputElement) => {
+    if (typeof input.showPicker !== "function") return false;
+    try { input.showPicker(); return true; } catch { return false; }
+  };
+  return (
+    <label className={`${chip} relative cursor-pointer focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid has-[:disabled]:cursor-not-allowed`}>
+      <AppIcon name="calendar-blank" size={17} className="text-ink-secondary" />
+      {invalid ? copy.annotate.date : dayLabel(value, today)}
+      <input
+        type="date"
+        aria-label={copy.annotate.date}
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
+        required
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onClick={(event) => openPicker(event.currentTarget)}
+        // Con teclado, Enter o Espacio abren el selector; solo si de verdad se abrió se cancela la acción nativa (F51-10).
+        onKeyDown={(event) => { if ((event.key === "Enter" || event.key === " ") && openPicker(event.currentTarget)) event.preventDefault(); }}
+        className="absolute inset-0 size-full cursor-pointer opacity-0 focus-visible:outline-none"
+      />
+    </label>
+  );
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, recent, today, actions, onClose, onSaved, returnFocusTo }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit";
   const [initial] = useState(() => initialDraft(mode, today));
   const [draft, setDraft] = useState<Draft>(initial);
-  const [details, setDetails] = useState(editing);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirming, setConfirming] = useState(false);
   // Bloqueo tras un fallo ambiguo: dura lo que dura esta apertura de la hoja.
   const [locked, setLocked] = useState(false);
   const saving = useRef(false);
   const amountId = `${useId()}-amount`;
-  const dateId = `${useId()}-date`;
+  const dateErrorId = `${useId()}-date-error`;
 
   const { type, amount, categoryId, date, description } = draft;
   const isSaving = status.kind === "saving";
@@ -144,9 +198,20 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
     const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
     let result;
     try {
-      result = mode.kind === "edit"
-        ? await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version })
-        : await actions.create({ ...common, type: value.type });
+      if (mode.kind === "edit") result = await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
+      else {
+        // Se guarda por el proveedor: oculta la hoja y la fila aparece ya; si falla, la hoja vuelve con esto mismo.
+        const now = new Date().toISOString();
+        const row: PendingRow = {
+          key: idempotencyKey,
+          state: "saving",
+          transaction: {
+            id: `pending:${idempotencyKey}`, type: value.type, amount: moneyFromPesos(BigInt(value.amount)), categoryId: value.categoryId,
+            transactionDate: value.date, description: common.description, status: "active", version: 1, createdAt: now, updatedAt: now,
+          },
+        };
+        result = await onTrack(row, () => actions.create({ ...common, type: value.type }));
+      }
     } catch {
       // La Server Action no llegó al servidor o su respuesta no volvió: se ofrece reintentar con la misma clave.
       result = { ok: false as const, error: "network" as const };
@@ -156,10 +221,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
       setStatus({ kind: "idle" });
       onSaved(result.value, mode.kind);
     } else {
-      if (result.error === "network" || result.error === "saveFailed" || result.error === "unexpected") setLocked(true);
+      if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved]);
+  }, [actions, draft, editing, idempotencyKey, isDirty, mode, onSaved, onTrack]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
@@ -183,12 +248,8 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
   };
 
   const title = editing ? copy.annotate.editTitle[type] : copy.annotate.title[type];
-  const choices = type === "income"
-    ? (["income"] as CategoryId[])
-    : details ? expenseCategories : (() => {
-      const list = fillRecentCategories(recent);
-      return categoryId && !list.includes(categoryId) ? [categoryId, ...list.slice(0, 4)] : list;
-    })();
+  // Gasto: las 9 en orden fijo. Ingreso: solo «Ingresos», que es su única categoría.
+  const choices: readonly CategoryId[] = type === "income" ? ["income"] : expenseCategories;
   const saveLabel = editing ? copy.annotate.saveChanges
     : amount && amount > 0 ? copy.annotate.saveWithAmount(copy.annotate.save[type], formatMoney(moneyFromPesos(BigInt(amount)))) : copy.annotate.save[type];
 
@@ -217,8 +278,11 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
 
   const body = (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3.5">
-      {/* 02·5: × a la izquierda, título serif al centro; la columna derecha equilibra el encabezado. */}
+      {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
+          izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
       <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+        <span />
+        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
         <button
           type="button"
           onClick={() => requestClose(false)}
@@ -227,8 +291,6 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
         >
           <AppIcon name="x" weight="bold" size={16} />
         </button>
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
-        <span />
       </div>
       <fieldset disabled={isSaving || locked} data-locked={locked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
         {editing ? null : (
@@ -255,58 +317,48 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
           fieldClassName="!bg-transparent !shadow-none justify-center"
           inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
         />
-        <div role="group" aria-label={details || type === "income" ? copy.annotate.category : copy.annotate.recent} className={details ? "flex flex-wrap gap-2" : `-mx-5 flex gap-2 px-5 py-0.5 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 ${isSaving || locked ? "overflow-hidden" : "overflow-x-auto"}`}>
-          {/* Bloqueada (E4 o tras un fallo ambiguo), la fila deja de desplazarse: sin fichas enfocables, una región con
-              scroll quedaría fuera del teclado (axe, scrollable-region-focusable). */}
-          {choices.map((id) => <CategoryChip key={id} id={id} selected={categoryId === id} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />)}
+        <div className="flex flex-col gap-2">
+          <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.annotate.category}</span>
+          <CategoryGrid ids={choices} value={categoryId} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />
         </div>
-        {details ? (
-          <div className="flex flex-col gap-3.5">
-            <Input
-              label={copy.annotate.description}
-              placeholder={copy.annotate.descriptionPlaceholder}
+        {/* Siempre a la vista: la descripción de una línea (opcional). */}
+        <div className="flex flex-col gap-1.5">
+          <label className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-sunken px-3.5 text-[15px] font-medium text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">
+            <AppIcon name="note-pencil" size={18} className="shrink-0 text-ink-secondary" />
+            <span className="sr-only">{copy.annotate.description}</span>
+            <input
+              type="text"
               value={description}
+              placeholder={copy.annotate.descriptionPlaceholder}
               maxLength={200}
               autoComplete="off"
               enterKeyHint="done"
+              aria-invalid={descriptionTooLong || undefined}
               onChange={(event) => update({ description: event.target.value })}
-              error={descriptionTooLong ? copy.annotate.errors.descriptionTooLong : undefined}
+              className="min-w-0 flex-1 bg-transparent placeholder:text-[var(--comp-field-muted-fg)] focus-visible:outline-none disabled:cursor-not-allowed"
             />
-            <div className="grid grid-cols-2 gap-2.5">
-              <Input
-                id={dateId}
-                type="date"
-                label={copy.annotate.date}
-                value={date}
-                required
-                onChange={(event) => update({ date: event.target.value })}
-                error={dateInvalid ? copy.annotate.errors.date : undefined}
-              />
-              {/* Q2: en P0-1 el contexto es siempre Yo. Se dice, no se elige. */}
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="text-[length:var(--label-s-size)] leading-[var(--label-s-line)] font-medium text-ink-secondary">{copy.annotate.context}</span>
-                <span className="flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] border-[1.5px] border-dashed border-border px-[14px] text-[length:var(--body-m-size)] font-medium text-ink">
-                  <AppIcon name="lock-simple" size={16} className="shrink-0 text-ink-secondary" />
-                  <span className="min-w-0 truncate">{copy.annotate.contextValue}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          // E1: el resumen editable (02·5) sin pagador ni reparto. La fecha abre los detalles.
-          <div className="flex flex-wrap items-center gap-1.5">
-            <SummaryChip icon="calendar-blank" onClick={() => { setDetails(true); requestAnimationFrame(() => document.getElementById(dateId)?.focus()); }}>{dayLabel(date, today)}</SummaryChip>
-            <SummaryChip icon="lock-simple">{copy.annotate.onlyYou}</SummaryChip>
-            <button type="button" aria-expanded={false} onClick={() => setDetails(true)} className="flex min-h-11 items-center px-1.5 text-[13px] font-semibold text-ink underline underline-offset-4">
-              {copy.annotate.details}
-            </button>
-          </div>
-        )}
+          </label>
+          {descriptionTooLong ? <p className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.descriptionTooLong}</p> : null}
+        </div>
+        {/* La fecha abre el selector; «Solo tú» (P0-1: el contexto es siempre Yo) solo informa, con su candado y sin flechas. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <DateChip value={date} today={today} invalid={dateInvalid} errorId={dateErrorId} onChange={(next) => update({ date: next })} />
+          <span className={chip}>
+            <AppIcon name="lock-simple" size={17} className="text-ink-secondary" />
+            {copy.annotate.onlyYou}
+          </span>
+        </div>
+        {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
       </fieldset>
-      {errorNotice}
-      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
-        {saveLabel}
-      </Button>
+      {/* «Guardar sube con el teclado» (comp 1c): en la hoja móvil el pie va fijo al fondo del área desplazable, con el fondo de
+          la hoja y el safe area: la hoja «bare» no pone relleno inferior, lo trae este pie. Desde 768 px (diálogo) el pie no es
+          fijo y el relleno es el del diálogo. El aviso de error sube con él. */}
+      <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
+        {errorNotice}
+        <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} className="w-full">
+          {saveLabel}
+        </Button>
+      </div>
       {/* F45-1 (revisión del PR #45): tras un fallo ambiguo el primer intento pudo guardarse, así que cerrar no puede
           decir «no se guardará». Se ofrece reintentar lo mismo con la misma clave (la opción segura, con el foco) o
           cerrar, y se pide revisar Actividad antes de volver a anotarlo. */}
@@ -333,5 +385,5 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, recent, toda
   );
 
   const props = { open, onOpenChange: requestClose, title, onOpenAutoFocus, onCloseAutoFocus, bare: true };
-  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props} draggable expanded={details}>{body}</BottomSheet>;
+  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props} draggable>{body}</BottomSheet>;
 }
