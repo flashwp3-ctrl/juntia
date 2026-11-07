@@ -326,7 +326,7 @@ disponibles (Q13). **Decisión del plan**, ya aprobada para la 003 (plan de la 0
   **420 s**, con axe en su nivel ligero en 144 s (decisión 21). Quedan **60 s** hasta
   el techo de 480 s, que ya bloquea.
 - **Qué corre cada PR** (`docs/TESTING.md` §4): los PR de metas corren las specs 1, 2,
-  3 y 4; los de presupuestos, 1, 2, 3 y 5. Solo el PR E y el nocturno corren las
+  3 y 4; los de presupuestos, 1, 2, 3 y 5. Solo el PR E (y la pasada manual de cierre de etapa) corren las
   cinco. Así cada PR suma una spec, no dos.
 - **Coste esperado.** La spec 4 necesita dos sesiones (Sara y Tomás) y la 5, una. Las
   dos reutilizan la pareja sembrada por worker (`seedCouple()`), con la parte P0-3 del

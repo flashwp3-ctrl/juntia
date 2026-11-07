@@ -181,9 +181,8 @@ src/
 │   ├── plan/          # Plan, BudgetIndicator, hoja de presupuesto, historial
 │   ├── analysis/      # Análisis S3, Chart, PlanningNote
 │   ├── goals/         # Metas, GoalStack, GoalCard, inmersiva S5, aporte, retiro, historial
-│   ├── expenses/      # «Cómo se pagó», FundingLedger, B3, quitar el uso, LimitNote
+│   ├── expenses/      # «Cómo se pagó» en Anotar y la LimitNote; goal-funding/: FundingLedger, B3, ConfirmationBadge, tarjeta de solicitud, quitar el uso
 │   ├── home/, activity/  # bloques de metas y asientos
-│   └── shared/        # ConfirmationBadge, tarjeta de solicitud
 └── app/(app)/
     ├── plan/page.tsx, plan/analisis/page.tsx
     └── metas/page.tsx, metas/[id]/page.tsx
@@ -260,7 +259,7 @@ entera y la mitad de servidor de US-2, US-5, US-6, US-7 y US-8.
 | Capa | Qué |
 | --- | --- |
 | Dominio | Las siete filas de DEC-G04 con `test.each`, «No disponible» distinto de 0, negativos sin `Math.max`; vistas que concilian sin sumarse (−120.000 + 120.000 = 0); saldo y disponible por aportante con propiedades (≥ 0); `budgetState` con comparación exacta y consumo 0 (estado «dentro», 0 %); `displayedPercent` truncado (92 %, 46 %, 65 %); `limitInForce`; `proposeFunding` (mayor residuo, suma exacta); `goalPace` (6.660.000 en 6 meses → 1.110.000); `monthComparison`; el dataset dorado de P0-3 y su prueba cronológica (F63-1) |
-| SQL/RLS (pgTAP) | Privilegios efectivos de tablas, funciones y triggers nuevos; cada tabla con su RLS para Sara, Tomás y una tercera cuenta; metas y presupuestos personales invisibles para el otro, también anulados y por agregados; solo inserción para cualquier rol; **el trigger de saldo con un `insert` directo como `juntia_writer`** de un retiro, una asignación y un `void` que anula un aporte, cada uno por encima del disponible, que fallan con `JT220`; cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella y cada validación (aporte a nombre de otro, aprobar la propia solicitud, uso sin aprobación, retiro ajeno, archivar con saldo); `transaction_goal_funded` con datos; una política rota a propósito que hace fallar la función |
+| SQL/RLS (pgTAP) | Privilegios efectivos de tablas, funciones y triggers nuevos; cada tabla con su RLS para Sara, Tomás y una tercera cuenta; metas y presupuestos personales invisibles para el otro, también anulados y por agregados; solo inserción para cualquier rol; **sobre una meta archivada, un aporte, un retiro y la anulación de un aporte como `juntia_writer` se rechazan (`JT202`), y solo el `void` de un uso se admite**; **el trigger de saldo con un `insert` directo como `juntia_writer`** de un retiro, una asignación y un `void` que anula un aporte, cada uno por encima del disponible, que fallan con `JT220`; cada función con éxito, rechazo por RLS, repetición idempotente, misma clave con otra huella y cada validación (aporte a nombre de otro, aprobar la propia solicitud, uso sin aprobación, retiro ajeno, archivar con saldo); `transaction_goal_funded` con datos; una política rota a propósito que hace fallar la función |
 | Integración | Las carreras de FR-112 con `raceUnderLock` en los dos órdenes (aprobar contra cancelar, retirar, quitar el uso y anular el gasto; dos usos; dos aprobaciones; editar contra desactivar presupuesto; dos creaciones de la misma clave; **dos anulaciones del mismo aporte o de dos aportes de la misma persona, y anular un aporte contra retirar**, con el disponible ≥ 0 en todos los casos) con la invariante «ningún uso vivo en un gasto no activo» y sin interbloqueos; idempotencia y `write_status` de cada escritura nueva; las cuatro funciones redefinidas contra gastos con y sin meta; lectura consistente de `metric_months` y `budget_months`; el paginador generalizado (F64-4) con más de 500 filas, fechas repetidas y escrituras entre páginas sobre `goal_entries`, `budget_history` y `usage_requests`, más las pruebas de la 002 y la 003 con la firma nueva; completitud y no duplicar de las metas en Yo (F64-3); importes de ida y vuelta (`9007199254740993`); exportación con lo nuevo, sin personales del otro ni duplicados |
 | E2E | Ninguna nueva; corren las specs 1, 2 y 3 |
 
@@ -281,7 +280,9 @@ baja el tiempo. El número de workers que use el job `e2e` sale de esa medición
 **Integración obligatoria de F64-1:** aportar, gastar todo con la meta, archivarla y
 anular el gasto: la anulación se aplica, los fondos vuelven, la meta queda `active` con
 su auditoría y el resultado trae `reactivated_goals`. Lo mismo con «Quitar el uso» y con
-un gasto privado y su meta personal. Archivar con saldo sigue fallando con `JT214`.
+un gasto privado y su meta personal. Repetir la anulación del gasto con la misma clave
+devuelve el mismo resultado y **no** genera una segunda auditoría de reactivación ni
+otro `void`. Archivar con saldo sigue fallando con `JT214`.
 
 **Criterios de salida:** job `db` verde en el último commit, con las salidas de los dos
 puntos de control; la medición de workers en la evidencia; dataset dorado de P0-3 en dominio e integración; cero accesos
