@@ -21,6 +21,8 @@ import type { ContextChoice } from "@/lib/context-preference";
 import { useOptionalContextChoice } from "@/components/shell/context-selector";
 import { newIdempotencyKey } from "./idempotency";
 import { lastFromSaved } from "./split-state";
+import { TIMED_OUT, withTimeout } from "@/features/shared/use-write";
+import type { WriteError, WriteOutcome } from "@/features/shared/write-result";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
@@ -278,70 +280,68 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     }
   }; }, [notify, undo, setHighlightId]);
 
-  // «Deshacer» de un gasto compartido recién anotado (FR-024): anula con `undo` y la versión de la creación; si el otro ya lo
-  // editó, el servidor responde con conflicto y no anula nada. La clave es una por aviso.
+  // F57-4 (revisión del PR #57). «Deshacer» de un gasto compartido (FR-024) y de Mover a Pareja (FR-034) con la máquina del
+  // PR B (contracts/server-actions.md §1–§2): cada intento espera como mucho 15 s y después es desconocido; con resultado
+  // desconocido nunca se dice que no se deshizo: el aviso ofrece «Comprobar estado» (`write_status`, que no reejecuta
+  // nada) y, si todavía no consta, «Reintentar» repite lo mismo con la misma clave. La clave es una por aviso. Si otro
+  // aviso ya ocupó su lugar, la respuesta no lo pisa.
   const sharedRef = useRef(sharedActions);
   useEffect(() => { sharedRef.current = sharedActions; });
-  const undoSharedRef = useRef<(saved: SavedShared, idempotencyKey: string) => Promise<void>>(async () => {});
-  const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => undoSharedRef.current(saved, idempotencyKey), []);
-  useEffect(() => { undoSharedRef.current = async (saved: SavedShared, idempotencyKey: string) => {
+  type UndoIntent = {
+    action: "void_shared_expense" | "undo_reclassify_to_shared"; id: string; idempotencyKey: string;
+    send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
+  };
+  const runUndoRef = useRef<(intent: UndoIntent, mode: "send" | "check") => Promise<void>>(async () => {});
+  const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check") => runUndoRef.current(intent, mode), []);
+  useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check") => {
     const writes = sharedRef.current;
-    if (!writes || undoing.current.has(saved.id)) return;
-    undoing.current.add(saved.id);
+    if (!writes || undoing.current.has(intent.id)) return;
+    undoing.current.add(intent.id);
     const generation = toastGeneration.current;
     setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
-    let result;
+    let outcome: { kind: "ok" } | { kind: "rejected"; error: WriteError } | { kind: "unknown" } | { kind: "notFound" };
     try {
-      result = await writes.voidShared({ idempotencyKey, transactionId: saved.id, expectedVersion: saved.version, reason: "undo" });
+      if (mode === "send") {
+        const result = await withTimeout(intent.send());
+        outcome = result === TIMED_OUT || result.status === "unknown" ? { kind: "unknown" } : result.status === "ok" ? { kind: "ok" } : { kind: "rejected", error: result.error };
+      } else {
+        const result = await withTimeout(writes.check({ action: intent.action, idempotencyKey: intent.idempotencyKey }));
+        outcome = result === TIMED_OUT || result.state === "error" ? { kind: "unknown" } : result.state === "completed" ? { kind: "ok" } : { kind: "notFound" };
+      }
     } catch {
-      result = { status: "unknown" as const };
+      outcome = { kind: "unknown" };
     }
-    undoing.current.delete(saved.id);
+    undoing.current.delete(intent.id);
     if (generation !== toastGeneration.current) return;
-    if (result.status === "ok") {
-      setHighlightId((current) => (current === saved.id ? null : current));
-      notify({ tone: "success", message: copy.annotate.undone.expense });
-    } else if (result.status === "rejected" && result.error === "versionConflict") {
-      notify({ tone: "error", message: copy.annotate.undoChanged });
-    } else if (result.status === "rejected" && (result.error === "alreadyDeleted" || result.error === "notFound")) {
-      setHighlightId((current) => (current === saved.id ? null : current));
-      notify({ tone: "error", message: copy.transaction.errors.alreadyDeleted });
-    } else if (result.status === "rejected" && result.error === "sessionExpired") {
-      notify({ tone: "error", message: copy.errors.sessionExpired });
+    if (outcome.kind === "ok") {
+      intent.onOk();
+      notify({ tone: "success", message: intent.done });
+    } else if (outcome.kind === "rejected") {
+      notify({ tone: "error", message: intent.rejected(outcome.error) });
+    } else if (outcome.kind === "notFound") {
+      notify({ tone: "error", message: copy.writes.notFound, action: { label: copy.writes.retry, onAction: () => void runUndo(intent, "send") } });
     } else {
-      notify({ tone: "error", message: copy.annotate.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undoShared(saved, idempotencyKey) } });
+      notify({ tone: "error", message: copy.writes.undoUnknown, action: { label: copy.writes.check, onAction: () => void runUndo(intent, "check") } });
     }
-  }; }, [notify, undoShared, setHighlightId]);
+  }; }, [notify, runUndo]);
 
-  // «Deshacer» de Mover a Pareja (FR-034): operación propia con la versión del compartido; el servidor la rechaza si hubo una
-  // edición, una anulación o una liquidación después (JT117), y se explica.
-  const undoMoveRef = useRef<(result: MoveResult, idempotencyKey: string) => Promise<void>>(async () => {});
-  const undoMove = useCallback((result: MoveResult, idempotencyKey: string) => undoMoveRef.current(result, idempotencyKey), []);
-  useEffect(() => { undoMoveRef.current = async (result: MoveResult, idempotencyKey: string) => {
-    const writes = sharedRef.current;
-    if (!writes?.undoReclassify || undoing.current.has(result.shared.id)) return;
-    undoing.current.add(result.shared.id);
-    const generation = toastGeneration.current;
-    setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
-    let outcome;
-    try {
-      outcome = await writes.undoReclassify({ idempotencyKey, sharedTransactionId: result.shared.id, expectedVersion: result.shared.version });
-    } catch {
-      outcome = { status: "unknown" as const };
-    }
-    undoing.current.delete(result.shared.id);
-    if (generation !== toastGeneration.current) return;
-    if (outcome.status === "ok") {
-      setHighlightId((current) => (current === result.shared.id ? null : current));
-      notify({ tone: "success", message: copy.move.undone });
-    } else if (outcome.status === "rejected" && (outcome.error === "undoNotAvailable" || outcome.error === "versionConflict")) {
-      notify({ tone: "error", message: copy.move.errors.undoNotAvailable });
-    } else if (outcome.status === "rejected" && outcome.error === "sessionExpired") {
-      notify({ tone: "error", message: copy.errors.sessionExpired });
-    } else {
-      notify({ tone: "error", message: copy.move.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undoMove(result, idempotencyKey) } });
-    }
-  }; }, [notify, undoMove, setHighlightId]);
+  const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => runUndo({
+    action: "void_shared_expense", id: saved.id, idempotencyKey, done: copy.annotate.undone.expense,
+    send: () => sharedRef.current!.voidShared({ idempotencyKey, transactionId: saved.id, expectedVersion: saved.version, reason: "undo" }),
+    onOk: () => setHighlightId((current) => (current === saved.id ? null : current)),
+    rejected: (error) => {
+      if (error === "alreadyDeleted" || error === "notFound") setHighlightId((current) => (current === saved.id ? null : current));
+      return error === "versionConflict" ? copy.annotate.undoChanged : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted
+        : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected;
+    },
+  }, "send"), [runUndo, setHighlightId]);
+
+  const undoMove = useCallback((result: MoveResult, idempotencyKey: string) => runUndo({
+    action: "undo_reclassify_to_shared", id: result.shared.id, idempotencyKey, done: copy.move.undone,
+    send: () => sharedRef.current!.undoReclassify!({ idempotencyKey, sharedTransactionId: result.shared.id, expectedVersion: result.shared.version }),
+    onOk: () => setHighlightId((current) => (current === result.shared.id ? null : current)),
+    rejected: (error) => (error === "undoNotAvailable" || error === "versionConflict" ? copy.move.errors.undoNotAvailable : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+  }, "send"), [runUndo, setHighlightId]);
 
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();

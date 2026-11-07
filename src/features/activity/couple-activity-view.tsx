@@ -14,7 +14,7 @@ import type { Settlement } from "@/domain/balances";
 import { formatMoney } from "@/domain/money";
 import { matchesSearch, type CategoryId } from "@/domain/transactions";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
-import type { CoupleMemberView } from "@/features/home/couple-home-view";
+import type { CoupleMemberView, CoupleMonthSummary } from "@/features/home/couple-home-view";
 import { memberName, rowMode } from "@/features/shared/shared-format";
 import { SettlementRow, SharedRow } from "@/features/shared/shared-row";
 import { useHighlightId } from "@/features/expenses/annotate-provider";
@@ -25,13 +25,14 @@ import { MonthNav, SearchField, type MonthNavigation } from "./activity-view";
 import { useActivityFilters } from "./activity-filters";
 
 export type CoupleSettlementView = Settlement & { id: string; settlementDate: string; createdAt: string; note: string | null; version: number };
-type Props = { expenses: readonly SharedTransaction[]; settlements: readonly CoupleSettlementView[]; month: string; today: string; navigation: MonthNavigation; members: readonly CoupleMemberView[]; selectedId?: string };
+/** F57-2 (revisión del PR #57): `summary` es `couple_month_summary` del mes; el total, el desglose y el conteo salen de ahí (FR-043), nunca de sumar la lista paginada, que solo se pinta, se filtra y se busca. */
+type Props = { expenses: readonly SharedTransaction[]; settlements: readonly CoupleSettlementView[]; month: string; today: string; navigation: MonthNavigation; members: readonly CoupleMemberView[]; summary: CoupleMonthSummary | null; selectedId?: string };
 type Item = { kind: "expense"; date: string; createdAt: string; row: SharedTransaction } | { kind: "settlement"; date: string; createdAt: string; row: CoupleSettlementView };
 
 const overline = "text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary";
 const detailHref = (id: string, month: string) => `/actividad/${id}?mes=${month}`;
 
-export function CoupleActivityView({ expenses, settlements, month, today, navigation, members, selectedId }: Props) {
+export function CoupleActivityView({ expenses, settlements, month, today, navigation, members, summary, selectedId }: Props) {
   const filters = useActivityFilters(month);
   const titleId = useId();
   const highlightId = useHighlightId();
@@ -41,10 +42,9 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
     ...visibleExpenses.map((row) => ({ kind: "expense" as const, date: row.transactionDate, createdAt: row.createdAt, row })),
     ...(filtering ? [] : settlements.map((row) => ({ kind: "settlement" as const, date: row.settlementDate, createdAt: row.createdAt, row }))),
   ].sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : a.createdAt > b.createdAt ? -1 : 1)), [visibleExpenses, settlements, filtering]);
-  const total = expenses.reduce((sum, row) => sum + row.amount.amountMinor, 0n);
-  const byCategory = new Map<CategoryId, bigint>();
-  for (const row of expenses) byCategory.set(row.categoryId, (byCategory.get(row.categoryId) ?? 0n) + row.amount.amountMinor);
-  const chips = [...byCategory].sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
+  const total = summary ? BigInt(summary.totalMinor) : 0n;
+  const chips = (Object.entries(summary?.byCategory ?? {}) as [CategoryId, string][]).map(([category, value]) => [category, BigInt(value)] as const)
+    .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
 
   if (expenses.length === 0 && settlements.length === 0) {
     return (
@@ -70,7 +70,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
             <span id={titleId} className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.spentTogether(monthName(month))}</span>
             <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">{formatMoney({ amountMinor: total, currency: "COP" })}</span>
           </p>
-          <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(expenses.length)}</span>
+          <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(summary?.count ?? 0)}</span>
         </div>
         {chips.length > 0 ? (
           <div role="group" aria-label={copy.activity.categoryFilter} className="flex flex-wrap gap-1.5">

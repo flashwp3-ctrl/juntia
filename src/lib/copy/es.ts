@@ -100,6 +100,8 @@ export const copy = {
     unknown: "No pudimos confirmar si se hizo. No lo des por hecho: reintenta lo mismo sin riesgo o comprueba el estado.",
     retry: "Reintentar", check: "Comprobar estado", checking: "Comprobando…",
     notFound: "Todavía no consta. Reintentar es seguro: no se hace dos veces.",
+    // F57-4: «Deshacer» sin respuesta (red, 15 s o respuesta perdida). Nunca dice que no se deshizo.
+    undoUnknown: "No pudimos confirmar si se deshizo. No lo des por hecho: comprueba el estado o reintenta sin riesgo.",
     close: { title: "¿Cerrar sin confirmar?", description: "No pudimos confirmar si se hizo. Revisa Mi pareja antes de volver a intentarlo.", keep: "Seguir aquí", confirm: "Cerrar" },
   },
   // PR C de la 003 (T046–T050; 02·5 y 02·6 con la opción 2a de «07 Nosotros en Anotar gasto», 04·1, 04·7, 04·10). Copy

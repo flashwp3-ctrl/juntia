@@ -52,7 +52,7 @@ export function ActivityScreen({ server, data, today, selectedId, detail, mobile
     ? <ActivityView rows={data.value.rows} month={data.value.month} today={today} navigation={data.value.navigation} selectedId={selectedId} />
     : <LoadError />;
   const us = server !== "us" ? undefined : !couple ? <UsUnavailable /> : layout(couple.data.ok
-    ? <CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} selectedId={selectedId} />
+    ? <CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} summary={couple.data.value.summary} selectedId={selectedId} />
     : <LoadError />);
   return (
     <>

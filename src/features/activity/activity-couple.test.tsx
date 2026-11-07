@@ -21,11 +21,13 @@ vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => 
 const members = [{ userId: "sara", name: "Sara", joinOrder: 1 as const, isMe: true }, { userId: "tomas", name: "Tomás", joinOrder: 2 as const, isMe: false }];
 const expenses: SharedTransaction[] = sharedOctober2026.map((row) => ({ ...row, createdBy: row.payerUserId, updatedBy: null, movedFromMe: false }));
 const settlements: CoupleSettlementView[] = [{ ...settlementOctober25, note: null, version: 1 }];
+// F57-2: el total, el desglose y el conteo salen de couple_month_summary (FR-043), no de sumar la lista.
+const summary = { totalMinor: "284000000", count: 6, byCategory: { home: "160000000", market: "64000000", services: "36000000", restaurants: "24000000" } };
 
 function view(props: Partial<Parameters<typeof CoupleActivityView>[0]> = {}) {
   return render(
     <AnnotateProvider actions={idle}><ActivityFiltersProvider>
-      <CoupleActivityView expenses={expenses} settlements={settlements} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: "2026-11" }} members={members} {...props} />
+      <CoupleActivityView expenses={expenses} settlements={settlements} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: "2026-11" }} members={members} summary={summary} {...props} />
     </ActivityFiltersProvider></AnnotateProvider>,
   );
 }
@@ -57,6 +59,13 @@ describe("Actividad en Nosotros (US-3.4)", () => {
     expect(screen.getByText(copy.activity.results(1))).toBeTruthy();
   });
 
+  it("F57-2: con la lista cortada, la cifra principal, las categorías y el conteo siguen siendo los del resumen", () => {
+    view({ expenses: expenses.slice(0, 2) });
+    expect(screen.getByText("$2.840.000")).toBeTruthy();
+    expect(screen.getByText(copy.activity.count(6))).toBeTruthy();
+    expect(screen.getByText(copy.activity.categoryChip(copy.categories.restaurants, "240.000"))).toBeTruthy();
+  });
+
   it("la tabla de escritorio tiene la columna «Pagó · Reparto» (04·7)", () => {
     view();
     expect(within(screen.getByRole("table")).getByRole("columnheader", { name: copy.activity.table.paidSplit })).toBeTruthy();
@@ -68,7 +77,7 @@ describe("Actividad en Nosotros (US-3.4)", () => {
   });
 
   it("vacío: 04·6 «Aún no hay gastos este mes» con «Anotar el primero»", () => {
-    view({ expenses: [], settlements: [] });
+    view({ expenses: [], settlements: [], summary: null });
     expect(screen.getByText(copy.activity.coupleEmpty.title)).toBeTruthy();
     expect(screen.getByText(copy.activity.coupleEmpty.description)).toBeTruthy();
   });

@@ -21,6 +21,8 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
   const router = useRouter();
   const { openEditShared, notify, sharedActions, couple } = useAnnotate();
   const [confirming, setConfirming] = useState(false);
+  // F57-3 (revisión del PR #57): con el resultado desconocido, cerrar pide confirmación y conserva la intención.
+  const [confirmingClose, setConfirmingClose] = useState(false);
   const key = useRef("");
   const deleteButton = useRef<HTMLButtonElement | null>(null);
   const partner = couple?.members.find((member) => !member.isMe)?.name ?? "";
@@ -65,14 +67,26 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
       </Button>
       <ConfirmDialog
         open={confirming}
-        onOpenChange={(next) => { if (!next && (write.pending || write.locked)) return; setConfirming(next); }}
+        onOpenChange={(next) => {
+          if (!next && write.pending) return;
+          if (!next && write.locked) { setConfirmingClose(true); return; }
+          setConfirming(next);
+        }}
         title={copy.remove.title.expense}
         description={copy.shared.remove.description(title, formatMoney(parseAmountMinor(expense.amountMinor)), partner)}
         onCloseAutoFocus={(event) => { event.preventDefault(); deleteButton.current?.focus(); }}
-        cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => setConfirming(false)}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
+        cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setConfirming(false))}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
         confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
         {notice}
+        <ConfirmDialog
+          open={confirmingClose}
+          onOpenChange={setConfirmingClose}
+          title={copy.writes.close.title}
+          description={copy.annotate.uncertain.description}
+          cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingClose(false)}>{copy.writes.close.keep}</Button>}
+          confirm={<Button variant="secondary" onClick={() => { setConfirmingClose(false); setConfirming(false); write.reset(); }}>{copy.writes.close.confirm}</Button>}
+        />
       </ConfirmDialog>
     </div>
   );

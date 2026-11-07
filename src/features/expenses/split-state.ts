@@ -44,26 +44,38 @@ export function initialSplit(members: readonly SheetMember[], last: LastSplit | 
   return { payerUserId: last.payerUserId, mode, participants, percents, amounts: {}, amountsTouched: false };
 }
 
-/** Lo último que usó la persona, a partir de un gasto guardado: participantes son quienes tienen parte positiva. */
-export function lastFromSaved(saved: Pick<SavedShared, "payerUserId" | "splitMode" | "splitPercents" | "parts">, members: readonly SheetMember[]): LastSplit {
+type SavedSplit = Pick<SavedShared, "payerUserId" | "splitMode" | "splitPercents" | "parts">;
+
+/**
+ * F57-1 (revisión del PR #57): quién participa en un gasto guardado sale de su modo, no de las partes positivas. `equal`
+ * reparte siempre entre los dos (un equal de $1 deja a Tomás en $0 y sigue siendo de los dos); `percent`, quien tiene un
+ * porcentaje mayor que 0 (100/0 es un solo participante); `amount`, quien tiene una parte mayor que 0 (FR-019a).
+ */
+function savedParticipants(saved: SavedSplit, members: readonly SheetMember[]) {
   const list = ordered(members);
-  const participants = list.filter((member) => BigInt(saved.parts[member.userId] ?? "0") > 0n).map((member) => member.userId);
+  if (saved.splitMode === "equal") return list.map((member) => member.userId);
+  if (saved.splitMode === "percent" && saved.splitPercents) return list.filter((_, index) => (saved.splitPercents![index] ?? 0) > 0).map((member) => member.userId);
+  return list.filter((member) => BigInt(saved.parts[member.userId] ?? "0") > 0n).map((member) => member.userId);
+}
+
+/** Lo último que usó la persona, a partir de un gasto guardado (Q5; decisión 1). */
+export function lastFromSaved(saved: SavedSplit, members: readonly SheetMember[]): LastSplit {
+  const list = ordered(members);
+  const participants = savedParticipants(saved, members);
   const percents = saved.splitMode === "percent" && saved.splitPercents ? Object.fromEntries(list.map((member, index) => [member.userId, saved.splitPercents![index] ?? 0])) : null;
-  return { payerUserId: saved.payerUserId, splitMode: participants.length === 1 ? "percent" : saved.splitMode, percents, participants };
+  return { payerUserId: saved.payerUserId, splitMode: saved.splitMode, percents, participants };
 }
 
 /** El reparto de un gasto compartido guardado, para editarlo (Q12). */
-export function splitFromSaved(saved: Pick<SavedShared, "payerUserId" | "splitMode" | "splitPercents" | "parts">, members: readonly SheetMember[]): SplitDraft {
+export function splitFromSaved(saved: SavedSplit, members: readonly SheetMember[]): SplitDraft {
   const list = ordered(members);
-  const participants = list.filter((member) => BigInt(saved.parts[member.userId] ?? "0") > 0n).map((member) => member.userId);
-  const single = participants.length === 1;
-  const mode: SplitMode = single ? "equal" : saved.splitMode;
+  const participants = savedParticipants(saved, members);
+  const mode: SplitMode = participants.length === 1 ? "equal" : saved.splitMode;
   const percents = mode === "percent" && saved.splitPercents ? Object.fromEntries(list.map((member, index) => [member.userId, String(saved.splitPercents![index] ?? 0)])) : {};
   const amounts = mode === "amount" ? Object.fromEntries(list.map((member) => [member.userId, String(BigInt(saved.parts[member.userId] ?? "0") / 100n)])) : {};
   return { payerUserId: saved.payerUserId, mode, participants, percents, amounts, amountsTouched: mode === "amount" };
 }
 
-/** Los valores de un reparto como los entiende el dominio. Importe sin tocar es un 50/50: dos partes positivas. */
 const values = (draft: Omit<SplitDraft, "previous" | "payerUserId">) => (draft.mode === "percent"
   ? Object.fromEntries(Object.entries(draft.percents).map(([id, text]) => [id, Number(text)]))
   : draft.mode === "amount"

@@ -60,7 +60,7 @@ export async function loadCoupleHome(month: string, volver: string): Promise<Loa
   }, volver);
 }
 
-export type CoupleMonthData = { expenses: SharedTransaction[]; settlements: CoupleSettlementView[]; month: string; navigation: { previous: string | null; next: string | null } };
+export type CoupleMonthData = { expenses: SharedTransaction[]; settlements: CoupleSettlementView[]; summary: CoupleMonthSummary | null; month: string; navigation: { previous: string | null; next: string | null } };
 
 /** Actividad en Nosotros (FR-046): gastos y liquidaciones del mes por cursor, con las flechas de `couple_transaction_months`. */
 export async function loadCoupleMonth(requested: string, current: string, volver: string): Promise<Loaded<CoupleMonthData>> {
@@ -68,9 +68,9 @@ export async function loadCoupleMonth(requested: string, current: string, volver
     const client = await createClient();
     const months = await listCoupleMonths(client);
     const month = clampMonth(months, current.slice(0, 7), requested);
-    const [expenses, settlements] = await Promise.all([listSharedExpenses(client, month), listSettlements(client, month)]);
+    const [expenses, settlements, totals] = await Promise.all([listSharedExpenses(client, month), listSettlements(client, month), getCoupleMonthSummary(client, month)]);
     return {
-      expenses, month, navigation: monthNavigation(months, current.slice(0, 7), month),
+      expenses, month, summary: totals ? { totalMinor: minorText(totals.total), count: totals.count, byCategory: byCategoryText(totals.byCategory) } : null, navigation: monthNavigation(months, current.slice(0, 7), month),
       settlements: settlements.map((row) => ({ id: row.id, settlementDate: row.settlementDate, createdAt: row.createdAt, fromUserId: row.fromUserId, toUserId: row.toUserId, amount: row.amount, status: row.status, note: row.note, version: row.version })),
     };
   }, volver);

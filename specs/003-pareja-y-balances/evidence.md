@@ -1324,3 +1324,20 @@ texto nuevo de Nosotros para Metas y Plan con pareja activa.
 ## T053 · punto de control intermedio (CI)
 
 T053 se fusiona con el gate por decisión del gestor (minutos de CI): no se lanza `gh workflow run`. La duración del job `e2e` frente a los 480 s se mide en la pasada de `ready_for_review` (T056), que es la única de este PR. Si supera 480 s, el gestor lo lleva a los fundadores antes del merge.
+
+## Revisión de ChatGPT F57 (sobre `6c2cbbd`)
+
+0 bloqueantes y 4 importantes; aprueba la privacidad, el cálculo en servidor,
+Inicio, Mover a Pareja, la ChangePreview, el alcance y la línea de `AGENTS.md`.
+Un solo commit, sin migraciones. Pruebas primero en
+`src/features/expenses/review-f57.test.tsx` y `activity-couple.test.tsx`: **9 en
+rojo** antes del código (las de 100/0 y de una parte de importe en 0 ya pasaban).
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| F57-1 | `lastFromSaved()` y `splitFromSaved()` deducían los participantes de las partes positivas: un equal de $1 (Sara $1, Tomás $0) volvía como un participante y se guardaba como percent 100/0 | Se reconstruye desde el modo guardado: `equal`, siempre los dos; `percent`, quien tiene porcentaje > 0; `amount`, quien tiene parte > 0 (FR-019a). `couple_expenses` ya expone `split_percents` (sin migración) | equal de $1 y percent 99/1 de $50 siguen siendo de los dos; editar la descripción del equal de $1 envía `equal` con los dos |
+| F57-2 | Actividad en Nosotros sumaba la lista paginada para el total, las categorías y el conteo | Salen de `couple_month_summary` del mes (FR-043), leído en `loadCoupleMonth`; la lista solo pinta, filtra y busca | con dos filas en la lista, la cifra, el conteo y las fichas son las del resumen |
+| F57-3 | Con un borrado en `unknown`, «Cerrar sin confirmar» cerraba sin preguntar | Abre «¿Cerrar sin confirmar?»; «Seguir aquí» conserva la intención | flujo completo y «Comprobar estado» con la misma clave |
+| F57-4 | «Deshacer» de un compartido y de Mover a Pareja llamaba directo, sin límite, sin `write_status` y con «No pudimos deshacer» | La máquina del PR B en el proveedor: 15 s y después desconocido, texto neutro (`copy.writes.undoUnknown`), «Comprobar estado» con `void_shared_expense` o `undo_reclassify_to_shared`, «Reintentar» con la misma clave si todavía no consta; la respuesta tardía no pisa nada | respuesta perdida con `completed`; `not_found` y reintento idéntico; promesa colgada más de 15 s; Mover a Pareja |
+
+Iteración: componentes 326 de 326 (las dos suites de F57 y de edición, tres veces seguidas sin fallos). `verify` 72,21 s; una primera pasada de `verify` con carga en el equipo falló en componentes (97,11 s) y no se reprodujo. `npm run e2e:dev` completo antes del push: **E2E 26 de 26 y axe 188 de 188** (axe 493,31 s; total 554,83 s). La pasada anterior perdió el caso de privacidad de la spec 3 por el límite de 30 s de Playwright en dev (~30 peticiones HTML y RSC); ese caso lleva ahora `test.slow()`.

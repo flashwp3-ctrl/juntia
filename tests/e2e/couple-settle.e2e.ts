@@ -66,6 +66,8 @@ test("gasto compartido 50/50: Sara lo anota en 2 toques y el total de Nosotros s
 });
 
 test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros llevan privados, con la cookie válida, ausente o no válida", async ({ browser, baseURL }, testInfo) => {
+  // ~30 peticiones de HTML y RSC con tres cookies y dos cuentas, más el prefetch: más que el límite por defecto de 30 s.
+  test.slow();
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   const [privateRows, sharedRows] = await Promise.all([seedMovements(pair.sara, "current"), seedSharedMovements(pair, "recent")]);
   const privateId = privateRows[0].id;
