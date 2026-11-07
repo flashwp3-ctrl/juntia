@@ -1390,3 +1390,29 @@ también suites del PR B; la prueba de F57-8, con tres recorridos de Anotar, lle
 20 s de límite. E2E dirigidas por el cambio del Toast
 (`npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`):
 **19 de 19**.
+
+## Cuarta ronda F57 (sobre `94c41a2`)
+
+Da por bueno el bloqueo de F57-8 con A ya desconocido o sin constar. Queda
+**F57-9**, la ventana anterior: con el deshacer de A en vuelo no había reserva; si se
+guardaba B, su aviso sustituía al de A y subía la generación, y cuando A llegaba a
+desconocido (15 s) la comprobación de generación descartaba su resultado: A perdía su
+recuperación y el «Deshacer» de B quedaba habilitado.
+
+Corrección, dentro de la regla de un deshacer a la vez: la intención se reserva
+desde que **empieza** (`activeUndo` con fase «en curso», en una referencia que cambia
+en el acto y en el estado que pinta); mientras exista, en curso o sin resolver, los
+«Deshacer» de los avisos nuevos quedan bloqueados igual que en F57-8 (el aviso de la
+propia intención no). Su resultado se aplica por la identidad de la intención, no por
+la generación: un desconocido pasa al aviso fijo aunque su aviso ya se haya
+sustituido. ok o rechazo liberan la reserva. La generación del aviso solo decide si
+se muestra un mensaje ordinario (no se pisa el aviso de B con el de A).
+
+Pruebas (`review-f57.test.tsx`, primero en rojo): deshacer de A retenido; B se guarda
+antes de que A responda y su «Deshacer» está bloqueado, también con Enter y Espacio
+desde el teclado; a los 15 s A pasa al aviso fijo y se comprueba con su clave; resuelto
+A, el bloqueo se libera. Lo mismo con «Deshacer» de Mover a Pareja.
+
+Iteración: componentes de `src/features/expenses` 167 de 167 (F57 y edición, tres
+veces seguidas sin fallos); `verify` 62,17 s; E2E dirigidas
+(`annotate.e2e.ts` y `couple-settle.e2e.ts`) **19 de 19**.

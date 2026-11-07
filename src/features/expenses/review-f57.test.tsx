@@ -247,6 +247,66 @@ describe("F57-8: un deshacer pendiente a la vez", () => {
     return screen.findByRole("button", { name: copy.annotate.undo });
   }
 
+  it("F57-9: con A todavía en vuelo, el Deshacer de B ya está bloqueado (también con el teclado); A llega a desconocido y sigue recuperable con su clave", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let n = 0;
+    const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));
+    const voidShared = vi.fn<SharedActions["voidShared"]>().mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue({ status: "ok", value: { id: ids[2], version: 2 } });
+    const check = vi.fn<SharedActions["check"]>(async () => ({ state: "completed", value: { id: ids[0], version: 2 } }));
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ create, voidShared, check })} couple={couple} context="us" today="2026-11-05"><Pages /></AnnotateProvider>);
+    await user.click(await annotate(user));
+    // B se guarda mientras el deshacer de A sigue sin respuesta: su Deshacer nace bloqueado.
+    const undoB = await annotate(user);
+    expect(undoB.getAttribute("aria-disabled")).toBe("true");
+    undoB.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(voidShared).toHaveBeenCalledTimes(1);
+    // A llega a desconocido por el límite de 15 s aunque su aviso ya no esté: pasa al aviso fijo con su clave.
+    await act(async () => { vi.advanceTimersByTime(15_000); });
+    expect(await screen.findByText(copy.writes.undoUnknown)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.check }));
+    await waitFor(() => expect(check).toHaveBeenCalledWith({ action: "void_shared_expense", idempotencyKey: voidShared.mock.calls[0][0].idempotencyKey }));
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    // Resuelto A, el bloqueo se libera.
+    const undoC = await annotate(user);
+    expect(undoC.getAttribute("aria-disabled")).toBeNull();
+  }, 30_000);
+
+  it("F57-9: lo mismo con «Deshacer» de Mover a Pareja en vuelo", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const shared = (id: string) => expense({ id, version: 1, movedFromMe: true, amountMinor: "6400000", parts: { [SARA]: "3200000", [TOMAS]: "3200000" } });
+    let n = 0;
+    const reclassify = vi.fn(async () => ({ status: "ok" as const, value: { voidedPrivateId: "5d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a1" + n, shared: shared(ids[n++]) } }));
+    const undoReclassify = vi.fn<NonNullable<SharedActions["undoReclassify"]>>(() => new Promise(() => {}));
+    const check = vi.fn<SharedActions["check"]>(async () => ({ state: "completed", value: { restoredPrivateId: "8d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10" } }));
+    const previewMove = vi.fn(async () => ({ ok: true as const, value: { month: "2026-11", privateMinor: "12800000", sharedPartMinor: "0", coupleTotalMinor: "0", balance: [{ userId: SARA, netMinor: "0" }, { userId: TOMAS, netMinor: "0" }] } }));
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    function Move() {
+      const { openMove } = useAnnotate();
+      return <button type="button" onClick={(event) => openMove({ id: "7d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a1" + n, type: "expense", categoryId: "health", transactionDate: "2026-11-05", description: "Farmacia", amountMinor: "6400000", version: 1 }, event.currentTarget)}>{copy.move.action}</button>;
+    }
+    render(<AnnotateProvider actions={noPrivate} sharedActions={sharedActions({ reclassify, undoReclassify, check, previewMove })} couple={couple} context="me" today="2026-11-05"><Move /></AnnotateProvider>);
+    const move = async () => {
+      await user.click(screen.getByRole("button", { name: copy.move.action }));
+      const dialog = await screen.findByRole("dialog", { name: copy.move.action });
+      await user.click(within(dialog).getByRole("button", { name: copy.move.review }));
+      await within(dialog).findByRole("list");
+      await user.click(within(dialog).getByRole("button", { name: copy.move.confirm }));
+      return screen.findByRole("button", { name: copy.annotate.undo });
+    };
+    await user.click(await move());
+    const undoB = await move();
+    expect(undoB.getAttribute("aria-disabled")).toBe("true");
+    await act(async () => { vi.advanceTimersByTime(15_000); });
+    expect(await screen.findByText(copy.writes.undoUnknown)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.check }));
+    await waitFor(() => expect(check).toHaveBeenCalledWith({ action: "undo_reclassify_to_shared", idempotencyKey: undoReclassify.mock.calls[0][0].idempotencyKey }));
+    await waitFor(() => expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull());
+    expect(undoReclassify).toHaveBeenCalledTimes(1);
+  }, 30_000);
+
   it("con A desconocido, el Deshacer de B está deshabilitado, A sigue recuperable al navegar y, resuelto A, vuelve el Deshacer", async () => {
     let n = 0;
     const create = vi.fn(async () => ({ status: "ok" as const, value: expense({ id: ids[n++], version: 1, amountMinor: "4500000", parts: { [SARA]: "2250000", [TOMAS]: "2250000" } }) }));

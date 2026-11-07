@@ -56,8 +56,8 @@ export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedT
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
 type Reveal = { id: string; transactionDate: string };
-/** `undo`: el aviso ofrece «Deshacer» de un gasto compartido o de Mover a Pareja (F57-8: uno pendiente a la vez). */
-type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: boolean };
+/** `undo`: el id del gasto cuyo «Deshacer» ofrece el aviso (compartido o Mover a Pareja; F57-8/F57-9: uno a la vez). */
+type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: string };
 type Notice = Omit<ToastState, "id">;
 
 type AnnotateState = {
@@ -297,21 +297,28 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   };
   // F57-6 (revisión del PR #57): mientras un deshacer sigue desconocido o sin constar, su aviso no caduca. Vive aquí, en
   // memoria (nunca en el navegador), con «Reintentar» y «Comprobar estado» sobre la intención original; cerrarlo se confirma.
-  const [pendingUndo, setPendingUndo] = useState<{ intent: UndoIntent; notFound: boolean; checking: boolean } | null>(null);
+  // F57-8 y F57-9 (decisión del gestor): un deshacer a la vez. La intención se reserva desde que EMPIEZA (fase «en curso»),
+  // no solo al llegar a desconocido; mientras exista, los «Deshacer» de los avisos nuevos quedan bloqueados. Su resultado se
+  // aplica por la identidad de la intención, no por la generación del aviso: si su aviso ya se sustituyó, un desconocido pasa
+  // igual al aviso fijo. ok o rechazo liberan la reserva. La generación solo evita pisar avisos ordinarios con respuestas viejas.
+  type ActiveUndo = { intent: UndoIntent; phase: "running" | "unknown" | "notFound"; checking: boolean };
+  const [activeUndo, setActiveUndoState] = useState<ActiveUndo | null>(null);
   const [confirmingDismiss, setConfirmingDismiss] = useState(false);
-  const pendingRef = useRef(pendingUndo);
-  useEffect(() => { pendingRef.current = pendingUndo; }, [pendingUndo]);
+  const activeRef = useRef<ActiveUndo | null>(null);
+  // La referencia cambia en el acto (un segundo toque en el mismo cuadro ya ve la reserva); el estado pinta.
+  const setActiveUndo = useCallback((next: ActiveUndo | null) => { activeRef.current = next; setActiveUndoState(next); }, []);
+  const pendingUndo = activeUndo && activeUndo.phase !== "running" ? activeUndo : null;
   const runUndoRef = useRef<(intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => Promise<void>>(async () => {});
   const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending" = "toast") => runUndoRef.current(intent, mode, source), []);
   useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => {
     const writes = sharedRef.current;
-    // F57-8 (decisión del gestor): un deshacer pendiente a la vez. Con otra intención sin resolver, ni se empieza esta ni se toca aquella.
-    if (pendingRef.current && pendingRef.current.intent !== intent) return;
+    const reserved = activeRef.current;
+    if (reserved && reserved.intent !== intent) return;
     if (!writes || undoing.current.has(intent.id)) return;
     undoing.current.add(intent.id);
     const generation = toastGeneration.current;
-    if (source === "pending") setPendingUndo((current) => (current && current.intent === intent ? { ...current, checking: true } : current));
-    else setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
+    setActiveUndo(reserved ? { ...reserved, checking: true } : { intent, phase: "running", checking: false });
+    if (source === "toast") setToast((current) => (current && current.id === generation && current.action ? { ...current, action: { ...current.action, busy: true } } : current));
     let outcome: { kind: "ok" } | { kind: "rejected"; error: WriteError } | { kind: "unknown" } | { kind: "notFound" };
     try {
       if (mode === "send") {
@@ -325,18 +332,20 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       outcome = { kind: "unknown" };
     }
     undoing.current.delete(intent.id);
-    // Una respuesta tardía no pisa nada: la del aviso de «Deshacer», si otro aviso ocupó su lugar; la del aviso fijo, si ya no es esta intención.
-    if (source === "toast" ? generation !== toastGeneration.current : pendingRef.current?.intent !== intent) return;
+    // Se aplica por la identidad: si la reserva ya no es esta intención (se cerró confirmándolo), la respuesta no toca nada.
+    if (activeRef.current?.intent !== intent) return;
+    // Un mensaje ordinario solo sale si nadie ocupó el lugar del aviso de esta intención.
+    const visible = source === "pending" || generation === toastGeneration.current;
     if (outcome.kind === "ok" || outcome.kind === "rejected") {
-      setPendingUndo(null);
-      if (outcome.kind === "ok") { intent.onOk(); notify({ tone: "success", message: intent.done }); }
-      else notify({ tone: "error", message: intent.rejected(outcome.error) });
+      setActiveUndo(null);
+      if (outcome.kind === "ok") intent.onOk();
+      if (visible) notify(outcome.kind === "ok" ? { tone: "success", message: intent.done } : { tone: "error", message: intent.rejected(outcome.error) });
     } else {
-      // Desconocido o sin constar: el aviso con «Deshacer» se retira y queda el aviso fijo, que no caduca.
-      if (source === "toast") setToast(null);
-      setPendingUndo({ intent, notFound: outcome.kind === "notFound", checking: false });
+      // Desconocido o sin constar: queda el aviso fijo, que no caduca; el aviso con «Deshacer» de esta intención se retira.
+      if (source === "toast" && generation === toastGeneration.current) setToast(null);
+      setActiveUndo({ intent, phase: outcome.kind === "notFound" ? "notFound" : "unknown", checking: false });
     }
-  }; }, [notify, runUndo]);
+  }; }, [notify, runUndo, setActiveUndo]);
 
   const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => runUndo({
     action: "void_shared_expense", id: saved.id, idempotencyKey, done: copy.annotate.undone.expense,
@@ -380,7 +389,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     setHighlightId(saved.id, "us");
     setReveal({ id: saved.id, transactionDate: saved.transactionDate });
     const key = newIdempotencyKey();
-    notify({ tone: "success", message: copy.annotate.saved.expense, undo: true, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
+    notify({ tone: "success", message: copy.annotate.saved.expense, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
 
   // Mover a Pareja (T050). El diálogo vive aquí para que A4 (el aviso con «Deshacer» y el resaltado) sobreviva a la
@@ -396,7 +405,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     appContext?.choose("us");
     setHighlightId(result.shared.id, "us");
     const key = newIdempotencyKey();
-    notify({ tone: "success", message, undo: true, action: { label: copy.annotate.undo, onAction: () => void undoMove(result, key) } });
+    notify({ tone: "success", message, undo: result.shared.id, action: { label: copy.annotate.undo, onAction: () => void undoMove(result, key) } });
     router.push(`/actividad?mes=${result.shared.transactionDate.slice(0, 7)}`);
   }, [appContext, notify, router, undoMove, setHighlightId]);
 
@@ -497,7 +506,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
               <WriteUnknown
                 message={copy.writes.undoUnknown}
                 checking={pendingUndo.checking}
-                notFound={pendingUndo.notFound}
+                notFound={pendingUndo.phase === "notFound"}
                 onRetry={() => void runUndo(pendingUndo.intent, "send", "pending")}
                 onCheck={() => void runUndo(pendingUndo.intent, "check", "pending")}
                 onDismiss={() => setConfirmingDismiss(true)}
@@ -505,7 +514,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             </div>
           ) : null}
           <AnimatePresence>
-            {toast ? <Toast key={toast.id} tone={toast.tone} message={toast.message} action={toast.undo && toast.action && pendingUndo ? { ...toast.action, blocked: copy.writes.undoBlocked } : toast.action} onTimeout={() => dismissToast(toast.id)} /> : null}
+            {toast ? <Toast key={toast.id} tone={toast.tone} message={toast.message} action={toast.undo && toast.action && activeUndo && activeUndo.intent.id !== toast.undo ? { ...toast.action, blocked: copy.writes.undoBlocked } : toast.action} onTimeout={() => dismissToast(toast.id)} /> : null}
           </AnimatePresence>
         </div>
       </div>
@@ -515,7 +524,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
         title={copy.writes.close.title}
         description={copy.writes.undoCloseDescription}
         cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingDismiss(false)}>{copy.writes.close.keep}</Button>}
-        confirm={<Button variant="secondary" onClick={() => { setConfirmingDismiss(false); setPendingUndo(null); }}>{copy.writes.close.confirm}</Button>}
+        confirm={<Button variant="secondary" onClick={() => { setConfirmingDismiss(false); setActiveUndo(null); }}>{copy.writes.close.confirm}</Button>}
       />
      </PendingContext.Provider>
     </AnnotateContext.Provider>
