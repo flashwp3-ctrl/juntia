@@ -5,5 +5,5 @@ import { shortDate } from "@/lib/format";
 export function invitationDay(instant: string) {
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(instant));
   // Espacio duro: «vence el 13 nov» no se parte con un correo largo delante (revisión de Impeccable).
-  return shortDate(day).replace(" ", " ");
+  return shortDate(day).replace(" ", "\u00A0");
 }
