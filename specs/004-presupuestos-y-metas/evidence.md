@@ -77,8 +77,28 @@ Ningún run de CI lanzado por el agente. Producción no se utiliza.
   Las redefiniciones de T018 siguen pendientes; no se declara el código listo.
 - No existen todavía `goal_functions` ni `goal_funding`; no se ha implementado
   T017–T018 ni las capas siguientes.
+- Ampliación de T016 tras la precisión del gestor: pasada en rojo completa,
+  `39 failed | 55 passed | 16 skipped (110)`, `150.09 s` Vitest / `150.75 s`
+  runner. Incluye las 18 carreras, las catorce escrituras, F64-1 privado y
+  compartido, paginación de 1101 filas por lista y exportación global.
+  Se mantienen diferenciadas las siete pruebas no ejecutadas por el fallo del
+  hook de exportación y las nueve omisiones previstas. No es salida de CI.
+- T017, primera iteración SQL (`115.19 s`): `12_budgets` **22/22**, y las
+  primeras **50 pruebas de `13_goals`** (metadatos, aportes, retiros, anulaciones,
+  idempotencia, permisos y políticas rotas) pasan. Los nueve definer nuevos
+  cumplen el control de privilegios. El resto sigue rojo por T018 ausente y el
+  inventario de entradas espera todavía sus cinco RPC. No se cierra el grupo.
+- T017, integración (`125.46 s` total): presupuestos **4/4**, carreras de anular
+  el mismo aporte y anular contra retirar **en ambos órdenes** pasadas. Los
+  fallos restantes corresponden a financiación, siembra/exportación pendientes
+  y a las redefiniciones privadas aún no aplicadas en esa ejecución.
+- T018, primera pasada SQL (`117.77 s`): privilegios **483**, vistas **32**,
+  presupuestos **22** y tablas de metas **24** pasan. El bloque de funciones de
+  metas pasa hasta aprobar/rechazar/cancelar; quitar/anular descubre una referencia
+  `g.id` ambigua en el helper común. Se corrigió el alias y se amplió el
+  inventario exacto de writer de 20 a 34 implementaciones; segunda pasada en curso.
 
-## Discrepancia pendiente de precisión humana · DEC-G04
+## Precisión del gestor · DEC-G04 (resuelta)
 
 El plan, PR A, orden obligatorio 3, pide «las siete filas de DEC-G04 en dominio y
 en `metric_months`». Pero `docs/TESTING.md` §6 define «Octubre · Yo, Tomás» como
@@ -87,20 +107,98 @@ interpretarlo como cero. La vista autenticada como Tomás conoce los registros
 persistidos de Tomás; el esquema no define una marca de datos incompletos.
 No se añade esa marca ni se fabrica un `null` en SQL.
 
-Se pidió precisión al gestor: siete filas en dominio; las seis con importes
-definidos en integración SQL; y el caso «No disponible» en dominio más las
-pruebas de privacidad/RLS. Pendiente de respuesta. Detención según la regla 6
-del encargo. La ejecución en curso termina normalmente para liberar su lock.
+El gestor confirmó en este chat: **siete filas en dominio y seis con importes
+definidos en integración SQL** contra `metric_months`. Para «Yo, Tomás · octubre»
+se comprueban en SQL únicamente `aporte_a_metas = 40000000`, `retiro_de_metas = 0`
+y `gasto_financiado_con_meta = 0` (unidades menores). **No se afirma consumo ni
+destinado neto de Tomás**, pues sus privados no están definidos (003, F47-9).
+Se añade aislamiento de métricas privadas en ambos sentidos entre Sara y Tomás.
+No se modifica la spec ni el plan. La implementación continúa con esta precisión.
 
-## Mapa parcial de tareas y commits
+## Mapa de tareas, commits y pruebas (hasta T021)
 
 | Tarea | Commit | Prueba / estado |
 | --- | --- | --- |
-| T002–T007 | `e7bdb31` | Dominio 78/78; rojo previo y control cronológico registrados arriba |
-| T008–T010 | `e7bdb31` | Errores/paginador 81/81; glosario incorporado; transportes posteriores pendientes |
-| T011 | `e7bdb31` | 30/30 tras esperar la condición de foco |
-| T012–T014 | `247aa63` | pgTAP completo verde en dev; tipos generados pendientes, con T019 según precisión de T024 |
-| T015–T016 | Trabajo en curso | Pruebas en rojo; cobertura aún en construcción, no se declaran terminadas |
-| T017–T023 | Pendiente | Sin implementación de funciones ni capas posteriores |
-| T024 | Gestor | No listo: T021 no está verde |
-| T027–T028 | Gestor | No ejecutadas; sin operaciones en producción |
+| T001 | Gestor | Declarada hecha; no modificada |
+| T002–T007 | e7bdb31 | Dominio 78/78, siete filas DEC-G04 y cronología; rojo registrado |
+| T008–T010 | e7bdb31, 52d00a4 | Errores/paginador 81/81, glosario y transportes monetarios |
+| T011 | e7bdb31 | 30/30 tras esperar la condición de foco; causa y baseline documentados |
+| T012–T014 | 247aa63, 1869e80, 52d00a4, 0df4d4a | Tablas, RLS, diez vistas y tipos; pgTAP completo verde en dev |
+| T015–T016 | af65881 (rojo), 1869e80, 52d00a4 | 103 pasan / 9 omisiones previstas; carreras en ambos órdenes, privacidad, recuperación de las 14 escrituras, F64-1 y páginas de 1101 filas |
+| T017–T018 | 1869e80, 0df4d4a | Cuatro migraciones nuevas; pgTAP completo verde, funciones y regresiones P0-1/P0-2 |
+| T019–T020 | 52d00a4, 0df4d4a | Adaptadores reales, exportación global y siembra SQL aislada; tipos generados directos |
+| T021 | Código 0df4d4a; salidas en este documento | SQL 112.89 s; integración 271.50 s; E2E 28/28, 100.67 s total |
+| T022–T023 | Pendientes tras T024 | No se ha modificado la configuración Playwright de workers ni ejecutado la medición |
+| T024 | Gestor | T021 verde; pendiente del único run manual de control. Ningún run lanzado por el agente |
+| T025 | Este documento, en curso | Las [V] siguen abiertas hasta el run de CI; faltan T023/T024 |
+| T026 | Parcial | Verify local; completo e2e:dev y verify final tras workers, antes del push final; revisión de ChatGPT pendiente |
+| T027–T028 | Gestor | Gate ready_for_review y migraciones a producción pendientes; ninguna operación en producción |
+
+## PR A · avance T018–T020 (iteración local, no cierre de [V])
+
+- T018: `test:db:dev` completo verde, **121.18 s**: privilegios 483, vistas 32, writer 18, presupuestos 22, funciones de metas 88, tablas de presupuestos 13 y de metas 24. Se conservaron las regresiones previas.
+- Integración tras T018: **92 passed / 2 failed / 16 skipped**, 144.85 s del runner. Las 18 carreras nuevas y las ocho pruebas de financiación/reactivación pasan; fallan dataset dorado y exportación todavía ausentes. Siete omisiones adicionales son pruebas bloqueadas por timeout del hook de exportación, no omisiones previstas.
+- T019: prueba nueva de tipos públicos vista en rojo (falta `limit_minor`); tipos generados por CLI fijado 2.121.0 contra el ref de dev explícito, schema public. La prueba ampliada recorre el AST, incluye todos los nombres monetarios nuevos y pasa (2/2). Adaptador real visto en rojo antes de crear módulos.
+- T020: aislamiento de metas/presupuestos añadido al test existente de dos workers, visto en rojo sin la siembra P0-3. Implementada siembra SQL histórica con opción golden; las aportaciones del otro solo se incluyen en metas compartidas.
+- Incidencia del lanzador: aunque run.mjs pasaba --testTimeout/--hookTimeout=60000, el proyecto integration seguía dando errores a 10000 ms (segunda pasada: múltiples hooks). Se aplicaron **los mismos 60 s ya prescritos** por TESTING.md §2 en la configuración del proyecto, solo con JUNTIA_TEST_TARGET=dev; no cambia el timeout de CI ni los presupuestos.
+- `typecheck` verde. Lint sin errores; se quitó el import nuevo sin usar. Persiste únicamente el warning preexistente balance-panel.tsx:61.
+
+- Generación definitiva T019: CLI 2.121.0 **directa por --db-url sin contraseña**, usando checkDevTarget, cleanPgEnv, dbUrlWithoutPassword y runInSession (mismo método de la 003). Contraseña solo en el entorno del hijo, guardia y lock propios; sin Docker ni transformación del resultado. Se sustituyó la generación inicial por --project-id, cuyo formato era el de la API de metadatos. Los espacios del archivo son los que emite el generador y no se corrigen manualmente; db:types:check lo validará en T024.
+- Verify fuera del sandbox: **52.79 s**, dominio **78/78**, componentes **678 pasan / 2 omisiones previstas**; lint sin errores y typecheck verde. El intento sandbox previo falló en los tests de puertos/procesos de Windows; no se cambiaron esas pruebas.
+- Pasadas completas posteriores: 98 pasan / 4 fallan / 9 omisiones (233.19 s); 98 pasan / 5 fallan / 9 omisiones (203.51 s). Se conservan como fallidas: statement_timeout de dev en carreras/recuperación de escrituras, una barrera agotada y la matriz repetida de exportación a 60 s. No se aumentó ningún límite.
+- Ajuste de iteración: maxWorkers=2 **solo bajo JUNTIA_TEST_TARGET=dev**, entre archivos de integración (las dos peticiones de cada carrera y sus barreras siguen concurrentes). Se elimina la repetición redundante de exportar en páginas de 2 y 3: quedan ambos formatos, archivo completo y página de 1, con escrituras entre páginas y las 1101 filas por historial en su prueba específica. Configuración de concurrencia: [Vitest maxWorkers](https://main.vitest.dev/config/maxworkers). CI conserva sus defaults y sus presupuestos. Nueva pasada completa en curso.
+
+- Integración completa con concurrencia de archivos acotada: **19 archivos pasan / 1 omitido; 103 pruebas pasan / 9 omisiones previstas**, **301.70 s** del runner (301.02 s Vitest). No fallos de barrera ni de RPC. Exportación 7/7, dataset dorado y privacidad 6/6, carreras 18/18, funciones 8/8, historiales 1101 filas, aislamiento de siembra y adaptadores reales incluidos. No cambia el límite de tiempo de CI.
+- Revisión adicional: el porcentaje en goals_overview se convertía a int4, que puede desbordar con target $1 y aportes admitidos. Regresión pgTAP añadida antes de corregir; ejecución roja en curso.
+
+- Regresión de progreso: primer intento **117.82 s**, inválido por un delimitador SQL de la prueba (no se cuenta como rojo funcional). Delimitador corregido, segundo intento **115.03 s**, rojo real con `integer out of range` en 13a_goal_tables: target 100 y aportes válidos. Se elimina solo el cast int4; se conserva trunc() y el valor entero sin tope artificial. Nueva pasada SQL completa en curso.
+- Tipo F64-1: prueba nueva de `VoidResult.reactivated_goals` vista en rojo con TS2339 antes de añadir el campo opcional de reactivaciones (importes string). Typecheck vuelve a verde; no cambia la firma de las operaciones de P0-1/P0-2.
+
+## T021 · cierre local sobre el esquema final
+
+Código validado: `0df4d4a571e2e451bb793a3ee405359600f0a945`. Los siete archivos de migración anteriores no cambian; el diff incorpora exactamente las cuatro migraciones de PR A.
+
+`npm run test:db:dev`:
+
+```text
+13a_goal_tables.test.sql: pasó (25), incluida regresión de progreso
+test:db:dev (total): pasó · 112.89 s
+```
+
+`npm run test:integration:dev`:
+
+```text
+Test Files 19 passed | 1 skipped (20)
+Tests 103 passed | 9 skipped (112)
+Duration 270.90s
+test:integration:dev (total): pasó · 271.50 s
+```
+
+Las nueve omisiones son las ocho pruebas declaradas de correo/Auth y 40P01 real: solo CI. No hay hooks fallidos ni pruebas bloqueadas contadas como omisiones.
+
+Comando dirigido de las specs 1, 2 y 3, con PORT=3400:
+
+```text
+npm run e2e:dev -- tests/e2e/access-account.e2e.ts tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts
+28 passed (1.2m)
+next build (juntia-dev): pasó · 26.82 s
+E2E dirigido (sin @mail): pasó · 71.43 s
+e2e:dev (total): pasó · 100.67 s
+```
+
+Incluye descargas JSON/CSV, privacidad HTML/RSC/prefetch, Anotar, Mover a Pareja y Balance. Las cuatro E2E @mail solo corren en CI. No se ejecutó el proyecto evidence ni se produjeron capturas locales: ADR-011 §9.8 las reserva al CI. Este PR no modifica interfaz; B–E quedan fuera.
+
+T022–T023 esperan el punto de control del gestor conforme a la precisión inicial. El e2e:dev completo y verify de salida final (T026) se ejecutarán tras la medición y antes del push final. No se marca el PR ready_for_review.
+
+Verify sobre el código final, fuera del sandbox (los tests Windows necesitan identificar sus procesos/puertos):
+
+```text
+npm run verify
+lint: pasó (1 warning preexistente en balance-panel.tsx:61, sin errores)
+typecheck: pasó
+dominio: 12 archivos, 78 pruebas pasan
+componentes: 54 archivos, 678 pasan / 2 omisiones previstas
+verify (total): pasó · 72.67 s (< 90 s)
+```
+
+**Listo para T024** tras publicar el SHA de este cierre. Se mantiene el borrador; el gestor lanza el run. Los tiempos anteriores son de iteración local, no sustituyen db:types:check ni cierran las [V].
