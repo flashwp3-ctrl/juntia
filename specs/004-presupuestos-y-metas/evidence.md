@@ -129,7 +129,7 @@ No se modifica la spec ni el plan. La implementación continúa con esta precisi
 | T019–T020 | 52d00a4, 0df4d4a | Adaptadores reales, exportación global y siembra SQL aislada; tipos generados directos |
 | T021 | Código 0df4d4a; salidas en este documento | SQL 112.89 s; integración 271.50 s; E2E 28/28, 100.67 s total |
 | T022–T023 | Pendientes tras T024 | No se ha modificado la configuración Playwright de workers ni ejecutado la medición |
-| T024 | Gestor | T021 verde; pendiente del único run manual de control. Ningún run lanzado por el agente |
+| T024 | Gestor | Run 42458621877: app/e2e verdes, db rojo en restaurador. Corrección 0deaae6 verificada localmente; listo para el único relanzamiento autorizado del gestor |
 | T025 | Este documento, en curso | Las [V] siguen abiertas hasta el run de CI; faltan T023/T024 |
 | T026 | Parcial | Verify local; completo e2e:dev y verify final tras workers, antes del push final; revisión de ChatGPT pendiente |
 | T027–T028 | Gestor | Gate ready_for_review y migraciones a producción pendientes; ninguna operación en producción |
@@ -202,3 +202,55 @@ verify (total): pasó · 72.67 s (< 90 s)
 ```
 
 **Listo para T024** tras publicar el SHA de este cierre. Se mantiene el borrador; el gestor lanza el run. Los tiempos anteriores son de iteración local, no sustituyen db:types:check ni cierran las [V].
+
+## T024 · run 42458621877 y corrección del restaurador
+
+El gestor comunicó el run [42458621877](https://github.com/flashwp3-ctrl/juntia/actions/runs/42458621877), SHA 3ca8643: app y e2e verdes (e2e 445 s); db rojo en db:restore-drill por «Tabla no prevista en el restaurador». Los RESTORE_INVARIANTS de controles negativos no son fallos del protocolo. El agente no lanzó ese run ni lanzará el relanzamiento.
+
+**Cambio del protocolo de restauración (AGENTS §17)**: autorizado expresamente por el gestor en este chat, con suspensión de triggers nombrados, misma transacción, equivalentes y negativos por regla, rol postgres alojado y revisión de ChatGPT/gestor antes del merge. No se modifica ninguna migración.
+
+| Trigger suspendido por nombre | Invariante equivalente sobre el snapshot | Controles N11 (también integración) |
+| --- | --- | --- |
+| goal_ledger_guard | Void existente, no void-de-void, misma meta; fechas desde creación y no futuras; aportante/actor del ámbito; saldo vivo ≥ 0 por meta y aportante; contexto del gasto, estado e intervalos archivados; una meta por gasto | invalid-void, void-of-void, future-entry, before-creation, foreign-contributor, goal-negative, member-negative, wrong-context, voided-expense, two-goals, archived-entry, completed-contribution |
+| goal_allocation_guard | entry_kind y asiento usage (FK compuesta activa), atribución a quien creó el uso e integrante autorizado, disponible no negativo, suma de asignaciones conciliada, uso vivo ≤ gasto | allocation-kind, allocation-nonusage, foreign-allocation, member-negative, over-expense |
+| goal_confirmation_guard | Meta compartida y contexto/moneda de gasto correctos, integrantes activos, solicitante y consentimiento, vínculo aprobado recíproco, pending solo sobre gasto activo/meta no archivada; sin actividad en intervalo archivado | personal-request, foreign-request-member, wrong-request-context, wrong-request-member, approval-link, pending-voided-expense, archived-request |
+| goal_void_reactivate | Solo void de uso cierra un intervalo archivado; reactivación auditada con gasto y devolución conciliada; estado final y rearchivo posteriores coherentes | missing-reactivation, wrong-refund, activation-without-void; positivos active y archivada de nuevo con auditoría intacta |
+
+Controles adicionales de restricciones que **nunca se desactivan**: category-kind, income-category (FK compuesta), scope-xor, goal-scope-xor, duplicate-budget y zero-limit. Un límite null sigue siendo desactivación válida; no se convierte en cero. El parser rechaza UPDATE, DELETE y SET session_replication_role. Se conservan activos los triggers de P0-1/P0-2, los de solo inserción, las comprobaciones diferidas de sumas y los internos de FK.
+
+Solo se cambia temporalmente goal_ledger_entries_confirmation_id_fkey: NOT DEFERRABLE → DEFERRABLE INITIALLY DEFERRED → NOT DEFERRABLE. Los asientos preceden a asignaciones/solicitudes y los no-void a sus voids. La copia original y sus valores permanecen intactos. planning-load-start comprueba propiedades iniciales; planning-load-end fuerza las restricciones, reactiva los cuatro triggers con ENABLE, vuelve a forzar restricciones y restablece la FK. check-invariants.sql corre después y antes del COMMIT exterior. PostgreSQL exige la comprobación preliminar para vaciar eventos pendientes antes de ENABLE; no se desactiva ningún trigger interno para evitarla. Fallar en cualquier punto revierte datos y DDL.
+
+El manifiesto ya descubre dinámicamente todas las tablas de juntia_data y usa su PK completa para count/MD5 de filas. La integración ejecuta la consulta real del script; el drill exige las seis líneas de recuentos/huellas. No se añadió una lista parcial que pudiera omitir tablas futuras.
+
+N11 usa una copia sintética por regla, modifica solo sus filas conocidas y recalcula data_sha256 antes de cifrar. Además de exit ≠ 0 y ausencia de marca de éxito, exige el marcador de la regla o de las restricciones: una mera discrepancia de manifiesto no cuenta. Los caminos A/B, login, cifrado y limpieza siguen solo en CI.
+
+Iteración:
+
+- Unidad nueva en rojo: tests/restore-data.test.ts, 1 falla / 5 pasan, «Tabla no prevista en el restaurador». Tras la lista, orden y protocolo, 6/6; ampliada a 8/8 con preservación de las filas de cada corrupción y validación del cierre.
+- Primera integración: 20 fallan / 109 pasan / 9 omisiones, 386.22 s Vitest. Reprodujo el impedimento real de postgres alojado: cannot ALTER TABLE goal_ledger_entries because it has pending trigger events. Se añadió el drenaje preliminar de restricciones; se conserva la comprobación posterior a ENABLE.
+- Siguiente integración: restauración 26/26, pero una carrera ajena interferida por DDL; total 1 falla / 128 pasan / 9 omisiones, 408.72 s. Se agrupó la carga de cada fixture en un viaje SQL y se espera la disponibilidad conjunta de los tres bloqueos DDL con NOWAIT, sin reintentar datos ni aserciones.
+- Siguiente: 1 falla / 131 pasan / 9 omisiones, 378.89 s del runner. Las 18 carreras pasan; el positivo antiguo de restauración detectó que se exigía auditoría de reactivación sin un void. Corregida la condición y ampliado el positivo con rearchivo, preservación de estado y número de auditorías. Nueva pasada en curso.
+- Typecheck verde. Bash -n de restore-drill.sh y restore-plain.sh verde fuera del sandbox; en sandbox MSYS fue rechazado por permisos del sistema, sin ejecutar ningún drill.
+
+### Corrección T024 · cierre local
+
+Código: `0deaae696b7766a373a9cbdee10e8194b91d6fcb` (protocolo, invariantes, fixture, 32 controles N11, pruebas y docs/TESTING.md). Ninguna migración modificada. PR #66 conserva el borrador y requiere la revisión expresa del protocolo por ChatGPT/gestor antes del merge.
+
+- Iteración siguiente: 2 fallan / 134 pasan / 9 omisiones, 384.31 s. Ambos fallos fueron las aserciones nuevas de estado con CRLF de Windows (active\r / archived\r); el estado SQL y todas las negativas eran correctos. Se normalizan los finales de línea del resultado, sin modificar datos ni expectativas.
+- Integración completa final de restauración: **20 archivos pasan / 1 omitido; 138 pruebas pasan / 9 omisiones previstas**, **387.63 s Vitest / 388.33 s del runner**. Incluye **35 casos de restore-planning** (32 corrupciones rechazadas, dos snapshots válidos y manifiesto), los cinco anteriores de restore y todas las carreras.
+- Los positivos comprueban **current_user=postgres y rolsuper=false** en juntia-dev, ciclo aprobado, FK compuesta, void posterior a su asiento, histórico archivado y rearchivo tras devolver/retirar. Verifican estado y auditoría intactos, triggers habilitados y FK NOT DEFERRABLE antes del cierre; las negativas comprueban ausencia de sus datos y propiedades originales tras el rollback.
+- Endurecimiento adicional del formato de entrada: el caso INSERT ON CONFLICT DO UPDATE se vio en rojo antes de prohibirlo. Solo se admite el sufijo vacío o ON CONFLICT DO NOTHING emitido por pg_dump. Se conserva el header real de search_path y se rechazan las formas SET LOCAL/SESSION y set_config de replicación. **Unidad 8/8** y verify después de este endurecimiento.
+- Sintaxis de Bash y JavaScript y git diff --check pasan. Comparación de supabase/migrations: **sin cambios**.
+
+`npm run verify`, fuera del sandbox:
+
+```text
+Dominio: 78 pasan
+Componentes: 681 pasan / 2 omisiones previstas
+Lint: sin errores (warning preexistente balance-panel.tsx:61)
+Typecheck: pasa
+Primera medición: exit 0, 105.62 s; aviso: supera el presupuesto de 90 s
+Segunda medición aislada, mismo código: exit 0, 91.81 s; aviso: supera el presupuesto de 90 s
+```
+
+**El aviso de tiempo local permanece abierto**; se conservan ambas mediciones. No se subió ningún umbral ni se cambió la suite para ocultarlo. Los controles funcionales de restauración están verdes; el relanzamiento T024 comprobará el drill completo, los caminos A/B, login y manifiestos en CI. Las 32 variantes N11 están preparadas y sus corrupciones se verificaron por integración/unidad; **el drill completo no se ha ejecutado en dev**. El agente no lanza CI ni marca ready_for_review. T022–T023 y el gate final siguen pendientes.
