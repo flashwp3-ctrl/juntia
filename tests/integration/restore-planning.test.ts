@@ -5,6 +5,7 @@ import {readFileSync} from "node:fs";
 import {orderRestoreData} from "../../scripts/order-restore-data.mjs";
 import {planningRestoreFixture,planningDump,planningCorruptions,corruptPlanningFixture} from "../support/restore-planning.mjs";
 import {runnerSql} from "./support/sql";
+import {coupleRejected,restoreDiagnostic} from "../../scripts/restore-diagnostics.mjs";
 import {isDevTarget} from "../support/dev-target";
 const owner="88888888-1111-4111-8111-111111111111",member="88888888-2222-4222-8222-222222222222",group="88888888-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const setup=()=>`select tests.create_user('${owner}','restore-planning-owner@seed.test');select tests.create_user('${member}','restore-planning-member@seed.test');select tests.seed_couple('${group}','${owner}','${member}');`;
@@ -46,4 +47,25 @@ it("004: manifiesto descubre las seis tablas y calcula count/huella con PK compl
  const query=script.slice(script.indexOf("select format('select %L"),script.indexOf("\\gexec")+7);
  const result=runnerSql("begin isolation level repeatable read read only;"+query+"\nrollback;");
  for(const table of ["budgets","budget_versions","savings_goals","goal_ledger_entries","goal_usage_allocations","goal_usage_confirmations"]){expect(result).toMatch(new RegExp('table=juntia_data\\.'+table+'\\|[0-9]+\\|[0-9a-f]{32}'));}
+});
+
+it.each([false,true])("N10: grupo sin segundo miembro, con P0-3=%s, devuelve rechazo de pareja inequívoco",(withPlanning)=>{
+ const f=planningRestoreFixture({owner,member,group});
+ const authOnly=setup().split("select tests.seed_couple")[0];
+ // Es la corrupción N10: se omite solo la membresía del segundo integrante.
+ const groupRows=`INSERT INTO juntia_data.groups (id,owner_user_id,status,activated_at) VALUES ('${group}','${owner}','active',now());
+ INSERT INTO juntia_data.group_members (group_id,user_id,role,status,join_order) VALUES ('${group}','${owner}','owner','active',1);
+ INSERT INTO juntia_data.group_invitations (group_id,email,token_hash,status,created_by,inviter_display_name,accepted_by,accepted_at) VALUES ('${group}','restore-planning-member@seed.test',repeat('8',64),'accepted','${owner}','Sara','${member}',now());`;
+ const sql=authOnly+orderRestoreData(groupRows+(withPlanning?planningDump(f):""))+validation();
+ let raw="";
+ try{runnerSql(`\\set VERBOSITY verbose\nbegin;${locks}do $n10$ begin execute '${sql.replaceAll("'","''")}';end $n10$;rollback;`);}catch(error){raw=String((error as {stderr?:unknown}).stderr??error);}
+ expect(coupleRejected(raw)).toBe(true);
+ if(withPlanning)expect(restoreDiagnostic(raw).sqlstate).toBe("JT111");else expect(restoreDiagnostic(raw).marker).toBe("pareja/membresias/invitaciones");
+ expect(JSON.parse(runnerSql(flags))).toEqual({disabled:0,deferred:false});
+});
+it("diagnóstico seguro del rol de restauración y propietarios de las seis tablas",()=>{
+ const role=JSON.parse(runnerSql(readFileSync("supabase/restore/describe-role.sql","utf8")));
+ expect(role.tables).toHaveLength(6);expect(role.tables.every((t:{can_act_as_owner:boolean})=>t.can_act_as_owner)).toBe(true);
+ if(isDevTarget()){expect(role.current_user).toBe("postgres");expect(role.superuser).toBe(false);}
+ console.info("[restore-role] "+JSON.stringify(role));
 });

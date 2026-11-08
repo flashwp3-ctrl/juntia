@@ -254,3 +254,27 @@ Segunda medición aislada, mismo código: exit 0, 91.81 s; aviso: supera el pres
 ```
 
 **El aviso de tiempo local permanece abierto**; se conservan ambas mediciones. No se subió ningún umbral ni se cambió la suite para ocultarlo. Los controles funcionales de restauración están verdes; el relanzamiento T024 comprobará el drill completo, los caminos A/B, login y manifiestos en CI. Las 32 variantes N11 están preparadas y sus corrupciones se verificaron por integración/unidad; **el drill completo no se ha ejecutado en dev**. El agente no lanza CI ni marca ready_for_review. T022–T023 y el gate final siguen pendientes.
+
+## Segundo T024 · run 42501082729 (80abe35): diagnóstico y corrección N10
+
+Se leyó el log existente, sin lanzar CI. El job db 128793769610 contiene, en este orden, «Camino A: MANIFIESTO COINCIDE; usuario restaurado entra», «Camino B: MANIFIESTO COINCIDE; base temporal borrada», «N10-couple-invariant: rechazo esperado, exit=1» y «Falló db:restore-drill». No alcanza la confirmación del motivo de N10 ni N11. El reset y GPG aparecen después porque scripts/ci.mjs publica todo stdout antes de stderr: no indican una nueva restauración A fallida. Según el gestor, app y e2e están verdes (439 s).
+
+Causa reproducida: N10 elimina la segunda membresía del grupo al que ahora pertenece el gasto compartido de la fixture P0-3. allocations_check_member rechaza con JT111 antes del validador de invariantes. El grep anterior exigía exclusivamente el marcador RESTORE_INVARIANTS de pareja y terminaba silenciosamente con exit 1. La corrección admite solo ese marcador o JT111/JT119, rechazos específicos de membresía/transición; permisos 42501, FK 23503, otras excepciones y marcadores en DETAIL no satisfacen N10. No se cambia ninguna migración, trigger, permiso ni protocolo transaccional autorizado.
+
+| Cambio | Prueba | Commit |
+| --- | --- | --- |
+| Etapas, exit y ERR sin comandos/argumentos/log crudo; clasificación SQL segura | restore-diagnostics.test.ts: salida privada falsa, exit 17, test silencioso exit 1, estados permitidos y rechazados | Único commit de esta corrección, el que contiene esta sección |
+| Rechazo temprano N10 y conservación del motivo preciso | restore-planning.test.ts: grupo inválido sin P0-3 → invariante; con P0-3 → JT111; rollback y propiedades intactas | Mismo commit |
+| Metadatos seguros de rol/propiedad en A y B | describe-role.sql y prueba de integración de las seis tablas; postgres no superusuario con capacidad de dueño en juntia-dev | Mismo commit |
+
+Pruebas vistas en rojo antes del código: los cuatro casos de restore-diagnostics.test.ts fallaron por falta de los módulos de diagnóstico/progreso. Después pasan 4/4; junto a restore-data.test.ts pasan 12/12. Un error inicial de sintaxis del propio test se corrigió antes de esa pasada y no se cuenta como rojo funcional.
+
+Validación final local (solo juntia-dev para base de datos):
+
+- npm run test:integration:dev: exit 0; 141 pruebas pasan / 9 omisiones previstas, 20 archivos pasan / 1 omitido; runner **391.67 s** (Vitest 391.47 s). Incluye restore-planning.test.ts **38 casos** y los cinco casos anteriores de restauración, los 32 negativos P0-3, N10 en ambos contextos y comprobación del rol.
+- npm run verify: exit 0, **63.14 s**, dentro de 90 s: dominio 78 pasan; componentes 685 pasan / 2 omisiones; lint sin errores (warning preexistente balance-panel.tsx:61); typecheck pasa. Las mediciones previas se conservan arriba, no se cambió el presupuesto.
+- Bash -n: restore-drill.sh, restore-plain.sh y restore-progress.sh pasan; git diff --check pasa; supabase/migrations sin cambios.
+
+A usa DB_URL generado por Supabase local y B PG configurado como postgres por el workflow. No se imprimieron sus valores. Los caminos A/B del run existente demuestran que ALTER/SET CONSTRAINTS y carga ya funcionaban: no hay motivo para cambiar a un rol de mayor privilegio. Se añade una sonda antes de la carga para que el próximo run registre current_user/session_user, superuser, propietarios y capacidad de dueño de ambas conexiones. El rol efectivo local de A aún no se ha observado directamente; en juntia-dev la aserción postgres:false y la capacidad de dueño de las seis tablas pasan. No se ejecutó Supabase local ni el drill completo; esas comprobaciones siguen reservadas al CI del gestor.
+
+**Lista la corrección para un relanzamiento del punto de control por el gestor**, tras un único commit y push. PR #66 sigue en borrador. Sin runs lanzados por el agente ni acceso a producción. T022–T023, T028 del gestor y gate final siguen pendientes.
