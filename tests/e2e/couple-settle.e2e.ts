@@ -171,7 +171,7 @@ test("Balance y liquidación parcial: Tomás le debe a Sara 429.900; tras 200.00
 // T060a / T065 (spec 003, PR D) / FR-051, FR-052; `docs/TESTING.md` §5, regla 3: **un** test con motion activo para los dos
 // momentos L2 (MOTION_SYSTEM, «Contención»): E5 al guardar un gasto compartido (el total cuenta hacia arriba) y S4 al
 // liquidar (el saldo cuenta hasta «Al día», el badge pasa a LIQUIDADO). Los dos solo con la confirmación del servidor.
-test("motion activo: E5 al anotar en Nosotros y S4 al liquidar el total (los dos momentos L2)", async ({ browser, baseURL }, testInfo) => {
+test("@serial motion activo: E5 al anotar en Nosotros y S4 al liquidar el total (los dos momentos L2)", async ({ browser, baseURL }, testInfo) => {
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   await seedSharedMovements(pair, "recent");
   const context = await browser.newContext({ baseURL, reducedMotion: "no-preference", viewport: { width: 390, height: 844 } });
@@ -219,6 +219,10 @@ test("motion activo: E5 al anotar en Nosotros y S4 al liquidar el total (los dos
   await sheet.getByRole("button", { name: copy.balance.settle.submit(owed) }).click();
   await expect(balance.getByText(copy.balance.settledBadge)).toBeVisible();
   await expect(balance.getByRole("heading", { name: copy.balance.settled })).toBeVisible();
+  // T023/T026: LIQUIDADO y el heading cambian al confirmar, antes de acabar S4.
+  // Espera el inicio registrado y el final real; no lee una muestra parcial del observer.
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __s4: string[] }).__s4.some((frame) => frame.startsWith("animating")))).toBe(true);
+  await expect(balance).not.toHaveAttribute("data-s4", "animating");
   const s4 = await page.evaluate(() => (window as unknown as { __s4: string[] }).__s4);
   console.log(`spec 3 · motion S4: ${s4.length} cambios; animando: ${s4.filter((frame) => frame.startsWith("animating")).length}`);
   expect(s4.some((frame) => frame.startsWith("animating")), "S4 anima con la confirmación").toBe(true);

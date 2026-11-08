@@ -7,6 +7,8 @@ import { appOrigin, appPort, assertPortFreeSync, webServer } from "./scripts/app
 // comprueba que el puerto esté libre y, si no, se niega con el PID (los workers cargan esta config con él ya arrancado).
 // Con `npm run e2e:dev` (decisión 18) la app arranca sin la clave secreta ni la conexión de juntia-dev, que solo usa la
 // siembra del proceso de pruebas.
+import { measurementConfig } from './scripts/dev-target/playwright-measurement.mjs';
+const measurement = measurementConfig(process.env.JUNTIA_PLAYWRIGHT_MEASURE);
 const devTarget = process.env.JUNTIA_TEST_TARGET === "dev";
 // Maestro §15.10, decisión 21 (PR D de la 003): accesibilidad en dos niveles. Por defecto, el nivel ligero de cada PR
 // (cada pantalla y estado una vez, a 390, en los dos temas): los casos con la etiqueta @sweep quedan fuera. Con
@@ -16,6 +18,7 @@ const a11yLevel = process.env.A11Y_LEVEL === "sweep" ? { grep: /@sweep/ } : { gr
 if (!process.env.TEST_WORKER_INDEX) assertPortFreeSync(appPort());
 const server = webServer();
 export default defineConfig({
+  ...measurement,
   retries: process.env.CI ? 1 : 0,
   use: { reducedMotion: "reduce", baseURL: appOrigin() },
   projects: [

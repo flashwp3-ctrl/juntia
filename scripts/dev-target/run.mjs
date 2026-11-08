@@ -16,6 +16,7 @@ import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { parseEnv } from "node:util";
 import { appOrigin, appPort, assertPortFree } from "../app-port.mjs";
+import { measurementPlan } from './playwright-measurement.mjs';
 import { planE2E } from "./e2e-plan.mjs";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
 import { runInSession } from "./session.mjs";
@@ -231,7 +232,7 @@ async function main() {
   if (!CI_ONLY[command]) throw new Error("Uso: node scripts/dev-target/run.mjs reset|test:db|test:integration|e2e [-- argumentos de Playwright]");
   const started = performance.now();
   // Los argumentos se validan antes del guardia y del bloqueo: uno que cambiaría el destino o la configuración no llega a nada.
-  const plan = command === "e2e" ? planE2E(process.argv.slice(3)) : null;
+  const plan = command === "e2e" ? measurementPlan(planE2E(process.argv.slice(3)), process.env.JUNTIA_PLAYWRIGHT_MEASURE) : null;
   if (plan && process.argv.length > 3) console.log(`e2e:dev dirigido: ${plan.map((step) => step.label).join(" · ")}. El completo, una vez antes de cada push.`);
   const { path, commonDir, fileEnv } = loadEnvTest();
   // F48-5: el enlace de la CLI se lee en el worktree y en el checkout principal; cualquiera que no sea dev para el comando.

@@ -11,6 +11,7 @@ import { acquireDevLock, alive, killTree, TreeStillAliveError, unlockDevLock } f
 import { runInSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
 import { planE2E } from "../scripts/dev-target/e2e-plan.mjs";
+import {measurementConfig,measurementPlan} from "../scripts/dev-target/playwright-measurement.mjs";
 
 describe("lector TAP de test:db:dev", () => {
   it("pasa con todas las pruebas ok y el plan al final (no_plan) o al principio (plan)", () => {
@@ -363,4 +364,15 @@ describe("e2e:dev dirigido (planE2E)", () => {
   ])("rechaza %j: cambiaría la config, el proyecto, el destino o la exclusión de @mail", (args) => {
     expect(() => planE2E(args)).toThrow(/e2e:dev/);
   });
+});
+
+// T022 / F64-6: configuración opt-in sin cambiar defaults ni ampliar F55-1.
+describe("medición de workers y dos pasadas de @serial",()=>{
+it('sin variable conserva configuración y plan actuales',()=>{expect(measurementConfig(undefined)).toEqual({});expect(measurementPlan(planE2E([]),undefined)).toEqual(planE2E([]));});
+it.each([1,2,4])('workers %s con y sin fullyParallel',(workers)=>{for(const parallel of [true,false])expect(measurementConfig(workers+':'+parallel)).toEqual({workers,fullyParallel:parallel});});
+it.each(['','0:true','8:false','2:yes','2:true --config evil','1:false:extra'])('rechaza configuración inválida sin reproducir su valor: %s',(value)=>{expect(()=>measurementConfig(value)).toThrow('JUNTIA_PLAYWRIGHT_MEASURE');});
+it('dos pasadas por proyecto: sin mail; serial con un worker; conserva rutas y grep',()=>{const plan=measurementPlan(planE2E(['tests/e2e/annotate.e2e.ts','--grep','motion']), '4:true');expect(plan).toHaveLength(2);expect(plan[0].args).toContain('@mail|@serial');expect(plan[1].args).toEqual(expect.arrayContaining(['--grep','(?=.*(?:motion))(?=.*@serial)','--workers','1','--pass-with-no-tests']));for(const step of plan)expect(step.args).toContain('tests/e2e/annotate.e2e.ts');});
+it('el completo incluye E2E y axe en ambas pasadas, sin reintentos de medición',()=>{const plan=measurementPlan(planE2E([]),'2:false');expect(plan).toHaveLength(4);expect(plan.filter((s:{a11yJob?:string})=>s.a11yJob==='e2e')).toHaveLength(2);for(const step of plan)expect(step.args).toEqual(expect.arrayContaining(['--retries','0']));});
+it('la medición no abre workers, grep-invert ni config como argumentos de usuario',()=>{for(const args of [['--workers','4'],['--grep-invert','@mail'],['--config','evil']])expect(()=>planE2E(args)).toThrow();});
+
 });

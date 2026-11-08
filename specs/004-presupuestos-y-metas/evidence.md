@@ -16,6 +16,8 @@ T001 declarada hecha por el gestor. T027 y T028 son humanas.
 Las salidas de `juntia-dev` son iteración, no cierre de verificaciones [V].
 Ningún run de CI lanzado por el agente. Producción no se utiliza.
 
+**Cierre actual**: T024 verde en 42508573805; T022–T023 medidos y documentados, sin aumento de workers recomendado; integración 142 verdes / 9 omisiones; completo final 1:false verde (407.98 s), verify final verde (62.55 s). PR en borrador para revisión del gestor y ChatGPT; gate final y producción siguen siendo humanos. Las secciones de avance anteriores se conservan como historial.
+
 ## Iteración local · grupo 1A
 
 - T002–T005: `npm run test:unit -- src/domain/budgets/budgets.test.ts src/domain/goals/goals.test.ts src/domain/metrics/metrics.test.ts src/domain/analysis/analysis.test.ts`.
@@ -278,3 +280,84 @@ Validación final local (solo juntia-dev para base de datos):
 A usa DB_URL generado por Supabase local y B PG configurado como postgres por el workflow. No se imprimieron sus valores. Los caminos A/B del run existente demuestran que ALTER/SET CONSTRAINTS y carga ya funcionaban: no hay motivo para cambiar a un rol de mayor privilegio. Se añade una sonda antes de la carga para que el próximo run registre current_user/session_user, superuser, propietarios y capacidad de dueño de ambas conexiones. El rol efectivo local de A aún no se ha observado directamente; en juntia-dev la aserción postgres:false y la capacidad de dueño de las seis tablas pasan. No se ejecutó Supabase local ni el drill completo; esas comprobaciones siguen reservadas al CI del gestor.
 
 **Lista la corrección para un relanzamiento del punto de control por el gestor**, tras un único commit y push. PR #66 sigue en borrador. Sin runs lanzados por el agente ni acceso a producción. T022–T023, T028 del gestor y gate final siguen pendientes.
+
+## T024 cerrado · run 42508573805 · 5be221a
+
+El gestor confirmó el checkpoint [42508573805](https://github.com/flashwp3-ctrl/juntia/actions/runs/42508573805), sobre 5be221ac4bc84b6a9ea955cd64425568d04579e1: **app verde 250 s; db verde 409 s; e2e verde 461 s**. El restore-drill completo con P0-3, sus caminos A/B y los negativos terminan en verde. El job db cierra T024 y las verificaciones ADR-013 [V] 1–7 aplicadas a las migraciones nuevas, con pgTAP, integración, tipos y restauración del mismo commit. El job db supera su presupuesto de aviso de 360 s; e2e queda a 19 s del tope bloqueante de 480 s. No se alteran presupuestos ni se lanza CI adicional por el agente.
+
+T022–T023 empiezan después de este checkpoint, conforme a la precisión del gestor. La configuración de workers que use CI no se fija aquí: T036 pertenece al PR B. El gate del commit final lo lanzará el gestor al marcarlo listo después de su revisión y la de ChatGPT.
+
+Lectura del job db 128816477634 del run verde: A informa current_user=session_user=postgres, superuser=false; B informa postgres, superuser=true. Las seis tablas son propiedad de postgres y can_act_as_owner=true en ambos caminos. Queda resuelta con salida real del runner la duda del rol local; no se cambió ningún rol ni privilegio. Marcador final: «ENSAYO LISTO: A y B, diez controles previos y 32 controles P0-3 rechazados». Check generated types, Test API y restore-drill constan success.
+
+## T022–T023 · medición de workers
+
+T022 usa una sola variable opt-in, JUNTIA_PLAYWRIGHT_MEASURE=W:true|false (W = 1, 2 o 4). Sin variable, ni workers ni fullyParallel se fijan: se conserva exactamente el default previo. e2e:dev valida la variable antes del guardia/lock y la hereda al hijo; no se abre la lista blanca F55-1. En modo de medición se excluyen @mail y @serial en la primera pasada de cada proyecto y se corre @serial aparte con --workers 1. Cero reintentos; axe serial sin casos se permite explícitamente. Los dos casos de motion activo, y solo esos, se etiquetan @serial.
+
+Test primero: suite nueva en rojo por módulo de medición inexistente; después 63 pasan / 2 omisiones al ejecutar junto a dev-target-tools. Se consolidaron los 13 casos nuevos dentro de tests/dev-target-tools.test.ts (la prueba de e2e-plan, como pide T022). Cubren defaults, seis combinaciones, entradas inválidas, filtros, dos pasadas por proyecto y rechazo de workers/config/grep-invert externos. Antes de la primera medición hubo un build fallido por un parámetro sin tipo en ese test (8.07 s); se corrigió y no se cuenta como resultado de workers porque no arrancó Playwright.
+
+Entorno: Windows, i7-12700H, 20 CPU lógicas, 16 GiB, Node 24.22.1, Playwright 1.64.1. App de producción local en PORT=3400, solo juntia-dev, guardia y lock por cada comando. Las muestras no se solaparon entre sí ni con verify. Durante 1:false se ejecutó un typecheck breve (3.8 s); se conserva como factor de ruido de esa muestra. No es un benchmark de laboratorio controlado. Orden: 1:false, 1:true, 2:false, 2:true, 4:false, 4:true. Una muestra por combinación; no se reintentaron los fallos. Los datos por cuenta y pareja son sintéticos y únicos; no se reinicia el proyecto entre muestras. Estos tiempos no incluyen instalación/Supabase del runner y no son equivalentes al tiempo del job de CI.
+
+Cada comando dirigido incluye las specs 1–3 (access-account, annotate, couple-settle) y los cuatro archivos axe existentes (routes, couple, couple-shared, balance). Todos se pasan por sus rutas .e2e.ts/.a11y.ts a npm run e2e:dev. Cada combinación selecciona 26 E2E en primera pasada, 2 E2E seriales y 94 casos ligeros axe; la pasada axe serial selecciona 0 casos. Quedan fuera @mail (4 E2E, solo CI), @sweep y evidence, como siempre. Con 4 workers y fullyParallel=false solo hay 3 workers efectivos de E2E porque hay 3 archivos; axe tiene 4.
+
+| Workers | fullyParallel | Build s | E2E sin serial s | Serial E2E / axe s | Axe sin serial s | Total s | Fallos | Aislamiento* |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 1 | false | 9.44 | 162.03 | 16.55 / 3.35 | 277.66 | 471.15 | 0 | RLS4 verde |
+| 1 | true | 10.63 | 151.80 | 17.42 / 3.44 | 283.79 | 468.11 | 0 | RLS4 verde |
+| 2 | false | 12.99 | 115.87 | 16.47 / 2.48 | 236.83 | 385.79 | 0 | RLS4 verde |
+| 2 | true | 9.17 | 105.81 | 17.91 / 2.72 | 146.65 | 283.24 | 1 E2E | RLS4 verde |
+| 4 | false | 9.36 | 86.54 | 16.10 / 3.43 | 216.62 | 333.06 | 1 E2E | RLS4 verde |
+| 4 | true | 8.95 | 82.86 | 16.30 / 3.46 | 90.35 | 202.93 | 1 E2E + 2 axe | RLS4 verde |
+
+El total incluye listado @mail y arranque de procesos/servidores, además de las columnas; las pasadas seriales vacías también tienen ese coste. Salidas originales de las seis ejecuciones en logs locales ignorados workers-W-P.log; esta tabla transcribe todas las filas del resumen del runner.
+
+Los tres fallos E2E son couple-settle.e2e.ts, «gasto compartido 50/50», línea 54: no encuentra data-counting-amount visible para $186.400 en 5 s. El contexto conservado de 4:true muestra heading Actividad, contexto Nosotros y «Gasto compartido de noviembre $186.400», con el movimiento correcto. Es coherente con el fallback existente de annotate-provider.tsx que, tras 60 cuadros sin fila confirmada visible, navega a Actividad; es una inferencia apoyada por el contexto y el código, no una traza temporal. No se cambió ese comportamiento ni la aserción para esconder el fallo. Con 4:true, los dos casos axe couple-shared (light/dark) agotan 30 s al llegar a la lista de revisión de Mover a Pareja, línea 130; no son violaciones axe y no se subió ningún timeout.
+
+**Propuesta inicial retirada tras T026: 2 workers, fullyParallel=false**, con primera pasada sin @serial y segunda con @serial y 1 worker. Reducción local de 85.36 s (18.1 %) frente a 1:false. No se recomiendan los modos con fallos aunque sean más rápidos. No se fija esa combinación en CI: T036 pertenece al PR B; el default de este PR sigue sin cambiar. El control de cuatro parejas pasó sin lecturas cruzadas; la adopción sigue condicionada al gate final del gestor; no garantiza por sí sola bajar el job de CI de 480 s.
+
+*Aislamiento: control común de integración, no un contador instrumentado entre los procesos Playwright de cada fila. La prueba T023 siembra concurrentemente cuatro parejas doradas por el mismo seedCouple que usan los workers (índices 40–43), verifica 12 IDs distintos (4 grupos y 8 personas), ocho archivos de sesión diferentes y los datos propios de cada pareja. Desde Sara y Tomás de las otras tres parejas consulta explícitamente los IDs ajenos en goals_overview, budget_history, couple_expenses y my_transactions: **96 consultas, todas vacías y sin errores**. Las pruebas E2E de privacidad HTML/RSC/prefetch también pasan en las seis combinaciones; no se observó fuga de datos. Los fallos de los tres modos descartados fueron los de interfaz/tiempo descritos arriba.
+
+Cierre de integración: npm run test:integration:dev, **20 archivos pasan / 1 omitido; 142 pruebas pasan / 9 omisiones previstas**, Vitest **434.02 s**, paso **434.67 s**, runner **434.82 s**. seed.test.ts pasa 4/4, incluida la prueba nueva (30.589 s). Las propiedades de aislamiento de la propuesta 2:false quedan comprobadas en la capa RLS; las duraciones siguen siendo solo iteración de dev. No se cambiaron las políticas para obtener el resultado ni se accedió a producción.
+
+## T026 · cierre y sincronización de S4
+
+Primer completo, sin argumentos dirigidos y con JUNTIA_PLAYWRIGHT_MEASURE=2:false: **415.39 s, exit 1**, 26 E2E no seriales y 94 axe pasan; una de las dos seriales falla. Es un fallo distinto de los de la matriz: S4 registra solo 2 valores distintos cuando la prueba lee el MutationObserver, y la aserción exige más de 2. El log muestra «4 cambios; animando: 2». Se conserva en workers-final-e2e-before-s4.log; no se cuenta como una pasada verde ni se reintenta sin cambios.
+
+Causa de sincronización en el test: SharedBalance cambia LIQUIDADO y el heading al aplicar la confirmación, mientras data-s4 permanece animating hasta acabar S4. La prueba esperaba esos textos y leía el observer inmediatamente, antes del final de la animación. Se añade espera al inicio registrado por el observer y a la retirada de data-s4=animating antes de leer la muestra final. **No se toca la app**, no se debilitan las aserciones de animación/valores intermedios, ni se añade timeout fijo, reintento o cambio de presupuesto. Es una corrección de sincronización del caso medido de T023/T026, sin decisión nueva de producto.
+
+La matriz anterior conserva las seis muestras originales, todas tomadas con el mismo test anterior; no se reemplazan por cifras posteriores. El cambio afecta solo a la espera del paso serial común de 1 worker, no al reparto de las otras pasadas.
+
+Después de verlo en rojo, prueba dirigida: npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts --grep 'motion activo', sin variable de medición: **1/1 pasa**, 28.91 s del runner; S4 observa **41 cambios, 38 animando**. Se ejecuta un segundo completo por esta corrección concreta; su salida se registra a continuación.
+
+verify previo a la corrección del test: **exit 0, 61.03 s**, dominio 78; componentes 698 pasan / 2 omisiones previstas; lint sin errores (warning preexistente balance-panel.tsx:61); typecheck pasa. Se repite verify después del completo corregido, justo antes del push, como pide T026.
+
+Segundo completo con 2:false, tras la espera correcta de S4: **425.61 s, exit 1** (workers-final-e2e-2-false.log). Fallan el E2E 50/50 (héroe de Inicio no encontrado), el caso serial E5 antes de llegar a S4 (héroe $2.940.000 no encontrado, tras observar el anterior $2.840.000) y axe compartido light por timeout global de 30 s esperando el conflicto «Tomás cambió este gasto antes». Pasan 25 E2E no seriales, 1 serial y 93 axe. La espera añadida a S4 no modifica ninguno de esos puntos de fallo.
+
+**La propuesta 2:false queda retirada. No se considera demostrado que aumentar workers sea estable**, aunque las pruebas de RLS sí pasan sin cruces. El fallo en una pasada ya forzada a 1 worker impide atribuir toda la inestabilidad a la concurrencia. No se cambian los flujos ni sus aserciones para recomendar paralelismo; no se fija ningún número de workers en CI.
+
+Siguiente control de entorno, después de acabar y soltar el lock: npm run db:dev:reset **pasa, 10.79 s**, 11 migraciones y esquema tests confirmado. Elimina solo las fixtures sintéticas acumuladas en juntia-dev; el guardia se ejecuta y no se usa --force ni se toca producción. Se comprueban primero, dirigidos, los dos recorridos afectados con 1:false sobre ese estado fresco, como el arranque del runner; solo después se valida el completo con ese perfil. La matriz anterior no se sustituye por estas salidas.
+
+Control dirigido después del reset: JUNTIA_PLAYWRIGHT_MEASURE=1:false; npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts --grep 'gasto compartido 50/50|motion activo': **2/2 pasan**, primera pasada 8.99 s, serial 11.44 s, runner **30.51 s**. S4 registra 41 cambios, 38 animando. Se pasa al completo sin argumentos con 1:false; la recomendación final es **no fijar un aumento de workers ni fullyParallel**. Las opciones de mitigación siguientes pertenecen al PR B; no se cambia su alcance aquí.
+
+### Cierre local final · 1:false
+
+Completo sin argumentos dirigidos, JUNTIA_PLAYWRIGHT_MEASURE=1:false, después del reset y de los dos recorridos dirigidos: **exit 0, 407.98 s**. Salida en workers-final-e2e-1-false.log: build 8.68 s; E2E no seriales **26/26, 123.10 s**; seriales **2/2, 17.98 s**; axe **94/94, 254.87 s**; axe serial **0 casos, 2.39 s** de proceso. S4: 41 cambios, 38 animando. Siguen omitidas por contrato las cuatro E2E @mail y el barrido @sweep; no se lanzaron correos ni el proyecto evidence contra dev.
+
+**Recomendación final T023: no fijar un aumento de workers ni activar fullyParallel en CI.** Para este cierre local se usó 1:false. Las seis muestras y las dos pasadas completas fallidas posteriores quedan registradas; 2:false dejó de cumplir cero fallos y no se conserva su propuesta inicial. El control común RLS de cuatro parejas sí pasó sin cruces. La matriz se tomó en orden, con fixtures acumuladas y una sola muestra por combinación; los tiempos y el control posterior limpio no aíslan por sí solos la causa de la degradación (concurrencia, volumen o latencia). No se afirma que reiniciar arregle un defecto de la app ni se ocultan los fallos de dev.
+
+T036 permite no tocar el job si T023 no demuestra seguridad/estabilidad; el PR B seguirá las siguientes mitigaciones del contrato sin elevar el tope. Este PR conserva los defaults sin variable, el workflow y sus presupuestos. El tope bloqueante de 480 s sigue vigente: el checkpoint en CI fue 461 s; 407.98 s de dev no garantiza el tiempo del gate final.
+
+| Tarea | Estado de este cierre | Commit / prueba |
+| --- | --- | --- |
+| T001 | Hecha por el gestor | Sin cambios |
+| T002–T021 | Implementadas y regresiones verificadas | Mapa anterior; checkpoint verde 42508573805 sobre 5be221a |
+| T022 | Configuración opt-in y lista blanca preservada | Commit de este cierre; dev-target-tools 63 pasan / 2 omisiones |
+| T023 | Seis combinaciones, dos pasadas y control de aislamiento; no se adopta aumento | Commit de este cierre; matriz completa, RLS 96/96 lecturas ajenas vacías |
+| T024 | Verde, cerrado por el gestor | Run 42508573805, SHA 5be221a; tipos, db y restaurador verdes |
+| T025 | Evidencia actualizada | Este documento conserva rojos, verdes, tiempos y límites |
+| T026 | Completo local verde; verify final se registra debajo | 407.98 s, 122 pruebas; revisión de ChatGPT pendiente, PR en borrador |
+| T027 | Pendiente, humana | Revisión del gestor, ChatGPT y gate ready_for_review sobre el SHA final |
+| T028 | Pendiente, humana después del merge | No se utiliza producción desde esta rama |
+
+No se modifican spec.md, plan.md, tasks.md, las migraciones ni el workflow. No se implementa ningún entregable de PR B–E. Sin procesos ajenos terminados, sin puertos 3000/3100, sin lock forzado, sin valores de .env.test publicados y sin runs de CI lanzados por el agente. El mapa con el SHA concreto de este cierre se publica en la descripción del PR.
+
+verify final después del completo verde: **exit 0, 62.55 s** (presupuesto sin cambios <90 s); dominio **78/78**, componentes **698 pasan / 2 omisiones previstas**, 55 archivos. Lint sin errores (solo el warning preexistente balance-panel.tsx:61); typecheck pasa. git diff --check pasa; comparaciones de migraciones, workflow, spec.md, plan.md y tasks.md sin cambios en este cierre. Los logs de validación permanecen locales e ignorados; no se versionan sesiones ni credenciales.

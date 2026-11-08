@@ -66,3 +66,20 @@ it("se niega a sembrar fuera del destino permitido", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = saved.NEXT_PUBLIC_SUPABASE_URL;
   }
 });
+
+// T023 / F64-6: cuatro workers no ven las metas, presupuestos ni gastos de otro.
+it('004 T023: cuatro parejas doradas concurrentes aíslan IDs, sesiones y lecturas RLS',async()=>{
+ const {seedCouple}=await import('../support/seed');
+ const pairs=await Promise.all([0,1,2,3].map(index=>seedCouple({index:40+index,golden:true})));
+ expect(new Set(pairs.flatMap(p=>[p.groupId,p.sara.id,p.tomas.id])).size).toBe(12);
+ const states=await Promise.all(pairs.flatMap((pair,index)=>(["sara","tomas"] as const).map(role=>writeStorageState(pair[role],40+index,role))));paths.push(...states);expect(new Set(states).size).toBe(8);
+ const snapshots=await Promise.all(pairs.map(async pair=>{
+  const [goals,budgets,expenses,privates]=await Promise.all([pair.sara.client.from('goals_overview').select('id'),pair.sara.client.from('budget_history').select('id'),pair.sara.client.from('couple_expenses').select('id'),pair.sara.client.from('my_transactions').select('id')]);
+  for(const result of [goals,budgets,expenses,privates])expect(result.error).toBeNull();
+  expect(goals.data).toHaveLength(2);expect(budgets.data!.length).toBeGreaterThanOrEqual(3);expect(expenses.data).toHaveLength(6);expect(privates.data).toHaveLength(9);
+  return {goals:goals.data!.map(r=>r.id),budgets:budgets.data!.map(r=>r.id),expenses:expenses.data!.map(r=>r.id),privates:privates.data!.map(r=>r.id)};
+ }));
+ await Promise.all(pairs.flatMap((pair,index)=>pairs.filter((_,other)=>other!==index).flatMap(foreign=>[foreign.sara,foreign.tomas].map(async user=>{
+  for(const [view,ids] of [['goals_overview',snapshots[index].goals],['budget_history',snapshots[index].budgets],['couple_expenses',snapshots[index].expenses],['my_transactions',snapshots[index].privates]] as const){const result=await user.client.from(view).select('id').in('id',ids);expect(result.error).toBeNull();expect(result.data).toEqual([]);}
+ }))));
+});
