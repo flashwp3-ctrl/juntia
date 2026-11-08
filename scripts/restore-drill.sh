@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# T029–T030 / FR-059 y T026b: dos restauraciones vacías y diez fallos rechazados.
+# T029–T030 / FR-059, T026b y 004: dos restauraciones vacías y controles negativos.
+# Cambio del protocolo de restauración (AGENTS §17), autorizado por el gestor:
+# order-restore-data carga P0-3 con solo cuatro triggers de negocio nombrados
+# suspendidos, un arco FK diferido, reactivación explícita y doble comprobación
+# de restricciones. check-invariants corre antes del COMMIT de psql -1.
+# Nunca se suspenden los triggers de P0-1/P0-2, los de solo inserción ni FK.
 set -euo pipefail
 ROOT=$(git rev-parse --show-toplevel)
 for required in backup-manifest.sh backup.sh restore-plain.sh; do
@@ -40,6 +45,10 @@ echo "F40-1: escritura concurrente confirmada; snapshot importado=$(cat "$DRILL_
 ARCHIVE=$(find "$WORK/good" -name 'juntia-*.tar.gpg')
 gpg --batch --pinentry-mode loopback --passphrase-fd 3 -d -o "$WORK/copy.tar" "$ARCHIVE" 3<<<"$JUNTIA_BACKUP_PASSPHRASE"
 tar -xf "$WORK/copy.tar" -C "$WORK"
+# El manifiesto dinámico debe cubrir recuento y huella de las seis tablas nuevas.
+for table in budgets budget_versions savings_goals goal_ledger_entries goal_usage_allocations goal_usage_confirmations; do
+  grep -Eq "^table=juntia_data[.]$table[|][0-9]+[|][0-9a-f]{32}$" "$WORK/manifest.txt"
+done
 # Camino A: db reset destruye los datos anteriores; nunca usa la semilla.
 supabase db reset --no-seed
 node "$ROOT/scripts/order-restore-data.mjs" "$WORK/data.sql" "$WORK/ordered.sql"
@@ -147,4 +156,24 @@ grep -F 'RESTORE_INVARIANTS:' "$WORK/N10-couple-invariant.log"
 no_database
 echo 'N10: pareja inválida rechazada por invariantes, con hash de datos correcto'
 no_database
-echo 'ENSAYO LISTO: A y B, diez controles negativos rechazados'
+# N11: una copia distinta por cada regla P0-3; el hash de datos es correcto.
+# El marcador comprueba que rechazó la regla/constraint, no solo el manifiesto.
+planning_controls=0
+while IFS='|' read -r rule marker; do
+  cp "$WORK/data.sql" "$WORK/altered/data.sql"
+  cp "$WORK/manifest.txt" "$WORK/altered/manifest.txt"
+  node "$ROOT/tests/support/corrupt-restore-planning.mjs" "$WORK/altered/data.sql" "$DRILL_USER_FILE" "$rule"
+  bad_hash=$(sha256sum "$WORK/altered/data.sql" | cut -d' ' -f1)
+  sed -i "s/^data_sha256=.*/data_sha256=$bad_hash/" "$WORK/altered/manifest.txt"
+  pack
+  name="N11-planning-$rule"
+  negative "$name" restore_negative
+  if [[ $marker = constraint ]]; then
+    grep -F 'Importación rechazada por SQL o restricciones' "$WORK/$name.log"
+  else
+    grep -F "RESTORE_INVARIANTS: $marker" "$WORK/$name.log"
+  fi
+  no_database
+  planning_controls=$((planning_controls+1))
+done < <(node "$ROOT/tests/support/corrupt-restore-planning.mjs" --list)
+echo "ENSAYO LISTO: A y B, diez controles previos y $planning_controls controles P0-3 rechazados"
