@@ -2,6 +2,9 @@
 -- idempotencia solo pending → completed propia; auditoría inmutable incluso para writer.
 begin;
 select no_plan();
+-- 004 T012 / ADR-013: ni acceso al esquema ni escritura directa en las seis tablas nuevas.
+select is(has_any_column_privilege(r,'juntia_data.'||t,p),false,'004 sin escritura por columna '||r||' '||t||' '||p)
+from unnest(array['anon','authenticated']) r cross join unnest(array['budgets','budget_versions','savings_goals','goal_ledger_entries','goal_usage_allocations','goal_usage_confirmations']) t cross join unnest(array['INSERT','UPDATE','REFERENCES']) p;
 select tests.create_user('11111111-1111-4111-8111-111111111111','sara@seed.test');
 select tests.create_user('22222222-2222-4222-8222-222222222222','tomas@seed.test');
 insert into juntia_data.transactions(id,type,created_by,owner_user_id,amount_minor,category_id,transaction_date)

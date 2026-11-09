@@ -1,6 +1,10 @@
 -- ADR-013 [V] 8: «security_invoker = true» y funcionan «sin usage sobre juntia_data».
 begin;
 select no_plan();
+-- 004 T012 / FR-005: vistas invoker; importes solo text. Todas existirán tras goal_funding.
+select is(reloptions,array['security_invoker=true'],'004 invoker '||relname) from pg_class
+where oid in (select to_regclass('public.'||v) from unnest(array['budget_months','budget_history','goals_overview','goals_totals','goal_member_balances','goal_entries','goal_activity','usage_requests','expense_goal_funding','metric_months']) v);
+select is((select count(*) from information_schema.columns where table_schema='public' and table_name='goals_overview' and column_name='context'),0::bigint,'004 goal_scope no es context');
 -- 003 T013: toda proyección nueva conserva security_invoker.
 select is(reloptions,array['security_invoker=true'],'invoker '||relname) from pg_class where oid in
  ('public.couple_expenses'::regclass,'public.couple_settlements'::regclass,'public.couple_transaction_months'::regclass,'public.my_shared_parts'::regclass,'public.couple_month_summary'::regclass,'public.me_month_summary'::regclass,'public.couple_balance'::regclass);

@@ -18,6 +18,11 @@ it("003 T025: dos workers siembran parejas aisladas y storageState por rol, con 
   for(const [pair,index] of [[first,20],[second,21]] as const) for(const role of ["sara","tomas"] as const) paths.push(await writeStorageState(pair[role],index,role));
   expect((await first.sara.client.from("couple_month_summary").select("total_minor").eq("month","2026-10-01").single()).data?.total_minor).toBe("284000000");
   expect((await first.tomas.client.from("couple_expenses").select("id")).data).toHaveLength(6);
+  const goals=(await first.sara.client.from("goals_overview").select("*")).data;
+  expect(goals).toHaveLength(2);expect(goals?.find(g=>g.name==="Japón")).toMatchObject({balance_minor:"1134000000",progress_percent:63,goal_scope:"shared"});
+  expect((await first.tomas.client.from("goals_overview").select("*")).data).toHaveLength(1);
+  expect((await first.sara.client.from("budget_months").select("*").eq("context","us").eq("month","2026-10-01")).data?.filter(r=>r.limit_minor!==null)).toHaveLength(3);
+  for(const role of ["sara","tomas"] as const){expect((await second[role].client.from("goals_overview").select("id")).data).toEqual([]);expect((await second[role].client.from("budget_months").select("*")).data).toEqual([]);}
   expect((await second.sara.client.from("couple_expenses").select("id")).data).toEqual([]);
   expect((await second.tomas.client.from("couple_expenses").select("id")).data).toEqual([]);
 });
@@ -60,4 +65,21 @@ it("se niega a sembrar fuera del destino permitido", async () => {
     process.env.API_URL = saved.API_URL;
     process.env.NEXT_PUBLIC_SUPABASE_URL = saved.NEXT_PUBLIC_SUPABASE_URL;
   }
+});
+
+// T023 / F64-6: cuatro workers no ven las metas, presupuestos ni gastos de otro.
+it('004 T023: cuatro parejas doradas concurrentes aíslan IDs, sesiones y lecturas RLS',async()=>{
+ const {seedCouple}=await import('../support/seed');
+ const pairs=await Promise.all([0,1,2,3].map(index=>seedCouple({index:40+index,golden:true})));
+ expect(new Set(pairs.flatMap(p=>[p.groupId,p.sara.id,p.tomas.id])).size).toBe(12);
+ const states=await Promise.all(pairs.flatMap((pair,index)=>(["sara","tomas"] as const).map(role=>writeStorageState(pair[role],40+index,role))));paths.push(...states);expect(new Set(states).size).toBe(8);
+ const snapshots=await Promise.all(pairs.map(async pair=>{
+  const [goals,budgets,expenses,privates]=await Promise.all([pair.sara.client.from('goals_overview').select('id'),pair.sara.client.from('budget_history').select('id'),pair.sara.client.from('couple_expenses').select('id'),pair.sara.client.from('my_transactions').select('id')]);
+  for(const result of [goals,budgets,expenses,privates])expect(result.error).toBeNull();
+  expect(goals.data).toHaveLength(2);expect(budgets.data!.length).toBeGreaterThanOrEqual(3);expect(expenses.data).toHaveLength(6);expect(privates.data).toHaveLength(9);
+  return {goals:goals.data!.map(r=>r.id),budgets:budgets.data!.map(r=>r.id),expenses:expenses.data!.map(r=>r.id),privates:privates.data!.map(r=>r.id)};
+ }));
+ await Promise.all(pairs.flatMap((pair,index)=>pairs.filter((_,other)=>other!==index).flatMap(foreign=>[foreign.sara,foreign.tomas].map(async user=>{
+  for(const [view,ids] of [['goals_overview',snapshots[index].goals],['budget_history',snapshots[index].budgets],['couple_expenses',snapshots[index].expenses],['my_transactions',snapshots[index].privates]] as const){const result=await user.client.from(view).select('id').in('id',ids);expect(result.error).toBeNull();expect(result.data).toEqual([]);}
+ }))));
 });

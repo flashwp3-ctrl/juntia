@@ -8,7 +8,23 @@ export type Database = {
             [_ in never]: never
           }
           Views: {
-            "couple_balance": {
+            "budget_history": {
+                  Row: {
+                    "budget_id": string | null,"changed_at": string | null,"changed_by": string | null,"effective_month": string | null,"id": string | null,"limit_minor": string | null,"previous_limit_minor": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"budget_months": {
+                  Row: {
+                    "budget_id": string | null,"category_id": string | null,"consumed_minor": string | null,"context": string | null,"limit_minor": string | null,"month": string | null,"remaining_minor": string | null,"state": string | null,"version": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"couple_balance": {
                   Row: {
                     "net_minor": string | null,"paid_minor": string | null,"settled_in_minor": string | null,"settled_out_minor": string | null,"share_minor": string | null,"user_id": string | null
                   }
@@ -68,9 +84,65 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"expense_goal_funding": {
+                  Row: {
+                    "funded": boolean | null,"goal_id": string | null,"goal_name": string | null,"pending_minor": string | null,"transaction_id": string | null,"used_minor": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"goal_activity": {
+                  Row: {
+                    "amount_minor": string | null,"context": string | null,"created_at": string | null,"created_by": string | null,"effective_date": string | null,"funding_mode": string | null,"goal_id": string | null,"id": string | null,"kind": string | null,"member_user_id": string | null,"month": string | null,"reason": string | null,"transaction_description": string | null,"transaction_id": string | null,"voided": boolean | null,"voided_reason": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"goal_entries": {
+                  Row: {
+                    "amount_minor": string | null,"created_at": string | null,"created_by": string | null,"effective_date": string | null,"funding_mode": string | null,"goal_id": string | null,"id": string | null,"kind": string | null,"member_user_id": string | null,"reason": string | null,"transaction_description": string | null,"transaction_id": string | null,"voided": boolean | null,"voided_reason": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"goal_member_balances": {
+                  Row: {
+                    "available_minor": string | null,"contributed_minor": string | null,"contribution_count": number | null,"goal_id": string | null,"used_minor": string | null,"user_id": string | null,"withdrawn_minor": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"goals_overview": {
+                  Row: {
+                    "balance_minor": string | null,"created_at": string | null,"goal_scope": string | null,"goal_type": string | null,"has_pending_request": boolean | null,"id": string | null,"my_available_minor": string | null,"name": string | null,"progress_percent": number | null,"status": string | null,"target_minor": string | null,"target_month": string | null,"version": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"goals_totals": {
+                  Row: {
+                    "balance_minor": string | null,"goal_count": number | null,"goal_scope": string | null,"my_available_minor": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
                 },"me_month_summary": {
                   Row: {
                     "by_category": Json | null,"consumption_minor": string | null,"month": string | null,"private_minor": string | null,"shared_part_minor": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"metric_months": {
+                  Row: {
+                    "aporte_a_metas": string | null,"context": string | null,"gasto_consumo": string | null,"gasto_financiado_con_meta": string | null,"month": string | null,"retiro_de_metas": string | null,"total_destinado_neto": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -136,17 +208,49 @@ export type Database = {
                         Relationships: [
                     
                   ]
+                },"usage_requests": {
+                  Row: {
+                    "amount_minor": string | null,"created_at": string | null,"goal_id": string | null,"goal_name": string | null,"id": string | null,"member_user_id": string | null,"requested_by": string | null,"resolved_at": string | null,"status": string | null,"transaction_amount_minor": string | null,"transaction_description": string | null,"transaction_id": string | null,"version": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Functions: {
             "accept_invitation":
 { Args: { "p_idempotency_key": string,"p_token_hash": string }; Returns: Json
                            },
+"approve_usage_request":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_request_id": string }; Returns: Json
+                           },
+"archive_goal":
+{ Args: { "p_expected_version": number,"p_goal_id": string,"p_idempotency_key": string }; Returns: Json
+                           },
 "cancel_invitation":
 { Args: { "p_expected_version": number,"p_group_id": string,"p_idempotency_key": string }; Returns: Json
                            },
+"cancel_usage_request":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_request_id": string }; Returns: Json
+                           },
 "complete_first_entry":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"complete_goal":
+{ Args: { "p_expected_version": number,"p_goal_id": string,"p_idempotency_key": string }; Returns: Json
+                           },
+"contribute_to_goal":
+{ Args: { "p_amount_minor": string,"p_entry_date": string,"p_funding_mode": string,"p_goal_id": string,"p_idempotency_key": string }; Returns: Json
+                           },
+"create_budget":
+{ Args: { "p_category_id": string,"p_context": string,"p_idempotency_key": string,"p_limit_minor": string }; Returns: Json
+                           },
+"create_expense_with_goal":
+{ Args: { "p_amount_minor": string,"p_category_id": string,"p_context": string,"p_description": string,"p_goal_id": string,"p_idempotency_key": string,"p_own_minor": string,"p_parts": Json,"p_payer_user_id": string,"p_requested_minor": string,"p_split_mode": string,"p_split_percents": (number)[],"p_transaction_date": string,"p_type"?: string }; Returns: Json
+                           },
+"create_goal":
+{ Args: { "p_context": string,"p_goal_type": string,"p_idempotency_key": string,"p_name": string,"p_target_minor": string,"p_target_month": string }; Returns: Json
                            },
 "create_invitation":
 { Args: { "p_email": string,"p_idempotency_key": string,"p_token_hash": string }; Returns: Json
@@ -172,20 +276,35 @@ export type Database = {
 "register_settlement":
 { Args: { "p_amount_minor": string,"p_idempotency_key": string,"p_note": string,"p_settlement_date": string }; Returns: Json
                            },
+"reject_usage_request":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_request_id": string }; Returns: Json
+                           },
+"remove_goal_usage":
+{ Args: { "p_expected_version": number,"p_idempotency_key": string,"p_transaction_id": string }; Returns: Json
+                           },
 "set_theme":
 { Args: { "p_theme": string }; Returns: Json
                            },
 "undo_reclassify_to_shared":
 { Args: { "p_expected_version": number,"p_idempotency_key": string,"p_shared_transaction_id": string }; Returns: Json
                            },
+"update_budget":
+{ Args: { "p_budget_id": string,"p_expected_version": number,"p_idempotency_key": string,"p_limit_minor": string }; Returns: Json
+                           },
 "update_display_name":
 { Args: { "p_display_name": string }; Returns: Json
+                           },
+"update_goal":
+{ Args: { "p_expected_version": number,"p_goal_id": string,"p_goal_type": string,"p_idempotency_key": string,"p_name": string,"p_target_minor": string,"p_target_month": string }; Returns: Json
                            },
 "update_shared_expense":
 { Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_expected_version": number,"p_idempotency_key": string,"p_parts": Json,"p_payer_user_id": string,"p_split_mode": string,"p_split_percents": (number)[],"p_transaction_date": string,"p_transaction_id": string }; Returns: Json
                            },
 "update_transaction":
 { Args: { "p_amount_minor": string,"p_category_id": string,"p_description": string,"p_expected_version": number,"p_idempotency_key": string,"p_transaction_date": string,"p_transaction_id": string }; Returns: Json
+                           },
+"void_goal_entry":
+{ Args: { "p_entry_id": string,"p_idempotency_key": string,"p_reason": string }; Returns: Json
                            },
 "void_settlement":
 { Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_settlement_id": string }; Returns: Json
@@ -195,6 +314,9 @@ export type Database = {
                            },
 "void_transaction":
 { Args: { "p_expected_version": number,"p_idempotency_key": string,"p_reason": string,"p_transaction_id": string }; Returns: Json
+                           },
+"withdraw_from_goal":
+{ Args: { "p_amount_minor": string,"p_entry_date": string,"p_goal_id": string,"p_idempotency_key": string,"p_reason": string }; Returns: Json
                            },
 "write_status":
 { Args: { "p_action": string,"p_idempotency_key": string }; Returns: Json

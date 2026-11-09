@@ -38,6 +38,16 @@ export function setupCoupleFixtures(slots=1) {
     // Los usuarios/perfiles/sesiones persisten. Otros archivos tienen otros UUID.
     runnerSql(`begin; set local session_replication_role='replica';
       do $$ begin
+        -- 004: limpiar primero los agregados nuevos del propio archivo. replica
+        -- es solo preparación de fixtures; las RPC bajo prueba conservan triggers/RLS.
+        if to_regclass('juntia_data.savings_goals') is not null then
+          delete from juntia_data.goal_usage_allocations where entry_id in(select id from juntia_data.goal_ledger_entries where goal_id in(select id from juntia_data.savings_goals where created_by=any(${actors})));
+          delete from juntia_data.goal_usage_confirmations where goal_id in(select id from juntia_data.savings_goals where created_by=any(${actors}));
+          delete from juntia_data.goal_ledger_entries where goal_id in(select id from juntia_data.savings_goals where created_by=any(${actors}));
+          delete from juntia_data.savings_goals where created_by=any(${actors});
+          delete from juntia_data.budget_versions where budget_id in(select id from juntia_data.budgets where created_by=any(${actors}));
+          delete from juntia_data.budgets where created_by=any(${actors});
+        end if;
         if to_regclass('juntia_data.transaction_allocations') is not null then
           delete from juntia_data.transaction_allocations where transaction_id in(select id from juntia_data.transactions where created_by=any(${actors}));
         end if;

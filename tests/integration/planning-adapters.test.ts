@@ -1,0 +1,25 @@
+import {expect,it} from "vitest";
+import {randomUUID} from "node:crypto";
+import {setupCoupleFixtures} from "./support/couple";
+import {moneyFromPesos} from "../../src/domain/money";
+const fixtures=setupCoupleFixtures();
+it("T019: adaptadores reales conservan importes, scope, historial y claves",async()=>{
+ const b=await import("../../src/lib/db/budgets");const g=await import("../../src/lib/db/goals");const m=await import("../../src/lib/db/metrics");const u=await import("../../src/lib/db/goal-usage");
+ const p=await fixtures.couple(),client=p.sara.client,key=randomUUID();
+ const budget=await b.createBudget(client,{idempotencyKey:key,context:"me",categoryId:"market",limit:moneyFromPesos(1000n)});
+ expect(await b.createBudget(client,{idempotencyKey:key,context:"me",categoryId:"market",limit:moneyFromPesos(1000n)})).toEqual(budget);
+ await b.updateBudget(client,{idempotencyKey:randomUUID(),budgetId:budget.budget_id,expectedVersion:1,limit:null});
+ expect((await b.budgetHistory(client,budget.budget_id)).map(r=>r.limit_minor)).toEqual([null,"100000"]);
+ const goal=await g.createGoal(client,{idempotencyKey:randomUUID(),context:"me",name:"Adaptador",goalType:"other",target:moneyFromPesos(1000n),targetMonth:null});
+ await g.contributeToGoal(client,{idempotencyKey:randomUUID(),goalId:goal.id,amount:moneyFromPesos(500n),entryDate:new Intl.DateTimeFormat("en-CA",{timeZone:"America/Bogota"}).format(new Date()),fundingMode:"reserved"});
+ expect((await g.listGoals(client,"me")).find(r=>r.id===goal.id)).toMatchObject({goal_scope:"personal",balance_minor:"50000"});
+ expect(await g.listGoals(client,"us")).toEqual([]);
+ expect((await g.goalEntries(client,goal.id))[0].amount_minor).toBe("50000");
+ expect((await g.goalTotals(client,"personal"))[0].balance_minor).toBe("50000");
+ expect((await m.metricMonths(client,"me"))[0].aporte_a_metas).toBe("50000");
+ const funded=await u.createExpenseWithGoal(client,{idempotencyKey:randomUUID(),context:"me",type:"expense",amount:moneyFromPesos(200n),categoryId:"market",transactionDate:new Intl.DateTimeFormat("en-CA",{timeZone:"America/Bogota"}).format(new Date()),description:"Adaptador financiado",goalId:goal.id,own:moneyFromPesos(200n),requested:moneyFromPesos(0n)});
+ expect(await u.expenseGoalFunding(client,funded.id)).toEqual([expect.objectContaining({funded:true,used_minor:"20000",pending_minor:"0"})]);
+ expect(await u.usageRequests(client)).toEqual([]);
+ await u.removeGoalUsage(client,{idempotencyKey:randomUUID(),transactionId:funded.id,expectedVersion:1});
+ expect((await g.goalTotals(client,"personal"))[0].balance_minor).toBe("50000");
+});

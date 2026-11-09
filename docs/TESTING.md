@@ -736,3 +736,31 @@ No se ajusta el presupuesto a la herramienta en silencio.
   DEC-G04, reglas de negocio de la UI, rendimiento
 - `docs/design/COMPONENT_SPECIFICATIONS.md` — el fixture de octubre
 - `AGENTS.md` 12, 16, 18
+
+## Restauración P0-3 · protocolo autorizado (AGENTS §17)
+
+En la revisión del PR A de la 004, el gestor autorizó este **cambio del protocolo de restauración**, para revisión de ChatGPT y del gestor antes del merge. No cambia ninguna migración ni las capacidades de la app. El fallo de T024, run 42458621877, fue la lista de tablas del ordenador, no los mensajes esperados de los controles negativos RESTORE_INVARIANTS.
+
+La copia ordenada incluye las seis tablas nuevas. Los asientos no void preceden a sus voids (FK autorreferente inmediata); las asignaciones siguen a los asientos. Del ciclo solicitud ↔ uso solo se difiere temporalmente goal_ledger_entries_confirmation_id_fkey. Se conserva la copia original y su hash.
+
+Dentro de la **misma transacción** (psql -1 en ambos caminos), planning-load-start.sql suspende por nombre solo goal_ledger_guard, goal_allocation_guard, goal_confirmation_guard y goal_void_reactivate. No se suspenden los triggers de P0-1/P0-2, los de solo inserción ni los internos de FK; no se cambia session_replication_role. El estado inicial se comprueba y se rechaza si no coincide con las propiedades esperadas.
+
+planning-load-end.sql drena primero los eventos diferidos con SET CONSTRAINTS ALL IMMEDIATE: PostgreSQL rechaza ALTER TABLE ENABLE TRIGGER si quedan eventos pendientes. Luego reactiva los cuatro triggers con ENABLE TRIGGER, comprueba nuevamente todas las restricciones y devuelve la FK a NOT DEFERRABLE. Después se ejecuta check-invariants.sql, y solo entonces termina el COMMIT exterior. Cualquier fallo revierte también el DDL.
+
+Las invariantes comprueban saldos vivos por meta y aportante, atribución, tipos y contexto, suma de asignaciones, tope del gasto, una meta por gasto, fechas, solicitudes y consentimiento, XOR de ámbito, presupuestos y límites. Los intervalos archivados usan archived_at y la auditoría de archivo; un void de uso cierra el intervalo y exige reactivación auditada y devolución conciliada. Una meta puede haberse archivado otra vez después de la devolución: no se altera su estado final al cargar su historia. La tabla trigger → invariantes y los controles concretos están en specs/004-presupuestos-y-metas/evidence.md.
+
+La integración de restauración carga fixtures sintéticas y hace rollback contra juntia-dev, comprobando current_user=postgres, rolsuper=false, datos intactos y propiedades restauradas. Para no interferir con las carreras de otras specs, adquiere conjuntamente los tres bloqueos DDL con NOWAIT antes de cargar y agrupa el SQL en un viaje a dev; solo espera la disponibilidad de esos bloqueos, no reintenta una restauración fallida. El drill completo, cifrado, A/B, manifiesto, login y controles N11 por cada regla, sigue **solo en CI**, lanzado por el gestor. El manifiesto descubre automáticamente todas las tablas de juntia_data; la prueba y el drill exigen recuento y huella de las seis nuevas.
+
+### Diagnóstico del drill y rechazo anticipado de N10
+
+Cada etapa del drill/restaurador lleva un marcador RESTORE step; los comandos con salida privada publican su código de salida y conservan el log crudo fuera de stdout. El trap ERR informa también los fallos de test/grep sin salida, con etapa, línea y código; no imprime comandos ni argumentos. Los errores SQL usan VERBOSITY=verbose y ON_ERROR_STOP=1 para extraer solo SQLSTATE, categoría y marcadores constantes permitidos, nunca DETAIL, CONTEXT, SQL ni datos. La lista N11 se genera en un paso comprobado, sin ocultar su exit en una sustitución de proceso.
+
+El run 42501082729 completó A y B. Se detenía en la comprobación del motivo de N10: al quitar al segundo integrante del grupo, las asignaciones P0-3 provocan JT111 (notCoupleMember) antes de check-invariants.sql. N10 acepta únicamente su invariante de pareja o JT111/JT119 (transición de pareja inválida), nunca un fallo genérico de permisos/FK. La integración reproduce N10 con y sin P0-3.
+
+A usa DB_URL del stack Supabase local; B usa PG, configurado como postgres en el workflow. Antes de cargar, ambos imprimen solo metadatos: current_user, session_user, superuser y propietario/capacidad de actuar como propietario de las seis tablas. No se modifica el rol, la propiedad ni los privilegios: A/B ya cargaban correctamente en ese run. El checkpoint 42508573805 confirma por la sonda que A usa postgres no superusuario y B postgres superusuario, ambos propietarios de las seis tablas; no se infiere del nombre de la variable DB_URL. En juntia-dev se comprueba postgres no superusuario y capacidad de dueño sobre las seis tablas, además de ejecutar el protocolo completo dentro de rollback.
+
+### Medición opt-in de workers (004 PR A, T022–T023)
+
+JUNTIA_PLAYWRIGHT_MEASURE admite solo W:true o W:false, con W igual a 1, 2 o 4. Ejemplo en PowerShell: $env:JUNTIA_PLAYWRIGHT_MEASURE='2:true'; npm run e2e:dev -- tests/e2e/annotate.e2e.ts. Se elimina la variable al terminar la medición. Sin ella, playwright.config.ts y el plan de e2e:dev conservan exactamente sus valores por defecto anteriores. La variable se hereda al hijo de pruebas, sin ampliar la lista blanca de argumentos: --workers, --grep-invert y --config siguen rechazados como entradas del usuario.
+
+Con la variable, cada proyecto seleccionado se ejecuta en dos pasadas sin reintentos: primero excluye @mail y @serial con los workers medidos; después selecciona @serial, sigue excluyendo @mail y fuerza un worker. Los filtros dirigidos se conservan; una pasada serial vacía se declara como tal y no es un fallo. Los dos casos de motion activo de las specs 2 y 3 llevan @serial. El resultado local no sustituye los tiempos del runner de CI ni prueba los flujos @mail. La tabla y la comprobación RLS de cuatro parejas están en evidence.md; la combinación del job e2e y su mecanismo de dos pasadas se fijan en PR B (T036), tras comprobar aislamiento.

@@ -14,17 +14,20 @@ export const PAGE_SIZE = 500;
 export type CursorKey = { transaction_date: string; created_at: string; id: string };
 export type PageOptions = {
   pageSize?: number;
+  /** 004 F64-4: columnas de orden antes del id; por defecto conserva el contrato de la 002/003. */
+  columns?: readonly string[];
   /** Solo pruebas: se llama antes de pedir cada página a partir de la segunda (para intercalar escrituras). */
   onPage?: (index: number) => Promise<void>;
 };
 
-export async function readByCursor<T extends CursorKey>(
-  page: (after: CursorKey | null, limit: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
-  { pageSize = PAGE_SIZE, onPage }: PageOptions = {},
+export async function readByCursor<T extends { id: string }>(
+  page: (after: T | null, limit: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  { pageSize = PAGE_SIZE, onPage, columns = ["transaction_date", "created_at"] }: PageOptions = {},
 ): Promise<T[]> {
   if (!Number.isInteger(pageSize) || pageSize < 1) throw new DbError("unexpected");
+  validateColumns(columns);
   const rows: T[] = [];
-  let after: CursorKey | null = null;
+  let after: T | null = null;
   for (let index = 0; ; index++) {
     if (index > 0 && onPage) await onPage(index);
     const { data, error } = await page(after, pageSize);
@@ -33,7 +36,8 @@ export async function readByCursor<T extends CursorKey>(
     if (data.length === 0) return rows;
     rows.push(...data);
     const last = data[data.length - 1];
-    after = { transaction_date: last.transaction_date, created_at: last.created_at, id: last.id };
+    // Conserva la fila: los consumidores viejos usan CursorKey; cada lista nueva declara sus columnas.
+    after = last;
   }
 }
 
@@ -41,8 +45,24 @@ export async function readByCursor<T extends CursorKey>(
  * Filtro `or` de PostgREST para «estrictamente después de `key`» en el orden (fecha, creación, id), ascendente o
  * descendente. Los valores con caracteres reservados (`:` y `.` del instante) van entre comillas dobles.
  */
-export function afterFilter(key: CursorKey, direction: "asc" | "desc", dateColumn: "transaction_date" | "settlement_date" = "transaction_date") {
+function validateColumns(columns: readonly string[]) {
+  if (columns.length < 1 || columns.length > 2 || new Set(columns).size !== columns.length || columns.some(c=>c==="id" || !/^[a-z][a-z0-9_]*$/.test(c))) throw new DbError("unexpected");
+}
+export function afterFilter(key: CursorKey | Record<string,string>, direction: "asc" | "desc", dateColumn: "transaction_date" | "settlement_date" | readonly string[] = "transaction_date") {
   const op = direction === "asc" ? "gt" : "lt";
+  if (typeof dateColumn !== "string") {
+    validateColumns(dateColumn);
+    const columns=[...dateColumn,"id"];
+    const value=(column:string)=>{
+      const text=(key as Record<string,string>)[column];
+      if(typeof text!=="string") throw new DbError("unexpected");
+      return `"${text.replaceAll("\\","\\\\").replaceAll('"','\\"')}"`;
+    };
+    return columns.map((column,index)=>{
+      const terms=[...columns.slice(0,index).map(c=>`${c}.eq.${value(c)}`),`${column}.${op}.${value(column)}`];
+      return index===0?terms[0]:`and(${terms.join(",")})`;
+    }).join(",");
+  }
   const date = key.transaction_date;
   const created = `"${key.created_at}"`;
   return `${dateColumn}.${op}.${date},and(${dateColumn}.eq.${date},created_at.${op}.${created}),and(${dateColumn}.eq.${date},created_at.eq.${created},id.${op}.${key.id})`;

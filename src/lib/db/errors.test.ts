@@ -3,6 +3,13 @@
 import { expect, it } from "vitest";
 import { mapDbError } from "./errors";
 const codes = {
+  JT201: "goalNotFound", JT202: "goalNotOpen", JT203: "goalContextMismatch", JT204: "insufficientMemberFunds",
+  JT205: "entryNotFound", JT206: "entryNotVoidable", JT207: "entryAlreadyVoided", JT208: "invalidEntryDate",
+  JT209: "usageExceedsExpense", JT210: "requestNotFound", JT211: "notRequestParty", JT212: "requestResolved",
+  JT213: "amountBelowGoalUsage", JT214: "goalTransitionNotAllowed", JT215: "invalidGoal", JT216: "invalidFundingMode",
+  JT217: "withdrawalReasonRequired", JT218: "budgetNotFound", JT219: "budgetAlreadyExists", JT220: "goalNegative",
+  JT221: "invalidBudget", JT222: "appendOnly", JT223: "invalidUsageAllocation", JT224: "oneGoalPerExpense",
+  JT225: "goalUndoNotAvailable", JT226: "nothingToRemove",
   JT101: "alreadyInCouple", JT102: "invitationNotFound", JT103: "invitationAlreadyAccepted", JT104: "invitationInvalid",
   JT105: "coupleNotActive", JT106: "nothingToSettle", JT107: "settlementExceedsPending", JT108: "invalidEmail",
   JT109: "invalidTokenHash", JT110: "invalidSplit", JT111: "notCoupleMember", JT112: "settlementNotFound",
@@ -15,6 +22,10 @@ const codes = {
   "40P01": "retryable", "40001": "retryable", "23514": "constraintViolation", "23503": "constraintViolation",
   "23505": "constraintViolation", "42501": "forbidden", PGRST301: "notAuthenticated",
 };
+// 004 contracts/errors.md: «23505 sobre budgets_one_per_key ... JT219 ... solicitud pendiente ... JT212».
+it.each([["budgets_one_per_key","budgetAlreadyExists"],["goal_usage_confirmations_one_pending","requestResolved"]])("004: %s",(name,kind)=>{
+  expect(mapDbError({code:"23505",message:`duplicate key value violates unique constraint "${name}"`}).kind).toBe(kind);
+});
 // 003 T007 · contracts/errors.md: «23505 sobre los índices de pareja se traduce a JT101».
 it.each(["group_members_one_couple_per_person", "group_invitations_one_pending"])("%s se traduce sin filtrar mensaje técnico", name => {
   expect(mapDbError({ code: "23505", message: `duplicate key value violates unique constraint "${name}"` }).kind).toBe("alreadyInCouple");

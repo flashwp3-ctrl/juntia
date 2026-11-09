@@ -9,6 +9,7 @@ import { dirname } from "node:path";
 import { createServerClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { saraPrivateOctober2026,sharedOctober2026 } from "../../src/domain/golden/october-2026";
+import {japan,japanContributions,bicycle,octoberBudgets,planningDates} from "../../src/domain/golden/planning-2026";
 import { moneyFromPesos } from "../../src/domain/money";
 import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { createTransaction } from "../../src/lib/db/transactions";
@@ -28,14 +29,38 @@ export async function seedCouple({index,golden=false}:{index:number;golden?:bool
   runnerSupabase();
   const [sara,tomas]=await Promise.all([seedUser({role:"couple-sara",index,displayName:"Sara"}),seedUser({role:"couple-tomas",index,displayName:"Tomás"})]);
   const groupId=randomUUID();
-  runnerSql(`select tests.seed_couple('${groupId}','${sara.id}','${tomas.id}')`);
+  if(golden) {
+    // Cronología aprobada de la 004: se inserta como historia sintética, no se corrige después.
+    runnerSql(`begin;
+      insert into juntia_data.groups(id,owner_user_id,status,created_at,activated_at) values('${groupId}','${sara.id}','active','${planningDates.invited}T12:00:00-05:00','${planningDates.activated}T12:00:00-05:00');
+      insert into juntia_data.group_members(group_id,user_id,role,status,join_order,joined_at) values('${groupId}','${sara.id}','owner','active',1,'${planningDates.invited}T12:00:00-05:00'),('${groupId}','${tomas.id}','member','active',2,'${planningDates.activated}T12:00:00-05:00');
+      insert into juntia_data.group_invitations(group_id,email,token_hash,status,created_by,inviter_display_name,accepted_by,created_at,expires_at,accepted_at)
+      values('${groupId}','${tomas.email}',encode(sha256('${groupId}'::bytea),'hex'),'accepted','${sara.id}','Sara','${tomas.id}','${planningDates.invited}T12:00:00-05:00','2025-12-07T12:00:00-05:00','${planningDates.activated}T12:00:00-05:00');commit;`);
+  } else runnerSql(`select tests.seed_couple('${groupId}','${sara.id}','${tomas.id}')`);
   if(golden) {
     const users={sara:sara.id,tomas:tomas.id};
     for(const row of sharedOctober2026) await createSharedExpense(sara.client,{idempotencyKey:randomUUID(),amount:row.amount,categoryId:row.categoryId,transactionDate:row.transactionDate,description:row.description,
       payerUserId:users[row.payerUserId as keyof typeof users],splitMode:row.splitMode,splitPercents:row.splitPercents,
       allocations:row.allocations.map(a=>({userId:users[a.userId as keyof typeof users],amount:a.amount}))});
   }
+  if(golden){
+    await seedGoldenMovements(sara);
+    seedPlanningGolden({groupId,sara,tomas});
+  }
   return {groupId,sara,tomas};
+}
+
+
+/** T020: parte P0-3 por SQL, una vez por pareja/worker con golden=true; sin RPC ni interacción de interfaz. */
+function seedPlanningGolden(pair:SeededCouple){
+ const {groupId,sara,tomas}=pair,users={sara:sara.id,tomas:tomas.id},japanId=randomUUID(),bikeId=randomUUID();
+ const sql=["begin;",`insert into juntia_data.savings_goals(id,group_id,name,goal_type,target_minor,target_month,created_by,created_at) values('${japanId}','${groupId}','Japón','travel',${japan.targetPesos*100n},'${japan.targetMonth}','${sara.id}','${planningDates.japanCreated}T12:00:00-05:00');`,
+ `insert into juntia_data.savings_goals(id,owner_user_id,name,goal_type,target_minor,created_by,created_at) values('${bikeId}','${sara.id}','Bicicleta de ruta','other',${bicycle.targetPesos*100n},'${sara.id}','${planningDates.bicycleCreated}T12:00:00-05:00');`];
+ for(const e of japanContributions)sql.push(`insert into juntia_data.goal_ledger_entries(goal_id,kind,member_user_id,amount_minor,entry_date,funding_mode,created_by,created_at) values('${japanId}','contribution','${users[e.member]}',${e.pesos*100n},'${e.date}','reserved','${users[e.member]}','${e.date}T12:00:00-05:00');`);
+ for(const e of bicycle.contributions)sql.push(`insert into juntia_data.goal_ledger_entries(goal_id,kind,member_user_id,amount_minor,entry_date,funding_mode,created_by,created_at) values('${bikeId}','contribution','${sara.id}',${e.pesos*100n},'${e.date}','reserved','${sara.id}','${e.date}T12:00:00-05:00');`);
+ for(const budget of octoberBudgets){const id=randomUUID();sql.push(`insert into juntia_data.budgets(id,group_id,category_id,version,created_by,created_at,updated_by,updated_at) values('${id}','${groupId}','${budget.categoryId}',${budget.versions.length},'${users[budget.versions[0].by]}','${budget.versions[0].date}T12:00:00-05:00','${users[budget.versions.at(-1)!.by]}','${budget.versions.at(-1)!.date}T12:00:00-05:00');`);
+ for(const v of budget.versions)sql.push(`insert into juntia_data.budget_versions(budget_id,effective_month,limit_minor,changed_by,changed_at) values('${id}','2026-10-01',${v.limitPesos*100n},'${users[v.by]}','${v.date}T12:00:00-05:00');`);}
+ sql.push("commit;");runnerSql(sql.join("\n"));
 }
 
 /**

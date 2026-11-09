@@ -72,13 +72,13 @@ it("JSON: la estructura del contrato, importes como texto y nada interno, anulad
   const text = await response.text();
   forbidden(text);
   const body = JSON.parse(text);
-  expect(Object.keys(body)).toEqual(["exported_at", "currency", "note", "transactions"]);
+  expect(Object.keys(body)).toEqual(["exported_at", "currency", "note", "transactions", "settlements", "goals", "goal_entries", "usage_requests", "budgets"]);
   expect(body.currency).toBe("COP");
   expect(body.note).toBe(copy.export.fileNote);
   expect(body.exported_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-05:00$/);
   expect(body.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + CONTROLS.length + 1);
   for (const row of body.transactions) {
-    expect(Object.keys(row)).toEqual(["transaction_date", "type", "category", "category_name", "description", "amount_minor", "currency", "created_at", "updated_at"]);
+    expect(Object.keys(row)).toEqual(["transaction_date", "type", "category", "category_name", "description", "amount_minor", "currency", "created_at", "updated_at", "context"]);
     expect(typeof row.amount_minor).toBe("string");
     expect(row.amount_minor).toMatch(/^[0-9]+$/);
   }
@@ -98,7 +98,7 @@ it("CSV: RFC 4180 con BOM, las mismas columnas, fórmulas neutralizadas y nada i
   expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
   const text = (await response.text()).replace(/^﻿/, "");
   forbidden(text);
-  expect(text.split("\r\n")[0]).toBe("transaction_date,type,category,category_name,description,amount_minor,currency,created_at,updated_at");
+  expect(text.split("\r\n")[0]).toBe("transaction_date,type,category,category_name,description,amount_minor,currency,created_at,updated_at,context,record_type");
   expect(text).toContain('2026-10-03,expense,transport,Transporte,Taxi a la oficina,4500000,COP,');
   for (const formula of FORMULAS) expect(text).toContain(`,'${formula},`);
   for (const [, encoded] of CONTROLS) expect(text).toContain(encoded);
@@ -137,7 +137,8 @@ it("F44-2: la exportación y la lectura del mes recorren todas las páginas con 
   const now = new Date("2026-11-05T15:00:00Z");
   for (const format of ["json", "csv"] as const) {
     const whole = await exportTransactions(sara.client, format, now);
-    for (const pageSize of [1, 2, 3]) expect((await exportTransactions(sara.client, format, now, { pageSize })).body, `${format}, páginas de ${pageSize}`).toBe(whole.body);
+    // Una página de una fila basta para verificar cada salto del cursor real; los tamaños se cubren en paginate.test.
+    for (const pageSize of [1]) expect((await exportTransactions(sara.client, format, now, { pageSize })).body, `${format}, páginas de ${pageSize}`).toBe(whole.body);
   }
   const json = JSON.parse((await exportTransactions(sara.client, "json", now, { pageSize: 2 })).body);
   expect(json.transactions).toHaveLength(saraPrivateOctober2026.length + FORMULAS.length + CONTROLS.length + 1);

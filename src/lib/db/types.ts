@@ -20,5 +20,23 @@ export type TransactionTransport = {
 export type CreateTransactionInput = TransactionDraft & { idempotencyKey: string };
 export type UpdateTransactionInput = Omit<CreateTransactionInput, "type"> & { transactionId: string; expectedVersion: number };
 export type VoidTransactionInput = { idempotencyKey: string; transactionId: string; expectedVersion: number; reason: "delete" | "undo" };
-export type VoidResult = { id: string; status: "voided"; version: number };
+export type VoidResult = { id: string; status: "voided"; version: number; reactivated_goals?:ReactivatedGoal[] };
 export type Profile = { displayName: string; theme: "light" | "dark" | "system"; firstEntryCompleted: boolean };
+
+// 004: frontera monetaria pública. Solo texto; conversión a bigint en dominio.
+export type PlanningContext="me"|"us";
+export type GoalScope="personal"|"shared";
+export type GoalType="travel"|"home"|"wedding"|"vehicle"|"education"|"emergency"|"other";
+export type BudgetResult={budget_id:string;version:number;effective_month:string};
+export type BudgetMonthTransport={context:PlanningContext;month:string;category_id:CategoryId;budget_id:string|null;version:number|null;limit_minor:string|null;consumed_minor:string;remaining_minor:string|null;state:"none"|"within"|"near"|"over"};
+export type BudgetHistoryTransport={id:string;budget_id:string;effective_month:string;previous_limit_minor:string|null;limit_minor:string|null;changed_by:string;changed_at:string};
+export type GoalResult={id:string;name:string;goal_type:GoalType;target_minor:string;target_month:string|null;status:"active"|"completed"|"archived";version:number};
+export type GoalTransport=GoalResult&{goal_scope:GoalScope;balance_minor:string;progress_percent:number;has_pending_request:boolean;my_available_minor:string;created_at:string};
+export type GoalTotalTransport={goal_scope:GoalScope;balance_minor:string;my_available_minor:string;goal_count:number};
+export type GoalMemberTransport={goal_id:string;user_id:string;contributed_minor:string;withdrawn_minor:string;used_minor:string;available_minor:string;contribution_count:number};
+export type GoalEntryTransport={id:string;goal_id:string;kind:"contribution"|"withdrawal"|"usage";member_user_id:string|null;amount_minor:string;effective_date:string;funding_mode:"reserved"|"transferred_declared"|null;reason:string|null;transaction_id:string|null;transaction_description:string|null;voided:boolean;voided_reason:string|null;created_by:string;created_at:string};
+export type GoalActivityTransport=GoalEntryTransport&{context:PlanningContext;month:string};
+export type UsageRequestTransport={id:string;goal_id:string;goal_name:string;transaction_id:string;transaction_description:string|null;transaction_amount_minor:string;requested_by:string;member_user_id:string;amount_minor:string;status:"pending"|"approved"|"rejected"|"cancelled";version:number;created_at:string;resolved_at:string|null};
+export type ExpenseFundingTransport={transaction_id:string;goal_id:string;goal_name:string;used_minor:string;pending_minor:string;funded:boolean};
+export type MetricMonthTransport={context:PlanningContext;month:string;gasto_consumo:string;aporte_a_metas:string;retiro_de_metas:string;gasto_financiado_con_meta:string;total_destinado_neto:string};
+export type ReactivatedGoal={goal_id:string;name:string;returned_minor:string};

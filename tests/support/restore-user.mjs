@@ -2,6 +2,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import {planningRestoreFixture,planningDump} from "./restore-planning.mjs";
+import {orderRestoreData} from "../../scripts/order-restore-data.mjs";
+import {fileURLToPath} from "node:url";
 import {execFileSync} from "node:child_process";
 import {cleanPgEnv} from "../../scripts/dev-target/guard.mjs";
 if (process.env.GITHUB_ACTIONS !== "true" || new URL(process.env.API_URL).hostname !== "127.0.0.1") throw new Error("Runner only");
@@ -17,7 +20,11 @@ if (process.argv[2] === "seed") {
   const negativeGroupId=randomUUID(),negativeMemberId=partner.data.user.id;
   if(new URL(process.env.DB_URL).hostname!=="127.0.0.1")throw new Error("Runner DB only");
   execFileSync('psql',['-X','-q','-v','ON_ERROR_STOP=1','-c',`select tests.seed_couple('${negativeGroupId}','${created.data.user.id}','${negativeMemberId}')`],{env:cleanPgEnv(process.env,process.env.DB_URL),stdio:'pipe'});
-  writeFileSync(process.env.DRILL_USER_FILE, JSON.stringify({...user,negativeGroupId,negativeMemberId}), { mode: 0o600 });
+  const outside=await admin.auth.admin.createUser({email:randomUUID()+'@seed.test',password:randomUUID()+'Aa1!',email_confirm:true});
+  if(outside.error)throw new Error('Synthetic outside user creation failed');
+  const planningFixture=planningRestoreFixture({owner:created.data.user.id,member:negativeMemberId,group:negativeGroupId,outsider:outside.data.user.id});
+  execFileSync('psql',['-X','-q','-v','ON_ERROR_STOP=1','-1','-f','-','-f',fileURLToPath(new URL('../../supabase/restore/check-invariants.sql',import.meta.url))],{input:orderRestoreData(planningDump(planningFixture)),env:cleanPgEnv(process.env,process.env.DB_URL),stdio:'pipe'});
+  writeFileSync(process.env.DRILL_USER_FILE, JSON.stringify({...user,negativeGroupId,negativeMemberId,planningFixture}), { mode: 0o600 });
 }
 const {email,password}=JSON.parse(readFileSync(process.env.DRILL_USER_FILE, "utf8"));
 const user={email,password};

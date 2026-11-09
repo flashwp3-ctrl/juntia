@@ -90,7 +90,7 @@ test("SC-009: doble toque en Guardar y el mismo envío repetido a mano dejan un 
   expect(rows[0].amount.amountMinor).toBe(1250000n);
 });
 
-test("motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (momentos L2 de E5)", async ({ browser, baseURL }, testInfo) => {
+test("@serial motion activo: el total cuenta hacia arriba y la fila nueva se desvanece (momentos L2 de E5)", async ({ browser, baseURL }, testInfo) => {
   const context = await browser.newContext({ baseURL, reducedMotion: "no-preference", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   const user = await seedUser({ role: "anotar-motion", index: testInfo.parallelIndex });
