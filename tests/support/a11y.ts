@@ -99,14 +99,28 @@ export async function signedContext(browser: Browser, baseURL: string, user: See
   return { context: browserContext, page: await browserContext.newPage() };
 }
 
+/**
+ * axe con el `<title>` ya puesto. Flake del gate del PR #66 (run 42543237243, «/cuenta/pareja · M3b enlace listo · light ·
+ * 390px», regla `document-title`): tras una Server Action con `revalidatePath`, el `router.refresh()` que la sigue vuelve
+ * a transmitir los metadatos y React quita y pone el `<title>`. Esperarlo antes de `analyze()` no bastaba: el refresco
+ * podía llegar a mitad del escaneo, que es asíncrono y dura segundos. Ahora el escaneo de todas las reglas salvo
+ * `document-title` va primero; después se espera a que `document.title` no esté vacío (la espera de Playwright, sin
+ * tiempos fijos) y solo entonces corre `document-title`, con sus violaciones en el mismo resultado. Si el título faltara
+ * de verdad, la espera falla igual. No cambia qué se audita.
+ */
+export async function analyzeAtRest(page: Page) {
+  const rest = await new AxeBuilder({ page }).disableRules(["document-title"]).analyze();
+  await expect(page).toHaveTitle(/\S/);
+  const title = await new AxeBuilder({ page }).withRules(["document-title"]).analyze();
+  return { ...rest, violations: [...rest.violations, ...title.violations] };
+}
+
 export async function axe(page: Page, label: string) {
   // Axe audita el estado en reposo: el puntero no deja un botón en hover (como reach() en tests/support/states.ts).
   await page.mouse.move(0, 0);
   // Y con los diálogos ya visibles del todo: a mitad de su aparición, axe mide colores con opacidad parcial.
   await expect.poll(() => page.evaluate(() => [...document.querySelectorAll("[role=dialog], [role=alertdialog]")].every((node) => getComputedStyle(node).opacity === "1"))).toBe(true);
-  // Como en routes.a11y.ts: con el <title> ya puesto (Next lo vuelve a transmitir tras una Server Action).
-  await expect(page).toHaveTitle(/\S/);
-  const result = await new AxeBuilder({ page }).analyze();
+  const result = await analyzeAtRest(page);
   const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
   console.log(`${label}: ${result.violations.length} violaciones, ${blocking.length} serias o críticas${blocking.length ? ` (${blocking.map(({ id }) => id).join(", ")})` : ""}`);
   expect.soft(blocking, label).toEqual([]);
