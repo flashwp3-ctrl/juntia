@@ -16,7 +16,10 @@ export type WriteError =
   // PR C (T045): gasto compartido y Mover a Pareja.
   | "alreadyDeleted" | "notFound" | "invalidSplit" | "coupleNotActive" | "moveNotAllowed" | "undoNotAvailable"
   // PR D (T062): liquidaciones (contracts/errors.md, JT106, JT107, JT112–JT114).
-  | "nothingToSettle" | "exceedsPending" | "settlementDate" | "alreadyVoided";
+  | "nothingToSettle" | "exceedsPending" | "settlementDate" | "alreadyVoided"
+  // 004 PR C (T046, T047): metas, aportes, retiros y anulaciones (contracts/errors.md, JT201–JT217, JT225).
+  | "goalNotFound" | "goalNotOpen" | "insufficientFunds" | "entryNotFound" | "entryAlreadyVoided" | "entryNotVoidable" | "entryDate"
+  | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable";
 export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError } | { status: "unknown" };
 /**
  * Lo que devuelve «Comprobar estado», ya normalizado por la Server Action. `error`: no se pudo comprobar (red); el
@@ -26,7 +29,9 @@ export type WriteStatusOutcome<T> = { state: "completed"; value: T } | { state: 
 /** Acciones de `idempotency_records` que el PR B consulta con `write_status`. El PR C añade las suyas. */
 export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation"
   | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared"
-  | "register_settlement" | "void_settlement";
+  | "register_settlement" | "void_settlement"
+  // 004 PR C (T046, T047): las escrituras de metas que «Comprobar estado» consulta.
+  | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
 export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 
@@ -60,6 +65,19 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   invalidSettlementDate: "settlementDate",
   settlementNotFound: "notFound",
   settlementVoided: "alreadyVoided",
+  // 004 PR C (T046, T047): metas. Un saldo que no alcanza (JT204 o el trigger JT220) es el mismo rechazo para la interfaz.
+  goalNotFound: "goalNotFound",
+  goalNotOpen: "goalNotOpen",
+  insufficientMemberFunds: "insufficientFunds",
+  goalNegative: "insufficientFunds",
+  entryNotFound: "entryNotFound",
+  entryAlreadyVoided: "entryAlreadyVoided",
+  entryNotVoidable: "entryNotVoidable",
+  invalidEntryDate: "entryDate",
+  goalTransitionNotAllowed: "goalTransition",
+  invalidGoal: "invalidGoal",
+  withdrawalReasonRequired: "reasonRequired",
+  goalUndoNotAvailable: "goalUndoNotAvailable",
 };
 
 /**

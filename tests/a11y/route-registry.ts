@@ -89,6 +89,9 @@ export const registry: readonly RouteEntry[] = [
   { route: "/actividad/[id]", state: "Diálogo de eliminar", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "deleteDialog" },
   { route: "/metas", state: "Metas", path: "/metas", session: "user" },
   { route: "/metas", state: "Metas Nosotros", path: "/metas", session: "user", prepare: "us" },
+  // 004 PR C (T044): la meta inmersiva con una cuenta sola solo tiene el estado «no encontrada»; con metas sembradas de
+  // una pareja se audita en tests/a11y/goals.a11y.ts.
+  { route: "/metas/[id]", state: "Meta no encontrada", path: "/metas/00000000-0000-4000-8000-000000000000", session: "user" },
   { route: "/plan", state: "Plan", path: "/plan", session: "user" },
   { route: "/balance", state: "Balance", path: "/balance", session: "user" },
   { route: "/cuenta", state: "C1", path: "/cuenta", session: "user" },
