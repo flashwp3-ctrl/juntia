@@ -235,6 +235,9 @@ jobs:
       - name: Start job clock
         run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
+        with:
+          # 004 PR B (T035): la historia que el selector necesita para git diff <base>...HEAD; sin ella, todas las specs (regla 6).
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -285,10 +288,21 @@ jobs:
             try npx playwright install-deps chromium
           fi
           echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
-      - name: E2E smoke (spec 1)
+      - name: Select E2E specs by area
+        id: select
+        # 004 PR B (T035, F64-5; specs/004-presupuestos-y-metas/contracts/ci.md): las specs 1–3 siempre y la 4 o la 5 según
+        # el área del PR; lo compartido, lo desconocido o sin base (Run workflow), todas las existentes. El resumen del job
+        # dice qué corrió, por qué y qué specs previstas todavía no existen.
+        if: '!inputs.a11y_sweep'
+        env:
+          E2E_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/e2e-select.mjs --base "$E2E_BASE"
+      - name: E2E smoke (selected specs)
         id: smoke
         # Decisión 21.2: el barrido a mano solo corre la accesibilidad.
         if: '!inputs.a11y_sweep'
+        env:
+          E2E_SPECS: ${{ steps.select.outputs.specs }}
         run: node scripts/ci.mjs run test:e2e:smoke
       - name: Axe of the states that need a session or the Auth API
         if: always() && (steps.smoke.outcome != 'skipped' || inputs.a11y_sweep)

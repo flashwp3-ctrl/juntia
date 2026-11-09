@@ -12,7 +12,9 @@ const budgets = { "test:unit": 15, verify: 90, "test:db": 60, "test:e2e:smoke": 
 if (mode === "run") {
   for (const command of commands) {
     const start = Date.now();
-    const args = command === "ci" ? ["ci"] : command === "chromium" ? ["exec", "--", "playwright", "install", "--with-deps", "--only-shell", "chromium"] : ["run", command];
+    // 004 PR B (T035, F64-5): en el job e2e, las specs que eligió scripts/e2e-select.mjs (E2E_SPECS); sin la variable, todas.
+    const specs = command === "test:e2e:smoke" ? (process.env.E2E_SPECS ?? "").split(/\s+/).filter(Boolean) : [];
+    const args = command === "ci" ? ["ci"] : command === "chromium" ? ["exec", "--", "playwright", "install", "--with-deps", "--only-shell", "chromium"] : ["run", command, ...(specs.length ? ["--", ...specs] : [])];
     const result = spawnSync("npm", args, { encoding: "utf8", shell: process.platform === "win32" });
     process.stdout.write(result.stdout ?? "");
     process.stderr.write(result.stderr ?? "");
