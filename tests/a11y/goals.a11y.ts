@@ -12,7 +12,7 @@ import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { contributeToGoal, createGoal } from "../../src/lib/db/goals";
 import { axe, largeText, signedContext, sweep, tabTo, target44 } from "../support/a11y";
-import { seedCouple, type SeededCouple } from "../support/seed";
+import { seedCouple } from "../support/seed";
 import { THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";

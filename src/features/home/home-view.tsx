@@ -16,6 +16,8 @@ import { CountingAmount } from "@/features/expenses/counting-amount";
 import { HighlightRow } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
 import { HomeEmpty, HomeScope, PendingHomeRows } from "./pending-home";
+import type { HomeGoals } from "@/features/goals/types";
+import { GoalsModule, SetAsideLine } from "./goals-home";
 
 const RECENT = 5;
 // El ancho de cada ficha del desglose crece con su importe (en pesos), como en 04·1.
@@ -39,7 +41,8 @@ export const categoryFg: Record<CategoryId, string> = {
  */
 export type SharedPartRow = { id: string; transactionDate: string; categoryId: CategoryId; description: string | null; amount: Money; myPart: Money; payerUserId: string };
 export type MeSummary = { privateMinor: string; sharedPartMinor: string; consumptionMinor: string; byCategory?: Partial<Record<CategoryId, string>> };
-type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string; shared?: { parts: readonly SharedPartRow[]; summary: MeSummary } };
+/** 004 PR C (T050; FR-070): `goals`, lo apartado del mes en Yo y las metas; `undefined` si la lectura falló. */
+type HomeViewProps = { rows: readonly Transaction[]; month: string; today: string; shared?: { parts: readonly SharedPartRow[]; summary: MeSummary }; goals?: HomeGoals };
 type RecentItem = { kind: "private"; row: Transaction } | { kind: "shared"; row: SharedPartRow };
 
 /** La fila de un gasto compartido en Yo: cuenta solo por la parte; el importe completo a la derecha (04·1 INICIO · YO). */
@@ -61,7 +64,7 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
   );
 }
 
-export function HomeView({ rows, month, today, shared }: HomeViewProps) {
+export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   const name = monthName(month);
   const summary = monthSummary(rows, month);
   const recentItems: RecentItem[] = [
@@ -75,6 +78,7 @@ export function HomeView({ rows, month, today, shared }: HomeViewProps) {
       <HomeEmpty month={month} today={today} empty={
         <div className="flex flex-col gap-6 pt-2">
           <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
+          {goals && (goals.goals.length > 0 || BigInt(goals.setAsideMinor) > 0n) ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /><GoalsModule goals={goals} context="me" today={today} /></div> : null}
         </div>
       } />
       </>
@@ -112,10 +116,13 @@ export function HomeView({ rows, month, today, shared }: HomeViewProps) {
           </div>
         ) : null}
       </section>
+      {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
+      {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /></div> : null}
       <AnnotateCta />
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-10">
+        <div className="flex flex-col gap-6 lg:order-2">
         {spentBy.length > 0 ? (
-          <section aria-labelledby="home-breakdown" className="flex flex-col gap-3 lg:order-2 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
+          <section aria-labelledby="home-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
             <h2 id="home-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
             <ul className="flex flex-wrap gap-2">
               {spentBy.map(([category, amount]) => (
@@ -135,6 +142,8 @@ export function HomeView({ rows, month, today, shared }: HomeViewProps) {
             </ul>
           </section>
         ) : null}
+        {goals ? <GoalsModule goals={goals} context="me" today={today} /> : null}
+        </div>
         <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:order-1">
           <div className="flex items-baseline justify-between gap-3 pb-1">
             <h2 id="home-recent" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>

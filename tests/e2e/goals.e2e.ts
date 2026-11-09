@@ -29,6 +29,8 @@ async function open(browser: Browser, baseURL: string, user: SeededUser, context
 const hero = (page: Page) => page.locator("[data-counting-amount]:visible").first();
 
 test("meta compartida: Sara la crea, aporta (el héroe de Inicio no cambia) y retira; Tomás la ve igual", async ({ browser, baseURL }, testInfo) => {
+  // Un recorrido de dos sesiones con cinco navegaciones y tres escrituras: más que el límite por defecto de 30 s.
+  test.slow();
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   await seedSharedMovements(pair, "recent");
   const sara = await open(browser, baseURL!, pair.sara, "us");
@@ -101,7 +103,9 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
   const shared = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", name: "Japón compartido", goalType: "travel", target: moneyFromPesos(18000000n), targetMonth: null });
   await contributeToGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: shared.id, amount: moneyFromPesos(400000n), entryDate: todayInBogota(), fundingMode: "reserved" });
   const PRIVATE = ["Bicicleta secreta", "345.678", "34567800", personal.id];
-  const leaks = (text: string) => PRIVATE.filter((marker) => text.includes(marker));
+  // Al pedir /metas/{id personal}, la propia URL vuelve en el payload del router: ahí el id no es un dato filtrado, y lo que
+  // se comprueba es que no salgan ni el nombre ni los importes.
+  const leaks = (text: string, path = "") => PRIVATE.filter((marker) => text.includes(marker) && !(marker === personal.id && path.includes(personal.id)));
   const routes = ["/metas", `/metas/${shared.id}`, `/metas/${personal.id}`, "/", `/actividad?mes=${month()}`];
 
   for (const cookie of ["us", null, "nosotros"]) {
@@ -111,7 +115,7 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
         const url = rsc ? `${path}${path.includes("?") ? "&" : "?"}_rsc=spec4` : path;
         const response = await page.request.get(url, { headers: rsc ? { RSC: "1" } : {} });
         expect([200, 404], url).toContain(response.status());
-        expect(leaks(await response.text()), `${cookie ?? "sin cookie"} ${url} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+        expect(leaks(await response.text(), path), `${cookie ?? "sin cookie"} ${url} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
       }
     }
     // Control positivo: con la cookie en Nosotros, el servidor sí trae la compartida.
@@ -125,7 +129,7 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
   // Tomás nunca recibe la meta personal de Sara, en ningún contexto ni por su id.
   for (const cookie of ["us", "me"] as const) {
     const { context, page } = await open(browser, baseURL!, pair.tomas, cookie);
-    for (const path of routes) expect(leaks(await (await page.request.get(path)).text()), `Tomás ${cookie} ${path}`).toEqual([]);
+    for (const path of routes) expect(leaks(await (await page.request.get(path)).text(), path), `Tomás ${cookie} ${path}`).toEqual([]);
     await context.close();
   }
 

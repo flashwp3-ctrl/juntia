@@ -65,6 +65,13 @@ import { FunnelSimple } from "@phosphor-icons/react/dist/ssr/FunnelSimple";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { Tag } from "@phosphor-icons/react/dist/ssr/Tag";
 import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
+import { AirplaneTilt } from "@phosphor-icons/react/dist/ssr/AirplaneTilt";
+import { Archive } from "@phosphor-icons/react/dist/ssr/Archive";
+import { ArrowUUpLeft } from "@phosphor-icons/react/dist/ssr/ArrowUUpLeft";
+import { FlagCheckered } from "@phosphor-icons/react/dist/ssr/FlagCheckered";
+import { GraduationCap } from "@phosphor-icons/react/dist/ssr/GraduationCap";
+import { Heart } from "@phosphor-icons/react/dist/ssr/Heart";
+import { Lifebuoy } from "@phosphor-icons/react/dist/ssr/Lifebuoy";
 import type { Icon } from "@phosphor-icons/react/dist/lib/types";
 
 // Mapa semántico de DESIGN_SYSTEM.md §3 que usa la 001, circle-notch (§Button, carga), los diez íconos de
@@ -140,6 +147,15 @@ const icons = {
   "minus-circle": MinusCircle,
   "share-network": ShareNetwork,
   "user-plus": UserPlus,
+  // 004 PR C: Retirar y Meta completada del mapa semántico (DESIGN_SYSTEM.md §3), archivar y los tipos de meta del
+  // fallback de GoalCard (viaje airplane-tilt, boda heart y vivienda house-line del comp; el resto, decisión del plan 3).
+  "arrow-u-up-left": ArrowUUpLeft,
+  "flag-checkered": FlagCheckered,
+  archive: Archive,
+  "airplane-tilt": AirplaneTilt,
+  heart: Heart,
+  "graduation-cap": GraduationCap,
+  lifebuoy: Lifebuoy,
 } as const satisfies Record<string, Icon>;
 
 export type AppIconName = keyof typeof icons;

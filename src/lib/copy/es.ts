@@ -11,6 +11,8 @@ export const copy = {
       cannotComplete: "No se puede dar por lograda esta meta.",
       versionConflict: (name:string) => `${name} cambió esta meta.`,
       undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
+      // 004 PR C: quién cambió la meta cuando no se sabe (otra pestaña o la pareja).
+      someone: "Alguien",
     },
     form: {errors:{name:"Escribe un nombre de hasta 60 caracteres.",type:"Elige un tipo de meta.",target:"Escribe un objetivo entre $1 y $999.999.999.",month:"Elige un mes válido."}},
     withdraw: {errors:{reason:"Escribe un motivo de hasta 140 caracteres."}},
@@ -66,7 +68,7 @@ export const copy = {
     },
     sheet: {
       createTitle: "Nueva meta", editTitle: "Editar meta", name: "Nombre", type: "Tipo de meta", target: "Objetivo",
-      month: "Fecha objetivo (opcional)", monthHelp: "Mes y año. Sin fecha no hay ritmo.", clearMonth: "Sin fecha",
+      month: "Fecha objetivo (opcional)", monthHelp: "Mes y año. Sin fecha no hay ritmo.", clearMonth: "Sin fecha", monthLabel: "Mes", yearLabel: "Año",
       scopeNote: { us: "Será una meta compartida: la ven y aportan los dos.", me: "Será una meta personal: solo tú la ves." },
       submitCreate: "Crear meta", submitEdit: "Guardar cambios", submitting: "Guardando…",
       created: (name: string) => `Meta «${name}» creada`, updated: "Cambios guardados", rejected: "No se guardó.",

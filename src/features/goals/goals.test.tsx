@@ -80,7 +80,7 @@ describe("GoalCard (US-4.3, US-4.6, US-4.9)", () => {
     const card = screen.getByRole("link", { name: copy.goals.card.accessibleName({ name: "Japón", scope: copy.goals.scope.shared.toLowerCase(), percent: 63, balance: "$11.340.000", target: "$18.000.000" }) });
     expect(card.getAttribute("href")).toBe(`/metas/${JAPAN}`);
     expect(within(card).getByText(copy.goals.ofTarget("$11.340.000", "$18.000.000"))).toBeTruthy();
-    expect(within(card).getByRole("img", { name: copy.goals.ribbon.label([copy.goals.ribbon.part("Sara", "$6.120.000"), copy.goals.ribbon.part("Tomás", "$5.220.000")].join(", "), "$18.000.000") })).toBeTruthy();
+    expect(within(card).getByRole("img", { hidden: true, name: copy.goals.ribbon.label([copy.goals.ribbon.part("Sara", "$6.120.000"), copy.goals.ribbon.part("Tomás", "$5.220.000")].join(", "), "$18.000.000") })).toBeTruthy();
     expect(within(card).getByText(copy.goals.pace.line("$6.660.000", 6, "$1.110.000"))).toBeTruthy();
     expect(within(card).getByText(copy.goals.pace.estimate)).toBeTruthy();
     expect(card.textContent).not.toMatch(/Llegar|te alcanza|Total gastado/);
@@ -369,10 +369,11 @@ describe("Historial de una meta (US-5.6, US-5.7; FR-043)", { timeout: 15000 }, (
 });
 
 describe("Meta inmersiva (US-4.5; FR-075–FR-077; SC-011)", () => {
-  const media = (reduce: boolean) => vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-    matches: reduce && query.includes("reduce"), media: query, onchange: null, addEventListener: vi.fn(), removeEventListener: vi.fn(),
-    addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
-  }) as unknown as MediaQueryList);
+  // jsdom no trae matchMedia: se fija la preferencia de movimiento reducido por caso (como account-context.test.tsx).
+  const media = (reduce: boolean) => vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: reduce && query.includes("reduce"), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+  }));
+  afterEach(() => vi.unstubAllGlobals());
 
   it("con movimiento reducido: el valor final en el DOM y la cinta llena desde el inicio; foco en el título", async () => {
     media(true);

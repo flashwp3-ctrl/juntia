@@ -195,3 +195,18 @@ html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-value
   background: var(--comp-segmented-knob-bg);
   box-shadow: var(--elevation-raised);
 }
+
+/* 004 PR C. S5 Goal Journey (MOTION_SYSTEM.md §4). La cinta de la meta inmersiva crece desde 0 (300–700 ms, stagger de 80 ms
+   que pone GoalRibbon). Las View Transitions de React 19.3 (`<ViewTransition share="goal-morph">`: foto, título y cinta de
+   cada meta) se expanden con la curva `emphasized` y la duración `journey`; el resto de la página hace el crossfade por
+   defecto. Con movimiento reducido: crossfade de 200 ms, sin escala ni desplazamiento. */
+@keyframes ribbon-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+::view-transition-group(.goal-morph) { animation-duration: 560ms; animation-timing-function: cubic-bezier(.3, 0, 0, 1); }
+::view-transition-image-pair(.goal-morph) { isolation: isolate; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) { animation: none !important; }
+  ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 200ms !important; animation-timing-function: linear !important; }
+}

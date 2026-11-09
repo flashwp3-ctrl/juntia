@@ -8,6 +8,7 @@ import { ActivityScreen } from "@/features/activity/activity-screen";
 import { loadMonth, monthParam, today } from "@/features/activity/load";
 import { activeCouple, loadCoupleMonth } from "@/features/couple/shared-load";
 import { serverContext } from "@/lib/server-context";
+import { goalPeople, loadGoalActivity } from "@/features/goals/load";
 
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [context, query] = await Promise.all([serverContext(), searchParams]);
@@ -19,5 +20,10 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const members = context === "us" ? await activeCouple() : null;
   const coupleData = members ? await loadCoupleMonth(month, now, volver) : null;
   if (coupleData?.ok && coupleData.value.month !== query.mes && typeof query.mes === "string") redirect(`/actividad?mes=${coupleData.value.month}`);
-  return <ActivityScreen server={context} data={data} today={now} couple={members && coupleData ? { data: coupleData, members } : null} />;
+  // 004 PR C (T050; FR-044, FR-071): los asientos de metas del mes que se enseña, del mismo contexto (en Nosotros, solo de
+  // metas compartidas). Un fallo de esa lectura no tumba Actividad: los movimientos se ven sin los asientos.
+  const shownMonth = data?.ok ? data.value.month : coupleData?.ok ? coupleData.value.month : null;
+  const goalsContext = context === "me" ? "me" : members ? "us" : null;
+  const [goals, people] = goalsContext && shownMonth ? await Promise.all([loadGoalActivity(goalsContext, shownMonth, volver), goalPeople()]) : [null, []];
+  return <ActivityScreen server={context} data={data} today={now} couple={members && coupleData ? { data: coupleData, members } : null} goals={goals?.ok ? goals.value : null} goalPeople={people} />;
 }

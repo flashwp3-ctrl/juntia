@@ -5,7 +5,8 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { CategoryId, TransactionType } from "@/domain/transactions";
 
-export type ActivityFilters = { query: string; type: TransactionType | "all"; categoryId: CategoryId | null };
+/** 004 PR C (FR-071): `goals` es el filtro «Aportes», que deja solo los asientos de metas. */
+export type ActivityFilters = { query: string; type: TransactionType | "all" | "goals"; categoryId: CategoryId | null };
 type State = ActivityFilters & {
   month: string | null;
   setQuery: (query: string) => void;

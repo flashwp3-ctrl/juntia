@@ -68,3 +68,8 @@ export type GoalActions = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada acción devuelve su propio resultado guardado.
   check: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<any>>;
 };
+
+/** Inicio (FR-070): lo apartado del mes (`aporte_a_metas`) y las metas abiertas del contexto. */
+export type HomeGoals = { setAsideMinor: string; goals: GoalView[]; members: Record<string, GoalMemberView[]> };
+/** Actividad (FR-044, FR-071): asientos de metas del mes y lo apartado del mes. */
+export type GoalActivityData = { entries: GoalEntryView[]; setAsideMinor: string };
