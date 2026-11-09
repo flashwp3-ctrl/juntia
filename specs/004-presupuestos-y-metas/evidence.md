@@ -381,3 +381,79 @@ Comprobación tras db:dev:reset (9.97 s), con el mismo código: **20 archivos pa
 E2E completo F66: reset previo **8.65 s**, luego npm run e2e:dev sin argumentos, PORT=3400, perfil local conservador 1:false, cero reintentos: **exit 0, 431.43 s**. Build 14.24 s; 26 E2E no seriales 122.75 s; 2 seriales 15.53 s; 94 axe 273.44 s; pasada axe serial vacía 3.63 s. S4: 41 cambios, 38 animando. Siguen fuera cuatro E2E @mail, @sweep y evidence según contrato. Este tiempo local no sustituye la medida del job e2e de CI (461 s en T024, tope 480 s). No se cambió ninguna opción del workflow ni se lanzó CI.
 
 verify final **59.80 s, exit 0**: 78 dominio, 698 componentes verdes y 2 omisiones previstas, typecheck verde y solo el aviso preexistente de balance-panel.tsx:61. git diff --check pasa. SQL e integración/e2e completos verdes; no se tocó producción. F66-1 y F66-2 se publican en un solo commit y un solo push con el PR en borrador; gate ready_for_review a cargo del gestor.
+
+
+---
+
+# Evidencia · 004 · PR C · Metas, aportes, retiros y S5
+
+Rama `claude/004-c-goals-6b13e8`, sobre `main` en `bd408b9` (PR A fusionado). Tareas T042–T053 y T044a; T054–T056 son humanas. Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (`PORT=3500`); **no es evidencia de CI** (ADR-011 §9.8) y no se lanzó ningún run. El lock no se forzó nunca: cuando lo tenía la sesión del PR B, se esperó a que lo soltara.
+
+## T042–T044 · pruebas escritas primero (commit `e33bf8e`)
+
+- Componentes: `src/features/goals/goals.test.tsx` (GoalCard con los siete `goal_type`, «Lo lograron» y excedente; GoalStack 0/1/2/3+ y «Ver todas»; Metas en Yo y Nosotros; Registrar aporte sin «¿Quién aporta?» y vista previa 11.840.000 · 65 %; Retirar con máximo y motivo; fila de retiro que no parece ingreso; historial con anulados y filtros; inmersiva con movimiento reducido; iconos `flag-banner`, `piggy-bank`, `arrow-u-up-left`, `flag-checkered`), `goal-undo.test.tsx` (deshacer único con tres orígenes: aporte, retiro y liquidación de la 003), `src/features/home/home-goals.test.tsx` y `src/features/activity/activity-goals.test.tsx`.
+- Spec E2E 4: `tests/e2e/goals.e2e.ts` (2 casos). Axe: `tests/a11y/goals.a11y.ts` (ligero: 1 caso por tema a 390 con 9 estados; `@sweep`: siete anchos, 200 %, teclado y 44 px). Registro de axe: `/metas/[id]` con el estado «Meta no encontrada».
+
+## T044a · rojo
+
+- Componentes (local): `npx vitest run --project components src/features/goals src/features/home/home-goals.test.tsx src/features/activity/activity-goals.test.tsx` → **4 archivos fallan, 9 pruebas fallan**; `goals.test.tsx` no carga («Failed to resolve import "./goal-card"»), el resto por ausencia (`offerGoalUndo is not a function`, región «Apartado para metas» no encontrada, radio «Aportes» no encontrado).
+- E2E y axe contra `juntia-dev`: la primera corrida no llegó a las pruebas porque `next build` hace typecheck de todo el repo y las pruebas de componentes referían módulos inexistentes («Failed to type check», 26,5 s). Para ver la E2E fallar por la funcionalidad se apartaron **temporalmente** esos cuatro archivos (sin commit) y se repitió:
+  - `npm run e2e:dev -- tests/e2e/goals.e2e.ts`: build **pasó (9,44 s)**, **2 fallan** — «meta compartida…»: `getByRole('heading', { name: 'Todavía no tienen metas' })` no encontrado; «Metas en Nosotros: ni el HTML…»: el control positivo no encuentra «Japón compartido» en `/metas`. La siembra pasó en los dos.
+  - `npm run e2e:dev -- tests/a11y/goals.a11y.ts` (A11Y_JOB=e2e): build **pasó (8,16 s)**, **2 fallan** (light y dark), por el mismo encabezado ausente.
+  - Después se restauraron los archivos (`git checkout -- src/features`).
+
+## T045–T050 · implementación (commits `4974554`, `a17858b`)
+
+- Metas (`src/app/(app)/metas/page.tsx`, `loading.tsx`), meta inmersiva (`metas/[id]/page.tsx`), `src/features/goals/*`, bloques de Inicio (`src/features/home/goals-home.tsx`) y asientos en Actividad (Yo y Nosotros, también en el detalle). Lecturas en `src/features/goals/load.ts`: en Nosotros solo `goal_scope = 'shared'` (y `goal_member_balances` solo de esos ids); en Yo `goals_overview` en una consulta y el total de `goals_totals` con `personal`. Server Actions en `src/features/goals/actions.ts` con `ok`/`rejected`/`unknown`, 15 s y `write_status`. El «Deshacer» de aportes y retiros usa la máquina única del proveedor de Anotar (`offerGoalUndo`, con su propio «Comprobar estado» para funcionar sin pareja).
+- Ninguna migración nueva; `src/lib/db/goals.ts` gana `goalMemberBalancesFor` y `getGoal` (lecturas).
+
+## T051 · iteración dirigida contra `juntia-dev`
+
+| Corrida | Resultado |
+| --- | --- |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` (1.ª) | 2 fallan: el radio nativo del tipo era `sr-only` y no se podía pulsar (timeout 30 s); y la prueba de privacidad contaba como fuga el id de la meta personal en `/metas/{id_personal}`, donde vuelve solo porque es la URL pedida (no salen nombre ni importes). Arreglos: el radio cubre la ficha con opacidad 0; el marcador del id no se aplica a la ruta que lo contiene; `test.slow()` en el recorrido de dos sesiones |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` (2.ª) | **2/2 pasan, 43,7 s** (build 12,19 s, total 58,32 s) |
+| `e2e:dev -- tests/a11y/goals.a11y.ts` (1.ª) | 2 fallan: `color-contrast` (gris secundario sobre el verde de ahorro, 4,38:1; y medición durante el fundido de entrada de la inmersiva) y `label-content-name-mismatch` en el enlace de la tarjeta. Arreglos: texto en tinta sobre el fallback (como pide GoalCard), nombre del enlace por un texto oculto y contenido visual `aria-hidden`, sin fundido propio con movimiento reducido |
+| `e2e:dev -- tests/a11y/goals.a11y.ts` (2.ª) | **2/2 pasan, 46,5 s** |
+
+Componentes y dominio (local): **815 pasan / 2 omisiones previstas** tras ajustar `src/app/(app)/product-routes.test.tsx`, que exigía Metas «sin datos» (FR-044 de la 002): Metas ya lee metas reales y se prueba en `src/features/goals`, como antes pasó con Inicio y Actividad. `tests/a11y/job-selection.test.ts` falló una vez mientras la sesión del PR B usaba el puerto; aislado, pasa.
+
+## T052 · [V] View Transitions con App Router — **queda abierta**
+
+Prueba temporal (no versionada) contra `juntia-dev` con `npm run e2e:dev`: siembra una pareja y una meta, abre la tarjeta en Metas, comprueba el foco y cierra con Escape. Envuelve `Document.prototype.startViewTransition` para contar las transiciones y leer sus pseudoelementos.
+
+Navegador: **Chromium 156.0.8078.4** (Playwright 1.64.1, headless). Resultado: **4/4 pasan, 24,1 s**:
+
+```
+{"T052":"con API","motion":"no-preference","browserName":"chromium","version":"156.0.8078.4","startViewTransition":true,"open":[],"close":[]}
+{"T052":"con API","motion":"reduce","browserName":"chromium","version":"156.0.8078.4","startViewTransition":true,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"no-preference","browserName":"chromium","version":"156.0.8078.4","startViewTransition":false,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"reduce","browserName":"chromium","version":"156.0.8078.4","startViewTransition":false,"open":[],"close":[]}
+```
+
+- **Se cumple** en los cuatro casos: la ruta se abre, el foco va al título (`h1`), Escape vuelve a `/metas` y el foco vuelve a la tarjeta de origen; el valor final está en el DOM.
+- **No se cumple**: React no inicia ninguna View Transition al abrir ni al cerrar (`open: []`, `close: []`), y el respaldo `layoutId` tampoco anima. Causa: el morph solo ocurre si el destino se pinta en el mismo commit que la navegación (página precargada; guía de View Transitions de Next 16). `/metas/[id]` es dinámica (cookie de contexto y base) y suspende primero en `metas/loading.tsx`, así que no se forma el par.
+- **WebKit**: no está instalado en este equipo (solo `chromium-1248` en `ms-playwright`); instalarlo es una descarga que no se hizo sin permiso. Sin salida de WebKit.
+- **Back-swipe de iPhone**: con los aplazados de la decisión 19.1.
+- Opciones para el gestor, no decididas aquí: (a) precarga completa del enlace de la tarjeta, revisando la regla de prefetch por contexto de la 003; (b) quitar el límite de carga de `/metas/[id]` y aceptar la espera sin Skeleton; (c) aceptar la entrada sin morph en P0-3 y cerrar el `[V]` como «no cumple».
+
+## T053 · capturas e Impeccable
+
+- Capturas locales contra `juntia-dev` con el dataset dorado y aportes del mes, a **390 y 1440 en claro y oscuro**, en `specs/004-presupuestos-y-metas/evidence/pr-c/capturas/` (40 PNG): Metas en Nosotros (pila y abanico) y en Yo, Inicio y Actividad en los dos contextos, la meta inmersiva con historial y las hojas de aporte, retiro y editar. Son capturas de iteración, no de CI; en las de página completa la barra inferior fija aparece a media página, y las hojas pueden salir a mitad de su fundido de 120 ms.
+- Impeccable (`critique`, solo revisión). Detector: `impeccable detect --json src/features/goals src/features/home/goals-home.tsx` → **`[]`, exit 0**. Sin superposición en el navegador: la app solo corre contra `juntia-dev` bajo el lock. Revisión de diseño en un subagente aislado: 27/40 en Nielsen, «específico de Bosque & Arena», 8 hallazgos. Corregidos en `a17858b`: la capa que asoma cortaba su título y tapaba el ícono; el abanico tapaba los nombres de atrás y dejaba hueco antes de «Crear meta»; «Disponible tuyo» aparecía en la fila de la pareja (ahora «Tus aportes» y «Aportes de {nombre}»); «Anular aporte» se repetía como botón de texto en cada fila (ahora botón de ícono de 44 px); los aportes iban antes que los gastos dentro del día; una sola meta personal quedaba estrecha en escritorio; y se restituye el anillo de foco del título. Además, un colapso de márgenes ocultaba las capas de la pila en móvil (visto en las capturas). **Abierto**: el campo de fecha nativo se ve «11/09/2026» en un navegador en inglés; comprobar con es-CO.
+
+## T051 · cierre local antes del push
+
+- `PORT=3500 npm run e2e:dev` **completo, una vez**, sin argumentos y sin variable de medición (defaults del repo): **exit 0, 342,90 s**. Build 14,06 s; E2E sin @mail **30/30, 82,12 s** (incluye la spec 4); axe con sesión **98/98, 245,10 s** (incluye `goals.a11y.ts` ligero y `/metas/[id]` del registro). Fuera, por contrato: las E2E @mail, `@sweep` y el proyecto evidence.
+- `npm run verify`: **exit 0, 61,26 s** (presupuesto < 90 s). Dominio **78/78**; componentes **743 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (solo el aviso preexistente de `balance-panel.tsx:61`).
+- **Presupuesto del job `e2e` (riesgo)**: la spec 4 añade ~44 s y el axe de metas ~47 s en `juntia-dev`. El checkpoint del PR A midió 461 s en CI con tope bloqueante de 480 s; con lo de este PR es probable que el gate lo supere. No se tocó el workflow ni el tope; la medición y la mitigación (a → b → c de contracts/ci.md) son del gestor en el gate (I2).
+
+| Tarea | Estado |
+| --- | --- |
+| T042–T044 | Hechas (`e33bf8e`) |
+| T044a | Hecha: rojo local y contra `juntia-dev`, salidas arriba |
+| T045–T050 | Hechas (`4974554`, `a17858b`) |
+| T051 | Hecha: dirigidas en verde, completo y `verify` en verde |
+| T052 | **Abierta**: Chromium sí (salida arriba), sin morph; WebKit sin instalar |
+| T053 | Hecha: 40 capturas, detector y revisión de Impeccable con sus correcciones |
+| T054–T056 | Humanas (gestor y fundadores) |
