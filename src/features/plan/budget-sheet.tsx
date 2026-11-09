@@ -48,7 +48,8 @@ type Target = { kind: "create"; categoryId: CategoryId | null } | { kind: "edit"
 type Payload =
   | { op: "create"; idempotencyKey: string; context: PlanContext; categoryId: CategoryId; limitPesos: string }
   | { op: "update"; idempotencyKey: string; budgetId: string; expectedVersion: number; limitPesos: string | null; reactivate: boolean };
-type Conflict = { kind: "version"; budgetId: string; expected: number } | { kind: "exists"; categoryId: CategoryId };
+/** `attempted`: el límite en pesos que no se guardó (`null` si era desactivar), para decirlo junto al vigente. */
+type Conflict = { kind: "version"; budgetId: string; expected: number; attempted: string | null } | { kind: "exists"; categoryId: CategoryId; attempted: string };
 
 type Props = {
   open: boolean;
@@ -171,8 +172,8 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     onDone(payload.op === "create" || payload.reactivate ? "created" : payload.limitPesos === null ? "deactivated" : "updated");
   }, [onDone]);
   const onRejected = useCallback((error: WriteError, payload: Payload) => {
-    if (error === "versionConflict" && payload.op === "update") { setConflict({ kind: "version", budgetId: payload.budgetId, expected: payload.expectedVersion }); router.refresh(); }
-    else if (error === "budgetExists" && payload.op === "create") { setConflict({ kind: "exists", categoryId: payload.categoryId }); router.refresh(); }
+    if (error === "versionConflict" && payload.op === "update") { setConflict({ kind: "version", budgetId: payload.budgetId, expected: payload.expectedVersion, attempted: payload.limitPesos }); router.refresh(); }
+    else if (error === "budgetExists" && payload.op === "create") { setConflict({ kind: "exists", categoryId: payload.categoryId, attempted: payload.limitPesos }); router.refresh(); }
     else if (error === "notFound") router.refresh();
   }, [router]);
   const write = useWrite<Payload, SavedBudget>({ action: "create_budget", run, check, onOk, onRejected });
@@ -182,6 +183,8 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
   const reactivating = target.kind === "create" && chosenRow?.budgetId && chosenRow.limitMinor === null ? chosenRow : null;
 
   const submit = (deactivate = false) => {
+    // Con un conflicto a la vista solo se sigue por «Revisar»: nunca otra escritura sobre la versión vieja.
+    if (conflict) return;
     if (deactivate && target.kind === "edit" && editing?.budgetId && base !== null) {
       setInvalid(null);
       void write.submit({ op: "update", idempotencyKey: key, budgetId: editing.budgetId, expectedVersion: base, limitPesos: null, reactivate: false });
@@ -224,7 +227,6 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     onClose();
   };
 
-  const limitRef = useRef<HTMLInputElement | null>(null);
 
   const message = invalid ?? (write.state.phase === "rejected" && !conflict ? rejectedMessage(write.state.error) : null);
   const title = target.kind === "edit" ? copy.plan.sheet.editTitle : copy.plan.sheet.createTitle;
@@ -251,11 +253,10 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
         </p>
       ) : null}
       <AmountInput
-        ref={limitRef}
         label={copy.plan.sheet.limit}
         value={limit}
         onValueChange={(next) => { setLimit(next); setInvalid(null); }}
-        disabled={locked}
+        disabled={locked || conflict !== null}
         aria-invalid={invalid ? true : undefined}
         aria-describedby={message ? errorId : undefined}
         className="w-full"
@@ -273,6 +274,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
                 <AppIcon name="warning" weight="bold" size={18} className="mt-px shrink-0 text-warning" />
                 <span className="flex flex-col gap-0.5">
                   <span className="font-semibold">{conflict.kind === "version" ? copy.plan.errors.versionConflict(freshBy) : copy.plan.errors.alreadyExists(freshBy)}</span>
+                  <span>{conflict.attempted === null ? copy.plan.sheet.notSavedOff : copy.plan.sheet.notSaved(formatMoney({ amountMinor: BigInt(conflict.attempted) * 100n, currency: "COP" }))}</span>
                   <span>{fresh.limitMinor === null ? copy.plan.sheet.currentOff : copy.plan.sheet.current(money(fresh.limitMinor))}</span>
                 </span>
               </span>
@@ -314,7 +316,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
             {editing.history.map((change) => (
               <li key={change.id} className="flex items-baseline justify-between gap-3 py-1.5 text-[13px] leading-[1.4]">
                 <span className="font-medium text-ink">{historyValue(change)}</span>
-                <span className="shrink-0 text-ink-secondary">{copy.plan.sheet.historyBy(change.byName, shortDate(change.date))}</span>
+                <span className="shrink-0 text-ink-secondary">{context === "me" ? copy.plan.sheet.historyByMe(shortDate(change.date)) : copy.plan.sheet.historyBy(change.byName, shortDate(change.date))}</span>
               </li>
             ))}
           </ul>
@@ -330,11 +332,12 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
       />
     </form>
   );
-  // Foco inicial: el límite si la categoría ya está; si hay que elegirla, la rejilla.
+  // Foco inicial: el límite si la categoría ya está; si hay que elegirla, la rejilla. Por el DOM del diálogo: AmountInput
+  // usa su propia ref para el cursor.
   const focusFirst = (event: Event) => {
     event.preventDefault();
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
-    (target.kind === "create" && !row ? dialog?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') : limitRef.current)?.focus();
+    (target.kind === "create" && !row ? dialog?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') : dialog?.querySelector<HTMLElement>('input[inputmode="numeric"]'))?.focus();
   };
   const props = { open, onOpenChange: requestClose, title, bare: true, onOpenAutoFocus: focusFirst };
   return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props}>{body}</BottomSheet>;

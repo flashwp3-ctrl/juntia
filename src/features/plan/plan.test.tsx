@@ -217,6 +217,9 @@ describe("Hoja de presupuesto (FR-011, FR-018, FR-093; US-2 escenarios 2, 6 y 7)
     view.rerender(<BudgetSheet {...all} row={fresh} rows={[fresh, ...goldenRows.slice(1)]} />);
     expect(within(sheet).getByText(copy.plan.errors.versionConflict("Tomás"))).toBeTruthy();
     expect(within(sheet).getByText(copy.plan.sheet.current("$950.000"))).toBeTruthy();
+    // Revisión de acabado: se dice qué no se guardó, y el campo no admite otra escritura sobre la versión vieja.
+    expect(within(sheet).getByText(copy.plan.sheet.notSaved("$850.000"))).toBeTruthy();
+    expect((within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement).disabled).toBe(true);
     await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.review }));
     expect((within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement).value).toBe("950.000");
     await user.clear(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }));
@@ -311,6 +314,14 @@ describe("Plan (FR-020; US-1, US-2 escenarios 4 y 6)", () => {
     expect(container.textContent).toContain(copy.plan.who.us);
     expect(container.textContent).not.toMatch(/te alcanza|puedes pagarlo/i);
     expect(screen.getByRole("button", { name: copy.plan.createBudget })).toBeTruthy();
+  });
+
+  it("en Yo, quien mira hizo el cambio: el último cambio y el historial van en primera persona", () => {
+    const change: BudgetChange = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", budgetId: MARKET, kind: "create", limitMinor: minor(80000n), previousLimitMinor: null, byName: "Sara", changedAt: "2026-10-09T15:00:00.000Z", date: "2026-10-09" };
+    const own: PlanRow = { categoryId: "health", budgetId: MARKET, version: 1, limitMinor: minor(80000n), consumedMinor: "0", history: [change] };
+    const { container } = render(<PlanScreen data={{ ...meData, rows: [...meData.rows, own] }} actions={actions()} />);
+    expect(container.textContent).toContain(copy.plan.lastChange(copy.plan.changeMe.create(copy.categories.health, "$80.000"), "9 oct"));
+    expect(container.textContent).not.toContain("Sara creó");
   });
 
   it("un presupuesto desactivado sin gasto en el mes no se pinta como «$0 · sin presupuesto»", () => {

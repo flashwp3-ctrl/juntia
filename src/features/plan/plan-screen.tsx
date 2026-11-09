@@ -17,13 +17,17 @@ import { copy } from "@/lib/copy/es";
 import { daysLeftInMonth, monthName, shortDate } from "@/lib/format";
 import { BudgetIndicator } from "./budget-indicator";
 import { BudgetSheet, type BudgetDone } from "./budget-sheet";
-import type { BudgetChange, PlanActions, PlanData, PlanRow } from "./types";
+import type { BudgetChange, PlanActions, PlanContext, PlanData, PlanRow } from "./types";
 
 const ORDER = new Map<string, number>(CATEGORY_CATALOG.map((category, index) => [category.id, index]));
 const money = (minor: string) => formatMoney({ amountMinor: BigInt(minor), currency: "COP" });
 
 /** «Sara subió Mercado a $900.000». */
-function describe(change: BudgetChange, category: string) {
+function describe(change: BudgetChange, category: string, context: PlanContext) {
+  if (context === "me") {
+    const mine = copy.plan.changeMe;
+    return change.kind === "deactivate" ? mine.deactivate(category) : mine[change.kind](category, money(change.limitMinor!));
+  }
   const phrases = copy.plan.change;
   switch (change.kind) {
     case "create": return phrases.create(change.byName, category, money(change.limitMinor!));
@@ -64,7 +68,7 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
   const notes = (
     <p className="text-[12px] leading-[1.5] text-pretty text-ink-secondary">
       {copy.plan.who[context]}
-      {last ? <> {copy.plan.lastChange(describe(last.change, copy.categories[last.row.categoryId]), shortDate(last.change.date))}</> : null}
+      {last ? <> {copy.plan.lastChange(describe(last.change, copy.categories[last.row.categoryId], context), shortDate(last.change.date))}</> : null}
     </p>
   );
   const createButton = budgets.length > 0 && canCreate
@@ -87,33 +91,37 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
 
       <section aria-labelledby="plan-budgets" className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         <h2 id="plan-budgets" className="sr-only">{copy.plan.budgets}</h2>
-        {budgets.length === 0 ? (
-          <div className="flex items-start gap-3.5 rounded-[var(--radius-xl)] bg-raised px-4 py-4 shadow-raised">
-            <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-sunken text-ink-secondary">
-              <AppIcon name="chart-pie-slice" weight="duotone" size={22} />
-            </span>
-            <span className="flex min-w-0 flex-col gap-2.5">
-              <span className="flex flex-col gap-0.5">
-                <span className="text-[length:var(--body-m-size)] font-semibold text-ink">{copy.plan.empty.title}</span>
-                <span className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.plan.empty[context]}</span>
-              </span>
-              <Button variant="secondary" icon="plus" className="self-start" onClick={() => open(null)}>{copy.plan.empty.action}</Button>
-            </span>
-          </div>
-        ) : null}
         {budgets.length > 0 ? (
           <ul className="flex flex-col">
             {budgets.map((row) => <BudgetIndicator key={row.categoryId} row={row} context={context} onOpen={open} />)}
           </ul>
         ) : null}
+        {/* «En qué se fue» sin presupuesto: una sola lista punteada (el lenguaje de lo pendiente del comp), no una tarjeta
+            por categoría, para que el modo sin presupuesto no se lea como una lista de avisos (US-1). */}
         {spent.length > 0 ? (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border rounded-[16px] border-[1.5px] border-dashed border-border-emphasis px-3.5">
             {spent.map((row) => <BudgetIndicator key={row.categoryId} row={row} context={context} onOpen={open} />)}
           </ul>
         ) : null}
+        {budgets.length === 0 ? (
+          // Sin presupuestos: una fila plana y una acción secundaria, después de lo gastado (DEC-R01; US-1, escenario 1).
+          <div className="flex items-start gap-3 pt-1">
+            <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-sunken text-ink-secondary">
+              <AppIcon name="chart-pie-slice" weight="duotone" size={20} />
+            </span>
+            <span className="flex min-w-0 flex-col gap-2">
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[length:var(--body-m-size)] font-semibold text-ink">{copy.plan.empty.title}</span>
+                <span className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.plan.empty[context]}</span>
+              </span>
+              {/* Texto al 200 %: el botón parte su texto en dos líneas antes que salirse (FR-101). */}
+              <Button variant="ghost" icon="plus" className="h-auto! min-h-11 max-w-full self-start py-2.5 text-left whitespace-normal!" onClick={() => open(null)}>{copy.plan.empty.action}</Button>
+            </span>
+          </div>
+        ) : null}
+        {createButton}
       </section>
       <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-2">
-        {createButton}
         {notes}
       </div>
 

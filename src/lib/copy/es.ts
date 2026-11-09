@@ -52,6 +52,15 @@ export const copy = {
       deactivate: (name: string, category: string) => `${name} desactivó ${category}`,
       reactivate: (name: string, category: string, amount: string) => `${name} volvió a activar ${category} con ${amount}`,
     },
+    // En Yo quien mira es quien hizo el cambio: primera persona (revisión de acabado del PR B).
+    changeMe: {
+      create: (category: string, amount: string) => `Creaste ${category} con ${amount}`,
+      raise: (category: string, amount: string) => `Subiste ${category} a ${amount}`,
+      lower: (category: string, amount: string) => `Bajaste ${category} a ${amount}`,
+      keep: (category: string, amount: string) => `Dejaste ${category} en ${amount}`,
+      deactivate: (category: string) => `Desactivaste ${category}`,
+      reactivate: (category: string, amount: string) => `Volviste a activar ${category} con ${amount}`,
+    },
     sheet: {
       createTitle: "Crear presupuesto", editTitle: "Editar presupuesto",
       context: { us: "En Nosotros: lo ven los dos.", me: "En Yo: solo tú lo ves." },
@@ -69,6 +78,9 @@ export const copy = {
       review: "Revisar",
       history: "Historial",
       historyBy: (name: string, date: string) => `${name} · ${date}`,
+      historyByMe: (date: string) => `Tú · ${date}`,
+      notSaved: (amount: string) => `Tu cambio a ${amount} no se guardó.`,
+      notSavedOff: "Tu desactivación no se guardó.",
       historyValue: {
         create: (amount: string) => `Creó con ${amount}`,
         change: (from: string, to: string) => `De ${from} a ${to}`,

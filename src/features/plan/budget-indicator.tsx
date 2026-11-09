@@ -33,7 +33,7 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
   const consumed = BigInt(row.consumedMinor);
   if (row.limitMinor === null) {
     return (
-      <li data-budget-state="none" className="mt-3 flex items-center justify-between gap-3 rounded-[16px] border-[1.5px] border-dashed border-border-emphasis px-3.5 py-3 first:mt-0">
+      <li data-budget-state="none" className="flex items-center justify-between gap-3 py-3">
         <span className="flex min-w-0 items-center gap-2.5">
           <CategoryIcon kind="category" category={row.categoryId} size="sm" />
           <span className="flex min-w-0 flex-col">
@@ -66,12 +66,9 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
   return (
     <li data-budget-state={state} className="relative flex flex-col gap-1.5 border-b-[length:var(--border-hairline)] border-border py-3">
       <span className="flex w-full items-center justify-between gap-3">
-        <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-          <span className="flex items-center gap-2.5 text-[length:var(--body-m-size)] font-medium text-ink">
-            <CategoryIcon kind="category" category={row.categoryId} size="sm" />
-            {name}
-          </span>
-          {state === "near" ? <Badge status="nearLimit" /> : state === "over" ? <Badge status="exceeded" /> : null}
+        <span className="flex min-w-0 items-center gap-2.5 text-[length:var(--body-m-size)] font-medium text-ink">
+          <CategoryIcon kind="category" category={row.categoryId} size="sm" />
+          {name}
         </span>
         <span className="shrink-0 text-right text-[length:var(--body-m-size)] tabular-nums">
           <span className="font-semibold text-ink">{pesos(money(consumed))}</span>{" "}
@@ -87,9 +84,13 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
       >
         <span className={`absolute inset-y-0 left-0 rounded-full ${state === "over" ? "" : fills[row.categoryId]}`} style={{ width: `${width}%`, ...(state === "over" ? striped : {}) }} />
       </span>
-      <span id={statusId} className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
-        {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
-        {status}
+      {/* El badge va al final de la línea de estado: la fila de arriba queda en una línea, como el comp, a 390 y a 1440. */}
+      <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span id={statusId} className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
+          {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
+          {status}
+        </span>
+        {state === "near" ? <Badge status="nearLimit" /> : state === "over" ? <Badge status="exceeded" /> : null}
       </span>
       <button
         type="button"
