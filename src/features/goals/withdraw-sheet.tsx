@@ -58,7 +58,7 @@ export function WithdrawSheet({ open, onClose, goal, available, today, idempoten
     void write.submit({ idempotencyKey, goalId: goal.id, amountPesos: amount.toString(), entryDate: date, reason: reason.trim() });
   };
 
-  const message = invalid ?? (write.state.phase === "rejected" ? goalRejection(write.state.error, { available: cop(availableMinor), prefix: copy.goals.withdrawSheet.rejected }) : null);
+  const message = invalid ?? (write.state.phase === "rejected" ? goalRejection(write.state.error, { available: cop(write.state.detail?.availableMinor ?? availableMinor), prefix: copy.goals.withdrawSheet.rejected }) : null);
   const phase = write.state.phase === "unknown" ? "unknown" : write.pending ? "pending" : "idle";
   return (
     <GoalSheetFrame open={open} title={copy.goals.withdrawSheet.title} icon="arrow-u-up-left" onClose={onClose} phase={phase} onRetry={() => void write.retry()}>

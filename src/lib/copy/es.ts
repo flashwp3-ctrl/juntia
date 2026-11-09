@@ -13,6 +13,9 @@ export const copy = {
       undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
       // 004 PR C: quién cambió la meta cuando no se sabe (otra pestaña o la pareja).
       someone: "Alguien",
+      // 004 PR C (revisión del PR #68; Q13, FR-042): anular o deshacer un aporte cuyos fondos ya se usaron o se retiraron.
+      fundsUsed: "Ya no se puede anular: esos fondos ya se usaron o se retiraron de la meta.",
+      fundsUsedWith: (amount: string) => `Ya no se puede anular: esos fondos ya se usaron o se retiraron. Te quedan ${amount} disponibles en esta meta.`,
     },
     form: {errors:{name:"Escribe un nombre de hasta 60 caracteres.",type:"Elige un tipo de meta.",target:"Escribe un objetivo entre $1 y $999.999.999.",month:"Elige un mes válido."}},
     withdraw: {errors:{reason:"Escribe un motivo de hasta 140 caracteres."}},
@@ -52,6 +55,8 @@ export const copy = {
       pace: (percent: number) => `marca de ritmo al ${percent} % del tiempo`,
     },
     card: {
+      // Revisión del PR #68 (T052): mientras se abre la meta inmersiva, la tarjeta tocada lo dice.
+      opening: (name: string) => `Abriendo ${name}…`,
       accessibleName: ({ name, scope, percent, balance, target }: { name: string; scope: string; percent: number; balance: string; target: string }) =>
         `${name}, meta ${scope}, ${percent} %, ${balance} de ${target}`,
     },

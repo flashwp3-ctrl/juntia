@@ -23,6 +23,7 @@ import { WithdrawSheet } from "./withdraw-sheet";
 import { GoalEntryRow } from "./goal-entry-row";
 import { GoalHistory } from "./goal-history";
 import { GoalImmersive } from "./goal-immersive";
+import { GoalStatusDialog } from "./goal-status-dialog";
 
 configure({ asyncUtilTimeout: 5000 });
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }));
@@ -407,5 +408,64 @@ describe("Meta inmersiva (US-4.5; FR-075–FR-077; SC-011)", () => {
     render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
     expect(icon(screen.getByRole("button", { name: copy.goals.immersive.contribute }), "piggy-bank")).toBeTruthy();
     expect(icon(screen.getByRole("button", { name: copy.goals.immersive.withdraw }), "arrow-u-up-left")).toBeTruthy();
+  });
+});
+
+describe("Revisión del gestor del PR #68", { timeout: 15000 }, () => {
+  it("retiro rechazado por saldo (JT204): dice el máximo vigente del servidor, no el de la página", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ withdraw: vi.fn(async () => ({ status: "rejected" as const, error: "insufficientFunds" as const, detail: { availableMinor: minor(500000n) } })) });
+    render(<WithdrawSheet open onClose={vi.fn()} goal={bike()} available={minor(1050000n)} today={TODAY} idempotencyKey={KEY} actions={writes} onDone={vi.fn()} />);
+    const dialog = screen.getByRole("dialog", { name: copy.goals.withdrawSheet.title });
+    await user.type(within(dialog).getByRole("textbox", { name: copy.goals.withdrawSheet.amount }), "900000");
+    await user.type(within(dialog).getByLabelText(copy.goals.withdrawSheet.reason), "Otro plan");
+    await user.click(within(dialog).getByRole("button", { name: copy.goals.withdrawSheet.submit("$900.000") }));
+    expect((await within(dialog).findByRole("alert")).textContent).toContain(copy.goals.errors.insufficient("$500.000"));
+  });
+
+  it("anular un aporte cuyos fondos ya se usaron (Q13): lo dice con su texto, nunca «no admite esta operación»", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ voidEntry: vi.fn(async () => ({ status: "rejected" as const, error: "insufficientFunds" as const, detail: { availableMinor: minor(100000n) } })) });
+    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} today={TODAY} actions={writes} />);
+    await user.click(screen.getByRole("button", { name: copy.goals.history.void.action }));
+    const dialog = screen.getByRole("alertdialog", { name: copy.goals.history.void.title });
+    await user.click(within(dialog).getByRole("button", { name: copy.goals.history.void.confirm }));
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(copy.goals.errors.fundsUsedWith("$100.000"));
+    expect(dialog.textContent).not.toContain(copy.goals.errors.notOpen);
+  });
+
+  it("anular con resultado desconocido: cerrar pide «¿Cerrar sin confirmar?» (FR-093)", async () => {
+    const user = userEvent.setup();
+    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} today={TODAY} actions={actions({ voidEntry: vi.fn(async () => ({ status: "unknown" as const })) })} />);
+    await user.click(screen.getByRole("button", { name: copy.goals.history.void.action }));
+    await user.click(screen.getByRole("button", { name: copy.goals.history.void.confirm }));
+    expect(await screen.findByText(copy.writes.unknown)).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(await screen.findByRole("alertdialog", { name: copy.writes.close.title })).toBeTruthy();
+  });
+
+  it("archivar con resultado desconocido: cerrar pide «¿Cerrar sin confirmar?»; un rechazo de transición dice lo de archivar", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<GoalStatusDialog kind="archive" goal={japan()} idempotencyKey={KEY} actions={actions({ archive: vi.fn(async () => ({ status: "unknown" as const })) })} onClose={vi.fn()} onDone={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: copy.goals.statusDialog.archiveConfirm }));
+    expect(await screen.findByText(copy.writes.unknown)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.writes.dismiss }));
+    expect(await screen.findByRole("alertdialog", { name: copy.writes.close.title })).toBeTruthy();
+    unmount();
+    render(<GoalStatusDialog kind="complete" goal={japan()} idempotencyKey={KEY} actions={actions({ complete: vi.fn(async () => ({ status: "rejected" as const, error: "goalTransition" as const })) })} onClose={vi.fn()} onDone={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: copy.goals.statusDialog.completeConfirm }));
+    expect((await screen.findByRole("alert")).textContent).toBe(copy.goals.errors.cannotComplete);
+  });
+
+  it("«Retirar» sin aportes propios disponibles: deshabilitado, con «No tienes aportes disponibles en esta meta»", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce"), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    const user = userEvent.setup();
+    render(<GoalImmersive goal={japan({ myAvailableMinor: "0" })} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    const withdraw = screen.getByRole("button", { name: copy.goals.immersive.withdraw });
+    expect(withdraw.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText(copy.goals.withdrawSheet.nothing)).toBeTruthy();
+    await user.click(withdraw);
+    expect(screen.queryByRole("dialog", { name: copy.goals.withdrawSheet.title })).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

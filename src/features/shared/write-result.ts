@@ -20,7 +20,9 @@ export type WriteError =
   // 004 PR C (T046, T047): metas, aportes, retiros y anulaciones (contracts/errors.md, JT201–JT217, JT225).
   | "goalNotFound" | "goalNotOpen" | "insufficientFunds" | "entryNotFound" | "entryAlreadyVoided" | "entryNotVoidable" | "entryDate"
   | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable";
-export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError } | { status: "unknown" };
+/** 004 PR C: `detail` lleva lo que el servidor dijo del rechazo (JT204: el disponible vigente, en unidades menores). */
+export type WriteRejectionDetail = { availableMinor?: string };
+export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError; detail?: WriteRejectionDetail } | { status: "unknown" };
 /**
  * Lo que devuelve «Comprobar estado», ya normalizado por la Server Action. `error`: no se pudo comprobar (red); el
  * estado sigue desconocido, sin decir que no consta.
@@ -85,10 +87,10 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
  * es `JT` ni Postgres conocido (un 5xx sin código): desconocido. Un `JT` sin copy propia (JT008, JT009, JT109, JT119) es
  * un rechazo confirmado que la interfaz dice como «algo salió mal».
  */
-export function outcomeFromError(error: unknown): { status: "rejected"; error: WriteError } | { status: "unknown" } {
-  const kind = (error instanceof DbError ? error : mapDbError(error)).kind;
-  if (UNKNOWN.has(kind)) return { status: "unknown" };
-  return { status: "rejected", error: REJECTED[kind] ?? "unexpected" };
+export function outcomeFromError(error: unknown): { status: "rejected"; error: WriteError; detail?: WriteRejectionDetail } | { status: "unknown" } {
+  const mapped = error instanceof DbError ? error : mapDbError(error);
+  if (UNKNOWN.has(mapped.kind)) return { status: "unknown" };
+  return mapped.detail ? { status: "rejected", error: REJECTED[mapped.kind] ?? "unexpected", detail: mapped.detail } : { status: "rejected", error: REJECTED[mapped.kind] ?? "unexpected" };
 }
 
 /** En el servidor: ejecuta la escritura y la clasifica. */

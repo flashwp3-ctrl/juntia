@@ -51,18 +51,28 @@ export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, chi
         </button>
       </div>
       {children}
-      <ConfirmDialog
-        open={confirming}
-        onOpenChange={setConfirming}
-        title={copy.writes.close.title}
-        description={copy.writes.unknown}
-        cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); onRetry(); }}>{copy.writes.retry}</Button>}
-        confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onClose({ unconfirmed: true }); }}>{copy.writes.close.confirm}</Button>}
-      />
+      <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={onRetry} onClose={() => onClose({ unconfirmed: true })} />
     </div>
   );
   const props = { open, onOpenChange: requestClose, title, bare: true, onOpenAutoFocus };
   return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props}>{body}</BottomSheet>;
+}
+
+/**
+ * FR-093: con un resultado desconocido, cerrar una hoja o un diálogo de metas se confirma («¿Cerrar sin confirmar?»), con
+ * «Reintentar» (la misma clave) como opción segura. Lo usan el marco de las hojas y los diálogos de anular y de estado.
+ */
+export function UnconfirmedClose({ open, onOpenChange, onRetry, onClose }: { open: boolean; onOpenChange: (open: boolean) => void; onRetry: () => void; onClose: () => void }) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={copy.writes.close.title}
+      description={copy.writes.unknown}
+      cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { onOpenChange(false); onRetry(); }}>{copy.writes.retry}</Button>}
+      confirm={<Button variant="secondary" onClick={() => { onOpenChange(false); onClose(); }}>{copy.writes.close.confirm}</Button>}
+    />
+  );
 }
 
 /** El aviso de un rechazo o de un dato no válido dentro de una hoja: se anuncia y queda junto al botón. */

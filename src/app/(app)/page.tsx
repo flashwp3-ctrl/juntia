@@ -25,12 +25,12 @@ export default async function HomePage() {
   const month = now.slice(0, 7);
   const members = context === null ? null : await activeCouple();
   const goalsContext = context === "me" || (context === "us" && members) ? context : null;
-  const people = goalsContext ? await goalPeople() : [];
   const [rows, shared, couple, homeGoals] = await Promise.all([
     context === "me" ? loadRows(month, "/") : null,
     context === "me" && members ? loadMeShared(month, "/") : null,
     context === "us" && members ? loadCoupleHome(month, "/") : null,
-    goalsContext ? loadHomeGoals(goalsContext, month, people, "/") : null,
+    // Quién aparece en las metas y las metas del contexto, en paralelo con el resto de Inicio.
+    goalsContext ? goalPeople().then((people) => loadHomeGoals(goalsContext, month, people, "/")) : null,
   ]);
   const goals = homeGoals?.ok ? homeGoals.value : undefined;
   const me = rows ? (rows.ok && (!shared || shared.ok) ? <HomeView rows={rows.value} month={month} today={now} shared={shared?.ok ? shared.value : undefined} goals={goals} /> : <LoadError />) : null;

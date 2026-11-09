@@ -24,6 +24,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   // metas compartidas). Un fallo de esa lectura no tumba Actividad: los movimientos se ven sin los asientos.
   const shownMonth = data?.ok ? data.value.month : coupleData?.ok ? coupleData.value.month : null;
   const goalsContext = context === "me" ? "me" : members ? "us" : null;
-  const [goals, people] = goalsContext && shownMonth ? await Promise.all([loadGoalActivity(goalsContext, shownMonth, volver), goalPeople()]) : [null, []];
+  // Los nombres para las filas de metas solo hacen falta en Yo: en Nosotros la vista usa la pareja que ya leyó.
+  const [goals, people] = goalsContext && shownMonth ? await Promise.all([loadGoalActivity(goalsContext, shownMonth, volver), goalsContext === "me" ? goalPeople() : []]) : [null, []];
   return <ActivityScreen server={context} data={data} today={now} couple={members && coupleData ? { data: coupleData, members } : null} goals={goals?.ok ? goals.value : null} goalPeople={people} />;
 }

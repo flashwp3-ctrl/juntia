@@ -19,8 +19,22 @@ const kinds = {
   "23505": "constraintViolation", "42501": "forbidden", PGRST301: "notAuthenticated",
 } as const;
 export type DbErrorKind = (typeof kinds)[keyof typeof kinds] | "unexpected" | "network" | "retryExhausted";
+/** 004 PR C (revisión del PR #68): datos del rechazo que el servidor da en `detail`; JT204 trae el disponible vigente. */
+export type DbErrorDetail = { availableMinor?: string };
 export class DbError extends Error {
-  constructor(readonly kind: DbErrorKind) { super(kind); this.name = "DbError"; }
+  constructor(readonly kind: DbErrorKind, readonly detail?: DbErrorDetail) { super(kind); this.name = "DbError"; }
+}
+/** El `detail` de JT204 (`{"available_minor":"…"}`, contracts/errors.md): solo un entero en texto; cualquier otra cosa se ignora. */
+function detailOf(error: object): DbErrorDetail | undefined {
+  const raw = "details" in error ? error.details : "detail" in error ? error.detail : undefined;
+  if (typeof raw !== "string") return undefined;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    const value = typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>).available_minor : undefined;
+    return typeof value === "string" && /^[0-9]{1,19}$/.test(value) ? { availableMinor: value } : undefined;
+  } catch {
+    return undefined;
+  }
 }
 export function mapDbError(error: unknown): DbError {
   if (error instanceof DbError) return error;
@@ -33,7 +47,7 @@ export function mapDbError(error: unknown): DbError {
     }
     if ("code" in error && error.code === "23505" && "message" in error && typeof error.message === "string"
       && /unique constraint "(?:group_members_one_couple_per_person|group_invitations_one_pending)"/.test(error.message)) return new DbError("alreadyInCouple");
-    if ("code" in error && typeof error.code === "string" && Object.hasOwn(kinds, error.code)) return new DbError(kinds[error.code as keyof typeof kinds]);
+    if ("code" in error && typeof error.code === "string" && Object.hasOwn(kinds, error.code)) return new DbError(kinds[error.code as keyof typeof kinds], error.code === "JT204" ? detailOf(error) : undefined);
     // PostgREST envuelve los fallos de fetch en un objeto con code vacío.
     if ("code" in error && error.code === "" && "message" in error && typeof error.message === "string"
       && /^(?:TypeError: (?:fetch failed|Failed to fetch|Load failed)|AbortError:|FetchError:)/.test(error.message)) return new DbError("network");

@@ -46,16 +46,19 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
   const router = useRouter();
   const titleId = useId();
   const highlightId = useHighlightId();
-  const goalsOnly = filters.type === "goals";
-  const filtering = filters.query.trim() !== "" || filters.categoryId !== null || filters.type !== "all";
+  // El tipo vive en el layout y se comparte con Yo: aquí no hay «Ingresos» (pasa a «Todos») y «Aportes» solo vale si las metas
+  // se cargaron; si no, «Todos». El valor normalizado manda en el control, en el filtrado y en el anuncio del conteo.
+  const type = filters.type === "income" || (filters.type === "goals" && setAsideMinor === undefined) ? "all" : filters.type;
+  const goalsOnly = type === "goals";
+  const filtering = filters.query.trim() !== "" || filters.categoryId !== null || type !== "all";
   const visibleExpenses = goalsOnly ? [] : expenses.filter((row) => matchesSearch(row.description, filters.query) && (filters.categoryId === null || row.categoryId === filters.categoryId));
   // Los asientos de metas no tienen categoría: con una categoría elegida o «Gastos» no se muestran; la búsqueda mira su título.
-  const visibleGoals = filters.categoryId !== null || filters.type === "expense" ? [] : goalEntries.filter((row) => matchesSearch(entryTitle(row, "activity"), filters.query));
+  const visibleGoals = filters.categoryId !== null || type === "expense" ? [] : goalEntries.filter((row) => matchesSearch(entryTitle(row, "activity"), filters.query));
   const items: Item[] = [
     ...visibleExpenses.map((row) => ({ kind: "expense" as const, date: row.transactionDate, createdAt: row.createdAt, row })),
     ...(filtering ? [] : settlements.map((row) => ({ kind: "settlement" as const, date: row.settlementDate, createdAt: row.createdAt, row }))),
     ...visibleGoals.map((row) => ({ kind: "goal" as const, date: row.effectiveDate, createdAt: row.createdAt, row })),
-  ].sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : (a.kind === "goal") !== (b.kind === "goal") ? (a.kind === "goal" ? 1 : -1) : a.createdAt > b.createdAt ? -1 : 1));
+  ].sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : (a.kind === "goal") !== (b.kind === "goal") ? (a.kind === "goal" ? 1 : -1) : a.createdAt !== b.createdAt ? (a.createdAt > b.createdAt ? -1 : 1) : a.row.id > b.row.id ? -1 : 1));
   const total = summary ? BigInt(summary.totalMinor) : 0n;
   const chips = (Object.entries(summary?.byCategory ?? {}) as [CategoryId, string][]).map(([category, value]) => [category, BigInt(value)] as const)
     .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
@@ -82,7 +85,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchField value={filters.query} onChange={filters.setQuery} />
           {setAsideMinor !== undefined ? (
-            <Segmented role="radiogroup" label={copy.activity.type} value={filters.type === "income" ? "all" : filters.type} onValueChange={filters.setType}
+            <Segmented role="radiogroup" label={copy.activity.type} value={type} onValueChange={filters.setType}
               options={[{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "goals", label: copy.goals.activity.filter }] as const} />
           ) : null}
         </div>
@@ -122,7 +125,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
           </div>
         ) : null}
       </section>
-      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(visibleExpenses.length) : ""}</p>
+      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(visibleExpenses.length + visibleGoals.length) : ""}</p>
       {stale ? (
         <div role="status" className="flex flex-col items-start gap-3 rounded-[16px] bg-sunken px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
           <span>{copy.activity.coupleStale.text}</span>

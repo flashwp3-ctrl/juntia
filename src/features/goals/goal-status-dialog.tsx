@@ -4,13 +4,14 @@
 // pendiente; si no se cumple, el servidor lo rechaza (JT214) y el diálogo lo explica. Llevan la versión leída; resultado
 // desconocido: «Reintentar» con la misma clave y «Comprobar estado».
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
 import { useWrite } from "@/features/shared/use-write";
 import { WriteUnknown } from "@/features/shared/write-unknown";
 import { copy } from "@/lib/copy/es";
 import { goalRejection } from "./goal-errors";
+import { UnconfirmedClose } from "./goal-sheet-frame";
 import type { GoalActions, GoalStatusPayload, GoalView, SavedGoalStatus } from "./types";
 
 type Props = { kind: "complete" | "archive"; goal: GoalView; idempotencyKey: string; actions: GoalActions; onClose: () => void; onDone: () => void };
@@ -24,13 +25,14 @@ export function GoalStatusDialog({ kind, goal, idempotencyKey, actions, onClose,
   const texts = kind === "complete"
     ? { title: copy.goals.statusDialog.completeTitle, description: copy.goals.statusDialog.completeDescription, confirm: copy.goals.statusDialog.completeConfirm }
     : { title: copy.goals.statusDialog.archiveTitle, description: `${copy.goals.statusDialog.archiveDescription} ${copy.goals.errors.cannotArchive}`, confirm: copy.goals.statusDialog.archiveConfirm };
+  const [confirming, setConfirming] = useState(false);
   const rejection = write.state.phase === "rejected"
-    ? write.state.error === "goalTransition" ? (kind === "complete" ? copy.goals.errors.cannotComplete : copy.goals.errors.cannotArchive) : goalRejection(write.state.error)
+    ? goalRejection(write.state.error, { transition: kind === "complete" ? copy.goals.errors.cannotComplete : copy.goals.errors.cannotArchive })
     : null;
   return (
     <ConfirmDialog
       open
-      onOpenChange={(next) => { if (!next && write.state.phase !== "pending" && write.state.phase !== "unknown") onClose(); }}
+      onOpenChange={(next) => { if (next || write.state.phase === "pending") return; if (write.state.phase === "unknown") setConfirming(true); else onClose(); }}
       title={texts.title}
       description={texts.description}
       cancel={(ref) => <Button ref={ref} variant="ghost" onClick={onClose} disabled={write.pending || write.locked}>{copy.goals.statusDialog.keep}</Button>}
@@ -40,7 +42,8 @@ export function GoalStatusDialog({ kind, goal, idempotencyKey, actions, onClose,
       )}
     >
       {rejection ? <p role="alert" className="text-[13px] font-medium text-ink">{rejection}</p> : null}
-      {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={onClose} /> : null}
+      {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirming(true)} /> : null}
+      <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={() => void write.retry()} onClose={onClose} />
     </ConfirmDialog>
   );
 }

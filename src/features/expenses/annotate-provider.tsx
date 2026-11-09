@@ -405,7 +405,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     check: (input) => goalRef.current ? goalRef.current.check(input) : Promise.resolve({ state: "error" as const }),
     onOk: () => router.refresh(),
     rejected: (error) => (error === "goalUndoNotAvailable" ? copy.goals.errors.undoNotAvailable : error === "entryAlreadyVoided" ? copy.goals.errors.alreadyVoided
-      : error === "insufficientFunds" ? copy.goals.errors.undoNotAvailable : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+      : error === "insufficientFunds" ? copy.goals.errors.fundsUsed : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
   }, "send"), [runUndo, router]);
   const offerGoalUndo = useCallback(({ kind, saved, message }: { kind: "contribution" | "withdrawal"; saved: SavedEntry; message: string }) => {
     const key = newIdempotencyKey();

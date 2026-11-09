@@ -416,9 +416,9 @@ Rama `claude/004-c-goals-6b13e8`, sobre `main` en `bd408b9` (PR A fusionado). Ta
 | `e2e:dev -- tests/a11y/goals.a11y.ts` (1.ª) | 2 fallan: `color-contrast` (gris secundario sobre el verde de ahorro, 4,38:1; y medición durante el fundido de entrada de la inmersiva) y `label-content-name-mismatch` en el enlace de la tarjeta. Arreglos: texto en tinta sobre el fallback (como pide GoalCard), nombre del enlace por un texto oculto y contenido visual `aria-hidden`, sin fundido propio con movimiento reducido |
 | `e2e:dev -- tests/a11y/goals.a11y.ts` (2.ª) | **2/2 pasan, 46,5 s** |
 
-Componentes y dominio (local): **815 pasan / 2 omisiones previstas** tras ajustar `src/app/(app)/product-routes.test.tsx`, que exigía Metas «sin datos» (FR-044 de la 002): Metas ya lee metas reales y se prueba en `src/features/goals`, como antes pasó con Inicio y Actividad. `tests/a11y/job-selection.test.ts` falló una vez mientras la sesión del PR B usaba el puerto; aislado, pasa.
+Componentes y dominio (local, corrida intermedia de `vitest --project components --project domain`, 71 archivos): **815 pasan, 2 fallan, 2 omisiones previstas**; los 2 fallos eran los casos de `/metas` de `product-routes.test.tsx`, que se quitan al ajustar `src/app/(app)/product-routes.test.tsx`, que exigía Metas «sin datos» (FR-044 de la 002): Metas ya lee metas reales y se prueba en `src/features/goals`, como antes pasó con Inicio y Actividad. `tests/a11y/job-selection.test.ts` falló una vez mientras la sesión del PR B usaba el puerto; aislado, pasa.
 
-## T052 · [V] View Transitions con App Router — **queda abierta**
+## T052 · [V] View Transitions con App Router — primera corrida (sustituida abajo, en «Revisión del gestor del PR #68»)
 
 Prueba temporal (no versionada) contra `juntia-dev` con `npm run e2e:dev`: siembra una pareja y una meta, abre la tarjeta en Metas, comprueba el foco y cierra con Escape. Envuelve `Document.prototype.startViewTransition` para contar las transiciones y leer sus pseudoelementos.
 
@@ -457,3 +457,46 @@ Navegador: **Chromium 156.0.8078.4** (Playwright 1.64.1, headless). Resultado: *
 | T052 | **Abierta**: Chromium sí (salida arriba), sin morph; WebKit sin instalar |
 | T053 | Hecha: 40 capturas, detector y revisión de Impeccable con sus correcciones |
 | T054–T056 | Humanas (gestor y fundadores) |
+
+## Revisión del gestor del PR #68 · correcciones
+
+Un solo commit nuevo sobre `f577a94`; mismo PR en borrador, sin CI.
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| 1 | La tabla de Actividad en Yo (xl) pintaba todas las transacciones y después todos los asientos | `Table` usa la misma lista ordenada que `DayList` (`days()`) | `activity-goals.test.tsx`, «Yo desde xl…»: falla con la vista anterior, pasa ahora |
+| 2 | El tipo del filtro del layout se arrastraba de Yo a Nosotros | Tipo normalizado en la vista de pareja (`income` → «Todos»; `goals` sin metas cargadas → «Todos»), usado en el control, el filtrado y el anuncio; lo mismo para `goals` en Yo | Dos casos nuevos: fallan con la vista anterior, pasan ahora |
+| 3 | Anular un aporte con fondos ya usados decía «Esta meta no admite esta operación» | `DbError` lee el `detail` de JT204 (`available_minor`, solo entero en texto) y llega al rechazo como `detail.availableMinor`. Retirar dice el máximo del servidor; anular y deshacer usan `copy.goals.errors.fundsUsed` / `fundsUsedWith` | `errors.test.ts` (detail válido, raro y ausente) y dos casos en `goals.test.tsx` |
+| 4 | Goal Journey sin morph (T052) | Opción (b): la lista pasa a `metas/(lista)/` y su `loading.tsx` ya no cubre `/metas/[id]`; indicador de navegación pendiente en la tarjeta (`useLinkStatus`, «Abriendo {meta}…»); se quita `originOf()` y el rectángulo guardado | T052 abajo; spec 4 y `goals.a11y.ts` repetidas |
+| 5 | Empates de orden en Actividad | Mismo orden en las dos vistas: fecha desc; dentro del día, gastos e ingresos (y liquidaciones en Nosotros) y después los asientos de metas; luego `created_at` desc y `id` como último desempate | Cubierto por el caso del punto 1 |
+| 6 | «Retirar» con 0 disponible | Acción deshabilitada con `copy.goals.withdrawSheet.nothing` | Caso nuevo en `goals.test.tsx` |
+| 7 | Diálogos de anular y de estado sin «¿Cerrar sin confirmar?» | `UnconfirmedClose` común (marco de hojas, anular y estado): Escape y «Cerrar aviso» con resultado desconocido preguntan | Dos casos nuevos |
+| 8 | `goalTransition` decía siempre «no se puede archivar» | `goalRejection(..., { transition })`; sin texto propio, el general | Caso de «Dar por lograda» |
+| 9 | Lecturas en serie | Inicio: `goalPeople()` en el `Promise.all`. Actividad en Nosotros ya no lo llama | Typecheck y spec 4 |
+| 10 | Carrera del prefetch y test que no podía fallar | Spec 4: se guardan las promesas de `response.text()`, `await Promise.all` y `fetched.length > afterSwitch`. «No suma al gasto» se pinta con los gastos reales de octubre (412.900) | Spec 4 2/2; componentes |
+| 11 | 815 frente a 743 | Conciliado arriba: 815 era una corrida intermedia de los dos proyectos juntos; `verify` informa por proyecto (dominio y componentes) | — |
+
+**Interpretación de orden (punto 5)**, para revisión: dentro de un mismo día, los asientos de metas van después de los movimientos. Motivo: el total que encabeza cada día es solo gasto, y poner el ahorro debajo evita leerlo como parte de ese total (DEC-G04). Entre asientos o entre movimientos del mismo día manda `created_at` desc y, con el mismo instante, el `id`, para que el orden sea total y estable.
+
+### T052 · segunda corrida (tras la opción b)
+
+Misma prueba temporal (no versionada), Chromium **156.0.8078.4**, `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/zz-vt-check.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 147,92 s** (build 40,90 s; E2E dirigido **7/7, 55,4 s**, incluida la spec 4; axe de metas **2/2, 48,6 s**). Resumen de los grupos de cada View Transition, sin errores (`error: null`; `finished: false` porque se lee mientras la transición aún corre):
+
+```
+{"motion":"no-preference","open":[{"finished":false,"error":null,"groups":["::view-transition-group(goal-title-{id})","::view-transition-group(goal-ribbon-{id})","::view-transition-group(goal-photo-{id})","::view-transition-group(root)"]}],"close":[]}
+{"motion":"reduce","open":[{"finished":false,"error":null,"groups":["::view-transition-group(root)"]}],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"open":[],"close":[]}
+```
+
+- **Apertura en Chromium: cumple.** La tarjeta y la meta inmersiva forman el par: `goal-photo`, `goal-title` y `goal-ribbon` animan entre las dos. Con movimiento reducido solo queda el fundido de la página (las reglas de `globals.css` quitan la animación de los grupos con nombre).
+- **Cierre (Escape → `/metas`): no hay transición**, porque la lista sí suspende en su Skeleton (`(lista)/loading.tsx`). No se probaron más variantes, por indicación del gestor.
+- **Respaldo sin la API (`layoutId` de Motion)**: sigue sin animación medible. La navegación, el foco al título, Escape y la vuelta del foco a la tarjeta cumplen en los cuatro casos.
+- **WebKit**: sigue sin instalar; lo corre el gestor si el fundador autoriza la descarga.
+- **CLS de la carga de `/metas`** (lista con Skeleton, 3 metas, Chromium, PerformanceObserver de `layout-shift`): **0 a 390 y 0 a 1440**. Es una medición de iteración; T054 la hace el gestor.
+
+### Cierre local de la ronda
+
+- Componentes de metas, Inicio, Actividad, `src/app/(app)` y `errors.test.ts`: **13 archivos, 177/177**. Registro de axe (`tests/a11y`, Vitest): **11/11**; `/metas` sigue en el registro aunque la página viva en `(lista)`.
+- `npm run verify`: **exit 0, 88,91 s** (presupuesto < 90 s; el lint tardó 35,6 s frente a 16,7 s de la corrida anterior, con la otra sesión usando el equipo). Dominio **78/78**; componentes **752 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (aviso preexistente de `balance-panel.tsx:61`).
+- `e2e:dev` completo no se repite en esta ronda (indicación del gestor); se repitieron la spec 4 y `goals.a11y.ts` porque cambió la estructura de rutas de `/metas`.

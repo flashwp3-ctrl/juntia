@@ -44,6 +44,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
   const archived = goal.status === "archived";
   const surplus = surplusOf(goal);
   const partner = people.find((person) => !person.isMe)?.name ?? null;
+  const canWithdraw = BigInt(goal.myAvailableMinor) > 0n;
   const show = (kind: NonNullable<Open>["kind"]) => setOpen({ kind, key: newIdempotencyKey() });
   const close = () => setOpen(null);
 
@@ -120,8 +121,10 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               {active ? <Button size="lg" icon="piggy-bank" onClick={() => show("contribute")}>{copy.goals.immersive.contribute}</Button> : null}
-              <Button size="lg" variant="secondary" icon="arrow-u-up-left" onClick={() => show("withdraw")} className={active ? "" : "col-span-2"}>{copy.goals.immersive.withdraw}</Button>
+              {/* Sin aportes propios disponibles no hay nada que retirar: la acción se deshabilita y se dice por qué (Q14). */}
+              <Button size="lg" variant="secondary" icon="arrow-u-up-left" onClick={() => show("withdraw")} disabled={!canWithdraw} aria-describedby={canWithdraw ? undefined : "goal-withdraw-nothing"} className={active ? "" : "col-span-2"}>{copy.goals.immersive.withdraw}</Button>
             </div>
+            {canWithdraw ? null : <p id="goal-withdraw-nothing" className="text-[13px] text-ink-secondary">{copy.goals.withdrawSheet.nothing}</p>}
             {goal.status === "completed" ? <p className="text-[13px] text-ink-secondary">{copy.goals.immersive.completedNote}</p> : null}
             <div role="group" aria-label={copy.goals.immersive.more} className="flex flex-wrap gap-2">
               <Button variant="ghost" icon="pencil-simple" onClick={() => show("edit")}>{copy.goals.immersive.edit}</Button>

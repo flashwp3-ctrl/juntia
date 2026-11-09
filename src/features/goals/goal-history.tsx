@@ -18,6 +18,7 @@ import { copy } from "@/lib/copy/es";
 import { dayLabel, monthTitle } from "@/lib/format";
 import { cop } from "./format";
 import { goalRejection } from "./goal-errors";
+import { UnconfirmedClose } from "./goal-sheet-frame";
 import { GoalEntryRow } from "./goal-entry-row";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalView, VoidEntryPayload } from "./types";
 
@@ -33,6 +34,7 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
   const [who, setWho] = useState("all");
   const [target, setTarget] = useState<{ entry: GoalEntryView; key: string } | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const run = useCallback((payload: VoidEntryPayload) => actions.voidEntry(payload), [actions]);
   const check = useCallback((input: Parameters<GoalActions["check"]>[0]) => actions.check(input), [actions]);
@@ -84,7 +86,7 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
       })}
       <ConfirmDialog
         open={target !== null}
-        onOpenChange={(next) => { if (!next && write.state.phase !== "pending" && write.state.phase !== "unknown") setTarget(null); }}
+        onOpenChange={(next) => { if (next || write.state.phase === "pending") return; if (write.state.phase === "unknown") setConfirming(true); else setTarget(null); }}
         title={copy.goals.history.void.title}
         description={copy.goals.history.void.description}
         cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setTarget(null)} disabled={write.pending || write.locked}>{copy.goals.history.void.keep}</Button>}
@@ -92,8 +94,9 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
           <Button variant="danger" loading={write.pending} onClick={() => target && void write.submit({ idempotencyKey: target.key, entryId: target.entry.id, reason: "void" })}>{copy.goals.history.void.confirm}</Button>
         )}
       >
-        {write.state.phase === "rejected" ? <p role="alert" className="text-[13px] font-medium text-ink">{goalRejection(write.state.error, { prefix: copy.goals.history.void.rejected })}</p> : null}
-        {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setTarget(null)} /> : null}
+        {write.state.phase === "rejected" ? <p role="alert" className="text-[13px] font-medium text-ink">{goalRejection(write.state.error, { voiding: true, available: write.state.detail?.availableMinor ? cop(write.state.detail.availableMinor) : undefined, prefix: copy.goals.history.void.rejected })}</p> : null}
+        {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirming(true)} /> : null}
+        <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={() => void write.retry()} onClose={() => setTarget(null)} />
       </ConfirmDialog>
     </section>
   );

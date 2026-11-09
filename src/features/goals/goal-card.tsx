@@ -6,7 +6,7 @@
 // cambia con «Dar por lograda» (Q15). Lograda: `flag-checkered` y la cinta llena. El ritmo es una estimación marcada con
 // el patrón punteado, nunca una promesa (Q9; glosario §9). La tarjeta es un enlace a la meta inmersiva con nombre
 // accesible con cifras; tocarla recuerda su rectángulo para Goal Journey y el retorno del foco.
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import * as m from "motion/react-m";
 import { ViewTransition, type MouseEvent } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
@@ -19,6 +19,22 @@ import type { GoalMemberView, GoalType, GoalView, PlanningContext } from "./type
 export const goalTypeIcon: Record<GoalType, AppIconName> = {
   travel: "airplane-tilt", home: "house-line", wedding: "heart", vehicle: "car-profile", education: "graduation-cap", emergency: "lifebuoy", other: "flag-banner",
 };
+
+/**
+ * Revisión del PR #68 (T052): la navegación a la meta inmersiva espera a la página (sin Skeleton intermedio, para que la
+ * View Transition se forme). Mientras tanto, la tarjeta tocada responde: un indicador en su esquina y el anuncio
+ * «Abriendo {meta}…». Sin espera fija: lo decide el estado del enlace (`useLinkStatus`). Con movimiento reducido no gira.
+ */
+function OpeningMark({ name }: { name: string }) {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span role="status" data-goal-opening="" className="absolute top-4 right-4 z-10 grid size-9 place-items-center rounded-full bg-raised text-ink shadow-raised">
+      <AppIcon name="circle-notch" weight="bold" size={18} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
+      <span className="sr-only">{copy.goals.card.opening(name)}</span>
+    </span>
+  );
+}
 
 export const overlineClass = "text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] uppercase";
 
@@ -57,7 +73,7 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
   const [scope, when] = overlineOf(goal).split(" · ");
   const open = (event: MouseEvent<HTMLAnchorElement>) => {
     if (onPeekClick) { onPeekClick(event); if (event.defaultPrevented) return; }
-    rememberOrigin(goal.id, event.currentTarget);
+    rememberOrigin(goal.id);
   };
   return (
     <ViewTransition name={`goal-photo-${goal.id}`} share="goal-morph" default="none">
@@ -72,6 +88,7 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>
           <GoalFallback goal={goal} size="card" peek={peek} />
+          <OpeningMark name={goal.name} />
           <span aria-hidden="true" className={`relative flex min-w-0 flex-col gap-1 ${peek ? "-mt-1.5 pr-16 lg:pl-14" : "pr-12"}`}>
             <span className={`${overlineClass} text-ink ${peek ? "hidden" : ""}`}>
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>

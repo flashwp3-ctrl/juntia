@@ -2,14 +2,14 @@
 // T031b / FR-059; contracts/server-actions.md §1: el lado del cliente de write-result.ts (las Server Actions no pueden
 // importar React).
 import { useCallback, useRef, useState } from "react";
-import type { WriteAction, WriteError, WriteOutcome, WriteStatusOutcome } from "./write-result";
+import type { WriteAction, WriteError, WriteOutcome, WriteRejectionDetail, WriteStatusOutcome } from "./write-result";
 
 export type WriteState<T> =
   | { phase: "idle" }
   | { phase: "pending" }
   /** `key`: la clave de la intención que dio este resultado (F55-2): quien lo pinta comprueba que es la suya. */
   | { phase: "ok"; value: T; key: string }
-  | { phase: "rejected"; error: WriteError }
+  | { phase: "rejected"; error: WriteError; detail?: WriteRejectionDetail }
   | { phase: "unknown"; checking: boolean; notFound: boolean };
 
 /**
@@ -70,7 +70,7 @@ export function useWrite<P extends { idempotencyKey: string }, T>({ action, run,
       setState({ phase: "ok", value: outcome.value, key: payload.idempotencyKey });
       onOk?.(outcome.value, payload);
     } else if (outcome.status === "rejected") {
-      setState({ phase: "rejected", error: outcome.error });
+      setState(outcome.detail ? { phase: "rejected", error: outcome.error, detail: outcome.detail } : { phase: "rejected", error: outcome.error });
       onRejected?.(outcome.error, payload);
     } else {
       setState({ phase: "unknown", checking: false, notFound: false });

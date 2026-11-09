@@ -133,7 +133,13 @@ type PendingStates = ReadonlyMap<string, PendingRow["state"]>;
 /** Solo las que viajan se pintan «Guardando…»; las confirmadas son filas normales que aún no están en la lista del servidor. */
 const savingOf = (pending: PendingStates, id: string) => (pending.get(id) === "saving" ? ("saving" as const) : undefined);
 
-/** 004 PR C: los días del mes con movimientos o asientos de metas, del más reciente al más antiguo. */
+/** Desempate de asientos del mismo día: el más reciente primero y, con el mismo instante, por id (orden total estable). */
+const byNewest = (a: GoalEntryView, b: GoalEntryView) => (a.createdAt !== b.createdAt ? (a.createdAt > b.createdAt ? -1 : 1) : a.id > b.id ? -1 : 1);
+/**
+ * 004 PR C: los días del mes con movimientos o asientos de metas, del más reciente al más antiguo. Interpretación (anotada en
+ * evidence.md): dentro de un día, los asientos de metas van después de los gastos e ingresos, porque el total del día que
+ * encabeza el grupo es solo gasto y el ahorro no se mezcla con él (DEC-G04). La lista y la tabla usan este mismo orden.
+ */
 function days(rows: readonly Transaction[], goals: readonly GoalEntryView[]) {
   const byDay = new Map<string, { transactions: Transaction[]; goals: GoalEntryView[] }>();
   for (const { date, transactions } of groupByDay(rows)) byDay.set(date, { transactions: [...transactions], goals: [] });
@@ -142,7 +148,7 @@ function days(rows: readonly Transaction[], goals: readonly GoalEntryView[]) {
     day.goals.push(entry);
     byDay.set(entry.effectiveDate, day);
   }
-  return [...byDay].sort(([a], [b]) => (a > b ? -1 : 1)).map(([date, day]) => ({ date, ...day, goals: day.goals.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1)) }));
+  return [...byDay].sort(([a], [b]) => (a > b ? -1 : 1)).map(([date, day]) => ({ date, ...day, goals: day.goals.sort(byNewest) }));
 }
 
 function DayList({ rows, month, today, selectedId, pending, goals, people }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates; goals: readonly GoalEntryView[]; people: readonly GoalPerson[] }) {
@@ -175,7 +181,10 @@ function DayList({ rows, month, today, selectedId, pending, goals, people }: { r
 }
 
 function Table({ rows, month, today, selectedId, pending, goals, people }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates; goals: readonly GoalEntryView[]; people: readonly GoalPerson[] }) {
-  const sorted = groupByDay(rows).flatMap(({ transactions }) => transactions);
+  const items = days(rows, goals).flatMap(({ transactions, goals: dayGoals }) => [
+    ...transactions.map((transaction) => ({ kind: "transaction" as const, transaction })),
+    ...dayGoals.map((entry) => ({ kind: "goal" as const, entry })),
+  ]);
   const highlightId = useHighlightId();
   const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
   return (
@@ -189,7 +198,13 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
         </tr>
       </thead>
       <tbody>
-        {sorted.map((transaction) => {
+        {items.map((item) => {
+          if (item.kind === "goal") {
+            const { entry } = item;
+            // 004 PR C: el asiento de meta, con su ficha, en su lugar del orden; no cuenta en el gasto.
+            return <tr key={entry.id} data-goal-row=""><td colSpan={3} className={`${cell} px-3`}><GoalEntryRow entry={entry} people={people} dateLabel={dayLabel(entry.effectiveDate, today)} variant="activity" /></td></tr>;
+          }
+          const { transaction } = item;
           const current = transaction.id === selectedId;
           return (
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
@@ -213,10 +228,6 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
             </tr>
           );
         })}
-        {/* 004 PR C: los asientos de metas del mes, con su ficha; no cuentan en el gasto. */}
-        {[...goals].sort((a, b) => (a.effectiveDate !== b.effectiveDate ? (a.effectiveDate > b.effectiveDate ? -1 : 1) : a.createdAt > b.createdAt ? -1 : 1)).map((entry) => (
-          <tr key={entry.id}><td colSpan={3} className={`${cell} px-3`}><GoalEntryRow entry={entry} people={people} dateLabel={dayLabel(entry.effectiveDate, today)} variant="activity" /></td></tr>
-        ))}
       </tbody>
     </table>
   );
@@ -225,11 +236,13 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
 export function ActivityView({ rows, month, today, navigation, selectedId, goalEntries = [], goalPeople = [], setAsideMinor }: ActivityViewProps) {
   const filters = useActivityFilters(month);
   // «Aportes» (FR-071) deja solo los asientos de metas; «Gastos» e «Ingresos», solo movimientos.
-  const goalsOnly = filters.type === "goals";
-  const txType = filters.type === "all" || filters.type === "goals" ? undefined : filters.type;
+  // El tipo vive en el layout y se comparte entre contextos: «Aportes» solo vale si las metas se cargaron.
+  const type = filters.type === "goals" && setAsideMinor === undefined ? "all" : filters.type;
+  const goalsOnly = type === "goals";
+  const txType = type === "all" || type === "goals" ? undefined : type;
   const visible = goalsOnly ? [] : filterTransactions(rows, { query: filters.query, type: txType, categoryId: filters.categoryId ?? undefined });
   const visibleGoals = filters.categoryId !== null || txType ? [] : goalEntries.filter((entry) => matchesSearch(entryTitle(entry, "activity"), filters.query));
-  const filtering = filters.query.trim() !== "" || filters.type !== "all" || filters.categoryId !== null;
+  const filtering = filters.query.trim() !== "" || type !== "all" || filters.categoryId !== null;
   // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
@@ -257,7 +270,7 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
           <Segmented
             role="radiogroup"
             label={copy.activity.type}
-            value={filters.type}
+            value={type}
             onValueChange={filters.setType}
             options={setAsideMinor !== undefined
               ? [{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "income", label: copy.activity.incomes }, { value: "goals", label: copy.goals.activity.filter }] as const
