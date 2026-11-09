@@ -491,7 +491,7 @@ Misma prueba temporal (no versionada), Chromium **156.0.8078.4**, `PORT=3500 npm
 
 - **Apertura en Chromium: cumple.** La tarjeta y la meta inmersiva forman el par: `goal-photo`, `goal-title` y `goal-ribbon` animan entre las dos. Con movimiento reducido solo queda el fundido de la página (las reglas de `globals.css` quitan la animación de los grupos con nombre).
 - **Cierre (Escape → `/metas`): no hay transición**, porque la lista sí suspende en su Skeleton (`(lista)/loading.tsx`). No se probaron más variantes, por indicación del gestor.
-- **Respaldo sin la API (`layoutId` de Motion)**: sigue sin animación medible. La navegación, el foco al título, Escape y la vuelta del foco a la tarjeta cumplen en los cuatro casos.
+- **Respaldo sin la API (`layoutId` de Motion)**: en esta corrida no se medía su animación (ver la tercera corrida, que sí lo mide y lo corrige). La navegación, el foco al título, Escape y la vuelta del foco a la tarjeta cumplen en los cuatro casos.
 - **WebKit**: sigue sin instalar; lo corre el gestor si el fundador autoriza la descarga.
 - **CLS de la carga de `/metas`** (lista con Skeleton, 3 metas, Chromium, PerformanceObserver de `layout-shift`): **0 a 390 y 0 a 1440**. Es una medición de iteración; T054 la hace el gestor.
 
@@ -500,3 +500,41 @@ Misma prueba temporal (no versionada), Chromium **156.0.8078.4**, `PORT=3500 npm
 - Componentes de metas, Inicio, Actividad, `src/app/(app)` y `errors.test.ts`: **13 archivos, 177/177**. Registro de axe (`tests/a11y`, Vitest): **11/11**; `/metas` sigue en el registro aunque la página viva en `(lista)`.
 - `npm run verify`: **exit 0, 88,91 s** (presupuesto < 90 s; el lint tardó 35,6 s frente a 16,7 s de la corrida anterior, con la otra sesión usando el equipo). Dominio **78/78**; componentes **752 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (aviso preexistente de `balance-panel.tsx:61`).
 - `e2e:dev` completo no se repite en esta ronda (indicación del gestor); se repitieron la spec 4 y `goals.a11y.ts` porque cambió la estructura de rutas de `/metas`.
+
+### T052 · tercera corrida: Chromium y WebKit (el gestor instaló `webkit-2370` con la autorización del fundador)
+
+La misma prueba temporal (no versionada) corre ahora con dos motores. WebKit se lanza desde la prueba con `webkit.launch()` de Playwright 1.64.1, porque la configuración del repo solo tiene Chromium y `e2e:dev` no admite otro proyecto. Además, en cada cuadro se mide si la meta inmersiva lleva una transformación en línea: así anima el respaldo `layoutId` de Motion. Comando: `PORT=3500 npm run e2e:dev -- tests/e2e/zz-vt-check.e2e.ts`. Resultado: **7 pasan, 2 fallan**, 56,0 s; los dos fallos son los de WebKit con la API. Resumen por caso:
+
+```
+{"browser":"chromium","version":"156.0.8078.4","mode":"con API","motion":"no-preference","startViewTransition":true,"layoutFrames":{"layout":0,"sampled":12},"open":[{"finished":false,"error":null,"groups":["::view-transition-group(goal-photo-{id})","::view-transition-group(goal-ribbon-{id})","::view-transition-group(goal-title-{id})","::view-transition-group(root)"]}],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"con API","motion":"reduce","startViewTransition":true,"layoutFrames":{"layout":0,"sampled":11},"open":[{"finished":false,"error":null,"groups":["::view-transition-group(root)"]}],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"layoutFrames":{"layout":15,"sampled":15},"open":[],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"layoutFrames":{"layout":0,"sampled":14},"open":[],"close":[]}
+{"browser":"webkit","version":"27.2","mode":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"layoutFrames":{"layout":7,"sampled":7},"open":[],"close":[]}
+{"browser":"webkit","version":"27.2","mode":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"layoutFrames":{"layout":0,"sampled":5},"open":[],"close":[]}
+{"CLS":"/metas","width":390,"value":0}
+{"CLS":"/metas","width":1440,"value":0}
+T052 · webkit · con API · movimiento no-preference → Error: expect(page).toHaveURL(…/metas/{id}) failed · Received "http://localhost:3500/metas"
+T052 · webkit · con API · movimiento reduce        → Error: expect(page).toHaveURL(…/metas/{id}) failed · Received "http://localhost:3500/metas"
+```
+
+- **Respaldo `layoutId` de Motion (sin la API): sí anima.** Chromium sin la API: 15 de 15 cuadros con transformación mientras la meta entra; WebKit 27.2: 7 de 7. Con movimiento reducido, 0 en los dos: no hay desplazamiento ni escala, como pide MOTION_SYSTEM §4. Esto corrige la segunda corrida, que decía «sin animación medible»: allí no se medía la transformación.
+- **WebKit 27.2 con la API nativa** (Playwright 27.2 sí trae `document.startViewTransition`): la navegación desde la tarjeta no se completó. Para descartar que la causara el espía de la prueba, corrí un diagnóstico aparte en WebKit **sin espía**, con la URL muestreada desde Node, una llamada a la página con límite propio y los eventos `crash` y `close`. Fueron cuatro corridas de diagnóstico; la última, que es la concluyente:
+
+```
+{"diag":"webkit con API sin espía","caso":"tarjeta → meta inmersiva","version":"27.2","clickReturned":true,"crashed":true,"closedEvent":false,"samples":[{"ms":278,"path":"/metas","responsive":true,"title":"Metas"},{"ms":1446,"path":"/metas/{id}","responsive":true,"title":null},{"ms":3011,"path":"/metas/{id}","responsive":true,"title":null},{"ms":6016,"path":"/metas/{id}","responsive":true,"title":null}],"errors":[]}
+{"diag":"webkit con API sin espía","caso":"Metas → Actividad (sin tarjetas de meta)","version":"27.2","clickReturned":true,"crashed":false,"closedEvent":false,"samples":[{"ms":264,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":1010,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":3013,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":6012,"path":"/actividad","responsive":true,"title":"Actividad"}],"errors":[]}
+```
+
+  - Al tocar la tarjeta, **el proceso de la página de WebKit se cae** (`crash: true`). La URL llega a `/metas/{id}`, pero la página ya no pinta nada (`h1` nulo) y no hay errores de consola.
+  - La navegación de control sin tarjetas de meta (Metas → Actividad) funciona: sin caída y con su título.
+  - Las corridas de diagnóstico anteriores acabaron en «página cerrada» o en el límite de 120 s, lo que también encaja con la caída.
+  - **Alcance de este dato**: es el WebKit de Playwright para Windows (build 2370, versión 27.2), no Safari en macOS ni en iOS. No se puede afirmar que Safari se caiga. Tampoco se puede descartar: en este WebKit, la View Transition con nombre de la meta tumba la página.
+- **Estado de T052**:
+  - **Chromium: apertura cumple** (par `goal-photo`, `goal-title`, `goal-ribbon`); el cierre no tiene transición; el respaldo anima.
+  - **WebKit: el respaldo cumple; con la API nativa, la página se cae.** Queda **abierta** para el gestor, sin más variantes probadas.
+  - Opciones que no se decidieron aquí:
+    - limitar la View Transition a los navegadores donde se verificó, y usar el respaldo de Motion en los demás;
+    - quitar la View Transition y quedarse con el respaldo de Motion para todos;
+    - verificar en un Safari real (macOS o iPhone) antes de decidir.
+- Las pruebas temporales (`zz-vt-check.e2e.ts`, `zz-webkit-diag.e2e.ts`) no se versionan; sus copias y salidas se conservan fuera del repositorio.
