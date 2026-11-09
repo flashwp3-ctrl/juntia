@@ -61,7 +61,7 @@ export const copy = {
       edit: "Editar meta", complete: "Dar por lograda", archive: "Archivar", more: "Más acciones", target: "Objetivo",
       members: "Aportes por persona",
       member: (name: string, amount: string, count: number) => `${name} ${amount} · ${count === 1 ? "1 aporte" : `${count} aportes`}`,
-      available: (amount: string) => `Disponible tuyo ${amount}`,
+      availableOf: (name: string, amount: string) => `Aportes de ${name} ${amount}`,
       readOnly: "Meta archivada: queda de solo lectura con su historial.",
       completedNote: "Meta lograda: admite usos y retiros, no aportes nuevos.",
       notFound: { title: "No encontramos esta meta", description: "Puede que no exista o que no sea de este contexto. En Metas están todas las que puedes ver." },

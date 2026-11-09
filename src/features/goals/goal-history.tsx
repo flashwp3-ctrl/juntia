@@ -75,7 +75,7 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
               {list.map((entry) => (
                 <li key={entry.id}>
                   <GoalEntryRow entry={entry} people={members} dateLabel={dayLabel(entry.effectiveDate, today)} variant="history"
-                    action={canVoid(entry) ? <Button size="sm" variant="ghost" onClick={() => open(entry)}>{copy.goals.history.void.action}</Button> : undefined} />
+                    action={canVoid(entry) ? <Button size="sm" variant="ghost" icon="minus-circle" label={copy.goals.history.void.action} onClick={() => open(entry)} /> : undefined} />
                 </li>
               ))}
             </ul>

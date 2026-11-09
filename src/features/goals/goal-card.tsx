@@ -36,13 +36,13 @@ type Props = {
 };
 
 /** Lo visible de una meta sin foto (Q6): lo comparten la tarjeta y la meta inmersiva. */
-export function GoalFallback({ goal, size }: { goal: GoalView; size: "card" | "immersive" }) {
+export function GoalFallback({ goal, size, peek = false }: { goal: GoalView; size: "card" | "immersive"; peek?: boolean }) {
   return (
     <>
       <span data-goal-fallback="" aria-hidden="true" className={`pointer-events-none absolute font-serif leading-none font-medium text-saving opacity-30 select-none ${size === "card" ? "-right-3 -bottom-16 text-[248px]" : "-right-6 -bottom-24 text-[min(88vw,440px)] lg:-bottom-28 lg:text-[min(44vw,560px)]"}`}>
         {goal.name.trim().charAt(0).toLocaleUpperCase("es-CO")}
       </span>
-      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-saving ${size === "card" ? "top-5 right-5" : "top-[max(72px,env(safe-area-inset-top))] right-6 lg:top-10 lg:right-10"}`} />
+      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-saving ${peek ? "hidden" : ""} ${size === "card" ? "top-5 right-5" : "top-[max(20px,env(safe-area-inset-top))] left-6 lg:top-10 lg:left-10"}`} />
     </>
   );
 }
@@ -71,17 +71,17 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
         >
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>
-          <GoalFallback goal={goal} size="card" />
-          <span aria-hidden="true" className="relative flex min-w-0 flex-col gap-1 pr-12">
-            <span className={`${overlineClass} text-ink`}>
+          <GoalFallback goal={goal} size="card" peek={peek} />
+          <span aria-hidden="true" className={`relative flex min-w-0 flex-col gap-1 ${peek ? "-mt-1.5 pr-16 lg:pl-14" : "pr-12"}`}>
+            <span className={`${overlineClass} text-ink ${peek ? "hidden" : ""}`}>
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>
             </span>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
-              <span className="line-clamp-2 font-serif text-[clamp(26px,8vw,32px)] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{goal.name}</span>
+              <span className={`font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
             </ViewTransition>
           </span>
-          {peek ? <span aria-hidden="true" className="absolute top-4 right-4 rounded-full bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}
-          <span aria-hidden="true" className="relative flex flex-col gap-2.5">
+          {peek ? <span aria-hidden="true" className="absolute top-3.5 right-4 rounded-full bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}
+          <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? "invisible" : ""}`}>
             <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="flex items-center gap-2">
                 <span className="text-[28px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{copy.goals.percent(goal.progressPercent)}</span>

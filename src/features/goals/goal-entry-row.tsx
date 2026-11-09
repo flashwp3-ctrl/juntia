@@ -66,7 +66,7 @@ export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Prop
           ) : null}
         </span>
       </span>
-      <span className="flex flex-col items-end gap-1">
+      <span className="flex items-center gap-1">
         <span className={`text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap tabular-nums ${entry.voided ? "text-ink-secondary line-through" : entry.kind === "contribution" ? "text-saving" : "text-ink-secondary"}`}>{amount}</span>
         {action}
       </span>

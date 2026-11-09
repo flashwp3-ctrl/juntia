@@ -55,7 +55,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
     ...visibleExpenses.map((row) => ({ kind: "expense" as const, date: row.transactionDate, createdAt: row.createdAt, row })),
     ...(filtering ? [] : settlements.map((row) => ({ kind: "settlement" as const, date: row.settlementDate, createdAt: row.createdAt, row }))),
     ...visibleGoals.map((row) => ({ kind: "goal" as const, date: row.effectiveDate, createdAt: row.createdAt, row })),
-  ].sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : a.createdAt > b.createdAt ? -1 : 1));
+  ].sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : (a.kind === "goal") !== (b.kind === "goal") ? (a.kind === "goal" ? 1 : -1) : a.createdAt > b.createdAt ? -1 : 1));
   const total = summary ? BigInt(summary.totalMinor) : 0n;
   const chips = (Object.entries(summary?.byCategory ?? {}) as [CategoryId, string][]).map(([category, value]) => [category, BigInt(value)] as const)
     .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));

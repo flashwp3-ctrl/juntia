@@ -46,7 +46,7 @@ export function GoalsModule({ goals, context, today }: { goals: HomeGoals; conte
         {goals.goals.length > 0 ? <Link href="/metas" className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.goals.home.seeAll}</Link> : null}
       </div>
       {goals.goals.length > 0 ? (
-        <GoalStack goals={goals.goals} members={goals.members} today={today} context={context} label={copy.goals.home.module} />
+        <GoalStack goals={goals.goals} members={goals.members} today={today} context={context} label={copy.goals.home.module} fan={false} />
       ) : (
         <div className="flex flex-col items-start gap-3 rounded-[16px] border-[length:var(--border-strong)] border-dashed border-border-emphasis px-4 py-4">
           <p className="flex items-start gap-2.5 text-[14px] leading-[1.45] text-ink-secondary"><AppIcon name="flag-banner" weight="duotone" size={20} className="mt-px shrink-0 text-saving" />{copy.goals.home.createHint}</p>

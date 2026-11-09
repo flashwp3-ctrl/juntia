@@ -25,20 +25,26 @@ type Props = {
   onCreate?: () => void;
   /** Encabezado accesible de la lista; por defecto «Metas». */
   label?: string;
+  /** Abanico desde lg (Metas). En una columna estrecha (Inicio), la pila sigue vertical. */
+  fan?: boolean;
 };
 
 const card = { type: "spring", stiffness: 260, damping: 28, mass: 1 } as const;
 // Posición de cada capa: en móvil, apiladas hacia arriba (la segunda deja 60 px a la vista y la tercera un canto de 12);
 // desde lg, en abanico hacia la derecha, la segunda girada 4°.
-const WIDE = "lg:w-[min(320px,40%)] lg:min-w-[260px]";
-function layerClass(visible: number, index: number) {
-  if (index === 0) return `relative z-30 ${visible === 3 ? "mt-[72px]" : visible === 2 ? "mt-[60px]" : ""} lg:mt-0 ${WIDE}`;
+const WIDE = "lg:w-[280px]";
+function layerClass(visible: number, index: number, fan: boolean) {
+  if (!fan) {
+    if (index === 0) return `relative z-30 ${visible === 3 ? "mt-[72px]" : visible === 2 ? "mt-[60px]" : ""}`;
+    return `absolute inset-x-0 origin-top ${index === 1 ? `${visible === 3 ? "top-[12px]" : "top-0"} z-20 scale-x-[.96]` : "top-0 z-10 scale-x-[.92]"}`;
+  }
+  if (index === 0) return `relative z-30 ${visible === 3 ? "mt-[72px]" : visible === 2 ? "mt-[60px]" : ""} lg:mt-0 ${visible === 1 ? "" : WIDE}`;
   const mobile = index === 1 ? `${visible === 3 ? "top-[12px]" : "top-0"} z-20 scale-x-[.96]` : "top-0 z-10 scale-x-[.92]";
-  const fan = index === 1 ? "lg:left-[calc(min(320px,40%)-88px)] lg:rotate-[4deg]" : "lg:left-[calc(2*min(320px,40%)-184px)] lg:rotate-[8deg]";
-  return `absolute inset-x-0 origin-top ${mobile} lg:inset-x-auto lg:top-2 lg:origin-bottom-left lg:scale-x-100 ${fan} ${WIDE}`;
+  const spread = index === 1 ? "lg:left-[224px] lg:rotate-[4deg]" : "lg:left-[448px] lg:rotate-[7deg]";
+  return `absolute inset-x-0 origin-top ${mobile} lg:inset-x-auto lg:top-2 lg:origin-bottom-left lg:scale-x-100 ${spread} ${WIDE}`;
 }
 
-export function GoalStack({ goals, members, today, context, onCreate, label = copy.goals.stack.list }: Props) {
+export function GoalStack({ goals, members, today, context, onCreate, label = copy.goals.stack.list, fan = true }: Props) {
   const reduced = usePrefersReducedMotion();
   const [front, setFront] = useState(0);
   const [listed, setListed] = useState(false);
@@ -68,7 +74,7 @@ export function GoalStack({ goals, members, today, context, onCreate, label = co
   return (
     <div className="flex flex-col gap-2">
       <div className="lg:flex lg:items-start lg:gap-6">
-        <ul aria-label={label} className={`relative lg:h-[244px] lg:flex-1 ${visible === 1 ? "lg:max-w-[360px]" : ""}`}>
+        <ul aria-label={label} className={`relative flow-root ${fan ? `lg:h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
           {ordered.map((goal, index) => {
             const shown = index < visible;
             return (
@@ -77,7 +83,7 @@ export function GoalStack({ goals, members, today, context, onCreate, label = co
                 layout={reduced ? false : "position"}
                 transition={card}
                 data-stack-layer={shown ? index : undefined}
-                className={shown ? layerClass(visible, index) : "sr-only"}
+                className={shown ? layerClass(visible, index, fan) : "sr-only"}
               >
                 <GoalCard
                   goal={goal}

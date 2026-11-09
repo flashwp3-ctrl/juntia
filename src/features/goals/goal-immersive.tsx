@@ -109,7 +109,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
                 <Avatar person={member.joinOrder} initial={initialOf(member.name)} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-[14px] font-semibold text-ink">{member.name}</span>
-                  <span className="text-[12px] text-ink-secondary tabular-nums">{copy.goals.immersive.available(cop(member.availableMinor))}</span>
+                  <span className="text-[12px] text-ink-secondary tabular-nums">{member.isMe ? copy.goals.yourShare(cop(member.availableMinor)) : copy.goals.immersive.availableOf(member.name, cop(member.availableMinor))}</span>
                 </span>
               </li>
             ))}
