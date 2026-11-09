@@ -7,6 +7,8 @@
 // a «sin presupuesto» en la pantalla y lo que el servidor manda en Nosotros. Las validaciones del límite, la vigencia por mes
 // y las carreras viven en dominio, pgTAP e integración. Cada test siembra su pareja por la base y las funciones reales
 // (regla dura 1); ningún caso se prepara por la interfaz. Solo Chromium, ninguna espera fija, movimiento reducido.
+// Los textos se buscan dentro de `main`: con `loading.tsx`, Next deja un instante fuera de `main` la copia oculta del HTML que
+// transmite, y `getByText` también encuentra nodos ocultos (falló así en el `e2e:dev` completo).
 import { randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { moneyFromPesos } from "../../src/domain/money";
@@ -38,7 +40,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await seedSharedMovements(pair, "recent");
   const sara = await open(browser, baseURL!, pair.sara, "us");
   await sara.page.goto("/plan");
-  await expect(sara.page.getByText(copy.plan.noBudget("$240.000"))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.noBudget("$240.000"))).toBeVisible();
 
   // Crear (US-2.1): activo desde el mes en curso, visible para los dos sin aprobación, con autor y fecha.
   await sara.page.getByRole("button", { name: copy.plan.createFor(restaurants) }).click();
@@ -47,9 +49,9 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await create.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("260000");
   await create.getByRole("button", { name: copy.plan.sheet.save }).click();
   await expect(create).toBeHidden();
-  await expect(sara.page.getByText(copy.plan.saved.created)).toBeAttached();
-  await expect(sara.page.getByText(copy.plan.leftPercent("20.000", 92))).toBeVisible();
-  await expect(sara.page.getByText(copy.plan.lastChange(copy.plan.change.create("Sara", restaurants, "$260.000"), shortDate(today())), { exact: false })).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.saved.created)).toBeAttached();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.leftPercent("20.000", 92))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.lastChange(copy.plan.change.create("Sara", restaurants, "$260.000"), shortDate(today())), { exact: false })).toBeVisible();
   const [created] = (await budgetMonths(pair.tomas.client, "us", month())).filter((row) => row.category_id === "restaurants");
   expect(created).toMatchObject({ limit_minor: "26000000", consumed_minor: "24000000", state: "near", version: 1 });
 
@@ -65,7 +67,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await saraSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("300000");
   await saraSheet.getByRole("button", { name: copy.plan.sheet.saveChanges }).click();
   await expect(saraSheet).toBeHidden();
-  await expect(sara.page.getByText(copy.plan.left("60.000"))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.left("60.000"))).toBeVisible();
 
   // Tomás guarda con la versión vieja: no se sobrescribe; ve quién lo cambió y el valor vigente, y revisa.
   await tomasSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("280000");
@@ -78,7 +80,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await tomasSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("320000");
   await tomasSheet.getByRole("button", { name: copy.plan.sheet.saveChanges }).click();
   await expect(tomasSheet).toBeHidden();
-  await expect(tomas.page.getByText(copy.plan.left("80.000"))).toBeVisible();
+  await expect(tomas.page.getByRole("main").getByText(copy.plan.left("80.000"))).toBeVisible();
 
   // Desactivar (US-2.5): vuelve a «sin presupuesto»; los gastos y el historial siguen; nunca un límite 0.
   await sara.page.reload();
@@ -87,7 +89,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await expect(off.getByRole("list", { name: copy.plan.sheet.history }).getByRole("listitem")).toHaveCount(3);
   await off.getByRole("button", { name: copy.plan.sheet.deactivate }).click();
   await expect(off).toBeHidden();
-  await expect(sara.page.getByText(copy.plan.noBudget("$240.000"))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.noBudget("$240.000"))).toBeVisible();
   await expect(sara.page.getByRole("button", { name: copy.plan.createFor(restaurants) })).toBeVisible();
   expect(await sara.page.locator("main").innerText()).not.toMatch(/\$0(?![.\d])|\b0 %/);
   const [after] = (await budgetMonths(pair.tomas.client, "us", month())).filter((row) => row.category_id === "restaurants");
@@ -137,7 +139,7 @@ test("spec 5 · privacidad: ni el HTML, ni el RSC, ni el prefetch de Plan en Nos
   expect(leaks(await (await page.request.get("/plan")).text()).filter((marker) => marker === "98.700" || marker === tomasOwn.budget_id)).toEqual([]);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).hover();
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
-  await expect(page.getByText(copy.plan.optional.us, { exact: false })).toBeVisible();
+  await expect(page.getByRole("main").getByText(copy.plan.optional.us, { exact: false })).toBeVisible();
   const afterSwitch = fetched.length;
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page).toHaveURL(/\/$/);
