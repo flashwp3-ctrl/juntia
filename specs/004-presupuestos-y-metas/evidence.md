@@ -381,3 +381,127 @@ Comprobación tras db:dev:reset (9.97 s), con el mismo código: **20 archivos pa
 E2E completo F66: reset previo **8.65 s**, luego npm run e2e:dev sin argumentos, PORT=3400, perfil local conservador 1:false, cero reintentos: **exit 0, 431.43 s**. Build 14.24 s; 26 E2E no seriales 122.75 s; 2 seriales 15.53 s; 94 axe 273.44 s; pasada axe serial vacía 3.63 s. S4: 41 cambios, 38 animando. Siguen fuera cuatro E2E @mail, @sweep y evidence según contrato. Este tiempo local no sustituye la medida del job e2e de CI (461 s en T024, tope 480 s). No se cambió ninguna opción del workflow ni se lanzó CI.
 
 verify final **59.80 s, exit 0**: 78 dominio, 698 componentes verdes y 2 omisiones previstas, typecheck verde y solo el aviso preexistente de balance-panel.tsx:61. git diff --check pasa. SQL e integración/e2e completos verdes; no se tocó producción. F66-1 y F66-2 se publican en un solo commit y un solo push con el PR en borrador; gate ready_for_review a cargo del gestor.
+
+---
+
+# Evidencia · 004 · PR B · Plan y presupuestos
+
+Rama `feat/004-b-plan-budgets`, sobre `main` en `bd408b9` (PR A fusionado). Todo lo de abajo es **iteración contra
+`juntia-dev`** (decisión 18) o local: no es evidencia de CI (ADR-011 §9.8); el gate es la pasada `ready_for_review` que
+lanza el gestor. Sin runs lanzados por el agente, sin migraciones nuevas, sin producción, sin `--force` del lock. El
+`juntia-dev` se compartió con la sesión del PR C: cada corrida esperó a que el lock estuviera libre y lo soltó al terminar.
+
+## Commits
+
+| Commit | Qué |
+| --- | --- |
+| `0d75086`, `20ae0f6` | Encargo del gestor: `document-title` intermitente de `routes.a11y.ts` (run 42543237243). Sin cambio de comportamiento |
+| `dea1bdc` | T029–T032, pruebas en rojo (y el copy de Plan, para que fallen por la funcionalidad y no por cadenas) |
+| `3d7fbc3` | T033–T034, Plan y la hoja de presupuesto |
+| `5d3b288` | T035, selector de specs y su integración en el job `e2e` |
+| `41a995e` | T037–T038, revisión de acabado (Impeccable) y barrido local |
+| `eebd501` | Spec 5: textos dentro de `main` (fallo del `e2e:dev` completo) |
+
+## Encargo del gestor · `document-title` (run 42543237243)
+
+Causa, leída en el log del intento 1 del job `e2e`: `toHaveTitle(/\S/)` pasó y **después** axe vio el `<title>` vacío. Tras la
+Server Action de M3b, `router.refresh()` vuelve a transmitir los metadatos y React quita y pone el título; el escaneo es
+asíncrono y dura segundos, así que la espera previa no bastaba. `analyzeAtRest` (`tests/support/a11y.ts`) corre todas las
+reglas salvo `document-title`, espera a que `document.title` no esté vacío (espera de Playwright, sin tiempos fijos) y solo
+entonces corre `document-title` con el axe ya inyectado, y une sus violaciones. Las reglas auditadas no cambian; sin título,
+falla igual. Lo usan `routes.a11y.ts` y el `axe()` común.
+
+- `npm run e2e:dev -- tests/a11y/routes.a11y.ts --grep "M3b"`: **2/2**, 17,8 s.
+- La primera versión reinyectaba axe con un segundo `AxeBuilder`: en el `e2e:dev` completo, `couple-shared.a11y.ts` (muchos
+  estados en un test) pasó de su límite de 30 s dos veces. Con el axe ya inyectado (`20ae0f6`), ese test baja de
+  23,5–29,5 s a 17–19 s por tema; `--grep "Nosotros · axe|M3b"` **4/4**, 41,8 s.
+
+## T036 · workers
+
+Confirmado en la sección T022–T023 de arriba: la propuesta 2:false se **retiró** («No se considera demostrado que aumentar
+workers sea estable»; recomendación final: no fijar aumento ni `fullyParallel`). **No se tocan los workers del job `e2e`**;
+el workflow solo gana el selector. Si el gate pasa de 480 s, rige la mitigación de contracts/ci.md: (a) no es segura, (b)
+ya aplicada en la spec 5, (c) fundadores.
+
+## T032a · rojo contra `juntia-dev`
+
+Local antes del código: dominio `budgets.test.ts` **6 fallan / 9 pasan** (`budgetChangeKind is not a function`);
+`src/features/plan/plan.test.tsx` y `tests/e2e-select.test.ts` fallan al importar módulos que no existen.
+
+`next build` comprueba los tipos de los tests, así que para el rojo E2E se apartaron un momento esos tres archivos de unidad
+(restaurados después y commiteados con el resto). Así el rojo es de la funcionalidad, no del build:
+
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: build pasó 10,21 s; **2 fallan** — test 1 en `getByText('$240.000 · sin
+  presupuesto')` (Plan seguía provisional); test 2 en el control positivo (el HTML de Nosotros no trae el presupuesto
+  compartido sembrado). La siembra (pareja, seis compartidos y `create_budget` real) funcionó en los dos.
+- `npm run e2e:dev -- tests/a11y/plan.a11y.ts`: build pasó 9,28 s; **1 falla** en
+  `getByRole('img', { name: 'Mercado: 640.000 de 900.000, 71 %' })`.
+
+## Verde
+
+- Componentes `src/features/plan`: **21/21** (BudgetIndicator en sus cinco estados, la hoja, el historial, Plan sin
+  presupuesto, primera persona en Yo, nada en el almacenamiento). Dominio `budgets`: **15/15**. Selector: **18/18**.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts tests/a11y/plan.a11y.ts`: **2/2** E2E (≈14 s y ≈12 s) y **1/1** axe (10
+  estados: Nosotros con presupuesto, hoja con historial, conflicto, crear y Yo sin presupuesto, claro y oscuro, **0
+  violaciones**).
+- Barrido local, `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/plan.a11y.ts`: **2/2**. 56 mediciones (cuatro pantallas ×
+  siete anchos × dos temas) sin scroll horizontal; 200 % sin scroll ni texto cortado en las cuatro; 44 px: «Editar el
+  presupuesto de Mercado» 366×94, «Crear presupuesto de Hogar» 53,9×44, «Crear presupuesto» 350×52, «Límite mensual»
+  350×85,6, «Guardar cambios» 350×52, «Desactivar presupuesto» 350×44; teclado: fila → Enter → foco en el límite; Escape
+  cierra; «Crear» de una fila → foco en el límite. La primera pasada encontró dos fallos reales, corregidos en `41a995e`: el
+  botón opcional se salía a 200 % y el foco inicial no llegaba al límite (AmountInput usa su propia ref).
+- El barrido oficial (`@sweep`, T039) sigue siendo del gestor en CI.
+
+## `e2e:dev` completo y `verify` (antes del push)
+
+Tres corridas completas, sin argumentos, PORT=3400, workers por defecto de `e2e:dev`:
+
+| # | Commit | Resultado | Fallo |
+| --- | --- | --- | --- |
+| 1 | `41a995e` | exit 1, 390,99 s; E2E 29/30, axe 94/95 | Spec 5, primera aserción: `getByText` vio la copia oculta que Next transmite fuera de `main` (`loading.tsx` nuevo) → `eebd501`. Y `couple-shared` light, límite de 30 s en «Mover a Pareja» |
+| 2 | `eebd501` | exit 1, 389,39 s; E2E **30/30**, axe 94/95 | `couple-shared` dark, límite de 30 s dentro de `analyzeAtRest` → `20ae0f6` |
+| 3 | `20ae0f6` | **exit 0, 320,85 s**; build 10,72 s; E2E **30/30** 62,70 s; axe **95/95** 246,19 s | — |
+
+Siguen fuera por contrato las E2E `@mail`, `@sweep` y `evidence`. Este tiempo local no mide el job de CI (461 s en T024,
+tope 480 s); la spec 5 añade dos tests de ≈14 s y ≈13 s y `plan.a11y.ts` uno de ≈20 s.
+
+`npm run verify` final sobre `20ae0f6`: **exit 0, 81,87 s** (< 90 s); lint sin errores (solo el aviso preexistente de
+`balance-panel.tsx:61`), typecheck, dominio **84/84**, componentes **735 pasan / 2 omisiones previstas**. `git diff --check`
+pasa.
+
+## Selector (T035) sobre este PR
+
+`node scripts/e2e-select.mjs --base origin/main` en la rama: corren `access-account`, `annotate`, `couple-settle` y
+`budgets`; «Spec 4: todavía no existe». Motivo: el PR toca `.github/`, `scripts/` y `tests/support/` (regla 6, todas las
+existentes) además del área de presupuestos. Coincide con el fixture «PR B con el selector» de contracts/ci.md.
+
+## T038 · capturas e Impeccable
+
+28 PNG en `specs/004-presupuestos-y-metas/evidence/pr-b/`, de `juntia-dev` (cuentas `@seed.test`), 390 y 1440, claro y
+oscuro: Plan en Nosotros con y sin presupuesto, Plan en Yo con y sin presupuesto, hoja de editar con historial, hoja de
+crear y conflicto. Las de 390 son de página completa: la barra inferior fija se dibuja sobre las últimas líneas. En
+`conflicto` el historial muestra varias ediciones de Tomás porque el script de captura cambió el presupuesto en cada una de
+las cuatro capturas. Spec temporal sin commitear, como en la 003.
+
+Impeccable: detector `impeccable detect --json src/features/plan` → **0 hallazgos**. Revisión de acabado
+(`impeccable-finish-reviewer`) contra el comp 04·2, el spec de BudgetIndicator y las capturas:
+
+| # | Hallazgo | Qué se hizo (`41a995e`) |
+| --- | --- | --- |
+| 1 | El modo sin presupuesto se leía como cinco avisos de crear (US-1) | Las categorías sin presupuesto, una sola lista punteada con divisores; el bloque «Sin presupuesto» plano y después de lo gastado |
+| 2 | A 390, CERCA DEL LÍMITE y EXCEDIDO partían la fila de arriba | El badge va al final de la línea de estado |
+| 3 | En un conflicto el campo seguía activo con el valor rechazado | Campo bloqueado, «Tu cambio a $X no se guardó.», solo «Revisar» sigue |
+| 4 | En Yo, «Sara creó…» cuando Sara es quien mira | Primera persona en Yo («Creaste…», «Tú · fecha») |
+| 5 | «Sin presupuesto» como título se confunde con el estado de cada fila | **Sin cambio**: redacción de los fundadores (T041) |
+| 6 | A 1440 «Crear presupuesto» quedaba lejos de la lista | Va debajo de la lista |
+
+## Para los fundadores (T041) y el gestor
+
+- Copy nuevo de `copy.plan` (es.ts) para aprobar en pantalla, incluido el punto 5 de arriba y «Te pasaste por» en Yo.
+- Lecturas de ejecución, sin alcance nuevo: el resumen del mes es `gasto_consumo` de `metric_months`; el porcentaje se
+  muestra con consumo 0, cerca y excedido (el comp no lo pone en «dentro» ni en el excedido; US-04 pide 118 %); un
+  presupuesto desactivado sin gasto en el mes no se pinta, y al volver a crear su categoría se reactiva con
+  `update_budget` (la clave única es por categoría); Plan enseña solo el mes en curso.
+- `copy.us.activeDescription` («Las metas y el plan de los dos llegan en una próxima versión…») ya no lo usa Plan; lo sigue
+  usando Metas hasta el PR C, que lo puede ajustar.
+- T039 (barrido en CI), T040 (CLS de Plan con el `loading.tsx` nuevo) y T041 siguen pendientes, humanas.
