@@ -14,3 +14,5 @@ export function limitInForce(versions: readonly BudgetVersion[], month: string):
   return versions.filter(v => v.effectiveMonth <= month)
     .sort((a,b) => b.effectiveMonth.localeCompare(a.effectiveMonth) || b.changedAt.localeCompare(a.changedAt))[0]?.limitMinor ?? null;
 }
+/** 004 PR B / FR-018: qué fue cada cambio del historial de un presupuesto. */
+export type BudgetChangeKind = "create" | "raise" | "lower" | "keep" | "deactivate" | "reactivate";
