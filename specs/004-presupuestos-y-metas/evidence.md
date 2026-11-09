@@ -16,7 +16,7 @@ T001 declarada hecha por el gestor. T027 y T028 son humanas.
 Las salidas de `juntia-dev` son iteración, no cierre de verificaciones [V].
 Ningún run de CI lanzado por el agente. Producción no se utiliza.
 
-**Cierre actual**: T024 verde en 42508573805; T022–T023 medidos y documentados, sin aumento de workers recomendado; integración 142 verdes / 9 omisiones; completo final 1:false verde (407.98 s), verify final verde (62.55 s). PR en borrador para revisión del gestor y ChatGPT; gate final y producción siguen siendo humanos. Las secciones de avance anteriores se conservan como historial.
+**Cierre anterior a F66 (7d1ed14)**: T024 verde en 42508573805; T022–T023 medidos y documentados, sin aumento de workers recomendado; integración 142 verdes / 9 omisiones; completo final 1:false verde (407.98 s), verify final verde (62.55 s). PR en borrador para revisión del gestor y ChatGPT; gate final y producción siguen siendo humanos. Las secciones de avance anteriores se conservan como historial. La validación vigente de F66 está en el cierre de este documento.
 
 ## Iteración local · grupo 1A
 
@@ -361,3 +361,23 @@ T036 permite no tocar el job si T023 no demuestra seguridad/estabilidad; el PR B
 No se modifican spec.md, plan.md, tasks.md, las migraciones ni el workflow. No se implementa ningún entregable de PR B–E. Sin procesos ajenos terminados, sin puertos 3000/3100, sin lock forzado, sin valores de .env.test publicados y sin runs de CI lanzados por el agente. El mapa con el SHA concreto de este cierre se publica en la descripción del PR.
 
 verify final después del completo verde: **exit 0, 62.55 s** (presupuesto sin cambios <90 s); dominio **78/78**, componentes **698 pasan / 2 omisiones previstas**, 55 archivos. Lint sin errores (solo el warning preexistente balance-panel.tsx:61); typecheck pasa. git diff --check pasa; comparaciones de migraciones, workflow, spec.md, plan.md y tasks.md sin cambios en este cierre. Los logs de validación permanecen locales e ignorados; no se versionan sesiones ni credenciales.
+
+## Revisión final del PR #66 · F66-1 y F66-2
+
+El gestor comunicó la revisión de ChatGPT sobre 7d1ed14: solo F66-1 y F66-2 pendientes; el resto aprobado. Autorizó corregir 20261107230952_goal_funding.sql porque aún no se aplicó en producción. Solo se cambia esa migración, el tipo de respuesta del adaptador, las regresiones de integración y esta evidencia. No se cambia el protocolo de restauración ni el workflow.
+
+**Rojo previo al SQL**: npm run test:integration:dev contra juntia-dev, **3 fallan / 142 pasan / 9 omisiones previstas**, Vitest 375.07 s, runner 376.30 s. F66-1: el UPDATE de la segunda sesión con versión obsoleta resuelve en lugar de devolver JT011. F66-2: la creación financiada privada deja create_transaction adicional y la compartida deja create_shared_expense adicional. No se imprimieron claves.
+
+**F66-1**: con el movimiento ya bloqueado, remove_goal_usage devuelve fondos y cancela la solicitud, luego actualiza version, updated_at y updated_by y exige row_count=1. La auditoría conserva versión y metadatos antes/después; el resultado versionado se guarda en su registro idempotente. El auxiliar común de devolución y las dos anulaciones no se cambian. La regresión usa dos sesiones reales: Tomás quita el uso, Sara intenta editar con la versión anterior, y el reintento de Tomás verifica el mismo resultado y una sola auditoría.
+
+**F66-2**: insert_transaction reutiliza la inserción privada/compartida, las partes, su validación y la auditoría sin crear/completar registros de idempotencia. Los campos privados conservan la validación previa a la huella y los compartidos reutilizan shared_fields. Las RPC existentes preservan su huella, permisos, respuesta e intención. El gasto con meta llama al auxiliar bajo la única intención exterior. Ambos auxiliares son invoker con search_path vacío, revocados a public/anon/authenticated y ejecutables por juntia_writer. La regresión privada/compartida compara el inventario de acciones por actor antes y después: delta exacta de un registro, misma respuesta al repetir y JT008 con otra huella.
+
+SQL verde: npm run test:db:dev **126.63 s**, reinicia 11 migraciones, confirma esquema tests y pasa todo pgTAP (**20 archivos, 1091 aserciones**, incluidos 483 controles de privilegios y 88 de metas). No se lanzó CI; el gate del SHA final es del gestor.
+
+Primera integración con el SQL corregido: **144 pasan / 1 falla / 9 omisiones**, 390.46 s. Pasan las tres F66, las 18 carreras de metas y los 38 casos de restore-planning. Falla la carrera existente regenerate_invitation contra aceptar, primero aceptar: JT011 en vez de JT103 al comprobar el perdedor. En el rojo anterior a F66 ese caso pasaba. La barrera registró ambos PID esperando; el error es compatible con que regenerar ganara y dejara la versión obsoleta. La prueba y ambas RPC de invitación están fuera del diff. Se conserva el fallo y se hace una sola comprobación completa tras reset limpio, sin cambiar esa prueba, sus expectativas ni los timeouts.
+
+Comprobación tras db:dev:reset (9.97 s), con el mismo código: **20 archivos pasan / 1 omitido; 145 pruebas pasan / 9 omisiones previstas**, Vitest 374.54 s, runner **375.56 s**. Incluye la carrera de invitaciones, las tres F66, la restauración y las regresiones de las RPC antiguas. No se subió ningún timeout ni se cambió la prueba que falló.
+
+E2E completo F66: reset previo **8.65 s**, luego npm run e2e:dev sin argumentos, PORT=3400, perfil local conservador 1:false, cero reintentos: **exit 0, 431.43 s**. Build 14.24 s; 26 E2E no seriales 122.75 s; 2 seriales 15.53 s; 94 axe 273.44 s; pasada axe serial vacía 3.63 s. S4: 41 cambios, 38 animando. Siguen fuera cuatro E2E @mail, @sweep y evidence según contrato. Este tiempo local no sustituye la medida del job e2e de CI (461 s en T024, tope 480 s). No se cambió ninguna opción del workflow ni se lanzó CI.
+
+verify final **59.80 s, exit 0**: 78 dominio, 698 componentes verdes y 2 omisiones previstas, typecheck verde y solo el aviso preexistente de balance-panel.tsx:61. git diff --check pasa. SQL e integración/e2e completos verdes; no se tocó producción. F66-1 y F66-2 se publican en un solo commit y un solo push con el PR en borrador; gate ready_for_review a cargo del gestor.

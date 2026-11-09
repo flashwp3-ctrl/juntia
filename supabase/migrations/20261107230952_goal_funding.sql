@@ -66,13 +66,104 @@ revoke all on function juntia_private.remove_transaction_goal_funding(uuid,text)
 grant execute on function juntia_private.remove_transaction_goal_funding(uuid,text) to juntia_writer;
 
 grant create on schema juntia_private to juntia_writer;
--- Definer: usa solo grants de writer y su RLS; la creación previa se reutiliza
--- dentro de ESTA transacción, con una clave interna nueva que no puede apropiarse
--- de una intención antigua de create_transaction/create_shared_expense.
+-- F66-2: conserva la validación privada y su orden antes de abrir la intención.
+create function juntia_private.validate_private_transaction(p_type text,amount bigint,p_category_id text,p_transaction_date text,v_description text) returns date
+language plpgsql security invoker set search_path='' as $$
+declare day date;
+begin
+  if amount<=0 or amount>99999999900 or amount%100<>0 then raise exception using errcode='JT003',message='amountOutOfRange'; end if;
+  if p_type is null or p_type not in ('expense','income') then raise exception using errcode='JT004',message='invalidType'; end if;
+  if not exists(select 1 from juntia_data.categories where id=p_category_id and kind=p_type) then raise exception using errcode='JT005',message='invalidCategory'; end if;
+  begin
+    if p_transaction_date is null or p_transaction_date !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then raise invalid_datetime_format; end if;
+    day := p_transaction_date::date;
+  exception when invalid_datetime_format or datetime_field_overflow then raise exception using errcode='JT006',message='invalidDate'; end;
+  if char_length(v_description)>140 then raise exception using errcode='JT007',message='descriptionTooLong'; end if;
+  return day;
+end $$;
+revoke all on function juntia_private.validate_private_transaction(text,bigint,text,text,text) from public,anon,authenticated;
+grant execute on function juntia_private.validate_private_transaction(text,bigint,text,text,text) to juntia_writer;
+
+-- Inserción y auditoría compartidas por las tres RPC. No abre ni completa intenciones.
+-- El llamador valida los campos y, en Nosotros, ya posee el bloqueo del grupo.
+create function juntia_private.insert_transaction(p_type text,p_amount bigint,p_category_id text,p_day date,p_description text,
+ p_group_id uuid default null,p_payer_user_id uuid default null,p_split_mode text default null,p_split_percents smallint[] default null,p_parts jsonb default null) returns jsonb
+language plpgsql security invoker set search_path='' as $$
+declare uid uuid:=juntia_private.current_uid();tx juntia_data.transactions;payload jsonb;n integer;written_at timestamptz;
+begin
+ if p_group_id is null then
+  insert into juntia_data.transactions(type,created_by,owner_user_id,amount_minor,category_id,transaction_date,description)
+   values(p_type,uid,uid,p_amount,p_category_id,p_day,nullif(btrim(p_description),'')) returning * into tx;
+  get diagnostics n=row_count;if n<>1 then raise exception using errcode='42501',message='writeDenied';end if;
+  payload:=to_jsonb(tx)||jsonb_build_object('amount_minor',tx.amount_minor::text);
+ else
+  perform juntia_private.validate_shared_split(p_group_id,p_amount,p_payer_user_id,p_split_mode,p_split_percents,p_parts);
+  written_at:=clock_timestamp();
+  insert into juntia_data.transactions(type,created_by,group_id,payer_user_id,amount_minor,category_id,transaction_date,description,split_mode,split_percents,updated_by,created_at,updated_at)
+   values('expense',uid,p_group_id,p_payer_user_id,p_amount,p_category_id,p_day,nullif(btrim(p_description),''),p_split_mode,p_split_percents,uid,written_at,written_at) returning * into tx;
+  get diagnostics n=row_count;if n<>1 then raise exception using errcode='42501',message='writeDenied';end if;
+  insert into juntia_data.transaction_allocations(transaction_id,user_id,amount_minor)
+   select tx.id,key::uuid,value::bigint from jsonb_each_text(p_parts);
+  get diagnostics n=row_count;if n<>2 then raise exception using errcode='42501',message='writeDenied';end if;
+  payload:=juntia_private.shared_payload(tx);
+ end if;
+ insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action,"after") values(uid,'transaction',tx.id,'create',payload);
+ get diagnostics n=row_count;if n<>1 then raise exception using errcode='42501',message='writeDenied';end if;
+ if p_group_id is null then
+  return payload-array['created_by','owner_user_id','group_id','status','voided_at','voided_by'];
+ end if;
+ return payload;
+end $$;
+revoke all on function juntia_private.insert_transaction(text,bigint,text,date,text,uuid,uuid,text,smallint[],jsonb) from public,anon,authenticated;
+grant execute on function juntia_private.insert_transaction(text,bigint,text,date,text,uuid,uuid,text,smallint[],jsonb) to juntia_writer;
+
+-- RPC existentes: misma firma, propietario, permisos, huella y respuesta.
+create or replace function juntia_private.create_transaction(p_idempotency_key text,p_type text,p_amount_minor text,p_category_id text,p_transaction_date text,p_description text)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare
+  uid uuid := juntia_private.current_uid(); key uuid; amount bigint; day date;
+  v_description text := nullif(btrim(p_description),''); fp text; saved juntia_data.idempotency_records;
+  v_result jsonb;
+  affected integer;
+begin
+  if uid is null then raise exception using errcode='JT001',message='notAuthenticated'; end if;
+  amount := juntia_private.parse_amount_minor(p_amount_minor);
+  day := juntia_private.validate_private_transaction(p_type,amount,p_category_id,p_transaction_date,v_description);
+  begin
+    key := p_idempotency_key::uuid;
+    if key is null then raise invalid_text_representation; end if;
+  exception when invalid_text_representation then raise exception using errcode='JT009',message='invalidIdempotencyKey'; end;
+  fp := juntia_private.request_fingerprint(jsonb_build_object('type',p_type,'amount_minor',amount::text,'category_id',p_category_id,'transaction_date',day::text,'description',v_description));
+  insert into juntia_data.idempotency_records(actor_user_id,action,idempotency_key,request_fingerprint)
+    values(uid,'create_transaction',key,fp) on conflict do nothing;
+  if not found then
+    select * into saved from juntia_data.idempotency_records where actor_user_id=uid and action='create_transaction' and idempotency_key=key;
+    if saved.request_fingerprint is distinct from fp or saved.status<>'completed' then raise exception using errcode='JT008',message='idempotencyKeyReused'; end if;
+    return saved.result;
+  end if;
+  v_result := juntia_private.insert_transaction(p_type,amount,p_category_id,day,v_description);
+  update juntia_data.idempotency_records set status='completed',result=v_result,completed_at=now()
+    where actor_user_id=uid and action='create_transaction' and idempotency_key=key and status='pending';
+  get diagnostics affected=row_count;
+  if affected<>1 then raise exception using errcode='42501',message='writeDenied'; end if;
+  return v_result;
+end $$;
+
+create or replace function juntia_private.create_shared_expense(p_idempotency_key text,p_amount_minor text,p_category_id text,p_transaction_date text,p_description text,p_payer_user_id uuid,p_split_mode text,p_split_percents smallint[],p_parts jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
+declare gid uuid;saved jsonb;amount bigint;result_value jsonb;
+begin
+ saved:=juntia_private.begin_write('create_shared_expense',p_idempotency_key,jsonb_build_object('amount_minor',p_amount_minor,'category_id',p_category_id,'transaction_date',p_transaction_date,'description',p_description,'payer_user_id',p_payer_user_id,'split_mode',p_split_mode,'split_percents',p_split_percents,'parts',p_parts)); if saved is not null then return saved; end if;
+ gid:=juntia_private.lock_active_couple();
+ amount:=juntia_private.shared_fields(p_amount_minor,p_category_id,p_transaction_date,p_description);
+ result_value:=juntia_private.insert_transaction('expense',amount,p_category_id,p_transaction_date::date,p_description,gid,p_payer_user_id,p_split_mode,p_split_percents,p_parts);
+ return juntia_private.finish_write('create_shared_expense',p_idempotency_key,result_value);
+end $$;
+
+-- Definer de writer: gasto, partes y financiación bajo una sola intención.
 create function juntia_private.create_expense_with_goal(p_idempotency_key text,p_context text,p_amount_minor text,p_category_id text,p_transaction_date text,p_description text,p_payer_user_id uuid,p_split_mode text,p_split_percents smallint[],p_parts jsonb,p_goal_id uuid,p_own_minor text,p_requested_minor text,p_type text default 'expense')
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare uid uuid:=juntia_private.current_uid();saved jsonb;result jsonb;expense jsonb;g juntia_data.savings_goals;t juntia_data.transactions;
- own_amount bigint;requested_amount bigint;amount bigint;gid uuid;other_member uuid;entry_id uuid;request_id uuid;
+ own_amount bigint;requested_amount bigint;amount bigint;gid uuid;other_member uuid;entry_id uuid;request_id uuid;day date;
 begin
  if uid is null then raise exception using errcode='JT001',message='notAuthenticated';end if;
  amount:=juntia_private.parse_amount_minor(p_amount_minor);own_amount:=juntia_private.parse_amount_minor(p_own_minor);requested_amount:=juntia_private.parse_amount_minor(p_requested_minor);
@@ -83,10 +174,12 @@ begin
  if own_amount::numeric+requested_amount>amount then raise exception using errcode='JT209',message='usageExceedsExpense';end if;
  if p_context='us' then
   gid:=juntia_private.lock_active_couple();
-  expense:=juntia_private.create_shared_expense(gen_random_uuid()::text,p_amount_minor,p_category_id,p_transaction_date,p_description,p_payer_user_id,p_split_mode,p_split_percents,p_parts);
+  amount:=juntia_private.shared_fields(p_amount_minor,p_category_id,p_transaction_date,p_description);
+  expense:=juntia_private.insert_transaction('expense',amount,p_category_id,p_transaction_date::date,p_description,gid,p_payer_user_id,p_split_mode,p_split_percents,p_parts);
  else
   if requested_amount<>0 then raise exception using errcode='JT203',message='goalContextMismatch';end if;
-  expense:=juntia_private.create_transaction(gen_random_uuid()::text,'expense',p_amount_minor,p_category_id,p_transaction_date,p_description);
+  day:=juntia_private.validate_private_transaction('expense',amount,p_category_id,p_transaction_date,nullif(btrim(p_description),''));
+  expense:=juntia_private.insert_transaction('expense',amount,p_category_id,day,p_description);
  end if;
  select * into t from juntia_data.transactions where id=(expense->>'id')::uuid for update;
  if not found then raise exception using errcode='JT010',message='transactionNotFound';end if;
@@ -169,7 +262,7 @@ grant execute on function juntia_private.usage_request_write(text,text,uuid,inte
 -- Definer limitado a writer: devolver fondos exige la misma autorización del gasto.
 create function juntia_private.remove_goal_usage(p_idempotency_key text,p_transaction_id uuid,p_expected_version integer) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare t juntia_data.transactions;gid uuid;saved jsonb;result jsonb;funding jsonb;uid uuid:=juntia_private.current_uid();
+declare t juntia_data.transactions;gid uuid;saved jsonb;result jsonb;funding jsonb;uid uuid:=juntia_private.current_uid();before_value jsonb;n integer;
 begin
  saved:=juntia_private.begin_write('remove_goal_usage',p_idempotency_key,jsonb_build_object('transaction_id',p_transaction_id,'expected_version',p_expected_version));if saved is not null then return saved;end if;
  select * into t from juntia_data.transactions where id=p_transaction_id;
@@ -180,9 +273,16 @@ begin
  if t.status<>'active' then raise exception using errcode='JT012',message='transactionVoided';end if;
  if t.version is distinct from p_expected_version then raise exception using errcode='JT011',message='versionConflict';end if;
  if not juntia_private.transaction_goal_funded(t.id) and not exists(select 1 from juntia_data.goal_usage_confirmations where transaction_id=t.id and status='pending') then raise exception using errcode='JT226',message='nothingToRemove';end if;
+ before_value:=jsonb_build_object('version',t.version,'updated_by',t.updated_by,'updated_at',t.updated_at);
  funding:=juntia_private.remove_transaction_goal_funding(t.id,'remove_usage');
- result:=jsonb_build_object('transaction_id',t.id)||funding;
- insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action,"after") values(uid,'transaction',t.id,'remove_usage',result);
+ -- F66-1: solo quitar uso sube aquí la versión; las anulaciones ya la suben por su cuenta.
+ update juntia_data.transactions set version=version+1,updated_at=clock_timestamp(),updated_by=uid
+  where id=t.id returning * into t;
+ get diagnostics n=row_count;if n<>1 then raise exception using errcode='42501',message='writeDenied';end if;
+ result:=jsonb_build_object('transaction_id',t.id,'version',t.version)||funding;
+ insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action,"before","after")
+  values(uid,'transaction',t.id,'remove_usage',before_value,result||jsonb_build_object('updated_by',t.updated_by,'updated_at',t.updated_at));
+ get diagnostics n=row_count;if n<>1 then raise exception using errcode='42501',message='writeDenied';end if;
  return juntia_private.finish_write('remove_goal_usage',p_idempotency_key,result);
 end $$;
 alter function juntia_private.remove_goal_usage(text,uuid,integer) owner to juntia_writer;

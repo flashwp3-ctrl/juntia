@@ -2,7 +2,7 @@
 // F64-1: «meta vuelve sola a active en la misma transacción ... no segundo void ni auditoría».
 import {expect,it} from "vitest";
 import {randomUUID} from "node:crypto";
-import {rpc,setupCoupleFixtures} from "./support/couple";
+import {expense,rpc,setupCoupleFixtures} from "./support/couple";
 import {runnerSql} from "./support/sql";
 import {seedGoal,fundedArgs,pendingExpense,assertGoalInvariant} from "./support/planning";
 const fixtures=setupCoupleFixtures();
@@ -94,4 +94,43 @@ it("T016: las catorce escrituras recuperan respuesta perdida, detectan otra huel
   }
   await check(p.sara,"remove_goal_usage",{p_transaction_id:funded.id,p_expected_version:1},{p_expected_version:2});
   expect(seen.size).toBe(14);
+});
+
+// F66-1: quitar el uso invalida la versión que otra sesión leyó, con auditoría e idempotencia.
+it("F66-1: quitar el uso invalida una edición de la otra sesión",async()=>{
+  const p=await fixtures.couple(),g=seedGoal(p);
+  const tx=await rpc(p.sara.client,"create_expense_with_goal",fundedArgs(p,g.id,{p_requested_minor:"0"}));
+  const before=await p.sara.client.from("couple_expenses").select("version,updated_at").eq("id",tx.id).single();
+  expect(before.error).toBeNull();
+  const version=before.data!.version;
+  const args={p_idempotency_key:randomUUID(),p_transaction_id:tx.id,p_expected_version:version};
+  const result=await rpc(p.tomas.client,"remove_goal_usage",args);
+  await expect(rpc(p.sara.client,"update_shared_expense",{
+    ...expense(p,{p_amount_minor:"30000",p_transaction_date:"2026-11-03",p_parts:{[p.sara.id]:"15000",[p.tomas.id]:"15000"}}),
+    p_transaction_id:tx.id,p_expected_version:version,
+  })).rejects.toMatchObject({code:"JT011"});
+  expect(result).toMatchObject({transaction_id:tx.id,version:version+1,voided_usages:1});
+  expect(await rpc(p.tomas.client,"remove_goal_usage",args)).toEqual(result);
+  const snapshot=JSON.parse(runnerSql(`select jsonb_build_object(
+    'version',t.version,'updated_by',t.updated_by,'updated_at',t.updated_at,
+    'audit',(select jsonb_agg(jsonb_build_object('actor',a.actor_user_id,'before',a."before",'after',a."after")) from juntia_data.audit_events a where a.entity_id=t.id and a.action='remove_usage'))
+    from juntia_data.transactions t where t.id='${tx.id}'`));
+  expect(snapshot).toMatchObject({version:version+1,updated_by:p.tomas.id,audit:[{actor:p.tomas.id,before:{version},after:result}]});
+  expect(Date.parse(snapshot.updated_at)).toBeGreaterThan(Date.parse(before.data!.updated_at));
+});
+
+// F66-2: una creación financiada, incluso al reintentar o cambiar huella, registra una sola intención.
+it.each(["me","us"])("F66-2: gasto financiado %s crea exactamente un registro de idempotencia",async(context)=>{
+  const p=await fixtures.couple(),g=seedGoal(p,context==="me");
+  const args=fundedArgs(p,g.id,context==="me"?{p_context:context,p_payer_user_id:null,p_split_mode:null,p_parts:null,p_requested_minor:"0"}:{});
+  const records=()=>JSON.parse(runnerSql(`select coalesce(jsonb_object_agg(action,n),'{}'::jsonb) from (
+    select action,count(*) as n from juntia_data.idempotency_records where actor_user_id='${p.sara.id}' group by action) counts`));
+  const before=records();
+  const first=await rpc(p.sara.client,"create_expense_with_goal",args);
+  expect(first).toMatchObject({goal_id:g.id,amount_minor:"30000",version:1});
+  expect(await rpc(p.sara.client,"create_expense_with_goal",args)).toEqual(first);
+  await expect(rpc(p.sara.client,"create_expense_with_goal",{...args,p_own_minor:"10100"})).rejects.toMatchObject({code:"JT008"});
+  expect(records()).toEqual({...before,create_expense_with_goal:1});
+  expect(runnerSql(`select count(*) from juntia_data.audit_events where entity_id='${first.id}' and action='create'`)).toBe("1");
+  expect(runnerSql(`select count(*) from juntia_data.transaction_allocations where transaction_id='${first.id}'`)).toBe(context==="us"?"2":"0");
 });
