@@ -16,3 +16,12 @@ export function limitInForce(versions: readonly BudgetVersion[], month: string):
 }
 /** 004 PR B / FR-018: qué fue cada cambio del historial de un presupuesto. */
 export type BudgetChangeKind = "create" | "raise" | "lower" | "keep" | "deactivate" | "reactivate";
+/**
+ * El tipo de un cambio a partir del límite anterior del mismo presupuesto (`previous_limit_minor`, `null` al crearlo o tras
+ * desactivarlo), el nuevo (`null` = desactivado) y si es su primera versión. Comparación exacta en unidades menores.
+ */
+export function budgetChangeKind(previous: bigint | null, limit: bigint | null, first: boolean): BudgetChangeKind {
+  if (limit === null) return "deactivate";
+  if (previous === null) return first ? "create" : "reactivate";
+  return limit > previous ? "raise" : limit < previous ? "lower" : "keep";
+}

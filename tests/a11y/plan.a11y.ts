@@ -60,7 +60,7 @@ if (JOB === "e2e") test.describe("Plan y presupuestos (004, PR B)", () => {
     await page.keyboard.press("Escape");
     await expect(sheet).toBeHidden();
 
-    await page.getByRole("button", { name: copy.plan.createBudget }).click();
+    await page.getByRole("button", { name: copy.plan.createBudget, exact: true }).click();
     await expect(page.getByRole("dialog", { name: copy.plan.sheet.createTitle })).toBeVisible();
     await bothThemes(page, "hoja de crear presupuesto");
     await page.keyboard.press("Escape");
