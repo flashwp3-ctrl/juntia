@@ -50,7 +50,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await create.getByRole("button", { name: copy.plan.sheet.save }).click();
   await expect(create).toBeHidden();
   await expect(sara.page.getByRole("main").getByText(copy.plan.saved.created)).toBeAttached();
-  await expect(sara.page.getByRole("main").getByText(copy.plan.leftPercent("20.000", 92))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.leftPercent("$20.000", 92))).toBeVisible();
   await expect(sara.page.getByRole("main").getByText(copy.plan.lastChange(copy.plan.change.create("Sara", restaurants, "$260.000"), shortDate(today())), { exact: false })).toBeVisible();
   const [created] = (await budgetMonths(pair.tomas.client, "us", month())).filter((row) => row.category_id === "restaurants");
   expect(created).toMatchObject({ limit_minor: "26000000", consumed_minor: "24000000", state: "near", version: 1 });
@@ -67,7 +67,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await saraSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("300000");
   await saraSheet.getByRole("button", { name: copy.plan.sheet.saveChanges }).click();
   await expect(saraSheet).toBeHidden();
-  await expect(sara.page.getByRole("main").getByText(copy.plan.left("60.000"))).toBeVisible();
+  await expect(sara.page.getByRole("main").getByText(copy.plan.left("$60.000"))).toBeVisible();
 
   // Tomás guarda con la versión vieja: no se sobrescribe; ve quién lo cambió y el valor vigente, y revisa.
   await tomasSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("280000");
@@ -80,7 +80,7 @@ test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en No
   await tomasSheet.getByRole("textbox", { name: copy.plan.sheet.limit }).fill("320000");
   await tomasSheet.getByRole("button", { name: copy.plan.sheet.saveChanges }).click();
   await expect(tomasSheet).toBeHidden();
-  await expect(tomas.page.getByRole("main").getByText(copy.plan.left("80.000"))).toBeVisible();
+  await expect(tomas.page.getByRole("main").getByText(copy.plan.left("$80.000"))).toBeVisible();
 
   // Desactivar (US-2.5): vuelve a «sin presupuesto»; los gastos y el historial siguen; nunca un límite 0.
   await sara.page.reload();
@@ -129,23 +129,29 @@ test("spec 5 · privacidad: ni el HTML, ni el RSC, ni el prefetch de Plan en Nos
 
   // Prefetch: Sara en Yo a 1440 (su presupuesto personal se ve, como debe), cambia a Nosotros y navega a Plan.
   const { context, page } = await open(browser, baseURL!, pair.sara, "me", "me", 1440);
-  const fetched: string[] = [];
-  page.on("response", async (response) => {
-    if (response.url().includes("_rsc=") && response.request().method() === "GET") fetched.push(await response.text().catch(() => ""));
+  // Cada RSC se registra en el acto, con la promesa de su cuerpo y si llegó después del cambio a Nosotros; los cuerpos se
+  // esperan todos antes de comprobarlos (revisión del gestor del PR #67, 1).
+  let switched = false;
+  const fetched: { after: boolean; body: Promise<string> }[] = [];
+  page.on("response", (response) => {
+    if (response.url().includes("_rsc=") && response.request().method() === "GET") fetched.push({ after: switched, body: response.text().catch(() => "") });
   });
   await page.goto("/plan");
   await expect(page.getByRole("img", { name: copy.plan.bar(copy.categories.health, "0", "123.400", 0) })).toBeVisible();
   // Tomás nunca: el personal de Tomás no aparece en el Plan de Sara en Yo.
   expect(leaks(await (await page.request.get("/plan")).text()).filter((marker) => marker === "98.700" || marker === tomasOwn.budget_id)).toEqual([]);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).hover();
+  switched = true;
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("main").getByText(copy.plan.optional.us, { exact: false })).toBeVisible();
-  const afterSwitch = fetched.length;
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.plan }).click();
   await expect(page.getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
-  for (const body of fetched.slice(afterSwitch)) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
+  const bodies = await Promise.all(fetched.filter((item) => item.after).map((item) => item.body));
+  // La prueba tiene que poder fallar: tras el cambio hubo RSC de Nosotros (el refresco y la navegación a Inicio y a Plan).
+  expect(bodies.length).toBeGreaterThan(0);
+  for (const body of bodies) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
   await context.close();
 });

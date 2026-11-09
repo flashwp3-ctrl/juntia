@@ -4,6 +4,7 @@
 // Anotar aislado, `src/components/`, solo documentación, sin clasificar, base ausente) y la regla de specs que todavía no
 // existen (no se pasan; el resumen las anota)». Cumple: F64-5.
 // Si un PR real no da lo que su fixture espera, se corrige el mapa del selector o el fixture, nunca a mano en el workflow.
+import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { changedFiles, selectSpecs, SPECS, summary } from "../scripts/e2e-select.mjs";
 
@@ -69,5 +70,14 @@ describe("selector de specs E2E por área (contracts/ci.md, F64-5)", () => {
 
   it("las rutas de Windows se normalizan antes de clasificar", () => {
     expect(select(["src\\features\\plan\\plan-screen.tsx"], afterC).specs).toEqual([1, 2, 3, 5]);
+  });
+
+  // Revisión del gestor del PR #67 (5): una spec que no esté en el mapa no correría nunca, en silencio. Cada archivo
+  // tests/e2e/*.e2e.ts del repositorio tiene que estar en SPECS (y SPECS no nombra rutas fuera de tests/e2e).
+  it("SPECS cubre todas las specs E2E del repositorio", () => {
+    const onDisk = readdirSync("tests/e2e").filter((name) => name.endsWith(".e2e.ts")).map((name) => `tests/e2e/${name}`);
+    const mapped = Object.values(files);
+    expect(onDisk.filter((path) => !mapped.includes(path))).toEqual([]);
+    expect(mapped.every((path) => path.startsWith("tests/e2e/") && path.endsWith(".e2e.ts"))).toBe(true);
   });
 });

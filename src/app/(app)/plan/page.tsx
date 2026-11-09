@@ -24,14 +24,16 @@ const actions: PlanActions = { create: createBudgetAction, update: updateBudgetA
 
 async function meView(now: string) {
   const account = await loadAccount();
-  const data = account ? await loadPlan("me", now, new Map([[account.userId, account.profile.displayName]])) : { ok: false as const };
+  const data = account ? await loadPlan("me", now, new Map([[account.userId, account.profile.displayName]]), account.userId) : { ok: false as const };
   return data.ok ? <PlanScreen data={data.value} actions={actions} /> : <LoadError />;
 }
 
 async function usView(now: string) {
   const members = await activeCouple();
   if (!members) return <UsUnavailable />;
-  const data = await loadPlan("us", now, new Map(members.map((member) => [member.userId, member.name])));
+  const me = members.find((member) => member.isMe);
+  if (!me) return <LoadError />;
+  const data = await loadPlan("us", now, new Map(members.map((member) => [member.userId, member.name])), me.userId);
   return data.ok ? <PlanScreen data={data.value} actions={actions} /> : <LoadError />;
 }
 

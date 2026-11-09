@@ -215,11 +215,16 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     write.reset();
   };
 
-  // Lo que el servidor devolvió tras el rechazo; mientras no llegue, no se inventa quién ni cuánto.
+  // Lo que el servidor devolvió tras el rechazo; mientras no llegue, no se inventa quién ni cuánto. Un presupuesto que el
+  // otro creó y ya desactivó también cuenta: se dice que ahora no tiene presupuesto (revisión del gestor del PR #67, 2).
   const fresh = conflict?.kind === "version"
     ? rows.find((item) => item.budgetId === conflict.budgetId && item.version !== null && item.version !== conflict.expected) ?? null
-    : conflict?.kind === "exists" ? rows.find((item) => item.categoryId === conflict.categoryId && item.budgetId && item.limitMinor !== null) ?? null : null;
-  const freshBy = fresh ? (conflict?.kind === "exists" ? fresh.history.at(-1)?.byName : fresh.history[0]?.byName) ?? "" : "";
+    : conflict?.kind === "exists" ? rows.find((item) => item.categoryId === conflict.categoryId && item.budgetId) ?? null : null;
+  const author = fresh ? (conflict?.kind === "exists" ? fresh.history.at(-1) : fresh.history[0]) : undefined;
+  // Si el cambio que ganó es de quien mira (otra pestaña u otro dispositivo), se dice en primera persona (PR #67, 3).
+  const conflictTitle = !conflict ? "" : author?.byMe
+    ? (conflict.kind === "version" ? copy.plan.errors.versionConflictMe : copy.plan.errors.alreadyExistsMe)
+    : conflict.kind === "version" ? copy.plan.errors.versionConflict(author?.byName ?? "") : copy.plan.errors.alreadyExists(author?.byName ?? "");
 
   const requestClose = (next: boolean) => {
     if (next || write.state.phase === "pending") return;
@@ -273,7 +278,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
               <span className="flex items-start gap-2.5">
                 <AppIcon name="warning" weight="bold" size={18} className="mt-px shrink-0 text-warning" />
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-semibold">{conflict.kind === "version" ? copy.plan.errors.versionConflict(freshBy) : copy.plan.errors.alreadyExists(freshBy)}</span>
+                  <span className="font-semibold">{conflictTitle}</span>
                   <span>{conflict.attempted === null ? copy.plan.sheet.notSavedOff : copy.plan.sheet.notSaved(formatMoney({ amountMinor: BigInt(conflict.attempted) * 100n, currency: "COP" }))}</span>
                   <span>{fresh.limitMinor === null ? copy.plan.sheet.currentOff : copy.plan.sheet.current(money(fresh.limitMinor))}</span>
                 </span>
@@ -281,10 +286,14 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
               <Button variant="secondary" icon="arrow-clockwise" className="self-start" onClick={() => review(fresh)}>{copy.plan.sheet.review}</Button>
             </>
           ) : (
-            <span aria-busy="true" className="flex items-center gap-2.5">
-              <AppIcon name="circle-notch" weight="bold" size={18} className="shrink-0 motion-safe:animate-spin" />
-              {copy.plan.sheet.checkingLatest}
-            </span>
+            <>
+              <span aria-busy="true" className="flex items-center gap-2.5">
+                <AppIcon name="circle-notch" weight="bold" size={18} className="shrink-0 motion-safe:animate-spin" />
+                {copy.plan.sheet.checkingLatest}
+              </span>
+              {/* Si el refresco no trae nada (falló la red o la respuesta), siempre hay salida: pedir lo vigente otra vez. */}
+              <Button variant="secondary" icon="arrow-clockwise" className="self-start" onClick={() => router.refresh()}>{copy.plan.sheet.reload}</Button>
+            </>
           )}
         </div>
       ) : null}

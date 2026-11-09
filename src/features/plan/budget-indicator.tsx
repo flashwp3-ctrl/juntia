@@ -57,8 +57,8 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
   const percent = displayedPercent(consumed, limit)!;
   const width = consumed >= limit ? 100 : Number((consumed * 10000n) / limit) / 100;
   const status = state === "over"
-    ? copy.plan.over[context](pesos(money(consumed - limit)), percent)
-    : state === "near" || consumed === 0n ? copy.plan.leftPercent(pesos(money(limit - consumed)), percent) : copy.plan.left(pesos(money(limit - consumed)));
+    ? copy.plan.over[context](formatMoney(money(consumed - limit)), percent)
+    : state === "near" || consumed === 0n ? copy.plan.leftPercent(formatMoney(money(limit - consumed)), percent) : copy.plan.left(formatMoney(money(limit - consumed)));
   const tone = state === "over" ? "text-[var(--comp-danger-text-fg)]" : state === "near" ? "text-warning" : "text-ink-secondary";
   const statusId = `budget-${row.categoryId}-status`;
   // La fila entera abre la hoja con un botón que la cubre (sin anidar la barra dentro del botón, que la volvería

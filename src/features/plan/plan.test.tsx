@@ -85,7 +85,9 @@ describe("BudgetIndicator (COMPONENT_SPECIFICATIONS; FR-017, FR-113)", () => {
     const { container } = indicator({});
     expect(screen.getByText("640.000")).toBeTruthy();
     expect(screen.getByText(copy.plan.of("900.000"))).toBeTruthy();
-    expect(screen.getByText(copy.plan.left("260.000"))).toBeTruthy();
+    expect(screen.getByText(copy.plan.left("$260.000"))).toBeTruthy();
+    // Glosario (Restante): «Quedan $X», con el signo; el texto literal, no solo la clave (revisión del gestor del PR #67, 4).
+    expect(screen.getByText("Quedan $260.000")).toBeTruthy();
     expect(screen.getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeTruthy();
     expect(icon(container, "warning") + icon(container, "warning-circle")).toBe(0);
     expect(container.querySelector("[data-budget-state]")?.getAttribute("data-budget-state")).toBe("within");
@@ -93,7 +95,7 @@ describe("BudgetIndicator (COMPONENT_SPECIFICATIONS; FR-017, FR-113)", () => {
 
   it("cerca (≥ 85 %): texto con `warning`, CERCA DEL LÍMITE y el porcentaje truncado", () => {
     const { container } = indicator({ categoryId: "restaurants", limitMinor: minor(260000n), consumedMinor: minor(240000n) });
-    expect(screen.getByText(copy.plan.leftPercent("20.000", 92))).toBeTruthy();
+    expect(screen.getByText(copy.plan.leftPercent("$20.000", 92))).toBeTruthy();
     expect(screen.getByText(copy.primitives.nearLimit)).toBeTruthy();
     expect(icon(container, "warning")).toBeGreaterThan(0);
     expect(container.querySelector("[data-budget-state]")?.getAttribute("data-budget-state")).toBe("near");
@@ -101,26 +103,27 @@ describe("BudgetIndicator (COMPONENT_SPECIFICATIONS; FR-017, FR-113)", () => {
 
   it("excedido: barra rayada, `warning-circle`, EXCEDIDO y «Se pasaron por 20.000», nunca solo color", () => {
     const { container } = indicator({ categoryId: "services", limitMinor: minor(340000n), consumedMinor: minor(360000n) });
-    expect(screen.getByText(copy.plan.over.us("20.000", 105))).toBeTruthy();
+    expect(screen.getByText(copy.plan.over.us("$20.000", 105))).toBeTruthy();
     expect(screen.getByText(copy.primitives.exceeded)).toBeTruthy();
+    expect(screen.getByText("Se pasaron por $20.000 · 105 %")).toBeTruthy();
     expect(icon(container, "warning-circle")).toBeGreaterThan(0);
     expect(container.querySelector("[data-budget-bar]")?.getAttribute("data-striped")).toBe("true");
   });
 
   it("US-04: 1.000.000 con un gasto de 1.180.000 → 118 % y «Se pasaron por 180.000»; en Yo, «Te pasaste por»", () => {
     indicator({ categoryId: "restaurants", limitMinor: minor(1000000n), consumedMinor: minor(1180000n) });
-    expect(screen.getByText(copy.plan.over.us("180.000", 118))).toBeTruthy();
+    expect(screen.getByText(copy.plan.over.us("$180.000", 118))).toBeTruthy();
     expect(screen.getByRole("img", { name: copy.plan.bar(copy.categories.restaurants, "1.180.000", "1.000.000", 118) })).toBeTruthy();
   });
 
   it("en Yo el excedido se dice en segunda persona", () => {
     indicator({ categoryId: "services", limitMinor: minor(340000n), consumedMinor: minor(360000n) }, "me");
-    expect(screen.getByText(copy.plan.over.me("20.000", 105))).toBeTruthy();
+    expect(screen.getByText(copy.plan.over.me("$20.000", 105))).toBeTruthy();
   });
 
   it("presupuesto activo con consumo 0: «Quedan 900.000 · 0 %» con su barra (distinto de sin presupuesto)", () => {
     const { container } = indicator({ consumedMinor: "0" });
-    expect(screen.getByText(copy.plan.leftPercent("900.000", 0))).toBeTruthy();
+    expect(screen.getByText(copy.plan.leftPercent("$900.000", 0))).toBeTruthy();
     expect(screen.getByRole("img", { name: copy.plan.bar(copy.categories.market, "0", "900.000", 0) })).toBeTruthy();
     expect(container.querySelector("[data-budget-bar]")).toBeTruthy();
   });
@@ -273,6 +276,9 @@ describe("Hoja de presupuesto (FR-011, FR-018, FR-093; US-2 escenarios 2, 6 y 7)
   it("FR-094: ninguna intención de escritura en el almacenamiento del navegador", async () => {
     const user = userEvent.setup();
     const local = vi.spyOn(Storage.prototype, "setItem");
+    // jsdom no trae IndexedDB: se pone uno espía, para que abrirla también haga fallar la prueba (revisión del PR #67, 6).
+    const idb = { open: vi.fn() };
+    vi.stubGlobal("indexedDB", idb);
     const writes = actions({ update: vi.fn(async () => ({ status: "unknown" as const })) });
     open({ actions: writes });
     const sheet = dialog(copy.plan.sheet.editTitle);
@@ -281,6 +287,61 @@ describe("Hoja de presupuesto (FR-011, FR-018, FR-093; US-2 escenarios 2, 6 y 7)
     await user.type(limit, "950000");
     await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.saveChanges }));
     expect(local).not.toHaveBeenCalled();
+    expect(idb.open).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  // Revisión del gestor del PR #67 (2): el aviso de conflicto nunca se queda girando sin salida.
+  it("conflicto con un presupuesto que el otro creó y ya desactivó: dice que ahora no tiene presupuesto y deja revisarlo", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ create: vi.fn(async () => ({ status: "rejected" as const, error: "budgetExists" as const })) });
+    const { view, all } = open({ row: null, actions: writes });
+    const sheet = dialog(copy.plan.sheet.createTitle);
+    await user.click(within(sheet).getByRole("radio", { name: copy.categories.home }));
+    await user.type(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }), "1500000");
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.save }));
+    const homeId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const history: BudgetChange[] = [
+      { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", budgetId: homeId, kind: "deactivate", limitMinor: null, previousLimitMinor: minor(1700000n), byName: "Tomás", changedAt: "2026-10-24T16:00:00.000Z", date: "2026-10-24" },
+      { id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", budgetId: homeId, kind: "create", limitMinor: minor(1700000n), previousLimitMinor: null, byName: "Tomás", changedAt: "2026-10-24T15:00:00.000Z", date: "2026-10-24" },
+    ];
+    const home: PlanRow = { ...goldenRows[3], budgetId: homeId, version: 2, limitMinor: null, history };
+    view.rerender(<BudgetSheet {...all} rows={[...goldenRows.slice(0, 3), home]} />);
+    expect(within(sheet).queryByText(copy.plan.sheet.checkingLatest)).toBeNull();
+    expect(within(sheet).getByText(copy.plan.errors.alreadyExists("Tomás"))).toBeTruthy();
+    expect(within(sheet).getByText(copy.plan.sheet.currentOff)).toBeTruthy();
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.review }));
+    expect(screen.getByRole("dialog", { name: copy.plan.sheet.editTitle })).toBeTruthy();
+  });
+
+  it("si el refresco no trae la versión nueva, «Volver a cargar» lo pide otra vez", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ update: vi.fn(async () => ({ status: "rejected" as const, error: "versionConflict" as const })) });
+    open({ actions: writes });
+    const sheet = dialog(copy.plan.sheet.editTitle);
+    await user.clear(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }));
+    await user.type(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }), "850000");
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.saveChanges }));
+    expect(within(sheet).getByText(copy.plan.sheet.checkingLatest)).toBeTruthy();
+    expect(router.refresh).toHaveBeenCalledTimes(1);
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.reload }));
+    expect(router.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  // Revisión del gestor del PR #67 (3): si el cambio que ganó es de quien mira (otra pestaña), primera persona.
+  it("conflicto con un cambio propio desde otro lugar: «Cambiaste este presupuesto en otro lugar.», nunca su propio nombre", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ update: vi.fn(async () => ({ status: "rejected" as const, error: "versionConflict" as const })) });
+    const { view, all } = open({ actions: writes });
+    const sheet = dialog(copy.plan.sheet.editTitle);
+    await user.clear(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }));
+    await user.type(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }), "850000");
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.saveChanges }));
+    const mine: BudgetChange = { id: "ffffffff-ffff-4fff-8fff-ffffffffffff", budgetId: MARKET, kind: "raise", limitMinor: minor(950000n), previousLimitMinor: minor(900000n), byName: "Sara", byMe: true, changedAt: "2026-10-24T15:00:00.000Z", date: "2026-10-24" };
+    const fresh: PlanRow = { ...market, version: 3, limitMinor: minor(950000n), history: [mine, ...market.history] };
+    view.rerender(<BudgetSheet {...all} row={fresh} rows={[fresh, ...goldenRows.slice(1)]} />);
+    expect(within(sheet).getByText(copy.plan.errors.versionConflictMe)).toBeTruthy();
+    expect(within(sheet).queryByText(copy.plan.errors.versionConflict("Sara"))).toBeNull();
   });
 });
 
@@ -304,9 +365,9 @@ describe("Plan (FR-020; US-1, US-2 escenarios 4 y 6)", () => {
     const { container } = render(<PlanScreen data={usData} actions={actions()} />);
     expect(screen.getByText(copy.plan.summary.us("$2.840.000"))).toBeTruthy();
     expect(container.querySelectorAll("[data-budget-bar]")).toHaveLength(3);
-    expect(screen.getByText(copy.plan.left("260.000"))).toBeTruthy();
-    expect(screen.getByText(copy.plan.leftPercent("20.000", 92))).toBeTruthy();
-    expect(screen.getByText(copy.plan.over.us("20.000", 105))).toBeTruthy();
+    expect(screen.getByText(copy.plan.left("$260.000"))).toBeTruthy();
+    expect(screen.getByText(copy.plan.leftPercent("$20.000", 92))).toBeTruthy();
+    expect(screen.getByText(copy.plan.over.us("$20.000", 105))).toBeTruthy();
     expect(screen.getByText(copy.plan.noBudget("$1.600.000"))).toBeTruthy();
     expect(screen.getByText(copy.plan.optional.us, { exact: false })).toBeTruthy();
     expect(screen.getByText(copy.plan.daysLeft(7, "octubre"), { exact: false })).toBeTruthy();

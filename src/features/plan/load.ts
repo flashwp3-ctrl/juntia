@@ -20,7 +20,7 @@ type Loaded<T> = { ok: true; value: T } | { ok: false };
 const bogotaDay = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" });
 
 /** El historial de un presupuesto, del más nuevo al más antiguo, con el tipo de cada cambio y el nombre de quien lo hizo. */
-function changesOf(rows: readonly BudgetHistoryTransport[], names: ReadonlyMap<string, string>): BudgetChange[] {
+function changesOf(rows: readonly BudgetHistoryTransport[], names: ReadonlyMap<string, string>, viewerId: string): BudgetChange[] {
   return rows.map((row, index) => ({
     id: row.id,
     budgetId: row.budget_id,
@@ -28,6 +28,7 @@ function changesOf(rows: readonly BudgetHistoryTransport[], names: ReadonlyMap<s
     limitMinor: row.limit_minor,
     previousLimitMinor: row.previous_limit_minor,
     byName: names.get(row.changed_by) ?? "",
+    byMe: row.changed_by === viewerId,
     changedAt: row.changed_at,
     date: bogotaDay.format(new Date(row.changed_at)),
   }));
@@ -35,9 +36,9 @@ function changesOf(rows: readonly BudgetHistoryTransport[], names: ReadonlyMap<s
 
 /**
  * Plan del mes en curso en `context`. `names`: quién puede aparecer como autor de un cambio (en Nosotros, los dos integrantes
- * activos que el servidor ya comprobó; en Yo, la propia persona).
+ * activos que el servidor ya comprobó; en Yo, la propia persona). `viewerId`: quien mira.
  */
-export async function loadPlan(context: PlanContext, today: string, names: ReadonlyMap<string, string>): Promise<Loaded<PlanData>> {
+export async function loadPlan(context: PlanContext, today: string, names: ReadonlyMap<string, string>, viewerId: string): Promise<Loaded<PlanData>> {
   try {
     const client = await createClient();
     const month = today.slice(0, 7);
@@ -52,7 +53,7 @@ export async function loadPlan(context: PlanContext, today: string, names: Reado
         version: row.version,
         limitMinor: row.limit_minor,
         consumedMinor: row.consumed_minor,
-        history: row.budget_id ? changesOf(history.filter((item) => item.budget_id === row.budget_id), names) : [],
+        history: row.budget_id ? changesOf(history.filter((item) => item.budget_id === row.budget_id), names, viewerId) : [],
       }));
     return { ok: true, value: { context, month, today, spentMinor: metrics[0]?.gasto_consumo ?? null, rows } };
   } catch (error) {

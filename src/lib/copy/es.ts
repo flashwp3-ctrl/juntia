@@ -23,7 +23,9 @@ export const copy = {
     nothingToRemove:"Este gasto no tiene uso de meta ni solicitud que quitar.",
     versionConflict:"La solicitud cambió. Revisa su estado.",
   }},
-  plan: {errors:{notFound:"Este presupuesto no está disponible.",alreadyExists:(name:string)=>`${name} ya creó este presupuesto.`,versionConflict:(name:string)=>`${name} cambió este presupuesto.`},form:{errors:{limit:"Elige una categoría de gasto y un límite entre $1 y $999.999.999."}},
+  plan: {errors:{notFound:"Este presupuesto no está disponible.",alreadyExists:(name:string)=>`${name} ya creó este presupuesto.`,versionConflict:(name:string)=>`${name} cambió este presupuesto.`,
+    // Revisión del gestor del PR #67 (3): cuando el último cambio es de quien mira (otra pestaña u otro dispositivo).
+    versionConflictMe:"Cambiaste este presupuesto en otro lugar.",alreadyExistsMe:"Ya creaste este presupuesto en otro lugar."},form:{errors:{limit:"Elige una categoría de gasto y un límite entre $1 y $999.999.999."}},
     // 004 PR B (T033, T034; FR-017, FR-018, FR-020, FR-100; 04·2 Plan). Copy nuevo para revisión de los fundadores en el PR.
     // DEC-R01 y DEC-R17: nunca «Presupuesto $0», «te alcanza» ni «puedes pagarlo»; el estado nunca solo con color.
     optional: { us: "Los presupuestos son opcionales: pónganlos solo donde les sirvan.", me: "Los presupuestos son opcionales: ponlos solo donde te sirvan." },
@@ -68,10 +70,11 @@ export const copy = {
       rule: (month: string) => `Rige desde ${month} y cada mes siguiente, hasta que se cambie o se desactive. Los meses anteriores conservan su límite.`,
       thisMonth: (amount: string, month: string) => `En ${month} van ${amount}.`,
       save: "Guardar presupuesto", saveChanges: "Guardar cambios", saving: "Guardando…",
-      deactivate: "Desactivar presupuesto", deactivating: "Desactivando…",
+      deactivate: "Desactivar presupuesto",
       deactivateNote: "Los gastos y el historial se conservan. Los meses anteriores mantienen su límite.",
       rejected: "No se guardó el presupuesto.",
       checkingLatest: "Revisando el valor vigente…",
+      reload: "Volver a cargar",
       closeUnconfirmed: "No pudimos confirmar si se guardó. Revisa Plan antes de volver a intentarlo.",
       current: (amount: string) => `Ahora el límite es ${amount}.`,
       currentOff: "Ahora no tiene presupuesto.",

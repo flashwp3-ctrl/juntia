@@ -15,6 +15,8 @@ export type BudgetChange = {
   limitMinor: string | null;
   previousLimitMinor: string | null;
   byName: string;
+  /** Lo hizo quien mira (en Yo, siempre): la interfaz lo dice en primera persona. */
+  byMe?: boolean;
   /** Instante del cambio (ISO), para ordenar. */
   changedAt: string;
   /** Día del cambio en Bogotá (`AAAA-MM-DD`). */

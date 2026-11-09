@@ -505,3 +505,24 @@ Impeccable: detector `impeccable detect --json src/features/plan` → **0 hallaz
 - `copy.us.activeDescription` («Las metas y el plan de los dos llegan en una próxima versión…») ya no lo usa Plan; lo sigue
   usando Metas hasta el PR C, que lo puede ajustar.
 - T039 (barrido en CI), T040 (CLS de Plan con el `loading.tsx` nuevo) y T041 siguen pendientes, humanas.
+
+## Revisión del gestor del PR #67 (antes de ChatGPT)
+
+Un solo commit y un solo push. Sin `e2e:dev` completo en esta ronda (lo indicó el gestor); solo las pruebas afectadas, con
+el lock.
+
+| # | Hallazgo | Qué se hizo | Prueba |
+| --- | --- | --- | --- |
+| 1 | La prueba de prefetch podía pasar sin comprobar nada | Cada RSC se registra en el acto (`{ after, body: Promise }`), se esperan todos con `Promise.all` y se exige al menos uno posterior al cambio de contexto | Spec 5 2/2 |
+| 2 | «Revisando el valor vigente…» sin salida | El caso JT219 acepta un presupuesto ya desactivado («Ahora no tiene presupuesto.» y «Revisar»); mientras no llega lo vigente, «Volver a cargar» pide la página otra vez | Dos tests de componente |
+| 3 | El conflicto podía nombrar a quien mira | `BudgetChange.byMe` (el servidor compara con quien mira); «Cambiaste este presupuesto en otro lugar.» y «Ya creaste este presupuesto en otro lugar.» | Un test de componente |
+| 4 | Moneda inconsistente | «Quedan $X», «Se pasaron por $X» y «Te pasaste por $X» con `formatMoney` (glosario, Restante). El nombre accesible de la barra sigue sin `$`: es el patrón de la 003 para `role="img"` («Tomás pagó 910.100; le corresponden 1.340.000; debe 429.900»). La línea «640.000 de 900.000» sigue como el comp 04·2 | Tests con el texto literal |
+| 5 | Una spec fuera del mapa no correría | `tests/e2e-select.test.ts` exige que `SPECS` cubra cada `tests/e2e/*.e2e.ts` | Selector 19/19 |
+| 6 | Menores | Fuera `copy.plan.sheet.deactivating`; la prueba de almacenamiento falla también con `indexedDB.open`; en `analyzeAtRest`, la comprobación del título y `axe.run` van en el mismo `page.evaluate` (si el título falta, se espera dentro de la página) | Componentes; M3b 4/4 |
+
+Salidas:
+
+- Componentes de Plan y selector: **43/43**.
+- `e2e:dev` dirigido (`budgets.e2e.ts`, `plan.a11y.ts`, `routes.a11y.ts` y `couple-shared.a11y.ts` con `--grep "spec 5|Plan ·|Nosotros · axe|M3b"`): spec 5 **2/2** (17,6 s y 14,6 s), Plan **1/1**, las cuatro rutas de Plan y M3b **4/4**; `couple-shared` **0/2** por el límite de 30 s del test (fallan dentro de la **primera** pasada de axe, no en la de `document-title`). Ese build tardó 29,37 s frente a 10 s, con la máquina cargada.
+- `couple-shared` solo, repetido: **2/2**, 28,7 s y 25,2 s. Es el rango que ya tenía en el PR A (23,5–29,5 s). **Riesgo para el gate:** ese test de la 003 va muy cerca de su límite de 30 s cuando el equipo está ocupado. No se toca en este PR.
+- `npm run verify`: la primera corrida falló por un test ajeno, `profile-form.test.tsx` › P2, que superó 5 s con la máquina cargada (componentes 67 s). La repetición pasó: **exit 0, 85,97 s**, dominio 84, componentes **739 pasan / 2 omisiones previstas**. `git diff --check` pasa.
