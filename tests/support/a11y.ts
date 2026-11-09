@@ -111,8 +111,11 @@ export async function signedContext(browser: Browser, baseURL: string, user: See
 export async function analyzeAtRest(page: Page) {
   const rest = await new AxeBuilder({ page }).disableRules(["document-title"]).analyze();
   await expect(page).toHaveTitle(/\S/);
-  const title = await new AxeBuilder({ page }).withRules(["document-title"]).analyze();
-  return { ...rest, violations: [...rest.violations, ...title.violations] };
+  // La segunda pasada usa el axe que la primera ya inyectó en la página: sin volver a inyectarlo, cuesta milisegundos (los
+  // archivos con muchos estados, como couple-shared.a11y.ts, van cerca de su límite de 30 s).
+  const title = await page.evaluate(() => (window as unknown as { axe: { run: (context: Document, options: object) => Promise<{ violations: unknown[] }> } })
+    .axe.run(document, { runOnly: { type: "rule", values: ["document-title"] } }));
+  return { ...rest, violations: [...rest.violations, ...(title.violations as typeof rest.violations)] };
 }
 
 export async function axe(page: Page, label: string) {
