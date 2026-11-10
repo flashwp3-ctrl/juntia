@@ -109,6 +109,12 @@ const openSheet = async (user: ReturnType<typeof userEvent.setup>) => {
   return screen.findByRole("dialog", { name: copy.annotate.title.expense });
 };
 const paidWith = () => screen.getByRole("radiogroup", { name: copy.goalExpense.paidWith.label });
+/** La ficha «Cómo se pagó» de la fila de «Hoy · Solo tú»; abre la subhoja con el selector. */
+const paidChip = () => screen.queryByRole("button", { name: new RegExp(`^${copy.goalExpense.paidWith.label}:`) });
+async function openPaidWith(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(paidChip()!);
+  return paidWith();
+}
 const isDisabled = (element: HTMLElement) => element.getAttribute("aria-disabled") === "true" || element.matches(":disabled");
 async function fillExpense(user: ReturnType<typeof userEvent.setup>, pesos: string, category: string = copy.categories.transport) {
   await user.type(screen.getByRole("textbox", { name: copy.annotate.amount }), pesos);
@@ -116,7 +122,7 @@ async function fillExpense(user: ReturnType<typeof userEvent.setup>, pesos: stri
 }
 /** Elige «Con una meta» y abre B1; devuelve la subhoja de la meta. */
 async function chooseGoal(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(within(paidWith()).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
+  await user.click(within(await openPaidWith(user)).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
   const picker = await screen.findByRole("radiogroup", { name: copy.goalExpense.picker.title });
   await user.click(within(picker).getByRole("radio", { name: new RegExp(`^${name}`) }));
   return picker;
@@ -131,7 +137,7 @@ describe("«Cómo se pagó» en Anotar (FR-050; Q16)", () => {
   it("«Dinero del mes» es el valor inicial y la ruta mínima no cambia: monto, categoría y Guardar, sin pedir metas", async () => {
     const { user, actions, sharedWrites, funding } = setup({ context: "me" });
     await openSheet(user);
-    expect((within(paidWith()).getByRole("radio", { name: copy.goalExpense.paidWith.month })).getAttribute("aria-checked")).toBe("true");
+    expect(paidChip()?.getAttribute("aria-label")).toBe(`${copy.goalExpense.paidWith.label}: ${copy.goalExpense.paidWith.month}`);
     await fillExpense(user, "45000", copy.categories.market);
     await user.click(screen.getByRole("button", { name: /^Guardar/ }));
     await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
@@ -144,7 +150,7 @@ describe("«Cómo se pagó» en Anotar (FR-050; Q16)", () => {
     const { user } = setup({ context: "me" });
     await openSheet(user);
     await user.click(screen.getByRole("radio", { name: copy.annotate.income }));
-    expect(screen.queryByRole("radiogroup", { name: copy.goalExpense.paidWith.label })).toBeNull();
+    expect(paidChip()).toBeNull();
   });
 });
 
@@ -153,7 +159,7 @@ describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a
     const { user, funding } = setup({ context: "us" });
     await openSheet(user);
     await fillExpense(user, "3000000");
-    await user.click(within(paidWith()).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
+    await user.click(within(await openPaidWith(user)).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
     const picker = await screen.findByRole("radiogroup", { name: copy.goalExpense.picker.title });
     expect(funding.loadGoals).toHaveBeenCalledTimes(1);
     expect(funding.loadGoals).toHaveBeenCalledWith({ context: "us" });
@@ -170,7 +176,7 @@ describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a
     expect(funding.loadGoals).toHaveBeenLastCalledWith({ context: "me" });
     await user.click(screen.getByRole("button", { name: copy.goalExpense.back }));
     await user.click(screen.getByRole("radio", { name: copy.context.us }));
-    await user.click(within(paidWith()).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
+    await user.click(within(await openPaidWith(user)).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
     const picker = await screen.findByRole("radiogroup", { name: copy.goalExpense.picker.title });
     expect(funding.loadGoals).toHaveBeenLastCalledWith({ context: "us" });
     expect(within(picker).queryByRole("radio", { name: /Bicicleta/ })).toBeNull();
@@ -181,7 +187,7 @@ describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a
     const funding = goalFunding({ loadGoals: vi.fn<GoalFundingActions["loadGoals"]>().mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({ ok: true, goals: [japan] }) });
     const { user } = setup({ funding });
     await openSheet(user);
-    await user.click(within(paidWith()).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
+    await user.click(within(await openPaidWith(user)).getByRole("radio", { name: copy.goalExpense.paidWith.goal }));
     expect(await screen.findByText(copy.goalExpense.picker.failed)).toBeTruthy();
     expect(screen.queryByText(copy.goalExpense.picker.empty.us)).toBeNull();
     await user.click(screen.getByRole("button", { name: copy.goalExpense.picker.retry }));

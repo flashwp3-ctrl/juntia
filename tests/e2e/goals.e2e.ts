@@ -256,6 +256,7 @@ async function openAnnotate(page: Page) {
 }
 /** «Con una meta» y la lista de B1, en el contexto que tenga la hoja. */
 async function goalPicker(sheet: Locator) {
+  await sheet.getByRole("button", { name: new RegExp(`^${copy.goalExpense.paidWith.label}:`) }).click();
   await sheet.getByRole("radiogroup", { name: copy.goalExpense.paidWith.label }).getByRole("radio", { name: copy.goalExpense.paidWith.goal }).click();
   const picker = sheet.getByRole("radiogroup", { name: copy.goalExpense.picker.title });
   await expect(picker.getByRole("radio").first()).toBeVisible();

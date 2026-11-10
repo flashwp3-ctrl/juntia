@@ -28,6 +28,8 @@
 // B3 (el efecto «ahora» y «si aprueba»). Cambiar el contexto de la hoja olvida la meta elegida. Guardar registra el gasto, el
 // uso propio y la solicitud en una sola escritura (create_expense_with_goal) con los tres resultados de la máquina común;
 // «NO SE REGISTRÓ» solo con un rechazo confirmado. No se ofrece al editar ni en un ingreso (Q16: una meta, elegida al anotar).
+// Forma compacta (UX 2: la hoja de 390 px abre ajustada al contenido y deja ver el saludo): «Cómo se pagó» es una ficha en la
+// fila de «Hoy · Solo tú», con el valor elegido, que abre la subhoja; ahí está el selector «Dinero del mes · Con una meta».
 import { useCallback, useId, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -369,7 +371,6 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     if (next === "month") { forgetGoal(); return; }
     setPaidWith("goal");
     if (!picker || picker.kind === "failed") void loadGoals(sheetContext);
-    openGoal();
   };
   const closeGoal = () => {
     setView("main");
@@ -583,7 +584,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
 
   // B1–B3 en la subhoja de la meta: la lista, FundingLedger y el efecto, con la × y «Volver al gasto».
   const fundingNow = fundingStatus?.kind === "ok" ? fundingStatus : null;
-  const goalView = withGoal ? (
+  const goalView = offerGoal ? (
     <div className="flex flex-col gap-3.5">
       <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
         <button ref={backRef} type="button" onClick={closeGoal} aria-label={copy.goalExpense.back} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
@@ -591,12 +592,21 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
         </button>
         <div className="flex min-w-0 flex-col items-center text-center">
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.goalExpense.paidWith.goal}</h2>
+          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.goalExpense.paidWith.label}</h2>
           {amount && amount > 0 ? <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.goalExpense.subtitle(formatMoney(moneyFromPesos(BigInt(amount))))}</p> : null}
         </div>
         {closeButton}
       </div>
-      <GoalPicker state={picker ?? { kind: "loading" }} context={sheetContext} value={goalId} onSelect={selectGoal} onRetry={() => void loadGoals(sheetContext)} disabled={isSaving || isLocked} />
+      <Segmented<PaidWith>
+        role="radiogroup"
+        label={copy.goalExpense.paidWith.label}
+        stretch
+        value={paidWith}
+        onValueChange={choosePaidWith}
+        disabled={isSaving || isLocked}
+        options={[{ value: "month", label: copy.goalExpense.paidWith.month }, { value: "goal", label: copy.goalExpense.paidWith.goal }]}
+      />
+      {withGoal ? <GoalPicker state={picker ?? { kind: "loading" }} context={sheetContext} value={goalId} onSelect={selectGoal} onRetry={() => void loadGoals(sheetContext)} disabled={isSaving || isLocked} /> : null}
       {goal && fundingStatus ? (
         <>
           <FundingLedger contributors={contributors} usagePesos={usage} onUsage={changeUsage} funds={funds} onFund={changeFund} status={fundingStatus}
@@ -689,49 +699,28 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
             <div className="flex flex-wrap items-center gap-2">
               <DateChip value={date} today={today} invalid={dateInvalid} errorId={dateErrorId} onChange={(next) => update({ date: next })} />
               {contextControl}
+              {/* 004 PR D (FR-050): «Cómo se pagó», con «Dinero del mes» como valor inicial; abre la subhoja de B1–B3. */}
+              {offerGoal ? (
+                <button
+                  type="button"
+                  ref={goalSummaryRef}
+                  data-goal-summary=""
+                  onClick={openGoal}
+                  aria-label={`${copy.goalExpense.paidWith.label}: ${withGoal ? (goal && usage ? copy.goalExpense.summary.line(goal.name, cop(BigInt(usage) * 100n)) : copy.goalExpense.summary.choose) : copy.goalExpense.paidWith.month}`}
+                  className={`${chip} max-w-full min-w-0 hover:bg-raised disabled:cursor-not-allowed ${withGoal && fundingStatus && fundingStatus.kind !== "ok" && fundingStatus.kind !== "noUsage" ? "shadow-[inset_0_0_0_1.5px_var(--color-status-danger)]" : ""}`}
+                >
+                  <AppIcon name="piggy-bank" size={17} className={withGoal ? "shrink-0 text-saving" : "shrink-0 text-ink-secondary"} />
+                  <span className="truncate">{withGoal ? (goal?.name ?? copy.goalExpense.paidWith.goal) : copy.goalExpense.paidWith.month}</span>
+                </button>
+              ) : null}
             </div>
             {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
-            {/* 004 PR D (FR-050): «Cómo se pagó», con «Dinero del mes» como valor inicial. */}
-            {offerGoal ? (
-              <div className="flex flex-col gap-2">
-                <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.goalExpense.paidWith.label}</span>
-                <Segmented<PaidWith>
-                  role="radiogroup"
-                  label={copy.goalExpense.paidWith.label}
-                  stretch
-                  value={paidWith}
-                  onValueChange={choosePaidWith}
-                  options={[{ value: "month", label: copy.goalExpense.paidWith.month }, { value: "goal", label: copy.goalExpense.paidWith.goal }]}
-                />
-              </div>
-            ) : null}
           </fieldset>
           {/* 2a: la fila resumen de 60 px bajo «Hoy · Nosotros», siempre a la vista. */}
           {lines && split ? (
             <div ref={summaryRef}>
               <SplitSummary payer={members.find((member) => member.userId === split.payerUserId) ?? members[0]} first={lines.first} second={lines.second} invalid={lines.invalid} onOpen={openSplit} disabled={isSaving} />
               {splitInvalid ? <p id={splitStatusId} className="sr-only">{lines.second}</p> : null}
-            </div>
-          ) : null}
-          {/* La fila resumen de la meta, como la del reparto: abre la subhoja de B1–B3. */}
-          {withGoal ? (
-            <div>
-              <button
-                type="button"
-                ref={goalSummaryRef}
-                data-goal-summary=""
-                onClick={openGoal}
-                disabled={isSaving}
-                aria-label={`${copy.goalExpense.summary.open}: ${goal && usage ? copy.goalExpense.summary.line(goal.name, cop(BigInt(usage) * 100n)) : copy.goalExpense.summary.choose}`}
-                className={`flex min-h-[60px] w-full items-center gap-3 rounded-[16px] px-3.5 py-2 text-left shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken disabled:cursor-not-allowed ${fundingStatus && fundingStatus.kind !== "ok" && fundingStatus.kind !== "noUsage" ? "shadow-[0_0_0_1.5px_var(--color-status-danger)]" : ""}`}
-              >
-                <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-saving-subtle text-saving"><AppIcon name="piggy-bank" weight="duotone" size={20} /></span>
-                <span aria-hidden="true" className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[12px] font-medium text-ink-secondary">{copy.goalExpense.summary.open}</span>
-                  <span className="truncate text-[15px] font-semibold text-ink">{goal && usage ? copy.goalExpense.summary.line(goal.name, cop(BigInt(usage) * 100n)) : copy.goalExpense.summary.choose}</span>
-                </span>
-                <AppIcon name="caret-right" size={16} className="shrink-0 text-ink-secondary" />
-              </button>
             </div>
           ) : null}
         </>

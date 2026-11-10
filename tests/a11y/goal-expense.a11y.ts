@@ -53,6 +53,7 @@ async function openFunding(page: Page) {
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
   await page.keyboard.type("300000");
   await sheet.getByRole("radio", { name: copy.categories.transport }).click();
+  await sheet.getByRole("button", { name: new RegExp(`^${copy.goalExpense.paidWith.label}:`) }).click();
   await sheet.getByRole("radiogroup", { name: copy.goalExpense.paidWith.label }).getByRole("radio", { name: copy.goalExpense.paidWith.goal }).click();
   const picker = sheet.getByRole("radiogroup", { name: copy.goalExpense.picker.title });
   await expect(picker.getByRole("radio", { name: /^Japón/ })).toBeVisible();
