@@ -31,6 +31,26 @@ async function seedGoals(index: number) {
   return { pair, japan, bike };
 }
 
+/** Las casillas de «Tipo de meta» de la hoja abierta: cuántas hay en cada fila y qué etiqueta no cabe en la suya. */
+async function goalTypeRows(page: Page) {
+  const group = page.getByRole("dialog").getByRole("group", { name: copy.goals.sheet.type });
+  return group.getByRole("radio").first().evaluate((radio) => {
+    const cells = [...(radio.closest("label")?.parentElement?.children ?? [])] as HTMLElement[];
+    const rows = new Map<number, number>();
+    for (const cell of cells) {
+      const top = Math.round(cell.getBoundingClientRect().top);
+      rows.set(top, (rows.get(top) ?? 0) + 1);
+    }
+    const clipped = cells.filter((cell) => {
+      const text = cell.querySelector("span:last-child") as HTMLElement | null;
+      const box = cell.getBoundingClientRect();
+      const label = text?.getBoundingClientRect();
+      return !text || !label || text.scrollWidth > text.clientWidth + 1 || label.left < box.left - 0.5 || label.right > box.right + 0.5;
+    }).map((cell) => cell.textContent?.trim() ?? "");
+    return { perRow: [...rows.entries()].sort(([a], [b]) => a - b).map(([, count]) => count), clipped };
+  });
+}
+
 async function openDialog(page: Page, button: string, title: string) {
   await page.getByRole("button", { name: button }).filter({ visible: true }).first().click();
   const dialog = page.getByRole("dialog", { name: title });
@@ -62,6 +82,15 @@ if (JOB === "e2e") test.describe("Metas, inmersiva, hojas e historial (PR C de l
 
       await openDialog(page, copy.goals.stack.create, copy.goals.sheet.createTitle);
       await axe(page, label("hoja de nueva meta"));
+      // Encargo del fundador (10 nov 2026): en escritorio los siete tipos iban en una sola fila y «Emergencias» se salía de
+      // su casilla. Ahora van en dos filas, 4 + 3, en todos los anchos, sin cortar ninguna etiqueta. Se mide a 390 y a 1440.
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        const types = await goalTypeRows(page);
+        expect.soft(types.perRow, `${width}px: tipos de meta por fila`).toEqual([4, 3]);
+        expect.soft(types.clipped, `${width}px: etiquetas de tipo cortadas`).toEqual([]);
+      }
+      await page.setViewportSize({ width: 390, height: 900 });
       await page.keyboard.press("Escape");
 
       await page.goto(`/metas/${japan.id}`);

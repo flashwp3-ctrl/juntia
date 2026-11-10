@@ -114,9 +114,11 @@ export function GoalFormSheet({ open, onClose, goal, context, today, idempotency
         <Input label={copy.goals.sheet.name} value={name} maxLength={60} disabled={locked} onChange={(event) => { setName(event.target.value); setInvalid(null); }} />
         <fieldset disabled={locked} className="flex flex-col gap-2">
           <legend className="pb-2 text-[length:var(--label-m-size)] font-semibold text-ink">{copy.goals.sheet.type}</legend>
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          {/* Encargo del fundador (10 nov 2026): los siete tipos en dos filas, 4 + 3, en todos los anchos, como en móvil. En
+              una sola fila de escritorio «Emergencias» se salía de su casilla. Las etiquetas nunca se cortan. */}
+          <div data-goal-types="" className="grid grid-cols-4 gap-2">
             {GOAL_TYPES.map((type) => (
-              <label key={type} className="group relative flex min-h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-2 text-center text-[12px] leading-tight font-semibold text-ink shadow-[0_0_0_1.5px_var(--color-border-subtle)] has-[:checked]:bg-saving-subtle has-[:checked]:shadow-[inset_0_0_0_2px_var(--color-text-primary)] has-[:focus-visible]:outline-[length:var(--border-focus)] has-[:focus-visible]:outline-offset-[var(--focus-offset)] has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-solid">
+              <label key={type} lang="es" className="group relative flex min-h-[64px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-2 text-center text-[12px] leading-tight font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] shadow-[0_0_0_1.5px_var(--color-border-subtle)] has-[:checked]:bg-saving-subtle has-[:checked]:shadow-[inset_0_0_0_2px_var(--color-text-primary)] has-[:focus-visible]:outline-[length:var(--border-focus)] has-[:focus-visible]:outline-offset-[var(--focus-offset)] has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-solid">
                 <input type="radio" name={`${id}-type`} value={type} checked={goalType === type} onChange={() => setGoalType(type)} className="absolute inset-0 m-0 cursor-pointer appearance-none rounded-[14px] opacity-0" />
                 <AppIcon name={goalTypeIcon[type]} weight="duotone" size={22} className="text-saving" />
                 <span>{copy.goals.types[type]}</span>
