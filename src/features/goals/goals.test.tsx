@@ -10,14 +10,14 @@
 // (meta lograda)».
 // Cifras del dataset dorado de P0-3 (spec, parte A): Japón 11.340.000 de 18.000.000 (63 %), Sara 6.120.000 en 11 aportes,
 // Tomás 5.220.000 en 10, objetivo abril de 2027; parte D: Bicicleta de ruta con 1.050.000 de Sara.
-import { act, configure, render, screen, within } from "@testing-library/react";
+import { act, configure, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, SavedEntry } from "./types";
 import { GoalCard } from "./goal-card";
-import { GoalStack, SWIPE, swipeStep } from "./goal-stack";
+import { FAN_REST_DELAY_MS, GoalStack, SWIPE, swipeStep } from "./goal-stack";
 import { GoalsScreen } from "./goals-screen";
 import { ContributeSheet } from "./contribute-sheet";
 import { WithdrawSheet } from "./withdraw-sheet";
@@ -553,5 +553,71 @@ describe("Orden de la pila (decisión del fundador del 10 de noviembre de 2026)"
     const old = { ...c, createdAt: "2025-01-01T00:00:00Z" };
     const young = { ...b, createdAt: "2026-06-01T00:00:00Z" };
     expect(front([young, { ...a, lastContributionDate: "2026-01-05", lastContributionCreatedAt: "2026-01-05T00:00:00Z" }, old])).toEqual([a.id, old.id, young.id]);
+  });
+});
+
+// Decisión del fundador del 10 de noviembre de 2026 (Juntia DS v1, «08·7 Abanico · hover y foco»; MOTION_SYSTEM §4.1).
+describe("Abanico · hover y foco", () => {
+  const fan = () => {
+    const view = render(<GoalStack goals={[japan(), extra(1), extra(2)]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
+    const root = view.container.querySelector("[data-fan]") as HTMLElement;
+    const layer = (index: number) => view.container.querySelector(`[data-fan-layer="${index}"]`) as HTMLElement;
+    return { ...view, root, layer };
+  };
+
+  it("hover en una tarjeta la activa al instante y vuelve al reposo 60 ms después de salir", () => {
+    vi.useFakeTimers();
+    const { root, layer } = fan();
+    fireEvent.pointerEnter(layer(1), { pointerType: "mouse" });
+    expect(root.getAttribute("data-fan-active")).toBe("1");
+    fireEvent.pointerLeave(layer(1), { pointerType: "mouse" });
+    expect(root.getAttribute("data-fan-active")).toBe("1");
+    act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS); });
+    expect(root.hasAttribute("data-fan-active")).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("si el puntero pasa a otra tarjeta dentro del margen, va directo a la nueva sin volver a reposo", () => {
+    vi.useFakeTimers();
+    const { root, layer } = fan();
+    fireEvent.pointerEnter(layer(0), { pointerType: "mouse" });
+    fireEvent.pointerLeave(layer(0), { pointerType: "mouse" });
+    act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS - 20); });
+    fireEvent.pointerEnter(layer(2), { pointerType: "mouse" });
+    expect(root.getAttribute("data-fan-active")).toBe("2");
+    act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS * 2); });
+    expect(root.getAttribute("data-fan-active")).toBe("2");
+    vi.useRealTimers();
+  });
+
+  it("el toque no activa el hover (en táctil no cambia nada)", () => {
+    const { root, layer } = fan();
+    fireEvent.pointerEnter(layer(1), { pointerType: "touch" });
+    expect(root.hasAttribute("data-fan-active")).toBe(false);
+  });
+
+  it("el foco de teclado (focus-visible) activa el mismo efecto", () => {
+    const { root, layer } = fan();
+    const link = layer(1).querySelector("[data-goal-card]") as HTMLElement;
+    link.matches = ((selector: string) => selector === ":focus-visible") as typeof link.matches;
+    fireEvent.focus(link);
+    expect(root.getAttribute("data-fan-active")).toBe("1");
+    expect(link.className).toContain("outline-offset-2");
+  });
+
+  it("fuera del abanico (Inicio) no hay estado de hover", () => {
+    const { container } = render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" fan={false} />);
+    expect(container.querySelector("[data-fan]")).toBeNull();
+    expect(container.querySelector("[data-fan-layer]")).toBeNull();
+  });
+
+  it("CSS: solo con puntero fino y desde lg; con movimiento reducido, sin desplazamiento ni escala y la segunda conserva 4°", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css).toContain("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {");
+    const reduced = css.slice(css.indexOf("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: reduce)"));
+    expect(reduced).toContain("translate: none; scale: none;");
+    expect(reduced).toContain('[data-fan-active] [data-fan-layer="1"] { rotate: 4deg; }');
+    expect(reduced).toContain("transition: box-shadow 120ms linear;");
+    expect(reduced.slice(0, reduced.indexOf("\n}\n") + 3)).not.toMatch(/translate: -?\d|scale: 1\./);
   });
 });

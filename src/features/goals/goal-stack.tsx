@@ -16,7 +16,7 @@
 import Link from "next/link";
 import * as m from "motion/react-m";
 import type { PanInfo } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { AppIcon } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
@@ -39,6 +39,9 @@ type Props = {
   /** Con él, «Ver todas» navega (Inicio → `/metas`) en lugar de desplegar la lista aquí. */
   seeAllHref?: string;
 };
+
+/** Abanico (Juntia DS v1, «08·7 Abanico · hover y foco»): una tarjeta vuelve al reposo 60 ms después de que el puntero la deja. */
+export const FAN_REST_DELAY_MS = 60;
 
 /** Umbrales del deslizamiento: 64 px de recorrido o 500 px/s de velocidad, en vertical. */
 export const SWIPE = { distancePx: 64, velocityPxPerS: 500 } as const;
@@ -80,6 +83,14 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // El clic que el navegador dispara al soltar un arrastre no abre la meta: se descartan los clics desde que empieza el
   // arrastre hasta 350 ms después de terminar (el clic puede llegar antes del aviso de fin de Motion).
   const dragEndedAt = useRef(0);
+  // Abanico: la tarjeta con hover o foco de teclado. Reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a
+  // otra dentro de ese margen, va directo a la nueva. El efecto visual vive en globals.css, solo con puntero fino y desde lg.
+  const [active, setActive] = useState<number | null>(null);
+  const rest = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (rest.current) clearTimeout(rest.current); }, []);
+  const enter = (index: number) => { if (rest.current) clearTimeout(rest.current); rest.current = null; setActive(index); };
+  const leave = () => { if (rest.current) clearTimeout(rest.current); rest.current = setTimeout(() => { rest.current = null; setActive(null); }, FAN_REST_DELAY_MS); };
+  const focusIn = (index: number) => (event: FocusEvent<HTMLElement>) => { if ((event.target as HTMLElement).matches?.(":focus-visible")) enter(index); };
   if (goals.length === 0) return null;
   const start = front < goals.length ? front : 0;
   const ordered = [...goals.slice(start), ...goals.slice(0, start)];
@@ -113,7 +124,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   }
   return (
     <div className="flex flex-col gap-2">
-      <div className="lg:flex lg:items-start lg:gap-6">
+      <div className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined} data-fan-active={fan && active !== null ? active : undefined}>
         <ul aria-label={label}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
           onClickCapture={swipe ? (event) => { if (Date.now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
@@ -126,6 +137,11 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                 layout={reduced ? false : "position"}
                 transition={card}
                 data-stack-layer={shown ? index : undefined}
+                data-fan-layer={fan && shown ? index : undefined}
+                onPointerEnter={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") enter(index); } : undefined}
+                onPointerLeave={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") leave(); } : undefined}
+                onFocus={fan && shown ? focusIn(index) : undefined}
+                onBlur={fan && shown ? leave : undefined}
                 className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-x" : ""}`}
                 // Deslizar vertical recorre la pila (solo la frontal y fuera del abanico).
                 {...(index === 0 && swipe ? {

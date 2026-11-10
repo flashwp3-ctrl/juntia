@@ -222,3 +222,33 @@ html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-value
 [data-goal-tint="education"] { --goal-tint-bg: var(--color-goal-tint-education-bg); --goal-tint-initial: var(--color-goal-tint-education-initial); --goal-tint-icon: var(--color-goal-tint-education-icon); --goal-tint-edge: var(--color-goal-tint-education-edge); }
 [data-goal-tint="emergency"] { --goal-tint-bg: var(--color-goal-tint-emergency-bg); --goal-tint-initial: var(--color-goal-tint-emergency-initial); --goal-tint-icon: var(--color-goal-tint-emergency-icon); --goal-tint-edge: var(--color-goal-tint-emergency-edge); }
 [data-goal-tint="other"] { --goal-tint-bg: var(--color-goal-tint-other-bg); --goal-tint-initial: var(--color-goal-tint-other-initial); --goal-tint-icon: var(--color-goal-tint-other-icon); --goal-tint-edge: var(--color-goal-tint-other-edge); }
+
+/* 004 PR C, decisión del fundador del 10 de noviembre de 2026 (Juntia DS v1, «08·7 Abanico · hover y foco»; MOTION_SYSTEM
+   §4.1). Solo con puntero fino y desde lg: en táctil no cambia nada. La tarjeta con hover o foco de teclado
+   (`data-fan-active`, que pone GoalStack con 60 ms de margen al salir) sube 8 px, escala a 1,02 desde el centro inferior y,
+   si estaba girada, se endereza; su sombra pasa de float a overlay en 180 ms. Con hover en una trasera, esa y las de su
+   derecha (y el «+») se desplazan 24 px a la derecha para que su franja asome más. El movimiento usa el spring `card`
+   (260/28/1) como curva linear(), 580 ms. Con movimiento reducido: sin desplazamiento, escala ni giro; solo la sombra, 120 ms. */
+:root { --spring-card-linear: linear(0, 0.046 3.6%, 0.148 7.1%, 0.274 10.5%, 0.403 14%, 0.524 17.5%, 0.630 21%, 0.720 24.5%, 0.794 28%, 0.852 31.5%, 0.897 35%, 0.930 38.4%, 0.955 41.9%, 0.973 45.4%, 0.985 48.9%, 0.993 52.4%, 0.998 55.9%, 1.001 59.4%, 1.003 62.9%, 1.004 66.3%, 1.004 69.8%, 1.004 73.3%, 1.003 76.8%, 1.003 80.3%, 1.002 83.8%, 1.002 87.3%, 1.001 90.8%, 1.001 94.2%, 1.001 97.7%, 1); }
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  [data-fan] [data-fan-layer] { transform-origin: bottom center; transition: translate 580ms var(--spring-card-linear), scale 580ms var(--spring-card-linear), rotate 580ms var(--spring-card-linear); }
+  [data-fan] [data-fan-layer] [data-goal-card] { transition: box-shadow 180ms cubic-bezier(.2, 0, 0, 1); }
+  [data-fan-active="0"] [data-fan-layer="0"] { translate: 0 -8px; scale: 1.02; rotate: 0deg; }
+  [data-fan-active="1"] [data-fan-layer="1"], [data-fan-active="2"] [data-fan-layer="2"] { translate: 24px -8px; scale: 1.02; rotate: 0deg; }
+  [data-fan-active="1"] [data-fan-layer="2"] { translate: 24px 0; }
+  [data-fan-active="0"] [data-fan-layer="0"] [data-goal-card] { box-shadow: var(--elevation-overlay); }
+  [data-fan-active="1"] [data-fan-layer="1"] [data-goal-card], [data-fan-active="2"] [data-fan-layer="2"] [data-goal-card] { box-shadow: var(--elevation-overlay), 0 0 0 1px var(--color-border-strong); }
+  [data-fan] [data-goal-create] { transition: translate 580ms var(--spring-card-linear), border-color 180ms cubic-bezier(.2, 0, 0, 1), background-color 180ms cubic-bezier(.2, 0, 0, 1); }
+  [data-fan-active="1"] [data-goal-create], [data-fan-active="2"] [data-goal-create] { translate: 24px 0; }
+  [data-goal-create]:is(:hover, :focus-visible) { border-color: var(--color-text-primary); background-color: color-mix(in srgb, var(--color-text-primary) 3%, transparent); }
+  [data-goal-create] [data-goal-create-plus] { transition: translate 580ms var(--spring-card-linear), scale 580ms var(--spring-card-linear), box-shadow 180ms cubic-bezier(.2, 0, 0, 1); }
+  [data-goal-create]:is(:hover, :focus-visible) [data-goal-create-plus] { translate: 0 -3px; scale: 1.04; box-shadow: var(--elevation-float); }
+  [data-goal-create]:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  [data-fan] [data-fan-layer], [data-fan] [data-goal-create], [data-goal-create] [data-goal-create-plus] { transition: none; }
+  [data-fan] [data-fan-layer] [data-goal-card], [data-goal-create] [data-goal-create-plus] { transition: box-shadow 120ms linear; }
+  [data-fan-active] [data-fan-layer], [data-fan-active] [data-goal-create], [data-goal-create]:is(:hover, :focus-visible) [data-goal-create-plus] { translate: none; scale: none; }
+  [data-fan-active] [data-fan-layer="1"] { rotate: 4deg; }
+  [data-fan-active] [data-fan-layer="2"] { rotate: 7deg; }
+}

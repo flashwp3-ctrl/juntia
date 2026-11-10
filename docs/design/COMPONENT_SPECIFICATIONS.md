@@ -81,6 +81,13 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - **Cantidades:** 0 → estado vacío · 1 → solo la tarjeta, sin pila · 2 → frontal + 1 asomando · 3 o más → frontal + 2 · más de 3 → el conteo en el pie.
 - **Gestos:** tocar la frontal la abre · tocar la que asoma la trae al frente (spring `card`) · deslizar vertical recorre la pila. Teclado: Tab entre tarjetas y Enter abre. Lector de pantalla: lista de metas, no un carrusel.
 - **Escritorio:** la pila se abre en abanico horizontal (la segunda girada 4°) con «+» punteado para crear meta.
+- **Abanico · hover y foco** (decisión del fundador del 10 de noviembre de 2026; Juntia DS v1, «08·7 Abanico · hover y foco»; MOTION_SYSTEM §4.1). Solo con `(hover: hover) and (pointer: fine)` y desde lg:
+  - la tarjeta con hover o `focus-visible` sube 8 px, escala a 1,02 desde el centro inferior y, si estaba girada, se endereza a 0° (spring `card`); su sombra pasa de `elevation.float` a `elevation.overlay` en 180 ms con `ease.standard`, y las traseras conservan su filete de 1 px. En reposo, la frontal lleva `elevation.float`;
+  - reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a otra tarjeta dentro de ese margen, va directo a la nueva;
+  - hover en la frontal: las demás quietas. Hover en una trasera: esa y las de su derecha se desplazan 24 px a la derecha para que su franja (ícono, inicial y %) asome más; las de la izquierda no se mueven. El «+», a la derecha de todas, se desplaza con ellas para conservar la separación; el paso del abanico no cambia (tres capas como máximo);
+  - «+» Crear meta: el contorno punteado pasa a tinta y el fondo toma un 3 % de tinta; el botón interior sube 3 px, escala a 1,04 y su sombra pasa de `raised` a `float`, con el mismo spring;
+  - foco de teclado: el mismo efecto y el anillo de 2 px `focus.ring` con offset de 2 px;
+  - movimiento reducido: sin escala ni desplazamiento, y la segunda conserva sus 4°; solo cambia la sombra, en 120 ms lineal.
 
 ## BudgetIndicator (opcional)
 - Barra de 8 px · color del pictograma de la categoría · texto «Quedan X».

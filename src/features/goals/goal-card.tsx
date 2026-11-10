@@ -86,7 +86,7 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
           onClick={open}
           tabIndex={tabIndex}
           data-goal-tint={goal.goalType}
-          className={`group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-[var(--goal-tint-bg)] p-5 text-ink outline-offset-[3px] ${peek ? "shadow-[0_0_0_1px_var(--color-border-strong)]" : "shadow-float"} motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]`}
+          className={`group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-[var(--goal-tint-bg)] p-5 text-ink outline-offset-2 ${peek ? "shadow-[0_0_0_1px_var(--color-border-strong)]" : "shadow-float"} motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]`}
         >
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>

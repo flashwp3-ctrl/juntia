@@ -91,6 +91,16 @@ Lote 3 de 5. Visual: `Juntia DS v1 - 03 Motion.dc.html` · prototipo: `Juntia DS
 - **Reduced motion:** Crossfade de 200 ms entre vistas, sin escala ni desplazamiento. La cinta aparece ya llena.
 - **Fallback:** Con la API: document.startViewTransition con view-transition-name compartidos. Sin la API: layoutId de Motion. [V] Probar con App Router.
 
+## 4.1 Abanico de GoalStack · hover y foco
+*L1.* Decisión del fundador del 10 de noviembre de 2026 (Juntia DS v1, «08·7 Abanico · hover y foco»). Solo con `(hover: hover) and (pointer: fine)` y desde lg; en táctil no cambia nada (el deslizar de móvil es aparte).
+
+- **Tarjeta con hover o `focus-visible`:** sube 8 px, escala a 1,02 desde el centro inferior y, si estaba girada, se endereza a 0°, con el spring `card` (260/28/1; en CSS, su curva `linear()` de 580 ms). Sombra de `elevation.float` a `elevation.overlay` en 180 ms con `ease.standard`.
+- **Sin parpadeo:** reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a otra tarjeta dentro de ese margen, va directo a la nueva.
+- **Vecinas:** hover en la frontal, las demás quietas; hover en una trasera, esa y las de su derecha (y el «+») se desplazan 24 px a la derecha.
+- **«+» Crear meta:** contorno a tinta y fondo con un 3 % de tinta; el botón interior sube 3 px, escala a 1,04 y pasa de `raised` a `float`.
+- **Foco de teclado:** el mismo efecto y el anillo de 2 px `focus.ring` con offset de 2 px.
+- **Reduced motion:** sin escala ni desplazamiento; la segunda conserva sus 4°; solo la sombra, 120 ms lineal.
+
 ## 5. Spending Story · el mes en capítulos
 *L1 · reveal progresivo.* El análisis mensual se lee como una historia corta: cuánto, en qué, comparado con qué. Cada dato aparece cuando llega su turno.
 
