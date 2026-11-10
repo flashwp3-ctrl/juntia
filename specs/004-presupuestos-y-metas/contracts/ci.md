@@ -11,14 +11,15 @@ código que ya corren CI y se revisan como cualquier cambio de pruebas.
 
 ## Jobs
 
-Los jobs `app`, `db` y `e2e` no cambian de forma, disparadores ni `timeout`. Crece su
-contenido:
+Los jobs `app`, `db` y `e2e` no cambian de forma ni disparadores, y `app` y `db` tampoco de `timeout`. El tope duro del job
+`e2e` pasa de 10 a 12 minutos (decisión de los fundadores del 10 de noviembre de 2026, junto con el presupuesto de 660 s), para
+que el presupuesto avise antes de que GitHub cancele el job. Crece su contenido:
 
 | Job | Qué añade P0-3 | Presupuesto |
 | --- | --- | --- |
 | `app` | Componentes (BudgetIndicator, Plan, Análisis, PlanningNote, GoalCard, GoalStack, Registrar aporte, Retirar, FundingLedger, ConfirmationBadge, B1–B7) en `components`; dominio (`budgets`, `goals`, `metrics`, `analysis`, `golden`) en `domain`; axe sin sesión de lo que no la necesite | Gate < 6 min; `verify` < 90 s; dominio < 15 s |
 | `db` | pgTAP `12_budgets.test.sql`, `13_goals.test.sql` (ledger, solo inserción, saldo por aportante, solicitudes, funciones redefinidas, `transaction_goal_funded`) y la ampliación de `01_privileges`, `03_views` y `05_direct_writes`. Integración: carreras de FR-112 con `raceUnderLock`, idempotencia de cada escritura, lectura consistente, exportación. `db:types:check` con las vistas y funciones nuevas | `test:db` < 60 s (comando) · gate < 6 min |
-| `e2e` | **Spec E2E 5** (nace en el PR B, crece en el E) y **spec E2E 4** (nace en el PR C, crece en el D con dos contextos). axe con sesión, nivel ligero, de cada pantalla y estado nuevo | **< 480 s, bloqueante** (decisiones 19.5 y 21.4) |
+| `e2e` | **Spec E2E 5** (nace en el PR B, crece en el E) y **spec E2E 4** (nace en el PR C, crece en el D con dos contextos). axe con sesión, nivel ligero, de cada pantalla y estado nuevo | **< 660 s, bloqueante** (decisiones 19.5 y 21.4; decisión de los fundadores del 10 de noviembre de 2026, abajo, en la mitigación) |
 
 ## El presupuesto del job `e2e` con las specs 4 y 5
 
@@ -160,6 +161,11 @@ no bloquear a mitad del PR B o el C, la mitigación queda decidida aquí:
    ninguna capa inferior se entere (`docs/TESTING.md` §4).
 3. **(c) Solo si (a) y (b) no bastan**, el PR se para y va a los fundadores con la
    medición. El tope de 480 s no se mueve por una medición.
+
+> **Decisión de los fundadores del 10 de noviembre de 2026:** el tope del job `e2e` sube de 480 s a 660 s. Medición del
+> gate del PR #67 (run 42849936048): 517 s con las specs 1, 2, 3 y 5 (Supabase 139 s, build 89 s, E2E 69 s, axe con sesión
+> 194 s); la mitigación (a) no fue segura (medición del PR A) y la (b) no basta, porque la mayor parte es preparación fija; se
+> aplicó la (c) de contracts/ci.md. El nuevo tope tampoco se mueve por una medición: solo por otra decisión de los fundadores.
 
 ## Barrido completo de accesibilidad (decisión 21.2)
 

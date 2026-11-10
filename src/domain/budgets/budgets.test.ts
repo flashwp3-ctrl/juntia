@@ -1,6 +1,6 @@
 // 004 FR-013, FR-015, FR-016: «consumo 0 con presupuesto activo → dentro, 0 %, distinto de null».
 // Decisión 22.7: «Los meses anteriores conservan el límite que tenían».
-import { budgetState, displayedPercent, limitInForce } from "./index";
+import { budgetChangeKind, budgetState, displayedPercent, limitInForce } from "./index";
 const p = (pesos: bigint) => pesos * 100n;
 describe("presupuestos opcionales y vigencia (T002)", () => {
   it.each([
@@ -28,5 +28,17 @@ describe("presupuestos opcionales y vigencia (T002)", () => {
     ];
     expect(["2026-09-01", "2026-10-01", "2026-11-01", "2026-12-01"].map(m => limitInForce(versions, m)))
       .toEqual([null, p(900000n), p(1000000n), null]);
+  });
+});
+
+// 004 PR B (T029, T033) / FR-018; US-2 escenario 6: «el historial con autor, fecha, valor anterior y nuevo, y la línea
+// «Último cambio: Sara subió Mercado a $900.000 · 3 oct»». El tipo de cada cambio sale de la versión anterior del mismo
+// presupuesto (`budget_history.previous_limit_minor`) y de si es la primera; desactivar es `null`, nunca un límite 0.
+describe("tipo de cada cambio del historial (PR B)", () => {
+  it.each([
+    [null, p(800000n), true, "create"], [p(800000n), p(900000n), false, "raise"], [p(900000n), p(800000n), false, "lower"],
+    [p(340000n), null, false, "deactivate"], [null, p(340000n), false, "reactivate"], [p(260000n), p(260000n), false, "keep"],
+  ] as const)("%s → %s (primera: %s) = %s", (previous, limit, first, kind) => {
+    expect(budgetChangeKind(previous, limit, first)).toBe(kind);
   });
 });

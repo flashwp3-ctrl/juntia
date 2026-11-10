@@ -9,9 +9,9 @@
 // T051 / FR-067; SC-002 (002): el recorrido sale de tests/a11y/route-registry.ts. Con A11Y_JOB=app (job app) audita los
 // estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
+import { analyzeAtRest } from "../support/a11y";
 import { seedUser } from "../support/seed";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, THEMES } from "./route-registry";
@@ -195,11 +195,11 @@ for (const colorScheme of THEMES) {
         await reach(page, entry, testInfo.parallelIndex);
         // Los momentos de motion de las rutas de producto se miden en su estado base, no con una hoja o un aviso abiertos.
         const isProduct = (PRODUCT as readonly string[]).includes(route) && !entry.prepare;
-        // Flake del PR C («/recuperar · A4b · dark · 390», document-title intermitente): tras la respuesta de una Server Action,
-        // Next vuelve a transmitir los metadatos y axe podía auditar el instante sin <title>. Se audita el estado en reposo, con
-        // el título ya puesto; si de verdad faltara, esta espera falla igual.
-        await expect(page).toHaveTitle(/\S/);
-        const result = await new AxeBuilder({ page }).analyze();
+        // Flakes del PR C («/recuperar · A4b · dark · 390») y del gate del PR #66 («/cuenta/pareja · M3b enlace listo · light
+        // · 390», run 42543237243), los dos de document-title: tras una Server Action, Next vuelve a transmitir los metadatos
+        // y el <title> desaparece un instante, también a mitad del escaneo. analyzeAtRest audita `document-title` aparte,
+        // cuando document.title ya no está vacío; si de verdad faltara, la espera falla igual.
+        const result = await analyzeAtRest(page);
         const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
         console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
         expect(blocking).toEqual([]);

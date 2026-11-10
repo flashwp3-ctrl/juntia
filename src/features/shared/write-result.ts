@@ -17,6 +17,8 @@ export type WriteError =
   | "alreadyDeleted" | "notFound" | "invalidSplit" | "coupleNotActive" | "moveNotAllowed" | "undoNotAvailable"
   // PR D (T062): liquidaciones (contracts/errors.md, JT106, JT107, JT112–JT114).
   | "nothingToSettle" | "exceedsPending" | "settlementDate" | "alreadyVoided"
+  // 004 PR B (T034): presupuestos (contracts/errors.md, JT218, JT219, JT221).
+  | "budgetExists"
   // 004 PR C (T046, T047): metas, aportes, retiros y anulaciones (contracts/errors.md, JT201–JT217, JT225).
   | "goalNotFound" | "goalNotOpen" | "insufficientFunds" | "entryNotFound" | "entryAlreadyVoided" | "entryNotVoidable" | "entryDate"
   | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable";
@@ -32,6 +34,8 @@ export type WriteStatusOutcome<T> = { state: "completed"; value: T } | { state: 
 export type WriteAction = "create_invitation" | "regenerate_invitation" | "cancel_invitation" | "accept_invitation"
   | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared"
   | "register_settlement" | "void_settlement"
+  // 004 PR B (T034): crear, editar y desactivar presupuesto (contracts/server-actions.md §1).
+  | "create_budget" | "update_budget"
   // 004 PR C (T046, T047): las escrituras de metas que «Comprobar estado» consulta.
   | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
@@ -67,6 +71,11 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   invalidSettlementDate: "settlementDate",
   settlementNotFound: "notFound",
   settlementVoided: "alreadyVoided",
+  // 004 PR B (T034): presupuestos. Uno inexistente o no visible, uno que ya existe para esa clave (incluye perder la carrera
+  // de creación) y un límite no válido son rechazos confirmados; JT011 ya es versionConflict.
+  budgetNotFound: "notFound",
+  budgetAlreadyExists: "budgetExists",
+  invalidBudget: "invalid",
   // 004 PR C (T046, T047): metas. Un saldo que no alcanza (JT204 o el trigger JT220) es el mismo rechazo para la interfaz.
   goalNotFound: "goalNotFound",
   goalNotOpen: "goalNotOpen",

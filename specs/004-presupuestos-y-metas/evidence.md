@@ -385,6 +385,261 @@ verify final **59.80 s, exit 0**: 78 dominio, 698 componentes verdes y 2 omision
 
 ---
 
+# Evidencia · 004 · PR B · Plan y presupuestos
+
+Rama `feat/004-b-plan-budgets`, sobre `main` en `bd408b9` (PR A fusionado). Todo lo de abajo es **iteración contra
+`juntia-dev`** (decisión 18) o local: no es evidencia de CI (ADR-011 §9.8); el gate es la pasada `ready_for_review` que
+lanza el gestor. Sin runs lanzados por el agente, sin migraciones nuevas, sin producción, sin `--force` del lock. El
+`juntia-dev` se compartió con la sesión del PR C: cada corrida esperó a que el lock estuviera libre y lo soltó al terminar.
+
+## Commits
+
+| Commit | Qué |
+| --- | --- |
+| `0d75086`, `20ae0f6` | Encargo del gestor: `document-title` intermitente de `routes.a11y.ts` (run 42543237243). Sin cambio de comportamiento |
+| `dea1bdc` | T029–T032, pruebas en rojo (y el copy de Plan, para que fallen por la funcionalidad y no por cadenas) |
+| `3d7fbc3` | T033–T034, Plan y la hoja de presupuesto |
+| `5d3b288` | T035, selector de specs y su integración en el job `e2e` |
+| `41a995e` | T037–T038, revisión de acabado (Impeccable) y barrido local |
+| `eebd501` | Spec 5: textos dentro de `main` (fallo del `e2e:dev` completo) |
+
+## Encargo del gestor · `document-title` (run 42543237243)
+
+Causa, leída en el log del intento 1 del job `e2e`: `toHaveTitle(/\S/)` pasó y **después** axe vio el `<title>` vacío. Tras la
+Server Action de M3b, `router.refresh()` vuelve a transmitir los metadatos y React quita y pone el título; el escaneo es
+asíncrono y dura segundos, así que la espera previa no bastaba. `analyzeAtRest` (`tests/support/a11y.ts`) corre todas las
+reglas salvo `document-title`, espera a que `document.title` no esté vacío (espera de Playwright, sin tiempos fijos) y solo
+entonces corre `document-title` con el axe ya inyectado, y une sus violaciones. Las reglas auditadas no cambian; sin título,
+falla igual. Lo usan `routes.a11y.ts` y el `axe()` común.
+
+- `npm run e2e:dev -- tests/a11y/routes.a11y.ts --grep "M3b"`: **2/2**, 17,8 s.
+- La primera versión reinyectaba axe con un segundo `AxeBuilder`: en el `e2e:dev` completo, `couple-shared.a11y.ts` (muchos
+  estados en un test) pasó de su límite de 30 s dos veces. Con el axe ya inyectado (`20ae0f6`), ese test baja de
+  23,5–29,5 s a 17–19 s por tema; `--grep "Nosotros · axe|M3b"` **4/4**, 41,8 s.
+
+## T036 · workers
+
+Confirmado en la sección T022–T023 de arriba: la propuesta 2:false se **retiró** («No se considera demostrado que aumentar
+workers sea estable»; recomendación final: no fijar aumento ni `fullyParallel`). **No se tocan los workers del job `e2e`**;
+el workflow solo gana el selector. Si el gate pasa de 480 s, rige la mitigación de contracts/ci.md: (a) no es segura, (b)
+ya aplicada en la spec 5, (c) fundadores.
+
+## T032a · rojo contra `juntia-dev`
+
+Local antes del código: dominio `budgets.test.ts` **6 fallan / 9 pasan** (`budgetChangeKind is not a function`);
+`src/features/plan/plan.test.tsx` y `tests/e2e-select.test.ts` fallan al importar módulos que no existen.
+
+`next build` comprueba los tipos de los tests, así que para el rojo E2E se apartaron un momento esos tres archivos de unidad
+(restaurados después y commiteados con el resto). Así el rojo es de la funcionalidad, no del build:
+
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: build pasó 10,21 s; **2 fallan** — test 1 en `getByText('$240.000 · sin
+  presupuesto')` (Plan seguía provisional); test 2 en el control positivo (el HTML de Nosotros no trae el presupuesto
+  compartido sembrado). La siembra (pareja, seis compartidos y `create_budget` real) funcionó en los dos.
+- `npm run e2e:dev -- tests/a11y/plan.a11y.ts`: build pasó 9,28 s; **1 falla** en
+  `getByRole('img', { name: 'Mercado: 640.000 de 900.000, 71 %' })`.
+
+## Verde
+
+- Componentes `src/features/plan`: **21/21** (BudgetIndicator en sus cinco estados, la hoja, el historial, Plan sin
+  presupuesto, primera persona en Yo, nada en el almacenamiento). Dominio `budgets`: **15/15**. Selector: **18/18**.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts tests/a11y/plan.a11y.ts`: **2/2** E2E (≈14 s y ≈12 s) y **1/1** axe (10
+  estados: Nosotros con presupuesto, hoja con historial, conflicto, crear y Yo sin presupuesto, claro y oscuro, **0
+  violaciones**).
+- Barrido local, `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/plan.a11y.ts`: **2/2**. 56 mediciones (cuatro pantallas ×
+  siete anchos × dos temas) sin scroll horizontal; 200 % sin scroll ni texto cortado en las cuatro; 44 px: «Editar el
+  presupuesto de Mercado» 366×94, «Crear presupuesto de Hogar» 53,9×44, «Crear presupuesto» 350×52, «Límite mensual»
+  350×85,6, «Guardar cambios» 350×52, «Desactivar presupuesto» 350×44; teclado: fila → Enter → foco en el límite; Escape
+  cierra; «Crear» de una fila → foco en el límite. La primera pasada encontró dos fallos reales, corregidos en `41a995e`: el
+  botón opcional se salía a 200 % y el foco inicial no llegaba al límite (AmountInput usa su propia ref).
+- El barrido oficial (`@sweep`, T039) sigue siendo del gestor en CI.
+
+## `e2e:dev` completo y `verify` (antes del push)
+
+Tres corridas completas, sin argumentos, PORT=3400, workers por defecto de `e2e:dev`:
+
+| # | Commit | Resultado | Fallo |
+| --- | --- | --- | --- |
+| 1 | `41a995e` | exit 1, 390,99 s; E2E 29/30, axe 94/95 | Spec 5, primera aserción: `getByText` vio la copia oculta que Next transmite fuera de `main` (`loading.tsx` nuevo) → `eebd501`. Y `couple-shared` light, límite de 30 s en «Mover a Pareja» |
+| 2 | `eebd501` | exit 1, 389,39 s; E2E **30/30**, axe 94/95 | `couple-shared` dark, límite de 30 s dentro de `analyzeAtRest` → `20ae0f6` |
+| 3 | `20ae0f6` | **exit 0, 320,85 s**; build 10,72 s; E2E **30/30** 62,70 s; axe **95/95** 246,19 s | — |
+
+Siguen fuera por contrato las E2E `@mail`, `@sweep` y `evidence`. Este tiempo local no mide el job de CI (461 s en T024,
+tope 480 s); la spec 5 añade dos tests de ≈14 s y ≈13 s y `plan.a11y.ts` uno de ≈20 s.
+
+`npm run verify` final sobre `20ae0f6`: **exit 0, 81,87 s** (< 90 s); lint sin errores (solo el aviso preexistente de
+`balance-panel.tsx:61`), typecheck, dominio **84/84**, componentes **735 pasan / 2 omisiones previstas**. `git diff --check`
+pasa.
+
+## Selector (T035) sobre este PR
+
+`node scripts/e2e-select.mjs --base origin/main` en la rama: corren `access-account`, `annotate`, `couple-settle` y
+`budgets`; «Spec 4: todavía no existe». Motivo: el PR toca `.github/`, `scripts/` y `tests/support/` (regla 6, todas las
+existentes) además del área de presupuestos. Coincide con el fixture «PR B con el selector» de contracts/ci.md.
+
+## T038 · capturas e Impeccable
+
+28 PNG en `specs/004-presupuestos-y-metas/evidence/pr-b/`, de `juntia-dev` (cuentas `@seed.test`), 390 y 1440, claro y
+oscuro: Plan en Nosotros con y sin presupuesto, Plan en Yo con y sin presupuesto, hoja de editar con historial, hoja de
+crear y conflicto. Las de 390 son de página completa: la barra inferior fija se dibuja sobre las últimas líneas. En
+`conflicto` el historial muestra varias ediciones de Tomás porque el script de captura cambió el presupuesto en cada una de
+las cuatro capturas. Spec temporal sin commitear, como en la 003.
+
+Impeccable: detector `impeccable detect --json src/features/plan` → **0 hallazgos**. Revisión de acabado
+(`impeccable-finish-reviewer`) contra el comp 04·2, el spec de BudgetIndicator y las capturas:
+
+| # | Hallazgo | Qué se hizo (`41a995e`) |
+| --- | --- | --- |
+| 1 | El modo sin presupuesto se leía como cinco avisos de crear (US-1) | Las categorías sin presupuesto, una sola lista punteada con divisores; el bloque «Sin presupuesto» plano y después de lo gastado |
+| 2 | A 390, CERCA DEL LÍMITE y EXCEDIDO partían la fila de arriba | El badge va al final de la línea de estado |
+| 3 | En un conflicto el campo seguía activo con el valor rechazado | Campo bloqueado, «Tu cambio a $X no se guardó.», solo «Revisar» sigue |
+| 4 | En Yo, «Sara creó…» cuando Sara es quien mira | Primera persona en Yo («Creaste…», «Tú · fecha») |
+| 5 | «Sin presupuesto» como título se confunde con el estado de cada fila | **Sin cambio**: redacción de los fundadores (T041) |
+| 6 | A 1440 «Crear presupuesto» quedaba lejos de la lista | Va debajo de la lista |
+
+## Para los fundadores (T041) y el gestor
+
+- Copy nuevo de `copy.plan` (es.ts) para aprobar en pantalla, incluido el punto 5 de arriba y «Te pasaste por» en Yo.
+- Lecturas de ejecución, sin alcance nuevo: el resumen del mes es `gasto_consumo` de `metric_months`; el porcentaje se
+  muestra con consumo 0, cerca y excedido (el comp no lo pone en «dentro» ni en el excedido; US-04 pide 118 %); un
+  presupuesto desactivado sin gasto en el mes no se pinta, y al volver a crear su categoría se reactiva con
+  `update_budget` (la clave única es por categoría); Plan enseña solo el mes en curso.
+- `copy.us.activeDescription` («Las metas y el plan de los dos llegan en una próxima versión…») ya no lo usa Plan; lo sigue
+  usando Metas hasta el PR C, que lo puede ajustar.
+- T040 (CLS de Plan con el `loading.tsx` nuevo) y T041 siguen pendientes, humanas. T039, abajo.
+
+## T039 · barrido completo de accesibilidad (hecha por el gestor)
+
+Run **42851485512** (`workflow_dispatch`, `a11y_sweep=true`), sobre `6183ac2`, lanzado por el gestor: **verde**. Job `e2e`
+en **396 s** (axe 167 s, Supabase 137 s, build 61 s); job `app` en **150 s**. Datos del gestor; el agente no lanzó el run.
+
+## Gate del PR #67 · run 42849936048 (sobre `6183ac2`) y decisión de los fundadores
+
+Todas las pruebas en verde (E2E **34/34**, axe **95/95**). El job `e2e` falló solo por el presupuesto: **517 s** frente a
+< 480 s (Supabase 139 s, build 89 s, E2E 69 s, axe 194 s). El gestor lo llevó a los fundadores según contracts/ci.md (c).
+
+Decisión de los fundadores del 10 de noviembre de 2026: el tope del job `e2e` sube de 480 s a 660 s. Medición del gate del
+PR #67 (run 42849936048): 517 s con las specs 1, 2, 3 y 5 (Supabase 139 s, build 89 s, E2E 69 s, axe con sesión 194 s); la
+mitigación (a) no fue segura (medición del PR A) y la (b) no basta, porque la mayor parte es preparación fija; se aplicó la
+(c) de contracts/ci.md. Con ella, el `timeout-minutes` del job `e2e` pasa de 10 a 12 (el agente señaló que 660 s quedaba
+por encima de los 600 s en que GitHub cancelaba el job; el gestor lo aprobó).
+
+Aplicado en un solo commit: `jobBudget` de `scripts/ci.mjs` (480 → 660), `timeout-minutes: 12` solo en el job `e2e` de
+`.github/workflows/ci.yml`, y la decisión en `contracts/ci.md`, `docs/TESTING.md` §9 y el maestro §15.10 (decisiones 19.5 y
+21.4 y una nota tras la decisión 21). Ninguna prueba comprobaba el 480.
+
+## Revisión del gestor del PR #67 (antes de ChatGPT)
+
+Un solo commit y un solo push. Sin `e2e:dev` completo en esta ronda (lo indicó el gestor); solo las pruebas afectadas, con
+el lock.
+
+| # | Hallazgo | Qué se hizo | Prueba |
+| --- | --- | --- | --- |
+| 1 | La prueba de prefetch podía pasar sin comprobar nada | Cada RSC se registra en el acto (`{ after, body: Promise }`), se esperan todos con `Promise.all` y se exige al menos uno posterior al cambio de contexto | Spec 5 2/2 |
+| 2 | «Revisando el valor vigente…» sin salida | El caso JT219 acepta un presupuesto ya desactivado («Ahora no tiene presupuesto.» y «Revisar»); mientras no llega lo vigente, «Volver a cargar» pide la página otra vez | Dos tests de componente |
+| 3 | El conflicto podía nombrar a quien mira | `BudgetChange.byMe` (el servidor compara con quien mira); «Cambiaste este presupuesto en otro lugar.» y «Ya creaste este presupuesto en otro lugar.» | Un test de componente |
+| 4 | Moneda inconsistente | «Quedan $X», «Se pasaron por $X» y «Te pasaste por $X» con `formatMoney` (glosario, Restante). El nombre accesible de la barra sigue sin `$`: es el patrón de la 003 para `role="img"` («Tomás pagó 910.100; le corresponden 1.340.000; debe 429.900»). La línea «640.000 de 900.000» sigue como el comp 04·2 | Tests con el texto literal |
+| 5 | Una spec fuera del mapa no correría | `tests/e2e-select.test.ts` exige que `SPECS` cubra cada `tests/e2e/*.e2e.ts` | Selector 19/19 |
+| 6 | Menores | Fuera `copy.plan.sheet.deactivating`; la prueba de almacenamiento falla también con `indexedDB.open`; en `analyzeAtRest`, la comprobación del título y `axe.run` van en el mismo `page.evaluate` (si el título falta, se espera dentro de la página) | Componentes; M3b 4/4 |
+
+Salidas:
+
+- Componentes de Plan y selector: **43/43**.
+- `e2e:dev` dirigido (`budgets.e2e.ts`, `plan.a11y.ts`, `routes.a11y.ts` y `couple-shared.a11y.ts` con `--grep "spec 5|Plan ·|Nosotros · axe|M3b"`): spec 5 **2/2** (17,6 s y 14,6 s), Plan **1/1**, las cuatro rutas de Plan y M3b **4/4**; `couple-shared` **0/2** por el límite de 30 s del test (fallan dentro de la **primera** pasada de axe, no en la de `document-title`). Ese build tardó 29,37 s frente a 10 s, con la máquina cargada.
+- `couple-shared` solo, repetido: **2/2**, 28,7 s y 25,2 s. Es el rango que ya tenía en el PR A (23,5–29,5 s). **Riesgo para el gate:** ese test de la 003 va muy cerca de su límite de 30 s cuando el equipo está ocupado. No se toca en este PR.
+- `npm run verify`: la primera corrida falló por un test ajeno, `profile-form.test.tsx` › P2, que superó 5 s con la máquina cargada (componentes 67 s). La repetición pasó: **exit 0, 85,97 s**, dominio 84, componentes **739 pasan / 2 omisiones previstas**. `git diff --check` pasa.
+
+## Revisión de ChatGPT del PR #67 (sobre `c26e9d6`)
+
+Un solo commit y un solo push. Solo las pruebas afectadas contra `juntia-dev`, con el lock; **sin `db:dev:reset`**.
+
+| # | Hallazgo | Qué se hizo | Prueba |
+| --- | --- | --- | --- |
+| F67-1 | La rejilla de categorías seguía activa durante un JT219 | `CategoryChoice` queda deshabilitada con un conflicto a la vista, y `onSelect` lo ignora | Test de componente: tras JT219 todas las categorías están deshabilitadas, un clic en Transporte no cambia Hogar y «Revisar» abre Hogar con su límite vigente |
+| F67-2 | El prefetch de la spec 5 no demostraba haber inspeccionado el RSC de Plan | Ver abajo | Spec 5 2/2 y prueba de mutación |
+| F67-3 | El inventario del selector no veía specs anidadas | `readdirSync(..., { recursive: true })` | Con una spec temporal en `tests/e2e/zz-probe/` la prueba falla («expected [ 'tests/e2e/zz-probe/probe.e2e.ts' ] to deeply equal []»); sin ella pasa |
+
+**F67-2, lo que se encontró.** Con un diagnóstico temporal se vio que **todos** los cuerpos RSC capturados medían 0: en las
+respuestas RSC transmitidas, `response.text()` de Playwright falla y el `.catch(() => "")` lo convertía en una cadena vacía.
+Así que ni esta versión ni la anterior inspeccionaban nada; las negativas pasaban por vacío. Ahora:
+
+- Los RSC se interceptan con `page.route` y `route.fetch()`: el cuerpo real se lee al responder y se entrega tal cual a la
+  página; un fallo al leerlo hace fallar la prueba.
+- Cada petición se registra al **empezar** (en el manejador de la ruta), con su ruta y con `underUs`, que se activa solo
+  cuando Plan de Nosotros ya está pintado (la cookie ya dice Nosotros).
+- En Yo se llega a Plan desde Inicio en el cliente y se exige que ese RSC de `/plan` traiga el presupuesto personal de
+  Sara: control de que la captura ve un presupuesto personal cuando viaja.
+- En Nosotros se exige al menos un RSC de `/plan` iniciado bajo Nosotros, que su cuerpo traiga el presupuesto compartido
+  sembrado (control positivo) y que ningún RSC iniciado bajo Nosotros traiga los marcadores personales (negativas de antes).
+- **Mutación**: con `underUs` activo desde el principio (las peticiones de Yo cuentan como de Nosotros) la prueba **falla**
+  en «RSC de /plan pedido en Nosotros». Sin la mutación, **2/2** (34,8 s en total).
+
+Salidas:
+
+- Componentes de Plan y selector: **44/44**.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **2/2**.
+- `npm run verify`: la primera corrida pasó (exit 0, 740 componentes) en 115,02 s con el equipo cargado (lint 43,68 s);
+  la repetición: **exit 0, 86,70 s** (< 90 s), dominio 84, componentes **740 pasan / 2 omisiones previstas**.
+  `git diff --check` pasa.
+
+## Re-revisión de ChatGPT del PR #67 (sobre `7de0fed`) · F67-4
+
+F67-1, F67-2 y F67-3 quedaron cerrados. F67-4: la respuesta del cambio de Yo a Nosotros se marcaba como de Yo y no se
+inspeccionaba. Un solo commit, solo en la prueba (`tests/e2e/budgets.e2e.ts`); sin cambios de producción ni `db:dev:reset`.
+
+- **Tres fases, marcadas al empezar cada petición**: `me` antes del clic en «Nosotros»; `switch` desde justo antes del clic
+  hasta que Plan de Nosotros se ve (la barra de Mercado 640.000 de 900.000); `us` después. Las respuestas de `switch` y `us`
+  pasan las negativas.
+- **Qué petición es la transición**: el selector escribe la cookie en el navegador (`writeContextCookie`, `document.cookie`) y
+  `ContextView` llama a `router.refresh()`, que hace un **GET con `_rsc` a `/plan`**; no hay Server Action. Aun así el
+  interceptor captura también los POST con `Next-Action` a `/` y `/plan`, por si el cambio pasara a una.
+- **Controles**: hay al menos una respuesta de la fase `switch` con cuerpo, y la de `/plan` trae ya el presupuesto compartido
+  sembrado. Se conservan los de `7de0fed`: el RSC de Plan en Yo trae el presupuesto personal; al menos un RSC de `/plan`
+  iniciado en `us` trae el compartido; y las lecturas directas de HTML y RSC sin interceptar, con la cookie válida, ausente y
+  no válida.
+- **Mutación**: el interceptor añade «123.400» (marca personal de Sara) **solo** al cuerpo capturado de las respuestas que
+  empezaron en `switch`. Resultado: **1 failed**, «respuesta de /plan en la fase switch», recibido `["123.400"]`. Sin la
+  mutación: **2/2** (37,0 s en total), `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` contra `juntia-dev`.
+
+`npm run verify`: la primera corrida falló por tres tests ajenos que superaron 5 s con el equipo cargado (`app-port.test.ts`
+y dos de `review-f57.test.tsx`; este commit no toca nada que Vitest corra). La repetición: **exit 0**, dominio 84, componentes
+**740 pasan / 2 omisiones previstas**, en **98,80 s**: por encima del presupuesto de 90 s, con los componentes en 68 s frente a
+41–52 s en las corridas anteriores de hoy (otra sesión trabajaba en el mismo equipo). `git diff --check` pasa.
+
+## Gate del PR #67 · run 42847381388 (sobre `2d257a9`): `--project` y las specs
+
+Falló el paso «E2E smoke (selected specs)» del job `e2e`. El selector eligió bien (todas, por tocar el workflow), pero
+`scripts/ci.mjs` ejecutaba `npm run test:e2e:smoke -- <specs>` sobre `playwright test --project e2e`; como `--project` admite
+varios valores, Playwright tomó los archivos como nombres de proyecto: «Project(s) "tests/e2e/access-account.e2e.ts", …
+not found». En local no salió porque `e2e:dev` arma su comando por otro camino (`scripts/dev-target/e2e-plan.mjs`).
+
+Arreglo (un solo commit y un solo push, que lanza el gate):
+
+- `package.json`: `--project=<nombre>` con `=` en `test:e2e:smoke` y en los demás scripts con el mismo patrón
+  (`test:a11y`, del mismo job, y `test:unit`, `test:components` y `test:integration`, de Vitest). Las líneas del workflow
+  con `--project e2e` / `--project evidence` van seguidas de opciones, no de archivos, y no cambian.
+- `scripts/ci.mjs`: el armado de los argumentos de npm pasa a `npmArgs(command, env)`, exportado; importado por una prueba,
+  el módulo no ejecuta nada.
+- `tests/ci-command.test.ts` (proyecto `components`): ejecuta el comando real que arma `ci.mjs` con `--list`, sin correr
+  nada. Con una spec lista solo `budgets.e2e.ts`; con dos, solo esas dos; sin `E2E_SPECS`, las cuatro de `tests/e2e`. Exige
+  salida 0 y que no aparezca «not found».
+
+Salidas locales:
+
+- `tests/ci-command.test.ts`: **3/3**. Con el script viejo (`--project e2e`) puesto a mano: **2 fallan** (los dos casos
+  con specs) y el de sin specs pasa; restaurado.
+- El camino exacto del job, con la lista del gate y `--list` (añadido dentro de `E2E_SPECS` para no correr nada):
+  `E2E_SPECS="tests/e2e/access-account.e2e.ts tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts tests/e2e/budgets.e2e.ts --list" node scripts/ci.mjs run test:e2e:smoke`
+  → `playwright test --project=e2e tests/e2e/access-account.e2e.ts … tests/e2e/budgets.e2e.ts --list`, **exit 0, «Total:
+  34 tests in 4 files»** (incluye las `@mail`, que en el job sí corren).
+- `A11Y_JOB=e2e npm run test:a11y -- --list` → `playwright test --project=a11y --list`, **«Total: 95 tests in 5 files»**,
+  como en `e2e:dev`.
+- `node scripts/ci.mjs summary` sigue funcionando como módulo principal.
+- `npm run verify`: la primera corrida falló en typecheck (el parámetro `env` del `.mjs` tomaba el tipo `ProcessEnv`; se
+  tipó con JSDoc). La repetición: **exit 0, 65,68 s**; `vitest run --project=domain` 84, `vitest run --project=components`
+  **743 pasan / 2 omisiones previstas**. `git diff --check` pasa.
+
+---
+
 # Evidencia · 004 · PR C · Metas, aportes, retiros y S5
 
 Rama `claude/004-c-goals-6b13e8`, sobre `main` en `bd408b9` (PR A fusionado). Tareas T042–T053 y T044a; T054–T056 son humanas. Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (`PORT=3500`); **no es evidencia de CI** (ADR-011 §9.8) y no se lanzó ningún run. El lock no se forzó nunca: cuando lo tenía la sesión del PR B, se esperó a que lo soltara.
@@ -697,3 +952,21 @@ Un solo cambio por punto, sin bucles de entrada y salida. En la esquina inferior
 **Corridas**
 - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/couple-settle.e2e.ts <prueba temporal> tests/a11y/goals.a11y.ts`: **exit 0, 148,19 s** (build 15,93 s; E2E 8/8, 88,19 s; axe 2/2, 41,83 s).
 - `npm run verify`, primera corrida: **exit 1** por un tiempo agotado (5 s) en `src/features/expenses/review-f57.test.tsx`, ajeno a metas; ese archivo solo pasa 19/19. Segunda corrida: **exit 0, 100,43 s** (aviso de presupuesto de 90 s). Dominio **78/78**; componentes **785 pasan / 2 omisiones previstas**, 60 archivos; typecheck y lint verdes.
+
+## Integración de `main` tras el PR B (`4fadbf5`)
+
+Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la ronda anterior.
+
+- **Conflictos**:
+  - `src/features/shared/write-result.ts`: `WriteError`, `WriteAction` y `REJECTED` suman los presupuestos del PR B y las metas del PR C; se conserva `detail`, con `WriteRejectionDetail`.
+  - `src/app/(app)/product-routes.test.tsx`: el PR B sacó Plan y el PR C sacó Metas, así que ya no queda ninguna ruta de producto sin datos. La prueba conserva lo que no depende de los datos de una página: en las seis rutas de producto, el AppShell no muestra el aviso de versión base ni cifras en sus nombres accesibles (FR-044).
+  - `evidence.md`: se conservan las secciones del PR B y del PR C, en ese orden.
+  - `src/lib/copy/es.ts` y `tests/support/a11y.ts` se fusionaron sin conflicto; el typecheck lo confirma.
+- **Selector de specs**: `scripts/e2e-select.mjs` ya mapea la spec 4 a `tests/e2e/goals.e2e.ts`; `tests/e2e-select.test.ts` pasa.
+- **Captura de RSC de la spec 5** (`tests/e2e/budgets.e2e.ts`): usa sus propias fases (`me`, `switch`, `us`), que se mueven a mano. El helper `tests/support/rsc-capture.ts`, que clasifica cada petición por su cookie, sirve también para ella. No se migra en este PR: queda anotado para un PR aparte.
+- **Corridas tras el merge**:
+  - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/budgets.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 138,32 s**. Build 33,89 s; E2E de las specs 4 y 5 **4/4, 54,53 s**; axe **2/2, 48,35 s**.
+  - `npm run verify`, tres corridas:
+    - La primera, **exit 1**: `tests/a11y/job-selection.test.ts`, que llega de `main`, encontró ocupado el puerto 3400 (otro proceso, no lanzado por esta sesión).
+    - La segunda, con `PORT=3500`, **exit 1**: otra vez el tiempo agotado de 5 s de `review-f57.test.tsx`, ajeno a metas. Solo, ese archivo pasa 19/19.
+    - La tercera, con `PORT=3500`, **exit 0, 94,72 s** (aviso de presupuesto de 90 s). Dominio **84/84**; componentes **836 pasan / 2 omisiones previstas**, 63 archivos; typecheck y lint verdes.

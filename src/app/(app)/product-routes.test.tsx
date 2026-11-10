@@ -1,6 +1,8 @@
 // P0-1, PR C (T066; FR-043, FR-044 de la 002): Inicio y Actividad ya leen datos reales y se prueban en
-// src/features/home y src/features/activity; aquí queda Plan, que sigue sin datos. Desde el PR C de la 004, Metas lee metas
-// reales y se prueba en src/features/goals, en la spec E2E 4 y en tests/a11y/goals.a11y.ts. Balance lee datos reales desde
+// src/features/home y src/features/activity. Plan lee datos reales desde el PR B de la 004 (su modo sin presupuesto se prueba
+// en src/features/plan/plan.test.tsx) y Metas desde el PR C de la 004 (src/features/goals, spec E2E 4 y
+// tests/a11y/goals.a11y.ts): ya no queda ninguna ruta de producto sin datos. Aquí queda lo que no depende de los datos de
+// una página: el AppShell no muestra el aviso de versión base en ninguna ruta (FR-044). Balance lee datos reales desde
 // el PR D de la 003 y se prueba en src/features/balance, en la spec E2E 3 y en tests/a11y/balance.a11y.ts. El aviso de versión
 // base desaparece (FR-044): la prueba que exigía verlo pasa a exigir que no esté en ninguna ruta.
 // T050 / FR-028, FR-029; SC-004; US-2, escenarios 1 y 3 — capa: componente (Vitest + RTL), con `next/navigation`
@@ -21,13 +23,9 @@ const idleActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn()
 import { AppShell } from "@/components/shell/app-shell";
 import { ContextProvider } from "@/components/shell/context-selector";
 import { AccountProvider } from "@/features/account/account-context";
-import PlanPage from "./plan/page";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useRouter: () => ({ refresh: vi.fn() }) }));
-// Metas y Plan leen la cookie de contexto en el servidor (F44-1); aquí, sin cookie: Yo.
-vi.mock("server-only", () => ({}));
-vi.mock("@/lib/server-context", () => ({ serverContext: async () => "me" }));
 
 // El árbol de cliente de src/app/(app)/layout.tsx, con un perfil de prueba sin cifras.
 function AppLayout({ children }: { children: ReactNode }) {
@@ -44,32 +42,24 @@ function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
-const routes: readonly [string, () => ReactNode | Promise<ReactNode>][] = [
-  ["/plan", PlanPage],
-];
+const productRoutes = ["/", "/actividad", "/plan", "/metas", "/balance", "/cuenta"] as const;
 
 // Dígitos, signo de pesos, porcentaje y las dos afirmaciones de saldo que §15.10 prohíbe sin datos.
 const FORBIDDEN = /[0-9]|\$|%|al día|le debe/i;
 const NAMED = ["aria-label", "aria-description", "title", "alt"] as const;
 
-describe("Rutas de producto sin datos: sin cifras y sin aviso de versión base (T050; FR-044 de la 002)", () => {
-  for (const [route, Page] of routes) {
-    it(`${route}: ni el texto visible ni los nombres accesibles tienen cifras`, async () => {
+describe("Rutas de producto: sin aviso de versión base (FR-044 de la 002)", () => {
+  for (const route of productRoutes) {
+    it(`${route}: el AppShell ya no muestra el aviso de versión base`, () => {
       pathname.current = route;
-      const { container } = render(<AppLayout>{await Page()}</AppLayout>);
-      expect(container.textContent ?? "").not.toMatch(FORBIDDEN);
+      const { container } = render(<AppLayout><p>Contenido</p></AppLayout>);
+      expect(container.querySelector("[data-base-version-notice]")).toBeNull();
+      expect(container.textContent).not.toMatch(/Versión base|Todavía no guarda datos/);
       for (const attribute of NAMED) {
         for (const node of container.querySelectorAll(`[${attribute}]`)) {
           expect(node.getAttribute(attribute) ?? "", `${attribute} en ${route}`).not.toMatch(FORBIDDEN);
         }
       }
-    });
-
-    it(`${route}: ya no muestra el aviso de versión base (FR-044)`, async () => {
-      pathname.current = route;
-      const { container } = render(<AppLayout>{await Page()}</AppLayout>);
-      expect(container.querySelector("[data-base-version-notice]")).toBeNull();
-      expect(container.textContent).not.toMatch(/Versión base|Todavía no guarda datos/);
     });
   }
 });
