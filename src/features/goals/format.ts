@@ -35,6 +35,23 @@ export function overlineOf(goal: GoalView) {
   return `${goal.scope === "shared" ? copy.goals.scope.shared : copy.goals.scope.personal} · ${when}`;
 }
 
+/**
+ * Orden de la pila (decisión del fundador del 10 de noviembre de 2026): al frente, la meta con el aporte no anulado más
+ * reciente (fecha del aporte y, en el mismo día, el registrado más tarde). Las que no tienen aportes van detrás, y los
+ * empates, por creación: la más antigua primero. Por último el id, para un orden total estable.
+ */
+export function stackOrder(a: GoalView, b: GoalView): number {
+  const byCreation = a.createdAt !== b.createdAt ? (a.createdAt < b.createdAt ? -1 : 1) : a.id < b.id ? -1 : 1;
+  if (a.lastContributionDate === null || b.lastContributionDate === null) {
+    if (a.lastContributionDate === b.lastContributionDate) return byCreation;
+    return a.lastContributionDate === null ? 1 : -1;
+  }
+  if (a.lastContributionDate !== b.lastContributionDate) return a.lastContributionDate > b.lastContributionDate ? -1 : 1;
+  const at = (value: string | null) => (value === null ? 0 : Date.parse(value));
+  if (at(a.lastContributionCreatedAt) !== at(b.lastContributionCreatedAt)) return at(a.lastContributionCreatedAt) > at(b.lastContributionCreatedAt) ? -1 : 1;
+  return byCreation;
+}
+
 export const reached = (goal: GoalView) => BigInt(goal.balanceMinor) >= BigInt(goal.targetMinor);
 export const surplusOf = (goal: GoalView) => {
   const extra = BigInt(goal.balanceMinor) - BigInt(goal.targetMinor);

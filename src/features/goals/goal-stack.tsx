@@ -22,6 +22,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
 import { usePrefersReducedMotion } from "@/lib/motion/reduced";
 import { GoalCard } from "./goal-card";
+import { stackOrder } from "./format";
 import type { GoalMemberView, GoalView, PlanningContext } from "./types";
 
 type Props = {
@@ -68,7 +69,9 @@ function layerClass(visible: number, index: number, fan: boolean) {
   return `absolute inset-x-0 origin-top ${mobile} lg:inset-x-auto lg:top-2 lg:origin-bottom-left lg:scale-x-100 ${spread} ${WIDE}`;
 }
 
-export function GoalStack({ goals, members, today, context, onCreate, label = copy.goals.stack.list, fan = true, seeAllHref }: Props) {
+export function GoalStack({ goals: given, members, today, context, onCreate, label = copy.goals.stack.list, fan = true, seeAllHref }: Props) {
+  // Al frente, la del aporte más reciente (stackOrder); tocar o deslizar mueve el frente desde ahí.
+  const goals = [...given].sort(stackOrder);
   const reduced = usePrefersReducedMotion();
   const [front, setFront] = useState(0);
   const [listed, setListed] = useState(false);

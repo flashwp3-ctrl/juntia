@@ -42,12 +42,12 @@ const minor = (pesos: bigint) => (pesos * 100n).toString();
 const japan = (overrides: Partial<GoalView> = {}): GoalView => ({
   id: JAPAN, name: "Japón", goalType: "travel", scope: "shared", status: "active", version: 3,
   targetMinor: minor(18000000n), balanceMinor: minor(11340000n), progressPercent: 63, myAvailableMinor: minor(6120000n),
-  hasPendingRequest: false, targetMonth: "2027-04-01", createdAt: "2025-12-01T17:00:00.000Z", ...overrides,
+  hasPendingRequest: false, targetMonth: "2027-04-01", createdAt: "2025-12-01T17:00:00.000Z", lastContributionDate: null, lastContributionCreatedAt: null, ...overrides,
 });
 const bike = (overrides: Partial<GoalView> = {}): GoalView => ({
   id: BIKE, name: "Bicicleta de ruta", goalType: "other", scope: "personal", status: "active", version: 2,
   targetMinor: minor(3000000n), balanceMinor: minor(1050000n), progressPercent: 35, myAvailableMinor: minor(1050000n),
-  hasPendingRequest: false, targetMonth: null, createdAt: "2026-08-01T17:00:00.000Z", ...overrides,
+  hasPendingRequest: false, targetMonth: null, createdAt: "2026-08-01T17:00:00.000Z", lastContributionDate: null, lastContributionCreatedAt: null, ...overrides,
 });
 const japanMembers: GoalMemberView[] = [
   { ...people[0], contributedMinor: minor(6120000n), withdrawnMinor: "0", usedMinor: "0", availableMinor: minor(6120000n), contributionCount: 11 },
@@ -532,5 +532,26 @@ describe("Tinte por tipo de meta", () => {
     expect(back.className).toContain("bg-[var(--goal-tint-bg)]");
     expect(back.className).toContain("shadow-[0_0_0_1px_var(--color-border-strong)]");
     expect(back.className).not.toMatch(/opacity-/);
+  });
+});
+
+describe("Orden de la pila (decisión del fundador del 10 de noviembre de 2026)", () => {
+  const front = (goals: GoalView[]) => {
+    const { container, unmount } = render(<GoalStack goals={goals} members={{}} today={TODAY} context="us" />);
+    const ids = [...container.querySelectorAll("[data-stack-layer] [data-goal-card]")].map((node) => node.getAttribute("data-goal-card"));
+    unmount();
+    return ids;
+  };
+  const a = extra(1), b = extra(2), c = extra(3);
+  it("al frente, la meta con el aporte más reciente (fecha del aporte)", () => {
+    expect(front([{ ...a, lastContributionDate: "2026-10-01", lastContributionCreatedAt: "2026-10-01T17:00:00Z" }, { ...b, lastContributionDate: "2026-11-02", lastContributionCreatedAt: "2026-11-02T17:00:00Z" }, c])).toEqual([b.id, a.id, c.id]);
+  });
+  it("mismo día: gana el aporte registrado más tarde", () => {
+    expect(front([{ ...a, lastContributionDate: "2026-11-02", lastContributionCreatedAt: "2026-11-02T09:00:00Z" }, { ...b, lastContributionDate: "2026-11-02", lastContributionCreatedAt: "2026-11-02T21:00:00Z" }])).toEqual([b.id, a.id]);
+  });
+  it("sin aportes: detrás de las que tienen, y entre ellas por creación (la más antigua primero)", () => {
+    const old = { ...c, createdAt: "2025-01-01T00:00:00Z" };
+    const young = { ...b, createdAt: "2026-06-01T00:00:00Z" };
+    expect(front([young, { ...a, lastContributionDate: "2026-01-05", lastContributionCreatedAt: "2026-01-05T00:00:00Z" }, old])).toEqual([a.id, old.id, young.id]);
   });
 });

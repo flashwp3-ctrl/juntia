@@ -27,7 +27,7 @@ const balance = computeBalance(beforeSettlement.expenses, beforeSettlement.settl
 const japan: GoalView = {
   id: "44444444-4444-4444-8444-444444444444", name: "Japón", goalType: "travel", scope: "shared", status: "active", version: 3,
   targetMinor: "1800000000", balanceMinor: "1134000000", progressPercent: 63, myAvailableMinor: "612000000", hasPendingRequest: false,
-  targetMonth: "2027-04-01", createdAt: "2025-12-01T17:00:00.000Z",
+  targetMonth: "2027-04-01", createdAt: "2025-12-01T17:00:00.000Z", lastContributionDate: "2026-10-22", lastContributionCreatedAt: "2026-10-22T17:00:00.000Z",
 };
 const goals = (setAsideMinor: string, list: GoalView[] = [japan]) => ({ setAsideMinor, goals: list, members: {} });
 

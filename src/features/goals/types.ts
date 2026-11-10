@@ -14,6 +14,8 @@ export type GoalView = {
   id: string; name: string; goalType: GoalType; scope: GoalScope; status: "active" | "completed" | "archived"; version: number;
   targetMinor: string; balanceMinor: string; progressPercent: number; myAvailableMinor: string; hasPendingRequest: boolean;
   targetMonth: string | null; createdAt: string;
+  /** El último aporte no anulado (`goals_overview`): su fecha y su instante, o `null` sin aportes. Ordenan la pila. */
+  lastContributionDate: string | null; lastContributionCreatedAt: string | null;
 };
 
 /** Una persona que puede aparecer en una meta: nombre visible, orden de ingreso (color y patrón) y si es quien mira. */

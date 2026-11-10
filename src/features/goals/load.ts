@@ -32,6 +32,7 @@ export const toGoalView = (row: GoalTransport): GoalView => ({
   id: row.id, name: row.name, goalType: row.goal_type, scope: row.goal_scope, status: row.status, version: row.version,
   targetMinor: row.target_minor, balanceMinor: row.balance_minor, progressPercent: Number(row.progress_percent), myAvailableMinor: row.my_available_minor,
   hasPendingRequest: row.has_pending_request, targetMonth: row.target_month, createdAt: row.created_at,
+  lastContributionDate: row.last_contribution_date ?? null, lastContributionCreatedAt: row.last_contribution_created_at ?? null,
 });
 
 export const toEntryView = (row: GoalEntryTransport, goalName?: string): GoalEntryView => ({
