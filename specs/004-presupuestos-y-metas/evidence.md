@@ -567,3 +567,29 @@ T052 · webkit · con API · movimiento reduce        → Error: expect(page).to
   La frontal queda quieta tras el gesto (misma posición durante 1,5 s), y un toque posterior abre la meta frontal.
   - **Regresión.** `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 106,65 s** (spec 4 2/2; axe de metas 2/2). Componentes de metas, Inicio y Actividad: **105/105**. No se reinició `juntia-dev`.
 - **Orden de la pila** («al frente, la meta con el aporte más reciente»): **pendiente**. `goals_overview` no trae la fecha del último aporte; se le preguntó al gestor si usar una consulta más sobre `goal_entries` o una migración, y si «más reciente» es `effective_date` o `created_at`.
+
+## Prefetch RSC en las specs 3 y 4 (revisión del gestor del PR #68; mismo hallazgo que F67-2 del PR B)
+
+- **Hallazgo** (de la sesión del PR B, `7de0fed`). En Playwright, `response.text()` devuelve "" con las respuestas RSC transmitidas, y el `.catch(() => "")` lo ocultaba. Por eso la parte de prefetch de la spec 4 (`goals.e2e.ts`) y de la spec 3 (`couple-settle.e2e.ts`, ya en `main`) no inspeccionaba ningún cuerpo.
+- **Arreglo** (commit `6bde71b`), un helper común en `tests/support/rsc-capture.ts`:
+  - intercepta con `page.route(url => url.searchParams.has("_rsc"))` y lee el cuerpo con `route.fetch()` y `response.text()`;
+  - entrega la respuesta sin cambios (`route.fulfill({ response, body })`);
+  - marca cada petición al empezar, con su ruta y con si se inició ya en Nosotros;
+  - si la lectura falla, la prueba falla: no hay `catch` que la cambie por "".
+- **Spec 4.** Control en Yo: el RSC de `/metas` (navegación de Inicio a Metas en el cliente) trae el id y el nombre de la meta personal. En Nosotros:
+  - ningún RSC trae marcadores personales;
+  - hay al menos un RSC de `/metas` iniciado en Nosotros;
+  - y trae la meta compartida sembrada (control positivo).
+- **Spec 3**, el mismo esquema: en Yo, el RSC de `/actividad` trae los privados de Sara. En Nosotros:
+  - ningún RSC trae privados;
+  - hay al menos un RSC de `/actividad`;
+  - y trae «Carulla Laureles».
+  - Es un arreglo de prueba: no cambia comportamiento.
+- **Verde** contra `juntia-dev`: `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/couple-settle.e2e.ts --grep "HTML"` da **2/2, 46,7 s** (build 17,10 s, total 66,25 s).
+- **Mutación 1**: en el helper, `underUs = true` desde el inicio, de modo que toda petición de Yo cuenta como de Nosotros. **Las dos fallan** en el control de Yo:
+  - spec 3: «el RSC de Actividad en Yo trae los privados», recibido `false`;
+  - spec 4: «el RSC de Metas en Yo trae la meta personal», recibido `false`.
+- **Mutación 2**: comprobar como de Nosotros todas las peticiones (`rsc.read(() => true)`), incluidas las de Yo. **Las dos fallan** en la comprobación negativa:
+  - spec 3: «RSC de /actividad pedido en Nosotros» con «Taxi a la oficina», «Reembolso EPS», «Regalo de cumpleaños», «Almuerzo con el equipo», «4500000» y «5970000», entre otros;
+  - spec 4: «RSC de /metas/{id personal} pedido en Nosotros», con el id de la meta personal.
+- Las dos mutaciones fueron temporales, sin commit; los archivos se restauraron con `git checkout`.
