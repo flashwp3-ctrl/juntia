@@ -19,6 +19,7 @@ import { loadCoupleForSheet } from "@/features/couple/shared-load";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
 import { settleAction, voidSettlementAction } from "@/features/balance/actions";
 import { todayInBogota } from "@/domain/transactions";
+import { goalActions } from "@/features/goals/goal-actions";
 
 const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
 // PR C de la 003 (T045–T050): escrituras de gasto compartido y de Mover a Pareja, con los tres resultados y «Comprobar estado».
@@ -39,7 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <AccountProvider displayName={account.profile.displayName} theme={account.profile.theme} person={personOf(couple)} partnerName={partnerOf(couple)} couple={couple?.status ?? null}>
       <InvitationReturn />
       <ContextProvider>
-        <AnnotateProvider actions={actions} today={todayInBogota()} couple={sheetCouple} sharedActions={sharedActions}>
+        <AnnotateProvider actions={actions} today={todayInBogota()} couple={sheetCouple} sharedActions={sharedActions} goalActions={goalActions}>
           <AppShell>
             <main id="contenido">{children}</main>
           </AppShell>

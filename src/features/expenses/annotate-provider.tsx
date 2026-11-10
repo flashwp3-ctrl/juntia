@@ -26,7 +26,8 @@ import { Button } from "@/components/ui/button";
 import { WriteUnknown } from "@/features/shared/write-unknown";
 import { lastFromSaved } from "./split-state";
 import { TIMED_OUT, withTimeout } from "@/features/shared/use-write";
-import type { WriteError, WriteOutcome } from "@/features/shared/write-result";
+import type { WriteAction, WriteError, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
+import type { GoalActions, SavedEntry } from "@/features/goals/types";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
@@ -80,6 +81,8 @@ type AnnotateState = {
   sharedActions: SharedActions | null;
   /** PR D (T062; FR-028, FR-060): el aviso «Liquidación registrada» con «Deshacer» de 6 s, que sobrevive a la navegación. */
   offerSettlementUndo: (saved: SavedSettlement) => void;
+  /** 004 PR C (T047; FR-042, FR-095): el aviso de un aporte o un retiro con «Deshacer» de 6 s, con la misma regla de un deshacer a la vez. */
+  offerGoalUndo: (offer: { kind: "contribution" | "withdrawal"; saved: SavedEntry; message: string }) => void;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -105,11 +108,13 @@ type AnnotateProviderProps = {
   /** PR C (T046): la pareja activa para la hoja (con lo último que usó la persona en Nosotros) y sus escrituras. */
   couple?: CoupleForSheet | null;
   sharedActions?: SharedActions;
+  /** 004 PR C (T047): las escrituras de metas, para el «Deshacer» de aportes y retiros. */
+  goalActions?: GoalActions;
   /** El contexto de la app; por defecto, el del selector (ContextProvider). Las pruebas lo fijan aquí. */
   context?: ContextChoice;
 };
 
-export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, context }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, goalActions, context }: AnnotateProviderProps) {
   const appContext = useOptionalContextChoice();
   const currentContext: ContextChoice = context ?? appContext?.value ?? "me";
   // Q5, decisión 1: lo último que usó esta persona en Nosotros. Nace de lo que leyó el layout y se actualiza en memoria al
@@ -295,8 +300,10 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const sharedRef = useRef(sharedActions);
   useEffect(() => { sharedRef.current = sharedActions; });
   type UndoIntent = {
-    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement"; id: string; idempotencyKey: string;
+    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement" | "void_goal_entry"; id: string; idempotencyKey: string;
     send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
+    /** 004 PR C: «Comprobar estado» propio (las metas existen también sin pareja, sin las escrituras compartidas). */
+    check?: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<unknown>>;
   };
   // F57-6 (revisión del PR #57): mientras un deshacer sigue desconocido o sin constar, su aviso no caduca. Vive aquí, en
   // memoria (nunca en el navegador), con «Reintentar» y «Comprobar estado» sobre la intención original; cerrarlo se confirma.
@@ -316,10 +323,10 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const runUndoRef = useRef<(intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => Promise<void>>(async () => {});
   const runUndo = useCallback((intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending" = "toast") => runUndoRef.current(intent, mode, source), []);
   useEffect(() => { runUndoRef.current = async (intent: UndoIntent, mode: "send" | "check", source: "toast" | "pending") => {
-    const writes = sharedRef.current;
+    const check = intent.check ?? sharedRef.current?.check;
     const reserved = activeRef.current;
     if (reserved && reserved.intent !== intent) return;
-    if (!writes || undoing.current.has(intent.id)) return;
+    if (!check || undoing.current.has(intent.id)) return;
     undoing.current.add(intent.id);
     const generation = toastGeneration.current;
     setActiveUndo(reserved ? { ...reserved, checking: true } : { intent, phase: "running", checking: false });
@@ -330,7 +337,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
         const result = await withTimeout(intent.send());
         outcome = result === TIMED_OUT || result.status === "unknown" ? { kind: "unknown" } : result.status === "ok" ? { kind: "ok" } : { kind: "rejected", error: result.error };
       } else {
-        const result = await withTimeout(writes.check({ action: intent.action, idempotencyKey: intent.idempotencyKey }));
+        const result = await withTimeout(check({ action: intent.action, idempotencyKey: intent.idempotencyKey }));
         outcome = result === TIMED_OUT || result.state === "error" ? { kind: "unknown" } : result.state === "completed" ? { kind: "ok" } : { kind: "notFound" };
       }
     } catch {
@@ -386,6 +393,24 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.balance.settle.done, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoSettlement(saved, key) } });
   }, [notify, undoSettlement]);
+
+  // 004 PR C (T047; Q13, FR-042, FR-095): «Deshacer» de 6 s tras un aporte o un retiro, con la misma máquina y la misma
+  // regla de un deshacer a la vez que la 003. Anula con `undo`; la función acepta el deshacer durante 60 s (research R8) y
+  // fuera de esa ventana responde JT225, que se dice. La clave es una por aviso.
+  const goalRef = useRef(goalActions);
+  useEffect(() => { goalRef.current = goalActions; });
+  const undoGoalEntry = useCallback((kind: "contribution" | "withdrawal", saved: SavedEntry, idempotencyKey: string) => runUndo({
+    action: "void_goal_entry", id: saved.id, idempotencyKey, done: kind === "contribution" ? copy.goals.contribute.undone : copy.goals.withdrawSheet.undone,
+    send: () => goalRef.current ? goalRef.current.voidEntry({ idempotencyKey, entryId: saved.id, reason: "undo" }) : Promise.resolve({ status: "unknown" as const }),
+    check: (input) => goalRef.current ? goalRef.current.check(input) : Promise.resolve({ state: "error" as const }),
+    onOk: () => router.refresh(),
+    rejected: (error) => (error === "goalUndoNotAvailable" ? copy.goals.errors.undoNotAvailable : error === "entryAlreadyVoided" ? copy.goals.errors.alreadyVoided
+      : error === "insufficientFunds" ? copy.goals.errors.fundsUsed : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+  }, "send"), [runUndo, router]);
+  const offerGoalUndo = useCallback(({ kind, saved, message }: { kind: "contribution" | "withdrawal"; saved: SavedEntry; message: string }) => {
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalEntry(kind, saved, key) } });
+  }, [notify, undoGoalEntry]);
 
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
@@ -479,8 +504,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo }),
-    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo }),
+    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>

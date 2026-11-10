@@ -115,6 +115,34 @@ En oscuro, la elevación se expresa con superficie más clara + hairline; las so
 | color.goal.track | #E7DFD0 | #22262A | Riel de la cinta |  |  |
 | color.goal.pace | #1A1C1A | #F3EFE7 | Marca de ritmo | 15,5:1 | 16,1:1 |
 | color.goal.projection | #6C665B | #A29C92 | Próximo aporte, punteado | 5,1:1 | 6,8:1 |
+| color.goal.tint.travel.bg | #C4DEE6 | #1B333A | Fondo del fallback sin foto · travel («Agua») |  |  |
+| color.goal.tint.travel.initial | #95B5BF | #405F69 | Inicial gigante del fallback · travel («Agua») |  |  |
+| color.goal.tint.travel.icon | #285764 | #96C7D5 | Ícono Duotone del tipo · travel («Agua») |  |  |
+| color.goal.tint.travel.edge | #577F8B | #5B808B | Borde interior de 1,5 px del riel sobre el tinte · travel («Agua») |  |  |
+| color.goal.tint.home.bg | #E3CEB9 | #372F27 | Fondo del fallback sin foto · home («Adobe») |  |  |
+| color.goal.tint.home.initial | #C1A58F | #695749 | Inicial gigante del fallback · home («Adobe») |  |  |
+| color.goal.tint.home.icon | #71472D | #DCB598 | Ícono Duotone del tipo · home («Adobe») |  |  |
+| color.goal.tint.home.edge | #8F6A51 | #907764 | Borde interior de 1,5 px del riel sobre el tinte · home («Adobe») |  |  |
+| color.goal.tint.wedding.bg | #E7D0DC | #35242D | Fondo del fallback sin foto · wedding («Malva polvo») |  |  |
+| color.goal.tint.wedding.initial | #C1A5B4 | #654E5B | Inicial gigante del fallback · wedding («Malva polvo») |  |  |
+| color.goal.tint.wedding.icon | #684257 | #D6B1C5 | Ícono Duotone del tipo · wedding («Malva polvo») |  |  |
+| color.goal.tint.wedding.edge | #8E6D7F | #896D7C | Borde interior de 1,5 px del riel sobre el tinte · wedding («Malva polvo») |  |  |
+| color.goal.tint.vehicle.bg | #D7D9BB | #2A3025 | Fondo del fallback sin foto · vehicle («Liquen») |  |  |
+| color.goal.tint.vehicle.initial | #AFB190 | #575E4A | Inicial gigante del fallback · vehicle («Liquen») |  |  |
+| color.goal.tint.vehicle.icon | #52532A | #C0CAA1 | Ícono Duotone del tipo · vehicle («Liquen») |  |  |
+| color.goal.tint.vehicle.edge | #777953 | #757D63 | Borde interior de 1,5 px del riel sobre el tinte · vehicle («Liquen») |  |  |
+| color.goal.tint.education.bg | #C6D2E7 | #1F2739 | Fondo del fallback sin foto · education («Pizarra») |  |  |
+| color.goal.tint.education.initial | #9CAAC3 | #4B546A | Inicial gigante del fallback · education («Pizarra») |  |  |
+| color.goal.tint.education.icon | #3B4D6E | #B0BEDC | Ícono Duotone del tipo · education («Pizarra») |  |  |
+| color.goal.tint.education.edge | #627290 | #68738B | Borde interior de 1,5 px del riel sobre el tinte · education («Pizarra») |  |  |
+| color.goal.tint.emergency.bg | #D9E5DC | #1C2A23 | Fondo del fallback sin foto · emergency («Salvia») |  |  |
+| color.goal.tint.emergency.initial | #A6BBAF | #40584A | Inicial gigante del fallback · emergency («Salvia») |  |  |
+| color.goal.tint.emergency.icon | #2F5A45 | #93C2A6 | Ícono Duotone del tipo · emergency («Salvia») |  |  |
+| color.goal.tint.emergency.edge | #658675 | #5A7967 | Borde interior de 1,5 px del riel sobre el tinte · emergency («Salvia») |  |  |
+| color.goal.tint.other.bg | #D0CBC5 | #353739 | Fondo del fallback sin foto · other («Piedra») |  |  |
+| color.goal.tint.other.initial | #A9A49E | #606265 | Inicial gigante del fallback · other («Piedra») |  |  |
+| color.goal.tint.other.icon | #4E4A43 | #C3C8CC | Ícono Duotone del tipo · other («Piedra») |  |  |
+| color.goal.tint.other.edge | #726E67 | #828588 | Borde interior de 1,5 px del riel sobre el tinte · other («Piedra») |  |  |
 | color.status.pending | #48443C | #D0CAC0 | POR SALDAR, borde punteado | 8,8:1 | 11,3:1 |
 | color.status.danger | #B4452F | #F0A08C | Exceso de presupuesto, error | 5,0:1 | 8,9:1 |
 | color.status.dangerSubtle | #F8DED6 | #3A211B | Fondo de error |  |  |
@@ -132,6 +160,8 @@ Contraste de la acción: texto #F7F3EB sobre #2D4B3D = 8,7:1 · #F3EFE7 sobre #3
 4. **Coral = exceso de presupuesto o error,** siempre con texto e ícono; nunca para saldos entre personas.
 5. **Por saldar = neutro** (borde punteado + reloj), no ámbar ni rojo. **Liquidado** = check + texto, en tinta.
 6. El color de una persona no codifica reglas financieras.
+
+- **Tinte por tipo de meta** (decisión del fundador del 10 de noviembre de 2026; BRAND_FOUNDATION, «tinte de la categoría de la meta»; Juntia DS v1, «08 Tintes de meta»): el fallback sin foto usa `color.goal.tint.{tipo}` (siete tipos, cuatro tokens cada uno). Sobre un tinte, el texto principal sigue en tinta y el secundario usa `color.status.pending`, nunca `color.text.secondary`, que no llega a 4,5:1 sobre algunos tintes. Limitación aceptada por el gestor y pendiente de la aprobación en pantalla: en claro, el tramo rayado de la persona 2 queda a 1,3–1,6:1 contra el tinte; el patrón y los importes en texto llevan la información.
 
 ### 2.2 CSS (referencia, no código de producción)
 ```css
@@ -157,6 +187,34 @@ Contraste de la acción: texto #F7F3EB sobre #2D4B3D = 8,7:1 · #F3EFE7 sobre #3
   --color-goal-track: #E7DFD0;
   --color-goal-pace: #1A1C1A;
   --color-goal-projection: #6C665B;
+  --color-goal-tint-travel-bg: #C4DEE6;
+  --color-goal-tint-travel-initial: #95B5BF;
+  --color-goal-tint-travel-icon: #285764;
+  --color-goal-tint-travel-edge: #577F8B;
+  --color-goal-tint-home-bg: #E3CEB9;
+  --color-goal-tint-home-initial: #C1A58F;
+  --color-goal-tint-home-icon: #71472D;
+  --color-goal-tint-home-edge: #8F6A51;
+  --color-goal-tint-wedding-bg: #E7D0DC;
+  --color-goal-tint-wedding-initial: #C1A5B4;
+  --color-goal-tint-wedding-icon: #684257;
+  --color-goal-tint-wedding-edge: #8E6D7F;
+  --color-goal-tint-vehicle-bg: #D7D9BB;
+  --color-goal-tint-vehicle-initial: #AFB190;
+  --color-goal-tint-vehicle-icon: #52532A;
+  --color-goal-tint-vehicle-edge: #777953;
+  --color-goal-tint-education-bg: #C6D2E7;
+  --color-goal-tint-education-initial: #9CAAC3;
+  --color-goal-tint-education-icon: #3B4D6E;
+  --color-goal-tint-education-edge: #627290;
+  --color-goal-tint-emergency-bg: #D9E5DC;
+  --color-goal-tint-emergency-initial: #A6BBAF;
+  --color-goal-tint-emergency-icon: #2F5A45;
+  --color-goal-tint-emergency-edge: #658675;
+  --color-goal-tint-other-bg: #D0CBC5;
+  --color-goal-tint-other-initial: #A9A49E;
+  --color-goal-tint-other-icon: #4E4A43;
+  --color-goal-tint-other-edge: #726E67;
   --color-status-pending: #48443C;
   --color-status-danger: #B4452F;
   --color-status-dangerSubtle: #F8DED6;
@@ -187,6 +245,34 @@ Contraste de la acción: texto #F7F3EB sobre #2D4B3D = 8,7:1 · #F3EFE7 sobre #3
   --color-goal-track: #22262A;
   --color-goal-pace: #F3EFE7;
   --color-goal-projection: #A29C92;
+  --color-goal-tint-travel-bg: #1B333A;
+  --color-goal-tint-travel-initial: #405F69;
+  --color-goal-tint-travel-icon: #96C7D5;
+  --color-goal-tint-travel-edge: #5B808B;
+  --color-goal-tint-home-bg: #372F27;
+  --color-goal-tint-home-initial: #695749;
+  --color-goal-tint-home-icon: #DCB598;
+  --color-goal-tint-home-edge: #907764;
+  --color-goal-tint-wedding-bg: #35242D;
+  --color-goal-tint-wedding-initial: #654E5B;
+  --color-goal-tint-wedding-icon: #D6B1C5;
+  --color-goal-tint-wedding-edge: #896D7C;
+  --color-goal-tint-vehicle-bg: #2A3025;
+  --color-goal-tint-vehicle-initial: #575E4A;
+  --color-goal-tint-vehicle-icon: #C0CAA1;
+  --color-goal-tint-vehicle-edge: #757D63;
+  --color-goal-tint-education-bg: #1F2739;
+  --color-goal-tint-education-initial: #4B546A;
+  --color-goal-tint-education-icon: #B0BEDC;
+  --color-goal-tint-education-edge: #68738B;
+  --color-goal-tint-emergency-bg: #1C2A23;
+  --color-goal-tint-emergency-initial: #40584A;
+  --color-goal-tint-emergency-icon: #93C2A6;
+  --color-goal-tint-emergency-edge: #5A7967;
+  --color-goal-tint-other-bg: #353739;
+  --color-goal-tint-other-initial: #606265;
+  --color-goal-tint-other-icon: #C3C8CC;
+  --color-goal-tint-other-edge: #828588;
   --color-status-pending: #D0CAC0;
   --color-status-danger: #F0A08C;
   --color-status-dangerSubtle: #3A211B;

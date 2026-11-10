@@ -19,15 +19,18 @@ import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
 import { BalanceLine } from "./balance-line";
 import { BalancePanel } from "@/features/balance/balance-panel";
 import { categoryFg, tileBg } from "./home-view";
+import type { HomeGoals } from "@/features/goals/types";
+import { GoalsModule, SetAsideLine } from "./goals-home";
 
 export { BalanceLine } from "./balance-line";
 export type CoupleMemberView = { userId: string; name: string; joinOrder: 1 | 2; isMe: boolean };
 export type CoupleMonthSummary = { totalMinor: string; count: number; byCategory: Partial<Record<CategoryId, string>> };
-type Props = { month: string; today: string; summary: CoupleMonthSummary | null; balance: readonly MemberBalance[]; rows: readonly SharedTransaction[]; members: readonly CoupleMemberView[] };
+/** 004 PR C (T050; FR-070): lo apartado del mes y las metas compartidas; `undefined` mientras la lectura no existe o falló. */
+type Props = { month: string; today: string; summary: CoupleMonthSummary | null; balance: readonly MemberBalance[]; rows: readonly SharedTransaction[]; members: readonly CoupleMemberView[]; goals?: HomeGoals };
 
 const RECENT = 5;
 
-export function CoupleHomeView({ month, today, summary, balance, rows, members }: Props) {
+export function CoupleHomeView({ month, today, summary, balance, rows, members, goals }: Props) {
   const name = monthName(month);
   const recent = groupByDay(rows).flatMap(({ transactions }) => transactions).slice(0, RECENT);
   // Sin ningún gasto compartido en la pareja (saldo sin movimiento y mes vacío): 04·6, nunca «Al día $0».
@@ -36,6 +39,8 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members }
     return (
       <div className="flex flex-col gap-6 pt-2">
         <ExitState icon="users-three" title={copy.couple.home.empty.title} description={copy.couple.home.empty.description} actions={<AnnotateFirst label={copy.couple.home.empty.action} />} />
+        {/* 004 PR C: sin gastos compartidos, las metas siguen aquí (el ahorro no depende del gasto). */}
+        {goals ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="us" /><GoalsModule goals={goals} context="us" today={today} /></div> : null}
       </div>
     );
   }
@@ -52,6 +57,8 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members }
         </h2>
         <CountingAmount amountMinor={total.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
       </section>
+      {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
+      {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="us" /></div> : null}
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-10">
         <div className="flex flex-col gap-6 lg:order-2">
           {/* PR D (T061; 04·7, RESPONSIVE «Shared Balance»): por debajo de 1024, la línea de saldo con «Ver balance»; desde
@@ -59,6 +66,7 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members }
           <div className="lg:hidden"><BalanceLine balance={balance} members={members} /></div>
           <div data-balance-line="" className="hidden lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
           <AnnotateCta />
+          {goals ? <GoalsModule goals={goals} context="us" today={today} /> : null}
           {spentBy.length > 0 ? (
             <section aria-labelledby="couple-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
               <h2 id="couple-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>

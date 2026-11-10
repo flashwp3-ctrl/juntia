@@ -18,8 +18,13 @@ export type WriteError =
   // PR D (T062): liquidaciones (contracts/errors.md, JT106, JT107, JT112–JT114).
   | "nothingToSettle" | "exceedsPending" | "settlementDate" | "alreadyVoided"
   // 004 PR B (T034): presupuestos (contracts/errors.md, JT218, JT219, JT221).
-  | "budgetExists";
-export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError } | { status: "unknown" };
+  | "budgetExists"
+  // 004 PR C (T046, T047): metas, aportes, retiros y anulaciones (contracts/errors.md, JT201–JT217, JT225).
+  | "goalNotFound" | "goalNotOpen" | "insufficientFunds" | "entryNotFound" | "entryAlreadyVoided" | "entryNotVoidable" | "entryDate"
+  | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable";
+/** 004 PR C: `detail` lleva lo que el servidor dijo del rechazo (JT204: el disponible vigente, en unidades menores). */
+export type WriteRejectionDetail = { availableMinor?: string };
+export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError; detail?: WriteRejectionDetail } | { status: "unknown" };
 /**
  * Lo que devuelve «Comprobar estado», ya normalizado por la Server Action. `error`: no se pudo comprobar (red); el
  * estado sigue desconocido, sin decir que no consta.
@@ -30,7 +35,9 @@ export type WriteAction = "create_invitation" | "regenerate_invitation" | "cance
   | "create_shared_expense" | "update_shared_expense" | "void_shared_expense" | "reclassify_to_shared" | "undo_reclassify_to_shared"
   | "register_settlement" | "void_settlement"
   // 004 PR B (T034): crear, editar y desactivar presupuesto (contracts/server-actions.md §1).
-  | "create_budget" | "update_budget";
+  | "create_budget" | "update_budget"
+  // 004 PR C (T046, T047): las escrituras de metas que «Comprobar estado» consulta.
+  | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
 export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 
@@ -69,6 +76,19 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   budgetNotFound: "notFound",
   budgetAlreadyExists: "budgetExists",
   invalidBudget: "invalid",
+  // 004 PR C (T046, T047): metas. Un saldo que no alcanza (JT204 o el trigger JT220) es el mismo rechazo para la interfaz.
+  goalNotFound: "goalNotFound",
+  goalNotOpen: "goalNotOpen",
+  insufficientMemberFunds: "insufficientFunds",
+  goalNegative: "insufficientFunds",
+  entryNotFound: "entryNotFound",
+  entryAlreadyVoided: "entryAlreadyVoided",
+  entryNotVoidable: "entryNotVoidable",
+  invalidEntryDate: "entryDate",
+  goalTransitionNotAllowed: "goalTransition",
+  invalidGoal: "invalidGoal",
+  withdrawalReasonRequired: "reasonRequired",
+  goalUndoNotAvailable: "goalUndoNotAvailable",
 };
 
 /**
@@ -76,10 +96,10 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
  * es `JT` ni Postgres conocido (un 5xx sin código): desconocido. Un `JT` sin copy propia (JT008, JT009, JT109, JT119) es
  * un rechazo confirmado que la interfaz dice como «algo salió mal».
  */
-export function outcomeFromError(error: unknown): { status: "rejected"; error: WriteError } | { status: "unknown" } {
-  const kind = (error instanceof DbError ? error : mapDbError(error)).kind;
-  if (UNKNOWN.has(kind)) return { status: "unknown" };
-  return { status: "rejected", error: REJECTED[kind] ?? "unexpected" };
+export function outcomeFromError(error: unknown): { status: "rejected"; error: WriteError; detail?: WriteRejectionDetail } | { status: "unknown" } {
+  const mapped = error instanceof DbError ? error : mapDbError(error);
+  if (UNKNOWN.has(mapped.kind)) return { status: "unknown" };
+  return mapped.detail ? { status: "rejected", error: REJECTED[mapped.kind] ?? "unexpected", detail: mapped.detail } : { status: "rejected", error: REJECTED[mapped.kind] ?? "unexpected" };
 }
 
 /** En el servidor: ejecuta la escritura y la clasifica. */

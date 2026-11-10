@@ -14,6 +14,7 @@ import { getCoupleBalance, getCoupleMonthSummary } from "../../src/lib/db/couple
 import { listSettlements } from "../../src/lib/db/settlements";
 import { listSharedExpenses } from "../../src/lib/db/shared-expenses";
 import { createTransaction, listTransactions } from "../../src/lib/db/transactions";
+import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedMovements, seedSharedMovements, type SeededUser } from "../support/seed";
 import { expect, test } from "./fixtures";
 
@@ -102,23 +103,39 @@ test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros lle
     await context.close();
   }
 
-  // Prefetch: en Yo, con los enlaces de Inicio precargados, se cambia a Nosotros y se navega a Actividad.
+  // Prefetch: en Yo, con los enlaces de Inicio precargados, se cambia a Nosotros y se navega a Actividad. Revisión del gestor
+  // del PR #68 (mismo arreglo que F67-2 del PR B): los RSC se capturan al empezar, con su ruta y su contexto, y su cuerpo se
+  // lee por `route.fetch()` (tests/support/rsc-capture.ts); antes `response.text()` devolvía "" y no se inspeccionaba nada.
   const { context, page } = await open(browser, baseURL!, pair.sara, "me", "me", 1440);
-  const prefetched: string[] = [];
-  page.on("response", async (response) => {
-    if (response.url().includes("_rsc=") && response.request().method() === "GET") prefetched.push(await response.text().catch(() => ""));
-  });
+  const rsc = await captureRsc(page);
+  // En Yo se llega a Actividad desde Inicio, en el cliente: su RSC lleva los privados de Sara (control de la captura).
   await page.goto("/");
+  await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
+  await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
+  await expect(page).toHaveURL(/\/actividad/);
+  await expect(page.getByText("Regalo de cumpleaños", { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  const inMe = await rsc.read((item) => item.path === "/actividad" && !item.underUs);
+  expect(inMe.some(({ body }) => body.includes("Regalo de cumpleaños")), "el RSC de Actividad en Yo trae los privados").toBe(true);
+  await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page.getByRole("link", { name: /^Regalo de cumpleaños, / })).toBeVisible();
   await page.getByRole("link", { name: copy.home.seeAll }).hover();
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("heading", { name: /gastaron juntos/ })).toBeVisible();
-  const afterSwitch = prefetched.length;
+  // El cambio Yo → Nosotros pide / otra vez (`router.refresh()`) con la cookie nueva: esa respuesta es de Nosotros, se
+  // inspecciona y trae un gasto compartido sembrado (control positivo del cambio, F67-4).
+  const atSwitch = await rsc.read((item) => item.underUs);
+  for (const { path, body } of atSwitch) expect(leaks(body), `RSC de ${path} del cambio a Nosotros`).toEqual([]);
+  expect(atSwitch.some(({ path, body }) => path === "/" && body.includes("Carulla Laureles")), `RSC del cambio: ${atSwitch.map((item) => item.path).join(", ")}`).toBe(true);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
   await expect(page).toHaveURL(/\/actividad/);
   await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
-  for (const body of prefetched.slice(afterSwitch)) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
+  const inUs = await rsc.read((item) => item.underUs);
+  for (const { path, body } of inUs) expect(leaks(body), `RSC de ${path} pedido en Nosotros`).toEqual([]);
+  // La prueba tiene que poder fallar: al menos un RSC de /actividad iniciado en Nosotros, con el gasto compartido sembrado.
+  const activity = inUs.filter((item) => item.path === "/actividad");
+  expect(activity.length, `RSC iniciados en Nosotros: ${inUs.map((item) => item.path).join(", ")}`).toBeGreaterThan(0);
+  expect(activity.some(({ body }) => body.includes("Carulla Laureles"))).toBe(true);
   await context.close();
 });
 

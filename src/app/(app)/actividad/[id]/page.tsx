@@ -18,6 +18,7 @@ import { SettlementDetail } from "@/features/balance/settlement-detail";
 import { LoadError } from "@/features/context/load-error";
 import { copy } from "@/lib/copy/es";
 import { serverContext } from "@/lib/server-context";
+import { goalPeople, loadGoalActivity } from "@/features/goals/load";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -50,7 +51,9 @@ export default async function TransactionPage({ params, searchParams }: Props) {
     const detail = !loaded.ok || (settled && !settled.ok) ? <LoadError /> : expense ? <SharedDetail expense={expense} members={members} closeHref={back} />
       : settlement ? <SettlementDetail settlement={settlement} members={members} closeHref={back} /> : <NotFound back={back} />;
     const title = settlement ? copy.balance.settlement.title : copy.detail.expense;
-    return <ActivityScreen server="us" data={null} today={now} couple={{ data, members }} selectedId={expense?.id ?? settlement?.id} detail={detail} mobileHeader={<DetailHeader title={title} backHref={back} />} />;
+    // 004 PR C (T050): la lista de al lado conserva los asientos de metas compartidas del mes.
+    const goals = data.ok ? await loadGoalActivity("us", data.value.month, back) : null;
+    return <ActivityScreen server="us" data={null} today={now} couple={{ data, members }} selectedId={expense?.id ?? settlement?.id} detail={detail} mobileHeader={<DetailHeader title={title} backHref={back} />} goals={goals?.ok ? goals.value : null} />;
   }
   // F44-1: sin cookie o con una no válida, ni el movimiento ni el mes se leen.
   if (context !== "me") return <ActivityScreen server={context} data={null} today={now} />;
@@ -63,5 +66,6 @@ export default async function TransactionPage({ params, searchParams }: Props) {
   const back = `/actividad?mes=${month}`;
   const title = transaction?.type === "income" ? copy.detail.income : copy.detail.expense;
   const detail = !loaded.ok ? <LoadError /> : transaction ? <TransactionDetail transaction={transaction} closeHref={back} /> : <NotFound back={back} />;
-  return <ActivityScreen server="me" data={data} today={now} selectedId={transaction?.id} detail={detail} mobileHeader={<DetailHeader title={title} backHref={back} />} />;
+  const [goals, people] = data.ok ? await Promise.all([loadGoalActivity("me", month, back), goalPeople()]) : [null, []];
+  return <ActivityScreen server="me" data={data} today={now} selectedId={transaction?.id} detail={detail} mobileHeader={<DetailHeader title={title} backHref={back} />} goals={goals?.ok ? goals.value : null} goalPeople={people} />;
 }

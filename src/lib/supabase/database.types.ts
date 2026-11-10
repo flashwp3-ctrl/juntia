@@ -118,7 +118,7 @@ export type Database = {
                   ]
                 },"goals_overview": {
                   Row: {
-                    "balance_minor": string | null,"created_at": string | null,"goal_scope": string | null,"goal_type": string | null,"has_pending_request": boolean | null,"id": string | null,"my_available_minor": string | null,"name": string | null,"progress_percent": number | null,"status": string | null,"target_minor": string | null,"target_month": string | null,"version": number | null
+                    "balance_minor": string | null,"created_at": string | null,"goal_scope": string | null,"goal_type": string | null,"has_pending_request": boolean | null,"id": string | null,"last_contribution_created_at": string | null,"last_contribution_date": string | null,"my_available_minor": string | null,"name": string | null,"progress_percent": number | null,"status": string | null,"target_minor": string | null,"target_month": string | null,"version": number | null
                   }
                   ComputedFields: never
                   Relationships: [

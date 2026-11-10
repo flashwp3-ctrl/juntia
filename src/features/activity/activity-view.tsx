@@ -14,16 +14,20 @@ import { Segmented } from "@/components/ui/segmented";
 import { ExitState } from "@/components/shell/provisional-state";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/domain/money";
-import { filterTransactions, groupByDay, monthKey, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
+import { filterTransactions, groupByDay, matchesSearch, monthKey, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format";
 import { AnnotateFirst } from "@/features/home/annotate-cta";
 import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
 import type { PendingRow } from "@/features/expenses/types";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
+import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
+import { cop } from "@/features/goals/format";
+import type { GoalEntryView, GoalPerson } from "@/features/goals/types";
 
 export type MonthNavigation = { previous: string | null; next: string | null };
-type ActivityViewProps = { rows: readonly Transaction[]; month: string; today: string; navigation: MonthNavigation; selectedId?: string };
+/** 004 PR C (T050; FR-044, FR-071): los asientos de metas propios del mes (`goal_activity` en Yo) y lo apartado del mes. */
+type ActivityViewProps = { rows: readonly Transaction[]; month: string; today: string; navigation: MonthNavigation; selectedId?: string; goalEntries?: readonly GoalEntryView[]; goalPeople?: readonly GoalPerson[]; setAsideMinor?: string };
 
 const detailHref = (id: string, month: string) => `/actividad/${id}?mes=${month}`;
 const overline = "text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary";
@@ -72,7 +76,7 @@ export function SearchField({ value, onChange }: { value: string; onChange: (val
   );
 }
 
-function Summary({ rows, month, filters, onCategory }: { rows: readonly Transaction[]; month: string; filters: ActivityFilters; onCategory: (category: CategoryId | null) => void }) {
+function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: readonly Transaction[]; month: string; filters: ActivityFilters; onCategory: (category: CategoryId | null) => void; setAsideMinor?: string }) {
   const summary = monthSummary(rows, month);
   const titleId = useId();
   const categories = (Object.entries(summary.byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
@@ -81,12 +85,21 @@ function Summary({ rows, month, filters, onCategory }: { rows: readonly Transact
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3 rounded-[var(--radius-xl)] px-4 py-3.5 shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-        <p className="flex flex-col gap-0.5">
-          <span id={titleId} className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.spentIn(monthName(month))}</span>
-          <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">
-            {spent ? formatMoney(summary.expenseTotal) : copy.home.noExpenses(monthName(month))}
-          </span>
-        </p>
+        <span className="flex flex-wrap items-end gap-x-6 gap-y-2">
+          <p className="flex flex-col gap-0.5">
+            <span id={titleId} className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.spentIn(monthName(month))}</span>
+            <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">
+              {spent ? formatMoney(summary.expenseTotal) : copy.home.noExpenses(monthName(month))}
+            </span>
+          </p>
+          {/* 004 PR C (DEC-G04): lo apartado del mes va al lado del gasto, nunca dentro. */}
+          {setAsideMinor !== undefined && BigInt(setAsideMinor) > 0n ? (
+            <p data-set-aside="" className="flex flex-col gap-0.5">
+              <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.goals.activity.setAside}</span>
+              <span className="text-[17px] leading-[var(--money-m-line)] font-semibold text-saving tabular-nums">{cop(setAsideMinor)}</span>
+            </p>
+          ) : null}
+        </span>
         <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(rows.length)}</span>
       </div>
       {categories.length > 0 ? (
@@ -120,11 +133,29 @@ type PendingStates = ReadonlyMap<string, PendingRow["state"]>;
 /** Solo las que viajan se pintan «Guardando…»; las confirmadas son filas normales que aún no están en la lista del servidor. */
 const savingOf = (pending: PendingStates, id: string) => (pending.get(id) === "saving" ? ("saving" as const) : undefined);
 
-function DayList({ rows, month, today, selectedId, pending }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates }) {
+/** Desempate de asientos del mismo día: el más reciente primero y, con el mismo instante, por id (orden total estable). */
+const byNewest = (a: GoalEntryView, b: GoalEntryView) => (a.createdAt !== b.createdAt ? (a.createdAt > b.createdAt ? -1 : 1) : a.id > b.id ? -1 : 1);
+/**
+ * 004 PR C: los días del mes con movimientos o asientos de metas, del más reciente al más antiguo. Interpretación (anotada en
+ * evidence.md): dentro de un día, los asientos de metas van después de los gastos e ingresos, porque el total del día que
+ * encabeza el grupo es solo gasto y el ahorro no se mezcla con él (DEC-G04). La lista y la tabla usan este mismo orden.
+ */
+function days(rows: readonly Transaction[], goals: readonly GoalEntryView[]) {
+  const byDay = new Map<string, { transactions: Transaction[]; goals: GoalEntryView[] }>();
+  for (const { date, transactions } of groupByDay(rows)) byDay.set(date, { transactions: [...transactions], goals: [] });
+  for (const entry of goals) {
+    const day = byDay.get(entry.effectiveDate) ?? { transactions: [], goals: [] };
+    day.goals.push(entry);
+    byDay.set(entry.effectiveDate, day);
+  }
+  return [...byDay].sort(([a], [b]) => (a > b ? -1 : 1)).map(([date, day]) => ({ date, ...day, goals: day.goals.sort(byNewest) }));
+}
+
+function DayList({ rows, month, today, selectedId, pending, goals, people }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates; goals: readonly GoalEntryView[]; people: readonly GoalPerson[] }) {
   const highlightId = useHighlightId();
   return (
     <div className="flex flex-col gap-4 xl:hidden">
-      {groupByDay(rows).map(({ date, transactions }) => {
+      {days(rows, goals).map(({ date, transactions, goals: dayGoals }) => {
         const label = dayLabel(date, today);
         // F51-2: el subtotal del día solo suma lo confirmado; las filas en vuelo o sin confirmar se listan, pero no cuentan.
         const spent = transactions.reduce((total, row) => (row.type === "expense" && !pending.has(row.id) ? total + row.amount.amountMinor : total), 0n);
@@ -140,6 +171,7 @@ function DayList({ rows, month, today, selectedId, pending }: { rows: readonly T
                   <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} temporary={pending.get(transaction.id) === "confirmed"} />
                 </li>
               ))}
+              {dayGoals.map((entry) => <li key={entry.id}><GoalEntryRow entry={entry} people={people} dateLabel={label} variant="activity" /></li>)}
             </ul>
           </section>
         );
@@ -148,8 +180,11 @@ function DayList({ rows, month, today, selectedId, pending }: { rows: readonly T
   );
 }
 
-function Table({ rows, month, today, selectedId, pending }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates }) {
-  const sorted = groupByDay(rows).flatMap(({ transactions }) => transactions);
+function Table({ rows, month, today, selectedId, pending, goals, people }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates; goals: readonly GoalEntryView[]; people: readonly GoalPerson[] }) {
+  const items = days(rows, goals).flatMap(({ transactions, goals: dayGoals }) => [
+    ...transactions.map((transaction) => ({ kind: "transaction" as const, transaction })),
+    ...dayGoals.map((entry) => ({ kind: "goal" as const, entry })),
+  ]);
   const highlightId = useHighlightId();
   const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
   return (
@@ -163,7 +198,13 @@ function Table({ rows, month, today, selectedId, pending }: { rows: readonly Tra
         </tr>
       </thead>
       <tbody>
-        {sorted.map((transaction) => {
+        {items.map((item) => {
+          if (item.kind === "goal") {
+            const { entry } = item;
+            // 004 PR C: el asiento de meta, con su ficha, en su lugar del orden; no cuenta en el gasto.
+            return <tr key={entry.id} data-goal-row=""><td colSpan={3} className={`${cell} px-3`}><GoalEntryRow entry={entry} people={people} dateLabel={dayLabel(entry.effectiveDate, today)} variant="activity" /></td></tr>;
+          }
+          const { transaction } = item;
           const current = transaction.id === selectedId;
           return (
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
@@ -192,10 +233,16 @@ function Table({ rows, month, today, selectedId, pending }: { rows: readonly Tra
   );
 }
 
-export function ActivityView({ rows, month, today, navigation, selectedId }: ActivityViewProps) {
+export function ActivityView({ rows, month, today, navigation, selectedId, goalEntries = [], goalPeople = [], setAsideMinor }: ActivityViewProps) {
   const filters = useActivityFilters(month);
-  const visible = filterTransactions(rows, { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined });
-  const filtering = filters.query.trim() !== "" || filters.type !== "all" || filters.categoryId !== null;
+  // «Aportes» (FR-071) deja solo los asientos de metas; «Gastos» e «Ingresos», solo movimientos.
+  // El tipo vive en el layout y se comparte entre contextos: «Aportes» solo vale si las metas se cargaron.
+  const type = filters.type === "goals" && setAsideMinor === undefined ? "all" : filters.type;
+  const goalsOnly = type === "goals";
+  const txType = type === "all" || type === "goals" ? undefined : type;
+  const visible = goalsOnly ? [] : filterTransactions(rows, { query: filters.query, type: txType, categoryId: filters.categoryId ?? undefined });
+  const visibleGoals = filters.categoryId !== null || txType ? [] : goalEntries.filter((entry) => matchesSearch(entryTitle(entry, "activity"), filters.query));
+  const filtering = filters.query.trim() !== "" || type !== "all" || filters.categoryId !== null;
   // Las creaciones en vuelo de este mes entran en la lista (con los mismos filtros), no en el resumen: ese espera a la revalidación.
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
@@ -205,8 +252,8 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
   // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
   const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);
   const pendingStates: PendingStates = new Map(inFlight.map((row) => [shown(row).id, row.state]));
-  const listed = [...filterTransactions(inFlight.map(shown), { query: filters.query, type: filters.type === "all" ? undefined : filters.type, categoryId: filters.categoryId ?? undefined }), ...visible];
-  if (rows.length === 0 && inFlight.length === 0) {
+  const listed = [...(goalsOnly ? [] : filterTransactions(inFlight.map(shown), { query: filters.query, type: txType, categoryId: filters.categoryId ?? undefined })), ...visible];
+  if (rows.length === 0 && inFlight.length === 0 && goalEntries.length === 0) {
     return (
       <div className="flex flex-col gap-4 pt-5 lg:pt-8">
         <MonthNav month={month} navigation={navigation} />
@@ -223,15 +270,17 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
           <Segmented
             role="radiogroup"
             label={copy.activity.type}
-            value={filters.type}
+            value={type}
             onValueChange={filters.setType}
-            options={[{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "income", label: copy.activity.incomes }] as const}
+            options={setAsideMinor !== undefined
+              ? [{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "income", label: copy.activity.incomes }, { value: "goals", label: copy.goals.activity.filter }] as const
+              : [{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "income", label: copy.activity.incomes }] as const}
           />
         </div>
       </div>
-      <Summary rows={rows} month={month} filters={filters} onCategory={(category) => filters.setCategory(category, month)} />
-      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(listed.length) : ""}</p>
-      {listed.length === 0 ? (
+      <Summary rows={rows} month={month} filters={filters} onCategory={(category) => filters.setCategory(category, month)} setAsideMinor={setAsideMinor} />
+      <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(listed.length + visibleGoals.length) : ""}</p>
+      {listed.length === 0 && visibleGoals.length === 0 ? (
         <ExitState
           icon="magnifying-glass"
           title={copy.activity.noResults.title}
@@ -240,8 +289,8 @@ export function ActivityView({ rows, month, today, navigation, selectedId }: Act
         />
       ) : (
         <>
-          <DayList rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} />
-          <Table rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} />
+          <DayList rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} goals={visibleGoals} people={goalPeople} />
+          <Table rows={listed} month={month} today={today} selectedId={selectedId} pending={pendingStates} goals={visibleGoals} people={goalPeople} />
         </>
       )}
     </div>

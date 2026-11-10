@@ -382,6 +382,7 @@ E2E completo F66: reset previo **8.65 s**, luego npm run e2e:dev sin argumentos,
 
 verify final **59.80 s, exit 0**: 78 dominio, 698 componentes verdes y 2 omisiones previstas, typecheck verde y solo el aviso preexistente de balance-panel.tsx:61. git diff --check pasa. SQL e integración/e2e completos verdes; no se tocó producción. F66-1 y F66-2 se publican en un solo commit y un solo push con el PR en borrador; gate ready_for_review a cargo del gestor.
 
+
 ---
 
 # Evidencia · 004 · PR B · Plan y presupuestos
@@ -636,3 +637,368 @@ Salidas locales:
 - `npm run verify`: la primera corrida falló en typecheck (el parámetro `env` del `.mjs` tomaba el tipo `ProcessEnv`; se
   tipó con JSDoc). La repetición: **exit 0, 65,68 s**; `vitest run --project=domain` 84, `vitest run --project=components`
   **743 pasan / 2 omisiones previstas**. `git diff --check` pasa.
+
+---
+
+# Evidencia · 004 · PR C · Metas, aportes, retiros y S5
+
+Rama `claude/004-c-goals-6b13e8`, sobre `main` en `bd408b9` (PR A fusionado). Tareas T042–T053 y T044a; T054–T056 son humanas. Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (`PORT=3500`); **no es evidencia de CI** (ADR-011 §9.8) y no se lanzó ningún run. El lock no se forzó nunca: cuando lo tenía la sesión del PR B, se esperó a que lo soltara.
+
+## T042–T044 · pruebas escritas primero (commit `e33bf8e`)
+
+- Componentes: `src/features/goals/goals.test.tsx` (GoalCard con los siete `goal_type`, «Lo lograron» y excedente; GoalStack 0/1/2/3+ y «Ver todas»; Metas en Yo y Nosotros; Registrar aporte sin «¿Quién aporta?» y vista previa 11.840.000 · 65 %; Retirar con máximo y motivo; fila de retiro que no parece ingreso; historial con anulados y filtros; inmersiva con movimiento reducido; iconos `flag-banner`, `piggy-bank`, `arrow-u-up-left`, `flag-checkered`), `goal-undo.test.tsx` (deshacer único con tres orígenes: aporte, retiro y liquidación de la 003), `src/features/home/home-goals.test.tsx` y `src/features/activity/activity-goals.test.tsx`.
+- Spec E2E 4: `tests/e2e/goals.e2e.ts` (2 casos). Axe: `tests/a11y/goals.a11y.ts` (ligero: 1 caso por tema a 390 con 9 estados; `@sweep`: siete anchos, 200 %, teclado y 44 px). Registro de axe: `/metas/[id]` con el estado «Meta no encontrada».
+
+## T044a · rojo
+
+- Componentes (local): `npx vitest run --project components src/features/goals src/features/home/home-goals.test.tsx src/features/activity/activity-goals.test.tsx` → **4 archivos fallan, 9 pruebas fallan**; `goals.test.tsx` no carga («Failed to resolve import "./goal-card"»), el resto por ausencia (`offerGoalUndo is not a function`, región «Apartado para metas» no encontrada, radio «Aportes» no encontrado).
+- E2E y axe contra `juntia-dev`: la primera corrida no llegó a las pruebas porque `next build` hace typecheck de todo el repo y las pruebas de componentes referían módulos inexistentes («Failed to type check», 26,5 s). Para ver la E2E fallar por la funcionalidad se apartaron **temporalmente** esos cuatro archivos (sin commit) y se repitió:
+  - `npm run e2e:dev -- tests/e2e/goals.e2e.ts`: build **pasó (9,44 s)**, **2 fallan** — «meta compartida…»: `getByRole('heading', { name: 'Todavía no tienen metas' })` no encontrado; «Metas en Nosotros: ni el HTML…»: el control positivo no encuentra «Japón compartido» en `/metas`. La siembra pasó en los dos.
+  - `npm run e2e:dev -- tests/a11y/goals.a11y.ts` (A11Y_JOB=e2e): build **pasó (8,16 s)**, **2 fallan** (light y dark), por el mismo encabezado ausente.
+  - Después se restauraron los archivos (`git checkout -- src/features`).
+
+## T045–T050 · implementación (commits `4974554`, `a17858b`)
+
+- Metas (`src/app/(app)/metas/page.tsx`, `loading.tsx`), meta inmersiva (`metas/[id]/page.tsx`), `src/features/goals/*`, bloques de Inicio (`src/features/home/goals-home.tsx`) y asientos en Actividad (Yo y Nosotros, también en el detalle). Lecturas en `src/features/goals/load.ts`: en Nosotros solo `goal_scope = 'shared'` (y `goal_member_balances` solo de esos ids); en Yo `goals_overview` en una consulta y el total de `goals_totals` con `personal`. Server Actions en `src/features/goals/actions.ts` con `ok`/`rejected`/`unknown`, 15 s y `write_status`. El «Deshacer» de aportes y retiros usa la máquina única del proveedor de Anotar (`offerGoalUndo`, con su propio «Comprobar estado» para funcionar sin pareja).
+- Ninguna migración nueva; `src/lib/db/goals.ts` gana `goalMemberBalancesFor` y `getGoal` (lecturas).
+
+## T051 · iteración dirigida contra `juntia-dev`
+
+| Corrida | Resultado |
+| --- | --- |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` (1.ª) | 2 fallan: el radio nativo del tipo era `sr-only` y no se podía pulsar (timeout 30 s); y la prueba de privacidad contaba como fuga el id de la meta personal en `/metas/{id_personal}`, donde vuelve solo porque es la URL pedida (no salen nombre ni importes). Arreglos: el radio cubre la ficha con opacidad 0; el marcador del id no se aplica a la ruta que lo contiene; `test.slow()` en el recorrido de dos sesiones |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` (2.ª) | **2/2 pasan, 43,7 s** (build 12,19 s, total 58,32 s) |
+| `e2e:dev -- tests/a11y/goals.a11y.ts` (1.ª) | 2 fallan: `color-contrast` (gris secundario sobre el verde de ahorro, 4,38:1; y medición durante el fundido de entrada de la inmersiva) y `label-content-name-mismatch` en el enlace de la tarjeta. Arreglos: texto en tinta sobre el fallback (como pide GoalCard), nombre del enlace por un texto oculto y contenido visual `aria-hidden`, sin fundido propio con movimiento reducido |
+| `e2e:dev -- tests/a11y/goals.a11y.ts` (2.ª) | **2/2 pasan, 46,5 s** |
+
+Componentes y dominio (local, corrida intermedia de `vitest --project components --project domain`, 71 archivos): **815 pasan, 2 fallan, 2 omisiones previstas**; los 2 fallos eran los casos de `/metas` de `product-routes.test.tsx`, que se quitan al ajustar `src/app/(app)/product-routes.test.tsx`, que exigía Metas «sin datos» (FR-044 de la 002): Metas ya lee metas reales y se prueba en `src/features/goals`, como antes pasó con Inicio y Actividad. `tests/a11y/job-selection.test.ts` falló una vez mientras la sesión del PR B usaba el puerto; aislado, pasa.
+
+## T052 · [V] View Transitions con App Router — primera corrida (sustituida abajo, en «Revisión del gestor del PR #68»)
+
+Prueba temporal (no versionada) contra `juntia-dev` con `npm run e2e:dev`: siembra una pareja y una meta, abre la tarjeta en Metas, comprueba el foco y cierra con Escape. Envuelve `Document.prototype.startViewTransition` para contar las transiciones y leer sus pseudoelementos.
+
+Navegador: **Chromium 156.0.8078.4** (Playwright 1.64.1, headless). Resultado: **4/4 pasan, 24,1 s**:
+
+```
+{"T052":"con API","motion":"no-preference","browserName":"chromium","version":"156.0.8078.4","startViewTransition":true,"open":[],"close":[]}
+{"T052":"con API","motion":"reduce","browserName":"chromium","version":"156.0.8078.4","startViewTransition":true,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"no-preference","browserName":"chromium","version":"156.0.8078.4","startViewTransition":false,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"reduce","browserName":"chromium","version":"156.0.8078.4","startViewTransition":false,"open":[],"close":[]}
+```
+
+- **Se cumple** en los cuatro casos: la ruta se abre, el foco va al título (`h1`), Escape vuelve a `/metas` y el foco vuelve a la tarjeta de origen; el valor final está en el DOM.
+- **No se cumple**: React no inicia ninguna View Transition al abrir ni al cerrar (`open: []`, `close: []`), y el respaldo `layoutId` tampoco anima. Causa: el morph solo ocurre si el destino se pinta en el mismo commit que la navegación (página precargada; guía de View Transitions de Next 16). `/metas/[id]` es dinámica (cookie de contexto y base) y suspende primero en `metas/loading.tsx`, así que no se forma el par.
+- **WebKit**: no está instalado en este equipo (solo `chromium-1248` en `ms-playwright`); instalarlo es una descarga que no se hizo sin permiso. Sin salida de WebKit.
+- **Back-swipe de iPhone**: con los aplazados de la decisión 19.1.
+- Opciones para el gestor, no decididas aquí: (a) precarga completa del enlace de la tarjeta, revisando la regla de prefetch por contexto de la 003; (b) quitar el límite de carga de `/metas/[id]` y aceptar la espera sin Skeleton; (c) aceptar la entrada sin morph en P0-3 y cerrar el `[V]` como «no cumple».
+
+## T053 · capturas e Impeccable
+
+- Capturas locales contra `juntia-dev` con el dataset dorado y aportes del mes, a **390 y 1440 en claro y oscuro**, en `specs/004-presupuestos-y-metas/evidence/pr-c/capturas/` (40 PNG): Metas en Nosotros (pila y abanico) y en Yo, Inicio y Actividad en los dos contextos, la meta inmersiva con historial y las hojas de aporte, retiro y editar. Son capturas de iteración, no de CI; en las de página completa la barra inferior fija aparece a media página, y las hojas pueden salir a mitad de su fundido de 120 ms.
+- Impeccable (`critique`, solo revisión). Detector: `impeccable detect --json src/features/goals src/features/home/goals-home.tsx` → **`[]`, exit 0**. Sin superposición en el navegador: la app solo corre contra `juntia-dev` bajo el lock. Revisión de diseño en un subagente aislado: 27/40 en Nielsen, «específico de Bosque & Arena», 8 hallazgos. Corregidos en `a17858b`: la capa que asoma cortaba su título y tapaba el ícono; el abanico tapaba los nombres de atrás y dejaba hueco antes de «Crear meta»; «Disponible tuyo» aparecía en la fila de la pareja (ahora «Tus aportes» y «Aportes de {nombre}»); «Anular aporte» se repetía como botón de texto en cada fila (ahora botón de ícono de 44 px); los aportes iban antes que los gastos dentro del día; una sola meta personal quedaba estrecha en escritorio; y se restituye el anillo de foco del título. Además, un colapso de márgenes ocultaba las capas de la pila en móvil (visto en las capturas). **Abierto**: el campo de fecha nativo se ve «11/09/2026» en un navegador en inglés; comprobar con es-CO.
+
+## T051 · cierre local antes del push
+
+- `PORT=3500 npm run e2e:dev` **completo, una vez**, sin argumentos y sin variable de medición (defaults del repo): **exit 0, 342,90 s**. Build 14,06 s; E2E sin @mail **30/30, 82,12 s** (incluye la spec 4); axe con sesión **98/98, 245,10 s** (incluye `goals.a11y.ts` ligero y `/metas/[id]` del registro). Fuera, por contrato: las E2E @mail, `@sweep` y el proyecto evidence.
+- `npm run verify`: **exit 0, 61,26 s** (presupuesto < 90 s). Dominio **78/78**; componentes **743 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (solo el aviso preexistente de `balance-panel.tsx:61`).
+- **Presupuesto del job `e2e` (riesgo)**: la spec 4 añade ~44 s y el axe de metas ~47 s en `juntia-dev`. El checkpoint del PR A midió 461 s en CI con tope bloqueante de 480 s; con lo de este PR es probable que el gate lo supere. No se tocó el workflow ni el tope; la medición y la mitigación (a → b → c de contracts/ci.md) son del gestor en el gate (I2).
+
+| Tarea | Estado |
+| --- | --- |
+| T042–T044 | Hechas (`e33bf8e`) |
+| T044a | Hecha: rojo local y contra `juntia-dev`, salidas arriba |
+| T045–T050 | Hechas (`4974554`, `a17858b`) |
+| T051 | Hecha: dirigidas en verde, completo y `verify` en verde |
+| T052 | **Abierta**: Chromium sí (salida arriba), sin morph; WebKit sin instalar |
+| T053 | Hecha: 40 capturas, detector y revisión de Impeccable con sus correcciones |
+| T054–T056 | Humanas (gestor y fundadores) |
+
+## Revisión del gestor del PR #68 · correcciones
+
+Un solo commit nuevo sobre `f577a94`; mismo PR en borrador, sin CI.
+
+| # | Hallazgo | Corrección | Prueba |
+| --- | --- | --- | --- |
+| 1 | La tabla de Actividad en Yo (xl) pintaba todas las transacciones y después todos los asientos | `Table` usa la misma lista ordenada que `DayList` (`days()`) | `activity-goals.test.tsx`, «Yo desde xl…»: falla con la vista anterior, pasa ahora |
+| 2 | El tipo del filtro del layout se arrastraba de Yo a Nosotros | Tipo normalizado en la vista de pareja (`income` → «Todos»; `goals` sin metas cargadas → «Todos»), usado en el control, el filtrado y el anuncio; lo mismo para `goals` en Yo | Dos casos nuevos: fallan con la vista anterior, pasan ahora |
+| 3 | Anular un aporte con fondos ya usados decía «Esta meta no admite esta operación» | `DbError` lee el `detail` de JT204 (`available_minor`, solo entero en texto) y llega al rechazo como `detail.availableMinor`. Retirar dice el máximo del servidor; anular y deshacer usan `copy.goals.errors.fundsUsed` / `fundsUsedWith` | `errors.test.ts` (detail válido, raro y ausente) y dos casos en `goals.test.tsx` |
+| 4 | Goal Journey sin morph (T052) | Opción (b): la lista pasa a `metas/(lista)/` y su `loading.tsx` ya no cubre `/metas/[id]`; indicador de navegación pendiente en la tarjeta (`useLinkStatus`, «Abriendo {meta}…»); se quita `originOf()` y el rectángulo guardado | T052 abajo; spec 4 y `goals.a11y.ts` repetidas |
+| 5 | Empates de orden en Actividad | Mismo orden en las dos vistas: fecha desc; dentro del día, gastos e ingresos (y liquidaciones en Nosotros) y después los asientos de metas; luego `created_at` desc y `id` como último desempate | Cubierto por el caso del punto 1 |
+| 6 | «Retirar» con 0 disponible | Acción deshabilitada con `copy.goals.withdrawSheet.nothing` | Caso nuevo en `goals.test.tsx` |
+| 7 | Diálogos de anular y de estado sin «¿Cerrar sin confirmar?» | `UnconfirmedClose` común (marco de hojas, anular y estado): Escape y «Cerrar aviso» con resultado desconocido preguntan | Dos casos nuevos |
+| 8 | `goalTransition` decía siempre «no se puede archivar» | `goalRejection(..., { transition })`; sin texto propio, el general | Caso de «Dar por lograda» |
+| 9 | Lecturas en serie | Inicio: `goalPeople()` en el `Promise.all`. Actividad en Nosotros ya no lo llama | Typecheck y spec 4 |
+| 10 | Carrera del prefetch y test que no podía fallar | Spec 4: se guardan las promesas de `response.text()`, `await Promise.all` y `fetched.length > afterSwitch`. «No suma al gasto» se pinta con los gastos reales de octubre (412.900) | Spec 4 2/2; componentes |
+| 11 | 815 frente a 743 | Conciliado arriba: 815 era una corrida intermedia de los dos proyectos juntos; `verify` informa por proyecto (dominio y componentes) | — |
+
+**Interpretación de orden (punto 5)**, para revisión: dentro de un mismo día, los asientos de metas van después de los movimientos. Motivo: el total que encabeza cada día es solo gasto, y poner el ahorro debajo evita leerlo como parte de ese total (DEC-G04). Entre asientos o entre movimientos del mismo día manda `created_at` desc y, con el mismo instante, el `id`, para que el orden sea total y estable.
+
+### T052 · segunda corrida (tras la opción b)
+
+Misma prueba temporal (no versionada), Chromium **156.0.8078.4**, `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/zz-vt-check.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 147,92 s** (build 40,90 s; E2E dirigido **7/7, 55,4 s**, incluida la spec 4; axe de metas **2/2, 48,6 s**). Resumen de los grupos de cada View Transition, sin errores (`error: null`; `finished: false` porque se lee mientras la transición aún corre):
+
+```
+{"motion":"no-preference","open":[{"finished":false,"error":null,"groups":["::view-transition-group(goal-title-{id})","::view-transition-group(goal-ribbon-{id})","::view-transition-group(goal-photo-{id})","::view-transition-group(root)"]}],"close":[]}
+{"motion":"reduce","open":[{"finished":false,"error":null,"groups":["::view-transition-group(root)"]}],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"open":[],"close":[]}
+{"T052":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"open":[],"close":[]}
+```
+
+- **Apertura en Chromium: cumple.** La tarjeta y la meta inmersiva forman el par: `goal-photo`, `goal-title` y `goal-ribbon` animan entre las dos. Con movimiento reducido solo queda el fundido de la página (las reglas de `globals.css` quitan la animación de los grupos con nombre).
+- **Cierre (Escape → `/metas`): no hay transición**, porque la lista sí suspende en su Skeleton (`(lista)/loading.tsx`). No se probaron más variantes, por indicación del gestor.
+- **Respaldo sin la API (`layoutId` de Motion)**: en esta corrida no se medía su animación (ver la tercera corrida, que sí lo mide y lo corrige). La navegación, el foco al título, Escape y la vuelta del foco a la tarjeta cumplen en los cuatro casos.
+- **WebKit**: sigue sin instalar; lo corre el gestor si el fundador autoriza la descarga.
+- **CLS de la carga de `/metas`** (lista con Skeleton, 3 metas, Chromium, PerformanceObserver de `layout-shift`): **0 a 390 y 0 a 1440**. Es una medición de iteración; T054 la hace el gestor.
+
+### Cierre local de la ronda
+
+- Componentes de metas, Inicio, Actividad, `src/app/(app)` y `errors.test.ts`: **13 archivos, 177/177**. Registro de axe (`tests/a11y`, Vitest): **11/11**; `/metas` sigue en el registro aunque la página viva en `(lista)`.
+- `npm run verify`: **exit 0, 88,91 s** (presupuesto < 90 s; el lint tardó 35,6 s frente a 16,7 s de la corrida anterior, con la otra sesión usando el equipo). Dominio **78/78**; componentes **752 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (aviso preexistente de `balance-panel.tsx:61`).
+- `e2e:dev` completo no se repite en esta ronda (indicación del gestor); se repitieron la spec 4 y `goals.a11y.ts` porque cambió la estructura de rutas de `/metas`.
+
+### T052 · tercera corrida: Chromium y WebKit (el gestor instaló `webkit-2370` con la autorización del fundador)
+
+La misma prueba temporal (no versionada) corre ahora con dos motores. WebKit se lanza desde la prueba con `webkit.launch()` de Playwright 1.64.1, porque la configuración del repo solo tiene Chromium y `e2e:dev` no admite otro proyecto. Además, en cada cuadro se mide si la meta inmersiva lleva una transformación en línea: así anima el respaldo `layoutId` de Motion. Comando: `PORT=3500 npm run e2e:dev -- tests/e2e/zz-vt-check.e2e.ts`. Resultado: **7 pasan, 2 fallan**, 56,0 s; los dos fallos son los de WebKit con la API. Resumen por caso:
+
+```
+{"browser":"chromium","version":"156.0.8078.4","mode":"con API","motion":"no-preference","startViewTransition":true,"layoutFrames":{"layout":0,"sampled":12},"open":[{"finished":false,"error":null,"groups":["::view-transition-group(goal-photo-{id})","::view-transition-group(goal-ribbon-{id})","::view-transition-group(goal-title-{id})","::view-transition-group(root)"]}],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"con API","motion":"reduce","startViewTransition":true,"layoutFrames":{"layout":0,"sampled":11},"open":[{"finished":false,"error":null,"groups":["::view-transition-group(root)"]}],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"layoutFrames":{"layout":15,"sampled":15},"open":[],"close":[]}
+{"browser":"chromium","version":"156.0.8078.4","mode":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"layoutFrames":{"layout":0,"sampled":14},"open":[],"close":[]}
+{"browser":"webkit","version":"27.2","mode":"sin API (respaldo Motion)","motion":"no-preference","startViewTransition":false,"layoutFrames":{"layout":7,"sampled":7},"open":[],"close":[]}
+{"browser":"webkit","version":"27.2","mode":"sin API (respaldo Motion)","motion":"reduce","startViewTransition":false,"layoutFrames":{"layout":0,"sampled":5},"open":[],"close":[]}
+{"CLS":"/metas","width":390,"value":0}
+{"CLS":"/metas","width":1440,"value":0}
+T052 · webkit · con API · movimiento no-preference → Error: expect(page).toHaveURL(…/metas/{id}) failed · Received "http://localhost:3500/metas"
+T052 · webkit · con API · movimiento reduce        → Error: expect(page).toHaveURL(…/metas/{id}) failed · Received "http://localhost:3500/metas"
+```
+
+- **Respaldo `layoutId` de Motion (sin la API): sí anima.** Chromium sin la API: 15 de 15 cuadros con transformación mientras la meta entra; WebKit 27.2: 7 de 7. Con movimiento reducido, 0 en los dos: no hay desplazamiento ni escala, como pide MOTION_SYSTEM §4. Esto corrige la segunda corrida, que decía «sin animación medible»: allí no se medía la transformación.
+- **WebKit 27.2 con la API nativa** (Playwright 27.2 sí trae `document.startViewTransition`): la navegación desde la tarjeta no se completó. Para descartar que la causara el espía de la prueba, corrí un diagnóstico aparte en WebKit **sin espía**, con la URL muestreada desde Node, una llamada a la página con límite propio y los eventos `crash` y `close`. Fueron cuatro corridas de diagnóstico; la última, que es la concluyente:
+
+```
+{"diag":"webkit con API sin espía","caso":"tarjeta → meta inmersiva","version":"27.2","clickReturned":true,"crashed":true,"closedEvent":false,"samples":[{"ms":278,"path":"/metas","responsive":true,"title":"Metas"},{"ms":1446,"path":"/metas/{id}","responsive":true,"title":null},{"ms":3011,"path":"/metas/{id}","responsive":true,"title":null},{"ms":6016,"path":"/metas/{id}","responsive":true,"title":null}],"errors":[]}
+{"diag":"webkit con API sin espía","caso":"Metas → Actividad (sin tarjetas de meta)","version":"27.2","clickReturned":true,"crashed":false,"closedEvent":false,"samples":[{"ms":264,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":1010,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":3013,"path":"/actividad","responsive":true,"title":"Actividad"},{"ms":6012,"path":"/actividad","responsive":true,"title":"Actividad"}],"errors":[]}
+```
+
+  - Al tocar la tarjeta, **el proceso de la página de WebKit se cae** (`crash: true`). La URL llega a `/metas/{id}`, pero la página ya no pinta nada (`h1` nulo) y no hay errores de consola.
+  - La navegación de control sin tarjetas de meta (Metas → Actividad) funciona: sin caída y con su título.
+  - Las corridas de diagnóstico anteriores acabaron en «página cerrada» o en el límite de 120 s, lo que también encaja con la caída.
+  - **Alcance de este dato**: es el WebKit de Playwright para Windows (build 2370, versión 27.2), no Safari en macOS ni en iOS. No se puede afirmar que Safari se caiga. Tampoco se puede descartar: en este WebKit, la View Transition con nombre de la meta tumba la página.
+- **Estado de T052 tras la tercera corrida** (antes de la verificación humana de abajo):
+  - **Chromium: apertura cumple** (par `goal-photo`, `goal-title`, `goal-ribbon`); el cierre no tiene transición; el respaldo anima.
+  - **WebKit de Playwright: el respaldo cumple; con la API nativa, la página se cae.**
+
+### T052 · verificación humana en Safari real y decisión del gestor (10 de noviembre de 2026)
+
+- **Quién y dónde**: el fundador, en su iPhone, con **Safari** real. Versión de iOS: **por confirmar** (la confirma el gestor con el fundador).
+- **Build**: `62072be`, compilado en local y servido por la red local (LAN) contra `juntia-dev`. No es un despliegue ni una corrida de CI.
+- **Resultado**: **al abrir una meta, la View Transition anima, y Safari no se cae.**
+- **Decisión del gestor**: se queda como está. View Transition nativa más el respaldo `layoutId` de Motion, FR-076 sin cambios. No se limita la View Transition a Chromium ni se quita.
+- **Limitación del port de Playwright WebKit para Windows**: build 2370, versión 27.2. Con la API nativa, el proceso de la página se cae (`crash: true`) al iniciarse la View Transition de la meta; la salida es la de la tercera corrida, arriba. Safari real no reproduce la caída, así que se registra como limitación de ese port, no de la app. Consecuencia: una prueba automática de Goal Journey en ese WebKit tendría que quitar la API, como hace el caso «sin API» de la prueba temporal.
+- **Limitación conocida, sin cambio en este PR**: al cerrar la meta (Escape o ×, de vuelta a `/metas`) no hay View Transition, porque la lista suspende en su Skeleton (`(lista)/loading.tsx`) y no se forma el par. El gestor se lo muestra a los fundadores en T056.
+- **Estado de T052**: **cerrada** para la apertura, en Chromium (salida de las corridas segunda y tercera) y en Safari real (verificación humana de arriba). El respaldo de Motion queda verificado en Chromium y en el WebKit de Playwright sin la API. Siguen fuera: el cierre, que es la limitación de arriba, y el back-swipe de iPhone, aplazado por la decisión 19.1.
+- Las pruebas temporales (`zz-vt-check.e2e.ts`, `zz-webkit-diag.e2e.ts`) no se versionan; sus copias y salidas se conservan fuera del repositorio.
+
+## Decisiones del fundador del 10 de noviembre de 2026 · GoalStack
+
+- **«Ver todas» en Inicio lleva a Metas.** La pila acepta `seeAllHref`; en Inicio es un enlace a `/metas`, que conserva el contexto (cookie). En Metas, «Ver todas» sigue desplegando la cuadrícula allí mismo, con «Ver en pila». Pruebas: `goals.test.tsx` y `home-goals.test.tsx`.
+- **Deslizar en vertical recorre la pila** (COMPONENT_SPECIFICATIONS, GoalStack):
+  - **Cómo funciona.** La tarjeta frontal se arrastra en vertical con Motion (`drag="y"`, vuelve a su sitio con el spring `card`). Hacia arriba trae la siguiente al frente; hacia abajo, la anterior. Cuenta a partir de 64 px de recorrido o 500 px/s de velocidad, y un gesto más horizontal que vertical no cuenta (`swipeStep`).
+  - **Dónde.** Solo en la frontal y con más de una meta; nunca en el abanico de escritorio. `touch-pan-x` solo en esa tarjeta, así que fuera de la pila la página se desplaza como siempre.
+  - **Movimiento reducido.** La tarjeta no sigue al dedo (`dragElastic: 0`) y el cambio es inmediato.
+  - **Clic al soltar.** Se descarta desde que empieza el arrastre hasta 350 ms después de soltar, para que soltar no abra la meta. El filtro va en la lista y no en la tarjeta, porque al soltar la tarjeta arrastrada ya pasó atrás. Además, el enlace no es arrastrable de forma nativa.
+  - **Alternativas.** Tocar la que asoma y «Ver todas» siguen igual.
+  - **Pruebas de componente.** Los umbrales de `swipeStep` (seis casos); solo la frontal lleva el gesto, y no con una sola meta.
+  - **Comprobación en móvil emulado.** Prueba temporal, no versionada, contra `juntia-dev`: Chromium 156 a 390 × 844 con `hasTouch` e `isMobile`, tres metas compartidas, gesto de 140 px hacia arriba y después hacia abajo. Fueron seis corridas, que encontraron y corrigieron dos fallos: el arrastre nativo del enlace, y el clic al soltar que abría la meta. Corrida final: **2/2, 21,3 s**.
+
+```
+{"swipe":"no-preference","boxesAfterDrag":["342","342","342","342","342","342"]}
+{"swipe":"no-preference","first":0,"afterUp":1,"afterDown":0,"tapOpens":true}
+{"swipe":"reduce","boxesAfterDrag":["342","342","342","342","342","342"]}
+{"swipe":"reduce","first":0,"afterUp":1,"afterDown":0,"tapOpens":true}
+```
+
+  La frontal queda quieta tras el gesto (misma posición durante 1,5 s), y un toque posterior abre la meta frontal.
+  - **Regresión.** `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 106,65 s** (spec 4 2/2; axe de metas 2/2). Componentes de metas, Inicio y Actividad: **105/105**. No se reinició `juntia-dev`.
+- **Orden de la pila** («al frente, la meta con el aporte más reciente»): **pendiente**. `goals_overview` no trae la fecha del último aporte; se le preguntó al gestor si usar una consulta más sobre `goal_entries` o una migración, y si «más reciente» es `effective_date` o `created_at`.
+
+## Prefetch RSC en las specs 3 y 4 (revisión del gestor del PR #68; mismo hallazgo que F67-2 del PR B)
+
+- **Hallazgo** (de la sesión del PR B, `7de0fed`). En Playwright, `response.text()` devuelve "" con las respuestas RSC transmitidas, y el `.catch(() => "")` lo ocultaba. Por eso la parte de prefetch de la spec 4 (`goals.e2e.ts`) y de la spec 3 (`couple-settle.e2e.ts`, ya en `main`) no inspeccionaba ningún cuerpo.
+- **Arreglo** (commit `6bde71b`), un helper común en `tests/support/rsc-capture.ts`:
+  - intercepta con `page.route(url => url.searchParams.has("_rsc"))` y lee el cuerpo con `route.fetch()` y `response.text()`;
+  - entrega la respuesta sin cambios (`route.fulfill({ response, body })`);
+  - marca cada petición al empezar, con su ruta y con si se inició ya en Nosotros;
+  - si la lectura falla, la prueba falla: no hay `catch` que la cambie por "".
+- **Spec 4.** Control en Yo: el RSC de `/metas` (navegación de Inicio a Metas en el cliente) trae el id y el nombre de la meta personal. En Nosotros:
+  - ningún RSC trae marcadores personales;
+  - hay al menos un RSC de `/metas` iniciado en Nosotros;
+  - y trae la meta compartida sembrada (control positivo).
+- **Spec 3**, el mismo esquema: en Yo, el RSC de `/actividad` trae los privados de Sara. En Nosotros:
+  - ningún RSC trae privados;
+  - hay al menos un RSC de `/actividad`;
+  - y trae «Carulla Laureles».
+  - Es un arreglo de prueba: no cambia comportamiento.
+- **Verde** contra `juntia-dev`: `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/couple-settle.e2e.ts --grep "HTML"` da **2/2, 46,7 s** (build 17,10 s, total 66,25 s).
+- **Mutación 1**: en el helper, `underUs = true` desde el inicio, de modo que toda petición de Yo cuenta como de Nosotros. **Las dos fallan** en el control de Yo:
+  - spec 3: «el RSC de Actividad en Yo trae los privados», recibido `false`;
+  - spec 4: «el RSC de Metas en Yo trae la meta personal», recibido `false`.
+- **Mutación 2**: comprobar como de Nosotros todas las peticiones (`rsc.read(() => true)`), incluidas las de Yo. **Las dos fallan** en la comprobación negativa:
+  - spec 3: «RSC de /actividad pedido en Nosotros» con «Taxi a la oficina», «Reembolso EPS», «Regalo de cumpleaños», «Almuerzo con el equipo», «4500000» y «5970000», entre otros;
+  - spec 4: «RSC de /metas/{id personal} pedido en Nosotros», con el id de la meta personal.
+- Las dos mutaciones fueron temporales, sin commit; los archivos se restauraron con `git checkout`.
+
+## Ronda del 10 de noviembre de 2026 · tintes, orden de la pila, hover del abanico
+
+Decisiones del fundador, traídas por el gestor. Commits locales `223260a` (tintes), `c33f105` (migración y orden), `3b5ba60` (hover), `6bde71b` y `c9bf37a` (RSC) y `19d9855` (pgTAP), en un solo push.
+
+### Tinte por tipo de meta
+
+- BRAND_FOUNDATION, «tinte de la categoría de la meta»; Juntia DS v1, «08 Tintes de meta».
+- **Tokens.** Los 28 tokens `color.goal.tint.{tipo}.{bg,initial,icon,edge}` en claro y oscuro: en `src/styles/tokens.css` (claro, oscuro y respaldo sin JavaScript, que la prueba de igualdad del tema oscuro confirma) y en `docs/design/DESIGN_SYSTEM.md`.
+- **Aplicación.** Cada tarjeta, capa de la pila, meta inmersiva y fila de archivada declara `data-goal-tint`. Además:
+  - el texto secundario sobre el tinte usa `status.pending`;
+  - el riel de la cinta lleva un borde interior de 1,5 px en `.edge`;
+  - las capas traseras conservan su tinte, sin atenuarse, con un filete de 1 px;
+  - el «+» va sin tinte, con contorno punteado de 2 px y el botón elevado;
+  - la ficha de lograda va rellena de tinta y la de archivada, con contorno y el ícono de archivar.
+- **Regla del fallback** actualizada en `COMPONENT_SPECIFICATIONS.md`.
+- **Pruebas.** Cada `goal_type` pinta su tinte, con sus cuatro variables en el CSS y en los tres bloques de tokens; el texto secundario de la tarjeta usa `status.pending`; las traseras llevan filete y no se atenúan.
+- **Limitación conocida, aceptada por el gestor y pendiente de la aprobación en pantalla.** En claro, el tramo rayado de Tomás queda a 1,3–1,6:1 contra el tinte, y a 1,6:1 contra el riel, como en todo el sistema. El patrón y los importes por persona en texto llevan la información. No se cambia la cinta.
+
+### Orden de la pila: migración `20261110120000_goal_last_contribution.sql`
+
+- **Migración.** `create or replace view public.goals_overview` con la definición anterior intacta y dos columnas al final: `last_contribution_date` (date) y `last_contribution_created_at` (timestamptz). Solo cuentan aportes no anulados; sin aportes, null. El nombre del archivo lleva `_goal`, así que entra en el área de metas del selector.
+- **Orden de GoalStack** (`stackOrder`), en Metas (Yo y Nosotros) y en Inicio:
+  - al frente, el aporte más reciente, por `effective_date` y, el mismo día, por `created_at`;
+  - sin aportes, detrás;
+  - los empates, por creación, la más antigua primero;
+  - por último, el `id`.
+  - En Yo se conserva la separación por `goal_scope`.
+- **Pruebas de componente**: fecha, empate del mismo día, metas sin aportes.
+- **`npm run db:dev:reset`** (autorizado por el usuario en esta sesión): **pasó, 12,43 s**, con 12 migraciones.
+- **`npm run test:db:dev`**:
+  - **Primera corrida: falló** en el archivo nuevo `13b` («could not determine which collation to use for string comparison», al comparar los nombres de columna de `information_schema`). Todo el pgTAP existente pasó, incluidos los 483 controles de privilegios.
+  - **Segunda corrida**, tras corregir la prueba con `array_agg(... collate "C")`: **pasó, 122,44 s**. `13b_goal_last_contribution` **13/13**: columnas, tipos y posición; `security_invoker`; aporte anulado que no cuenta; empate del mismo día; meta sin aportes con null; Tomás sigue sin ver la meta personal. `01_privileges` **483**: los grants de la vista se conservan.
+- **Ensayo de restauración**: `scripts/order-restore-data.mjs` trabaja sobre tablas y no lee vistas. Las integraciones que leen `goals_overview` usan `select("*")` o `id`.
+- **`npm run test:integration:dev`** (corrió la suite entera: los argumentos de archivo no se aplican): **145 pasan, 9 omisiones previstas, 413,87 s**.
+- **Tipos**: `database.types.ts` se actualizó a mano, con el mismo formato y orden alfabético que el generador. `db:types:check` solo corre en el job `db` de CI.
+- **Producción**: no se tocó; la migración la aplica el gestor después del merge.
+
+### Hover y foco del abanico
+
+- Juntia DS v1, «08·7 Abanico · hover y foco»; MOTION_SYSTEM §4.1; COMPONENT_SPECIFICATIONS, GoalStack.
+- **Estado.** `data-fan-active` en GoalStack, con 60 ms de margen al salir y salto directo a otra tarjeta. Responde solo al puntero de ratón y al `focus-visible`.
+- **Efecto en CSS.** Solo con `(hover: hover) and (pointer: fine)` y desde lg. El movimiento usa el spring `card` como curva `linear()` de 580 ms, generada del mismo muelle 260/28/1. La sombra pasa de `float` a `overlay` en 180 ms. Con movimiento reducido: sin desplazamiento ni escala, la segunda conserva sus 4° y solo cambia la sombra, en 120 ms lineal.
+- **Ajuste mínimo, para que lo vea el gestor.** Con hover en una tarjeta trasera, el «+» también se desplaza 24 px, para no chocar con la tercera; el paso del abanico no cambia.
+- **Medición en Chromium con movimiento normal y hover en la segunda y la tercera capa**: sin scroll horizontal a 1024, 1280 y 1440 (`scrollWidth = clientWidth`). A 1024, el «+» desplazado sobresale 16 px del área de contenido (borde derecho en 1012 frente a 996), dentro del margen de la página.
+
+```
+{"fanHover":1024,"layer":"1","before":{"s":1024,"c":1024},"during":{"s":1024,"c":1024,"plusRight":1012,"mainRight":996}}
+{"fanHover":1280,"layer":"1","before":{"s":1280,"c":1280},"during":{"s":1280,"c":1280,"plusRight":1196,"mainRight":1240}}
+{"fanHover":1440,"layer":"1","before":{"s":1440,"c":1440},"during":{"s":1440,"c":1440,"plusRight":1196,"mainRight":1400}}
+```
+
+- **Pruebas de componente**:
+  - hover inmediato y reposo a los 60 ms;
+  - salto directo a otra tarjeta sin volver al reposo;
+  - un toque no activa el hover;
+  - el foco de teclado activa el mismo efecto, con el anillo y su offset de 2 px;
+  - fuera del abanico no hay estado;
+  - el bloque de movimiento reducido no desplaza ni escala, y conserva los 4°.
+
+### Cierre de la ronda
+
+- **`PORT=3500 npm run e2e:dev` completo, primera corrida**, sobre la base reiniciada pero con las 145 integraciones recién sembradas: **exit 1, 422,69 s**; E2E 28/30, axe 97/98. Fallaron tres pruebas ajenas a metas:
+  - E5 de Anotar: el héroe siguió en $412.900;
+  - 50/50 de la spec 3: héroe no encontrado;
+  - axe de Nosotros: la lista de «Mover a Pareja» no apareció.
+  - Son los mismos tres casos intermitentes que registró el PR A con fixtures acumuladas («T026»).
+- **Las tres, dirigidas** (`tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts tests/a11y/couple-shared.a11y.ts`): **exit 0, 129,21 s**; E2E 21/21 y axe 2/2.
+- **Completo tras un nuevo `db:dev:reset`**, como en el PR A: **exit 0, 335,74 s**. Build 11,32 s; E2E sin @mail **30/30, 67,95 s**, con las specs 3 y 4 y su captura de RSC; axe con sesión **98/98, 255,09 s**, con `goals.a11y.ts` en los dos temas y `routes.a11y.ts`. Siguen fuera @mail, `@sweep` y el proyecto evidence.
+- **`npm run verify`**: **exit 0, 77,68 s**. Dominio **78/78**; componentes **778 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (aviso preexistente de `balance-panel.tsx:61`).
+- **Capturas.** 42 PNG en `evidence/pr-c/capturas/` a 390 y 1440 en los dos temas, con metas de viaje, vivienda, boda, vehículo, emergencias y educación:
+  - Metas, la pila, el abanico, la inmersiva e Inicio;
+  - el abanico con hover y movimiento normal (`metas-abanico-hover-movimiento-nosotros-1440-{light,dark}.png`): la tarjeta se endereza, sube y se desplaza 24 px, y las de su derecha y el «+» se desplazan con ella;
+  - el abanico con hover y movimiento reducido (`metas-abanico-hover-nosotros-1440-*.png`): conserva el giro y no se mueve.
+- Las pruebas temporales de captura no se versionan.
+
+## Revisión del gestor de `70b87b5..9464d58` · correcciones
+
+Un solo push; el PR sigue en borrador.
+
+1. **Bloqueante · RSC clasificado por su cookie** (`tests/support/rsc-capture.ts`). Cada petición `_rsc` se marca al empezar con su propia cookie (`route.request().headerValue("cookie")` contiene `juntia_context=us`). Se quitó `nowUnderUs`: ya no hay una bandera que la prueba mueva a mano, y el `router.refresh()` del cambio Yo → Nosotros, que viaja con la cookie nueva, se inspecciona como de Nosotros.
+   - **Control positivo del cambio**: justo después de ver Nosotros, hay al menos un RSC de Nosotros de la ruta del cambio con datos compartidos: `/` con «Carulla Laureles» en la spec 3 y `/metas` con el id de la meta compartida en la spec 4. Ninguno trae marcadores privados.
+   - **Mutación** (temporal, restaurada desde una copia en el scratchpad; sin commit): en el helper se añadió « Bicicleta secreta Regalo de cumpleaños» solo al cuerpo de la primera respuesta de Nosotros de la ruta de la página (la del cambio). `--grep "HTML"` en las specs 3 y 4: **las dos fallan** en la comprobación del cambio: «RSC de / del cambio a Nosotros» con «Regalo de cumpleaños» (spec 3) y «RSC de /metas del cambio a Nosotros» con «Bicicleta secreta» (spec 4). Una primera variante, que marcaba la primera respuesta de Nosotros fuera cual fuera su ruta, cayó en prefetches (`/actividad`, `/`) y también falló.
+2. **Inicio en Yo mezcla ámbitos.** `stackSort`: primero las personales y, dentro de cada ámbito, `stackOrder`. Prueba: una compartida con un aporte de ayer queda detrás de dos personales más antiguas.
+3. **Área de hover fija.** Los listeners siguen en el `li` (capa), que ya no se transforma; el movimiento va en dos envoltorios internos: `[data-fan-tilt]` (contragiro, pivote en la esquina inferior izquierda) y `[data-fan-card]` (desplazamiento y escala, pivote abajo al centro).
+4. **Pivote en reposo.** La capa ya no lleva `transform-origin` fuera de las capas de Tailwind: en reposo mantiene el `lg:origin-bottom-left` aprobado. Medido en Chromium a 1440: capa 0 `140px 114px`, sin giro; capas 1 y 2 `0px 228px`, con 4° y 7°; envoltorios sin transformación.
+5. **El foco de teclado no se pierde con el ratón.** GoalStack recuerda la tarjeta con `focus-visible`; al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
+6. **El frente se guarda por id** (`frontId`), no por índice: un `router.refresh` que reordena la pila no cambia la meta del frente.
+7. **Pruebas nuevas.** `goal-stack-drag.test.tsx`: deslizar arriba y abajo cambia de verdad el frente (y por debajo del umbral, no); el frente se conserva por id tras reordenar; con movimiento reducido `dragElastic` es 0 y sin él es mayor. `goals.test.tsx`: el enlace lleva el anillo (`focus-visible:outline-2`, `outline-solid`, `outline-focus`) además del offset; estructura de envoltorios; bloques CSS (la capa no tiene reglas propias; movimiento reducido sin `translate`, `scale` ni `rotate`); foco tras la salida del ratón; orden por ámbito en Inicio de Yo. Las cuatro de comportamiento fallan con el `goal-stack.tsx` anterior.
+
+**Comprobación en navegador** (prueba temporal sin versionar, Chromium, 1440, movimiento normal, tres metas compartidas). Para cada capa, el puntero se lleva desde fuera a un punto que esa capa tiene visible junto al borde inferior y a las esquinas giradas, y se cuentan durante 1,5 s los cambios de `data-fan-active`:
+
+```
+{"probes":[{"layer":"0","spot":"borde inferior","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina inferior izquierda","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina inferior derecha","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina superior derecha","flips":1,"sequence":"0"},
+ {"layer":"1","spot":"borde inferior","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina inferior izquierda","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina inferior derecha","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina superior derecha","flips":1,"sequence":"1"},
+ {"layer":"2","spot":"borde inferior","flips":1,"sequence":"2"},{"layer":"2","spot":"esquina inferior izquierda","flips":1,"sequence":"2"},{"layer":"2","spot":"esquina inferior derecha","flips":0,"sequence":""},{"layer":"2","spot":"esquina superior derecha","flips":1,"sequence":"2"}]}
+{"ring":{"card":true,"outline":"2px solid rgb(46, 88, 102)","offset":"2px","active":"1"}}
+```
+
+Un solo cambio por punto, sin bucles de entrada y salida. En la esquina inferior derecha de la tercera capa, el punto calculado quedó fuera de la zona activa (0 cambios, sin estado). El anillo de foco es de 2 px en `focus.ring` con su offset de 2 px.
+
+**Corridas**
+- `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/couple-settle.e2e.ts <prueba temporal> tests/a11y/goals.a11y.ts`: **exit 0, 148,19 s** (build 15,93 s; E2E 8/8, 88,19 s; axe 2/2, 41,83 s).
+- `npm run verify`, primera corrida: **exit 1** por un tiempo agotado (5 s) en `src/features/expenses/review-f57.test.tsx`, ajeno a metas; ese archivo solo pasa 19/19. Segunda corrida: **exit 0, 100,43 s** (aviso de presupuesto de 90 s). Dominio **78/78**; componentes **785 pasan / 2 omisiones previstas**, 60 archivos; typecheck y lint verdes.
+
+## Integración de `main` tras el PR B (`4fadbf5`)
+
+Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la ronda anterior.
+
+- **Conflictos**:
+  - `src/features/shared/write-result.ts`: `WriteError`, `WriteAction` y `REJECTED` suman los presupuestos del PR B y las metas del PR C; se conserva `detail`, con `WriteRejectionDetail`.
+  - `src/app/(app)/product-routes.test.tsx`: el PR B sacó Plan y el PR C sacó Metas, así que ya no queda ninguna ruta de producto sin datos. La prueba conserva lo que no depende de los datos de una página: en las seis rutas de producto, el AppShell no muestra el aviso de versión base ni cifras en sus nombres accesibles (FR-044).
+  - `evidence.md`: se conservan las secciones del PR B y del PR C, en ese orden.
+  - `src/lib/copy/es.ts` y `tests/support/a11y.ts` se fusionaron sin conflicto; el typecheck lo confirma.
+- **Selector de specs**: `scripts/e2e-select.mjs` ya mapea la spec 4 a `tests/e2e/goals.e2e.ts`; `tests/e2e-select.test.ts` pasa.
+- **Captura de RSC de la spec 5** (`tests/e2e/budgets.e2e.ts`): usa sus propias fases (`me`, `switch`, `us`), que se mueven a mano. El helper `tests/support/rsc-capture.ts`, que clasifica cada petición por su cookie, sirve también para ella. No se migra en este PR: queda anotado para un PR aparte.
+- **Corridas tras el merge**:
+  - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/budgets.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 138,32 s**. Build 33,89 s; E2E de las specs 4 y 5 **4/4, 54,53 s**; axe **2/2, 48,35 s**.
+  - `npm run verify`, tres corridas:
+    - La primera, **exit 1**: `tests/a11y/job-selection.test.ts`, que llega de `main`, encontró ocupado el puerto 3400 (otro proceso, no lanzado por esta sesión).
+    - La segunda, con `PORT=3500`, **exit 1**: otra vez el tiempo agotado de 5 s de `review-f57.test.tsx`, ajeno a metas. Solo, ese archivo pasa 19/19.
+    - La tercera, con `PORT=3500`, **exit 0, 94,72 s** (aviso de presupuesto de 90 s). Dominio **84/84**; componentes **836 pasan / 2 omisiones previstas**, 63 archivos; typecheck y lint verdes.
+
+## F68-1 · conflicto de versión al editar una meta (revisión externa del PR #68 sobre `090c13b`)
+
+- **Hallazgo.** Tras JT011, la hoja atribuía siempre el cambio a la pareja (`changedBy: partnerName`). Además, solo hacía `router.refresh()`: un segundo «Guardar» mandaba los valores viejos del formulario con la versión nueva de las props, y la base ya no detectaba el conflicto.
+- **Arreglo** (`goal-form-sheet.tsx`), con el patrón de `budget-sheet.tsx` del PR B:
+  - la versión (`base`) y la clave (`key`) de la intención son estado de la hoja, no se leen de las props al guardar;
+  - al recibir JT011, la hoja entra en conflicto: campos y «Guardar» bloqueados, y `submit` no escribe;
+  - mientras no llega el refresco, se muestra «Revisando la versión vigente…» con «Volver a cargar»;
+  - cuando llega una versión distinta de la intentada, se dicen lo que no se guardó y los valores vigentes (nombre, tipo, objetivo y fecha);
+  - «Revisar» carga lo vigente en el formulario, toma su versión y una clave nueva (`crypto.randomUUID()`), y solo entonces se puede guardar.
+- **Autor.** La lectura de la meta no trae quién la cambió, y no se añadió una migración. El aviso es neutral: «Esta meta cambió mientras la editabas.». `goalRejection` ya no acepta `changedBy` y `copy.goals.errors.someone` desapareció. `copy.goals.errors.versionConflict` es neutral («Esta meta cambió en otro lugar. Ya ves lo último.») y lo usa también `goal-status-dialog.tsx` (lograr y archivar), que ya pedía la página otra vez y no tiene valores que sobrescribir. El copy nuevo de `copy.goals.sheet.conflict` queda para T056.
+- **Pruebas de componente** (`goal-form-conflict.test.tsx`, 3):
+  - tras JT011: ningún nombre, «Guardar» ausente y campos bloqueados, también con `requestSubmit`; «Revisando…» con «Volver a cargar», que vuelve a pedir la página; con la versión nueva, lo intentado y lo vigente;
+  - «Revisar»: el formulario muestra lo vigente, y el segundo envío lleva `expectedVersion` 4, los valores vigentes y una clave distinta;
+  - el diálogo de lograr muestra el texto neutral.
+  - **Mutaciones** (temporales, restauradas desde una copia): sin la clave nueva en «Revisar», falla la segunda; con «Guardar» visible durante el conflicto, falla la primera.
+- **E2E** (spec 4, `goals.e2e.ts`): Sara abre «Editar meta» y cambia el nombre. Desde otra sesión suya (`updateGoal` con su cliente), la meta pasa a «Japón 2027» con otro objetivo. Al guardar:
+  - aviso de conflicto con lo intentado y lo vigente, sin «Tomás» ni «Alguien»;
+  - sin «Guardar» y con el campo bloqueado;
+  - la base conserva «Japón 2027» y la versión ganadora, también después de «Revisar»;
+  - tras una nueva edición y «Guardar», la base tiene el nombre nuevo, el objetivo ganador y la versión + 1.
+- **Corridas**:
+  - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 130,52 s**. Build 29,89 s; E2E **3/3, 60,84 s** (la nueva, 6,1 s); axe **2/2, 38,31 s**.
+  - `PORT=3500 npm run verify`: **exit 0, 73,09 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.
+
+## F68-2 · texto del conflicto en lograr y archivar (re-revisión externa sobre `d241836`)
+
+- `copy.goals.errors.versionConflict` afirmaba «Ya ves lo último» cuando el `router.refresh()` podía no haber llegado o haber fallado. Ahora dice: «Esta meta cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.». Lo usa `goal-status-dialog.tsx`.
+- La prueba del diálogo (`goal-form-conflict.test.tsx`) ahora exige además que el texto no afirme que la página ya se actualizó (`/ya ves|lo último|actualiz/i`).
+- Corridas:
+  - `vitest --project components src/features/goals`: **81/81**, 4 archivos.
+  - `PORT=3500 npm run verify`: **exit 0, 68,47 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.

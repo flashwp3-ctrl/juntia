@@ -18,6 +18,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { ActivityView } from "./activity-view";
 import { CoupleActivityView } from "./couple-activity-view";
 import type { MonthData } from "./load";
+import type { GoalActivityData, GoalPerson } from "@/features/goals/types";
 
 type ActivityScreenProps = {
   server: ContextChoice | null;
@@ -28,6 +29,9 @@ type ActivityScreenProps = {
   mobileHeader?: ReactNode;
   /** Nosotros: `null` sin pareja activa (o fuera de Nosotros); si no, lo leído de las vistas de grupo. */
   couple?: { data: { ok: true; value: CoupleMonthData } | { ok: false }; members: CoupleMemberView[] } | null;
+  /** 004 PR C (T050): asientos de metas del mes y lo apartado, del contexto que pinta el servidor; sin ellos, solo movimientos. */
+  goals?: GoalActivityData | null;
+  goalPeople?: readonly GoalPerson[];
 };
 
 function PickPanel() {
@@ -40,7 +44,7 @@ function PickPanel() {
   );
 }
 
-export function ActivityScreen({ server, data, today, selectedId, detail, mobileHeader, couple }: ActivityScreenProps) {
+export function ActivityScreen({ server, data, today, selectedId, detail, mobileHeader, couple, goals, goalPeople }: ActivityScreenProps) {
   const opened = Boolean(detail);
   const layout = (list: ReactNode) => (
     <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-8">
@@ -49,10 +53,10 @@ export function ActivityScreen({ server, data, today, selectedId, detail, mobile
     </div>
   );
   const list = !data ? null : data.ok
-    ? <ActivityView rows={data.value.rows} month={data.value.month} today={today} navigation={data.value.navigation} selectedId={selectedId} />
+    ? <ActivityView rows={data.value.rows} month={data.value.month} today={today} navigation={data.value.navigation} selectedId={selectedId} goalEntries={goals?.entries} goalPeople={goalPeople} setAsideMinor={goals?.setAsideMinor} />
     : <LoadError />;
   const us = server !== "us" ? undefined : !couple ? <UsUnavailable /> : layout(couple.data.ok
-    ? <CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} summary={couple.data.value.summary} selectedId={selectedId} />
+    ? <CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} summary={couple.data.value.summary} selectedId={selectedId} goalEntries={goals?.entries} setAsideMinor={goals?.setAsideMinor} />
     : <LoadError />);
   return (
     <>

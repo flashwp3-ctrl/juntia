@@ -9,11 +9,132 @@ export const copy = {
       date: "Elige hoy o una fecha pasada, desde la creación de la meta.",
       cannotArchive: "Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.",
       cannotComplete: "No se puede dar por lograda esta meta.",
-      versionConflict: (name:string) => `${name} cambió esta meta.`,
+      // F68-1 (revisión del PR #68): neutral. La lectura de la meta no dice quién la cambió (puede ser la pareja u otra
+      // pestaña de quien mira): no se atribuye.
+      // F68-2: no afirma que la página ya se actualizó (el refresco puede no haber llegado o fallar).
+      versionConflict: "Esta meta cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.",
       undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
+      // 004 PR C (revisión del PR #68; Q13, FR-042): anular o deshacer un aporte cuyos fondos ya se usaron o se retiraron.
+      fundsUsed: "Ya no se puede anular: esos fondos ya se usaron o se retiraron de la meta.",
+      fundsUsedWith: (amount: string) => `Ya no se puede anular: esos fondos ya se usaron o se retiraron. Te quedan ${amount} disponibles en esta meta.`,
     },
     form: {errors:{name:"Escribe un nombre de hasta 60 caracteres.",type:"Elige un tipo de meta.",target:"Escribe un objetivo entre $1 y $999.999.999.",month:"Elige un mes válido."}},
     withdraw: {errors:{reason:"Escribe un motivo de hasta 140 caracteres."}},
+    // 004 PR C (T045–T050; 04·3, 04·6, 04·7; GoalCard, GoalStack, S5). Copy nuevo para revisión de los fundadores en el PR;
+    // los textos de los comps se copian tal cual. Glosario §9: «Registrar aporte», nunca «Depositar» ni «Invertir»; un
+    // retiro es «Retiro de meta · reasignación», nunca «Ingreso»; nunca «Llegarán», «te alcanza» ni «Total gastado».
+    title: "Metas",
+    scope: { shared: "COMPARTIDA", personal: "PERSONAL" },
+    types: { travel: "Viaje", home: "Vivienda", wedding: "Boda", vehicle: "Vehículo", education: "Educación", emergency: "Emergencias", other: "Otra" },
+    empty: {
+      us: { title: "Todavía no tienen metas", description: "Una meta les ayuda a apartar dinero juntos para algo que quieren. El dinero sigue donde lo tengan.", action: "Crear una meta" },
+      me: { title: "Todavía no tienes metas", description: "Una meta te ayuda a apartar dinero para algo que quieres. El dinero sigue donde lo tengas.", action: "Crear una meta" },
+    },
+    totals: {
+      us: "Apartado en metas compartidas", usNote: "Es dinero apartado, no gastado. Sigue donde lo tengan.",
+      me: "Apartado en tus metas", meNote: "Es dinero apartado, no gastado. Sigue donde lo tengas.",
+    },
+    sections: { mine: "Tus metas", shared: "Metas compartidas", sharedNote: "Cada una muestra tus aportes. No se suman a tus metas.", archived: "Archivadas" },
+    yourShare: (amount: string) => `Tus aportes ${amount}`,
+    ofTarget: (balance: string, target: string) => `${balance} de ${target}`,
+    percent: (value: number) => `${value} %`,
+    due: (month: string) => `Para ${month}`,
+    noDate: "Sin fecha",
+    pace: {
+      line: (remaining: string, months: number, monthly: string) => `Faltan ${remaining} en ${months === 1 ? "1 mes" : `${months} meses`} · ${monthly} al mes`,
+      estimate: "Estimación",
+      pastDue: (month: string) => `La fecha era ${month}`,
+    },
+    reached: { us: "Lo lograron", me: "Lo lograste" },
+    reachedHint: "Cuando quieran, pueden darla por lograda.",
+    surplus: (amount: string) => `${amount} por encima del objetivo`,
+    status: { completed: "LOGRADA", archived: "ARCHIVADA" },
+    pending: "Hay una solicitud de fondos pendiente.",
+    ribbon: {
+      label: (parts: string, target: string) => `Apartado por persona: ${parts}. Objetivo ${target}.`,
+      part: (name: string, amount: string) => `${name} ${amount}`,
+      pace: (percent: number) => `marca de ritmo al ${percent} % del tiempo`,
+    },
+    card: {
+      // Revisión del PR #68 (T052): mientras se abre la meta inmersiva, la tarjeta tocada lo dice.
+      opening: (name: string) => `Abriendo ${name}…`,
+      accessibleName: ({ name, scope, percent, balance, target }: { name: string; scope: string; percent: number; balance: string; target: string }) =>
+        `${name}, meta ${scope}, ${percent} %, ${balance} de ${target}`,
+    },
+    stack: { count: (count: number) => (count === 1 ? "1 meta" : `${count} metas`), seeAll: "Ver todas", create: "Crear meta", list: "Metas", showAll: "Todas las metas", collapse: "Ver en pila" },
+    immersive: {
+      close: "Cerrar meta", back: "Volver a Metas", contribute: "Registrar aporte", withdraw: "Retirar", history: "Historial",
+      edit: "Editar meta", complete: "Dar por lograda", archive: "Archivar", more: "Más acciones", target: "Objetivo",
+      members: "Aportes por persona",
+      member: (name: string, amount: string, count: number) => `${name} ${amount} · ${count === 1 ? "1 aporte" : `${count} aportes`}`,
+      availableOf: (name: string, amount: string) => `Aportes de ${name} ${amount}`,
+      readOnly: "Meta archivada: queda de solo lectura con su historial.",
+      completedNote: "Meta lograda: admite usos y retiros, no aportes nuevos.",
+      notFound: { title: "No encontramos esta meta", description: "Puede que no exista o que no sea de este contexto. En Metas están todas las que puedes ver." },
+    },
+    sheet: {
+      createTitle: "Nueva meta", editTitle: "Editar meta", name: "Nombre", type: "Tipo de meta", target: "Objetivo",
+      month: "Fecha objetivo (opcional)", monthHelp: "Mes y año. Sin fecha no hay ritmo.", clearMonth: "Sin fecha", monthLabel: "Mes", yearLabel: "Año",
+      scopeNote: { us: "Será una meta compartida: la ven y aportan los dos.", me: "Será una meta personal: solo tú la ves." },
+      submitCreate: "Crear meta", submitEdit: "Guardar cambios", submitting: "Guardando…",
+      created: (name: string) => `Meta «${name}» creada`, updated: "Cambios guardados", rejected: "No se guardó.",
+      // F68-1 (revisión del PR #68): conflicto de versión al editar (JT011). Sin autor: la lectura no lo trae. Para T056.
+      conflict: {
+        title: "Esta meta cambió mientras la editabas.",
+        notSaved: (summary: string) => `Tus cambios no se guardaron: ${summary}.`,
+        current: (summary: string) => `Ahora: ${summary}.`,
+        checking: "Revisando la versión vigente…", reload: "Volver a cargar", review: "Revisar",
+        reviewNote: "Revisa los valores vigentes y guarda de nuevo si quieres cambiarlos.",
+      },
+    },
+    contribute: {
+      title: "Registrar aporte", amount: "Monto del aporte",
+      preview: (balance: string, percent: number) => `Con este aporte ${balance} · ${percent} %`,
+      explain: { us: "Un aporte aparta dinero para la meta. No es un gasto ni una transferencia: el dinero sigue donde lo tengan.", me: "Un aporte aparta dinero para la meta. No es un gasto ni una transferencia: el dinero sigue donde lo tengas." },
+      mode: "Cómo lo apartas", modes: { reserved: "Apartado en Juntia", transferred_declared: "Transferencia declarada" },
+      modeHelp: "Transferencia declarada: lo pasaste a otra cuenta tuya. Juntia no lo verifica.",
+      date: "Fecha",
+      submit: (amount: string) => `Registrar aporte de ${amount}`, submitting: "Registrando…",
+      done: (amount: string, goal: string) => `Aporte de ${amount} a ${goal}`, undone: "Aporte deshecho", rejected: "No se registró el aporte.",
+      errors: { amount: "Escribe un monto entre $1 y $999.999.999." },
+    },
+    withdrawSheet: {
+      title: "Retirar de la meta", amount: "Monto a retirar", reason: "Motivo", reasonPlaceholder: "Para qué lo usas",
+      max: (amount: string) => `Puedes retirar hasta ${amount}`,
+      explain: "Retirar libera dinero que apartaste. Es una reasignación, no un ingreso.",
+      onlyYours: "Solo se retira de tus propios aportes.",
+      nothing: "No tienes aportes disponibles en esta meta.",
+      date: "Fecha",
+      submit: (amount: string) => `Retirar ${amount}`, submitting: "Retirando…",
+      done: (amount: string, goal: string) => `Retiro de ${amount} de ${goal}`, undone: "Retiro deshecho", rejected: "No se registró el retiro.",
+    },
+    history: {
+      title: "Historial", filter: "Filtrar por persona", all: "Todos", empty: "Todavía no hay movimientos en esta meta.",
+      monthTotal: (amount: string) => `Aportes ${amount}`,
+      contribution: "Aporte", withdrawal: "Retiro de meta · reasignación", usage: (description: string) => `Uso · ${description}`, usageFallback: "Uso en un gasto",
+      by: (name: string) => `De ${name}`,
+      voided: "ANULADO", undone: "DESHECHO",
+      void: { action: "Anular aporte", title: "¿Anular este aporte?", description: "Sale del saldo de la meta y de los aportes de su mes. Sigue en el historial, marcado como anulado.", confirm: "Anular aporte", keep: "Conservar", done: "Aporte anulado", rejected: "No se anuló el aporte." },
+      accessibleName: ({ title, amount, who, date, voided }: { title: string; amount: string; who: string; date: string; voided: boolean }) =>
+        `${title}, ${amount} pesos, ${who}, ${date}${voided ? ", anulado" : ""}`,
+    },
+    statusDialog: {
+      completeTitle: "¿Dar por lograda esta meta?", completeDescription: "Sigue admitiendo usos y retiros, pero no aportes nuevos.", completeConfirm: "Dar por lograda",
+      archiveTitle: "¿Archivar esta meta?", archiveDescription: "Queda de solo lectura en «Archivadas» y conserva su historial.", archiveConfirm: "Archivar", keep: "Cancelar",
+      completedDone: "Meta dada por lograda", archivedDone: "Meta archivada",
+    },
+    activity: {
+      contribution: (goal: string) => `Aporte a ${goal}`, contributionMeta: (name: string) => `${name} · ahorro, no es consumo`,
+      withdrawal: "Retiro de meta · reasignación", withdrawalMeta: (goal: string, name: string) => `${goal} · ${name}`,
+      usage: (goal: string) => `Uso de ${goal} · no es un gasto nuevo`, usageMeta: (description: string) => description,
+      setAside: "Apartado", spent: (month: string) => `Gasto ${month}`, filter: "Aportes",
+    },
+    home: {
+      usSetAside: "Apartado para metas", usNote: "Son cosas distintas: no se suman.",
+      meSetAside: (amount: string) => `Apartaste ${amount} para metas`, meNote: "Es ahorro: no se suma al gasto.",
+      module: "Metas", seeAll: "Ver metas", create: "Crear una meta", createHint: "Aparten dinero para algo que quieren, sin mezclarlo con el gasto.",
+    },
+    loading: "Cargando metas",
   },
   goalExpense: {errors:{
     exceedsExpense:"El uso de la meta no puede superar el monto del gasto.",

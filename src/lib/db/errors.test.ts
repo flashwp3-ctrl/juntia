@@ -39,3 +39,12 @@ it("HTTP, red y desconocidos sin filtrar mensaje técnico", () => {
   expect(mapDbError({ code: "PGRST500" }).kind).toBe("unexpected");
   expect(mapDbError({ code: "unknown", message: "private detail" }).message).not.toContain("private detail");
 });
+
+// 004 PR C (revisión del PR #68): JT204 lleva el disponible vigente en `detail` (contracts/errors.md); lo demás no se inventa.
+it("JT204 conserva el disponible vigente del detail; un detail raro o ausente no da cifra", () => {
+  expect(mapDbError({ code: "JT204", message: "insufficientMemberFunds", details: '{"available_minor":"85000000"}' }).detail).toEqual({ availableMinor: "85000000" });
+  expect(mapDbError({ code: "JT204", message: "insufficientMemberFunds", details: '{"available_minor":85000000}' }).detail).toBeUndefined();
+  expect(mapDbError({ code: "JT204", message: "insufficientMemberFunds", details: "no es json" }).detail).toBeUndefined();
+  expect(mapDbError({ code: "JT204", message: "insufficientMemberFunds" }).detail).toBeUndefined();
+  expect(mapDbError({ code: "JT202", message: "goalNotOpen", details: '{"available_minor":"1"}' }).detail).toBeUndefined();
+});
