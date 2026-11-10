@@ -23,16 +23,19 @@ import { cop, overlineOf, paceOf, reached, surplusOf } from "./format";
 import { GoalFallback, overlineClass } from "./goal-card";
 import { GoalFormSheet } from "./goal-form-sheet";
 import { GoalHistory } from "./goal-history";
+import { UsageRequests } from "@/features/expenses/goal-funding/usage-request-card";
+import type { UsageRequestView } from "@/features/expenses/goal-funding/types";
 import { useViewTransitionsSupported } from "./goal-journey";
 import { GoalRibbon } from "./goal-ribbon";
 import { GoalStatusDialog } from "./goal-status-dialog";
 import { WithdrawSheet } from "./withdraw-sheet";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, PlanningContext } from "./types";
 
-type Props = { goal: GoalView; members: readonly GoalMemberView[]; entries: readonly GoalEntryView[]; people: readonly GoalPerson[]; today: string; context: PlanningContext; actions: GoalActions };
+/** 004 PR D (T062; FR-056): `requests`, las solicitudes de fondos pendientes de esta meta (B4 y B5). */
+type Props = { goal: GoalView; members: readonly GoalMemberView[]; entries: readonly GoalEntryView[]; people: readonly GoalPerson[]; today: string; context: PlanningContext; actions: GoalActions; requests?: readonly UsageRequestView[] };
 type Open = { kind: "contribute" | "withdraw" | "edit" | "complete" | "archive"; key: string } | null;
 
-export function GoalImmersive({ goal, members, entries, today, context, actions }: Props) {
+export function GoalImmersive({ goal, members, entries, people, today, context, actions, requests = [] }: Props) {
   const router = useRouter();
   const annotate = useOptionalAnnotate();
   const reduced = usePrefersReducedMotion();
@@ -133,6 +136,7 @@ export function GoalImmersive({ goal, members, entries, today, context, actions 
           </div>
         )}
 
+        <UsageRequests requests={requests} people={people} actions={actions.funding ?? null} />
         <GoalHistory goal={goal} entries={entries} members={members} today={today} actions={actions} />
       </div>
 

@@ -54,12 +54,13 @@ export async function updateSharedExpenseAction(input: unknown): Promise<WriteOu
   return outcome;
 }
 
-export async function voidSharedExpenseAction(input: unknown): Promise<WriteOutcome<{ id: string; version: number }>> {
+export async function voidSharedExpenseAction(input: unknown): Promise<WriteOutcome<{ id: string; version: number; reactivatedGoals: { goalId: string; name: string; returnedMinor: string }[] }>> {
   const payload = parseSharedVoid(input);
   if (!payload) return INVALID;
   const outcome = await runWrite(async () => {
     const result = await voidSharedExpense(await createClient(), payload);
-    return { id: result.id, version: result.version };
+    // 004 PR D (F64-1): las metas archivadas que volvieron a estar activas al devolverles los fondos.
+    return { id: result.id, version: result.version, reactivatedGoals: (result.reactivated_goals ?? []).map((goal) => ({ goalId: goal.goal_id, name: goal.name, returnedMinor: goal.returned_minor })) };
   });
   if (outcome.status === "ok") refresh();
   return outcome;

@@ -22,6 +22,7 @@ import { useHighlightId, useListScope, usePendingRows } from "@/features/expense
 import type { PendingRow } from "@/features/expenses/types";
 import { useActivityFilters, type ActivityFilters } from "./activity-filters";
 import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
+import { FundingRowBadge, useFundingLookup } from "@/features/expenses/goal-funding/funding-context";
 import { cop } from "@/features/goals/format";
 import type { GoalEntryView, GoalPerson } from "@/features/goals/types";
 
@@ -153,6 +154,8 @@ function days(rows: readonly Transaction[], goals: readonly GoalEntryView[]) {
 
 function DayList({ rows, month, today, selectedId, pending, goals, people }: { rows: readonly Transaction[]; month: string; today: string; selectedId?: string; pending: PendingStates; goals: readonly GoalEntryView[]; people: readonly GoalPerson[] }) {
   const highlightId = useHighlightId();
+  // 004 PR D (T064; FR-071): CON META en un privado pagado con una meta personal.
+  const funding = useFundingLookup();
   return (
     <div className="flex flex-col gap-4 xl:hidden">
       {days(rows, goals).map(({ date, transactions, goals: dayGoals }) => {
@@ -168,7 +171,7 @@ function DayList({ rows, month, today, selectedId, pending, goals, people }: { r
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {transactions.map((transaction) => (
                 <li key={transaction.id}>
-                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} temporary={pending.get(transaction.id) === "confirmed"} />
+                  <ExpenseRow transaction={transaction} href={detailHref(transaction.id, month)} dateLabel={label} current={transaction.id === selectedId} isNew={transaction.id === highlightId} pending={savingOf(pending, transaction.id)} temporary={pending.get(transaction.id) === "confirmed"} badge={funding(transaction.id)} />
                 </li>
               ))}
               {dayGoals.map((entry) => <li key={entry.id}><GoalEntryRow entry={entry} people={people} dateLabel={label} variant="activity" /></li>)}
@@ -223,7 +226,7 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
                   </Link>
                 )}
               </td>
-              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}</td>
+              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}<FundingRowBadge transactionId={transaction.id} /></td>
               <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
             </tr>
           );

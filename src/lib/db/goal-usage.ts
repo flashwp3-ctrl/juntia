@@ -1,8 +1,9 @@
 import type {SupabaseClient} from "@supabase/supabase-js";
 import {serializeAmountMinor,type Money} from "@/domain/money";
-import type {SharedExpenseInput,CreateTransactionInput,UsageRequestTransport,ExpenseFundingTransport,ReactivatedGoal,TransactionTransport,SharedExpenseTransport} from "./types";
-import {planningWrite,planningRows,planningPages} from "./planning";
-import {sharedSplitArgs} from "./shared-expenses";
+import type {SharedExpenseInput,CreateTransactionInput,UsageRequestTransport,ExpenseFundingTransport,ReactivatedGoal,TransactionTransport,SharedExpenseTransport,SharedTransaction} from "./types";
+import {planningWrite,planningRows,planningPages,planningMoney} from "./planning";
+import {withRetry} from "./retry";
+import {sharedSplitArgs,sharedTransaction} from "./shared-expenses";
 import {requireClaims} from "./session";
 import type {PageOptions} from "./paginate";
 type Funding={goalId:string;own:Money;requested:Money};
@@ -20,3 +21,7 @@ export function cancelUsageRequest(c:SupabaseClient,i:{idempotencyKey:string;req
 export function removeGoalUsage(c:SupabaseClient,i:{idempotencyKey:string;transactionId:string;expectedVersion:number}){return planningWrite<{transaction_id:string;version:number;voided_usages:number;cancelled_request:boolean;reactivated_goals:ReactivatedGoal[]}>(c,"remove_goal_usage",{p_idempotency_key:i.idempotencyKey,p_transaction_id:i.transactionId,p_expected_version:i.expectedVersion});}
 export function usageRequests(c:SupabaseClient,filters:{goalId?:string;status?:UsageRequestTransport["status"]}={},options:PageOptions={}){return planningPages<UsageRequestTransport>(c,"usage_requests",{...(filters.goalId?{goal_id:filters.goalId}:{}),...(filters.status?{status:filters.status}:{})},["created_at"],options);}
 export function expenseGoalFunding(c:SupabaseClient,transactionId:string){return planningRows<ExpenseFundingTransport>(c,"expense_goal_funding",{transaction_id:transactionId});}
+/** 004 PR D (T062, T064): el uso de metas de varios gastos (`expense_goal_funding`), en una consulta. */
+export async function expenseGoalFundingFor(c:SupabaseClient,transactionIds:readonly string[]):Promise<ExpenseFundingTransport[]>{if(transactionIds.length===0)return [];await requireClaims(c);return planningMoney(await withRetry<ExpenseFundingTransport[]>(()=>c.from("expense_goal_funding").select("*").in("transaction_id",[...transactionIds])));}
+/** 004 PR D (T062): los gastos compartidos de unas solicitudes, para decir su reparto en B5. Solo Nosotros (`couple_expenses`). */
+export async function fundedSharedExpenses(c:SupabaseClient,transactionIds:readonly string[]):Promise<SharedTransaction[]>{if(transactionIds.length===0)return [];await requireClaims(c);const rows=await withRetry<SharedExpenseTransport[]>(()=>c.from("couple_expenses").select("*").in("id",[...transactionIds]));return rows.map(sharedTransaction);}

@@ -21,6 +21,13 @@
 // módulo común (`ok`, `rejected`, `unknown` con «Reintentar» y «Comprobar estado»), sin fila optimista. La misma hoja
 // edita un gasto compartido (Q12): monto, categoría, fecha, descripción, pagador y reparto, con el aviso de recálculo; el
 // contexto se ve y no se cambia. En Yo, una edición con pareja activa ofrece pasar a Nosotros: es Mover a Pareja (FR-032).
+// 004 PR D (T060, T061; FR-050–FR-052, FR-085, FR-090; 04·11 B1–B3): al anotar un gasto, «Cómo se pagó: Dinero del mes · Con
+// una meta», con «Dinero del mes» como valor inicial (la ruta mínima no cambia). «Con una meta» abre en la misma hoja la
+// subhoja de la meta, como la de «Reparto»: B1 (las metas del contexto de la hoja, que se piden al servidor en ese momento:
+// en Nosotros solo compartidas, en Yo solo personales; nunca se pide ni se pinta una del otro ámbito), B2 (FundingLedger) y
+// B3 (el efecto «ahora» y «si aprueba»). Cambiar el contexto de la hoja olvida la meta elegida. Guardar registra el gasto, el
+// uso propio y la solicitud en una sola escritura (create_expense_with_goal) con los tres resultados de la máquina común;
+// «NO SE REGISTRÓ» solo con un rechazo confirmado. No se ofrece al editar ni en un ingreso (Q16: una meta, elegida al anotar).
 import { useCallback, useId, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -46,6 +53,13 @@ import { SplitEditor, SplitSummary, splitSubtitle } from "./split-editor";
 import { evaluateSplit, initialSplit, splitFromSaved, splitPayload, summaryLines, type SplitDraft } from "./split-state";
 import type { CoupleForSheet, SavedShared, SharedActions, SharedCreatePayload, SharedUpdatePayload } from "./shared-types";
 import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
+import { ConfirmationBadge } from "./goal-funding/confirmation-badge";
+import { FundingEffect } from "./goal-funding/funding-effect";
+import { FundingLedger } from "./goal-funding/funding-ledger";
+import { evaluateFunding, proposeFunds, type Funds } from "./goal-funding/funding-state";
+import { GoalPicker, type PickerState } from "./goal-funding/goal-picker";
+import type { Contributor, FundingGoal, GoalExpensePayload, GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
+import { cop } from "@/features/goals/format";
 
 const WIDE = "(min-width: 768px)";
 function subscribeWide(onChange: () => void) {
@@ -81,7 +95,25 @@ type AnnotateSheetProps = {
   onSharedSaved?: (saved: SavedShared, kind: "create" | "editShared") => void;
   /** Editar un privado con pareja activa y elegir Nosotros: Mover a Pareja (FR-032). */
   onMove?: (transaction: SavedTransaction) => void;
+  /** 004 PR D: el gasto con meta. Sin estas escrituras, «Cómo se pagó» no se ofrece. */
+  goalFunding?: GoalFundingActions;
+  onGoalSaved?: (saved: SavedGoalExpense, message: string) => void;
 };
+
+type PaidWith = "month" | "goal";
+
+/** Lo que dice la hoja ante un rechazo confirmado del gasto con meta (contracts/errors.md). */
+function goalRejection(error: WriteError) {
+  switch (error) {
+    case "insufficientFunds": case "allocation": return copy.goalExpense.errors.allocation;
+    case "usageExceedsExpense": return copy.goalExpense.errors.exceedsExpense;
+    case "goalNotOpen": case "goalNotFound": return copy.goalExpense.errors.goalClosed;
+    case "invalidSplit": return copy.annotate.split.errors.invalid;
+    case "coupleNotActive": return copy.shared.errors.notActive;
+    case "sessionExpired": return copy.errors.sessionExpired;
+    default: return copy.errors.unexpected;
+  }
+}
 
 /** Monto entre $1 y $999.999.999, categoría elegida y lo demás válido para el dominio (E1, E3). */
 function isComplete({ type, amount, categoryId, date, description }: Draft) {
@@ -198,7 +230,7 @@ function sharedRejection(error: WriteError, partner: string) {
   }
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove, goalFunding, onGoalSaved }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit" || mode.kind === "editShared";
   const editingShared = mode.kind === "editShared";
@@ -210,7 +242,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const [sheetContext, setSheetContext] = useState<ContextChoice>(() => (editingShared ? "us" : mode.kind === "edit" || !couple ? "me" : initialContext));
   const [initialSplitDraft] = useState<SplitDraft | null>(() => (!couple ? null : mode.kind === "editShared" ? splitFromSaved(mode.expense, couple.members) : initialSplit(couple.members, couple.last)));
   const [split, setSplit] = useState<SplitDraft | null>(initialSplitDraft);
-  const [view, setView] = useState<"main" | "split">("main");
+  const [view, setView] = useState<"main" | "split" | "goal">("main");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirming, setConfirming] = useState(false);
   const [confirmingMove, setConfirmingMove] = useState(false);
@@ -222,27 +254,58 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const amountId = `${useId()}-amount`;
   const dateErrorId = `${useId()}-date-error`;
   const splitStatusId = `${useId()}-split`;
+  const fundingStatusId = `${useId()}-funding`;
+  const backRef = useRef<HTMLButtonElement | null>(null);
+  const goalSummaryRef = useRef<HTMLButtonElement | null>(null);
+  // 004 PR D: «Cómo se pagó» y la meta de esta apertura (en memoria; nunca en el navegador, FR-094).
+  const [paidWith, setPaidWith] = useState<PaidWith>("month");
+  const [picker, setPicker] = useState<PickerState | null>(null);
+  const [goalId, setGoalId] = useState<string | null>(null);
+  const [usage, setUsage] = useState<number | null>(null);
+  const [funds, setFunds] = useState<Funds>({});
+  const [fundsTouched, setFundsTouched] = useState(false);
+  const loadSeq = useRef(0);
 
   const shared = sheetContext === "us" && couple !== null && split !== null && sharedActions !== undefined;
   const sharedRun = useCallback((payload: SharedCreatePayload | SharedUpdatePayload) => ("transactionId" in payload ? sharedActions!.update(payload) : sharedActions!.create(payload)), [sharedActions]);
   const sharedCheck = useCallback((input: Parameters<SharedActions["check"]>[0]) => sharedActions!.check(input), [sharedActions]);
   const sharedOk = useCallback((saved: SavedShared) => onSharedSaved?.(saved, editingShared ? "editShared" : "create"), [editingShared, onSharedSaved]);
   const sharedWrite = useWrite<SharedCreatePayload | SharedUpdatePayload, SavedShared>({ action: editingShared ? "update_shared_expense" : "create_shared_expense", run: sharedRun, check: sharedCheck, onOk: sharedOk });
+  const goalRun = useCallback((payload: GoalExpensePayload) => goalFunding!.create(payload), [goalFunding]);
+  const goalCheck = useCallback((input: Parameters<GoalFundingActions["check"]>[0]) => goalFunding!.check(input), [goalFunding]);
+  const goalNameRef = useRef("");
+  const goalOk = useCallback((saved: SavedGoalExpense, payload: GoalExpensePayload) => {
+    const asked = BigInt(payload.requestedPesos) > 0n;
+    onGoalSaved?.(saved, asked ? copy.goalExpense.saved.ask(partner) : copy.goalExpense.saved.own(goalNameRef.current));
+  }, [onGoalSaved, partner]);
+  const goalWrite = useWrite<GoalExpensePayload, SavedGoalExpense>({ action: "create_expense_with_goal", run: goalRun, check: goalCheck, onOk: goalOk });
 
   const { type, amount, categoryId, date, description } = draft;
-  const isSaving = status.kind === "saving" || sharedWrite.pending;
-  const isLocked = locked || sharedWrite.locked;
+  const isSaving = status.kind === "saving" || sharedWrite.pending || goalWrite.pending;
+  const isLocked = locked || sharedWrite.locked || goalWrite.locked;
   const isDirty = useCallback((value: Draft) => (Object.keys(initial) as (keyof Draft)[]).some((key) => initial[key] !== value[key]), [initial]);
+  // 004 PR D: la meta se ofrece solo al anotar un gasto, con sus escrituras; con meta, el gasto se guarda con ella.
+  const offerGoal = !editing && type === "expense" && goalFunding !== undefined;
+  const withGoal = offerGoal && paidWith === "goal";
+  const goals = picker?.kind === "ready" ? picker.goals : [];
+  const goal: FundingGoal | null = goals.find((item) => item.id === goalId) ?? null;
+  const contributorsOf = useCallback((target: FundingGoal): Contributor[] => target.members.map((member) => {
+    // En Yo la meta es personal: su único aportante es quien anota (DEC-G06).
+    const person = sheetContext === "us" ? members.find((item) => item.userId === member.userId) : null;
+    return { userId: member.userId, availableMinor: member.availableMinor, name: person?.name ?? "", joinOrder: person?.joinOrder ?? 1, isMe: sheetContext === "me" || Boolean(person?.isMe) };
+  }).sort((a, b) => a.joinOrder - b.joinOrder), [members, sheetContext]);
+  const contributors: Contributor[] = useMemo(() => (goal ? contributorsOf(goal) : []), [contributorsOf, goal]);
+  const fundingStatus = withGoal && goal ? evaluateFunding({ expensePesos: draft.amount, usagePesos: usage, funds, contributors }) : null;
   const splitStatus = split ? evaluateSplit(split, amount, members) : null;
   const payload = split && splitStatus ? splitPayload(split, splitStatus, members) : null;
   const initialPayload = useMemo(() => (initialSplitDraft && mode.kind === "editShared" ? JSON.stringify(splitPayload(initialSplitDraft, evaluateSplit(initialSplitDraft, pesosOf(mode.expense.amountMinor), members), members)) : null), [initialSplitDraft, members, mode]);
   const splitDirty = editingShared && JSON.stringify(payload) !== initialPayload;
-  const dirty = isDirty(draft) || splitDirty;
+  const dirty = isDirty(draft) || splitDirty || paidWith === "goal";
   const amountInvalid = amount === 0;
   const dateInvalid = !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date);
   const descriptionTooLong = [...description.trim()].length > 140;
   const splitInvalid = shared && splitStatus !== null && splitStatus.kind !== "ok" && splitStatus.kind !== "noAmount";
-  const canSave = isComplete(draft) && (!editing || dirty) && (!shared || payload !== null);
+  const canSave = isComplete(draft) && (!editing || dirty) && (!shared || payload !== null) && (!withGoal || fundingStatus?.kind === "ok");
   const lines = shared && split && splitStatus ? summaryLines(split, splitStatus, members) : null;
 
   const update = (patch: Partial<Draft>) => {
@@ -250,6 +313,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     // Lo escrito después de un error lo deja atrás; el siguiente Guardar es el reintento con la misma clave.
     setStatus((current) => (current.kind === "error" ? { kind: "idle" } : current));
     if (sharedWrite.state.phase === "rejected") sharedWrite.reset();
+    if (goalWrite.state.phase === "rejected") goalWrite.reset();
   };
   const changeSplit = (next: SplitDraft) => {
     setSplit(next);
@@ -269,6 +333,68 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
       return;
     }
     setSheetContext(next);
+    forgetGoal();
+  };
+
+  // 004 PR D (T060): B1 pide al servidor las metas del contexto de la hoja. Una respuesta de un contexto anterior se ignora.
+  const loadGoals = useCallback(async (context: ContextChoice) => {
+    if (!goalFunding) return;
+    const mine = ++loadSeq.current;
+    setPicker({ kind: "loading" });
+    let result: Awaited<ReturnType<GoalFundingActions["loadGoals"]>>;
+    try {
+      result = await goalFunding.loadGoals({ context });
+    } catch {
+      result = { ok: false };
+    }
+    if (mine !== loadSeq.current) return;
+    setPicker(result.ok ? { kind: "ready", goals: result.goals } : { kind: "failed" });
+  }, [goalFunding]);
+  function forgetGoal() {
+    loadSeq.current++;
+    setPaidWith("month");
+    setPicker(null);
+    setGoalId(null);
+    setUsage(null);
+    setFunds({});
+    setFundsTouched(false);
+    if (goalWrite.state.phase === "rejected") goalWrite.reset();
+  }
+  const openGoal = () => {
+    setView("goal");
+    requestAnimationFrame(() => backRef.current?.focus());
+  };
+  const choosePaidWith = (next: PaidWith) => {
+    if (next === paidWith) return;
+    if (next === "month") { forgetGoal(); return; }
+    setPaidWith("goal");
+    if (!picker || picker.kind === "failed") void loadGoals(sheetContext);
+    openGoal();
+  };
+  const closeGoal = () => {
+    setView("main");
+    requestAnimationFrame(() => goalSummaryRef.current?.focus());
+  };
+  /** Q16, opción (i): el uso empieza en el gasto (o en lo que haya en la meta) y los fondos, en la propuesta proporcional. */
+  const selectGoal = (next: FundingGoal) => {
+    setGoalId(next.id);
+    goalNameRef.current = next.name;
+    const total = next.members.reduce((sum, member) => sum + BigInt(member.availableMinor), 0n) / 100n;
+    const initialUsage = draft.amount && draft.amount > 0 ? Math.min(draft.amount, Number(total)) : null;
+    setUsage(initialUsage);
+    setFundsTouched(false);
+    setFunds(proposeFunds(contributorsOf(next), initialUsage));
+    if (goalWrite.state.phase === "rejected") goalWrite.reset();
+  };
+  const changeUsage = (value: number | null) => {
+    setUsage(value);
+    if (!fundsTouched) setFunds(proposeFunds(contributors, value));
+    if (goalWrite.state.phase === "rejected") goalWrite.reset();
+  };
+  const changeFund = (userId: string, value: number | null) => {
+    setFunds((current) => ({ ...current, [userId]: value }));
+    setFundsTouched(true);
+    if (goalWrite.state.phase === "rejected") goalWrite.reset();
   };
 
   // `patch`: Enter en una categoría guarda con la elección recién hecha, sin esperar a que el estado la refleje.
@@ -276,6 +402,18 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     const value = { ...draft, ...patch };
     if (saving.current || !isComplete(value) || (editing && !isDirty(value) && !splitDirty) || value.amount === null || value.categoryId === null) return;
     const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
+    if (withGoal) {
+      // 004 PR D (T061; FR-052, FR-090): solo lo decidido —meta, fondos propios y pedidos—; el servidor recalcula y valida.
+      const funding = goal ? evaluateFunding({ expensePesos: value.amount, usagePesos: usage, funds, contributors }) : null;
+      if (!goal || funding?.kind !== "ok") return;
+      const decided = { goalId: goal.id, ownPesos: String(funding.ownPesos), requestedPesos: String(funding.requestedPesos) };
+      if (shared) {
+        const splitNow = split ? splitPayload(split, evaluateSplit(split, value.amount, members), members) : null;
+        if (!splitNow) return;
+        await goalWrite.submit({ ...common, ...splitNow, ...decided, context: "us" });
+      } else await goalWrite.submit({ ...common, ...decided, context: "me" });
+      return;
+    }
     if (shared) {
       const splitNow = split ? splitPayload(split, evaluateSplit(split, value.amount, members), members) : null;
       if (!splitNow) return;
@@ -313,7 +451,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
       if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, draft, editing, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty]);
+  }, [actions, contributors, draft, editing, funds, goal, goalWrite, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty, usage, withGoal]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
@@ -328,7 +466,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
 
   // Con cambios sin guardar (o tras un resultado desconocido) se confirma antes de cerrar.
   const closeSheet = () => {
-    if (saving.current || (sharedWrite.pending && !sharedWrite.locked)) return;
+    if (saving.current || (sharedWrite.pending && !sharedWrite.locked) || (goalWrite.pending && !goalWrite.locked)) return;
     if (dirty || isLocked) setConfirming(true);
     else onClose();
   };
@@ -336,6 +474,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const requestClose = (next: boolean) => {
     if (next) return;
     if (view === "split") { closeSplit(); return; }
+    if (view === "goal") { closeGoal(); return; }
     closeSheet();
   };
 
@@ -414,17 +553,59 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     />
   );
 
+  // 004 PR D (T061; decisión 22.3): «NO SE REGISTRÓ» solo con un rechazo confirmado; con un resultado desconocido, la
+  // intención queda bloqueada con «Reintentar» y «Comprobar estado», sin decir que no se guardó (FR-093).
+  const goalNotice = goalWrite.state.phase === "rejected" ? (
+    <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+      <span className="flex flex-wrap items-center gap-2"><ConfirmationBadge state="failed" />{copy.goalExpense.failed}</span>
+      <span>{goalRejection(goalWrite.state.error)}</span>
+    </div>
+  ) : goalWrite.state.phase === "unknown" ? (
+    <WriteUnknown checking={goalWrite.state.checking} notFound={goalWrite.state.notFound} onRetry={() => void goalWrite.retry()} onCheck={() => void goalWrite.checkStatus()} />
+  ) : null;
+  const asking = contributors.some((contributor) => !contributor.isMe && (funds[contributor.userId] ?? 0) > 0);
+  const label = withGoal
+    ? asking ? copy.goalExpense.submit.ask(partner) : copy.goalExpense.submit.own(amount && amount > 0 ? formatMoney(moneyFromPesos(BigInt(amount))) : "")
+    : saveLabel;
+
   const footer = (
     // «Guardar sube con el teclado» (comp 1c y 2a): en la hoja móvil el pie va fijo al fondo del área desplazable, en las
     // dos vistas. Desde 768 px (diálogo) el pie no es fijo y el relleno es el del diálogo. El aviso de error sube con él.
     <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
       {errorNotice}
       {sharedNotice}
-      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={copy.annotate.saving} disabled={!canSave} aria-describedby={splitInvalid ? splitStatusId : undefined} className="w-full">
-        {saveLabel}
+      {goalNotice}
+      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={withGoal ? copy.goalExpense.submit.saving : copy.annotate.saving} disabled={!canSave} aria-describedby={splitInvalid ? splitStatusId : withGoal && fundingStatus && fundingStatus.kind !== "ok" ? fundingStatusId : undefined} className="w-full">
+        {label}
       </Button>
     </div>
   );
+
+  // B1–B3 en la subhoja de la meta: la lista, FundingLedger y el efecto, con la × y «Volver al gasto».
+  const fundingNow = fundingStatus?.kind === "ok" ? fundingStatus : null;
+  const goalView = withGoal ? (
+    <div className="flex flex-col gap-3.5">
+      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+        <button ref={backRef} type="button" onClick={closeGoal} aria-label={copy.goalExpense.back} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
+          <AppIcon name="caret-left" weight="bold" size={16} />
+        </button>
+        <div className="flex min-w-0 flex-col items-center text-center">
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.goalExpense.paidWith.goal}</h2>
+          {amount && amount > 0 ? <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.goalExpense.subtitle(formatMoney(moneyFromPesos(BigInt(amount))))}</p> : null}
+        </div>
+        {closeButton}
+      </div>
+      <GoalPicker state={picker ?? { kind: "loading" }} context={sheetContext} value={goalId} onSelect={selectGoal} onRetry={() => void loadGoals(sheetContext)} disabled={isSaving || isLocked} />
+      {goal && fundingStatus ? (
+        <>
+          <FundingLedger contributors={contributors} usagePesos={usage} onUsage={changeUsage} funds={funds} onFund={changeFund} status={fundingStatus}
+            split={lines ? { first: lines.first, second: lines.second } : null} statusId={fundingStatusId} disabled={isSaving || isLocked} />
+          {fundingNow ? <FundingEffect goalName={goal.name} balanceMinor={goal.balanceMinor} ownPesos={fundingNow.ownPesos} requestedPesos={fundingNow.requestedPesos} partnerName={partner || null} /> : null}
+        </>
+      ) : null}
+    </div>
+  ) : null;
 
   const splitView = shared && split ? (
     <div className="flex flex-col gap-3.5">
@@ -446,7 +627,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
 
   const body = (
     <form noValidate onSubmit={submit} className="flex flex-col gap-3.5">
-      {view === "split" && splitView ? splitView : (
+      {view === "split" && splitView ? splitView : view === "goal" && goalView ? goalView : (
         <>
           {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
               izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
@@ -510,12 +691,47 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
               {contextControl}
             </div>
             {dateInvalid ? <p id={dateErrorId} className="text-[length:var(--label-s-size)] text-danger">{copy.annotate.errors.date}</p> : null}
+            {/* 004 PR D (FR-050): «Cómo se pagó», con «Dinero del mes» como valor inicial. */}
+            {offerGoal ? (
+              <div className="flex flex-col gap-2">
+                <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.goalExpense.paidWith.label}</span>
+                <Segmented<PaidWith>
+                  role="radiogroup"
+                  label={copy.goalExpense.paidWith.label}
+                  stretch
+                  value={paidWith}
+                  onValueChange={choosePaidWith}
+                  options={[{ value: "month", label: copy.goalExpense.paidWith.month }, { value: "goal", label: copy.goalExpense.paidWith.goal }]}
+                />
+              </div>
+            ) : null}
           </fieldset>
           {/* 2a: la fila resumen de 60 px bajo «Hoy · Nosotros», siempre a la vista. */}
           {lines && split ? (
             <div ref={summaryRef}>
               <SplitSummary payer={members.find((member) => member.userId === split.payerUserId) ?? members[0]} first={lines.first} second={lines.second} invalid={lines.invalid} onOpen={openSplit} disabled={isSaving} />
               {splitInvalid ? <p id={splitStatusId} className="sr-only">{lines.second}</p> : null}
+            </div>
+          ) : null}
+          {/* La fila resumen de la meta, como la del reparto: abre la subhoja de B1–B3. */}
+          {withGoal ? (
+            <div>
+              <button
+                type="button"
+                ref={goalSummaryRef}
+                data-goal-summary=""
+                onClick={openGoal}
+                disabled={isSaving}
+                aria-label={`${copy.goalExpense.summary.open}: ${goal && usage ? copy.goalExpense.summary.line(goal.name, cop(BigInt(usage) * 100n)) : copy.goalExpense.summary.choose}`}
+                className={`flex min-h-[60px] w-full items-center gap-3 rounded-[16px] px-3.5 py-2 text-left shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken disabled:cursor-not-allowed ${fundingStatus && fundingStatus.kind !== "ok" && fundingStatus.kind !== "noUsage" ? "shadow-[0_0_0_1.5px_var(--color-status-danger)]" : ""}`}
+              >
+                <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-saving-subtle text-saving"><AppIcon name="piggy-bank" weight="duotone" size={20} /></span>
+                <span aria-hidden="true" className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-[12px] font-medium text-ink-secondary">{copy.goalExpense.summary.open}</span>
+                  <span className="truncate text-[15px] font-semibold text-ink">{goal && usage ? copy.goalExpense.summary.line(goal.name, cop(BigInt(usage) * 100n)) : copy.goalExpense.summary.choose}</span>
+                </span>
+                <AppIcon name="caret-right" size={16} className="shrink-0 text-ink-secondary" />
+              </button>
             </div>
           ) : null}
         </>

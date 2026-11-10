@@ -28,6 +28,7 @@ import { lastFromSaved } from "./split-state";
 import { TIMED_OUT, withTimeout } from "@/features/shared/use-write";
 import type { WriteAction, WriteError, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
 import type { GoalActions, SavedEntry } from "@/features/goals/types";
+import type { GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
@@ -83,6 +84,8 @@ type AnnotateState = {
   offerSettlementUndo: (saved: SavedSettlement) => void;
   /** 004 PR C (T047; FR-042, FR-095): el aviso de un aporte o un retiro con «Deshacer» de 6 s, con la misma regla de un deshacer a la vez. */
   offerGoalUndo: (offer: { kind: "contribution" | "withdrawal"; saved: SavedEntry; message: string }) => void;
+  /** 004 PR D (T060–T063): las escrituras del gasto con meta (B1–B7, quitar el uso), o `null` sin ellas. */
+  goalFunding: GoalFundingActions | null;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
@@ -110,11 +113,14 @@ type AnnotateProviderProps = {
   sharedActions?: SharedActions;
   /** 004 PR C (T047): las escrituras de metas, para el «Deshacer» de aportes y retiros. */
   goalActions?: GoalActions;
+  /** 004 PR D: el gasto con meta; por defecto, el que viaja con las de metas (`goalActions.funding`). */
+  goalFunding?: GoalFundingActions;
   /** El contexto de la app; por defecto, el del selector (ContextProvider). Las pruebas lo fijan aquí. */
   context?: ContextChoice;
 };
 
-export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, goalActions, context }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, goalActions, goalFunding, context }: AnnotateProviderProps) {
+  const funding = goalFunding ?? goalActions?.funding ?? null;
   const appContext = useOptionalContextChoice();
   const currentContext: ContextChoice = context ?? appContext?.value ?? "me";
   // Q5, decisión 1: lo último que usó esta persona en Nosotros. Nace de lo que leyó el layout y se actualiza en memoria al
@@ -300,7 +306,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const sharedRef = useRef(sharedActions);
   useEffect(() => { sharedRef.current = sharedActions; });
   type UndoIntent = {
-    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement" | "void_goal_entry"; id: string; idempotencyKey: string;
+    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement" | "void_goal_entry" | "void_transaction"; id: string; idempotencyKey: string;
     send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
     /** 004 PR C: «Comprobar estado» propio (las metas existen también sin pareja, sin las escrituras compartidas). */
     check?: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<unknown>>;
@@ -412,6 +418,26 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     notify({ tone: "success", message, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalEntry(kind, saved, key) } });
   }, [notify, undoGoalEntry]);
 
+  // 004 PR D (T061, T063; FR-059, FR-095): el «Deshacer» de 6 s de un gasto con meta anula en una operación el gasto, sus usos
+  // y la solicitud pendiente, con la versión que devolvió el registro; misma máquina y misma regla de un deshacer a la vez.
+  const fundingRef = useRef(funding);
+  useEffect(() => { fundingRef.current = funding; });
+  const undoGoalExpense = useCallback((saved: SavedGoalExpense, idempotencyKey: string) => runUndo({
+    action: saved.context === "us" ? "void_shared_expense" : "void_transaction", id: saved.transaction.id, idempotencyKey, done: copy.annotate.undone.expense,
+    send: () => fundingRef.current ? fundingRef.current.undoExpense({ idempotencyKey, context: saved.context, transactionId: saved.transaction.id, expectedVersion: saved.transaction.version }) : Promise.resolve({ status: "unknown" as const }),
+    check: (input) => fundingRef.current ? fundingRef.current.check(input) : Promise.resolve({ state: "error" as const }),
+    onOk: () => { setHighlightId((current) => (current === saved.transaction.id ? null : current)); router.refresh(); },
+    rejected: (error) => (error === "goalUndoNotAvailable" || error === "undoNotAvailable" ? copy.move.errors.undoNotAvailable : error === "versionConflict" ? copy.annotate.undoChanged
+      : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+  }, "send"), [runUndo, router, setHighlightId]);
+  const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {
+    close();
+    setHighlightId(saved.transaction.id, saved.context);
+    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate });
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message, undo: saved.transaction.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalExpense(saved, key) } });
+  }, [close, notify, undoGoalExpense, setHighlightId]);
+
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
     if (kind === "edit") {
@@ -504,8 +530,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo }),
-    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo, goalFunding: funding }),
+    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo, funding]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>
@@ -527,6 +553,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             sharedActions={sharedActions}
             initialContext={currentContext}
             onSharedSaved={onSharedSaved}
+            goalFunding={funding ?? undefined}
+            onGoalSaved={onGoalExpenseSaved}
             onMove={(transaction) => openMove(transaction, returnFocusTo.current)}
           />
         </Suspense>

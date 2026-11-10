@@ -4,6 +4,8 @@
 // Eliminar abre el diálogo de 02·1 (`alertdialog`, foco inicial en Cancelar) y anula con motivo `delete` y la versión
 // esperada: si el otro ya lo editó o lo eliminó, el servidor rechaza sin cambiar nada y se dice con su nombre. Con un
 // resultado desconocido nunca se afirma que no se eliminó: «Reintentar» (la misma clave) y «Comprobar estado».
+// 004 PR D (T063; FR-057; Q17; F64-1): con una meta, la confirmación avisa que el uso también se quita y la solicitud
+// pendiente se cancela en la misma operación; si una meta archivada vuelve a estar activa, el aviso lo dice.
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,8 @@ import { useAnnotate } from "./annotate-provider";
 import { ConfirmDialog } from "./confirm-dialog";
 import { newIdempotencyKey } from "./idempotency";
 import type { SavedShared, SharedActions, SharedVoidPayload } from "./shared-types";
+import { useExpenseFunding } from "./goal-funding/funding-context";
+import { reactivationMessage } from "./goal-funding/reactivation";
 
 export function SharedTransactionActions({ expense, backHref }: { expense: SavedShared; backHref: string }) {
   const router = useRouter();
@@ -27,15 +31,16 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
   const deleteButton = useRef<HTMLButtonElement | null>(null);
   const partner = couple?.members.find((member) => !member.isMe)?.name ?? "";
   const title = expense.description ?? copy.categories[expense.categoryId];
+  const funding = useExpenseFunding(expense.id);
 
   const run = useCallback((payload: SharedVoidPayload) => sharedActions!.voidShared(payload), [sharedActions]);
   const check = useCallback((input: Parameters<SharedActions["check"]>[0]) => sharedActions!.check(input), [sharedActions]);
-  const done = useCallback(() => {
+  const done = useCallback((result: { reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] }) => {
     setConfirming(false);
-    notify({ tone: "success", message: copy.remove.done.expense });
+    notify({ tone: "success", message: reactivationMessage(result.reactivatedGoals) ?? copy.remove.done.expense });
     router.push(backHref);
   }, [backHref, notify, router]);
-  const write = useWrite<SharedVoidPayload, { id: string; version: number }>({ action: "void_shared_expense", run, check, onOk: done });
+  const write = useWrite<SharedVoidPayload, { id: string; version: number; reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] }>({ action: "void_shared_expense", run, check, onOk: done });
   if (!sharedActions) return null;
 
   const openDialog = () => {
@@ -78,6 +83,7 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
         cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setConfirming(false))}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
         confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
+        {funding ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(funding.goalName)}</p> : null}
         {notice}
         <ConfirmDialog
           open={confirmingClose}

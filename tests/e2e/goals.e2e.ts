@@ -339,7 +339,7 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
   await tomas.page.goto("/");
   const card = tomas.page.getByRole("region", { name: copy.goalExpense.request.region }).filter({ visible: true });
   await expect(card.getByText(copy.goalExpense.request.title("Sara"))).toBeVisible();
-  await expect(card.getByLabel(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toBeVisible();
+  await expect(card.getByText(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toHaveCount(1);
   await expect(card.getByText(copy.goalExpense.request.rejectNote)).toBeVisible();
   const tomasSheet = await openAnnotate(tomas.page);
   const tomasPicker = await goalPicker(tomasSheet);
@@ -359,7 +359,7 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
 
   // Sara lo ve al navegar: el detalle del gasto dice APROBADO.
   await sara.page.goto(`/actividad/${pending.transaction_id}`);
-  await expect(sara.page.locator("[data-transaction-detail]:visible").getByText(copy.goalExpense.badge.approved)).toBeVisible();
+  await expect(sara.page.locator("[data-transaction-detail]:visible").getByText(copy.goalExpense.badge.approved, { exact: true })).toBeVisible();
 
   // Segundo caso (US-7.8): otra solicitud, sembrada por la función real; Tomás la rechaza y el gasto sigue.
   const second = await createExpenseWithGoal(pair.sara.client, {
@@ -377,6 +377,6 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
   await sara.page.goto(`/actividad/${second.id}`);
   const detail = sara.page.locator("[data-transaction-detail]:visible");
   await expect(detail).toContainText("Cena en Kioto");
-  await expect(detail.getByText(copy.goalExpense.badge.rejected("Tomás"))).toBeVisible();
+  await expect(detail.getByText(copy.goalExpense.badge.rejected("Tomás"), { exact: true })).toBeVisible();
   await Promise.all([sara.context.close(), tomas.context.close()]);
 });

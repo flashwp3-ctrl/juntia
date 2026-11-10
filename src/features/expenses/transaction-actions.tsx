@@ -4,6 +4,8 @@
 // el detalle. Eliminar abre el diálogo de 02·1 (`alertdialog`, foco inicial en Cancelar) y anula con motivo `delete`;
 // por dentro el movimiento queda anulado y auditado, y sale de Inicio, Actividad y la exportación. Sin «Deshacer» (Q4).
 // Las dos acciones van al pie, como en la edición de 04·1 («Guardar cambios» / «Eliminar gasto»), a todo el ancho.
+// 004 PR D (T063; FR-057; Q17; F64-1): si el gasto está pagado con una meta, la confirmación avisa que el uso también se quita
+// (las dos cosas en una operación) y, si una meta archivada vuelve a estar activa, el aviso lo dice con su monto.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -15,11 +17,15 @@ import { useAnnotate } from "./annotate-provider";
 import { ConfirmDialog } from "./confirm-dialog";
 import { newIdempotencyKey } from "./idempotency";
 import type { ExpenseActionError, SavedTransaction } from "./types";
+import { useExpenseFunding } from "./goal-funding/funding-context";
+import { reactivationMessage } from "./goal-funding/reactivation";
 
 type Status = { kind: "idle" } | { kind: "deleting" } | { kind: "error"; error: ExpenseActionError };
 
-export function TransactionActions({ transaction, backHref }: { transaction: SavedTransaction; backHref: string }) {
+export function TransactionActions({ transaction, backHref, funding }: { transaction: SavedTransaction; backHref: string; funding?: { goalName: string } }) {
   const router = useRouter();
+  const fromContext = useExpenseFunding(transaction.id);
+  const goalName = funding?.goalName ?? fromContext?.goalName ?? null;
   const { openEdit, notify, actions } = useAnnotate();
   const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -48,7 +54,7 @@ export function TransactionActions({ transaction, backHref }: { transaction: Sav
     busy.current = false;
     if (result.ok) {
       setConfirming(false);
-      notify({ tone: "success", message: copy.remove.done[transaction.type] });
+      notify({ tone: "success", message: reactivationMessage(result.value.reactivatedGoals) ?? copy.remove.done[transaction.type] });
       router.push(backHref);
     } else setStatus({ kind: "error", error: result.error });
   };
@@ -84,6 +90,7 @@ export function TransactionActions({ transaction, backHref }: { transaction: Sav
         cancel={(ref) => <Button ref={ref} variant="ghost" disabled={status.kind === "deleting"} onClick={() => setConfirming(false)}>{copy.remove.cancel}</Button>}
         confirm={<Button variant="danger" icon="trash" loading={status.kind === "deleting"} loadingLabel={copy.remove.deleting} onClick={() => void remove()}>{copy.remove.confirm}</Button>}
       >
+        {goalName ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(goalName)}</p> : null}
         {error}
       </ConfirmDialog>
     </div>

@@ -26,6 +26,7 @@ import type { SharedTransaction } from "@/lib/db/types";
 import { MonthNav, SearchField, type MonthNavigation } from "./activity-view";
 import { Segmented } from "@/components/ui/segmented";
 import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
+import { FundingRowBadge } from "@/features/expenses/goal-funding/funding-context";
 import { cop } from "@/features/goals/format";
 import type { GoalEntryView } from "@/features/goals/types";
 import { useActivityFilters } from "./activity-filters";
@@ -207,6 +208,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                     </td>
                     <td className={`${cell} text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>
                       {copy.shared.row.table(memberName(members, row.payerUserId), rowMode(row))}{row.movedFromMe ? ` · ${copy.move.movedFromMe}` : ""}
+                      <FundingRowBadge transactionId={row.id} />
                     </td>
                     <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{dayLabel(row.transactionDate, today)}</td>
                     <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap text-expense`}>{formatMoney(row.amount)}</td>

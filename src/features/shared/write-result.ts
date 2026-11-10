@@ -21,7 +21,9 @@ export type WriteError =
   | "budgetExists"
   // 004 PR C (T046, T047): metas, aportes, retiros y anulaciones (contracts/errors.md, JT201–JT217, JT225).
   | "goalNotFound" | "goalNotOpen" | "insufficientFunds" | "entryNotFound" | "entryAlreadyVoided" | "entryNotVoidable" | "entryDate"
-  | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable";
+  | "goalTransition" | "invalidGoal" | "reasonRequired" | "goalUndoNotAvailable"
+  // 004 PR D (T061–T063): gasto con meta, solicitudes y quitar el uso (contracts/errors.md, JT209–JT213, JT223, JT226).
+  | "usageExceedsExpense" | "requestGone" | "requestResolved" | "belowGoalUsage" | "allocation" | "nothingToRemove";
 /** 004 PR C: `detail` lleva lo que el servidor dijo del rechazo (JT204: el disponible vigente, en unidades menores). */
 export type WriteRejectionDetail = { availableMinor?: string };
 export type WriteOutcome<T> = { status: "ok"; value: T } | { status: "rejected"; error: WriteError; detail?: WriteRejectionDetail } | { status: "unknown" };
@@ -37,7 +39,9 @@ export type WriteAction = "create_invitation" | "regenerate_invitation" | "cance
   // 004 PR B (T034): crear, editar y desactivar presupuesto (contracts/server-actions.md §1).
   | "create_budget" | "update_budget"
   // 004 PR C (T046, T047): las escrituras de metas que «Comprobar estado» consulta.
-  | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry";
+  | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry"
+  // 004 PR D (T061–T063): gasto con meta, solicitudes, quitar el uso y el «Deshacer» de un gasto privado con meta.
+  | "create_expense_with_goal" | "approve_usage_request" | "reject_usage_request" | "cancel_usage_request" | "remove_goal_usage" | "void_transaction";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
 export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 
@@ -89,6 +93,14 @@ const REJECTED: Partial<Record<DbErrorKind, WriteError>> = {
   invalidGoal: "invalidGoal",
   withdrawalReasonRequired: "reasonRequired",
   goalUndoNotAvailable: "goalUndoNotAvailable",
+  // 004 PR D (T061–T063). JT203, JT211 y JT224 no ocurren en uso normal (B1 solo ofrece metas del contexto; cada parte ve
+  // solo sus botones): caen en «algo salió mal».
+  usageExceedsExpense: "usageExceedsExpense",
+  requestNotFound: "requestGone",
+  requestResolved: "requestResolved",
+  amountBelowGoalUsage: "belowGoalUsage",
+  invalidUsageAllocation: "allocation",
+  nothingToRemove: "nothingToRemove",
 };
 
 /**

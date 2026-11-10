@@ -4,7 +4,8 @@
 // - Retiro: ficha redonda neutra con `arrow-u-up-left`, «Retiro de meta · reasignación», sin «+», sin ficha ni color de
 //   ingreso (glosario §9; ADR-011 fila 5).
 // - Uso: «Uso de {meta} · no es un gasto nuevo»; el gasto real ya está en el consumo.
-// - Anulado: sigue en la lista, tachado y marcado ANULADO (o DESHECHO, si fue el «Deshacer» de 6 s).
+// - Anulado: sigue en la lista, tachado y marcado ANULADO (o DESHECHO, si fue el «Deshacer» de 6 s; o USO QUITADO, si se quitó
+//   el uso de la meta desde el gasto: 004 PR D, T063).
 import type { ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
@@ -41,7 +42,9 @@ function entryMeta(entry: GoalEntryView, people: readonly GoalPerson[], variant:
     return [copy.goals.history.by(who), entry.fundingMode ? copy.goals.contribute.modes[entry.fundingMode] : null].filter(Boolean).join(" · ");
   }
   if (entry.kind === "withdrawal") return variant === "activity" ? copy.goals.activity.withdrawalMeta(entry.goalName ?? "", who) : [entry.reason, who].filter(Boolean).join(" · ");
-  return entry.transactionDescription ?? copy.goals.history.usageFallback;
+  // 004 PR D (B4): en Actividad, el uso dice de quién son los aportes que se usaron.
+  const description = entry.transactionDescription ?? copy.goals.history.usageFallback;
+  return variant === "activity" ? copy.goalExpense.detail.rowMeta(who, description) : description;
 }
 
 export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Props) {
@@ -61,7 +64,7 @@ export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Prop
           <span className="whitespace-nowrap">{dateLabel}</span>
           {entry.voided ? (
             <span className="rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink">
-              {entry.voidedReason === "undo" ? copy.goals.history.undone : copy.goals.history.voided}
+              {entry.voidedReason === "undo" ? copy.goals.history.undone : entry.voidedReason === "remove_usage" ? copy.goalExpense.usageRemoved : copy.goals.history.voided}
             </span>
           ) : null}
         </span>

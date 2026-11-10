@@ -19,6 +19,8 @@ import { ActivityView } from "./activity-view";
 import { CoupleActivityView } from "./couple-activity-view";
 import type { MonthData } from "./load";
 import type { GoalActivityData, GoalPerson } from "@/features/goals/types";
+import { ExpenseFundingProvider } from "@/features/expenses/goal-funding/funding-context";
+import { PendingRequests } from "@/features/expenses/goal-funding/usage-request-card";
 
 type ActivityScreenProps = {
   server: ContextChoice | null;
@@ -55,11 +57,14 @@ export function ActivityScreen({ server, data, today, selectedId, detail, mobile
   const list = !data ? null : data.ok
     ? <ActivityView rows={data.value.rows} month={data.value.month} today={today} navigation={data.value.navigation} selectedId={selectedId} goalEntries={goals?.entries} goalPeople={goalPeople} setAsideMinor={goals?.setAsideMinor} />
     : <LoadError />;
+  // 004 PR D (T062; FR-056, FR-071): en Nosotros, las solicitudes de fondos pendientes van arriba de la lista (B4 y B5).
+  const requests = couple && goals?.requests?.length ? <div className="pt-5"><PendingRequests requests={goals.requests} people={couple.members} /></div> : null;
   const us = server !== "us" ? undefined : !couple ? <UsUnavailable /> : layout(couple.data.ok
-    ? <CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} summary={couple.data.value.summary} selectedId={selectedId} goalEntries={goals?.entries} setAsideMinor={goals?.setAsideMinor} />
+    ? <>{requests}<CoupleActivityView expenses={couple.data.value.expenses} settlements={couple.data.value.settlements} month={couple.data.value.month} today={today} navigation={couple.data.value.navigation} members={couple.members} summary={couple.data.value.summary} selectedId={selectedId} goalEntries={goals?.entries} setAsideMinor={goals?.setAsideMinor} /></>
     : <LoadError />);
+  // 004 PR D (T063, T064): el uso de metas de los gastos del mes, para la fila CON META, el detalle y Mover a Pareja.
   return (
-    <>
+    <ExpenseFundingProvider byTransaction={goals?.funding ?? {}} people={couple?.members ?? goalPeople ?? []}>
       <div className={opened ? "max-xl:hidden" : undefined}><PageHeader title={copy.nav.activity} /></div>
       {mobileHeader}
       <ContextView
@@ -68,6 +73,6 @@ export function ActivityScreen({ server, data, today, selectedId, detail, mobile
         me={data ? layout(list) : null}
         us={us}
       />
-    </>
+    </ExpenseFundingProvider>
   );
 }

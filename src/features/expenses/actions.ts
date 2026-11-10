@@ -10,7 +10,7 @@ import { createTransaction, updateTransaction, voidTransaction } from "@/lib/db/
 import { createClient } from "@/lib/supabase/server";
 import { toSavedTransaction as saved } from "./saved";
 import { parseCreatePayload, parseUpdatePayload, parseVoidPayload } from "./payload";
-import type { ActionResult, ExpenseActionError, SavedTransaction } from "./types";
+import type { ActionResult, ExpenseActionError, SavedTransaction, VoidedTransaction } from "./types";
 
 /**
  * contracts/errors.md: el código técnico nunca llega a la pantalla; cada uno cae en lo que la interfaz dice. No se
@@ -25,6 +25,7 @@ function toActionError(error: unknown): ExpenseActionError {
     case "transactionNotFound": return "notFound";
     case "network": return "network";
     case "retryable": case "retryExhausted": return "saveFailed";
+    case "amountBelowGoalUsage": return "belowGoalUsage";
     case "invalidAmount": case "amountOutOfRange": case "invalidCategory": case "invalidDate": case "descriptionTooLong": return "invalid";
     case "idempotencyKeyReused": case "invalidIdempotencyKey":
       // Indica un bug del cliente: se registra sin datos de la persona (contracts/errors.md, JT008/JT009).
@@ -60,13 +61,15 @@ export async function updateTransactionAction(input: unknown): Promise<ActionRes
   }
 }
 
-export async function voidTransactionAction(input: unknown): Promise<ActionResult<{ id: string; version: number }>> {
+export async function voidTransactionAction(input: unknown): Promise<ActionResult<VoidedTransaction>> {
   const payload = parseVoidPayload(input);
   if (!payload) return { ok: false, error: "invalid" };
   try {
     const result = await voidTransaction(await createClient(), payload);
     refresh();
-    return { ok: true, value: { id: result.id, version: result.version } };
+    // 004 PR D (F64-1): las metas archivadas que volvieron a estar activas al devolverles los fondos.
+    const reactivatedGoals = (result.reactivated_goals ?? []).map((goal) => ({ goalId: goal.goal_id, name: goal.name, returnedMinor: goal.returned_minor }));
+    return { ok: true, value: { id: result.id, version: result.version, reactivatedGoals } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

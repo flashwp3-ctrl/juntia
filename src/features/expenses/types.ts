@@ -21,7 +21,11 @@ export type VoidPayload = { idempotencyKey: string; transactionId: string; expec
  * Error de una acción, ya traducido a lo que la interfaz dice (contracts/errors.md). `saveFailed` y `network` se
  * ofrecen reintentar con la misma clave; `invalid` no debería llegar, porque la hoja valida antes.
  */
-export type ExpenseActionError = "sessionExpired" | "saveFailed" | "network" | "invalid" | "versionConflict" | "alreadyDeleted" | "notFound" | "unexpected";
+export type ExpenseActionError = "sessionExpired" | "saveFailed" | "network" | "invalid" | "versionConflict" | "alreadyDeleted" | "notFound" | "unexpected"
+  /** 004 PR D (T063; Q17, JT213): bajar el monto de un gasto con meta por debajo de lo ya usado. */
+  | "belowGoalUsage";
+/** Lo que devuelve anular un movimiento; `reactivatedGoals`, si devolvió fondos a una meta archivada (F64-1). */
+export type VoidedTransaction = { id: string; version: number; reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] };
 export type ActionResult<T> = { ok: true; value: T } | { ok: false; error: ExpenseActionError };
 
 /**
@@ -47,5 +51,6 @@ export type PendingRow = {
 export type ExpenseActions = {
   create: (payload: CreatePayload) => Promise<ActionResult<SavedTransaction>>;
   update: (payload: UpdatePayload) => Promise<ActionResult<SavedTransaction>>;
-  voidTransaction: (payload: VoidPayload) => Promise<ActionResult<{ id: string; version: number }>>;
+  /** 004 PR D (T063; F64-1): la anulación devuelve las metas archivadas que volvieron a estar activas. */
+  voidTransaction: (payload: VoidPayload) => Promise<ActionResult<VoidedTransaction>>;
 };

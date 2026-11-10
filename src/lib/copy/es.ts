@@ -222,6 +222,7 @@ export const copy = {
     detail: {
       title: "Pagado con una meta",
       use: (goal: string, name: string) => `Uso de ${goal} · Aportes de ${name} · no es un gasto nuevo`,
+      rowMeta: (name: string, description: string) => `Aportes de ${name} · ${description}`,
       pending: (amount: string, name: string) => `${amount} pendientes de ${name}`,
       approvedNote: (name: string) => `${name} aprobó el uso de sus fondos.`,
       rejectedNote: (name: string) => `${name} no aprobó. Solo cuentan los fondos ya usados.`,

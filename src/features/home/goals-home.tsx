@@ -4,12 +4,14 @@
 // propio que nunca se suma al héroe —«Apartado para metas $X · Son cosas distintas: no se suman.» en Nosotros y «Apartaste
 // $X para metas» en Yo—. `total_destinado_neto` no aparece en Inicio (§15.4: solo en Análisis). El módulo de metas es la
 // pila (o la tarjeta sola) con su cinta y su ritmo; sin metas, invita a crear una sin cifras (§15.10).
+// 004 PR D: las notas sobre el verde de ahorro van en tinta (text.secondary daba 4,38:1; axe de goal-expense.a11y.ts).
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { cop } from "@/features/goals/format";
 import { GoalStack } from "@/features/goals/goal-stack";
 import type { HomeGoals, PlanningContext } from "@/features/goals/types";
 import { copy } from "@/lib/copy/es";
+import { PendingRequests } from "@/features/expenses/goal-funding/usage-request-card";
 
 /** «Apartado para metas»: el ahorro del mes, aparte del héroe. Sin aportes en el mes, no se pinta. */
 export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: PlanningContext }) {
@@ -19,7 +21,7 @@ export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: Pl
     return (
       <p data-set-aside="" className="flex items-start gap-2.5 rounded-[16px] bg-saving-subtle px-3.5 py-3 text-[14px] leading-[1.45] text-ink">
         <AppIcon name="piggy-bank" weight="duotone" size={20} className="mt-px shrink-0 text-saving" />
-        <span className="flex flex-col gap-0.5"><span className="font-semibold">{copy.goals.home.meSetAside(amount)}</span><span className="text-[13px] text-ink-secondary">{copy.goals.home.meNote}</span></span>
+        <span className="flex flex-col gap-0.5"><span className="font-semibold">{copy.goals.home.meSetAside(amount)}</span><span className="text-[13px] text-ink">{copy.goals.home.meNote}</span></span>
       </p>
     );
   }
@@ -31,7 +33,7 @@ export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: Pl
           <h2 id="home-set-aside" className="text-[14px] font-semibold">{copy.goals.home.usSetAside}</h2>
           <span className="text-[17px] font-semibold text-saving tabular-nums">{amount}</span>
         </span>
-        <span className="text-[13px] text-ink-secondary">{copy.goals.home.usNote}</span>
+        <span className="text-[13px] text-ink">{copy.goals.home.usNote}</span>
       </span>
     </section>
   );
@@ -45,6 +47,8 @@ export function GoalsModule({ goals, context, today }: { goals: HomeGoals; conte
         <h2 id="home-goals" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.goals.home.module}</h2>
         {goals.goals.length > 0 ? <Link href="/metas" className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.goals.home.seeAll}</Link> : null}
       </div>
+      {/* 004 PR D (T062; FR-056): en Nosotros, la solicitud de fondos en la sesión del otro (B5) y la propia (B4). */}
+      {goals.requests?.length && goals.people ? <PendingRequests requests={goals.requests} people={goals.people} /> : null}
       {goals.goals.length > 0 ? (
         <GoalStack goals={goals.goals} members={goals.members} today={today} context={context} label={copy.goals.home.module} fan={false} seeAllHref="/metas" />
       ) : (

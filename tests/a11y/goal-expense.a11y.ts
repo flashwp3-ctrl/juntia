@@ -86,7 +86,7 @@ if (JOB === "e2e") test.describe("Gasto con meta y confirmaciones (PR D de la 00
     await expect(sara.page.getByRole("region", { name: copy.goalExpense.request.region }).filter({ visible: true }).getByText(copy.goalExpense.request.noExpiry)).toBeVisible();
     await bothThemes(sara.page, "B4 · tarjeta pendiente en Actividad");
     await sara.page.goto(`/actividad/${rejected.id}`);
-    await expect(sara.page.locator("[data-transaction-detail]:visible").getByText(copy.goalExpense.badge.rejected("Tomás"))).toBeVisible();
+    await expect(sara.page.locator("[data-transaction-detail]:visible").getByText(copy.goalExpense.badge.rejected("Tomás"), { exact: true })).toBeVisible();
     await bothThemes(sara.page, "B7 · detalle con la solicitud rechazada");
     await sara.context.close();
 

@@ -350,7 +350,7 @@ describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", () => {
     expect(screen.getByText(copy.goalExpense.request.title("Sara"))).toBeTruthy();
     expect(screen.getByText(copy.goalExpense.request.split("50/50"))).toBeTruthy();
     expect(screen.getByText(copy.goalExpense.request.used("Sara", "$1.620.000"))).toBeTruthy();
-    expect(screen.getByLabelText(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toBeTruthy();
+    expect(screen.getByText(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toBeTruthy();
     expect(screen.getByText(copy.goalExpense.request.rejectNote)).toBeTruthy();
     expect(screen.queryByRole("button", { name: copy.goalExpense.request.cancel })).toBeNull();
     await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
