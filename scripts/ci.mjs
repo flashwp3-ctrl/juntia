@@ -5,16 +5,36 @@ import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
 
 const timingFile = join(process.env.RUNNER_TEMP ?? tmpdir(), `juntia-ci-${process.env.GITHUB_JOB ?? "local"}.jsonl`);
 const [mode, ...commands] = process.argv.slice(2);
 const budgets = { "test:unit": 15, verify: 90, "test:db": 60, "test:e2e:smoke": 180 };
-if (mode === "run") {
+
+/**
+ * Los argumentos de npm para un comando. 004 PR B (T035, F64-5): en el job e2e, las specs que eligió scripts/e2e-select.mjs
+ * (`E2E_SPECS`) van detrás de `--`; sin la variable, todas. Los scripts de package.json fijan el proyecto con `--project=e2e`
+ * (con `=`): con `--project e2e`, Playwright tomaba los archivos que siguen como más nombres de proyecto (gate del PR #67, run
+ * 42847381388). tests/ci-command.test.ts ejecuta este mismo comando con `--list`.
+ * @param {string} command
+ * @param {Record<string, string | undefined>} [env]
+ * @returns {string[]}
+ */
+export function npmArgs(command, env = process.env) {
+  const specs = command === "test:e2e:smoke" ? (env.E2E_SPECS ?? "").split(/\s+/).filter(Boolean) : [];
+  if (command === "ci") return ["ci"];
+  if (command === "chromium") return ["exec", "--", "playwright", "install", "--with-deps", "--only-shell", "chromium"];
+  return ["run", command, ...(specs.length ? ["--", ...specs] : [])];
+}
+
+// Importado por una prueba, el módulo no ejecuta nada.
+const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
+if (!isMain) {
+  // Sin efectos.
+} else if (mode === "run") {
   for (const command of commands) {
     const start = Date.now();
-    // 004 PR B (T035, F64-5): en el job e2e, las specs que eligió scripts/e2e-select.mjs (E2E_SPECS); sin la variable, todas.
-    const specs = command === "test:e2e:smoke" ? (process.env.E2E_SPECS ?? "").split(/\s+/).filter(Boolean) : [];
-    const args = command === "ci" ? ["ci"] : command === "chromium" ? ["exec", "--", "playwright", "install", "--with-deps", "--only-shell", "chromium"] : ["run", command, ...(specs.length ? ["--", ...specs] : [])];
+    const args = npmArgs(command);
     const result = spawnSync("npm", args, { encoding: "utf8", shell: process.platform === "win32" });
     process.stdout.write(result.stdout ?? "");
     process.stderr.write(result.stderr ?? "");

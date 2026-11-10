@@ -583,3 +583,36 @@ inspeccionaba. Un solo commit, solo en la prueba (`tests/e2e/budgets.e2e.ts`); s
 y dos de `review-f57.test.tsx`; este commit no toca nada que Vitest corra). La repetición: **exit 0**, dominio 84, componentes
 **740 pasan / 2 omisiones previstas**, en **98,80 s**: por encima del presupuesto de 90 s, con los componentes en 68 s frente a
 41–52 s en las corridas anteriores de hoy (otra sesión trabajaba en el mismo equipo). `git diff --check` pasa.
+
+## Gate del PR #67 · run 42847381388 (sobre `2d257a9`): `--project` y las specs
+
+Falló el paso «E2E smoke (selected specs)» del job `e2e`. El selector eligió bien (todas, por tocar el workflow), pero
+`scripts/ci.mjs` ejecutaba `npm run test:e2e:smoke -- <specs>` sobre `playwright test --project e2e`; como `--project` admite
+varios valores, Playwright tomó los archivos como nombres de proyecto: «Project(s) "tests/e2e/access-account.e2e.ts", …
+not found». En local no salió porque `e2e:dev` arma su comando por otro camino (`scripts/dev-target/e2e-plan.mjs`).
+
+Arreglo (un solo commit y un solo push, que lanza el gate):
+
+- `package.json`: `--project=<nombre>` con `=` en `test:e2e:smoke` y en los demás scripts con el mismo patrón
+  (`test:a11y`, del mismo job, y `test:unit`, `test:components` y `test:integration`, de Vitest). Las líneas del workflow
+  con `--project e2e` / `--project evidence` van seguidas de opciones, no de archivos, y no cambian.
+- `scripts/ci.mjs`: el armado de los argumentos de npm pasa a `npmArgs(command, env)`, exportado; importado por una prueba,
+  el módulo no ejecuta nada.
+- `tests/ci-command.test.ts` (proyecto `components`): ejecuta el comando real que arma `ci.mjs` con `--list`, sin correr
+  nada. Con una spec lista solo `budgets.e2e.ts`; con dos, solo esas dos; sin `E2E_SPECS`, las cuatro de `tests/e2e`. Exige
+  salida 0 y que no aparezca «not found».
+
+Salidas locales:
+
+- `tests/ci-command.test.ts`: **3/3**. Con el script viejo (`--project e2e`) puesto a mano: **2 fallan** (los dos casos
+  con specs) y el de sin specs pasa; restaurado.
+- El camino exacto del job, con la lista del gate y `--list` (añadido dentro de `E2E_SPECS` para no correr nada):
+  `E2E_SPECS="tests/e2e/access-account.e2e.ts tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts tests/e2e/budgets.e2e.ts --list" node scripts/ci.mjs run test:e2e:smoke`
+  → `playwright test --project=e2e tests/e2e/access-account.e2e.ts … tests/e2e/budgets.e2e.ts --list`, **exit 0, «Total:
+  34 tests in 4 files»** (incluye las `@mail`, que en el job sí corren).
+- `A11Y_JOB=e2e npm run test:a11y -- --list` → `playwright test --project=a11y --list`, **«Total: 95 tests in 5 files»**,
+  como en `e2e:dev`.
+- `node scripts/ci.mjs summary` sigue funcionando como módulo principal.
+- `npm run verify`: la primera corrida falló en typecheck (el parámetro `env` del `.mjs` tomaba el tipo `ProcessEnv`; se
+  tipó con JSDoc). La repetición: **exit 0, 65,68 s**; `vitest run --project=domain` 84, `vitest run --project=components`
+  **743 pasan / 2 omisiones previstas**. `git diff --check` pasa.
