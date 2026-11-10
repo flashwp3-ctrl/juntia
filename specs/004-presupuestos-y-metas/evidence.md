@@ -559,3 +559,27 @@ Salidas:
 - `npm run verify`: la primera corrida pasó (exit 0, 740 componentes) en 115,02 s con el equipo cargado (lint 43,68 s);
   la repetición: **exit 0, 86,70 s** (< 90 s), dominio 84, componentes **740 pasan / 2 omisiones previstas**.
   `git diff --check` pasa.
+
+## Re-revisión de ChatGPT del PR #67 (sobre `7de0fed`) · F67-4
+
+F67-1, F67-2 y F67-3 quedaron cerrados. F67-4: la respuesta del cambio de Yo a Nosotros se marcaba como de Yo y no se
+inspeccionaba. Un solo commit, solo en la prueba (`tests/e2e/budgets.e2e.ts`); sin cambios de producción ni `db:dev:reset`.
+
+- **Tres fases, marcadas al empezar cada petición**: `me` antes del clic en «Nosotros»; `switch` desde justo antes del clic
+  hasta que Plan de Nosotros se ve (la barra de Mercado 640.000 de 900.000); `us` después. Las respuestas de `switch` y `us`
+  pasan las negativas.
+- **Qué petición es la transición**: el selector escribe la cookie en el navegador (`writeContextCookie`, `document.cookie`) y
+  `ContextView` llama a `router.refresh()`, que hace un **GET con `_rsc` a `/plan`**; no hay Server Action. Aun así el
+  interceptor captura también los POST con `Next-Action` a `/` y `/plan`, por si el cambio pasara a una.
+- **Controles**: hay al menos una respuesta de la fase `switch` con cuerpo, y la de `/plan` trae ya el presupuesto compartido
+  sembrado. Se conservan los de `7de0fed`: el RSC de Plan en Yo trae el presupuesto personal; al menos un RSC de `/plan`
+  iniciado en `us` trae el compartido; y las lecturas directas de HTML y RSC sin interceptar, con la cookie válida, ausente y
+  no válida.
+- **Mutación**: el interceptor añade «123.400» (marca personal de Sara) **solo** al cuerpo capturado de las respuestas que
+  empezaron en `switch`. Resultado: **1 failed**, «respuesta de /plan en la fase switch», recibido `["123.400"]`. Sin la
+  mutación: **2/2** (37,0 s en total), `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` contra `juntia-dev`.
+
+`npm run verify`: la primera corrida falló por tres tests ajenos que superaron 5 s con el equipo cargado (`app-port.test.ts`
+y dos de `review-f57.test.tsx`; este commit no toca nada que Vitest corra). La repetición: **exit 0**, dominio 84, componentes
+**740 pasan / 2 omisiones previstas**, en **98,80 s**: por encima del presupuesto de 90 s, con los componentes en 68 s frente a
+41–52 s en las corridas anteriores de hoy (otra sesión trabajaba en el mismo equipo). `git diff --check` pasa.
