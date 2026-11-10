@@ -599,7 +599,7 @@ describe("Abanico · hover y foco", () => {
   it("el foco de teclado (focus-visible) activa el mismo efecto", () => {
     const { root, layer } = fan();
     const link = layer(1).querySelector("[data-goal-card]") as HTMLElement;
-    link.matches = ((selector: string) => selector === ":focus-visible") as typeof link.matches;
+    link.matches = ((selector: string): boolean => selector === ":focus-visible") as unknown as typeof link.matches;
     fireEvent.focus(link);
     expect(root.getAttribute("data-fan-active")).toBe("1");
     expect(link.className).toContain("outline-offset-2");

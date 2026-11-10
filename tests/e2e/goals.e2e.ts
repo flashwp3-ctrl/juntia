@@ -11,6 +11,7 @@ import { moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { contributeToGoal, createGoal, goalEntries, listGoals } from "../../src/lib/db/goals";
+import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedSharedMovements, type SeededUser } from "../support/seed";
 import { expect, test } from "./fixtures";
 
@@ -133,26 +134,32 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
     await context.close();
   }
 
-  // Prefetch: en Yo, con Metas y su enlace a la meta personal ya pintados, se cambia a Nosotros y se navega.
+  // Prefetch: Sara en Yo (su meta personal se ve, como debe), cambia a Nosotros y navega. Los RSC se capturan al empezar,
+  // con su ruta y su contexto (tests/support/rsc-capture.ts; revisión del gestor del PR #68).
   const { context, page } = await open(browser, baseURL!, pair.sara, "me", "me", 1440);
-  // Revisión del PR #68: se guardan las promesas de cada cuerpo (no el texto ya leído), para no comprobar antes de que
-  // terminen de llegar; y se exige que después del cambio haya llegado al menos una respuesta RSC.
-  const prefetched: Promise<string>[] = [];
-  page.on("response", async (response) => {
-    if (response.url().includes("_rsc=") && response.request().method() === "GET") prefetched.push(response.text().catch(() => ""));
-  });
-  await page.goto("/metas");
+  const rsc = await captureRsc(page);
+  // En Yo se llega a Metas desde Inicio, en el cliente: su RSC lleva la meta personal. Es el control de que la captura ve
+  // una meta personal cuando viaja; en Nosotros, el mismo camino no debe traerla.
+  await page.goto("/");
+  await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.goals }).click();
   await expect(page.getByRole("link", { name: /^Bicicleta secreta, meta personal/ }).first()).toBeVisible();
+  const inMe = await rsc.read((item) => item.path === "/metas" && !item.underUs);
+  expect(inMe.some(({ body }) => body.includes(personal.id) && body.includes("Bicicleta secreta")), "el RSC de Metas en Yo trae la meta personal").toBe(true);
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("link", { name: /^Japón compartido, meta compartida/ }).first()).toBeVisible();
-  const afterSwitch = prefetched.length;
+  // Desde aquí la cookie ya dice Nosotros (Metas de Nosotros está pintada): toda petición que empiece ahora es de Nosotros.
+  rsc.nowUnderUs();
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page.getByRole("region", { name: copy.goals.home.usSetAside }).filter({ visible: true })).toBeVisible();
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.goals }).click();
   await expect(page.getByRole("link", { name: /^Japón compartido, meta compartida/ }).first()).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
-  const fetched = await Promise.all(prefetched);
-  expect(fetched.length).toBeGreaterThan(afterSwitch);
-  for (const body of fetched.slice(afterSwitch)) expect(leaks(body)).toEqual([]);
+  const inUs = await rsc.read((item) => item.underUs);
+  for (const { path, body } of inUs) expect(leaks(body), `RSC de ${path} pedido en Nosotros`).toEqual([]);
+  // La prueba tiene que poder fallar: al menos un RSC de /metas iniciado en Nosotros, y su cuerpo trae la meta compartida
+  // sembrada (control positivo), así que de verdad se inspeccionó Metas de Nosotros.
+  const metas = inUs.filter((item) => item.path === "/metas");
+  expect(metas.length, `RSC iniciados en Nosotros: ${inUs.map((item) => item.path).join(", ")}`).toBeGreaterThan(0);
+  expect(metas.some(({ body }) => body.includes(shared.id) && body.includes("Japón compartido"))).toBe(true);
   await context.close();
 });
