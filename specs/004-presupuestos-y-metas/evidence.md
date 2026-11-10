@@ -1069,3 +1069,28 @@ Rama `claude/004-d-goal-expense-d92653`, sobre `main` en `7b42b3a` (PR A, B y C 
 | T065 | Hecha: dirigidas en verde, `e2e:dev` completo y `verify` en verde (este con aviso de tiempo) |
 | T066 | Hecha: 54 capturas y revisión visual; sin salida del CLI de Impeccable (no instalado) |
 | T067–T069 | Humanas (gestor y fundadores) |
+
+## Revisión del gestor del PR #69 (sobre `2a20dd8`) · correcciones
+
+1. **JT213 al editar** (bloqueante): la edición privada y la compartida dicen «Primero quita el uso de la meta o usa menos», sin «Reintentar» (ni «Comprobar estado»); los campos siguen editables. Dos pruebas de componentes nuevas.
+2. **«Comprobar estado» de un gasto con meta en Yo**: se clasifica por valor (`funded-context.ts`: `payer_user_id` de texto y `parts` presentes = Nosotros). Prueba unitaria `goal-funding/write-status.test.ts` con los dos payloads; con la lógica vieja falla el caso de Yo (comprobado: 1 falla, 2 pasan) y con la nueva pasa. La forma real la confirma `tests/integration/planning-adapters.test.ts` contra `juntia-dev`: el payload privado guardado trae `payer_user_id: null` y `split_mode: null`.
+3. **Privacidad de Anotar en la spec 4**: en lugar de pedir `/` a mano, la navegación y el prefetch con `tests/support/rsc-capture.ts` (cada RSC clasificado por su cookie). Control positivo en Yo: el RSC de Inicio trae «Bicicleta de ruta» y su id. Mutación: el mismo detector de fugas, sobre ese RSC de Yo, la encuentra; sin eso la prueba no probaría nada. En Nosotros (cambio de contexto, Actividad e Inicio con hover), ningún RSC la lleva y el de Inicio trae Japón. La parte de la Server Action de B1 no cambia.
+4. **Tiempo del CI**: el selector clasifica `tests/a11y/**/*.a11y.ts` como neutro (decisión del gestor), con tres fixtures nuevos en `tests/e2e-select.test.ts` (axe solo, PR D con su axe y `tests/support/` que sigue compartido) y la nota en `contracts/ci.md`. Recorte de la E2E nueva (mitigación b): sin las aserciones de saldo tras crear, aprobar y rechazar (`listGoals`, `goalMemberBalances`; las cubren integración y pgTAP), que pasan a comprobar el estado de la solicitud; y el B1 de Tomás solo comprueba que su respuesta no filtra, al final, sin abrir y descartar la hoja a mitad del recorrido. `test.slow()` en `couple-shared.a11y.ts` se queda: su caso ligero midió 48,2 s en la corrida dirigida de esta ronda (más de sus 30 s) y el recorte de la E2E no lo afecta.
+5. JT225 en el deshacer de un gasto con meta usa `copy.goals.errors.undoNotAvailable`.
+6. La reactivación de F64-1 va además de «Gasto eliminado» («Gasto eliminado. La meta … volvió a estar activa: …»).
+7. Eliminar un compartido con solo una solicitud pendiente dice «La solicitud pendiente también se cancela.»; el aviso de los fondos solo con uso aplicado.
+8. Actividad en Nosotros lee `usage_requests` una vez: `monthFunding` devuelve también las pendientes.
+9. Las cuentas de FundingLedger y el uso inicial, en `bigint`.
+10. Tarjeta de solicitud con resultado desconocido: el aviso se puede cerrar con «¿Cerrar sin confirmar?» (el mismo `UnconfirmedClose` de las hojas de metas); al cerrar se dice «No pudimos confirmar si se guardó. Revisa el estado de la solicitud antes de volver a intentarlo.», se pide la página otra vez y las acciones vuelven con la MISMA clave (repetir es la misma intención). Prueba de componentes nueva.
+
+Corridas de esta ronda (solo lo afectado; no se tocó `tests/support/` ni los fixtures compartidos, así que no hay `e2e:dev` completo):
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components src/features/expenses` | **207/207** |
+| `npm run test:integration:dev` (corre la suite entera) | **exit 0**: 20 archivos, **145 pasan / 9 omitidas**; `planning-adapters.test.ts` 1/1 |
+| `e2e:dev -- goals.e2e.ts goal-expense.a11y.ts couple-shared.a11y.ts` (grep de los casos) | La E2E nueva falló después de la privacidad (ya en verde): la sesión de Sara se abría en Yo y su script inicial reinstalaba «Yo» en cada carga; se separan las dos sesiones. Axe **3/3** (`couple-shared` 48,2 s y 26,4 s; `goal-expense` 27,2 s) |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` | **exit 0, 118,12 s**: spec 4 **4/4**, el caso nuevo en **36,7 s** |
+| `npm run verify` | **exit 0, 69,86 s**: lint (solo el aviso previo), typecheck, dominio 84/84, componentes **879 / 2 omisiones previstas** |
+
+Selector para este PR tras el cambio: **sigue pidiendo las cinco** por `scripts/e2e-select.mjs`, `tests/e2e-select.test.ts`, `src/components/ui/expense-row.tsx` y `src/features/shared/` (`write-result.ts`, `shared-row.tsx`); la regla de axe ya no cuenta.

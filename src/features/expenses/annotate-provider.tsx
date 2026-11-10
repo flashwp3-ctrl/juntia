@@ -427,7 +427,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     send: () => fundingRef.current ? fundingRef.current.undoExpense({ idempotencyKey, context: saved.context, transactionId: saved.transaction.id, expectedVersion: saved.transaction.version }) : Promise.resolve({ status: "unknown" as const }),
     check: (input) => fundingRef.current ? fundingRef.current.check(input) : Promise.resolve({ state: "error" as const }),
     onOk: () => { setHighlightId((current) => (current === saved.transaction.id ? null : current)); router.refresh(); },
-    rejected: (error) => (error === "goalUndoNotAvailable" || error === "undoNotAvailable" ? copy.move.errors.undoNotAvailable : error === "versionConflict" ? copy.annotate.undoChanged
+    rejected: (error) => (error === "goalUndoNotAvailable" ? copy.goals.errors.undoNotAvailable : error === "undoNotAvailable" ? copy.move.errors.undoNotAvailable : error === "versionConflict" ? copy.annotate.undoChanged
       : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
   }, "send"), [runUndo, router, setHighlightId]);
   const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {

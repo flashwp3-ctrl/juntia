@@ -33,14 +33,16 @@ export function proposeFunds(contributors: readonly Contributor[], usagePesos: n
 /** Lo que dice el pie de FundingLedger y si Guardar se habilita. Orden: uso, tope del gasto, topes por aportante y suma. */
 export function evaluateFunding({ expensePesos, usagePesos, funds, contributors }: { expensePesos: number | null; usagePesos: number | null; funds: Funds; contributors: readonly Contributor[] }): FundingStatus {
   if (!usagePesos || usagePesos <= 0) return { kind: "noUsage" };
-  if (expensePesos !== null && usagePesos > expensePesos) return { kind: "exceedsExpense" };
+  if (expensePesos !== null && BigInt(usagePesos) > BigInt(expensePesos)) return { kind: "exceedsExpense" };
   for (const contributor of contributors) {
     const value = funds[contributor.userId] ?? 0;
     if (minorOf(value) > BigInt(contributor.availableMinor)) return { kind: "exceedsAvailable", userId: contributor.userId, availableMinor: contributor.availableMinor };
   }
-  const sum = contributors.reduce((total, { userId }) => total + (funds[userId] ?? 0), 0);
-  if (sum < usagePesos) return { kind: "missing", pesos: usagePesos - sum };
-  if (sum > usagePesos) return { kind: "over", pesos: sum - usagePesos };
-  const own = contributors.filter(({ isMe }) => isMe).reduce((total, { userId }) => total + (funds[userId] ?? 0), 0);
-  return { kind: "ok", ownPesos: own, requestedPesos: sum - own };
+  // Las cuentas, en bigint (revisión del gestor del PR #69, 9); a `number` solo los pesos que se muestran (≤ 99.999.999).
+  const usage = BigInt(usagePesos);
+  const sum = contributors.reduce((total, { userId }) => total + BigInt(funds[userId] ?? 0), 0n);
+  if (sum < usage) return { kind: "missing", pesos: Number(usage - sum) };
+  if (sum > usage) return { kind: "over", pesos: Number(sum - usage) };
+  const own = contributors.filter(({ isMe }) => isMe).reduce((total, { userId }) => total + BigInt(funds[userId] ?? 0), 0n);
+  return { kind: "ok", ownPesos: Number(own), requestedPesos: Number(sum - own) };
 }

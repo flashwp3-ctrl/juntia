@@ -37,7 +37,7 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
   const check = useCallback((input: Parameters<SharedActions["check"]>[0]) => sharedActions!.check(input), [sharedActions]);
   const done = useCallback((result: { reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] }) => {
     setConfirming(false);
-    notify({ tone: "success", message: reactivationMessage(result.reactivatedGoals) ?? copy.remove.done.expense });
+    notify({ tone: "success", message: [copy.remove.done.expense, reactivationMessage(result.reactivatedGoals)].filter(Boolean).join(". ") });
     router.push(backHref);
   }, [backHref, notify, router]);
   const write = useWrite<SharedVoidPayload, { id: string; version: number; reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] }>({ action: "void_shared_expense", run, check, onOk: done });
@@ -83,7 +83,9 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
         cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setConfirming(false))}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
         confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
-        {funding ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(funding.goalName)}</p> : null}
+        {/* Con uso aplicado, los fondos vuelven; con solo una solicitud pendiente, solo se cancela la solicitud. */}
+        {funding?.funded ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(funding.goalName)}</p> : null}
+        {funding?.request?.status === "pending" ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.remove.pendingNote}</p> : null}
         {notice}
         <ConfirmDialog
           open={confirmingClose}

@@ -225,6 +225,8 @@ function sharedRejection(error: WriteError, partner: string) {
   switch (error) {
     case "invalidSplit": return copy.annotate.split.errors.invalid;
     case "versionConflict": return copy.shared.errors.versionConflict(partner);
+    // 004 PR D (Q17, JT213): el monto quedaría por debajo de lo usado de la meta; reintentar repetiría el rechazo.
+    case "belowGoalUsage": return copy.goalExpense.errors.removeUsageFirst;
     case "alreadyDeleted": case "notFound": return copy.shared.errors.alreadyDeleted(partner);
     case "coupleNotActive": return copy.shared.errors.notActive;
     case "sessionExpired": return copy.errors.sessionExpired;
@@ -381,7 +383,8 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     setGoalId(next.id);
     goalNameRef.current = next.name;
     const total = next.members.reduce((sum, member) => sum + BigInt(member.availableMinor), 0n) / 100n;
-    const initialUsage = draft.amount && draft.amount > 0 ? Math.min(draft.amount, Number(total)) : null;
+    // En bigint: el disponible de la meta puede superar el máximo de un número exacto; el uso nunca pasa del gasto.
+    const initialUsage = draft.amount && draft.amount > 0 ? Number(BigInt(draft.amount) < total ? BigInt(draft.amount) : total) : null;
     setUsage(initialUsage);
     setFundsTouched(false);
     setFunds(proposeFunds(contributorsOf(next), initialUsage));
@@ -513,6 +516,8 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
           ? <Toast tone="error" message={copy.transaction.errors.versionConflict} action={{ label: copy.annotate.reload, onAction: () => { onClose(); mode.onReload(); } }} />
           : <Toast tone="error" message={copy.errors.unexpected} action={retry} />;
       case "alreadyDeleted": return <Toast tone="error" message={copy.transaction.errors.alreadyDeleted} />;
+      // 004 PR D (Q17, JT213): sin «Reintentar», que repetiría el mismo rechazo; primero se quita el uso o se usa menos.
+      case "belowGoalUsage": return <Toast tone="error" message={copy.goalExpense.errors.removeUsageFirst} />;
       case "notFound": return <Toast tone="error" message={copy.transaction.errors.notFound} />;
       case "network": return <Toast tone="error" message={copy.errors.network} action={retry} />;
       case "saveFailed": return <Toast tone="error" message={copy.errors.saveFailed} action={retry} />;

@@ -40,7 +40,10 @@ const BOTH = [/^src\/domain\/metrics\//, /^src\/lib\/db\/metrics\.ts$/];
 const NEUTRAL = [
   /\.md$/, /^docs\//, /^specs\//, /^src\/features\/expenses\//,
   /^src\/features\/(?:home|activity|balance|couple|account)\//,
-  /^src\/lib\/copy\/es\.ts$/, /^src\/lib\/db\/(?:errors|types)\.ts$/, /^src\/lib\/supabase\/database\.types\.ts$/,
+  /^src\/lib\/copy\/es\.ts$/,
+  // Decisión del gestor (revisión del PR #69, 4): un archivo de axe no cambia qué hace ninguna spec E2E y corre igual en el
+  // paso de axe del job. tests/support/** sigue siendo compartido (regla 6).
+  /^tests\/a11y\/(?:[^/]+\/)*[^/]+\.a11y\.ts$/, /^src\/lib\/db\/(?:errors|types)\.ts$/, /^src\/lib\/supabase\/database\.types\.ts$/,
 ];
 
 const normalize = (path) => String(path).trim().replace(/\\/g, "/").replace(/^\.\//, "");

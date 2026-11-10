@@ -112,8 +112,7 @@ export async function loadGoalActivity(context: PlanningContext, month: string, 
     const [entries, goals, metrics] = await Promise.all([goalActivity(client, context, `${month}-01`), listGoals(client, context), metricMonths(client, context, `${month}-01`)]);
     const names = new Map(goals.map((goal) => [goal.id, goal.name]));
     // 004 PR D (T064): el uso de metas de los gastos del mes (CON META, el detalle) y, en Nosotros, las solicitudes pendientes.
-    const funding = await monthFunding(client, context, entries, names);
-    const requests = context === "us" ? await pendingRequests(client) : [];
+    const { funding, pending: requests } = await monthFunding(client, context, entries, names);
     return { entries: entries.map((entry) => toEntryView(entry, names.get(entry.goal_id))), setAsideMinor: metrics[0]?.aporte_a_metas ?? "0", funding, requests };
   }, volver);
 }

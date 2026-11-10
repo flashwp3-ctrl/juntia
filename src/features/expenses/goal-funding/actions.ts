@@ -21,6 +21,7 @@ import { writeStatus } from "@/lib/db/write-status";
 import { createClient } from "@/lib/supabase/server";
 import { isUuid, parseCreatePayload } from "../payload";
 import { allocationsFor, parseSharedCreate, toSavedShared } from "../shared-payload";
+import { fundedContext } from "./funded-context";
 import type { FundingGoal, FundingGoalsResult, ReactivatedGoalView, RemoveUsageResult, RequestResult, SavedGoalExpense, VoidedExpense } from "./types";
 
 const refresh = () => revalidatePath("/", "layout");
@@ -163,8 +164,7 @@ export async function goalFundingWriteStatusAction(input: unknown): Promise<Writ
     const result = status.result as Record<string, unknown>;
     switch (raw.action as Action) {
       case "create_expense_with_goal": {
-        const context = "payer_user_id" in result || "split_mode" in result ? "us" : "me";
-        return { state: "completed", value: savedFrom(context, result as unknown as FundedExpense) };
+        return { state: "completed", value: savedFrom(fundedContext(result), result as unknown as FundedExpense) };
       }
       case "approve_usage_request": case "reject_usage_request": case "cancel_usage_request":
         return { state: "completed", value: toRequestResult(result as { request_id: string; status: RequestResult["status"] }) };

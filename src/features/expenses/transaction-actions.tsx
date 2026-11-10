@@ -54,7 +54,7 @@ export function TransactionActions({ transaction, backHref, funding }: { transac
     busy.current = false;
     if (result.ok) {
       setConfirming(false);
-      notify({ tone: "success", message: reactivationMessage(result.value.reactivatedGoals) ?? copy.remove.done[transaction.type] });
+      notify({ tone: "success", message: [copy.remove.done[transaction.type], reactivationMessage(result.value.reactivatedGoals)].filter(Boolean).join(". ") });
       router.push(backHref);
     } else setStatus({ kind: "error", error: result.error });
   };

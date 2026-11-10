@@ -20,6 +20,7 @@ import type { WriteAction, WriteError, WriteRejectionDetail } from "@/features/s
 import { cop, personName } from "@/features/goals/format";
 import type { GoalPerson } from "@/features/goals/types";
 import { copy } from "@/lib/copy/es";
+import { UnconfirmedClose } from "@/features/goals/goal-sheet-frame";
 import { ConfirmationBadge } from "./confirmation-badge";
 import { useOptionalAnnotate } from "../annotate-provider";
 import type { GoalFundingActions, RequestPayload, RequestResult, UsageRequestView } from "./types";
@@ -55,6 +56,11 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const [done, setDone] = useState<RequestResult["status"] | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [kind, setKind] = useState<Kind>("approve");
+  // Revisión del gestor del PR #69 (10): con un resultado desconocido, cerrar el aviso se confirma («¿Cerrar sin confirmar?»,
+  // como las hojas de metas) y deja dicho que no se pudo confirmar; las acciones vuelven con la MISMA clave, así que repetirlas
+  // es la misma intención (idempotente) y nunca una segunda resolución. Se pide la página otra vez para ver el estado real.
+  const [confirmingClose, setConfirmingClose] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
 
   const run = useCallback((payload: RequestPayload & { kind: Kind }) => {
     const { kind: which, ...rest } = payload;
@@ -131,7 +137,9 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
           {blocked ? <Button variant="secondary" icon="arrow-clockwise" onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
         </div>
       ) : null}
-      {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} /> : null}
+      {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirmingClose(true)} /> : null}
+      {unconfirmed && write.state.phase !== "unknown" ? <p role="status" className="text-[13px] font-semibold text-ink">{copy.goalExpense.request.closedUnconfirmed}</p> : null}
+      <UnconfirmedClose open={confirmingClose} onOpenChange={setConfirmingClose} onRetry={() => void write.retry()} onClose={() => { setUnconfirmed(true); write.reset(); router.refresh(); }} />
       {status === "pending" && !blocked && write.state.phase !== "unknown" ? (
         role === "member" ? (
           <div className="flex flex-wrap gap-2">

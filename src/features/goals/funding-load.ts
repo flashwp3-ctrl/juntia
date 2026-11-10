@@ -38,15 +38,18 @@ export async function pendingRequests(client: SupabaseClient, goalId?: string): 
 
 /**
  * El uso de metas en los gastos del mes: de los usos de `goal_activity` del mes (en Yo, solo los de quien mira) y, en
- * Nosotros, de las solicitudes de esos gastos o pendientes. Una sola lectura de `expense_goal_funding` por gasto.
+ * Nosotros, de las solicitudes de esos gastos o pendientes. Una sola lectura de `usage_requests` (revisión del gestor del
+ * PR #69, 8): de ella salen también las pendientes que Actividad pinta arriba; y una de `expense_goal_funding` por gasto.
  */
-export async function monthFunding(client: SupabaseClient, context: PlanningContext, entries: readonly GoalEntryTransport[], names: ReadonlyMap<string, string>): Promise<Record<string, ExpenseFundingView>> {
+export async function monthFunding(client: SupabaseClient, context: PlanningContext, entries: readonly GoalEntryTransport[], names: ReadonlyMap<string, string>): Promise<{ funding: Record<string, ExpenseFundingView>; pending: UsageRequestView[] }> {
   const usages = entries.filter((entry) => entry.kind === "usage" && entry.transaction_id);
   const requestRows = context === "us" ? await usageRequests(client) : [];
   const ids = new Set<string>(usages.map((entry) => entry.transaction_id!));
   for (const row of requestRows) if (row.status === "pending" || ids.has(row.transaction_id)) ids.add(row.transaction_id);
-  if (ids.size === 0) return {};
+  if (ids.size === 0) return { funding: {}, pending: [] };
   const [funding, requests] = await Promise.all([expenseGoalFundingFor(client, [...ids]), requestViews(client, requestRows.filter((row) => ids.has(row.transaction_id)))]);
+  // Las pendientes, de la más antigua a la más reciente (como pendingRequests).
+  const pending = requests.filter((item) => item.status === "pending").reverse();
   const result: Record<string, ExpenseFundingView> = {};
   for (const row of funding) {
     const uses = new Map<string, bigint>();
@@ -62,5 +65,5 @@ export async function monthFunding(client: SupabaseClient, context: PlanningCont
       uses: [...uses.entries()].map(([memberUserId, amount]) => ({ memberUserId, amountMinor: amount.toString() })), request,
     };
   }
-  return result;
+  return { funding: result, pending };
 }

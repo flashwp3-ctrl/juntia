@@ -218,6 +218,7 @@ export const copy = {
       rejected: "Rechazaste la solicitud. El gasto sigue registrado y tus aportes no cambian.",
       review: "Revisar",
       expenseFallback: "Gasto",
+      closedUnconfirmed: "No pudimos confirmar si se guardó. Revisa el estado de la solicitud antes de volver a intentarlo.",
     },
     detail: {
       title: "Pagado con una meta",

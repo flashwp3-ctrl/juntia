@@ -75,6 +75,9 @@ excluir.
      y los archivos que **todo** PR de P0-3 toca por
      construcción y que no cambian una ruta: `src/lib/copy/es.ts`,
      `src/lib/db/errors.ts`, `src/lib/db/types.ts` y `src/lib/supabase/database.types.ts`.
+     **Decisión del gestor (revisión del PR #69, 10 de noviembre de 2026):** también los archivos de axe
+     `tests/a11y/**/*.a11y.ts`, que no cambian ninguna spec E2E y corren igual en el paso de axe del job;
+     `tests/support/**` sigue en la regla 6.
      Riesgo aceptado del plan: un cambio de copy de metas en un PR que no toca ningún
      archivo de metas no correría la spec 4; se mitiga en la revisión y en la pasada
      completa de cierre de etapa.
@@ -113,6 +116,7 @@ excluir.
   | Un cambio en `src/components/` dentro de cualquiera de ellos | — | **1–5** (las existentes) |
   | Exportación aislada | `src/lib/db/export.ts` | **1–5** (las existentes): la exportación es compartida |
   | Anotar aislado | `src/features/expenses/annotate-sheet.tsx` | 1, 2, 3 y **4** |
+  | Un archivo de axe (decisión del gestor, PR #69) | `tests/a11y/goal-expense.a11y.ts` | 1, 2, 3 (neutro) |
 
   Si un PR real no da lo que su fixture espera, se corrige el mapa del selector o el
   fixture en ese PR, nunca a mano en el workflow.

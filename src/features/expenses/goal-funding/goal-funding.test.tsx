@@ -451,7 +451,8 @@ describe("Quitar el uso, eliminar y reactivar (US-8; FR-057, FR-059, FR-072; F64
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(copy.goalExpense.deleteWarning("Bicicleta de ruta"))).toBeTruthy();
     await user.click(within(dialog).getByRole("button", { name: copy.remove.confirm }));
-    expect(await screen.findByText(copy.goalExpense.reactivated("Bicicleta de ruta", "$1.050.000"))).toBeTruthy();
+    // F64-1, revisión del gestor del PR #69 (6): el aviso de reactivación va además de «Gasto eliminado», no en su lugar.
+    expect(await screen.findByText(`${copy.remove.done.expense}. ${copy.goalExpense.reactivated("Bicicleta de ruta", "$1.050.000")}`)).toBeTruthy();
   });
 
   it("reactivationMessage: una meta, varias y ninguna", () => {
@@ -477,5 +478,63 @@ describe("FundingEffect sin solicitud", () => {
     const rows = within(screen.getByRole("list", { name: copy.goalExpense.effect.title })).getAllByRole("listitem");
     expect(rows).toHaveLength(1);
     expect(rows[0].getAttribute("aria-label")).toBe(copy.goalExpense.effect.row(copy.goalExpense.effect.now("Bicicleta de ruta"), "$1.050.000", "$650.000"));
+  });
+});
+
+// Revisión del gestor del PR #69 (1): JT213 al editar el monto por debajo de lo ya usado de la meta (US-8.4; Q17). Se dice
+// «Primero quita el uso de la meta o usa menos» y no se ofrece «Reintentar», que repetiría el mismo rechazo.
+describe("Editar un gasto con meta por debajo de lo usado (JT213)", { timeout: 15000 }, () => {
+  it("privado: el aviso propio, sin «Reintentar», y los campos siguen editables", async () => {
+    const user = userEvent.setup();
+    const actions = expenseActions();
+    vi.mocked(actions.update).mockResolvedValue({ ok: false, error: "belowGoalUsage" });
+    render(<AnnotateProvider actions={actions} context="me" today="2026-11-05"><TransactionActions transaction={privateSaved({ version: 2 })} backHref="/actividad" /></AnnotateProvider>);
+    await user.click(screen.getByRole("button", { name: copy.detail.edit }));
+    const amount = await screen.findByRole("textbox", { name: copy.annotate.amount });
+    await user.clear(amount);
+    await user.type(amount, "100000");
+    await user.click(screen.getByRole("button", { name: copy.annotate.saveChanges }));
+    expect(await screen.findByText(copy.goalExpense.errors.removeUsageFirst)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: copy.annotate.retry })).toBeNull();
+    expect((screen.getByRole("textbox", { name: copy.annotate.amount }) as HTMLInputElement).disabled).toBe(false);
+    expect(actions.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("compartido: el aviso propio, sin «Reintentar»", async () => {
+    const user = userEvent.setup();
+    const writes = sharedActions();
+    vi.mocked(writes.update).mockResolvedValue({ status: "rejected", error: "belowGoalUsage" });
+    function Edit() {
+      const { openEditShared } = useAnnotate();
+      return <button type="button" onClick={(event) => openEditShared(shared({ version: 3 }), event.currentTarget, () => {})}>{copy.detail.edit}</button>;
+    }
+    render(<AnnotateProvider actions={expenseActions()} sharedActions={writes} couple={couple} context="us" today="2026-11-05"><Edit /></AnnotateProvider>);
+    await user.click(screen.getByRole("button", { name: copy.detail.edit }));
+    const amount = await screen.findByRole("textbox", { name: copy.annotate.amount });
+    await user.clear(amount);
+    await user.type(amount, "1000000");
+    await user.click(screen.getByRole("button", { name: copy.annotate.saveChanges }));
+    expect(await screen.findByText(copy.goalExpense.errors.removeUsageFirst)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: copy.annotate.retry })).toBeNull();
+    expect(screen.queryByRole("button", { name: copy.writes.check })).toBeNull();
+  });
+});
+
+// Revisión del gestor del PR #69 (10): un resultado desconocido en la tarjeta no se pierde en silencio.
+describe("La tarjeta de solicitud con un resultado desconocido", { timeout: 15000 }, () => {
+  it("cerrar el aviso se confirma, dice que no se pudo confirmar y repetir usa la misma clave", async () => {
+    const user = userEvent.setup();
+    const actions = goalFunding({ approve: vi.fn<GoalFundingActions["approve"]>(async () => ({ status: "unknown" })) });
+    render(<UsageRequestCard request={request()} people={tomasView} actions={actions} />);
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
+    await user.click(await screen.findByRole("button", { name: copy.writes.dismiss }));
+    const confirm = await screen.findByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(confirm).getByRole("button", { name: copy.writes.close.confirm }));
+    expect(await screen.findByText(copy.goalExpense.request.closedUnconfirmed)).toBeTruthy();
+    expect(router.refresh).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
+    await waitFor(() => expect(actions.approve).toHaveBeenCalledTimes(2));
+    const [first, second] = vi.mocked(actions.approve).mock.calls.map(([payload]) => payload.idempotencyKey);
+    expect(second).toBe(first);
   });
 });
