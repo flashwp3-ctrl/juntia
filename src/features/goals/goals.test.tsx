@@ -602,7 +602,11 @@ describe("Abanico · hover y foco", () => {
     link.matches = ((selector: string): boolean => selector === ":focus-visible") as unknown as typeof link.matches;
     fireEvent.focus(link);
     expect(root.getAttribute("data-fan-active")).toBe("1");
+    // El anillo de foco (2 px, focus.ring) y su offset de 2 px, no solo el offset.
     expect(link.className).toContain("outline-offset-2");
+    expect(link.className).toContain("focus-visible:outline-2");
+    expect(link.className).toContain("focus-visible:outline-solid");
+    expect(link.className).toContain("focus-visible:outline-focus");
   });
 
   it("fuera del abanico (Inicio) no hay estado de hover", () => {
@@ -611,13 +615,57 @@ describe("Abanico · hover y foco", () => {
     expect(container.querySelector("[data-fan-layer]")).toBeNull();
   });
 
-  it("CSS: solo con puntero fino y desde lg; con movimiento reducido, sin desplazamiento ni escala y la segunda conserva 4°", () => {
+  it("CSS: solo con puntero fino y desde lg; el movimiento va en los envoltorios, nunca en la capa (área de hover fija)", () => {
     const css = readFileSync("src/app/globals.css", "utf8");
-    expect(css).toContain("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {");
-    const reduced = css.slice(css.indexOf("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: reduce)"));
-    expect(reduced).toContain("translate: none; scale: none;");
-    expect(reduced).toContain('[data-fan-active] [data-fan-layer="1"] { rotate: 4deg; }');
+    const start = css.indexOf("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {");
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf("\n}\n", start));
+    // La capa (`li`, el área de hover) no se transforma ni cambia de pivote: en reposo, el abanico queda como el aprobado.
+    expect(block).not.toMatch(/\[data-fan-layer(="\d")?\]\s*\{/);
+    expect(block).toContain('[data-fan-active="1"] [data-fan-layer="1"] [data-fan-tilt] { rotate: -4deg; }');
+    expect(block).toContain('[data-fan-active="1"] [data-fan-layer="1"] [data-fan-card], [data-fan-active="2"] [data-fan-layer="2"] [data-fan-card] { translate: 24px -8px; scale: 1.02; }');
+    expect(block).toContain("[data-fan] [data-fan-tilt] { transform-origin: 0 100%;");
+    expect(block).toContain("[data-fan] [data-fan-card] { transform-origin: bottom center;");
+  });
+
+  it("CSS: con movimiento reducido, sin desplazamiento, escala ni contragiro (la segunda conserva sus 4°); solo la sombra", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    const start = css.indexOf("@media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: reduce)");
+    const reduced = css.slice(start, css.indexOf("\n}\n", start));
+    expect(reduced).toContain("translate: none; scale: none; rotate: none;");
     expect(reduced).toContain("transition: box-shadow 120ms linear;");
-    expect(reduced.slice(0, reduced.indexOf("\n}\n") + 3)).not.toMatch(/translate: -?\d|scale: 1\./);
+    expect(reduced).not.toMatch(/translate: -?\d|scale: 1\.|rotate: -?\d/);
+  });
+
+  it("la tarjeta vive en dos envoltorios dentro de la capa: la capa (área de hover) no lleva el movimiento", () => {
+    const { layer } = fan();
+    expect(layer(1).querySelector(":scope > [data-fan-tilt] > [data-fan-card] [data-goal-card]")).toBeTruthy();
+  });
+
+  it("si el ratón entra y sale mientras una tarjeta tiene foco de teclado, el efecto vuelve a la enfocada", () => {
+    vi.useFakeTimers();
+    const { root, layer } = fan();
+    const link = layer(0).querySelector("[data-goal-card]") as HTMLElement;
+    link.matches = ((selector: string): boolean => selector === ":focus-visible") as unknown as typeof link.matches;
+    fireEvent.focus(link);
+    fireEvent.pointerEnter(layer(2), { pointerType: "mouse" });
+    expect(root.getAttribute("data-fan-active")).toBe("2");
+    fireEvent.pointerLeave(layer(2), { pointerType: "mouse" });
+    act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS); });
+    expect(root.getAttribute("data-fan-active")).toBe("0");
+    vi.useRealTimers();
+  });
+});
+
+// Revisión del gestor del PR #68 (punto 2): en Inicio de Yo, la pila mezcla ámbitos; primero las personales y, dentro de cada
+// ámbito, la del aporte más reciente. Una compartida con un aporte de ayer no pasa por delante de las personales.
+describe("Orden de la pila por ámbito (Inicio en Yo)", () => {
+  it("personales delante de compartidas; dentro de cada ámbito, el aporte más reciente", () => {
+    const sharedRecent = japan({ id: "a1111111-1111-4111-8111-111111111111", name: "Compartida reciente", lastContributionDate: "2026-11-09", lastContributionCreatedAt: "2026-11-09T12:00:00Z" });
+    const personalOld = bike({ id: "a2222222-2222-4222-8222-222222222222", name: "Personal antigua", lastContributionDate: "2026-08-05", lastContributionCreatedAt: "2026-08-05T12:00:00Z" });
+    const personalNew = bike({ id: "a3333333-3333-4333-8333-333333333333", name: "Personal nueva", lastContributionDate: "2026-10-01", lastContributionCreatedAt: "2026-10-01T12:00:00Z" });
+    const { container } = render(<GoalStack goals={[sharedRecent, personalOld, personalNew]} members={{}} today={TODAY} context="me" fan={false} seeAllHref="/metas" />);
+    const ids = [...container.querySelectorAll("[data-stack-layer] [data-goal-card]")].map((node) => node.getAttribute("data-goal-card"));
+    expect(ids).toEqual([personalNew.id, personalOld.id, sharedRecent.id]);
   });
 });

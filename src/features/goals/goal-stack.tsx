@@ -43,6 +43,22 @@ type Props = {
 /** Abanico (Juntia DS v1, «08·7 Abanico · hover y foco»): una tarjeta vuelve al reposo 60 ms después de que el puntero la deja. */
 export const FAN_REST_DELAY_MS = 60;
 
+/**
+ * Orden de la pila: primero el ámbito (en Yo, las personales delante de las compartidas: Q11) y, dentro de cada uno, la del
+ * aporte más reciente (`stackOrder`). En Nosotros todas son compartidas, así que solo cuenta `stackOrder`.
+ */
+export const stackSort = (a: GoalView, b: GoalView) => (a.scope !== b.scope ? (a.scope === "personal" ? -1 : 1) : stackOrder(a, b));
+
+/** La meta que queda al frente tras deslizar `step` (1 la siguiente, -1 la anterior), por id: la lista se reordena sola. */
+export function stepFront(ids: readonly string[], frontId: string | null, step: -1 | 0 | 1): string | null {
+  if (ids.length === 0) return null;
+  const start = Math.max(0, frontId === null ? 0 : ids.indexOf(frontId));
+  return ids[(start + step + ids.length) % ids.length];
+}
+
+/** Reloj de los manejadores del gesto (fuera del render). */
+const now = () => Date.now();
+
 /** Umbrales del deslizamiento: 64 px de recorrido o 500 px/s de velocidad, en vertical. */
 export const SWIPE = { distancePx: 64, velocityPxPerS: 500 } as const;
 
@@ -73,10 +89,11 @@ function layerClass(visible: number, index: number, fan: boolean) {
 }
 
 export function GoalStack({ goals: given, members, today, context, onCreate, label = copy.goals.stack.list, fan = true, seeAllHref }: Props) {
-  // Al frente, la del aporte más reciente (stackOrder); tocar o deslizar mueve el frente desde ahí.
-  const goals = [...given].sort(stackOrder);
+  // Al frente, la del aporte más reciente dentro de su ámbito (stackSort); tocar o deslizar mueve el frente desde ahí. El
+  // frente se guarda por id: tras un `router.refresh` la lista puede llegar en otro orden y sigue la misma meta delante.
+  const goals = [...given].sort(stackSort);
   const reduced = usePrefersReducedMotion();
-  const [front, setFront] = useState(0);
+  const [frontId, setFrontId] = useState<string | null>(null);
   const [listed, setListed] = useState(false);
   // En el abanico de escritorio no hay gesto: las tarjetas están una al lado de la otra.
   const fanned = useMediaQuery("(min-width: 1024px)") && fan;
@@ -87,19 +104,22 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // otra dentro de ese margen, va directo a la nueva. El efecto visual vive en globals.css, solo con puntero fino y desde lg.
   const [active, setActive] = useState<number | null>(null);
   const rest = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // La capa con foco de teclado: al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
+  const focused = useRef<number | null>(null);
   useEffect(() => () => { if (rest.current) clearTimeout(rest.current); }, []);
   const enter = (index: number) => { if (rest.current) clearTimeout(rest.current); rest.current = null; setActive(index); };
-  const leave = () => { if (rest.current) clearTimeout(rest.current); rest.current = setTimeout(() => { rest.current = null; setActive(null); }, FAN_REST_DELAY_MS); };
-  const focusIn = (index: number) => (event: FocusEvent<HTMLElement>) => { if ((event.target as HTMLElement).matches?.(":focus-visible")) enter(index); };
+  const leave = () => { if (rest.current) clearTimeout(rest.current); rest.current = setTimeout(() => { rest.current = null; setActive(focused.current); }, FAN_REST_DELAY_MS); };
+  const focusIn = (index: number) => (event: FocusEvent<HTMLElement>) => { if ((event.target as HTMLElement).matches?.(":focus-visible")) { focused.current = index; enter(index); } };
+  const focusOut = () => { focused.current = null; leave(); };
   if (goals.length === 0) return null;
-  const start = front < goals.length ? front : 0;
+  const start = Math.max(0, frontId === null ? 0 : goals.findIndex((goal) => goal.id === frontId));
   const ordered = [...goals.slice(start), ...goals.slice(0, start)];
   const visible = Math.min(ordered.length, 3);
   const swipe = !fanned && goals.length > 1;
   const onDragEnd = (_event: unknown, info: PanInfo) => {
-    dragEndedAt.current = Date.now();
+    dragEndedAt.current = now();
     const step = swipeStep(info.offset, info.velocity);
-    if (step !== 0) setFront((start + step + goals.length) % goals.length);
+    if (step !== 0) setFrontId(stepFront(goals.map((goal) => goal.id), goals[start].id, step));
   };
   const seeAllClass = "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-md)] px-2 text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4 hover:bg-sunken";
   const footer = (
@@ -127,7 +147,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
       <div className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined} data-fan-active={fan && active !== null ? active : undefined}>
         <ul aria-label={label}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
-          onClickCapture={swipe ? (event) => { if (Date.now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
+          onClickCapture={swipe ? (event) => { if (now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
           className={`relative flow-root ${fan ? `lg:h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
           {ordered.map((goal, index) => {
             const shown = index < visible;
@@ -138,10 +158,12 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                 transition={card}
                 data-stack-layer={shown ? index : undefined}
                 data-fan-layer={fan && shown ? index : undefined}
+                // El área de hover es el `li`, que no se mueve: el movimiento va en los envoltorios de dentro. Así, con el puntero
+                // en el borde de abajo o en una esquina, la tarjeta no se escapa de debajo y no hay bucle de entrar y salir.
                 onPointerEnter={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") enter(index); } : undefined}
                 onPointerLeave={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") leave(); } : undefined}
                 onFocus={fan && shown ? focusIn(index) : undefined}
-                onBlur={fan && shown ? leave : undefined}
+                onBlur={fan && shown ? focusOut : undefined}
                 className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-x" : ""}`}
                 // Deslizar vertical recorre la pila (solo la frontal y fuera del abanico).
                 {...(index === 0 && swipe ? {
@@ -152,16 +174,22 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                   "data-swipe": "",
                 } : {})}
               >
-                <GoalCard
-                  goal={goal}
-                  members={members[goal.id] ?? []}
-                  today={today}
-                  context={context}
-                  peek={index > 0 && shown}
-                  tabIndex={shown ? undefined : -1}
-                  // La que asoma se trae al frente con el primer toque; la frontal (o Enter con el teclado) abre.
-                  onPeekClick={index > 0 && shown ? (event) => { if (event.detail > 0) { event.preventDefault(); setFront(goals.indexOf(goal)); } } : undefined}
-                />
+                {/* Abanico: `data-fan-tilt` deshace el giro con el mismo pivote que el `li` y `data-fan-card` sube y escala desde el
+                    centro inferior. En reposo no tienen transformación: el abanico queda como el aprobado. */}
+                <div data-fan-tilt="">
+                  <div data-fan-card="">
+                    <GoalCard
+                      goal={goal}
+                      members={members[goal.id] ?? []}
+                      today={today}
+                      context={context}
+                      peek={index > 0 && shown}
+                      tabIndex={shown ? undefined : -1}
+                      // La que asoma se trae al frente con el primer toque; la frontal (o Enter con el teclado) abre.
+                      onPeekClick={index > 0 && shown ? (event) => { if (event.detail > 0) { event.preventDefault(); setFrontId(goal.id); } } : undefined}
+                    />
+                  </div>
+                </div>
               </m.li>
             );
           })}

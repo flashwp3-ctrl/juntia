@@ -121,8 +121,11 @@ test("Cambiar Yo/Nosotros: ni el HTML, ni el RSC, ni el prefetch de Nosotros lle
   await page.getByRole("link", { name: copy.home.seeAll }).hover();
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("heading", { name: /gastaron juntos/ })).toBeVisible();
-  // Desde aquí la cookie ya dice Nosotros (Inicio de Nosotros está pintado): toda petición que empiece ahora es de Nosotros.
-  rsc.nowUnderUs();
+  // El cambio Yo → Nosotros pide / otra vez (`router.refresh()`) con la cookie nueva: esa respuesta es de Nosotros, se
+  // inspecciona y trae un gasto compartido sembrado (control positivo del cambio, F67-4).
+  const atSwitch = await rsc.read((item) => item.underUs);
+  for (const { path, body } of atSwitch) expect(leaks(body), `RSC de ${path} del cambio a Nosotros`).toEqual([]);
+  expect(atSwitch.some(({ path, body }) => path === "/" && body.includes("Carulla Laureles")), `RSC del cambio: ${atSwitch.map((item) => item.path).join(", ")}`).toBe(true);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.activity }).click();
   await expect(page).toHaveURL(/\/actividad/);
   await expect(page.getByText("Carulla Laureles", { exact: true }).filter({ visible: true }).first()).toBeVisible();

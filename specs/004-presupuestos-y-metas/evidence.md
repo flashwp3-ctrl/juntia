@@ -668,3 +668,32 @@ Decisiones del fundador, traídas por el gestor. Commits locales `223260a` (tint
   - el abanico con hover y movimiento normal (`metas-abanico-hover-movimiento-nosotros-1440-{light,dark}.png`): la tarjeta se endereza, sube y se desplaza 24 px, y las de su derecha y el «+» se desplazan con ella;
   - el abanico con hover y movimiento reducido (`metas-abanico-hover-nosotros-1440-*.png`): conserva el giro y no se mueve.
 - Las pruebas temporales de captura no se versionan.
+
+## Revisión del gestor de `70b87b5..9464d58` · correcciones
+
+Un solo push; el PR sigue en borrador.
+
+1. **Bloqueante · RSC clasificado por su cookie** (`tests/support/rsc-capture.ts`). Cada petición `_rsc` se marca al empezar con su propia cookie (`route.request().headerValue("cookie")` contiene `juntia_context=us`). Se quitó `nowUnderUs`: ya no hay una bandera que la prueba mueva a mano, y el `router.refresh()` del cambio Yo → Nosotros, que viaja con la cookie nueva, se inspecciona como de Nosotros.
+   - **Control positivo del cambio**: justo después de ver Nosotros, hay al menos un RSC de Nosotros de la ruta del cambio con datos compartidos: `/` con «Carulla Laureles» en la spec 3 y `/metas` con el id de la meta compartida en la spec 4. Ninguno trae marcadores privados.
+   - **Mutación** (temporal, restaurada desde una copia en el scratchpad; sin commit): en el helper se añadió « Bicicleta secreta Regalo de cumpleaños» solo al cuerpo de la primera respuesta de Nosotros de la ruta de la página (la del cambio). `--grep "HTML"` en las specs 3 y 4: **las dos fallan** en la comprobación del cambio: «RSC de / del cambio a Nosotros» con «Regalo de cumpleaños» (spec 3) y «RSC de /metas del cambio a Nosotros» con «Bicicleta secreta» (spec 4). Una primera variante, que marcaba la primera respuesta de Nosotros fuera cual fuera su ruta, cayó en prefetches (`/actividad`, `/`) y también falló.
+2. **Inicio en Yo mezcla ámbitos.** `stackSort`: primero las personales y, dentro de cada ámbito, `stackOrder`. Prueba: una compartida con un aporte de ayer queda detrás de dos personales más antiguas.
+3. **Área de hover fija.** Los listeners siguen en el `li` (capa), que ya no se transforma; el movimiento va en dos envoltorios internos: `[data-fan-tilt]` (contragiro, pivote en la esquina inferior izquierda) y `[data-fan-card]` (desplazamiento y escala, pivote abajo al centro).
+4. **Pivote en reposo.** La capa ya no lleva `transform-origin` fuera de las capas de Tailwind: en reposo mantiene el `lg:origin-bottom-left` aprobado. Medido en Chromium a 1440: capa 0 `140px 114px`, sin giro; capas 1 y 2 `0px 228px`, con 4° y 7°; envoltorios sin transformación.
+5. **El foco de teclado no se pierde con el ratón.** GoalStack recuerda la tarjeta con `focus-visible`; al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
+6. **El frente se guarda por id** (`frontId`), no por índice: un `router.refresh` que reordena la pila no cambia la meta del frente.
+7. **Pruebas nuevas.** `goal-stack-drag.test.tsx`: deslizar arriba y abajo cambia de verdad el frente (y por debajo del umbral, no); el frente se conserva por id tras reordenar; con movimiento reducido `dragElastic` es 0 y sin él es mayor. `goals.test.tsx`: el enlace lleva el anillo (`focus-visible:outline-2`, `outline-solid`, `outline-focus`) además del offset; estructura de envoltorios; bloques CSS (la capa no tiene reglas propias; movimiento reducido sin `translate`, `scale` ni `rotate`); foco tras la salida del ratón; orden por ámbito en Inicio de Yo. Las cuatro de comportamiento fallan con el `goal-stack.tsx` anterior.
+
+**Comprobación en navegador** (prueba temporal sin versionar, Chromium, 1440, movimiento normal, tres metas compartidas). Para cada capa, el puntero se lleva desde fuera a un punto que esa capa tiene visible junto al borde inferior y a las esquinas giradas, y se cuentan durante 1,5 s los cambios de `data-fan-active`:
+
+```
+{"probes":[{"layer":"0","spot":"borde inferior","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina inferior izquierda","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina inferior derecha","flips":1,"sequence":"0"},{"layer":"0","spot":"esquina superior derecha","flips":1,"sequence":"0"},
+ {"layer":"1","spot":"borde inferior","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina inferior izquierda","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina inferior derecha","flips":1,"sequence":"1"},{"layer":"1","spot":"esquina superior derecha","flips":1,"sequence":"1"},
+ {"layer":"2","spot":"borde inferior","flips":1,"sequence":"2"},{"layer":"2","spot":"esquina inferior izquierda","flips":1,"sequence":"2"},{"layer":"2","spot":"esquina inferior derecha","flips":0,"sequence":""},{"layer":"2","spot":"esquina superior derecha","flips":1,"sequence":"2"}]}
+{"ring":{"card":true,"outline":"2px solid rgb(46, 88, 102)","offset":"2px","active":"1"}}
+```
+
+Un solo cambio por punto, sin bucles de entrada y salida. En la esquina inferior derecha de la tercera capa, el punto calculado quedó fuera de la zona activa (0 cambios, sin estado). El anillo de foco es de 2 px en `focus.ring` con su offset de 2 px.
+
+**Corridas**
+- `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/e2e/couple-settle.e2e.ts <prueba temporal> tests/a11y/goals.a11y.ts`: **exit 0, 148,19 s** (build 15,93 s; E2E 8/8, 88,19 s; axe 2/2, 41,83 s).
+- `npm run verify`, primera corrida: **exit 1** por un tiempo agotado (5 s) en `src/features/expenses/review-f57.test.tsx`, ajeno a metas; ese archivo solo pasa 19/19. Segunda corrida: **exit 0, 100,43 s** (aviso de presupuesto de 90 s). Dominio **78/78**; componentes **785 pasan / 2 omisiones previstas**, 60 archivos; typecheck y lint verdes.

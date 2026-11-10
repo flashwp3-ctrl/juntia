@@ -144,11 +144,15 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.goals }).click();
   await expect(page.getByRole("link", { name: /^Bicicleta secreta, meta personal/ }).first()).toBeVisible();
   const inMe = await rsc.read((item) => item.path === "/metas" && !item.underUs);
+  // (Cada RSC cuenta como de Nosotros por su propia cookie al empezar: F67-4.)
   expect(inMe.some(({ body }) => body.includes(personal.id) && body.includes("Bicicleta secreta")), "el RSC de Metas en Yo trae la meta personal").toBe(true);
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("link", { name: /^Japón compartido, meta compartida/ }).first()).toBeVisible();
-  // Desde aquí la cookie ya dice Nosotros (Metas de Nosotros está pintada): toda petición que empiece ahora es de Nosotros.
-  rsc.nowUnderUs();
+  // El cambio Yo → Nosotros pide /metas otra vez (`router.refresh()`) con la cookie nueva: esa respuesta es de Nosotros, se
+  // inspecciona y trae la compartida sembrada (control positivo del cambio, F67-4).
+  const atSwitch = await rsc.read((item) => item.underUs);
+  for (const { path, body } of atSwitch) expect(leaks(body), `RSC de ${path} del cambio a Nosotros`).toEqual([]);
+  expect(atSwitch.some(({ path, body }) => path === "/metas" && body.includes(shared.id)), `RSC del cambio: ${atSwitch.map((item) => item.path).join(", ")}`).toBe(true);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page.getByRole("region", { name: copy.goals.home.usSetAside }).filter({ visible: true })).toBeVisible();
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.goals }).click();
