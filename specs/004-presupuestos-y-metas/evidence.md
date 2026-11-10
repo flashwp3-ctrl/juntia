@@ -593,3 +593,78 @@ T052 · webkit · con API · movimiento reduce        → Error: expect(page).to
   - spec 3: «RSC de /actividad pedido en Nosotros» con «Taxi a la oficina», «Reembolso EPS», «Regalo de cumpleaños», «Almuerzo con el equipo», «4500000» y «5970000», entre otros;
   - spec 4: «RSC de /metas/{id personal} pedido en Nosotros», con el id de la meta personal.
 - Las dos mutaciones fueron temporales, sin commit; los archivos se restauraron con `git checkout`.
+
+## Ronda del 10 de noviembre de 2026 · tintes, orden de la pila, hover del abanico
+
+Decisiones del fundador, traídas por el gestor. Commits locales `223260a` (tintes), `c33f105` (migración y orden), `3b5ba60` (hover), `6bde71b` y `c9bf37a` (RSC) y `19d9855` (pgTAP), en un solo push.
+
+### Tinte por tipo de meta
+
+- BRAND_FOUNDATION, «tinte de la categoría de la meta»; Juntia DS v1, «08 Tintes de meta».
+- **Tokens.** Los 28 tokens `color.goal.tint.{tipo}.{bg,initial,icon,edge}` en claro y oscuro: en `src/styles/tokens.css` (claro, oscuro y respaldo sin JavaScript, que la prueba de igualdad del tema oscuro confirma) y en `docs/design/DESIGN_SYSTEM.md`.
+- **Aplicación.** Cada tarjeta, capa de la pila, meta inmersiva y fila de archivada declara `data-goal-tint`. Además:
+  - el texto secundario sobre el tinte usa `status.pending`;
+  - el riel de la cinta lleva un borde interior de 1,5 px en `.edge`;
+  - las capas traseras conservan su tinte, sin atenuarse, con un filete de 1 px;
+  - el «+» va sin tinte, con contorno punteado de 2 px y el botón elevado;
+  - la ficha de lograda va rellena de tinta y la de archivada, con contorno y el ícono de archivar.
+- **Regla del fallback** actualizada en `COMPONENT_SPECIFICATIONS.md`.
+- **Pruebas.** Cada `goal_type` pinta su tinte, con sus cuatro variables en el CSS y en los tres bloques de tokens; el texto secundario de la tarjeta usa `status.pending`; las traseras llevan filete y no se atenúan.
+- **Limitación conocida, aceptada por el gestor y pendiente de la aprobación en pantalla.** En claro, el tramo rayado de Tomás queda a 1,3–1,6:1 contra el tinte, y a 1,6:1 contra el riel, como en todo el sistema. El patrón y los importes por persona en texto llevan la información. No se cambia la cinta.
+
+### Orden de la pila: migración `20261110120000_goal_last_contribution.sql`
+
+- **Migración.** `create or replace view public.goals_overview` con la definición anterior intacta y dos columnas al final: `last_contribution_date` (date) y `last_contribution_created_at` (timestamptz). Solo cuentan aportes no anulados; sin aportes, null. El nombre del archivo lleva `_goal`, así que entra en el área de metas del selector.
+- **Orden de GoalStack** (`stackOrder`), en Metas (Yo y Nosotros) y en Inicio:
+  - al frente, el aporte más reciente, por `effective_date` y, el mismo día, por `created_at`;
+  - sin aportes, detrás;
+  - los empates, por creación, la más antigua primero;
+  - por último, el `id`.
+  - En Yo se conserva la separación por `goal_scope`.
+- **Pruebas de componente**: fecha, empate del mismo día, metas sin aportes.
+- **`npm run db:dev:reset`** (autorizado por el usuario en esta sesión): **pasó, 12,43 s**, con 12 migraciones.
+- **`npm run test:db:dev`**:
+  - **Primera corrida: falló** en el archivo nuevo `13b` («could not determine which collation to use for string comparison», al comparar los nombres de columna de `information_schema`). Todo el pgTAP existente pasó, incluidos los 483 controles de privilegios.
+  - **Segunda corrida**, tras corregir la prueba con `array_agg(... collate "C")`: **pasó, 122,44 s**. `13b_goal_last_contribution` **13/13**: columnas, tipos y posición; `security_invoker`; aporte anulado que no cuenta; empate del mismo día; meta sin aportes con null; Tomás sigue sin ver la meta personal. `01_privileges` **483**: los grants de la vista se conservan.
+- **Ensayo de restauración**: `scripts/order-restore-data.mjs` trabaja sobre tablas y no lee vistas. Las integraciones que leen `goals_overview` usan `select("*")` o `id`.
+- **`npm run test:integration:dev`** (corrió la suite entera: los argumentos de archivo no se aplican): **145 pasan, 9 omisiones previstas, 413,87 s**.
+- **Tipos**: `database.types.ts` se actualizó a mano, con el mismo formato y orden alfabético que el generador. `db:types:check` solo corre en el job `db` de CI.
+- **Producción**: no se tocó; la migración la aplica el gestor después del merge.
+
+### Hover y foco del abanico
+
+- Juntia DS v1, «08·7 Abanico · hover y foco»; MOTION_SYSTEM §4.1; COMPONENT_SPECIFICATIONS, GoalStack.
+- **Estado.** `data-fan-active` en GoalStack, con 60 ms de margen al salir y salto directo a otra tarjeta. Responde solo al puntero de ratón y al `focus-visible`.
+- **Efecto en CSS.** Solo con `(hover: hover) and (pointer: fine)` y desde lg. El movimiento usa el spring `card` como curva `linear()` de 580 ms, generada del mismo muelle 260/28/1. La sombra pasa de `float` a `overlay` en 180 ms. Con movimiento reducido: sin desplazamiento ni escala, la segunda conserva sus 4° y solo cambia la sombra, en 120 ms lineal.
+- **Ajuste mínimo, para que lo vea el gestor.** Con hover en una tarjeta trasera, el «+» también se desplaza 24 px, para no chocar con la tercera; el paso del abanico no cambia.
+- **Medición en Chromium con movimiento normal y hover en la segunda y la tercera capa**: sin scroll horizontal a 1024, 1280 y 1440 (`scrollWidth = clientWidth`). A 1024, el «+» desplazado sobresale 16 px del área de contenido (borde derecho en 1012 frente a 996), dentro del margen de la página.
+
+```
+{"fanHover":1024,"layer":"1","before":{"s":1024,"c":1024},"during":{"s":1024,"c":1024,"plusRight":1012,"mainRight":996}}
+{"fanHover":1280,"layer":"1","before":{"s":1280,"c":1280},"during":{"s":1280,"c":1280,"plusRight":1196,"mainRight":1240}}
+{"fanHover":1440,"layer":"1","before":{"s":1440,"c":1440},"during":{"s":1440,"c":1440,"plusRight":1196,"mainRight":1400}}
+```
+
+- **Pruebas de componente**:
+  - hover inmediato y reposo a los 60 ms;
+  - salto directo a otra tarjeta sin volver al reposo;
+  - un toque no activa el hover;
+  - el foco de teclado activa el mismo efecto, con el anillo y su offset de 2 px;
+  - fuera del abanico no hay estado;
+  - el bloque de movimiento reducido no desplaza ni escala, y conserva los 4°.
+
+### Cierre de la ronda
+
+- **`PORT=3500 npm run e2e:dev` completo, primera corrida**, sobre la base reiniciada pero con las 145 integraciones recién sembradas: **exit 1, 422,69 s**; E2E 28/30, axe 97/98. Fallaron tres pruebas ajenas a metas:
+  - E5 de Anotar: el héroe siguió en $412.900;
+  - 50/50 de la spec 3: héroe no encontrado;
+  - axe de Nosotros: la lista de «Mover a Pareja» no apareció.
+  - Son los mismos tres casos intermitentes que registró el PR A con fixtures acumuladas («T026»).
+- **Las tres, dirigidas** (`tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts tests/a11y/couple-shared.a11y.ts`): **exit 0, 129,21 s**; E2E 21/21 y axe 2/2.
+- **Completo tras un nuevo `db:dev:reset`**, como en el PR A: **exit 0, 335,74 s**. Build 11,32 s; E2E sin @mail **30/30, 67,95 s**, con las specs 3 y 4 y su captura de RSC; axe con sesión **98/98, 255,09 s**, con `goals.a11y.ts` en los dos temas y `routes.a11y.ts`. Siguen fuera @mail, `@sweep` y el proyecto evidence.
+- **`npm run verify`**: **exit 0, 77,68 s**. Dominio **78/78**; componentes **778 pasan / 2 omisiones previstas**, 59 archivos; typecheck verde; lint sin errores (aviso preexistente de `balance-panel.tsx:61`).
+- **Capturas.** 42 PNG en `evidence/pr-c/capturas/` a 390 y 1440 en los dos temas, con metas de viaje, vivienda, boda, vehículo, emergencias y educación:
+  - Metas, la pila, el abanico, la inmersiva e Inicio;
+  - el abanico con hover y movimiento normal (`metas-abanico-hover-movimiento-nosotros-1440-{light,dark}.png`): la tarjeta se endereza, sube y se desplaza 24 px, y las de su derecha y el «+» se desplazan con ella;
+  - el abanico con hover y movimiento reducido (`metas-abanico-hover-nosotros-1440-*.png`): conserva el giro y no se mueve.
+- Las pruebas temporales de captura no se versionan.
