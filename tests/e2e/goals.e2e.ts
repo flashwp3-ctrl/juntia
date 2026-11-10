@@ -6,11 +6,12 @@
 // Cada test siembra su propia pareja por la base y las funciones reales (FR-117). Solo Chromium, ninguna espera fija,
 // movimiento reducido (ADR-011 §6).
 import { randomUUID } from "node:crypto";
-import type { Browser, BrowserContext, Page } from "@playwright/test";
+import type { Browser, BrowserContext, Locator, Page } from "@playwright/test";
 import { moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
-import { contributeToGoal, createGoal, goalEntries, listGoals, updateGoal } from "../../src/lib/db/goals";
+import { contributeToGoal, createGoal, goalEntries, goalMemberBalances, listGoals, updateGoal } from "../../src/lib/db/goals";
+import { createExpenseWithGoal, usageRequests } from "../../src/lib/db/goal-usage";
 import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedSharedMovements, type SeededUser } from "../support/seed";
 import { expect, test } from "./fixtures";
@@ -205,4 +206,177 @@ test("editar una meta con una versión vieja: JT011 sin autor; la ganadora se co
   await expect(sheet).toHaveCount(0);
   expect(await kept()).toMatchObject({ name: "Japón 2027 y Corea", target_minor: "2000000000", version: winner.version + 1 });
   await sara.context.close();
+});
+
+// 004 PR D, T058 / FR-114 (dos sesiones), FR-085, FR-086; SC-009 (recorrido); US-7.1, US-7.1a, US-7.4–US-7.8; F63-3.
+// Criterio literal (tasks.md, T058): «el caso de la matriz "Financiación ajena → aprobar/rechazar" con dos contextos
+// autenticados (Sara pide, Tomás aprueba en un caso y rechaza en otro; los estados se ven en las dos sesiones al navegar), y
+// el caso de privacidad de B1 (F63-3): Sara con metas personales, Tomás sin ellas, nada personal en el HTML, el RSC ni el
+// prefetch de Anotar en Nosotros».
+// Qué rompería sin que una capa inferior se entere (contracts/ci.md, mitigación b): la integración ya prueba la atomicidad,
+// la revalidación y las carreras; aquí se prueba lo que solo existe con dos navegadores y el servidor real: que la solicitud
+// viaja de la sesión de Sara a la de Tomás sin tiempo real (al navegar), que cada uno ve el estado del otro, y que B1 en
+// Nosotros nunca trae una meta personal por la respuesta de su Server Action, el HTML ni el RSC. Un solo caso con una sola
+// pareja del dataset dorado (Japón 11.340.000: Sara 6.120.000, Tomás 5.220.000; Bicicleta de ruta, personal de Sara): la
+// segunda solicitud (la que se rechaza) se siembra por la función real, porque su registro por la interfaz ya lo cubre la
+// primera. B1 no es una ruta: sus metas llegan por una Server Action al elegir «Con una meta», así que se inspecciona su
+// respuesta (además del HTML y el RSC de Inicio, donde vive Anotar), con un control positivo en Yo.
+
+/** Respuestas de las Server Actions de la página (POST con `next-action`), leídas al interceptarlas, como rsc-capture.ts. */
+async function captureActions(page: Page) {
+  const fetched: Promise<string>[] = [];
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST" || !(await request.headerValue("next-action"))) return route.fallback();
+    let settle!: (body: string) => void;
+    let fail!: (error: unknown) => void;
+    const body = new Promise<string>((resolve, reject) => { settle = resolve; fail = reject; });
+    // Sin esto, un rechazo que nadie espera todavía sería un error no manejado; al leerlo con `read`, falla igual.
+    body.catch(() => {});
+    fetched.push(body);
+    try {
+      const response = await route.fetch();
+      const text = await response.text();
+      settle(text);
+      await route.fulfill({ response, body: text });
+    } catch (error) {
+      fail(error);
+      await route.abort().catch(() => {});
+    }
+  });
+  return { count: () => fetched.length, read: (from = 0) => Promise.all(fetched.slice(from)) };
+}
+
+async function openAnnotate(page: Page) {
+  await page.locator("body").focus();
+  await page.keyboard.press("n");
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  return sheet;
+}
+/** «Con una meta» y la lista de B1, en el contexto que tenga la hoja. */
+async function goalPicker(sheet: Locator) {
+  await sheet.getByRole("radiogroup", { name: copy.goalExpense.paidWith.label }).getByRole("radio", { name: copy.goalExpense.paidWith.goal }).click();
+  const picker = sheet.getByRole("radiogroup", { name: copy.goalExpense.picker.title });
+  await expect(picker.getByRole("radio").first()).toBeVisible();
+  return picker;
+}
+const optionNames = (picker: Locator) => picker.getByRole("radio").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("aria-label") ?? node.textContent ?? ""));
+
+test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno y rechaza otro; B1 en Nosotros sin metas personales", async ({ browser, baseURL }, testInfo) => {
+  test.slow();
+  const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
+  const mine = await listGoals(pair.sara.client, "me");
+  const japan = mine.find((goal) => goal.name === "Japón")!;
+  const bike = mine.find((goal) => goal.name === "Bicicleta de ruta")!;
+  expect(japan).toMatchObject({ balance_minor: "1134000000" });
+  const PRIVATE = ["Bicicleta de ruta", bike.id, "105000000", "1.050.000"];
+  const leaks = (text: string) => PRIVATE.filter((marker) => text.includes(marker));
+
+  // F63-3: el HTML y el RSC de Inicio en Nosotros, donde vive Anotar, no llevan la meta personal.
+  const sara = await open(browser, baseURL!, pair.sara, "us");
+  for (const rsc of [false, true]) {
+    const response = await sara.page.request.get(rsc ? "/?_rsc=spec4d" : "/", { headers: rsc ? { RSC: "1" } : {} });
+    expect(leaks(await response.text()), `Inicio en Nosotros ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+  }
+  const actions = await captureActions(sara.page);
+  await sara.page.goto("/");
+  const sheet = await openAnnotate(sara.page);
+  await sara.page.keyboard.type("3000000");
+  await sheet.getByRole("radio", { name: copy.categories.transport }).click();
+  await sheet.getByPlaceholder(copy.annotate.descriptionPlaceholder).fill("Tiquetes a Tokio");
+
+  // Control positivo: con la hoja en «Solo tú», B1 trae la meta personal por la respuesta de su Server Action y la captura la ve.
+  await sheet.getByRole("radio", { name: copy.annotate.onlyYou }).click();
+  const personal = await goalPicker(sheet);
+  expect(await optionNames(personal)).toEqual([copy.goalExpense.picker.option("Bicicleta de ruta", "$1.050.000")]);
+  expect((await actions.read()).some((body) => body.includes(bike.id) && body.includes("Bicicleta de ruta")), "la respuesta de B1 en Yo trae la personal").toBe(true);
+  await sheet.getByRole("button", { name: copy.goalExpense.back }).click();
+
+  // US-7.1 y 7.1a: en Nosotros, solo Japón; ni la lista ni la respuesta de la acción traen la personal, ni deshabilitada.
+  const fromUs = actions.count();
+  await sheet.getByRole("radio", { name: copy.context.us }).click();
+  const picker = await goalPicker(sheet);
+  const saraSees = await optionNames(picker);
+  expect(saraSees).toEqual([copy.goalExpense.picker.option("Japón", "$11.340.000")]);
+  await expect(sheet.getByText(copy.goalExpense.picker.note.us)).toBeVisible();
+  const usBodies = await actions.read(fromUs);
+  expect(usBodies.length, "B1 en Nosotros pidió sus metas").toBeGreaterThan(0);
+  for (const body of usBodies) expect(leaks(body), "respuesta de B1 en Nosotros").toEqual([]);
+  expect(usBodies.some((body) => body.includes(japan.id)), "control positivo: la respuesta de Nosotros trae Japón").toBe(true);
+
+  // B2 y B3 con los importes escritos del dataset (no la propuesta): 1.620.000 de Sara y 1.380.000 pedidos a Tomás.
+  await picker.getByRole("radio", { name: /^Japón/ }).click();
+  await sheet.getByRole("textbox", { name: copy.goalExpense.ledger.mine }).fill("1620000");
+  await sheet.getByRole("textbox", { name: copy.goalExpense.ledger.theirs("Tomás") }).fill("1380000");
+  await expect(sheet.getByText(copy.goalExpense.ledger.sum("$3.000.000", "$3.000.000"))).toBeVisible();
+  const effect = await sheet.getByRole("list", { name: copy.goalExpense.effect.title }).getByRole("listitem").evaluateAll((rows) => rows.map((row) => row.getAttribute("aria-label")));
+  expect(effect).toEqual([
+    copy.goalExpense.effect.row(copy.goalExpense.effect.now("Japón"), "$11.340.000", "$9.720.000"),
+    copy.goalExpense.effect.row(copy.goalExpense.effect.ifApproves("Tomás"), "$9.720.000", "$8.340.000"),
+  ]);
+  await sheet.getByRole("button", { name: copy.goalExpense.submit.ask("Tomás") }).click();
+  await expect(sheet).toBeHidden();
+  await expect(sara.page.getByRole("status").filter({ hasText: copy.goalExpense.saved.ask("Tomás") })).toBeVisible();
+
+  // US-7.4: en una operación, el gasto, el uso de Sara aplicado y la solicitud pendiente. Japón 9.720.000.
+  const [pending] = await usageRequests(pair.tomas.client, { status: "pending" });
+  expect(pending).toMatchObject({ goal_id: japan.id, requested_by: pair.sara.id, member_user_id: pair.tomas.id, amount_minor: "138000000", transaction_description: "Tiquetes a Tokio" });
+  expect((await listGoals(pair.tomas.client, "us")).find((goal) => goal.id === japan.id)).toMatchObject({ balance_minor: "972000000", has_pending_request: true });
+
+  // B4: Sara, al navegar a Actividad, ve la tarjeta pendiente y la fila CON META.
+  await sara.page.goto("/actividad");
+  const requests = sara.page.getByRole("region", { name: copy.goalExpense.request.region }).filter({ visible: true });
+  await expect(requests.getByText(copy.goalExpense.badge.pending("Tomás"))).toBeVisible();
+  await expect(requests.getByText(copy.goalExpense.request.waiting("Tomás"))).toBeVisible();
+  await expect(requests.getByText(copy.goalExpense.request.noExpiry)).toBeVisible();
+  await expect(requests.getByRole("button", { name: copy.goalExpense.request.cancel })).toBeVisible();
+  await expect(sara.page.locator(`[data-transaction-id="${pending.transaction_id}"]:visible`).first()).toContainText(copy.goalExpense.badge.funded);
+
+  // B5: Tomás, en su sesión, la ve al navegar a Inicio; B1 le muestra las mismas metas que a Sara, sin nada personal.
+  const tomas = await open(browser, baseURL!, pair.tomas, "us");
+  const tomasActions = await captureActions(tomas.page);
+  await tomas.page.goto("/");
+  const card = tomas.page.getByRole("region", { name: copy.goalExpense.request.region }).filter({ visible: true });
+  await expect(card.getByText(copy.goalExpense.request.title("Sara"))).toBeVisible();
+  await expect(card.getByLabel(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toBeVisible();
+  await expect(card.getByText(copy.goalExpense.request.rejectNote)).toBeVisible();
+  const tomasSheet = await openAnnotate(tomas.page);
+  const tomasPicker = await goalPicker(tomasSheet);
+  expect((await optionNames(tomasPicker)).map((name) => name.split(",")[0])).toEqual(saraSees.map((name) => name.split(",")[0]));
+  for (const body of await tomasActions.read()) expect(leaks(body), "B1 de Tomás").toEqual([]);
+  await tomasSheet.getByRole("button", { name: copy.annotate.close }).click();
+  const discard = tomas.page.getByRole("alertdialog");
+  await discard.getByRole("button", { name: copy.annotate.discard.confirm }).click();
+  await expect(tomasSheet).toBeHidden();
+
+  // US-7.7: Tomás aprueba con la versión leída; Japón 8.340.000 (46 %) y Tomás 3.840.000.
+  await card.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }).click();
+  // La tarjeta se va con el refresco (ya no está pendiente); el aviso lo dice y la base lo confirma.
+  await expect(tomas.page.getByRole("status").filter({ hasText: copy.goalExpense.request.approved("Japón") }).first()).toBeVisible();
+  await expect.poll(async () => (await listGoals(pair.sara.client, "us")).find((goal) => goal.id === japan.id)).toMatchObject({ balance_minor: "834000000", progress_percent: 46, has_pending_request: false });
+  expect((await goalMemberBalances(pair.sara.client, japan.id)).find((row) => row.user_id === pair.tomas.id)).toMatchObject({ available_minor: "384000000" });
+
+  // Sara lo ve al navegar: el detalle del gasto dice APROBADO.
+  await sara.page.goto(`/actividad/${pending.transaction_id}`);
+  await expect(sara.page.locator("[data-transaction-detail]:visible").getByText(copy.goalExpense.badge.approved)).toBeVisible();
+
+  // Segundo caso (US-7.8): otra solicitud, sembrada por la función real; Tomás la rechaza y el gasto sigue.
+  const second = await createExpenseWithGoal(pair.sara.client, {
+    idempotencyKey: randomUUID(), context: "us", amount: moneyFromPesos(300000n), categoryId: "restaurants", transactionDate: todayInBogota(), description: "Cena en Kioto",
+    payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null,
+    allocations: [{ userId: pair.sara.id, amount: moneyFromPesos(150000n) }, { userId: pair.tomas.id, amount: moneyFromPesos(150000n) }],
+    goalId: japan.id, own: moneyFromPesos(100000n), requested: moneyFromPesos(200000n),
+  });
+  await tomas.page.goto("/");
+  await expect(card.getByText(copy.goalExpense.request.expense("Cena en Kioto", "$300.000"))).toBeVisible();
+  await card.getByRole("button", { name: copy.goalExpense.request.reject }).click();
+  await expect(tomas.page.getByRole("status").filter({ hasText: copy.goalExpense.request.rejected }).first()).toBeVisible();
+  await expect.poll(async () => (await usageRequests(pair.sara.client)).find((row) => row.transaction_id === second.id)).toMatchObject({ status: "rejected" });
+  expect((await listGoals(pair.sara.client, "us")).find((goal) => goal.id === japan.id)).toMatchObject({ balance_minor: "824000000" });
+  await sara.page.goto(`/actividad/${second.id}`);
+  const detail = sara.page.locator("[data-transaction-detail]:visible");
+  await expect(detail).toContainText("Cena en Kioto");
+  await expect(detail.getByText(copy.goalExpense.badge.rejected("Tomás"))).toBeVisible();
+  await Promise.all([sara.context.close(), tomas.context.close()]);
 });
