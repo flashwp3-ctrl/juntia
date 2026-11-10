@@ -40,6 +40,9 @@ describe("selección de casos a11y por job (T031d)", () => {
     // PR D de la 003 (T060b): Balance y liquidaciones, solo en e2e.
     expect(e2e.filter((line) => line.includes("balance.a11y.ts") && sessionTitle(line)).length).toBeGreaterThan(0);
     expect(app.filter((line) => line.includes("balance.a11y.ts"))).toEqual([]);
+    // 004 PR B (T031): Plan y la hoja de presupuesto, con sesión, solo en e2e.
+    expect(e2e.filter((line) => line.includes("plan.a11y.ts") && sessionTitle(line)).length).toBeGreaterThan(0);
+    expect(app.filter((line) => line.includes("plan.a11y.ts"))).toEqual([]);
     for (const entry of e2eEntries.filter((item) => item.axe !== false)) expect(e2e.some((line) => line.includes(entryTitle(entry))), `${entry.route} · ${entry.state}`).toBe(true);
   });
 
@@ -72,6 +75,8 @@ describe("niveles de accesibilidad (decisión 21)", () => {
     for (const file of ["couple.a11y.ts", "couple-shared.a11y.ts", "balance.a11y.ts"]) {
       for (const theme of ["light", "dark"]) expect(pr.some((line) => line.includes(file) && line.includes(`${theme} · 390px`)), `${file} · ${theme}`).toBe(true);
     }
+    // 004 PR B: los estados de Plan se agrupan por ruta con los dos temas en el mismo contexto (contracts/ci.md).
+    expect(pr.filter((line) => line.includes("plan.a11y.ts") && line.includes("light y dark · 390px"))).toHaveLength(1);
   });
 
   it("el barrido a mano lista solo lo que el PR no corre (@sweep), de todos los archivos a11y", () => {
@@ -79,6 +84,6 @@ describe("niveles de accesibilidad (decisión 21)", () => {
     const inPr = new Set(pr.map(title));
     expect(full.filter((line) => inPr.has(title(line)))).toEqual([]);
     expect(full.filter((line) => /390px/.test(line))).toEqual([]);
-    for (const file of ["routes.a11y.ts", "couple.a11y.ts", "couple-shared.a11y.ts", "balance.a11y.ts"]) expect(full.some((line) => line.includes(file)), file).toBe(true);
+    for (const file of ["routes.a11y.ts", "couple.a11y.ts", "couple-shared.a11y.ts", "balance.a11y.ts", "plan.a11y.ts"]) expect(full.some((line) => line.includes(file)), file).toBe(true);
   });
 }, 120_000);
