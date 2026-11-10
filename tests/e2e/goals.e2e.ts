@@ -317,7 +317,8 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
     copy.goalExpense.effect.row(copy.goalExpense.effect.ifApproves("Tomás"), "$9.720.000", "$8.340.000"),
   ]);
   await sheet.getByRole("button", { name: copy.goalExpense.submit.ask("Tomás") }).click();
-  await expect(sheet).toBeHidden();
+  // La escritura tiene hasta 15 s antes de pasar a desconocido (FR-093); bajo la carga de la suite completa tarda más de 5 s.
+  await expect(sheet).toBeHidden({ timeout: 15_000 });
   await expect(sara.page.getByRole("status").filter({ hasText: copy.goalExpense.saved.ask("Tomás") })).toBeVisible();
 
   // US-7.4: en una operación, el gasto, el uso de Sara aplicado y la solicitud pendiente. Japón 9.720.000.

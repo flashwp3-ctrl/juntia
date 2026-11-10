@@ -55,6 +55,10 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
   for (const colorScheme of THEMES) {
     for (const width of [390, 1440]) {
       test(`Nosotros · axe de Inicio, Actividad, Anotar, Reparto, edición, eliminar, ChangePreview y A5 · ${colorScheme} · ${width}px · con sesión`, width === 390 ? {} : { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+        // 004 PR D: con «Cómo se pagó» en Anotar, este caso de nueve estados pasó de ~27 s a rozar su límite de 30 s en juntia-dev
+        // (29,3 s y un 30,0 s agotado en la corrida completa). Sin cambiar qué se audita, el límite pasa a 90 s, como los demás
+        // casos a11y con sesión de la 004.
+        test.slow();
         const { pair, shared, pharmacy } = await seedState(testInfo.parallelIndex);
         const label = (state: string) => `${colorScheme} ${width}px · ${state}`;
         const { context, page } = await signedContext(browser, baseURL!, pair.sara, colorScheme, "us");
