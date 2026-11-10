@@ -1,6 +1,6 @@
 // T042 (spec 003, PR C) / FR-022, FR-057, FR-059–FR-062; US-7 — capa: componentes (Vitest + RTL).
 // Criterio literal (tasks.md, T042): «edición compartida con el aviso y los campos de Q12; conflicto de versión con
-// «{nombre} cambió este gasto antes» y «{nombre} ya lo eliminó»; `ok`/`rejected`/`unknown` (con `unknown` nunca se afirma
+// avisos neutrales de conflicto y de gasto ya eliminado (F69-2: sin atribuir el cambio a nadie); `ok`/`rejected`/`unknown` (con `unknown` nunca se afirma
 // que no se escribió; «Comprobar estado» con `completed` y con `not_found`); el aviso con «Deshacer» y el resaltado
 // sobreviven a la navegación, y una respuesta tardía no pisa otro aviso; la hoja guarda su contexto aunque cambie el
 // selector (FR-062)». La clasificación de los errores en el servidor está en write-result.test.tsx.
@@ -93,22 +93,24 @@ describe("Edición compartida (US-7.1, Q12)", () => {
     expect(await screen.findByText(copy.annotate.saved.edit)).toBeTruthy();
   });
 
-  it("conflicto de versión: «Tomás cambió este gasto antes» con Recargar", async () => {
+  it("conflicto de versión: aviso neutral, sin atribuir el cambio (F69-2), con Recargar", async () => {
     const { user, onReload } = setup(sharedActions({ update: vi.fn(async () => ({ status: "rejected" as const, error: "versionConflict" as const })) }));
     await openEdit(user);
     await changeAmount(user, "250000");
     await user.click(screen.getByRole("button", { name: copy.annotate.saveChanges }));
-    expect(await screen.findByText(copy.shared.errors.versionConflict("Tomás"))).toBeTruthy();
+    expect(await screen.findByText(copy.shared.errors.versionConflict)).toBeTruthy();
+    expect(screen.queryByText(/Tomás cambió|Sara cambió/)).toBeNull();
     await user.click(screen.getByRole("button", { name: copy.annotate.reload }));
     expect(onReload).toHaveBeenCalled();
   });
 
-  it("ya anulado: «Tomás ya lo eliminó.»", async () => {
+  it("ya anulado: aviso neutral, sin atribuirlo (F69-2)", async () => {
     const { user } = setup(sharedActions({ update: vi.fn(async () => ({ status: "rejected" as const, error: "alreadyDeleted" as const })) }));
     await openEdit(user);
     await changeAmount(user, "250000");
     await user.click(screen.getByRole("button", { name: copy.annotate.saveChanges }));
-    expect(await screen.findByText(copy.shared.errors.alreadyDeleted("Tomás"))).toBeTruthy();
+    expect(await screen.findByText(copy.shared.errors.alreadyDeleted)).toBeTruthy();
+    expect(screen.queryByText(/Tomás ya|Sara ya/)).toBeNull();
   });
 
   it("unknown: nunca afirma que no se guardó; Comprobar estado con not_found dice que todavía no consta y con completed cierra", async () => {

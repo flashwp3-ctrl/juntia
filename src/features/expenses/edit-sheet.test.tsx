@@ -19,7 +19,7 @@ const expense: SavedTransaction = {
   description: "Carulla Laureles", amountMinor: "4500000", version: 2,
 };
 
-function setup(update: ExpenseActions["update"] = vi.fn(async (payload) => ({ ok: true as const, value: { ...expense, version: 3, amountMinor: `${payload.amountPesos}00` } })), transaction = expense) {
+function setup(update: ExpenseActions["update"] = vi.fn(async (payload) => ({ status: "ok" as const, value: { ...expense, version: 3, amountMinor: `${payload.amountPesos}00` } })), transaction = expense) {
   const user = userEvent.setup();
   const actions = { create: vi.fn(), update: vi.fn(update), voidTransaction: vi.fn() };
   render(<AnnotateProvider actions={actions} today="2026-11-05"><TransactionActions transaction={transaction} backHref="/actividad?mes=2026-10" /></AnnotateProvider>);
@@ -64,7 +64,7 @@ describe("Edición de un movimiento (T078)", { timeout: 15000 }, () => {
   });
 
   it("Q15 / JT011: la segunda edición con versión vieja falla, lo explica y ofrece recargar sin perder lo escrito", async () => {
-    const { user, trigger } = setup(async () => ({ ok: false, error: "versionConflict" }));
+    const { user, trigger } = setup(async () => ({ status: "rejected", error: "versionConflict" }));
     await user.click(trigger);
     await screen.findByRole("dialog");
     await user.clear(amount());
@@ -79,7 +79,7 @@ describe("Edición de un movimiento (T078)", { timeout: 15000 }, () => {
   });
 
   it("JT012: editar un movimiento ya eliminado lo explica", async () => {
-    const { user, trigger } = setup(async () => ({ ok: false, error: "alreadyDeleted" }));
+    const { user, trigger } = setup(async () => ({ status: "rejected", error: "alreadyDeleted" }));
     await user.click(trigger);
     await screen.findByRole("dialog");
     await user.type(within(screen.getByRole("dialog")).getByRole("textbox", { name: copy.annotate.description }), " 2");

@@ -76,8 +76,8 @@ function goalFunding(overrides: Partial<GoalFundingActions> = {}): GoalFundingAc
 function expenseActions(): ExpenseActions {
   return {
     create: vi.fn<ExpenseActions["create"]>(async () => ({ ok: true, value: privateSaved() })),
-    update: vi.fn<ExpenseActions["update"]>(async () => ({ ok: true, value: privateSaved() })),
-    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ ok: true, value: { id: EXPENSE, version: 2 } })),
+    update: vi.fn<ExpenseActions["update"]>(async () => ({ status: "ok", value: privateSaved() })),
+    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ status: "ok", value: { id: EXPENSE, version: 2 } })),
   };
 }
 function sharedActions(): SharedActions {
@@ -445,7 +445,7 @@ describe("Quitar el uso, eliminar y reactivar (US-8; FR-057, FR-059, FR-072; F64
   it("eliminar un gasto con meta avisa en la confirmación que también se quita el uso; la reactivación se dice con su monto", async () => {
     const user = userEvent.setup();
     const actions = expenseActions();
-    vi.mocked(actions.voidTransaction).mockResolvedValue({ ok: true, value: { id: EXPENSE, version: 2, reactivatedGoals: [{ goalId: BIKE, name: "Bicicleta de ruta", returnedMinor: minor(1050000n) }] } });
+    vi.mocked(actions.voidTransaction).mockResolvedValue({ status: "ok", value: { id: EXPENSE, version: 2, reactivatedGoals: [{ goalId: BIKE, name: "Bicicleta de ruta", returnedMinor: minor(1050000n) }] } });
     render(<AnnotateProvider actions={actions} context="me" today="2026-11-05"><TransactionActions transaction={privateSaved()} backHref="/actividad" funding={{ goalName: "Bicicleta de ruta" }} /></AnnotateProvider>);
     await user.click(screen.getByRole("button", { name: copy.remove.action.expense }));
     const dialog = await screen.findByRole("alertdialog");
@@ -487,7 +487,7 @@ describe("Editar un gasto con meta por debajo de lo usado (JT213)", { timeout: 1
   it("privado: el aviso propio, sin «Reintentar», y los campos siguen editables", async () => {
     const user = userEvent.setup();
     const actions = expenseActions();
-    vi.mocked(actions.update).mockResolvedValue({ ok: false, error: "belowGoalUsage" });
+    vi.mocked(actions.update).mockResolvedValue({ status: "rejected", error: "belowGoalUsage" });
     render(<AnnotateProvider actions={actions} context="me" today="2026-11-05"><TransactionActions transaction={privateSaved({ version: 2 })} backHref="/actividad" /></AnnotateProvider>);
     await user.click(screen.getByRole("button", { name: copy.detail.edit }));
     const amount = await screen.findByRole("textbox", { name: copy.annotate.amount });

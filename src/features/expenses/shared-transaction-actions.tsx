@@ -52,9 +52,9 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
 
   const notice = write.state.phase === "rejected" ? (
     write.state.error === "versionConflict"
-      ? <Toast tone="error" message={copy.shared.errors.versionConflict(partner)} action={{ label: copy.annotate.reload, onAction: () => { setConfirming(false); router.refresh(); } }} />
+      ? <Toast tone="error" message={copy.shared.errors.versionConflict} action={{ label: copy.annotate.reload, onAction: () => { setConfirming(false); router.refresh(); } }} />
       : write.state.error === "alreadyDeleted" || write.state.error === "notFound"
-        ? <Toast tone="error" message={copy.shared.errors.alreadyDeleted(partner)} />
+        ? <Toast tone="error" message={copy.shared.errors.alreadyDeleted} />
         : write.state.error === "sessionExpired"
           ? <Toast tone="error" message={copy.errors.sessionExpired} />
           : <Toast tone="error" message={copy.errors.unexpected} />

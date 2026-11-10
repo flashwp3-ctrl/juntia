@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
+import type { WriteOutcome } from "@/features/shared/write-result";
 import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
 
@@ -35,8 +36,8 @@ function deferred<T>() {
 function mockActions(overrides: Partial<ExpenseActions> = {}) {
   return {
     create: vi.fn<ExpenseActions["create"]>(overrides.create ?? (async () => ({ ok: true, value: saved() }))),
-    update: vi.fn<ExpenseActions["update"]>(overrides.update ?? (async () => ({ ok: true, value: saved({ version: 2 }) }))),
-    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(overrides.voidTransaction ?? (async () => ({ ok: true, value: { id: saved().id, version: 2 } }))),
+    update: vi.fn<ExpenseActions["update"]>(overrides.update ?? (async () => ({ status: "ok", value: saved({ version: 2 }) }))),
+    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(overrides.voidTransaction ?? (async () => ({ status: "ok", value: { id: saved().id, version: 2 } }))),
   };
 }
 
@@ -677,8 +678,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("US-2.5: Deshacer anula con motivo `undo` y la versión devuelta; dos clics, una petición", async () => {
-    const pending = deferred<ActionResult<{ id: string; version: number }>>();
-    const voidTransaction = vi.fn<(payload: VoidPayload) => Promise<ActionResult<{ id: string; version: number }>>>(() => pending.promise);
+    const pending = deferred<WriteOutcome<{ id: string; version: number }>>();
+    const voidTransaction = vi.fn<(payload: VoidPayload) => Promise<WriteOutcome<{ id: string; version: number }>>>(() => pending.promise);
     const { user, trigger } = setup(mockActions({ voidTransaction }));
     await user.click(trigger);
     await sheet();
@@ -688,13 +689,13 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.dblClick(undo);
     expect(voidTransaction).toHaveBeenCalledTimes(1);
     expect(voidTransaction.mock.calls[0][0]).toMatchObject({ transactionId: saved().id, expectedVersion: 1, reason: "undo" });
-    await act(async () => pending.resolve({ ok: true, value: { id: saved().id, version: 2 } }));
+    await act(async () => pending.resolve({ status: "ok", value: { id: saved().id, version: 2 } }));
     expect((await screen.findByRole("status")).textContent).toContain(copy.annotate.undone.expense);
     expect(screen.getByTestId("highlight").textContent).toBe("");
   });
 
   it("Deshacer después de editar: la versión cambió y se explica, sin anular nada", async () => {
-    const { user, trigger } = setup(mockActions({ voidTransaction: vi.fn(async () => ({ ok: false as const, error: "versionConflict" as const })) }));
+    const { user, trigger } = setup(mockActions({ voidTransaction: vi.fn(async () => ({ status: "rejected" as const, error: "versionConflict" as const })) }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
@@ -704,7 +705,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("un Deshacer rechazado ofrece Reintentar con la misma clave", async () => {
-    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ ok: true, value: { id: saved().id, version: 2 } });
+    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ status: "ok", value: { id: saved().id, version: 2 } });
     const { user, trigger } = setup(mockActions({ voidTransaction }));
     await user.click(trigger);
     await sheet();
@@ -719,7 +720,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("orden de respuestas: un Deshacer que responde tarde no pisa el toast del guardado siguiente", async () => {
-    const late = deferred<ActionResult<{ id: string; version: number }>>();
+    const late = deferred<WriteOutcome<{ id: string; version: number }>>();
     const second = saved({ id: "0c5e1f3a-8f1d-4b5a-9c39-2a7d3e9b8c11" });
     const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: true, value: saved() }).mockResolvedValueOnce({ ok: true, value: second });
     const { user, trigger } = setup(mockActions({ create, voidTransaction: vi.fn(() => late.promise) }));
@@ -733,7 +734,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await fillMinimum(user, "8000");
     await user.click(saveButton());
     await waitFor(() => expect(screen.getByTestId("highlight").textContent).toBe(second.id));
-    await act(async () => late.resolve({ ok: true, value: { id: saved().id, version: 2 } }));
+    await act(async () => late.resolve({ status: "ok", value: { id: saved().id, version: 2 } }));
     const toast = screen.getByRole("status");
     expect(toast.textContent).toContain(copy.annotate.saved.expense);
     expect(screen.getByTestId("highlight").textContent).toBe(second.id);
@@ -888,7 +889,7 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
   });
 
   it("editar no usa fila optimista: conserva E4 con la hoja a la vista", async () => {
-    const pending = deferred<ActionResult<SavedTransaction>>();
+    const pending = deferred<WriteOutcome<SavedTransaction>>();
     const actions = mockActions({ update: vi.fn(() => pending.promise) });
     const user = userEvent.setup();
     function EditTrigger() {
@@ -903,7 +904,7 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
     expect(amount().matches(":disabled")).toBe(true);
     expect(screen.getByRole("dialog", { name: copy.annotate.editTitle.expense })).toBeTruthy();
     expect(pendingRows()).toHaveLength(0);
-    await act(async () => pending.resolve({ ok: true, value: saved({ version: 2 }) }));
+    await act(async () => pending.resolve({ status: "ok", value: saved({ version: 2 }) }));
   });
 });
 

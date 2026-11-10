@@ -279,13 +279,17 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     try {
       result = await actionsRef.current.voidTransaction({ idempotencyKey, transactionId: transaction.id, expectedVersion: transaction.version, reason: "undo" });
     } catch {
-      result = { ok: false as const, error: "network" as const };
+      result = { status: "unknown" as const };
     }
     undoing.current.delete(transaction.id);
     if (generation !== toastGeneration.current) return;
-    if (result.ok) {
+    // 004 PR D (F69-1): la anulación privada responde ok/rejected/unknown. Un desconocido sigue ofreciendo «Reintentar» con la
+    // MISMA clave (idempotente), como antes con un fallo de red.
+    if (result.status === "ok") {
       setHighlightId((current) => (current === transaction.id ? null : current));
       notify({ tone: "success", message: copy.annotate.undone[transaction.type] });
+    } else if (result.status === "unknown") {
+      notify({ tone: "error", message: copy.annotate.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undo(transaction, idempotencyKey) } });
     } else if (result.error === "versionConflict") {
       notify({ tone: "error", message: copy.annotate.undoChanged });
     } else if (result.error === "alreadyDeleted" || result.error === "notFound") {

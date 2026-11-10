@@ -105,7 +105,10 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
         const amount = edit.getByRole("textbox", { name: copy.annotate.amount });
         await amount.fill("190000");
         await edit.getByRole("button", { name: copy.annotate.saveChanges }).click();
-        await expect(edit.getByText(copy.shared.errors.versionConflict("Tomás"))).toBeVisible();
+        // F69-2 (revisión del PR #69): el aviso no atribuye el cambio a nadie, aunque aquí lo hizo Tomás: la lectura no lo dice.
+        const conflict = edit.getByRole("alert").filter({ hasText: copy.shared.errors.versionConflict });
+        await expect(conflict).toBeVisible();
+        await expect(conflict).not.toContainText(/Tomás|Sara|Alguien/);
         await axe(page, label("edición compartida en conflicto"));
         await context.close();
 

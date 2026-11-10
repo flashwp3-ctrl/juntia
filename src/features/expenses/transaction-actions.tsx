@@ -8,7 +8,10 @@
 // (las dos cosas en una operación) y, si una meta archivada vuelve a estar activa, el aviso lo dice con su monto.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useWrite } from "@/features/shared/use-write";
+import { WriteUnknown } from "@/features/shared/write-unknown";
+import type { WriteAction } from "@/features/shared/write-result";
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 import { formatMoney, parseAmountMinor } from "@/domain/money";
@@ -16,11 +19,9 @@ import { copy } from "@/lib/copy/es";
 import { useAnnotate } from "./annotate-provider";
 import { ConfirmDialog } from "./confirm-dialog";
 import { newIdempotencyKey } from "./idempotency";
-import type { ExpenseActionError, SavedTransaction } from "./types";
+import type { SavedTransaction, VoidedTransaction, VoidPayload } from "./types";
 import { useExpenseFunding } from "./goal-funding/funding-context";
 import { reactivationMessage } from "./goal-funding/reactivation";
-
-type Status = { kind: "idle" } | { kind: "deleting" } | { kind: "error"; error: ExpenseActionError };
 
 export function TransactionActions({ transaction, backHref, funding }: { transaction: SavedTransaction; backHref: string; funding?: { goalName: string } }) {
   const router = useRouter();
@@ -28,39 +29,33 @@ export function TransactionActions({ transaction, backHref, funding }: { transac
   const goalName = funding?.goalName ?? fromContext?.goalName ?? null;
   const { openEdit, notify, actions } = useAnnotate();
   const [confirming, setConfirming] = useState(false);
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // F69-1: con el resultado desconocido, cerrar pide confirmación y conserva la intención (como en un compartido).
+  const [confirmingClose, setConfirmingClose] = useState(false);
   // Una clave por apertura del diálogo: el doble clic y el reintento son la misma intención.
   const key = useRef("");
-  const busy = useRef(false);
   const deleteButton = useRef<HTMLButtonElement | null>(null);
   const title = transaction.description ?? copy.categories[transaction.categoryId];
 
+  // 004 PR D (F69-1, revisión de ChatGPT del PR #69): la eliminación de un privado sigue el contrato común —ok, rechazo
+  // confirmado o resultado desconocido, 15 s y «Comprobar estado» por write_status con void_transaction—, con o sin meta.
+  const run = useCallback((payload: VoidPayload) => actions.voidTransaction(payload), [actions]);
+  const check = useCallback((input: { action: WriteAction; idempotencyKey: string }) => (actions.check ? actions.check(input) : Promise.resolve({ state: "error" as const })), [actions]);
+  const done = useCallback((result: VoidedTransaction) => {
+    setConfirming(false);
+    notify({ tone: "success", message: [copy.remove.done[transaction.type], reactivationMessage(result.reactivatedGoals)].filter(Boolean).join(". ") });
+    router.push(backHref);
+  }, [backHref, notify, router, transaction.type]);
+  const write = useWrite<VoidPayload, VoidedTransaction>({ action: "void_transaction", run, check, onOk: done });
+
   const openDialog = () => {
     key.current = newIdempotencyKey();
-    setStatus({ kind: "idle" });
+    write.reset();
     setConfirming(true);
   };
+  const remove = () => void write.submit({ idempotencyKey: key.current, transactionId: transaction.id, expectedVersion: transaction.version, reason: "delete" });
 
-  const remove = async () => {
-    if (busy.current) return;
-    busy.current = true;
-    setStatus({ kind: "deleting" });
-    let result;
-    try {
-      result = await actions.voidTransaction({ idempotencyKey: key.current, transactionId: transaction.id, expectedVersion: transaction.version, reason: "delete" });
-    } catch {
-      result = { ok: false as const, error: "network" as const };
-    }
-    busy.current = false;
-    if (result.ok) {
-      setConfirming(false);
-      notify({ tone: "success", message: [copy.remove.done[transaction.type], reactivationMessage(result.value.reactivatedGoals)].filter(Boolean).join(". ") });
-      router.push(backHref);
-    } else setStatus({ kind: "error", error: result.error });
-  };
-
-  const error = status.kind === "error" ? (() => {
-    switch (status.error) {
+  const error = write.state.phase === "rejected" ? (() => {
+    switch (write.state.error) {
       case "alreadyDeleted":
       case "notFound":
         return <Toast tone="error" message={<>{copy.transaction.errors.alreadyDeleted}{" "}<Link href={backHref} className="font-semibold underline underline-offset-2">{copy.remove.backToActivity}</Link></>} />;
@@ -69,9 +64,12 @@ export function TransactionActions({ transaction, backHref, funding }: { transac
       case "sessionExpired":
         return <Toast tone="error" message={<>{copy.errors.sessionExpired}{" "}<a href={`/entrar?volver=${encodeURIComponent(backHref)}`} className="font-semibold underline underline-offset-2">{copy.account.signInAgain}</a></>} />;
       default:
-        return <Toast tone="error" message={copy.remove.failed} action={{ label: copy.annotate.retry, onAction: () => void remove() }} />;
+        // Un rechazo confirmado no se escribió: reintentar repetiría el mismo rechazo.
+        return <Toast tone="error" message={copy.errors.unexpected} />;
     }
-  })() : null;
+  })() : write.state.phase === "unknown" ? (
+    <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
+  ) : null;
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -83,15 +81,27 @@ export function TransactionActions({ transaction, backHref, funding }: { transac
       </Button>
       <ConfirmDialog
         open={confirming}
-        onOpenChange={(next) => { if (!next && busy.current) return; setConfirming(next); }}
+        onOpenChange={(next) => {
+          if (!next && write.pending) return;
+          if (!next && write.locked) { setConfirmingClose(true); return; }
+          setConfirming(next);
+        }}
         title={copy.remove.title[transaction.type]}
         description={copy.remove.description(title, formatMoney(parseAmountMinor(transaction.amountMinor)))}
         onCloseAutoFocus={(event) => { event.preventDefault(); deleteButton.current?.focus(); }}
-        cancel={(ref) => <Button ref={ref} variant="ghost" disabled={status.kind === "deleting"} onClick={() => setConfirming(false)}>{copy.remove.cancel}</Button>}
-        confirm={<Button variant="danger" icon="trash" loading={status.kind === "deleting"} loadingLabel={copy.remove.deleting} onClick={() => void remove()}>{copy.remove.confirm}</Button>}
+        cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setConfirming(false))}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
+        confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
         {goalName ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(goalName)}</p> : null}
         {error}
+        <ConfirmDialog
+          open={confirmingClose}
+          onOpenChange={setConfirmingClose}
+          title={copy.writes.close.title}
+          description={copy.annotate.uncertain.description}
+          cancel={(ref) => <Button ref={ref} variant="ghost" onClick={() => setConfirmingClose(false)}>{copy.writes.close.keep}</Button>}
+          confirm={<Button variant="secondary" onClick={() => { setConfirmingClose(false); setConfirming(false); write.reset(); }}>{copy.writes.close.confirm}</Button>}
+        />
       </ConfirmDialog>
     </div>
   );

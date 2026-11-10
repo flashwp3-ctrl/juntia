@@ -425,7 +425,9 @@ export const copy = {
   // nuevo para revisión de los fundadores en el PR; los textos de los comps se copian tal cual.
   shared: {
     errors: {
-      versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.`,
+      // F69-2 (revisión del PR #69): neutrales, como F68-1. La lectura no dice quién cambió o eliminó el gasto (puede ser la
+      // pareja u otra pestaña de quien mira): no se atribuye. Para aprobación de los fundadores en T069.
+      versionConflict: "Este gasto cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.", alreadyDeleted: "Este gasto ya se eliminó.",
       notActive: "Necesitas una pareja activa para anotar en Nosotros.",
     },
     context: "Contexto del gasto",

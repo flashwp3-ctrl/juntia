@@ -41,7 +41,9 @@ export type WriteAction = "create_invitation" | "regenerate_invitation" | "cance
   // 004 PR C (T046, T047): las escrituras de metas que «Comprobar estado» consulta.
   | "create_goal" | "update_goal" | "complete_goal" | "archive_goal" | "contribute_to_goal" | "withdraw_from_goal" | "void_goal_entry"
   // 004 PR D (T061–T063): gasto con meta, solicitudes, quitar el uso y el «Deshacer» de un gasto privado con meta.
-  | "create_expense_with_goal" | "approve_usage_request" | "reject_usage_request" | "cancel_usage_request" | "remove_goal_usage" | "void_transaction";
+  | "create_expense_with_goal" | "approve_usage_request" | "reject_usage_request" | "cancel_usage_request" | "remove_goal_usage" | "void_transaction"
+  // 004 PR D (F69-1): editar un movimiento privado.
+  | "update_transaction";
 /** T045: las escrituras del PR C que «Comprobar estado» consulta (las de `idempotency_records`). */
 export const SHARED_WRITE_ACTIONS = ["create_shared_expense", "update_shared_expense", "void_shared_expense", "reclassify_to_shared", "undo_reclassify_to_shared"] as const satisfies readonly WriteAction[];
 

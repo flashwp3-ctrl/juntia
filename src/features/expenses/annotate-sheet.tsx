@@ -46,7 +46,7 @@ import { dayLabel } from "@/lib/format";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { useWrite } from "@/features/shared/use-write";
 import { WriteUnknown } from "@/features/shared/write-unknown";
-import type { WriteError } from "@/features/shared/write-result";
+import type { WriteAction, WriteError } from "@/features/shared/write-result";
 import type { ContextChoice } from "@/lib/context-preference";
 import { ConfirmDialog } from "./confirm-dialog";
 import type { SheetMode } from "./annotate-provider";
@@ -54,7 +54,7 @@ import { normalizeDescription, toPayloadPesos } from "./payload";
 import { SplitEditor, SplitSummary, splitSubtitle } from "./split-editor";
 import { evaluateSplit, initialSplit, splitFromSaved, splitPayload, summaryLines, type SplitDraft } from "./split-state";
 import type { CoupleForSheet, SavedShared, SharedActions, SharedCreatePayload, SharedUpdatePayload } from "./shared-types";
-import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction } from "./types";
+import { isAmbiguousError, type ActionResult, type ExpenseActionError, type ExpenseActions, type PendingRow, type SavedTransaction, type UpdatePayload } from "./types";
 import { ConfirmationBadge } from "./goal-funding/confirmation-badge";
 import { FundingEffect } from "./goal-funding/funding-effect";
 import { FundingLedger } from "./goal-funding/funding-ledger";
@@ -84,7 +84,7 @@ type AnnotateSheetProps = {
   mode: SheetMode;
   idempotencyKey: string;
   today: string;
-  actions: Pick<ExpenseActions, "create" | "update">;
+  actions: Pick<ExpenseActions, "create" | "update" | "check">;
   onClose: () => void;
   onSaved: (saved: SavedTransaction, kind: SheetMode["kind"]) => void;
   /** UX lote 1, cambio 3: la creación viaja por el proveedor, que oculta la hoja y enseña la fila al instante. */
@@ -221,13 +221,13 @@ function DateChip({ value, today, invalid, errorId, onChange }: { value: string;
 
 
 /** PR C: lo que dice la hoja ante un rechazo confirmado de una escritura compartida (contracts/errors.md). */
-function sharedRejection(error: WriteError, partner: string) {
+function sharedRejection(error: WriteError) {
   switch (error) {
     case "invalidSplit": return copy.annotate.split.errors.invalid;
-    case "versionConflict": return copy.shared.errors.versionConflict(partner);
+    case "versionConflict": return copy.shared.errors.versionConflict;
     // 004 PR D (Q17, JT213): el monto quedaría por debajo de lo usado de la meta; reintentar repetiría el rechazo.
     case "belowGoalUsage": return copy.goalExpense.errors.removeUsageFirst;
-    case "alreadyDeleted": case "notFound": return copy.shared.errors.alreadyDeleted(partner);
+    case "alreadyDeleted": case "notFound": return copy.shared.errors.alreadyDeleted;
     case "coupleNotActive": return copy.shared.errors.notActive;
     case "sessionExpired": return copy.errors.sessionExpired;
     default: return copy.errors.unexpected;
@@ -283,10 +283,16 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     onGoalSaved?.(saved, asked ? copy.goalExpense.saved.ask(partner) : copy.goalExpense.saved.own(goalNameRef.current));
   }, [onGoalSaved, partner]);
   const goalWrite = useWrite<GoalExpensePayload, SavedGoalExpense>({ action: "create_expense_with_goal", run: goalRun, check: goalCheck, onOk: goalOk });
+  // 004 PR D (F69-1): la edición de un privado sigue el contrato común (ok/rejected/unknown, 15 s y «Comprobar estado» por
+  // write_status con update_transaction), con o sin meta. La creación conserva su camino (la ruta mínima de la spec 2).
+  const editRun = useCallback((payload: UpdatePayload) => actions.update(payload), [actions]);
+  const editCheck = useCallback((input: { action: WriteAction; idempotencyKey: string }) => (actions.check ? actions.check(input) : Promise.resolve({ state: "error" as const })), [actions]);
+  const editOk = useCallback((saved: SavedTransaction) => onSaved(saved, "edit"), [onSaved]);
+  const editWrite = useWrite<UpdatePayload, SavedTransaction>({ action: "update_transaction", run: editRun, check: editCheck, onOk: editOk });
 
   const { type, amount, categoryId, date, description } = draft;
-  const isSaving = status.kind === "saving" || sharedWrite.pending || goalWrite.pending;
-  const isLocked = locked || sharedWrite.locked || goalWrite.locked;
+  const isSaving = status.kind === "saving" || sharedWrite.pending || goalWrite.pending || editWrite.pending;
+  const isLocked = locked || sharedWrite.locked || goalWrite.locked || editWrite.locked;
   const isDirty = useCallback((value: Draft) => (Object.keys(initial) as (keyof Draft)[]).some((key) => initial[key] !== value[key]), [initial]);
   // 004 PR D: la meta se ofrece solo al anotar un gasto, con sus escrituras; con meta, el gasto se guarda con ella.
   const offerGoal = !editing && type === "expense" && goalFunding !== undefined;
@@ -318,6 +324,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     setStatus((current) => (current.kind === "error" ? { kind: "idle" } : current));
     if (sharedWrite.state.phase === "rejected") sharedWrite.reset();
     if (goalWrite.state.phase === "rejected") goalWrite.reset();
+    if (editWrite.state.phase === "rejected") editWrite.reset();
   };
   const changeSplit = (next: SplitDraft) => {
     setSplit(next);
@@ -425,12 +432,15 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
       else await sharedWrite.submit({ ...common, ...splitNow });
       return;
     }
+    if (mode.kind === "edit") {
+      await editWrite.submit({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
+      return;
+    }
     saving.current = true;
     setStatus({ kind: "saving" });
     let result;
     try {
-      if (mode.kind === "edit") result = await actions.update({ ...common, transactionId: mode.transaction.id, expectedVersion: mode.transaction.version });
-      else {
+      {
         // Se guarda por el proveedor: oculta la hoja y la fila aparece ya; si falla, la hoja vuelve con esto mismo.
         const now = new Date().toISOString();
         const row: PendingRow = {
@@ -450,12 +460,12 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     saving.current = false;
     if (result.ok) {
       setStatus({ kind: "idle" });
-      onSaved(result.value, mode.kind === "edit" ? "edit" : "create");
+      onSaved(result.value, "create");
     } else {
       if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, contributors, draft, editing, funds, goal, goalWrite, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty, usage, withGoal]);
+  }, [actions, contributors, draft, editWrite, editing, funds, goal, goalWrite, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty, usage, withGoal]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 
@@ -470,7 +480,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
 
   // Con cambios sin guardar (o tras un resultado desconocido) se confirma antes de cerrar.
   const closeSheet = () => {
-    if (saving.current || (sharedWrite.pending && !sharedWrite.locked) || (goalWrite.pending && !goalWrite.locked)) return;
+    if (saving.current || (sharedWrite.pending && !sharedWrite.locked) || (goalWrite.pending && !goalWrite.locked) || (editWrite.pending && !editWrite.locked)) return;
     if (dirty || isLocked) setConfirming(true);
     else onClose();
   };
@@ -525,8 +535,23 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     }
   })() : null;
 
+  // F69-1: el rechazo confirmado de la edición privada (sin «Reintentar», que repetiría el rechazo) y el desconocido, con
+  // «Reintentar» (la misma clave y la misma carga) y «Comprobar estado».
+  const editNotice = editWrite.state.phase === "rejected" ? (() => {
+    switch (editWrite.state.error) {
+      case "versionConflict":
+        return mode.kind === "edit" ? <Toast tone="error" message={copy.transaction.errors.versionConflict} action={{ label: copy.annotate.reload, onAction: () => { onClose(); mode.onReload(); } }} /> : null;
+      case "alreadyDeleted": return <Toast tone="error" message={copy.transaction.errors.alreadyDeleted} />;
+      case "notFound": return <Toast tone="error" message={copy.transaction.errors.notFound} />;
+      case "belowGoalUsage": return <Toast tone="error" message={copy.goalExpense.errors.removeUsageFirst} />;
+      case "sessionExpired": return <Toast tone="error" message={copy.errors.sessionExpired} />;
+      default: return <Toast tone="error" message={copy.errors.unexpected} />;
+    }
+  })() : editWrite.state.phase === "unknown" ? (
+    <WriteUnknown checking={editWrite.state.checking} notFound={editWrite.state.notFound} onRetry={() => void editWrite.retry()} onCheck={() => void editWrite.checkStatus()} />
+  ) : null;
   const sharedNotice = sharedWrite.state.phase === "rejected" ? (
-    <Toast tone="error" message={sharedRejection(sharedWrite.state.error, partner)}
+    <Toast tone="error" message={sharedRejection(sharedWrite.state.error)}
       action={sharedWrite.state.error === "versionConflict" && mode.kind === "editShared" ? { label: copy.annotate.reload, onAction: () => { onClose(); mode.onReload(); } } : undefined} />
   ) : sharedWrite.state.phase === "unknown" ? (
     <WriteUnknown checking={sharedWrite.state.checking} notFound={sharedWrite.state.notFound} onRetry={() => void sharedWrite.retry()} onCheck={() => void sharedWrite.checkStatus()} />
@@ -581,7 +606,11 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
       {errorNotice}
       {sharedNotice}
       {goalNotice}
-      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={withGoal ? copy.goalExpense.submit.saving : copy.annotate.saving} disabled={!canSave} aria-describedby={splitInvalid ? splitStatusId : withGoal && fundingStatus && fundingStatus.kind !== "ok" ? fundingStatusId : undefined} className="w-full">
+      {editNotice}
+      {/* F69-4: con un resultado desconocido de una escritura con «Reintentar» y «Comprobar estado» propios (gasto con meta,
+          compartido o edición), Guardar no se habilita: solo siguen esas dos. La creación privada conserva su regla (decisión del
+          fundador del 5 nov 2026): ahí Guardar es el mismo reintento con la misma clave. */}
+      <Button type="submit" size="lg" icon="check" loading={isSaving} loadingLabel={withGoal ? copy.goalExpense.submit.saving : copy.annotate.saving} disabled={!canSave || isSaving || sharedWrite.locked || goalWrite.locked || editWrite.locked} aria-describedby={splitInvalid ? splitStatusId : withGoal && fundingStatus && fundingStatus.kind !== "ok" ? fundingStatusId : undefined} className="w-full">
         {label}
       </Button>
     </div>
@@ -740,7 +769,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
           onOpenChange={setConfirming}
           title={copy.annotate.uncertain.title}
           description={copy.annotate.uncertain.description}
-          cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); if (sharedWrite.locked) void sharedWrite.retry(); else void save(); }}>{copy.annotate.uncertain.retry}</Button>}
+          cancel={(ref) => <Button ref={ref} variant="ghost" icon="arrow-clockwise" onClick={() => { setConfirming(false); if (sharedWrite.locked) void sharedWrite.retry(); else if (goalWrite.locked) void goalWrite.retry(); else if (editWrite.locked) void editWrite.retry(); else void save(); }}>{copy.annotate.uncertain.retry}</Button>}
           confirm={<Button variant="secondary" onClick={() => { setConfirming(false); onClose(); }}>{copy.annotate.uncertain.close}</Button>}
         />
       ) : (

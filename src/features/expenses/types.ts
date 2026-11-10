@@ -2,6 +2,7 @@
 // las Server Actions. Los importes viajan como texto en las dos direcciones (FR-008; ADR-013 §4): `amountPesos` son los
 // pesos enteros que escribió la persona y `amountMinor` las unidades menores que devolvió la función.
 import type { CategoryId, Transaction, TransactionType } from "@/domain/transactions";
+import type { WriteAction, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
 
 /** Un movimiento guardado, tal como lo ve la interfaz: sin `bigint` y con la `version` que espera la siguiente escritura. */
 export type SavedTransaction = {
@@ -50,7 +51,11 @@ export type PendingRow = {
 
 export type ExpenseActions = {
   create: (payload: CreatePayload) => Promise<ActionResult<SavedTransaction>>;
-  update: (payload: UpdatePayload) => Promise<ActionResult<SavedTransaction>>;
+  /** 004 PR D (F69-1): editar y eliminar siguen el contrato común `ok`/`rejected`/`unknown`, con «Comprobar estado». */
+  update: (payload: UpdatePayload) => Promise<WriteOutcome<SavedTransaction>>;
   /** 004 PR D (T063; F64-1): la anulación devuelve las metas archivadas que volvieron a estar activas. */
-  voidTransaction: (payload: VoidPayload) => Promise<ActionResult<VoidedTransaction>>;
+  voidTransaction: (payload: VoidPayload) => Promise<WriteOutcome<VoidedTransaction>>;
+  /** «Comprobar estado» de `update_transaction` y `void_transaction` (`write_status`). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada acción devuelve su propio resultado guardado.
+  check?: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<any>>;
 };
