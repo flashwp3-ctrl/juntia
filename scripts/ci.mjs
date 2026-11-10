@@ -1,6 +1,7 @@
-// Medición de comandos y jobs: ADR-011 §4. Los presupuestos de comando generan avisos. El del job `e2e` (< 480 s, maestro
-// §15.10, decisiones 19.5 y 21.4) bloquea desde el PR D de la 003 (decisión 20.17, Q17; tasks.md T070), salvo en el barrido
-// de accesibilidad a mano (A11Y_LEVEL=sweep), que tiene su propio tope duro de 10 min (docs/TESTING.md §9).
+// Medición de comandos y jobs: ADR-011 §4. Los presupuestos de comando generan avisos. El del job `e2e` (< 660 s desde la
+// decisión de los fundadores del 10 nov 2026, antes < 480 s; maestro §15.10, decisiones 19.5 y 21.4) bloquea desde el PR D
+// de la 003 (decisión 20.17, Q17; tasks.md T070), salvo en el barrido de accesibilidad a mano (A11Y_LEVEL=sweep), que solo
+// tiene el tope duro del job: 12 min desde el 10 nov 2026, antes 10 (docs/TESTING.md §9).
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -49,8 +50,9 @@ if (!isMain) {
   const lines = ["| Control | Estado | Duración | Presupuesto |", "| --- | --- | --- | --- |"];
   for (const row of rows) lines.push(`| ${row.command} | ${row.status !== 0 ? "falló" : row.emptyDomain ? "0 pruebas — la 001 no tiene dominio financiero" : "pasó"} | ${row.seconds.toFixed(2)} s | ${budgets[row.command] ? `< ${budgets[row.command]} s` : "—"} |`);
   const duration = (Date.now() - Number(process.env.JOB_STARTED_MS)) / 1000;
-  // Maestro §15.10, decisión 19.5: el job e2e tiene < 480 s; los demás, el < 6 min del gate (ADR-011 §4).
-  const jobBudget = process.env.GITHUB_JOB === "e2e" ? 480 : 360;
+  // Maestro §15.10, decisión 19.5 y decisión de los fundadores del 10 nov 2026 (gate del PR #67, run 42849936048): el job e2e
+  // tiene < 660 s (antes 480 s); los demás, el < 6 min del gate (ADR-011 §4).
+  const jobBudget = process.env.GITHUB_JOB === "e2e" ? 660 : 360;
   lines.push(`| Job ${process.env.GITHUB_JOB} (incluye instalación) | ${process.env.JOB_STATUS} | ${duration.toFixed(2)} s | < ${jobBudget} s |`);
   const blocking = process.env.GITHUB_JOB === "e2e" && process.env.A11Y_LEVEL !== "sweep";
   if (duration >= jobBudget && blocking) {

@@ -504,7 +504,27 @@ Impeccable: detector `impeccable detect --json src/features/plan` → **0 hallaz
   `update_budget` (la clave única es por categoría); Plan enseña solo el mes en curso.
 - `copy.us.activeDescription` («Las metas y el plan de los dos llegan en una próxima versión…») ya no lo usa Plan; lo sigue
   usando Metas hasta el PR C, que lo puede ajustar.
-- T039 (barrido en CI), T040 (CLS de Plan con el `loading.tsx` nuevo) y T041 siguen pendientes, humanas.
+- T040 (CLS de Plan con el `loading.tsx` nuevo) y T041 siguen pendientes, humanas. T039, abajo.
+
+## T039 · barrido completo de accesibilidad (hecha por el gestor)
+
+Run **42851485512** (`workflow_dispatch`, `a11y_sweep=true`), sobre `6183ac2`, lanzado por el gestor: **verde**. Job `e2e`
+en **396 s** (axe 167 s, Supabase 137 s, build 61 s); job `app` en **150 s**. Datos del gestor; el agente no lanzó el run.
+
+## Gate del PR #67 · run 42849936048 (sobre `6183ac2`) y decisión de los fundadores
+
+Todas las pruebas en verde (E2E **34/34**, axe **95/95**). El job `e2e` falló solo por el presupuesto: **517 s** frente a
+< 480 s (Supabase 139 s, build 89 s, E2E 69 s, axe 194 s). El gestor lo llevó a los fundadores según contracts/ci.md (c).
+
+Decisión de los fundadores del 10 de noviembre de 2026: el tope del job `e2e` sube de 480 s a 660 s. Medición del gate del
+PR #67 (run 42849936048): 517 s con las specs 1, 2, 3 y 5 (Supabase 139 s, build 89 s, E2E 69 s, axe con sesión 194 s); la
+mitigación (a) no fue segura (medición del PR A) y la (b) no basta, porque la mayor parte es preparación fija; se aplicó la
+(c) de contracts/ci.md. Con ella, el `timeout-minutes` del job `e2e` pasa de 10 a 12 (el agente señaló que 660 s quedaba
+por encima de los 600 s en que GitHub cancelaba el job; el gestor lo aprobó).
+
+Aplicado en un solo commit: `jobBudget` de `scripts/ci.mjs` (480 → 660), `timeout-minutes: 12` solo en el job `e2e` de
+`.github/workflows/ci.yml`, y la decisión en `contracts/ci.md`, `docs/TESTING.md` §9 y el maestro §15.10 (decisiones 19.5 y
+21.4 y una nota tras la decisión 21). Ninguna prueba comprobaba el 480.
 
 ## Revisión del gestor del PR #67 (antes de ChatGPT)
 

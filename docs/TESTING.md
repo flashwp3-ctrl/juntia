@@ -666,9 +666,16 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
 | **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
-| Job `e2e` (specs E2E y axe con sesión en su nivel ligero; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026) | **< 8 min (480 s)** |
-| Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 10 min |
+| Job `e2e` (specs E2E y axe con sesión en su nivel ligero; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026, y decisión de los fundadores del 10 nov 2026, abajo) | **< 11 min (660 s)**; hasta el 10 nov 2026, < 8 min (480 s) |
+| Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 12 min (10 min hasta el 10 nov 2026; corre en el job `e2e`) |
 | Nocturno / post-merge | **< 15 min** |
+
+> **Decisión de los fundadores del 10 de noviembre de 2026:** el tope del job `e2e` sube de 480 s a 660 s. Medición del
+> gate del PR #67 (run 42849936048): 517 s con las specs 1, 2, 3 y 5 (Supabase 139 s, build 89 s, E2E 69 s, axe con sesión
+> 194 s); la mitigación (a) no fue segura (medición del PR A) y la (b) no basta, porque la mayor parte es preparación fija; se
+> aplicó la (c) de `specs/004-presupuestos-y-metas/contracts/ci.md`. Con ella, el tope duro del job `e2e` (`timeout-minutes`
+> en `.github/workflows/ci.yml`) pasa de 10 a 12 minutos, para que el presupuesto avise antes de que GitHub cancele el job;
+> los demás jobs no cambian.
 
 «Mide el job» aplica **solo a esta segunda tabla**.
 

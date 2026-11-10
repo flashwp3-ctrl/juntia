@@ -228,7 +228,9 @@ jobs:
     # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
     if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Decisión de los fundadores del 10 nov 2026: 12 min, para que el presupuesto de 660 s (scripts/ci.mjs) avise antes de que
+    # GitHub cancele el job (antes, 10 min sobre un presupuesto de 480 s).
+    timeout-minutes: 12
     env:
       SITE_URL: http://localhost:3400
     steps:
