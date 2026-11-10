@@ -994,3 +994,11 @@ Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la 
 - **Corridas**:
   - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 130,52 s**. Build 29,89 s; E2E **3/3, 60,84 s** (la nueva, 6,1 s); axe **2/2, 38,31 s**.
   - `PORT=3500 npm run verify`: **exit 0, 73,09 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.
+
+## F68-2 · texto del conflicto en lograr y archivar (re-revisión externa sobre `d241836`)
+
+- `copy.goals.errors.versionConflict` afirmaba «Ya ves lo último» cuando el `router.refresh()` podía no haber llegado o haber fallado. Ahora dice: «Esta meta cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.». Lo usa `goal-status-dialog.tsx`.
+- La prueba del diálogo (`goal-form-conflict.test.tsx`) ahora exige además que el texto no afirme que la página ya se actualizó (`/ya ves|lo último|actualiz/i`).
+- Corridas:
+  - `vitest --project components src/features/goals`: **81/81**, 4 archivos.
+  - `PORT=3500 npm run verify`: **exit 0, 68,47 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.

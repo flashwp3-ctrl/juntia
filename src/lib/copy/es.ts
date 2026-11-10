@@ -11,7 +11,8 @@ export const copy = {
       cannotComplete: "No se puede dar por lograda esta meta.",
       // F68-1 (revisión del PR #68): neutral. La lectura de la meta no dice quién la cambió (puede ser la pareja u otra
       // pestaña de quien mira): no se atribuye.
-      versionConflict: "Esta meta cambió en otro lugar. Ya ves lo último.",
+      // F68-2: no afirma que la página ya se actualizó (el refresco puede no haber llegado o fallar).
+      versionConflict: "Esta meta cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.",
       undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
       // 004 PR C (revisión del PR #68; Q13, FR-042): anular o deshacer un aporte cuyos fondos ya se usaron o se retiraron.
       fundsUsed: "Ya no se puede anular: esos fondos ya se usaron o se retiraron de la meta.",

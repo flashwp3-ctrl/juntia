@@ -97,6 +97,8 @@ describe("Lograr o archivar · conflicto de versión (F68-1)", () => {
     await user.click(screen.getByRole("button", { name: copy.goals.statusDialog.completeConfirm }));
     expect((await screen.findByRole("alert")).textContent).toBe(copy.goals.errors.versionConflict);
     expect(copy.goals.errors.versionConflict).not.toMatch(/Tomás|Sara|Alguien/);
+    // F68-2: el aviso sale antes de que el refresco llegue (o aunque falle): no afirma que ya se ve lo último.
+    expect(copy.goals.errors.versionConflict).not.toMatch(/ya ves|lo último|actualiz/i);
     expect(router.refresh).toHaveBeenCalled();
   });
 });
