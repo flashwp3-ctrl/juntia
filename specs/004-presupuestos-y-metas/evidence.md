@@ -530,11 +530,17 @@ T052 · webkit · con API · movimiento reduce        → Error: expect(page).to
   - La navegación de control sin tarjetas de meta (Metas → Actividad) funciona: sin caída y con su título.
   - Las corridas de diagnóstico anteriores acabaron en «página cerrada» o en el límite de 120 s, lo que también encaja con la caída.
   - **Alcance de este dato**: es el WebKit de Playwright para Windows (build 2370, versión 27.2), no Safari en macOS ni en iOS. No se puede afirmar que Safari se caiga. Tampoco se puede descartar: en este WebKit, la View Transition con nombre de la meta tumba la página.
-- **Estado de T052**:
+- **Estado de T052 tras la tercera corrida** (antes de la verificación humana de abajo):
   - **Chromium: apertura cumple** (par `goal-photo`, `goal-title`, `goal-ribbon`); el cierre no tiene transición; el respaldo anima.
-  - **WebKit: el respaldo cumple; con la API nativa, la página se cae.** Queda **abierta** para el gestor, sin más variantes probadas.
-  - Opciones que no se decidieron aquí:
-    - limitar la View Transition a los navegadores donde se verificó, y usar el respaldo de Motion en los demás;
-    - quitar la View Transition y quedarse con el respaldo de Motion para todos;
-    - verificar en un Safari real (macOS o iPhone) antes de decidir.
+  - **WebKit de Playwright: el respaldo cumple; con la API nativa, la página se cae.**
+
+### T052 · verificación humana en Safari real y decisión del gestor (10 de noviembre de 2026)
+
+- **Quién y dónde**: el fundador, en su iPhone, con **Safari** real. Versión de iOS: **por confirmar** (la confirma el gestor con el fundador).
+- **Build**: `62072be`, compilado en local y servido por la red local (LAN) contra `juntia-dev`. No es un despliegue ni una corrida de CI.
+- **Resultado**: **al abrir una meta, la View Transition anima, y Safari no se cae.**
+- **Decisión del gestor**: se queda como está. View Transition nativa más el respaldo `layoutId` de Motion, FR-076 sin cambios. No se limita la View Transition a Chromium ni se quita.
+- **Limitación del port de Playwright WebKit para Windows**: build 2370, versión 27.2. Con la API nativa, el proceso de la página se cae (`crash: true`) al iniciarse la View Transition de la meta; la salida es la de la tercera corrida, arriba. Safari real no reproduce la caída, así que se registra como limitación de ese port, no de la app. Consecuencia: una prueba automática de Goal Journey en ese WebKit tendría que quitar la API, como hace el caso «sin API» de la prueba temporal.
+- **Limitación conocida, sin cambio en este PR**: al cerrar la meta (Escape o ×, de vuelta a `/metas`) no hay View Transition, porque la lista suspende en su Skeleton (`(lista)/loading.tsx`) y no se forma el par. El gestor se lo muestra a los fundadores en T056.
+- **Estado de T052**: **cerrada** para la apertura, en Chromium (salida de las corridas segunda y tercera) y en Safari real (verificación humana de arriba). El respaldo de Motion queda verificado en Chromium y en el WebKit de Playwright sin la API. Siguen fuera: el cierre, que es la limitación de arriba, y el back-swipe de iPhone, aplazado por la decisión 19.1.
 - Las pruebas temporales (`zz-vt-check.e2e.ts`, `zz-webkit-diag.e2e.ts`) no se versionan; sus copias y salidas se conservan fuera del repositorio.
