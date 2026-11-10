@@ -549,7 +549,7 @@ puntos 3 y 4.
 
 #### Gasto con meta y confirmaciones (§15.5, §15.6.3 puntos 3, 5 y 6; 04·11)
 
-- **FR-050**: Anotar ofrece «Cómo se pagó: Dinero del mes · Con una meta», con «Dinero del mes» como valor inicial; con una meta, una sola meta activa del mismo contexto, un importe usado ≤ importe del gasto y FundingLedger para los fondos por aportante (según Q16; 04·11 B1–B2).
+- **FR-050**: Anotar ofrece «Cómo se pagó: Dinero del mes · Con una meta», con «Dinero del mes» como valor inicial; con una meta, una sola meta activa o lograda (nunca archivada; Q15 y FR-032: una meta lograda admite usos) del mismo contexto (aprobado por los fundadores el 10 de noviembre de 2026), un importe usado ≤ importe del gasto y FundingLedger para los fondos por aportante (según Q16; 04·11 B1–B2).
 - **FR-051**: FundingLedger propone un reparto proporcional a lo disponible de cada aportante, en pesos enteros con mayor residuo, editable, con tope por aportante; la suma debe ser exactamente el importe usado (según Q16).
 - **FR-052**: **Registro inicial:** el gasto, su reparto, el uso de **fondos propios** y sus asignaciones, y la solicitud por los fondos del otro (si los hay), en **una sola operación atómica e idempotente**, que no espera ninguna aprobación. La solicitud registra la cantidad exacta por aportante (§15.6.3 punto 5).
 - **FR-053**: Mientras una solicitud está pendiente, sus fondos **no se descuentan ni cuentan** en `goal_balance`, en el disponible ni en `gasto_financiado_con_meta`; no vence; no es una transferencia (§15.5).

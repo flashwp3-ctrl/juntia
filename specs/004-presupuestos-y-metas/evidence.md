@@ -1094,3 +1094,8 @@ Corridas de esta ronda (solo lo afectado; no se tocó `tests/support/` ni los fi
 | `npm run verify` | **exit 0, 69,86 s**: lint (solo el aviso previo), typecheck, dominio 84/84, componentes **879 / 2 omisiones previstas** |
 
 Selector para este PR tras el cambio: **sigue pidiendo las cinco** por `scripts/e2e-select.mjs`, `tests/e2e-select.test.ts`, `src/components/ui/expense-row.tsx` y `src/features/shared/` (`write-result.ts`, `shared-row.tsx`); la regla de axe ya no cuenta.
+
+## Desviaciones aprobadas por los fundadores (10 de noviembre de 2026, tras ver las capturas)
+
+1. **Ficha «Cómo se pagó» con subhoja.** Desviación aprobada por los fundadores el 10 de noviembre de 2026: en lugar de una fila propia (comp 04·11), «Cómo se pagó» es una ficha en la fila «Hoy · Solo tú» que abre una subhoja, para que la hoja de 390 px respete su altura máxima (UX 2); «Dinero del mes» sigue por defecto y la ruta mínima no cambia. Nota corta con la misma referencia en `docs/design/COMPONENT_SPECIFICATIONS.md`, flujo «Gasto con meta», sin reescribir el comp.
+2. **Metas logradas en B1.** FR-050 de `spec.md` dice ahora «una sola meta activa o lograda (nunca archivada; Q15 y FR-032: una meta lograda admite usos) del mismo contexto (aprobado por los fundadores el 10 de noviembre de 2026)». Ninguna prueba citaba el texto viejo de FR-050.
