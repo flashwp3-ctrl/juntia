@@ -75,7 +75,9 @@ describe("selector de specs E2E por área (contracts/ci.md, F64-5)", () => {
   // Revisión del gestor del PR #67 (5): una spec que no esté en el mapa no correría nunca, en silencio. Cada archivo
   // tests/e2e/*.e2e.ts del repositorio tiene que estar en SPECS (y SPECS no nombra rutas fuera de tests/e2e).
   it("SPECS cubre todas las specs E2E del repositorio", () => {
-    const onDisk = readdirSync("tests/e2e").filter((name) => name.endsWith(".e2e.ts")).map((name) => `tests/e2e/${name}`);
+    // Recursivo (F67-3): una spec en un subdirectorio que no esté en SPECS también hace fallar la prueba.
+    const onDisk = readdirSync("tests/e2e", { recursive: true, encoding: "utf8" }).map((name) => name.replace(/\\/g, "/"))
+      .filter((name) => name.endsWith(".e2e.ts")).map((name) => `tests/e2e/${name}`);
     const mapped = Object.values(files);
     expect(onDisk.filter((path) => !mapped.includes(path))).toEqual([]);
     expect(mapped.every((path) => path.startsWith("tests/e2e/") && path.endsWith(".e2e.ts"))).toBe(true);

@@ -250,7 +250,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
         {copy.plan.sheet.context[context]}
       </p>
       {target.kind === "create" && !row ? (
-        <CategoryChoice ids={available} value={target.categoryId} disabled={locked} onSelect={(id) => { setTarget({ kind: "create", categoryId: id }); setInvalid(null); }} />
+        <CategoryChoice ids={available} value={target.categoryId} disabled={locked || conflict !== null} onSelect={(id) => { if (conflict) return; setTarget({ kind: "create", categoryId: id }); setInvalid(null); }} />
       ) : chosen ? (
         <p className="flex items-center gap-2.5 text-[length:var(--body-l-size)] font-semibold text-ink">
           <CategoryIcon kind="category" category={chosen} size="md" />

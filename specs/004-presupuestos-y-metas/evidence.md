@@ -526,3 +526,36 @@ Salidas:
 - `e2e:dev` dirigido (`budgets.e2e.ts`, `plan.a11y.ts`, `routes.a11y.ts` y `couple-shared.a11y.ts` con `--grep "spec 5|Plan ·|Nosotros · axe|M3b"`): spec 5 **2/2** (17,6 s y 14,6 s), Plan **1/1**, las cuatro rutas de Plan y M3b **4/4**; `couple-shared` **0/2** por el límite de 30 s del test (fallan dentro de la **primera** pasada de axe, no en la de `document-title`). Ese build tardó 29,37 s frente a 10 s, con la máquina cargada.
 - `couple-shared` solo, repetido: **2/2**, 28,7 s y 25,2 s. Es el rango que ya tenía en el PR A (23,5–29,5 s). **Riesgo para el gate:** ese test de la 003 va muy cerca de su límite de 30 s cuando el equipo está ocupado. No se toca en este PR.
 - `npm run verify`: la primera corrida falló por un test ajeno, `profile-form.test.tsx` › P2, que superó 5 s con la máquina cargada (componentes 67 s). La repetición pasó: **exit 0, 85,97 s**, dominio 84, componentes **739 pasan / 2 omisiones previstas**. `git diff --check` pasa.
+
+## Revisión de ChatGPT del PR #67 (sobre `c26e9d6`)
+
+Un solo commit y un solo push. Solo las pruebas afectadas contra `juntia-dev`, con el lock; **sin `db:dev:reset`**.
+
+| # | Hallazgo | Qué se hizo | Prueba |
+| --- | --- | --- | --- |
+| F67-1 | La rejilla de categorías seguía activa durante un JT219 | `CategoryChoice` queda deshabilitada con un conflicto a la vista, y `onSelect` lo ignora | Test de componente: tras JT219 todas las categorías están deshabilitadas, un clic en Transporte no cambia Hogar y «Revisar» abre Hogar con su límite vigente |
+| F67-2 | El prefetch de la spec 5 no demostraba haber inspeccionado el RSC de Plan | Ver abajo | Spec 5 2/2 y prueba de mutación |
+| F67-3 | El inventario del selector no veía specs anidadas | `readdirSync(..., { recursive: true })` | Con una spec temporal en `tests/e2e/zz-probe/` la prueba falla («expected [ 'tests/e2e/zz-probe/probe.e2e.ts' ] to deeply equal []»); sin ella pasa |
+
+**F67-2, lo que se encontró.** Con un diagnóstico temporal se vio que **todos** los cuerpos RSC capturados medían 0: en las
+respuestas RSC transmitidas, `response.text()` de Playwright falla y el `.catch(() => "")` lo convertía en una cadena vacía.
+Así que ni esta versión ni la anterior inspeccionaban nada; las negativas pasaban por vacío. Ahora:
+
+- Los RSC se interceptan con `page.route` y `route.fetch()`: el cuerpo real se lee al responder y se entrega tal cual a la
+  página; un fallo al leerlo hace fallar la prueba.
+- Cada petición se registra al **empezar** (en el manejador de la ruta), con su ruta y con `underUs`, que se activa solo
+  cuando Plan de Nosotros ya está pintado (la cookie ya dice Nosotros).
+- En Yo se llega a Plan desde Inicio en el cliente y se exige que ese RSC de `/plan` traiga el presupuesto personal de
+  Sara: control de que la captura ve un presupuesto personal cuando viaja.
+- En Nosotros se exige al menos un RSC de `/plan` iniciado bajo Nosotros, que su cuerpo traiga el presupuesto compartido
+  sembrado (control positivo) y que ningún RSC iniciado bajo Nosotros traiga los marcadores personales (negativas de antes).
+- **Mutación**: con `underUs` activo desde el principio (las peticiones de Yo cuentan como de Nosotros) la prueba **falla**
+  en «RSC de /plan pedido en Nosotros». Sin la mutación, **2/2** (34,8 s en total).
+
+Salidas:
+
+- Componentes de Plan y selector: **44/44**.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **2/2**.
+- `npm run verify`: la primera corrida pasó (exit 0, 740 componentes) en 115,02 s con el equipo cargado (lint 43,68 s);
+  la repetición: **exit 0, 86,70 s** (< 90 s), dominio 84, componentes **740 pasan / 2 omisiones previstas**.
+  `git diff --check` pasa.

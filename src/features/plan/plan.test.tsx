@@ -292,6 +292,30 @@ describe("Hoja de presupuesto (FR-011, FR-018, FR-093; US-2 escenarios 2, 6 y 7)
   });
 
   // Revisión del gestor del PR #67 (2): el aviso de conflicto nunca se queda girando sin salida.
+  // Revisión de ChatGPT del PR #67 (F67-1): con un JT219 a la vista, el aviso habla de Hogar; la categoría no se puede cambiar
+  // hasta resolverlo, y «Revisar» sigue sobre Hogar.
+  it("tras JT219 la rejilla de categorías queda bloqueada y «Revisar» abre la categoría del aviso", async () => {
+    const user = userEvent.setup();
+    const writes = actions({ create: vi.fn(async () => ({ status: "rejected" as const, error: "budgetExists" as const })) });
+    const { view, all } = open({ row: null, actions: writes });
+    const sheet = dialog(copy.plan.sheet.createTitle);
+    await user.click(within(sheet).getByRole("radio", { name: copy.categories.home }));
+    await user.type(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }), "1500000");
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.save }));
+    for (const radio of within(sheet).getAllByRole("radio")) expect((radio as HTMLButtonElement).disabled).toBe(true);
+    await user.click(within(sheet).getByRole("radio", { name: copy.categories.transport }));
+    expect(within(sheet).getByRole("radio", { name: copy.categories.home }).getAttribute("aria-checked")).toBe("true");
+    expect(within(sheet).getByRole("radio", { name: copy.categories.transport }).getAttribute("aria-checked")).toBe("false");
+    const homeId = "12121212-1212-4121-8121-121212121212";
+    const created: BudgetChange = { id: "34343434-3434-4343-8343-343434343434", budgetId: homeId, kind: "create", limitMinor: minor(1700000n), previousLimitMinor: null, byName: "Tomás", changedAt: "2026-10-24T15:00:00.000Z", date: "2026-10-24" };
+    const home: PlanRow = { ...goldenRows[3], budgetId: homeId, version: 1, limitMinor: minor(1700000n), history: [created] };
+    view.rerender(<BudgetSheet {...all} rows={[...goldenRows.slice(0, 3), home]} />);
+    await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.review }));
+    const edit = screen.getByRole("dialog", { name: copy.plan.sheet.editTitle });
+    expect(within(edit).getByText(copy.categories.home)).toBeTruthy();
+    expect((within(edit).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement).value).toBe("1.700.000");
+  });
+
   it("conflicto con un presupuesto que el otro creó y ya desactivó: dice que ahora no tiene presupuesto y deja revisarlo", async () => {
     const user = userEvent.setup();
     const writes = actions({ create: vi.fn(async () => ({ status: "rejected" as const, error: "budgetExists" as const })) });

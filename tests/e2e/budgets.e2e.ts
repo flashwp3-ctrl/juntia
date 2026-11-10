@@ -129,29 +129,53 @@ test("spec 5 · privacidad: ni el HTML, ni el RSC, ni el prefetch de Plan en Nos
 
   // Prefetch: Sara en Yo a 1440 (su presupuesto personal se ve, como debe), cambia a Nosotros y navega a Plan.
   const { context, page } = await open(browser, baseURL!, pair.sara, "me", "me", 1440);
-  // Cada RSC se registra en el acto, con la promesa de su cuerpo y si llegó después del cambio a Nosotros; los cuerpos se
-  // esperan todos antes de comprobarlos (revisión del gestor del PR #67, 1).
-  let switched = false;
-  const fetched: { after: boolean; body: Promise<string> }[] = [];
-  page.on("response", (response) => {
-    if (response.url().includes("_rsc=") && response.request().method() === "GET") fetched.push({ after: switched, body: response.text().catch(() => "") });
+  // Cada RSC se registra al EMPEZAR la petición, con su ruta, si se inició ya en Nosotros y la promesa de su cuerpo; los
+  // cuerpos se esperan todos antes de comprobarlos (revisiones del gestor y de ChatGPT del PR #67: 1 y F67-2).
+  // El cuerpo se lee interceptando la petición (`route.fetch()`), no con `response.text()`: en las respuestas RSC transmitidas,
+  // Playwright no da el cuerpo y la lectura devolvía "" en silencio (comprobado en esta ronda), así que no se inspeccionaba
+  // nada. La respuesta se entrega tal cual a la página. Un fallo al leer hace fallar la prueba.
+  let underUs = false;
+  const fetched: { path: string; underUs: boolean; body: Promise<string> }[] = [];
+  await page.route((url) => url.searchParams.has("_rsc"), async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    let settle!: (body: string) => void;
+    let fail!: (error: unknown) => void;
+    fetched.push({ path: new URL(route.request().url()).pathname, underUs, body: new Promise<string>((resolve, reject) => { settle = resolve; fail = reject; }) });
+    try {
+      const response = await route.fetch();
+      const body = await response.text();
+      settle(body);
+      await route.fulfill({ response, body });
+    } catch (error) {
+      fail(error);
+      await route.abort().catch(() => {});
+    }
   });
-  await page.goto("/plan");
+  // En Yo se llega a Plan desde Inicio, en el cliente: su RSC lleva el presupuesto personal de Sara. Es el control de que la
+  // captura ve un presupuesto personal cuando viaja; en Nosotros, el mismo camino no debe traerlo.
+  await page.goto("/");
+  await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.plan }).click();
   await expect(page.getByRole("img", { name: copy.plan.bar(copy.categories.health, "0", "123.400", 0) })).toBeVisible();
+  const inMe = await Promise.all(fetched.filter((item) => item.path === "/plan").map((item) => item.body));
+  expect(inMe.some((body) => body.includes(saraOwn.budget_id)), "el RSC de Plan en Yo trae el presupuesto personal").toBe(true);
   // Tomás nunca: el personal de Tomás no aparece en el Plan de Sara en Yo.
   expect(leaks(await (await page.request.get("/plan")).text()).filter((marker) => marker === "98.700" || marker === tomasOwn.budget_id)).toEqual([]);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).hover();
-  switched = true;
   await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
   await expect(page.getByRole("main").getByText(copy.plan.optional.us, { exact: false })).toBeVisible();
+  // Desde aquí la cookie ya dice Nosotros (Plan de Nosotros está pintado): toda petición que empiece ahora es de Nosotros.
+  underUs = true;
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.home }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole("navigation", { name: copy.shell.navigation }).getByRole("link", { name: copy.nav.plan }).click();
   await expect(page.getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
-  const bodies = await Promise.all(fetched.filter((item) => item.after).map((item) => item.body));
-  // La prueba tiene que poder fallar: tras el cambio hubo RSC de Nosotros (el refresco y la navegación a Inicio y a Plan).
-  expect(bodies.length).toBeGreaterThan(0);
-  for (const body of bodies) expect(leaks(body), "RSC pedido en Nosotros").toEqual([]);
+  const inUs = await Promise.all(fetched.filter((item) => item.underUs).map(async (item) => ({ path: item.path, body: await item.body })));
+  for (const { path, body } of inUs) expect(leaks(body), `RSC de ${path} pedido en Nosotros`).toEqual([]);
+  // La prueba tiene que poder fallar: al menos un RSC de /plan iniciado en Nosotros, y su cuerpo trae el presupuesto
+  // compartido sembrado (control positivo), así que de verdad se inspeccionó el Plan de Nosotros.
+  const plan = inUs.filter((item) => item.path === "/plan");
+  expect(plan.length, `RSC iniciados en Nosotros: ${inUs.map((item) => item.path).join(", ")}`).toBeGreaterThan(0);
+  expect(plan.some(({ body }) => body.includes(shared.budget_id))).toBe(true);
   await context.close();
 });
