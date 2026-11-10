@@ -1002,3 +1002,70 @@ Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la 
 - Corridas:
   - `vitest --project components src/features/goals`: **81/81**, 4 archivos.
   - `PORT=3500 npm run verify`: **exit 0, 68,47 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.
+
+---
+
+# Evidencia · 004 · PR D · Gasto con meta y confirmaciones
+
+Rama `claude/004-d-goal-expense-d92653`, sobre `main` en `7b42b3a` (PR A, B y C fusionados). Tareas T057–T066 y T059a, más el encargo del fundador del selector de tipos de meta; T067–T069 son humanas. Todo se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (puerto 3400); **no es evidencia de CI** (ADR-011 §9.8) y no se lanzó ningún run. Ninguna migración.
+
+## T057–T059 · pruebas escritas primero (commit `24c2e78`)
+
+- Componentes: `src/features/expenses/goal-funding/goal-funding.test.tsx` (31 casos): «Dinero del mes» por defecto y la ruta mínima; B1 pide solo las metas del contexto de la hoja (en Nosotros `{ context: "us" }` y ninguna personal, ni deshabilitada; cambiar la hoja a Nosotros vuelve a pedir y olvida la elección; un fallo de carga no se presenta como «no hay metas»); FundingLedger (propuesta 1.619.048 / 1.380.952 con mayor residuo, «Faltan $19.048», «Sobran $80.952», topes por aportante, uso ≤ gasto, Guardar bloqueado); B3 con «Japón ahora $11.340.000 → $9.720.000» y «Si Tomás aprueba $9.720.000 → $8.340.000»; la carga que viaja (solo meta, fondos propios y pedidos); Yo sin solicitud; ConfirmationBadge en sus cinco estados y «NO SE REGISTRÓ» solo con rechazo confirmado (con `unknown`: «Reintentar» y «Comprobar estado», campos bloqueados); B4 («No vence», «Cancelar solicitud»), B5 («Tus aportes en Japón $5.220.000 → $3.840.000», reparto, lo usado por Sara), B7, aportes cambiados (JT204 con el disponible) y versión vieja bloqueada hasta «Revisar» sin atribución; «Quitar el uso» con la versión del gasto, sobre un gasto anulado con su mensaje y «USO QUITADO» en el historial; la LimitNote; la confirmación de eliminar con el aviso del uso; la reactivación de F64-1; y el «Deshacer» de un gasto con meta.
+- Spec E2E 4 (`tests/e2e/goals.e2e.ts`, +1 caso): dos sesiones con el dataset dorado (Sara pide 1.380.000 a Tomás; Tomás aprueba; una segunda solicitud, sembrada por la función real, la rechaza; los estados se ven en las dos sesiones al navegar) y la privacidad de B1: HTML y RSC de Inicio en Nosotros y la **respuesta de la Server Action de B1** sin la meta personal, con control positivo en Yo (la captura sí ve «Bicicleta de ruta» cuando viaja) y control positivo en Nosotros (la respuesta trae Japón). B1 no es una ruta: sus metas llegan por una Server Action al elegir «Con una meta», por eso se inspecciona esa respuesta (`route.fetch()`, como `tests/support/rsc-capture.ts`, que no se tocó).
+- A11y: `tests/a11y/goal-expense.a11y.ts`, un caso ligero con los dos temas en el mismo contexto (B1–B3, B4, B7, B5, la LimitNote y la confirmación de quitar el uso; 390 px) y un caso `@sweep` (siete anchos, 200 % y 44 px).
+
+## T059a · rojo contra `juntia-dev`
+
+- Componentes (local): `npx vitest run --project=components src/features/expenses/goal-funding/` → **1 archivo falla, sin pruebas cargadas**: los módulos de `goal-funding/` no existían.
+- E2E y axe: como en el PR C, `next build` hace typecheck de todo el repo y la prueba de componentes refería módulos inexistentes, así que se apartó **temporalmente** (sin commit) y se restauró después. `npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goal-expense.a11y.ts tests/a11y/goals.a11y.ts --grep "gasto con meta|Gasto con meta|Metas · axe ligero"`: build **pasó (36,37 s)**; E2E **1 falla** (`getByRole('radiogroup', { name: 'Cómo se pagó' })` no existe; la siembra del dataset dorado pasó); axe **falla** el caso nuevo por lo mismo. Total 324,47 s, exit 1.
+- Selector de tipos (con el código viejo restaurado solo para esta corrida): `npm run e2e:dev -- tests/a11y/goals.a11y.ts --grep "Metas · axe ligero"` → **2 fallan** (claro y oscuro), y solo a 1440 px: `tipos de meta por fila` esperado `[4, 3]`, recibido `[7]`; `etiquetas de tipo cortadas` recibido `["Emergencias"]`. A 390 px ya iba 4 + 3. Es exactamente el problema que reportó el fundador.
+
+## T060–T064 · implementación (commits `d00e2d4`, `629782b`)
+
+- `src/features/expenses/goal-funding/`: Server Actions (`loadFundingGoalsAction`, `createExpenseWithGoalAction`, aprobar, rechazar, cancelar, quitar el uso, el deshacer y «Comprobar estado» con `write_status`), FundingLedger, B1 (`goal-picker.tsx`), B3 (`funding-effect.tsx`), ConfirmationBadge, la tarjeta de solicitud, «Quitar el uso» con la LimitNote y el contexto de financiación de Actividad. Lecturas en `src/features/goals/funding-load.ts` (`expense_goal_funding`, `usage_requests`, `goal_member_balances`; en Nosotros solo metas compartidas) y `src/lib/db/` (`listGoalsByScope`, `expenseGoalFundingFor`, `fundedSharedExpenses`).
+- Las escrituras del gasto con meta viajan en `goalActions.funding`: el layout no cambia.
+- La anulación (privada y compartida) devuelve `reactivatedGoals`; eliminar y quitar el uso dicen «La meta {nombre} volvió a estar activa: se devolvieron $X».
+- Corrección de paso: las notas de «Apartado para metas» de Inicio (PR C) iban en gris sobre el verde de ahorro (4,38:1); axe del caso nuevo lo detectó y pasan a tinta.
+- Encargo del fundador (commit propio `d00e2d4`): el selector de tipos de la hoja de meta va en 4 columnas en todos los anchos (4 + 3), con etiquetas que pueden partir línea y nunca se cortan; los siete tipos aprobados, sin íconos ni tipos nuevos.
+
+## T065 · iteración dirigida contra `juntia-dev`
+
+| Corrida | Resultado |
+| --- | --- |
+| 1.ª: E2E nueva + `goal-expense.a11y.ts` + `goals.a11y.ts` ligero | E2E: todo el recorrido pasa salvo la última aserción (`getByText` no exacto encontraba también la nota «Tomás no aprobó…»; se hace exacta). `goals.a11y.ts` **2/2 pasan** (el selector 4 + 3 ya en verde a 390 y 1440). `goal-expense.a11y.ts` falla: `color-contrast` en la nota de Inicio (arriba) |
+| 2.ª: E2E nueva + `goal-expense.a11y.ts` | E2E **pasa, 28,6 s**. Axe: `color-contrast` del subtítulo de la meta elegida en B1 (gris sobre verde) y `aria-prohibited-attr` (un `aria-label` en un `<p>` de B5). Se corrigen: tinta en la elegida y texto solo para lectores de pantalla |
+| 3.ª: `goal-expense.a11y.ts` | **Pasa, 19,1 s**; 0 violaciones serias o críticas en los 12 estados (6 × 2 temas) |
+
+## T066 · capturas e Impeccable
+
+- 54 capturas a **390 y 1440 en claro y oscuro** en `specs/004-presupuestos-y-metas/evidence/pr-d/capturas/`, con un script temporal no versionado contra `juntia-dev`: «Cómo se pagó», B1, B2 y B3, B2 con «Faltan» y Guardar bloqueado, B4 en Actividad con CON META, B4/B6/B7 en el detalle, B5 en Inicio de Tomás y en la meta, la LimitNote con «Quitar el uso», la confirmación, «Uso quitado», eliminar con el aviso del uso, la reactivación y la hoja «Nueva meta» a 1440 con los tipos en 4 + 3. Las notificaciones de una sola vez (13–15) solo a 390. Son capturas de iteración, no de CI.
+- Impeccable: el CLI `impeccable detect` no está instalado en este equipo, así que no hay salida del detector; el hook de diseño de Impeccable revisó cada archivo editado sin hallazgos deterministas. Revisión visual sobre las capturas, con dos ajustes: la fila de uso en Actividad dice de quién son los aportes («Aportes de Sara · Tiquetes a Tokio», B4), y la tarjeta de solicitud dentro del detalle no repite el título del gasto.
+- Hallazgo aparte, previo al PR D y fuera de su alcance: con la hoja de Anotar abierta, cruzar los 768 px (hoja ↔ diálogo) la remonta y pierde el monto escrito. Lo vio el script de capturas; no se corrigió aquí.
+
+## T065 · corridas completas antes del push
+
+| Corrida | Resultado |
+| --- | --- |
+| `npm run e2e:dev` completo (1.ª, sobre `629782b`) | **exit 1, 409,12 s**. E2E 32/34: falla «UX 2: la hoja de 390 px abre ajustada al contenido» (la hoja medía 776 px; límite 728) porque la fila nueva «Cómo se pagó» sumaba ~80 px; y «Cambiar Yo/Nosotros…» de la spec 3 por tiempo (57,6 s). Axe 99/100: «Nosotros · axe de Inicio…» de `couple-shared.a11y.ts` agotó sus 30 s |
+| Arreglo (`c83da15`) | «Cómo se pagó» pasa a ser una ficha en la fila de «Hoy · Solo tú» con el valor elegido («Dinero del mes» o la meta), que abre la subhoja; el selector «Dinero del mes · Con una meta» queda arriba de B1. Sin fila nueva en la hoja. Las pruebas abren la ficha primero |
+| Dirigida: UX 2 de la spec 2, «Cambiar Yo/Nosotros» de la 3, la E2E nueva y los a11y de pareja y de PR D | **Todo pasa**; `couple-shared.a11y.ts` ligero en 29,3 s y 27,8 s (al borde de 30 s) |
+| `npm run e2e:dev` completo (2.ª, sobre `c83da15`) | **exit 1, 417,44 s**: la E2E nueva esperaba el cierre de la hoja 5 s y la escritura tardó más bajo la carga de la suite; el `@serial` de movimiento de la spec 3 (que en local corre en paralelo con todo) no vio el total nuevo a tiempo; y otra vez el límite de 30 s de `couple-shared.a11y.ts`. Aislados, los tres pasan (11,5 s, 32,4 s, 27,9 s y 27,2 s) |
+| Arreglo (`446cdca`) | La E2E nueva espera el cierre hasta 15 s (el plazo de una escritura, FR-093); el caso ligero de `couple-shared.a11y.ts` lleva `test.slow()`, como los demás a11y con sesión de la 004, sin cambiar qué audita |
+| **`npm run e2e:dev` completo (final)** | **exit 0, 452,52 s.** Build 16,85 s; E2E sin @mail **34/34, 101,87 s**; axe con sesión **100/100, 332,57 s**. Fuera, por contrato: las E2E @mail, `@sweep` y el proyecto evidence |
+| **`npm run verify`** | **exit 0, 93,95 s: supera el presupuesto de 90 s (aviso del script, no bloquea).** Lint verde (solo el aviso previo de `balance-panel.tsx:61`); typecheck verde; dominio **84/84**; componentes **870 pasan / 2 omisiones previstas**, 65 archivos (59,29 s) |
+
+- Componentes: en una corrida intermedia, con la máquina cargada, 4 casos de otros archivos agotaron su límite de 5 s; la siguiente corrida dio 519/519 y `verify` 870/870.
+- **Presupuesto del job `e2e`**: la E2E nueva tarda ~28–42 s en `juntia-dev` y el a11y nuevo ~19–28 s. El gate del PR C midió 556 s con las cinco specs; con lo de este PR el job puede acercarse a los 660 s. El PR D corre las cinco specs por el selector (añade archivos en `tests/a11y/`, regla 6), como el PR C. No se tocó el workflow ni el tope; la medición es la del gate (gestor).
+
+## Estado de las tareas del PR D
+
+| Tarea | Estado |
+| --- | --- |
+| T057–T059 | Hechas (`24c2e78`) |
+| T059a | Hecha: rojo local y contra `juntia-dev`, salidas arriba |
+| T060–T064 | Hechas (`629782b`, `c83da15`) |
+| Encargo del fundador (tipos 4 + 3) | Hecho (`d00e2d4`), con su comprobación a 390 y 1440 y la captura 16 |
+| T065 | Hecha: dirigidas en verde, `e2e:dev` completo y `verify` en verde (este con aviso de tiempo) |
+| T066 | Hecha: 54 capturas y revisión visual; sin salida del CLI de Impeccable (no instalado) |
+| T067–T069 | Humanas (gestor y fundadores) |
