@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, SavedEntry } from "./types";
 import { GoalCard } from "./goal-card";
-import { GoalStack } from "./goal-stack";
+import { GoalStack, SWIPE, swipeStep } from "./goal-stack";
 import { GoalsScreen } from "./goals-screen";
 import { ContributeSheet } from "./contribute-sheet";
 import { WithdrawSheet } from "./withdraw-sheet";
@@ -467,5 +467,34 @@ describe("Revisión del gestor del PR #68", { timeout: 15000 }, () => {
     await user.click(withdraw);
     expect(screen.queryByRole("dialog", { name: copy.goals.withdrawSheet.title })).toBeNull();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("GoalStack · gesto y «Ver todas» (decisiones del fundador, PR #68)", () => {
+  it.each([
+    [{ x: 0, y: -SWIPE.distancePx }, { x: 0, y: 0 }, 1],
+    [{ x: 0, y: -10 }, { x: 0, y: -SWIPE.velocityPxPerS }, 1],
+    [{ x: 0, y: SWIPE.distancePx }, { x: 0, y: 0 }, -1],
+    [{ x: 0, y: 10 }, { x: 0, y: SWIPE.velocityPxPerS }, -1],
+    [{ x: 0, y: -(SWIPE.distancePx - 1) }, { x: 0, y: -100 }, 0],
+    [{ x: 120, y: -80 }, { x: 900, y: -600 }, 0],
+  ] as const)("deslizar %o con velocidad %o → %i (arriba: la siguiente; abajo: la anterior; más horizontal: nada)", (offset, velocity, step) => {
+    expect(swipeStep(offset, velocity)).toBe(step);
+  });
+
+  it("solo la frontal se arrastra, y solo con más de una meta", () => {
+    const { container, unmount } = render(<GoalStack goals={[japan(), extra(1), extra(2)]} members={{}} today={TODAY} context="us" />);
+    const layers = container.querySelectorAll("[data-stack-layer]");
+    expect(layers[0].hasAttribute("data-swipe")).toBe(true);
+    expect(layers[1].hasAttribute("data-swipe")).toBe(false);
+    unmount();
+    const single = render(<GoalStack goals={[japan()]} members={{}} today={TODAY} context="us" />);
+    expect(single.container.querySelector("[data-swipe]")).toBeNull();
+  });
+
+  it("con `seeAllHref` (Inicio), «Ver todas» es un enlace a Metas y no despliega la lista aquí", () => {
+    render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" seeAllHref="/metas" />);
+    expect(screen.getByRole("link", { name: copy.goals.stack.seeAll }).getAttribute("href")).toBe("/metas");
+    expect(screen.queryByRole("button", { name: copy.goals.stack.seeAll })).toBeNull();
   });
 });

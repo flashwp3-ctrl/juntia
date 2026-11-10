@@ -81,6 +81,8 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
         <Link
           href={`/metas/${goal.id}`}
           data-goal-card={goal.id}
+          // Sin arrastre nativo del enlace: el gesto de la pila (deslizar) no compite con arrastrar y soltar.
+          draggable={false}
           onClick={open}
           tabIndex={tabIndex}
           className="group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-saving-subtle p-5 text-ink shadow-float outline-offset-[3px] motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]"

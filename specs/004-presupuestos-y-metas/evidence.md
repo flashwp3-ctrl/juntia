@@ -544,3 +544,26 @@ T052 · webkit · con API · movimiento reduce        → Error: expect(page).to
 - **Limitación conocida, sin cambio en este PR**: al cerrar la meta (Escape o ×, de vuelta a `/metas`) no hay View Transition, porque la lista suspende en su Skeleton (`(lista)/loading.tsx`) y no se forma el par. El gestor se lo muestra a los fundadores en T056.
 - **Estado de T052**: **cerrada** para la apertura, en Chromium (salida de las corridas segunda y tercera) y en Safari real (verificación humana de arriba). El respaldo de Motion queda verificado en Chromium y en el WebKit de Playwright sin la API. Siguen fuera: el cierre, que es la limitación de arriba, y el back-swipe de iPhone, aplazado por la decisión 19.1.
 - Las pruebas temporales (`zz-vt-check.e2e.ts`, `zz-webkit-diag.e2e.ts`) no se versionan; sus copias y salidas se conservan fuera del repositorio.
+
+## Decisiones del fundador del 10 de noviembre de 2026 · GoalStack
+
+- **«Ver todas» en Inicio lleva a Metas.** La pila acepta `seeAllHref`; en Inicio es un enlace a `/metas`, que conserva el contexto (cookie). En Metas, «Ver todas» sigue desplegando la cuadrícula allí mismo, con «Ver en pila». Pruebas: `goals.test.tsx` y `home-goals.test.tsx`.
+- **Deslizar en vertical recorre la pila** (COMPONENT_SPECIFICATIONS, GoalStack):
+  - **Cómo funciona.** La tarjeta frontal se arrastra en vertical con Motion (`drag="y"`, vuelve a su sitio con el spring `card`). Hacia arriba trae la siguiente al frente; hacia abajo, la anterior. Cuenta a partir de 64 px de recorrido o 500 px/s de velocidad, y un gesto más horizontal que vertical no cuenta (`swipeStep`).
+  - **Dónde.** Solo en la frontal y con más de una meta; nunca en el abanico de escritorio. `touch-pan-x` solo en esa tarjeta, así que fuera de la pila la página se desplaza como siempre.
+  - **Movimiento reducido.** La tarjeta no sigue al dedo (`dragElastic: 0`) y el cambio es inmediato.
+  - **Clic al soltar.** Se descarta desde que empieza el arrastre hasta 350 ms después de soltar, para que soltar no abra la meta. El filtro va en la lista y no en la tarjeta, porque al soltar la tarjeta arrastrada ya pasó atrás. Además, el enlace no es arrastrable de forma nativa.
+  - **Alternativas.** Tocar la que asoma y «Ver todas» siguen igual.
+  - **Pruebas de componente.** Los umbrales de `swipeStep` (seis casos); solo la frontal lleva el gesto, y no con una sola meta.
+  - **Comprobación en móvil emulado.** Prueba temporal, no versionada, contra `juntia-dev`: Chromium 156 a 390 × 844 con `hasTouch` e `isMobile`, tres metas compartidas, gesto de 140 px hacia arriba y después hacia abajo. Fueron seis corridas, que encontraron y corrigieron dos fallos: el arrastre nativo del enlace, y el clic al soltar que abría la meta. Corrida final: **2/2, 21,3 s**.
+
+```
+{"swipe":"no-preference","boxesAfterDrag":["342","342","342","342","342","342"]}
+{"swipe":"no-preference","first":0,"afterUp":1,"afterDown":0,"tapOpens":true}
+{"swipe":"reduce","boxesAfterDrag":["342","342","342","342","342","342"]}
+{"swipe":"reduce","first":0,"afterUp":1,"afterDown":0,"tapOpens":true}
+```
+
+  La frontal queda quieta tras el gesto (misma posición durante 1,5 s), y un toque posterior abre la meta frontal.
+  - **Regresión.** `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 106,65 s** (spec 4 2/2; axe de metas 2/2). Componentes de metas, Inicio y Actividad: **105/105**. No se reinició `juntia-dev`.
+- **Orden de la pila** («al frente, la meta con el aporte más reciente»): **pendiente**. `goals_overview` no trae la fecha del último aporte; se le preguntó al gestor si usar una consulta más sobre `goal_entries` o una migración, y si «más reciente» es `effective_date` o `created_at`.

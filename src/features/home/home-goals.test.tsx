@@ -44,9 +44,11 @@ describe("Inicio con metas (US-9)", () => {
     expect(container.textContent).not.toMatch(/Total gastado|te alcanza/);
   });
 
-  it("Nosotros: el módulo de metas con la tarjeta de Japón y su cinta", () => {
+  it("Nosotros: el módulo de metas con la tarjeta de Japón y su cinta; «Ver todas» lleva a Metas (decisión del fundador)", () => {
     wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} goals={goals("90000000")} />);
     expect(screen.getByRole("link", { name: /^Japón, meta compartida, 63 %/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: copy.goals.stack.seeAll }).getAttribute("href")).toBe("/metas");
+    expect(screen.queryByRole("button", { name: copy.goals.stack.seeAll })).toBeNull();
   });
 
   it("Yo de Sara: el héroe es el gasto y «Apartaste $500.000 para metas» va aparte, sin destinado neto", () => {
