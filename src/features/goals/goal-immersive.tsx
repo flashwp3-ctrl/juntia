@@ -32,7 +32,7 @@ import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, 
 type Props = { goal: GoalView; members: readonly GoalMemberView[]; entries: readonly GoalEntryView[]; people: readonly GoalPerson[]; today: string; context: PlanningContext; actions: GoalActions };
 type Open = { kind: "contribute" | "withdraw" | "edit" | "complete" | "archive"; key: string } | null;
 
-export function GoalImmersive({ goal, members, entries, people, today, context, actions }: Props) {
+export function GoalImmersive({ goal, members, entries, today, context, actions }: Props) {
   const router = useRouter();
   const annotate = useOptionalAnnotate();
   const reduced = usePrefersReducedMotion();
@@ -43,7 +43,6 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
   const active = goal.status === "active";
   const archived = goal.status === "archived";
   const surplus = surplusOf(goal);
-  const partner = people.find((person) => !person.isMe)?.name ?? null;
   const canWithdraw = BigInt(goal.myAvailableMinor) > 0n;
   const show = (kind: NonNullable<Open>["kind"]) => setOpen({ kind, key: newIdempotencyKey() });
   const close = () => setOpen(null);
@@ -146,7 +145,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           onDone={(saved, payload) => { close(); annotate?.offerGoalUndo({ kind: "withdrawal", saved, message: copy.goals.withdrawSheet.done(cop(BigInt(payload.amountPesos) * 100n), goal.name) }); }} />
       ) : null}
       {open?.kind === "edit" ? (
-        <GoalFormSheet open onClose={close} goal={goal} context={context} today={today} idempotencyKey={open.key} actions={actions} partnerName={partner}
+        <GoalFormSheet open onClose={close} goal={goal} context={context} today={today} idempotencyKey={open.key} actions={actions}
           onDone={() => { close(); annotate?.notify({ tone: "success", message: copy.goals.sheet.updated }); }} />
       ) : null}
       {open?.kind === "complete" || open?.kind === "archive" ? (

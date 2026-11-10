@@ -10,7 +10,7 @@ import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
-import { contributeToGoal, createGoal, goalEntries, listGoals } from "../../src/lib/db/goals";
+import { contributeToGoal, createGoal, goalEntries, listGoals, updateGoal } from "../../src/lib/db/goals";
 import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedSharedMovements, type SeededUser } from "../support/seed";
 import { expect, test } from "./fixtures";
@@ -166,4 +166,43 @@ test("Metas en Nosotros: ni el HTML, ni el RSC, ni el prefetch llevan metas pers
   expect(metas.length, `RSC iniciados en Nosotros: ${inUs.map((item) => item.path).join(", ")}`).toBeGreaterThan(0);
   expect(metas.some(({ body }) => body.includes(shared.id) && body.includes("Japón compartido"))).toBe(true);
   await context.close();
+});
+
+// F68-1 (revisión del PR #68): el conflicto de versión al editar una meta. Sara abre «Editar meta»; mientras tanto, la misma
+// meta cambia desde otra sesión suya (otra pestaña). Al guardar: JT011, ningún autor inventado, la versión ganadora se
+// conserva en la base y no se puede volver a guardar hasta «Revisar»; solo una nueva confirmación explícita la cambia.
+test("editar una meta con una versión vieja: JT011 sin autor; la ganadora se conserva hasta «Revisar» y guardar otra vez", async ({ browser, baseURL }, testInfo) => {
+  test.slow();
+  const pair = await seedCouple({ index: testInfo.parallelIndex });
+  const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", name: "Japón", goalType: "travel", target: moneyFromPesos(18000000n), targetMonth: null });
+  const sara = await open(browser, baseURL!, pair.sara, "us");
+  await sara.page.goto(`/metas/${goal.id}`);
+  await sara.page.getByRole("button", { name: copy.goals.immersive.edit }).click();
+  const sheet = sara.page.getByRole("dialog", { name: copy.goals.sheet.editTitle });
+  const name = sheet.getByLabel(copy.goals.sheet.name);
+  await name.fill("Japón y Corea");
+
+  // La otra pestaña gana: misma cuenta, versión leída.
+  const winner = await updateGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, expectedVersion: goal.version, name: "Japón 2027", goalType: "travel", target: moneyFromPesos(20000000n), targetMonth: null });
+
+  await sheet.getByRole("button", { name: copy.goals.sheet.submitEdit }).click();
+  const conflict = sheet.locator("[data-goal-conflict]");
+  await expect(conflict).toContainText(copy.goals.sheet.conflict.title);
+  await expect(conflict).toContainText("Japón y Corea");
+  await expect(conflict).toContainText("Japón 2027");
+  await expect(conflict).not.toContainText(/Tomás|Alguien/);
+  await expect(sheet.getByRole("button", { name: copy.goals.sheet.submitEdit })).toHaveCount(0);
+  await expect(name).toBeDisabled();
+  const kept = async () => (await listGoals(pair.sara.client, "us")).find((item) => item.id === goal.id)!;
+  expect(await kept()).toMatchObject({ name: "Japón 2027", version: winner.version });
+
+  // «Revisar»: lo vigente en el formulario; una nueva confirmación explícita guarda sobre la versión ganadora.
+  await conflict.getByRole("button", { name: copy.goals.sheet.conflict.review }).click();
+  await expect(name).toHaveValue("Japón 2027");
+  expect(await kept()).toMatchObject({ name: "Japón 2027", version: winner.version });
+  await name.fill("Japón 2027 y Corea");
+  await sheet.getByRole("button", { name: copy.goals.sheet.submitEdit }).click();
+  await expect(sheet).toHaveCount(0);
+  expect(await kept()).toMatchObject({ name: "Japón 2027 y Corea", target_minor: "2000000000", version: winner.version + 1 });
+  await sara.context.close();
 });

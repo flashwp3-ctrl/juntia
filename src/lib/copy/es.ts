@@ -9,10 +9,10 @@ export const copy = {
       date: "Elige hoy o una fecha pasada, desde la creación de la meta.",
       cannotArchive: "Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.",
       cannotComplete: "No se puede dar por lograda esta meta.",
-      versionConflict: (name:string) => `${name} cambió esta meta.`,
+      // F68-1 (revisión del PR #68): neutral. La lectura de la meta no dice quién la cambió (puede ser la pareja u otra
+      // pestaña de quien mira): no se atribuye.
+      versionConflict: "Esta meta cambió en otro lugar. Ya ves lo último.",
       undoNotAvailable: "Ya no se puede deshacer. Revisa el historial de la meta.",
-      // 004 PR C: quién cambió la meta cuando no se sabe (otra pestaña o la pareja).
-      someone: "Alguien",
       // 004 PR C (revisión del PR #68; Q13, FR-042): anular o deshacer un aporte cuyos fondos ya se usaron o se retiraron.
       fundsUsed: "Ya no se puede anular: esos fondos ya se usaron o se retiraron de la meta.",
       fundsUsedWith: (amount: string) => `Ya no se puede anular: esos fondos ya se usaron o se retiraron. Te quedan ${amount} disponibles en esta meta.`,
@@ -77,6 +77,14 @@ export const copy = {
       scopeNote: { us: "Será una meta compartida: la ven y aportan los dos.", me: "Será una meta personal: solo tú la ves." },
       submitCreate: "Crear meta", submitEdit: "Guardar cambios", submitting: "Guardando…",
       created: (name: string) => `Meta «${name}» creada`, updated: "Cambios guardados", rejected: "No se guardó.",
+      // F68-1 (revisión del PR #68): conflicto de versión al editar (JT011). Sin autor: la lectura no lo trae. Para T056.
+      conflict: {
+        title: "Esta meta cambió mientras la editabas.",
+        notSaved: (summary: string) => `Tus cambios no se guardaron: ${summary}.`,
+        current: (summary: string) => `Ahora: ${summary}.`,
+        checking: "Revisando la versión vigente…", reload: "Volver a cargar", review: "Revisar",
+        reviewNote: "Revisa los valores vigentes y guarda de nuevo si quieres cambiarlos.",
+      },
     },
     contribute: {
       title: "Registrar aporte", amount: "Monto del aporte",

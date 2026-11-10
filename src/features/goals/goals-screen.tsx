@@ -59,7 +59,7 @@ function Archived({ goals }: { goals: readonly GoalView[] }) {
   );
 }
 
-export function GoalsScreen({ data, people, today, actions }: Props) {
+export function GoalsScreen({ data, today, actions }: Props) {
   const annotate = useOptionalAnnotate();
   const [creating, setCreating] = useState<string | null>(null);
   const { context } = data;
@@ -68,7 +68,6 @@ export function GoalsScreen({ data, people, today, actions }: Props) {
   const personal = open.filter((goal) => goal.scope === "personal");
   const shared = open.filter((goal) => goal.scope === "shared");
   const create = () => setCreating(newIdempotencyKey());
-  const partner = people.find((person) => !person.isMe)?.name ?? null;
 
   // Al volver de la meta inmersiva, el foco vuelve a la tarjeta de origen (MOTION_SYSTEM §4).
   useEffect(() => {
@@ -77,7 +76,7 @@ export function GoalsScreen({ data, people, today, actions }: Props) {
   }, []);
 
   const sheet = creating ? (
-    <GoalFormSheet open onClose={() => setCreating(null)} context={context} today={today} idempotencyKey={creating} actions={actions} partnerName={partner}
+    <GoalFormSheet open onClose={() => setCreating(null)} context={context} today={today} idempotencyKey={creating} actions={actions}
       onDone={(saved) => { setCreating(null); annotate?.notify({ tone: "success", message: copy.goals.sheet.created(saved.name) }); }} />
   ) : null;
 

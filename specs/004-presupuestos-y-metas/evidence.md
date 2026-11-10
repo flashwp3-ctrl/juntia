@@ -970,3 +970,27 @@ Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la 
     - La primera, **exit 1**: `tests/a11y/job-selection.test.ts`, que llega de `main`, encontró ocupado el puerto 3400 (otro proceso, no lanzado por esta sesión).
     - La segunda, con `PORT=3500`, **exit 1**: otra vez el tiempo agotado de 5 s de `review-f57.test.tsx`, ajeno a metas. Solo, ese archivo pasa 19/19.
     - La tercera, con `PORT=3500`, **exit 0, 94,72 s** (aviso de presupuesto de 90 s). Dominio **84/84**; componentes **836 pasan / 2 omisiones previstas**, 63 archivos; typecheck y lint verdes.
+
+## F68-1 · conflicto de versión al editar una meta (revisión externa del PR #68 sobre `090c13b`)
+
+- **Hallazgo.** Tras JT011, la hoja atribuía siempre el cambio a la pareja (`changedBy: partnerName`). Además, solo hacía `router.refresh()`: un segundo «Guardar» mandaba los valores viejos del formulario con la versión nueva de las props, y la base ya no detectaba el conflicto.
+- **Arreglo** (`goal-form-sheet.tsx`), con el patrón de `budget-sheet.tsx` del PR B:
+  - la versión (`base`) y la clave (`key`) de la intención son estado de la hoja, no se leen de las props al guardar;
+  - al recibir JT011, la hoja entra en conflicto: campos y «Guardar» bloqueados, y `submit` no escribe;
+  - mientras no llega el refresco, se muestra «Revisando la versión vigente…» con «Volver a cargar»;
+  - cuando llega una versión distinta de la intentada, se dicen lo que no se guardó y los valores vigentes (nombre, tipo, objetivo y fecha);
+  - «Revisar» carga lo vigente en el formulario, toma su versión y una clave nueva (`crypto.randomUUID()`), y solo entonces se puede guardar.
+- **Autor.** La lectura de la meta no trae quién la cambió, y no se añadió una migración. El aviso es neutral: «Esta meta cambió mientras la editabas.». `goalRejection` ya no acepta `changedBy` y `copy.goals.errors.someone` desapareció. `copy.goals.errors.versionConflict` es neutral («Esta meta cambió en otro lugar. Ya ves lo último.») y lo usa también `goal-status-dialog.tsx` (lograr y archivar), que ya pedía la página otra vez y no tiene valores que sobrescribir. El copy nuevo de `copy.goals.sheet.conflict` queda para T056.
+- **Pruebas de componente** (`goal-form-conflict.test.tsx`, 3):
+  - tras JT011: ningún nombre, «Guardar» ausente y campos bloqueados, también con `requestSubmit`; «Revisando…» con «Volver a cargar», que vuelve a pedir la página; con la versión nueva, lo intentado y lo vigente;
+  - «Revisar»: el formulario muestra lo vigente, y el segundo envío lleva `expectedVersion` 4, los valores vigentes y una clave distinta;
+  - el diálogo de lograr muestra el texto neutral.
+  - **Mutaciones** (temporales, restauradas desde una copia): sin la clave nueva en «Revisar», falla la segunda; con «Guardar» visible durante el conflicto, falla la primera.
+- **E2E** (spec 4, `goals.e2e.ts`): Sara abre «Editar meta» y cambia el nombre. Desde otra sesión suya (`updateGoal` con su cliente), la meta pasa a «Japón 2027» con otro objetivo. Al guardar:
+  - aviso de conflicto con lo intentado y lo vigente, sin «Tomás» ni «Alguien»;
+  - sin «Guardar» y con el campo bloqueado;
+  - la base conserva «Japón 2027» y la versión ganadora, también después de «Revisar»;
+  - tras una nueva edición y «Guardar», la base tiene el nombre nuevo, el objetivo ganador y la versión + 1.
+- **Corridas**:
+  - `PORT=3500 npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goals.a11y.ts`: **exit 0, 130,52 s**. Build 29,89 s; E2E **3/3, 60,84 s** (la nueva, 6,1 s); axe **2/2, 38,31 s**.
+  - `PORT=3500 npm run verify`: **exit 0, 73,09 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.
