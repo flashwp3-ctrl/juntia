@@ -7,8 +7,8 @@ select has_column('public','goals_overview','last_contribution_date','columna de
 select has_column('public','goals_overview','last_contribution_created_at','columna del instante del último aporte');
 select col_type_is('public','goals_overview','last_contribution_date','date','fecha sin hora');
 select col_type_is('public','goals_overview','last_contribution_created_at','timestamp with time zone','instante con zona');
-select results_eq($$select column_name::text from information_schema.columns where table_schema='public' and table_name='goals_overview' order by ordinal_position$$,
- array['id','goal_scope','name','goal_type','target_minor','target_month','status','version','balance_minor','progress_percent','has_pending_request','my_available_minor','created_at','last_contribution_date','last_contribution_created_at']::text[],
+select is((select array_agg(column_name::text collate "C" order by ordinal_position) from information_schema.columns where table_schema='public' and table_name='goals_overview'),
+ array['id','goal_scope','name','goal_type','target_minor','target_month','status','version','balance_minor','progress_percent','has_pending_request','my_available_minor','created_at','last_contribution_date','last_contribution_created_at']::text[] collate "C",
  'las columnas de antes no cambian de orden; las nuevas van al final');
 select is((select c.reloptions from pg_class c where c.oid='public.goals_overview'::regclass),array['security_invoker=true']::text[],'sigue siendo security_invoker');
 select tests.create_user('11111111-1111-4111-8111-111111111111','sara@seed.test');
