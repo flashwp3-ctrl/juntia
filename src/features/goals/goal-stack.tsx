@@ -149,8 +149,9 @@ export function GoalStack({ goals, members, today, context, onCreate, label = co
         </ul>
         {onCreate ? (
           <button type="button" onClick={onCreate}
-            className="hidden h-[228px] w-[132px] shrink-0 flex-col items-center justify-center gap-2 rounded-[26px] border-[length:var(--border-strong)] border-dashed border-border-emphasis text-[length:var(--label-m-size)] font-semibold text-ink hover:bg-sunken lg:flex">
-            <AppIcon name="plus" weight="bold" size={22} />
+            data-goal-create=""
+            className="hidden h-[228px] w-[132px] shrink-0 flex-col items-center justify-center gap-2.5 rounded-[26px] border-2 border-dashed border-ink-secondary text-[length:var(--label-m-size)] font-semibold text-ink lg:flex">
+            <span aria-hidden="true" data-goal-create-plus="" className="grid size-11 place-items-center rounded-full bg-raised shadow-raised"><AppIcon name="plus" weight="bold" size={20} /></span>
             {copy.goals.stack.create}
           </button>
         ) : null}

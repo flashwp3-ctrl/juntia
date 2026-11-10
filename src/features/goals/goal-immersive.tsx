@@ -64,13 +64,13 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
   return (
     <article aria-labelledby="goal-title" className="-mx-4 flex flex-col sm:-mx-6 lg:mx-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:items-start lg:gap-10 lg:pt-6">
       <ViewTransition name={`goal-photo-${goal.id}`} share="goal-morph" default="none">
-        <m.div layoutId={supported || reduced ? undefined : `goal-photo-${goal.id}`} className="relative isolate flex min-h-[min(52vh,460px)] flex-col justify-end overflow-hidden bg-saving-subtle px-6 pt-[max(76px,env(safe-area-inset-top))] pb-12 text-ink lg:sticky lg:top-8 lg:min-h-[min(78vh,720px)] lg:rounded-[38px] lg:px-10 lg:pb-12">
+        <m.div layoutId={supported || reduced ? undefined : `goal-photo-${goal.id}`} data-goal-tint={goal.goalType} className="relative isolate flex min-h-[min(52vh,460px)] flex-col justify-end overflow-hidden bg-[var(--goal-tint-bg)] px-6 pt-[max(76px,env(safe-area-inset-top))] pb-12 text-ink lg:sticky lg:top-8 lg:min-h-[min(78vh,720px)] lg:rounded-[38px] lg:px-10 lg:pb-12">
           <GoalFallback goal={goal} size="immersive" />
           <Link href="/metas" aria-label={copy.goals.immersive.close} className="absolute top-[max(16px,env(safe-area-inset-top))] right-4 z-10 grid size-11 place-items-center rounded-full bg-raised text-ink shadow-raised hover:bg-sunken lg:top-6 lg:right-6">
             <AppIcon name="x" weight="bold" size={18} />
           </Link>
           <div className="relative flex flex-col gap-2">
-            <p className={`${overlineClass} text-ink`}>{overlineOf(goal)}</p>
+            <p className={`${overlineClass} text-pending`}>{overlineOf(goal)}</p>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
               <h1 id="goal-title" ref={title} tabIndex={-1} className="max-w-[18ch] font-serif text-[clamp(44px,13vw,84px)] leading-[0.98] font-medium tracking-[-0.02em] text-balance outline-none focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-4 focus-visible:outline-focus focus-visible:outline-solid lg:text-[clamp(56px,6vw,112px)]">
                 {goal.name}

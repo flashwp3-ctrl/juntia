@@ -12,6 +12,7 @@
 // Tomás 5.220.000 en 10, objetivo abril de 2027; parte D: Bicicleta de ruta con 1.050.000 de Sara.
 import { act, configure, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, SavedEntry } from "./types";
@@ -496,5 +497,40 @@ describe("GoalStack · gesto y «Ver todas» (decisiones del fundador, PR #68)",
     render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" seeAllHref="/metas" />);
     expect(screen.getByRole("link", { name: copy.goals.stack.seeAll }).getAttribute("href")).toBe("/metas");
     expect(screen.queryByRole("button", { name: copy.goals.stack.seeAll })).toBeNull();
+  });
+});
+
+// Decisión del fundador del 10 de noviembre de 2026 (BRAND_FOUNDATION, «tinte de la categoría de la meta»; Juntia DS v1, «08
+// Tintes de meta»): el fallback sin foto pinta el tinte de su tipo; el texto secundario sobre el tinte usa `status.pending`.
+describe("Tinte por tipo de meta", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const tokens = readFileSync("src/styles/tokens.css", "utf8");
+  it.each(["travel", "home", "wedding", "vehicle", "education", "emergency", "other"] as const)("%s pinta su tinte: fondo, inicial, ícono y borde del riel", (goalType) => {
+    const { container } = render(<GoalCard goal={japan({ goalType })} members={japanMembers} today={TODAY} context="us" />);
+    const card = container.querySelector("[data-goal-card]") as HTMLElement;
+    expect(card.getAttribute("data-goal-tint")).toBe(goalType);
+    expect(card.className).toContain("bg-[var(--goal-tint-bg)]");
+    expect(card.className).not.toContain("bg-saving-subtle");
+    expect(container.querySelector("[data-goal-fallback]")?.className).toContain("text-[color:var(--goal-tint-initial)]");
+    expect(container.querySelector("[data-ribbon-on-tint]")).toBeTruthy();
+    // Las cuatro variables del tipo existen en el CSS y en los tres bloques de tokens (claro, oscuro y respaldo).
+    expect(css).toContain(`[data-goal-tint="${goalType}"] { --goal-tint-bg: var(--color-goal-tint-${goalType}-bg);`);
+    for (const part of ["bg", "initial", "icon", "edge"]) expect(tokens.match(new RegExp(`--color-goal-tint-${goalType}-${part}: #[0-9A-F]{6};`, "g"))).toHaveLength(3);
+  });
+
+  it("el texto secundario de la tarjeta usa status.pending, nunca text.secondary", () => {
+    const { container } = render(<GoalCard goal={japan()} members={japanMembers} today={TODAY} context="us" />);
+    const card = container.querySelector("[data-goal-card]") as HTMLElement;
+    expect(card.innerHTML).not.toContain("text-ink-secondary");
+    expect(card.innerHTML).toContain("text-pending");
+  });
+
+  it("las capas traseras conservan su tinte con un filete de 1 px; la frontal lleva la sombra float", () => {
+    const { container } = render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" />);
+    const [front, back] = [...container.querySelectorAll("[data-goal-card]")] as HTMLElement[];
+    expect(front.className).toContain("shadow-float");
+    expect(back.className).toContain("bg-[var(--goal-tint-bg)]");
+    expect(back.className).toContain("shadow-[0_0_0_1px_var(--color-border-strong)]");
+    expect(back.className).not.toMatch(/opacity-/);
   });
 });

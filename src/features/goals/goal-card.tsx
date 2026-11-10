@@ -55,10 +55,10 @@ type Props = {
 export function GoalFallback({ goal, size, peek = false }: { goal: GoalView; size: "card" | "immersive"; peek?: boolean }) {
   return (
     <>
-      <span data-goal-fallback="" aria-hidden="true" className={`pointer-events-none absolute font-serif leading-none font-medium text-saving opacity-30 select-none ${size === "card" ? "-right-3 -bottom-16 text-[248px]" : "-right-6 -bottom-24 text-[min(88vw,440px)] lg:-bottom-28 lg:text-[min(44vw,560px)]"}`}>
+      <span data-goal-fallback="" aria-hidden="true" className={`pointer-events-none absolute font-serif leading-none font-medium text-[color:var(--goal-tint-initial)] select-none ${size === "card" ? "-right-3 -bottom-16 text-[248px]" : "-right-6 -bottom-24 text-[min(88vw,440px)] lg:-bottom-28 lg:text-[min(44vw,560px)]"}`}>
         {goal.name.trim().charAt(0).toLocaleUpperCase("es-CO")}
       </span>
-      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-saving ${peek ? "hidden" : ""} ${size === "card" ? "top-5 right-5" : "top-[max(20px,env(safe-area-inset-top))] left-6 lg:top-10 lg:left-10"}`} />
+      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-[color:var(--goal-tint-icon)] ${peek ? "hidden lg:block" : ""} ${size === "card" ? "top-5 right-5" : "top-[max(20px,env(safe-area-inset-top))] left-6 lg:top-10 lg:left-10"}`} />
     </>
   );
 }
@@ -85,27 +85,28 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
           draggable={false}
           onClick={open}
           tabIndex={tabIndex}
-          className="group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-saving-subtle p-5 text-ink shadow-float outline-offset-[3px] motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]"
+          data-goal-tint={goal.goalType}
+          className={`group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-[var(--goal-tint-bg)] p-5 text-ink outline-offset-[3px] ${peek ? "shadow-[0_0_0_1px_var(--color-border-strong)]" : "shadow-float"} motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]`}
         >
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>
           <GoalFallback goal={goal} size="card" peek={peek} />
           <OpeningMark name={goal.name} />
           <span aria-hidden="true" className={`relative flex min-w-0 flex-col gap-1 ${peek ? "-mt-1.5 pr-16 lg:pl-14" : "pr-12"}`}>
-            <span className={`${overlineClass} text-ink ${peek ? "hidden" : ""}`}>
+            <span className={`${overlineClass} text-pending ${peek ? "hidden" : ""}`}>
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>
             </span>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
               <span className={`font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
             </ViewTransition>
           </span>
-          {peek ? <span aria-hidden="true" className="absolute top-3.5 right-4 rounded-full bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}
+          {peek ? <span aria-hidden="true" className="absolute top-3.5 right-4 rounded-full lg:top-16 bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}
           <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? "invisible" : ""}`}>
             <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="flex items-center gap-2">
                 <span className="text-[28px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{copy.goals.percent(goal.progressPercent)}</span>
                 {completed ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-raised px-2 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-ink shadow-raised">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-canvas">
                     <AppIcon name="flag-checkered" weight="fill" size={13} />{copy.goals.status.completed}
                   </span>
                 ) : suggest ? (
@@ -114,18 +115,18 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
                   </span>
                 ) : null}
               </span>
-              <span className="text-[13px] font-medium text-ink tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</span>
+              <span className="text-[13px] font-medium text-pending tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</span>
             </span>
             <ViewTransition name={`goal-ribbon-${goal.id}`} share="goal-morph" default="none">
-              <span className="block"><GoalRibbon members={ribbonMembers} targetMinor={goal.targetMinor} pacePercent={pace.kind === "line" ? pace.elapsedPercent : null} /></span>
+              <span className="block"><GoalRibbon members={ribbonMembers} targetMinor={goal.targetMinor} pacePercent={pace.kind === "line" ? pace.elapsedPercent : null} onTint /></span>
             </ViewTransition>
-            {surplus > 0n ? <span data-goal-surplus="" className="text-[12px] font-medium text-ink">{copy.goals.surplus(cop(surplus))}</span> : null}
+            {surplus > 0n ? <span data-goal-surplus="" className="text-[12px] font-medium text-pending">{copy.goals.surplus(cop(surplus))}</span> : null}
             {pace.kind === "line" ? (
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] leading-[1.35] text-ink">
-                <span className="rounded-full border-[1.5px] border-dashed border-ink px-1.5 text-[11px] font-semibold text-ink">{copy.goals.pace.estimate}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] leading-[1.35] text-pending">
+                <span className="rounded-full border-[1.5px] border-dashed border-pending px-1.5 text-[11px] font-semibold text-pending">{copy.goals.pace.estimate}</span>
                 <span>{pace.text}</span>
               </span>
-            ) : pace.kind === "pastDue" ? <span className="text-[12px] leading-[1.35] text-ink">{pace.text}</span> : null}
+            ) : pace.kind === "pastDue" ? <span className="text-[12px] leading-[1.35] text-pending">{pace.text}</span> : null}
           </span>
         </Link>
       </m.div>

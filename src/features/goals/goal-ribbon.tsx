@@ -19,11 +19,13 @@ type Props = {
   size?: "card" | "immersive";
   /** Crecer desde 0 al montar (Goal Journey, 300–700 ms). */
   grow?: boolean;
+  /** Sobre el tinte de la meta: el riel lleva un borde interior de 1,5 px en `.edge` (≥ 3:1 contra el tinte y el riel). */
+  onTint?: boolean;
 };
 
 const fill = { 1: "bg-person-1", 2: "bg-[repeating-linear-gradient(135deg,var(--color-person-2)_0_5px,var(--color-person-2-stripe)_5px_9px)]" } as const;
 
-export function GoalRibbon({ members, targetMinor, pacePercent = null, size = "card", grow = false }: Props) {
+export function GoalRibbon({ members, targetMinor, pacePercent = null, size = "card", grow = false, onTint = false }: Props) {
   const reduced = usePrefersReducedMotion();
   const target = BigInt(targetMinor);
   const parts = members.filter((member) => BigInt(member.availableMinor) > 0n);
@@ -36,7 +38,7 @@ export function GoalRibbon({ members, targetMinor, pacePercent = null, size = "c
   }, []);
   const animate = grow && !reduced;
   return (
-    <div role="img" aria-label={label} className={`relative w-full rounded-full bg-track ${size === "card" ? "h-2.5" : "h-4"}`}>
+    <div role="img" aria-label={label} data-ribbon-on-tint={onTint ? "" : undefined} className={`relative w-full rounded-full bg-track ${size === "card" ? "h-2.5" : "h-4"} ${onTint ? "after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:shadow-[inset_0_0_0_1.5px_var(--goal-tint-edge)] after:content-['']" : ""}`}>
       <div className="absolute inset-0 flex overflow-hidden rounded-full">
         {parts.map((member, index) => {
           const width = widths[index];

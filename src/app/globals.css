@@ -210,3 +210,15 @@ html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-value
   ::view-transition-group(*) { animation: none !important; }
   ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 200ms !important; animation-timing-function: linear !important; }
 }
+
+/* 004 PR C, decisión del fundador del 10 de noviembre de 2026 (BRAND_FOUNDATION: «tinte de la categoría de la meta»):
+   tinte por tipo de meta en el fallback sin foto (Juntia DS v1, «08 Tintes de meta»). Cada tarjeta, capa de la pila o meta
+   inmersiva declara `data-goal-tint` y usa estas cuatro variables: fondo, inicial gigante, ícono Duotone y borde interior del
+   riel de la cinta. El texto principal sigue en tinta y el secundario en `status.pending` (4,5:1 sobre todos los tintes). */
+[data-goal-tint="travel"] { --goal-tint-bg: var(--color-goal-tint-travel-bg); --goal-tint-initial: var(--color-goal-tint-travel-initial); --goal-tint-icon: var(--color-goal-tint-travel-icon); --goal-tint-edge: var(--color-goal-tint-travel-edge); }
+[data-goal-tint="home"] { --goal-tint-bg: var(--color-goal-tint-home-bg); --goal-tint-initial: var(--color-goal-tint-home-initial); --goal-tint-icon: var(--color-goal-tint-home-icon); --goal-tint-edge: var(--color-goal-tint-home-edge); }
+[data-goal-tint="wedding"] { --goal-tint-bg: var(--color-goal-tint-wedding-bg); --goal-tint-initial: var(--color-goal-tint-wedding-initial); --goal-tint-icon: var(--color-goal-tint-wedding-icon); --goal-tint-edge: var(--color-goal-tint-wedding-edge); }
+[data-goal-tint="vehicle"] { --goal-tint-bg: var(--color-goal-tint-vehicle-bg); --goal-tint-initial: var(--color-goal-tint-vehicle-initial); --goal-tint-icon: var(--color-goal-tint-vehicle-icon); --goal-tint-edge: var(--color-goal-tint-vehicle-edge); }
+[data-goal-tint="education"] { --goal-tint-bg: var(--color-goal-tint-education-bg); --goal-tint-initial: var(--color-goal-tint-education-initial); --goal-tint-icon: var(--color-goal-tint-education-icon); --goal-tint-edge: var(--color-goal-tint-education-edge); }
+[data-goal-tint="emergency"] { --goal-tint-bg: var(--color-goal-tint-emergency-bg); --goal-tint-initial: var(--color-goal-tint-emergency-initial); --goal-tint-icon: var(--color-goal-tint-emergency-icon); --goal-tint-edge: var(--color-goal-tint-emergency-edge); }
+[data-goal-tint="other"] { --goal-tint-bg: var(--color-goal-tint-other-bg); --goal-tint-initial: var(--color-goal-tint-other-initial); --goal-tint-icon: var(--color-goal-tint-other-icon); --goal-tint-edge: var(--color-goal-tint-other-edge); }

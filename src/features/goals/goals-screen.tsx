@@ -42,10 +42,13 @@ function Archived({ goals }: { goals: readonly GoalView[] }) {
         {goals.map((goal) => (
           <li key={goal.id}>
             <Link href={`/metas/${goal.id}`} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
-              <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-ink-secondary"><AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} /></span>
+              <span aria-hidden="true" data-goal-tint={goal.goalType} className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--goal-tint-bg)] text-[color:var(--goal-tint-icon)]"><AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} /></span>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[15px] font-semibold">{goal.name}</span>
-                <span className="text-[12px] text-ink-secondary">{copy.goals.status.archived} · {copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</span>
+                <span className="flex flex-wrap items-center gap-1.5 text-[12px] text-ink-secondary">
+                  <span className="inline-flex items-center gap-1 rounded-full border-[1.5px] border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink"><AppIcon name="archive" size={12} />{copy.goals.status.archived}</span>
+                  {copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}
+                </span>
               </span>
               <AppIcon name="caret-right" size={18} className="text-ink-secondary" />
             </Link>
