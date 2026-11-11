@@ -7,7 +7,7 @@
 // sola cuenta no siembra: va aquí, solo con A11Y_JOB=e2e, y cada título termina en «con sesión».
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
-import { axe, largeText, signedContext, sweep, tabTo, target44 } from "../support/a11y";
+import { axe, largeText, overflow, signedContext, sweep, tabTo, target44 } from "../support/a11y";
 import { seedCouple } from "../support/seed";
 import { THEMES } from "./route-registry";
 
@@ -24,6 +24,13 @@ async function bothThemes(page: Page, label: string) {
 }
 const usReady = (page: Page) => expect(region(page, copy.analysis.chapters.where).getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
 const meReady = (page: Page) => expect(region(page, copy.analysis.chapters.where).getByText(copy.analysis.where.noBudgets.me)).toBeVisible();
+/** F71-3 (decisión de los fundadores del 11 nov 2026): la tabla visible desplegable «Ver cifras exactas» bajo el gráfico. */
+async function openFigures(page: Page) {
+  const toggle = region(page, copy.analysis.chapters.compared).getByRole("button", { name: copy.analysis.compared.show });
+  await toggle.click();
+  await expect(region(page, copy.analysis.chapters.compared).getByRole("button", { name: copy.analysis.compared.hide })).toHaveAttribute("aria-expanded", "true");
+  await expect(region(page, copy.analysis.chapters.compared).getByRole("table", { name: copy.analysis.compared.table })).toBeVisible();
+}
 async function openNote(page: Page) {
   const how = region(page, copy.analysis.chapters.setAside).getByRole("button", { name: copy.analysis.note.how });
   await how.click();
@@ -31,7 +38,7 @@ async function openNote(page: Page) {
 }
 
 if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
-  test("Análisis · axe de Nosotros con presupuesto, la PlanningNote abierta y Yo sin presupuesto · light y dark · 390px · con sesión", async ({ browser, baseURL }, testInfo) => {
+  test("Análisis · axe de Nosotros con presupuesto, la PlanningNote y las cifras exactas abiertas y Yo sin presupuesto · light y dark · 390px · con sesión", async ({ browser, baseURL }, testInfo) => {
     test.slow();
     const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
     const { context, page } = await signedContext(browser, baseURL!, pair.sara, "light", "us");
@@ -56,7 +63,9 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     await openNote(page);
     await expect(region(page, copy.analysis.chapters.setAside).getByRole("group", { name: copy.analysis.note.overline })).toContainText("$3.740.000");
     await expect(page.getByRole("main")).not.toContainText(/total gastado/i);
-    await bothThemes(page, "Análisis en Nosotros con la PlanningNote abierta");
+    await openFigures(page);
+    await expect(region(page, copy.analysis.chapters.compared).getByRole("row", { name: /Octubre 2026/ })).toContainText("$2.840.000");
+    await bothThemes(page, "Análisis en Nosotros con la PlanningNote y las cifras exactas abiertas");
     await context.close();
 
     // Yo de Sara en octubre, sin presupuestos personales: solo gasto y categorías; ninguna barra, límite, 0 % ni EXCEDIDO.
@@ -97,15 +106,24 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     await motion.close();
   });
 
-  test("barrido de siete anchos y 200 %: Análisis en Nosotros con la PlanningNote abierta y en Yo · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+  test("barrido de siete anchos y 200 %: Análisis en Nosotros con la PlanningNote y las cifras exactas abiertas, y en Yo · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     test.slow();
     const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
     const { context, page } = await signedContext(browser, baseURL!, pair.sara, "light", "us");
     await page.goto(OCTOBER);
     await usReady(page);
     await openNote(page);
+    await openFigures(page);
     await sweep(page, "Análisis en Nosotros");
     await largeText(page, "Análisis en Nosotros");
+    // Las cifras exactas abiertas a 320 px y con el texto al 200 %, sin desbordar (F71-3).
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    const narrow = await overflow(page);
+    console.log(`Análisis con las cifras exactas · 320px · 200 %: scrollWidth ${narrow.scrollWidth} / ${narrow.clientWidth}; cortado: ${narrow.clipped.length}`);
+    expect.soft(narrow.scrollWidth, "320px · 200 %: sin scroll horizontal").toBeLessThanOrEqual(narrow.clientWidth);
+    expect.soft(narrow.clipped, "320px · 200 %: sin texto cortado").toEqual([]);
+    await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     await context.close();
     const me = await signedContext(browser, baseURL!, pair.sara, "light", "me");
     await me.page.goto(OCTOBER);
@@ -121,7 +139,7 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     await page.goto(OCTOBER);
     await usReady(page);
     const next = copy.analysis.nextMonth("Noviembre 2026");
-    for (const name of [next, copy.analysis.note.how]) await target44(page, name, name === next ? "link" : "button");
+    for (const name of [next, copy.analysis.note.how, copy.analysis.compared.show]) await target44(page, name, name === next ? "link" : "button");
     // En orden de lectura: el selector de mes antes que los capítulos, y «Cómo se calcula» dentro del capítulo 4.
     await tabTo(page, next);
     await tabTo(page, copy.analysis.note.how);

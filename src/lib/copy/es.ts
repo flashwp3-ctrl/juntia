@@ -342,6 +342,9 @@ export const copy = {
       chart: "Gasto por mes",
       caption: "Solo el gasto de los meses con datos, hasta seis. Lo apartado para metas va aparte.",
       table: "Gasto por mes, en pesos",
+      // F71-3, decisión de los fundadores del 11 nov 2026: la tabla desplegable bajo el gráfico.
+      show: "Ver cifras exactas",
+      hide: "Ocultar cifras exactas",
       month: "Mes",
       amount: "Gasto",
       first: "Es el primer mes con gastos: todavía no hay con qué comparar.",

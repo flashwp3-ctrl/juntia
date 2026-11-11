@@ -1435,3 +1435,27 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
 - `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 64,47 s, total 75,51 s.
 - `npm run verify`: **exit 0, 68,85 s**; componentes 982 / 2 omisiones previstas.
 - `e2e:dev` completo: no se repitió en esta ronda; el gestor no lo pidió.
+
+## F71-3 · decisión de los fundadores del 11 de noviembre de 2026: «Ver cifras exactas»
+
+- **Decisión:** bajo el Chart de Análisis, una tabla visible desplegable en lugar del tooltip por teclado de COMPONENT_SPECIFICATIONS «Chart». Anotada en `docs/design/COMPONENT_SPECIFICATIONS.md` §Chart.
+- **Construcción** (`month-chart.tsx`): el mismo patrón que «Cómo se calcula». Un botón de 44 px con `aria-expanded` y `aria-controls`, que dice «Ver cifras exactas» o «Ocultar cifras exactas», con el `caret-right` de `AppIcon` que gira y foco visible. Abre una tabla visible con cada mes del gráfico y su importe exacto (`formatMoney`, con `$`), con el estilo de la tabla de Actividad: encabezado en overline y filas separadas por línea fina, con el mes elegido en tinta.
+- **Sin duplicar:** se quitó la tabla `sr-only`. El gráfico es decorativo (`aria-hidden`) y la tabla desplegable es la única equivalencia accesible, para teclado y para lector de pantalla, que puede abrirla con el botón. Nadie pierde acceso: la caption de la tabla («Gasto por mes, en pesos») sigue siendo su nombre.
+- **Pruebas:**
+  - Componentes, **22/22**. Caso nuevo: cerrada no hay ninguna tabla; al abrir, `aria-expanded` pasa a `true`, el texto cambia, `aria-controls` apunta a la tabla y hay una sola tabla con los importes exactos de cada mes; al cerrar, desaparece. El caso anterior comprueba que las barras están dentro del bloque `aria-hidden`.
+  - `analysis.a11y.ts` ligero: estado nuevo con la PlanningNote y las cifras exactas abiertas, en los dos temas: **0 violaciones**. La fila de octubre de la tabla abierta muestra $2.840.000.
+  - `@sweep`: siete anchos y 200 % con la tabla abierta (Nosotros 390 / 390), y **320 px al 200 %: 320 / 320, sin texto cortado**. Objetivo «Ver cifras exactas»: **146,8 × 44**.
+
+### Corridas (puerto 3500)
+
+- `npm run verify`: **exit 0, 66,84 s**; componentes 983 / 2 omisiones previstas.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**, total 42,70 s; 0 violaciones en los seis análisis; F71-2 sigue en verde (opacidad 1, `transform: none`, `shown`).
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**, total 40,92 s.
+- `npm run e2e:dev` completo: build 9,91 s; **E2E 32 / 35 en 166,56 s**; axe con sesión **103 / 103 en 379,49 s**; **total 557,13 s, exit 1**. Fallan, por tiempo:
+  - Exportar: los 5 s de «Archivo listo.»;
+  - «Cambiar Yo/Nosotros» de la spec 3 (90 s);
+  - **la spec 5 «presupuesto activado y desactivado»**, otra vez: los 30 s del test entero vencen, esta vez en `page.reload`. Es la cuarta corrida completa seguida en que falla, siempre por esos 30 s y en un paso distinto; dirigida pasa.
+- **Hipótesis descartada en lo posible:** que el enlace nuevo «Ver el análisis de {mes}» de Plan precargue Análisis con sus lecturas en cada carga de Plan, que ese caso recarga varias veces con dos sesiones.
+  - Un script temporal sin versionar abrió `/plan` y vio una sola petición a `/plan/analisis`, con `Next-Router-Prefetch: 1`.
+  - Es la precarga de Next para una ruta dinámica con `loading.tsx`, que pinta hasta el Skeleton y no ejecuta la página.
+  - Playwright no da el cuerpo de un RSC transmitido, así que la ausencia de datos no queda probada con ese script. No se cambió nada.

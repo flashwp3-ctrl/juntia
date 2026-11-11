@@ -162,15 +162,34 @@ describe("Chart del capítulo 3 (COMPONENT_SPECIFICATIONS «Chart»; US-3, escen
     { month: "2026-09", spentMinor: minor(2725000n) },
     { month: "2026-10", spentMinor: minor(2840000n) },
   ];
-  it("una barra de gasto por mes con datos y su tabla equivalente; el mes elegido, en tinta", () => {
+  it("una barra de gasto por mes con datos; el mes elegido, en tinta; el gráfico es decorativo para el lector", () => {
     render(<MonthChart months={history} selected="2026-10" />);
     const bars = document.querySelectorAll("[data-chart-bar]");
     expect(bars).toHaveLength(3);
     expect([...bars].map((bar) => bar.getAttribute("data-current"))).toEqual(["false", "false", "true"]);
+    expect(bars[0].closest("[aria-hidden=\"true\"]")).toBeTruthy();
+  });
+
+  // F71-3, decisión de los fundadores del 11 nov 2026: en lugar del tooltip por teclado, la tabla visible desplegable «Ver
+  // cifras exactas», con el patrón de «Cómo se calcula»; es la única equivalencia accesible (no hay otra tabla oculta).
+  it("«Ver cifras exactas» abre y cierra la tabla con aria-expanded y los importes exactos de cada mes", async () => {
+    const user = userEvent.setup();
+    render(<MonthChart months={history} selected="2026-10" />);
+    expect(screen.queryByRole("table")).toBeNull();
+    const toggle = screen.getByRole("button", { name: copy.analysis.compared.show });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await user.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(toggle.textContent).toContain(copy.analysis.compared.hide);
     const table = screen.getByRole("table", { name: copy.analysis.compared.table });
+    expect(table.id).toBe(toggle.getAttribute("aria-controls"));
+    expect(screen.getAllByRole("table")).toHaveLength(1);
     expect(within(table).getAllByRole("row").map((row) => [...row.children].map((cell) => text(cell).trim()).join(" "))).toEqual([
       `${copy.analysis.compared.month} ${copy.analysis.compared.amount}`, "Agosto 2026 $2.400.000", "Septiembre 2026 $2.725.000", "Octubre 2026 $2.840.000",
     ]);
+    await user.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("table")).toBeNull();
   });
 
   it("nunca apila ahorro y gasto: el capítulo 3 no lleva lo apartado ni ninguna barra con dos segmentos", () => {
