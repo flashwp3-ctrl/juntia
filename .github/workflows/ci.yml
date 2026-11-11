@@ -187,7 +187,9 @@ jobs:
         # un segundo. La imagen ya trae postgresql-common (PGDG) con su llave y todas las dependencias de PostgreSQL 17
         # (run 42965711679: solo se instalaron postgresql-17 y postgresql-client-17, ambos de PGDG), así que apt mira
         # solo la lista de PGDG, sin espejos de Ubuntu, con tiempos acotados. Si PGDG falla, el paso falla rápido y claro.
-        timeout-minutes: 4
+        # Reparto del tope: update 90 s + install 150 s + clúster hasta 60 s (pg_createcluster y pg_isready) = 300 s; los
+        # 6 min dejan margen para que salga nuestro ::error antes de que GitHub cancele el paso.
+        timeout-minutes: 6
         run: |
           set -euo pipefail
           key=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
