@@ -399,3 +399,76 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
   for (const body of tomasBodies) expect(leaks(body), "B1 de Tomás").toEqual([]);
   await Promise.all([sara.context.close(), tomas.context.close()]);
 });
+
+// Decisión de los fundadores del 11 de noviembre de 2026: en móvil, la pila se recorre deslizando en horizontal y el scroll
+// vertical empezado sobre la tarjeta del frente mueve la página (antes, `drag="y"` con `touch-action: pan-x` lo bloqueaba).
+// Móvil emulado de verdad (táctil): los toques van por CDP (`Input.dispatchTouchEvent`), que pasa por el compositor y respeta
+// `touch-action`; `Input.synthesizeScrollGesture` no desplaza en el Chromium sin interfaz. En Inicio, con movimientos, para
+// que la página tenga recorrido de sobra con cualquier alto de viewport; el punto de partida sale de la parte visible de la
+// tarjeta (por encima de la barra inferior fija), no de coordenadas fijas: la geometría del CI no es la de una máquina local.
+test("pila de metas en móvil: el scroll vertical sobre la tarjeta mueve la página y deslizar a la izquierda trae la siguiente", async ({ browser, baseURL }) => {
+  const pair = await seedCouple({ index: test.info().parallelIndex });
+  await seedSharedMovements(pair, "recent");
+  const today = todayInBogota();
+  for (const [name, pesos] of [["Japón", 500000n], ["Sala nueva", 300000n]] as const) {
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", name, goalType: "travel", target: moneyFromPesos(18000000n), targetMonth: null });
+    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(pesos), entryDate: today, fundingMode: "reserved" });
+  }
+  const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width: 390, height: 700 }, hasTouch: true, isMobile: true });
+  await context.addCookies(pair.sara.cookies);
+  await context.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL!).hostname, path: "/" }]);
+  await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+  const page = await context.newPage();
+  await page.goto("/");
+  const front = page.locator("[data-swipe]").filter({ visible: true }).first();
+  const frontName = () => front.locator("[data-goal-title]").innerText();
+  await expect(front).toBeVisible();
+  const first = await frontName();
+  const cdp = await context.newCDPSession(page);
+  // Un dedo que se apoya en (x, y) y se desliza (dx, dy) en diez pasos.
+  const touchDrag = async (x: number, y: number, dx: number, dy: number) => {
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 10; step += 1) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + (dx * step) / 10, y: y + (dy * step) / 10 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+  // La tarjeta a la vista y quieta: dos lecturas seguidas de su caja iguales (sin esperas fijas).
+  const settle = async () => {
+    await front.scrollIntoViewIfNeeded();
+    let last = "";
+    await expect.poll(async () => { const box = JSON.stringify(await front.boundingBox()); const same = box === last; last = box; return same; }, { message: "la caja de la tarjeta del frente se queda quieta" }).toBe(true);
+  };
+  // Un punto bien dentro de la parte visible de la tarjeta: lejos del borde izquierdo y por encima de la barra inferior fija.
+  // La guarda dice qué elemento hay en el punto si no es la tarjeta, para diagnosticar.
+  const startPoint = async () => {
+    const point = await front.evaluate((card) => {
+      const box = card.getBoundingClientRect();
+      const bar = document.querySelector("nav[aria-label] > div")?.getBoundingClientRect();
+      const bottom = Math.min(box.bottom, bar && bar.height > 0 ? bar.top : window.innerHeight, window.innerHeight);
+      const top = Math.max(box.top, 0);
+      const x = Math.round(box.left + box.width * 0.6);
+      const y = Math.round(top + (bottom - top) / 2);
+      const hit = document.elementFromPoint(x, y);
+      const describe = (node: Element | null) => (node ? `<${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ""}${node.className && typeof node.className === "string" ? ` class="${node.className.slice(0, 60)}"` : ""}>` : "nada");
+      return { x, y, visible: bottom - top, onCard: !!hit?.closest("[data-swipe]"), hit: describe(hit), card: `${Math.round(box.top)}–${Math.round(box.bottom)}`, bar: bar ? Math.round(bar.top) : null, viewport: window.innerHeight };
+    });
+    expect(point.visible, `parte visible de la tarjeta (tarjeta ${point.card}, barra ${point.bar}, viewport ${point.viewport})`).toBeGreaterThan(80);
+    expect(point.onCard, `el dedo empieza sobre la tarjeta del frente: en (${point.x}, ${point.y}) hay ${point.hit} (tarjeta ${point.card}, barra ${point.bar}, viewport ${point.viewport})`).toBe(true);
+    return point;
+  };
+
+  // Scroll vertical empezado sobre la tarjeta: la página baja y el frente no cambia.
+  await settle();
+  const before = await page.evaluate(() => window.scrollY);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight - window.scrollY), "la página tiene recorrido vertical por debajo").toBeGreaterThan(200);
+  const start = await startPoint();
+  await touchDrag(start.x, start.y, 0, -150);
+  await expect.poll(() => page.evaluate(() => window.scrollY), { message: "el scroll empezado sobre la tarjeta mueve la página" }).toBeGreaterThan(before + 60);
+  expect(await frontName()).toBe(first);
+
+  // Deslizar a la izquierda sobre la frontal: la siguiente pasa al frente.
+  await settle();
+  const from = await startPoint();
+  await touchDrag(from.x, from.y, -160, 0);
+  await expect.poll(frontName).not.toBe(first);
+  await context.close();
+});

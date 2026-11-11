@@ -44,11 +44,15 @@ describe("Inicio con metas (US-9)", () => {
     expect(container.textContent).not.toMatch(/Total gastado|te alcanza/);
   });
 
-  it("Nosotros: el módulo de metas con la tarjeta de Japón y su cinta; «Ver todas» lleva a Metas (decisión del fundador)", () => {
-    wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} goals={goals("90000000")} />);
+  it("Nosotros: el módulo de metas con la tarjeta de Japón y su cinta; «Ver todas» es el único camino a Metas (decisiones de los fundadores)", () => {
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} goals={goals("90000000")} />);
     expect(screen.getByRole("link", { name: /^Japón, meta compartida, 63 %/ })).toBeTruthy();
     expect(screen.getByRole("link", { name: copy.goals.stack.seeAll }).getAttribute("href")).toBe("/metas");
     expect(screen.queryByRole("button", { name: copy.goals.stack.seeAll })).toBeNull();
+    // 11 de noviembre de 2026: el encabezado ya no lleva «Ver metas»; en el módulo, un solo enlace a /metas (el del pie).
+    expect(screen.queryByRole("link", { name: "Ver metas" })).toBeNull();
+    const goalsModule = container.querySelector<HTMLElement>("[data-goals-home]")!;
+    expect(within(goalsModule).getAllByRole("link").filter((link) => link.getAttribute("href") === "/metas")).toHaveLength(1);
   });
 
   it("Yo de Sara: el héroe es el gasto y «Apartaste $500.000 para metas» va aparte, sin destinado neto", () => {
