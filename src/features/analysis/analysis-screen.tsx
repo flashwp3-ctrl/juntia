@@ -69,7 +69,7 @@ function Chapter({ number, title, children, className = "" }: { number: number; 
     setPhase("waiting");
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && (entry.intersectionRatio >= 0.3 || entry.intersectionRect.height >= window.innerHeight * 0.3)) {
-        setPhase("entering");
+        setPhase((current) => (current === "waiting" ? "entering" : current));
         observer.disconnect();
       }
     }, { threshold: [0, 0.15, 0.3] });
@@ -83,8 +83,13 @@ function Chapter({ number, title, children, className = "" }: { number: number; 
       ref={ref}
       aria-labelledby={id}
       data-chapter-phase={visible}
-      className={`flex min-w-0 flex-col gap-4 ${className}`}
-      style={visible === "shown" ? undefined : { opacity: visible === "waiting" ? 0 : 1, transform: visible === "waiting" ? "translateY(12px)" : "none", transition: `opacity 320ms ${enter}, transform 320ms ${enter}` }}
+      // Revisión F71-2 del PR #71: un capítulo que espera su entrada no deja un control invisible en el orden de Tab. Al recibir
+      // foco pasa a `shown` en el acto (sin transición que tape el indicador), y `:focus-within` lo asegura en CSS.
+      onFocusCapture={visible === "shown" ? undefined : () => setPhase("shown")}
+      className={`flex min-w-0 flex-col gap-4 focus-within:opacity-100! focus-within:transform-none! ${className}`}
+      // En `shown`, `transition: none` cancela una entrada que ya hubiera empezado: una transición en curso gana incluso al
+      // `!important` de `:focus-within`, y quitar el estilo en línea no la para (la transición por defecto es `all 0s`).
+      style={visible === "shown" ? { transition: "none" } : { opacity: visible === "waiting" ? 0 : 1, transform: visible === "waiting" ? "translateY(12px)" : "none", transition: `opacity 320ms ${enter}, transform 320ms ${enter}` }}
     >
       <div className="flex flex-col gap-1">
         <p aria-hidden="true" className={overline}>{copy.analysis.chapter(number)}</p>

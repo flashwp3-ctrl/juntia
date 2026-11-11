@@ -12,7 +12,7 @@
 import { randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { moneyFromPesos } from "../../src/domain/money";
-import { todayInBogota } from "../../src/domain/transactions";
+import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { budgetHistory, budgetMonths, createBudget } from "../../src/lib/db/budgets";
 import { contributeToGoal, createGoal } from "../../src/lib/db/goals";
@@ -20,6 +20,7 @@ import { createTransaction } from "../../src/lib/db/transactions";
 import { monthName, shortDate } from "../../src/lib/format";
 import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedSharedMovements, type SeededUser } from "../support/seed";
+import { runnerSql } from "../integration/support/sql";
 import { expect, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
@@ -242,6 +243,27 @@ test("spec 5 · privacidad de Análisis: ni el HTML, ni el RSC, ni el prefetch d
       }
       await context.close();
     }
+  }
+
+  // Revisión F71-1 del PR #71: un mes con presupuesto y sin gastos ni metas se puede ver. Un presupuesto de Nosotros que rige
+  // desde el mes anterior (Transporte 150.000), escrito como historia en la base, igual que la siembra dorada: ese mes no tiene
+  // ninguna métrica. Antes, `?mes=` redirigía al mes en curso. Ahora se ve con su límite real y consumo 0, sin métricas
+  // inventadas (ni gasto ni PlanningNote) ni barras de lo que no tiene presupuesto.
+  const before = shiftMonth(today().slice(0, 7), -1);
+  const transport = randomUUID();
+  runnerSql(`begin;
+    insert into juntia_data.budgets(id,group_id,category_id,version,created_by,created_at,updated_by,updated_at) values('${transport}','${pair.groupId}','transport',1,'${pair.sara.id}','${before}-02T12:00:00-05:00','${pair.sara.id}','${before}-02T12:00:00-05:00');
+    insert into juntia_data.budget_versions(budget_id,effective_month,limit_minor,changed_by,changed_at) values('${transport}','${before}-01',15000000,'${pair.sara.id}','${before}-02T12:00:00-05:00');
+    commit;`);
+  {
+    const { context, page } = await open(browser, baseURL!, pair.sara, "us");
+    await page.goto(analysisOf(before));
+    await expect(page).toHaveURL(new RegExp(`mes=${before}$`));
+    await expect(chapter(page, copy.analysis.chapters.where).getByRole("img", { name: copy.plan.bar(copy.categories.transport, "0", "150.000", 0) })).toBeVisible();
+    await expect(chapter(page, copy.analysis.chapters.where).getByRole("img")).toHaveCount(1);
+    await expect(chapter(page, copy.analysis.chapters.amount)).toContainText(copy.analysis.noSpending.us(monthName(before)));
+    await expect(page.getByRole("main").getByRole("group", { name: copy.analysis.note.overline })).toHaveCount(0);
+    await context.close();
   }
 
   // Prefetch (tests/support/rsc-capture.ts: cada RSC se clasifica por su propia cookie al empezar). Sara en Yo a 1440 llega a

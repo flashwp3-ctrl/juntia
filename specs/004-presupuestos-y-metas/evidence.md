@@ -1405,3 +1405,33 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
   - segunda, con el equipo en reposo (un solo proceso de Node, CPU al 5 %): **33 / 35 en 146,49 s**; fallan Exportar (los 5 s de «Archivo listo.») y la spec 5 «activado y desactivado».
 - La spec 5 «activado y desactivado» es del PR B y no cambió. En el fallo, la página ya anuncia «Presupuesto desactivado.» y la lista aún muestra el límite cuando vencen los **30 s del test entero**, que no lleva `test.slow()`. Dirigida pasa (arriba, 3/3).
 - **Ninguna corrida completa de esta ronda salió limpia contra `juntia-dev`.** Los fallos son tiempos agotados y cambian de una corrida a otra; ninguno es de un archivo de Análisis, y el a11y con sesión pasó entero.
+
+## Revisión de ChatGPT del PR #71 (sobre `ad17956`) · F71-1 a F71-3
+
+1. **F71-1 · el primer mes del selector ignoraba los meses que solo tienen presupuesto.**
+   - **Arreglo:** el primer mes navegable es el primero con alguna métrica de `metric_months` o con un límite vigente de `budget_months`, el que llegue antes. `metric_months` sigue siendo la única fuente de las cinco métricas. `budget_months` ya genera una fila por mes desde el primer mes de vigencia de cada presupuesto, así que basta con una consulta barata: `firstBudgetMonth` en `src/lib/db/budgets.ts`, filtrada por `context` en SQL, con `limit_minor` no nulo, `order by month` y `limit 1`.
+   - **Prueba:** dentro del caso de privacidad de la spec 5, sin siembra nueva, un presupuesto de Nosotros (Transporte 150.000) que rige desde el mes anterior, escrito como historia en la base igual que la siembra dorada. Ese mes no tiene ninguna métrica. Se comprueba:
+     - `?mes=` de ese mes no redirige;
+     - el único `img` del capítulo 2 es la barra real «Transporte: 0 de 150.000, 0 %»;
+     - el capítulo 1 dice que no hay gastos;
+     - no aparece la PlanningNote (ninguna métrica inventada).
+   - **Con el `load.ts` anterior** puesto un momento, `npm run e2e:dev -- tests/e2e/budgets.e2e.ts --grep "privacidad de Análisis"` **falla**: se esperaba `mes=2026-10` y llegó `mes=2026-11`.
+2. **F71-2 · un control enfocable dentro de un capítulo invisible.**
+   - **Arreglo:** el capítulo pasa a `shown` al recibir foco (`onFocusCapture`), y `:focus-within` fuerza opacidad 1 y ninguna transformación. Sin `aria-hidden` ni `inert`.
+   - **Dos detalles que solo vio el navegador:**
+     - Una entrada ya empezada sigue corriendo: una transición en curso gana incluso al `!important`, y quitar el estilo en línea no la para, porque la transición por defecto es `all 0s`. En `shown`, `transition: none` explícito la cancela.
+     - El observador solo avanza desde `waiting`, para no devolver un capítulo enfocado a `entering`.
+   - **Prueba en el a11y ligero, con movimiento normal** (el resto del archivo usa `reduce`). A 390 px, con el capítulo 4 en `waiting`, Tab hasta «Cómo se calcula». En ese mismo instante, el botón enfocado y su capítulo tienen opacidad efectiva 1, `transform: none` y fase `shown`.
+     - Con el código anterior **falla**: opacidad 0,627, `matrix(1, 0, 0, 1, 0, 4.47)` y `phase: "waiting"`.
+     - Con `onFocusCapture` y sin `transition: none`, **también fallaba**: opacidad 0,628 con `phase: "shown"`. Así se encontró el primer detalle.
+     - Con el arreglo completo **pasa**: opacidad 1, `"none"` y `"shown"`.
+3. **F71-3 · tooltip accesible por teclado en el Chart. No implementado: no hay una forma limpia que cumpla las tres condiciones.** Una barra enfocable necesita un nombre accesible, que el lector anunciaría además de la tabla `sr-only` (duplica). Una barra enfocable dentro del bloque visual `aria-hidden` incumple `aria-hidden-focus` de axe. Va al gestor para que lo proponga a los fundadores (tabla visible desplegable, «Ver cifras exactas»). Una alternativa posible que no se construyó: que el propio Chart sea la tabla, con cada mes una celda enfocable y su importe exacto dentro y un tooltip visual `aria-hidden`; cambia la estructura del componente y no se probó.
+
+### Corridas (puerto 3500)
+
+- Componentes de Análisis y `tests/a11y-select.test.ts`: **85/85**. ESLint y typecheck limpios.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; axe 24,10 s, total 36,83 s. Sin violaciones serias; F71-2 en verde.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; total 37,33 s. Al 200 %, 390 / 390 en Nosotros y en Yo; teclado y 44 px verdes.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 64,47 s, total 75,51 s.
+- `npm run verify`: **exit 0, 68,85 s**; componentes 982 / 2 omisiones previstas.
+- `e2e:dev` completo: no se repitió en esta ronda; el gestor no lo pidió.

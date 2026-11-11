@@ -2,7 +2,7 @@ import "server-only";
 // 004 PR E (T073, T075) / FR-021–FR-024, FR-063, FR-085; contracts/server-actions.md §4. Lecturas de Análisis con el
 // cliente de la petición (vistas `security_invoker`), nunca con la clave secreta (FR-006). Todo con el `context` de la
 // pantalla en la consulta, no filtrado después: en Nosotros no se pide nada personal (FR-085).
-// - `metric_months` del contexto, todos sus meses en una lectura: las cinco métricas del mes, el capítulo 3 (meses con gasto)
+// - `metric_months` del contexto, todos sus meses en una lectura (la única fuente de las cinco métricas), el capítulo 3
 //   y los límites del selector de mes. El cliente no recalcula ninguna métrica (FR-063).
 // - `budget_months` del mes y del anterior: el desglose por categoría con su límite vigente, y la comparación (Q10), que
 //   calcula el dominio (`monthComparison`).
@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
 import { monthComparison } from "@/domain/analysis";
 import { aporte_a_metas } from "@/domain/metrics";
 import { shiftMonth, type CategoryId } from "@/domain/transactions";
-import { budgetMonths } from "@/lib/db/budgets";
+import { budgetMonths, firstBudgetMonth } from "@/lib/db/budgets";
 import { DbError, mapDbError } from "@/lib/db/errors";
 import { goalActivity } from "@/lib/db/goals";
 import { metricMonths } from "@/lib/db/metrics";
@@ -30,9 +30,17 @@ const positive = (minor: string) => BigInt(minor) > 0n;
 const spending = (rows: readonly BudgetMonthTransport[]) =>
   rows.filter((row) => row.category_id !== "income").map((row) => ({ categoryId: row.category_id, amountMinor: BigInt(row.consumed_minor) }));
 
-/** El mes que se puede enseñar: entre el primero con datos del contexto y el mes en curso. */
-export function clampMonth(month: string, metrics: readonly MetricMonthTransport[], current: string) {
-  const first = metrics.map(monthOf).filter((value) => value <= current).sort()[0] ?? current;
+/**
+ * El primer mes navegable del contexto: el primero con alguna métrica (`metric_months`) o con un límite vigente
+ * (`budget_months`), el que llegue antes (revisión F71-1 del PR #71: un mes con presupuesto y sin gastos ni metas se puede
+ * ver). Sin ninguno, el mes en curso.
+ */
+export function firstMonth(metrics: readonly MetricMonthTransport[], budgetMonth: string | null, current: string) {
+  return [...metrics.map(monthOf), ...(budgetMonth ? [budgetMonth.slice(0, 7)] : [])].filter((value) => value <= current).sort()[0] ?? current;
+}
+
+/** El mes que se puede enseñar: entre el primero navegable y el mes en curso. */
+export function clampMonth(month: string, first: string, current: string) {
   return month > current ? current : month < first ? first : month;
 }
 
@@ -45,8 +53,9 @@ export async function loadAnalysis(context: AnalysisContext, month: string, toda
   try {
     const client = await createClient();
     const current = today.slice(0, 7);
-    const all = await metricMonths(client, context);
-    const shown = clampMonth(month, all, current);
+    const [all, budgetMonth] = await Promise.all([metricMonths(client, context), firstBudgetMonth(client, context)]);
+    const first = firstMonth(all, budgetMonth, current);
+    const shown = clampMonth(month, first, current);
     const previous = shiftMonth(shown, -1);
     const [rows, before, entries] = await Promise.all([
       budgetMonths(client, context, `${shown}-01`),
@@ -59,7 +68,6 @@ export async function loadAnalysis(context: AnalysisContext, month: string, toda
       fundedMinor: row.gasto_financiado_con_meta, netMinor: row.total_destinado_neto,
     } : null;
     const comparison = monthComparison(spending(rows), spending(before));
-    const first = all.map(monthOf).filter((value) => value <= current).sort()[0] ?? current;
     const history = all.filter((item) => monthOf(item) <= shown && positive(item.gasto_consumo))
       .sort((a, b) => monthOf(a).localeCompare(monthOf(b))).slice(-HISTORY)
       .map((item) => ({ month: monthOf(item), spentMinor: item.gasto_consumo }));

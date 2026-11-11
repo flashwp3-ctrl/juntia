@@ -72,6 +72,29 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     expect(await me.page.locator("main").innerText()).not.toMatch(/\$0(?![.\d])|\b0 %|EXCEDIDO/);
     await bothThemes(me.page, "Análisis en Yo sin presupuesto");
     await me.context.close();
+
+    // Revisión F71-2 del PR #71, con movimiento NORMAL (el resto del archivo usa `reduce`): a 390 px el capítulo 4 empieza bajo
+    // el pliegue y espera su entrada con opacidad 0. Al llegar con Tab a «Cómo se calcula», el botón enfocado y su capítulo
+    // tienen opacidad efectiva 1 y ninguna transformación en ese mismo instante (sin esperar a la animación de entrada).
+    const motion = await browser.newContext({ baseURL, reducedMotion: "no-preference", colorScheme: "light", viewport: { width: 390, height: 900 } });
+    await motion.addCookies(pair.sara.cookies);
+    await motion.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL!).hostname, path: "/" }]);
+    await motion.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+    const moving = await motion.newPage();
+    await moving.goto(OCTOBER);
+    await usReady(moving);
+    await expect(moving.locator("main [data-chapter-phase='waiting']").first()).toBeAttached();
+    await tabTo(moving, copy.analysis.note.how);
+    const seen = await moving.evaluate(() => {
+      const button = document.activeElement as HTMLElement;
+      let opacity = 1;
+      for (let node: HTMLElement | null = button; node; node = node.parentElement) opacity *= Number(getComputedStyle(node).opacity);
+      const chapter = button.closest<HTMLElement>("[data-chapter-phase]")!;
+      return { opacity, chapterOpacity: getComputedStyle(chapter).opacity, transform: getComputedStyle(chapter).transform, phase: chapter.dataset.chapterPhase };
+    });
+    console.log(`F71-2 · foco en «Cómo se calcula» con movimiento normal: ${JSON.stringify(seen)}`);
+    expect(seen).toMatchObject({ opacity: 1, chapterOpacity: "1", transform: "none", phase: "shown" });
+    await motion.close();
   });
 
   test("barrido de siete anchos y 200 %: Análisis en Nosotros con la PlanningNote abierta y en Yo · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
