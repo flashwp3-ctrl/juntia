@@ -84,6 +84,8 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
           // Sin arrastre nativo del enlace: el gesto de la pila (deslizar) no compite con arrastrar y soltar.
           draggable={false}
           onClick={open}
+          // Revisión del PR #74 (F74-1): un toque en la que asoma la trae al frente sin navegar; E5 no lo toma por una navegación.
+          data-stays-on-page={onPeekClick ? "" : undefined}
           tabIndex={tabIndex}
           data-goal-tint={goal.goalType}
           // Alto mínimo, no fijo (encargo del gestor en el PR E): con el texto al 200 % el contenido pide más de 228 px y, con un alto

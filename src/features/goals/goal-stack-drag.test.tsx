@@ -23,6 +23,7 @@ vi.mock("motion/react-m", () => {
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }), usePathname: () => "/metas" }));
 
 const { GoalStack } = await import("./goal-stack");
+const { startsNavigation } = await import("@/features/expenses/annotate/use-reveal");
 
 const goal = (index: number, overrides: Partial<GoalView> = {}): GoalView => ({
   id: `6666666${index}-6666-4666-8666-666666666666`, name: `Meta ${index}`, goalType: "home", scope: "shared", status: "active", version: 1,
@@ -92,5 +93,51 @@ describe("GoalStack · deslizar horizontal (decisión de los fundadores del 11 d
     media(false);
     render(<GoalStack goals={[goal(1), goal(2)]} members={{}} today="2026-11-10" context="us" />);
     expect((dragged.props as DragProps).dragElastic).toBeGreaterThan(0);
+  });
+});
+
+// F74-3 (revisión de ChatGPT del PR #74): la señal `data-stays-on-page` de la lista se quita 350 ms después del ÚLTIMO arrastre.
+// Con dos arrastres seguidos, el plazo del primero no la quita mientras el clic del segundo sigue bloqueado; si lo hiciera, E5
+// tomaría ese clic por una navegación (startsNavigation) y dejaría de esperar el gasto recién guardado.
+describe("GoalStack · la señal de «no navega» tras deslizar (F74-3)", () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("dos arrastres a menos de 350 ms: vencido el plazo del primero y no el del segundo, el clic sigue bloqueado y no es una navegación", () => {
+    vi.useFakeTimers();
+    media(false);
+    const { container, unmount } = render(<GoalStack goals={[goal(1), goal(2), goal(3)]} members={{}} today="2026-11-10" context="us" />);
+    const list = container.querySelector("ul")!;
+    const drag = () => act(() => { (dragged.props as DragProps).onDragEnd!({}, { offset: { x: 0, y: -120 }, velocity: { x: 0, y: 0 } }); });
+    const clickCard = () => {
+      const card = container.querySelector<HTMLAnchorElement>("[data-stack-layer='0'] [data-goal-card]")!;
+      const event = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, detail: 1 });
+      const navigates = startsNavigation(Object.defineProperty(event, "target", { value: card }));
+      card.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, detail: 1 }));
+      return navigates;
+    };
+
+    drag(); // t = 0: el primer plazo vence a los 350 ms
+    act(() => { vi.advanceTimersByTime(200); });
+    drag(); // t = 200: el segundo vence a los 550 ms
+    act(() => { vi.advanceTimersByTime(250); }); // t = 450: venció el primero, no el segundo
+    expect(list.hasAttribute("data-stays-on-page")).toBe(true);
+    // El clic que sigue a soltar está bloqueado (no abre la meta) y E5 no lo toma por una navegación.
+    const blocked = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, detail: 1 });
+    container.querySelector("[data-stack-layer='0'] [data-goal-card]")!.dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+    expect(clickCard()).toBe(false);
+
+    act(() => { vi.advanceTimersByTime(150); }); // t = 600: venció el del último arrastre
+    expect(list.hasAttribute("data-stays-on-page")).toBe(false);
+    expect(clickCard()).toBe(true);
+
+    // Al desmontar se cancela el temporizador del último arrastre.
+    const set = vi.spyOn(globalThis, "setTimeout");
+    const cleared = vi.spyOn(globalThis, "clearTimeout");
+    drag();
+    const timer = set.mock.results.find((result) => result.type === "return")?.value;
+    expect(timer).toBeDefined();
+    unmount();
+    expect(cleared.mock.calls.some(([id]) => id === timer)).toBe(true);
   });
 });

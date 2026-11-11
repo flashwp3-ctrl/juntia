@@ -190,6 +190,7 @@ describe("La espera de una fila confirmada termina siempre (sin bucle de refresc
   });
 });
 
+// Issue #53: sigue abierto; necesita el ADR del UUID generado en el cliente dentro de `create_transaction` (tabla en annotate/machines.test.ts).
 describe("Límite conocido F51-11, aceptado por el gestor: la real llega antes que la respuesta", () => {
   it("con la respuesta de B retenida y la lista ya con B real, se ven la temporal y la real; al llegar la respuesta queda una sola", async () => {
     const held = deferred<ActionResult<SavedTransaction>>();

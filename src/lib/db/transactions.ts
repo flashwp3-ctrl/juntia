@@ -59,12 +59,6 @@ export async function listTransactionMonths(client: SupabaseClient): Promise<str
   if (error) throw mapDbError(error);
   return data.map(({ month }) => month as string);
 }
-export async function listRecentCategories(client: SupabaseClient) {
-  await requireClaims(client);
-  const { data, error } = await client.from("my_recent_categories").select("category_id");
-  if (error) throw mapDbError(error);
-  return data.map(({ category_id }) => category_id as TransactionTransport["category_id"]);
-}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /**
  * Un movimiento activo propio para el detalle (FR-037, lectura). Ajeno, anulado o inexistente dan lo mismo,
