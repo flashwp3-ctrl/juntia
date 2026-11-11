@@ -1173,3 +1173,12 @@ El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó):
 | `vitest --project components src/features` | **536/536** |
 | `npm run verify` | **exit 0, 106,37 s: supera el presupuesto de 90 s (aviso).** Dominio 84/84, componentes **890 / 2 omisiones previstas** |
 | `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 137,20 s**: **21/21**, E2E 107,63 s |
+
+## Barrido T068 (run 42939346411 sobre `7afdbe5`) · «Quitar el uso de la meta» al 200 %
+
+- **Fallo** (el único de 107): `goal-expense.a11y.ts`, «detalle con LimitNote · 200 %: sin scroll horizontal», 392 / 390. `Button` no parte su etiqueta (`whitespace-nowrap`, alto fijo) y «Quitar el uso de la meta» no cabía al 200 %.
+- **Arreglo**, sin tocar el `Button` compartido: los botones del gasto con meta (`goal-funding/wrap-label.ts`: el disparador y la confirmación de quitar el uso; aprobar, rechazar, cancelar y «Revisar» de la tarjeta de solicitud) pueden partir la etiqueta en dos líneas. Conservan el alto mínimo de su tamaño, y las dos caras (reposo y carga) siguen en la misma celda: el ancho no salta al cargar y nada se corta.
+- **Comprobación nueva** en el `@sweep` del archivo: el detalle con meta (LimitNote, «Quitar el uso», Editar y Eliminar) a **320 px**, con el texto normal y al 200 %.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/goal-expense.a11y.ts`: **exit 0, 32,23 s.** Sin scroll horizontal en los siete anchos y los dos temas (B2/B3, B5 y el detalle). Al 200 %: Anotar 390/390, B5 390/390 y detalle **390/390**; detalle a 320 px **320/320** y a 320 px · 200 % **320/320**, sin texto cortado. Objetivos: «Aprobar $200.000» 171,8×44, «Rechazar» 138,9×44 y «Quitar el uso de la meta» 320×52.
+- Pasada ligera del archivo: **exit 0, 53,29 s.** `npm run verify`: **exit 0, 101,60 s** (aviso: más de 90 s), componentes 890 / 2 omisiones previstas.
+- **Fuera de alcance, para el gestor:** a 320 px y al 200 %, en Inicio de Nosotros, el título «Japón» de la tarjeta de la pila (GoalCard del PR C, `line-clamp-2`) queda cortado. El barrido oficial empieza en 360 y ahí no ocurre. No se tocó.

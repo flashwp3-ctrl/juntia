@@ -11,7 +11,7 @@ import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { contributeToGoal, createGoal } from "../../src/lib/db/goals";
 import { createExpenseWithGoal, rejectUsageRequest, usageRequests } from "../../src/lib/db/goal-usage";
-import { axe, largeText, signedContext, sweep, target44 } from "../support/a11y";
+import { axe, largeText, overflow, signedContext, sweep, target44 } from "../support/a11y";
 import { seedCouple } from "../support/seed";
 import { THEMES } from "./route-registry";
 
@@ -58,6 +58,22 @@ async function openFunding(page: Page) {
   const picker = sheet.getByRole("radiogroup", { name: copy.goalExpense.picker.title });
   await expect(picker.getByRole("radio", { name: /^Japón/ })).toBeVisible();
   return { sheet, picker };
+}
+
+/**
+ * Barrido T068 (run 42939346411): a 320 px, con el texto normal y al 200 %, sin scroll horizontal ni texto cortado. Los siete
+ * anchos del barrido empiezan en 360; el detalle con meta (LimitNote, «Quitar el uso», Editar y Eliminar) se mide además aquí.
+ */
+async function narrow(page: Page, label: string) {
+  await page.setViewportSize({ width: 320, height: 900 });
+  for (const size of ["", "200%"]) {
+    await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, size);
+    const result = await overflow(page);
+    console.log(`${label} · 320px${size ? " · 200 %" : ""}: scrollWidth ${result.scrollWidth} / ${result.clientWidth}; cortado: ${result.clipped.length}${result.wide.length ? `; se sale: ${result.wide.join(" | ")}` : ""}`);
+    expect.soft(result.scrollWidth, `${label} · 320px${size ? " · 200 %" : ""}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+    expect.soft(result.clipped, `${label} · 320px${size ? " · 200 %" : ""}: sin texto cortado`).toEqual([]);
+  }
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
 }
 
 /** Los dos temas sobre el mismo estado, sin repetir el recorrido (como Plan, contracts/ci.md: agrupados por ruta). */
@@ -135,6 +151,8 @@ if (JOB === "e2e") test.describe("Gasto con meta y confirmaciones (PR D de la 00
     await expect(me.page.locator("[data-transaction-detail]:visible").getByRole("note")).toBeVisible();
     await sweep(me.page, "detalle con LimitNote");
     await largeText(me.page, "detalle con LimitNote");
+    await narrow(me.page, "detalle con LimitNote");
+    await me.page.setViewportSize({ width: 390, height: 900 });
     await target44(me.page, copy.goalExpense.remove.action);
     await me.context.close();
   });

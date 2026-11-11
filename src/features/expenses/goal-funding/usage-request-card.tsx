@@ -22,6 +22,7 @@ import type { GoalPerson } from "@/features/goals/types";
 import { copy } from "@/lib/copy/es";
 import { UnconfirmedClose } from "@/features/goals/goal-sheet-frame";
 import { ConfirmationBadge } from "./confirmation-badge";
+import { wrapLabelMd } from "./wrap-label";
 import { useOptionalAnnotate } from "../annotate-provider";
 import type { GoalFundingActions, RequestPayload, RequestResult, UsageRequestView } from "./types";
 
@@ -134,7 +135,7 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       {write.state.phase === "rejected" ? (
         <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
           <span>{requestRejection(write.state.error, write.state.detail, request.goalName)}</span>
-          {blocked ? <Button variant="secondary" icon="arrow-clockwise" onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
+          {blocked ? <Button variant="secondary" icon="arrow-clockwise" className={wrapLabelMd} onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
         </div>
       ) : null}
       {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirmingClose(true)} /> : null}
@@ -143,11 +144,11 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       {status === "pending" && !blocked && write.state.phase !== "unknown" ? (
         role === "member" ? (
           <div className="flex flex-wrap gap-2">
-            <Button icon="check" loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>
-            <Button variant="secondary" loading={write.pending && kind === "reject"} loadingLabel={copy.goalExpense.request.rejecting} disabled={busy} onClick={() => send("reject")}>{copy.goalExpense.request.reject}</Button>
+            <Button icon="check" className={wrapLabelMd} loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>
+            <Button variant="secondary" className={wrapLabelMd} loading={write.pending && kind === "reject"} loadingLabel={copy.goalExpense.request.rejecting} disabled={busy} onClick={() => send("reject")}>{copy.goalExpense.request.reject}</Button>
           </div>
         ) : role === "requester" ? (
-          <Button variant="ghost" icon="x" loading={write.pending} loadingLabel={copy.goalExpense.request.cancelling} disabled={busy} onClick={() => send("cancel")} className="self-start">{copy.goalExpense.request.cancel}</Button>
+          <Button variant="ghost" icon="x" loading={write.pending} loadingLabel={copy.goalExpense.request.cancelling} disabled={busy} onClick={() => send("cancel")} className={`self-start ${wrapLabelMd}`}>{copy.goalExpense.request.cancel}</Button>
         ) : null
       ) : null}
     </article>
