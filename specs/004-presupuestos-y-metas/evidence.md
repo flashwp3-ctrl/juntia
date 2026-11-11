@@ -1182,3 +1182,25 @@ El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó):
 - `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/goal-expense.a11y.ts`: **exit 0, 32,23 s.** Sin scroll horizontal en los siete anchos y los dos temas (B2/B3, B5 y el detalle). Al 200 %: Anotar 390/390, B5 390/390 y detalle **390/390**; detalle a 320 px **320/320** y a 320 px · 200 % **320/320**, sin texto cortado. Objetivos: «Aprobar $200.000» 171,8×44, «Rechazar» 138,9×44 y «Quitar el uso de la meta» 320×52.
 - Pasada ligera del archivo: **exit 0, 53,29 s.** `npm run verify`: **exit 0, 101,60 s** (aviso: más de 90 s), componentes 890 / 2 omisiones previstas.
 - **Fuera de alcance, para el gestor:** a 320 px y al 200 %, en Inicio de Nosotros, el título «Japón» de la tarjeta de la pila (GoalCard del PR C, `line-clamp-2`) queda cortado. El barrido oficial empieza en 360 y ahí no ocurre. No se tocó.
+
+## F69-6 · E5 cuando el gasto se guarda en un contexto distinto del de la página (revisión de `ac92923`)
+
+- **Hallazgo**: la hoja tiene su propio selector Yo/Nosotros y guardar no cambia el contexto de la app. Un compartido anotado desde Inicio en Yo (o un privado desde Inicio en Nosotros) dejaba a E5 esperando los 10 s, porque la lista del mes estaba montada pero nunca iba a traer ese id. Al final llevaba a Actividad de un contexto que tampoco lo enseña.
+- **Corrección**:
+  1. `Reveal` lleva `context`, el de la escritura (privado `me`, compartido `us`, gasto con meta el suyo).
+  2. `useListScope(month, ids, contexts)`: cada lista se registra por separado (`useId`), con su mes, sus contextos y sus ids. Ya no hay unión por mes (punto 5 opcional). Actividad de Yo pasa `["me"]` y Nosotros (Inicio y Actividad) `["us"]`. Inicio de Yo pasa `["me", "us"]` cuando hay pareja, y entonces informa también de los ids de tu parte de lo compartido.
+  3. La fila de tu parte compartida en Inicio de Yo (`HighlightSharedPart`) lleva `data-transaction-id` y el mismo estado «nueva» que `ExpenseRow`. Si E5 la encuentra y el gasto es de otro contexto, la resalta en el contexto de la página.
+  4. Las listas candidatas son las del mes del gasto que pintan su contexto. Si no hay ninguna, E5 termina enseguida. Si una ya trae el id y la fila no se ve, termina a los 3 cuadros. Si no lo trae, espera hasta el tope de 10 s. Cuando el gasto es del contexto de la página, «terminar» es lo de antes: otra revalidación y Actividad del mes. Cuando es de otro contexto, E5 solo deja de mirar: no navega, no espera y no cambia el contexto. Queda el aviso «Gasto guardado · Deshacer».
+- **Pruebas** (`reveal-context.test.tsx`, 4 nuevas):
+  - un compartido desde una vista de Yo que no pinta lo compartido termina al primer cuadro, sin `push` ni `refresh`;
+  - el inverso, un privado desde Inicio en Nosotros, termina igual;
+  - en Inicio de Yo con pareja, E5 espera la lista y luego resalta la parte compartida (`data-new`), sin navegar;
+  - en Inicio de Yo con pareja, si el compartido llega fuera de los 5 recientes, termina a los pocos cuadros sin ir a Actividad de Yo.
+  
+  Las de `annotate-sheet.test.tsx` y `home-reveal.test.tsx` siguen igual: el arnés pasa ahora `["me"]`.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components` (completo) | **894/894, 2 omisiones previstas** |
+| `npm run verify` | 1.ª corrida: **falló** con 3 *timeouts* de componentes, entre ellos `shared-edit.test.tsx:147`, «una respuesta tardía de «Deshacer»…», que no toca este cambio (la misma suite pasa sola). 2.ª corrida: **exit 0, 103,41 s** (aviso: más de 90 s); dominio 84/84, componentes 894 / 2 omisiones previstas |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 139 s**: build 24,08 s; **21/21** (1,8 min) |

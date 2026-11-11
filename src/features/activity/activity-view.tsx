@@ -250,7 +250,7 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
   const listedIds = useMemo(() => rows.map(({ id }) => id), [rows]);
-  useListScope(month, listedIds);
+  useListScope(month, listedIds, ["me"]);
   const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
   // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
   const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);

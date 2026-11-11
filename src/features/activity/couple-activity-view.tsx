@@ -49,7 +49,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
   const highlightId = useHighlightId();
   // F69-5: Actividad de Nosotros monta su mes y avisa de los ids que trae (E5 decide por ellos).
   const listedIds = useMemo(() => expenses.map((row) => row.id), [expenses]);
-  useListScope(month, listedIds);
+  useListScope(month, listedIds, ["us"]);
   // El tipo vive en el layout y se comparte con Yo: aquí no hay «Ingresos» (pasa a «Todos») y «Aportes» solo vale si las metas
   // se cargaron; si no, «Todos». El valor normalizado manda en el control, en el filtrado y en el anuncio del conteo.
   const type = filters.type === "income" || (filters.type === "goals" && setAsideMinor === undefined) ? "all" : filters.type;

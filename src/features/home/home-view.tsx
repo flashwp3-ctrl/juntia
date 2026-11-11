@@ -13,7 +13,7 @@ import { groupByDay, monthSummary, type CategoryId, type Transaction } from "@/d
 import { copy } from "@/lib/copy/es";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
 import { CountingAmount } from "@/features/expenses/counting-amount";
-import { HighlightRow } from "@/features/expenses/highlight-row";
+import { HighlightRow, HighlightSharedPart } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
 import { HomeEmpty, HomeScope, PendingHomeRows } from "./pending-home";
 import type { HomeGoals } from "@/features/goals/types";
@@ -50,7 +50,7 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
   const title = row.description ?? copy.categories[row.categoryId];
   const date = dayLabel(row.transactionDate, today);
   return (
-    <div data-shared-part="" className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+    <HighlightSharedPart id={row.id} className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2">
       <span className={`grid size-10 place-items-center rounded-[12px] ${tileBg[row.categoryId]}`}><AppIcon name={categories[row.categoryId].icon} weight="duotone" size={20} className={categoryFg[row.categoryId]} /></span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
@@ -60,13 +60,16 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
         </span>
       </span>
       <span className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
-    </div>
+    </HighlightSharedPart>
   );
 }
 
 export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   const name = monthName(month);
   const summary = monthSummary(rows, month);
+  // F69-6: Inicio de Yo con pareja pinta también tu parte de lo compartido; avisa de esos ids como de Nosotros, para que E5
+  // resalte aquí un compartido recién anotado desde Yo en lugar de esperar.
+  const scope = <HomeScope month={month} knownIds={[...rows.map(({ id }) => id), ...(shared?.parts ?? []).map(({ id }) => id)]} contexts={shared ? ["me", "us"] : ["me"]} />;
   const recentItems: RecentItem[] = [
     ...groupByDay(rows).flatMap(({ transactions }) => transactions).map((row) => ({ kind: "private" as const, row })),
     ...(shared?.parts ?? []).map((row) => ({ kind: "shared" as const, row })),
@@ -74,7 +77,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   if (recentItems.length === 0) {
     return (
       <>
-      <HomeScope month={month} knownIds={rows.map(({ id }) => id)} />
+      {scope}
       <HomeEmpty month={month} today={today} empty={
         <div className="flex flex-col gap-6 pt-2">
           <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
@@ -94,7 +97,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   const heroTitle = spent ? copy.home.spentIn(name) : copy.home.noExpenses(name);
   return (
     <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
-      <HomeScope month={month} knownIds={rows.map(({ id }) => id)} />
+      {scope}
       <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
         <h2 id="home-hero" className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">

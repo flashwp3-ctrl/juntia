@@ -38,7 +38,7 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
   const nothingYet = rows.length === 0 && balance.every((row) => row.paid.amountMinor === 0n && row.settledOut.amountMinor === 0n);
   // F69-5 (revisión del PR #69): Inicio de Nosotros monta su mes y avisa de los ids que trae, como Inicio de Yo; E5 decide
   // por ellos si la fila recién anotada puede estar aquí.
-  const scope = <HomeScope month={month} knownIds={rows.map((row) => row.id)} />;
+  const scope = <HomeScope month={month} knownIds={rows.map((row) => row.id)} contexts={["us"]} />;
   if (nothingYet) {
     return (
       <div className="flex flex-col gap-6 pt-2">

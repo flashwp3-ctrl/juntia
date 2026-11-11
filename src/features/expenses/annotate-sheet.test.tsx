@@ -62,7 +62,7 @@ function PendingList() {
 // servidor le entregó (Inicio pinta 5 y avisa de todos, como HomeScope); por defecto, los que enseña.
 function Pages({ rows = [], known = rows }: { rows?: string[]; known?: string[] }) {
   const [page, setPage] = useState("inicio");
-  useListScope("2026-11", known);
+  useListScope("2026-11", known, ["me"]);
   return (
     <>
       <Trigger />

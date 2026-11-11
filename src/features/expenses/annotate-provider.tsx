@@ -11,7 +11,7 @@
 // volver a la pestaña se pide la página otra vez para traer lo que anotó la otra persona (Q16).
 import { AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
@@ -65,7 +65,8 @@ function isShown(node: HTMLElement) {
 export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void }
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
-type Reveal = { id: string; transactionDate: string };
+/** F69-6: `context`, el de la escritura (Yo o Nosotros), que puede no ser el de la página desde la que se anotó. */
+type Reveal = { id: string; transactionDate: string; context: ContextChoice };
 /** `undo`: el id del gasto cuyo «Deshacer» ofrece el aviso (compartido o Mover a Pareja; F57-8/F57-9: uno a la vez). */
 type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: string };
 type Notice = Omit<ToastState, "id">;
@@ -99,10 +100,13 @@ const AnnotateContext = createContext<AnnotateState | null>(null);
 const NO_ROWS: readonly PendingRow[] = [];
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
 type ListScope = {
-  /** Una lista monta (o deja de montar) el mes que muestra: sirve para saber si una fila confirmada aún le corresponde a alguien. */
-  enter: (month: string) => () => void;
+  /**
+   * Una lista monta (o deja de montar) el mes que muestra: sirve para saber si una fila confirmada aún le corresponde a alguien.
+   * F69-6: `key` identifica la lista y `contexts`, de qué contextos pinta movimientos (Inicio en Yo con pareja: los dos).
+   */
+  enter: (key: string, month: string, contexts: readonly ContextChoice[]) => () => void;
   /** Una lista informa de los ids reales que trae; `revalidated`: llegó por una revalidación (filas nuevas del servidor). */
-  report: (month: string, ids: readonly string[], revalidated: boolean) => void;
+  report: (key: string, month: string, ids: readonly string[], revalidated: boolean) => void;
 };
 const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_ROWS, scope: { enter: () => () => {}, report: () => {} } });
 /** Plazo entre peticiones de revalidación mientras una fila confirmada espera a la real (F51-12). */
@@ -143,6 +147,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const [sessionKey, setSessionKey] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
   const highlightId = highlight && highlight.context === currentContext ? highlight.id : null;
+  const pageContextRef = useRef(currentContext);
+  useEffect(() => { pageContextRef.current = currentContext; }, [currentContext]);
   const setHighlightId = useCallback((next: string | null | ((current: string | null) => string | null), where: ContextChoice = "me") => {
     setHighlight((current) => {
       const value = typeof next === "function" ? next(current?.id ?? null) : next;
@@ -221,19 +227,22 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // porque ninguna la mostraba; (c) tope de 3 revalidaciones pedidas: se retira la temporal, el servidor ya confirmó. Nunca hay
   // revalidaciones periódicas sin límite.
   const mountedMonths = useRef(new Map<string, number>());
-  // F69-5: los ids que el servidor entregó a cada mes montado (todos los del mes, aunque Inicio solo pinte 5). E5 sabe por
-  // aquí si el árbol que llegó ya incluye ESTE gasto; un árbol ajeno sin él nunca dispara la navegación.
-  const knownIds = useRef(new Map<string, Set<string>>());
+  // F69-5: los ids que el servidor entregó a cada lista montada (todos los del mes, aunque Inicio solo pinte 5). E5 sabe por
+  // aquí si el árbol que llegó ya incluye ESTE gasto; un árbol ajeno sin él nunca dispara la navegación. F69-6: por lista, con
+  // su mes y sus contextos, en lugar de la unión por mes: un id que trae una lista de Nosotros no cuenta para una de Yo.
+  const lists = useRef(new Map<string, { month: string; contexts: readonly ContextChoice[]; ids: ReadonlySet<string> }>());
   const scope = useMemo<ListScope>(() => ({
-    enter: (month) => {
+    enter: (key, month, contexts) => {
       mountedMonths.current.set(month, (mountedMonths.current.get(month) ?? 0) + 1);
+      lists.current.set(key, { month, contexts, ids: lists.current.get(key)?.ids ?? new Set() });
       return () => {
+        lists.current.delete(key);
         const left = (mountedMonths.current.get(month) ?? 1) - 1;
-        if (left <= 0) { mountedMonths.current.delete(month); knownIds.current.delete(month); }
+        if (left <= 0) mountedMonths.current.delete(month);
         else mountedMonths.current.set(month, left);
       };
     },
-    report: (month, ids, revalidated) => { const known = knownIds.current.get(month) ?? new Set<string>(); for (const id of ids) known.add(id); knownIds.current.set(month, known); setFlights((current) => {
+    report: (key, month, ids, revalidated) => { const list = lists.current.get(key); if (list && list.month === month) lists.current.set(key, { ...list, ids: new Set(ids) }); setFlights((current) => {
       const next = current.filter((flight) => {
         if (flight.state !== "confirmed" || !flight.savedId) return true;
         if (ids.includes(flight.savedId)) return false; // (a)
@@ -447,7 +456,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {
     close();
     setHighlightId(saved.transaction.id, saved.context);
-    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate });
+    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate, context: saved.context });
     const key = newIdempotencyKey();
     notify({ tone: "success", message, undo: saved.transaction.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalExpense(saved, key) } });
   }, [close, notify, undoGoalExpense, setHighlightId]);
@@ -459,7 +468,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "me");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, context: "me" });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
   }, [close, notify, undo, setHighlightId]);
@@ -474,7 +483,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "us");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, context: "us" });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved.expense, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
@@ -522,22 +531,35 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       askRefreshRef.current();
       router.push(`/actividad?mes=${month}`);
     };
+    // F69-6: si el gasto es de otro contexto que el de la página (un compartido anotado desde Inicio en Yo, o un privado desde
+    // Nosotros), Actividad de este contexto tampoco lo enseña: E5 termina sin esperar y sin navegar. Queda el aviso de siempre,
+    // «Gasto guardado · Deshacer»; no se cambia el contexto de la página.
+    const end = () => { if (reveal.context === pageContextRef.current) leave(); else setReveal(null); };
     const check = () => {
+      const page = pageContextRef.current;
       const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
-      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
-      // F69-5. (1) Ninguna lista de esta pantalla es del mes del gasto (otro mes o una ruta sin lista): la fila no puede estar
-      // aquí; se lleva a Actividad enseguida. (2) La lista del mes ya trae este id y la fila no se ve (fuera de los 5 recientes
-      // de Inicio): tras unos cuadros, a Actividad. (3) Todavía no lo trae: se espera, aunque lleguen árboles ajenos, hasta el
-      // tope de seguridad; entonces, otra revalidación y a Actividad, como antes.
-      if (!mountedMonths.current.has(month)) { leave(); return; }
-      if (knownIds.current.get(month)?.has(reveal.id)) {
-        if (++after >= SETTLE_FRAMES) { leave(); return; }
-      } else if (performance.now() - started >= REVEAL_SAFETY_MS) { leave(); return; }
+      if (row) {
+        row.scrollIntoView?.({ block: "nearest" });
+        // F69-6: la página lo pinta en su contexto (la parte compartida en Inicio de Yo): se resalta ahí.
+        if (reveal.context !== page) setHighlightId(reveal.id, page);
+        setReveal(null);
+        return;
+      }
+      // F69-5 y F69-6. (1) Ninguna lista de esta pantalla es del mes del gasto y pinta su contexto (otro mes, una ruta sin lista
+      // u otro contexto): la fila no puede estar aquí; termina enseguida. (2) Una de esas listas ya trae este id y la fila no
+      // se ve (fuera de los 5 recientes de Inicio): tras unos cuadros, termina. (3) Todavía no lo trae: se espera, aunque
+      // lleguen árboles ajenos, hasta el tope de seguridad; entonces termina. Terminar es ir a Actividad del mes si el gasto es
+      // del contexto de la página; si no, solo dejar de mirar.
+      const candidates = [...lists.current.values()].filter((list) => list.month === month && list.contexts.includes(reveal.context));
+      if (candidates.length === 0) { end(); return; }
+      if (candidates.some((list) => list.ids.has(reveal.id))) {
+        if (++after >= SETTLE_FRAMES) { end(); return; }
+      } else if (performance.now() - started >= REVEAL_SAFETY_MS) { end(); return; }
       handle = requestAnimationFrame(check);
     };
     handle = requestAnimationFrame(check);
     return () => cancelAnimationFrame(handle);
-  }, [reveal, router]);
+  }, [reveal, router, setHighlightId]);
 
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));
@@ -644,15 +666,22 @@ export function usePendingRows(): readonly PendingRow[] {
   return useContext(PendingContext).rows;
 }
 
-/** Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12). */
-export function useListScope(month: string, ids: readonly string[]) {
+/**
+ * Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12) y
+ * para que E5 sepa si la pantalla puede enseñar el gasto nuevo. F69-6: `contexts`, de qué contextos pinta movimientos la
+ * lista (Actividad e Inicio de Yo: `["me"]`; Inicio de Yo con pareja, que pinta tu parte de lo compartido: `["me", "us"]`;
+ * Nosotros: `["us"]`).
+ */
+export function useListScope(month: string, ids: readonly string[], contexts: readonly ContextChoice[]) {
   const { scope, rows } = useContext(PendingContext);
-  useEffect(() => scope.enter(month), [scope, month]);
+  const key = useId();
+  const contextKey = contexts.join(",");
+  useEffect(() => scope.enter(key, month, contextKey.split(",") as ContextChoice[]), [scope, key, month, contextKey]);
   // Lo que la lista trae cambió (llegó una revalidación): (a) y (b).
-  useEffect(() => scope.report(month, ids, true), [scope, month, ids]);
+  useEffect(() => scope.report(key, month, ids, true), [scope, key, month, ids, contextKey]);
   // Una fila acaba de confirmarse y la lista ya la trae (la real llegó antes que la respuesta): solo (a).
   const confirmed = rows.filter((row) => row.state === "confirmed").map((row) => row.savedId).join(",");
-  useEffect(() => scope.report(month, ids, false), [scope, month, ids, confirmed]);
+  useEffect(() => scope.report(key, month, ids, false), [scope, key, month, ids, confirmed]);
 }
 
 /** PR D: el proveedor, o `null` fuera de él (el detalle de liquidación se pinta también en pruebas sin Anotar). */
