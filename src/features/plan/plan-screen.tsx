@@ -7,6 +7,7 @@
 // Sin presupuestos en el contexto (US-1): «Sin presupuesto» con `chart-pie-slice` y «Crear presupuesto (opcional)» como
 // acción secundaria; nunca «$0», 0 %, «excedido» ni asequibilidad (DEC-R01, DEC-R17). Un presupuesto desactivado sin gasto
 // en el mes no se pinta. Las cifras vienen del servidor; aquí solo se formatean y se ordenan.
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -87,6 +88,11 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
         <p className="text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-ink-secondary">
           <span>{copy.plan.optional[context]}</span> <span>{copy.plan.daysLeft(daysLeftInMonth(today), name)}</span>
         </p>
+        {/* 004 PR E (T075; FR-021; Q5): Análisis es una ruta hija de Plan, con o sin presupuestos. */}
+        <Link href={`/plan/analisis?mes=${month}`} className="-ml-1 inline-flex min-h-11 items-center gap-1.5 self-start rounded-[var(--radius-md)] px-1 text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4 hover:bg-sunken">
+          {copy.plan.analysis(name)}
+          <AppIcon name="arrow-right" weight="bold" size={16} className="shrink-0" />
+        </Link>
       </section>
 
       <section aria-labelledby="plan-budgets" className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
