@@ -813,6 +813,12 @@ El run 42501082729 completó A y B. Se detenía en la comprobación del motivo d
 
 A usa DB_URL del stack Supabase local; B usa PG, configurado como postgres en el workflow. Antes de cargar, ambos imprimen solo metadatos: current_user, session_user, superuser y propietario/capacidad de actuar como propietario de las seis tablas. No se modifica el rol, la propiedad ni los privilegios: A/B ya cargaban correctamente en ese run. El checkpoint 42508573805 confirma por la sonda que A usa postgres no superusuario y B postgres superusuario, ambos propietarios de las seis tablas; no se infiere del nombre de la variable DB_URL. En juntia-dev se comprueba postgres no superusuario y capacidad de dueño sobre las seis tablas, además de ejecutar el protocolo completo dentro de rollback.
 
+### PostgreSQL 17 plano, solo desde PGDG (11 de noviembre de 2026)
+
+El restaurador B corre sobre un PostgreSQL 17 instalado en el runner desde PGDG. Desde el 11 de noviembre de 2026, los runs 43045655895 (intentos 1 y 2) y 43052000905 se colgaron en ese paso: `apt-get update` completo reintentaba `azure.archive.ubuntu.com` («Temporary failure resolving») hasta agotar los 10 min del job, aunque PGDG respondía en menos de un segundo, y el ensayo de restauración no llegaba a correr.
+
+Ahora el paso no toca los espejos de Ubuntu. La imagen `ubuntu-24.04` ya trae `postgresql-common` de PGDG, con su llave, y todas las dependencias de PostgreSQL 17: en el run verde 42965711679 solo se instalaron `postgresql-17` y `postgresql-client-17`, los dos desde PGDG. `apt-get update` e `install` leen solo una lista de PGDG escrita en `$RUNNER_TEMP`, con `--no-install-recommends`, tres reintentos, 20 s por conexión, 90 s y 150 s de tope, y `timeout-minutes: 4` en el paso. Si PGDG falla, o si una imagen futura deja de traer alguna dependencia, el paso falla en minutos con un `::error` que lo dice. No hay alternativa a Ubuntu: hay que relanzar el job o revisar la imagen.
+
 ### Medición opt-in de workers (004 PR A, T022–T023)
 
 JUNTIA_PLAYWRIGHT_MEASURE admite solo W:true o W:false, con W igual a 1, 2 o 4. Ejemplo en PowerShell: $env:JUNTIA_PLAYWRIGHT_MEASURE='2:true'; npm run e2e:dev -- tests/e2e/annotate.e2e.ts. Se elimina la variable al terminar la medición. Sin ella, playwright.config.ts y el plan de e2e:dev conservan exactamente sus valores por defecto anteriores. La variable se hereda al hijo de pruebas, sin ampliar la lista blanca de argumentos: --workers, --grep-invert y --config siguen rechazados como entradas del usuario.
