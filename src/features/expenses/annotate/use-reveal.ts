@@ -27,7 +27,11 @@ function shownRow(id: string) {
  */
 export function startsNavigation(event: MouseEvent) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
-  const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+  const target = event.target instanceof Element ? event.target : null;
+  // F74-1: un enlace (o su contenedor) que un clic de puntero no hace navegar lo dice con `data-stays-on-page` (la meta que asoma
+  // en la pila, el clic que sigue a deslizarla). No se mira `defaultPrevented`: Next también lo cancela en su navegación de cliente.
+  if (event.detail > 0 && target?.closest("[data-stays-on-page]")) return false;
+  const link = target ? target.closest<HTMLAnchorElement>("a[href]") : null;
   if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return false;
   const next = new URL(link.href, window.location.href);
   if (next.origin !== window.location.origin) return false;

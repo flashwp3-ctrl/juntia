@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate, useListScope } from "../annotate-provider";
+import { startsNavigation } from "./use-reveal";
 import type { ActionResult, ExpenseActions, SavedTransaction } from "../types";
 
 configure({ asyncUtilTimeout: 5000 });
@@ -158,5 +159,37 @@ describe("E5 tras llevar a Actividad del mes (seguimiento, #54)", { timeout: 150
     expect(frames).toHaveLength(0);
     expect(router.push).toHaveBeenCalledTimes(1);
     router.push.mockReset();
+  });
+});
+
+describe("qué cuenta como el inicio de una navegación de la persona (startsNavigation)", () => {
+  const click = (html: string, selector: string, init: MouseEventInit = { button: 0, detail: 1 }) => {
+    document.body.innerHTML = html;
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true, ...init });
+    Object.defineProperty(event, "target", { value: document.querySelector(selector) });
+    return startsNavigation(event);
+  };
+  afterEach(() => { document.body.innerHTML = ""; });
+
+  it.each([
+    { what: "un enlace interno a otra página", html: `<a href="/metas">x</a>`, selector: "a", expected: true },
+    { what: "un enlace a la misma ruta (recargar)", html: `<a href="/">x</a>`, selector: "a", expected: true },
+    { what: "un ancla de la misma página («Ir al contenido»)", html: `<a href="/#contenido">x</a>`, selector: "a", expected: false },
+    { what: "un enlace externo", html: `<a href="https://example.com/">x</a>`, selector: "a", expected: false },
+    { what: "un enlace a otra pestaña", html: `<a href="/metas" target="_blank">x</a>`, selector: "a", expected: false },
+    { what: "una descarga", html: `<a href="/exportar" download>x</a>`, selector: "a", expected: false },
+    { what: "un botón", html: `<button>x</button>`, selector: "button", expected: false },
+    { what: "F74-1 · la meta que asoma (data-stays-on-page) con puntero", html: `<a href="/metas/1" data-stays-on-page><span>x</span></a>`, selector: "span", expected: false },
+    { what: "F74-1 · el clic tras deslizar la pila (la lista lleva la señal)", html: `<ul data-stays-on-page><li><a href="/metas/1">x</a></li></ul>`, selector: "a", expected: false },
+  ])("$what → $expected", ({ html, selector, expected }) => {
+    expect(click(html, selector)).toBe(expected);
+  });
+
+  it("F74-1 · con el teclado (Enter: detail 0), la meta que asoma sí navega", () => {
+    expect(click(`<a href="/metas/1" data-stays-on-page>x</a>`, "a", { button: 0, detail: 0 })).toBe(true);
+  });
+
+  it("con una tecla modificadora (abre en otra pestaña) no cuenta", () => {
+    expect(click(`<a href="/metas">x</a>`, "a", { button: 0, detail: 1, ctrlKey: true })).toBe(false);
   });
 });

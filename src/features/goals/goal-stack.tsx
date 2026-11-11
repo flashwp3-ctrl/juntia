@@ -100,6 +100,9 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // El clic que el navegador dispara al soltar un arrastre no abre la meta: se descartan los clics desde que empieza el
   // arrastre hasta 350 ms después de terminar (el clic puede llegar antes del aviso de fin de Motion).
   const dragEndedAt = useRef(0);
+  // F74-1 (revisión del PR #74): ese clic no navega (onClickCapture de la lista); mientras dura, la lista lo dice con
+  // `data-stays-on-page` para que E5 no lo tome por una navegación.
+  const listRef = useRef<HTMLUListElement>(null);
   // Abanico: la tarjeta con hover o foco de teclado. Reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a
   // otra dentro de ese margen, va directo a la nueva. El efecto visual vive en globals.css, solo con puntero fino y desde lg.
   const [active, setActive] = useState<number | null>(null);
@@ -118,6 +121,8 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   const swipe = !fanned && goals.length > 1;
   const onDragEnd = (_event: unknown, info: PanInfo) => {
     dragEndedAt.current = now();
+    listRef.current?.setAttribute("data-stays-on-page", "");
+    window.setTimeout(() => listRef.current?.removeAttribute("data-stays-on-page"), 350);
     const step = swipeStep(info.offset, info.velocity);
     if (step !== 0) setFrontId(stepFront(goals.map((goal) => goal.id), goals[start].id, step));
   };
@@ -145,7 +150,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   return (
     <div className="flex flex-col gap-2">
       <div className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined} data-fan-active={fan && active !== null ? active : undefined}>
-        <ul aria-label={label}
+        <ul aria-label={label} ref={listRef}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
           onClickCapture={swipe ? (event) => { if (now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
           className={`relative flow-root ${fan ? `lg:min-h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>

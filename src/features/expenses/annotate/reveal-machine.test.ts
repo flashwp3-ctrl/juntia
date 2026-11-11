@@ -61,6 +61,13 @@ const TABLE: Row[] = [
   { state: "ya en Actividad, la persona se va a otra ruta → termina", frame: following({ route: "/metas", reached: true }), step: { kind: "stop", reason: "navigated" } },
   { state: "siguiendo, la URL no llega a Actividad antes de 10 s → para sin otra navegación", frame: following({ route: HOME, reached: false, elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "arrived" } },
   { state: "siguiendo, ya en Actividad y la lista no trae el id en 10 s → para sin una segunda navegación", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], ["a"])], elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "arrived" } },
+  // F74-2: siguiendo, ya en Actividad, su lista aún carga (Skeleton de loading.tsx, o sin registrar todavía).
+  { state: "F74-2 · siguiendo, URL ya en Actividad y ninguna lista registrada (Skeleton) → espera", frame: following({ route: ACTIVITY, reached: true, lists: [], elapsed: 2000 }), step: { kind: "wait", settled: 0 } },
+  { state: "F74-2 · siguiendo, el Skeleton de Actividad registra su mes sin ids → espera", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"])], elapsed: 2000 }), step: { kind: "wait", settled: 0 } },
+  { state: "F74-2 · siguiendo, sin lista hasta el tope de 10 s → para sin otra navegación", frame: following({ route: ACTIVITY, reached: true, lists: [], elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "arrived" } },
+  { state: "fuera del seguimiento, una ruta sin lista sigue llevando a Actividad enseguida (la regla inicial no cambia)", frame: frame({ lists: [], elapsed: 2000 }), step: { kind: "toActivity", month: "2026-11" } },
+  // F74-1: un toque que no navega (la meta que asoma, `data-stays-on-page`) no marca `leaving`: E5 sigue esperando.
+  { state: "F74-1 · un toque en la meta que asoma (no navega) mientras E5 espera → sigue esperando", frame: frame({ leaving: false, lists: [list("2026-11", ["me"])], elapsed: 2000 }), step: { kind: "wait", settled: 0 } },
   // «No robar la navegación»: la persona empezó a navegar y su página aún carga (la URL no cambió todavía).
   { state: "la persona hace clic en un enlace mientras E5 espera (la página nueva aún carga) → termina sin navegar", frame: frame({ leaving: true, lists: [list("2026-11", ["me"])], elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "navigated" } },
   { state: "la persona hace clic en un enlace con la lista que ya trae el id al cuadro 3 → termina sin navegar", frame: frame({ leaving: true, lists: [list("2026-11", ["me"], [ID])], settled: SETTLE_FRAMES - 1 }), step: { kind: "stop", reason: "navigated" } },

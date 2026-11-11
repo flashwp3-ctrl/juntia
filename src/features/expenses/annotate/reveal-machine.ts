@@ -81,8 +81,9 @@ export function revealStep({ target, page, route, lists, shown, elapsed, settled
   const end: RevealStep = target.context !== page ? { kind: "stop", reason: "otherContext" } : target.follow ? { kind: "stop", reason: "arrived" } : { kind: "toActivity", month };
   // Las listas que pueden enseñarlo: las del mes del gasto que pintan su contexto, también en carga (F69-7, sin ids todavía).
   const candidates = [...lists].filter((list) => list.month === month && list.contexts.includes(target.context));
-  // Ninguna (otro mes, una ruta sin lista u otro contexto): la fila no puede estar aquí; termina enseguida.
-  if (candidates.length === 0) return end;
+  // Ninguna (otro mes, una ruta sin lista u otro contexto): la fila no puede estar aquí; termina enseguida. F74-2: en el
+  // seguimiento, ya en Actividad, «ninguna» es que su lista aún carga (el Skeleton de loading.tsx): se espera, con el tope.
+  if (candidates.length === 0) return target.follow && elapsed < REVEAL_SAFETY_MS ? { kind: "wait", settled } : end;
   const holding = candidates.filter((list) => list.ids.has(target.id));
   if (holding.length > 0) {
     // #54: la trae una lista cuyo filtro la oculta: se quitan esos filtros (una vez) y se vuelve a mirar.
