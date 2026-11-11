@@ -42,7 +42,9 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
         ))}
       </div>
       <figcaption className="text-[12px] leading-[1.45] text-pretty text-ink-secondary">{copy.analysis.compared.caption}</figcaption>
-      <table className="sr-only">
+      {/* Una tabla ignora el ancho de 1 px de `sr-only` y desbordaba con el texto al 200 %: la oculta su contenedor. */}
+      <div className="sr-only">
+      <table>
         <caption>{copy.analysis.compared.table}</caption>
         <thead><tr><th scope="col">{copy.analysis.compared.month}</th><th scope="col">{copy.analysis.compared.amount}</th></tr></thead>
         <tbody>
@@ -51,6 +53,7 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
           ))}
         </tbody>
       </table>
+      </div>
     </figure>
   );
 }
