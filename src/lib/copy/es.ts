@@ -311,6 +311,59 @@ export const copy = {
       },
     },
     saved: { created: "Presupuesto creado.", updated: "Presupuesto actualizado.", deactivated: "Presupuesto desactivado." },
+    // 004 PR E (T075; FR-021; Q5): el acceso a Análisis desde Plan.
+    analysis: (month: string) => `Ver el análisis de ${month}`,
+  },
+  // 004 PR E (T073–T075; FR-021–FR-025, FR-063; US-3; 04·2 Análisis; MOTION_SYSTEM §5; COMPONENT_SPECIFICATIONS «Chart» y
+  // «PlanningNote»). Copy nuevo para revisión de los fundadores en el PR. Descriptivo y sin culpa: la comparación nombra
+  // categorías, nunca un gasto ni una causa (Q10); nunca «Total gastado» ni «te alcanza» (DEC-G04, DEC-R17); el ahorro va aparte.
+  analysis: {
+    title: "Análisis",
+    loading: "Cargando el análisis",
+    month: "Mes del análisis",
+    chapter: (number: number) => `Capítulo ${number}`,
+    chapters: { amount: "Cuánto", where: "En qué", compared: "Comparado", setAside: "Lo apartado" },
+    spent: { us: "Gastaron juntos", me: "Gastaste" },
+    noSpending: { us: (month: string) => `En ${month} no hay gastos de Nosotros.`, me: (month: string) => `En ${month} no anotaste gastos.` },
+    comparison: {
+      more: (amount: string, percent: number, month: string) => `${amount} más que en ${month} (+${percent} %).`,
+      less: (amount: string, percent: number, month: string) => `${amount} menos que en ${month} (−${percent} %).`,
+      same: (month: string) => `Lo mismo que en ${month}.`,
+      rose: (categories: readonly string[]) => `Lo que más subió: ${categories.join(" y ")}.`,
+    },
+    where: {
+      none: "Sin gastos por categoría en este mes.",
+      budgets: "Con presupuesto",
+      noBudgets: { us: "No tienen presupuestos en este mes: solo lo gastado por categoría.", me: "No tienes presupuestos en este mes: solo lo gastado por categoría." },
+      elapsed: (percent: number) => `La marca es lo que va del mes: ${percent} %.`,
+    },
+    compared: {
+      chart: "Gasto por mes",
+      caption: "Solo el gasto de los meses con datos, hasta seis. Lo apartado para metas va aparte.",
+      table: "Gasto por mes, en pesos",
+      month: "Mes",
+      amount: "Gasto",
+      first: "Es el primer mes con gastos: todavía no hay con qué comparar.",
+      empty: "Todavía no hay meses con gastos para comparar.",
+      millions: (value: string) => `${value} M`,
+      thousands: (value: string) => `${value} mil`,
+    },
+    setAside: {
+      us: (total: string, parts: string) => `${total} · ${parts}. Va aparte: no es gasto.`,
+      me: (total: string) => `${total}. Va aparte: no es gasto.`,
+      part: (name: string, amount: string) => `${name} ${amount}`,
+      none: { us: (month: string) => `En ${month} no apartaron nada para metas.`, me: (month: string) => `En ${month} no apartaste nada para metas.` },
+    },
+    note: {
+      overline: "Destinado neto · para planificar",
+      fixed: "No es lo gastado ni un saldo bancario.",
+      negative: "Negativo: liberaron de metas más de lo que destinaron.",
+      how: "Cómo se calcula",
+      terms: { spent: "Gasto", contributed: "Aportes", withdrawn: "Retiros", funded: "Gastos pagados con metas", net: "Destinado neto" },
+      signs: { plus: "más", minus: "menos", equals: "igual a" },
+    },
+    previousMonth: (label: string) => `Análisis del mes anterior: ${label}`,
+    nextMonth: (label: string) => `Análisis del mes siguiente: ${label}`,
   },
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N" },
@@ -608,12 +661,13 @@ export const copy = {
     privacy: {
       title: "Privacidad y datos", whoSees: "Qué ve cada uno", onlyYou: "Solo tú", onlyYouItems: ["Los gastos e ingresos que anotas", "Tu nombre visible y tu correo de acceso"],
       partnerLater: "Cuando invites a tu pareja, aquí verás qué comparten y qué sigue siendo solo tuyo.", yourData: "Tus datos",
-      export: "Exportar mis datos", exportHint: "JSON y CSV con tus movimientos",
+      export: "Exportar mis datos", exportHint: "JSON y CSV con tus movimientos, metas y presupuestos",
       deleteTitle: "Eliminar tu cuenta", deleteDescription: "La solicitud de eliminación todavía no está disponible en la app. Nada se borra sin que lo confirmes.",
     },
+    // 004 PR E (T076; FR-080, FR-081; I4): «qué incluye» dice el alcance que el PR A dio al archivo. Copy para los fundadores.
     export: {
-      title: "Exportar mis datos", format: "Formato", json: "JSON", jsonHint: "Tus movimientos, estructurados.", csv: "CSV", csvHint: "Tus movimientos en una tabla: fecha, tipo, categoría, descripción e importe.",
-      includes: "Incluye solo tus movimientos activos.", excludes: "Nunca incluye datos internos ni de otras personas.", notRestore: "Es una copia para consultar. No sirve para restaurar ni migrar automáticamente.",
+      title: "Exportar mis datos", format: "Formato", json: "JSON", jsonHint: "Tus datos, separados por tipo de registro.", csv: "CSV", csvHint: "Todo en una tabla: una fila por registro, con su tipo y su contexto (Yo o Nosotros).",
+      includes: "Incluye lo que ves en Juntia: tus movimientos, los gastos compartidos con su reparto, las liquidaciones, tus metas y las compartidas con sus aportes, y los presupuestos de Yo y de Nosotros.", excludes: "Nunca incluye lo privado de tu pareja (sus gastos, metas y presupuestos personales) ni datos internos.", notRestore: "Es una copia para consultar. No sirve para restaurar ni migrar automáticamente.",
       close: "Cerrar", prepare: "Preparar archivo", preparing: "Preparando…", ready: "Archivo listo.", download: "Descargar",
       failedLead: "No se pudo preparar.", failed: "No se descargó nada. Inténtalo de nuevo.", retry: "Reintentar",
     },
@@ -647,6 +701,8 @@ export const copy = {
     dateLine: (date: string, left: number) => `${date} · ${left === 0 ? "último día del mes" : left === 1 ? "queda 1 día del mes" : `quedan ${left} días del mes`}`,
     annotateHint: "Monto y categoría",
     breakdownTitle: "En qué se fue", recentTitle: "Tus movimientos", seeAll: "Ver todo",
+    // 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes.
+    analysis: "Ver el análisis",
     // PR C de la 003 (04·1 INICIO · YO; FR-045): `gasto_consumo` de Yo, privados más la parte compartida.
     onlyYours: "Solo tuyos", sharedPart: "Tu parte compartida",
     empty: { title: "Todavía no anotas nada este mes", description: "Cuando anotes un gasto o un ingreso, aquí verás cuánto llevas y en qué se fue. Solo tú lo ves.", action: "Anotar el primero" },
