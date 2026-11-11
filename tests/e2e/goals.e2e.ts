@@ -399,3 +399,48 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
   for (const body of tomasBodies) expect(leaks(body), "B1 de Tomás").toEqual([]);
   await Promise.all([sara.context.close(), tomas.context.close()]);
 });
+
+// Decisión de los fundadores del 11 de noviembre de 2026: en móvil, la pila se recorre deslizando en horizontal y el scroll
+// vertical empezado sobre la tarjeta del frente mueve la página (antes, `drag="y"` con `touch-action: pan-x` lo bloqueaba).
+// Móvil emulado de verdad (táctil): los toques van por CDP (`Input.dispatchTouchEvent`), que pasa por el compositor y respeta
+// `touch-action`; `Input.synthesizeScrollGesture` no desplaza en el Chromium sin interfaz.
+test("pila de metas en móvil: el scroll vertical sobre la tarjeta mueve la página y deslizar a la izquierda trae la siguiente", async ({ browser, baseURL }) => {
+  const pair = await seedCouple({ index: test.info().parallelIndex });
+  const today = todayInBogota();
+  for (const [name, pesos] of [["Japón", 500000n], ["Sala nueva", 300000n]] as const) {
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", name, goalType: "travel", target: moneyFromPesos(18000000n), targetMonth: null });
+    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(pesos), entryDate: today, fundingMode: "reserved" });
+  }
+  const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width: 390, height: 520 }, hasTouch: true, isMobile: true });
+  await context.addCookies(pair.sara.cookies);
+  await context.addCookies([{ name: "juntia_context", value: "us", domain: new URL(baseURL!).hostname, path: "/" }]);
+  await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+  const page = await context.newPage();
+  await page.goto("/metas");
+  const front = page.locator("[data-swipe]");
+  const frontName = () => front.locator("[data-goal-title]").innerText();
+  await expect(front).toBeVisible();
+  const first = await frontName();
+  const cdp = await context.newCDPSession(page);
+  const center = async () => { const box = (await front.boundingBox())!; return { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) }; };
+  // Un dedo que se apoya en (x, y) y se desliza (dx, dy) en diez pasos.
+  const touchDrag = async (x: number, y: number, dx: number, dy: number) => {
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 10; step += 1) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + (dx * step) / 10, y: y + (dy * step) / 10 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
+  // Scroll vertical empezado sobre la tarjeta: la página baja y el frente no cambia.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight), "la página tiene recorrido vertical").toBeGreaterThan(120);
+  const start = await center();
+  expect(await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest("[data-swipe]"), start), "el dedo empieza sobre la tarjeta del frente").toBe(true);
+  await touchDrag(start.x, start.y, 0, -150);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(60);
+  expect(await frontName()).toBe(first);
+
+  // Deslizar a la izquierda sobre la frontal: la siguiente pasa al frente.
+  const from = await center();
+  await touchDrag(from.x, from.y, -160, 0);
+  await expect.poll(frontName).not.toBe(first);
+  await context.close();
+});

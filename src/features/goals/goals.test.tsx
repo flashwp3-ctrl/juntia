@@ -471,15 +471,16 @@ describe("Revisión del gestor del PR #68", { timeout: 15000 }, () => {
   });
 });
 
-describe("GoalStack · gesto y «Ver todas» (decisiones del fundador, PR #68)", () => {
+describe("GoalStack · gesto y «Ver todas» (decisiones de los fundadores, PR #68 y 11 de noviembre de 2026)", () => {
   it.each([
-    [{ x: 0, y: -SWIPE.distancePx }, { x: 0, y: 0 }, 1],
-    [{ x: 0, y: -10 }, { x: 0, y: -SWIPE.velocityPxPerS }, 1],
-    [{ x: 0, y: SWIPE.distancePx }, { x: 0, y: 0 }, -1],
-    [{ x: 0, y: 10 }, { x: 0, y: SWIPE.velocityPxPerS }, -1],
-    [{ x: 0, y: -(SWIPE.distancePx - 1) }, { x: 0, y: -100 }, 0],
-    [{ x: 120, y: -80 }, { x: 900, y: -600 }, 0],
-  ] as const)("deslizar %o con velocidad %o → %i (arriba: la siguiente; abajo: la anterior; más horizontal: nada)", (offset, velocity, step) => {
+    [{ x: -SWIPE.distancePx, y: 0 }, { x: 0, y: 0 }, 1],
+    [{ x: -10, y: 0 }, { x: -SWIPE.velocityPxPerS, y: 0 }, 1],
+    [{ x: SWIPE.distancePx, y: 0 }, { x: 0, y: 0 }, -1],
+    [{ x: 10, y: 0 }, { x: SWIPE.velocityPxPerS, y: 0 }, -1],
+    [{ x: -(SWIPE.distancePx - 1), y: 0 }, { x: -100, y: 0 }, 0],
+    [{ x: -80, y: 120 }, { x: -600, y: 900 }, 0],
+    [{ x: 0, y: -200 }, { x: 0, y: -900 }, 0],
+  ] as const)("deslizar %o con velocidad %o → %i (izquierda: la siguiente; derecha: la anterior; más vertical: nada, es scroll)", (offset, velocity, step) => {
     expect(swipeStep(offset, velocity)).toBe(step);
   });
 

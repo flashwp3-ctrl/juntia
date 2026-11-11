@@ -132,7 +132,7 @@ export const copy = {
     home: {
       usSetAside: "Apartado para metas", usNote: "Son cosas distintas: no se suman.",
       meSetAside: (amount: string) => `Apartaste ${amount} para metas`, meNote: "Es ahorro: no se suma al gasto.",
-      module: "Metas", seeAll: "Ver metas", create: "Crear una meta", createHint: "Aparten dinero para algo que quieren, sin mezclarlo con el gasto.",
+      module: "Metas", create: "Crear una meta", createHint: "Aparten dinero para algo que quieren, sin mezclarlo con el gasto.",
     },
     loading: "Cargando metas",
   },

@@ -8,11 +8,13 @@
 // vista y fuera del orden de tabulación: «Ver todas» es el camino del teclado). Desde lg, la pila se abre en abanico
 // horizontal (la segunda girada 4°) con «+» punteado para crear meta (RESPONSIVE).
 // La `[V]` de rendimiento del abanico con 6 metas en gama media (T054) es del gestor; si falla, el PR cae a la lista.
-// Revisión del fundador (PR #68): «deslizar vertical recorre la pila» en móvil. La tarjeta frontal se arrastra en vertical
-// (spring `card` al soltar); hacia arriba trae la siguiente y hacia abajo la anterior, pasado un umbral de distancia o de
-// velocidad. El gesto solo existe sobre la pila (fuera de ella la página se desplaza como siempre) y nunca en el abanico de
-// escritorio. Con movimiento reducido la tarjeta no sigue al dedo y el cambio es inmediato. Las alternativas siguen: tocar
-// la que asoma y «Ver todas». En Inicio, «Ver todas» lleva a Metas en el contexto actual (`seeAllHref`).
+// Decisión de los fundadores del 11 de noviembre de 2026 (revisión T056; antes, PR #68 con el gesto vertical): en móvil,
+// «deslizar horizontal recorre la pila». La tarjeta frontal se arrastra en horizontal (spring `card` al soltar); a la
+// izquierda trae la siguiente y a la derecha la anterior, pasado un umbral de distancia o de velocidad. La capa arrastrable
+// lleva `touch-action: pan-y`, así que un desplazamiento vertical empezado sobre la tarjeta mueve la página. Nunca hay gesto
+// en el abanico de escritorio. Con movimiento reducido la tarjeta no sigue al dedo y el cambio es inmediato. Las
+// alternativas siguen: tocar la que asoma y «Ver todas». En Inicio, «Ver todas» lleva a Metas en el contexto actual
+// (`seeAllHref`) y es el único camino a Metas desde el módulo.
 import Link from "next/link";
 import * as m from "motion/react-m";
 import type { PanInfo } from "motion/react";
@@ -59,17 +61,17 @@ export function stepFront(ids: readonly string[], frontId: string | null, step: 
 /** Reloj de los manejadores del gesto (fuera del render). */
 const now = () => Date.now();
 
-/** Umbrales del deslizamiento: 64 px de recorrido o 500 px/s de velocidad, en vertical. */
+/** Umbrales del deslizamiento: 64 px de recorrido o 500 px/s de velocidad, en horizontal. */
 export const SWIPE = { distancePx: 64, velocityPxPerS: 500 } as const;
 
 /**
- * Qué hace un deslizamiento vertical sobre la pila: `1` trae la siguiente (hacia arriba), `-1` la anterior (hacia abajo) y
- * `0` nada. Un gesto más horizontal que vertical no cuenta.
+ * Qué hace un deslizamiento horizontal sobre la pila: `1` trae la siguiente (a la izquierda), `-1` la anterior (a la
+ * derecha) y `0` nada. Un gesto más vertical que horizontal es scroll de la página y no cuenta.
  */
 export function swipeStep(offset: { x: number; y: number }, velocity: { x: number; y: number }): -1 | 0 | 1 {
-  if (Math.abs(offset.x) > Math.abs(offset.y)) return 0;
-  if (offset.y <= -SWIPE.distancePx || velocity.y <= -SWIPE.velocityPxPerS) return 1;
-  if (offset.y >= SWIPE.distancePx || velocity.y >= SWIPE.velocityPxPerS) return -1;
+  if (Math.abs(offset.y) >= Math.abs(offset.x)) return 0;
+  if (offset.x <= -SWIPE.distancePx || velocity.x <= -SWIPE.velocityPxPerS) return 1;
+  if (offset.x >= SWIPE.distancePx || velocity.x >= SWIPE.velocityPxPerS) return -1;
   return 0;
 }
 
@@ -164,10 +166,10 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                 onPointerLeave={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") leave(); } : undefined}
                 onFocus={fan && shown ? focusIn(index) : undefined}
                 onBlur={fan && shown ? focusOut : undefined}
-                className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-x" : ""}`}
-                // Deslizar vertical recorre la pila (solo la frontal y fuera del abanico).
+                className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-y" : ""}`}
+                // Deslizar horizontal recorre la pila (solo la frontal y fuera del abanico); el vertical es de la página.
                 {...(index === 0 && swipe ? {
-                  drag: "y" as const, dragConstraints: { top: 0, bottom: 0 }, dragElastic: reduced ? 0 : 0.5, dragSnapToOrigin: true,
+                  drag: "x" as const, dragConstraints: { left: 0, right: 0 }, dragElastic: reduced ? 0 : 0.5, dragSnapToOrigin: true,
                   dragTransition: { bounceStiffness: card.stiffness, bounceDamping: card.damping },
                   onDragStart: () => { dragEndedAt.current = Number.POSITIVE_INFINITY; },
                   onDragEnd,
