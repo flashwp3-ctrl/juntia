@@ -10,12 +10,17 @@ import { initialSheet, isBusy, reduceSheet, type SheetState } from "./sheet-mach
 import { blocksUndo, checkOutcome, mayRun, pendingOf, reduceUndo, sendOutcome, type UndoIntent, type UndoState } from "./undo-machine";
 
 describe("hoja (sheet-machine)", () => {
-  const open = (state: SheetState, key: string, context: "me" | "us" = "me") => reduceSheet(state, { type: "open", mode: { kind: "create" }, key, context });
+  const open = (state: SheetState, key: string, context: "me" | "us" = "me", via: "pointer" | "keyboard" = "keyboard") => reduceSheet(state, { type: "open", mode: { kind: "create" }, key, context, via });
 
   it("abrir monta la hoja con su clave y el contexto de la app en ese momento", () => {
     const state = open(initialSheet, "k1", "us");
     expect(state).toMatchObject({ phase: "open", mounted: true, key: "k1", context: "us" });
     expect(isBusy(state)).toBe(true);
+  });
+
+  it("registra cómo se abrió (puntero o teclado) para el foco del monto (WCAG 2.4.7)", () => {
+    expect(open(initialSheet, "k1", "me", "pointer").via).toBe("pointer");
+    expect(open(initialSheet, "k1", "me", "keyboard").via).toBe("keyboard");
   });
 
   it("una sola hoja a la vez: una segunda apertura, abierta u oculta, no cambia nada (ni la clave)", () => {

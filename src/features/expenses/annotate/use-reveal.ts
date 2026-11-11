@@ -20,6 +20,20 @@ function shownRow(id: string) {
   return [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${id}"]:not([data-temp])`)].find(isShown) ?? null;
 }
 
+/**
+ * El inicio de una navegación de la persona dentro de la app: un clic primario, sin teclas modificadoras, en un enlace interno
+ * que no abre otra pestaña ni descarga, y que va a otra página (un ancla de la misma página, como «Ir al contenido», no cuenta).
+ * Se mira en captura, antes de que Next cancele el clic para hacer su navegación de cliente.
+ */
+export function startsNavigation(event: MouseEvent) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+  const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+  if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return false;
+  const next = new URL(link.href, window.location.href);
+  if (next.origin !== window.location.origin) return false;
+  return next.pathname + next.search !== window.location.pathname + window.location.search || next.hash === "";
+}
+
 /** La ruta en la que está la persona, con su consulta (Actividad cambia de mes por `?mes=`). */
 export const currentRoute = () => `${window.location.pathname}${window.location.search}`;
 
@@ -43,13 +57,19 @@ export function useReveal({ registry, page, onHighlight, onActivity }: RevealHoo
     let settled = 0;
     let unfiltered = false;
     let reached = false;
+    let leaving = false;
     let handle = 0;
+    // «No robar la navegación»: la persona empezó a navegar aunque la URL todavía no haya cambiado.
+    const onClick = (event: MouseEvent) => { if (startsNavigation(event)) leaving = true; };
+    const onPopState = () => { leaving = true; };
+    document.addEventListener("click", onClick, true);
+    window.addEventListener("popstate", onPopState);
     const started = performance.now();
     const frame = () => {
       const row = shownRow(target.id);
       const route = currentRoute();
       reached ||= route === target.route;
-      const step = revealStep({ target, page: hooks.current.page(), route, lists: registry.snapshot(), shown: row !== null, elapsed: performance.now() - started, settled, unfiltered, reached });
+      const step = revealStep({ target, page: hooks.current.page(), route, lists: registry.snapshot(), shown: row !== null, elapsed: performance.now() - started, settled, unfiltered, reached, leaving });
       switch (step.kind) {
         case "wait":
           settled = step.settled;
@@ -79,7 +99,11 @@ export function useReveal({ registry, page, onHighlight, onActivity }: RevealHoo
       }
     };
     handle = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(handle);
+    return () => {
+      cancelAnimationFrame(handle);
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener("popstate", onPopState);
+    };
   }, [target, registry]);
 
   /** `route`: la ruta en la que estaba la persona al enviar (la creación privada se envía con la hoja ya oculta). */

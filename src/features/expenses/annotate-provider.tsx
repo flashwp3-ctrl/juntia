@@ -30,7 +30,7 @@ import { initialSheet, isBusy, reduceSheet, type SheetMode } from "./annotate/sh
 import { useFlights, type ListScope } from "./annotate/use-flights";
 import { useMachine } from "./annotate/use-machine";
 import { currentRoute, useReveal } from "./annotate/use-reveal";
-import { useNotices, usePrivateUndo, useSingleUndo, type Notice } from "./annotate/use-undo";
+import { useNotices, useSingleUndo, type Notice } from "./annotate/use-undo";
 
 export type { SheetMode } from "./annotate/sheet-machine";
 
@@ -120,10 +120,20 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // La hoja (sheet-machine). La referencia la leen `N` y el segundo toque en el mismo cuadro.
   const [sheet, sendSheet, sheetRef] = useMachine(reduceSheet, initialSheet);
   const returnFocusTo = useRef<HTMLElement | null>(null);
-  const begin = useCallback((mode: SheetMode, trigger: HTMLElement | null) => {
+  // Cómo llegó la última interacción: `pointerdown` es puntero; `keydown` (el atajo `N`, Enter o Espacio en un disparador, que
+  // producen un clic con `detail === 0`) es teclado. Se lee al abrir: los disparadores no tienen que pasarlo (WCAG 2.4.7).
+  const modality = useRef<"pointer" | "keyboard">("keyboard");
+  useEffect(() => {
+    const pointer = () => { modality.current = "pointer"; };
+    const keyboard = () => { modality.current = "keyboard"; };
+    document.addEventListener("pointerdown", pointer, true);
+    document.addEventListener("keydown", keyboard, true);
+    return () => { document.removeEventListener("pointerdown", pointer, true); document.removeEventListener("keydown", keyboard, true); };
+  }, []);
+  const begin =useCallback((mode: SheetMode, trigger: HTMLElement | null) => {
     if (isBusy(sheetRef.current)) return; // una sola hoja a la vez
     returnFocusTo.current = trigger;
-    sendSheet({ type: "open", mode, key: newIdempotencyKey(), context: pageContext.current });
+    sendSheet({ type: "open", mode, key: newIdempotencyKey(), context: pageContext.current, via: modality.current });
   }, [pageContext, sendSheet, sheetRef]);
   const openFrom = useCallback((trigger: HTMLElement | null) => begin({ kind: "create" }, trigger), [begin]);
   const openEdit = useCallback((transaction: SavedTransaction, trigger: HTMLElement | null, onReload: () => void) => begin({ kind: "edit", transaction, onReload }, trigger), [begin]);
@@ -158,9 +168,24 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const notices = useNotices();
   const { notify } = notices;
   const [inFlight] = useState(() => new Set<string>());
-  const undoPrivate = usePrivateUndo(notices, inFlight, () => actionsRef.current, unhighlight);
   const singleUndo = useSingleUndo(notices, inFlight, () => sharedRef.current?.check);
   const runUndo = singleUndo.run;
+
+  // «Deshacer» de una creación privada (US-2.5; FR-034): anula con `undo` y la versión que devolvió la creación. Revisión del
+  // PR #74 (decisión del gestor, 11 nov 2026): se alinea con el contrato de la 003/004, como las demás intenciones. Entra en la
+  // reserva única, con el tope de 15 s. Un desconocido pasa al aviso fijo con «Reintentar» (la misma clave) y «Comprobar estado»
+  // (`write_status` con `void_transaction`); antes era un aviso ordinario que caducaba. Un rechazo confirmado no ofrece reintento.
+  const undoPrivate = useCallback((saved: SavedTransaction, idempotencyKey: string) => runUndo({
+    action: "void_transaction", id: saved.id, idempotencyKey, done: copy.annotate.undone[saved.type],
+    send: () => actionsRef.current.voidTransaction({ idempotencyKey, transactionId: saved.id, expectedVersion: saved.version, reason: "undo" }),
+    check: (input) => (actionsRef.current.check ? actionsRef.current.check(input) : Promise.resolve({ state: "error" as const })),
+    onOk: () => unhighlight(saved.id),
+    rejected: (error) => {
+      if (error === "alreadyDeleted" || error === "notFound") unhighlight(saved.id);
+      return error === "versionConflict" ? copy.annotate.undoChanged : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted
+        : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected;
+    },
+  }, "send"), [actionsRef, runUndo, unhighlight]);
 
   // F57-4: «Deshacer» de un gasto compartido (FR-024) y de Mover a Pareja (FR-034), con el contrato común.
   const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => runUndo({
@@ -239,7 +264,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     highlightIn(saved.id, "me");
     reveal({ id: saved.id, transactionDate: saved.transactionDate, context: "me" }, submittedFrom.current ?? currentRoute());
     const key = newIdempotencyKey();
-    notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undoPrivate(saved, key) } });
+    notify({ tone: "success", message: copy.annotate.saved[saved.type], undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoPrivate(saved, key) } });
   }, [close, highlightIn, notify, reveal, undoPrivate]);
 
   // E5 de un gasto compartido (02·5). La siguiente apertura recuerda lo que se usó (Q5).
@@ -324,6 +349,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             couple={coupleForSheet}
             sharedActions={sharedActions}
             initialContext={sheet.context}
+            openedWith={sheet.via}
             onSharedSaved={onSharedSaved}
             goalFunding={funding ?? undefined}
             onGoalSaved={onGoalExpenseSaved}

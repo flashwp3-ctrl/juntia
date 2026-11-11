@@ -763,7 +763,9 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect((await screen.findByRole("alert")).textContent).toContain(copy.annotate.undoChanged);
   });
 
-  it("un Deshacer rechazado ofrece Reintentar con la misma clave", async () => {
+  // Revisión del PR #74 (decisión del gestor, 11 nov 2026): el deshacer privado sigue el contrato de la 003/004. Sin respuesta (red),
+  // el resultado es desconocido y pasa al aviso fijo; «Reintentar» repite lo mismo con la MISMA clave (antes, un aviso que caducaba).
+  it("un Deshacer sin respuesta (red) pasa al aviso fijo y Reintentar usa la misma clave", async () => {
     const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ status: "ok", value: { id: saved().id, version: 2 } });
     const { user, trigger } = setup(mockActions({ voidTransaction }));
     await user.click(trigger);
@@ -772,8 +774,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.click(saveButton());
     await user.click(await screen.findByRole("button", { name: copy.annotate.undo }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain(copy.annotate.undoFailed);
-    await user.click(within(alert).getByRole("button", { name: copy.annotate.retry }));
+    expect(alert.textContent).toContain(copy.writes.undoUnknown);
+    await user.click(within(alert).getByRole("button", { name: copy.writes.retry }));
     await waitFor(() => expect(voidTransaction).toHaveBeenCalledTimes(2));
     expect(voidTransaction.mock.calls[1][0].idempotencyKey).toBe(voidTransaction.mock.calls[0][0].idempotencyKey);
   });

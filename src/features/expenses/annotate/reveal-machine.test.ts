@@ -12,7 +12,7 @@ const list = (month: string, contexts: ContextChoice[], ids: string[] = [], hidd
 /** Un cuadro: por defecto, un privado de noviembre anotado en Inicio de Yo, recién empezado. */
 const frame = (overrides: Partial<RevealFrame> & { context?: ContextChoice; date?: string } = {}): RevealFrame => {
   const { context = "me", date = "2026-11-05", ...rest } = overrides;
-  return { target: { id: ID, transactionDate: date, context, route: HOME }, page: "me", route: HOME, lists: [], shown: false, elapsed: 0, settled: 0, unfiltered: false, reached: false, ...rest };
+  return { target: { id: ID, transactionDate: date, context, route: HOME }, page: "me", route: HOME, lists: [], shown: false, elapsed: 0, settled: 0, unfiltered: false, reached: false, leaving: false, ...rest };
 };
 
 const ACTIVITY = "/actividad?mes=2026-11";
@@ -59,6 +59,12 @@ const TABLE: Row[] = [
   { state: "ya en Actividad, un filtro que se conserva entre meses lo oculta → quita esos filtros", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], [ID], [ID])] }), step: { kind: "unfilter", list: "lista-2026-11-me" } },
   { state: "ya en Actividad y no se ve tras unos cuadros → termina sin volver a navegar", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], [ID])], settled: SETTLE_FRAMES - 1, unfiltered: true }), step: { kind: "stop", reason: "arrived" } },
   { state: "ya en Actividad, la persona se va a otra ruta → termina", frame: following({ route: "/metas", reached: true }), step: { kind: "stop", reason: "navigated" } },
+  { state: "siguiendo, la URL no llega a Actividad antes de 10 s → para sin otra navegación", frame: following({ route: HOME, reached: false, elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "arrived" } },
+  { state: "siguiendo, ya en Actividad y la lista no trae el id en 10 s → para sin una segunda navegación", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], ["a"])], elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "arrived" } },
+  // «No robar la navegación»: la persona empezó a navegar y su página aún carga (la URL no cambió todavía).
+  { state: "la persona hace clic en un enlace mientras E5 espera (la página nueva aún carga) → termina sin navegar", frame: frame({ leaving: true, lists: [list("2026-11", ["me"])], elapsed: REVEAL_SAFETY_MS }), step: { kind: "stop", reason: "navigated" } },
+  { state: "la persona hace clic en un enlace con la lista que ya trae el id al cuadro 3 → termina sin navegar", frame: frame({ leaving: true, lists: [list("2026-11", ["me"], [ID])], settled: SETTLE_FRAMES - 1 }), step: { kind: "stop", reason: "navigated" } },
+  { state: "siguiendo, la persona hace clic en un enlace antes de que llegue la URL → termina", frame: following({ route: HOME, reached: false, leaving: true }), step: { kind: "stop", reason: "navigated" } },
 ];
 
 describe("E5 · tabla de estados", () => {

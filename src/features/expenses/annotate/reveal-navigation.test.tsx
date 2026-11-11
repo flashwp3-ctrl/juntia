@@ -20,6 +20,9 @@ function Home({ list }: { list: boolean }) {
     <>
       <button type="button" onClick={(event) => openFrom(event.currentTarget)}>{copy.nav.annotate}</button>
       {list ? <HomeList /> : null}
+      {/* Un enlace interno: Next cancela el clic y navega en el cliente; aquí se cancela para que jsdom no navegue. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- prueba: el <a> que pinta Link, sin el router de Next. */}
+      <a href="/metas" onClick={(event) => event.preventDefault()}>Metas</a>
     </>
   );
 }
@@ -102,5 +105,58 @@ describe("E5 respeta la navegación de la persona", { timeout: 15000 }, () => {
     await screen.findByRole("button", { name: copy.annotate.undo });
     at(16);
     expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+  });
+
+  it("si hace clic en un enlace mientras E5 espera (su página aún carga), E5 no la lleva a Actividad", async () => {
+    const { user, actions } = setup(async () => ({ ok: true, value: saved() }));
+    await annotate(user);
+    const { frames, at } = controlTime();
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    await waitFor(() => expect(actions.create).toHaveBeenCalledTimes(1));
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    at(2000);
+    // La URL todavía no cambia: la navegación de cliente está en curso.
+    await user.click(screen.getByRole("link", { name: "Metas" }));
+    at(10_100);
+    expect(frames).toHaveLength(0);
+    expect(router.push).not.toHaveBeenCalled();
+  });
+});
+
+describe("E5 tras llevar a Actividad del mes (seguimiento, #54)", { timeout: 15000 }, () => {
+  it("si la URL no llega a Actividad antes de 10 s, para sin otra navegación", async () => {
+    const { user } = setup(async () => ({ ok: true, value: saved() }), false);
+    await annotate(user);
+    const { frames, at } = controlTime();
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    at(16);
+    expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    // La URL se queda en «/» (la navegación no termina): espera…
+    at(5000);
+    expect(frames.length).toBeGreaterThan(0);
+    // …y al tope para, sin un segundo push.
+    at(10_100);
+    expect(frames).toHaveLength(0);
+    expect(router.push).toHaveBeenCalledTimes(1);
+  });
+
+  it("si la URL llegó pero la lista no trae el id en 10 s, para sin una segunda navegación", async () => {
+    router.push.mockImplementation((url: string) => { window.history.pushState({}, "", url); });
+    const { user } = setup(async () => ({ ok: true, value: saved() }));
+    await annotate(user);
+    const { frames, at } = controlTime();
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    // La lista de noviembre nunca trae el id: al tope, E5 lleva a Actividad del mes, que llega enseguida.
+    at(10_100);
+    expect(router.push).toHaveBeenCalledTimes(1);
+    at(10_116);
+    expect(frames.length).toBeGreaterThan(0);
+    // En Actividad la lista sigue sin el id: al tope del seguimiento, para.
+    at(20_300);
+    expect(frames).toHaveLength(0);
+    expect(router.push).toHaveBeenCalledTimes(1);
+    router.push.mockReset();
   });
 });

@@ -17,23 +17,26 @@ export type SheetState = {
   mode: SheetMode;
   key: string;
   context: ContextChoice;
+  /** Cómo se abrió: con puntero (toque o clic) o con teclado (`N`, Enter o Espacio en el disparador). WCAG 2.4.7: solo la apertura
+   *  con puntero deja el monto sin anillo (02·5); con teclado, el foco siempre se ve. */
+  via: "pointer" | "keyboard";
 };
 
 export type SheetEvent =
-  | { type: "open"; mode: SheetMode; key: string; context: ContextChoice }
+  | { type: "open"; mode: SheetMode; key: string; context: ContextChoice; via: SheetState["via"] }
   /** La creación privada se envía: la hoja se oculta y sigue ocupada. */
   | { type: "hide" }
   /** Rechazo o resultado desconocido de esa creación: la hoja vuelve, con lo escrito y la misma clave. */
   | { type: "restore" }
   | { type: "close" };
 
-export const initialSheet: SheetState = { phase: "closed", mounted: false, mode: { kind: "create" }, key: "", context: "me" };
+export const initialSheet: SheetState = { phase: "closed", mounted: false, mode: { kind: "create" }, key: "", context: "me", via: "keyboard" };
 
 export function reduceSheet(state: SheetState, event: SheetEvent): SheetState {
   switch (event.type) {
     case "open":
       // Una sola hoja a la vez: ni una segunda apertura ni `N` con la hoja abierta u oculta.
-      return state.phase === "closed" ? { phase: "open", mounted: true, mode: event.mode, key: event.key, context: event.context } : state;
+      return state.phase === "closed" ? { phase: "open", mounted: true, mode: event.mode, key: event.key, context: event.context, via: event.via } : state;
     case "hide":
       return state.phase === "open" ? { ...state, phase: "hidden" } : state;
     case "restore":

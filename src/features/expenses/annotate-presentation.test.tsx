@@ -92,17 +92,34 @@ describe("Anotar al cruzar 768 px", { timeout: 15000 }, () => {
   });
 });
 
-describe("el monto al abrir (02·5, sin marco)", { timeout: 15000 }, () => {
-  it("el foco de la apertura no pinta el anillo; al salir del campo, el anillo vuelve para el foco siguiente", async () => {
+// El estilo calculado (anillo pintado o no) se comprueba en Chromium, en la spec 2 (`annotate.e2e.ts`): jsdom no carga el CSS.
+describe("el monto al abrir (02·5, sin marco; WCAG 2.4.7)", { timeout: 15000 }, () => {
+  const quiet = (frame: HTMLElement) => frame.className.includes("focus-within:!outline-none");
+
+  it("abierta con puntero, el foco de la apertura no pinta el anillo; al salir del campo, vuelve para el foco siguiente", async () => {
     const user = await openSheet();
     const frame = amount().parentElement!;
     expect(document.activeElement).toBe(amount());
-    expect(frame.className).toContain("focus-within:!outline-none");
+    expect(quiet(frame)).toBe(true);
     // El anillo del diseño (focus.ring) sigue en el marco: solo se apaga en esta primera vez.
     expect(frame.className).toContain("focus-within:outline-solid");
     await user.tab({ shift: true });
     await user.tab();
     expect(document.activeElement).toBe(amount());
-    expect(frame.className).not.toContain("focus-within:!outline-none");
+    expect(quiet(frame)).toBe(false);
+  });
+
+  it.each([
+    { how: "con el atajo N", open: async (user: ReturnType<typeof userEvent.setup>) => { await user.keyboard("n"); } },
+    { how: "con Enter sobre el disparador", open: async (user: ReturnType<typeof userEvent.setup>) => { screen.getByRole("button", { name: copy.nav.annotate }).focus(); await user.keyboard("{Enter}"); } },
+    { how: "con Espacio sobre el disparador", open: async (user: ReturnType<typeof userEvent.setup>) => { screen.getByRole("button", { name: copy.nav.annotate }).focus(); await user.keyboard(" "); } },
+  ])("abierta $how, el foco del monto conserva el anillo", async ({ open }) => {
+    const actions: ExpenseActions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
+    const user = userEvent.setup();
+    render(<AnnotateProvider actions={actions} today="2026-11-05"><Trigger /></AnnotateProvider>);
+    await open(user);
+    await screen.findByRole("dialog", { name: copy.annotate.title.expense });
+    expect(document.activeElement).toBe(amount());
+    expect(quiet(amount().parentElement!)).toBe(false);
   });
 });

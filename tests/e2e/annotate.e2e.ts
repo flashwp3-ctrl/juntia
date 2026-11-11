@@ -5,7 +5,7 @@
 // L2 de E5».
 // Además, «Deshacer» de punta a punta (US-2.5): el total vuelve y el movimiento sale de la base activa. Solo Chromium y
 // ninguna espera fija (ADR-011 §6); cada test siembra su propia cuenta, porque escribe movimientos.
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
@@ -29,11 +29,16 @@ async function signedInHome(page: Page, user: SeededUser) {
   await page.goto("/");
 }
 
+/** El anillo de foco que pinta el marco del monto (estilo calculado de su padre). */
+const ringOf = (sheet: Locator) => sheet.getByRole("textbox", { name: copy.annotate.amount }).evaluate((node) => getComputedStyle(node.parentElement!).outlineStyle);
+
 async function annotate(page: Page, pesos: string) {
   await page.locator("body").focus();
   await page.keyboard.press("n");
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  // WCAG 2.4.7: abierta con el teclado, el foco del monto se ve (anillo pintado en el marco, estilo calculado).
+  expect(await ringOf(sheet)).toBe("solid");
   await page.keyboard.type(pesos);
   await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
   return sheet;
@@ -244,6 +249,8 @@ test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde 
   await page.locator("[data-annotate-trigger]:visible").first().click();
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
   await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  // 02·5: abierta con puntero, el monto no tiene marco: el foco de la apertura no pinta el anillo.
+  expect(await ringOf(sheet)).toBe("none");
   await page.keyboard.type("23400");
   const radio = (id: keyof typeof copy.categories) => sheet.getByRole("radio", { name: copy.categories[id] });
   await radio("home").click();

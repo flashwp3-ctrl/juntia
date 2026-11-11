@@ -85,6 +85,8 @@ type AnnotateSheetProps = {
   couple?: CoupleForSheet | null;
   sharedActions?: SharedActions;
   initialContext?: ContextChoice;
+  /** Cómo se abrió la hoja: solo con puntero el monto abre sin anillo (02·5); con teclado, el foco se ve (WCAG 2.4.7). */
+  openedWith?: "pointer" | "keyboard";
   onSharedSaved?: (saved: SavedShared, kind: "create" | "editShared") => void;
   /** Editar un privado con pareja activa y elegir Nosotros: Mover a Pareja (FR-032). */
   onMove?: (transaction: SavedTransaction) => void;
@@ -225,7 +227,7 @@ function sharedRejection(error: WriteError) {
   }
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove, goalFunding, onGoalSaved }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", openedWith = "keyboard", onSharedSaved, onMove, goalFunding, onGoalSaved }: AnnotateSheetProps) {
   const editing = mode.kind === "edit" || mode.kind === "editShared";
   const editingShared = mode.kind === "editShared";
   const members = useMemo(() => couple?.members ?? [], [couple]);
@@ -242,9 +244,10 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const [confirmingMove, setConfirmingMove] = useState(false);
   // Bloqueo tras un fallo ambiguo: dura lo que dura esta apertura de la hoja.
   const [locked, setLocked] = useState(false);
-  // 02·5: el monto no tiene marco. El foco que la hoja le pone al abrir no pinta el anillo; en cuanto el campo pierde el
+  // 02·5: el monto no tiene marco. El foco que la hoja le pone al abrir con PUNTERO no pinta el anillo (con teclado, sí: WCAG
+  // 2.4.7); en cuanto el campo pierde el
   // foco, el anillo vuelve para todo foco posterior (Tab, Mayús+Tab o un toque), como en el resto de los campos.
-  const [amountOpening, setAmountOpening] = useState(true);
+  const [amountOpening, setAmountOpening] = useState(openedWith === "pointer");
   const saving = useRef(false);
   const summaryRef = useRef<HTMLDivElement | null>(null);
   const payerRef = useRef<HTMLButtonElement | null>(null);

@@ -47,6 +47,8 @@ export type RevealFrame = {
   unfiltered: boolean;
   /** Con `follow`: la ruta ya llegó a la de destino al menos una vez (la navegación de Next tarda en cambiar la URL). */
   reached: boolean;
+  /** La persona EMPEZÓ una navegación (un clic en un enlace interno, atrás o adelante), aunque la página nueva aún cargue. */
+  leaving: boolean;
 };
 
 export type RevealStep =
@@ -62,8 +64,10 @@ export type RevealStep =
 
 export const monthOf = (date: string) => date.slice(0, 7);
 
-export function revealStep({ target, page, route, lists, shown, elapsed, settled, unfiltered, reached }: RevealFrame): RevealStep {
+export function revealStep({ target, page, route, lists, shown, elapsed, settled, unfiltered, reached, leaving }: RevealFrame): RevealStep {
   if (shown) return { kind: "highlight", context: page };
+  // La persona empezó a navegar (su página aún puede estar cargando): E5 no pisa esa navegación con la suya.
+  if (leaving) return { kind: "stop", reason: "navigated" };
   if (route !== target.route) {
     // Tras llevarla a Actividad, la URL tarda en cambiar: se espera a que llegue (con el tope).
     if (target.follow && !reached) return elapsed >= REVEAL_SAFETY_MS ? { kind: "stop", reason: "arrived" } : { kind: "wait", settled };
