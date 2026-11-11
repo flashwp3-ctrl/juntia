@@ -8,14 +8,18 @@ import { REVEAL_SAFETY_MS, revealStep, SETTLE_FRAMES, type ListSnapshot, type Re
 
 const ID = "7d1b2a52-35e8-4c4c-9e43-9b7e0f1c2a10";
 const HOME = "/";
-const list = (month: string, contexts: ContextChoice[], ids: string[] = []): ListSnapshot => ({ month, contexts, ids: new Set(ids) });
+const list = (month: string, contexts: ContextChoice[], ids: string[] = [], hidden: string[] = []): ListSnapshot => ({ key: `lista-${month}-${contexts.join("-")}`, month, contexts, ids: new Set(ids), hidden: new Set(hidden) });
 /** Un cuadro: por defecto, un privado de noviembre anotado en Inicio de Yo, recién empezado. */
 const frame = (overrides: Partial<RevealFrame> & { context?: ContextChoice; date?: string } = {}): RevealFrame => {
   const { context = "me", date = "2026-11-05", ...rest } = overrides;
-  return { target: { id: ID, transactionDate: date, context, route: HOME }, page: "me", route: HOME, lists: [], shown: false, elapsed: 0, settled: 0, ...rest };
+  return { target: { id: ID, transactionDate: date, context, route: HOME }, page: "me", route: HOME, lists: [], shown: false, elapsed: 0, settled: 0, unfiltered: false, reached: false, ...rest };
 };
 
-type Row = { state: string; frame: RevealFrame; step: RevealStep };
+const ACTIVITY = "/actividad?mes=2026-11";
+/** Un cuadro después de que E5 llevara a la persona a Actividad del mes. */
+const following = (overrides: Partial<RevealFrame>) => frame({ ...overrides, target: { ...frame().target, route: ACTIVITY, follow: true } });
+
+type Row ={ state: string; frame: RevealFrame; step: RevealStep };
 const TABLE: Row[] = [
   // Mismo contexto y mes.
   { state: "mismo contexto y mes · la lista trae el id y la fila se ve → resalta ahí", frame: frame({ lists: [list("2026-11", ["me"], [ID])], shown: true }), step: { kind: "highlight", context: "me" } },
@@ -45,6 +49,16 @@ const TABLE: Row[] = [
   { state: "la persona va a Actividad de otro mes durante la espera → termina sin volver a llevarla", frame: frame({ route: "/actividad?mes=2026-09", lists: [list("2026-09", ["me"], ["c"])], elapsed: 3000 }), step: { kind: "stop", reason: "navigated" } },
   { state: "la persona va a otra ruta que sí enseña la fila → la resalta ahí", frame: frame({ route: "/actividad?mes=2026-11", lists: [list("2026-11", ["me"], [ID])], shown: true }), step: { kind: "highlight", context: "me" } },
   { state: "la misma ruta al tope de 10 s sigue llevando a Actividad (el cambio de ruta es lo único que lo evita)", frame: frame({ lists: [list("2026-11", ["me"])], elapsed: REVEAL_SAFETY_MS + 1 }), step: { kind: "toActivity", month: "2026-11" } },
+  // #54 (F51-14): un filtro activo de Actividad oculta el gasto recién guardado.
+  { state: "#54 · la lista de Actividad trae el id y un filtro activo lo oculta → quita solo los filtros que lo excluyen", frame: frame({ route: ACTIVITY, target: { ...frame().target, route: ACTIVITY }, lists: [list("2026-11", ["me"], [ID], [ID])] }), step: { kind: "unfilter", list: "lista-2026-11-me" } },
+  { state: "#54 · ya pidió quitar los filtros y la fila aún no se pinta → espera unos cuadros", frame: frame({ route: ACTIVITY, target: { ...frame().target, route: ACTIVITY }, lists: [list("2026-11", ["me"], [ID], [ID])], unfiltered: true }), step: { kind: "wait", settled: 1 } },
+  { state: "#54 · tras quitar los filtros, la fila se ve → la resalta ahí", frame: frame({ route: ACTIVITY, target: { ...frame().target, route: ACTIVITY }, lists: [list("2026-11", ["me"], [ID])], unfiltered: true, shown: true }), step: { kind: "highlight", context: "me" } },
+  { state: "#54 · un id que el filtro oculta pero que es de otra lista (Nosotros) no quita filtros de esta", frame: frame({ lists: [list("2026-11", ["us"], [ID], [ID]), list("2026-11", ["me"], ["a"])] }), step: { kind: "wait", settled: 0 } },
+  // E5 llevó a la persona a Actividad del mes y sigue mirando ahí (follow), por si un filtro lo oculta (#54).
+  { state: "tras llevarla a Actividad, la URL todavía no cambió → espera (no es una navegación de la persona)", frame: following({ route: HOME, reached: false, elapsed: 300 }), step: { kind: "wait", settled: 0 } },
+  { state: "ya en Actividad, un filtro que se conserva entre meses lo oculta → quita esos filtros", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], [ID], [ID])] }), step: { kind: "unfilter", list: "lista-2026-11-me" } },
+  { state: "ya en Actividad y no se ve tras unos cuadros → termina sin volver a navegar", frame: following({ route: ACTIVITY, reached: true, lists: [list("2026-11", ["me"], [ID])], settled: SETTLE_FRAMES - 1, unfiltered: true }), step: { kind: "stop", reason: "arrived" } },
+  { state: "ya en Actividad, la persona se va a otra ruta → termina", frame: following({ route: "/metas", reached: true }), step: { kind: "stop", reason: "navigated" } },
 ];
 
 describe("E5 · tabla de estados", () => {

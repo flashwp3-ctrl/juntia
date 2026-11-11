@@ -20,7 +20,7 @@ import { dayLabel, monthName, monthTitle, pesos, shortDate } from "@/lib/format"
 import { AnnotateFirst } from "@/features/home/annotate-cta";
 import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
 import type { PendingRow } from "@/features/expenses/types";
-import { useActivityFilters, type ActivityFilters } from "./activity-filters";
+import { excludingFilters, useActivityFilters, type ActivityFilters } from "./activity-filters";
 import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
 import { FundingRowBadge, useFundingLookup } from "@/features/expenses/goal-funding/funding-context";
 import { cop } from "@/features/goals/format";
@@ -250,7 +250,15 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
   // Una fila ya confirmada se esconde en cuanto la lista trae la real: nunca las dos (F51-8).
   const known = new Set(rows.map(({ id }) => id));
   const listedIds = useMemo(() => rows.map(({ id }) => id), [rows]);
-  useListScope(month, listedIds, ["me"]);
+  // #54: los movimientos que la lista trae y los filtros dejan fuera; E5 quita solo los filtros que excluyen el recién guardado.
+  const visibleIds = new Set(visible.map(({ id }) => id));
+  useListScope(month, listedIds, ["me"], {
+    hidden: rows.filter(({ id }) => !visibleIds.has(id)).map(({ id }) => id),
+    unhide: (id) => {
+      const row = rows.find((candidate) => candidate.id === id);
+      if (row) filters.reveal(excludingFilters(row, { query: filters.query, type, categoryId: filters.categoryId }));
+    },
+  });
   const inFlight = usePendingRows().filter(({ transaction, savedId }) => monthKey(transaction.transactionDate) === month && !(savedId && known.has(savedId)));
   // Una fila ya confirmada se muestra como lo que es: la fila real (con su id y su detalle), sin «Guardando…» (F51-12).
   const shown = (row: (typeof inFlight)[number]) => (row.savedId ? { ...row.transaction, id: row.savedId } : row.transaction);

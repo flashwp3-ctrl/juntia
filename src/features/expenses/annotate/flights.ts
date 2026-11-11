@@ -62,16 +62,31 @@ export function refreshRound(flights: Flights, counts: ReadonlyMap<string, numbe
  */
 export class ListRegistry {
   private readonly lists = new Map<string, ListSnapshot>();
+  /** #54: cómo quita cada lista los filtros que dejan fuera un id (solo esos). */
+  private readonly unhiders = new Map<string, (id: string) => void>();
 
   enter(key: string, month: string, contexts: readonly ContextChoice[]) {
-    this.lists.set(key, { month, contexts, ids: this.lists.get(key)?.ids ?? new Set() });
-    return () => { this.lists.delete(key); };
+    const previous = this.lists.get(key);
+    this.lists.set(key, { key, month, contexts, ids: previous?.ids ?? new Set(), hidden: previous?.hidden ?? new Set() });
+    return () => { this.lists.delete(key); this.unhiders.delete(key); };
   }
 
   /** Guarda los ids que trae la lista, si sigue montada con ese mes. */
   report(key: string, month: string, ids: readonly string[]) {
     const list = this.lists.get(key);
     if (list && list.month === month) this.lists.set(key, { ...list, ids: new Set(ids) });
+  }
+
+  /** #54: los ids que la lista trae y sus filtros dejan fuera, y cómo quitar esos filtros. */
+  filter(key: string, hidden: readonly string[], unhide: (id: string) => void) {
+    const list = this.lists.get(key);
+    if (!list) return;
+    this.lists.set(key, { ...list, hidden: new Set(hidden) });
+    this.unhiders.set(key, unhide);
+  }
+
+  unhide(key: string, id: string) {
+    this.unhiders.get(key)?.(id);
   }
 
   hasMonth(month: string) {

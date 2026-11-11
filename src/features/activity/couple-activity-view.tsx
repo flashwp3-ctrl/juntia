@@ -29,7 +29,7 @@ import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
 import { FundingRowBadge } from "@/features/expenses/goal-funding/funding-context";
 import { cop } from "@/features/goals/format";
 import type { GoalEntryView } from "@/features/goals/types";
-import { useActivityFilters } from "./activity-filters";
+import { excludingFilters, useActivityFilters } from "./activity-filters";
 
 export type CoupleSettlementView = Settlement & { id: string; settlementDate: string; createdAt: string; note: string | null; version: number };
 /** F57-2 (revisión del PR #57): `summary` es `couple_month_summary` del mes; el total, el desglose y el conteo salen de ahí (FR-043), nunca de sumar la lista paginada, que solo se pinta, se filtra y se busca. */
@@ -49,13 +49,21 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
   const highlightId = useHighlightId();
   // F69-5: Actividad de Nosotros monta su mes y avisa de los ids que trae (E5 decide por ellos).
   const listedIds = useMemo(() => expenses.map((row) => row.id), [expenses]);
-  useListScope(month, listedIds, ["us"]);
   // El tipo vive en el layout y se comparte con Yo: aquí no hay «Ingresos» (pasa a «Todos») y «Aportes» solo vale si las metas
   // se cargaron; si no, «Todos». El valor normalizado manda en el control, en el filtrado y en el anuncio del conteo.
   const type = filters.type === "income" || (filters.type === "goals" && setAsideMinor === undefined) ? "all" : filters.type;
   const goalsOnly = type === "goals";
   const filtering = filters.query.trim() !== "" || filters.categoryId !== null || type !== "all";
   const visibleExpenses = goalsOnly ? [] : expenses.filter((row) => matchesSearch(row.description, filters.query) && (filters.categoryId === null || row.categoryId === filters.categoryId));
+  // #54: los gastos que la lista trae y los filtros dejan fuera; E5 quita solo los filtros que excluyen el recién guardado.
+  const visibleIds = new Set(visibleExpenses.map(({ id }) => id));
+  useListScope(month, listedIds, ["us"], {
+    hidden: expenses.filter(({ id }) => !visibleIds.has(id)).map(({ id }) => id),
+    unhide: (id) => {
+      const row = expenses.find((candidate) => candidate.id === id);
+      if (row) filters.reveal(excludingFilters({ type: "expense", categoryId: row.categoryId, description: row.description }, { query: filters.query, type, categoryId: filters.categoryId }));
+    },
+  });
   // Los asientos de metas no tienen categoría: con una categoría elegida o «Gastos» no se muestran; la búsqueda mira su título.
   const visibleGoals = filters.categoryId !== null || type === "expense" ? [] : goalEntries.filter((row) => matchesSearch(entryTitle(row, "activity"), filters.query));
   const items: Item[] = [

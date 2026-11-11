@@ -76,7 +76,7 @@ type AnnotateState = {
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
-const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_FLIGHTS, scope: { enter: () => () => {}, report: () => {} } });
+const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_FLIGHTS, scope: { enter: () => () => {}, report: () => {}, filter: () => {} } });
 
 type AnnotateProviderProps = {
   children: ReactNode;
@@ -373,9 +373,10 @@ export function usePendingRows(): readonly PendingRow[] {
  * Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12) y
  * para que E5 sepa si la pantalla puede enseñar el gasto nuevo. F69-6: `contexts`, de qué contextos pinta movimientos la
  * lista (Actividad e Inicio de Yo: `["me"]`; Inicio de Yo con pareja, que pinta tu parte de lo compartido: `["me", "us"]`;
- * Nosotros: `["us"]`).
+ * Nosotros: `["us"]`). #54: `filters`, en una lista con filtros (Actividad), los ids que trae y sus filtros dejan fuera, y cómo
+ * quitar solo los filtros que excluyen uno.
  */
-export function useListScope(month: string, ids: readonly string[], contexts: readonly ContextChoice[]) {
+export function useListScope(month: string, ids: readonly string[], contexts: readonly ContextChoice[], filters?: { hidden: readonly string[]; unhide: (id: string) => void }) {
   const { scope, rows } = useContext(PendingContext);
   const key = useId();
   const contextKey = contexts.join(",");
@@ -385,6 +386,10 @@ export function useListScope(month: string, ids: readonly string[], contexts: re
   // Una fila acaba de confirmarse y la lista ya la trae (la real llegó antes que la respuesta): solo (a).
   const confirmed = rows.filter((row) => row.state === "confirmed").map((row) => row.savedId).join(",");
   useEffect(() => scope.report(key, month, ids, false), [scope, key, month, ids, confirmed]);
+  const unhide = useRef(filters?.unhide);
+  useEffect(() => { unhide.current = filters?.unhide; });
+  const hiddenKey = filters?.hidden.join(",") ?? "";
+  useEffect(() => { scope.filter(key, hiddenKey ? hiddenKey.split(",") : [], (id) => unhide.current?.(id)); }, [scope, key, month, contextKey, hiddenKey]);
 }
 
 /** PR D: el proveedor, o `null` fuera de él (el detalle de liquidación se pinta también en pruebas sin Anotar). */

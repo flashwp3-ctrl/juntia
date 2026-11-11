@@ -143,6 +143,24 @@ describe("filas en vuelo (flights)", () => {
     expect(refreshRound(launch(NO_FLIGHTS, row("k3")), new Map())).toEqual({ exhausted: [], live: [] });
   });
 
+  // Tabla de estados de la fila optimista frente a lo que informa una lista (`reconcile`). La de E5 está en reveal-machine.test.ts.
+  const saving = launch(NO_FLIGHTS, row("k1"));
+  const confirmed = confirm(saving, "k1", "real-1");
+  const otherMonth = confirm(launch(NO_FLIGHTS, row("k1", "2026-10-20")), "k1", "real-1");
+  it.each([
+    { state: "«Guardando…» y la lista trae otros ids → se queda", flights: saving, ids: ["otro"], revalidated: true, mounted: true, left: ["k1"] },
+    { state: "confirmada y la lista trae su id real → se retira (a): nunca las dos", flights: confirmed, ids: ["real-1"], revalidated: false, mounted: true, left: [] },
+    { state: "confirmada, revalidación sin su id y una lista de su mes montada → se queda (sin hueco)", flights: confirmed, ids: ["otro"], revalidated: true, mounted: true, left: ["k1"] },
+    { state: "confirmada de otro mes, revalidación sin su id y ninguna lista de su mes → se retira (b)", flights: otherMonth, ids: [], revalidated: true, mounted: false, left: [] },
+    // #53 (F51-11), límite conocido: mientras la respuesta no llega no se sabe el id real, así que una lista que ya trae la real
+    // no puede emparejarla y, durante ese intervalo, se ven las dos. Arreglarlo bien necesita que el cliente conozca el id antes
+    // (un UUID generado en el cliente dentro de `create_transaction`): migración y contrato de función con su ADR. Sin heurísticas
+    // de cliente (decisión del gestor, 11 nov 2026). Prueba de punta a punta: optimistic-isolation.test.tsx.
+    { state: "límite conocido #53: «Guardando…» y la lista ya trae la real (id aún desconocido) → se queda; se ven las dos", flights: saving, ids: ["real-1"], revalidated: true, mounted: true, left: ["k1"] },
+  ])("$state", ({ flights, ids, revalidated, mounted, left }) => {
+    expect(reconcile(flights, ids, revalidated, () => mounted).map(({ key }) => key)).toEqual(left);
+  });
+
   it("el registro de listas es por lista: su mes, sus contextos y sus ids; salir la borra", () => {
     const registry = new ListRegistry();
     const leaveHome = registry.enter("inicio", "2026-11", ["me", "us"]);

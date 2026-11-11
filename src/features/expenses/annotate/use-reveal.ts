@@ -41,14 +41,25 @@ export function useReveal({ registry, page, onHighlight, onActivity }: RevealHoo
   useEffect(() => {
     if (!target) return;
     let settled = 0;
+    let unfiltered = false;
+    let reached = false;
     let handle = 0;
     const started = performance.now();
     const frame = () => {
       const row = shownRow(target.id);
-      const step = revealStep({ target, page: hooks.current.page(), route: currentRoute(), lists: registry.snapshot(), shown: row !== null, elapsed: performance.now() - started, settled });
+      const route = currentRoute();
+      reached ||= route === target.route;
+      const step = revealStep({ target, page: hooks.current.page(), route, lists: registry.snapshot(), shown: row !== null, elapsed: performance.now() - started, settled, unfiltered, reached });
       switch (step.kind) {
         case "wait":
           settled = step.settled;
+          handle = requestAnimationFrame(frame);
+          return;
+        case "unfilter":
+          // #54: la lista quita solo los filtros que lo excluyen; se vuelve a contar desde cero para darle tiempo a pintarse.
+          unfiltered = true;
+          settled = 0;
+          registry.unhide(step.list, target.id);
           handle = requestAnimationFrame(frame);
           return;
         case "highlight":
@@ -56,10 +67,13 @@ export function useReveal({ registry, page, onHighlight, onActivity }: RevealHoo
           if (target.context !== step.context) hooks.current.onHighlight(target.id, step.context);
           setTarget(null);
           return;
-        case "toActivity":
-          setTarget(null);
+        case "toActivity": {
+          const destination = `/actividad?mes=${step.month}`;
+          // Se sigue mirando en Actividad del mes, por si un filtro que se conserva entre meses (tipo, búsqueda) lo oculta (#54).
+          setTarget({ ...target, route: destination, follow: true });
           hooks.current.onActivity(step.month);
           return;
+        }
         case "stop":
           setTarget(null);
       }
@@ -69,5 +83,5 @@ export function useReveal({ registry, page, onHighlight, onActivity }: RevealHoo
   }, [target, registry]);
 
   /** `route`: la ruta en la que estaba la persona al enviar (la creación privada se envía con la hoja ya oculta). */
-  return useCallback((next: Omit<RevealTarget, "route">, route: string = currentRoute()) => setTarget({ ...next, route }), []);
+  return useCallback((next: Omit<RevealTarget, "route" | "follow">, route: string = currentRoute()) => setTarget({ ...next, route }), []);
 }

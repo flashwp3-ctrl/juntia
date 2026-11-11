@@ -1,6 +1,12 @@
 "use client";
 // Las creaciones privadas en vuelo y las listas montadas (UX lote 1, cambio 3; F51-8, F51-12; F69-5, F69-6). La lógica está en
 // `flights.ts`; aquí solo el estado, la referencia que leen los efectos y el intervalo de revalidaciones con tope.
+// Por qué no `useOptimistic` de React 19 (evaluado en la refactorización del 11 nov 2026; no volver a proponerlo sin esto):
+//   1. el valor optimista cae al terminar la acción (~0,4 s) y la fila real llega con el árbol (~1,4 s): habría hueco, y F51-12
+//      exige que la temporal confirmada se quede hasta que la lista traiga el id;
+//   2. con el tope de 15 s la transición seguiría pendiente y la fila a la vista mientras la hoja vuelve bloqueada;
+//   3. compartidos y gasto con meta no tienen fila optimista (aprobado): solo serviría para la creación privada;
+//   4. la hoja vive en el layout y las listas en las páginas: el hook tendría que estar igual en este proveedor.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContextChoice } from "@/lib/context-preference";
 import type { ActionResult, PendingRow, SavedTransaction } from "../types";
@@ -11,6 +17,8 @@ export type ListScope = {
   enter: (key: string, month: string, contexts: readonly ContextChoice[]) => () => void;
   /** `revalidated`: llegó por una revalidación (filas nuevas del servidor). */
   report: (key: string, month: string, ids: readonly string[], revalidated: boolean) => void;
+  /** #54: los ids que la lista trae y sus filtros dejan fuera, y cómo quitar solo los filtros que excluyen uno. */
+  filter: (key: string, hidden: readonly string[], unhide: (id: string) => void) => void;
 };
 
 type FlightHooks = {
@@ -56,6 +64,7 @@ export function useFlights({ refresh, onLaunch, onReturn }: FlightHooks) {
 
   const scope = useMemo<ListScope>(() => ({
     enter: (key, month, contexts) => registry.enter(key, month, contexts),
+    filter: (key, hidden, unhide) => registry.filter(key, hidden, unhide),
     report: (key, month, ids, revalidated) => {
       registry.report(key, month, ids);
       setFlights((current) => reconcile(current, ids, revalidated, (target) => registry.hasMonth(target)));
