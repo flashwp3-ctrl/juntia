@@ -318,7 +318,8 @@ ligero corren, con el mismo criterio que el selector de specs E2E:
 - **Un archivo a11y cambiado** corre ese archivo (`routes.a11y.ts`, entero).
 - **Lo compartido, lo desconocido, una base que no se puede calcular o un fallo del
   script → todos, con el registro completo:** `src/components/`, el shell y el resto
-  de `src/app/`, `globals.css`, Anotar (`annotate-sheet.tsx`), Inicio y Actividad,
+  de `src/app/`, `globals.css`, `src/features/shared/` («Comprobar estado» y filas
+  compartidas de todas las áreas), Anotar (`annotate-sheet.tsx`), Inicio y Actividad,
   que auditan varios archivos, `src/lib/db/errors.ts`, `tests/support/**`,
   `tests/a11y/route-registry.ts`, `scripts/`, el workflow y cualquier ruta sin
   clasificar.
@@ -326,8 +327,9 @@ ligero corren, con el mismo criterio que el selector de specs E2E:
   salta): documentación, specs E2E, pruebas de Vitest y SQL y **`src/lib/copy/es.ts`**,
   como en E2E, porque todo PR lo toca. Riesgo aceptado: un cambio de copy que afecte
   nombres accesibles de otra área no se detecta en el gate; lo cubren la revisión y
-  el barrido completo al cerrar cada etapa. Otro archivo de `src/lib/copy/` es
-  compartido.
+  el barrido completo al cerrar cada etapa. Pero un PR que solo toca `es.ts` (o
+  `es.ts` y otros neutros) corre todo; con un área, solo el área. Otro archivo de
+  `src/lib/copy/` es compartido.
 - Solo se pasan a Playwright los archivos que existen; uno previsto que falta se
   anota en el resumen y no se da por aprobado. El resumen del job dice qué archivos
   corrieron, cuáles no y por qué. Lo comprueba `tests/a11y-select.test.ts`, que

@@ -160,7 +160,7 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
      | Presupuestos y Análisis | `src/app/(app)/plan/**`, `src/features/plan/**`, `src/features/analysis/**`, `src/domain/budgets/**`, `src/domain/analysis/**`, `src/lib/db/budgets.ts` y `planning.ts`, migraciones `*_budget*` | `plan` | `presupuestos` |
      | Balance | `src/app/(app)/balance/**`, `src/features/balance/**`, `src/domain/balances/**`, `src/lib/db/settlements.ts` | `balance` | `balance` |
      | Pareja e invitación | `src/app/(app)/cuenta/pareja/**`, `src/app/invitacion/**`, `src/features/couple/**`, `src/domain/couple/**`, `src/lib/db/couple.ts` e `invitation-token.ts` | `couple` | `pareja` |
-     | Gastos compartidos | `src/features/expenses/shared-*`, `split-*` y `reclassify-*`, `src/features/shared/**`, `src/domain/allocations/**`, `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts` | `couple-shared` | `nucleo` (Inicio y Actividad en Nosotros) |
+     | Gastos compartidos | `src/features/expenses/shared-*`, `split-*` y `reclassify-*`, `src/domain/allocations/**`, `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts` | `couple-shared` | `nucleo` (Inicio y Actividad en Nosotros) |
      | Núcleo | `src/features/auth/**`, `src/app/(auth)/**`, `src/app/auth/**`, `src/features/account/**`, `src/app/(app)/cuenta/**` (fuera de pareja), `src/lib/db/export.ts` y `profile.ts` | — | `nucleo` |
 
   3. **Neutros** (no añaden nada; si el PR solo toca neutros, el paso de axe con sesión se salta y el resumen lo dice):
@@ -168,11 +168,15 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
      las de `tests/a11y/`), `supabase/tests/**`, los scripts de copia y restauración y **`src/lib/copy/es.ts`** (decisión del
      gestor del 11 de noviembre de 2026, como en E2E: todo PR lo toca). **Riesgo aceptado:** un cambio de copy que afecte
      nombres accesibles de otra área no se detecta en el gate; lo cubren la revisión y el barrido completo al cerrar cada
-     etapa. Cualquier otro archivo de `src/lib/copy/` es compartido.
+     etapa. **Pero si `es.ts` cambia y la selección queda vacía** (el PR solo toca la copy, o la copy y otros neutros),
+     **corre todo**: es el caso más arriesgado para los nombres accesibles (revisión del gestor del PR #70). Con un área,
+     `es.ts` sigue siendo neutro y solo corre el área. Cualquier otro archivo de `src/lib/copy/` es compartido.
   4. **Todos, con el registro completo**, con lo compartido o lo desconocido: `src/components/**`, el shell y el resto de
      `src/app/` (layouts, raíz, `globals.css`, `not-found`, API), `src/features/expenses/annotate-sheet.tsx` y el resto de
      `src/features/expenses/` (Anotar lo auditan `routes`, `couple-shared` y `goal-expense`), `src/features/home/**` (Inicio
-     aloja los módulos de metas, Balance y gasto con meta), `src/features/activity/**`, `src/lib/` fuera de lo anterior
+     aloja los módulos de metas, Balance y gasto con meta), `src/features/activity/**`, `src/features/shared/**` (`use-write`, `write-result` y `write-unknown`, «Comprobar estado», y
+     `shared-row` y `shared-format` los usan las hojas y pantallas de todas las áreas; revisión del gestor del PR #70),
+     `src/lib/` fuera de lo anterior
      (incluidos `src/lib/db/errors.ts` y `types.ts`), `tests/support/**`, `tests/a11y/route-registry.ts`,
      `playwright.config.ts`, `package.json`, el lockfile, `.github/`, `scripts/`, una migración que no es de metas ni de
      presupuestos, cualquier ruta sin clasificar, una base que no se puede calcular o un fallo del script.

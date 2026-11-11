@@ -63,7 +63,10 @@ const AREAS = [
   ] },
   // Los gastos compartidos se ven en Inicio y Actividad en Nosotros, que son del núcleo del registro.
   { why: "gastos compartidos", files: ofArea("compartidos"), routes: ["nucleo"], rules: [
-    /^src\/features\/expenses\/(?:shared-[^/]+|split-[^/]+|reclassify-[^/]+)\.tsx?$/, /^src\/features\/shared\//,
+    // src/features/shared/ NO es de esta área (revisión del gestor del PR #70): use-write, write-result y write-unknown
+    // («Comprobar estado») los usan las hojas de todas las áreas, y shared-row y shared-format, Balance, Inicio, Actividad y
+    // metas. Cae en la regla 4 (todos).
+    /^src\/features\/expenses\/(?:shared-[^/]+|split-[^/]+|reclassify-[^/]+)\.tsx?$/,
     /^src\/domain\/allocations\//, /^src\/lib\/db\/(?:shared-expenses|couple-reads|reclassify)\.ts$/,
   ] },
   // Núcleo: acceso, cuenta (fuera de pareja, que va antes) y exportación. Inicio, Actividad y el resto de Anotar los auditan
@@ -77,6 +80,7 @@ const AREAS = [
  * Neutros: no cambian lo que audita ningún archivo a11y. `src/lib/copy/es.ts` es neutro como en E2E (decisión del gestor,
  * 11 nov 2026): todo PR lo toca. Riesgo aceptado: un cambio de copy que afecte nombres accesibles de otra área no se detecta
  * en el gate; lo cubren la revisión y el barrido completo al cerrar cada etapa. Otro archivo de src/lib/copy/ es compartido.
+ * Si es.ts cambia y la selección queda vacía (sin ningún área), corre todo (ver selectA11y).
  */
 const NEUTRAL = [
   /\.md$/, /^docs\//, /^specs\//, /^tests\/e2e\//, /^tests\/evidence\//, /\.test\.tsx?$/, /^supabase\/tests\//,
@@ -84,6 +88,7 @@ const NEUTRAL = [
   /^scripts\/(?:backup|restore|order-restore|dev-target\/)/, /^tests\/support\/(?:corrupt-restore|restore)-[^/]+\.mjs$/,
 ];
 
+const COPY = "src/lib/copy/es.ts";
 const normalize = (path) => String(path).trim().replace(/\\/g, "/").replace(/^\.\//, "");
 
 /** Qué pide un archivo: archivos a11y y áreas del registro, nada (neutro) o todo (`all`: compartido o sin clasificar). */
@@ -127,7 +132,13 @@ export function selectA11y(changed, exists = existsSync) {
       byReason.set(key, [...(byReason.get(key) ?? []), path]);
     }
     for (const [key, paths] of byReason) reasons.push(`${key}: ${paths.slice(0, 5).join(", ")}${paths.length > 5 ? ` y ${paths.length - 5} más` : ""}.`);
-    if (byReason.size === 0) reasons.push("Ninguno: el PR solo toca archivos neutros (regla 3).");
+    // Revisión del gestor del PR #70: es.ts es neutro solo junto a un área. Si cambió y nada más pidió archivos (el PR solo
+    // toca la copy, o la copy y neutros), corre todo: es el caso más arriesgado para los nombres accesibles.
+    if (byReason.size === 0 && changed.map(normalize).includes(COPY)) {
+      ALL.forEach((file) => wanted.add(file));
+      ROUTE_AREAS.forEach((area) => areas.add(area));
+      reasons.push(`Todos: el PR cambia ${COPY} sin tocar ningún área (regla 3).`);
+    } else if (byReason.size === 0) reasons.push("Ninguno: el PR solo toca archivos neutros (regla 3).");
   }
   const files = ALL.filter((file) => wanted.has(file));
   const missing = files.filter((file) => !exists(file));

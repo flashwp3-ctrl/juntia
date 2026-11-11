@@ -56,6 +56,13 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
     ["Anotar es compartido (lo auditan routes, couple-shared y goal-expense)", ["src/features/expenses/annotate-sheet.tsx"], ALL, null],
     ["Inicio es compartido (módulos de metas, Balance y gasto con meta)", ["src/features/home/home-view.tsx"], ALL, null],
     ["un archivo sin clasificar", ["src/features/nueva-cosa/rara.tsx"], ALL, null],
+    // Revisión del gestor del PR #70 (1): src/features/shared/ es infraestructura de todas las áreas («Comprobar estado»).
+    ["src/features/shared/use-write.ts es compartido", ["src/features/shared/use-write.ts"], ALL, null],
+    ["src/features/shared/ dentro de un PR de gastos compartidos sigue siendo todo", ["src/features/expenses/split-editor.tsx", "src/features/shared/shared-row.tsx"], ALL, null],
+    // Revisión del gestor del PR #70 (2): es.ts sin ningún área corre todo; con un área, sigue siendo neutro.
+    ["solo es.ts: todos", ["src/lib/copy/es.ts"], ALL, null],
+    ["es.ts con neutros (documentación y specs E2E): todos", ["src/lib/copy/es.ts", "docs/TESTING.md", "tests/e2e/goals.e2e.ts"], ALL, null],
+    ["es.ts con un área: solo el área", ["src/lib/copy/es.ts", "src/features/balance/balance-panel.tsx", "docs/TESTING.md"], a("routes", "balance"), ["balance"]],
     ["una migración que no es de metas ni de presupuestos", ["supabase/migrations/20261120000300_couple_fix.sql"], ALL, null],
   ] as const)("%s", (_name, changed, expected, areas) => {
     const result = select([...changed], exists);
@@ -71,7 +78,6 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
   it.each([
     ["solo documentación", ["docs/TESTING.md", "specs/004-presupuestos-y-metas/contracts/ci.md", "README.md"]],
     ["solo specs E2E", ["tests/e2e/goals.e2e.ts"]],
-    ["solo la copy", ["src/lib/copy/es.ts"]],
     ["las pruebas de Vitest de tests/a11y no son del paso de axe", ["tests/a11y/job-selection.test.ts"]],
   ] as const)("neutros, nada: %s (el paso se salta)", (_name, changed) => {
     const result = select([...changed], exists);
