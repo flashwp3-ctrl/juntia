@@ -26,5 +26,5 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const goalsContext = context === "me" ? "me" : members ? "us" : null;
   // Los nombres para las filas de metas solo hacen falta en Yo: en Nosotros la vista usa la pareja que ya leyó.
   const [goals, people] = goalsContext && shownMonth ? await Promise.all([loadGoalActivity(goalsContext, shownMonth, volver), goalsContext === "me" ? goalPeople() : []]) : [null, []];
-  return <ActivityScreen server={context} data={data} today={now} couple={members && coupleData ? { data: coupleData, members } : null} goals={goals?.ok ? goals.value : null} goalPeople={people} />;
+  return <ActivityScreen server={context} data={data} today={now} couple={members && coupleData ? { data: coupleData, members } : null} goals={goals?.ok ? goals.value : null} goalPeople={people} listMonth={month} />;
 }

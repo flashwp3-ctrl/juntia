@@ -26,6 +26,8 @@ type ActivityScreenProps = {
   server: ContextChoice | null;
   data: { ok: true; value: MonthData } | { ok: false } | null;
   today: string;
+  /** F69-7: el mes de la lista, para que el Skeleton de un contexto en carga cuente como lista de ese mes (ContextView). */
+  listMonth?: string;
   selectedId?: string;
   detail?: ReactNode;
   mobileHeader?: ReactNode;
@@ -46,7 +48,7 @@ function PickPanel() {
   );
 }
 
-export function ActivityScreen({ server, data, today, selectedId, detail, mobileHeader, couple, goals, goalPeople }: ActivityScreenProps) {
+export function ActivityScreen({ server, data, today, selectedId, detail, mobileHeader, couple, goals, goalPeople, listMonth }: ActivityScreenProps) {
   const opened = Boolean(detail);
   const layout = (list: ReactNode) => (
     <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-8">
@@ -70,6 +72,7 @@ export function ActivityScreen({ server, data, today, selectedId, detail, mobile
       <ContextView
         server={server}
         pending={<ActivitySkeleton />}
+        listMonth={listMonth}
         me={data ? layout(list) : null}
         us={us}
       />

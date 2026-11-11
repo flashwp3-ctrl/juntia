@@ -6,6 +6,9 @@
 import { act, configure, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ContextProvider, useContextChoice } from "@/components/shell/context-selector";
+import { AccountProvider } from "@/features/account/account-context";
+import { ContextView } from "@/features/context/context-view";
 import { copy } from "@/lib/copy/es";
 import type { ContextChoice } from "@/lib/context-preference";
 import { AnnotateProvider, useAnnotate, useListScope } from "./annotate-provider";
@@ -154,5 +157,102 @@ describe("E5 entre contextos (F69-6)", { timeout: 15000 }, () => {
     run(5);
     expect(frames).toHaveLength(0);
     expect(router.push).not.toHaveBeenCalled();
+  });
+});
+
+// F69-7 (revisión del PR #69): durante Nosotros → Yo, Inicio enseña el Skeleton de Yo hasta que llega el RSC. Un privado
+// confirmado en ese momento no tiene todavía la lista de Yo montada; el Skeleton cuenta como lista de Yo en carga (ContextView
+// con `listMonth`), así que E5 espera en lugar de llevar a Actividad, y resalta la fila cuando llega Inicio de Yo.
+function SwitchToMe() {
+  const { choose } = useContextChoice();
+  return <button type="button" onClick={() => choose("me")}>a Yo</button>;
+}
+function HomeYo({ ids }: { ids: string[] }) {
+  const { highlightId } = useAnnotate();
+  useListScope("2026-11", ids, ["me", "us"]);
+  return <>{ids.map((id) => <a key={id} href={`/actividad/${id}`} data-transaction-id={id} data-new={highlightId === id ? "" : undefined}>{id}</a>)}</>;
+}
+function HomeUs() {
+  const { openFrom } = useAnnotate();
+  useListScope("2026-11", [], ["us"]);
+  return <button type="button" onClick={(event) => openFrom(event.currentTarget)}>{copy.nav.annotate}</button>;
+}
+function TriggerOutside() {
+  const { openFrom } = useAnnotate();
+  return <button type="button" onClick={(event) => openFrom(event.currentTarget)}>Anotar desde la barra</button>;
+}
+
+describe("E5 durante el cambio de contexto (F69-7)", { timeout: 15000 }, () => {
+  it("Inicio en Skeleton durante Nosotros → Yo: un privado confirmado antes del RSC no navega; al montar Inicio de Yo con el id, se resalta", async () => {
+    window.localStorage.setItem("juntia:context", "us");
+    window.matchMedia = ((query: string) => ({
+      matches: false, media: query, onchange: null,
+      addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    const user = userEvent.setup();
+    const priv = privateActions();
+    const tree = (server: ContextChoice, ids: string[] = []) => (
+      <AccountProvider displayName="Sara" theme="light" couple="active">
+        <ContextProvider>
+          <AnnotateProvider actions={priv} sharedActions={sharedActions()} couple={couple} today="2026-11-05">
+            <SwitchToMe />
+            <TriggerOutside />
+            <ContextView server={server} listMonth="2026-11" pending={<div data-testid="esqueleto-yo" />} me={server === "me" ? <HomeYo ids={ids} /> : null} us={server === "us" ? <HomeUs /> : undefined} />
+          </AnnotateProvider>
+        </ContextProvider>
+      </AccountProvider>
+    );
+    const view = render(tree("us"));
+    await user.click(screen.getByRole("button", { name: "a Yo" }));
+    // 1. Inicio enseña el Skeleton de Yo: el RSC de Yo no ha llegado.
+    expect(screen.getByTestId("esqueleto-yo")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Anotar desde la barra" }));
+    await screen.findByRole("dialog", { name: copy.annotate.title.expense });
+    await user.type(screen.getByRole("textbox", { name: copy.annotate.amount }), "45000");
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
+    const { frames, run } = stubFrames();
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    await waitFor(() => expect(priv.create).toHaveBeenCalledTimes(1));
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    // 2. Confirmado antes del RSC: la lista de Yo está en carga; E5 espera y no navega.
+    run(40);
+    expect(router.push).not.toHaveBeenCalled();
+    expect(frames.length).toBeGreaterThan(0);
+    expect(screen.getByTestId("esqueleto-yo")).toBeTruthy();
+    // 3. Llega Inicio de Yo con el id: se resalta la fila, sin navegar.
+    act(() => { view.rerender(tree("me", [PRIVATE_ID])); });
+    run(3);
+    expect(frames).toHaveLength(0);
+    expect(router.push).not.toHaveBeenCalled();
+    expect(document.querySelector(`[data-transaction-id="${PRIVATE_ID}"]`)?.hasAttribute("data-new")).toBe(true);
+    window.localStorage.clear();
+  });
+
+  it("sin `listMonth` (una página sin lista, como Metas o Plan), el mismo privado durante el Skeleton sale a Actividad enseguida", async () => {
+    window.localStorage.setItem("juntia:context", "us");
+    const user = userEvent.setup();
+    const priv = privateActions();
+    render(
+      <AccountProvider displayName="Sara" theme="light" couple="active">
+        <ContextProvider>
+          <AnnotateProvider actions={priv} sharedActions={sharedActions()} couple={couple} today="2026-11-05">
+            <SwitchToMe />
+            <TriggerOutside />
+            <ContextView server="us" pending={<div data-testid="esqueleto-yo" />} me={null} us={<p>Metas de Nosotros</p>} />
+          </AnnotateProvider>
+        </ContextProvider>
+      </AccountProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "a Yo" }));
+    await user.click(screen.getByRole("button", { name: "Anotar desde la barra" }));
+    await screen.findByRole("dialog", { name: copy.annotate.title.expense });
+    await user.type(screen.getByRole("textbox", { name: copy.annotate.amount }), "45000");
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
+    const { run } = stubFrames();
+    await user.click(screen.getByRole("button", { name: /^Guardar/ }));
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    run(1);
+    expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    window.localStorage.clear();
   });
 });

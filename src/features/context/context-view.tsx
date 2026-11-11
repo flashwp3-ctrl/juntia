@@ -26,10 +26,24 @@ import { useContextChoice } from "@/components/shell/context-selector";
 import { UsUnavailable } from "./us-unavailable";
 import { useAccount } from "@/features/account/account-context";
 import { writeContextCookie, type ContextChoice } from "@/lib/context-preference";
+import { useListScope } from "@/features/expenses/annotate-provider";
 
-type ContextViewProps = { me: ReactNode; server: ContextChoice | null; pending?: ReactNode; us?: ReactNode; usPending?: ReactNode };
+/**
+ * F69-7 (revisión del PR #69): `listMonth`, el mes de la lista que pinta la página (Inicio y Actividad). Mientras el Skeleton de
+ * un contexto espera su RSC, la página se registra como lista de ese mes y contexto, todavía sin ids: E5 sabe que la vista
+ * real puede traer el gasto recién guardado y espera (con su tope) en lugar de salir a Actividad. Las páginas sin lista (Metas,
+ * Plan, Balance) no lo pasan.
+ */
+type ContextViewProps = { me: ReactNode; server: ContextChoice | null; pending?: ReactNode; us?: ReactNode; usPending?: ReactNode; listMonth?: string };
 
-export function ContextView({ me, server, pending = null, us, usPending }: ContextViewProps) {
+const NO_IDS: readonly string[] = [];
+const ONLY: Record<ContextChoice, readonly ContextChoice[]> = { me: ["me"], us: ["us"] };
+function LoadingList({ month, context }: { month: string; context: ContextChoice }) {
+  useListScope(month, NO_IDS, ONLY[context]);
+  return null;
+}
+
+export function ContextView({ me, server, pending = null, us, usPending, listMonth }: ContextViewProps) {
   const { value, hydrated } = useContextChoice();
   const router = useRouter();
   const asked = useRef<ContextChoice | null>(null);
@@ -62,6 +76,9 @@ export function ContextView({ me, server, pending = null, us, usPending }: Conte
   // Lo que el servidor construyó para Nosotros solo vale si el servidor pintó Nosotros; si no, el Skeleton (o, sin pareja,
   // el estado sin datos).
   const unavailable = server === "us" ? (us ?? <UsUnavailable />) : active ? (usPending ?? pending) : <UsUnavailable />;
+  // F69-7: el Skeleton de un contexto ya elegido cuenta como lista en carga de ese contexto (solo tras hidratar: antes, la
+  // página pinta los dos estados y CSS elige uno).
+  const loading = (context: ContextChoice, node: ReactNode) => (listMonth ? <><LoadingList month={listMonth} context={context} />{node}</> : node);
   let view: ReactNode;
   if (!hydrated) {
     view = server === "us" ? <div key="us">{unavailable}</div> : (
@@ -70,7 +87,7 @@ export function ContextView({ me, server, pending = null, us, usPending }: Conte
         <div key="us-css" data-context-view="us">{unavailable}</div>
       </>
     );
-  } else if (value === "us") view = <div key="us" data-s1={server === "us" ? s1 : undefined}>{unavailable}</div>;
-  else view = <div key="me" data-context-view="me" data-s1={server === "me" ? s1 : undefined}>{server === "me" ? me : pending}</div>;
+  } else if (value === "us") view = <div key="us" data-s1={server === "us" ? s1 : undefined}>{server !== "us" && active ? loading("us", unavailable) : unavailable}</div>;
+  else view = <div key="me" data-context-view="me" data-s1={server === "me" ? s1 : undefined}>{server === "me" ? me : loading("me", pending)}</div>;
   return <HeroMemoryContext.Provider value={memory}>{view}</HeroMemoryContext.Provider>;
 }

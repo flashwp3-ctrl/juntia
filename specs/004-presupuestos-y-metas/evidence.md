@@ -1204,3 +1204,25 @@ El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó):
 | `vitest --project components` (completo) | **894/894, 2 omisiones previstas** |
 | `npm run verify` | 1.ª corrida: **falló** con 3 *timeouts* de componentes, entre ellos `shared-edit.test.tsx:147`, «una respuesta tardía de «Deshacer»…», que no toca este cambio (la misma suite pasa sola). 2.ª corrida: **exit 0, 103,41 s** (aviso: más de 90 s); dominio 84/84, componentes 894 / 2 omisiones previstas |
 | `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 139 s**: build 24,08 s; **21/21** (1,8 min) |
+
+## F69-7 · Una lista en carga cuenta como candidata (revisión de `e2d9ef3`)
+
+- **Hallazgo**: durante Nosotros → Yo, ContextView enseña el Skeleton de Yo hasta que llega el RSC. Un privado confirmado en ese momento no encontraba ninguna lista de Yo montada. E5 lo trataba como «la página no puede mostrarlo» y llevaba a Actividad, aunque Inicio en Yo lo iba a enseñar.
+- **Corrección**: el registro se hace en `ContextView`, el único punto que sabe que el Skeleton de un contexto concreto está esperando su RSC. Las páginas con lista (Inicio y Actividad) le pasan `listMonth`. Mientras pinta el Skeleton del contexto elegido, ya hidratado, se registra una lista de ese mes y contexto sin ids. La vista real la reemplaza al montar, porque el Skeleton se desmonta en el mismo commit. Metas, Plan y Balance no pasan `listMonth` y siguen saliendo enseguida. No se recupera el contador de árboles ni cambian los tiempos.
+- **E5 distingue tres casos**:
+  - sin lista compatible: termina enseguida, como en F69-6;
+  - con una lista compatible en carga o que todavía no trae el id: espera, con el tope de 10 s;
+  - con una lista que ya trae el id: resalta la fila o, si no se ve, termina tras 3 cuadros.
+- **Pruebas** (`reveal-context.test.tsx`):
+  - la regresión exigida: Skeleton de Inicio durante Nosotros → Yo; un privado confirmado antes del RSC pasa 40 cuadros sin navegar; luego monta Inicio de Yo con el id y la fila se resalta. **Sin `listMonth` falla**: `push` se llama una vez;
+  - el contraste: una página sin `listMonth` sale enseguida a Actividad.
+  
+  Se mantienen las de F69-5 y F69-6.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest reveal-context.test.tsx` | **6/6**; con `listMonth` quitado del arnés, la regresión **falla** (`push` llamado 1 vez) |
+| `npm run verify` | **exit 0, 80,14 s**: dominio 84/84, componentes **896 / 2 omisiones previstas** |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`, 1.ª | **exit 1, 143 s: 20/21**. Falló «desconocido: respuesta perdida…» (`annotate.e2e.ts:360`): Actividad seguía en «Cargando movimientos» (loading.tsx) cuando se agotaron los 5 s. El RSC de `juntia-dev` iba lento; la página es de Yo y no pinta Skeleton de contexto |
+| La misma prueba sola, ×2 | **1/1 y 1/1** (14,9 s y 10,2 s) |
+| Specs 2 y 3, 2.ª | **exit 0, 107 s**: build 9,84 s; **21/21** (1,6 min) |
