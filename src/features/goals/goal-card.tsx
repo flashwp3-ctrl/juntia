@@ -86,7 +86,9 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
           onClick={open}
           tabIndex={tabIndex}
           data-goal-tint={goal.goalType}
-          className={`group relative isolate flex h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-[var(--goal-tint-bg)] p-5 text-ink outline-offset-2 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-focus ${peek ? "shadow-[0_0_0_1px_var(--color-border-strong)]" : "shadow-float"} motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]`}
+          // Alto mínimo, no fijo (encargo del gestor en el PR E): con el texto al 200 % el contenido pide más de 228 px y, con un alto
+          // fijo, el título (que `line-clamp` deja encoger) se recortaba y el pie se salía por debajo. A tamaño normal sigue midiendo 228.
+          className={`group relative isolate flex min-h-[228px] flex-col justify-between overflow-hidden rounded-[26px] bg-[var(--goal-tint-bg)] p-5 text-ink outline-offset-2 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-focus ${peek ? "shadow-[0_0_0_1px_var(--color-border-strong)]" : "shadow-float"} motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] active:scale-[.99]`}
         >
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>
@@ -97,7 +99,7 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>
             </span>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
-              <span className={`font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
+              <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
             </ViewTransition>
           </span>
           {peek ? <span aria-hidden="true" className="absolute top-3.5 right-4 rounded-full lg:top-16 bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}

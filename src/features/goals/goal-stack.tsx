@@ -148,7 +148,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
         <ul aria-label={label}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
           onClickCapture={swipe ? (event) => { if (now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
-          className={`relative flow-root ${fan ? `lg:h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
+          className={`relative flow-root ${fan ? `lg:min-h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
           {ordered.map((goal, index) => {
             const shown = index < visible;
             return (
