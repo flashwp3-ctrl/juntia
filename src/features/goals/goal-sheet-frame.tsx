@@ -1,24 +1,16 @@
 "use client";
 // 004 PR C (T046, T047) / FR-093, FR-101; RESPONSIVE_SPECIFICATIONS, «Sheets y diálogos»: hoja por debajo de 768 y diálogo de
-// 520 desde 768, con la × a la derecha, como la hoja de liquidación de la 003. El marco común de las hojas de metas: título
+// 520 desde 768, con la × a la derecha, como la hoja de liquidación de la 003. En el mismo árbol (BottomSheet `adaptive`):
+// cruzar 768 px con la hoja abierta cambia solo la presentación, sin perder lo escrito, el foco ni el cursor. El marco común de las hojas de metas: título
 // serif centrado, ícono del mapa semántico y el cierre que, con un resultado desconocido, pregunta antes
 // («¿Cerrar sin confirmar?»; FR-093).
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
-import { DialogTitle, Modal } from "@/components/ui/modal";
+import { DialogTitle } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
 import { copy } from "@/lib/copy/es";
-
-const WIDE = "(min-width: 768px)";
-const subscribe = (onChange: () => void) => {
-  if (typeof window.matchMedia !== "function") return () => {};
-  const query = window.matchMedia(WIDE);
-  query.addEventListener?.("change", onChange);
-  return () => query.removeEventListener?.("change", onChange);
-};
-const read = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE).matches;
 
 type Props = {
   open: boolean;
@@ -34,7 +26,6 @@ type Props = {
 };
 
 export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, children, onOpenAutoFocus }: Props) {
-  const wide = useSyncExternalStore(subscribe, read, () => false);
   const [confirming, setConfirming] = useState(false);
   const requestClose = (next: boolean) => {
     if (next || phase === "pending") return;
@@ -54,8 +45,7 @@ export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, chi
       <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={onRetry} onClose={() => onClose({ unconfirmed: true })} />
     </div>
   );
-  const props = { open, onOpenChange: requestClose, title, bare: true, onOpenAutoFocus };
-  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props}>{body}</BottomSheet>;
+  return <BottomSheet open={open} onOpenChange={requestClose} title={title} onOpenAutoFocus={onOpenAutoFocus} bare adaptive>{body}</BottomSheet>;
 }
 
 /**

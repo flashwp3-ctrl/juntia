@@ -1,7 +1,8 @@
 "use client";
 // 004 PR B (T034) / FR-011–FR-013, FR-018, FR-093–FR-095, FR-099; US-2 escenarios 1, 2, 3, 6 y 7; contracts/server-actions.md
 // §1–§2; COMPONENT_SPECIFICATIONS «BudgetIndicator», «Conflicto [V]». Hoja por debajo de 768 y diálogo desde 768
-// (RESPONSIVE_SPECIFICATIONS, «Sheets y diálogos»), con la × a la derecha. Crear, editar y desactivar con la máquina de
+// (RESPONSIVE_SPECIFICATIONS, «Sheets y diálogos»), con la × a la derecha, en el mismo árbol (BottomSheet `adaptive`): cruzar
+// 768 px con la hoja abierta no pierde lo escrito, el foco ni el cursor. Crear, editar y desactivar con la máquina de
 // escritura de la 003 (useWrite):
 // - La clave la trae quien abre la hoja (nace al abrirla) y se reusa en cada reintento; el contexto queda fijo al abrirla
 //   (FR-099). Solo viajan la categoría, el límite en pesos enteros o `null` para desactivar, y la versión leída (FR-090).
@@ -13,13 +14,13 @@
 // - Una categoría con un presupuesto desactivado se vuelve a activar editándolo (la clave única es por categoría).
 // - Desactivar envía `null`; los gastos y el historial quedan (Q7). Este PR no añade ningún «Deshacer» (FR-095).
 import { useRouter } from "next/navigation";
-import { useCallback, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useCallback, useId, useRef, useState, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { categories, CategoryIcon } from "@/components/ui/category-icon";
-import { DialogTitle, Modal } from "@/components/ui/modal";
+import { DialogTitle } from "@/components/ui/modal";
 import { formatMoney } from "@/domain/money";
 import { CATEGORY_CATALOG, type CategoryId } from "@/domain/transactions";
 import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
@@ -30,14 +31,6 @@ import { copy } from "@/lib/copy/es";
 import { monthName, shortDate } from "@/lib/format";
 import type { BudgetChange, BudgetWriteAction, PlanActions, PlanContext, PlanRow, SavedBudget } from "./types";
 
-const WIDE = "(min-width: 768px)";
-const subscribeWide = (onChange: () => void) => {
-  if (typeof window.matchMedia !== "function") return () => {};
-  const query = window.matchMedia(WIDE);
-  query.addEventListener?.("change", onChange);
-  return () => query.removeEventListener?.("change", onChange);
-};
-const readWide = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE).matches;
 const MAX_PESOS = 999_999_999;
 const EXPENSE: readonly CategoryId[] = CATEGORY_CATALOG.filter((category) => category.kind === "expense").map((category) => category.id);
 const money = (minor: string) => formatMoney({ amountMinor: BigInt(minor), currency: "COP" });
@@ -142,7 +135,6 @@ function CategoryChoice({ ids, value, disabled, onSelect }: { ids: readonly Cate
 }
 
 export function BudgetSheet({ open, onClose, context, row, rows, month, idempotencyKey, actions, onDone }: Props) {
-  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const router = useRouter();
   const [target, setTarget] = useState<Target>(() => initialTarget(row));
   const editing = target.kind === "edit" ? rows.find((item) => item.budgetId === target.budgetId) ?? (row?.budgetId === target.budgetId ? row : null) : null;
@@ -348,6 +340,5 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
     (target.kind === "create" && !row ? dialog?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') : dialog?.querySelector<HTMLElement>('input[inputmode="numeric"]'))?.focus();
   };
-  const props = { open, onOpenChange: requestClose, title, bare: true, onOpenAutoFocus: focusFirst };
-  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props}>{body}</BottomSheet>;
+  return <BottomSheet open={open} onOpenChange={requestClose} title={title} onOpenAutoFocus={focusFirst} bare adaptive>{body}</BottomSheet>;
 }

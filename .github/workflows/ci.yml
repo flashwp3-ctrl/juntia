@@ -67,6 +67,16 @@ jobs:
         # Decisión 21.2: el barrido a mano (a11y_sweep) solo instala; lo demás ya pasó en el PR. Los estados sin sesión del
         # barrido necesitan el build de este job (Supabase inalcanzable a propósito), así que el barrido no sale de aquí.
         run: node scripts/ci.mjs run ${{ inputs.a11y_sweep && 'ci' || 'ci lint typecheck test:unit test:components' }}
+      - name: Restore the Next build cache
+        # Solo .next/cache, lo que Next documenta como seguro entre builds (guía «CI Build Caching»; desde 16.3 guarda ahí
+        # también la caché de Turbopack de `next build`). Clave por job, lockfile y src/; restore-keys reusa la última
+        # build del job aunque cambie src/ (docs/TESTING.md §9).
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: next-${{ runner.os }}-app-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-app-${{ hashFiles('package-lock.json') }}-
       - name: Build once with the unreachable Supabase URL
         # T051/T052 (002, PR B): axe solo de los estados sin sesión. Este job no tiene Supabase: la URL apunta a un puerto
         # local donde no escucha nadie, así que el acceso responde con el error de red real (A1d). No es una clave.
@@ -113,6 +123,11 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      # PostgreSQL plano del ensayo de restauración. Run 43061973171 (11-nov-2026): el puerto anterior, 55432, cae en el
+      # rango efímero de Linux (32768–60999) y un puerto aleatorio de Docker o Supabase lo había tomado («Address already
+      # in use»). 15432 queda por debajo de ese rango y fuera de los puertos de supabase/config.toml (54320–54329, 8083).
+      PLAIN_PG_PORT: 15432
     steps:
       - name: Start job clock
         run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
@@ -202,23 +217,29 @@ jobs:
             || { echo "::error title=PGDG::apt.postgresql.org no respondió (apt-get update, máx. 90 s); el ensayo de restauración no corre. Reintentar el job."; exit 1; }
           sudo timeout 150 apt-get "${pgdg[@]}" install -y -q --no-install-recommends postgresql-17 postgresql-client-17 \
             || { echo "::error title=PGDG::No se instaló PostgreSQL 17 solo desde PGDG (descarga o dependencia ausente en la imagen; máx. 150 s)."; exit 1; }
-          sudo pg_createcluster 17 juntia --port 55432 --start
+          # Antes de crear el clúster: si alguien ya escucha en el puerto, se dice quién y se falla con un error claro.
+          if sudo ss -Hltn "sport = :$PLAIN_PG_PORT" | grep -q .; then
+            echo "::error title=PostgreSQL plano::El puerto $PLAIN_PG_PORT ya está en uso en el runner; el clúster del ensayo de restauración no puede escuchar ahí."
+            sudo ss -Hltnp "sport = :$PLAIN_PG_PORT" || true
+            exit 1
+          fi
+          sudo pg_createcluster 17 juntia --port "$PLAIN_PG_PORT" --start
           # PR #52: el cluster rechazó conexiones unos 25 s después de crearlo. Se espera a que acepte (hasta 60 s) y, si
           # no, se imprime su log antes de fallar.
-          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p 55432 -q && break; sleep 1; done
-          pg_isready -h 127.0.0.1 -p 55432 || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
+          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p "$PLAIN_PG_PORT" -q && break; sleep 1; done
+          pg_isready -h 127.0.0.1 -p "$PLAIN_PG_PORT" || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
           password=$(openssl rand -hex 24)
           echo "::add-mask::$password"
-          sudo -u postgres psql -p 55432 -q -v ON_ERROR_STOP=1 -c "alter user postgres password '$password'"
-          connection="postgresql://postgres:$password@127.0.0.1:55432"
+          sudo -u postgres psql -p "$PLAIN_PG_PORT" -q -v ON_ERROR_STOP=1 -c "alter user postgres password '$password'"
+          connection="postgresql://postgres:$password@127.0.0.1:$PLAIN_PG_PORT"
           echo "::add-mask::$connection"
           echo "PG=$connection" >> "$GITHUB_ENV"
           echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
       - name: Restore drill and nine negative controls
         shell: bash
         run: |
-          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p 55432 -q && break; sleep 1; done
-          pg_isready -h 127.0.0.1 -p 55432 || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
+          for attempt in $(seq 1 60); do pg_isready -h 127.0.0.1 -p "$PLAIN_PG_PORT" -q && break; sleep 1; done
+          pg_isready -h 127.0.0.1 -p "$PLAIN_PG_PORT" || { sudo cat /var/log/postgresql/postgresql-17-juntia.log; exit 1; }
           node scripts/ci.mjs run db:restore-drill
       - name: Plain PostgreSQL log on failure
         if: failure() && steps.plain.outcome == 'success'
@@ -281,6 +302,14 @@ jobs:
               PUBLISHABLE_KEY) printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$value" >> "$GITHUB_ENV" ;;
             esac
           done <<< "$status"
+      - name: Restore the Next build cache
+        # Igual que en el job app, con su propia clave: este job compila con las variables públicas del Supabase del runner.
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-
       - name: Install and build with the runner's Supabase
         run: node scripts/ci.mjs run ci build
       - name: Install Chromium (own time limit, one retry)
