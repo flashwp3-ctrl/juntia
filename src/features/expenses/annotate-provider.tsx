@@ -46,10 +46,10 @@ function isEditable(target: EventTarget | null) {
 }
 
 /**
- * Cuadros que se sigue mirando después de que llegue el árbol revalidado, por si la fila se pinta en el cuadro siguiente.
- * Revisión del PR #69: antes E5 miraba 60 cuadros (~1 s) desde el guardado, sin saber si la revalidación ya había llegado; con
- * un RSC lento (traza en juntia-dev: la acción responde a ~0,4 s y el árbol llega a ~1,4–1,5 s) llevaba a Actividad aunque la
- * fila iba a aparecer en Inicio.
+ * Cuadros que se sigue mirando cuando la lista ya trae el id pero la fila no se ve, por si se pinta en el cuadro siguiente.
+ * Revisión del PR #69 (F69-5): E5 ya no decide por un número de cuadros desde el guardado ni por la llegada de un árbol
+ * cualquiera, sino por los ids que el servidor entrega a las listas montadas (traza en juntia-dev: la acción responde a
+ * ~0,4 s y el árbol con la fila llega a ~1,4–1,5 s).
  */
 const SETTLE_FRAMES = 3;
 /** Tope de seguridad si la revalidación no llega nunca: entonces se pide otra y se lleva a Actividad, como antes. */
@@ -65,8 +65,7 @@ function isShown(node: HTMLElement) {
 export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void }
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
-/** `since`: cuántos árboles había entregado el servidor cuando empezó la escritura (E5 espera uno posterior). */
-type Reveal = { id: string; transactionDate: string; since: number };
+type Reveal = { id: string; transactionDate: string };
 /** `undo`: el id del gasto cuyo «Deshacer» ofrece el aviso (compartido o Mover a Pareja; F57-8/F57-9: uno a la vez). */
 type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: string };
 type Notice = Omit<ToastState, "id">;
@@ -158,12 +157,6 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const router = useRouter();
   // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
   const [reveal, setReveal] = useState<Reveal | null>(null);
-  // Revisión del PR #69: cada árbol que entrega el servidor (navegación o revalidación) llega como unos `children` nuevos del
-  // layout. E5 compara con el número que había al empezar la escritura (`markWriteStart`, que llama la hoja al guardar).
-  const trees = useRef(0);
-  useEffect(() => { trees.current += 1; }, [children]);
-  const writeStart = useRef(0);
-  const markWriteStart = useCallback(() => { writeStart.current = trees.current; }, []);
   // UX lote 1, cambio 3, simplificado por decisión de los fundadores (7 nov 2026). Cada creación en vuelo es una fila temporal
   // con estado propio, por su clave: una petición colgada no retrasa la retirada de otra (F51-8). Nada de esto se guarda en el
   // navegador: si se recarga la página, no queda rastro (el resultado desconocido se resuelve en la hoja, con «Reintentar»).
@@ -228,16 +221,19 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // porque ninguna la mostraba; (c) tope de 3 revalidaciones pedidas: se retira la temporal, el servidor ya confirmó. Nunca hay
   // revalidaciones periódicas sin límite.
   const mountedMonths = useRef(new Map<string, number>());
+  // F69-5: los ids que el servidor entregó a cada mes montado (todos los del mes, aunque Inicio solo pinte 5). E5 sabe por
+  // aquí si el árbol que llegó ya incluye ESTE gasto; un árbol ajeno sin él nunca dispara la navegación.
+  const knownIds = useRef(new Map<string, Set<string>>());
   const scope = useMemo<ListScope>(() => ({
     enter: (month) => {
       mountedMonths.current.set(month, (mountedMonths.current.get(month) ?? 0) + 1);
       return () => {
         const left = (mountedMonths.current.get(month) ?? 1) - 1;
-        if (left <= 0) mountedMonths.current.delete(month);
+        if (left <= 0) { mountedMonths.current.delete(month); knownIds.current.delete(month); }
         else mountedMonths.current.set(month, left);
       };
     },
-    report: (_month, ids, revalidated) => setFlights((current) => {
+    report: (month, ids, revalidated) => { const known = knownIds.current.get(month) ?? new Set<string>(); for (const id of ids) known.add(id); knownIds.current.set(month, known); setFlights((current) => {
       const next = current.filter((flight) => {
         if (flight.state !== "confirmed" || !flight.savedId) return true;
         if (ids.includes(flight.savedId)) return false; // (a)
@@ -245,7 +241,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
         return mountedMonths.current.has(flight.transaction.transactionDate.slice(0, 7)); // (b): fuera del alcance de las listas montadas
       });
       return next.length === current.length ? current : next;
-    }),
+    }); },
   }), []);
   const pendingContext = useMemo(() => ({ rows: pendingRows, scope }), [pendingRows, scope]);
   const flightsRef = useRef(flights);
@@ -451,7 +447,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {
     close();
     setHighlightId(saved.transaction.id, saved.context);
-    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate, since: writeStart.current });
+    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate });
     const key = newIdempotencyKey();
     notify({ tone: "success", message, undo: saved.transaction.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalExpense(saved, key) } });
   }, [close, notify, undoGoalExpense, setHighlightId]);
@@ -463,7 +459,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "me");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate, since: writeStart.current });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
   }, [close, notify, undo, setHighlightId]);
@@ -478,7 +474,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "us");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate, since: writeStart.current });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved.expense, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
@@ -515,20 +511,29 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // está, la pantalla no la enseña: se lleva a Actividad (revisión del PR #69). No cambia el total del mes ni los 5 recientes.
   useEffect(() => {
     if (!reveal) return;
-    let after = -1;
+    let after = 0;
     let handle = 0;
     const started = performance.now();
-    const check = () => {
-      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
-      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
-      const arrived = trees.current > reveal.since;
-      if (arrived) after += 1;
-      if ((arrived && after < SETTLE_FRAMES) || (!arrived && performance.now() - started < REVEAL_SAFETY_MS)) { handle = requestAnimationFrame(check); return; }
+    const month = reveal.transactionDate.slice(0, 7);
+    const leave = () => {
       setReveal(null);
       // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación (cuenta para el tope) y se
       // sigue esperando.
       askRefreshRef.current();
-      router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
+      router.push(`/actividad?mes=${month}`);
+    };
+    const check = () => {
+      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
+      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
+      // F69-5. (1) Ninguna lista de esta pantalla es del mes del gasto (otro mes o una ruta sin lista): la fila no puede estar
+      // aquí; se lleva a Actividad enseguida. (2) La lista del mes ya trae este id y la fila no se ve (fuera de los 5 recientes
+      // de Inicio): tras unos cuadros, a Actividad. (3) Todavía no lo trae: se espera, aunque lleguen árboles ajenos, hasta el
+      // tope de seguridad; entonces, otra revalidación y a Actividad, como antes.
+      if (!mountedMonths.current.has(month)) { leave(); return; }
+      if (knownIds.current.get(month)?.has(reveal.id)) {
+        if (++after >= SETTLE_FRAMES) { leave(); return; }
+      } else if (performance.now() - started >= REVEAL_SAFETY_MS) { leave(); return; }
+      handle = requestAnimationFrame(check);
     };
     handle = requestAnimationFrame(check);
     return () => cancelAnimationFrame(handle);
@@ -577,7 +582,6 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             onSharedSaved={onSharedSaved}
             goalFunding={funding ?? undefined}
             onGoalSaved={onGoalExpenseSaved}
-            onWriteStart={markWriteStart}
             onMove={(transaction) => openMove(transaction, returnFocusTo.current)}
           />
         </Suspense>

@@ -11,7 +11,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { WriteOutcome } from "@/features/shared/write-result";
-import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
+import { AnnotateProvider, useAnnotate, usePendingRows, useListScope } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
 
 // La hoja llega en un chunk aparte en su primera apertura (como el aviso de la 001).
@@ -58,9 +58,11 @@ function PendingList() {
 }
 
 // Simula una navegación del App Router: el layout (y el proveedor) persisten y cambia la página que envuelven.
-// `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`).
-function Pages({ rows = [] }: { rows?: string[] }) {
+// `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`). `known`: los ids del mes que el
+// servidor le entregó (Inicio pinta 5 y avisa de todos, como HomeScope); por defecto, los que enseña.
+function Pages({ rows = [], known = rows }: { rows?: string[]; known?: string[] }) {
   const [page, setPage] = useState("inicio");
+  useListScope("2026-11", known);
   return (
     <>
       <Trigger />
@@ -78,7 +80,7 @@ function Pages({ rows = [] }: { rows?: string[] }) {
 function setup(actions = mockActions(), rows: string[] = []) {
   const user = userEvent.setup();
   const view = render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
-  const revalidate = (next: string[] = rows) => act(() => { view.rerender(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={next} /></AnnotateProvider>); });
+  const revalidate = (next: string[] = rows, known: string[] = next) => act(() => { view.rerender(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={next} known={known} /></AnnotateProvider>); });
   return { user, actions, revalidate, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
 }
 
@@ -528,8 +530,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
-    await screen.findByRole("button", { name: copy.annotate.undo });
-    revalidate();
+    // F69-5: ninguna lista de la pantalla es de octubre: la fila no puede estar aquí y se lleva a Actividad sin esperar.
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-10"));
     expect(router.push).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status").textContent).toContain(copy.annotate.saved.expense);
@@ -543,7 +544,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await fillMinimum(user);
     await user.click(saveButton());
     await screen.findByRole("button", { name: copy.annotate.undo });
-    revalidate();
+    // El servidor ya trae el gasto en el mes, pero Inicio solo pinta los 5 recientes: a Actividad.
+    revalidate(["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"], ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5", saved().id]);
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
   });
 
@@ -582,12 +584,15 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     for (let step = 0; step < 10; step++) act(() => { frames.splice(0).forEach((callback) => callback(1600 + step * 16)); });
     expect(router.push).not.toHaveBeenCalled();
     expect(frames).toHaveLength(0);
+    expect(screen.getByTestId("highlight").textContent).toBe(saved().id);
     vi.restoreAllMocks();
   });
 
-  it("E5: cuando el árbol revalidado llega sin la fila, lleva a Actividad del mes a los pocos cuadros, ni antes de que llegue", async () => {
+  // F69-5 (revisión del PR #69): un árbol ajeno (por ejemplo, el router.refresh() de volver a la pestaña) que llega sin el
+  // gasto no dispara la navegación; el posterior, con el gasto, lo resalta en la misma pantalla.
+  it("E5: un árbol ajeno sin la fila no navega; el siguiente, con la fila guardada, la resalta en Inicio", async () => {
     const frames: FrameRequestCallback[] = [];
-    const { user, trigger, revalidate } = setup(mockActions(), []);
+    const { user, trigger, revalidate } = setup(mockActions(), ["previo"]);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
@@ -595,12 +600,14 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     await user.click(saveButton());
     await screen.findByRole("button", { name: copy.annotate.undo });
-    for (let step = 0; step < 70; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    revalidate(["previo"], ["previo"]);
+    for (let step = 0; step < 80; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
     expect(router.push).not.toHaveBeenCalled();
-    revalidate([]);
-    for (let step = 0; step < 5; step++) act(() => { frames.splice(0).forEach((callback) => callback(1200 + step * 16)); });
-    expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
-    expect(router.push).toHaveBeenCalledTimes(1);
+    revalidate([saved().id, "previo"]);
+    for (let step = 0; step < 10; step++) act(() => { frames.splice(0).forEach((callback) => callback(1400 + step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(0);
+    expect(screen.getByTestId("highlight").textContent).toBe(saved().id);
     vi.restoreAllMocks();
   });
 

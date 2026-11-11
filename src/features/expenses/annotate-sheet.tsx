@@ -100,8 +100,6 @@ type AnnotateSheetProps = {
   /** 004 PR D: el gasto con meta. Sin estas escrituras, «Cómo se pagó» no se ofrece. */
   goalFunding?: GoalFundingActions;
   onGoalSaved?: (saved: SavedGoalExpense, message: string) => void;
-  /** Revisión del PR #69: avisa al proveedor de que empieza una escritura, para que E5 espere el árbol revalidado posterior. */
-  onWriteStart?: () => void;
 };
 
 type PaidWith = "month" | "goal";
@@ -236,7 +234,7 @@ function sharedRejection(error: WriteError) {
   }
 }
 
-export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove, goalFunding, onGoalSaved, onWriteStart }: AnnotateSheetProps) {
+export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove, goalFunding, onGoalSaved }: AnnotateSheetProps) {
   const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit" || mode.kind === "editShared";
   const editingShared = mode.kind === "editShared";
@@ -415,7 +413,6 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     const value = { ...draft, ...patch };
     if (saving.current || !isComplete(value) || (editing && !isDirty(value) && !splitDirty) || value.amount === null || value.categoryId === null) return;
     const common = { idempotencyKey, amountPesos: toPayloadPesos(value.amount), categoryId: value.categoryId, transactionDate: value.date, description: normalizeDescription(value.description) };
-    onWriteStart?.();
     if (withGoal) {
       // 004 PR D (T061; FR-052, FR-090): solo lo decidido —meta, fondos propios y pedidos—; el servidor recalcula y valida.
       const funding = goal ? evaluateFunding({ expensePesos: value.amount, usagePesos: usage, funds, contributors }) : null;
@@ -468,7 +465,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
       if (isAmbiguousError(result.error)) setLocked(true);
       setStatus({ kind: "error", error: result.error });
     }
-  }, [actions, contributors, draft, editWrite, editing, funds, goal, goalWrite, idempotencyKey, isDirty, members, mode, onSaved, onTrack, onWriteStart, shared, sharedWrite, split, splitDirty, usage, withGoal]);
+  }, [actions, contributors, draft, editWrite, editing, funds, goal, goalWrite, idempotencyKey, isDirty, members, mode, onSaved, onTrack, shared, sharedWrite, split, splitDirty, usage, withGoal]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void save(); };
 

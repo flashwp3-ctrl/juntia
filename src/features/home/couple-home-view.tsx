@@ -13,6 +13,7 @@ import { groupByDay } from "@/domain/transactions";
 import { CountingAmount } from "@/features/expenses/counting-amount";
 import { SharedRow } from "@/features/shared/shared-row";
 import { copy } from "@/lib/copy/es";
+import { HomeScope } from "./pending-home";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
 import type { SharedTransaction } from "@/lib/db/types";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
@@ -35,9 +36,13 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
   const recent = groupByDay(rows).flatMap(({ transactions }) => transactions).slice(0, RECENT);
   // Sin ningún gasto compartido en la pareja (saldo sin movimiento y mes vacío): 04·6, nunca «Al día $0».
   const nothingYet = rows.length === 0 && balance.every((row) => row.paid.amountMinor === 0n && row.settledOut.amountMinor === 0n);
+  // F69-5 (revisión del PR #69): Inicio de Nosotros monta su mes y avisa de los ids que trae, como Inicio de Yo; E5 decide
+  // por ellos si la fila recién anotada puede estar aquí.
+  const scope = <HomeScope month={month} knownIds={rows.map((row) => row.id)} />;
   if (nothingYet) {
     return (
       <div className="flex flex-col gap-6 pt-2">
+        {scope}
         <ExitState icon="users-three" title={copy.couple.home.empty.title} description={copy.couple.home.empty.description} actions={<AnnotateFirst label={copy.couple.home.empty.action} />} />
         {/* 004 PR C: sin gastos compartidos, las metas siguen aquí (el ahorro no depende del gasto). */}
         {goals ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="us" /><GoalsModule goals={goals} context="us" today={today} /></div> : null}
@@ -50,6 +55,7 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
   const total = summary ? BigInt(summary.totalMinor) : 0n;
   return (
     <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
+      {scope}
       <section aria-labelledby="couple-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
         <h2 id="couple-hero" className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">

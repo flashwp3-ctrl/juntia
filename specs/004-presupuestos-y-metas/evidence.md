@@ -1157,3 +1157,19 @@ En la corrida completa local, los casos de E5 y los límites de 30 s fallan igua
 | **`npm run e2e:dev` completo** | **exit 0, 409,95 s**: build 11,45 s; E2E **34/34** (125,80 s); axe con sesión **100/100** (271,44 s) |
 
 El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó): todo lo anterior corre sobre el `juntia-dev` acumulado.
+
+## F69-5 · E5 decide por los ids que trae el servidor, no por la llegada de un árbol (revisión de `7afdbe5`)
+
+- **Hallazgo**: `trees.current > reveal.since` solo probaba que el layout había entregado unos `children` nuevos, no que fueran los de esta escritura. Un `router.refresh()` ajeno (volver a la pestaña) sin la fila llevaba a Actividad aunque el árbol bueno llegara después.
+- **Corrección** (la más simple ligada a la escritura): las listas montadas ya informan al proveedor de los ids de su mes con `useListScope` (Inicio informa de todos los del mes, aunque pinte 5). Ahora informan también Inicio y Actividad de Nosotros. E5 decide así:
+  1. ninguna lista de la pantalla es del mes del gasto (otro mes, o una ruta sin lista): la fila no puede estar ahí y va a Actividad enseguida;
+  2. la lista del mes ya trae ese id pero la fila no se ve (fuera de los 5 recientes): va a Actividad a los 3 cuadros;
+  3. todavía no lo trae: espera, aunque lleguen árboles ajenos, hasta el tope de 10 s; entonces pide otra revalidación y va a Actividad, como antes.
+  Se quitan el contador de árboles y `onWriteStart`.
+- **Pruebas** (`annotate-sheet.test.tsx`): regresión exigida. Primero llega un árbol ajeno sin la fila y pasan 80 cuadros sin navegar; luego llega el posterior con la fila guardada, que se resalta en Inicio. Con el proveedor de `7afdbe5` falla; con el nuevo pasa. Se mantienen el refresco lento, otro mes (ahora sin esperar), fuera de los 5 recientes (el servidor trae el id; Inicio no lo pinta), sin revalidación (tope de 10 s) y F51-13.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components src/features` | **536/536** |
+| `npm run verify` | **exit 0, 106,37 s: supera el presupuesto de 90 s (aviso).** Dominio 84/84, componentes **890 / 2 omisiones previstas** |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 137,20 s**: **21/21**, E2E 107,63 s |

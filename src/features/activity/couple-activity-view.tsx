@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { useRouter } from "next/navigation";
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ExitState } from "@/components/shell/provisional-state";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { AnnotateFirst } from "@/features/home/annotate-cta";
 import type { CoupleMemberView, CoupleMonthSummary } from "@/features/home/couple-home-view";
 import { memberName, rowMode } from "@/features/shared/shared-format";
 import { SettlementRow, SharedRow } from "@/features/shared/shared-row";
-import { useHighlightId } from "@/features/expenses/annotate-provider";
+import { useHighlightId, useListScope } from "@/features/expenses/annotate-provider";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, monthName, pesos, shortDate } from "@/lib/format";
 import type { SharedTransaction } from "@/lib/db/types";
@@ -47,6 +47,9 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
   const router = useRouter();
   const titleId = useId();
   const highlightId = useHighlightId();
+  // F69-5: Actividad de Nosotros monta su mes y avisa de los ids que trae (E5 decide por ellos).
+  const listedIds = useMemo(() => expenses.map((row) => row.id), [expenses]);
+  useListScope(month, listedIds);
   // El tipo vive en el layout y se comparte con Yo: aquí no hay «Ingresos» (pasa a «Todos») y «Aportes» solo vale si las metas
   // se cargaron; si no, «Todos». El valor normalizado manda en el control, en el filtrado y en el anuncio del conteo.
   const type = filters.type === "income" || (filters.type === "goals" && setAsideMinor === undefined) ? "all" : filters.type;
