@@ -114,6 +114,7 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 ## Chart
 - Barras mensuales radio 8/3, el mes actual en tinta y el resto en sunken. Etiquetas sobre la barra en 11/600.
 - Nunca se apilan ahorro y gasto. Tabla equivalente oculta para lectores de pantalla y tooltip accesible por teclado.
+- **En Análisis (decisión de los fundadores del 11 de noviembre de 2026, F71-3 del PR #71):** el tooltip por teclado y la tabla oculta se sustituyen por una **tabla visible desplegable** bajo el gráfico, «Ver cifras exactas» / «Ocultar cifras exactas», con el patrón de «Cómo se calcula» de la PlanningNote (botón de 44 px con `aria-expanded` y `aria-controls`). El gráfico queda decorativo para el lector de pantalla y la tabla desplegable es su equivalencia accesible, para teclado y para lector.
 - **Motion:** las barras crecen desde la base (stagger de 40 ms); al cambiar de mes hacen crossfade de valores con counter.
 
 ## Skeleton

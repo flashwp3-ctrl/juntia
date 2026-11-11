@@ -126,7 +126,11 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
         <div className="flex flex-col gap-6 lg:order-2">
         {spentBy.length > 0 ? (
           <section aria-labelledby="home-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
-            <h2 id="home-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
+            {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <h2 id="home-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
+              <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.analysis}</Link>
+            </div>
             <ul className="flex flex-wrap gap-2">
               {spentBy.map(([category, amount]) => (
                 <li

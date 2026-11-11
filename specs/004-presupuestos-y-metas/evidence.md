@@ -1,4 +1,4 @@
-# Evidencia · 004 · PR A
+# Evidencia · 004 · PR A a E
 
 ## Precisión del gestor · T024
 
@@ -1236,3 +1236,243 @@ El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó):
   - `perRow` se mide con `expect.poll`, sin esperas fijas. Se mantienen `[4, 3]` y la aserción de etiquetas sin cortar.
 - **Sigue fallando con el código viejo**: con la clase de `d00e2d4^` (`grid-cols-4 sm:grid-cols-7`) puesta un momento en el componente, falla en los dos temas con «1440px: tipos de meta por fila», `[4, 3]` esperado y `[7]` recibido. Después se devolvió la clase actual.
 - `npm run e2e:dev -- tests/a11y/goals.a11y.ts`, tres veces: **exit 0 en 61 s, 61 s y 66 s**; las tres corridas, 2/2 (45,3 s, 47,3 s y 48,8 s).
+
+
+---
+
+# PR E · Análisis, PlanningNote, exportación y cierre
+
+Rama `claude/004-e-analysis-0995c2`, sobre `main` en `026e06e` (PR A–D y el selector de accesibilidad #70 fusionados). Tareas
+T070–T078, T072a y T083, más el encargo del gestor de GoalCard. T079–T082, T084 y T085 son del gestor y de los fundadores.
+Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (puerto 3400).
+**Nada de esto es evidencia de CI** (ADR-011 §9.8): el agente no lanzó ningún run.
+
+## Commits
+
+| Commit | Qué |
+| --- | --- |
+| `130e5cf` | T070–T072: pruebas primero (componentes de Análisis, spec 5 ampliada, `analysis.a11y.ts` y su alta en el selector de accesibilidad), copy de Análisis y de «qué incluye» la exportación |
+| `e51ff05` | T073–T076: `/plan/analisis`, capítulos, Chart, PlanningNote, accesos desde Plan e Inicio |
+| `7191640` | Encargo del gestor: GoalCard crece con el texto al 200 % (commit propio) |
+| `d592ef4` | La tabla equivalente del Chart se oculta por su contenedor (desbordaba al 200 %) |
+| `3b0e4f1` | Las barras de presupuesto de Análisis con el color de la categoría, como en Plan |
+| `ec35f84` | `/plan/analisis` en el registro de rutas de axe (mes vacío, una cuenta sola) |
+
+## T070–T072 · pruebas escritas primero
+
+- **Componentes** (`src/features/analysis/analysis.test.tsx`, 18 casos): los cuatro capítulos como regiones con encabezado y en orden; «Gastaron juntos $2.840.000»; el desglose Hogar 1.600.000 · Mercado 640.000 · Servicios 360.000 · Restaurantes 240.000; «$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.»; Yo con «$500.000. Va aparte…»; con presupuesto (límite, consumido, desviación y marca de mes transcurrido solo en el mes en curso) y sin él (ninguna barra, ni «de $», ni 0 %, ni EXCEDIDO); comparación (sin mes anterior no hay «+X %»; con él, pesos, porcentaje entero y hasta dos categorías; «menos» sin categorías si ninguna subió); Chart (una barra por mes con datos, el elegido en tinta, tabla equivalente, nunca lo apartado ni dos segmentos); PlanningNote (3.740.000, `aria-expanded`, `<dl>` con signos en texto, negativo −200.000 con su frase, nunca «Total gastado» ni en el capítulo 1 ni en un encabezado, 17/600); movimiento reducido (todo visible, valor final en el DOM).
+- **Spec E2E 5** (`tests/e2e/budgets.e2e.ts`), dos casos nuevos. Qué rompería sin que una capa inferior se entere (lección 4): que la página real lea `metric_months` y `budget_months` del contexto de la cookie y del mes de la URL, y lo que el servidor manda en Nosotros. Todo lo demás está en componentes, dominio, pgTAP e integración.
+  1. Recorrido con la pareja dorada: acceso desde Plan («Ver el análisis de {mes}»), octubre de Nosotros con límite y desviación (Mercado 71 %, Servicios excedido 105 %, Restaurantes 92 %), sin comparación, lo apartado por persona y la PlanningNote abierta con $3.740.000; Yo de Tomás sin presupuesto: ninguna barra, límite, 0 % ni EXCEDIDO, y «$400.000. Va aparte: no es gasto.».
+  2. Privacidad: un presupuesto personal de cada uno, un gasto privado de Sara en Salud y un aporte a una meta personal suya, con importes únicos. HTML y RSC de `/plan/analisis` para Sara y Tomás con la cookie `us`, sin ella y con `nosotros` (control positivo con `us`: el gasto compartido en unidades menores). Prefetch con `tests/support/rsc-capture.ts` (lección 1), clasificando cada RSC por su cookie al empezar: control positivo en Yo (el RSC de Análisis trae lo personal), en el cambio a Nosotros (el RSC de Análisis del cambio, sin lo personal y con lo compartido) y en Nosotros, entrando por «Ver el análisis» de «En qué se fue» de Inicio. Sin `response.text()` sobre RSC transmitidos ni `catch` silencioso.
+- **A11y** (`tests/a11y/analysis.a11y.ts`): ligero (Nosotros con presupuesto, PlanningNote abierta, Yo sin presupuesto; 390 px, dos temas) y dos `@sweep` (siete anchos y 200 % con la nota abierta; teclado y 44 px). Alta en `FILES` de `scripts/a11y-select.mjs` con el área `presupuestos` (contracts/ci.md: un archivo a11y nuevo entra en el mismo PR); fixtures de `tests/a11y-select.test.ts` actualizados.
+
+## T072a · rojo contra `juntia-dev`
+
+- Componentes: `npx vitest run --project=components src/features/analysis` → **falla** al resolver `./analysis-screen` (no existe).
+- Primer intento de E2E: el `next build` de `e2e:dev` comprueba los tipos de toda la rama y falló por la prueba de componentes (importa módulos que aún no existen y usaba `toBeInTheDocument`, sin jest-dom en este repo). Se cambiaron esos matchers y la prueba de componentes quedó fuera del árbol mientras corría el rojo E2E, para que fallara por la funcionalidad y no por la compilación.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: build **pasó** 10,61 s; E2E **falló** 135,37 s. Los dos casos de la PR B siguen verdes; los dos nuevos fallan por la ausencia de Análisis: no existe el enlace «Ver el análisis de noviembre» en Plan (se agota el test esperándolo) y `/plan/analisis` responde **404** donde se espera 200.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: build **pasó** 12,04 s; axe **falló** 20,32 s: no encuentra la región «En qué» con la barra de Mercado (la ruta no existe).
+
+## T077 · iteración hasta verde
+
+- Componentes de Análisis: **18/18**. `src/features/{analysis,plan,home}` y `tests/a11y-select.test.ts`: 135 casos, uno falló por cómo la prueba leía las filas de la tabla (celdas sin espacio); corregida la prueba.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts --grep "Análisis"`: **exit 0**, 2/2 (18,0 s y 20,2 s; total 77,92 s).
+- Axe ligero de Análisis, primera pasada: 1 violación seria en **claro** en los tres estados, `color-contrast`: el texto secundario de la PlanningNote (`text-secondary` #6C665B sobre `sunken` #E7DFD0, por debajo de 4,5:1). Arreglo: `--comp-field-muted-fg`, el token de la errata F16-1 (7,32:1 en claro). Después, `npm run e2e:dev -- tests/a11y/analysis.a11y.ts tests/a11y/plan.a11y.ts`: **exit 0** (axe 30,30 s).
+- `@sweep` de Análisis (`A11Y_LEVEL=sweep`): al 200 % la tabla `sr-only` del Chart desbordaba (447 / 390): una tabla ignora el ancho de 1 px de `sr-only`. Arreglo en `d592ef4` (la oculta un `div.sr-only`). Después: Nosotros 390 / 390 y Yo 390 / 390, sin texto cortado; teclado y 44 px verdes («Análisis del mes siguiente» 44×44, «Cómo se calcula» 136×44).
+- **Mutación de privacidad** (lección 1): `budgetMonths(client, context === "us" ? "me" : context, …)` puesto un momento en `load.ts` → `npm run e2e:dev -- tests/e2e/budgets.e2e.ts --grep "privacidad de Análisis"` **falla** («Sara us HTML»: `123.400`, `12340000`, `43.210`, `4321000`). Revertido con `git checkout`; no está en ningún commit.
+- `A11Y_ROUTE_AREAS=presupuestos npm run e2e:dev -- tests/a11y/routes.a11y.ts`: **exit 0**; «/plan/analisis · Análisis sin datos», 0 violaciones en claro y oscuro.
+
+### Corrida completa antes del push
+
+- `npm run e2e:dev` (primera): build 16,39 s; **E2E 35 / 36 en 146,36 s**; axe con sesión **101 / 101 en 363,80 s**; **total 528,52 s, exit 1**. El único fallo: spec 1, «Exportar: el archivo JSON y el CSV llegan como descarga…», que no vio «Archivo listo.» en los 5 s de su espera. Solo, `npm run e2e:dev -- tests/e2e/access-account.e2e.ts --grep "Exportar"` → **exit 0, 9,8 s**. `src/lib/db/export.ts` no se tocó (I4); la lectura que prepara el archivo hace varias lecturas en serie desde el PR A y, contra `juntia-dev` (East US) con todos los workers a la vez, superó los 5 s. Ver preguntas abiertas.
+- `npm run verify` (primera): falló el registro de rutas de axe (`/plan/analisis` no estaba en ninguna lista). Arreglado en `ec35f84`. Segunda: **exit 0, 96,31 s** (aviso: más de 90 s, como en el PR D); lint 31,88 s, typecheck 2,72 s, dominio 1,43 s, componentes 60,28 s (979 / 2 omisiones previstas); pgTAP, integración y E2E, solo en CI.
+- `npm run e2e:dev` (segunda, sobre `ec35f84`): build 13,96 s; **E2E 35 / 36 en 148,61 s**; axe con sesión **102 / 103 en 309,39 s**; **total 473,23 s, exit 1**. Esta vez Exportar pasó. Dos fallos de áreas que este PR no toca: spec 1, «invitación → M5 sin datos → … → M1», por una violación de modo estricto (dos «ACTIVA»: la copia transmitida que Next deja un instante, el mismo patrón que se anotó en la spec 5), y `balance.a11y.ts` (oscuro), por `psql` al sembrar: «connection to server at "aws-0-us-east-1.pooler.supabase.com" … server closed the connection unexpectedly». Repetidos solos: `--grep "M5 sin datos"` **exit 0** (10,5 s) y `tests/a11y/balance.a11y.ts` **exit 0** (2/2). Ninguna de las dos corridas completas salió limpia de principio a fin; cada fallo pasó al repetirlo solo y ninguno es de un archivo de este PR.
+
+## T076 · exportación
+
+- `src/lib/db/export.ts` y `planning.ts` sin cambios (I4: el contenido lo cambió el PR A).
+- La descarga de la spec 1 pasa sola (arriba). Texto de «qué incluye» de la hoja Exportar y de la fila de Privacidad, para los fundadores: «Incluye lo que ves en Juntia: tus movimientos, los gastos compartidos con su reparto, las liquidaciones, tus metas y las compartidas con sus aportes, y los presupuestos de Yo y de Nosotros.» · «Nunca incluye lo privado de tu pareja (sus gastos, metas y presupuestos personales) ni datos internos.» · JSON: «Tus datos, separados por tipo de registro.» · CSV: «Todo en una tabla: una fila por registro, con su tipo y su contexto (Yo o Nosotros).» · Privacidad: «JSON y CSV con tus movimientos, metas y presupuestos».
+- `copy.export.fileNote`, que va **dentro** del archivo, se corrigió solo de texto tras la respuesta del gestor (ver «Respuestas del gestor a las preguntas del PR #71»).
+
+## T078 · capturas e Impeccable
+
+- 22 PNG en `specs/004-presupuestos-y-metas/evidence/pr-e/capturas/`, de `juntia-dev` (cuentas `@seed.test`), con un script temporal no versionado, sobre `3b0e4f1`: a **390 y 1440, claro y oscuro**, Análisis de Nosotros en el mes en curso con presupuesto (comparación «Lo mismo que en octubre», Chart de dos meses, marca de mes transcurrido), octubre de Nosotros con la PlanningNote abierta, Yo de octubre sin presupuesto y Nosotros sin presupuesto; a 390, el acceso desde Plan y desde Inicio; y GoalCard a 320 px con el texto al 200 % en los dos temas. Las de página completa a 390 llevan la barra inferior fija encima de unas líneas, como en los PR B–D.
+- Impeccable: el CLI `impeccable detect` no está instalado en este equipo; no hay salida del detector. El hook de diseño de Impeccable revisó cada archivo editado sin hallazgos deterministas. Revisión visual sobre las capturas, con un ajuste: las barras de presupuesto iban en tinta y en Plan van con el color de la categoría; se igualaron (`3b0e4f1`).
+- Para los fundadores (T081): la PlanningNote como se aprobó en su forma (decisión 22.4), el orden de los capítulos a 1440 (1 y 2 arriba, el 2 a la derecha en dos filas; 3 y 4 a la izquierda) y la copy nueva de `es.ts` (`analysis.*`, `plan.analysis`, `home.analysis`, `account.export.*`).
+
+## Encargo del gestor · GoalCard a 320 px y 200 %
+
+- Causa: la tarjeta medía 228 px fijos con `overflow-hidden`. Al 200 % el espaciado en `rem` se duplica; el contenido pedía más alto, el título (con `line-clamp`, que lo deja encoger) cedía y el pie quedaba fuera de la caja.
+- Arreglo (`7191640`): `min-h-[228px]` en lugar de `h-[228px]` (a tamaño normal sigue midiendo 228), el título no encoge (`shrink-0`, con `data-goal-title` para medirlo), y el abanico de escritorio pasa de `lg:h-[244px]` a `lg:min-h-[244px]`.
+- Comprobación nueva, `@sweep` de `goals.a11y.ts`: Inicio de Nosotros (Tomás) a 320 px con el texto al 200 %, en los dos temas: el título no esconde media línea o más, ningún texto que no sea decoración absoluta queda fuera de la caja, y sin scroll horizontal.
+  - Con el código viejo (la tarjeta de `HEAD` con solo `data-goal-title` añadido): **falla** en claro y oscuro: «tarjeta «Japón»: fuera de la caja «Faltan $17.100.000 en 5 meses»» (31,13 s).
+  - Con el arreglo: **exit 0** (30,88 s), «sin recortes» en los dos temas.
+  - Precisión: con la medición nueva el título de «Japón» no aparece recortado en más de media línea en el código viejo; lo que se perdía de forma medible era el pie. La medición inicial (por `.font-serif`) contaba la inicial decorativa y se descartó.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/goals.a11y.ts tests/a11y/analysis.a11y.ts`: el barrido de Metas y el de teclado siguieron verdes con el arreglo.
+
+## Selectores para este PR
+
+- `node scripts/e2e-select.mjs --base origin/main`: **las cinco specs** (1, 2 y 3 siempre; 4 por `goal-card.tsx` y `goal-stack.tsx`; 5 por Análisis; además «todas» por `scripts/a11y-select.mjs` y `tests/a11y-select.test.ts`).
+- `node scripts/a11y-select.mjs --base origin/main`: **los ocho archivos** (`routes.a11y.ts` con el registro completo, `couple`, `couple-shared`, `balance`, `goals`, `goal-expense`, `plan`, `analysis`), porque Inicio (`home-view.tsx`, `couple-home-view.tsx`), GoalCard y la pila son compartidos, y el script del selector cambia.
+- Tiempo: la corrida completa de `e2e:dev` midió 146 s de E2E y 364 s de axe con sesión contra `juntia-dev`; el job `e2e` del CI lo mide el gate (T080), con tope de 660 s.
+
+## T083 · tabla de `[V]`
+
+Fuentes: las salidas de este documento y los runs que el gestor verificó y pasó al agente el 11 de noviembre de 2026 (respuesta
+a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con su responsable. El agente no lanzó ninguno.
+
+| PR | Run | Qué es |
+| --- | --- | --- |
+| A | [42508573805](https://github.com/flashwp3-ctrl/juntia/actions/runs/42508573805) | Punto de control T024, verde (job `db`: pgTAP, integración, tipos y restauración) |
+| A | [42543237243](https://github.com/flashwp3-ctrl/juntia/actions/runs/42543237243) | Gate, verde tras volver a correr el job `e2e` por el `document-title` intermitente |
+| B | [42853507482](https://github.com/flashwp3-ctrl/juntia/actions/runs/42853507482) | Gate, verde; job `e2e` 464 s |
+| B | [42851485512](https://github.com/flashwp3-ctrl/juntia/actions/runs/42851485512) | Barrido `@sweep` T039, verde |
+| C | [42862640227](https://github.com/flashwp3-ctrl/juntia/actions/runs/42862640227) | Gate, verde; job `e2e` 556 s |
+| C | [42862623410](https://github.com/flashwp3-ctrl/juntia/actions/runs/42862623410) | Barrido T055 |
+| D | [42958244114](https://github.com/flashwp3-ctrl/juntia/actions/runs/42958244114) | Gate, verde; job `e2e` 583 s |
+| D | [42951372008](https://github.com/flashwp3-ctrl/juntia/actions/runs/42951372008) | Barrido T068, sobre `ac92923` (tras el arreglo de «Quitar el uso de la meta» al 200 %; el run 42939346411 es el fallido, arriba) |
+
+| `[V]` | Cierre | Salida |
+| --- | --- | --- |
+| ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas | **Cerrada** | PR A: 42508573805 y gate 42543237243 |
+| ADR-013 [V] 3–6 sobre las funciones nuevas | **Cerrada** | PR A: 42508573805 y gate 42543237243 |
+| `goal_usage_confirmations`: bloqueo sin consentimiento y revalidación | **Cerrada** | SQL: PR A, 42508573805. Dos sesiones (T058): gate del PR D, 42958244114 |
+| RLS de metas privadas y compartidas | **Cerrada** | PR A: 42508573805 (pgTAP) |
+| Registro inicial del gasto con meta (punto 5) | **Cerrada** | PR A: 42508573805 (integración) |
+| Autorización posterior de fondos ajenos (punto 6) | **Cerrada** | PR A: 42508573805 (integración) |
+| Aprobar contra quitar el uso y contra anular el gasto | **Cerrada** | PR A: 42508573805 (integración) |
+| Ediciones concurrentes de presupuesto (punto 7) | **Cerrada** | SQL: PR A, 42508573805. Aviso en pantalla (T029, T030): gate del PR B, 42853507482 |
+| Idempotencia de las escrituras que mueven dinero (punto 2) | **Cerrada hasta el PR D** | SQL e integración: PR A, 42508573805. Escrituras de interfaz: gates del PR C (42862640227) y del PR D (42958244114). El PR E no añade escrituras |
+| Las siete filas de DEC-G04 | **Cerrada** | PR A: 42508573805 (dominio e integración) |
+| `transaction_goal_funded` conectado | **Cerrada** | Función: PR A, 42508573805. Pantalla: gate del PR D, 42958244114 |
+| Dataset dorado en orden cronológico | **Cerrada** | PR A: 42508573805 (dominio) |
+| View Transitions con App Router | **Cerrada para la apertura** | Chromium: la View Transition anima al abrir una meta. El respaldo de Motion (`layoutId`), en Chromium y en el WebKit de Playwright sin la API. La API nativa en el WebKit de Playwright para Windows (build 2370) hace caer el proceso de la página: es una limitación de ese port, no de la app. Safari real del iPhone del fundador, el 10 de noviembre de 2026: anima bien y no se cae (versión de iOS **pendiente**). Salidas en la sección T052. El back-swipe de iPhone, **aplazado por decisión 19.1** |
+| Rendimiento de GoalStack y del abanico | **Pendiente del gestor** (T054, laboratorio) | — |
+| Luminancia del scrim de fotos | **No aplica** (decisión 22.6) | — |
+| Privacidad por ámbito | **Cerrada hasta el PR D; PR E pendiente del gate (T080)** | Gates de los PR B (42853507482), C (42862640227) y D (42958244114). PR E: verde contra `juntia-dev`, con una mutación que la hace fallar (arriba) |
+| Umbrales de §15.7 | **Pendiente del gestor** (T040, T054, T067, T079, laboratorio) | — |
+| Presupuesto del job `e2e` | **Cerrada hasta el PR D; PR E pendiente del gate (T080)** | T023: medición en «T022–T023». Gates: B 464 s, C 556 s, D 583 s, con el tope de 660 s de la decisión de los fundadores del 10 de noviembre de 2026 (el 517 s del run 42849936048 del PR B es el que llevó a esa decisión) |
+| Barrido completo de accesibilidad | **Hecho en los PR B, C y D; cierre de P0-3 pendiente del gestor (T082)** | B: 42851485512. C: 42862623410. D: 42951372008 |
+| Revisión visual de los elementos propuestos | **Pendiente de los fundadores** en este documento (T041, T056, T069, T081) | — |
+| Salida interna | **Pendiente de los fundadores** (T084) | — |
+
+## Desviaciones
+
+- La marca de mes transcurrido solo se pinta en el mes en curso: en un mes pasado estaría siempre al 100 % y no dice nada. Es aritmética de días transcurridos (días completos antes de hoy) sobre los días del mes, truncada.
+- El desglose por persona de lo apartado (Nosotros) sale de `goal_activity` del mes sumado en el dominio (`aporte_a_metas`) y solo se enseña si cuadra con `aporte_a_metas` de `metric_months`; si una escritura cae entre las dos lecturas, se enseña el total sin desglose.
+- Los capítulos fuera de la vista se esconden solo después de montar (con IntersectionObserver), no desde el servidor: así nada queda con opacidad 0 sin JavaScript ni con movimiento reducido, y no hay diferencia de hidratación.
+- El Chart son cajas de CSS, no un SVG; misma geometría (radio 8/3, mes elegido en tinta, etiquetas 11/600) y tabla equivalente.
+
+## Respuestas del gestor a las preguntas del PR #71 (11 de noviembre de 2026)
+
+1. **La espera de Exportar en la spec 1**: no cambia. En CI nunca falló (el Supabase del runner es local); si falla en el gate, se mira con su log.
+2. **`copy.export.fileNote`**: comprobada contra `export.ts`. El JSON lleva `transactions` (los movimientos propios y los gastos compartidos con su parte), `settlements`, `goals`, `goal_entries` (aportes, retiros y usos), `usage_requests` y `budgets`, así que «tus movimientos activos» ya no lo describía. Cambió **solo el texto** en `es.ts`, como corrección solo de texto **aprobada por el gestor**: «Copia de consulta de lo que ves en Juntia: movimientos, gastos compartidos, liquidaciones, metas con sus aportes, retiros y usos, solicitudes de uso y presupuestos. No sirve para restaurar ni migrar automáticamente.». Sin tocar `export.ts` ni la forma del archivo; `tests/integration/export.test.ts` compara la nota con `copy.export.fileNote`.
+3. **Tiempo del job `e2e`**: lo mide el gate; si pasa de 660 s, se decide con la medición.
+4. **Tabla de `[V]`**: completada arriba con los runs que verificó el gestor.
+5. **Check de Vercel** en el PR: es el bloqueo de autor de la cuenta Hobby; no es hallazgo.
+
+## Revisión del gestor del PR #71 (sobre `c4648e7` y `7688eb8`) · correcciones
+
+1. **Bloqueante · capítulos invisibles con movimiento reducido tras hidratar.** `usePrefersReducedMotion` da `false` en el servidor y en la hidratación. El efecto de `Chapter` escondía los capítulos bajo el pliegue y, al volver a pintar con `true`, salía sin devolverlos a `shown`.
+   - **Prueba nueva** `src/features/analysis/analysis-hydration.test.tsx`: `renderToString` y `hydrateRoot` con `matchMedia` en reduce y los capítulos bajo el pliegue. Con el código viejo **falla**: los cuatro capítulos quedan en `waiting`. Con el arreglo, los cuatro en `shown` y ningún `opacity: 0`.
+   - **Arreglo**: con movimiento reducido, la fase que se pinta es siempre `shown`, derivada en el render y no guardada desde el efecto (ESLint, `react-hooks/set-state-in-effect`, rechaza un `setPhase("shown")` dentro del efecto). Además, el efecto lee también `matchMedia` y con movimiento reducido no esconde nada.
+   - **Guardia en el navegador**: el a11y ligero comprueba que los cuatro `[data-chapter-phase]` están en `shown` tras la carga. Con el efecto viejo puesto un momento, esa comprobación **pasó** en Chromium (`npm run e2e:dev -- tests/a11y/analysis.a11y.ts`, exit 0): React vuelve a pintar con la instantánea del cliente antes de ejecutar los efectos, así que en Chromium el efecto ya veía `reduced=true`. El fallo se reproduce en la hidratación de jsdom, que es la prueba que lo detiene. La guardia se deja por su bajo coste.
+   - **axe**: por lo anterior, en Chromium los capítulos 3 y 4 ya estaban visibles cuando axe auditaba. Tras el arreglo, el a11y ligero y el `@sweep` de Análisis se repiten abajo.
+2. **¿Cambiar de mes remonta la pantalla?** **No.** Script temporal sin versionar contra `juntia-dev`, en Chromium, **sin** movimiento reducido. Marca el primer capítulo y el contador, pulsa «Análisis del mes anterior» y registra los cambios del DOM.
+   - Nosotros (noviembre → octubre): mismo nodo de capítulo y de contador, ningún Skeleton (`aria-busy` ni `data-skeleton`). Los dos meses valen $2.840.000, así que el contador no tenía nada que contar.
+   - Yo de Sara (noviembre → octubre): mismo nodo de capítulo y de contador, ningún Skeleton, y el contador interpola de $1.500.000 a $1.912.900 en 17 pasos ($1.502.494, $1.558.192, … $1.912.898, $1.912.900). Las fases de los capítulos no se reinician (sin re-entrada).
+   - No hace falta arreglo: la búsqueda en la URL no cambia la clave del segmento en esta versión de Next (16.4.4), y `loading.tsx` no aparece.
+3. Sin «(+0 %)» ni «(−0 %)»: con `percent` 0, la frase sin porcentaje. Caso nuevo en componentes.
+4. Umbral de entrada `top < innerHeight`: lo que ya asoma no se esconde ni parpadea.
+5. `compactPesos` redondea: $2.990.000 → «3 M», $2.860.000 → «2,9 M», $999.700 → «1 M». Caso nuevo en componentes.
+6. **Spec 5**: se quitó el caso «Análisis con y sin presupuesto», que repetía la siembra del a11y ligero.
+   - Sus aserciones pasan al a11y ligero, sobre los mismos datos reales: el capítulo 1 sin «%», Servicios excedido 105 %, Restaurantes 92 %, lo apartado por persona, la PlanningNote con $3.740.000 y nunca «Total gastado». En Yo de Sara: $1.912.900, ninguna barra, límite, 0 % ni EXCEDIDO, y «$500.000. Va aparte: no es gasto.».
+   - El caso de privacidad crea además un presupuesto de Nosotros (Mercado 900.000) y comprueba su barra al 71 % en la página real.
+   - El clic en el enlace de Plan queda solo en el caso de privacidad.
+7. Fila de T052 de la tabla de `[V]`, corregida con lo exacto: Chromium con View Transition al abrir; respaldo de Motion en Chromium y en el WebKit de Playwright; la API nativa se cae en el WebKit de Playwright para Windows (limitación de ese port); Safari real del iPhone del fundador anima bien.
+8. `copy.export.fileNote`: anotado como corrección solo de texto aprobada por el gestor.
+
+### Corridas de esta ronda (puerto 3500: el 3400 lo ocupaba otro proceso, que no se tocó)
+
+- Componentes de Análisis: **21/21**, con la hidratación. ESLint limpio.
+- `PORT=3500 npm run verify`: **exit 0, 92,28 s** (aviso: más de 90 s); componentes 982 / 2 omisiones previstas. Las dos pasadas anteriores fallaron por el entorno, no por el código. En una, `tests/a11y-select.test.ts --list` encontró el 3400 ocupado. En la otra, `review-f57.test.tsx` agotó sus 5 s bajo carga; solo pasa 19/19, y no es un archivo de este PR.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; axe 25,98 s, total 40,44 s. Sin violaciones serias en los tres estados y en los dos temas; los cuatro capítulos en `shown`.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; total 38,23 s. Al 200 %, Nosotros 390 / 390 y Yo 390 / 390, sin texto cortado; teclado y 44 px verdes.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 61,97 s, total 72,04 s.
+- `npm run e2e:dev` completo: build 10,37 s; **E2E 29 / 35 en 221,67 s**; axe con sesión **103 / 103 en 337,41 s**; **total 570,62 s, exit 1**. Los seis fallos son tiempos agotados: Exportar (5 s), spec 5 «presupuesto activado y desactivado» (30 s), las dos privacidades de las specs 3 y 4 (90 s), Balance y liquidación (30 s) y «@serial motion activo» (30 s).
+- `npm run e2e:dev -- --project e2e`, dos veces, para separar carga de regresión:
+  - primera, con el equipo aún cargado: **32 / 35 en 192,41 s**; fallan la spec 5 «activado y desactivado» y «Cambiar Yo/Nosotros» de la spec 3;
+  - segunda, con el equipo en reposo (un solo proceso de Node, CPU al 5 %): **33 / 35 en 146,49 s**; fallan Exportar (los 5 s de «Archivo listo.») y la spec 5 «activado y desactivado».
+- La spec 5 «activado y desactivado» es del PR B y no cambió. En el fallo, la página ya anuncia «Presupuesto desactivado.» y la lista aún muestra el límite cuando vencen los **30 s del test entero**, que no lleva `test.slow()`. Dirigida pasa (arriba, 3/3).
+- **Ninguna corrida completa de esta ronda salió limpia contra `juntia-dev`.** Los fallos son tiempos agotados y cambian de una corrida a otra; ninguno es de un archivo de Análisis, y el a11y con sesión pasó entero.
+
+## Revisión de ChatGPT del PR #71 (sobre `ad17956`) · F71-1 a F71-3
+
+1. **F71-1 · el primer mes del selector ignoraba los meses que solo tienen presupuesto.**
+   - **Arreglo:** el primer mes navegable es el primero con alguna métrica de `metric_months` o con un límite vigente de `budget_months`, el que llegue antes. `metric_months` sigue siendo la única fuente de las cinco métricas. `budget_months` ya genera una fila por mes desde el primer mes de vigencia de cada presupuesto, así que basta con una consulta barata: `firstBudgetMonth` en `src/lib/db/budgets.ts`, filtrada por `context` en SQL, con `limit_minor` no nulo, `order by month` y `limit 1`.
+   - **Prueba:** dentro del caso de privacidad de la spec 5, sin siembra nueva, un presupuesto de Nosotros (Transporte 150.000) que rige desde el mes anterior, escrito como historia en la base igual que la siembra dorada. Ese mes no tiene ninguna métrica. Se comprueba:
+     - `?mes=` de ese mes no redirige;
+     - el único `img` del capítulo 2 es la barra real «Transporte: 0 de 150.000, 0 %»;
+     - el capítulo 1 dice que no hay gastos;
+     - no aparece la PlanningNote (ninguna métrica inventada).
+   - **Con el `load.ts` anterior** puesto un momento, `npm run e2e:dev -- tests/e2e/budgets.e2e.ts --grep "privacidad de Análisis"` **falla**: se esperaba `mes=2026-10` y llegó `mes=2026-11`.
+2. **F71-2 · un control enfocable dentro de un capítulo invisible.**
+   - **Arreglo:** el capítulo pasa a `shown` al recibir foco (`onFocusCapture`), y `:focus-within` fuerza opacidad 1 y ninguna transformación. Sin `aria-hidden` ni `inert`.
+   - **Dos detalles que solo vio el navegador:**
+     - Una entrada ya empezada sigue corriendo: una transición en curso gana incluso al `!important`, y quitar el estilo en línea no la para, porque la transición por defecto es `all 0s`. En `shown`, `transition: none` explícito la cancela.
+     - El observador solo avanza desde `waiting`, para no devolver un capítulo enfocado a `entering`.
+   - **Prueba en el a11y ligero, con movimiento normal** (el resto del archivo usa `reduce`). A 390 px, con el capítulo 4 en `waiting`, Tab hasta «Cómo se calcula». En ese mismo instante, el botón enfocado y su capítulo tienen opacidad efectiva 1, `transform: none` y fase `shown`.
+     - Con el código anterior **falla**: opacidad 0,627, `matrix(1, 0, 0, 1, 0, 4.47)` y `phase: "waiting"`.
+     - Con `onFocusCapture` y sin `transition: none`, **también fallaba**: opacidad 0,628 con `phase: "shown"`. Así se encontró el primer detalle.
+     - Con el arreglo completo **pasa**: opacidad 1, `"none"` y `"shown"`.
+3. **F71-3 · tooltip accesible por teclado en el Chart. No implementado: no hay una forma limpia que cumpla las tres condiciones.** Una barra enfocable necesita un nombre accesible, que el lector anunciaría además de la tabla `sr-only` (duplica). Una barra enfocable dentro del bloque visual `aria-hidden` incumple `aria-hidden-focus` de axe. Va al gestor para que lo proponga a los fundadores (tabla visible desplegable, «Ver cifras exactas»). Una alternativa posible que no se construyó: que el propio Chart sea la tabla, con cada mes una celda enfocable y su importe exacto dentro y un tooltip visual `aria-hidden`; cambia la estructura del componente y no se probó.
+
+### Corridas (puerto 3500)
+
+- Componentes de Análisis y `tests/a11y-select.test.ts`: **85/85**. ESLint y typecheck limpios.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; axe 24,10 s, total 36,83 s. Sin violaciones serias; F71-2 en verde.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; total 37,33 s. Al 200 %, 390 / 390 en Nosotros y en Yo; teclado y 44 px verdes.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 64,47 s, total 75,51 s.
+- `npm run verify`: **exit 0, 68,85 s**; componentes 982 / 2 omisiones previstas.
+- `e2e:dev` completo: no se repitió en esta ronda; el gestor no lo pidió.
+
+## F71-3 · decisión de los fundadores del 11 de noviembre de 2026: «Ver cifras exactas»
+
+- **Decisión:** bajo el Chart de Análisis, una tabla visible desplegable en lugar del tooltip por teclado de COMPONENT_SPECIFICATIONS «Chart». Anotada en `docs/design/COMPONENT_SPECIFICATIONS.md` §Chart.
+- **Construcción** (`month-chart.tsx`): el mismo patrón que «Cómo se calcula». Un botón de 44 px con `aria-expanded` y `aria-controls`, que dice «Ver cifras exactas» o «Ocultar cifras exactas», con el `caret-right` de `AppIcon` que gira y foco visible. Abre una tabla visible con cada mes del gráfico y su importe exacto (`formatMoney`, con `$`), con el estilo de la tabla de Actividad: encabezado en overline y filas separadas por línea fina, con el mes elegido en tinta.
+- **Sin duplicar:** se quitó la tabla `sr-only`. El gráfico es decorativo (`aria-hidden`) y la tabla desplegable es la única equivalencia accesible, para teclado y para lector de pantalla, que puede abrirla con el botón. Nadie pierde acceso: la caption de la tabla («Gasto por mes, en pesos») sigue siendo su nombre.
+- **Pruebas:**
+  - Componentes, **22/22**. Caso nuevo: cerrada no hay ninguna tabla; al abrir, `aria-expanded` pasa a `true`, el texto cambia, `aria-controls` apunta a la tabla y hay una sola tabla con los importes exactos de cada mes; al cerrar, desaparece. El caso anterior comprueba que las barras están dentro del bloque `aria-hidden`.
+  - `analysis.a11y.ts` ligero: estado nuevo con la PlanningNote y las cifras exactas abiertas, en los dos temas: **0 violaciones**. La fila de octubre de la tabla abierta muestra $2.840.000.
+  - `@sweep`: siete anchos y 200 % con la tabla abierta (Nosotros 390 / 390), y **320 px al 200 %: 320 / 320, sin texto cortado**. Objetivo «Ver cifras exactas»: **146,8 × 44**.
+
+### Corridas (puerto 3500)
+
+- `npm run verify`: **exit 0, 66,84 s**; componentes 983 / 2 omisiones previstas.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**, total 42,70 s; 0 violaciones en los seis análisis; F71-2 sigue en verde (opacidad 1, `transform: none`, `shown`).
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**, total 40,92 s.
+- `npm run e2e:dev` completo: build 9,91 s; **E2E 32 / 35 en 166,56 s**; axe con sesión **103 / 103 en 379,49 s**; **total 557,13 s, exit 1**. Fallan, por tiempo:
+  - Exportar: los 5 s de «Archivo listo.»;
+  - «Cambiar Yo/Nosotros» de la spec 3 (90 s);
+  - **la spec 5 «presupuesto activado y desactivado»**, otra vez: los 30 s del test entero vencen, esta vez en `page.reload`. Es la cuarta corrida completa seguida en que falla, siempre por esos 30 s y en un paso distinto; dirigida pasa.
+- **Hipótesis descartada en lo posible:** que el enlace nuevo «Ver el análisis de {mes}» de Plan precargue Análisis con sus lecturas en cada carga de Plan, que ese caso recarga varias veces con dos sesiones.
+  - Un script temporal sin versionar abrió `/plan` y vio una sola petición a `/plan/analisis`, con `Next-Router-Prefetch: 1`.
+  - Es la precarga de Next para una ruta dinámica con `loading.tsx`, que pinta hasta el Skeleton y no ejecuta la página.
+  - Playwright no da el cuerpo de un RSC transmitido, así que la ausencia de datos no queda probada con ese script. No se cambió nada.
+
+## Spec 5 · `test.slow()` en «presupuesto activado y desactivado» (gestor, 11 de noviembre de 2026)
+
+- El caso del PR B falló en las cuatro corridas completas de `e2e:dev` de las rondas de revisión del PR #71, siempre por los 30 s del test entero y en pasos distintos («$240.000 · sin presupuesto», «Quedan $80.000», la lista tras desactivar, `page.reload`). Dirigido pasó siempre. Es un caso de dos sesiones (Sara y Tomás) con varias recargas.
+- Cambio: `test.slow()` **solo en ese caso**, con un comentario que cita esta medición. No cambia ninguna espera interna ni ningún otro test.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` con el cambio (primera pasada): el caso «activado y desactivado» **pasó**, pero **falló** el de privacidad de Análisis. Al entrar en Análisis desde «Ver el análisis» de Inicio, `main` seguía mostrando «Plan · Cargando el plan» pasados los 5 s de la espera. La instantánea del fallo lo enseña con el título ya en «Análisis · Juntia».
+
+## Skeleton de Plan delante de Análisis (encontrado al aplicar `test.slow()`)
+
+- **Causa:** `src/app/(app)/plan/loading.tsx` envolvía también a la ruta hija `/plan/analisis`. Al llegar a Análisis desde otra sección se veía primero el Skeleton de Plan, con su título «Plan» y «Cargando el plan». Eso es un Skeleton equivocado, un salto de diseño para T079 y un estado que puede tardar con `juntia-dev`.
+- **Arreglo:** el mismo patrón que `metas/(lista)`: Plan pasa a `src/app/(app)/plan/(resumen)/` (`page.tsx` y `loading.tsx`, movidos con `git mv`, sin cambios de contenido salvo un comentario). La URL `/plan` no cambia y su `loading.tsx` ya no envuelve a `/plan/analisis`, que usa el suyo.
+- **Corridas** (puerto 3500), tras los dos cambios:
+  - `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 69,84 s, total 85,60 s.
+  - `npm run e2e:dev -- tests/a11y/plan.a11y.ts tests/a11y/analysis.a11y.ts`: **exit 0**, total 38,41 s.
+  - `A11Y_ROUTE_AREAS=presupuestos npm run e2e:dev -- tests/a11y/routes.a11y.ts`: **exit 0**; `/plan` y `/plan/analisis` en claro y oscuro.
+  - Componentes del registro de rutas y de los selectores: **107/107**.
+  - `npm run verify`: **exit 0, 83,69 s**.

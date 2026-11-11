@@ -12,11 +12,15 @@
 import { randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { moneyFromPesos } from "../../src/domain/money";
-import { todayInBogota } from "../../src/domain/transactions";
+import { shiftMonth, todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { budgetHistory, budgetMonths, createBudget } from "../../src/lib/db/budgets";
-import { shortDate } from "../../src/lib/format";
+import { contributeToGoal, createGoal } from "../../src/lib/db/goals";
+import { createTransaction } from "../../src/lib/db/transactions";
+import { monthName, shortDate } from "../../src/lib/format";
+import { captureRsc } from "../support/rsc-capture";
 import { seedCouple, seedSharedMovements, type SeededUser } from "../support/seed";
+import { runnerSql } from "../integration/support/sql";
 import { expect, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
@@ -35,6 +39,9 @@ async function open(browser: Browser, baseURL: string, user: SeededUser, context
 const restaurants = copy.categories.restaurants;
 
 test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en Nosotros, Tomás choca con su cambio, lo revisa, y al desactivarlo vuelve a «sin presupuesto»", async ({ browser, baseURL }, testInfo) => {
+  // 004 PR E (gestor, 11 nov 2026): falla por tiempo solo en corridas completas, en pasos distintos (4 de 4 en juntia-dev);
+  // dirigido pasa; caso de dos sesiones con recargas. Sin cambiar ninguna espera interna.
+  test.slow();
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   // Los seis gastos compartidos del dataset en el mes en curso: Restaurantes lleva 240.000 y no tiene presupuesto.
   await seedSharedMovements(pair, "recent");
@@ -191,5 +198,103 @@ test("spec 5 · privacidad: ni el HTML, ni el RSC, ni el prefetch de Plan en Nos
   const plan = afterMe.filter((item) => item.phase === "us" && item.path === "/plan");
   expect(plan.length, `RSC iniciados en Nosotros: ${afterMe.filter((item) => item.phase === "us").map((item) => item.path).join(", ")}`).toBeGreaterThan(0);
   expect(plan.some(({ body }) => body.includes(shared.budget_id))).toBe(true);
+  await context.close();
+});
+
+// 004 PR E · T071 [US3] — la spec 5 crece con Análisis. Criterio literal (tasks.md, T071): «Análisis con y sin presupuesto
+// (con presupuesto muestra límite y desviación; sin presupuesto, ninguna barra fingida); HTML, RSC y prefetch de Análisis en
+// Nosotros sin datos personales». Cumple: FR-114 (Análisis); FR-085; US-3.
+// Por qué en E2E (docs/TESTING.md §4; contracts/ci.md, mitigación b): lo que ninguna capa inferior ve es que la página real
+// lee `metric_months` y `budget_months` del contexto de la cookie y el mes de la URL, y lo que el servidor manda en Nosotros.
+// Los capítulos, la comparación, el Chart y la PlanningNote con todas sus variantes están en componentes (T070); las cifras
+// de las vistas, en dominio, pgTAP e integración. Un caso, la privacidad, con un presupuesto de Nosotros como dato real (con
+// presupuesto, límite en la página). El recorrido con y sin presupuesto sobre la pareja dorada vive en el axe ligero de
+// tests/a11y/analysis.a11y.ts, que ya sembraba lo mismo (revisión del gestor del PR #71, 6: no pagar dos veces la siembra).
+const analysisOf = (month: string) => `/plan/analisis?mes=${month}`;
+const chapter = (page: Page, name: string) => page.getByRole("main").getByRole("region", { name });
+
+test("spec 5 · privacidad de Análisis: ni el HTML, ni el RSC, ni el prefetch de Análisis en Nosotros llevan gastos, presupuestos ni metas personales", async ({ browser, baseURL }, testInfo) => {
+  test.slow();
+  const pair = await seedCouple({ index: testInfo.parallelIndex });
+  await seedSharedMovements(pair, "recent");
+  // Lo personal de cada uno, por las funciones reales y con importes únicos: un presupuesto de cada uno, un gasto privado de
+  // Sara en Salud (ninguna fila compartida es de Salud) y un aporte a una meta personal suya.
+  const [saraOwn, tomasOwn] = await Promise.all([
+    createBudget(pair.sara.client, { idempotencyKey: randomUUID(), context: "me", categoryId: "health", limit: moneyFromPesos(123400n) }),
+    createBudget(pair.tomas.client, { idempotencyKey: randomUUID(), context: "me", categoryId: "entertainment", limit: moneyFromPesos(98700n) }),
+    // Con presupuesto en Nosotros: Mercado 900.000 con 640.000 de consumo (71 %).
+    createBudget(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", categoryId: "market", limit: moneyFromPesos(900000n) }),
+    createTransaction(pair.sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(43210n), categoryId: "health", transactionDate: today(), description: "Consulta privada" }),
+  ]);
+  const bike = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "me", name: "Bicicleta secreta", goalType: "vehicle", target: moneyFromPesos(3000000n), targetMonth: null });
+  await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: bike.id, amount: moneyFromPesos(77770n), entryDate: today(), fundingMode: "reserved" });
+  const PERSONAL = ["123.400", "12340000", "98.700", "9870000", saraOwn.budget_id, tomasOwn.budget_id, "43.210", "4321000", "Consulta privada", "77.770", "7777000", "Bicicleta secreta", bike.id];
+  const leaks = (text: string) => PERSONAL.filter((marker) => text.includes(marker));
+  // Control positivo de Nosotros: el gasto compartido del mes, en unidades menores, viaja en el HTML y en el RSC.
+  const US = "284000000";
+  const path = analysisOf(today().slice(0, 7));
+
+  for (const user of [pair.sara, pair.tomas]) {
+    for (const cookie of ["us", null, "nosotros"]) {
+      const { context, page } = await open(browser, baseURL!, user, "us", cookie);
+      for (const rsc of [false, true]) {
+        const response = await page.request.get(rsc ? `${path}&_rsc=spec5` : path, { headers: rsc ? { RSC: "1" } : {} });
+        expect(response.status()).toBe(200);
+        const body = await response.text();
+        expect(leaks(body), `${user.displayName} ${cookie ?? "sin cookie"} ${rsc ? "RSC" : "HTML"}`).toEqual([]);
+        if (cookie === "us") expect(body, `${user.displayName} ${rsc ? "RSC" : "HTML"}: control positivo`).toContain(US);
+      }
+      await context.close();
+    }
+  }
+
+  // Revisión F71-1 del PR #71: un mes con presupuesto y sin gastos ni metas se puede ver. Un presupuesto de Nosotros que rige
+  // desde el mes anterior (Transporte 150.000), escrito como historia en la base, igual que la siembra dorada: ese mes no tiene
+  // ninguna métrica. Antes, `?mes=` redirigía al mes en curso. Ahora se ve con su límite real y consumo 0, sin métricas
+  // inventadas (ni gasto ni PlanningNote) ni barras de lo que no tiene presupuesto.
+  const before = shiftMonth(today().slice(0, 7), -1);
+  const transport = randomUUID();
+  runnerSql(`begin;
+    insert into juntia_data.budgets(id,group_id,category_id,version,created_by,created_at,updated_by,updated_at) values('${transport}','${pair.groupId}','transport',1,'${pair.sara.id}','${before}-02T12:00:00-05:00','${pair.sara.id}','${before}-02T12:00:00-05:00');
+    insert into juntia_data.budget_versions(budget_id,effective_month,limit_minor,changed_by,changed_at) values('${transport}','${before}-01',15000000,'${pair.sara.id}','${before}-02T12:00:00-05:00');
+    commit;`);
+  {
+    const { context, page } = await open(browser, baseURL!, pair.sara, "us");
+    await page.goto(analysisOf(before));
+    await expect(page).toHaveURL(new RegExp(`mes=${before}$`));
+    await expect(chapter(page, copy.analysis.chapters.where).getByRole("img", { name: copy.plan.bar(copy.categories.transport, "0", "150.000", 0) })).toBeVisible();
+    await expect(chapter(page, copy.analysis.chapters.where).getByRole("img")).toHaveCount(1);
+    await expect(chapter(page, copy.analysis.chapters.amount)).toContainText(copy.analysis.noSpending.us(monthName(before)));
+    await expect(page.getByRole("main").getByRole("group", { name: copy.analysis.note.overline })).toHaveCount(0);
+    await context.close();
+  }
+
+  // Prefetch (tests/support/rsc-capture.ts: cada RSC se clasifica por su propia cookie al empezar). Sara en Yo a 1440 llega a
+  // Análisis desde Plan: su RSC trae lo personal (control de que la captura lo ve cuando viaja). Cambia a Nosotros en
+  // Análisis y vuelve a entrar desde «En qué se fue» de Inicio: ningún RSC de Nosotros lo trae, y el de Análisis trae el gasto
+  // compartido (control positivo).
+  const { context, page } = await open(browser, baseURL!, pair.sara, "me", "me", 1440);
+  const rsc = await captureRsc(page);
+  const nav = page.getByRole("navigation", { name: copy.shell.navigation });
+  await page.goto("/plan");
+  await page.getByRole("main").getByRole("link", { name: copy.plan.analysis(monthName(today().slice(0, 7))) }).click();
+  await expect(chapter(page, copy.analysis.chapters.setAside).getByText("$77.770. Va aparte: no es gasto.")).toBeVisible();
+  const inMe = await rsc.read((item) => item.path === "/plan/analisis" && !item.underUs);
+  expect(inMe.some(({ body }) => body.includes("7777000") && body.includes("4321000")), "el RSC de Análisis en Yo trae lo personal").toBe(true);
+  await page.locator("[data-context-selector]:visible").getByRole("radio", { name: copy.context.us }).click();
+  await expect(chapter(page, copy.analysis.chapters.amount)).toContainText(copy.analysis.spent.us);
+  const atSwitch = await rsc.read((item) => item.underUs);
+  for (const { path: from, body } of atSwitch) expect(leaks(body), `RSC de ${from} del cambio a Nosotros`).toEqual([]);
+  expect(atSwitch.some(({ path: from, body }) => from === "/plan/analisis" && body.includes(US)), `RSC del cambio: ${atSwitch.map((item) => item.path).join(", ")}`).toBe(true);
+  await nav.getByRole("link", { name: copy.nav.home }).click();
+  await page.getByRole("main").getByRole("link", { name: copy.home.analysis, exact: true }).click();
+  await expect(chapter(page, copy.analysis.chapters.amount)).toContainText("$2.840.000");
+  await expect(chapter(page, copy.analysis.chapters.where).getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
+  expect(leaks(await page.locator("main").innerText())).toEqual([]);
+  const inUs = await rsc.read((item) => item.underUs);
+  for (const { path: from, body } of inUs) expect(leaks(body), `RSC de ${from} pedido en Nosotros`).toEqual([]);
+  const analysis = inUs.filter((item) => item.path === "/plan/analisis");
+  expect(analysis.length, `RSC iniciados en Nosotros: ${inUs.map((item) => item.path).join(", ")}`).toBeGreaterThan(1);
+  expect(analysis.filter(({ body }) => body.includes(US)).length).toBeGreaterThan(1);
   await context.close();
 });

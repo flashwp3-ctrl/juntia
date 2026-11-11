@@ -23,6 +23,8 @@ export const FILES = {
   "tests/a11y/goals.a11y.ts": "metas",
   "tests/a11y/goal-expense.a11y.ts": "gasto con meta",
   "tests/a11y/plan.a11y.ts": "presupuestos",
+  // 004 PR E (T072): Análisis es del área de presupuestos (contracts/ci.md, «Selector de accesibilidad por área»).
+  "tests/a11y/analysis.a11y.ts": "presupuestos",
 };
 export const ROUTES_FILE = "tests/a11y/routes.a11y.ts";
 /**

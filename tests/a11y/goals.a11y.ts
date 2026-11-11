@@ -161,6 +161,50 @@ if (JOB === "e2e") test.describe("Metas, inmersiva, hojas e historial (PR C de l
     await context.close();
   });
 
+  // Encargo del gestor en el PR E (hallazgo de la sesión del PR D, 10 nov 2026): en Inicio de Nosotros, a 320 px y con el
+  // texto al 200 %, el título de la tarjeta se cortaba incluso con «Japón» (tema oscuro). `largeText` mide a 390 y solo el
+  // recorte horizontal; aquí se mide lo que se perdía: el título recortado en vertical (`line-clamp-2` lo dejaba encoger) y el
+  // contenido de la tarjeta que se salía por debajo de su caja (`overflow-hidden`). En los dos temas, como el resto del barrido.
+  test("320 px y 200 %: el título y el contenido de las tarjetas de meta de Inicio de Nosotros caben sin cortarse · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const { pair } = await seedGoals(testInfo.parallelIndex);
+    for (const colorScheme of THEMES) {
+      const { context, page } = await signedContext(browser, baseURL!, pair.tomas, colorScheme, "us");
+      await page.setViewportSize({ width: 320, height: 900 });
+      await page.goto("/");
+      await expect(page.getByRole("link", { name: /^Japón, meta compartida/ }).first()).toBeVisible();
+      await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+      // Sin esperas fijas: se mide cuando la maquetación con el texto grande ya está (las tarjetas tienen tamaño).
+      const measure = () => page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main [data-goal-card]")]
+        .filter((card) => card.getClientRects().length > 0 && card.getBoundingClientRect().width > 0)
+        .flatMap((card) => {
+          const title = card.querySelector<HTMLElement>("[data-goal-title]");
+          const name = title?.textContent?.trim() ?? "";
+          // Recortado = `line-clamp` esconde al menos media línea (unos px de más son el remate de las letras, no texto perdido).
+          const line = title ? parseFloat(getComputedStyle(title).lineHeight) || 0 : 0;
+          const box = card.getBoundingClientRect();
+          // Texto que queda fuera de la caja de la tarjeta (`overflow-hidden` lo esconde). La decoración en posición absoluta (la
+          // inicial de apertura, el fondo sin foto) no cuenta: no es contenido.
+          const decorative = (node: HTMLElement) => { for (let at: HTMLElement | null = node; at && at !== card; at = at.parentElement) if (getComputedStyle(at).position === "absolute") return true; return false; };
+          const outside = [...card.querySelectorAll<HTMLElement>("span, p")]
+            .filter((node) => node.children.length === 0 && (node.textContent ?? "").trim() && !node.classList.contains("sr-only") && !decorative(node))
+            .filter((node) => { const rect = node.getBoundingClientRect(); return rect.height > 0 && (rect.bottom > box.bottom + 1 || rect.right > box.right + 1); })
+            .map((node) => `«${(node.textContent ?? "").trim().slice(0, 30)}»`);
+          return [
+            ...(title ? [] : ["tarjeta sin título"]),
+            ...(title && title.scrollHeight - title.clientHeight > line / 2 ? [`título «${name}» recortado (${title.scrollHeight} > ${title.clientHeight})`] : []),
+            ...(outside.length ? [`tarjeta «${name}»: fuera de la caja ${outside.join(", ")}`] : []),
+          ];
+        }));
+      await expect.poll(() => page.evaluate(() => document.querySelectorAll("main [data-goal-card]").length)).toBeGreaterThan(0);
+      const clipped = await measure();
+      console.log(`Inicio de Nosotros · ${colorScheme} · 320px · 200 %: ${clipped.length ? clipped.join("; ") : "sin recortes"}`);
+      expect.soft(clipped, `${colorScheme} · 320px · 200 %: tarjetas de meta sin recortes`).toEqual([]);
+      const { scrollWidth, clientWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+      expect.soft(scrollWidth, `${colorScheme} · 320px · 200 %: sin scroll horizontal`).toBeLessThanOrEqual(clientWidth);
+      await context.close();
+    }
+  });
+
   test("teclado y 44 px: la pila, «Ver todas», la inmersiva (Enter abre, Escape cierra) y los botones de aporte y retiro · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const { pair } = await seedGoals(testInfo.parallelIndex);
     const { context, page } = await signedContext(browser, baseURL!, pair.sara, "light", "us");

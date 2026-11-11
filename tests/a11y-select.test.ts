@@ -35,8 +35,8 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
   // [nombre, archivos cambiados, archivos a11y esperados, áreas del registro (null = completo)]
   it.each([
     ["PR típico de metas (con es.ts)", GOALS_PR, a("routes", "goals", "goal-expense"), ["metas"]],
-    ["PR típico de plan (con es.ts)", PLAN_PR, a("routes", "plan"), ["presupuestos"]],
-    ["PR típico de análisis (métricas del dominio, sin exportación)", ANALYSIS_PR, a("routes", "goals", "goal-expense", "plan"), ["metas", "presupuestos"]],
+    ["PR típico de plan (con es.ts)", PLAN_PR, a("routes", "plan", "analysis"), ["presupuestos"]],
+    ["PR típico de análisis (métricas del dominio, sin exportación)", ANALYSIS_PR, a("routes", "goals", "goal-expense", "plan", "analysis"), ["metas", "presupuestos"]],
     ["PR de análisis que toca la exportación: todos", [...ANALYSIS_PR, "src/lib/db/export.ts"], ALL, null],
     ["PR de metas que toca su capa de datos o su dominio: todos (Inicio y Actividad los cargan)", [...GOALS_PR, "src/lib/db/goals.ts", "src/domain/goals/index.ts"], ALL, null],
     ["la tarjeta de meta (también en la pila de Inicio): todos", ["src/features/goals/goal-card.tsx"], ALL, null],
@@ -59,10 +59,10 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
     ["núcleo: acceso y cuenta", ["src/features/auth/sign-in-form.tsx", "src/app/(app)/cuenta/perfil/page.tsx"], a("routes"), ["nucleo"]],
     ["exportación aislada: todos (la importa la ruta de API)", ["src/lib/db/export.ts"], ALL, null],
     ["migración de metas: todos (alimenta la capa de datos que cargan Inicio y Actividad)", ["supabase/migrations/20261120000200_goal_fix.sql"], ALL, null],
-    ["migración de presupuestos", ["supabase/migrations/20261120000100_budget_fix.sql"], a("routes", "plan"), ["presupuestos"]],
+    ["migración de presupuestos", ["supabase/migrations/20261120000100_budget_fix.sql"], a("routes", "plan", "analysis"), ["presupuestos"]],
     ["un archivo a11y de área cambiado corre solo ese archivo", ["tests/a11y/balance.a11y.ts"], a("balance"), null],
     ["routes.a11y.ts cambiado: el registro completo", ["tests/a11y/routes.a11y.ts"], a("routes"), null],
-    ["dos áreas suman sus archivos y sus áreas del registro", [...GOALS_PR, ...PLAN_PR], a("routes", "goals", "goal-expense", "plan"), ["metas", "presupuestos"]],
+    ["dos áreas suman sus archivos y sus áreas del registro", [...GOALS_PR, ...PLAN_PR], a("routes", "goals", "goal-expense", "plan", "analysis"), ["metas", "presupuestos"]],
     ["src/components/ es compartido", [...GOALS_PR, "src/components/ui/button.tsx"], ALL, null],
     ["el shell es compartido", ["src/app/(app)/layout.tsx"], ALL, null],
     ["globals.css es compartido", ["src/app/globals.css"], ALL, null],
@@ -128,7 +128,7 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
   });
 
   it("las rutas de Windows se normalizan antes de clasificar", () => {
-    expect(select(["src\\features\\plan\\plan-screen.tsx"], exists).files).toEqual(a("routes", "plan"));
+    expect(select(["src\\features\\plan\\plan-screen.tsx"], exists).files).toEqual(a("routes", "plan", "analysis"));
   });
 
   // Como SPECS en e2e-select (F67-3): un archivo a11y que no esté en el mapa no correría nunca en un PR de área, en silencio.
