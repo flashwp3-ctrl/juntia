@@ -1226,3 +1226,13 @@ El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó):
 | `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`, 1.ª | **exit 1, 143 s: 20/21**. Falló «desconocido: respuesta perdida…» (`annotate.e2e.ts:360`): Actividad seguía en «Cargando movimientos» (loading.tsx) cuando se agotaron los 5 s. El RSC de `juntia-dev` iba lento; la página es de Yo y no pinta Skeleton de contexto |
 | La misma prueba sola, ×2 | **1/1 y 1/1** (14,9 s y 10,2 s) |
 | Specs 2 y 3, 2.ª | **exit 0, 107 s**: build 9,84 s; **21/21** (1,6 min) |
+
+## Gate del PR #69 (run 42956506044 sobre `7c6e2b1`) · «1440px: tipos de meta por fila» recibió `[7]`
+
+- **Causa**: el momento de la medición, no la maquetación. El componente tiene `grid-cols-4` en todos los anchos. Al pasar de 390 a 1440 px la hoja se vuelve a montar (BottomSheet → Modal), y `goalTypeRows` medía enseguida el diálogo que se cerraba o uno sin maquetar: siete casillas con el mismo `top`.
+- **Arreglo, solo en la prueba** (`tests/a11y/goals.a11y.ts`):
+  - antes de medir, espera a **un solo** diálogo «Nueva meta» y a que el grupo de tipos sea visible;
+  - las casillas sin tamaño no cuentan como fila;
+  - `perRow` se mide con `expect.poll`, sin esperas fijas. Se mantienen `[4, 3]` y la aserción de etiquetas sin cortar.
+- **Sigue fallando con el código viejo**: con la clase de `d00e2d4^` (`grid-cols-4 sm:grid-cols-7`) puesta un momento en el componente, falla en los dos temas con «1440px: tipos de meta por fila», `[4, 3]` esperado y `[7]` recibido. Después se devolvió la clase actual.
+- `npm run e2e:dev -- tests/a11y/goals.a11y.ts`, tres veces: **exit 0 en 61 s, 61 s y 66 s**; las tres corridas, 2/2 (45,3 s, 47,3 s y 48,8 s).
