@@ -150,18 +150,40 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
 - **Reglas, en este orden:**
   1. **Un archivo a11y cambiado** corre ese archivo; `routes.a11y.ts` cambiado, con el registro completo.
   2. **Un archivo de código de un área** corre los archivos y las áreas del registro de esa área (gana la primera fila que
-     encaja):
+     encaja), **salvo los compartidos de la lista `SHARED`**, que van antes y corren todo:
 
-     | Área | Archivos de código | Archivos a11y | Registro |
+     | Área | Archivos de código (fuera de `SHARED`) | Archivos a11y | Registro |
      | --- | --- | --- | --- |
-     | Métricas | `src/domain/metrics/**`, `src/lib/db/metrics.ts` | `goals`, `goal-expense` y `plan` | `metas` y `presupuestos` |
-     | Gasto con meta | `src/features/expenses/goal-funding/**`, `src/lib/db/goal-usage.ts` | `goal-expense` | — |
-     | Metas | `src/app/(app)/metas/**`, `src/features/goals/**`, `src/domain/goals/**`, `src/lib/db/goals.ts`, migraciones `*_goal*` | `goals` y `goal-expense` | `metas` |
-     | Presupuestos y Análisis | `src/app/(app)/plan/**`, `src/features/plan/**`, `src/features/analysis/**`, `src/domain/budgets/**`, `src/domain/analysis/**`, `src/lib/db/budgets.ts` y `planning.ts`, migraciones `*_budget*` | `plan` | `presupuestos` |
-     | Balance | `src/app/(app)/balance/**`, `src/features/balance/**`, `src/domain/balances/**`, `src/lib/db/settlements.ts` | `balance` | `balance` |
-     | Pareja e invitación | `src/app/(app)/cuenta/pareja/**`, `src/app/invitacion/**`, `src/features/couple/**`, `src/domain/couple/**`, `src/lib/db/couple.ts` e `invitation-token.ts` | `couple` | `pareja` |
-     | Gastos compartidos | `src/features/expenses/shared-*`, `split-*` y `reclassify-*`, `src/domain/allocations/**`, `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts` | `couple-shared` | `nucleo` (Inicio y Actividad en Nosotros) |
-     | Núcleo | `src/features/auth/**`, `src/app/(auth)/**`, `src/app/auth/**`, `src/features/account/**`, `src/app/(app)/cuenta/**` (fuera de pareja), `src/lib/db/export.ts` y `profile.ts` | — | `nucleo` |
+     | Métricas | `src/domain/metrics/**` | `goals`, `goal-expense` y `plan` | `metas` y `presupuestos` |
+     | Metas | `src/app/(app)/metas/**`, `src/features/goals/**` (pantalla, inmersiva, hojas, historial, errores) | `goals` y `goal-expense` | `metas` |
+     | Presupuestos y Análisis | `src/app/(app)/plan/**`, `src/features/plan/**`, `src/features/analysis/**`, `src/domain/budgets/**`, `src/domain/analysis/**`, `src/lib/db/budgets.ts`, migraciones `*_budget*` | `plan` | `presupuestos` |
+     | Balance | `src/app/(app)/balance/**`, `src/features/balance/**` (pantalla, desglose, esqueleto) | `balance` | `balance` |
+     | Pareja e invitación | `src/app/(app)/cuenta/pareja/**`, `src/app/invitacion/**`, `src/features/couple/**` (Mi pareja e invitación), `src/domain/couple/**`, `src/lib/db/invitation-token.ts` | `couple` | `pareja` |
+     | Núcleo | `src/features/auth/**`, `src/app/(auth)/**`, `src/app/auth/**`, `src/features/account/**` (Mi cuenta), `src/app/(app)/cuenta/**` (fuera de pareja) | — | `nucleo` |
+
+     **`SHARED` y la guardia de imports (revisión del PR #70, F70-1..3).** Un archivo de una carpeta de área que importan
+     el layout, el shell, Inicio, Actividad, Anotar, la exportación u otra área cambia pantallas fuera de su área: corre
+     todo. `tests/a11y-select.test.ts` recorre los imports estáticos de `src/` (`import … from`, `export … from`,
+     `import("…")`, alias `@/`; sin contar los imports solo de tipos) y falla, diciendo cuál, si un archivo que el mapa
+     asigna a un área lo importa un archivo que pide más (otra área, el layout o algo compartido). Reclasificaciones que
+     salieron de la guardia:
+     - **Pareja:** `couple/shared-load.ts`, `load.ts`, `invitation-return.tsx`, `intent.ts`, `sensitive-confirmation.tsx`
+       y `src/lib/db/couple.ts` (F70-1: los consumen el layout, Inicio, Actividad, Balance, Plan, Metas y Anotar).
+     - **Gastos compartidos:** sin fila propia. `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts`,
+       `src/domain/allocations/**` (F70-2: alimentan `loadBalance`, Inicio y Actividad) y todo `src/features/expenses/`,
+       incluido `goal-funding/`, que importan Anotar y Actividad. `couple-shared.a11y.ts` y `goal-expense.a11y.ts` corren
+       con lo compartido, con su propio archivo o con el área de metas.
+     - **Cuenta:** `account/account-context.tsx`, `theme-controller.ts` (F70-3: el tema de todo el layout),
+       `account-button.tsx` (shell), `account-ui.tsx`, `limit-note.tsx`, `load-account.ts`, `src/lib/db/profile.ts` y
+       `auth/auth-frame.tsx` (lo usa `/invitacion`).
+     - **Balance:** `actions.ts` (layout), `saved.ts`, `balance-panel.tsx` y `shared-balance.tsx` (Inicio),
+       `settle-sheet.tsx`, `settlement-detail.tsx` (Actividad), `bar-geometry.ts`, `src/domain/balances/**` y
+       `src/lib/db/settlements.ts`.
+     - **Metas:** `actions.ts` y `goal-actions.ts` (layout), `goal-stack.tsx`, `goal-card.tsx`, `goal-journey.ts`,
+       `goal-ribbon.tsx` (Inicio), `format.ts` y `goal-entry-row.tsx` (Actividad), `load.ts`, `funding-load.ts` y
+       `types.ts` (Inicio y Actividad), `goal-sheet-frame.tsx`, `src/domain/goals/**`, `src/lib/db/goals.ts`,
+       `goal-usage.ts` y `metrics.ts`, y las migraciones `*_goal*`.
+     - **Exportación:** `src/lib/db/export.ts` (la ruta de API) y `planning.ts`, que importa.
 
   3. **Neutros** (no añaden nada; si el PR solo toca neutros, el paso de axe con sesión se salta y el resumen lo dice):
      `**/*.md`, `docs/**`, `specs/**`, `tests/e2e/**`, `tests/evidence/**`, las pruebas de Vitest (`*.test.ts(x)`, incluidas
@@ -183,12 +205,15 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
 - **Archivos que todavía no existen:** solo se pasan a Playwright los que existen en el commit; uno previsto que falta se
   anota en el resumen («todavía no existe») y no se da por aprobado.
 - **El resumen del job** dice qué archivos a11y corrieron, cuáles no (el PR no toca su área) y por qué.
-- **Qué corre un PR típico** (con `es.ts`, sin compartido): **metas** → `goals`, `goal-expense` y el registro de `metas`;
-  **plan** → `plan` y el registro de `presupuestos`; **análisis** (métricas y exportación) → `goals`, `goal-expense`, `plan` y
-  el registro de `nucleo`, `metas` y `presupuestos`. Si además toca `src/components/`, Inicio, Anotar o `errors.ts`, todo.
+- **Qué corre un PR típico** (con `es.ts`, sin compartido): **metas** (pantalla, inmersiva y hojas) → `goals`,
+  `goal-expense` y el registro de `metas`; **plan** → `plan` y el registro de `presupuestos`; **análisis** (pantalla y
+  métricas del dominio) → `goals`, `goal-expense`, `plan` y el registro de `metas` y `presupuestos`. Si además toca un
+  compartido (`src/components/`, Inicio, Actividad, Anotar, `errors.ts`, la exportación o cualquier archivo de `SHARED`,
+  como la capa de datos o el dominio de metas), todo.
 - **Prueba:** `tests/a11y-select.test.ts`, con fixtures por área (y los tres PR típicos), compartido, desconocido, sin base
-  y solo documentación; el mapa de rutas (una ruta sin clasificar es núcleo; el fail-safe de `A11Y_ROUTE_AREAS`); el comando
-  real con `--list`; y la cobertura del mapa (`FILES` cubre todos los `tests/a11y/**/*.a11y.ts`, recursivo).
+  y solo documentación; los tres hallazgos de la revisión del PR #70; la guardia de imports; el mapa de rutas (una ruta sin
+  clasificar es núcleo; el fail-safe de `A11Y_ROUTE_AREAS`); el comando real con `--list`; y la cobertura del mapa (`FILES`
+  cubre todos los `tests/a11y/**/*.a11y.ts`, recursivo).
   Un archivo a11y nuevo (por ejemplo, el de Análisis del PR E) entra en `FILES` con su área en el mismo PR, o la prueba
   falla. `tests/ci-command.test.ts` ejecuta el comando de npm del paso con `A11Y_FILES` y `--list`.
 - **No cambian:** el job `app` (estados sin sesión), el barrido `@sweep` (`A11Y_LEVEL=sweep`, sin selector) y la pasada

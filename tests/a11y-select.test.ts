@@ -9,7 +9,8 @@ import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { changedFiles, FILES, ROUTE_AREAS, ROUTES_FILE, selectA11y, summary } from "../scripts/a11y-select.mjs";
+import { changedFiles, classify, FILES, ROUTE_AREAS, ROUTES_FILE, selectA11y, summary } from "../scripts/a11y-select.mjs";
+import { importers, importSpecifiers, resolveImport, sourceFiles } from "./support/import-graph.mjs";
 import { registry, ROUTE_AREAS as REGISTRY_AREAS, routeArea, routeAreaFilter } from "./a11y/route-registry";
 
 type Selection = { files: string[]; run: string[]; missing: string[]; routeAreas: string[] | null; skip: boolean; all: boolean; reasons: string[] };
@@ -20,27 +21,45 @@ const a = (...names: string[]) => names.map((name) => `tests/a11y/${name}.a11y.t
 /** El orden de FILES, para comparar sin depender del orden de las áreas. */
 const ordered = (files: string[]) => ALL.filter((file) => files.includes(file));
 
-// PR típicos de P0-3 (contracts/ci.md): con la copy, que todo PR toca y es neutra.
-const GOALS_PR = ["src/app/(app)/metas/page.tsx", "src/app/(app)/metas/[id]/page.tsx", "src/features/goals/goal-card.tsx", "src/domain/goals/index.ts",
-  "src/lib/db/goals.ts", "src/lib/copy/es.ts", "tests/e2e/goals.e2e.ts", "tests/a11y/goals.a11y.ts"];
+// PR típicos de P0-3 (contracts/ci.md): con la copy, que todo PR toca y es neutra. Después de la guardia de imports (F70), un
+// PR de metas que toca su dominio, su capa de datos o lo que muestran Inicio y Actividad corre todo (ver los casos de abajo);
+// el típico de pantallas y hojas de Metas sigue en su área.
+const GOALS_PR = ["src/app/(app)/metas/(lista)/page.tsx", "src/app/(app)/metas/[id]/page.tsx", "src/features/goals/goals-screen.tsx",
+  "src/features/goals/goal-immersive.tsx", "src/features/goals/contribute-sheet.tsx", "src/lib/copy/es.ts", "tests/e2e/goals.e2e.ts", "tests/a11y/goals.a11y.ts"];
 const PLAN_PR = ["src/app/(app)/plan/page.tsx", "src/features/plan/plan-screen.tsx", "src/features/plan/budget-sheet.tsx", "src/domain/budgets/index.ts",
   "src/lib/db/budgets.ts", "src/lib/copy/es.ts", "tests/e2e/budgets.e2e.ts", "tests/a11y/plan.a11y.ts"];
 const ANALYSIS_PR = ["src/app/(app)/plan/analisis/page.tsx", "src/features/analysis/analysis-screen.tsx", "src/domain/analysis/index.ts",
-  "src/domain/metrics/index.ts", "src/lib/db/export.ts", "src/lib/copy/es.ts", "tests/e2e/budgets.e2e.ts"];
+  "src/domain/metrics/index.ts", "src/lib/copy/es.ts", "tests/e2e/budgets.e2e.ts"];
 
 describe("selector de accesibilidad de nivel ligero por área (decisión de los fundadores del 11 nov 2026)", () => {
   // [nombre, archivos cambiados, archivos a11y esperados, áreas del registro (null = completo)]
   it.each([
     ["PR típico de metas (con es.ts)", GOALS_PR, a("routes", "goals", "goal-expense"), ["metas"]],
     ["PR típico de plan (con es.ts)", PLAN_PR, a("routes", "plan"), ["presupuestos"]],
-    ["PR típico de análisis (métricas y exportación)", ANALYSIS_PR, a("routes", "goals", "goal-expense", "plan"), ["nucleo", "metas", "presupuestos"]],
-    ["gasto con meta aislado: sin registro", ["src/features/expenses/goal-funding/funding-ledger.tsx", "src/lib/db/goal-usage.ts"], a("goal-expense"), null],
-    ["Balance", ["src/features/balance/balance-panel.tsx", "src/lib/db/settlements.ts"], a("routes", "balance"), ["balance"]],
+    ["PR típico de análisis (métricas del dominio, sin exportación)", ANALYSIS_PR, a("routes", "goals", "goal-expense", "plan"), ["metas", "presupuestos"]],
+    ["PR de análisis que toca la exportación: todos", [...ANALYSIS_PR, "src/lib/db/export.ts"], ALL, null],
+    ["PR de metas que toca su capa de datos o su dominio: todos (Inicio y Actividad los cargan)", [...GOALS_PR, "src/lib/db/goals.ts", "src/domain/goals/index.ts"], ALL, null],
+    ["la tarjeta de meta (también en la pila de Inicio): todos", ["src/features/goals/goal-card.tsx"], ALL, null],
+    ["gasto con meta (lo importan Anotar y Actividad): todos", ["src/features/expenses/goal-funding/funding-ledger.tsx", "src/lib/db/goal-usage.ts"], ALL, null],
+    ["Balance (su pantalla)", ["src/features/balance/balance-screen.tsx", "src/app/(app)/balance/page.tsx"], a("routes", "balance"), ["balance"]],
+    ["el panel de Balance (también en Inicio): todos", ["src/features/balance/balance-panel.tsx"], ALL, null],
     ["pareja", ["src/features/couple/invite-sheet.tsx", "src/app/invitacion/page.tsx"], a("routes", "couple"), ["pareja"]],
-    ["gastos compartidos: couple-shared y el núcleo (Inicio y Actividad en Nosotros)", ["src/features/expenses/split-editor.tsx", "src/lib/db/shared-expenses.ts"], a("routes", "couple-shared"), ["nucleo"]],
+    ["gastos compartidos (los importan Anotar y Actividad): todos", ["src/features/expenses/split-editor.tsx"], ALL, null],
+    // F70-1: las cargas de pareja las consumen el layout, Inicio, Actividad, Balance y Anotar.
+    ["F70-1: couple/shared-load.ts es compartido", ["src/features/couple/shared-load.ts"], ALL, null],
+    ["F70-1: couple/load.ts (layout global) es compartido", ["src/features/couple/load.ts"], ALL, null],
+    ["F70-1: lo exclusivo de Mi pareja conserva su área", ["src/features/couple/partner-screen.tsx"], a("routes", "couple"), ["pareja"]],
+    // F70-2: alimentan loadBalance, Inicio y Actividad.
+    ["F70-2: lib/db/shared-expenses.ts es compartido", ["src/lib/db/shared-expenses.ts"], ALL, null],
+    ["F70-2: lib/db/couple-reads.ts es compartido", ["src/lib/db/couple-reads.ts"], ALL, null],
+    // F70-3: el tema que aplica el layout.
+    ["F70-3: account/account-context.tsx (AccountProvider) es compartido", ["src/features/account/account-context.tsx"], ALL, null],
+    ["F70-3: account/theme-controller.ts es compartido", ["src/features/account/theme-controller.ts"], ALL, null],
+    ["F70-3: lo exclusivo de Mi cuenta conserva el núcleo", ["src/features/account/theme-selector.tsx"], a("routes"), ["nucleo"]],
     ["núcleo: acceso y cuenta", ["src/features/auth/sign-in-form.tsx", "src/app/(app)/cuenta/perfil/page.tsx"], a("routes"), ["nucleo"]],
-    ["exportación aislada: núcleo", ["src/lib/db/export.ts"], a("routes"), ["nucleo"]],
-    ["migración de metas", ["supabase/migrations/20261120000200_goal_fix.sql"], a("routes", "goals", "goal-expense"), ["metas"]],
+    ["exportación aislada: todos (la importa la ruta de API)", ["src/lib/db/export.ts"], ALL, null],
+    ["migración de metas: todos (alimenta la capa de datos que cargan Inicio y Actividad)", ["supabase/migrations/20261120000200_goal_fix.sql"], ALL, null],
+    ["migración de presupuestos", ["supabase/migrations/20261120000100_budget_fix.sql"], a("routes", "plan"), ["presupuestos"]],
     ["un archivo a11y de área cambiado corre solo ese archivo", ["tests/a11y/balance.a11y.ts"], a("balance"), null],
     ["routes.a11y.ts cambiado: el registro completo", ["tests/a11y/routes.a11y.ts"], a("routes"), null],
     ["dos áreas suman sus archivos y sus áreas del registro", [...GOALS_PR, ...PLAN_PR], a("routes", "goals", "goal-expense", "plan"), ["metas", "presupuestos"]],
@@ -62,7 +81,7 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
     // Revisión del gestor del PR #70 (2): es.ts sin ningún área corre todo; con un área, sigue siendo neutro.
     ["solo es.ts: todos", ["src/lib/copy/es.ts"], ALL, null],
     ["es.ts con neutros (documentación y specs E2E): todos", ["src/lib/copy/es.ts", "docs/TESTING.md", "tests/e2e/goals.e2e.ts"], ALL, null],
-    ["es.ts con un área: solo el área", ["src/lib/copy/es.ts", "src/features/balance/balance-panel.tsx", "docs/TESTING.md"], a("routes", "balance"), ["balance"]],
+    ["es.ts con un área: solo el área", ["src/lib/copy/es.ts", "src/features/balance/balance-screen.tsx", "docs/TESTING.md"], a("routes", "balance"), ["balance"]],
     ["una migración que no es de metas ni de presupuestos", ["supabase/migrations/20261120000300_couple_fix.sql"], ALL, null],
   ] as const)("%s", (_name, changed, expected, areas) => {
     const result = select([...changed], exists);
@@ -115,6 +134,45 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
       .filter((name) => name.endsWith(".a11y.ts")).map((name) => `tests/a11y/${name}`);
     expect(onDisk.filter((path) => !ALL.includes(path))).toEqual([]);
     expect(ALL.filter((path) => !onDisk.includes(path))).toEqual([]);
+  });
+});
+
+// Revisión del PR #70 (F70-1..3): la guardia que impide que vuelva a pasar. Por cada archivo de src/ que una regla asigna a un
+// área, todos los que lo importan con valores (fuera de las pruebas) tienen que pedir como mucho lo mismo: si lo importa otra
+// área, el layout o un archivo compartido, un cambio en él cambiaría pantallas que el selector no correría. Los imports solo
+// de tipos no cuentan (no cambian lo que se renderiza; los archivos que cambian con un tipo ya están en el diff).
+describe("guardia de imports del mapa de áreas (F70)", () => {
+  it("ningún archivo de área lo importa otra área, el layout o un archivo compartido", () => {
+    type Cls = { files: string[]; routes: string[]; all?: boolean; why: string };
+    const cls = (path: string) => classify(path) as Cls;
+    const files = (sourceFiles("src") as string[]).filter((path) => !/\.test\.tsx?$/.test(path));
+    const byTarget = importers(files) as Map<string, string[]>;
+    const coverage = (c: Cls) => new Set([...c.files, ...c.routes.map((area) => `registro:${area}`)]);
+    const violations: string[] = [];
+    for (const file of files) {
+      const own = cls(file);
+      if (own.all || (own.files.length === 0 && own.routes.length === 0)) continue;
+      const mine = coverage(own);
+      for (const importer of byTarget.get(file) ?? []) {
+        const theirs = cls(importer);
+        if (!theirs.all && theirs.files.length === 0 && theirs.routes.length === 0) continue;
+        const missing = [...coverage(theirs)].filter((item) => !mine.has(item));
+        if (missing.length) violations.push(`${file} (${own.why}) lo importa ${importer} (${theirs.why}): pásalo a SHARED de scripts/a11y-select.mjs o amplía su área`);
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it("el parser sigue los alias @/, las rutas relativas y los imports dinámicos, y salta los de solo tipos", () => {
+    expect(importSpecifiers('import { a } from "@/x";\nimport b from "../y";\nexport { c } from "./z";\nconst d = await import("@/w");\nimport "./side";'))
+      .toEqual(["@/x", "../y", "./z", "@/w", "./side"]);
+    expect(importSpecifiers('import type { A } from "@/t";\nimport { type B, type C } from "@/u";\nexport type { D } from "./v";\nimport { type E, f } from "@/g";'))
+      .toEqual(["@/g"]);
+    expect(resolveImport("src/app/(app)/layout.tsx", "@/features/couple/load")).toBe("src/features/couple/load.ts");
+    expect(resolveImport("src/features/couple/load.ts", "./shared-load")).toBe("src/features/couple/shared-load.ts");
+    expect(resolveImport("src/features/couple/load.ts", "react")).toBeNull();
+    // F70-1: la carga de pareja que la guardia tiene que ver desde el layout.
+    expect((importers(sourceFiles("src")) as Map<string, string[]>).get("src/features/couple/load.ts")).toContain("src/app/(app)/layout.tsx");
   });
 });
 

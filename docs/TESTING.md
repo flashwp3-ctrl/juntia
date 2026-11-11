@@ -298,21 +298,25 @@ de noviembre de 2026; maestro §15.10, decisión 21).** En el job `e2e`,
 --name-only <base>...HEAD`) y elige qué archivos `tests/a11y/*.a11y.ts` del nivel
 ligero corren, con el mismo criterio que el selector de specs E2E:
 
-- **Por área:** metas → `goals.a11y.ts` y `goal-expense.a11y.ts` (gasto con meta
-  aislado → solo `goal-expense.a11y.ts`); presupuestos y Análisis → `plan.a11y.ts`;
-  métricas → los tres; Balance → `balance.a11y.ts`; pareja e invitación →
-  `couple.a11y.ts`; gastos compartidos (reparto, Mover a Pareja) →
-  `couple-shared.a11y.ts`. El mapa completo, en
+- **Por área:** metas → `goals.a11y.ts` y `goal-expense.a11y.ts`; presupuestos y
+  Análisis → `plan.a11y.ts`; métricas del dominio → los tres; Balance →
+  `balance.a11y.ts`; pareja e invitación → `couple.a11y.ts`. El mapa completo, en
   `specs/004-presupuestos-y-metas/contracts/ci.md` («Selector de accesibilidad por
   área»).
+- **Lo que otras áreas importan no es del área.** Un archivo de una carpeta de área
+  que importan el layout, el shell, Inicio, Actividad, Anotar, la exportación u otra
+  área (las cargas de pareja, el tema, la capa de datos de metas, el panel de Balance,
+  los gastos compartidos y el gasto con meta) va en la lista `SHARED` del selector y
+  corre todo. Una guardia de `tests/a11y-select.test.ts` recorre los imports de
+  `src/` y falla, diciendo cuál, si un archivo de área lo importa algo que pide más.
 - **`routes.a11y.ts` se parte por área:** cada ruta del registro tiene un área
   (`routeArea` en `tests/a11y/route-registry.ts`): `metas`, `presupuestos`,
   `balance`, `pareja` o `nucleo` (acceso, Inicio, Actividad, Anotar, `/cuenta/*`,
   exportación y cualquier ruta sin clasificar). La variable **`A11Y_ROUTE_AREAS`**
   (áreas separadas por espacios o comas) limita el recorrido a esas áreas; sin ella,
   vacía, con un valor desconocido o en el barrido, recorre el registro completo. El
-  núcleo solo corre con lo compartido o con un cambio del núcleo (acceso, cuenta,
-  exportación, gastos compartidos). En local, con `A11Y_ROUTE_AREAS` en el entorno
+  núcleo solo corre con lo compartido o con un cambio del núcleo (acceso y Mi
+  cuenta). En local, con `A11Y_ROUTE_AREAS` en el entorno
   (en PowerShell, `$env:A11Y_ROUTE_AREAS='metas'`), `npm run e2e:dev --
   tests/a11y/routes.a11y.ts` recorre solo esa área; se elimina la variable al terminar.
 - **Un archivo a11y cambiado** corre ese archivo (`routes.a11y.ts`, entero).

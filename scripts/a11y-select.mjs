@@ -35,45 +35,51 @@ const ALL = Object.keys(FILES);
 const ofArea = (...areas) => ALL.filter((file) => areas.includes(FILES[file]));
 
 /**
- * Las áreas: qué archivos de código piden qué archivos a11y (`files`) y qué áreas del registro (`routes`). Gana la primera
- * fila que encaja. Metas y presupuestos repiten las reglas de e2e-select.mjs; pareja, compartidos, Balance y núcleo son
- * propias de axe, porque en E2E las cubren las specs 1–3, que corren siempre.
+ * Compartidos dentro de una carpeta de área (revisión del PR #70, F70-1..3). Los importa el layout, el shell, Inicio, Actividad,
+ * Anotar, la exportación u otra área, así que un cambio en ellos cambia pantallas fuera de su área: corren todo. Salen de la
+ * guardia de imports de tests/a11y-select.test.ts, que falla y dice qué archivo añadir aquí cuando un archivo de área lo importa
+ * otra área, el layout o un archivo compartido. Van antes que las áreas.
+ */
+const SHARED = [
+  // F70-1: cargas de pareja que consumen el layout global, Inicio, Actividad, Balance, Plan, Metas y Anotar.
+  /^src\/features\/couple\/(?:shared-load|load|invitation-return|intent|sensitive-confirmation)\.tsx?$/, /^src\/lib\/db\/couple\.ts$/,
+  // F70-2: lecturas y escrituras de gastos compartidos (alimentan loadBalance, Inicio y Actividad). Sin fila propia: todo
+  // src/features/expenses/ (también goal-funding/) es compartido por defecto, porque lo importan Anotar y Actividad.
+  /^src\/lib\/db\/(?:shared-expenses|couple-reads|reclassify)\.ts$/, /^src\/domain\/allocations\//,
+  // F70-3: el tema y la cuenta que aplica el layout (AccountProvider, ThemeController) y el botón de cuenta del shell.
+  /^src\/features\/account\/(?:account-context|theme-controller|account-button|account-ui|limit-note|load-account)\.tsx?$/,
+  /^src\/lib\/db\/profile\.ts$/, /^src\/features\/auth\/auth-frame\.tsx$/,
+  // Balance: acciones registradas en el layout, el panel de Inicio, el detalle de liquidación de Actividad y su dominio.
+  /^src\/features\/balance\/(?:actions|saved|balance-panel|settle-sheet|settlement-detail|shared-balance|bar-geometry)\.tsx?$/,
+  /^src\/domain\/balances\//, /^src\/lib\/db\/settlements\.ts$/,
+  // Metas: la pila y las tarjetas de Inicio, las filas y el formato de Actividad, las cargas de Inicio y las acciones del
+  // layout; con ellas, su dominio y su capa de datos (y las migraciones de metas, que la alimentan). La exportación y
+  // planning.ts, que la importa, también.
+  /^src\/features\/goals\/(?:actions|goal-actions|format|goal-entry-row|goal-stack|goal-card|goal-journey|goal-ribbon|goal-sheet-frame|load|funding-load|types)\.tsx?$/,
+  /^src\/domain\/goals\//, /^src\/lib\/db\/(?:goals|goal-usage|metrics|planning|export)\.ts$/, /^supabase\/migrations\/[^/]*_goal[^/]*\.sql$/,
+];
+
+/**
+ * Las áreas: qué archivos de código piden qué archivos a11y (files) y qué áreas del registro (routes). Gana la primera fila
+ * que encaja. Lo que la guardia de imports encontró compartido está antes, en SHARED.
  */
 const AREAS = [
-  // Las métricas alimentan Metas y Plan/Análisis (regla 4 de e2e-select.mjs; las cargan features/goals y features/plan).
+  // Las métricas del dominio alimentan Metas y Plan/Análisis (regla 4 de e2e-select.mjs).
   { why: "métricas: metas y presupuestos", files: ofArea("metas", "gasto con meta", "presupuestos"), routes: ["metas", "presupuestos"],
-    rules: [/^src\/domain\/metrics\//, /^src\/lib\/db\/metrics\.ts$/] },
-  // Gasto con meta: B1–B3 en Anotar, B4/B7 en Actividad y B5 en Inicio; ninguno de esos estados está en el registro.
-  { why: "gasto con meta", files: ofArea("gasto con meta"), routes: [],
-    rules: [/^src\/features\/expenses\/goal-funding\//, /^src\/lib\/db\/goal-usage\.ts$/] },
-  { why: "área de metas", files: ofArea("metas", "gasto con meta"), routes: ["metas"], rules: [
-    /^src\/app\/\(app\)\/metas\//, /^src\/features\/goals\//, /^src\/domain\/goals\//, /^src\/lib\/db\/goals\.ts$/,
-    /^supabase\/migrations\/[^/]*_goal[^/]*\.sql$/,
-  ] },
+    rules: [/^src\/domain\/metrics\//] },
+  { why: "área de metas", files: ofArea("metas", "gasto con meta"), routes: ["metas"], rules: [/^src\/app\/\(app\)\/metas\//, /^src\/features\/goals\//] },
   { why: "área de presupuestos", files: ofArea("presupuestos"), routes: ["presupuestos"], rules: [
     /^src\/app\/\(app\)\/plan\//, /^src\/features\/plan\//, /^src\/features\/analysis\//, /^src\/domain\/budgets\//,
-    /^src\/domain\/analysis\//, /^src\/lib\/db\/(?:budgets|planning)\.ts$/, /^supabase\/migrations\/[^/]*_budget[^/]*\.sql$/,
+    /^src\/domain\/analysis\//, /^src\/lib\/db\/budgets\.ts$/, /^supabase\/migrations\/[^/]*_budget[^/]*\.sql$/,
   ] },
-  { why: "área de Balance", files: ofArea("balance"), routes: ["balance"], rules: [
-    /^src\/app\/\(app\)\/balance\//, /^src\/features\/balance\//, /^src\/domain\/balances\//, /^src\/lib\/db\/settlements\.ts$/,
-  ] },
+  { why: "área de Balance", files: ofArea("balance"), routes: ["balance"], rules: [/^src\/app\/\(app\)\/balance\//, /^src\/features\/balance\//] },
   { why: "área de pareja", files: ofArea("pareja"), routes: ["pareja"], rules: [
     /^src\/app\/\(app\)\/cuenta\/pareja\//, /^src\/app\/invitacion\//, /^src\/features\/couple\//, /^src\/domain\/couple\//,
-    /^src\/lib\/db\/(?:couple|invitation-token)\.ts$/,
+    /^src\/lib\/db\/invitation-token\.ts$/,
   ] },
-  // Los gastos compartidos se ven en Inicio y Actividad en Nosotros, que son del núcleo del registro.
-  { why: "gastos compartidos", files: ofArea("compartidos"), routes: ["nucleo"], rules: [
-    // src/features/shared/ NO es de esta área (revisión del gestor del PR #70): use-write, write-result y write-unknown
-    // («Comprobar estado») los usan las hojas de todas las áreas, y shared-row y shared-format, Balance, Inicio, Actividad y
-    // metas. Cae en la regla 4 (todos).
-    /^src\/features\/expenses\/(?:shared-[^/]+|split-[^/]+|reclassify-[^/]+)\.tsx?$/,
-    /^src\/domain\/allocations\//, /^src\/lib\/db\/(?:shared-expenses|couple-reads|reclassify)\.ts$/,
-  ] },
-  // Núcleo: acceso, cuenta (fuera de pareja, que va antes) y exportación. Inicio, Actividad y el resto de Anotar los auditan
-  // también otros archivos, así que son compartidos (regla 4).
+  // Núcleo: acceso y Mi cuenta (fuera de pareja, que va antes).
   { why: "núcleo del registro", files: [], routes: ["nucleo"], rules: [
     /^src\/features\/auth\//, /^src\/app\/\(auth\)\//, /^src\/app\/auth\//, /^src\/features\/account\//, /^src\/app\/\(app\)\/cuenta\//,
-    /^src\/lib\/db\/(?:export|profile)\.ts$/,
   ] },
 ];
 /**
@@ -92,9 +98,10 @@ const COPY = "src/lib/copy/es.ts";
 const normalize = (path) => String(path).trim().replace(/\\/g, "/").replace(/^\.\//, "");
 
 /** Qué pide un archivo: archivos a11y y áreas del registro, nada (neutro) o todo (`all`: compartido o sin clasificar). */
-function classify(path) {
+export function classify(path) {
   if (path === ROUTES_FILE) return { files: [ROUTES_FILE], routes: ROUTE_AREAS, why: "cambia routes.a11y.ts: todo el registro" };
   if (path in FILES) return { files: [path], routes: [], why: "cambia el propio archivo a11y" };
+  if (SHARED.some((rule) => rule.test(path))) return { files: ALL, routes: ROUTE_AREAS, why: "compartido (lo importan otras áreas o el layout)", all: true };
   for (const area of AREAS) if (area.rules.some((rule) => rule.test(path))) return { files: area.files, routes: area.routes, why: area.why };
   if (NEUTRAL.some((rule) => rule.test(path))) return { files: [], routes: [], why: "neutro" };
   return { files: ALL, routes: ROUTE_AREAS, why: "compartido o sin clasificar", all: true };
