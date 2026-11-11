@@ -30,6 +30,12 @@ const tileBg: Record<CategoryId, string> = {
   health: "bg-category-health-bg", entertainment: "bg-category-entertainment-bg", shopping: "bg-category-shopping-bg",
   services: "bg-category-services-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
 };
+// El relleno de la barra de presupuesto, el color del pictograma de la categoría, como BudgetIndicator en Plan.
+const barFill: Record<CategoryId, string> = {
+  market: "bg-category-market-fg", restaurants: "bg-category-restaurants-fg", home: "bg-category-home-fg", transport: "bg-category-transport-fg",
+  health: "bg-category-health-fg", entertainment: "bg-category-entertainment-fg", shopping: "bg-category-shopping-fg",
+  services: "bg-category-services-fg", income: "bg-category-income-fg", other: "bg-category-other-fg",
+};
 const categoryFg: Record<CategoryId, string> = {
   market: "text-category-market-fg", restaurants: "text-category-restaurants-fg", home: "text-category-home-fg", transport: "text-category-transport-fg",
   health: "text-category-health-fg", entertainment: "text-category-entertainment-fg", shopping: "text-category-shopping-fg",
@@ -146,7 +152,7 @@ function BudgetLine({ row, context, elapsed }: { row: AnalysisCategory; context:
       <span className="relative block">
         <span role="img" aria-label={copy.plan.bar(name, pesos({ amountMinor: consumed, currency: "COP" }), pesos({ amountMinor: limit, currency: "COP" }), percent)} data-budget-bar="" className="relative block h-2 w-full overflow-hidden rounded-full bg-track">
           <span
-            className={`absolute inset-y-0 left-0 rounded-full ${state === "over" ? "" : "bg-ink"}`}
+            className={`absolute inset-y-0 left-0 rounded-full ${state === "over" ? "" : barFill[row.categoryId]}`}
             style={{ width: `${width}%`, ...(state === "over" ? { backgroundImage: "repeating-linear-gradient(135deg, var(--color-status-danger) 0 4px, color-mix(in srgb, var(--color-status-danger) 55%, transparent) 4px 7px)" } : {}) }}
           />
         </span>
