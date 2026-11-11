@@ -93,6 +93,8 @@ export const registry: readonly RouteEntry[] = [
   // una pareja se audita en tests/a11y/goals.a11y.ts.
   { route: "/metas/[id]", state: "Meta no encontrada", path: "/metas/00000000-0000-4000-8000-000000000000", session: "user" },
   { route: "/plan", state: "Plan", path: "/plan", session: "user" },
+  // 004 PR E (T072): Análisis con una cuenta sola y sin movimientos (el mes vacío); con la pareja dorada, en analysis.a11y.ts.
+  { route: "/plan/analisis", state: "Análisis sin datos", path: "/plan/analisis", session: "user" },
   { route: "/balance", state: "Balance", path: "/balance", session: "user" },
   { route: "/cuenta", state: "C1", path: "/cuenta", session: "user" },
   { route: "/cuenta/perfil", state: "P1", path: "/cuenta/perfil", session: "user" },
