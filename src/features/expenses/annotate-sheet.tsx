@@ -11,7 +11,7 @@
 // Un fallo deja la hoja abierta con lo escrito y un aviso con su propio botón «Reintentar», que reusa la clave de esta
 // apertura (FR-036). Decisión del fundador (5 nov 2026, revisión del PR D): tras un fallo ambiguo (red, guardado fallido
 // o inesperado) el primer intento pudo llegar al servidor, así que los campos quedan bloqueados para esa apertura: solo
-// se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md).
+// se reintenta lo mismo con la misma clave, o se cierra. Nunca viaja otra intención con esa clave (JT008). Hoja por debajo de 768 px y diálogo de 520 desde 768 (RESPONSIVE_SPECIFICATIONS.md), en el mismo árbol: cruzar 768 px con la hoja abierta no la vuelve a montar (BottomSheet `adaptive`).
 // PR C de la 003 (T046, T047; FR-018–FR-024, FR-059, FR-062): con la pareja activa, el chip «Solo tú» es el selector
 // Yo/Nosotros de la hoja (decisión 6 de los fundadores, 7 nov 2026), que nace con el contexto de la app y no cambia si el
 // selector de la app cambia con la hoja abierta (FR-062). En Nosotros, la opción 2a de «07 Nosotros en Anotar gasto»: una
@@ -30,13 +30,13 @@
 // «NO SE REGISTRÓ» solo con un rechazo confirmado. No se ofrece al editar ni en un ingreso (Q16: una meta, elegida al anotar).
 // Forma compacta (UX 2: la hoja de 390 px abre ajustada al contenido y deja ver el saludo): «Cómo se pagó» es una ficha en la
 // fila de «Hoy · Solo tú», con el valor elegido, que abre la subhoja; ahí está el selector «Dinero del mes · Con una meta».
-import { useCallback, useId, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { categories } from "@/components/ui/category-icon";
-import { DialogTitle, Modal } from "@/components/ui/modal";
+import { DialogTitle } from "@/components/ui/modal";
 import { Segmented } from "@/components/ui/segmented";
 import { Toast } from "@/components/ui/toast";
 import { formatMoney, moneyFromPesos } from "@/domain/money";
@@ -49,7 +49,7 @@ import { WriteUnknown } from "@/features/shared/write-unknown";
 import type { WriteAction, WriteError } from "@/features/shared/write-result";
 import type { ContextChoice } from "@/lib/context-preference";
 import { ConfirmDialog } from "./confirm-dialog";
-import type { SheetMode } from "./annotate-provider";
+import type { SheetMode } from "./annotate/sheet-machine";
 import { normalizeDescription, toPayloadPesos } from "./payload";
 import { SplitEditor, SplitSummary, splitSubtitle } from "./split-editor";
 import { evaluateSplit, initialSplit, splitFromSaved, splitPayload, summaryLines, type SplitDraft } from "./split-state";
@@ -62,15 +62,6 @@ import { evaluateFunding, proposeFunds, type Funds } from "./goal-funding/fundin
 import { GoalPicker, type PickerState } from "./goal-funding/goal-picker";
 import type { Contributor, FundingGoal, GoalExpensePayload, GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
 import { cop } from "@/features/goals/format";
-
-const WIDE = "(min-width: 768px)";
-function subscribeWide(onChange: () => void) {
-  if (typeof window.matchMedia !== "function") return () => {};
-  const query = window.matchMedia(WIDE);
-  query.addEventListener?.("change", onChange);
-  return () => query.removeEventListener?.("change", onChange);
-}
-const readWide = () => typeof window.matchMedia === "function" && window.matchMedia(WIDE).matches;
 
 const MAX_PESOS = 999_999_999;
 const pesosOf = (amountMinor: string) => Number(BigInt(amountMinor) / 100n);
@@ -235,7 +226,6 @@ function sharedRejection(error: WriteError) {
 }
 
 export default function AnnotateSheet({ open, mode, idempotencyKey, today, actions, onClose, onSaved, onTrack, returnFocusTo, couple = null, sharedActions, initialContext = "me", onSharedSaved, onMove, goalFunding, onGoalSaved }: AnnotateSheetProps) {
-  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
   const editing = mode.kind === "edit" || mode.kind === "editShared";
   const editingShared = mode.kind === "editShared";
   const members = useMemo(() => couple?.members ?? [], [couple]);
@@ -252,6 +242,9 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const [confirmingMove, setConfirmingMove] = useState(false);
   // Bloqueo tras un fallo ambiguo: dura lo que dura esta apertura de la hoja.
   const [locked, setLocked] = useState(false);
+  // 02·5: el monto no tiene marco. El foco que la hoja le pone al abrir no pinta el anillo; en cuanto el campo pierde el
+  // foco, el anillo vuelve para todo foco posterior (Tab, Mayús+Tab o un toque), como en el resto de los campos.
+  const [amountOpening, setAmountOpening] = useState(true);
   const saving = useRef(false);
   const summaryRef = useRef<HTMLDivElement | null>(null);
   const payerRef = useRef<HTMLButtonElement | null>(null);
@@ -697,13 +690,14 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
               label={copy.annotate.amount}
               value={amount}
               onValueChange={(value) => update({ amount: value })}
+              onBlur={() => setAmountOpening(false)}
               error={amountInvalid ? copy.annotate.errors.amountOutOfRange : undefined}
               enterKeyHint="done"
               // 02·5: «$» y la cifra centrados juntos, en grande, sin el marco hundido. El marco sigue a todo el ancho (el
               // clamp del tamaño mide su contenedor) y el <input> toma el ancho de lo escrito (field-sizing). Hallazgo de la
               // primera corrida de evidencia: centrar los hijos del <label> encogía el marco y el monto no se veía.
               className="text-center"
-              fieldClassName="!bg-transparent !shadow-none justify-center"
+              fieldClassName={`!bg-transparent !shadow-none justify-center ${amountOpening ? "focus-within:!outline-none" : ""}`}
               inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
             />
             <div className="flex flex-col gap-2">
@@ -795,6 +789,5 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     </form>
   );
 
-  const props = { open, onOpenChange: requestClose, title, onOpenAutoFocus, onCloseAutoFocus, bare: true };
-  return wide ? <Modal {...props}>{body}</Modal> : <BottomSheet {...props} draggable>{body}</BottomSheet>;
+  return <BottomSheet open={open} onOpenChange={requestClose} title={title} onOpenAutoFocus={onOpenAutoFocus} onCloseAutoFocus={onCloseAutoFocus} bare draggable adaptive>{body}</BottomSheet>;
 }
