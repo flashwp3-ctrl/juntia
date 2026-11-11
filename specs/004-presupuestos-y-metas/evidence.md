@@ -1292,7 +1292,7 @@ Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scri
 
 - `src/lib/db/export.ts` y `planning.ts` sin cambios (I4: el contenido lo cambió el PR A).
 - La descarga de la spec 1 pasa sola (arriba). Texto de «qué incluye» de la hoja Exportar y de la fila de Privacidad, para los fundadores: «Incluye lo que ves en Juntia: tus movimientos, los gastos compartidos con su reparto, las liquidaciones, tus metas y las compartidas con sus aportes, y los presupuestos de Yo y de Nosotros.» · «Nunca incluye lo privado de tu pareja (sus gastos, metas y presupuestos personales) ni datos internos.» · JSON: «Tus datos, separados por tipo de registro.» · CSV: «Todo en una tabla: una fila por registro, con su tipo y su contexto (Yo o Nosotros).» · Privacidad: «JSON y CSV con tus movimientos, metas y presupuestos».
-- No se cambió `copy.export.fileNote` («Copia de consulta de tus movimientos activos…»), que va **dentro** del archivo: cambiarlo cambia el contenido. Pregunta abierta.
+- `copy.export.fileNote`, que va **dentro** del archivo, se corrigió solo de texto tras la respuesta del gestor (ver «Respuestas del gestor a las preguntas del PR #71»).
 
 ## T078 · capturas e Impeccable
 
@@ -1318,30 +1318,41 @@ Todo lo de esta sección se ejecutó en local o contra `juntia-dev` con los scri
 
 ## T083 · tabla de `[V]`
 
-Solo se cita lo que tiene salida en este documento. Lo demás queda «pendiente del gestor» (o de los fundadores), sin inventar
-runs. Los gates de los PR C y D no tienen su run en este documento; el gestor dio en su encargo que midieron 556–583 s.
+Fuentes: las salidas de este documento y los runs que el gestor verificó y pasó al agente el 11 de noviembre de 2026 (respuesta
+a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con su responsable. El agente no lanzó ninguno.
+
+| PR | Run | Qué es |
+| --- | --- | --- |
+| A | [42508573805](https://github.com/flashwp3-ctrl/juntia/actions/runs/42508573805) | Punto de control T024, verde (job `db`: pgTAP, integración, tipos y restauración) |
+| A | [42543237243](https://github.com/flashwp3-ctrl/juntia/actions/runs/42543237243) | Gate, verde tras volver a correr el job `e2e` por el `document-title` intermitente |
+| B | [42853507482](https://github.com/flashwp3-ctrl/juntia/actions/runs/42853507482) | Gate, verde; job `e2e` 464 s |
+| B | [42851485512](https://github.com/flashwp3-ctrl/juntia/actions/runs/42851485512) | Barrido `@sweep` T039, verde |
+| C | [42862640227](https://github.com/flashwp3-ctrl/juntia/actions/runs/42862640227) | Gate, verde; job `e2e` 556 s |
+| C | [42862623410](https://github.com/flashwp3-ctrl/juntia/actions/runs/42862623410) | Barrido T055 |
+| D | [42958244114](https://github.com/flashwp3-ctrl/juntia/actions/runs/42958244114) | Gate, verde; job `e2e` 583 s |
+| D | [42951372008](https://github.com/flashwp3-ctrl/juntia/actions/runs/42951372008) | Barrido T068, sobre `ac92923` (tras el arreglo de «Quitar el uso de la meta» al 200 %; el run 42939346411 es el fallido, arriba) |
 
 | `[V]` | Cierre | Salida |
 | --- | --- | --- |
-| ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas | **Cerrada** (PR A) | T024, run 42508573805 sobre `5be221a`: job `db` verde (pgTAP, integración, tipos y restauración del mismo commit) |
-| ADR-013 [V] 3–6 sobre las funciones nuevas | **Cerrada** (PR A) | Mismo run 42508573805 |
-| `goal_usage_confirmations`: bloqueo sin consentimiento y revalidación | SQL **cerrada** en el PR A (run 42508573805); recorrido de dos sesiones (T058, PR D): **pendiente del gestor** (run del gate del PR #69) | — |
-| RLS de metas privadas y compartidas | **Cerrada** (PR A) | Run 42508573805 (pgTAP) |
-| Registro inicial del gasto con meta (punto 5) | **Cerrada** (PR A) | Run 42508573805 (integración) |
-| Autorización posterior de fondos ajenos (punto 6) | **Cerrada** (PR A) | Run 42508573805 (integración) |
-| Aprobar contra quitar el uso y contra anular el gasto | **Cerrada** (PR A) | Run 42508573805 (integración) |
-| Ediciones concurrentes de presupuesto (punto 7) | SQL **cerrada** (PR A, run 42508573805); aviso en pantalla (T029, T030): pruebas verdes en el run 42849936048 del PR #67 (E2E 34/34, axe 95/95; el job falló solo por el presupuesto, ver «Gate del PR #67») | — |
-| Idempotencia de las escrituras que mueven dinero (punto 2) | SQL e integración **cerradas** (PR A, run 42508573805); las escrituras de interfaz de los PR C y D: **pendiente del gestor** (runs de sus gates) | — |
-| Las siete filas de DEC-G04 | **Cerrada** (PR A) | Run 42508573805 (dominio e integración) |
-| `transaction_goal_funded` conectado | Función **cerrada** (PR A, run 42508573805); pantalla (PR D): **pendiente del gestor** | — |
-| Dataset dorado en orden cronológico | **Cerrada** (PR A) | Run 42508573805 (dominio) |
-| View Transitions con App Router | **Cerrada para la apertura** (T052) | Chromium (corridas segunda y tercera) y Safari real del fundador (sección «T052 · verificación humana…»); el back-swipe de iPhone, **aplazado por decisión 19.1**; la versión de iOS, por confirmar |
-| Rendimiento de GoalStack y del abanico | **Pendiente del gestor** (T054, laboratorio) | En iteración solo hay CLS = 0 de `/metas` a 390 y 1440 (sección T052), que no es T054 |
+| ADR-013 [V] 1, 2 y 7 sobre las tablas nuevas | **Cerrada** | PR A: 42508573805 y gate 42543237243 |
+| ADR-013 [V] 3–6 sobre las funciones nuevas | **Cerrada** | PR A: 42508573805 y gate 42543237243 |
+| `goal_usage_confirmations`: bloqueo sin consentimiento y revalidación | **Cerrada** | SQL: PR A, 42508573805. Dos sesiones (T058): gate del PR D, 42958244114 |
+| RLS de metas privadas y compartidas | **Cerrada** | PR A: 42508573805 (pgTAP) |
+| Registro inicial del gasto con meta (punto 5) | **Cerrada** | PR A: 42508573805 (integración) |
+| Autorización posterior de fondos ajenos (punto 6) | **Cerrada** | PR A: 42508573805 (integración) |
+| Aprobar contra quitar el uso y contra anular el gasto | **Cerrada** | PR A: 42508573805 (integración) |
+| Ediciones concurrentes de presupuesto (punto 7) | **Cerrada** | SQL: PR A, 42508573805. Aviso en pantalla (T029, T030): gate del PR B, 42853507482 |
+| Idempotencia de las escrituras que mueven dinero (punto 2) | **Cerrada hasta el PR D** | SQL e integración: PR A, 42508573805. Escrituras de interfaz: gates del PR C (42862640227) y del PR D (42958244114). El PR E no añade escrituras |
+| Las siete filas de DEC-G04 | **Cerrada** | PR A: 42508573805 (dominio e integración) |
+| `transaction_goal_funded` conectado | **Cerrada** | Función: PR A, 42508573805. Pantalla: gate del PR D, 42958244114 |
+| Dataset dorado en orden cronológico | **Cerrada** | PR A: 42508573805 (dominio) |
+| View Transitions con App Router | **Cerrada para la apertura** | Chromium y WebKit de Playwright, con salida en este documento (sección T052); el fundador, en el Safari de su iPhone, el 10 de noviembre de 2026 (versión de iOS **pendiente**). El back-swipe de iPhone, **aplazado por decisión 19.1** |
+| Rendimiento de GoalStack y del abanico | **Pendiente del gestor** (T054, laboratorio) | — |
 | Luminancia del scrim de fotos | **No aplica** (decisión 22.6) | — |
-| Privacidad por ámbito | PR B: specs verdes en el run 42849936048. PR C y D: **pendiente del gestor** (runs de sus gates). PR E: verde contra `juntia-dev`, con mutación que la hace fallar (arriba); el cierre es el gate T080, **pendiente del gestor** | — |
+| Privacidad por ámbito | **Cerrada hasta el PR D; PR E pendiente del gate (T080)** | Gates de los PR B (42853507482), C (42862640227) y D (42958244114). PR E: verde contra `juntia-dev`, con una mutación que la hace fallar (arriba) |
 | Umbrales de §15.7 | **Pendiente del gestor** (T040, T054, T067, T079, laboratorio) | — |
-| Presupuesto del job `e2e` | T023: medición en «T022–T023». PR B: 517 s en el run 42849936048 → decisión de los fundadores del 10 nov 2026 (tope 660 s). PR C y D: **pendiente del gestor** (cifras dadas por el gestor: 556–583 s, sin run aquí). PR E: **pendiente del gestor** (T080) | — |
-| Barrido completo de accesibilidad | PR B: **verde**, run 42851485512. PR C (T055): **pendiente del gestor**. PR D (T068): run 42939346411 con un fallo («Quitar el uso de la meta» al 200 %), corregido en la sección «Barrido T068»; la pasada verde, **pendiente del gestor**. Cierre de P0-3 (T082): **pendiente del gestor** | — |
+| Presupuesto del job `e2e` | **Cerrada hasta el PR D; PR E pendiente del gate (T080)** | T023: medición en «T022–T023». Gates: B 464 s, C 556 s, D 583 s, con el tope de 660 s de la decisión de los fundadores del 10 de noviembre de 2026 (el 517 s del run 42849936048 del PR B es el que llevó a esa decisión) |
+| Barrido completo de accesibilidad | **Hecho en los PR B, C y D; cierre de P0-3 pendiente del gestor (T082)** | B: 42851485512. C: 42862623410. D: 42951372008 |
 | Revisión visual de los elementos propuestos | **Pendiente de los fundadores** en este documento (T041, T056, T069, T081) | — |
 | Salida interna | **Pendiente de los fundadores** (T084) | — |
 
@@ -1352,8 +1363,10 @@ runs. Los gates de los PR C y D no tienen su run en este documento; el gestor di
 - Los capítulos fuera de la vista se esconden solo después de montar (con IntersectionObserver), no desde el servidor: así nada queda con opacidad 0 sin JavaScript ni con movimiento reducido, y no hay diferencia de hidratación.
 - El Chart son cajas de CSS, no un SVG; misma geometría (radio 8/3, mes elegido en tinta, etiquetas 11/600) y tabla equivalente.
 
-## Preguntas abiertas
+## Respuestas del gestor a las preguntas del PR #71 (11 de noviembre de 2026)
 
-1. **Exportar en el `e2e:dev` completo**: la espera de 5 s de «Archivo listo.» se quedó corta una vez contra `juntia-dev` con todos los workers (sola, 9,8 s en total). En el CI la base es local; ¿se deja así o se alarga esa espera en la spec 1?
-2. **`copy.export.fileNote`** sigue diciendo «Copia de consulta de tus movimientos activos» dentro del archivo, que desde el PR A lleva también metas, solicitudes y presupuestos. Cambiarlo cambia el contenido (I4): ¿lo hacemos aquí o en el PR documental?
-3. **Tiempo del job `e2e`**: este PR corre las cinco specs y los ocho archivos a11y (compartidos: Inicio y GoalCard) y añade dos casos E2E y un archivo a11y con una pareja dorada por caso. Con los gates anteriores en 556–583 s, el margen hasta 660 s es justo.
+1. **La espera de Exportar en la spec 1**: no cambia. En CI nunca falló (el Supabase del runner es local); si falla en el gate, se mira con su log.
+2. **`copy.export.fileNote`**: comprobada contra `export.ts`. El JSON lleva `transactions` (los movimientos propios y los gastos compartidos con su parte), `settlements`, `goals`, `goal_entries` (aportes, retiros y usos), `usage_requests` y `budgets`, así que «tus movimientos activos» ya no lo describía. Cambió **solo el texto** en `es.ts`: «Copia de consulta de lo que ves en Juntia: movimientos, gastos compartidos, liquidaciones, metas con sus aportes, retiros y usos, solicitudes de uso y presupuestos. No sirve para restaurar ni migrar automáticamente.». Sin tocar `export.ts` ni la forma del archivo; `tests/integration/export.test.ts` compara la nota con `copy.export.fileNote`.
+3. **Tiempo del job `e2e`**: lo mide el gate; si pasa de 660 s, se decide con la medición.
+4. **Tabla de `[V]`**: completada arriba con los runs que verificó el gestor.
+5. **Check de Vercel** en el PR: es el bloqueo de autor de la cuenta Hobby; no es hallazgo.

@@ -740,7 +740,8 @@ export const copy = {
     notFound: { title: "No encontramos este movimiento", description: "Puede que se haya eliminado o que no sea tuyo. En Actividad están todos tus movimientos." },
     pick: { title: "Elige un movimiento", description: "Su detalle aparece aquí, junto a la lista." },
   },
-  export: { fileNote: "Copia de consulta de tus movimientos activos en Juntia. No sirve para restaurar ni migrar automáticamente." },
+  // 004 PR E (respuesta del gestor a la pregunta 2 del PR #71): desde el PR A el archivo lleva más que los movimientos. Solo texto.
+  export: { fileNote: "Copia de consulta de lo que ves en Juntia: movimientos, gastos compartidos, liquidaciones, metas con sus aportes, retiros y usos, solicitudes de uso y presupuestos. No sirve para restaurar ni migrar automáticamente." },
   states: {
     notFound: "No encontramos esta página",
     notFoundDescription: "La dirección no existe o todavía no hace parte de esta versión. Desde Inicio puedes seguir recorriendo Juntia.",
