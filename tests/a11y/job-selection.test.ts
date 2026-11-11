@@ -13,7 +13,7 @@ const CLI = join(process.cwd(), "node_modules", "@playwright", "test", "cli.js")
 
 function list(job: "app" | "e2e", level: "pr" | "sweep" = "pr") {
   const result = spawnSync(process.execPath, [CLI, "test", "--project", "a11y", "--list", "--reporter=list"], {
-    cwd: process.cwd(), encoding: "utf8", env: { ...process.env, A11Y_JOB: job, A11Y_LEVEL: level === "sweep" ? "sweep" : "", CI: "" },
+    cwd: process.cwd(), encoding: "utf8", env: { ...process.env, A11Y_JOB: job, A11Y_LEVEL: level === "sweep" ? "sweep" : "", A11Y_ROUTE_AREAS: "", CI: "" },
   });
   expect(result.status, result.stderr).toBe(0);
   return result.stdout.split("\n").filter((line) => line.includes(".a11y.ts"));

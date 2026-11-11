@@ -14,11 +14,15 @@ import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
 import { seedUser } from "../support/seed";
 import { openWithSession, reach, targetPath } from "../support/states";
-import { appEntries, e2eEntries, THEMES } from "./route-registry";
+import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
 // T084: los estados marcados `axe: false` solo se capturan (T098); su hoja ya se audita en otro estado.
-const entries = (JOB === "e2e" ? e2eEntries : appEntries).filter((entry) => entry.axe !== false);
+// Decisión de los fundadores del 11 nov 2026: A11Y_ROUTE_AREAS (scripts/a11y-select.mjs) limita el nivel ligero a las áreas
+// del PR; sin la variable, con un valor desconocido o en el barrido, todo el registro (route-registry.ts, routeAreaFilter).
+const areas = routeAreaFilter();
+const inAreas = (route: string) => !areas || areas.has(routeArea(route));
+const entries = (JOB === "e2e" ? e2eEntries : appEntries).filter((entry) => entry.axe !== false && inAreas(entry.route));
 const INTERNAL = "/interno/primitivos";
 const NOT_FOUND = "/ruta-que-no-existe";
 const PRODUCT = ["/", "/actividad", "/metas", "/plan", "/balance", "/cuenta"] as const;
@@ -302,7 +306,7 @@ for (const colorScheme of THEMES) {
 // solo móvil (< 768, RESPONSIVE_SPECIFICATIONS.md §Cuenta); a 768 y más conserva la barra de tablet con su Anotar visible.
 // No es una spec E2E: visita la ruta y mira qué disparador queda visible, en la misma capa que el resto de este archivo.
 // Con sesión: solo en el job e2e (T051).
-for (const colorScheme of JOB === "e2e" ? THEMES : []) {
+for (const colorScheme of JOB === "e2e" && inAreas("/cuenta") ? THEMES : []) {
   for (const [width, barVisible] of [[390, false], [768, true]] as const) {
     test(`/cuenta · ${colorScheme} · ${width}px: barra ${barVisible ? "visible con Anotar" : "oculta (pantalla apilada)"}`, width === 390 ? {} : { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
       const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });

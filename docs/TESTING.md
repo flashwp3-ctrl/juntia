@@ -292,12 +292,51 @@ Tres reglas, sin excepción:
   cierre de la etapa. Los archivos `*.a11y.ts` separan los dos niveles (por
   ejemplo, con una etiqueta `@sweep` excluida de la pasada del PR).
 
-La intención es correr axe **sobre las rutas que el PR toca**. Eso necesita un
-mapa de ruta tocada —qué rutas afecta un cambio— y **ese mapa todavía no existe**.
+**Selector por área del nivel ligero con sesión (decisión de los fundadores del 11
+de noviembre de 2026; maestro §15.10, decisión 21).** En el job `e2e`,
+`scripts/a11y-select.mjs` recibe los archivos cambiados del PR (`git diff
+--name-only <base>...HEAD`) y elige qué archivos `tests/a11y/*.a11y.ts` del nivel
+ligero corren, con el mismo criterio que el selector de specs E2E:
 
-> **Mientras no exista: axe corre sobre todas las rutas ya implementadas**, en los
-> dos temas. Si todavía no hay ninguna implementada, no corre nada y no hay nada
-> que declarar.
+- **Por área:** metas → `goals.a11y.ts` y `goal-expense.a11y.ts` (gasto con meta
+  aislado → solo `goal-expense.a11y.ts`); presupuestos y Análisis → `plan.a11y.ts`;
+  métricas → los tres; Balance → `balance.a11y.ts`; pareja e invitación →
+  `couple.a11y.ts`; gastos compartidos (reparto, Mover a Pareja) →
+  `couple-shared.a11y.ts`. El mapa completo, en
+  `specs/004-presupuestos-y-metas/contracts/ci.md` («Selector de accesibilidad por
+  área»).
+- **`routes.a11y.ts` se parte por área:** cada ruta del registro tiene un área
+  (`routeArea` en `tests/a11y/route-registry.ts`): `metas`, `presupuestos`,
+  `balance`, `pareja` o `nucleo` (acceso, Inicio, Actividad, Anotar, `/cuenta/*`,
+  exportación y cualquier ruta sin clasificar). La variable **`A11Y_ROUTE_AREAS`**
+  (áreas separadas por espacios o comas) limita el recorrido a esas áreas; sin ella,
+  vacía, con un valor desconocido o en el barrido, recorre el registro completo. El
+  núcleo solo corre con lo compartido o con un cambio del núcleo (acceso, cuenta,
+  exportación, gastos compartidos). En local, con `A11Y_ROUTE_AREAS` en el entorno
+  (en PowerShell, `$env:A11Y_ROUTE_AREAS='metas'`), `npm run e2e:dev --
+  tests/a11y/routes.a11y.ts` recorre solo esa área; se elimina la variable al terminar.
+- **Un archivo a11y cambiado** corre ese archivo (`routes.a11y.ts`, entero).
+- **Lo compartido, lo desconocido, una base que no se puede calcular o un fallo del
+  script → todos, con el registro completo:** `src/components/`, el shell y el resto
+  de `src/app/`, `globals.css`, Anotar (`annotate-sheet.tsx`), Inicio y Actividad,
+  que auditan varios archivos, `src/lib/db/errors.ts`, `tests/support/**`,
+  `tests/a11y/route-registry.ts`, `scripts/`, el workflow y cualquier ruta sin
+  clasificar.
+- **Neutros** (no añaden nada; si solo hay neutros, el paso de axe con sesión se
+  salta): documentación, specs E2E, pruebas de Vitest y SQL y **`src/lib/copy/es.ts`**,
+  como en E2E, porque todo PR lo toca. Riesgo aceptado: un cambio de copy que afecte
+  nombres accesibles de otra área no se detecta en el gate; lo cubren la revisión y
+  el barrido completo al cerrar cada etapa. Otro archivo de `src/lib/copy/` es
+  compartido.
+- Solo se pasan a Playwright los archivos que existen; uno previsto que falta se
+  anota en el resumen y no se da por aprobado. El resumen del job dice qué archivos
+  corrieron, cuáles no y por qué. Lo comprueba `tests/a11y-select.test.ts`, que
+  además exige que el mapa cubra todos los `tests/a11y/**/*.a11y.ts`.
+- **No cambian:** el job `app` (estados sin sesión, todos), el barrido `@sweep` a
+  mano y la pasada completa al cerrar cada etapa, que corren siempre enteros.
+
+Fuera del selector, la intención sigue siendo correr axe **sobre las rutas que el
+PR toca**, y una ruta implementada nunca se deja de auditar en la pasada completa.
 
 **Dónde corre** (ADR-011 §5, enmienda «Axe en dos jobs»): según si el estado real
 necesita sesión, no según el grupo de rutas. Los estados sin sesión, en el job

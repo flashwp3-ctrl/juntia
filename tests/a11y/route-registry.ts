@@ -125,3 +125,30 @@ export const sessionlessEntries = registry.filter((entry) => entry.session === "
 export const sessionEntries = registry.filter((entry) => entry.session !== "none");
 export const appEntries = sessionlessEntries.filter((entry) => !entry.needsAuthApi);
 export const e2eEntries = registry.filter((entry) => !appEntries.includes(entry));
+
+/**
+ * Decisión de los fundadores del 11 nov 2026 (opción C del gestor; contracts/ci.md, «Selector de accesibilidad por área»):
+ * el área de cada ruta del registro, para que el nivel ligero del job e2e corra solo las del área del PR. scripts/a11y-select.mjs
+ * usa los mismos nombres (tests/a11y-select.test.ts lo comprueba). Una ruta que este mapa no clasifica cuenta como núcleo.
+ */
+export const ROUTE_AREAS = ["nucleo", "metas", "presupuestos", "balance", "pareja"] as const;
+export type RouteArea = (typeof ROUTE_AREAS)[number];
+export function routeArea(route: string): RouteArea {
+  if (/^\/metas(?:\/|$)/.test(route)) return "metas";
+  if (/^\/plan(?:\/|$)/.test(route)) return "presupuestos";
+  if (/^\/balance(?:\/|$)/.test(route)) return "balance";
+  if (/^\/cuenta\/pareja(?:\/|$)/.test(route) || /^\/invitacion(?:\/|$)/.test(route)) return "pareja";
+  return "nucleo";
+}
+
+/**
+ * Las áreas que pide `A11Y_ROUTE_AREAS` (lista separada por espacios o comas), o `null` = todo el registro. Fail-safe: sin la
+ * variable, vacía o con cualquier valor que no sea un área conocida, todo el registro. El barrido (`A11Y_LEVEL=sweep`) siempre
+ * recorre el registro completo.
+ */
+export function routeAreaFilter(env: Record<string, string | undefined> = process.env): ReadonlySet<RouteArea> | null {
+  if (env.A11Y_LEVEL === "sweep") return null;
+  const tokens = (env.A11Y_ROUTE_AREAS ?? "").split(/[\s,]+/).filter(Boolean);
+  if (tokens.length === 0 || tokens.some((token) => !(ROUTE_AREAS as readonly string[]).includes(token))) return null;
+  return new Set(tokens as RouteArea[]);
+}

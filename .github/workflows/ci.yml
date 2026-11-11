@@ -306,10 +306,26 @@ jobs:
         env:
           E2E_SPECS: ${{ steps.select.outputs.specs }}
         run: node scripts/ci.mjs run test:e2e:smoke
+      - name: Select light accessibility files by area
+        id: select_a11y
+        # Decisión de los fundadores del 11 nov 2026 (maestro §15.10, decisión 21; contracts/ci.md): el nivel ligero corre los
+        # archivos a11y del área del PR, con el criterio de las specs E2E; lo compartido, lo desconocido o sin base, todos. El
+        # barrido a mano (a11y_sweep) no selecciona: corre entero. El resumen del job dice qué archivos corrieron y por qué.
+        if: always() && !inputs.a11y_sweep
+        # Si el script se cae antes de escribir su salida, el paso de axe recibe A11Y_FILES vacío y corre todos (regla 4).
+        continue-on-error: true
+        env:
+          A11Y_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/a11y-select.mjs --base "$A11Y_BASE"
       - name: Axe of the states that need a session or the Auth API
-        if: always() && (steps.smoke.outcome != 'skipped' || inputs.a11y_sweep)
+        # skip=true: el PR solo toca archivos neutros; el resumen del selector lo dice.
+        if: always() && (steps.smoke.outcome != 'skipped' || inputs.a11y_sweep) && steps.select_a11y.outputs.skip != 'true'
         env:
           A11Y_JOB: e2e
+          # Vacíos (barrido a mano o selector sin salida): todos los archivos y todo el registro (scripts/ci.mjs, npmArgs;
+          # tests/a11y/route-registry.ts, routeAreaFilter).
+          A11Y_FILES: ${{ steps.select_a11y.outputs.files }}
+          A11Y_ROUTE_AREAS: ${{ steps.select_a11y.outputs.route_areas }}
         run: node scripts/ci.mjs run test:a11y
       - name: T054 · spec 1 with 1, 2 and 4 workers (manual runs only)
         if: github.event_name == 'workflow_dispatch' && inputs.measure_workers

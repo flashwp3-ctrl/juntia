@@ -130,6 +130,66 @@ excluir.
   vez, cuando nace su spec, para medir el job y registrarlo en la evidencia. El techo
   no se mueve por una medición (cláusula anticliquet).
 
+### Selector de accesibilidad por área (decisión de los fundadores del 11 de noviembre de 2026)
+
+El nivel ligero de accesibilidad con sesión (paso «Axe of the states that need a session or the Auth API» del job `e2e`)
+corre por área, con el mismo criterio que el selector de specs E2E. Maestro §15.10, decisión 21, y `docs/TESTING.md` §3.
+
+- **Un script determinista**, `scripts/a11y-select.mjs`, recibe los archivos cambiados (`git diff --name-only
+  <base>...HEAD`) y devuelve los archivos `tests/a11y/*.a11y.ts` que corren. El workflow los pasa por `npmArgs`
+  (`A11Y_FILES`, detrás de `--` de `npm run test:a11y`, que fija `--project=a11y` con `=`, lección del PR #67). Si el paso
+  del selector se salta o se cae sin escribir salida, `A11Y_FILES` llega vacío y corren todos.
+- **`routes.a11y.ts` se parte por área (opción C del gestor, 11 de noviembre de 2026).** El registro
+  (`tests/a11y/route-registry.ts`) da a cada ruta un área con `routeArea`: `/metas/**` → `metas`, `/plan/**` →
+  `presupuestos`, `/balance` → `balance`, `/cuenta/pareja` e `/invitacion` → `pareja`, y **todo lo demás → `nucleo`**
+  (acceso, Inicio, Actividad, detalle, Anotar E1–E5, `/cuenta/*`, exportación D1–D5 y la barra de `/cuenta`). Una ruta que
+  el mapa no clasifica cuenta como núcleo. `routes.a11y.ts` lee **`A11Y_ROUTE_AREAS`** (áreas separadas por espacios o comas)
+  y solo recorre esas. **Fail-safe:** sin la variable, vacía, con cualquier valor que no sea un área conocida o con
+  `A11Y_LEVEL=sweep`, recorre el registro completo. El selector escribe `route_areas` (vacío = completo) y el workflow lo
+  pasa al paso de axe; `job-selection.test.ts` y el `@sweep` siguen viendo el registro completo.
+- **Reglas, en este orden:**
+  1. **Un archivo a11y cambiado** corre ese archivo; `routes.a11y.ts` cambiado, con el registro completo.
+  2. **Un archivo de código de un área** corre los archivos y las áreas del registro de esa área (gana la primera fila que
+     encaja):
+
+     | Área | Archivos de código | Archivos a11y | Registro |
+     | --- | --- | --- | --- |
+     | Métricas | `src/domain/metrics/**`, `src/lib/db/metrics.ts` | `goals`, `goal-expense` y `plan` | `metas` y `presupuestos` |
+     | Gasto con meta | `src/features/expenses/goal-funding/**`, `src/lib/db/goal-usage.ts` | `goal-expense` | — |
+     | Metas | `src/app/(app)/metas/**`, `src/features/goals/**`, `src/domain/goals/**`, `src/lib/db/goals.ts`, migraciones `*_goal*` | `goals` y `goal-expense` | `metas` |
+     | Presupuestos y Análisis | `src/app/(app)/plan/**`, `src/features/plan/**`, `src/features/analysis/**`, `src/domain/budgets/**`, `src/domain/analysis/**`, `src/lib/db/budgets.ts` y `planning.ts`, migraciones `*_budget*` | `plan` | `presupuestos` |
+     | Balance | `src/app/(app)/balance/**`, `src/features/balance/**`, `src/domain/balances/**`, `src/lib/db/settlements.ts` | `balance` | `balance` |
+     | Pareja e invitación | `src/app/(app)/cuenta/pareja/**`, `src/app/invitacion/**`, `src/features/couple/**`, `src/domain/couple/**`, `src/lib/db/couple.ts` e `invitation-token.ts` | `couple` | `pareja` |
+     | Gastos compartidos | `src/features/expenses/shared-*`, `split-*` y `reclassify-*`, `src/features/shared/**`, `src/domain/allocations/**`, `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts` | `couple-shared` | `nucleo` (Inicio y Actividad en Nosotros) |
+     | Núcleo | `src/features/auth/**`, `src/app/(auth)/**`, `src/app/auth/**`, `src/features/account/**`, `src/app/(app)/cuenta/**` (fuera de pareja), `src/lib/db/export.ts` y `profile.ts` | — | `nucleo` |
+
+  3. **Neutros** (no añaden nada; si el PR solo toca neutros, el paso de axe con sesión se salta y el resumen lo dice):
+     `**/*.md`, `docs/**`, `specs/**`, `tests/e2e/**`, `tests/evidence/**`, las pruebas de Vitest (`*.test.ts(x)`, incluidas
+     las de `tests/a11y/`), `supabase/tests/**`, los scripts de copia y restauración y **`src/lib/copy/es.ts`** (decisión del
+     gestor del 11 de noviembre de 2026, como en E2E: todo PR lo toca). **Riesgo aceptado:** un cambio de copy que afecte
+     nombres accesibles de otra área no se detecta en el gate; lo cubren la revisión y el barrido completo al cerrar cada
+     etapa. Cualquier otro archivo de `src/lib/copy/` es compartido.
+  4. **Todos, con el registro completo**, con lo compartido o lo desconocido: `src/components/**`, el shell y el resto de
+     `src/app/` (layouts, raíz, `globals.css`, `not-found`, API), `src/features/expenses/annotate-sheet.tsx` y el resto de
+     `src/features/expenses/` (Anotar lo auditan `routes`, `couple-shared` y `goal-expense`), `src/features/home/**` (Inicio
+     aloja los módulos de metas, Balance y gasto con meta), `src/features/activity/**`, `src/lib/` fuera de lo anterior
+     (incluidos `src/lib/db/errors.ts` y `types.ts`), `tests/support/**`, `tests/a11y/route-registry.ts`,
+     `playwright.config.ts`, `package.json`, el lockfile, `.github/`, `scripts/`, una migración que no es de metas ni de
+     presupuestos, cualquier ruta sin clasificar, una base que no se puede calcular o un fallo del script.
+- **Archivos que todavía no existen:** solo se pasan a Playwright los que existen en el commit; uno previsto que falta se
+  anota en el resumen («todavía no existe») y no se da por aprobado.
+- **El resumen del job** dice qué archivos a11y corrieron, cuáles no (el PR no toca su área) y por qué.
+- **Qué corre un PR típico** (con `es.ts`, sin compartido): **metas** → `goals`, `goal-expense` y el registro de `metas`;
+  **plan** → `plan` y el registro de `presupuestos`; **análisis** (métricas y exportación) → `goals`, `goal-expense`, `plan` y
+  el registro de `nucleo`, `metas` y `presupuestos`. Si además toca `src/components/`, Inicio, Anotar o `errors.ts`, todo.
+- **Prueba:** `tests/a11y-select.test.ts`, con fixtures por área (y los tres PR típicos), compartido, desconocido, sin base
+  y solo documentación; el mapa de rutas (una ruta sin clasificar es núcleo; el fail-safe de `A11Y_ROUTE_AREAS`); el comando
+  real con `--list`; y la cobertura del mapa (`FILES` cubre todos los `tests/a11y/**/*.a11y.ts`, recursivo).
+  Un archivo a11y nuevo (por ejemplo, el de Análisis del PR E) entra en `FILES` con su área en el mismo PR, o la prueba
+  falla. `tests/ci-command.test.ts` ejecuta el comando de npm del paso con `A11Y_FILES` y `--list`.
+- **No cambian:** el job `app` (estados sin sesión), el barrido `@sweep` (`A11Y_LEVEL=sweep`, sin selector) y la pasada
+  completa al cerrar cada etapa y en los PR con pantallas nuevas.
+
 ### Mitigación prevista, en este orden y sin subir el tope
 
 Con 60 s de margen, dos specs nuevas probablemente no caben tal como está el job. Para
