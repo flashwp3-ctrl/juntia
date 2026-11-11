@@ -15,7 +15,7 @@ const files = SPECS as Record<number, string>;
 const beforeC = (path: string) => path !== files[4];
 const afterC = () => true;
 
-const PR_B = ["src/app/(app)/plan/page.tsx", "src/features/plan/plan-screen.tsx", "src/features/plan/budget-sheet.tsx", "src/domain/budgets/index.ts",
+const PR_B = ["src/app/(app)/plan/(resumen)/page.tsx", "src/features/plan/plan-screen.tsx", "src/features/plan/budget-sheet.tsx", "src/domain/budgets/index.ts",
   "src/lib/db/budgets.ts", "src/lib/copy/es.ts", "src/lib/db/errors.ts", "tests/e2e/budgets.e2e.ts"];
 const PR_C = ["src/app/(app)/metas/page.tsx", "src/app/(app)/metas/[id]/page.tsx", "src/features/goals/goal-card.tsx", "src/domain/goals/index.ts",
   "src/lib/db/goals.ts", "src/features/home/home-view.tsx", "src/features/activity/activity-view.tsx", "src/lib/copy/es.ts", "tests/e2e/goals.e2e.ts"];

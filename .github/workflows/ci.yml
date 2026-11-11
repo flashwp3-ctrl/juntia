@@ -182,13 +182,26 @@ jobs:
       - name: Install plain PostgreSQL 17 from PGDG
         id: plain
         shell: bash
+        # Runs 43045655895 y 43052000905 (11-nov-2026): `apt-get update` completo se colgó reintentando
+        # azure.archive.ubuntu.com («Temporary failure resolving») hasta agotar el job, aunque PGDG respondía en menos de
+        # un segundo. La imagen ya trae postgresql-common (PGDG) con su llave y todas las dependencias de PostgreSQL 17
+        # (run 42965711679: solo se instalaron postgresql-17 y postgresql-client-17, ambos de PGDG), así que apt mira
+        # solo la lista de PGDG, sin espejos de Ubuntu, con tiempos acotados. Si PGDG falla, el paso falla rápido y claro.
+        # Reparto del tope: update 90 s + install 150 s + clúster hasta 60 s (pg_createcluster y pg_isready) = 300 s; los
+        # 6 min dejan margen para que salga nuestro ::error antes de que GitHub cancele el paso.
+        timeout-minutes: 6
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get update -qq
-          sudo apt-get install -y postgresql-17 postgresql-client-17
+          key=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+          [ -s "$key" ] || { echo "::error title=PGDG::Falta la llave $key en la imagen; no se instala PostgreSQL 17."; exit 1; }
+          list="$RUNNER_TEMP/pgdg.list"
+          echo "deb [signed-by=$key] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" > "$list"
+          pgdg=(-o "Dir::Etc::sourcelist=$list" -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0
+            -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20)
+          sudo timeout 90 apt-get "${pgdg[@]}" update -q --error-on=any \
+            || { echo "::error title=PGDG::apt.postgresql.org no respondió (apt-get update, máx. 90 s); el ensayo de restauración no corre. Reintentar el job."; exit 1; }
+          sudo timeout 150 apt-get "${pgdg[@]}" install -y -q --no-install-recommends postgresql-17 postgresql-client-17 \
+            || { echo "::error title=PGDG::No se instaló PostgreSQL 17 solo desde PGDG (descarga o dependencia ausente en la imagen; máx. 150 s)."; exit 1; }
           sudo pg_createcluster 17 juntia --port 55432 --start
           # PR #52: el cluster rechazó conexiones unos 25 s después de crearlo. Se espera a que acepte (hasta 60 s) y, si
           # no, se imprime su log antes de fallar.

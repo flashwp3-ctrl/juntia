@@ -26,7 +26,7 @@ const ordered = (files: string[]) => ALL.filter((file) => files.includes(file));
 // el típico de pantallas y hojas de Metas sigue en su área.
 const GOALS_PR = ["src/app/(app)/metas/(lista)/page.tsx", "src/app/(app)/metas/[id]/page.tsx", "src/features/goals/goals-screen.tsx",
   "src/features/goals/goal-immersive.tsx", "src/features/goals/contribute-sheet.tsx", "src/lib/copy/es.ts", "tests/e2e/goals.e2e.ts", "tests/a11y/goals.a11y.ts"];
-const PLAN_PR = ["src/app/(app)/plan/page.tsx", "src/features/plan/plan-screen.tsx", "src/features/plan/budget-sheet.tsx", "src/domain/budgets/index.ts",
+const PLAN_PR = ["src/app/(app)/plan/(resumen)/page.tsx", "src/features/plan/plan-screen.tsx", "src/features/plan/budget-sheet.tsx", "src/domain/budgets/index.ts",
   "src/lib/db/budgets.ts", "src/lib/copy/es.ts", "tests/e2e/budgets.e2e.ts", "tests/a11y/plan.a11y.ts"];
 const ANALYSIS_PR = ["src/app/(app)/plan/analisis/page.tsx", "src/features/analysis/analysis-screen.tsx", "src/domain/analysis/index.ts",
   "src/domain/metrics/index.ts", "src/lib/copy/es.ts", "tests/e2e/budgets.e2e.ts"];
