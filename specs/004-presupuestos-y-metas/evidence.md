@@ -1459,3 +1459,20 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
   - Un script temporal sin versionar abrió `/plan` y vio una sola petición a `/plan/analisis`, con `Next-Router-Prefetch: 1`.
   - Es la precarga de Next para una ruta dinámica con `loading.tsx`, que pinta hasta el Skeleton y no ejecuta la página.
   - Playwright no da el cuerpo de un RSC transmitido, así que la ausencia de datos no queda probada con ese script. No se cambió nada.
+
+## Spec 5 · `test.slow()` en «presupuesto activado y desactivado» (gestor, 11 de noviembre de 2026)
+
+- El caso del PR B falló en las cuatro corridas completas de `e2e:dev` de las rondas de revisión del PR #71, siempre por los 30 s del test entero y en pasos distintos («$240.000 · sin presupuesto», «Quedan $80.000», la lista tras desactivar, `page.reload`). Dirigido pasó siempre. Es un caso de dos sesiones (Sara y Tomás) con varias recargas.
+- Cambio: `test.slow()` **solo en ese caso**, con un comentario que cita esta medición. No cambia ninguna espera interna ni ningún otro test.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts` con el cambio (primera pasada): el caso «activado y desactivado» **pasó**, pero **falló** el de privacidad de Análisis. Al entrar en Análisis desde «Ver el análisis» de Inicio, `main` seguía mostrando «Plan · Cargando el plan» pasados los 5 s de la espera. La instantánea del fallo lo enseña con el título ya en «Análisis · Juntia».
+
+## Skeleton de Plan delante de Análisis (encontrado al aplicar `test.slow()`)
+
+- **Causa:** `src/app/(app)/plan/loading.tsx` envolvía también a la ruta hija `/plan/analisis`. Al llegar a Análisis desde otra sección se veía primero el Skeleton de Plan, con su título «Plan» y «Cargando el plan». Eso es un Skeleton equivocado, un salto de diseño para T079 y un estado que puede tardar con `juntia-dev`.
+- **Arreglo:** el mismo patrón que `metas/(lista)`: Plan pasa a `src/app/(app)/plan/(resumen)/` (`page.tsx` y `loading.tsx`, movidos con `git mv`, sin cambios de contenido salvo un comentario). La URL `/plan` no cambia y su `loading.tsx` ya no envuelve a `/plan/analisis`, que usa el suyo.
+- **Corridas** (puerto 3500), tras los dos cambios:
+  - `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 69,84 s, total 85,60 s.
+  - `npm run e2e:dev -- tests/a11y/plan.a11y.ts tests/a11y/analysis.a11y.ts`: **exit 0**, total 38,41 s.
+  - `A11Y_ROUTE_AREAS=presupuestos npm run e2e:dev -- tests/a11y/routes.a11y.ts`: **exit 0**; `/plan` y `/plan/analisis` en claro y oscuro.
+  - Componentes del registro de rutas y de los selectores: **107/107**.
+  - `npm run verify`: **exit 0, 83,69 s**.

@@ -39,6 +39,9 @@ async function open(browser: Browser, baseURL: string, user: SeededUser, context
 const restaurants = copy.categories.restaurants;
 
 test("spec 5 · presupuesto activado y desactivado: Sara crea Restaurantes en Nosotros, Tomás choca con su cambio, lo revisa, y al desactivarlo vuelve a «sin presupuesto»", async ({ browser, baseURL }, testInfo) => {
+  // 004 PR E (gestor, 11 nov 2026): falla por tiempo solo en corridas completas, en pasos distintos (4 de 4 en juntia-dev);
+  // dirigido pasa; caso de dos sesiones con recargas. Sin cambiar ninguna espera interna.
+  test.slow();
   const pair = await seedCouple({ index: testInfo.parallelIndex });
   // Los seis gastos compartidos del dataset en el mes en curso: Restaurantes lleva 240.000 y no tiene presupuesto.
   await seedSharedMovements(pair, "recent");
