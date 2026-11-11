@@ -45,8 +45,15 @@ function isEditable(target: EventTarget | null) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
-/** Cuadros que se espera a que la fila nueva aparezca antes de llevar a Actividad (~1 s a 60 Hz). */
-const REVEAL_FRAMES = 60;
+/**
+ * Cuadros que se sigue mirando después de que llegue el árbol revalidado, por si la fila se pinta en el cuadro siguiente.
+ * Revisión del PR #69: antes E5 miraba 60 cuadros (~1 s) desde el guardado, sin saber si la revalidación ya había llegado; con
+ * un RSC lento (traza en juntia-dev: la acción responde a ~0,4 s y el árbol llega a ~1,4–1,5 s) llevaba a Actividad aunque la
+ * fila iba a aparecer en Inicio.
+ */
+const SETTLE_FRAMES = 3;
+/** Tope de seguridad si la revalidación no llega nunca: entonces se pide otra y se lleva a Actividad, como antes. */
+const REVEAL_SAFETY_MS = 10_000;
 /** Visible para la persona: ni ella ni ningún antepasado con `display: none` (copias ocultas de rutas, `xl:hidden`). */
 function isShown(node: HTMLElement) {
   for (let current: HTMLElement | null = node; current; current = current.parentElement) {
@@ -58,7 +65,8 @@ function isShown(node: HTMLElement) {
 export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void }
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
-type Reveal = { id: string; transactionDate: string };
+/** `since`: cuántos árboles había entregado el servidor cuando empezó la escritura (E5 espera uno posterior). */
+type Reveal = { id: string; transactionDate: string; since: number };
 /** `undo`: el id del gasto cuyo «Deshacer» ofrece el aviso (compartido o Mover a Pareja; F57-8/F57-9: uno a la vez). */
 type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: string };
 type Notice = Omit<ToastState, "id">;
@@ -150,6 +158,12 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const router = useRouter();
   // F45-2 (revisión del PR #45): el movimiento recién anotado que hay que enseñar resaltado.
   const [reveal, setReveal] = useState<Reveal | null>(null);
+  // Revisión del PR #69: cada árbol que entrega el servidor (navegación o revalidación) llega como unos `children` nuevos del
+  // layout. E5 compara con el número que había al empezar la escritura (`markWriteStart`, que llama la hoja al guardar).
+  const trees = useRef(0);
+  useEffect(() => { trees.current += 1; }, [children]);
+  const writeStart = useRef(0);
+  const markWriteStart = useCallback(() => { writeStart.current = trees.current; }, []);
   // UX lote 1, cambio 3, simplificado por decisión de los fundadores (7 nov 2026). Cada creación en vuelo es una fila temporal
   // con estado propio, por su clave: una petición colgada no retrasa la retirada de otra (F51-8). Nada de esto se guarda en el
   // navegador: si se recarga la página, no queda rastro (el resultado desconocido se resuelve en la hoja, con «Reintentar»).
@@ -437,7 +451,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {
     close();
     setHighlightId(saved.transaction.id, saved.context);
-    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate });
+    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate, since: writeStart.current });
     const key = newIdempotencyKey();
     notify({ tone: "success", message, undo: saved.transaction.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalExpense(saved, key) } });
   }, [close, notify, undoGoalExpense, setHighlightId]);
@@ -449,7 +463,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "me");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, since: writeStart.current });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
   }, [close, notify, undo, setHighlightId]);
@@ -464,7 +478,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "us");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, since: writeStart.current });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved.expense, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
@@ -496,16 +510,20 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // F45-2: E5 resalta la fila nueva «en la misma pantalla» (MOTION_SYSTEM.md §2). Si la pantalla no la enseña (otro
   // mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), se lleva a la persona a Actividad del mes del
   // movimiento; el aviso y el resaltado viven en el proveedor y siguen allí. Si ya la enseña, no se navega. Se mira
-  // durante unos cuadros: la respuesta de la Server Action trae Inicio y Actividad revalidados, y React los aplica en
-  // una transición. No cambia el total del mes en curso ni los 5 recientes.
+  // hasta que llega el árbol revalidado: la respuesta de la Server Action trae Inicio y Actividad revalidados y React los
+  // aplica en una transición, que el proveedor ve como unos `children` nuevos del layout. Si ese árbol ya llegó y la fila no
+  // está, la pantalla no la enseña: se lleva a Actividad (revisión del PR #69). No cambia el total del mes ni los 5 recientes.
   useEffect(() => {
     if (!reveal) return;
-    let frames = 0;
+    let after = -1;
     let handle = 0;
+    const started = performance.now();
     const check = () => {
       const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
       if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
-      if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
+      const arrived = trees.current > reveal.since;
+      if (arrived) after += 1;
+      if ((arrived && after < SETTLE_FRAMES) || (!arrived && performance.now() - started < REVEAL_SAFETY_MS)) { handle = requestAnimationFrame(check); return; }
       setReveal(null);
       // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación (cuenta para el tope) y se
       // sigue esperando.
@@ -559,6 +577,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             onSharedSaved={onSharedSaved}
             goalFunding={funding ?? undefined}
             onGoalSaved={onGoalExpenseSaved}
+            onWriteStart={markWriteStart}
             onMove={(transaction) => openMove(transaction, returnFocusTo.current)}
           />
         </Suspense>

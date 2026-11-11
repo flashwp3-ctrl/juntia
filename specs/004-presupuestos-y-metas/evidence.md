@@ -1142,3 +1142,18 @@ Las fallas de héroe/E5 no tocan código de esta ronda (la creación no cambió)
 | `npm run verify` | **exit 0, 105,52 s** (aviso: más de 90 s). Componentes **888 / 2 omisiones previstas**. Antes, dos casos de `goal-funding.test.tsx` agotaban su límite de 5 s con la máquina cargada; ese archivo usa ahora 15 s, como otras pruebas de hojas |
 
 En la corrida completa local, los casos de E5 y los límites de 30 s fallan igual en `main` que en el PR D: la diferencia atribuible al PR D era la del `@serial` dirigido, y queda corregida.
+
+## E5 espera el árbol revalidado (causa propuesta por la revisión de `5c80a3b`, confirmada con traza)
+
+- **Traza** (E2E temporal, no versionada, contra `juntia-dev`; Inicio de Nosotros, anotar $100.000; tiempos en ms desde Enter; 3 corridas): la Server Action responde a 470 / 384 / 393; el árbol revalidado llega con la fila y el héroe a **1.508 / 1.427**; en la tercera, `pushState /actividad?mes=2026-11` sale a **1.433** (60 cuadros después del guardado) y la fila aparece a 2.912, ya en Actividad. Es la carrera de los 60 cuadros de `annotate-provider.tsx` con un RSC lento.
+- **Corrección** (`annotate-provider.tsx`, `annotate-sheet.tsx`): cada árbol que entrega el servidor llega al proveedor como unos `children` nuevos del layout. La hoja marca el inicio de la escritura (`onWriteStart`) y E5 espera un árbol **posterior** a esa marca: si trae la fila, la resalta en la misma pantalla; si llega sin ella, lleva a Actividad del mes a los 3 cuadros; si no llega nunca, el tope de seguridad de 10 s pide otra revalidación y lleva a Actividad, como antes. Sin esperas fijas. El comportamiento aprobado de E5 no cambia.
+- **Pruebas de componentes** (`annotate-sheet.test.tsx`, con `requestAnimationFrame` controlado y una `revalidate()` que vuelve a entregar los `children`): refresco lento (100 cuadros sin árbol nuevo, no navega; llega con la fila, no navega), árbol sin la fila (navega a los pocos cuadros, no antes) y tope de seguridad (10 s). Con el proveedor anterior las tres fallan; con el nuevo pasan. `home-reveal.test.tsx` (F51-13) revalida antes de esperar la navegación, con la misma intención. Las dos pruebas F45-2 de navegación revalidan tras guardar.
+
+| Corrida | Resultado |
+| --- | --- |
+| Traza con la corrección (3 corridas) | La acción a 491 / 300 / 327; el héroe sube en Inicio a **1.557 / 1.253 / 1.308**; **ningún `pushState`** |
+| Dirigida: «N → monto…» y el `@serial` de la spec 2; «gasto compartido 50/50…» y el `@serial` de la spec 3 | **4/4 pasan** («gasto compartido 50/50…» fallaba también en `main`) |
+| `npm run verify` | **exit 0, 67,72 s**: dominio 84/84, componentes **890 / 2 omisiones previstas** |
+| **`npm run e2e:dev` completo** | **exit 0, 409,95 s**: build 11,45 s; E2E **34/34** (125,80 s); axe con sesión **100/100** (271,44 s) |
+
+El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó): todo lo anterior corre sobre el `juntia-dev` acumulado.

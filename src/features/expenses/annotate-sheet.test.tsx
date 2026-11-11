@@ -73,10 +73,13 @@ function Pages({ rows = [] }: { rows?: string[] }) {
   );
 }
 
+// Revisión del PR #69: `revalidate` simula la llegada del árbol revalidado tras la Server Action (el layout entrega unos
+// `children` nuevos al proveedor), con las filas que traiga la página.
 function setup(actions = mockActions(), rows: string[] = []) {
   const user = userEvent.setup();
-  render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
-  return { user, actions, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
+  const view = render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
+  const revalidate = (next: string[] = rows) => act(() => { view.rerender(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={next} /></AnnotateProvider>); });
+  return { user, actions, revalidate, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
 }
 
 const sheet = () => screen.findByRole("dialog", { name: copy.annotate.title.expense });
@@ -520,11 +523,13 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
 
   it("F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado", async () => {
     const previous = saved({ transactionDate: "2026-10-20" });
-    const { user, trigger } = setup(mockActions({ create: vi.fn(async () => ({ ok: true as const, value: previous })) }));
+    const { user, trigger, revalidate } = setup(mockActions({ create: vi.fn(async () => ({ ok: true as const, value: previous })) }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    revalidate();
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-10"));
     expect(router.push).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status").textContent).toContain(copy.annotate.saved.expense);
@@ -532,11 +537,13 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("F45-2: un gasto del mes en curso que no entra en los 5 recientes lleva a Actividad del mes", async () => {
-    const { user, trigger } = setup(mockActions(), ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"]);
+    const { user, trigger, revalidate } = setup(mockActions(), ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"]);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    revalidate();
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
   });
 
@@ -557,9 +564,11 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     vi.restoreAllMocks();
   });
 
-  it("F45-2: sin la fila a la vista, navega a Actividad al agotarse los cuadros (60), ni uno antes", async () => {
+  // Revisión del PR #69: E5 espera el árbol revalidado, no un número de cuadros. Traza en juntia-dev: la acción responde a
+  // ~0,4 s y el árbol llega a ~1,4–1,5 s; con 60 cuadros (~1 s) la app llevaba a Actividad aunque la fila iba a salir en Inicio.
+  it("E5 con un refresco lento: sin el árbol revalidado no navega aunque pasen 100 cuadros; cuando llega con la fila, la resalta ahí", async () => {
     const frames: FrameRequestCallback[] = [];
-    const { user, trigger } = setup(mockActions(), []);
+    const { user, trigger, revalidate } = setup(mockActions(), []);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
@@ -567,10 +576,53 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     await user.click(saveButton());
     await screen.findByRole("button", { name: copy.annotate.undo });
-    for (let step = 0; step < 59; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    for (let step = 0; step < 100; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
     expect(router.push).not.toHaveBeenCalled();
-    act(() => { frames.splice(0).forEach((callback) => callback(960)); });
+    revalidate([saved().id]);
+    for (let step = 0; step < 10; step++) act(() => { frames.splice(0).forEach((callback) => callback(1600 + step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(0);
+    vi.restoreAllMocks();
+  });
+
+  it("E5: cuando el árbol revalidado llega sin la fila, lleva a Actividad del mes a los pocos cuadros, ni antes de que llegue", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const { user, trigger, revalidate } = setup(mockActions(), []);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    for (let step = 0; step < 70; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    revalidate([]);
+    for (let step = 0; step < 5; step++) act(() => { frames.splice(0).forEach((callback) => callback(1200 + step * 16)); });
     expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    expect(router.push).toHaveBeenCalledTimes(1);
+    vi.restoreAllMocks();
+  });
+
+  it("E5: si el árbol revalidado no llega nunca, el tope de seguridad (10 s) pide otro y lleva a Actividad", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const { user, trigger } = setup(mockActions(), []);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    now = 9_900;
+    act(() => { frames.splice(0).forEach((callback) => callback(now)); });
+    expect(router.push).not.toHaveBeenCalled();
+    now = 10_100;
+    act(() => { frames.splice(0).forEach((callback) => callback(now)); });
+    expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    expect(router.refresh).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
 
