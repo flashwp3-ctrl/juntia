@@ -46,6 +46,9 @@ const SHARED = [
   // F70-2: lecturas y escrituras de gastos compartidos (alimentan loadBalance, Inicio y Actividad). Sin fila propia: todo
   // src/features/expenses/ (también goal-funding/) es compartido por defecto, porque lo importan Anotar y Actividad.
   /^src\/lib\/db\/(?:shared-expenses|couple-reads|reclassify)\.ts$/, /^src\/domain\/allocations\//,
+  // F70-4: errors.ts no es como la copy: tiene lógica (mapDbError, detailOf, DbError: 401, red, conflictos) que decide el
+  // estado de pantallas de todas las áreas, como la redirección a iniciar sesión de goals/load.ts y couple/shared-load.ts.
+  /^src\/lib\/db\/errors\.ts$/,
   // F70-3: el tema y la cuenta que aplica el layout (AccountProvider, ThemeController) y el botón de cuenta del shell.
   /^src\/features\/account\/(?:account-context|theme-controller|account-button|account-ui|limit-note|load-account)\.tsx?$/,
   /^src\/lib\/db\/profile\.ts$/, /^src\/features\/auth\/auth-frame\.tsx$/,
@@ -86,18 +89,17 @@ const AREAS = [
  * Neutros: no cambian lo que audita ningún archivo a11y. `src/lib/copy/es.ts` es neutro como en E2E (decisión del gestor,
  * 11 nov 2026): todo PR lo toca. Riesgo aceptado: un cambio de copy que afecte nombres accesibles de otra área no se detecta
  * en el gate; lo cubren la revisión y el barrido completo al cerrar cada etapa. Otro archivo de src/lib/copy/ es compartido.
- * Si es.ts cambia y la selección queda vacía (sin ningún área), corre todo (ver selectA11y). `src/lib/db/errors.ts` tiene
- * el mismo trato (decisión del gestor, 11 nov 2026): casi todo PR añade códigos JT; junto a un área es neutro y, sin área,
- * corre todo.
+ * Si es.ts cambia y la selección queda vacía (sin ningún área), corre todo (ver selectA11y). `src/lib/db/errors.ts` NO tiene
+ * ese trato: está en SHARED (F70-4).
  */
 const NEUTRAL = [
   /\.md$/, /^docs\//, /^specs\//, /^tests\/e2e\//, /^tests\/evidence\//, /\.test\.tsx?$/, /^supabase\/tests\//,
-  /^src\/lib\/copy\/es\.ts$/, /^src\/lib\/db\/errors\.ts$/,
+  /^src\/lib\/copy\/es\.ts$/,
   /^scripts\/(?:backup|restore|order-restore|dev-target\/)/, /^tests\/support\/(?:corrupt-restore|restore)-[^/]+\.mjs$/,
 ];
 
 /** Neutros solo junto a un área: si cambian y la selección queda vacía, corre todo. */
-const NEUTRAL_WITH_AREA = ["src/lib/copy/es.ts", "src/lib/db/errors.ts"];
+const NEUTRAL_WITH_AREA = ["src/lib/copy/es.ts"];
 const normalize = (path) => String(path).trim().replace(/\\/g, "/").replace(/^\.\//, "");
 
 /** Qué pide un archivo: archivos a11y y áreas del registro, nada (neutro) o todo (`all`: compartido o sin clasificar). */
@@ -143,7 +145,7 @@ export function selectA11y(changed, exists = existsSync) {
     }
     for (const [key, paths] of byReason) reasons.push(`${key}: ${paths.slice(0, 5).join(", ")}${paths.length > 5 ? ` y ${paths.length - 5} más` : ""}.`);
     // Revisión del gestor del PR #70: es.ts es neutro solo junto a un área. Si cambió y nada más pidió archivos (el PR solo
-    // toca la copy, o la copy y neutros), corre todo: es el caso más arriesgado para los nombres accesibles. Igual errors.ts.
+    // toca la copy, o la copy y neutros), corre todo: es el caso más arriesgado para los nombres accesibles.
     const conditional = NEUTRAL_WITH_AREA.filter((path) => changed.map(normalize).includes(path));
     if (byReason.size === 0 && conditional.length) {
       ALL.forEach((file) => wanted.add(file));

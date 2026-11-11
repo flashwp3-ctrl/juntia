@@ -165,8 +165,13 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
      el layout, el shell, Inicio, Actividad, Anotar, la exportación u otra área cambia pantallas fuera de su área: corre
      todo. `tests/a11y-select.test.ts` recorre los imports estáticos de `src/` (`import … from`, `export … from`,
      `import("…")`, alias `@/`; sin contar los imports solo de tipos) y falla, diciendo cuál, si un archivo que el mapa
-     asigna a un área lo importa un archivo que pide más (otra área, el layout o algo compartido). Reclasificaciones que
-     salieron de la guardia:
+     asigna a un área lo importa un archivo que pide más (otra área, el layout o algo compartido). **También falla (F70-4)**
+     con «clasifícalo a mano o usa una ruta literal» ante lo que no puede seguir: un `import()` o un `require()` con ruta
+     calculada, o un import o `require()` local (relativo o `@/`) que no se resuelve. **Límites:** solo conoce el alias
+     `@/` (un alias nuevo en `tsconfig.json` se tomaría por paquete y sus imports se ignorarían: hay que añadirlo al parser,
+     `tests/support/import-graph.mjs`); los imports de solo tipos (`import type`, `export type`, `{ type A }`) se excluyen a
+     propósito, porque no cambian lo que se renderiza; y lo que no es un import (migraciones, CSS por clase, datos) lo
+     clasifica el mapa a mano. Reclasificaciones que salieron de la guardia:
      - **Pareja:** `couple/shared-load.ts`, `load.ts`, `invitation-return.tsx`, `intent.ts`, `sensitive-confirmation.tsx`
        y `src/lib/db/couple.ts` (F70-1: los consumen el layout, Inicio, Actividad, Balance, Plan, Metas y Anotar).
      - **Gastos compartidos:** sin fila propia. `src/lib/db/shared-expenses.ts`, `couple-reads.ts` y `reclassify.ts`,
@@ -184,6 +189,9 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
        `types.ts` (Inicio y Actividad), `goal-sheet-frame.tsx`, `src/domain/goals/**`, `src/lib/db/goals.ts`,
        `goal-usage.ts` y `metrics.ts`, y las migraciones `*_goal*`.
      - **Exportación:** `src/lib/db/export.ts` (la ruta de API) y `planning.ts`, que importa.
+     - **Errores de datos (F70-4):** `src/lib/db/errors.ts`. No es como la copy: tiene lógica (`mapDbError`, `detailOf`,
+       `DbError`: 401, red, conflictos) que decide el estado de pantallas de todas las áreas, como la redirección a
+       iniciar sesión de `goals/load.ts` y `couple/shared-load.ts`. Corre todo, también junto a un área.
 
   3. **Neutros** (no añaden nada; si el PR solo toca neutros, el paso de axe con sesión se salta y el resumen lo dice):
      `**/*.md`, `docs/**`, `specs/**`, `tests/e2e/**`, `tests/evidence/**`, las pruebas de Vitest (`*.test.ts(x)`, incluidas
@@ -193,15 +201,14 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
      etapa. **Pero si `es.ts` cambia y la selección queda vacía** (el PR solo toca la copy, o la copy y otros neutros),
      **corre todo**: es el caso más arriesgado para los nombres accesibles (revisión del gestor del PR #70). Con un área,
      `es.ts` sigue siendo neutro y solo corre el área. Cualquier otro archivo de `src/lib/copy/` es compartido.
-     **`src/lib/db/errors.ts`, mismo trato** (decisión del gestor del 11 de noviembre de 2026; casi todo PR añade códigos
-     `JT`): neutro junto a un área; si es lo único no neutro del PR, solo o con `es.ts` y neutros, corre todo.
+     `src/lib/db/errors.ts` **no** tiene este trato: es compartido (F70-4, regla 2, `SHARED`).
   4. **Todos, con el registro completo**, con lo compartido o lo desconocido: `src/components/**`, el shell y el resto de
      `src/app/` (layouts, raíz, `globals.css`, `not-found`, API), `src/features/expenses/annotate-sheet.tsx` y el resto de
      `src/features/expenses/` (Anotar lo auditan `routes`, `couple-shared` y `goal-expense`), `src/features/home/**` (Inicio
      aloja los módulos de metas, Balance y gasto con meta), `src/features/activity/**`, `src/features/shared/**` (`use-write`, `write-result` y `write-unknown`, «Comprobar estado», y
      `shared-row` y `shared-format` los usan las hojas y pantallas de todas las áreas; revisión del gestor del PR #70),
      `src/lib/` fuera de lo anterior
-     (incluido `src/lib/db/types.ts`), `tests/support/**`, `tests/a11y/route-registry.ts`,
+     (incluidos `src/lib/db/errors.ts` y `types.ts`), `tests/support/**`, `tests/a11y/route-registry.ts`,
      `playwright.config.ts`, `package.json`, el lockfile, `.github/`, `scripts/`, una migración que no es de metas ni de
      presupuestos, cualquier ruta sin clasificar, una base que no se puede calcular o un fallo del script.
 - **Archivos que todavía no existen:** solo se pasan a Playwright los que existen en el commit; uno previsto que falta se
@@ -210,7 +217,7 @@ corre por área, con el mismo criterio que el selector de specs E2E. Maestro §1
 - **Qué corre un PR típico** (con `es.ts`, sin compartido): **metas** (pantalla, inmersiva y hojas) → `goals`,
   `goal-expense` y el registro de `metas`; **plan** → `plan` y el registro de `presupuestos`; **análisis** (pantalla y
   métricas del dominio) → `goals`, `goal-expense`, `plan` y el registro de `metas` y `presupuestos`. Si además toca un
-  compartido (`src/components/`, Inicio, Actividad, Anotar, la exportación o cualquier archivo de `SHARED`,
+  compartido (`src/components/`, Inicio, Actividad, Anotar, `errors.ts`, la exportación o cualquier archivo de `SHARED`,
   como la capa de datos o el dominio de metas), todo.
 - **Prueba:** `tests/a11y-select.test.ts`, con fixtures por área (y los tres PR típicos), compartido, desconocido, sin base
   y solo documentación; los tres hallazgos de la revisión del PR #70; la guardia de imports; el mapa de rutas (una ruta sin

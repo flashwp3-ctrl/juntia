@@ -324,7 +324,9 @@ ligero corren, con el mismo criterio que el selector de specs E2E:
   script → todos, con el registro completo:** `src/components/`, el shell y el resto
   de `src/app/`, `globals.css`, `src/features/shared/` («Comprobar estado» y filas
   compartidas de todas las áreas), Anotar (`annotate-sheet.tsx`), Inicio y Actividad,
-  que auditan varios archivos, `tests/support/**`,
+  que auditan varios archivos, `src/lib/db/errors.ts` (su lógica de 401, red y
+  conflictos decide el estado de pantallas de todas las áreas; no es neutro como la
+  copy), `tests/support/**`,
   `tests/a11y/route-registry.ts`, `scripts/`, el workflow y cualquier ruta sin
   clasificar.
 - **Neutros** (no añaden nada; si solo hay neutros, el paso de axe con sesión se

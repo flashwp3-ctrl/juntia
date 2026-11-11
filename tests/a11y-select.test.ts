@@ -6,11 +6,11 @@
 // `--list`; y que el mapa cubra todos los tests/a11y/**/*.a11y.ts. Si un PR real no da lo que su fixture espera, se corrige el
 // mapa del selector o el fixture, nunca a mano en el workflow.
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { changedFiles, classify, FILES, ROUTE_AREAS, ROUTES_FILE, selectA11y, summary } from "../scripts/a11y-select.mjs";
-import { importers, importSpecifiers, resolveImport, sourceFiles } from "./support/import-graph.mjs";
+import { importers, importSpecifiers, resolveImport, sourceFiles, unfollowableImports } from "./support/import-graph.mjs";
 import { registry, ROUTE_AREAS as REGISTRY_AREAS, routeArea, routeAreaFilter } from "./a11y/route-registry";
 
 type Selection = { files: string[]; run: string[]; missing: string[]; routeAreas: string[] | null; skip: boolean; all: boolean; reasons: string[] };
@@ -67,8 +67,8 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
     ["el shell es compartido", ["src/app/(app)/layout.tsx"], ALL, null],
     ["globals.css es compartido", ["src/app/globals.css"], ALL, null],
     ["otro archivo de src/lib/copy/ es compartido", ["src/lib/copy/en.ts"], ALL, null],
-    // Decisión del gestor (11 nov 2026): errors.ts, mismo trato que es.ts.
-    ["errors.ts con un área: solo el área", [...PLAN_PR, "src/lib/db/errors.ts"], a("routes", "plan"), ["presupuestos"]],
+    // F70-4: errors.ts tiene lógica (401, red, conflictos) que decide el estado de pantallas de todas las áreas: compartido.
+    ["errors.ts con un área: todos", [...PLAN_PR, "src/lib/db/errors.ts"], ALL, null],
     ["solo errors.ts: todos", ["src/lib/db/errors.ts"], ALL, null],
     ["errors.ts con es.ts y neutros: todos", ["src/lib/db/errors.ts", "src/lib/copy/es.ts", "docs/TESTING.md"], ALL, null],
     ["tests/support/ es compartido", ["tests/support/seed.ts"], ALL, null],
@@ -164,6 +164,34 @@ describe("guardia de imports del mapa de áreas (F70)", () => {
       }
     }
     expect(violations).toEqual([]);
+  });
+
+  // F70-4: lo que la guardia no puede seguir falla en vez de ignorarse.
+  it("ningún archivo de src/ tiene un import() o require() con ruta calculada ni un import local que no se resuelva", () => {
+    const files = (sourceFiles("src") as string[]).filter((path) => !/\.test\.tsx?$/.test(path));
+    expect(files.flatMap((file) => unfollowableImports(file, readFileSync(file, "utf8")) as string[])).toEqual([]);
+  });
+
+  it("el parser marca import() y require() calculados y los locales que no se resuelven, y deja pasar los literales", () => {
+    const from = "src/features/couple/load.ts";
+    const problems = unfollowableImports(from, [
+      'const a = await import(`./${name}`);',
+      "const b = await import(path);",
+      "const c = require(modulePath);",
+      'const d = require("./no-existe");',
+      'import { e } from "@/features/no-existe";',
+      'const ok1 = await import("./shared-load");',
+      'const ok2 = require("node:fs");',
+      'import { ok3 } from "@/features/couple/shared-load";',
+      'import { ok4 } from "react";',
+    ].join("\n")) as string[];
+    expect(problems).toHaveLength(5);
+    expect(problems.every((problem) => problem.includes("clasifícalo a mano o usa una ruta literal"))).toBe(true);
+    expect(problems.join("\n")).toMatch(/import\(\) con ruta calculada \(`\.\/\$\{name\}`\)/);
+    expect(problems.join("\n")).toMatch(/import\(\) con ruta calculada \(path\)/);
+    expect(problems.join("\n")).toMatch(/require\(\) con ruta calculada \(modulePath\)/);
+    expect(problems.join("\n")).toContain('require("./no-existe") no se resuelve');
+    expect(problems.join("\n")).toContain('import de "@/features/no-existe" no se resuelve');
   });
 
   it("el parser sigue los alias @/, las rutas relativas y los imports dinámicos, y salta los de solo tipos", () => {
