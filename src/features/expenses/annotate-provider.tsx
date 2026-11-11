@@ -11,7 +11,7 @@
 // volver a la pestaña se pide la página otra vez para traer lo que anotó la otra persona (Q16).
 import { AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Toast, type ToastAction, type ToastTone } from "@/components/ui/toast";
 import { todayInBogota } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
@@ -28,6 +28,7 @@ import { lastFromSaved } from "./split-state";
 import { TIMED_OUT, withTimeout } from "@/features/shared/use-write";
 import type { WriteAction, WriteError, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
 import type { GoalActions, SavedEntry } from "@/features/goals/types";
+import type { GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
 
 // Rendimiento (auditoría de Impeccable de la 001): la hoja, Radix y su animación no viajan con cada ruta. Se precargan
 // cuando el navegador queda libre y se montan con la primera apertura; desde ahí siguen montados para conservar la
@@ -44,8 +45,15 @@ function isEditable(target: EventTarget | null) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
-/** Cuadros que se espera a que la fila nueva aparezca antes de llevar a Actividad (~1 s a 60 Hz). */
-const REVEAL_FRAMES = 60;
+/**
+ * Cuadros que se sigue mirando cuando la lista ya trae el id pero la fila no se ve, por si se pinta en el cuadro siguiente.
+ * Revisión del PR #69 (F69-5): E5 ya no decide por un número de cuadros desde el guardado ni por la llegada de un árbol
+ * cualquiera, sino por los ids que el servidor entrega a las listas montadas (traza en juntia-dev: la acción responde a
+ * ~0,4 s y el árbol con la fila llega a ~1,4–1,5 s).
+ */
+const SETTLE_FRAMES = 3;
+/** Tope de seguridad si la revalidación no llega nunca: entonces se pide otra y se lleva a Actividad, como antes. */
+const REVEAL_SAFETY_MS = 10_000;
 /** Visible para la persona: ni ella ni ningún antepasado con `display: none` (copias ocultas de rutas, `xl:hidden`). */
 function isShown(node: HTMLElement) {
   for (let current: HTMLElement | null = node; current; current = current.parentElement) {
@@ -57,7 +65,8 @@ function isShown(node: HTMLElement) {
 export type SheetMode = { kind: "create" } | { kind: "edit"; transaction: SavedTransaction; onReload: () => void }
   | { kind: "editShared"; expense: SavedShared; onReload: () => void };
 /** Lo que E5 enseña resaltado: el id, su fecha (para llevar a Actividad del mes) y el contexto donde vive (FR-040). */
-type Reveal = { id: string; transactionDate: string };
+/** F69-6: `context`, el de la escritura (Yo o Nosotros), que puede no ser el de la página desde la que se anotó. */
+type Reveal = { id: string; transactionDate: string; context: ContextChoice };
 /** `undo`: el id del gasto cuyo «Deshacer» ofrece el aviso (compartido o Mover a Pareja; F57-8/F57-9: uno a la vez). */
 type ToastState = { id: number; tone: ToastTone; message: string; action?: ToastAction; undo?: string };
 type Notice = Omit<ToastState, "id">;
@@ -83,16 +92,21 @@ type AnnotateState = {
   offerSettlementUndo: (saved: SavedSettlement) => void;
   /** 004 PR C (T047; FR-042, FR-095): el aviso de un aporte o un retiro con «Deshacer» de 6 s, con la misma regla de un deshacer a la vez. */
   offerGoalUndo: (offer: { kind: "contribution" | "withdrawal"; saved: SavedEntry; message: string }) => void;
+  /** 004 PR D (T060–T063): las escrituras del gasto con meta (B1–B7, quitar el uso), o `null` sin ellas. */
+  goalFunding: GoalFundingActions | null;
 };
 
 const AnnotateContext = createContext<AnnotateState | null>(null);
 const NO_ROWS: readonly PendingRow[] = [];
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
 type ListScope = {
-  /** Una lista monta (o deja de montar) el mes que muestra: sirve para saber si una fila confirmada aún le corresponde a alguien. */
-  enter: (month: string) => () => void;
+  /**
+   * Una lista monta (o deja de montar) el mes que muestra: sirve para saber si una fila confirmada aún le corresponde a alguien.
+   * F69-6: `key` identifica la lista y `contexts`, de qué contextos pinta movimientos (Inicio en Yo con pareja: los dos).
+   */
+  enter: (key: string, month: string, contexts: readonly ContextChoice[]) => () => void;
   /** Una lista informa de los ids reales que trae; `revalidated`: llegó por una revalidación (filas nuevas del servidor). */
-  report: (month: string, ids: readonly string[], revalidated: boolean) => void;
+  report: (key: string, month: string, ids: readonly string[], revalidated: boolean) => void;
 };
 const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_ROWS, scope: { enter: () => () => {}, report: () => {} } });
 /** Plazo entre peticiones de revalidación mientras una fila confirmada espera a la real (F51-12). */
@@ -110,11 +124,14 @@ type AnnotateProviderProps = {
   sharedActions?: SharedActions;
   /** 004 PR C (T047): las escrituras de metas, para el «Deshacer» de aportes y retiros. */
   goalActions?: GoalActions;
+  /** 004 PR D: el gasto con meta; por defecto, el que viaja con las de metas (`goalActions.funding`). */
+  goalFunding?: GoalFundingActions;
   /** El contexto de la app; por defecto, el del selector (ContextProvider). Las pruebas lo fijan aquí. */
   context?: ContextChoice;
 };
 
-export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, goalActions, context }: AnnotateProviderProps) {
+export function AnnotateProvider({ children, actions, today, couple = null, sharedActions, goalActions, goalFunding, context }: AnnotateProviderProps) {
+  const funding = goalFunding ?? goalActions?.funding ?? null;
   const appContext = useOptionalContextChoice();
   const currentContext: ContextChoice = context ?? appContext?.value ?? "me";
   // Q5, decisión 1: lo último que usó esta persona en Nosotros. Nace de lo que leyó el layout y se actualiza en memoria al
@@ -130,6 +147,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const [sessionKey, setSessionKey] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
   const highlightId = highlight && highlight.context === currentContext ? highlight.id : null;
+  const pageContextRef = useRef(currentContext);
+  useEffect(() => { pageContextRef.current = currentContext; }, [currentContext]);
   const setHighlightId = useCallback((next: string | null | ((current: string | null) => string | null), where: ContextChoice = "me") => {
     setHighlight((current) => {
       const value = typeof next === "function" ? next(current?.id ?? null) : next;
@@ -208,16 +227,22 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // porque ninguna la mostraba; (c) tope de 3 revalidaciones pedidas: se retira la temporal, el servidor ya confirmó. Nunca hay
   // revalidaciones periódicas sin límite.
   const mountedMonths = useRef(new Map<string, number>());
+  // F69-5: los ids que el servidor entregó a cada lista montada (todos los del mes, aunque Inicio solo pinte 5). E5 sabe por
+  // aquí si el árbol que llegó ya incluye ESTE gasto; un árbol ajeno sin él nunca dispara la navegación. F69-6: por lista, con
+  // su mes y sus contextos, en lugar de la unión por mes: un id que trae una lista de Nosotros no cuenta para una de Yo.
+  const lists = useRef(new Map<string, { month: string; contexts: readonly ContextChoice[]; ids: ReadonlySet<string> }>());
   const scope = useMemo<ListScope>(() => ({
-    enter: (month) => {
+    enter: (key, month, contexts) => {
       mountedMonths.current.set(month, (mountedMonths.current.get(month) ?? 0) + 1);
+      lists.current.set(key, { month, contexts, ids: lists.current.get(key)?.ids ?? new Set() });
       return () => {
+        lists.current.delete(key);
         const left = (mountedMonths.current.get(month) ?? 1) - 1;
         if (left <= 0) mountedMonths.current.delete(month);
         else mountedMonths.current.set(month, left);
       };
     },
-    report: (_month, ids, revalidated) => setFlights((current) => {
+    report: (key, month, ids, revalidated) => { const list = lists.current.get(key); if (list && list.month === month) lists.current.set(key, { ...list, ids: new Set(ids) }); setFlights((current) => {
       const next = current.filter((flight) => {
         if (flight.state !== "confirmed" || !flight.savedId) return true;
         if (ids.includes(flight.savedId)) return false; // (a)
@@ -225,7 +250,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
         return mountedMonths.current.has(flight.transaction.transactionDate.slice(0, 7)); // (b): fuera del alcance de las listas montadas
       });
       return next.length === current.length ? current : next;
-    }),
+    }); },
   }), []);
   const pendingContext = useMemo(() => ({ rows: pendingRows, scope }), [pendingRows, scope]);
   const flightsRef = useRef(flights);
@@ -273,13 +298,17 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     try {
       result = await actionsRef.current.voidTransaction({ idempotencyKey, transactionId: transaction.id, expectedVersion: transaction.version, reason: "undo" });
     } catch {
-      result = { ok: false as const, error: "network" as const };
+      result = { status: "unknown" as const };
     }
     undoing.current.delete(transaction.id);
     if (generation !== toastGeneration.current) return;
-    if (result.ok) {
+    // 004 PR D (F69-1): la anulación privada responde ok/rejected/unknown. Un desconocido sigue ofreciendo «Reintentar» con la
+    // MISMA clave (idempotente), como antes con un fallo de red.
+    if (result.status === "ok") {
       setHighlightId((current) => (current === transaction.id ? null : current));
       notify({ tone: "success", message: copy.annotate.undone[transaction.type] });
+    } else if (result.status === "unknown") {
+      notify({ tone: "error", message: copy.annotate.undoFailed, action: { label: copy.annotate.retry, onAction: () => void undo(transaction, idempotencyKey) } });
     } else if (result.error === "versionConflict") {
       notify({ tone: "error", message: copy.annotate.undoChanged });
     } else if (result.error === "alreadyDeleted" || result.error === "notFound") {
@@ -300,7 +329,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const sharedRef = useRef(sharedActions);
   useEffect(() => { sharedRef.current = sharedActions; });
   type UndoIntent = {
-    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement" | "void_goal_entry"; id: string; idempotencyKey: string;
+    action: "void_shared_expense" | "undo_reclassify_to_shared" | "void_settlement" | "void_goal_entry" | "void_transaction"; id: string; idempotencyKey: string;
     send: () => Promise<WriteOutcome<unknown>>; done: string; rejected: (error: WriteError) => string; onOk: () => void;
     /** 004 PR C: «Comprobar estado» propio (las metas existen también sin pareja, sin las escrituras compartidas). */
     check?: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<unknown>>;
@@ -412,6 +441,26 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     notify({ tone: "success", message, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalEntry(kind, saved, key) } });
   }, [notify, undoGoalEntry]);
 
+  // 004 PR D (T061, T063; FR-059, FR-095): el «Deshacer» de 6 s de un gasto con meta anula en una operación el gasto, sus usos
+  // y la solicitud pendiente, con la versión que devolvió el registro; misma máquina y misma regla de un deshacer a la vez.
+  const fundingRef = useRef(funding);
+  useEffect(() => { fundingRef.current = funding; });
+  const undoGoalExpense = useCallback((saved: SavedGoalExpense, idempotencyKey: string) => runUndo({
+    action: saved.context === "us" ? "void_shared_expense" : "void_transaction", id: saved.transaction.id, idempotencyKey, done: copy.annotate.undone.expense,
+    send: () => fundingRef.current ? fundingRef.current.undoExpense({ idempotencyKey, context: saved.context, transactionId: saved.transaction.id, expectedVersion: saved.transaction.version }) : Promise.resolve({ status: "unknown" as const }),
+    check: (input) => fundingRef.current ? fundingRef.current.check(input) : Promise.resolve({ state: "error" as const }),
+    onOk: () => { setHighlightId((current) => (current === saved.transaction.id ? null : current)); router.refresh(); },
+    rejected: (error) => (error === "goalUndoNotAvailable" ? copy.goals.errors.undoNotAvailable : error === "undoNotAvailable" ? copy.move.errors.undoNotAvailable : error === "versionConflict" ? copy.annotate.undoChanged
+      : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected),
+  }, "send"), [runUndo, router, setHighlightId]);
+  const onGoalExpenseSaved = useCallback((saved: SavedGoalExpense, message: string) => {
+    close();
+    setHighlightId(saved.transaction.id, saved.context);
+    setReveal({ id: saved.transaction.id, transactionDate: saved.transaction.transactionDate, context: saved.context });
+    const key = newIdempotencyKey();
+    notify({ tone: "success", message, undo: saved.transaction.id, action: { label: copy.annotate.undo, onAction: () => void undoGoalExpense(saved, key) } });
+  }, [close, notify, undoGoalExpense, setHighlightId]);
+
   const onSaved = useCallback((saved: SavedTransaction, kind: SheetMode["kind"]) => {
     close();
     if (kind === "edit") {
@@ -419,7 +468,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "me");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, context: "me" });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved[saved.type], action: { label: copy.annotate.undo, onAction: () => void undo(saved, key) } });
   }, [close, notify, undo, setHighlightId]);
@@ -434,7 +483,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
       return;
     }
     setHighlightId(saved.id, "us");
-    setReveal({ id: saved.id, transactionDate: saved.transactionDate });
+    setReveal({ id: saved.id, transactionDate: saved.transactionDate, context: "us" });
     const key = newIdempotencyKey();
     notify({ tone: "success", message: copy.annotate.saved.expense, undo: saved.id, action: { label: copy.annotate.undo, onAction: () => void undoShared(saved, key) } });
   }, [close, couple, notify, undoShared, setHighlightId]);
@@ -466,25 +515,51 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   // F45-2: E5 resalta la fila nueva «en la misma pantalla» (MOTION_SYSTEM.md §2). Si la pantalla no la enseña (otro
   // mes, fuera de los 5 recientes de Inicio, o una ruta sin lista), se lleva a la persona a Actividad del mes del
   // movimiento; el aviso y el resaltado viven en el proveedor y siguen allí. Si ya la enseña, no se navega. Se mira
-  // durante unos cuadros: la respuesta de la Server Action trae Inicio y Actividad revalidados, y React los aplica en
-  // una transición. No cambia el total del mes en curso ni los 5 recientes.
+  // hasta que llega el árbol revalidado: la respuesta de la Server Action trae Inicio y Actividad revalidados y React los
+  // aplica en una transición, que el proveedor ve como unos `children` nuevos del layout. Si ese árbol ya llegó y la fila no
+  // está, la pantalla no la enseña: se lleva a Actividad (revisión del PR #69). No cambia el total del mes ni los 5 recientes.
   useEffect(() => {
     if (!reveal) return;
-    let frames = 0;
+    let after = 0;
     let handle = 0;
-    const check = () => {
-      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
-      if (row) { row.scrollIntoView?.({ block: "nearest" }); setReveal(null); return; }
-      if (++frames < REVEAL_FRAMES) { handle = requestAnimationFrame(check); return; }
+    const started = performance.now();
+    const month = reveal.transactionDate.slice(0, 7);
+    const leave = () => {
       setReveal(null);
       // F51-12: la fila temporal NO se retira por haberse agotado el plazo: se pide una revalidación (cuenta para el tope) y se
       // sigue esperando.
       askRefreshRef.current();
-      router.push(`/actividad?mes=${reveal.transactionDate.slice(0, 7)}`);
+      router.push(`/actividad?mes=${month}`);
+    };
+    // F69-6: si el gasto es de otro contexto que el de la página (un compartido anotado desde Inicio en Yo, o un privado desde
+    // Nosotros), Actividad de este contexto tampoco lo enseña: E5 termina sin esperar y sin navegar. Queda el aviso de siempre,
+    // «Gasto guardado · Deshacer»; no se cambia el contexto de la página.
+    const end = () => { if (reveal.context === pageContextRef.current) leave(); else setReveal(null); };
+    const check = () => {
+      const page = pageContextRef.current;
+      const row = [...document.querySelectorAll<HTMLElement>(`[data-transaction-id="${reveal.id}"]:not([data-temp])`)].find(isShown);
+      if (row) {
+        row.scrollIntoView?.({ block: "nearest" });
+        // F69-6: la página lo pinta en su contexto (la parte compartida en Inicio de Yo): se resalta ahí.
+        if (reveal.context !== page) setHighlightId(reveal.id, page);
+        setReveal(null);
+        return;
+      }
+      // F69-5 y F69-6. (1) Ninguna lista de esta pantalla es del mes del gasto y pinta su contexto (otro mes, una ruta sin lista
+      // u otro contexto): la fila no puede estar aquí; termina enseguida. (2) Una de esas listas ya trae este id y la fila no
+      // se ve (fuera de los 5 recientes de Inicio): tras unos cuadros, termina. (3) Todavía no lo trae: se espera, aunque
+      // lleguen árboles ajenos, hasta el tope de seguridad; entonces termina. Terminar es ir a Actividad del mes si el gasto es
+      // del contexto de la página; si no, solo dejar de mirar.
+      const candidates = [...lists.current.values()].filter((list) => list.month === month && list.contexts.includes(reveal.context));
+      if (candidates.length === 0) { end(); return; }
+      if (candidates.some((list) => list.ids.has(reveal.id))) {
+        if (++after >= SETTLE_FRAMES) { end(); return; }
+      } else if (performance.now() - started >= REVEAL_SAFETY_MS) { end(); return; }
+      handle = requestAnimationFrame(check);
     };
     handle = requestAnimationFrame(check);
     return () => cancelAnimationFrame(handle);
-  }, [reveal, router]);
+  }, [reveal, router, setHighlightId]);
 
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1));
@@ -504,8 +579,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   }, [openFrom]);
 
   const dismissToast = useCallback((id: number) => setToast((current) => (current?.id === id ? null : current)), []);
-  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo }),
-    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo]);
+  const state = useMemo(() => ({ open, openFrom, openEdit, openEditShared, openMove, couple: coupleForSheet, sharedActions: sharedActions ?? null, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo, goalFunding: funding }),
+    [open, openFrom, openEdit, openEditShared, openMove, coupleForSheet, sharedActions, highlightId, notify, actions, track, offerSettlementUndo, offerGoalUndo, funding]);
   return (
     <AnnotateContext.Provider value={state}>
      <PendingContext.Provider value={pendingContext}>
@@ -527,6 +602,8 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
             sharedActions={sharedActions}
             initialContext={currentContext}
             onSharedSaved={onSharedSaved}
+            goalFunding={funding ?? undefined}
+            onGoalSaved={onGoalExpenseSaved}
             onMove={(transaction) => openMove(transaction, returnFocusTo.current)}
           />
         </Suspense>
@@ -589,15 +666,22 @@ export function usePendingRows(): readonly PendingRow[] {
   return useContext(PendingContext).rows;
 }
 
-/** Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12). */
-export function useListScope(month: string, ids: readonly string[]) {
+/**
+ * Las listas montan su mes y avisan de los ids reales que traen, para retirar la fila temporal que ya no hace falta (F51-12) y
+ * para que E5 sepa si la pantalla puede enseñar el gasto nuevo. F69-6: `contexts`, de qué contextos pinta movimientos la
+ * lista (Actividad e Inicio de Yo: `["me"]`; Inicio de Yo con pareja, que pinta tu parte de lo compartido: `["me", "us"]`;
+ * Nosotros: `["us"]`).
+ */
+export function useListScope(month: string, ids: readonly string[], contexts: readonly ContextChoice[]) {
   const { scope, rows } = useContext(PendingContext);
-  useEffect(() => scope.enter(month), [scope, month]);
+  const key = useId();
+  const contextKey = contexts.join(",");
+  useEffect(() => scope.enter(key, month, contextKey.split(",") as ContextChoice[]), [scope, key, month, contextKey]);
   // Lo que la lista trae cambió (llegó una revalidación): (a) y (b).
-  useEffect(() => scope.report(month, ids, true), [scope, month, ids]);
+  useEffect(() => scope.report(key, month, ids, true), [scope, key, month, ids, contextKey]);
   // Una fila acaba de confirmarse y la lista ya la trae (la real llegó antes que la respuesta): solo (a).
   const confirmed = rows.filter((row) => row.state === "confirmed").map((row) => row.savedId).join(",");
-  useEffect(() => scope.report(month, ids, false), [scope, month, ids, confirmed]);
+  useEffect(() => scope.report(key, month, ids, false), [scope, key, month, ids, confirmed]);
 }
 
 /** PR D: el proveedor, o `null` fuera de él (el detalle de liquidación se pinta también en pruebas sin Anotar). */

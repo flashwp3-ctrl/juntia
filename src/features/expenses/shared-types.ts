@@ -52,7 +52,7 @@ export type MovePreviewBase = {
 export type SharedActions = {
   create: (payload: SharedCreatePayload) => Promise<WriteOutcome<SavedShared>>;
   update: (payload: SharedUpdatePayload) => Promise<WriteOutcome<SavedShared>>;
-  voidShared: (payload: SharedVoidPayload) => Promise<WriteOutcome<{ id: string; version: number }>>;
+  voidShared: (payload: SharedVoidPayload) => Promise<WriteOutcome<{ id: string; version: number; reactivatedGoals?: { goalId: string; name: string; returnedMinor: string }[] }>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada acción devuelve su propio resultado guardado.
   check: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<any>>;
   reclassify?: (payload: ReclassifyPayload) => Promise<WriteOutcome<MoveResult>>;

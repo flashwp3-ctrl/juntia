@@ -13,7 +13,7 @@ import { AccountProvider } from "@/features/account/account-context";
 import { loadAccount } from "@/features/account/load-account";
 import { InvitationReturn } from "@/features/couple/invitation-return";
 import { loadCoupleForShell, partnerOf, personOf } from "@/features/couple/load";
-import { createTransactionAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
+import { createTransactionAction, privateWriteStatusAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
 import { createSharedExpenseAction, previewMoveAction, reclassifyAction, sharedWriteStatusAction, undoReclassifyAction, updateSharedExpenseAction, voidSharedExpenseAction } from "@/features/expenses/shared-actions";
 import { loadCoupleForSheet } from "@/features/couple/shared-load";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
@@ -21,7 +21,8 @@ import { settleAction, voidSettlementAction } from "@/features/balance/actions";
 import { todayInBogota } from "@/domain/transactions";
 import { goalActions } from "@/features/goals/goal-actions";
 
-const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
+// 004 PR D (F69-1): editar y eliminar un privado, con «Comprobar estado».
+const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction, check: privateWriteStatusAction };
 // PR C de la 003 (T045–T050): escrituras de gasto compartido y de Mover a Pareja, con los tres resultados y «Comprobar estado».
 const sharedActions = {
   create: createSharedExpenseAction, update: updateSharedExpenseAction, voidShared: voidSharedExpenseAction, check: sharedWriteStatusAction,

@@ -143,7 +143,105 @@ export const copy = {
     allocation:"Revisa los fondos: deben sumar el uso y estar disponibles por aportante.",
     nothingToRemove:"Este gasto no tiene uso de meta ni solicitud que quitar.",
     versionConflict:"La solicitud cambió. Revisa su estado.",
-  }},
+    // 004 PR D (T060–T064): rechazos que la interfaz dice con su propio texto (contracts/errors.md).
+    insufficient:(name:string,amount:string)=>`${name} tiene ${amount} disponibles en esta meta.`,
+    insufficientOwn:(amount:string)=>`Tienes ${amount} disponibles en esta meta.`,
+    goalClosed:"Esta meta ya no admite usos. Elige otra o paga con dinero del mes.",
+    expenseVoided:"Este gasto ya se eliminó: no hay uso que quitar.",
+    transactionChanged:"Este gasto cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.",
+  },
+    // 004 PR D (T060–T064; 04·11 B1–B7; FundingLedger, ConfirmationBadge y ChangePreview en B3, aprobados en su forma,
+    // decisión 22.3). Copy nuevo para revisión de los fundadores en el PR (T069). Glosario §9 y DEC-R17: un uso de meta
+    // nunca es «un gasto nuevo» ni un ingreso; nunca «te alcanza»; Juntia no mueve dinero.
+    paidWith: { label: "Cómo se pagó", month: "Dinero del mes", goal: "Con una meta" },
+    picker: {
+      title: "Con qué meta", loading: "Cargando metas…", failed: "No pudimos cargar las metas.", retry: "Reintentar",
+      empty: { us: "Todavía no tienen metas compartidas para usar.", me: "Todavía no tienes metas personales para usar." },
+      // Lectura 12 de la spec: una explicación genérica, sin consultar ni pintar ninguna meta personal (FR-085).
+      note: { us: "Las metas personales solo se usan en gastos de Yo.", me: "Las metas compartidas se usan en gastos de Nosotros." },
+      balance: (amount: string) => `Saldo ${amount}`,
+      noFunds: "Sin fondos para usar",
+      option: (name: string, amount: string) => `${name}, saldo ${amount}`,
+    },
+    summary: { open: "Uso de la meta", line: (goal: string, amount: string) => `${goal} · usa ${amount}`, choose: "Elige la meta" },
+    subtitle: (amount: string) => `Gasto de ${amount}`,
+    back: "Volver al gasto",
+    ledger: {
+      usage: "Cuánto se paga con la meta",
+      usageHelp: "No puede ser más que el gasto.",
+      splitTitle: "Reparto del gasto · quién lo asume",
+      splitNote: "Define el balance entre ustedes. No cambia con la meta.",
+      fundsTitle: "Fondos de la meta · de quién son",
+      mine: "Tus fondos", theirs: (name: string) => `Fondos de ${name}`,
+      available: (amount: string) => `Disponible ${amount}`,
+      needsApproval: "Pide aprobación",
+      sum: (sum: string, usage: string) => `Suman ${sum} de ${usage}`,
+      missing: (amount: string) => `Faltan ${amount}`,
+      over: (amount: string) => `Sobran ${amount}`,
+      exceedsExpense: "El uso no puede superar el gasto.",
+      exceedsAvailable: (name: string, amount: string) => `${name} tiene ${amount} disponibles.`,
+      exceedsAvailableMine: (amount: string) => `Tienes ${amount} disponibles.`,
+      when: (name: string) => `Tus fondos se usan al registrar; los de ${name}, solo si aprueba.`,
+      whenMine: "Tus fondos se usan al registrar.",
+    },
+    effect: {
+      title: "Efecto", now: (goal: string) => `${goal} ahora`, ifApproves: (name: string) => `Si ${name} aprueba`,
+      expense: "Gasto del mes", expenseNote: "Es una compra real: cuenta como gasto. La meta solo dice con qué dinero se pagó.",
+      noMove: "Juntia no mueve dinero.",
+      row: (label: string, before: string, after: string) => `${label}: antes ${before}, después ${after}`,
+    },
+    submit: { own: (amount: string) => `Registrar gasto de ${amount}`, ask: (name: string) => `Registrar y pedir a ${name}`, saving: "Registrando…" },
+    saved: { own: (goal: string) => `Gasto registrado con ${goal}`, ask: (name: string) => `Gasto registrado. Falta que ${name} apruebe sus fondos.` },
+    // ConfirmationBadge (decisión 22.3): «NO SE REGISTRÓ» solo con un rechazo confirmado del servidor (lección F47-4).
+    badge: {
+      pending: (name: string) => `PENDIENTE DE ${name.toLocaleUpperCase("es")}`, approved: "APROBADO",
+      rejected: (name: string) => `${name.toLocaleUpperCase("es")} NO APROBÓ`, failed: "NO SE REGISTRÓ", funded: "CON META",
+    },
+    failed: "No se registró el gasto.",
+    request: {
+      region: "Solicitudes de fondos",
+      // B4: quien pide.
+      waiting: (name: string) => `El gasto ya está registrado. Falta solo el uso de los fondos de ${name}.`,
+      asks: (amount: string, name: string, goal: string) => `Pides ${amount} de los aportes de ${name} en ${goal}`,
+      noExpiry: "No vence.",
+      cancel: "Cancelar solicitud", cancelling: "Cancelando…", cancelled: "Solicitud cancelada. El gasto sigue registrado.",
+      // B5: a quien se pide.
+      title: (name: string) => `${name} pide usar tus fondos`,
+      expense: (description: string, amount: string) => `${description} · ${amount}`,
+      split: (mode: string) => `Reparto ${mode}`,
+      used: (name: string, amount: string) => `${name} ya usó ${amount} de sus aportes`,
+      yours: (goal: string, before: string, after: string) => `Tus aportes en ${goal} ${before} → ${after}`,
+      yoursLabel: (goal: string, before: string, after: string) => `Tus aportes en ${goal}: antes ${before}, después ${after}`,
+      rejectNote: "Si rechazas, el gasto sigue registrado y tus aportes no cambian.",
+      approve: (amount: string) => `Aprobar ${amount}`, approving: "Aprobando…", reject: "Rechazar", rejecting: "Rechazando…",
+      approved: (goal: string) => `Aprobaste el uso de tus fondos en ${goal}.`,
+      rejected: "Rechazaste la solicitud. El gasto sigue registrado y tus aportes no cambian.",
+      review: "Revisar",
+      expenseFallback: "Gasto",
+      closedUnconfirmed: "No pudimos confirmar si se guardó. Revisa el estado de la solicitud antes de volver a intentarlo.",
+    },
+    detail: {
+      title: "Pagado con una meta",
+      use: (goal: string, name: string) => `Uso de ${goal} · Aportes de ${name} · no es un gasto nuevo`,
+      rowMeta: (name: string, description: string) => `Aportes de ${name} · ${description}`,
+      pending: (amount: string, name: string) => `${amount} pendientes de ${name}`,
+      approvedNote: (name: string) => `${name} aprobó el uso de sus fondos.`,
+      rejectedNote: (name: string) => `${name} no aprobó. Solo cuentan los fondos ya usados.`,
+    },
+    remove: {
+      action: "Quitar el uso de la meta", title: "¿Quitar el uso de la meta?",
+      description: (goal: string) => `Los fondos vuelven a cada aportante en ${goal}. El gasto sigue registrado, pagado con dinero del mes.`,
+      pendingNote: "La solicitud pendiente también se cancela.",
+      confirm: "Quitar el uso", keep: "Conservar", removing: "Quitando…",
+      done: "Uso quitado",
+    },
+    // La etiqueta de un uso que se quitó, en el historial de la meta y en Actividad.
+    usageRemoved: "USO QUITADO",
+    deleteWarning: (goal: string) => `También se quita el uso de ${goal}: los fondos vuelven a sus aportantes.`,
+    // F64-1, opción (a): anular un gasto pagado con una meta archivada la reactiva sola.
+    reactivated: (goal: string, amount: string) => `La meta ${goal} volvió a estar activa: se devolvieron ${amount}`,
+    limit: { title: "No se puede mover este gasto", description: "Está pagado con una meta personal. Primero quita el uso de la meta; después podrás moverlo a Pareja." },
+  },
   plan: {errors:{notFound:"Este presupuesto no está disponible.",alreadyExists:(name:string)=>`${name} ya creó este presupuesto.`,versionConflict:(name:string)=>`${name} cambió este presupuesto.`,
     // Revisión del gestor del PR #67 (3): cuando el último cambio es de quien mira (otra pestaña u otro dispositivo).
     versionConflictMe:"Cambiaste este presupuesto en otro lugar.",alreadyExistsMe:"Ya creaste este presupuesto en otro lugar."},form:{errors:{limit:"Elige una categoría de gasto y un límite entre $1 y $999.999.999."}},
@@ -327,7 +425,9 @@ export const copy = {
   // nuevo para revisión de los fundadores en el PR; los textos de los comps se copian tal cual.
   shared: {
     errors: {
-      versionConflict: (name: string) => `${name} cambió este gasto antes. Recárgalo para ver lo último.`, alreadyDeleted: (name: string) => `${name} ya lo eliminó.`,
+      // F69-2 (revisión del PR #69): neutrales, como F68-1. La lectura no dice quién cambió o eliminó el gasto (puede ser la
+      // pareja u otra pestaña de quien mira): no se atribuye. Para aprobación de los fundadores en T069.
+      versionConflict: "Este gasto cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.", alreadyDeleted: "Este gasto ya se eliminó.",
       notActive: "Necesitas una pareja activa para anotar en Nosotros.",
     },
     context: "Contexto del gasto",

@@ -24,7 +24,7 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
   const people = readable ? await goalPeople() : [];
   const loaded = readable ? await loadGoalDetail(id, context, people, `/metas/${id}`) : null;
   const view = !loaded ? null : !loaded.ok ? <LoadError /> : loaded.value ? (
-    <GoalImmersive goal={loaded.value.goal} members={loaded.value.members} entries={loaded.value.entries} people={people} today={now} context={context!} actions={goalActions} />
+    <GoalImmersive goal={loaded.value.goal} members={loaded.value.members} entries={loaded.value.entries} people={people} today={now} context={context!} actions={goalActions} requests={loaded.value.requests} />
   ) : (
     <ExitState icon="flag-banner" headingLevel={1} title={copy.goals.immersive.notFound.title} description={copy.goals.immersive.notFound.description}
       actions={<Link href="/metas" className={exitLinkClass}>{copy.goals.immersive.back}</Link>} />

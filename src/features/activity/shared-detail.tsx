@@ -12,6 +12,7 @@ import { initialOf } from "@/domain/account";
 import { formatMoney } from "@/domain/money";
 import { SharedTransactionActions } from "@/features/expenses/shared-transaction-actions";
 import { toSavedShared } from "@/features/expenses/shared-payload";
+import { ExpenseFundingDetail } from "@/features/expenses/goal-funding/funding-context";
 import type { CoupleMemberView } from "@/features/home/couple-home-view";
 import { memberName, rowMode } from "@/features/shared/shared-format";
 import { copy } from "@/lib/copy/es";
@@ -79,6 +80,8 @@ export function SharedDetail({ expense, members, closeHref }: { expense: SharedT
         <p>{copy.shared.detail.notedBy(memberName(members, expense.createdBy), payer?.name ?? "")}</p>
         {edited ? <p>{copy.shared.detail.editedBy(memberName(members, expense.updatedBy!), instantInBogota(expense.updatedAt))}</p> : null}
       </div>
+      {/* 004 PR D (T062–T064): el uso de la meta, la solicitud (B4–B7) y «Quitar el uso de la meta». */}
+      <ExpenseFundingDetail transactionId={expense.id} version={expense.version} />
       <SharedTransactionActions expense={toSavedShared(expense)} backHref={closeHref} />
     </article>
   );

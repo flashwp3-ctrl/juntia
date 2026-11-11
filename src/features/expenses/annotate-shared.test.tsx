@@ -37,8 +37,8 @@ const savedPrivate = (): SavedTransaction => ({ id: "7d1b2a52-35e8-4c4c-9e43-9b7
 function privateActions(): ExpenseActions {
   return {
     create: vi.fn<ExpenseActions["create"]>(async () => ({ ok: true, value: savedPrivate() })),
-    update: vi.fn<ExpenseActions["update"]>(async () => ({ ok: true, value: savedPrivate() })),
-    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ ok: true, value: { id: savedPrivate().id, version: 2 } })),
+    update: vi.fn<ExpenseActions["update"]>(async () => ({ status: "ok", value: savedPrivate() })),
+    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ status: "ok", value: { id: savedPrivate().id, version: 2 } })),
   };
 }
 function sharedActions(overrides: Partial<SharedActions> = {}): SharedActions {

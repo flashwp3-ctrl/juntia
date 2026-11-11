@@ -3,6 +3,7 @@
 // Estas dos piezas las pintan: arriba de «Últimos movimientos» y, en el primer gasto, en lugar del estado vacío. El gasto del
 // mes y el desglose no las cuentan: esperan a la revalidación, que es la única que sabe si el servidor escribió.
 import type { ReactNode } from "react";
+import type { ContextChoice } from "@/lib/context-preference";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { monthKey } from "@/domain/transactions";
 import { useHighlightId, useListScope, usePendingRows } from "@/features/expenses/annotate-provider";
@@ -44,7 +45,7 @@ export function HomeEmpty({ month, today, empty }: { month: string; today: strin
 }
 
 /** Inicio monta su mes y avisa de los ids reales que trae (F51-12). No pinta nada: vive en los dos estados de Inicio (con y sin movimientos). */
-export function HomeScope({ month, knownIds }: { month: string; knownIds: readonly string[] }) {
-  useListScope(month, knownIds);
+export function HomeScope({ month, knownIds, contexts }: { month: string; knownIds: readonly string[]; contexts: readonly ContextChoice[] }) {
+  useListScope(month, knownIds, contexts);
   return null;
 }

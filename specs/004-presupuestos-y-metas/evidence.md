@@ -1002,3 +1002,237 @@ Merge de `origin/main`, sin rebase, en el mismo push que las correcciones de la 
 - Corridas:
   - `vitest --project components src/features/goals`: **81/81**, 4 archivos.
   - `PORT=3500 npm run verify`: **exit 0, 68,47 s**. Dominio **84/84**; componentes **839 pasan / 2 omisiones previstas**, 64 archivos; typecheck y lint verdes.
+
+---
+
+# Evidencia · 004 · PR D · Gasto con meta y confirmaciones
+
+Rama `claude/004-d-goal-expense-d92653`, sobre `main` en `7b42b3a` (PR A, B y C fusionados). Tareas T057–T066 y T059a, más el encargo del fundador del selector de tipos de meta; T067–T069 son humanas. Todo se ejecutó en local o contra `juntia-dev` con los scripts `:dev`, el guardia y el lock (puerto 3400); **no es evidencia de CI** (ADR-011 §9.8) y no se lanzó ningún run. Ninguna migración.
+
+## T057–T059 · pruebas escritas primero (commit `24c2e78`)
+
+- Componentes: `src/features/expenses/goal-funding/goal-funding.test.tsx` (31 casos): «Dinero del mes» por defecto y la ruta mínima; B1 pide solo las metas del contexto de la hoja (en Nosotros `{ context: "us" }` y ninguna personal, ni deshabilitada; cambiar la hoja a Nosotros vuelve a pedir y olvida la elección; un fallo de carga no se presenta como «no hay metas»); FundingLedger (propuesta 1.619.048 / 1.380.952 con mayor residuo, «Faltan $19.048», «Sobran $80.952», topes por aportante, uso ≤ gasto, Guardar bloqueado); B3 con «Japón ahora $11.340.000 → $9.720.000» y «Si Tomás aprueba $9.720.000 → $8.340.000»; la carga que viaja (solo meta, fondos propios y pedidos); Yo sin solicitud; ConfirmationBadge en sus cinco estados y «NO SE REGISTRÓ» solo con rechazo confirmado (con `unknown`: «Reintentar» y «Comprobar estado», campos bloqueados); B4 («No vence», «Cancelar solicitud»), B5 («Tus aportes en Japón $5.220.000 → $3.840.000», reparto, lo usado por Sara), B7, aportes cambiados (JT204 con el disponible) y versión vieja bloqueada hasta «Revisar» sin atribución; «Quitar el uso» con la versión del gasto, sobre un gasto anulado con su mensaje y «USO QUITADO» en el historial; la LimitNote; la confirmación de eliminar con el aviso del uso; la reactivación de F64-1; y el «Deshacer» de un gasto con meta.
+- Spec E2E 4 (`tests/e2e/goals.e2e.ts`, +1 caso): dos sesiones con el dataset dorado (Sara pide 1.380.000 a Tomás; Tomás aprueba; una segunda solicitud, sembrada por la función real, la rechaza; los estados se ven en las dos sesiones al navegar) y la privacidad de B1: HTML y RSC de Inicio en Nosotros y la **respuesta de la Server Action de B1** sin la meta personal, con control positivo en Yo (la captura sí ve «Bicicleta de ruta» cuando viaja) y control positivo en Nosotros (la respuesta trae Japón). B1 no es una ruta: sus metas llegan por una Server Action al elegir «Con una meta», por eso se inspecciona esa respuesta (`route.fetch()`, como `tests/support/rsc-capture.ts`, que no se tocó).
+- A11y: `tests/a11y/goal-expense.a11y.ts`, un caso ligero con los dos temas en el mismo contexto (B1–B3, B4, B7, B5, la LimitNote y la confirmación de quitar el uso; 390 px) y un caso `@sweep` (siete anchos, 200 % y 44 px).
+
+## T059a · rojo contra `juntia-dev`
+
+- Componentes (local): `npx vitest run --project=components src/features/expenses/goal-funding/` → **1 archivo falla, sin pruebas cargadas**: los módulos de `goal-funding/` no existían.
+- E2E y axe: como en el PR C, `next build` hace typecheck de todo el repo y la prueba de componentes refería módulos inexistentes, así que se apartó **temporalmente** (sin commit) y se restauró después. `npm run e2e:dev -- tests/e2e/goals.e2e.ts tests/a11y/goal-expense.a11y.ts tests/a11y/goals.a11y.ts --grep "gasto con meta|Gasto con meta|Metas · axe ligero"`: build **pasó (36,37 s)**; E2E **1 falla** (`getByRole('radiogroup', { name: 'Cómo se pagó' })` no existe; la siembra del dataset dorado pasó); axe **falla** el caso nuevo por lo mismo. Total 324,47 s, exit 1.
+- Selector de tipos (con el código viejo restaurado solo para esta corrida): `npm run e2e:dev -- tests/a11y/goals.a11y.ts --grep "Metas · axe ligero"` → **2 fallan** (claro y oscuro), y solo a 1440 px: `tipos de meta por fila` esperado `[4, 3]`, recibido `[7]`; `etiquetas de tipo cortadas` recibido `["Emergencias"]`. A 390 px ya iba 4 + 3. Es exactamente el problema que reportó el fundador.
+
+## T060–T064 · implementación (commits `d00e2d4`, `629782b`)
+
+- `src/features/expenses/goal-funding/`: Server Actions (`loadFundingGoalsAction`, `createExpenseWithGoalAction`, aprobar, rechazar, cancelar, quitar el uso, el deshacer y «Comprobar estado» con `write_status`), FundingLedger, B1 (`goal-picker.tsx`), B3 (`funding-effect.tsx`), ConfirmationBadge, la tarjeta de solicitud, «Quitar el uso» con la LimitNote y el contexto de financiación de Actividad. Lecturas en `src/features/goals/funding-load.ts` (`expense_goal_funding`, `usage_requests`, `goal_member_balances`; en Nosotros solo metas compartidas) y `src/lib/db/` (`listGoalsByScope`, `expenseGoalFundingFor`, `fundedSharedExpenses`).
+- Las escrituras del gasto con meta viajan en `goalActions.funding`: el layout no cambia.
+- La anulación (privada y compartida) devuelve `reactivatedGoals`; eliminar y quitar el uso dicen «La meta {nombre} volvió a estar activa: se devolvieron $X».
+- Corrección de paso: las notas de «Apartado para metas» de Inicio (PR C) iban en gris sobre el verde de ahorro (4,38:1); axe del caso nuevo lo detectó y pasan a tinta.
+- Encargo del fundador (commit propio `d00e2d4`): el selector de tipos de la hoja de meta va en 4 columnas en todos los anchos (4 + 3), con etiquetas que pueden partir línea y nunca se cortan; los siete tipos aprobados, sin íconos ni tipos nuevos.
+
+## T065 · iteración dirigida contra `juntia-dev`
+
+| Corrida | Resultado |
+| --- | --- |
+| 1.ª: E2E nueva + `goal-expense.a11y.ts` + `goals.a11y.ts` ligero | E2E: todo el recorrido pasa salvo la última aserción (`getByText` no exacto encontraba también la nota «Tomás no aprobó…»; se hace exacta). `goals.a11y.ts` **2/2 pasan** (el selector 4 + 3 ya en verde a 390 y 1440). `goal-expense.a11y.ts` falla: `color-contrast` en la nota de Inicio (arriba) |
+| 2.ª: E2E nueva + `goal-expense.a11y.ts` | E2E **pasa, 28,6 s**. Axe: `color-contrast` del subtítulo de la meta elegida en B1 (gris sobre verde) y `aria-prohibited-attr` (un `aria-label` en un `<p>` de B5). Se corrigen: tinta en la elegida y texto solo para lectores de pantalla |
+| 3.ª: `goal-expense.a11y.ts` | **Pasa, 19,1 s**; 0 violaciones serias o críticas en los 12 estados (6 × 2 temas) |
+
+## T066 · capturas e Impeccable
+
+- 54 capturas a **390 y 1440 en claro y oscuro** en `specs/004-presupuestos-y-metas/evidence/pr-d/capturas/`, con un script temporal no versionado contra `juntia-dev`: «Cómo se pagó», B1, B2 y B3, B2 con «Faltan» y Guardar bloqueado, B4 en Actividad con CON META, B4/B6/B7 en el detalle, B5 en Inicio de Tomás y en la meta, la LimitNote con «Quitar el uso», la confirmación, «Uso quitado», eliminar con el aviso del uso, la reactivación y la hoja «Nueva meta» a 1440 con los tipos en 4 + 3. Las notificaciones de una sola vez (13–15) solo a 390. Son capturas de iteración, no de CI.
+- Impeccable: el CLI `impeccable detect` no está instalado en este equipo, así que no hay salida del detector; el hook de diseño de Impeccable revisó cada archivo editado sin hallazgos deterministas. Revisión visual sobre las capturas, con dos ajustes: la fila de uso en Actividad dice de quién son los aportes («Aportes de Sara · Tiquetes a Tokio», B4), y la tarjeta de solicitud dentro del detalle no repite el título del gasto.
+- Hallazgo aparte, previo al PR D y fuera de su alcance: con la hoja de Anotar abierta, cruzar los 768 px (hoja ↔ diálogo) la remonta y pierde el monto escrito. Lo vio el script de capturas; no se corrigió aquí.
+
+## T065 · corridas completas antes del push
+
+| Corrida | Resultado |
+| --- | --- |
+| `npm run e2e:dev` completo (1.ª, sobre `629782b`) | **exit 1, 409,12 s**. E2E 32/34: falla «UX 2: la hoja de 390 px abre ajustada al contenido» (la hoja medía 776 px; límite 728) porque la fila nueva «Cómo se pagó» sumaba ~80 px; y «Cambiar Yo/Nosotros…» de la spec 3 por tiempo (57,6 s). Axe 99/100: «Nosotros · axe de Inicio…» de `couple-shared.a11y.ts` agotó sus 30 s |
+| Arreglo (`c83da15`) | «Cómo se pagó» pasa a ser una ficha en la fila de «Hoy · Solo tú» con el valor elegido («Dinero del mes» o la meta), que abre la subhoja; el selector «Dinero del mes · Con una meta» queda arriba de B1. Sin fila nueva en la hoja. Las pruebas abren la ficha primero |
+| Dirigida: UX 2 de la spec 2, «Cambiar Yo/Nosotros» de la 3, la E2E nueva y los a11y de pareja y de PR D | **Todo pasa**; `couple-shared.a11y.ts` ligero en 29,3 s y 27,8 s (al borde de 30 s) |
+| `npm run e2e:dev` completo (2.ª, sobre `c83da15`) | **exit 1, 417,44 s**: la E2E nueva esperaba el cierre de la hoja 5 s y la escritura tardó más bajo la carga de la suite; el `@serial` de movimiento de la spec 3 (que en local corre en paralelo con todo) no vio el total nuevo a tiempo; y otra vez el límite de 30 s de `couple-shared.a11y.ts`. Aislados, los tres pasan (11,5 s, 32,4 s, 27,9 s y 27,2 s) |
+| Arreglo (`446cdca`) | La E2E nueva espera el cierre hasta 15 s (el plazo de una escritura, FR-093); el caso ligero de `couple-shared.a11y.ts` lleva `test.slow()`, como los demás a11y con sesión de la 004, sin cambiar qué audita |
+| **`npm run e2e:dev` completo (final)** | **exit 0, 452,52 s.** Build 16,85 s; E2E sin @mail **34/34, 101,87 s**; axe con sesión **100/100, 332,57 s**. Fuera, por contrato: las E2E @mail, `@sweep` y el proyecto evidence |
+| **`npm run verify`** | **exit 0, 93,95 s: supera el presupuesto de 90 s (aviso del script, no bloquea).** Lint verde (solo el aviso previo de `balance-panel.tsx:61`); typecheck verde; dominio **84/84**; componentes **870 pasan / 2 omisiones previstas**, 65 archivos (59,29 s) |
+
+- Componentes: en una corrida intermedia, con la máquina cargada, 4 casos de otros archivos agotaron su límite de 5 s; la siguiente corrida dio 519/519 y `verify` 870/870.
+- **Presupuesto del job `e2e`**: la E2E nueva tarda ~28–42 s en `juntia-dev` y el a11y nuevo ~19–28 s. El gate del PR C midió 556 s con las cinco specs; con lo de este PR el job puede acercarse a los 660 s. El PR D corre las cinco specs por el selector (añade archivos en `tests/a11y/`, regla 6), como el PR C. No se tocó el workflow ni el tope; la medición es la del gate (gestor).
+
+## Estado de las tareas del PR D
+
+| Tarea | Estado |
+| --- | --- |
+| T057–T059 | Hechas (`24c2e78`) |
+| T059a | Hecha: rojo local y contra `juntia-dev`, salidas arriba |
+| T060–T064 | Hechas (`629782b`, `c83da15`) |
+| Encargo del fundador (tipos 4 + 3) | Hecho (`d00e2d4`), con su comprobación a 390 y 1440 y la captura 16 |
+| T065 | Hecha: dirigidas en verde, `e2e:dev` completo y `verify` en verde (este con aviso de tiempo) |
+| T066 | Hecha: 54 capturas y revisión visual; sin salida del CLI de Impeccable (no instalado) |
+| T067–T069 | Humanas (gestor y fundadores) |
+
+## Revisión del gestor del PR #69 (sobre `2a20dd8`) · correcciones
+
+1. **JT213 al editar** (bloqueante): la edición privada y la compartida dicen «Primero quita el uso de la meta o usa menos», sin «Reintentar» (ni «Comprobar estado»); los campos siguen editables. Dos pruebas de componentes nuevas.
+2. **«Comprobar estado» de un gasto con meta en Yo**: se clasifica por valor (`funded-context.ts`: `payer_user_id` de texto y `parts` presentes = Nosotros). Prueba unitaria `goal-funding/write-status.test.ts` con los dos payloads; con la lógica vieja falla el caso de Yo (comprobado: 1 falla, 2 pasan) y con la nueva pasa. La forma real la confirma `tests/integration/planning-adapters.test.ts` contra `juntia-dev`: el payload privado guardado trae `payer_user_id: null` y `split_mode: null`.
+3. **Privacidad de Anotar en la spec 4**: en lugar de pedir `/` a mano, la navegación y el prefetch con `tests/support/rsc-capture.ts` (cada RSC clasificado por su cookie). Control positivo en Yo: el RSC de Inicio trae «Bicicleta de ruta» y su id. Mutación: el mismo detector de fugas, sobre ese RSC de Yo, la encuentra; sin eso la prueba no probaría nada. En Nosotros (cambio de contexto, Actividad e Inicio con hover), ningún RSC la lleva y el de Inicio trae Japón. La parte de la Server Action de B1 no cambia.
+4. **Tiempo del CI**: el selector clasifica `tests/a11y/**/*.a11y.ts` como neutro (decisión del gestor), con tres fixtures nuevos en `tests/e2e-select.test.ts` (axe solo, PR D con su axe y `tests/support/` que sigue compartido) y la nota en `contracts/ci.md`. Recorte de la E2E nueva (mitigación b): sin las aserciones de saldo tras crear, aprobar y rechazar (`listGoals`, `goalMemberBalances`; las cubren integración y pgTAP), que pasan a comprobar el estado de la solicitud; y el B1 de Tomás solo comprueba que su respuesta no filtra, al final, sin abrir y descartar la hoja a mitad del recorrido. `test.slow()` en `couple-shared.a11y.ts` se queda: su caso ligero midió 48,2 s en la corrida dirigida de esta ronda (más de sus 30 s) y el recorte de la E2E no lo afecta.
+5. JT225 en el deshacer de un gasto con meta usa `copy.goals.errors.undoNotAvailable`.
+6. La reactivación de F64-1 va además de «Gasto eliminado» («Gasto eliminado. La meta … volvió a estar activa: …»).
+7. Eliminar un compartido con solo una solicitud pendiente dice «La solicitud pendiente también se cancela.»; el aviso de los fondos solo con uso aplicado.
+8. Actividad en Nosotros lee `usage_requests` una vez: `monthFunding` devuelve también las pendientes.
+9. Las cuentas de FundingLedger y el uso inicial, en `bigint`.
+10. Tarjeta de solicitud con resultado desconocido: el aviso se puede cerrar con «¿Cerrar sin confirmar?» (el mismo `UnconfirmedClose` de las hojas de metas); al cerrar se dice «No pudimos confirmar si se guardó. Revisa el estado de la solicitud antes de volver a intentarlo.», se pide la página otra vez y las acciones vuelven con la MISMA clave (repetir es la misma intención). Prueba de componentes nueva.
+
+Corridas de esta ronda (solo lo afectado; no se tocó `tests/support/` ni los fixtures compartidos, así que no hay `e2e:dev` completo):
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components src/features/expenses` | **207/207** |
+| `npm run test:integration:dev` (corre la suite entera) | **exit 0**: 20 archivos, **145 pasan / 9 omitidas**; `planning-adapters.test.ts` 1/1 |
+| `e2e:dev -- goals.e2e.ts goal-expense.a11y.ts couple-shared.a11y.ts` (grep de los casos) | La E2E nueva falló después de la privacidad (ya en verde): la sesión de Sara se abría en Yo y su script inicial reinstalaba «Yo» en cada carga; se separan las dos sesiones. Axe **3/3** (`couple-shared` 48,2 s y 26,4 s; `goal-expense` 27,2 s) |
+| `e2e:dev -- tests/e2e/goals.e2e.ts` | **exit 0, 118,12 s**: spec 4 **4/4**, el caso nuevo en **36,7 s** |
+| `npm run verify` | **exit 0, 69,86 s**: lint (solo el aviso previo), typecheck, dominio 84/84, componentes **879 / 2 omisiones previstas** |
+
+Selector para este PR tras el cambio: **sigue pidiendo las cinco** por `scripts/e2e-select.mjs`, `tests/e2e-select.test.ts`, `src/components/ui/expense-row.tsx` y `src/features/shared/` (`write-result.ts`, `shared-row.tsx`); la regla de axe ya no cuenta.
+
+## Desviaciones aprobadas por los fundadores (10 de noviembre de 2026, tras ver las capturas)
+
+1. **Ficha «Cómo se pagó» con subhoja.** Desviación aprobada por los fundadores el 10 de noviembre de 2026: en lugar de una fila propia (comp 04·11), «Cómo se pagó» es una ficha en la fila «Hoy · Solo tú» que abre una subhoja, para que la hoja de 390 px respete su altura máxima (UX 2); «Dinero del mes» sigue por defecto y la ruta mínima no cambia. Nota corta con la misma referencia en `docs/design/COMPONENT_SPECIFICATIONS.md`, flujo «Gasto con meta», sin reescribir el comp.
+2. **Metas logradas en B1.** FR-050 de `spec.md` dice ahora «una sola meta activa o lograda (nunca archivada; Q15 y FR-032: una meta lograda admite usos) del mismo contexto (aprobado por los fundadores el 10 de noviembre de 2026)». Ninguna prueba citaba el texto viejo de FR-050.
+
+## Revisión de ChatGPT del PR #69 (sobre `87f0437`) · F69-1 a F69-4
+
+- **F69-1.** Editar y eliminar un gasto **privado** (con o sin meta, un solo camino) siguen el contrato común: `updateTransactionAction` y `voidTransactionAction` devuelven `ok`/`rejected`/`unknown` con `runWrite`; «Comprobar estado» nuevo, `privateWriteStatusAction`, lee `write_status` con `update_transaction` y `void_transaction` (las dos acciones ya se guardan en `idempotency_records` desde la 002: `20261105000300_money_functions.sql`, líneas 86 y 123). La edición usa `useWrite` en la hoja (15 s, campos bloqueados, «Reintentar» con la misma clave, «Comprobar estado»; un rechazo confirmado no ofrece reintentar). La eliminación usa `useWrite` con «¿Cerrar sin confirmar?». Lo recuperado de una eliminación trae `reactivatedGoals` como la respuesta normal. **La creación no cambia** (ruta mínima de la spec 2); el «Deshacer» de una creación privada adapta su lectura al resultado nuevo, con los mismos textos y «Reintentar» con la misma clave ante un desconocido. Pruebas nuevas en `src/features/expenses/private-writes.test.tsx` (respuesta perdida después del commit y «Comprobar estado», en editar y en eliminar; cierre con desconocido; rechazos confirmados) y las existentes adaptadas (`annotate-sheet`, `delete-dialog`, `edit-sheet`, `annotate-shared`, `goal-funding`).
+- **F69-2.** Los avisos de conflicto y de «ya eliminado» de un compartido son neutrales: «Este gasto cambió en otro lugar. Revisa su estado antes de intentarlo de nuevo.» y «Este gasto ya se eliminó.» (para T069). `couple-shared.a11y.ts` comprueba ahora que el aviso no nombra a nadie (falla ante «Tomás…», «Sara…» o «Alguien…»), y `shared-edit.test.tsx` también.
+- **F69-3.** «Comprobar estado» de `void_shared_expense` conserva `reactivatedGoals`; `void_settlement` no cambia. `src/features/expenses/void-status.test.ts` compara la respuesta normal con la recuperada en un compartido y en un privado; con el código anterior falla el compartido (1 de 3) y con el nuevo pasan los 3.
+- **F69-4.** Tras un desconocido en una escritura con «Reintentar» y «Comprobar estado» propios (gasto con meta, compartido, edición), Guardar queda deshabilitado; solo siguen esas dos acciones (prueba en `private-writes.test.tsx`). La creación privada conserva su regla: tras un fallo ambiguo, Guardar es el mismo reintento con la misma clave (decisión del fundador del 5 de noviembre de 2026; la prueba existente lo exige).
+
+| Corrida | Resultado |
+| --- | --- |
+| `npm run verify` | **exit 0, 99,27 s: supera el presupuesto de 90 s (aviso).** Lint (solo el aviso previo), typecheck, dominio 84/84, componentes **888 / 2 omisiones previstas** |
+| `npm run e2e:dev` completo | **exit 1, 501,10 s.** E2E 31/34, axe 98/100. Fallan: «gasto compartido 50/50…» y el `@serial` de movimiento de la spec 3, y el `@serial` de movimiento de la spec 2 (el número héroe no sube a tiempo tras anotar y la app lleva a Actividad); y `goals.a11y.ts` y `plan.a11y.ts` por **«ensure_profile falló en la siembra»** (entorno) |
+| Dirigidas: las tres E2E, `goals.a11y.ts` y `plan.a11y.ts` | Los dos a11y y el `@serial` de la spec 2 pasan; los dos casos de la spec 3 vuelven a fallar |
+| La misma prueba («gasto compartido 50/50…») sobre **`87f0437`** (los cambios de esta ronda apartados con un stash etiquetado y restaurados después) | **También falla**, igual. No es una regresión de esta ronda: ese código pasó el `e2e:dev` completo de antes (`446cdca`, exit 0). El síntoma es que la revalidación tras anotar no llega dentro del ~1 s que espera el resaltado de E5 en `juntia-dev` hoy |
+| Specs 1, 2, 3 y 4 + `couple-shared.a11y.ts` | **exit 1, 229,44 s.** E2E 29/32: los mismos dos casos de la spec 3 y, esta vez, «N → monto → categoría reciente → Guardar…» de la spec 2, por la misma causa (el héroe sigue en $412.900 y la página pasa a Actividad). La spec 1 y la spec 4 pasan; `couple-shared.a11y.ts` 2/2 |
+
+Las fallas de héroe/E5 no tocan código de esta ronda (la creación no cambió) y se reproducen en el commit anterior; quedan para el gate de CI, que es la evidencia.
+
+## Regresión de E5 en Inicio de Nosotros (pedido del gestor sobre `5c80a3b`)
+
+- **Reinicio de `juntia-dev`**: `npm run db:dev:reset` lo **denegó el clasificador de permisos** de esta sesión; no se ejecutó ni se buscó otro camino. Todo lo de abajo corre sobre el `juntia-dev` acumulado.
+- **Comparación por versión** (worktree aparte, `git worktree add --detach`, con su propio `npm ci`), con `npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts --grep 'motion activo'` («@serial motion activo: E5 al anotar en Nosotros…», spec 3), una corrida por fila:
+
+| Versión | Resultado |
+| --- | --- |
+| `main` (`7b42b3a`) | 5 de 6 pasan |
+| PR D `87f0437` | 0 de 2 |
+| PR D `5c80a3b` | 0 de 5 |
+| `5c80a3b` sin leer solicitudes en Inicio (prueba temporal) | 3 de 5 |
+| `5c80a3b` con esa lectura en paralelo (prueba temporal) | 0 de 4 |
+| **Con la corrección** | **6 de 7** |
+
+- **Causa**: el PR D añadió a Inicio de Nosotros una lectura de `usage_requests`; en este `juntia-dev` esa consulta es lenta y la revalidación tras anotar no llega dentro de la ventana del resaltado de E5 (~1 s), así que la app lleva a Actividad y el héroe no se ve subir. Leerla en paralelo no basta: es la rama más lenta.
+- **Corrección**: `goals_overview` ya trae `has_pending_request`; Inicio solo lee las solicitudes si alguna meta tiene una pendiente, y Actividad solo si hay usos en el mes o alguna pendiente (`loadHomeGoals`, `monthFunding`). Sin solicitudes, la revalidación no paga esa lectura.
+- La spec 2 («N → monto…» y su `@serial`) da lo mismo en `87f0437` y en `5c80a3b` (pasan en dirigida). «Gasto compartido 50/50…» de la spec 3 **falla también en `main`**.
+
+| Corrida completa | Resultado |
+| --- | --- |
+| `npm run e2e:dev` sobre **`main`** (`7b42b3a`) | **exit 1, 468,62 s**: E2E 30/33 («N → monto…» y el `@serial` de la spec 2, «gasto compartido 50/50…» de la spec 3), axe 98/99 (`couple-shared.a11y.ts`, 30 s agotados) |
+| `npm run e2e:dev` sobre el PR D **con la corrección** | **exit 1, 502,09 s**: E2E 31/34 (el `@serial` de la spec 2, «gasto compartido 50/50…» y el `@serial` de la spec 3, que en la completa corre en paralelo con todo), axe 99/100 (`balance.a11y.ts`, 30 s agotados) |
+| `npm run verify` | **exit 0, 105,52 s** (aviso: más de 90 s). Componentes **888 / 2 omisiones previstas**. Antes, dos casos de `goal-funding.test.tsx` agotaban su límite de 5 s con la máquina cargada; ese archivo usa ahora 15 s, como otras pruebas de hojas |
+
+En la corrida completa local, los casos de E5 y los límites de 30 s fallan igual en `main` que en el PR D: la diferencia atribuible al PR D era la del `@serial` dirigido, y queda corregida.
+
+## E5 espera el árbol revalidado (causa propuesta por la revisión de `5c80a3b`, confirmada con traza)
+
+- **Traza** (E2E temporal, no versionada, contra `juntia-dev`; Inicio de Nosotros, anotar $100.000; tiempos en ms desde Enter; 3 corridas): la Server Action responde a 470 / 384 / 393; el árbol revalidado llega con la fila y el héroe a **1.508 / 1.427**; en la tercera, `pushState /actividad?mes=2026-11` sale a **1.433** (60 cuadros después del guardado) y la fila aparece a 2.912, ya en Actividad. Es la carrera de los 60 cuadros de `annotate-provider.tsx` con un RSC lento.
+- **Corrección** (`annotate-provider.tsx`, `annotate-sheet.tsx`): cada árbol que entrega el servidor llega al proveedor como unos `children` nuevos del layout. La hoja marca el inicio de la escritura (`onWriteStart`) y E5 espera un árbol **posterior** a esa marca: si trae la fila, la resalta en la misma pantalla; si llega sin ella, lleva a Actividad del mes a los 3 cuadros; si no llega nunca, el tope de seguridad de 10 s pide otra revalidación y lleva a Actividad, como antes. Sin esperas fijas. El comportamiento aprobado de E5 no cambia.
+- **Pruebas de componentes** (`annotate-sheet.test.tsx`, con `requestAnimationFrame` controlado y una `revalidate()` que vuelve a entregar los `children`): refresco lento (100 cuadros sin árbol nuevo, no navega; llega con la fila, no navega), árbol sin la fila (navega a los pocos cuadros, no antes) y tope de seguridad (10 s). Con el proveedor anterior las tres fallan; con el nuevo pasan. `home-reveal.test.tsx` (F51-13) revalida antes de esperar la navegación, con la misma intención. Las dos pruebas F45-2 de navegación revalidan tras guardar.
+
+| Corrida | Resultado |
+| --- | --- |
+| Traza con la corrección (3 corridas) | La acción a 491 / 300 / 327; el héroe sube en Inicio a **1.557 / 1.253 / 1.308**; **ningún `pushState`** |
+| Dirigida: «N → monto…» y el `@serial` de la spec 2; «gasto compartido 50/50…» y el `@serial` de la spec 3 | **4/4 pasan** («gasto compartido 50/50…» fallaba también en `main`) |
+| `npm run verify` | **exit 0, 67,72 s**: dominio 84/84, componentes **890 / 2 omisiones previstas** |
+| **`npm run e2e:dev` completo** | **exit 0, 409,95 s**: build 11,45 s; E2E **34/34** (125,80 s); axe con sesión **100/100** (271,44 s) |
+
+El reinicio de `juntia-dev` no se hizo (el clasificador de permisos lo denegó): todo lo anterior corre sobre el `juntia-dev` acumulado.
+
+## F69-5 · E5 decide por los ids que trae el servidor, no por la llegada de un árbol (revisión de `7afdbe5`)
+
+- **Hallazgo**: `trees.current > reveal.since` solo probaba que el layout había entregado unos `children` nuevos, no que fueran los de esta escritura. Un `router.refresh()` ajeno (volver a la pestaña) sin la fila llevaba a Actividad aunque el árbol bueno llegara después.
+- **Corrección** (la más simple ligada a la escritura): las listas montadas ya informan al proveedor de los ids de su mes con `useListScope` (Inicio informa de todos los del mes, aunque pinte 5). Ahora informan también Inicio y Actividad de Nosotros. E5 decide así:
+  1. ninguna lista de la pantalla es del mes del gasto (otro mes, o una ruta sin lista): la fila no puede estar ahí y va a Actividad enseguida;
+  2. la lista del mes ya trae ese id pero la fila no se ve (fuera de los 5 recientes): va a Actividad a los 3 cuadros;
+  3. todavía no lo trae: espera, aunque lleguen árboles ajenos, hasta el tope de 10 s; entonces pide otra revalidación y va a Actividad, como antes.
+  Se quitan el contador de árboles y `onWriteStart`.
+- **Pruebas** (`annotate-sheet.test.tsx`): regresión exigida. Primero llega un árbol ajeno sin la fila y pasan 80 cuadros sin navegar; luego llega el posterior con la fila guardada, que se resalta en Inicio. Con el proveedor de `7afdbe5` falla; con el nuevo pasa. Se mantienen el refresco lento, otro mes (ahora sin esperar), fuera de los 5 recientes (el servidor trae el id; Inicio no lo pinta), sin revalidación (tope de 10 s) y F51-13.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components src/features` | **536/536** |
+| `npm run verify` | **exit 0, 106,37 s: supera el presupuesto de 90 s (aviso).** Dominio 84/84, componentes **890 / 2 omisiones previstas** |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 137,20 s**: **21/21**, E2E 107,63 s |
+
+## Barrido T068 (run 42939346411 sobre `7afdbe5`) · «Quitar el uso de la meta» al 200 %
+
+- **Fallo** (el único de 107): `goal-expense.a11y.ts`, «detalle con LimitNote · 200 %: sin scroll horizontal», 392 / 390. `Button` no parte su etiqueta (`whitespace-nowrap`, alto fijo) y «Quitar el uso de la meta» no cabía al 200 %.
+- **Arreglo**, sin tocar el `Button` compartido: los botones del gasto con meta (`goal-funding/wrap-label.ts`: el disparador y la confirmación de quitar el uso; aprobar, rechazar, cancelar y «Revisar» de la tarjeta de solicitud) pueden partir la etiqueta en dos líneas. Conservan el alto mínimo de su tamaño, y las dos caras (reposo y carga) siguen en la misma celda: el ancho no salta al cargar y nada se corta.
+- **Comprobación nueva** en el `@sweep` del archivo: el detalle con meta (LimitNote, «Quitar el uso», Editar y Eliminar) a **320 px**, con el texto normal y al 200 %.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/goal-expense.a11y.ts`: **exit 0, 32,23 s.** Sin scroll horizontal en los siete anchos y los dos temas (B2/B3, B5 y el detalle). Al 200 %: Anotar 390/390, B5 390/390 y detalle **390/390**; detalle a 320 px **320/320** y a 320 px · 200 % **320/320**, sin texto cortado. Objetivos: «Aprobar $200.000» 171,8×44, «Rechazar» 138,9×44 y «Quitar el uso de la meta» 320×52.
+- Pasada ligera del archivo: **exit 0, 53,29 s.** `npm run verify`: **exit 0, 101,60 s** (aviso: más de 90 s), componentes 890 / 2 omisiones previstas.
+- **Fuera de alcance, para el gestor:** a 320 px y al 200 %, en Inicio de Nosotros, el título «Japón» de la tarjeta de la pila (GoalCard del PR C, `line-clamp-2`) queda cortado. El barrido oficial empieza en 360 y ahí no ocurre. No se tocó.
+
+## F69-6 · E5 cuando el gasto se guarda en un contexto distinto del de la página (revisión de `ac92923`)
+
+- **Hallazgo**: la hoja tiene su propio selector Yo/Nosotros y guardar no cambia el contexto de la app. Un compartido anotado desde Inicio en Yo (o un privado desde Inicio en Nosotros) dejaba a E5 esperando los 10 s, porque la lista del mes estaba montada pero nunca iba a traer ese id. Al final llevaba a Actividad de un contexto que tampoco lo enseña.
+- **Corrección**:
+  1. `Reveal` lleva `context`, el de la escritura (privado `me`, compartido `us`, gasto con meta el suyo).
+  2. `useListScope(month, ids, contexts)`: cada lista se registra por separado (`useId`), con su mes, sus contextos y sus ids. Ya no hay unión por mes (punto 5 opcional). Actividad de Yo pasa `["me"]` y Nosotros (Inicio y Actividad) `["us"]`. Inicio de Yo pasa `["me", "us"]` cuando hay pareja, y entonces informa también de los ids de tu parte de lo compartido.
+  3. La fila de tu parte compartida en Inicio de Yo (`HighlightSharedPart`) lleva `data-transaction-id` y el mismo estado «nueva» que `ExpenseRow`. Si E5 la encuentra y el gasto es de otro contexto, la resalta en el contexto de la página.
+  4. Las listas candidatas son las del mes del gasto que pintan su contexto. Si no hay ninguna, E5 termina enseguida. Si una ya trae el id y la fila no se ve, termina a los 3 cuadros. Si no lo trae, espera hasta el tope de 10 s. Cuando el gasto es del contexto de la página, «terminar» es lo de antes: otra revalidación y Actividad del mes. Cuando es de otro contexto, E5 solo deja de mirar: no navega, no espera y no cambia el contexto. Queda el aviso «Gasto guardado · Deshacer».
+- **Pruebas** (`reveal-context.test.tsx`, 4 nuevas):
+  - un compartido desde una vista de Yo que no pinta lo compartido termina al primer cuadro, sin `push` ni `refresh`;
+  - el inverso, un privado desde Inicio en Nosotros, termina igual;
+  - en Inicio de Yo con pareja, E5 espera la lista y luego resalta la parte compartida (`data-new`), sin navegar;
+  - en Inicio de Yo con pareja, si el compartido llega fuera de los 5 recientes, termina a los pocos cuadros sin ir a Actividad de Yo.
+  
+  Las de `annotate-sheet.test.tsx` y `home-reveal.test.tsx` siguen igual: el arnés pasa ahora `["me"]`.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest --project components` (completo) | **894/894, 2 omisiones previstas** |
+| `npm run verify` | 1.ª corrida: **falló** con 3 *timeouts* de componentes, entre ellos `shared-edit.test.tsx:147`, «una respuesta tardía de «Deshacer»…», que no toca este cambio (la misma suite pasa sola). 2.ª corrida: **exit 0, 103,41 s** (aviso: más de 90 s); dominio 84/84, componentes 894 / 2 omisiones previstas |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts` (specs 2 y 3 completas) | **exit 0, 139 s**: build 24,08 s; **21/21** (1,8 min) |
+
+## F69-7 · Una lista en carga cuenta como candidata (revisión de `e2d9ef3`)
+
+- **Hallazgo**: durante Nosotros → Yo, ContextView enseña el Skeleton de Yo hasta que llega el RSC. Un privado confirmado en ese momento no encontraba ninguna lista de Yo montada. E5 lo trataba como «la página no puede mostrarlo» y llevaba a Actividad, aunque Inicio en Yo lo iba a enseñar.
+- **Corrección**: el registro se hace en `ContextView`, el único punto que sabe que el Skeleton de un contexto concreto está esperando su RSC. Las páginas con lista (Inicio y Actividad) le pasan `listMonth`. Mientras pinta el Skeleton del contexto elegido, ya hidratado, se registra una lista de ese mes y contexto sin ids. La vista real la reemplaza al montar, porque el Skeleton se desmonta en el mismo commit. Metas, Plan y Balance no pasan `listMonth` y siguen saliendo enseguida. No se recupera el contador de árboles ni cambian los tiempos.
+- **E5 distingue tres casos**:
+  - sin lista compatible: termina enseguida, como en F69-6;
+  - con una lista compatible en carga o que todavía no trae el id: espera, con el tope de 10 s;
+  - con una lista que ya trae el id: resalta la fila o, si no se ve, termina tras 3 cuadros.
+- **Pruebas** (`reveal-context.test.tsx`):
+  - la regresión exigida: Skeleton de Inicio durante Nosotros → Yo; un privado confirmado antes del RSC pasa 40 cuadros sin navegar; luego monta Inicio de Yo con el id y la fila se resalta. **Sin `listMonth` falla**: `push` se llama una vez;
+  - el contraste: una página sin `listMonth` sale enseguida a Actividad.
+  
+  Se mantienen las de F69-5 y F69-6.
+
+| Corrida | Resultado |
+| --- | --- |
+| `vitest reveal-context.test.tsx` | **6/6**; con `listMonth` quitado del arnés, la regresión **falla** (`push` llamado 1 vez) |
+| `npm run verify` | **exit 0, 80,14 s**: dominio 84/84, componentes **896 / 2 omisiones previstas** |
+| `npm run e2e:dev -- tests/e2e/annotate.e2e.ts tests/e2e/couple-settle.e2e.ts`, 1.ª | **exit 1, 143 s: 20/21**. Falló «desconocido: respuesta perdida…» (`annotate.e2e.ts:360`): Actividad seguía en «Cargando movimientos» (loading.tsx) cuando se agotaron los 5 s. El RSC de `juntia-dev` iba lento; la página es de Yo y no pinta Skeleton de contexto |
+| La misma prueba sola, ×2 | **1/1 y 1/1** (14,9 s y 10,2 s) |
+| Specs 2 y 3, 2.ª | **exit 0, 107 s**: build 9,84 s; **21/21** (1,6 min) |
+
+## Gate del PR #69 (run 42956506044 sobre `7c6e2b1`) · «1440px: tipos de meta por fila» recibió `[7]`
+
+- **Causa**: el momento de la medición, no la maquetación. El componente tiene `grid-cols-4` en todos los anchos. Al pasar de 390 a 1440 px la hoja se vuelve a montar (BottomSheet → Modal), y `goalTypeRows` medía enseguida el diálogo que se cerraba o uno sin maquetar: siete casillas con el mismo `top`.
+- **Arreglo, solo en la prueba** (`tests/a11y/goals.a11y.ts`):
+  - antes de medir, espera a **un solo** diálogo «Nueva meta» y a que el grupo de tipos sea visible;
+  - las casillas sin tamaño no cuentan como fila;
+  - `perRow` se mide con `expect.poll`, sin esperas fijas. Se mantienen `[4, 3]` y la aserción de etiquetas sin cortar.
+- **Sigue fallando con el código viejo**: con la clase de `d00e2d4^` (`grid-cols-4 sm:grid-cols-7`) puesta un momento en el componente, falla en los dos temas con «1440px: tipos de meta por fila», `[4, 3]` esperado y `[7]` recibido. Después se devolvió la clase actual.
+- `npm run e2e:dev -- tests/a11y/goals.a11y.ts`, tres veces: **exit 0 en 61 s, 61 s y 66 s**; las tres corridas, 2/2 (45,3 s, 47,3 s y 48,8 s).

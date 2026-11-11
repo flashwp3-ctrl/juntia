@@ -2,10 +2,10 @@
 // Fuera del grupo (app): monta él mismo el contexto, Anotar y el AppShell (research R6). Es también lo que ve una visita
 // a /interno/primitivos cerrada. Con el aviso de versión base y salida hacia Inicio; sin mensaje técnico.
 import Link from "next/link";
-import { createTransactionAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
+import { createTransactionAction, privateWriteStatusAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
 
-const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction };
+const actions = { create: createTransactionAction, update: updateTransactionAction, voidTransaction: voidTransactionAction, check: privateWriteStatusAction };
 import { AppShell, PageHeader } from "@/components/shell/app-shell";
 import { ContextProvider } from "@/components/shell/context-selector";
 import { ExitState } from "@/components/shell/provisional-state";

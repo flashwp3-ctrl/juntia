@@ -16,6 +16,7 @@ import { copy } from "@/lib/copy/es";
 import { pesos } from "@/lib/format";
 import type { SharedTransaction } from "@/lib/db/types";
 import { memberName, rowMode, type MemberRef } from "./shared-format";
+import { useFundingLookup } from "@/features/expenses/goal-funding/funding-context";
 
 export type { MemberRef } from "./shared-format";
 
@@ -23,11 +24,13 @@ type SharedRowProps = { row: SharedTransaction; members: readonly MemberRef[]; h
 
 export function SharedRow({ row, members, href, dateLabel, current = false }: SharedRowProps) {
   const highlightId = useHighlightId();
+  // 004 PR D (T064; FR-071): CON META o PENDIENTE DE {nombre}, con su texto en el nombre accesible.
+  const funding = useFundingLookup()(row.id);
   const payer = members.find((member) => member.userId === row.payerUserId);
   const title = row.description ?? copy.categories[row.categoryId];
   const meta = copy.shared.row.meta(payer?.name ?? "", rowMode(row));
   const moved = row.movedFromMe ? ` · ${copy.move.movedFromMe}` : "";
-  const name = copy.shared.row.accessibleName({ title, amount: pesos(row.amount), category: copy.categories[row.categoryId], date: dateLabel, meta: meta + moved });
+  const name = copy.shared.row.accessibleName({ title, amount: pesos(row.amount), category: copy.categories[row.categoryId], date: dateLabel, meta: meta + moved }) + (funding ? `, ${funding.label}` : "");
   return (
     <Link
       href={href}
@@ -46,6 +49,7 @@ export function SharedRow({ row, members, href, dateLabel, current = false }: Sh
         </span>
         {/* «movido desde Yo» en su propia línea: es la señal de A4 y no puede quedar cortada a 390. */}
         {row.movedFromMe ? <span className="text-[12px] leading-[1.35] font-medium text-ink-secondary group-data-[new]:text-ink">{copy.move.movedFromMe}</span> : null}
+        {funding ? funding.node : null}
       </span>
       <span aria-hidden="true" data-row-amount="" className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
     </Link>

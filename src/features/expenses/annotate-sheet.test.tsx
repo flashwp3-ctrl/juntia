@@ -10,7 +10,8 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
-import { AnnotateProvider, useAnnotate, usePendingRows } from "./annotate-provider";
+import type { WriteOutcome } from "@/features/shared/write-result";
+import { AnnotateProvider, useAnnotate, usePendingRows, useListScope } from "./annotate-provider";
 import type { ActionResult, CreatePayload, ExpenseActions, SavedTransaction, VoidPayload } from "./types";
 
 // La hoja llega en un chunk aparte en su primera apertura (como el aviso de la 001).
@@ -35,8 +36,8 @@ function deferred<T>() {
 function mockActions(overrides: Partial<ExpenseActions> = {}) {
   return {
     create: vi.fn<ExpenseActions["create"]>(overrides.create ?? (async () => ({ ok: true, value: saved() }))),
-    update: vi.fn<ExpenseActions["update"]>(overrides.update ?? (async () => ({ ok: true, value: saved({ version: 2 }) }))),
-    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(overrides.voidTransaction ?? (async () => ({ ok: true, value: { id: saved().id, version: 2 } }))),
+    update: vi.fn<ExpenseActions["update"]>(overrides.update ?? (async () => ({ status: "ok", value: saved({ version: 2 }) }))),
+    voidTransaction: vi.fn<ExpenseActions["voidTransaction"]>(overrides.voidTransaction ?? (async () => ({ status: "ok", value: { id: saved().id, version: 2 } }))),
   };
 }
 
@@ -57,9 +58,11 @@ function PendingList() {
 }
 
 // Simula una navegación del App Router: el layout (y el proveedor) persisten y cambia la página que envuelven.
-// `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`).
-function Pages({ rows = [] }: { rows?: string[] }) {
+// `rows`: los movimientos que la página enseña (como ExpenseRow, con `data-transaction-id`). `known`: los ids del mes que el
+// servidor le entregó (Inicio pinta 5 y avisa de todos, como HomeScope); por defecto, los que enseña.
+function Pages({ rows = [], known = rows }: { rows?: string[]; known?: string[] }) {
   const [page, setPage] = useState("inicio");
+  useListScope("2026-11", known, ["me"]);
   return (
     <>
       <Trigger />
@@ -72,10 +75,13 @@ function Pages({ rows = [] }: { rows?: string[] }) {
   );
 }
 
+// Revisión del PR #69: `revalidate` simula la llegada del árbol revalidado tras la Server Action (el layout entrega unos
+// `children` nuevos al proveedor), con las filas que traiga la página.
 function setup(actions = mockActions(), rows: string[] = []) {
   const user = userEvent.setup();
-  render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
-  return { user, actions, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
+  const view = render(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={rows} /></AnnotateProvider>);
+  const revalidate = (next: string[] = rows, known: string[] = next) => act(() => { view.rerender(<AnnotateProvider actions={actions} today="2026-11-05"><Pages rows={next} known={known} /></AnnotateProvider>); });
+  return { user, actions, revalidate, trigger: screen.getByRole("button", { name: copy.nav.annotate }) };
 }
 
 const sheet = () => screen.findByRole("dialog", { name: copy.annotate.title.expense });
@@ -519,11 +525,12 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
 
   it("F45-2: un gasto del mes anterior no se ve en Inicio: lleva a Actividad de su mes con el aviso y el resaltado", async () => {
     const previous = saved({ transactionDate: "2026-10-20" });
-    const { user, trigger } = setup(mockActions({ create: vi.fn(async () => ({ ok: true as const, value: previous })) }));
+    const { user, trigger, revalidate } = setup(mockActions({ create: vi.fn(async () => ({ ok: true as const, value: previous })) }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
+    // F69-5: ninguna lista de la pantalla es de octubre: la fila no puede estar aquí y se lleva a Actividad sin esperar.
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-10"));
     expect(router.push).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status").textContent).toContain(copy.annotate.saved.expense);
@@ -531,11 +538,14 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("F45-2: un gasto del mes en curso que no entra en los 5 recientes lleva a Actividad del mes", async () => {
-    const { user, trigger } = setup(mockActions(), ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"]);
+    const { user, trigger, revalidate } = setup(mockActions(), ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"]);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
     await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    // El servidor ya trae el gasto en el mes, pero Inicio solo pinta los 5 recientes: a Actividad.
+    revalidate(["otro-1", "otro-2", "otro-3", "otro-4", "otro-5"], ["otro-1", "otro-2", "otro-3", "otro-4", "otro-5", saved().id]);
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
   });
 
@@ -556,9 +566,11 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     vi.restoreAllMocks();
   });
 
-  it("F45-2: sin la fila a la vista, navega a Actividad al agotarse los cuadros (60), ni uno antes", async () => {
+  // Revisión del PR #69: E5 espera el árbol revalidado, no un número de cuadros. Traza en juntia-dev: la acción responde a
+  // ~0,4 s y el árbol llega a ~1,4–1,5 s; con 60 cuadros (~1 s) la app llevaba a Actividad aunque la fila iba a salir en Inicio.
+  it("E5 con un refresco lento: sin el árbol revalidado no navega aunque pasen 100 cuadros; cuando llega con la fila, la resalta ahí", async () => {
     const frames: FrameRequestCallback[] = [];
-    const { user, trigger } = setup(mockActions(), []);
+    const { user, trigger, revalidate } = setup(mockActions(), []);
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
@@ -566,10 +578,58 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     await user.click(saveButton());
     await screen.findByRole("button", { name: copy.annotate.undo });
-    for (let step = 0; step < 59; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    for (let step = 0; step < 100; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
     expect(router.push).not.toHaveBeenCalled();
-    act(() => { frames.splice(0).forEach((callback) => callback(960)); });
+    revalidate([saved().id]);
+    for (let step = 0; step < 10; step++) act(() => { frames.splice(0).forEach((callback) => callback(1600 + step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(0);
+    expect(screen.getByTestId("highlight").textContent).toBe(saved().id);
+    vi.restoreAllMocks();
+  });
+
+  // F69-5 (revisión del PR #69): un árbol ajeno (por ejemplo, el router.refresh() de volver a la pestaña) que llega sin el
+  // gasto no dispara la navegación; el posterior, con el gasto, lo resalta en la misma pantalla.
+  it("E5: un árbol ajeno sin la fila no navega; el siguiente, con la fila guardada, la resalta en Inicio", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const { user, trigger, revalidate } = setup(mockActions(), ["previo"]);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    revalidate(["previo"], ["previo"]);
+    for (let step = 0; step < 80; step++) act(() => { frames.splice(0).forEach((callback) => callback(step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    revalidate([saved().id, "previo"]);
+    for (let step = 0; step < 10; step++) act(() => { frames.splice(0).forEach((callback) => callback(1400 + step * 16)); });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(0);
+    expect(screen.getByTestId("highlight").textContent).toBe(saved().id);
+    vi.restoreAllMocks();
+  });
+
+  it("E5: si el árbol revalidado no llega nunca, el tope de seguridad (10 s) pide otro y lleva a Actividad", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const { user, trigger } = setup(mockActions(), []);
+    await user.click(trigger);
+    await sheet();
+    await fillMinimum(user);
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => frames.push(callback));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    await user.click(saveButton());
+    await screen.findByRole("button", { name: copy.annotate.undo });
+    now = 9_900;
+    act(() => { frames.splice(0).forEach((callback) => callback(now)); });
+    expect(router.push).not.toHaveBeenCalled();
+    now = 10_100;
+    act(() => { frames.splice(0).forEach((callback) => callback(now)); });
     expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11");
+    expect(router.refresh).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
 
@@ -677,8 +737,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("US-2.5: Deshacer anula con motivo `undo` y la versión devuelta; dos clics, una petición", async () => {
-    const pending = deferred<ActionResult<{ id: string; version: number }>>();
-    const voidTransaction = vi.fn<(payload: VoidPayload) => Promise<ActionResult<{ id: string; version: number }>>>(() => pending.promise);
+    const pending = deferred<WriteOutcome<{ id: string; version: number }>>();
+    const voidTransaction = vi.fn<(payload: VoidPayload) => Promise<WriteOutcome<{ id: string; version: number }>>>(() => pending.promise);
     const { user, trigger } = setup(mockActions({ voidTransaction }));
     await user.click(trigger);
     await sheet();
@@ -688,13 +748,13 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.dblClick(undo);
     expect(voidTransaction).toHaveBeenCalledTimes(1);
     expect(voidTransaction.mock.calls[0][0]).toMatchObject({ transactionId: saved().id, expectedVersion: 1, reason: "undo" });
-    await act(async () => pending.resolve({ ok: true, value: { id: saved().id, version: 2 } }));
+    await act(async () => pending.resolve({ status: "ok", value: { id: saved().id, version: 2 } }));
     expect((await screen.findByRole("status")).textContent).toContain(copy.annotate.undone.expense);
     expect(screen.getByTestId("highlight").textContent).toBe("");
   });
 
   it("Deshacer después de editar: la versión cambió y se explica, sin anular nada", async () => {
-    const { user, trigger } = setup(mockActions({ voidTransaction: vi.fn(async () => ({ ok: false as const, error: "versionConflict" as const })) }));
+    const { user, trigger } = setup(mockActions({ voidTransaction: vi.fn(async () => ({ status: "rejected" as const, error: "versionConflict" as const })) }));
     await user.click(trigger);
     await sheet();
     await fillMinimum(user);
@@ -704,7 +764,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("un Deshacer rechazado ofrece Reintentar con la misma clave", async () => {
-    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ ok: true, value: { id: saved().id, version: 2 } });
+    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ status: "ok", value: { id: saved().id, version: 2 } });
     const { user, trigger } = setup(mockActions({ voidTransaction }));
     await user.click(trigger);
     await sheet();
@@ -719,7 +779,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
   });
 
   it("orden de respuestas: un Deshacer que responde tarde no pisa el toast del guardado siguiente", async () => {
-    const late = deferred<ActionResult<{ id: string; version: number }>>();
+    const late = deferred<WriteOutcome<{ id: string; version: number }>>();
     const second = saved({ id: "0c5e1f3a-8f1d-4b5a-9c39-2a7d3e9b8c11" });
     const create = vi.fn<ExpenseActions["create"]>().mockResolvedValueOnce({ ok: true, value: saved() }).mockResolvedValueOnce({ ok: true, value: second });
     const { user, trigger } = setup(mockActions({ create, voidTransaction: vi.fn(() => late.promise) }));
@@ -733,7 +793,7 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await fillMinimum(user, "8000");
     await user.click(saveButton());
     await waitFor(() => expect(screen.getByTestId("highlight").textContent).toBe(second.id));
-    await act(async () => late.resolve({ ok: true, value: { id: saved().id, version: 2 } }));
+    await act(async () => late.resolve({ status: "ok", value: { id: saved().id, version: 2 } }));
     const toast = screen.getByRole("status");
     expect(toast.textContent).toContain(copy.annotate.saved.expense);
     expect(screen.getByTestId("highlight").textContent).toBe(second.id);
@@ -888,7 +948,7 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
   });
 
   it("editar no usa fila optimista: conserva E4 con la hoja a la vista", async () => {
-    const pending = deferred<ActionResult<SavedTransaction>>();
+    const pending = deferred<WriteOutcome<SavedTransaction>>();
     const actions = mockActions({ update: vi.fn(() => pending.promise) });
     const user = userEvent.setup();
     function EditTrigger() {
@@ -903,7 +963,7 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
     expect(amount().matches(":disabled")).toBe(true);
     expect(screen.getByRole("dialog", { name: copy.annotate.editTitle.expense })).toBeTruthy();
     expect(pendingRows()).toHaveLength(0);
-    await act(async () => pending.resolve({ ok: true, value: saved({ version: 2 }) }));
+    await act(async () => pending.resolve({ status: "ok", value: saved({ version: 2 }) }));
   });
 });
 

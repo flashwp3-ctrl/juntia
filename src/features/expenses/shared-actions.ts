@@ -14,7 +14,7 @@ import { getCoupleBalance, getCoupleMonthSummary, getMeMonthSummary } from "@/li
 import { reclassifyToShared, undoReclassifyToShared } from "@/lib/db/reclassify";
 import { createSharedExpense, sharedTransaction, updateSharedExpense, voidSharedExpense } from "@/lib/db/shared-expenses";
 import { getTransaction } from "@/lib/db/transactions";
-import type { SettlementTransport, SharedExpenseTransport } from "@/lib/db/types";
+import type { ReactivatedGoal, SettlementTransport, SharedExpenseTransport } from "@/lib/db/types";
 import { savedFromTransport } from "@/features/balance/saved";
 import { writeStatus } from "@/lib/db/write-status";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +22,10 @@ import { allocationsFor, parseReclassify, parseSharedCreate, parseSharedUpdate, 
 import type { MovePreviewBase, MoveResult, SavedShared } from "./shared-types";
 
 const refresh = () => revalidatePath("/", "layout");
+/** La anulación de un compartido, igual en la respuesta y en «Comprobar estado» (F69-3). */
+const voidedShared = (result: { id: string; version: number; reactivated_goals?: ReactivatedGoal[] }) => ({
+  id: result.id, version: result.version, reactivatedGoals: (result.reactivated_goals ?? []).map((goal) => ({ goalId: goal.goal_id, name: goal.name, returnedMinor: goal.returned_minor })),
+});
 const INVALID = { status: "rejected", error: "invalid" } as const;
 
 async function sharedArgs(client: Awaited<ReturnType<typeof createClient>>, payload: NonNullable<ReturnType<typeof parseSharedCreate>>) {
@@ -54,12 +58,12 @@ export async function updateSharedExpenseAction(input: unknown): Promise<WriteOu
   return outcome;
 }
 
-export async function voidSharedExpenseAction(input: unknown): Promise<WriteOutcome<{ id: string; version: number }>> {
+export async function voidSharedExpenseAction(input: unknown): Promise<WriteOutcome<{ id: string; version: number; reactivatedGoals: { goalId: string; name: string; returnedMinor: string }[] }>> {
   const payload = parseSharedVoid(input);
   if (!payload) return INVALID;
   const outcome = await runWrite(async () => {
-    const result = await voidSharedExpense(await createClient(), payload);
-    return { id: result.id, version: result.version };
+    // 004 PR D (F64-1): las metas archivadas que volvieron a estar activas al devolverles los fondos.
+    return voidedShared(await voidSharedExpense(await createClient(), payload));
   });
   if (outcome.status === "ok") refresh();
   return outcome;
@@ -112,8 +116,10 @@ export async function sharedWriteStatusAction(input: unknown): Promise<WriteStat
       case "register_settlement":
         return { state: "completed", value: savedFromTransport(result as unknown as SettlementTransport) };
       case "void_settlement":
-      case "void_shared_expense":
         return { state: "completed", value: { id: String(result.id), version: Number(result.version) } };
+      // F69-3 (revisión del PR #69): lo recuperado trae lo mismo que la respuesta normal, también las metas reactivadas (F64-1).
+      case "void_shared_expense":
+        return { state: "completed", value: voidedShared(result as unknown as { id: string; version: number; reactivated_goals?: ReactivatedGoal[] }) };
       case "reclassify_to_shared":
         return { state: "completed", value: { voidedPrivateId: String(result.voided_private_id), shared: toSavedShared(sharedTransaction(result.shared as SharedExpenseTransport)) } satisfies MoveResult };
       case "undo_reclassify_to_shared":

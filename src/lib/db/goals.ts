@@ -26,3 +26,5 @@ export function goalActivity(c:SupabaseClient,context:PlanningContext,month:stri
 export async function goalMemberBalancesFor(c:SupabaseClient,goalIds:readonly string[]):Promise<GoalMemberTransport[]>{if(goalIds.length===0)return [];await requireClaims(c);return planningMoney(await withRetry<GoalMemberTransport[]>(()=>c.from("goal_member_balances").select("*").in("goal_id",[...goalIds])));}
 /** 004 PR C (T049): una meta visible por su id; en Nosotros solo si es compartida (FR-085). */
 export function getGoal(c:SupabaseClient,goalId:string,scope?:GoalScope){return planningRows<GoalTransport>(c,"goals_overview",scope?{id:goalId,goal_scope:scope}:{id:goalId}).then(rows=>rows[0]??null);}
+/** 004 PR D (T060; FR-085, F63-3): las metas de un solo ámbito. B1 en Nosotros pide `shared` y en Yo `personal`: nunca lee las del otro ámbito. */
+export function listGoalsByScope(c:SupabaseClient,scope:GoalScope){return planningPages<GoalTransport>(c,"goals_overview",{goal_scope:scope},["created_at"]);}

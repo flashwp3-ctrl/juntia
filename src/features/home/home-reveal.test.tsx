@@ -67,17 +67,15 @@ describe("Un gasto anterior a los 5 recientes de Inicio (F51-13)", { timeout: 20
     await screen.findByText(copy.annotate.saved.expense);
 
     // Confirmada y SIN revalidar todavía: el total sigue siendo el del servidor (la temporal no suma) y la temporal, que ya lleva el
-    // UUID real, no cuenta como «visible»: el revelado agota sus cuadros y lleva a Actividad del mes.
+    // UUID real, no cuenta como «visible»; E5 espera el árbol revalidado (revisión del PR #69), así que todavía no navega.
     expect(hero()).toBe(total(FIVE));
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
-    const summary = await screen.findByRole("region", { name: copy.activity.spentIn("noviembre") });
-    expect(summary.textContent).toContain(total(FIVE));
-    expect(summary.textContent).not.toContain(total(SIX));
+    expect(router.push).not.toHaveBeenCalled();
 
-    // Llega la revalidación con la real: una sola fila real por vista (lista por día y tabla), ninguna temporal ni duplicada, y los
-    // totales salen del servidor.
+    // Llega la revalidación: Inicio solo pinta los 5 recientes, la real no se ve ahí y E5 lleva a Actividad del mes, donde hay una
+    // sola fila real por vista (lista por día y tabla), ninguna temporal ni duplicada, y los totales salen del servidor.
     act(() => { screen.getByRole("button", { name: "revalidar" }).click(); });
-    expect(screen.getByRole("region", { name: copy.activity.spentIn("noviembre") }).textContent).toContain(total(SIX));
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/actividad?mes=2026-11"));
+    expect((await screen.findByRole("region", { name: copy.activity.spentIn("noviembre") })).textContent).toContain(total(SIX));
     expect(document.querySelectorAll("[data-temp]")).toHaveLength(0);
     expect(document.querySelectorAll("[data-transaction-id='real-old']")).toHaveLength(2);
     expect(create).toHaveBeenCalledTimes(1);

@@ -6,9 +6,10 @@ import { act, configure, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
+import type { WriteOutcome } from "@/features/shared/write-result";
 import { AnnotateProvider } from "./annotate-provider";
 import { TransactionActions } from "./transaction-actions";
-import type { ActionResult, ExpenseActions, SavedTransaction } from "./types";
+import type { ExpenseActions, SavedTransaction } from "./types";
 
 configure({ asyncUtilTimeout: 5000 });
 
@@ -20,7 +21,7 @@ const transaction: SavedTransaction = {
   description: "Carulla Laureles", amountMinor: "18640000", version: 3,
 };
 
-function setup(voidTransaction: ExpenseActions["voidTransaction"] = vi.fn(async () => ({ ok: true as const, value: { id: transaction.id, version: 4 } }))) {
+function setup(voidTransaction: ExpenseActions["voidTransaction"] = vi.fn(async () => ({ status: "ok" as const, value: { id: transaction.id, version: 4 } }))) {
   const user = userEvent.setup();
   const actions = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn(voidTransaction) };
   render(<AnnotateProvider actions={actions} today="2026-11-05"><TransactionActions transaction={transaction} backHref="/actividad?mes=2026-10" /></AnnotateProvider>);
@@ -64,18 +65,18 @@ describe("Diálogo de eliminar (T078)", { timeout: 15000 }, () => {
   });
 
   it("doble clic en Eliminar envía una sola petición", async () => {
-    let resolve!: (value: ActionResult<{ id: string; version: number }>) => void;
+    let resolve!: (value: WriteOutcome<{ id: string; version: number }>) => void;
     const { user, trigger, actions } = setup(() => new Promise((ok) => { resolve = ok; }));
     await user.click(trigger);
     const confirm = within(await screen.findByRole("alertdialog")).getByRole("button", { name: copy.remove.confirm });
     await user.dblClick(confirm);
     expect(actions.voidTransaction).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: copy.remove.deleting }).getAttribute("aria-busy")).toBe("true");
-    await act(async () => resolve({ ok: true, value: { id: transaction.id, version: 4 } }));
+    await act(async () => resolve({ status: "ok", value: { id: transaction.id, version: 4 } }));
   });
 
   it("JT012: explica que ya se eliminó", async () => {
-    const { user, trigger } = setup(async () => ({ ok: false, error: "alreadyDeleted" }));
+    const { user, trigger } = setup(async () => ({ status: "rejected", error: "alreadyDeleted" }));
     await user.click(trigger);
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: copy.remove.confirm }));
@@ -84,7 +85,7 @@ describe("Diálogo de eliminar (T078)", { timeout: 15000 }, () => {
   });
 
   it("JT011: si otra pestaña lo editó, lo explica y ofrece recargar", async () => {
-    const { user, trigger } = setup(async () => ({ ok: false, error: "versionConflict" }));
+    const { user, trigger } = setup(async () => ({ status: "rejected", error: "versionConflict" }));
     await user.click(trigger);
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: copy.remove.confirm }));
@@ -94,15 +95,15 @@ describe("Diálogo de eliminar (T078)", { timeout: 15000 }, () => {
     expect(router.refresh).toHaveBeenCalled();
   });
 
-  it("una promesa rechazada ofrece Reintentar con la misma clave", async () => {
-    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ ok: true, value: { id: transaction.id, version: 4 } });
+  it("F69-1: una respuesta perdida es un resultado desconocido: «Reintentar» con la misma clave", async () => {
+    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>().mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce({ status: "ok", value: { id: transaction.id, version: 4 } });
     const { user, trigger, actions } = setup(voidTransaction);
     await user.click(trigger);
     const dialog = await screen.findByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: copy.remove.confirm }));
     const alert = await within(dialog).findByRole("alert");
-    expect(alert.textContent).toContain(copy.remove.failed);
-    await user.click(within(alert).getByRole("button", { name: copy.annotate.retry }));
+    expect(alert.textContent).toContain(copy.writes.unknown);
+    await user.click(within(alert).getByRole("button", { name: copy.writes.retry }));
     await waitFor(() => expect(actions.voidTransaction).toHaveBeenCalledTimes(2));
     expect(actions.voidTransaction.mock.calls[1][0].idempotencyKey).toBe(actions.voidTransaction.mock.calls[0][0].idempotencyKey);
   });

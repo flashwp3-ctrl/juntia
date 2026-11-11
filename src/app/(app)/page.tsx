@@ -39,7 +39,7 @@ export default async function HomePage() {
   return (
     <>
       <HomeHeader />
-      <ContextView server={context} pending={<HomeSkeleton />} me={me} us={us} />
+      <ContextView server={context} pending={<HomeSkeleton />} me={me} us={us} listMonth={month} />
     </>
   );
 }

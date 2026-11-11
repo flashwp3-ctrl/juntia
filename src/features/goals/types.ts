@@ -5,6 +5,7 @@
 // recalcula en cada escritura (FR-090).
 import type { GoalScope, GoalType, PlanningContext } from "@/lib/db/types";
 import type { WriteAction, WriteOutcome, WriteStatusOutcome } from "@/features/shared/write-result";
+import type { ExpenseFundingView, GoalFundingActions, UsageRequestView } from "@/features/expenses/goal-funding/types";
 
 export type { GoalScope, GoalType, PlanningContext };
 export const GOAL_TYPES = ["travel", "home", "wedding", "vehicle", "education", "emergency", "other"] as const satisfies readonly GoalType[];
@@ -69,9 +70,19 @@ export type GoalActions = {
   voidEntry: (payload: VoidEntryPayload) => Promise<WriteOutcome<{ entryId: string }>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada acción devuelve su propio resultado guardado.
   check: (input: { action: WriteAction; idempotencyKey: string }) => Promise<WriteStatusOutcome<any>>;
+  /** 004 PR D (T060–T063): el gasto con meta y sus solicitudes. Viaja aquí para llegar al proveedor de Anotar con las de metas. */
+  funding?: GoalFundingActions;
 };
 
 /** Inicio (FR-070): lo apartado del mes (`aporte_a_metas`) y las metas abiertas del contexto. */
-export type HomeGoals = { setAsideMinor: string; goals: GoalView[]; members: Record<string, GoalMemberView[]> };
+export type HomeGoals = {
+  setAsideMinor: string; goals: GoalView[]; members: Record<string, GoalMemberView[]>;
+  /** 004 PR D (T062; FR-056): en Nosotros, las solicitudes de fondos pendientes (B4 y B5) y quién es quién. */
+  requests?: UsageRequestView[]; people?: GoalPerson[];
+};
 /** Actividad (FR-044, FR-071): asientos de metas del mes y lo apartado del mes. */
-export type GoalActivityData = { entries: GoalEntryView[]; setAsideMinor: string };
+export type GoalActivityData = {
+  entries: GoalEntryView[]; setAsideMinor: string;
+  /** 004 PR D (T062, T064; FR-071): el uso de metas de los gastos del mes y, en Nosotros, las solicitudes pendientes. */
+  funding?: Record<string, ExpenseFundingView>; requests?: UsageRequestView[];
+};

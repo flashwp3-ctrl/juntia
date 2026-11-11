@@ -150,6 +150,8 @@ A1 detalle personal (botón secundario «Mover a Pareja») · A2 importe, partic
 ## Flujo Gasto con meta  [A]
 B1 «Cómo se pagó: Con una meta» + metas del mismo contexto (las personales, deshabilitadas en Nosotros con el motivo) · B2 importe + FundingLedger · B3 efecto «ahora» y «si aprueba» · B4 gasto ya registrado + tarjeta de solicitud pendiente (cancelable, no vence) · B5 la otra persona aprueba o rechaza la cantidad exacta · B6 aprobado · B7 rechazado: el gasto sigue y solo cuentan los fondos propios. Errores: fondos insuficientes por aportante, aportes cambiados antes de aprobar, sin conexión.
 
+> Nota de implementación (PR D de la 004): desviación aprobada por los fundadores el 10 de noviembre de 2026: en lugar de una fila propia (comp 04·11), «Cómo se pagó» es una ficha en la fila «Hoy · Solo tú» que abre una subhoja, para que la hoja de 390 px respete su altura máxima (UX 2); «Dinero del mes» sigue por defecto y la ruta mínima no cambia. B1 ofrece metas activas o logradas, nunca archivadas (FR-050 de la spec 004).
+
 ## Cuenta (02·9–02·10, pantallas 04·14–04·19)  [P]
 ### AccountButton
 - **Anatomía:** avatar 40 (radio 14, color y patrón de persona) en un área de 44 · anillo de 1,5 px `border.strong` con separación `surface.canvas` · ficha de engranaje de 20 en `surface.raised`.

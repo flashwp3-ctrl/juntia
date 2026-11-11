@@ -17,9 +17,16 @@ it("T019: adaptadores reales conservan importes, scope, historial y claves",asyn
  expect((await g.goalEntries(client,goal.id))[0].amount_minor).toBe("50000");
  expect((await g.goalTotals(client,"personal"))[0].balance_minor).toBe("50000");
  expect((await m.metricMonths(client,"me"))[0].aporte_a_metas).toBe("50000");
- const funded=await u.createExpenseWithGoal(client,{idempotencyKey:randomUUID(),context:"me",type:"expense",amount:moneyFromPesos(200n),categoryId:"market",transactionDate:new Intl.DateTimeFormat("en-CA",{timeZone:"America/Bogota"}).format(new Date()),description:"Adaptador financiado",goalId:goal.id,own:moneyFromPesos(200n),requested:moneyFromPesos(0n)});
+ const fundedKey=randomUUID();
+ const funded=await u.createExpenseWithGoal(client,{idempotencyKey:fundedKey,context:"me",type:"expense",amount:moneyFromPesos(200n),categoryId:"market",transactionDate:new Intl.DateTimeFormat("en-CA",{timeZone:"America/Bogota"}).format(new Date()),description:"Adaptador financiado",goalId:goal.id,own:moneyFromPesos(200n),requested:moneyFromPesos(0n)});
  expect(await u.expenseGoalFunding(client,funded.id)).toEqual([expect.objectContaining({funded:true,used_minor:"20000",pending_minor:"0"})]);
  expect(await u.usageRequests(client)).toEqual([]);
+ // Revisión del gestor del PR #69 (2): el payload privado guardado trae payer_user_id y split_mode en null (no ausentes);
+ // «Comprobar estado» lo clasifica por valor como de Yo.
+ const ws=await import("../../src/lib/db/write-status");const {fundedContext}=await import("../../src/features/expenses/goal-funding/funded-context");
+ const saved=await ws.writeStatus(client,"create_expense_with_goal",fundedKey);
+ expect(saved.state).toBe("completed");const result=(saved as {result:Record<string,unknown>}).result;
+ expect(result).toMatchObject({id:funded.id,payer_user_id:null,split_mode:null});expect(fundedContext(result)).toBe("me");
  await u.removeGoalUsage(client,{idempotencyKey:randomUUID(),transactionId:funded.id,expectedVersion:1});
  expect((await g.goalTotals(client,"personal"))[0].balance_minor).toBe("50000");
 });

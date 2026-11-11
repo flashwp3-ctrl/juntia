@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 // T065 / US-3.2, US-6.1; COMPONENT_SPECIFICATIONS.md §ExpenseRow (02·1). Variantes de P0-1: gasto (tinta, sin signo) e
 // ingreso («+», ficha arena, tinta). Todo es privado en P0-1, así que la meta lleva el candado de «Solo tú» (variante
 // privado). Propuesta §15.9 «Gasto, ingreso y liquidación en tinta»: se aprueba viendo la pantalla.
@@ -30,6 +31,8 @@ type ExpenseRowProps = {
   /** Fila seleccionada en el panel de detalle de escritorio. */
   current?: boolean;
   className?: string;
+  /** 004 PR D (T064; FR-071): la marca CON META de un gasto pagado con una meta, y su texto para el nombre accesible. */
+  badge?: { node: ReactNode; label: string } | null;
 };
 
 export function rowTitle(transaction: Transaction) {
@@ -40,11 +43,11 @@ export function signedAmount(transaction: Transaction) {
   return `${transaction.type === "income" ? "+" : ""}${formatMoney(transaction.amount)}`;
 }
 
-export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pending, temporary = false, current = false, className = "" }: ExpenseRowProps) {
+export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pending, temporary = false, current = false, className = "", badge = null }: ExpenseRowProps) {
   const income = transaction.type === "income";
   const title = rowTitle(transaction);
   const pendingLabel = pending ? copy.row.pending.saving : null;
-  const name = copy.row.accessibleName({ title, amount: pesos(transaction.amount), income, category: copy.categories[transaction.categoryId], date: dateLabel }) + (pendingLabel ? `, ${pendingLabel}` : "");
+  const name = copy.row.accessibleName({ title, amount: pesos(transaction.amount), income, category: copy.categories[transaction.categoryId], date: dateLabel }) + (pendingLabel ? `, ${pendingLabel}` : "") + (badge ? `, ${badge.label}` : "");
   const content = (
     <>
       <span className="sr-only">{name}</span>
@@ -56,6 +59,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
           <AppIcon name="lock-simple" size={12} className="shrink-0" />
           <span className="truncate">{copy.row.onlyYou} · {dateLabel}{pendingLabel ? ` · ${pendingLabel}` : ""}</span>
         </span>
+        {badge ? badge.node : null}
       </span>
       <span aria-hidden="true" data-row-amount="" className={`text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap ${income ? "text-income" : "text-expense"}`}>
         {signedAmount(transaction)}
