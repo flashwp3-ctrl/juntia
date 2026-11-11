@@ -103,6 +103,9 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // F74-1 (revisión del PR #74): ese clic no navega (onClickCapture de la lista); mientras dura, la lista lo dice con
   // `data-stays-on-page` para que E5 no lo tome por una navegación.
   const listRef = useRef<HTMLUListElement>(null);
+  // F74-3: un solo temporizador: cada arrastre cancela el anterior, así que la señal se quita 350 ms después del ÚLTIMO.
+  const staysTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (staysTimer.current) clearTimeout(staysTimer.current); }, []);
   // Abanico: la tarjeta con hover o foco de teclado. Reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a
   // otra dentro de ese margen, va directo a la nueva. El efecto visual vive en globals.css, solo con puntero fino y desde lg.
   const [active, setActive] = useState<number | null>(null);
@@ -122,7 +125,8 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   const onDragEnd = (_event: unknown, info: PanInfo) => {
     dragEndedAt.current = now();
     listRef.current?.setAttribute("data-stays-on-page", "");
-    window.setTimeout(() => listRef.current?.removeAttribute("data-stays-on-page"), 350);
+    if (staysTimer.current) clearTimeout(staysTimer.current);
+    staysTimer.current = setTimeout(() => { staysTimer.current = null; listRef.current?.removeAttribute("data-stays-on-page"); }, 350);
     const step = swipeStep(info.offset, info.velocity);
     if (step !== 0) setFrontId(stepFront(goals.map((goal) => goal.id), goals[start].id, step));
   };
