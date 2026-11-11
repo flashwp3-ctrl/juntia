@@ -16,13 +16,16 @@ const budgets = { "test:unit": 15, verify: 90, "test:db": 60, "test:e2e:smoke": 
  * Los argumentos de npm para un comando. 004 PR B (T035, F64-5): en el job e2e, las specs que eligió scripts/e2e-select.mjs
  * (`E2E_SPECS`) van detrás de `--`; sin la variable, todas. Los scripts de package.json fijan el proyecto con `--project=e2e`
  * (con `=`): con `--project e2e`, Playwright tomaba los archivos que siguen como más nombres de proyecto (gate del PR #67, run
- * 42847381388). tests/ci-command.test.ts ejecuta este mismo comando con `--list`.
+ * 42847381388). Decisión de los fundadores del 11 nov 2026: igual con `test:a11y` y los archivos a11y del nivel ligero que
+ * eligió scripts/a11y-select.mjs (`A11Y_FILES`); `test:a11y` también fija `--project=a11y` con `=`. tests/ci-command.test.ts
+ * ejecuta este mismo comando con `--list`.
  * @param {string} command
  * @param {Record<string, string | undefined>} [env]
  * @returns {string[]}
  */
 export function npmArgs(command, env = process.env) {
-  const specs = command === "test:e2e:smoke" ? (env.E2E_SPECS ?? "").split(/\s+/).filter(Boolean) : [];
+  const selected = { "test:e2e:smoke": env.E2E_SPECS, "test:a11y": env.A11Y_FILES }[command];
+  const specs = (selected ?? "").split(/\s+/).filter(Boolean);
   if (command === "ci") return ["ci"];
   if (command === "chromium") return ["exec", "--", "playwright", "install", "--with-deps", "--only-shell", "chromium"];
   return ["run", command, ...(specs.length ? ["--", ...specs] : [])];

@@ -37,6 +37,22 @@ describe("comando de la spec E2E en el job e2e (scripts/ci.mjs)", () => {
     expect(result.files.sort()).toEqual(["access-account.e2e.ts", "budgets.e2e.ts"]);
   });
 
+  // Decisión de los fundadores del 11 nov 2026: el paso de axe del job e2e pasa así los archivos de scripts/a11y-select.mjs.
+  it("con A11Y_FILES, test:a11y lista solo esos archivos a11y (--project=a11y con `=`)", () => {
+    const files = ["tests/a11y/goals.a11y.ts", "tests/a11y/goal-expense.a11y.ts"];
+    expect(npmArgs("test:a11y", { A11Y_FILES: files.join(" ") })).toEqual(["run", "test:a11y", "--", ...files]);
+    const args = npmArgs("test:a11y", { A11Y_FILES: files.join(" ") }) as string[];
+    const result = spawnSync("npm", [...args, "--list", "--reporter=list"], {
+      encoding: "utf8", shell: process.platform === "win32", env: { ...process.env, CI: "", A11Y_JOB: "e2e", A11Y_LEVEL: "" },
+    });
+    const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+    expect(output).not.toMatch(/not found/);
+    expect(result.status, output).toBe(0);
+    const listed = [...new Set([...(result.stdout ?? "").matchAll(/›\s+(\S+\.a11y\.ts):\d+:\d+/g)].map((match) => match[1].replace(/\\/g, "/").split("/").pop()!))];
+    expect(listed.sort()).toEqual(["goal-expense.a11y.ts", "goals.a11y.ts"]);
+    expect(npmArgs("test:a11y", {})).toEqual(["run", "test:a11y"]);
+  });
+
   it("sin E2E_SPECS corre todas las specs del proyecto e2e", () => {
     expect(npmArgs("test:e2e:smoke", {})).toEqual(["run", "test:e2e:smoke"]);
     const result = list({});
