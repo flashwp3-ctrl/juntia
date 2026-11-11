@@ -67,7 +67,10 @@ describe("selector de accesibilidad de nivel ligero por área (decisión de los 
     ["el shell es compartido", ["src/app/(app)/layout.tsx"], ALL, null],
     ["globals.css es compartido", ["src/app/globals.css"], ALL, null],
     ["otro archivo de src/lib/copy/ es compartido", ["src/lib/copy/en.ts"], ALL, null],
-    ["src/lib/db/errors.ts es compartido", [...PLAN_PR, "src/lib/db/errors.ts"], ALL, null],
+    // Decisión del gestor (11 nov 2026): errors.ts, mismo trato que es.ts.
+    ["errors.ts con un área: solo el área", [...PLAN_PR, "src/lib/db/errors.ts"], a("routes", "plan"), ["presupuestos"]],
+    ["solo errors.ts: todos", ["src/lib/db/errors.ts"], ALL, null],
+    ["errors.ts con es.ts y neutros: todos", ["src/lib/db/errors.ts", "src/lib/copy/es.ts", "docs/TESTING.md"], ALL, null],
     ["tests/support/ es compartido", ["tests/support/seed.ts"], ALL, null],
     ["el registro de rutas es compartido", ["tests/a11y/route-registry.ts"], ALL, null],
     ["el workflow es compartido", [".github/workflows/ci.yml"], ALL, null],
