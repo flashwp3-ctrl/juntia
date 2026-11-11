@@ -1116,3 +1116,29 @@ Selector para este PR tras el cambio: **sigue pidiendo las cinco** por `scripts/
 | Specs 1, 2, 3 y 4 + `couple-shared.a11y.ts` | **exit 1, 229,44 s.** E2E 29/32: los mismos dos casos de la spec 3 y, esta vez, «N → monto → categoría reciente → Guardar…» de la spec 2, por la misma causa (el héroe sigue en $412.900 y la página pasa a Actividad). La spec 1 y la spec 4 pasan; `couple-shared.a11y.ts` 2/2 |
 
 Las fallas de héroe/E5 no tocan código de esta ronda (la creación no cambió) y se reproducen en el commit anterior; quedan para el gate de CI, que es la evidencia.
+
+## Regresión de E5 en Inicio de Nosotros (pedido del gestor sobre `5c80a3b`)
+
+- **Reinicio de `juntia-dev`**: `npm run db:dev:reset` lo **denegó el clasificador de permisos** de esta sesión; no se ejecutó ni se buscó otro camino. Todo lo de abajo corre sobre el `juntia-dev` acumulado.
+- **Comparación por versión** (worktree aparte, `git worktree add --detach`, con su propio `npm ci`), con `npm run e2e:dev -- tests/e2e/couple-settle.e2e.ts --grep 'motion activo'` («@serial motion activo: E5 al anotar en Nosotros…», spec 3), una corrida por fila:
+
+| Versión | Resultado |
+| --- | --- |
+| `main` (`7b42b3a`) | 5 de 6 pasan |
+| PR D `87f0437` | 0 de 2 |
+| PR D `5c80a3b` | 0 de 5 |
+| `5c80a3b` sin leer solicitudes en Inicio (prueba temporal) | 3 de 5 |
+| `5c80a3b` con esa lectura en paralelo (prueba temporal) | 0 de 4 |
+| **Con la corrección** | **6 de 7** |
+
+- **Causa**: el PR D añadió a Inicio de Nosotros una lectura de `usage_requests`; en este `juntia-dev` esa consulta es lenta y la revalidación tras anotar no llega dentro de la ventana del resaltado de E5 (~1 s), así que la app lleva a Actividad y el héroe no se ve subir. Leerla en paralelo no basta: es la rama más lenta.
+- **Corrección**: `goals_overview` ya trae `has_pending_request`; Inicio solo lee las solicitudes si alguna meta tiene una pendiente, y Actividad solo si hay usos en el mes o alguna pendiente (`loadHomeGoals`, `monthFunding`). Sin solicitudes, la revalidación no paga esa lectura.
+- La spec 2 («N → monto…» y su `@serial`) da lo mismo en `87f0437` y en `5c80a3b` (pasan en dirigida). «Gasto compartido 50/50…» de la spec 3 **falla también en `main`**.
+
+| Corrida completa | Resultado |
+| --- | --- |
+| `npm run e2e:dev` sobre **`main`** (`7b42b3a`) | **exit 1, 468,62 s**: E2E 30/33 («N → monto…» y el `@serial` de la spec 2, «gasto compartido 50/50…» de la spec 3), axe 98/99 (`couple-shared.a11y.ts`, 30 s agotados) |
+| `npm run e2e:dev` sobre el PR D **con la corrección** | **exit 1, 502,09 s**: E2E 31/34 (el `@serial` de la spec 2, «gasto compartido 50/50…» y el `@serial` de la spec 3, que en la completa corre en paralelo con todo), axe 99/100 (`balance.a11y.ts`, 30 s agotados) |
+| `npm run verify` | **exit 0, 105,52 s** (aviso: más de 90 s). Componentes **888 / 2 omisiones previstas**. Antes, dos casos de `goal-funding.test.tsx` agotaban su límite de 5 s con la máquina cargada; ese archivo usa ahora 15 s, como otras pruebas de hojas |
+
+En la corrida completa local, los casos de E5 y los límites de 30 s fallan igual en `main` que en el PR D: la diferencia atribuible al PR D era la del `@serial` dirigido, y queda corregida.

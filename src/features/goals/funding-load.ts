@@ -41,9 +41,10 @@ export async function pendingRequests(client: SupabaseClient, goalId?: string): 
  * Nosotros, de las solicitudes de esos gastos o pendientes. Una sola lectura de `usage_requests` (revisión del gestor del
  * PR #69, 8): de ella salen también las pendientes que Actividad pinta arriba; y una de `expense_goal_funding` por gasto.
  */
-export async function monthFunding(client: SupabaseClient, context: PlanningContext, entries: readonly GoalEntryTransport[], names: ReadonlyMap<string, string>): Promise<{ funding: Record<string, ExpenseFundingView>; pending: UsageRequestView[] }> {
+export async function monthFunding(client: SupabaseClient, context: PlanningContext, entries: readonly GoalEntryTransport[], names: ReadonlyMap<string, string>, anyPending = true): Promise<{ funding: Record<string, ExpenseFundingView>; pending: UsageRequestView[] }> {
   const usages = entries.filter((entry) => entry.kind === "usage" && entry.transaction_id);
-  const requestRows = context === "us" ? await usageRequests(client) : [];
+  // Solo se lee `usage_requests` si hay usos en el mes o alguna meta con una solicitud pendiente.
+  const requestRows = context === "us" && (usages.length > 0 || anyPending) ? await usageRequests(client) : [];
   const ids = new Set<string>(usages.map((entry) => entry.transaction_id!));
   for (const row of requestRows) if (row.status === "pending" || ids.has(row.transaction_id)) ids.add(row.transaction_id);
   if (ids.size === 0) return { funding: {}, pending: [] };

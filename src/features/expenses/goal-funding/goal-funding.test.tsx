@@ -133,7 +133,7 @@ async function setField(user: ReturnType<typeof userEvent.setup>, name: string, 
   await user.type(field(name), pesos);
 }
 
-describe("«Cómo se pagó» en Anotar (FR-050; Q16)", () => {
+describe("«Cómo se pagó» en Anotar (FR-050; Q16)", { timeout: 15000 }, () => {
   it("«Dinero del mes» es el valor inicial y la ruta mínima no cambia: monto, categoría y Guardar, sin pedir metas", async () => {
     const { user, actions, sharedWrites, funding } = setup({ context: "me" });
     await openSheet(user);
@@ -154,7 +154,7 @@ describe("«Cómo se pagó» en Anotar (FR-050; Q16)", () => {
   });
 });
 
-describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a)", () => {
+describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a)", { timeout: 15000 }, () => {
   it("en Nosotros pide solo las metas compartidas y no pinta ninguna personal, ni deshabilitada; la explicación es genérica", async () => {
     const { user, funding } = setup({ context: "us" });
     await openSheet(user);
@@ -195,7 +195,7 @@ describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a
   });
 });
 
-describe("FundingLedger: reparto ≠ fondos (FR-051; US-7.2; FR-113)", () => {
+describe("FundingLedger: reparto ≠ fondos (FR-051; US-7.2; FR-113)", { timeout: 15000 }, () => {
   it("propone lo proporcional a lo disponible en pesos enteros, separa el reparto de los fondos y pide aprobación solo en la fila del otro", async () => {
     const { user } = setup();
     await openSheet(user);
@@ -290,7 +290,7 @@ describe("FundingLedger: reparto ≠ fondos (FR-051; US-7.2; FR-113)", () => {
   });
 });
 
-describe("ConfirmationBadge en sus cinco estados (decisión 22.3)", () => {
+describe("ConfirmationBadge en sus cinco estados (decisión 22.3)", { timeout: 15000 }, () => {
   it.each([
     [{ state: "pending", name: "Tomás" }, copy.goalExpense.badge.pending("Tomás")],
     [{ state: "approved" }, copy.goalExpense.badge.approved],
@@ -334,7 +334,7 @@ const request = (overrides: Partial<UsageRequestView> = {}): UsageRequestView =>
 });
 const tomasView: GoalPerson[] = people.map((person) => ({ ...person, isMe: person.userId === TOMAS }));
 
-describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", () => {
+describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", { timeout: 15000 }, () => {
   it("B4, quien pide: el gasto ya está registrado, falta solo el uso de los fondos del otro, «No vence» y «Cancelar solicitud»", async () => {
     const user = userEvent.setup();
     const actions = goalFunding();
@@ -399,7 +399,7 @@ describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", () => {
   });
 });
 
-describe("Quitar el uso, eliminar y reactivar (US-8; FR-057, FR-059, FR-072; F64-1)", () => {
+describe("Quitar el uso, eliminar y reactivar (US-8; FR-057, FR-059, FR-072; F64-1)", { timeout: 15000 }, () => {
   function Host({ children }: { children: React.ReactNode }) {
     return <AnnotateProvider actions={expenseActions()} context="me" today="2026-11-05">{children}</AnnotateProvider>;
   }
@@ -472,7 +472,7 @@ describe("Quitar el uso, eliminar y reactivar (US-8; FR-057, FR-059, FR-072; F64
   });
 });
 
-describe("FundingEffect sin solicitud", () => {
+describe("FundingEffect sin solicitud", { timeout: 15000 }, () => {
   it("con fondos propios solo, no hay fila «si aprueba»", () => {
     render(<FundingEffect goalName="Bicicleta de ruta" balanceMinor={minor(1050000n)} ownPesos={400000} requestedPesos={0} partnerName={null} />);
     const rows = within(screen.getByRole("list", { name: copy.goalExpense.effect.title })).getAllByRole("listitem");

@@ -100,7 +100,10 @@ export async function loadHomeGoals(context: PlanningContext, month: string, peo
     const client = await createClient();
     const [rows, metrics] = await Promise.all([listGoals(client, context), metricMonths(client, context, `${month}-01`)]);
     const goals = rows.map(toGoalView).filter((goal) => goal.status !== "archived").sort((a, b) => (a.scope === b.scope ? byCreation(a, b) : a.scope === "personal" ? -1 : 1));
-    const [balances, requests] = await Promise.all([goalMemberBalancesFor(client, goals.map(({ id }) => id)), context === "us" ? pendingRequests(client) : Promise.resolve([])]);
+    // 004 PR D (regresión de E5 medida en juntia-dev): `goals_overview` ya dice si una meta tiene una solicitud pendiente; sin
+    // ninguna, Inicio no consulta `usage_requests`, y la revalidación tras anotar no paga esa lectura.
+    const pending = context === "us" && goals.some((goal) => goal.hasPendingRequest);
+    const [balances, requests] = await Promise.all([goalMemberBalancesFor(client, goals.map(({ id }) => id)), pending ? pendingRequests(client) : Promise.resolve([])]);
     return { setAsideMinor: metrics[0]?.aporte_a_metas ?? "0", goals, members: toMembers(balances, people), requests, people: [...people] };
   }, volver);
 }
@@ -112,7 +115,8 @@ export async function loadGoalActivity(context: PlanningContext, month: string, 
     const [entries, goals, metrics] = await Promise.all([goalActivity(client, context, `${month}-01`), listGoals(client, context), metricMonths(client, context, `${month}-01`)]);
     const names = new Map(goals.map((goal) => [goal.id, goal.name]));
     // 004 PR D (T064): el uso de metas de los gastos del mes (CON META, el detalle) y, en Nosotros, las solicitudes pendientes.
-    const { funding, pending: requests } = await monthFunding(client, context, entries, names);
+    // Sin usos en el mes ni metas con una solicitud pendiente, no hay nada que leer de `usage_requests` (ver loadHomeGoals).
+    const { funding, pending: requests } = await monthFunding(client, context, entries, names, goals.some((goal) => goal.has_pending_request));
     return { entries: entries.map((entry) => toEntryView(entry, names.get(entry.goal_id))), setAsideMinor: metrics[0]?.aporte_a_metas ?? "0", funding, requests };
   }, volver);
 }
