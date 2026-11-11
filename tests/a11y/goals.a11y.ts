@@ -32,20 +32,17 @@ async function seedGoals(index: number) {
 }
 
 /**
- * Las casillas de «Tipo de meta» de la hoja abierta: cuántas hay en cada fila y qué etiqueta no cabe en la suya. Gate del PR #69
- * (run 42956506044): al cruzar 768 px la hoja se vuelve a montar (BottomSheet → Modal) y una medición inmediata podía leer el
- * diálogo que se cierra o uno sin maquetar (todas las casillas con `top` 0: «[7]»). Por eso se espera a un solo diálogo
- * visible con el grupo visible, y las casillas sin tamaño no cuentan como fila: `perRow` sale vacío hasta que hay maquetación.
+ * Las casillas de «Tipo de meta» de la hoja abierta: cuántas hay en cada fila y qué etiqueta no cabe en la suya. En el gate del
+ * PR #69 (run 42956506044) la hoja se volvía a montar al cruzar 768 px (BottomSheet → Modal) y hubo que esperar a una sola hoja
+ * maquetada. Desde que el marco usa BottomSheet `adaptive` es el mismo árbol: basta esperar a que la hoja tome la presentación
+ * del ancho nuevo (`data-modal` desde 768, `data-bottom-sheet` por debajo) y medir una vez.
  */
-async function goalTypeRows(page: Page, title: string) {
+async function goalTypeRows(page: Page, title: string, width: number) {
   const dialog = page.getByRole("dialog", { name: title });
-  await expect(dialog).toHaveCount(1);
-  const group = dialog.getByRole("group", { name: copy.goals.sheet.type });
-  await expect(group).toBeVisible();
-  return group.getByRole("radio").first().evaluate((radio) => {
+  await expect(dialog).toHaveAttribute(width >= 768 ? "data-modal" : "data-bottom-sheet", "");
+  return dialog.getByRole("group", { name: copy.goals.sheet.type }).getByRole("radio").first().evaluate((radio) => {
     const cells = [...(radio.closest("label")?.parentElement?.children ?? [])] as HTMLElement[];
     const rows = new Map<number, number>();
-    if (cells.some((cell) => { const box = cell.getBoundingClientRect(); return box.width === 0 || box.height === 0; })) return { perRow: [] as number[], clipped: [] as string[] };
     for (const cell of cells) {
       const top = Math.round(cell.getBoundingClientRect().top);
       rows.set(top, (rows.get(top) ?? 0) + 1);
@@ -95,9 +92,9 @@ if (JOB === "e2e") test.describe("Metas, inmersiva, hojas e historial (PR C de l
       // su casilla. Ahora van en dos filas, 4 + 3, en todos los anchos, sin cortar ninguna etiqueta. Se mide a 390 y a 1440.
       for (const width of [390, 1440]) {
         await page.setViewportSize({ width, height: 900 });
-        // Sin esperas fijas: se vuelve a medir hasta que la hoja remontada está maquetada (o se agota el plazo de expect).
-        await expect.poll(async () => (await goalTypeRows(page, copy.goals.sheet.createTitle)).perRow, { message: `${width}px: tipos de meta por fila` }).toEqual([4, 3]);
-        expect.soft((await goalTypeRows(page, copy.goals.sheet.createTitle)).clipped, `${width}px: etiquetas de tipo cortadas`).toEqual([]);
+        const { perRow, clipped } = await goalTypeRows(page, copy.goals.sheet.createTitle, width);
+        expect(perRow, `${width}px: tipos de meta por fila`).toEqual([4, 3]);
+        expect.soft(clipped, `${width}px: etiquetas de tipo cortadas`).toEqual([]);
       }
       await page.setViewportSize({ width: 390, height: 900 });
       await page.keyboard.press("Escape");

@@ -757,10 +757,27 @@ permiso para que el número siga a la deriva en vez de contenerla. Una medición
 un dato sobre lo que la suite tarda; no es un argumento sobre lo que debería
 tardar.
 
-### Dos consecuencias prácticas
+### Tres consecuencias prácticas
 
 - **Instala solo Chromium** en el humo: `npx playwright install --with-deps
   chromium`. Nunca los tres navegadores.
+- **Sí se cachea la compilación de Next, y solo `.next/cache`.** Los jobs `app` y
+  `e2e` restauran `.next/cache` con `actions/cache` antes de compilar (11 nov 2026).
+  Es lo que la guía «CI Build Caching» de Next documenta como seguro entre builds, y
+  desde Next 16.3 guarda ahí también la caché de Turbopack de `next build`
+  (`turbopackFileSystemCacheForBuild`, activa por defecto). Nunca `.next` entero.
+  La clave es `next-<SO>-<job>-<hash de package-lock.json>-<hash de src/**>`, una por
+  job porque cada uno compila con otras variables públicas de Supabase; `restore-keys`
+  (`next-<SO>-<job>-<hash del lockfile>-`) reusa la última build del job cuando
+  cambia `src/`, y un lockfile nuevo empieza en frío. La caché se guarda solo si el
+  job termina verde. **Ahorro esperado, sin medir todavía en CI:** el paso «Install
+  and build with the runner's Supabase» del job `e2e` ronda 100 s (89 s de build en
+  el run 42849936048). En local (Windows, 11 nov 2026), `next build` bajó de 66 s en
+  frío a 15 s con `.next/cache` restaurada (81 MB) y `src/` sin cambios; un PR que toca
+  `src/` recompila lo que cambió, así que en CI se espera un ahorro menor que ese, del
+  orden de 30–60 s por job con build, menos los segundos de restaurar la caché. Es una
+  estimación, no una medición: la mide el gate. El primer run llena la caché y el
+  siguiente la usa; el resumen del job ya publica el tiempo de `build`.
 - **No cachees los binarios del navegador.** No es un olvido nuestro: **la
   documentación oficial de Playwright lo desaconseja** — «Caching browser binaries
   is not recommended, since the amount of time it takes to restore the cache is
@@ -818,6 +835,8 @@ A usa DB_URL del stack Supabase local; B usa PG, configurado como postgres en el
 El restaurador B corre sobre un PostgreSQL 17 instalado en el runner desde PGDG. Desde el 11 de noviembre de 2026, los runs 43045655895 (intentos 1 y 2) y 43052000905 se colgaron en ese paso: `apt-get update` completo reintentaba `azure.archive.ubuntu.com` («Temporary failure resolving») hasta agotar los 10 min del job, aunque PGDG respondía en menos de un segundo, y el ensayo de restauración no llegaba a correr.
 
 Ahora el paso no toca los espejos de Ubuntu. La imagen `ubuntu-24.04` ya trae `postgresql-common` de PGDG, con su llave, y todas las dependencias de PostgreSQL 17: en el run verde 42965711679 solo se instalaron `postgresql-17` y `postgresql-client-17`, los dos desde PGDG. `apt-get update` e `install` leen solo una lista de PGDG escrita en `$RUNNER_TEMP`, con `--no-install-recommends`, tres reintentos, 20 s por conexión, 90 s y 150 s de tope, y `timeout-minutes: 6` en el paso: 90 s + 150 s + hasta 60 s para que el clúster acepte conexiones suman 300 s, y el minuto restante es margen para que salga el `::error` propio antes de que GitHub cancele el paso. Si PGDG falla, o si una imagen futura deja de traer alguna dependencia, el paso falla en minutos con un `::error` que lo dice. No hay alternativa a Ubuntu: hay que relanzar el job o revisar la imagen.
+
+**Puerto 15432 (11 de noviembre de 2026).** El clúster plano escuchaba en 55432, dentro del rango efímero de Linux (32768–60999). En el run 43061973171 falló con «could not bind IPv4 address "127.0.0.1": Address already in use»: un puerto aleatorio de Docker o del Supabase local lo había tomado. Ahora escucha en 15432 (`PLAIN_PG_PORT` del job `db`), por debajo del rango efímero y fuera de los puertos de `supabase/config.toml` (54320–54329 y 8083). Antes de `pg_createcluster`, el paso comprueba con `ss` que nadie escucha en ese puerto; si alguien lo hace, falla con un `::error` que lo dice y muestra qué proceso lo tiene. `PG`, la conexión del restaurador B, sale de esa misma variable.
 
 ### Medición opt-in de workers (004 PR A, T022–T023)
 
