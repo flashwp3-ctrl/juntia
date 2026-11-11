@@ -58,8 +58,14 @@ function Chapter({ number, title, children, className = "" }: { number: number; 
   const [phase, setPhase] = useState<Phase>("shown");
   useEffect(() => {
     const element = ref.current;
-    if (reduced || !element || typeof IntersectionObserver === "undefined") return;
-    if (element.getBoundingClientRect().top < window.innerHeight * 0.85) return;
+    // Revisión del gestor del PR #71 (bloqueante 1): `reduced` es `false` en la hidratación (instantánea del servidor) y pasa a
+    // `true` en el render siguiente. Por eso el efecto lee también `matchMedia` y no esconde nada con movimiento reducido, y la
+    // fase que se pinta es `shown` siempre que haya movimiento reducido (`visible`, abajo), aunque un efecto anterior la cambiara.
+    const prefersReduced = reduced || (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (prefersReduced) return;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    // Solo lo que empieza por debajo de la vista espera su entrada (revisión del PR #71, 4): lo que ya asoma no parpadea.
+    if (element.getBoundingClientRect().top < window.innerHeight) return;
     setPhase("waiting");
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && (entry.intersectionRatio >= 0.3 || entry.intersectionRect.height >= window.innerHeight * 0.3)) {
@@ -70,20 +76,21 @@ function Chapter({ number, title, children, className = "" }: { number: number; 
     observer.observe(element);
     return () => observer.disconnect();
   }, [reduced]);
+  const visible: Phase = reduced ? "shown" : phase;
   const id = `analysis-chapter-${number}`;
   return (
     <section
       ref={ref}
       aria-labelledby={id}
-      data-chapter-phase={phase}
+      data-chapter-phase={visible}
       className={`flex min-w-0 flex-col gap-4 ${className}`}
-      style={phase === "shown" ? undefined : { opacity: phase === "waiting" ? 0 : 1, transform: phase === "waiting" ? "translateY(12px)" : "none", transition: `opacity 320ms ${enter}, transform 320ms ${enter}` }}
+      style={visible === "shown" ? undefined : { opacity: visible === "waiting" ? 0 : 1, transform: visible === "waiting" ? "translateY(12px)" : "none", transition: `opacity 320ms ${enter}, transform 320ms ${enter}` }}
     >
       <div className="flex flex-col gap-1">
         <p aria-hidden="true" className={overline}>{copy.analysis.chapter(number)}</p>
         <h2 id={id} className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{title}</h2>
       </div>
-      {children(phase)}
+      {children(visible)}
     </section>
   );
 }

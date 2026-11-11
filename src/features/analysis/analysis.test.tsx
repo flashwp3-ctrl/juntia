@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { metricCases, octoberBudgets } from "@/domain/golden/planning-2026";
 import { copy } from "@/lib/copy/es";
 import { AnalysisScreen } from "./analysis-screen";
+import { compactPesos } from "./format";
 import { MonthChart } from "./month-chart";
 import { PlanningNote } from "./planning-note";
 import type { AnalysisData, AnalysisMetrics } from "./types";
@@ -139,6 +140,19 @@ describe("Comparación con el mes anterior (Q10; FR-023)", () => {
     const amount = chapter(copy.analysis.chapters.amount);
     expect(text(amount)).toContain(copy.analysis.comparison.less("$300.000", 9, "septiembre"));
     expect(text(amount)).not.toContain("Lo que más subió");
+  });
+});
+
+describe("Revisión del gestor del PR #71 (3 y 5)", () => {
+  it("con menos del 1 % de diferencia no se muestra «(+0 %)» ni «(−0 %)»", () => {
+    render(<AnalysisScreen data={{ ...withBudgets, comparison: { previousMonth: "2026-09", differenceMinor: minor(5000n), percent: 0, categories: [] } }} />);
+    const amount = chapter(copy.analysis.chapters.amount);
+    expect(text(amount)).toContain("$5.000 más que en septiembre.");
+    expect(text(amount)).not.toContain("%");
+  });
+
+  it("la etiqueta corta del Chart redondea: $2.990.000 es «3 M», $2.840.000 «2,8 M» y $640.400 «640 mil»", () => {
+    expect([2990000n, 2840000n, 2860000n, 640400n, 999700n, 450n].map((pesos) => compactPesos(pesos * 100n))).toEqual(["3 M", "2,8 M", "2,9 M", "640 mil", "1 M", "450"]);
   });
 });
 

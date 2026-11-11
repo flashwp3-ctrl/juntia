@@ -37,14 +37,39 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     const { context, page } = await signedContext(browser, baseURL!, pair.sara, "light", "us");
     await page.goto(OCTOBER);
     await usReady(page);
+    // Revisión del gestor del PR #71 (bloqueante 1): con movimiento reducido, tras una carga completa ningún capítulo queda
+    // escondido esperando su entrada; axe audita los cuatro.
+    await expect(page.locator("main [data-chapter-phase]")).toHaveCount(4);
+    await expect(page.locator("main [data-chapter-phase]:not([data-chapter-phase='shown'])")).toHaveCount(0);
+    // El recorrido con presupuesto de la spec 5 (T071), sobre esta misma siembra (revisión del PR #71, 6): US-3, escenarios 1 y
+    // 2. Octubre de Nosotros: el gasto sin comparación (sin gastos compartidos en septiembre, Q10), límite y desviación,
+    // lo apartado por persona y la PlanningNote con $3.740.000.
+    const amount = region(page, copy.analysis.chapters.amount);
+    await expect(amount).toContainText(copy.analysis.spent.us);
+    await expect(amount).toContainText("$2.840.000");
+    await expect(amount).not.toContainText("%");
+    const where = region(page, copy.analysis.chapters.where);
+    await expect(where.getByText(copy.plan.over.us("$20.000", 105))).toBeVisible();
+    await expect(where.getByText(copy.plan.leftPercent("$20.000", 92))).toBeVisible();
+    await expect(region(page, copy.analysis.chapters.setAside).getByText("$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.")).toBeVisible();
     await bothThemes(page, "Análisis en Nosotros con presupuesto");
     await openNote(page);
+    await expect(region(page, copy.analysis.chapters.setAside).getByRole("group", { name: copy.analysis.note.overline })).toContainText("$3.740.000");
+    await expect(page.getByRole("main")).not.toContainText(/total gastado/i);
     await bothThemes(page, "Análisis en Nosotros con la PlanningNote abierta");
     await context.close();
 
+    // Yo de Sara en octubre, sin presupuestos personales: solo gasto y categorías; ninguna barra, límite, 0 % ni EXCEDIDO.
     const me = await signedContext(browser, baseURL!, pair.sara, "light", "me");
     await me.page.goto(OCTOBER);
     await meReady(me.page);
+    await expect(region(me.page, copy.analysis.chapters.amount)).toContainText(`${copy.analysis.spent.me}`);
+    await expect(region(me.page, copy.analysis.chapters.amount)).toContainText("$1.912.900");
+    const mine = region(me.page, copy.analysis.chapters.where);
+    await expect(mine.getByRole("img")).toHaveCount(0);
+    await expect(mine.locator("[data-budget-bar], [data-elapsed-mark]")).toHaveCount(0);
+    await expect(region(me.page, copy.analysis.chapters.setAside).getByText("$500.000. Va aparte: no es gasto.")).toBeVisible();
+    expect(await me.page.locator("main").innerText()).not.toMatch(/\$0(?![.\d])|\b0 %|EXCEDIDO/);
     await bothThemes(me.page, "Análisis en Yo sin presupuesto");
     await me.context.close();
   });

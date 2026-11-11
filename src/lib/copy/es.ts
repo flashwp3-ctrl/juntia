@@ -326,8 +326,9 @@ export const copy = {
     spent: { us: "Gastaron juntos", me: "Gastaste" },
     noSpending: { us: (month: string) => `En ${month} no hay gastos de Nosotros.`, me: (month: string) => `En ${month} no anotaste gastos.` },
     comparison: {
-      more: (amount: string, percent: number, month: string) => `${amount} más que en ${month} (+${percent} %).`,
-      less: (amount: string, percent: number, month: string) => `${amount} menos que en ${month} (−${percent} %).`,
+      // Revisión del PR #71 (3): con menos del 1 % de diferencia, sin «(+0 %)».
+      more: (amount: string, percent: number, month: string) => `${amount} más que en ${month}${percent ? ` (+${percent} %)` : ""}.`,
+      less: (amount: string, percent: number, month: string) => `${amount} menos que en ${month}${percent ? ` (−${percent} %)` : ""}.`,
       same: (month: string) => `Lo mismo que en ${month}.`,
       rose: (categories: readonly string[]) => `Lo que más subió: ${categories.join(" y ")}.`,
     },

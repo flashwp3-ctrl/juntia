@@ -1346,7 +1346,7 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
 | Las siete filas de DEC-G04 | **Cerrada** | PR A: 42508573805 (dominio e integración) |
 | `transaction_goal_funded` conectado | **Cerrada** | Función: PR A, 42508573805. Pantalla: gate del PR D, 42958244114 |
 | Dataset dorado en orden cronológico | **Cerrada** | PR A: 42508573805 (dominio) |
-| View Transitions con App Router | **Cerrada para la apertura** | Chromium y WebKit de Playwright, con salida en este documento (sección T052); el fundador, en el Safari de su iPhone, el 10 de noviembre de 2026 (versión de iOS **pendiente**). El back-swipe de iPhone, **aplazado por decisión 19.1** |
+| View Transitions con App Router | **Cerrada para la apertura** | Chromium: la View Transition anima al abrir una meta. El respaldo de Motion (`layoutId`), en Chromium y en el WebKit de Playwright sin la API. La API nativa en el WebKit de Playwright para Windows (build 2370) hace caer el proceso de la página: es una limitación de ese port, no de la app. Safari real del iPhone del fundador, el 10 de noviembre de 2026: anima bien y no se cae (versión de iOS **pendiente**). Salidas en la sección T052. El back-swipe de iPhone, **aplazado por decisión 19.1** |
 | Rendimiento de GoalStack y del abanico | **Pendiente del gestor** (T054, laboratorio) | — |
 | Luminancia del scrim de fotos | **No aplica** (decisión 22.6) | — |
 | Privacidad por ámbito | **Cerrada hasta el PR D; PR E pendiente del gate (T080)** | Gates de los PR B (42853507482), C (42862640227) y D (42958244114). PR E: verde contra `juntia-dev`, con una mutación que la hace fallar (arriba) |
@@ -1366,7 +1366,42 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
 ## Respuestas del gestor a las preguntas del PR #71 (11 de noviembre de 2026)
 
 1. **La espera de Exportar en la spec 1**: no cambia. En CI nunca falló (el Supabase del runner es local); si falla en el gate, se mira con su log.
-2. **`copy.export.fileNote`**: comprobada contra `export.ts`. El JSON lleva `transactions` (los movimientos propios y los gastos compartidos con su parte), `settlements`, `goals`, `goal_entries` (aportes, retiros y usos), `usage_requests` y `budgets`, así que «tus movimientos activos» ya no lo describía. Cambió **solo el texto** en `es.ts`: «Copia de consulta de lo que ves en Juntia: movimientos, gastos compartidos, liquidaciones, metas con sus aportes, retiros y usos, solicitudes de uso y presupuestos. No sirve para restaurar ni migrar automáticamente.». Sin tocar `export.ts` ni la forma del archivo; `tests/integration/export.test.ts` compara la nota con `copy.export.fileNote`.
+2. **`copy.export.fileNote`**: comprobada contra `export.ts`. El JSON lleva `transactions` (los movimientos propios y los gastos compartidos con su parte), `settlements`, `goals`, `goal_entries` (aportes, retiros y usos), `usage_requests` y `budgets`, así que «tus movimientos activos» ya no lo describía. Cambió **solo el texto** en `es.ts`, como corrección solo de texto **aprobada por el gestor**: «Copia de consulta de lo que ves en Juntia: movimientos, gastos compartidos, liquidaciones, metas con sus aportes, retiros y usos, solicitudes de uso y presupuestos. No sirve para restaurar ni migrar automáticamente.». Sin tocar `export.ts` ni la forma del archivo; `tests/integration/export.test.ts` compara la nota con `copy.export.fileNote`.
 3. **Tiempo del job `e2e`**: lo mide el gate; si pasa de 660 s, se decide con la medición.
 4. **Tabla de `[V]`**: completada arriba con los runs que verificó el gestor.
 5. **Check de Vercel** en el PR: es el bloqueo de autor de la cuenta Hobby; no es hallazgo.
+
+## Revisión del gestor del PR #71 (sobre `c4648e7` y `7688eb8`) · correcciones
+
+1. **Bloqueante · capítulos invisibles con movimiento reducido tras hidratar.** `usePrefersReducedMotion` da `false` en el servidor y en la hidratación. El efecto de `Chapter` escondía los capítulos bajo el pliegue y, al volver a pintar con `true`, salía sin devolverlos a `shown`.
+   - **Prueba nueva** `src/features/analysis/analysis-hydration.test.tsx`: `renderToString` y `hydrateRoot` con `matchMedia` en reduce y los capítulos bajo el pliegue. Con el código viejo **falla**: los cuatro capítulos quedan en `waiting`. Con el arreglo, los cuatro en `shown` y ningún `opacity: 0`.
+   - **Arreglo**: con movimiento reducido, la fase que se pinta es siempre `shown`, derivada en el render y no guardada desde el efecto (ESLint, `react-hooks/set-state-in-effect`, rechaza un `setPhase("shown")` dentro del efecto). Además, el efecto lee también `matchMedia` y con movimiento reducido no esconde nada.
+   - **Guardia en el navegador**: el a11y ligero comprueba que los cuatro `[data-chapter-phase]` están en `shown` tras la carga. Con el efecto viejo puesto un momento, esa comprobación **pasó** en Chromium (`npm run e2e:dev -- tests/a11y/analysis.a11y.ts`, exit 0): React vuelve a pintar con la instantánea del cliente antes de ejecutar los efectos, así que en Chromium el efecto ya veía `reduced=true`. El fallo se reproduce en la hidratación de jsdom, que es la prueba que lo detiene. La guardia se deja por su bajo coste.
+   - **axe**: por lo anterior, en Chromium los capítulos 3 y 4 ya estaban visibles cuando axe auditaba. Tras el arreglo, el a11y ligero y el `@sweep` de Análisis se repiten abajo.
+2. **¿Cambiar de mes remonta la pantalla?** **No.** Script temporal sin versionar contra `juntia-dev`, en Chromium, **sin** movimiento reducido. Marca el primer capítulo y el contador, pulsa «Análisis del mes anterior» y registra los cambios del DOM.
+   - Nosotros (noviembre → octubre): mismo nodo de capítulo y de contador, ningún Skeleton (`aria-busy` ni `data-skeleton`). Los dos meses valen $2.840.000, así que el contador no tenía nada que contar.
+   - Yo de Sara (noviembre → octubre): mismo nodo de capítulo y de contador, ningún Skeleton, y el contador interpola de $1.500.000 a $1.912.900 en 17 pasos ($1.502.494, $1.558.192, … $1.912.898, $1.912.900). Las fases de los capítulos no se reinician (sin re-entrada).
+   - No hace falta arreglo: la búsqueda en la URL no cambia la clave del segmento en esta versión de Next (16.4.4), y `loading.tsx` no aparece.
+3. Sin «(+0 %)» ni «(−0 %)»: con `percent` 0, la frase sin porcentaje. Caso nuevo en componentes.
+4. Umbral de entrada `top < innerHeight`: lo que ya asoma no se esconde ni parpadea.
+5. `compactPesos` redondea: $2.990.000 → «3 M», $2.860.000 → «2,9 M», $999.700 → «1 M». Caso nuevo en componentes.
+6. **Spec 5**: se quitó el caso «Análisis con y sin presupuesto», que repetía la siembra del a11y ligero.
+   - Sus aserciones pasan al a11y ligero, sobre los mismos datos reales: el capítulo 1 sin «%», Servicios excedido 105 %, Restaurantes 92 %, lo apartado por persona, la PlanningNote con $3.740.000 y nunca «Total gastado». En Yo de Sara: $1.912.900, ninguna barra, límite, 0 % ni EXCEDIDO, y «$500.000. Va aparte: no es gasto.».
+   - El caso de privacidad crea además un presupuesto de Nosotros (Mercado 900.000) y comprueba su barra al 71 % en la página real.
+   - El clic en el enlace de Plan queda solo en el caso de privacidad.
+7. Fila de T052 de la tabla de `[V]`, corregida con lo exacto: Chromium con View Transition al abrir; respaldo de Motion en Chromium y en el WebKit de Playwright; la API nativa se cae en el WebKit de Playwright para Windows (limitación de ese port); Safari real del iPhone del fundador anima bien.
+8. `copy.export.fileNote`: anotado como corrección solo de texto aprobada por el gestor.
+
+### Corridas de esta ronda (puerto 3500: el 3400 lo ocupaba otro proceso, que no se tocó)
+
+- Componentes de Análisis: **21/21**, con la hidratación. ESLint limpio.
+- `PORT=3500 npm run verify`: **exit 0, 92,28 s** (aviso: más de 90 s); componentes 982 / 2 omisiones previstas. Las dos pasadas anteriores fallaron por el entorno, no por el código. En una, `tests/a11y-select.test.ts --list` encontró el 3400 ocupado. En la otra, `review-f57.test.tsx` agotó sus 5 s bajo carga; solo pasa 19/19, y no es un archivo de este PR.
+- `npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; axe 25,98 s, total 40,44 s. Sin violaciones serias en los tres estados y en los dos temas; los cuatro capítulos en `shown`.
+- `A11Y_LEVEL=sweep npm run e2e:dev -- tests/a11y/analysis.a11y.ts`: **exit 0**; total 38,23 s. Al 200 %, Nosotros 390 / 390 y Yo 390 / 390, sin texto cortado; teclado y 44 px verdes.
+- `npm run e2e:dev -- tests/e2e/budgets.e2e.ts`: **exit 0, 3/3**; E2E 61,97 s, total 72,04 s.
+- `npm run e2e:dev` completo: build 10,37 s; **E2E 29 / 35 en 221,67 s**; axe con sesión **103 / 103 en 337,41 s**; **total 570,62 s, exit 1**. Los seis fallos son tiempos agotados: Exportar (5 s), spec 5 «presupuesto activado y desactivado» (30 s), las dos privacidades de las specs 3 y 4 (90 s), Balance y liquidación (30 s) y «@serial motion activo» (30 s).
+- `npm run e2e:dev -- --project e2e`, dos veces, para separar carga de regresión:
+  - primera, con el equipo aún cargado: **32 / 35 en 192,41 s**; fallan la spec 5 «activado y desactivado» y «Cambiar Yo/Nosotros» de la spec 3;
+  - segunda, con el equipo en reposo (un solo proceso de Node, CPU al 5 %): **33 / 35 en 146,49 s**; fallan Exportar (los 5 s de «Archivo listo.») y la spec 5 «activado y desactivado».
+- La spec 5 «activado y desactivado» es del PR B y no cambió. En el fallo, la página ya anuncia «Presupuesto desactivado.» y la lista aún muestra el límite cuando vencen los **30 s del test entero**, que no lleva `test.slow()`. Dirigida pasa (arriba, 3/3).
+- **Ninguna corrida completa de esta ronda salió limpia contra `juntia-dev`.** Los fallos son tiempos agotados y cambian de una corrida a otra; ninguno es de un archivo de Análisis, y el a11y con sesión pasó entero.

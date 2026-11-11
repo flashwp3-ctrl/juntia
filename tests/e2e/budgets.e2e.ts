@@ -203,52 +203,11 @@ test("spec 5 · privacidad: ni el HTML, ni el RSC, ni el prefetch de Plan en Nos
 // Por qué en E2E (docs/TESTING.md §4; contracts/ci.md, mitigación b): lo que ninguna capa inferior ve es que la página real
 // lee `metric_months` y `budget_months` del contexto de la cookie y el mes de la URL, y lo que el servidor manda en Nosotros.
 // Los capítulos, la comparación, el Chart y la PlanningNote con todas sus variantes están en componentes (T070); las cifras
-// de las vistas, en dominio, pgTAP e integración. Dos casos: el recorrido (una pareja dorada) y la privacidad.
+// de las vistas, en dominio, pgTAP e integración. Un caso, la privacidad, con un presupuesto de Nosotros como dato real (con
+// presupuesto, límite en la página). El recorrido con y sin presupuesto sobre la pareja dorada vive en el axe ligero de
+// tests/a11y/analysis.a11y.ts, que ya sembraba lo mismo (revisión del gestor del PR #71, 6: no pagar dos veces la siembra).
 const analysisOf = (month: string) => `/plan/analisis?mes=${month}`;
 const chapter = (page: Page, name: string) => page.getByRole("main").getByRole("region", { name });
-
-test("spec 5 · Análisis con y sin presupuesto: octubre de Nosotros con límite y desviación, y Yo de Tomás sin presupuesto, sin barras fingidas", async ({ browser, baseURL }, testInfo) => {
-  test.slow();
-  // La pareja dorada: octubre con los seis compartidos, los presupuestos de la parte B y los aportes de la parte A.
-  const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
-  const sara = await open(browser, baseURL!, pair.sara, "us");
-  // Acceso desde Plan (Q5): «Ver el análisis de {mes}» abre el del mes en curso.
-  await sara.page.goto("/plan");
-  await sara.page.getByRole("main").getByRole("link", { name: copy.plan.analysis(monthName(today().slice(0, 7))) }).click();
-  await expect(sara.page).toHaveURL(/\/plan\/analisis/);
-  await expect(chapter(sara.page, copy.analysis.chapters.amount)).toBeVisible();
-
-  // Octubre en Nosotros (US-3, escenarios 1 y 2): el gasto, el desglose con límite y desviación, sin comparación (no hay
-  // gastos compartidos en septiembre: Q10), lo apartado por persona y la PlanningNote.
-  await sara.page.goto(analysisOf("2026-10"));
-  const amount = chapter(sara.page, copy.analysis.chapters.amount);
-  await expect(amount).toContainText(copy.analysis.spent.us);
-  await expect(amount).toContainText("$2.840.000");
-  await expect(amount).not.toContainText("%");
-  const where = chapter(sara.page, copy.analysis.chapters.where);
-  await expect(where.getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
-  await expect(where.getByText(copy.plan.over.us("$20.000", 105))).toBeVisible();
-  await expect(where.getByText(copy.plan.leftPercent("$20.000", 92))).toBeVisible();
-  const setAside = chapter(sara.page, copy.analysis.chapters.setAside);
-  await expect(setAside.getByText("$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.")).toBeVisible();
-  const how = setAside.getByRole("button", { name: copy.analysis.note.how });
-  await how.click();
-  await expect(how).toHaveAttribute("aria-expanded", "true");
-  await expect(setAside.getByRole("group", { name: copy.analysis.note.overline })).toContainText("$3.740.000");
-  await expect(sara.page.getByRole("main")).not.toContainText(/total gastado/i);
-
-  // Yo de Tomás en octubre: no tiene presupuestos personales. Solo gasto y categorías; ninguna barra, límite ni 0 %.
-  const tomas = await open(browser, baseURL!, pair.tomas, "me");
-  await tomas.page.goto(analysisOf("2026-10"));
-  await expect(chapter(tomas.page, copy.analysis.chapters.amount)).toContainText(copy.analysis.spent.me);
-  const mine = chapter(tomas.page, copy.analysis.chapters.where);
-  await expect(mine.getByText(copy.analysis.where.noBudgets.me)).toBeVisible();
-  await expect(mine.getByRole("img")).toHaveCount(0);
-  await expect(mine.locator("[data-budget-bar], [data-elapsed-mark]")).toHaveCount(0);
-  await expect(chapter(tomas.page, copy.analysis.chapters.setAside).getByText("$400.000. Va aparte: no es gasto.")).toBeVisible();
-  expect(await tomas.page.locator("main").innerText()).not.toMatch(/\$0(?![.\d])|\b0 %|EXCEDIDO/);
-  await Promise.all([sara.context.close(), tomas.context.close()]);
-});
 
 test("spec 5 · privacidad de Análisis: ni el HTML, ni el RSC, ni el prefetch de Análisis en Nosotros llevan gastos, presupuestos ni metas personales", async ({ browser, baseURL }, testInfo) => {
   test.slow();
@@ -259,6 +218,8 @@ test("spec 5 · privacidad de Análisis: ni el HTML, ni el RSC, ni el prefetch d
   const [saraOwn, tomasOwn] = await Promise.all([
     createBudget(pair.sara.client, { idempotencyKey: randomUUID(), context: "me", categoryId: "health", limit: moneyFromPesos(123400n) }),
     createBudget(pair.tomas.client, { idempotencyKey: randomUUID(), context: "me", categoryId: "entertainment", limit: moneyFromPesos(98700n) }),
+    // Con presupuesto en Nosotros: Mercado 900.000 con 640.000 de consumo (71 %).
+    createBudget(pair.sara.client, { idempotencyKey: randomUUID(), context: "us", categoryId: "market", limit: moneyFromPesos(900000n) }),
     createTransaction(pair.sara.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(43210n), categoryId: "health", transactionDate: today(), description: "Consulta privada" }),
   ]);
   const bike = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), context: "me", name: "Bicicleta secreta", goalType: "vehicle", target: moneyFromPesos(3000000n), targetMonth: null });
@@ -303,6 +264,7 @@ test("spec 5 · privacidad de Análisis: ni el HTML, ni el RSC, ni el prefetch d
   await nav.getByRole("link", { name: copy.nav.home }).click();
   await page.getByRole("main").getByRole("link", { name: copy.home.analysis, exact: true }).click();
   await expect(chapter(page, copy.analysis.chapters.amount)).toContainText("$2.840.000");
+  await expect(chapter(page, copy.analysis.chapters.where).getByRole("img", { name: copy.plan.bar(copy.categories.market, "640.000", "900.000", 71) })).toBeVisible();
   expect(leaks(await page.locator("main").innerText())).toEqual([]);
   const inUs = await rsc.read((item) => item.underUs);
   for (const { path: from, body } of inUs) expect(leaks(body), `RSC de ${from} pedido en Nosotros`).toEqual([]);
