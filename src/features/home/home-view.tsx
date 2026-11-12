@@ -14,7 +14,7 @@ import { copy } from "@/lib/copy/es";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
 import { HighlightRow, HighlightSharedPart } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
-import { HomeEmpty, HomeHeroTotal, HomeScope, PendingAwareMoney, PendingHomeRows } from "./pending-home";
+import { HeroBreakdown, HomeEmpty, HomeHeroTotal, HomeScope, PendingHomeRows } from "./pending-home";
 import type { HomeGoals } from "@/features/goals/types";
 import { GoalsModule, SetAsideLine } from "./goals-home";
 
@@ -77,7 +77,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
     return (
       <>
       {scope}
-      <HomeEmpty month={month} today={today} title={copy.home.spentIn(name)} empty={
+      <HomeEmpty month={month} today={today} title={copy.home.spentIn(name)} breakdown={shared ? { privateMinor: shared.summary.privateMinor, sharedPartMinor: shared.summary.sharedPartMinor } : undefined} empty={
         <div className="flex flex-col gap-6 pt-2">
           <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
           {goals && (goals.goals.length > 0 || BigInt(goals.setAsideMinor) > 0n) ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /><GoalsModule goals={goals} context="me" today={today} /></div> : null}
@@ -106,18 +106,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
           headingId="home-hero"
           titles={{ spent: copy.home.spentIn(name), none: copy.home.noExpenses(name) }}
         />
-        {shared ? (
-          <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.onlyYours}</p>
-              <PendingAwareMoney confirmedMinor={shared.summary.privateMinor} month={month} knownIds={privateIds} className="text-[17px] font-semibold text-ink tabular-nums" />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.sharedPart}</p>
-              <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(shared.summary.sharedPartMinor), currency: "COP" })}</p>
-            </div>
-          </div>
-        ) : null}
+        {shared ? <HeroBreakdown privateMinor={shared.summary.privateMinor} sharedPartMinor={shared.summary.sharedPartMinor} month={month} knownIds={privateIds} /> : null}
       </section>
       {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
       {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /></div> : null}

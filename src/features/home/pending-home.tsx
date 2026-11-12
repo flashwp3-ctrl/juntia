@@ -46,9 +46,28 @@ export function HomeHeroTotal({ confirmedMinor, month, knownIds, headingId, titl
 }
 
 /** F05: «Solo tuyos» de Inicio de Yo con pareja, que sube con el héroe. */
-export function PendingAwareMoney({ confirmedMinor, month, knownIds, className }: { confirmedMinor: string; month: string; knownIds: readonly string[]; className: string }) {
+function PendingAwareMoney({ confirmedMinor, month, knownIds, className }: { confirmedMinor: string; month: string; knownIds: readonly string[]; className: string }) {
   const total = usePendingTotal(confirmedMinor, month, knownIds);
   return <p data-pending-aware="" className={className}>{formatMoney({ amountMinor: total, currency: "COP" })}</p>;
+}
+
+/**
+ * F05/F77-4: el desglose del héroe de Inicio de Yo con pareja, «Solo tuyos» (con los gastos privados en vuelo) y «Tu parte
+ * compartida» (no tiene filas en vuelo). Lo usan la rama con movimientos y el estado vacío con un gasto en vuelo.
+ */
+export function HeroBreakdown({ privateMinor, sharedPartMinor, month, knownIds }: { privateMinor: string; sharedPartMinor: string; month: string; knownIds: readonly string[] }) {
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.onlyYours}</p>
+        <PendingAwareMoney confirmedMinor={privateMinor} month={month} knownIds={knownIds} className="text-[17px] font-semibold text-ink tabular-nums" />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.sharedPart}</p>
+        <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(sharedPartMinor), currency: "COP" })}</p>
+      </div>
+    </div>
+  );
 }
 
 /** Los `<li>` de las filas en vuelo del mes, para ir dentro de la lista de recientes. */
@@ -69,7 +88,12 @@ export function PendingHomeRows({ month, today, knownIds }: { month: string; tod
  * fila en vuelo es un gasto, también el héroe con su total optimista (lo confirmado del mes es 0: no hay movimientos, ni
  * propios ni, en Yo con pareja, partes compartidas). Sin gasto en vuelo (solo un ingreso), ningún héroe de $0.
  */
-export function HomeEmpty({ month, today, title, empty }: { month: string; today: string; title: string; empty: ReactNode }) {
+export function HomeEmpty({ month, today, title, breakdown, empty }: {
+  month: string; today: string; title: string;
+  /** F77-4: en Yo con pareja, el desglose «Solo tuyos / Tu parte compartida» del mes (vacío: los dos en 0). */
+  breakdown?: { privateMinor: string; sharedPartMinor: string };
+  empty: ReactNode;
+}) {
   const rows = usePendingRows();
   const pending = useMonthPending(month, []);
   if (pending.length === 0) return empty;
@@ -79,6 +103,7 @@ export function HomeEmpty({ month, today, title, empty }: { month: string; today
       {spending ? (
         <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
           <HomeHeroTotal confirmedMinor="0" month={month} knownIds={[]} headingId="home-hero" titles={{ spent: title, none: title }} />
+          {breakdown ? <HeroBreakdown privateMinor={breakdown.privateMinor} sharedPartMinor={breakdown.sharedPartMinor} month={month} knownIds={[]} /> : null}
         </section>
       ) : null}
       <section aria-labelledby="home-recent" className="flex flex-col gap-1">

@@ -134,8 +134,22 @@ describe("Inicio con una fila en vuelo", () => {
 
   it("F77-2: en Yo con pareja y sin movimientos (consumo 0), el héroe optimista también sale; con solo un ingreso en vuelo, ningún héroe de $0", async () => {
     const empty = { privateMinor: "0", sharedPartMinor: "0", consumptionMinor: "0" };
-    const first = render(wrapHome(<><Flight pending={row({ transactionDate: "2026-11-05" })} /><HomeView rows={[]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: empty }} /></>));
+    const pending = row({ transactionDate: "2026-11-05" });
+    const outcome = { ok: true as const, value: { ...saved("real-1"), transactionDate: "2026-11-05" } };
+    const concept = (label: string) => screen.getByText(label).closest("div")!.textContent;
+    const first = render(wrapHome(<><Flight pending={pending} outcome={outcome} /><HomeView rows={[]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: empty }} /></>));
     await vi.waitFor(() => expect(hero()).toBe("$45.000"));
+    // F77-4: también el desglose durante el vuelo: Solo tuyos $45.000 y Tu parte compartida $0.
+    expect(concept(copy.home.onlyYours)).toContain("$45.000");
+    expect(concept(copy.home.sharedPart)).toContain("$0");
+    // Llega la real (y el resumen del servidor con ella): la rama normal dice lo mismo, sin sumar dos veces.
+    const real = { privateMinor: "4500000", sharedPartMinor: "0", consumptionMinor: "4500000" };
+    first.rerender(wrapHome(<><Flight pending={pending} outcome={outcome} /><HomeView rows={[{ ...pending.transaction, id: "real-1" }]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: real }} /></>));
+    expect(hero()).toBe("$45.000");
+    expect(concept(copy.home.onlyYours)).toContain("$45.000");
+    expect(concept(copy.home.onlyYours)).not.toContain("$90.000");
+    expect(concept(copy.home.sharedPart)).toContain("$0");
+    expect(pendingRows()).toHaveLength(0);
     first.unmount();
     const income = row({ transactionDate: "2026-11-05", type: "income", categoryId: "income" });
     render(wrapHome(<><Flight pending={income} />{home([], "2026-11")}</>));
