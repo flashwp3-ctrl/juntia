@@ -961,7 +961,7 @@ describe("Título de la tarjeta con el texto ampliado", () => {
     const title = container.querySelector("[data-goal-title]") as HTMLElement;
     expect(title.style.getPropertyValue("--title-em")).toBe(String(longestWordEm("Emergencias")));
     expect(title.className).toContain("text-[clamp(1.625rem,8vw,2rem)]");
-    expect(title.className).toContain("max-md:text-[min(clamp(1.625rem,8vw,2rem),calc((100vw_-_2.5rem_-_88px_+_(1rem_-_16px)*3)/var(--title-em)))]");
+    expect(title.className).toContain("max-md:text-[max(clamp(26px,8vw,2rem),min(clamp(1.625rem,8vw,2rem),calc((100vw_-_2.5rem_-_88px_+_(1rem_-_16px)*3)/var(--title-em))))]");
     // Sin contención de tamaño: la tarjeta se ajusta a su contenido en Inicio (F79-2).
     expect(title.parentElement?.className).not.toContain("@container");
   });

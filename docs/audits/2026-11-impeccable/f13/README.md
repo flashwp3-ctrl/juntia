@@ -54,7 +54,7 @@ Lo que hizo falta, además de pasar a `rem`, para que el texto ampliado quepa. N
 | Cabeceras del saldo (módulo de Inicio y de Balance) | «Ver balance ›» sacaba la flecha de la pantalla a 320 | `flex-wrap`: el enlace baja de línea |
 | Selector de mes de Actividad | «Noviembre» montaba la flecha | Por debajo de 16rem el mes sube a su línea y las flechas quedan debajo |
 | Segmentado «Todos · Gastos · Aportes» | A 320 los segmentos se montaban | Prop `wrap` (por defecto, los de ancho completo): por debajo de 16rem pasan a otra fila |
-| Tarjeta de meta | El título se partía («Bicicl de…») o se recortaba; la que asoma por detrás se alargaba y tapaba «Ver todas» | Mínimo en rem y tope por el ancho de su palabra más larga (`longestWordEm`); relleno, ícono y reserva en px; la que asoma no reserva el alto de su contenido invisible por debajo de `lg` |
+| Tarjeta de meta | El título se partía («Bicicl de…») o se recortaba; la que asoma por detrás se alargaba y tapaba «Ver todas» | Mínimo en rem y tope por el ancho de su palabra más larga (`longestWordEm`), sin bajar nunca del tamaño de antes (F79-4: a 16 px mide lo mismo que en `main`, también «Electrodomésticos», y si la palabra no cabe con la letra ampliada se queda en ese tamaño); relleno, ícono y reserva en px; la que asoma no reserva el alto de su contenido invisible por debajo de `lg` |
 | Sidebar desde 1280 | Ancho fijo de 248 px: «Yo/Nosotros», los destinos y la cuenta se montaban | Ancho en `rem` (15,5) y altos mínimos |
 
 ## 3. Lo que no se resolvió, y por qué

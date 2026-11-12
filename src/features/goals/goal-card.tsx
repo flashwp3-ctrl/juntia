@@ -113,9 +113,10 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
                   no pasa del ancho en que cabe entera su palabra más larga: 100vw menos el margen de la página (2,5rem), el relleno
                   (40 px) y la reserva del ícono (48 px), entre el ancho estimado de esa palabra en em. Nunca se parte ni se recorta, y la
                   tarjeta crece en alto. (1rem − 16px)·3 vale 0 a 16 px y 48 px al 200 %: con la letra ampliada el título recupera la
-                  reserva del ícono, que queda arriba, junto a la sobrelínea. Sin consulta de contenedor: la tarjeta se ajusta a su
+                  reserva del ícono, que queda arriba, junto a la sobrelínea. F79-4: nunca baja del tamaño de antes, clamp(26px, 8vw, 2rem): a 16 px el
+                  tope nunca lo supera, así que mide lo mismo que en main; si con la letra ampliada la palabra no cabe, se queda ahí. Sin consulta de contenedor: la tarjeta se ajusta a su
                   contenido en Inicio y una contención de tamaño la estrecharía. */}
-              <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[min(1.5rem,8vw)] leading-[1.15]" : "line-clamp-2 text-[clamp(1.625rem,8vw,2rem)] max-md:text-[min(clamp(1.625rem,8vw,2rem),calc((100vw_-_2.5rem_-_88px_+_(1rem_-_16px)*3)/var(--title-em)))] max-md:-mr-[calc((1rem_-_16px)*3)] leading-[1.04] text-balance"}`} style={peek ? undefined : ({ "--title-em": longestWordEm(goal.name) } as CSSProperties)}>{goal.name}</span>
+              <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[min(1.5rem,8vw)] leading-[1.15]" : "line-clamp-2 text-[clamp(1.625rem,8vw,2rem)] max-md:text-[max(clamp(26px,8vw,2rem),min(clamp(1.625rem,8vw,2rem),calc((100vw_-_2.5rem_-_88px_+_(1rem_-_16px)*3)/var(--title-em))))] max-md:-mr-[calc((1rem_-_16px)*3)] leading-[1.04] text-balance"}`} style={peek ? undefined : ({ "--title-em": longestWordEm(goal.name) } as CSSProperties)}>{goal.name}</span>
             </ViewTransition>
           </span>
           {peek ? <span aria-hidden="true" data-peek-percent="" className={`absolute top-3.5 right-4 rounded-full ${fanned ? "lg:top-16" : ""} bg-raised px-2.5 py-1 text-[0.8125rem] font-semibold tabular-nums shadow-raised`}>{copy.goals.percent(goal.progressPercent)}</span> : null}
