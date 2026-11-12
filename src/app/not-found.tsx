@@ -3,8 +3,10 @@
 // a /interno/primitivos cerrada. Con el aviso de versión base y salida hacia Inicio; sin mensaje técnico.
 // F21 (auditoría Impeccable, nov 2026): «no encontrado» no es una advertencia, así que usa la brújula (`compass`) y no
 // `warning`. Con sesión, carga la cuenta como el layout de (app), para que el sidebar conserve el avatar y el nombre. Sin
-// sesión, o si la lectura falla, se queda con el acceso mínimo: una ruta inexistente nunca debe romper.
+// sesión, o si la lectura falla, se queda con el acceso mínimo: una ruta inexistente nunca debe romper. Las excepciones
+// internas de Next (salida dinámica, redirect, notFound) no son fallos de lectura: `unstable_rethrow` las deja pasar.
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import type { ReactNode } from "react";
 import { createTransactionAction, privateWriteStatusAction, updateTransactionAction, voidTransactionAction } from "@/features/expenses/actions";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
@@ -29,7 +31,8 @@ async function withAccount(children: ReactNode) {
         {children}
       </AccountProvider>
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     return children;
   }
 }

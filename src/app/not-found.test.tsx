@@ -7,7 +7,7 @@ import { copy } from "@/lib/copy/es";
 
 const load = vi.hoisted(() => ({ account: vi.fn(), couple: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("next/navigation", () => ({ usePathname: () => "/ruta-que-no-existe", useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
+vi.mock("next/navigation", async (original) => ({ ...(await original<typeof import("next/navigation")>()), usePathname: () => "/ruta-que-no-existe", useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 vi.mock("@/features/account/load-account", () => ({ loadAccount: load.account }));
 vi.mock("@/features/couple/load", () => ({
   loadCoupleForShell: load.couple,
@@ -44,5 +44,16 @@ describe("404 (F21)", () => {
     const second = render(await NotFound());
     expect(screen.getByRole("heading", { level: 1, name: copy.states.notFound })).toBeTruthy();
     expect(second.container.querySelector("[data-account-button]")).toBeNull();
+  });
+
+  // Endurecimiento (revisión del PR #78): el catch no se traga las excepciones internas de Next.
+  it("una excepción interna de Next (redirect, salida dinámica) se propaga en vez de pintar la 404", async () => {
+    const { redirect } = await import("next/navigation");
+    let internal: unknown;
+    try { redirect("/entrar"); } catch (error) { internal = error; }
+    load.account.mockRejectedValueOnce(internal);
+    await expect(NotFound()).rejects.toBe(internal);
+    load.account.mockRejectedValueOnce(Object.assign(new Error("Dynamic server usage"), { digest: "DYNAMIC_SERVER_USAGE" }));
+    await expect(NotFound()).rejects.toMatchObject({ digest: "DYNAMIC_SERVER_USAGE" });
   });
 });

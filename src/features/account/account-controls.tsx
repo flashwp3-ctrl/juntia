@@ -143,6 +143,10 @@ export function ExportEntry() {
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [state, setState] = useState<ExportState>({ status: "idle" });
   const request = useRef(0);
+  // F78-3: el disparador está fuera de la hoja y la abre con setOpen, así que Radix no sabe adónde devolver el foco. Al
+  // cerrar (×, Escape o scrim), vuelve a «Exportar mis datos», como hoja y como diálogo (mismo árbol, `adaptive`).
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = (event: Event) => { event.preventDefault(); triggerRef.current?.focus(); };
   const reset = () => {
     request.current += 1;
     setState((previous) => {
@@ -172,7 +176,7 @@ export function ExportEntry() {
   ];
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
+      <button ref={triggerRef} type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
         <Tile icon="download-simple" tone="services" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[15px] font-semibold text-ink">{copy.account.privacy.export}</span>
@@ -183,7 +187,7 @@ export function ExportEntry() {
       {/* F11 (auditoría Impeccable, nov 2026): el mismo marco que las demás hojas (liquidar, metas, presupuesto): hoja por
           debajo de 768 y diálogo de 520 desde 768 en el mismo árbol, con el título serif centrado y la «×» a la derecha
           (COMPONENT_SPECIFICATIONS §BottomSheet: gesto, ×, Escape o scrim). */}
-      <BottomSheet open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} bare adaptive>
+      <BottomSheet open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} onCloseAutoFocus={returnFocus} bare adaptive>
         <div className="flex flex-col gap-4 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
             <span />

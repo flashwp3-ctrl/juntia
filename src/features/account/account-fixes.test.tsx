@@ -3,9 +3,9 @@
 // (COMPONENT_SPECIFICATIONS §BottomSheet: «cierre con gesto, botón ×, Escape o scrim»).
 // F17 (propuesta aprobada por los fundadores, 11 nov 2026): «Mi cuenta» activa en el sidebar usa el mismo «estás aquí» que
 // los demás destinos (fondo nav-active y elevación), no un anillo interior de tinta.
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AccountProvider } from "./account-context";
 import { SidebarAccount } from "./account-button";
@@ -40,6 +40,40 @@ describe("Exportar: encabezado de hoja con «×» (F11)", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: copy.account.export.title })).toBeNull();
   });
+});
+
+// F78-3 (revisión del PR #78): al cerrar Exportar, el foco vuelve a «Exportar mis datos» por las tres vías de cierre, como
+// hoja (< 768) y como diálogo (≥ 768), que comparten árbol (BottomSheet `adaptive`).
+describe("Exportar devuelve el foco al disparador (F78-3)", () => {
+  const setWide = (wide: boolean) => {
+    window.matchMedia = ((query: string) => ({ matches: wide && query.includes("min-width: 768px"), media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false })) as typeof window.matchMedia;
+  };
+  afterEach(() => { delete (window as { matchMedia?: unknown }).matchMedia; });
+
+  const ways = {
+    "×": async (user: ReturnType<typeof userEvent.setup>, sheet: HTMLElement) => user.click(within(sheet).getByRole("button", { name: copy.account.export.close })),
+    Escape: async (user: ReturnType<typeof userEvent.setup>) => user.keyboard("{Escape}"),
+    scrim: async (user: ReturnType<typeof userEvent.setup>) => user.click(document.querySelector<HTMLElement>("[class*='--comp-scrim']")!),
+  } as const;
+
+  for (const wide of [false, true]) {
+    for (const [way, close] of Object.entries(ways)) {
+      it(`${wide ? "diálogo (≥ 768)" : "hoja (< 768)"}: abrir con teclado y cerrar con ${way} deja el foco en el disparador`, async () => {
+        setWide(wide);
+        const user = userEvent.setup();
+        render(<ExportEntry />);
+        const trigger = screen.getByRole("button", { name: new RegExp(copy.account.privacy.export) });
+        trigger.focus();
+        await user.keyboard("{Enter}");
+        const sheet = await screen.findByRole("dialog", { name: copy.account.export.title });
+        expect(sheet.hasAttribute("data-modal")).toBe(wide);
+        expect(document.activeElement).not.toBe(trigger);
+        await close(user, sheet);
+        await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.account.export.title })).toBeNull());
+        expect(document.activeElement).toBe(trigger);
+      });
+    }
+  }
 });
 
 describe("Mi cuenta activa en el sidebar (F17)", () => {
