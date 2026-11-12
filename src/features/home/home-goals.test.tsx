@@ -72,3 +72,24 @@ describe("Inicio con metas (US-9)", () => {
     expect(container.querySelector("[data-goals-home]")?.textContent).not.toMatch(/\$/);
   });
 });
+
+describe("Inicio · Nosotros desde 1024 (F03 de la auditoría de Impeccable; comp 04·7)", () => {
+  const cells = (container: HTMLElement) => Object.fromEntries([...container.querySelectorAll<HTMLElement>("[data-home-cell], [data-balance-line]")].map((cell) => [cell.dataset.homeCell ?? "balance", cell.className]));
+
+  it("la meta va en la columna ancha (7/12) junto al Balance, y «Recientes» debajo junto a «En qué se fue»", () => {
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} goals={goals("90000000")} />);
+    const at = cells(container);
+    expect(at.goals).toContain("lg:col-start-1 lg:row-start-1");
+    expect(at.balance).toContain("lg:col-start-2 lg:row-start-1");
+    expect(at.recent).toContain("lg:col-start-1 lg:row-start-2");
+    expect(at.breakdown).toContain("lg:col-start-2 lg:row-start-2");
+    // En móvil, el orden de lectura es el del DOM y no cambia: saldo, metas, en qué se fue y recientes.
+    const order = [...container.querySelectorAll<HTMLElement>("[data-home-cell]")].map((cell) => cell.dataset.homeCell);
+    expect(order).toEqual(["goals", "breakdown", "recent"]);
+  });
+
+  it("sin la lectura de metas, «Recientes» sube a la primera fila y no deja un hueco", () => {
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} />);
+    expect(cells(container).recent).toContain("lg:row-start-1 lg:row-span-2");
+  });
+});

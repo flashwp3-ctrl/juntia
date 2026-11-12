@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { TIMED_OUT } from "@/features/shared/use-write";
 import { moneyFromPesos } from "@/domain/money";
 import type { PendingRow } from "../types";
-import { confirm, drop, launch, ListRegistry, MAX_REFRESHES, NO_FLIGHTS, reconcile, refreshRound } from "./flights";
+import { confirm, drop, launch, ListRegistry, MAX_REFRESHES, NO_FLIGHTS, pendingSpendMinor, reconcile, refreshRound } from "./flights";
 import { initialSheet, isBusy, reduceSheet, type SheetState } from "./sheet-machine";
 import { blocksUndo, checkOutcome, mayRun, pendingOf, reduceUndo, sendOutcome, type UndoIntent, type UndoState } from "./undo-machine";
 
@@ -109,6 +109,31 @@ describe("filas en vuelo (flights)", () => {
   const row = (key: string, date = "2026-11-05"): PendingRow => ({
     key, state: "saving",
     transaction: { id: `pending:${key}`, type: "expense", amount: moneyFromPesos(45000n), categoryId: "market", transactionDate: date, description: null, status: "active", version: 1, createdAt: "", updatedAt: "" },
+  });
+
+  it("F05: el gasto en vuelo suma al total del mes hasta que la lista trae la fila real; nunca dos veces", () => {
+    const saving = launch(NO_FLIGHTS, row("k1"));
+    expect(pendingSpendMinor(saving, "2026-11", [])).toBe(4500000n);
+    // Confirmada pero la lista aún no la trae: sigue contando (el total del servidor todavía no la incluye).
+    const confirmed = confirm(saving, "k1", "real-1");
+    expect(pendingSpendMinor(confirmed, "2026-11", ["otra"])).toBe(4500000n);
+    // La lista trae el id real: el total del servidor ya la incluye y la temporal deja de sumar en ese mismo render.
+    expect(pendingSpendMinor(confirmed, "2026-11", ["real-1"])).toBe(0n);
+  });
+
+  it("F05: rechazo o desconocido retiran la fila y el total vuelve a lo confirmado", () => {
+    const flights = launch(launch(NO_FLIGHTS, row("k1")), row("k2"));
+    expect(pendingSpendMinor(flights, "2026-11", [])).toBe(9000000n);
+    expect(pendingSpendMinor(drop(flights, ["k1"]), "2026-11", [])).toBe(4500000n);
+    expect(pendingSpendMinor(drop(flights, ["k1", "k2"]), "2026-11", [])).toBe(0n);
+  });
+
+  it("F05: solo cuenta gastos del mes de la lista (un ingreso nunca entra en el héroe)", () => {
+    const income: PendingRow = { ...row("k2"), transaction: { ...row("k2").transaction, type: "income", categoryId: "income" } };
+    const flights = launch(launch(launch(NO_FLIGHTS, row("k1", "2026-10-20")), income), row("k3"));
+    expect(pendingSpendMinor(flights, "2026-11", [])).toBe(4500000n);
+    expect(pendingSpendMinor(flights, "2026-10", [])).toBe(4500000n);
+    expect(pendingSpendMinor(flights, "2026-09", [])).toBe(0n);
   });
 
   it("nace «Guardando…» y el reintento con la misma clave no la duplica", () => {

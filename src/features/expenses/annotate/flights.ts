@@ -57,6 +57,22 @@ export function refreshRound(flights: Flights, counts: ReadonlyMap<string, numbe
 }
 
 /**
+ * F05 (auditoría de Impeccable; propuesta aprobada por los fundadores el 11 de noviembre de 2026): lo que las creaciones en
+ * vuelo suman al gasto del mes de una lista, para que el total del héroe de Inicio suba con la fila (MOTION_SYSTEM §2: «la
+ * fila nueva … el total cuenta hacia arriba», un solo momento). Cuenta solo gastos (un ingreso nunca entra en el héroe,
+ * FR-019) del mes de la lista. Una fila confirmada deja de contar en cuanto la lista trae su id real: desde ese render el
+ * total del servidor ya la incluye, así que nunca se suma dos veces. Con rechazo o resultado desconocido la fila se retira
+ * (`drop`) y el total vuelve solo a lo confirmado. Como las filas, vive en memoria: nada se guarda en el navegador.
+ */
+export function pendingSpendMinor(flights: Flights, month: string, knownIds: readonly string[]): bigint {
+  return flights.reduce((sum, { transaction, savedId }) => (
+    transaction.type === "expense" && monthOf(transaction.transactionDate) === month && !(savedId && knownIds.includes(savedId))
+      ? sum + transaction.amount.amountMinor
+      : sum
+  ), 0n);
+}
+
+/**
  * Las listas montadas, por lista (F69-6: un id que trae una lista de Nosotros no cuenta para una de Yo). Las cuentas no se
  * pintan: viven en una referencia del proveedor y E5 las lee en cada cuadro.
  */

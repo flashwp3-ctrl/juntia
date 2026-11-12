@@ -46,7 +46,7 @@ export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: Pl
 export function GoalsModule({ goals, context, today }: { goals: HomeGoals; context: PlanningContext; today: string }) {
   return (
     <section aria-labelledby="home-goals" data-goals-home="" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
-      <h2 id="home-goals" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.goals.home.module}</h2>
+      <h2 id="home-goals" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.goals.home.module}</h2>
       {/* 004 PR D (T062; FR-056): en Nosotros, la solicitud de fondos en la sesión del otro (B5) y la propia (B4). */}
       {goals.requests?.length && goals.people ? <PendingRequests requests={goals.requests} people={goals.people} /> : null}
       {goals.goals.length > 0 ? (
