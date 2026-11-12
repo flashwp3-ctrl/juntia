@@ -17,13 +17,18 @@ type SegmentedProps<T extends string> = {
   onValueChange: (value: T) => void;
   /** Ocupa todo el ancho con segmentos iguales. */
   stretch?: boolean;
+  /**
+   * F79: con la letra ampliada, por debajo de sm, los segmentos pasan a otra fila cuando el grupo mide menos de 16rem. Solo para un
+   * grupo que ocupa el ancho de su columna (en él va un contenedor de tamaño); por defecto, los de ancho completo.
+   */
+  wrap?: boolean;
   /** PR C de la 003: el reparto se deshabilita con un solo participante (FR-019a). */
   disabled?: boolean;
 };
 
 const knobClass = "absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised";
 
-export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false, disabled = false }: SegmentedProps<T>) {
+export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false, wrap = stretch, disabled = false }: SegmentedProps<T>) {
   const reduced = useReducedMotion();
   const knobId = `${useId()}-knob`;
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -38,12 +43,16 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
     onValueChange(options[next].value);
   };
 
-  return (
+  // F79 (revisión del PR #79): con la letra al 200 % los segmentos no cabían en una fila a 320 y se montaban. Con `wrap`, por debajo
+  // de sm el grupo va en un contenedor «seg» (columna, para que siga estirándose igual) y, si mide menos de 16rem (nunca a 16 px: a 320
+  // mide 17,5rem), los segmentos pasan a otra fila (RESPONSIVE: «los segmentados pasan a apilarse»). Los que se ajustan a su contenido
+  // (el selector Yo/Nosotros) no lo llevan: una contención de tamaño los dejaría sin ancho.
+  const group = (
     <div
       role={role}
       aria-label={label}
       aria-disabled={disabled || undefined}
-      className={`${stretch ? "flex" : "inline-flex"} rounded-[var(--radius-md)] bg-sunken p-[3px] shadow-[var(--comp-field-inset)] ${disabled ? "opacity-60" : ""}`}
+      className={`${stretch ? "flex" : "inline-flex"} ${wrap ? "@max-[16rem]/seg:flex-wrap" : ""} rounded-[var(--radius-md)] bg-sunken p-[3px] shadow-[var(--comp-field-inset)] ${disabled ? "opacity-60" : ""}`}
     >
       {options.map((option, index) => {
         const selected = option.value === value;
@@ -80,4 +89,5 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
       })}
     </div>
   );
+  return wrap ? <div className="flex flex-col max-sm:@container/seg">{group}</div> : group;
 }

@@ -55,7 +55,7 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
                     {memberName(row.payerUserId)} <span className="whitespace-nowrap">· {rowMode(row)}</span>
                   </td>
                   {ordered.map((member, index) => (
-                    <td role="cell" key={member.userId} className={`${cell} ${index === 0 ? "order-4" : "order-5 text-right @max-[18rem]:text-left"} block pr-[8px] whitespace-nowrap @max-[18rem]:col-span-2 text-ink md:table-cell md:text-right`}>
+                    <td role="cell" key={member.userId} className={`${cell} ${index === 0 ? "order-4" : "order-5 text-right @max-[16rem]:text-left"} block pr-[8px] whitespace-nowrap @max-[16rem]:col-span-2 text-ink md:table-cell md:text-right`}>
                       <span aria-hidden="true" className="mr-1 text-ink-secondary md:hidden">{member.name.charAt(0)}</span>
                       {formatMoney(row.allocations.find((part) => part.userId === member.userId)?.amount ?? { amountMinor: 0n, currency: "COP" })}
                     </td>

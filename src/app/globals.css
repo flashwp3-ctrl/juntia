@@ -146,12 +146,14 @@ html[data-context="us"] [data-context-view="me"],
 html:not([data-context="us"]) [data-context-view="us"] { display: none; }
 
 /* F13 (texto ampliado, 11 nov 2026; RESPONSIVE_SPECIFICATIONS «las filas pasan a 2 líneas»): las filas de movimiento,
-   aporte y liquidación son su propio contenedor. Cuando miden menos de 18rem —nunca a 16 px, donde la fila más estrecha
-   (360) mide 20rem; sí con la letra al 200 % a 390— la cifra baja a una segunda línea bajo el texto, en vez de dejar el
-   título en dos letras. El último hijo de la fila es siempre la cifra (o, en Mi cuenta, el valor con la flecha). */
+   aporte y liquidación son su propio contenedor. Cuando miden menos de 16rem —nunca a 16 px, donde la fila más estrecha
+   (320 menos el margen de 2 × 20 px) mide 17,5rem; sí con la letra al 200 % a 320 y a 390 (F79-1)— la cifra baja a una
+   segunda línea, en vez de dejar el título en dos letras. Ocupa todo el ancho de la fila y va a la derecha, como a 16 px: en la
+   columna del texto, «$1.600.000» no cabía a 320. El último hijo de la fila es siempre la cifra (o, en Mi cuenta, el valor con
+   la flecha). */
 .row-stack { container-type: inline-size; }
-@container (max-width: 18rem) {
-  .row-stack > :last-child { grid-column: 2 / -1; justify-self: start; text-align: left; }
+@container (max-width: 16rem) {
+  .row-stack > :last-child { grid-column: 1 / -1; justify-self: end; text-align: right; }
 }
 
 @keyframes button-spin {

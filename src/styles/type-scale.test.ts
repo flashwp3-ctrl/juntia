@@ -18,8 +18,8 @@ const ALLOWED = [
   /text-\[248px\]/,
   /text-\[min\(\d+vw,\d+px\)\]/,
   /text-\[[^\]]*cqi[^\]]*\]/,
-  // El título de la tarjeta de meta (geometría fija): suelo en px y tramo en vw para no partir palabras con la letra ampliada.
-  /text-\[clamp\(26px,8vw,2rem\)\]/,
+  // El tope del título de la tarjeta de meta (F79-2): resta en px el relleno y la reserva del ícono, que van en px; su mínimo es rem.
+  /text-\[min\(clamp\(1\.625rem,[^\]]*var\(--title-em\)\)\)\]/,
 ];
 
 it("los tamaños de texto de src/ van en rem, no en px", () => {

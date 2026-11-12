@@ -98,7 +98,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchField value={filters.query} onChange={filters.setQuery} />
           {setAsideMinor !== undefined ? (
-            <Segmented role="radiogroup" label={copy.activity.type} value={type} onValueChange={filters.setType}
+            <Segmented role="radiogroup" label={copy.activity.type} wrap value={type} onValueChange={filters.setType}
               options={[{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "goals", label: copy.goals.activity.filter }] as const} />
           ) : null}
         </div>

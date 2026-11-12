@@ -51,12 +51,12 @@ function MonthArrow({ target, direction }: { target: string | null; direction: "
 export function MonthNav({ month, navigation }: { month: string; navigation: MonthNavigation }) {
   return (
     // Las flechas quedan en los extremos de la fila: no se mueven con el largo del nombre del mes. F13: con la letra al 200 % las
-    // dos flechas miden 88 px y «Noviembre» ya no cabe entre ellas; por debajo de 19rem (nunca a 16 px: a 360 la fila mide
-    // 20rem) el mes sube a su propia línea y las flechas quedan debajo, en los extremos.
+    // dos flechas miden 88 px y «Noviembre» ya no cabe entre ellas; por debajo de 16rem (nunca a 16 px: a 320 la fila mide
+    // 17,5rem) el mes sube a su propia línea y las flechas quedan debajo, en los extremos.
     <div className="@container xl:max-w-[360px]">
-      <div className="flex items-center gap-2 @max-[19rem]:flex-wrap @max-[19rem]:justify-between">
+      <div className="flex items-center gap-2 @max-[16rem]:flex-wrap @max-[16rem]:justify-between">
         <MonthArrow target={navigation.previous} direction="previous" />
-        <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-fit)] leading-[var(--title-m-line)] font-medium text-ink @max-[19rem]:order-first @max-[19rem]:basis-full" aria-live="polite">{monthTitle(month)}</p>
+        <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-fit)] leading-[var(--title-m-line)] font-medium text-ink @max-[16rem]:order-first @max-[16rem]:basis-full" aria-live="polite">{monthTitle(month)}</p>
         <MonthArrow target={navigation.next} direction="next" />
       </div>
     </div>
@@ -289,7 +289,7 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
           <SearchField value={filters.query} onChange={filters.setQuery} />
           <Segmented
             role="radiogroup"
-            label={copy.activity.type}
+            label={copy.activity.type} wrap
             value={type}
             onValueChange={filters.setType}
             options={setAsideMinor !== undefined

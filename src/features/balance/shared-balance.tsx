@@ -144,7 +144,7 @@ export function SharedBalance({ balance, members, state = "ready", size = "scree
       className={size === "screen" ? "flex flex-col gap-4" : "flex flex-col gap-3 rounded-[var(--radius-xl)] bg-raised p-5 shadow-raised"}
     >
       <div className="flex flex-col items-start gap-1.5">
-        <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <span data-balance-badge={current ? "pending" : "settled"} className="inline-flex">
             <Badge status={current ? "pending" : "settled"} />
           </span>
