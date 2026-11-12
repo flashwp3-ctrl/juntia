@@ -41,4 +41,28 @@ describe("ExpenseRow (T064)", () => {
     const link = screen.getByRole("link", { name: copy.row.accessibleName({ title: copy.categories.transport, amount: "45.000", income: false, category: copy.categories.transport, date: "3 oct" }) });
     expect(link.hasAttribute("data-new")).toBe(true);
   });
+
+  // F01 (auditoría Impeccable, nov 2026): la fila en vuelo no baja la opacidad del texto (3,44:1); se marca con el contorno
+  // punteado de «pendiente» y el reloj de arena junto a «Guardando…» en status.pending. La geometría no cambia (outline).
+  it("en vuelo (E4): «Guardando…» con reloj de arena y contorno punteado, sin opacidad sobre el texto y sin enlace", () => {
+    const { container } = render(<ExpenseRow transaction={expense} href="/actividad/x" dateLabel="Hoy" pending="saving" />);
+    expect(screen.queryByRole("link")).toBeNull();
+    const row = container.querySelector<HTMLElement>("[data-pending='saving']")!;
+    expect(row.getAttribute("aria-busy")).toBe("true");
+    expect(row.className).not.toMatch(/opacity-/);
+    expect(row.className).toMatch(/outline-dashed/);
+    expect(row.className).toMatch(/outline-border-emphasis/);
+    expect(row.className).not.toMatch(/(^|\s)border-dashed/);
+    const label = row.querySelector<HTMLElement>("[data-pending-label]")!;
+    expect(label.textContent).toBe(copy.row.pending.saving);
+    expect(label.className).toContain("text-pending");
+    expect(label.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("hourglass-medium");
+    expect(row.querySelector(".sr-only")?.textContent?.endsWith(`, ${copy.row.pending.saving}`)).toBe(true);
+  });
+
+  it("confirmada, la fila no lleva marca de «Guardando…»", () => {
+    const { container } = render(<ExpenseRow transaction={expense} href="/actividad/x" dateLabel="Hoy" />);
+    expect(container.querySelector("[data-pending-label]")).toBeNull();
+    expect(container.querySelector("a")!.className).not.toMatch(/outline-dashed/);
+  });
 });

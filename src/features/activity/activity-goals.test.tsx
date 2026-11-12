@@ -124,3 +124,77 @@ describe("Orden y filtros heredados (revisión del gestor del PR #68)", () => {
     expect(screen.queryByRole("radio", { name: copy.goals.activity.filter })).toBeNull();
   });
 });
+
+// F07 (auditoría Impeccable, nov 2026): «En la tabla de escritorio, las filas «Aporte a Japón» ocupan cuatro columnas
+// (colSpan={4}): la fecha va en el subtítulo, no en FECHA; no hay «Pagó · reparto»». RESPONSIVE: «desde xl, tabla de 5
+// columnas con encabezados».
+describe("Tabla de escritorio de Nosotros: los aportes en sus columnas (F07)", () => {
+  it("el aporte ocupa las cuatro columnas: título con su ficha redonda, «Sara · aporte», la fecha y +importe en verde ahorro", () => {
+    const { container } = couple();
+    const headers = [...container.querySelectorAll("table thead th")].map((th) => th.textContent);
+    expect(headers).toEqual([copy.activity.table.description, copy.activity.table.paidSplit, copy.activity.table.date, copy.activity.table.amount]);
+    const row = container.querySelector<HTMLElement>(`table tbody tr[data-entry-id="${goalEntries[0].id}"]`)!;
+    const cells = [...row.querySelectorAll("td")];
+    expect(cells).toHaveLength(4);
+    expect(cells.some((td) => td.hasAttribute("colspan"))).toBe(false);
+    expect(cells[0].textContent).toBe(copy.goals.activity.contribution("Japón"));
+    const chip = cells[0].querySelector<HTMLElement>("[data-goal-chip]")!;
+    expect(chip.className).toContain("rounded-full");
+    expect(chip.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("piggy-bank");
+    expect(cells[1].textContent).toBe(copy.activity.table.goalContribution("Sara"));
+    expect(cells[1].textContent).toBe("Sara · aporte");
+    expect(cells[2].textContent).toBe("22 oct");
+    expect(cells[3].textContent).toBe("+$500.000");
+    expect(cells[3].className).toContain("text-saving");
+  });
+
+  // F78-1: la tabla no pierde nada de la fila móvil. El retiro dice de qué meta salió; el uso, en qué se usó.
+  it("un retiro en la tabla dice de qué meta salió y quién («Japón · Tomás»), sin «+» ni color de ingreso", () => {
+    const withdrawal = entry({ id: "7ccccccc-cccc-4ccc-8ccc-cccccccccccc", kind: "withdrawal", memberUserId: "tomas", createdBy: "tomas", amountMinor: "10000000", fundingMode: null, reason: "Cambio", effectiveDate: "2026-10-10", createdAt: "2026-10-10T17:00:00.000Z" });
+    const { container } = render(
+      <AnnotateProvider actions={idle}><ActivityFiltersProvider>
+        <CoupleActivityView expenses={expenses} settlements={[]} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: null }} members={members} summary={summary} goalEntries={[withdrawal]} setAsideMinor="0" />
+      </ActivityFiltersProvider></AnnotateProvider>,
+    );
+    const cells = [...container.querySelectorAll(`table tbody tr[data-entry-id="${withdrawal.id}"] td`)];
+    expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.withdrawal, copy.goals.activity.withdrawalMeta("Japón", "Tomás"), "10 oct", "−$100.000"]);
+    expect(cells[1].textContent).toBe("Japón · Tomás");
+    expect(cells[3].className).not.toMatch(/text-income|text-saving/);
+  });
+
+  it("un uso en la tabla dice de quién son los aportes y en qué se usaron («Aportes de Sara · Pasajes»)", () => {
+    const usage = entry({ id: "7ddddddd-dddd-4ddd-8ddd-dddddddddddd", kind: "usage", amountMinor: "30000000", fundingMode: null, transactionId: "88888888-8888-4888-8888-888888888888", transactionDescription: "Pasajes", effectiveDate: "2026-10-12", createdAt: "2026-10-12T17:00:00.000Z" });
+    const { container } = render(
+      <AnnotateProvider actions={idle}><ActivityFiltersProvider>
+        <CoupleActivityView expenses={expenses} settlements={[]} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: null }} members={members} summary={summary} goalEntries={[usage]} setAsideMinor="0" />
+      </ActivityFiltersProvider></AnnotateProvider>,
+    );
+    const cells = [...container.querySelectorAll(`table tbody tr[data-entry-id="${usage.id}"] td`)];
+    expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.usage("Japón"), copy.goalExpense.detail.rowMeta("Sara", "Pasajes"), "12 oct", "−$300.000"]);
+    // Lo mismo que dice la fila de la lista (móvil y 1024) para ese asiento.
+    const listRow = container.querySelector<HTMLElement>(`li [data-entry-id="${usage.id}"]`)!;
+    expect(listRow.textContent).toContain(cells[1].textContent!);
+  });
+});
+
+// F16 + F78-2: por debajo de 768 las fichas del resumen van en un scroller horizontal; como recorta también en vertical,
+// lleva relleno para el anillo de foco (4 px fuera de la ficha) compensado con margen negativo, en Yo y en Nosotros.
+describe("Fichas del resumen a 390 (F16, F78-2)", () => {
+  it("el scroller deja sitio al anillo de foco sin cambiar el alto, en Nosotros y en Yo", () => {
+    const { container, unmount } = couple();
+    const rails = [container.querySelector<HTMLElement>('[role="group"][aria-label="' + copy.activity.categoryFilter + '"]')!];
+    unmount();
+    const yo = render(
+      <AnnotateProvider actions={idle}><ActivityFiltersProvider>
+        <ActivityView rows={saraPrivateOctober2026} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: null }} goalEntries={[]} goalPeople={members} setAsideMinor="0" />
+      </ActivityFiltersProvider></AnnotateProvider>,
+    );
+    rails.push(yo.container.querySelector<HTMLElement>('[role="group"][aria-label="' + copy.activity.categoryFilter + '"]')!);
+    for (const rail of rails) {
+      expect(rail.className).toContain("max-md:overflow-x-auto");
+      expect(rail.className).toContain("max-md:py-1.5");
+      expect(rail.className).toContain("max-md:-my-1");
+      expect(rail.className).toContain("md:flex-wrap");
+    }
+  });
+});

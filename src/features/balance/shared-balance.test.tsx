@@ -152,6 +152,30 @@ describe("Tabla de desglose (US-5.6)", () => {
     expect(within(table).getByRole("row", { name: new RegExp(copy.balance.breakdown.total) }).textContent).toContain("$2.840.000");
   });
 
+  // F12 + F78-4 (revisión del PR #78): ninguna celda de texto fija un ancho mínimo ni impide partir; solo el modo de reparto
+  // («· 55/45») va unido. Así un nombre de 60 caracteres no empuja la tabla fuera de su columna ni da scroll a la página.
+  it("«Pagó · reparto»: el nombre se puede partir y solo el modo va unido; sin anchos mínimos en las celdas de texto", () => {
+    const long = members.map((member) => (member.userId === "sara" ? { ...member, name: "Sara María Fernanda de los Ángeles Restrepo Villegas Ochoa" } : member));
+    render(<BalanceBreakdown month="2026-10" expenses={rows} members={long} totalMinor="284000000" />);
+    const table = screen.getByRole("table", { name: copy.balance.breakdown.caption("octubre") });
+    const arriendo = within(table).getByRole("row", { name: /Arriendo/ });
+    const payer = arriendo.querySelector<HTMLElement>("[data-breakdown-payer]")!;
+    expect(payer.textContent).toBe(copy.shared.row.table(long[0].name, "55/45"));
+    expect(payer.className).not.toMatch(/whitespace-nowrap|min-w-\[/);
+    expect(payer.className).toContain("[overflow-wrap:anywhere]");
+    const mode = payer.querySelector("span")!;
+    expect(mode.textContent).toBe("· 55/45");
+    expect(mode.className).toContain("whitespace-nowrap");
+    const expense = within(arriendo).getByRole("rowheader");
+    expect(expense.className).not.toMatch(/min-w-\[/);
+    expect(expense.className).toContain("min-w-0");
+    // Los encabezados «Parte de {nombre}» también se parten, y la tabla vive en su propio contenedor con scroll horizontal.
+    for (const header of within(table).getAllByRole("columnheader").filter((cell) => cell.textContent?.startsWith("Parte de"))) expect(header.className).toContain("[overflow-wrap:anywhere]");
+    expect(table.parentElement!.hasAttribute("data-breakdown-scroll")).toBe(true);
+    expect(table.parentElement!.className).toContain("md:overflow-x-auto");
+    expect(table.parentElement!.className).toContain("min-w-0");
+  });
+
   it("un mes sin gastos compartidos lo dice", () => {
     render(<BalanceBreakdown month="2026-09" expenses={[]} members={members} totalMinor={null} />);
     expect(screen.getByText(copy.balance.breakdown.empty("septiembre"))).toBeTruthy();

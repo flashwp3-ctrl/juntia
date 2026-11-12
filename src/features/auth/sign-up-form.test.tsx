@@ -24,3 +24,15 @@ describe("Registro: campo del nombre (UX lote 1, cambio 6)", () => {
     expect(copy.auth.signUp.nameHelp).toBe(copy.account.profile.nameHelp);
   });
 });
+
+// F09 (auditoría Impeccable, nov 2026): los enlaces de acceso no usan el verde de ahorro (DESIGN_SYSTEM §2.1, regla 2:
+// «Verde texto = ahorro destinado»); van en tinta subrayada.
+describe("Enlaces de acceso en tinta subrayada (F09)", () => {
+  it("«Ya tengo cuenta» va en tinta, subrayado, sin text-saving", () => {
+    render(<SignUpForm />);
+    const link = screen.getByRole("link", { name: copy.auth.signUp.haveAccount });
+    expect(link.className).toContain("text-ink");
+    expect(link.className).toMatch(/(^|\s)underline(\s|$)/);
+    expect(link.className).not.toContain("text-saving");
+  });
+});

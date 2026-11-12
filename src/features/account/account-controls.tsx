@@ -9,12 +9,11 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { InlineNotice } from "@/components/ui/inline-notice";
-import { Modal } from "@/components/ui/modal";
+import { DialogTitle } from "@/components/ui/modal";
 import { signOut, type FormState } from "@/features/auth/actions";
 import { copy } from "@/lib/copy/es";
-import { useMediaQuery } from "@/lib/use-media-query";
 import { requestPasswordChange } from "./actions";
-import { Tile, type TileTone } from "./account-ui";
+import { SessionExpiredNotice, Tile, type TileTone } from "./account-ui";
 import type { AppIconName } from "@/components/ui/app-icon";
 
 // «Descargar» (D4) es un enlace al Blob con `download`, con la forma del Button primary lg.
@@ -89,10 +88,7 @@ export function PasswordChange({ email }: { email: string }) {
       {sent ? <InlineNotice tone="success" icon="check-circle">{copy.account.security.sent(email)}</InlineNotice> : null}
       {status === "failed" ? <InlineNotice tone="danger" icon="wifi-slash">{copy.errors.network}</InlineNotice> : null}
       {status === "sessionExpired" ? (
-        <InlineNotice tone="danger" icon="warning-circle">
-          {copy.errors.sessionExpired}{" "}
-          <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/seguridad")}`} className="font-semibold underline underline-offset-2">{copy.account.signInAgain}</Link>
-        </InlineNotice>
+        <SessionExpiredNotice back="/cuenta/seguridad" />
       ) : null}
     </div>
   );
@@ -133,7 +129,7 @@ type ExportState = { status: "idle" | "preparing" | "failed" | "sessionExpired" 
 
 /** El nombre que propone el servidor (Content-Disposition) o, si falta, uno con la fecha y la extensión del formato. */
 function filenameOf(response: Response, format: "json" | "csv") {
-  return /filename="([^"]+)"/.exec(response.headers.get("content-disposition") ?? "")?.[1] ?? `juntia-movimientos.${format}`;
+  return /filename="([^"]+)"/.exec(response.headers.get("content-disposition") ?? "")?.[1] ?? `juntia-datos.${format}`;
 }
 
 /**
@@ -147,6 +143,10 @@ export function ExportEntry() {
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [state, setState] = useState<ExportState>({ status: "idle" });
   const request = useRef(0);
+  // F78-3: el disparador está fuera de la hoja y la abre con setOpen, así que Radix no sabe adónde devolver el foco. Al
+  // cerrar (×, Escape o scrim), vuelve a «Exportar mis datos», como hoja y como diálogo (mismo árbol, `adaptive`).
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = (event: Event) => { event.preventDefault(); triggerRef.current?.focus(); };
   const reset = () => {
     request.current += 1;
     setState((previous) => {
@@ -170,15 +170,13 @@ export function ExportEntry() {
       if (id === request.current) setState({ status: "failed" });
     }
   };
-  const wide = useMediaQuery("(min-width: 768px)");
-  const Container = wide ? Modal : BottomSheet;
   const formats = [
     { value: "json" as const, label: copy.account.export.json, hint: copy.account.export.jsonHint },
     { value: "csv" as const, label: copy.account.export.csv, hint: copy.account.export.csvHint },
   ];
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
+      <button ref={triggerRef} type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
         <Tile icon="download-simple" tone="services" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[15px] font-semibold text-ink">{copy.account.privacy.export}</span>
@@ -186,77 +184,86 @@ export function ExportEntry() {
         </span>
         <AppIcon name="caret-right" size={18} className="text-ink-secondary" />
       </button>
-      <Container open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} closeLabel={copy.account.export.close}>
-        <div role="radiogroup" aria-label={copy.account.export.format} className="flex flex-col gap-2">
-          {formats.map((option) => {
-            const selected = option.value === format;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                tabIndex={selected ? 0 : -1}
-                onClick={() => { if (option.value !== format) { setFormat(option.value); reset(); } }}
-                onKeyDown={(event) => {
-                  if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
-                  event.preventDefault();
-                  const next = option.value === "json" ? "csv" : "json";
-                  setFormat(next);
-                  reset();
-                  (event.currentTarget.parentElement?.querySelector(`[data-format="${next}"]`) as HTMLElement | null)?.focus();
-                }}
-                data-format={option.value}
-                className={`grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3 rounded-[16px] px-3.5 py-3 text-left ${selected ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)]"}`}
-              >
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold text-ink">{option.label}</span>
-                  <span className="text-[12px] leading-[1.4] text-[var(--comp-field-muted-fg)]">{option.hint}</span>
-                </span>
-                <span aria-hidden="true" className={`grid size-[22px] place-items-center rounded-full border-2 ${selected ? "border-ink" : "border-border-emphasis"}`}>
-                  {selected ? <span className="size-2.5 rounded-full bg-ink" /> : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <ul className="flex flex-col text-[14px] leading-[1.45] text-ink-secondary">
-          {[["check", copy.account.export.includes], ["lock-simple", copy.account.export.excludes], ["info", copy.account.export.notRestore]].map(([icon, text]) => (
-            <li key={text} className="flex items-start gap-2.5 py-[7px]"><AppIcon name={icon as AppIconName} size={18} className="mt-px shrink-0 text-ink" />{text}</li>
-          ))}
-        </ul>
-        {state.status === "ready" ? (
-          <InlineNotice tone="success" icon="check-circle"><strong className="font-semibold">{copy.account.export.ready}</strong> {state.filename}</InlineNotice>
-        ) : null}
-        {state.status === "failed" ? (
-          <InlineNotice tone="danger" icon="warning-circle"><strong className="font-semibold">{copy.account.export.failedLead}</strong> {copy.account.export.failed}</InlineNotice>
-        ) : null}
-        {state.status === "sessionExpired" ? (
-          <InlineNotice tone="danger" icon="warning-circle">
-            {copy.errors.sessionExpired}{" "}
-            <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/privacidad")}`} className="font-semibold underline underline-offset-2">{copy.account.signInAgain}</Link>
-          </InlineNotice>
-        ) : null}
-        <div className="pt-2">
+      {/* F11 (auditoría Impeccable, nov 2026): el mismo marco que las demás hojas (liquidar, metas, presupuesto): hoja por
+          debajo de 768 y diálogo de 520 desde 768 en el mismo árbol, con el título serif centrado y la «×» a la derecha
+          (COMPONENT_SPECIFICATIONS §BottomSheet: gesto, ×, Escape o scrim). */}
+      <BottomSheet open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} onCloseAutoFocus={returnFocus} bare adaptive>
+        <div className="flex flex-col gap-4 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+            <span />
+            <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.account.export.title}</DialogTitle>
+            <button type="button" onClick={() => { setOpen(false); reset(); }} aria-label={copy.account.export.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
+              <AppIcon name="x" weight="bold" size={16} />
+            </button>
+          </div>
+          <div role="radiogroup" aria-label={copy.account.export.format} className="flex flex-col gap-2">
+            {formats.map((option) => {
+              const selected = option.value === format;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => { if (option.value !== format) { setFormat(option.value); reset(); } }}
+                  onKeyDown={(event) => {
+                    if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+                    event.preventDefault();
+                    const next = option.value === "json" ? "csv" : "json";
+                    setFormat(next);
+                    reset();
+                    (event.currentTarget.parentElement?.querySelector(`[data-format="${next}"]`) as HTMLElement | null)?.focus();
+                  }}
+                  data-format={option.value}
+                  className={`grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3 rounded-[16px] px-3.5 py-3 text-left ${selected ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)]"}`}
+                >
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold text-ink">{option.label}</span>
+                    <span className="text-[12px] leading-[1.4] text-[var(--comp-field-muted-fg)]">{option.hint}</span>
+                  </span>
+                  <span aria-hidden="true" className={`grid size-[22px] place-items-center rounded-full border-2 ${selected ? "border-ink" : "border-border-emphasis"}`}>
+                    {selected ? <span className="size-2.5 rounded-full bg-ink" /> : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <ul className="flex flex-col text-[14px] leading-[1.45] text-ink-secondary">
+            {[["check", copy.account.export.includes], ["lock-simple", copy.account.export.excludes], ["info", copy.account.export.notRestore]].map(([icon, text]) => (
+              <li key={text} className="flex items-start gap-2.5 py-[7px]"><AppIcon name={icon as AppIconName} size={18} className="mt-px shrink-0 text-ink" />{text}</li>
+            ))}
+          </ul>
           {state.status === "ready" ? (
-            <a href={state.url} download={state.filename} className={exportPrimary}>
-              <AppIcon name="download-simple" weight="bold" size={20} />
-              {copy.account.export.download}
-            </a>
-          ) : (
-            <Button
-              size="lg"
-              className="w-full"
-              icon={state.status === "failed" ? "arrow-clockwise" : "file-text"}
-              loading={state.status === "preparing"}
-              loadingLabel={copy.account.export.preparing}
-              onClick={() => void prepare()}
-            >
-              {state.status === "failed" ? copy.account.export.retry : copy.account.export.prepare}
-            </Button>
-          )}
+            <InlineNotice tone="success" icon="check-circle"><strong className="font-semibold">{copy.account.export.ready}</strong> {state.filename}</InlineNotice>
+          ) : null}
+          {state.status === "failed" ? (
+            <InlineNotice tone="danger" icon="warning-circle"><strong className="font-semibold">{copy.account.export.failedLead}</strong> {copy.account.export.failed}</InlineNotice>
+          ) : null}
+          {state.status === "sessionExpired" ? (
+            <SessionExpiredNotice back="/cuenta/privacidad" />
+          ) : null}
+          <div className="pt-2">
+            {state.status === "ready" ? (
+              <a href={state.url} download={state.filename} className={exportPrimary}>
+                <AppIcon name="download-simple" weight="bold" size={20} />
+                {copy.account.export.download}
+              </a>
+            ) : (
+              <Button
+                size="lg"
+                className="w-full"
+                icon={state.status === "failed" ? "arrow-clockwise" : "file-text"}
+                loading={state.status === "preparing"}
+                loadingLabel={copy.account.export.preparing}
+                onClick={() => void prepare()}
+              >
+                {state.status === "failed" ? copy.account.export.retry : copy.account.export.prepare}
+              </Button>
+            )}
+          </div>
         </div>
-      </Container>
+      </BottomSheet>
     </>
   );
 }

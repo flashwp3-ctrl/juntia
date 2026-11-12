@@ -35,7 +35,9 @@ function MonthArrows({ month, navigation }: Pick<BalanceData, "month" | "navigat
 
 export function BalanceScreen({ data, members, today }: { data: BalanceData; members: readonly BalanceMember[]; today: string }) {
   return (
-    <div className="flex flex-col gap-9 pt-4 pb-6 lg:grid lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start lg:gap-12 lg:pt-8">
+    // F12 (auditoría Impeccable, nov 2026): desde 1280, dos columnas iguales (6/12 – 6/12) para que la tabla del desglose,
+    // de cinco columnas, se lea en una línea por gasto; de 1024 a 1279 se queda en 6/5.
+    <div className="flex flex-col gap-9 pt-4 pb-6 lg:grid lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start lg:gap-12 lg:pt-8 xl:grid-cols-2">
       <div className="flex flex-col gap-9">
         <BalancePanel balance={data.balance} members={members} today={today} />
       </div>

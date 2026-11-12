@@ -3,6 +3,8 @@
 // anillo de 1,5 px `border.strong` separado por `surface.canvas` y ficha de engranaje de 20 en `surface.raised`. Navega a
 // /cuenta en un toque, sin menú (§15.3): es un enlace con el nombre «Mi cuenta».
 // SidebarAccount: fila de 56 al pie del sidebar («Nombre · Mi cuenta» + caret) y, en el rail de 1024, avatar 36 en 48.
+// F17 (propuesta aprobada por los fundadores, 11 nov 2026): activa, usa el mismo «estás aquí» que los destinos del sidebar
+// (fondo `nav-active` y elevación), sin el anillo de tinta que se leía como foco.
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { personFill } from "@/components/ui/avatar";
@@ -40,7 +42,7 @@ export function SidebarAccount({ current }: { current: boolean }) {
     <Link
       href="/cuenta"
       aria-current={current ? "page" : undefined}
-      className={`${hit} mt-auto flex size-12 items-center justify-center gap-2.5 self-center rounded-[16px] xl:size-auto xl:min-h-14 xl:justify-start xl:self-stretch xl:p-2.5 motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-[var(--comp-nav-active-bg)] shadow-[var(--elevation-raised),inset_0_0_0_2px_var(--color-text-primary)]" : "hover:bg-[var(--comp-nav-active-bg)] xl:bg-sunken"}`}
+      className={`${hit} mt-auto flex size-12 items-center justify-center gap-2.5 self-center rounded-[16px] xl:size-auto xl:min-h-14 xl:justify-start xl:self-stretch xl:p-2.5 motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-[var(--comp-nav-active-bg)] shadow-raised" : "hover:bg-[var(--comp-nav-active-bg)] xl:bg-sunken"}`}
     >
       {account ? (
         <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-[13px] ${personFill[account.person]} text-[14px] font-semibold text-[var(--comp-avatar-fg)]`}>{account.initial}</span>

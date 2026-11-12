@@ -16,6 +16,7 @@ import { ChartPieSlice } from "@phosphor-icons/react/dist/ssr/ChartPieSlice";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr/CheckCircle";
 import { CircleNotch } from "@phosphor-icons/react/dist/ssr/CircleNotch";
 import { Clock } from "@phosphor-icons/react/dist/ssr/Clock";
+import { Compass } from "@phosphor-icons/react/dist/ssr/Compass";
 import { DotsThreeOutline } from "@phosphor-icons/react/dist/ssr/DotsThreeOutline";
 import { FilmSlate } from "@phosphor-icons/react/dist/ssr/FilmSlate";
 import { FirstAidKit } from "@phosphor-icons/react/dist/ssr/FirstAidKit";
@@ -87,6 +88,8 @@ const icons = {
   "caret-left": CaretLeft,
   warning: Warning,
   "warning-circle": WarningCircle,
+  // F21 (auditoría Impeccable, nov 2026): «no encontrado» (404), que no es una advertencia ni un error.
+  compass: Compass,
   "check-circle": CheckCircle,
   clock: Clock,
   "lock-simple": LockSimple,

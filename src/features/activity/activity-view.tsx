@@ -104,7 +104,11 @@ function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: re
         <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(rows.length)}</span>
       </div>
       {categories.length > 0 ? (
-        <div role="group" aria-label={copy.activity.categoryFilter} className="flex flex-wrap gap-1.5">
+        <div role="group" aria-label={copy.activity.categoryFilter} className="flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:-my-1 max-md:px-4 max-md:py-1.5 max-md:[scrollbar-width:none] md:flex-wrap">
+          {/* F16 (auditoría Impeccable, nov 2026): por debajo de 768 las fichas van en una fila con scroll horizontal, de borde a
+              borde de la tarjeta, en vez de partirse una por línea y empujar la lista fuera de la primera pantalla. F78-2: el
+              scroller recorta también en vertical; 6 px de relleno dejan sitio al anillo de foco (--border-focus + --focus-offset =
+              4 px fuera de la ficha) y el margen negativo de 4 px conserva el alto de antes. */}
           {categories.map(([category, amount]) => {
             const pressed = filters.categoryId === category;
             return (

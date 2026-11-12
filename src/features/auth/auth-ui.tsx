@@ -49,4 +49,6 @@ export function SubmitButton({ children, pendingLabel, icon, variant = "primary"
   );
 }
 
-export const authLink = "font-semibold text-saving underline-offset-2 hover:underline";
+// F09 (auditoría Impeccable, nov 2026): los enlaces de acceso van en tinta subrayada. El verde de texto es solo ahorro
+// destinado (DESIGN_SYSTEM §2.1, regla 2), así que la primera pantalla no lo usa con otro significado.
+export const authLink = "font-semibold text-ink underline decoration-[1.5px] underline-offset-[3px] hover:decoration-2";

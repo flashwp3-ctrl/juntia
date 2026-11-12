@@ -1,7 +1,6 @@
 "use client";
 // T047 / FR-051; 04·14 P1–P5. P1 editando, P2 validación, P3 guardando, P4 guardado (Toast «Perfil actualizado.»), P5
 // error que conserva lo escrito. T048: la sesión caducada usa el mismo patrón de error y tampoco pierde lo escrito.
-import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AppIcon } from "@/components/ui/app-icon";
 import { displayNameError, initialOf, normalizeDisplayName } from "@/domain/account";
 import { copy } from "@/lib/copy/es";
+import { SessionExpiredNotice } from "./account-ui";
 import type { SaveNameResult } from "./types";
 
 type Status = "editing" | "saved" | "failed" | "sessionExpired";
@@ -47,10 +47,7 @@ export function ProfileForm({ initialName, email, save, person = 1 }: ProfileFor
     <form noValidate onSubmit={submit} className="flex flex-col gap-[18px]">
       {status === "failed" ? <InlineNotice tone="danger" icon="warning-circle">{copy.account.profile.saveFailed}</InlineNotice> : null}
       {status === "sessionExpired" ? (
-        <InlineNotice tone="danger" icon="warning-circle">
-          {copy.errors.sessionExpired}{" "}
-          <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/perfil")}`} className="font-semibold underline underline-offset-2">{copy.account.signInAgain}</Link>
-        </InlineNotice>
+        <SessionExpiredNotice back="/cuenta/perfil" />
       ) : null}
       <div className="flex items-center gap-4">
         <Avatar person={person} initial={invalid ? "?" : initialOf(name)} size={88} />
