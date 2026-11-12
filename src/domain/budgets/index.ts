@@ -1,3 +1,4 @@
+import { CATEGORY_CATALOG } from "../transactions";
 export type BudgetVersion = Readonly<{ effectiveMonth: string; changedAt: string; limitMinor: bigint | null }>;
 export type BudgetMonth = Readonly<{ limitMinor: bigint | null; consumedMinor: bigint }>;
 export function budgetState(consumed: bigint, limit: bigint | null): "none" | "within" | "near" | "over" {
@@ -25,3 +26,14 @@ export function budgetChangeKind(previous: bigint | null, limit: bigint | null, 
   if (previous === null) return first ? "create" : "reactivate";
   return limit > previous ? "raise" : limit < previous ? "lower" : "keep";
 }
+/**
+ * F22 (auditoría de Impeccable): el orden de los presupuestos en Plan y en Análisis es el mismo, el del catálogo de
+ * categorías, para que la pareja compare las dos pantallas fila a fila (el desglose del gasto sigue de mayor a menor).
+ */
+export function byBudgetOrder(a: Readonly<{ categoryId: string }>, b: Readonly<{ categoryId: string }>): number {
+  return catalogIndex(a.categoryId) - catalogIndex(b.categoryId);
+}
+const catalogIndex = (id: string) => {
+  const index = CATEGORY_CATALOG.findIndex((category) => category.id === id);
+  return index === -1 ? CATEGORY_CATALOG.length : index;
+};

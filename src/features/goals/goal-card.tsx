@@ -45,6 +45,12 @@ type Props = {
   context: PlanningContext;
   /** Capa que asoma en la pila: arriba, el nombre y el %. */
   peek?: boolean;
+  /**
+   * F24 (auditoría de Impeccable): la capa que asoma es del abanico de escritorio (Metas), donde se ve su franja derecha y
+   * caben ícono, nombre y % debajo. En la pila vertical (Inicio, también desde lg) solo asoman 60 px arriba: el % va en esa
+   * franja, como en móvil (COMPONENT_SPECIFICATIONS §GoalStack, «la segunda asoma 60 px con nombre y %»).
+   */
+  fanned?: boolean;
   /** La capa que asoma trae su tarjeta al frente en lugar de abrirla (GoalStack, «Gestos»). */
   onPeekClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
   className?: string;
@@ -52,18 +58,18 @@ type Props = {
 };
 
 /** Lo visible de una meta sin foto (Q6): lo comparten la tarjeta y la meta inmersiva. */
-export function GoalFallback({ goal, size, peek = false }: { goal: GoalView; size: "card" | "immersive"; peek?: boolean }) {
+export function GoalFallback({ goal, size, peek = false, fanned = false }: { goal: GoalView; size: "card" | "immersive"; peek?: boolean; fanned?: boolean }) {
   return (
     <>
       <span data-goal-fallback="" aria-hidden="true" className={`pointer-events-none absolute font-serif leading-none font-medium text-[color:var(--goal-tint-initial)] select-none ${size === "card" ? "-right-3 -bottom-16 text-[248px]" : "-right-6 -bottom-24 text-[min(88vw,440px)] lg:-bottom-28 lg:text-[min(44vw,560px)]"}`}>
         {goal.name.trim().charAt(0).toLocaleUpperCase("es-CO")}
       </span>
-      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-[color:var(--goal-tint-icon)] ${peek ? "hidden lg:block" : ""} ${size === "card" ? "top-5 right-5" : "top-[max(20px,env(safe-area-inset-top))] left-6 lg:top-10 lg:left-10"}`} />
+      <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={size === "card" ? 30 : 44} className={`absolute text-[color:var(--goal-tint-icon)] ${peek ? `hidden ${fanned ? "lg:block" : ""}` : ""} ${size === "card" ? "top-5 right-5" : "top-[max(20px,env(safe-area-inset-top))] left-6 lg:top-10 lg:left-10"}`} />
     </>
   );
 }
 
-export function GoalCard({ goal, members, today, context, peek = false, onPeekClick, className = "", tabIndex }: Props) {
+export function GoalCard({ goal, members, today, context, peek = false, fanned = false, onPeekClick, className = "", tabIndex }: Props) {
   const supported = useViewTransitionsSupported();
   const pace = paceOf(goal, today);
   const completed = goal.status === "completed";
@@ -94,9 +100,9 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
         >
           {/* WCAG 2.5.3: el nombre del enlace es un texto propio con las cifras; lo visible repite lo mismo y no se lee dos veces. */}
           <span className="sr-only">{accessibleName(goal)}{completed ? `, ${copy.goals.status.completed.toLowerCase()}` : suggest ? `, ${copy.goals.reached[context]}` : ""}</span>
-          <GoalFallback goal={goal} size="card" peek={peek} />
+          <GoalFallback goal={goal} size="card" peek={peek} fanned={fanned} />
           <OpeningMark name={goal.name} />
-          <span aria-hidden="true" className={`relative flex min-w-0 flex-col gap-1 ${peek ? "-mt-1.5 pr-16 lg:pl-14" : "pr-12"}`}>
+          <span aria-hidden="true" className={`relative flex min-w-0 flex-col gap-1 ${peek ? `-mt-1.5 pr-16 ${fanned ? "lg:pl-14" : ""}` : "pr-12"}`}>
             <span className={`${overlineClass} text-pending ${peek ? "hidden" : ""}`}>
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>
             </span>
@@ -104,7 +110,7 @@ export function GoalCard({ goal, members, today, context, peek = false, onPeekCl
               <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
             </ViewTransition>
           </span>
-          {peek ? <span aria-hidden="true" className="absolute top-3.5 right-4 rounded-full lg:top-16 bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised">{copy.goals.percent(goal.progressPercent)}</span> : null}
+          {peek ? <span aria-hidden="true" data-peek-percent="" className={`absolute top-3.5 right-4 rounded-full ${fanned ? "lg:top-16" : ""} bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised`}>{copy.goals.percent(goal.progressPercent)}</span> : null}
           <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? "invisible" : ""}`}>
             <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="flex items-center gap-2">

@@ -64,7 +64,7 @@ export function WithdrawSheet({ open, onClose, goal, available, today, idempoten
     <GoalSheetFrame open={open} title={copy.goals.withdrawSheet.title} icon="arrow-u-up-left" onClose={onClose} phase={phase} onRetry={() => void write.retry()}>
       <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-1 text-center">
-          <p className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
+          <p className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
           <p className="text-[13px] font-semibold text-ink tabular-nums">{copy.goals.withdrawSheet.max(cop(availableMinor))}</p>
           <p className="text-[12px] text-ink-secondary">{copy.goals.withdrawSheet.onlyYours}</p>
         </div>
@@ -77,7 +77,7 @@ export function WithdrawSheet({ open, onClose, goal, available, today, idempoten
           <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
         ) : (
           <Button type="submit" size="lg" variant="secondary" icon="arrow-u-up-left" className="w-full" loading={write.pending} loadingLabel={copy.goals.withdrawSheet.submitting} aria-describedby={message ? errorId : undefined}>
-            {copy.goals.withdrawSheet.submit(cop((amount ?? 0n) * 100n))}
+            {amount && amount > 0n ? copy.goals.withdrawSheet.submit(cop(amount * 100n)) : copy.goals.withdrawSheet.submitEmpty}
           </Button>
         )}
       </form>

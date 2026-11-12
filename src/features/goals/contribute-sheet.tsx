@@ -68,7 +68,7 @@ export function ContributeSheet({ open, onClose, goal, context, today, idempoten
         <p className="rounded-[14px] bg-sunken px-3 py-2.5 text-[13px] font-medium text-ink">{goal.status === "completed" ? copy.goals.immersive.completedNote : copy.goals.immersive.readOnly}</p>
       ) : (
         <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
-          <p className="text-center font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
+          <p className="text-center font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
           <AmountInput label={copy.goals.contribute.amount} value={pesos} onValueChange={(next) => { setPesos(next); setInvalid(null); }} disabled={locked} className="w-full" fieldClassName="w-full" />
           {after !== null ? (
             <p aria-live="polite" className="rounded-[14px] bg-saving-subtle px-3 py-2.5 text-[14px] font-semibold text-ink tabular-nums">
@@ -88,7 +88,7 @@ export function ContributeSheet({ open, onClose, goal, context, today, idempoten
             <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
           ) : (
             <Button type="submit" size="lg" icon="piggy-bank" className="w-full" loading={write.pending} loadingLabel={copy.goals.contribute.submitting} aria-describedby={message ? errorId : undefined}>
-              {copy.goals.contribute.submit(cop((amount ?? 0n) * 100n))}
+              {amount && amount > 0n ? copy.goals.contribute.submit(cop(amount * 100n)) : copy.goals.contribute.submitEmpty}
             </Button>
           )}
         </form>

@@ -83,7 +83,11 @@ describe("Análisis · los cuatro capítulos con el dataset de octubre (US-3, es
   it("capítulo 4: «$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.» y la PlanningNote con $3.740.000", () => {
     render(<AnalysisScreen data={withBudgets} />);
     const setAside = chapter(copy.analysis.chapters.setAside);
-    expect(within(setAside).getByText("$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.")).toBeTruthy();
+    expect(setAside.querySelector("[data-set-aside-line]")!.textContent).toBe("$900.000 · Sara $500.000 · Tomás $400.000. Va aparte: no es gasto.");
+    // F14 (auditoría de Impeccable): la cifra apartada en verde ahorro, como en Inicio.
+    const amount = setAside.querySelector("[data-set-aside-amount]")!;
+    expect(amount.textContent).toBe("$900.000");
+    expect(amount.className).toContain("text-saving");
     const note = within(setAside).getByRole("group", { name: copy.analysis.note.overline });
     expect(text(note)).toContain("$3.740.000");
     expect(text(note)).toContain(copy.analysis.note.fixed);
@@ -93,7 +97,9 @@ describe("Análisis · los cuatro capítulos con el dataset de octubre (US-3, es
     const sara = metricCases[1];
     render(<AnalysisScreen data={{ ...withoutBudgets, context: "me", contributors: null, metrics: { spentMinor: minor(sara.consumption), contributedMinor: minor(sara.contributions), withdrawnMinor: "0", fundedMinor: "0", netMinor: minor(sara.net) } }} />);
     expect(text(chapter(copy.analysis.chapters.amount))).toContain(`${copy.analysis.spent.me} $1.912.900`);
-    expect(within(chapter(copy.analysis.chapters.setAside)).getByText("$500.000. Va aparte: no es gasto.")).toBeTruthy();
+    const setAside = chapter(copy.analysis.chapters.setAside);
+    expect(setAside.querySelector("[data-set-aside-line]")!.textContent).toBe("$500.000. Va aparte: no es gasto.");
+    expect(setAside.querySelector("[data-set-aside-amount]")!.className).toContain("text-saving");
   });
 });
 
@@ -109,6 +115,19 @@ describe("Análisis con y sin presupuesto (US-3, escenario 2; FR-022)", () => {
     // 11 de noviembre: diez días transcurridos de treinta (33 %), solo aritmética (Q9).
     expect(within(where).getByText(copy.analysis.where.elapsed(33))).toBeTruthy();
     expect(budgets.querySelectorAll("[data-elapsed-mark]")).toHaveLength(3);
+  });
+
+  it("F22: los presupuestos van en el orden de Plan (catálogo) y con sus mismos badges", () => {
+    render(<AnalysisScreen data={withBudgets} />);
+    const budgets = within(chapter(copy.analysis.chapters.where)).getByRole("list", { name: copy.analysis.where.budgets });
+    const items = within(budgets).getAllByRole("listitem");
+    expect(items.map((item) => item.querySelector("span")!.textContent)).toEqual([
+      expect.stringContaining(copy.categories.market), expect.stringContaining(copy.categories.restaurants), expect.stringContaining(copy.categories.services),
+    ]);
+    // Restaurantes 240.000 de 260.000 (92 %): cerca; Servicios 360.000 de 340.000: excedido. Igual que en Plan.
+    expect(items[0].textContent).not.toContain(copy.primitives.nearLimit);
+    expect(items[1].textContent).toContain(copy.primitives.nearLimit);
+    expect(items[2].textContent).toContain(copy.primitives.exceeded);
   });
 
   it("un mes pasado con presupuesto no lleva marca de mes transcurrido", () => {

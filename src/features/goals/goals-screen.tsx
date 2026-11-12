@@ -21,7 +21,7 @@ import { GoalStack } from "./goal-stack";
 import type { GoalActions, GoalPerson, GoalsScreenData, GoalView } from "./types";
 
 type Props = { data: GoalsScreenData; people: readonly GoalPerson[]; today: string; actions: GoalActions };
-const sectionTitle = "font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink";
+const sectionTitle = "font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink";
 
 function Total({ label, note, amount }: { label: string; note: string; amount: string }) {
   return (

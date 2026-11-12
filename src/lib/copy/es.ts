@@ -65,9 +65,13 @@ export const copy = {
     immersive: {
       close: "Cerrar meta", back: "Volver a Metas", contribute: "Registrar aporte", withdraw: "Retirar", history: "Historial",
       edit: "Editar meta", complete: "Dar por lograda", archive: "Archivar", more: "Más acciones", target: "Objetivo",
-      members: "Aportes por persona",
+      // F06 (auditoría de Impeccable; propuesta aprobada por los fundadores el 11 de noviembre de 2026; copy a aprobar en
+      // pantalla): arriba, lo disponible de cada uno, que es lo que se puede usar o retirar; el historial dice lo aportado.
+      members: "Aportes por persona", available: "Disponible por persona",
       member: (name: string, amount: string, count: number) => `${name} ${amount} · ${count === 1 ? "1 aporte" : `${count} aportes`}`,
-      availableOf: (name: string, amount: string) => `Aportes de ${name} ${amount}`,
+      availableOf: (name: string, amount: string) => `Disponible de ${name} ${amount}`,
+      availableMine: (amount: string) => `Tu disponible ${amount}`,
+      contributedSuffix: (amount: string, mine: boolean) => ` · ${mine ? "aportaste" : "aportó"} ${amount}`,
       readOnly: "Meta archivada: queda de solo lectura con su historial.",
       completedNote: "Meta lograda: admite usos y retiros, no aportes nuevos.",
       notFound: { title: "No encontramos esta meta", description: "Puede que no exista o que no sea de este contexto. En Metas están todas las que puedes ver." },
@@ -94,7 +98,8 @@ export const copy = {
       mode: "Cómo lo apartas", modes: { reserved: "Apartado en Juntia", transferred_declared: "Transferencia declarada" },
       modeHelp: "Transferencia declarada: lo pasaste a otra cuenta tuya. Juntia no lo verifica.",
       date: "Fecha",
-      submit: (amount: string) => `Registrar aporte de ${amount}`, submitting: "Registrando…",
+      // F18 (auditoría de Impeccable): con el campo vacío, el botón no dice «$0».
+      submit: (amount: string) => `Registrar aporte de ${amount}`, submitEmpty: "Registrar aporte", submitting: "Registrando…",
       done: (amount: string, goal: string) => `Aporte de ${amount} a ${goal}`, undone: "Aporte deshecho", rejected: "No se registró el aporte.",
       errors: { amount: "Escribe un monto entre $1 y $999.999.999." },
     },
@@ -105,7 +110,7 @@ export const copy = {
       onlyYours: "Solo se retira de tus propios aportes.",
       nothing: "No tienes aportes disponibles en esta meta.",
       date: "Fecha",
-      submit: (amount: string) => `Retirar ${amount}`, submitting: "Retirando…",
+      submit: (amount: string) => `Retirar ${amount}`, submitEmpty: "Retirar", submitting: "Retirando…",
       done: (amount: string, goal: string) => `Retiro de ${amount} de ${goal}`, undone: "Retiro deshecho", rejected: "No se registró el retiro.",
     },
     history: {
@@ -353,8 +358,9 @@ export const copy = {
       thousands: (value: string) => `${value} mil`,
     },
     setAside: {
-      us: (total: string, parts: string) => `${total} · ${parts}. Va aparte: no es gasto.`,
-      me: (total: string) => `${total}. Va aparte: no es gasto.`,
+      // F14 (auditoría de Impeccable): la cifra apartada se pinta aparte, en verde ahorro como en Inicio; esto es el resto.
+      us: (parts: string) => ` · ${parts}. Va aparte: no es gasto.`,
+      me: ". Va aparte: no es gasto.",
       part: (name: string, amount: string) => `${name} ${amount}`,
       none: { us: (month: string) => `En ${month} no apartaron nada para metas.`, me: (month: string) => `En ${month} no apartaste nada para metas.` },
     },
