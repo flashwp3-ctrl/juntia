@@ -36,7 +36,7 @@ type Props = {
   onCreate?: () => void;
   /** Encabezado accesible de la lista; por defecto «Metas». */
   label?: string;
-  /** Abanico desde lg (Metas). En una columna estrecha (Inicio), la pila sigue vertical. */
+  /** Abanico desde lg (Metas). En Inicio la pila sigue vertical también desde lg (04·7: la meta, en la columna de 7/12). */
   fan?: boolean;
   /** Con él, «Ver todas» navega (Inicio → `/metas`) en lugar de desplegar la lista aquí. */
   seeAllHref?: string;
@@ -153,13 +153,16 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
       </div>
     );
   }
+  // F19 (auditoría de Impeccable): desde lg, el abanico y su pie forman un bloque del ancho del abanico (con el «+»), así «N
+  // metas» y «Ver todas» quedan pegados a las tarjetas y no a 1.000 px. Las tarjetas conservan el tamaño y el paso del
+  // abanico aprobados (08·7; MOTION_SYSTEM §4.1).
   return (
-    <div className="flex flex-col gap-2">
+    <div data-goal-stack="" className={`flex flex-col gap-2 ${fan ? "lg:w-fit lg:max-w-full" : ""}`}>
       <div className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined} data-fan-active={fan && active !== null ? active : undefined}>
         <ul aria-label={label} ref={listRef}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
           onClickCapture={swipe ? (event) => { if (now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
-          className={`relative flow-root ${fan ? `lg:min-h-[244px] lg:flex-none ${visible === 1 ? "lg:w-full lg:max-w-[360px]" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
+          className={`relative flow-root ${fan ? `lg:min-h-[244px] lg:flex-none ${visible === 1 ? "lg:w-[360px] lg:max-w-full" : visible === 2 ? "lg:w-[504px]" : "lg:w-[728px]"}` : ""}`}>
           {ordered.map((goal, index) => {
             const shown = index < visible;
             return (
@@ -195,6 +198,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                       today={today}
                       context={context}
                       peek={index > 0 && shown}
+                      fanned={fan}
                       tabIndex={shown ? undefined : -1}
                       // La que asoma se trae al frente con el primer toque; la frontal (o Enter con el teclado) abre.
                       onPeekClick={index > 0 && shown ? (event) => { if (event.detail > 0) { event.preventDefault(); setFrontId(goal.id); } } : undefined}

@@ -35,6 +35,12 @@ import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, 
 type Props = { goal: GoalView; members: readonly GoalMemberView[]; entries: readonly GoalEntryView[]; people: readonly GoalPerson[]; today: string; context: PlanningContext; actions: GoalActions; requests?: readonly UsageRequestView[] };
 type Open = { kind: "contribute" | "withdraw" | "edit" | "complete" | "archive"; key: string } | null;
 
+/** Sin ninguna interacción del usuario en este documento: se llegó por URL (recarga, enlace o barra de direcciones). */
+function arrivedWithoutInteraction() {
+  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+  return activation?.hasBeenActive === false;
+}
+
 export function GoalImmersive({ goal, members, entries, people, today, context, actions, requests = [] }: Props) {
   const router = useRouter();
   const annotate = useOptionalAnnotate();
@@ -50,8 +56,17 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
   const show = (kind: NonNullable<Open>["kind"]) => setOpen({ kind, key: newIdempotencyKey() });
   const close = () => setOpen(null);
 
-  // Al llegar, el foco va al título (MOTION_SYSTEM §4, «Teclado»).
-  useEffect(() => { title.current?.focus({ preventScroll: true }); }, []);
+  // Al llegar, el foco va al título (MOTION_SYSTEM §4, «Teclado»). F04 (auditoría de Impeccable): si se entra por URL (recarga
+  // o enlace, sin ninguna interacción en el documento), el foco es programático y no pinta el anillo: `focusVisible: false` y,
+  // donde el navegador no lo admite, `data-quiet-focus` lo apaga hasta que el título pierde el foco. Al llegar desde la
+  // tarjeta, el navegador decide como siempre: con un toque no hay anillo y con el teclado (Enter) sí.
+  useEffect(() => {
+    const node = title.current;
+    if (!node) return;
+    const byUrl = arrivedWithoutInteraction();
+    if (byUrl) node.setAttribute("data-quiet-focus", "");
+    node.focus({ preventScroll: true, ...(byUrl ? { focusVisible: false } : {}) });
+  }, []);
   // Escape cierra la meta cuando no hay una hoja abierta (la hoja se cierra primero con su propio Escape).
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -74,7 +89,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           <div className="relative flex flex-col gap-2">
             <p className={`${overlineClass} text-pending`}>{overlineOf(goal)}</p>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
-              <h1 id="goal-title" ref={title} tabIndex={-1} className="max-w-[18ch] font-serif text-[clamp(44px,13vw,84px)] leading-[0.98] font-medium tracking-[-0.02em] text-balance outline-none focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-4 focus-visible:outline-focus focus-visible:outline-solid lg:text-[clamp(56px,6vw,112px)]">
+              <h1 id="goal-title" ref={title} tabIndex={-1} onBlur={(event) => event.currentTarget.removeAttribute("data-quiet-focus")} className="max-w-[18ch] font-serif text-[clamp(44px,13vw,84px)] leading-[0.98] font-medium tracking-[-0.02em] text-balance outline-none focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-4 focus-visible:outline-focus focus-visible:outline-solid data-[quiet-focus]:focus-visible:outline-none lg:text-[clamp(56px,6vw,112px)]">
                 {goal.name}
               </h1>
             </ViewTransition>
@@ -106,13 +121,18 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
         </section>
 
         {members.length > 0 ? (
-          <ul aria-label={copy.goals.immersive.members} className="flex flex-col gap-2">
+          <ul aria-label={copy.goals.immersive.available} className="flex flex-col gap-2">
             {members.map((member) => (
               <li key={member.userId} className="flex items-center gap-3">
                 <Avatar person={member.joinOrder} initial={initialOf(member.name)} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-[14px] font-semibold text-ink">{member.name}</span>
-                  <span className="text-[12px] text-ink-secondary tabular-nums">{member.isMe ? copy.goals.yourShare(cop(member.availableMinor)) : copy.goals.immersive.availableOf(member.name, cop(member.availableMinor))}</span>
+                  {/* F06 (propuesta aprobada el 11 de noviembre de 2026): arriba, lo DISPONIBLE de cada uno; el historial dice lo
+                      aportado. Si ya se usó o retiró algo, también lo aportado, para que las dos cifras cuadren a la vista. */}
+                  <span data-member-available="" className="text-[12px] text-ink-secondary tabular-nums">
+                    {member.isMe ? copy.goals.immersive.availableMine(cop(member.availableMinor)) : copy.goals.immersive.availableOf(member.name, cop(member.availableMinor))}
+                    {member.contributedMinor !== member.availableMinor ? copy.goals.immersive.contributedSuffix(cop(member.contributedMinor), member.isMe) : null}
+                  </span>
                 </span>
               </li>
             ))}

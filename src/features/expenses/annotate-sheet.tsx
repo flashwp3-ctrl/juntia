@@ -58,7 +58,7 @@ import { isAmbiguousError, type ActionResult, type ExpenseActionError, type Expe
 import { ConfirmationBadge } from "./goal-funding/confirmation-badge";
 import { FundingEffect } from "./goal-funding/funding-effect";
 import { FundingLedger } from "./goal-funding/funding-ledger";
-import { evaluateFunding, proposeFunds, type Funds } from "./goal-funding/funding-state";
+import { evaluateFunding, proposeFunds, type Funds, type SplitShares } from "./goal-funding/funding-state";
 import { GoalPicker, type PickerState } from "./goal-funding/goal-picker";
 import type { Contributor, FundingGoal, GoalExpensePayload, GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
 import { cop } from "@/features/goals/format";
@@ -301,6 +301,14 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     return { userId: member.userId, availableMinor: member.availableMinor, name: person?.name ?? "", joinOrder: person?.joinOrder ?? 1, isMe: sheetContext === "me" || Boolean(person?.isMe) };
   }).sort((a, b) => a.joinOrder - b.joinOrder), [members, sheetContext]);
   const contributors: Contributor[] = useMemo(() => (goal ? contributorsOf(goal) : []), [contributorsOf, goal]);
+  // F20/F77-3: lo asignado a cada integrante en el reparto del gasto, del que parte la propuesta de fondos. En Yo, o sin un
+  // reparto válido, `null`.
+  const ownShareOf = useCallback((draftSplit: SplitDraft | null, amountPesos: number | null): SplitShares => {
+    if (sheetContext !== "us" || !draftSplit || amountPesos === null || amountPesos <= 0) return null;
+    const status = evaluateSplit(draftSplit, amountPesos, members);
+    if (status.kind !== "ok") return null;
+    return status.allocations.map(({ userId, amount }) => ({ userId, joinOrder: members.find((member) => member.userId === userId)?.joinOrder ?? 1, pesos: amount.amountMinor / 100n }));
+  }, [members, sheetContext]);
   const fundingStatus = withGoal && goal ? evaluateFunding({ expensePesos: draft.amount, usagePesos: usage, funds, contributors }) : null;
   const splitStatus = split ? evaluateSplit(split, amount, members) : null;
   const payload = split && splitStatus ? splitPayload(split, splitStatus, members) : null;
@@ -324,6 +332,8 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   };
   const changeSplit = (next: SplitDraft) => {
     setSplit(next);
+    // F20: si los fondos siguen siendo la propuesta, siguen al reparto nuevo.
+    if (withGoal && goal && !fundsTouched) setFunds(proposeFunds(contributors, usage, ownShareOf(next, draft.amount)));
     if (sharedWrite.state.phase === "rejected") sharedWrite.reset();
   };
   const setType = (next: TransactionType) => {
@@ -381,7 +391,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     setView("main");
     requestAnimationFrame(() => goalSummaryRef.current?.focus());
   };
-  /** Q16, opción (i): el uso empieza en el gasto (o en lo que haya en la meta) y los fondos, en la propuesta proporcional. */
+  /** El uso empieza en el gasto (o en lo que haya en la meta) y los fondos, en tu parte del reparto (F20). */
   const selectGoal = (next: FundingGoal) => {
     setGoalId(next.id);
     goalNameRef.current = next.name;
@@ -390,12 +400,12 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     const initialUsage = draft.amount && draft.amount > 0 ? Number(BigInt(draft.amount) < total ? BigInt(draft.amount) : total) : null;
     setUsage(initialUsage);
     setFundsTouched(false);
-    setFunds(proposeFunds(contributorsOf(next), initialUsage));
+    setFunds(proposeFunds(contributorsOf(next), initialUsage, ownShareOf(split, draft.amount)));
     if (goalWrite.state.phase === "rejected") goalWrite.reset();
   };
   const changeUsage = (value: number | null) => {
     setUsage(value);
-    if (!fundsTouched) setFunds(proposeFunds(contributors, value));
+    if (!fundsTouched) setFunds(proposeFunds(contributors, value, ownShareOf(split, draft.amount)));
     if (goalWrite.state.phase === "rejected") goalWrite.reset();
   };
   const changeFund = (userId: string, value: number | null) => {

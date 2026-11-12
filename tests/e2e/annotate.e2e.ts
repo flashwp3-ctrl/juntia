@@ -137,6 +137,8 @@ test("UX 3: Guardar → la fila aparece antes de la respuesta del servidor → s
   const user = await seedUser({ role: "fila-optimista", index: testInfo.parallelIndex });
   const seeded = (await seedMovements(user, "recent")).length;
   await signedInHome(page, user);
+  const before = await heroPesos(page);
+  const optimistic = formatMoney(moneyFromPesos(before + 47350n));
   let release!: () => void;
   const gate = new Promise<void>((resolve) => { release = resolve; });
   let held = 0;
@@ -156,11 +158,15 @@ test("UX 3: Guardar → la fila aparece antes de la respuesta del servidor → s
   expect(held).toBe(1);
   await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toHaveCount(0);
   expect(await activeCount(user)).toBe(seeded);
+  // F05 (auditoría de Impeccable): el total del héroe sube con la fila, sin esperar al servidor.
+  await expect(page.locator("[data-counting-amount]:visible")).toHaveAttribute("data-counting-amount", optimistic);
 
   // Se suelta la respuesta: se confirma, la fila en vuelo desaparece y queda la real, una sola vez.
   release();
   await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
   await expect(page.locator("[data-pending]")).toHaveCount(0);
+  // Con la real en la lista, el total del servidor la incluye: el mismo, nunca sumada dos veces.
+  await expect(page.locator("[data-counting-amount]:visible")).toHaveAttribute("data-counting-amount", optimistic);
   await expect(page.locator("a[data-transaction-id]:visible").filter({ hasText: "$47.350" })).toHaveCount(1);
   expect(await activeCount(user)).toBe(seeded + 1);
 

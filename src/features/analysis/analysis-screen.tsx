@@ -12,7 +12,8 @@ import { animate } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { categories as categoryIcons } from "@/components/ui/category-icon";
-import { budgetState, displayedPercent } from "@/domain/budgets";
+import { Badge } from "@/components/ui/badge";
+import { budgetState, byBudgetOrder, displayedPercent } from "@/domain/budgets";
 import type { CategoryId } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { monthName, monthTitle, pesos } from "@/lib/format";
@@ -93,7 +94,7 @@ function Chapter({ number, title, children, className = "" }: { number: number; 
     >
       <div className="flex flex-col gap-1">
         <p aria-hidden="true" className={overline}>{copy.analysis.chapter(number)}</p>
-        <h2 id={id} className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{title}</h2>
+        <h2 id={id} className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{title}</h2>
       </div>
       {children(visible)}
     </section>
@@ -170,9 +171,13 @@ function BudgetLine({ row, context, elapsed }: { row: AnalysisCategory; context:
         </span>
         {elapsed !== null ? <span aria-hidden="true" data-elapsed-mark="" className="absolute -top-1 -bottom-1 w-[2px] -translate-x-1/2 rounded-full bg-ink-secondary" style={{ left: `${elapsed}%` }} /> : null}
       </span>
-      <span className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
-        {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
-        {status}
+      {/* F22 (auditoría de Impeccable): los mismos badges que Plan, al final de la línea de estado. */}
+      <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
+          {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
+          {status}
+        </span>
+        {state === "near" ? <Badge status="nearLimit" /> : state === "over" ? <Badge status="exceeded" /> : null}
       </span>
     </li>
   );
@@ -192,7 +197,8 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
   const spent = metrics ? BigInt(metrics.spentMinor) : 0n;
   const contributed = metrics ? BigInt(metrics.contributedMinor) : 0n;
   const spentRows = data.categories.filter((row) => BigInt(row.consumedMinor) > 0n).sort(byAmount);
-  const budgets = data.categories.filter((row) => row.limitMinor !== null).sort(byAmount);
+  // F22: el mismo orden que Plan (el del catálogo), no el del gasto.
+  const budgets = data.categories.filter((row) => row.limitMinor !== null).sort(byBudgetOrder);
   const elapsed = budgets.length > 0 ? elapsedPercent(month, data.today) : null;
   const comparison = data.comparison;
   const difference = comparison ? BigInt(comparison.differenceMinor) : 0n;
@@ -202,7 +208,7 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
     <div className="flex flex-col gap-8 pt-4 pb-10 lg:gap-12 lg:pt-8">
       <div role="group" aria-label={copy.analysis.month} className="flex items-center gap-2 lg:max-w-[360px]">
         <MonthArrow target={data.navigation.previous} direction="previous" />
-        <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink" aria-live="polite">{monthTitle(month)}</p>
+        <p className="min-w-0 flex-1 text-center font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink" aria-live="polite">{monthTitle(month)}</p>
         <MonthArrow target={data.navigation.next} direction="next" />
       </div>
 
@@ -285,12 +291,16 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
             <>
               <p className="flex items-start gap-2.5 text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-ink">
                 <AppIcon name="piggy-bank" weight="duotone" size={20} className="mt-0.5 shrink-0 text-saving" />
-                <span>
-                  {contributed > 0n
-                    ? context === "us" && data.contributors && data.contributors.length > 0
-                      ? copy.analysis.setAside.us(money(contributed), data.contributors.map((part) => copy.analysis.setAside.part(part.name, money(BigInt(part.amountMinor)))).join(" · "))
-                      : copy.analysis.setAside.me(money(contributed))
-                    : copy.analysis.setAside.none[context](name)}
+                {/* F14 (auditoría de Impeccable): la cifra apartada en `finance.saving`, como «Apartado para metas» en Inicio. */}
+                <span data-set-aside-line="">
+                  {contributed > 0n ? (
+                    <>
+                      <span data-set-aside-amount="" className="font-semibold text-saving tabular-nums">{money(contributed)}</span>
+                      {context === "us" && data.contributors && data.contributors.length > 0
+                        ? copy.analysis.setAside.us(data.contributors.map((part) => copy.analysis.setAside.part(part.name, money(BigInt(part.amountMinor)))).join(" · "))
+                        : copy.analysis.setAside.me}
+                    </>
+                  ) : copy.analysis.setAside.none[context](name)}
                 </span>
               </p>
               {metrics ? <PlanningNote metrics={metrics} /> : null}

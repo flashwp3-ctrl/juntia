@@ -163,6 +163,25 @@ describe("GoalStack (US-4.10; decisión 22.2)", () => {
     stack([japan(), extra(1)]);
     expect(screen.getByRole("button", { name: copy.goals.stack.create })).toBeTruthy();
   });
+
+  it("F24: en la pila vertical (Inicio) el % de la que asoma queda en su franja también desde lg; en el abanico, bajo el ícono", () => {
+    const vertical = render(<GoalStack goals={[japan(), extra(1)]} members={{ [JAPAN]: japanMembers }} today={TODAY} context="us" fan={false} seeAllHref="/metas" />);
+    const chip = vertical.container.querySelector<HTMLElement>("[data-stack-layer='1'] [data-peek-percent]")!;
+    expect(chip.textContent).toBe(copy.goals.percent(1));
+    expect(chip.className).toContain("top-3.5");
+    expect(chip.className).not.toContain("lg:top-16");
+    vertical.unmount();
+    const { container } = stack([japan(), extra(1)]);
+    expect(container.querySelector<HTMLElement>("[data-stack-layer='1'] [data-peek-percent]")!.className).toContain("lg:top-16");
+  });
+
+  it("F19: desde lg el pie «N metas · Ver todas» va del ancho del abanico, pegado a las tarjetas; la pila de Inicio no cambia", () => {
+    const { container, unmount } = stack([japan(), extra(1)]);
+    expect(container.querySelector<HTMLElement>("[data-goal-stack]")!.className).toContain("lg:w-fit");
+    unmount();
+    const home = render(<GoalStack goals={[japan(), extra(1)]} members={{ [JAPAN]: japanMembers }} today={TODAY} context="us" fan={false} seeAllHref="/metas" />);
+    expect(home.container.querySelector<HTMLElement>("[data-goal-stack]")!.className).not.toContain("lg:w-fit");
+  });
 });
 
 describe("Metas en Yo y Nosotros (Q11; FR-035)", () => {
@@ -258,6 +277,18 @@ describe("Registrar aporte (US-5.1, US-5.3, US-5.4; FR-040)", { timeout: 15000 }
     expect(onDone).not.toHaveBeenCalled();
   });
 
+  it("F18: con el campo vacío el botón dice «Registrar aporte», sin «$0»; con importe, lo nombra", async () => {
+    const user = userEvent.setup();
+    const { dialog } = sheet();
+    const field = within(dialog).getByRole("textbox", { name: copy.goals.contribute.amount });
+    expect(within(dialog).getByRole("button", { name: copy.goals.contribute.submitEmpty })).toBeTruthy();
+    expect(dialog.textContent).not.toContain("$0");
+    await user.type(field, "500000");
+    expect(within(dialog).getByRole("button", { name: copy.goals.contribute.submit("$500.000") })).toBeTruthy();
+    await user.clear(field);
+    expect(within(dialog).getByRole("button", { name: copy.goals.contribute.submitEmpty })).toBeTruthy();
+  });
+
   it("meta lograda: no admite aportes (FR-032)", () => {
     render(<ContributeSheet open onClose={vi.fn()} goal={japan({ status: "completed" })} context="us" today={TODAY} idempotencyKey={KEY} actions={actions()} onDone={vi.fn()} />);
     expect(screen.getByText(copy.goals.immersive.completedNote)).toBeTruthy();
@@ -293,6 +324,15 @@ describe("Retirar (US-6.1–6.3; FR-041)", { timeout: 15000 }, () => {
     await user.type(within(dialog).getByLabelText(copy.goals.withdrawSheet.reason), "La bicicleta puede esperar");
     await user.click(within(dialog).getByRole("button", { name: copy.goals.withdrawSheet.submit("$200.000") }));
     expect(writes.withdraw).toHaveBeenCalledWith({ idempotencyKey: KEY, goalId: BIKE, amountPesos: "200000", entryDate: TODAY, reason: "La bicicleta puede esperar" });
+  });
+
+  it("F18: con el campo vacío el botón dice «Retirar», sin «$0»", async () => {
+    const user = userEvent.setup();
+    const { dialog } = sheet();
+    expect(within(dialog).getByRole("button", { name: copy.goals.withdrawSheet.submitEmpty })).toBeTruthy();
+    expect(dialog.textContent).not.toContain("$0");
+    await user.type(within(dialog).getByRole("textbox", { name: copy.goals.withdrawSheet.amount }), "200000");
+    expect(within(dialog).getByRole("button", { name: copy.goals.withdrawSheet.submit("$200.000") })).toBeTruthy();
   });
 
   it("dice que es una reasignación, nunca un ingreso", () => {
@@ -394,6 +434,42 @@ describe("Meta inmersiva (US-4.5; FR-075–FR-077; SC-011)", () => {
     expect(screen.getByRole("link", { name: copy.goals.immersive.close }).getAttribute("href")).toBe("/metas");
     await user.keyboard("{Escape}");
     expect(router.push).toHaveBeenCalledWith("/metas");
+  });
+
+  it("F04: al entrar por URL (sin interacción) el foco va al título sin anillo; al llegar desde la tarjeta decide el navegador", async () => {
+    media(true);
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    vi.stubGlobal("navigator", { ...navigator, userActivation: { hasBeenActive: false } });
+    const first = render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    const title = screen.getByRole("heading", { level: 1, name: "Japón" });
+    await act(async () => {});
+    expect(document.activeElement).toBe(title);
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true, focusVisible: false });
+    expect(title.hasAttribute("data-quiet-focus")).toBe(true);
+    expect(title.className).toContain("data-[quiet-focus]:focus-visible:outline-none");
+    fireEvent.blur(title);
+    expect(title.hasAttribute("data-quiet-focus")).toBe(false);
+    first.unmount();
+    vi.stubGlobal("navigator", { ...navigator, userActivation: { hasBeenActive: true } });
+    render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    await act(async () => {});
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+    expect(screen.getByRole("heading", { level: 1, name: "Japón" }).hasAttribute("data-quiet-focus")).toBe(false);
+    focus.mockRestore();
+  });
+
+  it("F06: arriba, lo disponible de cada uno; con algo usado, también lo aportado, que es lo que dice el historial", () => {
+    media(true);
+    const used: GoalMemberView[] = [{ ...japanMembers[0], usedMinor: minor(100000n), availableMinor: minor(6020000n) }, japanMembers[1]];
+    render(<GoalImmersive goal={japan()} members={used} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    const list = screen.getByRole("list", { name: copy.goals.immersive.available });
+    const lines = [...list.querySelectorAll("[data-member-available]")].map((line) => line.textContent);
+    expect(lines).toEqual([
+      copy.goals.immersive.availableMine("$6.020.000") + copy.goals.immersive.contributedSuffix("$6.120.000", true),
+      copy.goals.immersive.availableOf("Tomás", "$5.220.000"),
+    ]);
+    expect(lines).toEqual(["Tu disponible $6.020.000 · aportaste $6.120.000", "Disponible de Tomás $5.220.000"]);
+    expect(list.textContent).not.toContain("Tus aportes");
   });
 
   it("archivada: solo lectura, sin aportar ni retirar", () => {

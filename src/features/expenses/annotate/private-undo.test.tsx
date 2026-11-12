@@ -8,7 +8,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WRITE_TIMEOUT_MS } from "@/features/shared/use-write";
 import { copy } from "@/lib/copy/es";
-import { AnnotateProvider, useAnnotate } from "../annotate-provider";
+import { AnnotateProvider, useAnnotate, usePendingRows } from "../annotate-provider";
+import { pendingSpendMinor } from "./flights";
 import type { ExpenseActions, SavedTransaction } from "../types";
 
 configure({ asyncUtilTimeout: 5000 });
@@ -130,5 +131,25 @@ describe("Deshacer de una creación privada en el deshacer único", { timeout: 2
     expect(within(alert).queryByRole("button", { name: copy.annotate.retry })).toBeNull();
     expect(screen.queryByText(copy.writes.undoUnknown)).toBeNull();
     expect(actions.voidTransaction).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("F05: deshacer retira la fila temporal confirmada y su suma al héroe", { timeout: 20000 }, () => {
+  function Probe() {
+    const rows = usePendingRows();
+    return <output data-testid="probe">{`${rows.length}:${pendingSpendMinor(rows, "2026-11", [])}`}</output>;
+  }
+
+  it("anulada con «Deshacer», la temporal se va enseguida, sin esperar a las revalidaciones", async () => {
+    const voidTransaction = vi.fn<ExpenseActions["voidTransaction"]>(async () => ({ status: "ok" as const, value: { id: FIRST, version: 2 } }));
+    const actions: ExpenseActions = { create: vi.fn<ExpenseActions["create"]>().mockResolvedValue({ ok: true, value: saved(FIRST) }), update: vi.fn(), voidTransaction };
+    render(<AnnotateProvider actions={actions} context="me" today="2026-11-05"><Trigger /><Probe /></AnnotateProvider>);
+    const user = userEvent.setup();
+    await annotate(user);
+    // Confirmada, la lista aún no trae la real: la temporal sigue sumando sus 45.000.
+    await waitFor(() => expect(screen.getByTestId("probe").textContent).toBe("1:4500000"));
+    await user.click(await screen.findByRole("button", { name: copy.annotate.undo }));
+    await waitFor(() => expect(voidTransaction).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("probe").textContent).toBe("0:0"));
   });
 });

@@ -72,3 +72,26 @@ describe("Inicio con metas (US-9)", () => {
     expect(container.querySelector("[data-goals-home]")?.textContent).not.toMatch(/\$/);
   });
 });
+
+describe("Inicio · Nosotros desde 1024 (F03 de la auditoría de Impeccable; comp 04·7)", () => {
+  const cells = (container: HTMLElement) => Object.fromEntries([...container.querySelectorAll<HTMLElement>("[data-home-cell], [data-balance-line]")].map((cell) => [cell.dataset.homeCell ?? "balance", cell.className]));
+
+  it("la meta va en la columna ancha (7/12) junto al Balance, y «Recientes» debajo junto a «En qué se fue»", () => {
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} goals={goals("90000000")} />);
+    const at = cells(container);
+    expect(at.goals).toContain("lg:col-start-1 lg:row-start-1");
+    expect(at.balance).toContain("lg:col-start-2 lg:row-start-1");
+    expect(at.recent).toContain("lg:col-start-1 lg:row-start-2");
+    expect(at.breakdown).toContain("lg:col-start-2 lg:row-start-2");
+    // F77-1: el orden del DOM (el de lectura y tabulación). En la fila 1 de escritorio, metas → módulo de Balance; en móvil el
+    // módulo está oculto y la línea de saldo va primera. La fila 2 conserva el orden móvil (desviación aceptada).
+    const grid = container.querySelector<HTMLElement>("[data-home-cell='goals']")!.parentElement!;
+    const order = [...grid.children].map((cell) => (cell as HTMLElement).dataset.homeCell ?? ((cell as HTMLElement).dataset.balanceLine !== undefined ? "balance" : cell.className.startsWith("lg:hidden") ? "balance-line" : cell.tagName.toLowerCase()));
+    expect(order).toEqual(["balance-line", "button", "goals", "balance", "breakdown", "recent"]);
+  });
+
+  it("sin la lectura de metas, «Recientes» sube a la primera fila y no deja un hueco", () => {
+    const { container } = wrap(<CoupleHomeView month="2026-10" today="2026-10-31" summary={summary} balance={balance} rows={rows} members={members} />);
+    expect(cells(container).recent).toContain("lg:row-start-1 lg:row-span-2");
+  });
+});

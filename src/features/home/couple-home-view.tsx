@@ -58,49 +58,53 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
       {scope}
       <section aria-labelledby="couple-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
-        <h2 id="couple-hero" className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">
+        <h2 id="couple-hero" className="font-serif text-balance text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">
           {copy.couple.home.spentIn(name)}
         </h2>
         <CountingAmount amountMinor={total.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
       </section>
       {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
       {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="us" /></div> : null}
+      {/* F03 (auditoría de Impeccable; comp 04·7 y RESPONSIVE md/lg, «Meta 7/12 · balance + Anotar 5/12»): en móvil, una
+          columna en este orden (el del DOM); desde 1024, dos filas de 7/12 + 5/12: la meta junto al módulo de Balance y,
+          debajo, «Recientes» junto a «En qué se fue». Sin metas, «Recientes» sube a la primera fila. */}
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-10">
-        <div className="flex flex-col gap-6 lg:order-2">
-          {/* PR D (T061; 04·7, RESPONSIVE «Shared Balance»): por debajo de 1024, la línea de saldo con «Ver balance»; desde
-              1024, el módulo con barras de 16 px, «Desglose» y «Registrar liquidación». */}
-          <div className="lg:hidden"><BalanceLine balance={balance} members={members} /></div>
-          <div data-balance-line="" className="hidden lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
-          <AnnotateCta />
-          {goals ? <GoalsModule goals={goals} context="us" today={today} /> : null}
-          {spentBy.length > 0 ? (
-            <section aria-labelledby="couple-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
-              {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <h2 id="couple-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
-                <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.analysis}</Link>
-              </div>
-              <ul className="flex flex-wrap gap-2">
-                {spentBy.map(([category, amountMinor]) => {
-                  const amount = { amountMinor, currency: "COP" as const };
-                  const grow = Number(amountMinor / 100n);
-                  return (
-                    <li key={category} aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))} style={{ flexGrow: grow }} className={`flex min-h-[88px] min-w-[100px] basis-[100px] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}>
-                      <span aria-hidden="true" className="flex min-w-0 flex-col items-start gap-1 text-[length:var(--label-s-size)] font-semibold text-ink">
-                        <AppIcon name={categories[category].icon} weight="duotone" size={18} className={categoryFg[category]} />
-                        <span className="max-w-full truncate">{copy.categories[category]}</span>
-                      </span>
-                      <span aria-hidden="true" className="text-[13px] font-semibold text-ink">{pesos(amount)}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ) : null}
-        </div>
-        <section aria-labelledby="couple-recent" className="flex flex-col gap-1 lg:order-1">
+        {/* PR D (T061; 04·7, RESPONSIVE «Shared Balance»): por debajo de 1024, la línea de saldo con «Ver balance»; desde
+            1024, el módulo con barras de 16 px, «Desglose» y «Registrar liquidación». */}
+        <div className="lg:hidden"><BalanceLine balance={balance} members={members} /></div>
+        <AnnotateCta />
+        {goals ? <div data-home-cell="goals" className="lg:col-start-1 lg:row-start-1"><GoalsModule goals={goals} context="us" today={today} /></div> : null}
+        {/* F77-1 (revisión del gestor del PR #77): el módulo de Balance va DESPUÉS de las metas en el DOM, para que la fila 1
+            de escritorio se lea y se tabule metas → balance (WCAG 1.3.2, 2.4.3). En móvil está oculto y la línea de saldo
+            sigue primera. La fila 2 («En qué se fue» antes que «Recientes») conserva el orden móvil: desviación aceptada. */}
+        <div data-balance-line="" className="hidden lg:col-start-2 lg:row-start-1 lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
+        {spentBy.length > 0 ? (
+          <section aria-labelledby="couple-breakdown" data-home-cell="breakdown" className="flex flex-col gap-3 lg:col-start-2 lg:row-start-2 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
+            {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <h2 id="couple-breakdown" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
+              <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.analysis}</Link>
+            </div>
+            <ul className="flex flex-wrap gap-2">
+              {spentBy.map(([category, amountMinor]) => {
+                const amount = { amountMinor, currency: "COP" as const };
+                const grow = Number(amountMinor / 100n);
+                return (
+                  <li key={category} aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))} style={{ flexGrow: grow }} className={`flex min-h-[88px] min-w-[100px] basis-[100px] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}>
+                    <span aria-hidden="true" className="flex min-w-0 flex-col items-start gap-1 text-[length:var(--label-s-size)] font-semibold text-ink">
+                      <AppIcon name={categories[category].icon} weight="duotone" size={18} className={categoryFg[category]} />
+                      <span className="max-w-full truncate">{copy.categories[category]}</span>
+                    </span>
+                    <span aria-hidden="true" className="text-[13px] font-semibold text-ink">{pesos(amount)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
+        <section aria-labelledby="couple-recent" data-home-cell="recent" className={`flex flex-col gap-1 lg:col-start-1 ${goals ? "lg:row-start-2" : "lg:row-start-1 lg:row-span-2"}`}>
           <div className="flex items-baseline justify-between gap-3 pb-1">
-            <h2 id="couple-recent" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.couple.home.recentTitle}</h2>
+            <h2 id="couple-recent" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.couple.home.recentTitle}</h2>
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
           </div>
           {recent.length === 0 ? (

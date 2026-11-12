@@ -95,13 +95,111 @@ describe("Subtotal diario con filas en vuelo (F51-2)", () => {
 
 describe("Inicio con una fila en vuelo", () => {
   const home = (rows = saraPrivateOctober2026, month = "2026-10") => <HomeView rows={rows} month={month} today="2026-11-05" />;
+  const hero = () => document.querySelector("[data-counting-amount]")?.getAttribute("data-counting-amount");
+  const saved = (id: string): SavedTransaction => ({ id, type: "expense", categoryId: "market", transactionDate: "2026-10-23", description: "Mercado de la esquina", amountMinor: "4500000", version: 1 });
+  const real = (id: string) => ({ ...row({ transactionDate: "2026-10-23" }).transaction, id });
+  const wrapHome = (node: ReactNode) => <ContextProvider><AnnotateProvider actions={idleActions}>{node}</AnnotateProvider></ContextProvider>;
 
-  it("la fila aparece arriba de «Últimos movimientos» y el gasto del mes espera a la revalidación", async () => {
+  it("F05: confirmada, el total optimista se queda; cuando la lista trae la fila real, el del servidor la incluye y no se suma dos veces", async () => {
+    const pending = row({ transactionDate: "2026-10-23" });
+    const outcome = { ok: true as const, value: saved("real-1") };
+    const view = render(wrapHome(<><Flight pending={pending} outcome={outcome} />{home()}</>));
+    await vi.waitFor(() => expect(document.querySelector("a[href^='/actividad/real-1']")).toBeTruthy());
+    expect(hero()).toBe("$457.900");
+    // La revalidación trae la fila real (y el total del servidor con ella): 457.900, nunca 502.900.
+    view.rerender(wrapHome(<><Flight pending={pending} outcome={outcome} />{home([real("real-1"), ...saraPrivateOctober2026])}</>));
+    expect(hero()).toBe("$457.900");
+    expect(pendingRows()).toHaveLength(0);
+  });
+
+  it("F77-2: en el primer gasto del mes (sin movimientos), el héroe optimista dice $45.000 y, con la real, sigue en $45.000", async () => {
+    let resolve!: (value: ActionResult<SavedTransaction>) => void;
+    const held = new Promise<ActionResult<SavedTransaction>>((done) => { resolve = done; });
+    const pending = row({ transactionDate: "2026-11-05" });
+    function Held() {
+      const { track } = useAnnotate();
+      useEffect(() => { void track(pending, () => held); }, [track]);
+      return null;
+    }
+    const view = render(wrapHome(<><Held />{home([], "2026-11")}</>));
+    await vi.waitFor(() => expect(hero()).toBe("$45.000"));
+    expect(screen.getByRole("heading", { name: copy.home.spentIn("noviembre") })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: copy.home.empty.title })).toBeNull();
+    await act(async () => { resolve({ ok: true, value: { ...saved("real-1"), transactionDate: "2026-11-05" } }); });
+    expect(hero()).toBe("$45.000");
+    view.rerender(wrapHome(<><Held />{home([{ ...pending.transaction, id: "real-1" }], "2026-11")}</>));
+    expect(hero()).toBe("$45.000");
+    expect(pendingRows()).toHaveLength(0);
+  });
+
+  it("F77-2: en Yo con pareja y sin movimientos (consumo 0), el héroe optimista también sale; con solo un ingreso en vuelo, ningún héroe de $0", async () => {
+    const empty = { privateMinor: "0", sharedPartMinor: "0", consumptionMinor: "0" };
+    const pending = row({ transactionDate: "2026-11-05" });
+    const outcome = { ok: true as const, value: { ...saved("real-1"), transactionDate: "2026-11-05" } };
+    const concept = (label: string) => screen.getByText(label).closest("div")!.textContent;
+    const first = render(wrapHome(<><Flight pending={pending} outcome={outcome} /><HomeView rows={[]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: empty }} /></>));
+    await vi.waitFor(() => expect(hero()).toBe("$45.000"));
+    // F77-4: también el desglose durante el vuelo: Solo tuyos $45.000 y Tu parte compartida $0.
+    expect(concept(copy.home.onlyYours)).toContain("$45.000");
+    expect(concept(copy.home.sharedPart)).toContain("$0");
+    // Llega la real (y el resumen del servidor con ella): la rama normal dice lo mismo, sin sumar dos veces.
+    const real = { privateMinor: "4500000", sharedPartMinor: "0", consumptionMinor: "4500000" };
+    first.rerender(wrapHome(<><Flight pending={pending} outcome={outcome} /><HomeView rows={[{ ...pending.transaction, id: "real-1" }]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: real }} /></>));
+    expect(hero()).toBe("$45.000");
+    expect(concept(copy.home.onlyYours)).toContain("$45.000");
+    expect(concept(copy.home.onlyYours)).not.toContain("$90.000");
+    expect(concept(copy.home.sharedPart)).toContain("$0");
+    expect(pendingRows()).toHaveLength(0);
+    first.unmount();
+    const income = row({ transactionDate: "2026-11-05", type: "income", categoryId: "income" });
+    render(wrapHome(<><Flight pending={income} />{home([], "2026-11")}</>));
+    await vi.waitFor(() => expect(pendingRows()).toHaveLength(1));
+    expect(hero()).toBeUndefined();
+    expect(screen.queryByRole("heading", { name: copy.home.spentIn("noviembre") })).toBeNull();
+  });
+
+  it("F05: rechazada, la fila se va y el total vuelve a lo confirmado", async () => {
+    mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} outcome={{ ok: false, error: "invalid" }} />{home()}</>);
+    await act(async () => {});
+    expect(pendingRows()).toHaveLength(0);
+    expect(hero()).toBe("$412.900");
+  });
+
+  it("F05: resultado desconocido (red), la fila se va y el total vuelve a lo confirmado", async () => {
+    mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} outcome={{ ok: false, error: "network" }} />{home()}</>);
+    await act(async () => {});
+    expect(pendingRows()).toHaveLength(0);
+    expect(hero()).toBe("$412.900");
+  });
+
+  it("F05: un gasto en vuelo de otro mes no toca el héroe", async () => {
+    mount(<><Flight pending={row({ transactionDate: "2026-11-05" })} />{home()}</>);
+    await act(async () => {});
+    expect(hero()).toBe("$412.900");
+  });
+
+  it("F05: con pareja, el héroe (gasto_consumo) y «Solo tuyos» suben juntos; «Tu parte compartida» no cambia", async () => {
+    const summary = { privateMinor: "41290000", sharedPartMinor: "150000000", consumptionMinor: "191290000" };
+    mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} /><HomeView rows={saraPrivateOctober2026} month="2026-10" today="2026-11-05" shared={{ parts: [], summary }} /></>);
+    await vi.waitFor(() => expect(hero()).toBe("$1.957.900"));
+    expect(screen.getByText(copy.home.onlyYours).closest("div")!.textContent).toContain("$457.900");
+    expect(screen.getByText(copy.home.sharedPart).closest("div")!.textContent).toContain("$1.500.000");
+  });
+
+  it("F05: nada se guarda en el navegador mientras la fila viaja", async () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} />{home()}</>);
+    await vi.waitFor(() => expect(hero()).toBe("$457.900"));
+    expect(setItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+  });
+
+  it("la fila aparece arriba de «Últimos movimientos» y el total del héroe sube con ella (F05, optimista)", async () => {
     mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} />{home()}</>);
     const recent = screen.getByRole("region", { name: copy.home.recentTitle });
     await vi.waitFor(() => expect(within(recent).getAllByRole("listitem")[0].querySelector("[data-pending]")).toBeTruthy());
     expect(within(recent).getAllByRole("listitem")[0].textContent).toContain(copy.row.pending.saving);
-    expect(screen.getByRole("region", { name: copy.home.spentIn("octubre") }).textContent).toMatch(/\$\s?412\.900/);
+    expect(hero()).toBe("$457.900");
   });
 
   it("en el primer gasto, la fila en vuelo reemplaza al estado vacío", async () => {

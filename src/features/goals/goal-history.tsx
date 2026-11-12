@@ -52,7 +52,7 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
 
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3">
-      <h2 id={titleId} className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.goals.history.title}</h2>
+      <h2 id={titleId} className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.goals.history.title}</h2>
       {shared && members.length > 0 ? (
         <ul aria-label={copy.goals.immersive.members} className="flex flex-col gap-1">
           {members.map((member) => (

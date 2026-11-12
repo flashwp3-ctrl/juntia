@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
+import { byBudgetOrder } from "@/domain/budgets";
 import { formatMoney } from "@/domain/money";
 import { CATEGORY_CATALOG } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
@@ -48,7 +49,7 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
   const [announce, setAnnounce] = useState("");
   const { context, month, today } = data;
   const name = monthName(month);
-  const budgets = data.rows.filter((row) => row.limitMinor !== null).sort((a, b) => ORDER.get(a.categoryId)! - ORDER.get(b.categoryId)!);
+  const budgets = data.rows.filter((row) => row.limitMinor !== null).sort(byBudgetOrder);
   const spent = data.rows.filter((row) => row.limitMinor === null && BigInt(row.consumedMinor) > 0n)
     .sort((a, b) => (BigInt(b.consumedMinor) > BigInt(a.consumedMinor) ? 1 : BigInt(b.consumedMinor) < BigInt(a.consumedMinor) ? -1 : ORDER.get(a.categoryId)! - ORDER.get(b.categoryId)!));
   const canCreate = CATEGORY_CATALOG.some((category) => category.kind === "expense" && !budgets.some((row) => row.categoryId === category.id));

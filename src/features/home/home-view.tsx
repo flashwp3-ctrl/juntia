@@ -12,10 +12,9 @@ import { formatMoney, type Money } from "@/domain/money";
 import { groupByDay, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
-import { CountingAmount } from "@/features/expenses/counting-amount";
 import { HighlightRow, HighlightSharedPart } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
-import { HomeEmpty, HomeScope, PendingHomeRows } from "./pending-home";
+import { HeroBreakdown, HomeEmpty, HomeHeroTotal, HomeScope, PendingHomeRows } from "./pending-home";
 import type { HomeGoals } from "@/features/goals/types";
 import { GoalsModule, SetAsideLine } from "./goals-home";
 
@@ -78,7 +77,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
     return (
       <>
       {scope}
-      <HomeEmpty month={month} today={today} empty={
+      <HomeEmpty month={month} today={today} title={copy.home.spentIn(name)} breakdown={shared ? { privateMinor: shared.summary.privateMinor, sharedPartMinor: shared.summary.sharedPartMinor } : undefined} empty={
         <div className="flex flex-col gap-6 pt-2">
           <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
           {goals && (goals.goals.length > 0 || BigInt(goals.setAsideMinor) > 0n) ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /><GoalsModule goals={goals} context="me" today={today} /></div> : null}
@@ -93,31 +92,21 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   const spentBy = (Object.entries(byCategory) as [CategoryId, NonNullable<(typeof summary.byCategory)[CategoryId]>][])
     .sort(([, a], [, b]) => (b.amountMinor > a.amountMinor ? 1 : b.amountMinor < a.amountMinor ? -1 : 0));
   const heroMinor = shared ? BigInt(shared.summary.consumptionMinor) : summary.expenseTotal.amountMinor;
-  const spent = heroMinor > 0n;
-  const heroTitle = spent ? copy.home.spentIn(name) : copy.home.noExpenses(name);
+  // F05: el héroe y «Solo tuyos» suman los gastos en vuelo que la lista aún no trae (los mismos ids que avisa `HomeScope`).
+  const privateIds = rows.map(({ id }) => id);
   return (
     <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
       {scope}
       <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
-        <h2 id="home-hero" className="font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">
-          {heroTitle}
-        </h2>
-        {spent ? (
-          <CountingAmount amountMinor={heroMinor.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
-        ) : null}
-        {shared ? (
-          <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.onlyYours}</p>
-              <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(shared.summary.privateMinor), currency: "COP" })}</p>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.sharedPart}</p>
-              <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(shared.summary.sharedPartMinor), currency: "COP" })}</p>
-            </div>
-          </div>
-        ) : null}
+        <HomeHeroTotal
+          confirmedMinor={heroMinor.toString()}
+          month={month}
+          knownIds={privateIds}
+          headingId="home-hero"
+          titles={{ spent: copy.home.spentIn(name), none: copy.home.noExpenses(name) }}
+        />
+        {shared ? <HeroBreakdown privateMinor={shared.summary.privateMinor} sharedPartMinor={shared.summary.sharedPartMinor} month={month} knownIds={privateIds} /> : null}
       </section>
       {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
       {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /></div> : null}
@@ -128,7 +117,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
           <section aria-labelledby="home-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
             {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-              <h2 id="home-breakdown" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
+              <h2 id="home-breakdown" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
               <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.analysis}</Link>
             </div>
             <ul className="flex flex-wrap gap-2">
@@ -153,7 +142,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
         </div>
         <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:order-1">
           <div className="flex items-baseline justify-between gap-3 pb-1">
-            <h2 id="home-recent" className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
+            <h2 id="home-recent" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">

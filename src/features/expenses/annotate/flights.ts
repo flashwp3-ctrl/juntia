@@ -31,6 +31,15 @@ export const drop = (flights: Flights, keys: readonly string[]): Flights => {
 };
 
 /**
+ * F05: la creación confirmada se anuló («Deshacer» o ya no existe): su fila temporal se va ya, sin esperar a las
+ * revalidaciones, y deja de sumar al total. Antes podía quedarse hasta el tope de 3 revalidaciones.
+ */
+export const forgetSaved = (flights: Flights, savedId: string): Flights => {
+  const next = flights.filter((flight) => flight.savedId !== savedId);
+  return next.length === flights.length ? flights : next;
+};
+
+/**
  * Una lista informa de los ids reales que trae. (a) La fila confirmada cuyo id ya está se retira. (b) Si llegó por una
  * revalidación (`revalidated`) y la fila ya no le corresponde a ninguna lista montada (`hasMonth`), también.
  */
@@ -54,6 +63,22 @@ export function refreshRound(flights: Flights, counts: ReadonlyMap<string, numbe
   const exhausted = waiting.filter((flight) => (counts.get(flight.key) ?? 0) >= MAX_REFRESHES).map((flight) => flight.key);
   const live = waiting.filter((flight) => (counts.get(flight.key) ?? 0) < MAX_REFRESHES).map((flight) => flight.key);
   return { exhausted, live };
+}
+
+/**
+ * F05 (auditoría de Impeccable; propuesta aprobada por los fundadores el 11 de noviembre de 2026): lo que las creaciones en
+ * vuelo suman al gasto del mes de una lista, para que el total del héroe de Inicio suba con la fila (MOTION_SYSTEM §2: «la
+ * fila nueva … el total cuenta hacia arriba», un solo momento). Cuenta solo gastos (un ingreso nunca entra en el héroe,
+ * FR-019) del mes de la lista. Una fila confirmada deja de contar en cuanto la lista trae su id real: desde ese render el
+ * total del servidor ya la incluye, así que nunca se suma dos veces. Con rechazo o resultado desconocido la fila se retira
+ * (`drop`) y el total vuelve solo a lo confirmado. Como las filas, vive en memoria: nada se guarda en el navegador.
+ */
+export function pendingSpendMinor(flights: Flights, month: string, knownIds: readonly string[]): bigint {
+  return flights.reduce((sum, { transaction, savedId }) => (
+    transaction.type === "expense" && monthOf(transaction.transactionDate) === month && !(savedId && knownIds.includes(savedId))
+      ? sum + transaction.amount.amountMinor
+      : sum
+  ), 0n);
 }
 
 /**
