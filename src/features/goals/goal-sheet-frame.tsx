@@ -34,9 +34,9 @@ export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, chi
   };
   const body = (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-saving-subtle text-saving"><AppIcon name={icon} weight="duotone" size={22} /></span>
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.primitives.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>
@@ -68,7 +68,7 @@ export function UnconfirmedClose({ open, onOpenChange, onRetry, onClose }: { ope
 /** El aviso de un rechazo o de un dato no válido dentro de una hoja: se anuncia y queda junto al botón. */
 export function SheetError({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p id={id} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[13px] font-medium text-ink">
+    <p id={id} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[0.8125rem] font-medium text-ink">
       <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-danger" />
       <span>{children}</span>
     </p>

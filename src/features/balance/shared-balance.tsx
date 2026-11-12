@@ -161,10 +161,14 @@ export function SharedBalance({ balance, members, state = "ready", size = "scree
           {current && debtor && creditor ? copy.balance.owes(debtor.name, creditor.name) : copy.balance.settled}
         </h2>
         {current || counting ? (
-          <p data-balance-amount={current ? formatMoney(current.amount) : undefined} className="text-[clamp(32px,9vw,var(--money-l-size))] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums">
-            <span aria-hidden="true" data-balance-counter="">{amountText}</span>
-            <span className="sr-only">{current ? formatMoney(current.amount) : copy.balance.settled}</span>
-          </p>
+          // F13: el importe se ajusta al ancho de su tarjeta (16cqi) solo cuando el texto está ampliado; a 16 px el mínimo y el tope
+          // quedan en 32 y 40 px, como antes. El envoltorio es el contenedor de la consulta.
+          <div className="@container">
+            <p data-balance-amount={current ? formatMoney(current.amount) : undefined} className="text-[clamp(min(2rem,max(32px,16cqi)),9vw,min(var(--money-l-size),max(40px,16cqi)))] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums">
+              <span aria-hidden="true" data-balance-counter="">{amountText}</span>
+              <span className="sr-only">{current ? formatMoney(current.amount) : copy.balance.settled}</span>
+            </p>
+          </div>
         ) : null}
         {size === "screen" ? <p className="text-[length:var(--body-s-size)] leading-[1.45] text-pretty text-ink-secondary">{current ? copy.balance.cumulative : copy.balance.settledNote}</p> : null}
       </div>
@@ -173,7 +177,7 @@ export function SharedBalance({ balance, members, state = "ready", size = "scree
         {bars.map(({ row, member, geometry, status, label, net, before }) => (
           <div key={row.userId} className="flex flex-col gap-2">
             {size === "screen" ? (
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[13px] font-medium text-ink-secondary">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[0.8125rem] font-medium text-ink-secondary">
                 <span className="flex min-w-0 items-center gap-2">
                   {member ? <Avatar person={member.joinOrder} initial={initialOf(member.name)} size={24} /> : null}
                   <span className="truncate font-semibold text-ink">{member?.name}</span>
@@ -202,11 +206,11 @@ export function SharedBalance({ balance, members, state = "ready", size = "scree
               })}
               <span aria-hidden="true" style={{ left: `${geometry.mark}%` }} className="absolute -inset-y-[5px] -ml-px w-0.5 rounded-[2px] bg-ink" />
             </div>
-            {size === "screen" ? <p className="text-[12px] text-ink-secondary tabular-nums">{copy.balance.paidLine(pesos(row.paid), pesos(row.share))}</p> : null}
+            {size === "screen" ? <p className="text-[0.75rem] text-ink-secondary tabular-nums">{copy.balance.paidLine(pesos(row.paid), pesos(row.share))}</p> : null}
           </div>
         ))}
         {size === "screen" ? (
-          <ul aria-label={copy.balance.legend.label} className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 text-[11px] font-medium text-ink-secondary">
+          <ul aria-label={copy.balance.legend.label} className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 text-[0.6875rem] font-medium text-ink-secondary">
             <li className="flex items-center gap-1.5"><span aria-hidden="true" className="h-3 w-0.5 bg-ink" />{copy.balance.legend.share}</li>
             {usedKinds.has("over") ? <li className="flex items-center gap-1.5"><span aria-hidden="true" className={`h-2.5 w-4 rounded-[3px] ${personFill[1]} ${segmentClass.over}`} />{copy.balance.legend.over}</li> : null}
             {usedKinds.has("missing") ? <li className="flex items-center gap-1.5"><span aria-hidden="true" className={`h-2.5 w-4 rounded-[3px] ${segmentClass.missing}`} />{copy.balance.legend.missing}</li> : null}
@@ -214,7 +218,7 @@ export function SharedBalance({ balance, members, state = "ready", size = "scree
             {usedKinds.has("settled") ? <li className="flex items-center gap-1.5"><span aria-hidden="true" className={`h-2.5 w-4 rounded-[3px] ${segmentClass.settled}`} />{copy.balance.legend.settled}</li> : null}
           </ul>
         ) : (
-          <p className="text-[12px] leading-[1.45] text-pretty text-ink-secondary">{copy.balance.moduleCaption}</p>
+          <p className="text-[0.75rem] leading-[1.45] text-pretty text-ink-secondary">{copy.balance.moduleCaption}</p>
         )}
       </div>
       {children}

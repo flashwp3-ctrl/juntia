@@ -100,7 +100,7 @@ export function AmountInput({ value, defaultValue = null, onValueChange, error, 
       // Decisión 14: 0,68 em por carácter. Onest 600 con tnum y -0,03 em mide hasta 0,590 em por carácter en importes
       // formateados, frente a 0,537 de Geist; el coeficiente sube en la misma proporción (0,62 × 1,099).
       fieldClassName={`@container min-h-16 py-1.5 ${fieldClassName}`}
-      inputClassName={`text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),40px)] leading-none font-semibold tracking-[-0.03em] ${inputClassName}`}
+      inputClassName={`text-[length:clamp(28px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),2.5rem)] leading-none font-semibold tracking-[-0.03em] ${inputClassName}`}
       style={{ "--amount-chars": Math.max(shown.length, 4) } as React.CSSProperties}
     />
   );

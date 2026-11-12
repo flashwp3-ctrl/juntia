@@ -31,7 +31,7 @@ function usePendingTotal(confirmedMinor: string, month: string, knownIds: readon
  * el titular de «sin gastos» y ningún importe, como antes.
  */
 const HERO_HEADING = "font-serif text-balance text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]";
-const HERO_AMOUNT = "text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]";
+const HERO_AMOUNT = "text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]";
 
 export function HomeHeroTotal({ confirmedMinor, month, knownIds, headingId, titles }: {
   confirmedMinor: string; month: string; knownIds: readonly string[]; headingId: string; titles: { spent: string; none: string };
@@ -60,11 +60,11 @@ export function HeroBreakdown({ privateMinor, sharedPartMinor, month, knownIds }
     <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
       <div className="flex flex-col gap-0.5">
         <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.onlyYours}</p>
-        <PendingAwareMoney confirmedMinor={privateMinor} month={month} knownIds={knownIds} className="text-[17px] font-semibold text-ink tabular-nums" />
+        <PendingAwareMoney confirmedMinor={privateMinor} month={month} knownIds={knownIds} className="text-[1.0625rem] font-semibold text-ink tabular-nums" />
       </div>
       <div className="flex flex-col gap-0.5">
         <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.home.sharedPart}</p>
-        <p className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(sharedPartMinor), currency: "COP" })}</p>
+        <p className="text-[1.0625rem] font-semibold text-ink tabular-nums">{formatMoney({ amountMinor: BigInt(sharedPartMinor), currency: "COP" })}</p>
       </div>
     </div>
   );

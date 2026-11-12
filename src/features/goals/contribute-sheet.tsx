@@ -65,22 +65,22 @@ export function ContributeSheet({ open, onClose, goal, context, today, idempoten
   return (
     <GoalSheetFrame open={open} title={copy.goals.contribute.title} icon="piggy-bank" onClose={onClose} phase={phase} onRetry={() => void write.retry()}>
       {goal.status !== "active" ? (
-        <p className="rounded-[14px] bg-sunken px-3 py-2.5 text-[13px] font-medium text-ink">{goal.status === "completed" ? copy.goals.immersive.completedNote : copy.goals.immersive.readOnly}</p>
+        <p className="rounded-[14px] bg-sunken px-3 py-2.5 text-[0.8125rem] font-medium text-ink">{goal.status === "completed" ? copy.goals.immersive.completedNote : copy.goals.immersive.readOnly}</p>
       ) : (
         <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
           <p className="text-center font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
           <AmountInput label={copy.goals.contribute.amount} value={pesos} onValueChange={(next) => { setPesos(next); setInvalid(null); }} disabled={locked} className="w-full" fieldClassName="w-full" />
           {after !== null ? (
-            <p aria-live="polite" className="rounded-[14px] bg-saving-subtle px-3 py-2.5 text-[14px] font-semibold text-ink tabular-nums">
+            <p aria-live="polite" className="rounded-[14px] bg-saving-subtle px-3 py-2.5 text-[0.875rem] font-semibold text-ink tabular-nums">
               {copy.goals.contribute.preview(cop(after), percentOf(after, BigInt(goal.targetMinor)))}
             </p>
           ) : null}
-          <p className="text-[13px] leading-[1.5] text-pretty text-ink-secondary">{copy.goals.contribute.explain[context]}</p>
+          <p className="text-[0.8125rem] leading-[1.5] text-pretty text-ink-secondary">{copy.goals.contribute.explain[context]}</p>
           <div className="flex flex-col gap-2">
             <Segmented role="radiogroup" label={copy.goals.contribute.mode} stretch disabled={locked}
               options={[{ value: "reserved", label: copy.goals.contribute.modes.reserved }, { value: "transferred_declared", label: copy.goals.contribute.modes.transferred_declared }] as const}
               value={mode} onValueChange={setMode} />
-            {mode === "transferred_declared" ? <p className="text-[12px] leading-[1.45] text-ink-secondary">{copy.goals.contribute.modeHelp}</p> : null}
+            {mode === "transferred_declared" ? <p className="text-[0.75rem] leading-[1.45] text-ink-secondary">{copy.goals.contribute.modeHelp}</p> : null}
           </div>
           <Input label={copy.goals.contribute.date} type="date" value={date} min={min} max={today} disabled={locked} onChange={(event) => { setDate(event.target.value); setInvalid(null); }} />
           {message ? <SheetError id={errorId}>{message}</SheetError> : null}

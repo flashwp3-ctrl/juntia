@@ -12,7 +12,7 @@ export function NewPasswordForm() {
   return (
     <>
       <BackToSignIn />
-      <h1 className="font-serif text-[40px] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.newPassword.title}</h1>
+      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.newPassword.title}</h1>
       {state.error && !state.field ? <InlineNotice tone="danger" icon="wifi-slash">{state.error}</InlineNotice> : null}
       <form action={action} noValidate className="flex flex-col gap-5">
         <PasswordInput label={copy.auth.newPassword.label} name="password" autoComplete="new-password" help={copy.auth.newPassword.help} error={state.field === "password" ? state.error : undefined} />

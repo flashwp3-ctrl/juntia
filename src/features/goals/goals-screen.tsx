@@ -27,8 +27,8 @@ function Total({ label, note, amount }: { label: string; note: string; amount: s
   return (
     <div className="flex flex-col gap-1">
       <p className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{label}</p>
-      <p data-goals-total="" className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums">{amount}</p>
-      <p className="text-[13px] text-ink-secondary">{note}</p>
+      <p data-goals-total="" className="text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums">{amount}</p>
+      <p className="text-[0.8125rem] text-ink-secondary">{note}</p>
     </div>
   );
 }
@@ -44,9 +44,9 @@ function Archived({ goals }: { goals: readonly GoalView[] }) {
             <Link href={`/metas/${goal.id}`} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
               <span aria-hidden="true" data-goal-tint={goal.goalType} className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--goal-tint-bg)] text-[color:var(--goal-tint-icon)]"><AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} /></span>
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-[15px] font-semibold">{goal.name}</span>
-                <span className="flex flex-wrap items-center gap-1.5 text-[12px] text-ink-secondary">
-                  <span className="inline-flex items-center gap-1 rounded-full border-[1.5px] border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink"><AppIcon name="archive" size={12} />{copy.goals.status.archived}</span>
+                <span className="truncate text-[0.9375rem] font-semibold">{goal.name}</span>
+                <span className="flex flex-wrap items-center gap-1.5 text-[0.75rem] text-ink-secondary">
+                  <span className="inline-flex items-center gap-1 rounded-full border-[1.5px] border-border-emphasis px-1.5 text-[0.625rem] font-semibold tracking-[0.06em] text-ink"><AppIcon name="archive" size={12} />{copy.goals.status.archived}</span>
                   {copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}
                 </span>
               </span>
@@ -118,13 +118,13 @@ export function GoalsScreen({ data, today, actions }: Props) {
             <section aria-labelledby="goals-shared" className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <h2 id="goals-shared" className={sectionTitle}>{copy.goals.sections.shared}</h2>
-                <p className="text-[13px] text-ink-secondary">{copy.goals.sections.sharedNote}</p>
+                <p className="text-[0.8125rem] text-ink-secondary">{copy.goals.sections.sharedNote}</p>
               </div>
               <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {shared.map((goal) => (
                   <li key={goal.id} className="flex flex-col gap-2">
                     <GoalCard goal={goal} members={data.members[goal.id] ?? []} today={today} context="me" />
-                    <p className="px-1 text-[13px] font-semibold text-ink tabular-nums">{copy.goals.yourShare(cop(goal.myAvailableMinor))}</p>
+                    <p className="px-1 text-[0.8125rem] font-semibold text-ink tabular-nums">{copy.goals.yourShare(cop(goal.myAvailableMinor))}</p>
                   </li>
                 ))}
               </ul>

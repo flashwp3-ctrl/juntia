@@ -107,36 +107,38 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
               <span>{scope}</span>{" · "}<span>{when === copy.goals.noDate ? copy.goals.noDate : copy.goals.due(targetMonthLabel(goal.targetMonth!))}</span>
             </span>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
-              <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[24px] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,32px)] leading-[1.04] text-balance"}`}>{goal.name}</span>
+              {/* F13: el título vive en una tarjeta de geometría fija. Con la letra ampliada no pasa de 8vw (el tamaño de 390 px a 16 px),
+                  para que «Bicicleta» o «Japón» no se partan ni queden en dos letras; a 16 px mide lo mismo que antes. */}
+              <span data-goal-title="" className={`shrink-0 font-serif font-medium tracking-[-0.015em] ${peek ? "truncate text-[min(1.5rem,8vw)] leading-[1.15]" : "line-clamp-2 text-[clamp(26px,8vw,2rem)] leading-[1.04] text-balance"}`}>{goal.name}</span>
             </ViewTransition>
           </span>
-          {peek ? <span aria-hidden="true" data-peek-percent="" className={`absolute top-3.5 right-4 rounded-full ${fanned ? "lg:top-16" : ""} bg-raised px-2.5 py-1 text-[13px] font-semibold tabular-nums shadow-raised`}>{copy.goals.percent(goal.progressPercent)}</span> : null}
+          {peek ? <span aria-hidden="true" data-peek-percent="" className={`absolute top-3.5 right-4 rounded-full ${fanned ? "lg:top-16" : ""} bg-raised px-2.5 py-1 text-[0.8125rem] font-semibold tabular-nums shadow-raised`}>{copy.goals.percent(goal.progressPercent)}</span> : null}
           <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? "invisible" : ""}`}>
             <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="flex items-center gap-2">
-                <span className="text-[28px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{copy.goals.percent(goal.progressPercent)}</span>
+                <span className="text-[1.75rem] leading-none font-semibold tracking-[-0.02em] tabular-nums">{copy.goals.percent(goal.progressPercent)}</span>
                 {completed ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-canvas">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[0.6875rem] font-semibold tracking-[0.04em] text-canvas">
                     <AppIcon name="flag-checkered" weight="fill" size={13} />{copy.goals.status.completed}
                   </span>
                 ) : suggest ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-raised px-2 py-0.5 text-[12px] font-semibold text-ink shadow-raised">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-raised px-2 py-0.5 text-[0.75rem] font-semibold text-ink shadow-raised">
                     <AppIcon name="check-circle" weight="fill" size={13} className="text-saving" />{copy.goals.reached[context]}
                   </span>
                 ) : null}
               </span>
-              <span className="text-[13px] font-medium text-pending tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</span>
+              <span className="text-[0.8125rem] font-medium text-pending tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</span>
             </span>
             <ViewTransition name={`goal-ribbon-${goal.id}`} share="goal-morph" default="none">
               <span className="block"><GoalRibbon members={ribbonMembers} targetMinor={goal.targetMinor} pacePercent={pace.kind === "line" ? pace.elapsedPercent : null} onTint /></span>
             </ViewTransition>
-            {surplus > 0n ? <span data-goal-surplus="" className="text-[12px] font-medium text-pending">{copy.goals.surplus(cop(surplus))}</span> : null}
+            {surplus > 0n ? <span data-goal-surplus="" className="text-[0.75rem] font-medium text-pending">{copy.goals.surplus(cop(surplus))}</span> : null}
             {pace.kind === "line" ? (
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] leading-[1.35] text-pending">
-                <span className="rounded-full border-[1.5px] border-dashed border-pending px-1.5 text-[11px] font-semibold text-pending">{copy.goals.pace.estimate}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.75rem] leading-[1.35] text-pending">
+                <span className="rounded-full border-[1.5px] border-dashed border-pending px-1.5 text-[0.6875rem] font-semibold text-pending">{copy.goals.pace.estimate}</span>
                 <span>{pace.text}</span>
               </span>
-            ) : pace.kind === "pastDue" ? <span className="text-[12px] leading-[1.35] text-pending">{pace.text}</span> : null}
+            ) : pace.kind === "pastDue" ? <span className="text-[0.75rem] leading-[1.35] text-pending">{pace.text}</span> : null}
           </span>
         </Link>
       </m.div>

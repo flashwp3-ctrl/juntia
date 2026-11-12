@@ -31,7 +31,7 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
           const delay = (current ? months.length : index) * 40;
           return (
             <div key={item.month} className="flex h-full max-w-[64px] min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
-              <span className={`text-[11px] leading-none font-semibold whitespace-nowrap tabular-nums ${current ? "text-ink" : "text-ink-secondary"}`}>{compactPesos(BigInt(item.spentMinor))}</span>
+              <span className={`text-[0.6875rem] leading-none font-semibold whitespace-nowrap tabular-nums ${current ? "text-ink" : "text-ink-secondary"}`}>{compactPesos(BigInt(item.spentMinor))}</span>
               <div
                 data-chart-bar=""
                 data-current={current ? "true" : "false"}
@@ -44,10 +44,10 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
       </div>
       <div aria-hidden="true" className="-mt-1 flex gap-2">
         {months.map((item) => (
-          <span key={item.month} className={`max-w-[64px] min-w-0 flex-1 text-center text-[12px] ${item.month === selected ? "font-semibold text-ink" : "text-ink-secondary"}`}>{short(item.month)}</span>
+          <span key={item.month} className={`max-w-[64px] min-w-0 flex-1 text-center text-[0.75rem] ${item.month === selected ? "font-semibold text-ink" : "text-ink-secondary"}`}>{short(item.month)}</span>
         ))}
       </div>
-      <figcaption className="text-[12px] leading-[1.45] text-pretty text-ink-secondary">{copy.analysis.compared.caption}</figcaption>
+      <figcaption className="text-[0.75rem] leading-[1.45] text-pretty text-ink-secondary">{copy.analysis.compared.caption}</figcaption>
       {/* Decisión de los fundadores del 11 nov 2026 (F71-3 del PR #71): en lugar del tooltip por teclado de
           COMPONENT_SPECIFICATIONS «Chart», una tabla visible desplegable con las cifras exactas, con el mismo patrón que «Cómo se
           calcula» de la PlanningNote. Es la equivalencia accesible del gráfico (que es decorativo) para quien usa teclado y para
@@ -57,12 +57,12 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
         aria-expanded={open}
         aria-controls={`${id}-figures`}
         onClick={() => setOpen((value) => !value)}
-        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 self-start rounded-[var(--radius-md)] px-2 text-[13px] font-semibold text-ink underline underline-offset-4 hover:bg-sunken"
+        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 self-start rounded-[var(--radius-md)] px-2 text-[0.8125rem] font-semibold text-ink underline underline-offset-4 hover:bg-sunken"
       >
         {open ? copy.analysis.compared.hide : copy.analysis.compared.show}
         <AppIcon name="caret-right" weight="bold" size={14} className={`motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] ${open ? "rotate-90" : ""}`} />
       </button>
-      <table id={`${id}-figures`} hidden={!open} className="w-full border-collapse text-left text-[13px] leading-[1.45]">
+      <table id={`${id}-figures`} hidden={!open} className="w-full border-collapse text-left text-[0.8125rem] leading-[1.45]">
         <caption className="sr-only">{copy.analysis.compared.table}</caption>
         <thead>
           <tr className={overline}>

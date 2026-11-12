@@ -73,7 +73,7 @@ export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
               data-theme-option={option.value}
               onClick={() => choose(option.value)}
               onKeyDown={(event) => move(event, index)}
-              className="group flex min-w-0 flex-col items-center gap-2 rounded-[18px] p-1 text-[13px] font-semibold text-ink focus-visible:outline-offset-2"
+              className="group flex min-w-0 flex-col items-center gap-2 rounded-[18px] p-1 text-[0.8125rem] font-semibold text-ink focus-visible:outline-offset-2"
             >
               <span className={`w-full rounded-[18px] p-[3px] ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1px_var(--color-border-subtle)]"}`}>
                 <Preview theme={option.value} />
@@ -86,7 +86,7 @@ export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
           );
         })}
       </div>
-      <p className="text-[13px] leading-[1.45] text-ink-secondary">{copy.account.appearance.help}</p>
+      <p className="text-[0.8125rem] leading-[1.45] text-ink-secondary">{copy.account.appearance.help}</p>
       {problem === "failed" ? <InlineNotice tone="danger" icon="warning-circle">{copy.errors.saveFailed}</InlineNotice> : null}
       {problem === "sessionExpired" ? (
         <SessionExpiredNotice back="/cuenta/apariencia" />

@@ -123,11 +123,11 @@ export default function MoveDialog({ transaction, idempotencyKey, members, actio
   };
 
   const header = (
-    <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+    <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
       <span />
       <div className="flex min-w-0 flex-col items-center text-center">
-        <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{title}</p>
-        <DialogTitle className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.move.action}</DialogTitle>
+        <p className="max-w-full truncate text-[0.75rem] font-medium text-[var(--comp-field-muted-fg)]">{title}</p>
+        <DialogTitle className="font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.move.action}</DialogTitle>
       </div>
       <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
         <AppIcon name="x" weight="bold" size={16} />
@@ -139,11 +139,11 @@ export default function MoveDialog({ transaction, idempotencyKey, members, actio
     <>
       <p className="text-center text-[length:var(--body-s-size)] text-[var(--comp-field-muted-fg)]">{copy.move.lead}</p>
       <div className="flex min-h-11 items-center justify-between gap-3 border-b-[length:var(--border-hairline)] border-border">
-        <span className="text-[12px] font-medium text-ink-secondary">{copy.move.amount}</span>
-        <span className="flex items-center gap-2"><span className="text-[17px] font-semibold text-ink tabular-nums">{formatMoney(amount)}</span><span className="text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span></span>
+        <span className="text-[0.75rem] font-medium text-ink-secondary">{copy.move.amount}</span>
+        <span className="flex items-center gap-2"><span className="text-[1.0625rem] font-semibold text-ink tabular-nums">{formatMoney(amount)}</span><span className="text-[0.75rem] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span></span>
       </div>
       <SplitEditor members={members} draft={split} onChange={setSplit} amountPesos={pesos} statusId={statusId} payerFixed />
-      {status.kind === "ok" ? <p className="text-center text-[13px] font-semibold text-ink">{copy.shared.summary.parts(status.allocations.map((part) => [members.find((m) => m.userId === part.userId)!.name, formatMoney(part.amount)] as const))}</p> : null}
+      {status.kind === "ok" ? <p className="text-center text-[0.8125rem] font-semibold text-ink">{copy.shared.summary.parts(status.allocations.map((part) => [members.find((m) => m.userId === part.userId)!.name, formatMoney(part.amount)] as const))}</p> : null}
       <Button size="lg" icon="arrow-right" className="w-full" disabled={!payload} aria-describedby={payload ? undefined : statusId} onClick={toPreview}>{copy.move.review}</Button>
     </>
   );
@@ -151,16 +151,16 @@ export default function MoveDialog({ transaction, idempotencyKey, members, actio
   const locked = write.locked || write.pending;
   const changePreview = (
     <>
-      <p className="text-center text-[12px] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary">{copy.move.preview.eyebrow}</p>
+      <p className="text-center text-[0.75rem] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary">{copy.move.preview.eyebrow}</p>
       {rejectedShown && write.state.phase === "rejected" ? (
-        <div role="alert" className="flex items-start gap-2.5 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+        <div role="alert" className="flex items-start gap-2.5 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           <AppIcon name="warning-circle" weight="bold" size={20} className="shrink-0 text-danger" />
           <span>{copy.move.rejected(title)}</span>
         </div>
       ) : null}
-      {base.state === "loading" ? <p role="status" className="text-center text-[13px] text-[var(--comp-field-muted-fg)]">{copy.move.preview.loading}</p> : null}
+      {base.state === "loading" ? <p role="status" className="text-center text-[0.8125rem] text-[var(--comp-field-muted-fg)]">{copy.move.preview.loading}</p> : null}
       {base.state === "failed" ? (
-        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[13px] font-medium text-ink">
+        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] font-medium text-ink">
           <span>{copy.move.preview.failed}</span>
           <Button variant="secondary" icon="arrow-clockwise" onClick={() => void loadPreview()}>{copy.annotate.retry}</Button>
         </div>
@@ -171,18 +171,18 @@ export default function MoveDialog({ transaction, idempotencyKey, members, actio
           <ul role="list" aria-label={copy.move.preview.title(monthName(base.value.month))} className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
             {preview.rows.map((row) => (
               <li key={row.label} aria-label={copy.move.preview.row(row.label, formatMoney(row.before), formatMoney(row.after))} className="flex min-h-12 items-center justify-between gap-3 py-2">
-                <span aria-hidden="true" className="min-w-0 text-[13px] font-medium text-ink-secondary">{row.label}</span>
+                <span aria-hidden="true" className="min-w-0 text-[0.8125rem] font-medium text-ink-secondary">{row.label}</span>
                 <span aria-hidden="true" className="flex shrink-0 items-baseline gap-2 tabular-nums">
-                  <s className="text-[13px] text-ink-secondary">{formatMoney(row.before)}</s>
+                  <s className="text-[0.8125rem] text-ink-secondary">{formatMoney(row.before)}</s>
                   <AppIcon name="arrow-right" size={12} className="text-ink-secondary" />
-                  <span className="text-[15px] font-semibold text-ink">{formatMoney(row.after)}</span>
+                  <span className="text-[0.9375rem] font-semibold text-ink">{formatMoney(row.after)}</span>
                 </span>
               </li>
             ))}
           </ul>
-          <p className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.move.preview.paidNote(me.name, formatMoney(amount), formatMoney(preview.myShare))}</p>
-          <p className="flex items-start gap-2 rounded-[14px] bg-sunken px-3 py-2.5 text-[13px] font-medium text-ink"><AppIcon name="eye" size={16} className="mt-px shrink-0 text-ink-secondary" />{copy.move.preview.visibility(partner.name, title)}</p>
-          <p className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.move.preview.atomic}</p>
+          <p className="text-[0.75rem] text-[var(--comp-field-muted-fg)]">{copy.move.preview.paidNote(me.name, formatMoney(amount), formatMoney(preview.myShare))}</p>
+          <p className="flex items-start gap-2 rounded-[14px] bg-sunken px-3 py-2.5 text-[0.8125rem] font-medium text-ink"><AppIcon name="eye" size={16} className="mt-px shrink-0 text-ink-secondary" />{copy.move.preview.visibility(partner.name, title)}</p>
+          <p className="text-[0.75rem] text-[var(--comp-field-muted-fg)]">{copy.move.preview.atomic}</p>
         </>
       ) : null}
       {write.state.phase === "unknown" ? (

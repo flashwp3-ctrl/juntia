@@ -59,18 +59,18 @@ export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Prop
   const amount = entry.kind === "contribution" ? `+${cop(entry.amountMinor)}` : `−${cop(entry.amountMinor)}`;
   const title = entryTitle(entry, variant);
   return (
-    <div data-goal-entry={entry.kind} data-entry-id={entry.id} className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+    <div data-goal-entry={entry.kind} data-entry-id={entry.id} className="row-stack grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2">
       <span data-goal-chip="" aria-hidden="true" className={`grid size-10 shrink-0 place-items-center rounded-full ${chip.className}`}>
         <AppIcon name={chip.icon} weight="duotone" size={20} />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className={`truncate text-[15px] leading-[1.3] font-semibold text-ink ${entry.voided ? "line-through decoration-1" : ""}`}>{title}</span>
-        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[12px] leading-[1.35] text-ink-secondary">
+        <span className={`truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink ${entry.voided ? "line-through decoration-1" : ""}`}>{title}</span>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[0.75rem] leading-[1.35] text-ink-secondary">
           <span className="truncate">{entryMeta(entry, people, variant)}</span>
           <span aria-hidden="true">·</span>
           <span className="whitespace-nowrap">{dateLabel}</span>
           {entry.voided ? (
-            <span className="rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink">
+            <span className="rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[0.625rem] font-semibold tracking-[0.06em] text-ink">
               {voidedLabel(entry)}
             </span>
           ) : null}

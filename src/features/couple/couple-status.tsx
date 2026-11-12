@@ -43,12 +43,12 @@ export function CoupleStatus({ state, title, line, me, partner }: CoupleStatusPr
           )}
         </span>
       </div>
-      <span className={`${badge.tone} inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[11px] leading-none font-semibold tracking-[.06em] whitespace-nowrap`}>
+      <span className={`${badge.tone} inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[0.6875rem] leading-none font-semibold tracking-[.06em] whitespace-nowrap`}>
         <AppIcon name={badge.icon} weight="bold" size={12} className={badge.iconTone} />
         {badge.text}
       </span>
-      <span className="font-serif text-[32px] leading-[1.05] font-normal tracking-[-0.01em] break-words text-ink">{title}</span>
-      <span className="text-[13px] leading-[1.4] [overflow-wrap:anywhere] text-ink-secondary">{line}</span>
+      <span className="font-serif text-[2rem] leading-[1.05] font-normal tracking-[-0.01em] break-words text-ink">{title}</span>
+      <span className="text-[0.8125rem] leading-[1.4] [overflow-wrap:anywhere] text-ink-secondary">{line}</span>
     </div>
   );
 }

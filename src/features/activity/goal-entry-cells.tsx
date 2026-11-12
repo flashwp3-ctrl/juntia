@@ -32,15 +32,15 @@ export function GoalEntryCells({ entry, people, dateLabel }: Props) {
           <span data-goal-chip="" aria-hidden="true" className={`grid size-8 shrink-0 place-items-center rounded-full ${chip.className}`}>
             <AppIcon name={chip.icon} weight="duotone" size={16} />
           </span>
-          <span className={`truncate text-[15px] font-semibold text-ink ${entry.voided ? "line-through decoration-1" : ""}`}>{entryTitle(entry, "activity")}</span>
+          <span className={`truncate text-[0.9375rem] font-semibold text-ink ${entry.voided ? "line-through decoration-1" : ""}`}>{entryTitle(entry, "activity")}</span>
           {entry.voided ? (
-            <span className="shrink-0 rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink">{voidedLabel(entry)}</span>
+            <span className="shrink-0 rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[0.625rem] font-semibold tracking-[0.06em] text-ink">{voidedLabel(entry)}</span>
           ) : null}
         </span>
       </td>
-      <td className={`${cell} text-[13px] text-ink-secondary`}>{entry.kind === "contribution" ? copy.activity.table.goalContribution(who) : entryMeta(entry, people, "activity")}</td>
-      <td className={`${cell} font-mono text-[13px] text-ink-secondary`}>{dateLabel}</td>
-      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap tabular-nums ${entry.voided ? "text-ink-secondary line-through" : entry.kind === "contribution" ? "text-saving" : "text-ink-secondary"}`}>{amount}</td>
+      <td className={`${cell} text-[0.8125rem] text-ink-secondary`}>{entry.kind === "contribution" ? copy.activity.table.goalContribution(who) : entryMeta(entry, people, "activity")}</td>
+      <td className={`${cell} font-mono text-[0.8125rem] text-ink-secondary`}>{dateLabel}</td>
+      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[0.9375rem] font-semibold whitespace-nowrap tabular-nums ${entry.voided ? "text-ink-secondary line-through" : entry.kind === "contribution" ? "text-saving" : "text-ink-secondary"}`}>{amount}</td>
     </tr>
   );
 }

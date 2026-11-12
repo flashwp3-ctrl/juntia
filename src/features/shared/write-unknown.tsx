@@ -11,7 +11,7 @@ type WriteUnknownProps = { checking: boolean; notFound: boolean; onRetry: () => 
 
 export function WriteUnknown({ checking, notFound, onRetry, onCheck, message = copy.writes.unknown, onDismiss }: WriteUnknownProps) {
   return (
-    <div role="alert" data-write-unknown="" className="flex flex-col gap-3 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+    <div role="alert" data-write-unknown="" className="flex flex-col gap-3 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
       <span className="flex items-start gap-2.5">
         <AppIcon name="warning" weight="bold" size={20} className="shrink-0 text-warning" />
         <span className="flex min-w-0 flex-col gap-1 text-pretty">

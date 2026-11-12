@@ -17,8 +17,8 @@ export function VerifyEmail() {
       <span aria-hidden="true" className="mt-6 grid size-16 place-items-center rounded-[20px] bg-category-home-bg text-category-home-fg lg:mt-2">
         <AppIcon name="envelope-simple" weight="duotone" size={32} />
       </span>
-      <h1 className="font-serif text-[40px] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.verifyEmail.title}</h1>
-      <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">
+      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.verifyEmail.title}</h1>
+      <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">
         {copy.auth.verifyEmail.description} {copy.auth.verifyEmail.spam}
       </p>
       {state.notice ? <InlineNotice tone="success" icon="check-circle">{state.notice}</InlineNotice> : null}

@@ -92,7 +92,7 @@ export function TransactionActions({ transaction, backHref, funding }: { transac
         cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setConfirming(false))}>{write.locked ? copy.annotate.uncertain.close : copy.remove.cancel}</Button>}
         confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
-        {goalName ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(goalName)}</p> : null}
+        {goalName ? <p className="text-[0.8125rem] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(goalName)}</p> : null}
         {error}
         <ConfirmDialog
           open={confirmingClose}

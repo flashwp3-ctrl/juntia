@@ -19,7 +19,7 @@ import { copy } from "@/lib/copy/es";
 import { evaluateSplit, setMode, shownAmounts, splitMessage, toggleParticipant, type SplitDraft, type SplitStatus } from "./split-state";
 import type { SheetMember } from "./shared-types";
 
-const label = "text-[12px] font-medium text-ink-secondary";
+const label = "text-[0.75rem] font-medium text-ink-secondary";
 const sorted = (members: readonly SheetMember[]) => [...members].sort((a, b) => a.joinOrder - b.joinOrder);
 
 /** La fila resumen de 2a. `invalid`: el reparto no cuadra; dice el aviso en rojo y Guardar sigue deshabilitado. */
@@ -37,8 +37,8 @@ export function SplitSummary({ payer, first, second, invalid, onOpen, disabled }
       <span className="sr-only">{copy.shared.summary.open}: </span>
       <Avatar person={payer.joinOrder} initial={initialOf(payer.name)} size={36} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{first}<span className="sr-only">. </span></span>
-        <span className={`truncate text-[12px] leading-[1.35] ${invalid ? "font-semibold text-danger" : "text-[var(--comp-field-muted-fg)]"}`}>
+        <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{first}<span className="sr-only">. </span></span>
+        <span className={`truncate text-[0.75rem] leading-[1.35] ${invalid ? "font-semibold text-danger" : "text-[var(--comp-field-muted-fg)]"}`}>
           {invalid ? <AppIcon name="warning-circle" weight="bold" size={12} className="mr-1 inline-block align-[-1px]" /> : null}
           {second}
         </span>
@@ -91,7 +91,7 @@ const digitsOf = (text: string) => text.replace(/\D/g, "").replace(/^0+(?=\d)/, 
 
 function PartField({ name, value, suffix, prefix, onChange, disabled }: { name: string; value: string; suffix?: string; prefix?: string; onChange: (value: string) => void; disabled?: boolean }) {
   return (
-    <label className="flex h-11 w-[132px] shrink-0 items-center gap-1 rounded-[12px] bg-sunken px-3 text-[15px] font-semibold text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid has-[:disabled]:opacity-60">
+    <label className="flex h-11 w-[8.25rem] shrink-0 items-center gap-1 rounded-[12px] bg-sunken px-3 text-[0.9375rem] font-semibold text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid has-[:disabled]:opacity-60">
       <span className="sr-only">{name}</span>
       {prefix ? <span aria-hidden="true" className="text-ink-secondary">{prefix}</span> : null}
       <input
@@ -159,8 +159,8 @@ export function SplitEditor({ members, draft, onChange, amountPesos, statusId, p
         {payerFixed ? (
           <div className="flex min-h-11 items-center gap-2.5 border-b-[length:var(--border-hairline)] border-border">
             <Avatar person={payer.joinOrder} initial={initialOf(payer.name)} size={24} />
-            <span className="flex-1 text-[15px] font-semibold text-ink">{payer.name}</span>
-            <span className="text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span>
+            <span className="flex-1 text-[0.9375rem] font-semibold text-ink">{payer.name}</span>
+            <span className="text-[0.75rem] font-medium text-[var(--comp-field-muted-fg)]">{copy.move.kept}</span>
           </div>
         ) : (
           <PayerGroup members={members} value={draft.payerUserId} onChange={(id) => onChange({ ...draft, payerUserId: id })} firstRef={payerRef} />
@@ -193,21 +193,21 @@ export function SplitEditor({ members, draft, onChange, amountPesos, statusId, p
                     onChange={() => onChange(toggleParticipant(draft, member.userId, members))}
                     className="size-5 shrink-0 cursor-pointer accent-[var(--color-text-primary)] disabled:cursor-not-allowed"
                   />
-                  <span className="min-w-0 truncate text-[15px] font-semibold text-ink">
+                  <span className="min-w-0 truncate text-[0.9375rem] font-semibold text-ink">
                     {member.name}
-                    {member.isMe ? <span className="ml-1.5 text-[13px] font-medium text-[var(--comp-field-muted-fg)]">{copy.shared.split.you}</span> : null}
+                    {member.isMe ? <span className="ml-1.5 text-[0.8125rem] font-medium text-[var(--comp-field-muted-fg)]">{copy.shared.split.you}</span> : null}
                   </span>
                 </label>
                 {!included ? (
-                  <span className="text-[13px] font-medium text-[var(--comp-field-muted-fg)]">{copy.shared.split.notParticipating}</span>
+                  <span className="text-[0.8125rem] font-medium text-[var(--comp-field-muted-fg)]">{copy.shared.split.notParticipating}</span>
                 ) : single ? (
-                  <span className="text-[15px] font-semibold text-ink tabular-nums">{part ? `${formatMoney(part)} · 100 %` : "100 %"}</span>
+                  <span className="text-[0.9375rem] font-semibold text-ink tabular-nums">{part ? `${formatMoney(part)} · 100 %` : "100 %"}</span>
                 ) : draft.mode === "percent" ? (
                   <PartField name={copy.shared.split.percentOf(member.name)} value={draft.percents[member.userId] ?? ""} suffix="%" onChange={(value) => onChange({ ...draft, percents: { ...draft.percents, [member.userId]: value.slice(0, 3) } })} />
                 ) : draft.mode === "amount" ? (
                   <PartField name={copy.shared.split.amountOf(member.name)} value={amounts[member.userId] ?? ""} prefix="$" onChange={(value) => onChange({ ...draft, amountsTouched: true, amounts: { ...amounts, [member.userId]: value } })} />
                 ) : (
-                  <span className="text-[15px] font-semibold text-ink tabular-nums">{part ? formatMoney(part) : ""}</span>
+                  <span className="text-[0.9375rem] font-semibold text-ink tabular-nums">{part ? formatMoney(part) : ""}</span>
                 )}
               </li>
             );
@@ -216,7 +216,7 @@ export function SplitEditor({ members, draft, onChange, amountPesos, statusId, p
       </div>
       <SplitBar members={members} draft={draft} amountPesos={amountPesos} status={status} />
       {/* El aviso: rol status y Guardar lo referencia con aria-describedby (2a, «Teclado y lector»). */}
-      <p id={statusId} role="status" className={`flex min-h-5 items-start gap-1.5 text-[13px] leading-[1.45] font-medium ${message ? "text-danger" : "text-[var(--comp-field-muted-fg)]"}`}>
+      <p id={statusId} role="status" className={`flex min-h-5 items-start gap-1.5 text-[0.8125rem] leading-[1.45] font-medium ${message ? "text-danger" : "text-[var(--comp-field-muted-fg)]"}`}>
         {message ? <><AppIcon name="warning-circle" weight="bold" size={16} className="mt-px shrink-0" />{message}</>
           : single ? <><AppIcon name="info" size={16} className="mt-px shrink-0" />{copy.shared.split.singleNote(list.find((m) => draft.participants.includes(m.userId))!.name)}</> : null}
       </p>

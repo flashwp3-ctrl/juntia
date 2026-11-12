@@ -60,7 +60,7 @@ export function CountingAmount({ amountMinor, className = "" }: { amountMinor: s
       <span aria-hidden="true" data-counting-amount={final} className="tabular-nums">{reduced ? final : shown}</span>
       <span className="sr-only">{final}</span>
       {delta !== null ? (
-        <span aria-hidden="true" data-amount-delta="" className="text-[13px] font-semibold tracking-normal text-ink-secondary">+{pesos(money(delta))}</span>
+        <span aria-hidden="true" data-amount-delta="" className="text-[0.8125rem] font-semibold tracking-normal text-ink-secondary">+{pesos(money(delta))}</span>
       ) : null}
     </p>
   );

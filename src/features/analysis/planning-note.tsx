@@ -28,19 +28,19 @@ export function PlanningNote({ metrics }: { metrics: AnalysisMetrics }) {
   return (
     <div role="group" aria-labelledby={`${id}-title`} data-planning-note="" className="flex flex-col gap-1.5 rounded-[16px] bg-sunken px-4 pt-3.5 pb-2">
       <p id={`${id}-title`} className="text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] text-[var(--comp-field-muted-fg)] uppercase">{note.overline}</p>
-      <p data-planning-value="" className="text-[17px] leading-[1.3] font-semibold text-ink tabular-nums">{signedMoney(net)}</p>
-      <p className="text-[13px] leading-[1.45] text-pretty text-[var(--comp-field-muted-fg)]">{net < 0n ? note.negative : note.fixed}</p>
+      <p data-planning-value="" className="text-[1.0625rem] leading-[1.3] font-semibold text-ink tabular-nums">{signedMoney(net)}</p>
+      <p className="text-[0.8125rem] leading-[1.45] text-pretty text-[var(--comp-field-muted-fg)]">{net < 0n ? note.negative : note.fixed}</p>
       <button
         type="button"
         aria-expanded={open}
         aria-controls={`${id}-how`}
         onClick={() => setOpen((value) => !value)}
-        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 self-start rounded-[var(--radius-md)] px-2 text-[13px] font-semibold text-ink underline underline-offset-4 hover:bg-raised/60"
+        className="-mx-2 inline-flex min-h-11 items-center gap-1.5 self-start rounded-[var(--radius-md)] px-2 text-[0.8125rem] font-semibold text-ink underline underline-offset-4 hover:bg-raised/60"
       >
         {note.how}
         <AppIcon name="caret-right" weight="bold" size={14} className={`motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] ${open ? "rotate-90" : ""}`} />
       </button>
-      <dl id={`${id}-how`} hidden={!open} className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 border-t-[length:var(--border-hairline)] border-border pt-2.5 text-[13px] leading-[1.45]">
+      <dl id={`${id}-how`} hidden={!open} className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 border-t-[length:var(--border-hairline)] border-border pt-2.5 text-[0.8125rem] leading-[1.45]">
         {rows.map((row) => (
           <div key={row.label} className={`col-span-2 grid grid-cols-subgrid items-baseline py-1 ${row.sign === "equals" ? "mt-1 border-t-[length:var(--border-hairline)] border-border pt-2 font-semibold text-ink" : "text-[var(--comp-field-muted-fg)]"}`}>
             <dt className="flex min-w-0 items-baseline gap-1.5">

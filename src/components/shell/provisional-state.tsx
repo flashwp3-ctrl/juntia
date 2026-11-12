@@ -44,7 +44,7 @@ function StateBlock({ icon, title, description, headingLevel = 2, actions, tone 
         <span aria-hidden="true" className={`grid size-[88px] shrink-0 place-items-center rounded-[28px] ${chips[tone]} lg:mb-2`}>
           <AppIcon name={icon} weight="duotone" size={42} />
         </span>
-        <Heading className="font-serif text-[length:var(--state-title-size)] leading-[var(--display-l-line)] font-medium tracking-[var(--display-l-tracking)] text-ink text-balance [--state-title-size:28px] lg:[--state-title-size:35px]">
+        <Heading className="font-serif text-[length:var(--state-title-size)] leading-[var(--display-l-line)] font-medium tracking-[var(--display-l-tracking)] text-ink text-balance [--state-title-size:1.75rem] lg:[--state-title-size:2.1875rem]">
           {title}
         </Heading>
         <p className="text-[length:var(--body-m-size)] leading-[1.5] text-pretty text-[var(--comp-shell-muted-fg)] lg:text-[length:var(--body-l-size)]">

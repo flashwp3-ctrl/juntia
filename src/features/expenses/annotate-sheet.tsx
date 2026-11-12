@@ -170,7 +170,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
             tabIndex={index === stop ? 0 : -1}
             onClick={() => onSelect(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
-            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[12px] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[0.75rem] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
           >
             <AppIcon name={categories[id].icon} weight="duotone" size={22} className={fg} />
             <span>{copy.categories[id]}</span>
@@ -181,7 +181,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
   );
 }
 
-const chip = "flex h-11 items-center gap-2 rounded-[14px] bg-sunken px-3 text-[14px] font-medium text-ink shadow-[var(--comp-field-inset)]";
+const chip = "flex h-11 items-center gap-2 rounded-[14px] bg-sunken px-3 text-[0.875rem] font-medium text-ink shadow-[var(--comp-field-inset)]";
 
 /** El chip de fecha es un selector nativo: un `input type="date"` transparente cubre el chip, así que el toque (o Enter) abre el selector del sistema. */
 function DateChip({ value, today, invalid, errorId, onChange }: { value: string; today: string; invalid: boolean; errorId: string; onChange: (value: string) => void }) {
@@ -593,7 +593,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   // 004 PR D (T061; decisión 22.3): «NO SE REGISTRÓ» solo con un rechazo confirmado; con un resultado desconocido, la
   // intención queda bloqueada con «Reintentar» y «Comprobar estado», sin decir que no se guardó (FR-093).
   const goalNotice = goalWrite.state.phase === "rejected" ? (
-    <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+    <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
       <span className="flex flex-wrap items-center gap-2"><ConfirmationBadge state="failed" />{copy.goalExpense.failed}</span>
       <span>{goalRejection(goalWrite.state.error)}</span>
     </div>
@@ -626,14 +626,14 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const fundingNow = fundingStatus?.kind === "ok" ? fundingStatus : null;
   const goalView = offerGoal ? (
     <div className="flex flex-col gap-3.5">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <button ref={backRef} type="button" onClick={closeGoal} aria-label={copy.goalExpense.back} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="caret-left" weight="bold" size={16} />
         </button>
         <div className="flex min-w-0 flex-col items-center text-center">
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.goalExpense.paidWith.label}</h2>
-          {amount && amount > 0 ? <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{copy.goalExpense.subtitle(formatMoney(moneyFromPesos(BigInt(amount))))}</p> : null}
+          <h2 className="font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.goalExpense.paidWith.label}</h2>
+          {amount && amount > 0 ? <p className="max-w-full truncate text-[0.75rem] font-medium text-[var(--comp-field-muted-fg)]">{copy.goalExpense.subtitle(formatMoney(moneyFromPesos(BigInt(amount))))}</p> : null}
         </div>
         {closeButton}
       </div>
@@ -659,15 +659,15 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
 
   const splitView = shared && split ? (
     <div className="flex flex-col gap-3.5">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <button type="button" onClick={closeSplit} aria-label={copy.shared.split.back} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="caret-left" weight="bold" size={16} />
         </button>
         <div className="flex min-w-0 flex-col items-center text-center">
           {/* La hoja conserva su nombre («Anotar gasto») en la subhoja; «Reparto» es el encabezado visible. */}
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <h2 className="font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.shared.split.title}</h2>
-          <p className="max-w-full truncate text-[12px] font-medium text-[var(--comp-field-muted-fg)]">{splitSubtitle(categoryId ? copy.categories[categoryId] : null, amount)}</p>
+          <h2 className="font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-ink">{copy.shared.split.title}</h2>
+          <p className="max-w-full truncate text-[0.75rem] font-medium text-[var(--comp-field-muted-fg)]">{splitSubtitle(categoryId ? copy.categories[categoryId] : null, amount)}</p>
         </div>
         {closeButton}
       </div>
@@ -681,9 +681,9 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
         <>
           {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
               izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
-          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
             <span />
-            <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+            <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
             {closeButton}
           </div>
           <fieldset disabled={isSaving || isLocked} data-locked={isLocked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">
@@ -711,15 +711,15 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
               // primera corrida de evidencia: centrar los hijos del <label> encogía el marco y el monto no se veía.
               className="text-center"
               fieldClassName={`!bg-transparent !shadow-none justify-center ${amountOpening ? "focus-within:!outline-none" : ""}`}
-              inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),48px)] tracking-[-0.04em]"
+              inputClassName="flex-none max-w-full min-w-[3ch] [field-sizing:content] text-center !text-[length:clamp(30px,calc(100cqi/(var(--amount-chars)*0.68+0.75)),3rem)] tracking-[-0.04em]"
             />
             <div className="flex flex-col gap-2">
-              <span aria-hidden="true" className="text-[12px] font-medium text-ink-secondary">{copy.annotate.category}</span>
+              <span aria-hidden="true" className="text-[0.75rem] font-medium text-ink-secondary">{copy.annotate.category}</span>
               <CategoryGrid ids={choices} value={categoryId} onSelect={(next) => update({ categoryId: next })} onEnter={(next) => { update({ categoryId: next }); void save({ categoryId: next }); }} />
             </div>
             {/* Siempre a la vista: la descripción de una línea (opcional). */}
             <div className="flex flex-col gap-1.5">
-              <label className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-sunken px-3.5 text-[15px] font-medium text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">
+              <label className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-sunken px-3.5 text-[0.9375rem] font-medium text-ink shadow-[var(--comp-field-inset)] focus-within:outline-[length:var(--border-focus)] focus-within:outline-offset-[var(--focus-offset)] focus-within:outline-focus focus-within:outline-solid">
                 <AppIcon name="note-pencil" size={18} className="shrink-0 text-ink-secondary" />
                 <span className="sr-only">{copy.annotate.description}</span>
                 <input

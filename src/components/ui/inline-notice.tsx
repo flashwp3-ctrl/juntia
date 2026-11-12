@@ -15,7 +15,7 @@ type InlineNoticeProps = { tone?: keyof typeof tones; icon: AppIconName; childre
 export function InlineNotice({ tone = "info", icon, children, className = "" }: InlineNoticeProps) {
   const look = tones[tone];
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={`flex items-start gap-2.5 rounded-[16px] px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink ${look.box} ${className}`}>
+    <div role={tone === "danger" ? "alert" : "status"} className={`flex items-start gap-2.5 rounded-[16px] px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink ${look.box} ${className}`}>
       <AppIcon name={icon} weight={look.weight} size={20} className={`shrink-0 ${look.icon}`} />
       <span className="min-w-0 text-pretty">{children}</span>
     </div>

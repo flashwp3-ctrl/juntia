@@ -41,7 +41,7 @@ export function GoalStatusDialog({ kind, goal, idempotencyKey, actions, onClose,
           onClick={() => void write.submit({ idempotencyKey, goalId: goal.id, expectedVersion: goal.version })}>{texts.confirm}</Button>
       )}
     >
-      {rejection ? <p role="alert" className="text-[13px] font-medium text-ink">{rejection}</p> : null}
+      {rejection ? <p role="alert" className="text-[0.8125rem] font-medium text-ink">{rejection}</p> : null}
       {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirming(true)} /> : null}
       <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={() => void write.retry()} onClose={onClose} />
     </ConfirmDialog>

@@ -8,7 +8,7 @@ import { copy } from "@/lib/copy/es";
 export function AuthFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-rows-[auto_1fr] lg:px-10 lg:pt-8 lg:pb-16">
-      <p aria-hidden="true" className="hidden items-center gap-2 font-serif text-[28px] leading-none font-medium tracking-[-0.015em] text-ink lg:flex">
+      <p aria-hidden="true" className="hidden items-center gap-2 font-serif text-[1.75rem] leading-none font-medium tracking-[-0.015em] text-ink lg:flex">
         <span className="size-3 rounded-[4px] bg-primary" />
         {copy.shell.brand}
       </p>

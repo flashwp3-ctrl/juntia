@@ -19,9 +19,9 @@ export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: Pl
   const amount = cop(goals.setAsideMinor);
   if (context === "me") {
     return (
-      <p data-set-aside="" className="flex items-start gap-2.5 rounded-[16px] bg-saving-subtle px-3.5 py-3 text-[14px] leading-[1.45] text-ink">
+      <p data-set-aside="" className="flex items-start gap-2.5 rounded-[16px] bg-saving-subtle px-3.5 py-3 text-[0.875rem] leading-[1.45] text-ink">
         <AppIcon name="piggy-bank" weight="duotone" size={20} className="mt-px shrink-0 text-saving" />
-        <span className="flex flex-col gap-0.5"><span className="font-semibold">{copy.goals.home.meSetAside(amount)}</span><span className="text-[13px] text-ink">{copy.goals.home.meNote}</span></span>
+        <span className="flex flex-col gap-0.5"><span className="font-semibold">{copy.goals.home.meSetAside(amount)}</span><span className="text-[0.8125rem] text-ink">{copy.goals.home.meNote}</span></span>
       </p>
     );
   }
@@ -30,10 +30,10 @@ export function SetAsideLine({ goals, context }: { goals: HomeGoals; context: Pl
       <AppIcon name="piggy-bank" weight="duotone" size={22} className="mt-0.5 shrink-0 text-saving" />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex flex-wrap items-baseline gap-x-2">
-          <h2 id="home-set-aside" className="text-[14px] font-semibold">{copy.goals.home.usSetAside}</h2>
-          <span className="text-[17px] font-semibold text-saving tabular-nums">{amount}</span>
+          <h2 id="home-set-aside" className="text-[0.875rem] font-semibold">{copy.goals.home.usSetAside}</h2>
+          <span className="text-[1.0625rem] font-semibold text-saving tabular-nums">{amount}</span>
         </span>
-        <span className="text-[13px] text-ink">{copy.goals.home.usNote}</span>
+        <span className="text-[0.8125rem] text-ink">{copy.goals.home.usNote}</span>
       </span>
     </section>
   );
@@ -53,7 +53,7 @@ export function GoalsModule({ goals, context, today }: { goals: HomeGoals; conte
         <GoalStack goals={goals.goals} members={goals.members} today={today} context={context} label={copy.goals.home.module} fan={false} seeAllHref="/metas" />
       ) : (
         <div className="flex flex-col items-start gap-3 rounded-[16px] border-[length:var(--border-strong)] border-dashed border-border-emphasis px-4 py-4">
-          <p className="flex items-start gap-2.5 text-[14px] leading-[1.45] text-ink-secondary"><AppIcon name="flag-banner" weight="duotone" size={20} className="mt-px shrink-0 text-saving" />{copy.goals.home.createHint}</p>
+          <p className="flex items-start gap-2.5 text-[0.875rem] leading-[1.45] text-ink-secondary"><AppIcon name="flag-banner" weight="duotone" size={20} className="mt-px shrink-0 text-saving" />{copy.goals.home.createHint}</p>
           <Link href="/metas" className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-md)] bg-raised px-3.5 text-[length:var(--label-m-size)] font-semibold text-ink shadow-raised hover:bg-sunken">
             <AppIcon name="plus" weight="bold" size={16} />{copy.goals.home.create}
           </Link>

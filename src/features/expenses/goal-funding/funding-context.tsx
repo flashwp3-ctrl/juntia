@@ -77,7 +77,7 @@ export function ExpenseFundingDetail({ transactionId, version }: { transactionId
       {funding.uses.length > 0 ? (
         <ul className="flex flex-col gap-1.5">
           {funding.uses.map((use) => (
-            <li key={use.memberUserId} className="flex items-baseline justify-between gap-3 text-[13px]">
+            <li key={use.memberUserId} className="flex items-baseline justify-between gap-3 text-[0.8125rem]">
               <span className="min-w-0 text-ink-secondary">{copy.goalExpense.detail.use(funding.goalName, personName(people, use.memberUserId))}</span>
               <span className="shrink-0 font-semibold text-ink tabular-nums">−{cop(use.amountMinor)}</span>
             </li>

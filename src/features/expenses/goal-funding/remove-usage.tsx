@@ -67,7 +67,7 @@ export function RemoveGoalUsage({ transactionId, version, goalName, hasPending, 
   return (
     <div className="flex flex-col gap-2">
       <Button ref={trigger} variant="secondary" size="lg" icon="arrow-u-up-left" className={`w-full ${wrapLabelLg}`} onClick={openDialog}>{copy.goalExpense.remove.action}</Button>
-      {doneHere ? <p role="status" className="text-[13px] font-semibold text-ink">{doneHere}</p> : null}
+      {doneHere ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{doneHere}</p> : null}
       <ConfirmDialog
         open={open}
         onOpenChange={(next) => {
@@ -81,7 +81,7 @@ export function RemoveGoalUsage({ transactionId, version, goalName, hasPending, 
         cancel={(ref) => <Button ref={ref} variant="ghost" disabled={write.pending} onClick={() => (write.locked ? setConfirmingClose(true) : setOpen(false))}>{write.locked ? copy.annotate.uncertain.close : copy.goalExpense.remove.keep}</Button>}
         confirm={write.locked || write.state.phase === "rejected" ? <span /> : <Button variant="danger" icon="arrow-u-up-left" className={wrapLabelMd} loading={write.pending} loadingLabel={copy.goalExpense.remove.removing} onClick={confirm}>{copy.goalExpense.remove.confirm}</Button>}
       >
-        {hasPending ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.remove.pendingNote}</p> : null}
+        {hasPending ? <p className="text-[0.8125rem] leading-[1.45] text-ink">{copy.goalExpense.remove.pendingNote}</p> : null}
         {write.state.phase === "rejected" ? (
           <Toast tone="error" message={removeRejection(write.state.error)} action={write.state.error === "versionConflict" ? { label: copy.goalExpense.request.review, onAction: () => { setOpen(false); router.refresh(); } } : undefined} />
         ) : null}

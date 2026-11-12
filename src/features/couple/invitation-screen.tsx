@@ -49,7 +49,7 @@ const linkSecondary = "inline-flex h-[52px] w-full items-center justify-center g
 
 function Brand() {
   return (
-    <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[26px] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
+    <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
       <span className="size-[9px] rounded-[3px] bg-primary" />
       {copy.shell.brand}
     </p>
@@ -65,12 +65,12 @@ function Tile({ icon }: { icon: AppIconName }) {
 }
 
 const Title = ({ children }: { children: string }) => (
-  <h1 className="font-serif text-[clamp(32px,10vw,38px)] leading-[1.05] font-normal tracking-[-0.01em] text-balance text-ink">{children}</h1>
+  <h1 className="font-serif text-[clamp(2rem,10vw,2.375rem)] leading-[1.05] font-normal tracking-[-0.01em] text-balance text-ink">{children}</h1>
 );
 
 function HowRow({ icon, text }: { icon: AppIconName; text: string }) {
   return (
-    <li className="flex items-start gap-2.5 py-[7px] text-[14px] leading-[1.45] text-ink-secondary">
+    <li className="flex items-start gap-2.5 py-[7px] text-[0.875rem] leading-[1.45] text-ink-secondary">
       <AppIcon name={icon} size={18} className="mt-px shrink-0 text-ink" />
       <span className="min-w-0 text-pretty"><RichText text={text} /></span>
     </li>
@@ -123,7 +123,7 @@ function Valid({ screen, token, actions }: { screen: Extract<Screen, { kind: "va
         <HowRow icon="lock-simple" text={copy.couple.invitation.valid.private} />
         <HowRow icon="scales" text={copy.couple.invitation.valid.money} />
       </ul>
-      <p className="text-[12px] leading-[1.45] [overflow-wrap:anywhere] text-ink-secondary">{copy.couple.invitation.valid.line(screen.email, invitationDay(screen.expiresAt))}</p>
+      <p className="text-[0.75rem] leading-[1.45] [overflow-wrap:anywhere] text-ink-secondary">{copy.couple.invitation.valid.line(screen.email, invitationDay(screen.expiresAt))}</p>
       {notice ? <InlineNotice tone="danger" icon="warning-circle">{notice}</InlineNotice> : null}
       {state.phase === "unknown" ? <WriteUnknown checking={state.checking} notFound={state.notFound} onRetry={() => void accept.retry()} onCheck={() => void accept.checkStatus()} /> : null}
       <div className="flex flex-col gap-2">
@@ -146,7 +146,7 @@ function Invalid({ screen }: { screen: Extract<Screen, { kind: "invalid" }> }) {
       <Brand />
       <Tile icon="link-break" />
       <Title>{copy.couple.invitation.invalid}</Title>
-      <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">{screen.message}</p>
+      <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">{screen.message}</p>
       {screen.toPartner ? null : <InlineNotice icon="info">{copy.couple.invitation.invalidNote}</InlineNotice>}
       {screen.toPartner ? (
         <Link href="/cuenta/pareja" className={linkSecondary}><AppIcon name="users-three" weight="bold" size={17} />{copy.couple.invitation.toPartner}</Link>
@@ -188,7 +188,7 @@ export function InvitationScreen({ actions }: { actions: InvitationActions }) {
     return (
       <div aria-busy="true" className="flex flex-col gap-5">
         <Brand />
-        <p role="status" className="mt-10 flex items-center gap-2 text-[15px] text-ink-secondary lg:mt-2">
+        <p role="status" className="mt-10 flex items-center gap-2 text-[0.9375rem] text-ink-secondary lg:mt-2">
           <AppIcon name="circle-notch" weight="bold" size={18} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
           {copy.couple.invitation.loading}
         </p>
@@ -201,12 +201,12 @@ export function InvitationScreen({ actions }: { actions: InvitationActions }) {
         <Brand />
         <Tile icon="envelope-open" />
         <Title>{copy.couple.invitation.signedOut.title}</Title>
-        <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">{copy.couple.invitation.signedOut.description}</p>
+        <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">{copy.couple.invitation.signedOut.description}</p>
         <div className="flex flex-col gap-2">
           <Link href={`/entrar?volver=${volver}`} className={linkPrimary}><AppIcon name="sign-in" weight="bold" size={17} />{copy.couple.invitation.signedOut.signIn}</Link>
           <Link href={`/crear-cuenta?volver=${volver}`} className={linkSecondary}><AppIcon name="user-plus" weight="bold" size={17} />{copy.couple.invitation.signedOut.signUp}</Link>
         </div>
-        <p className="text-[12px] leading-[1.45] text-ink-secondary">{copy.couple.invitation.signedOut.note}</p>
+        <p className="text-[0.75rem] leading-[1.45] text-ink-secondary">{copy.couple.invitation.signedOut.note}</p>
       </>
     );
   }

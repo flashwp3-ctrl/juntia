@@ -84,8 +84,8 @@ export function SharedTransactionActions({ expense, backHref }: { expense: Saved
         confirm={write.locked ? <span /> : <Button variant="danger" icon="trash" loading={write.pending} loadingLabel={copy.remove.deleting} onClick={remove}>{copy.remove.confirm}</Button>}
       >
         {/* Con uso aplicado, los fondos vuelven; con solo una solicitud pendiente, solo se cancela la solicitud. */}
-        {funding?.funded ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(funding.goalName)}</p> : null}
-        {funding?.request?.status === "pending" ? <p className="text-[13px] leading-[1.45] text-ink">{copy.goalExpense.remove.pendingNote}</p> : null}
+        {funding?.funded ? <p className="text-[0.8125rem] leading-[1.45] text-ink">{copy.goalExpense.deleteWarning(funding.goalName)}</p> : null}
+        {funding?.request?.status === "pending" ? <p className="text-[0.8125rem] leading-[1.45] text-ink">{copy.goalExpense.remove.pendingNote}</p> : null}
         {notice}
         <ConfirmDialog
           open={confirmingClose}

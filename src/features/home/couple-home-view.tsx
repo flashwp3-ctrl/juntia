@@ -61,7 +61,7 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
         <h2 id="couple-hero" className="font-serif text-balance text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]">
           {copy.couple.home.spentIn(name)}
         </h2>
-        <CountingAmount amountMinor={total.toString()} className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
+        <CountingAmount amountMinor={total.toString()} className="text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]" />
       </section>
       {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
       {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="us" /></div> : null}
@@ -90,12 +90,12 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
                 const amount = { amountMinor, currency: "COP" as const };
                 const grow = Number(amountMinor / 100n);
                 return (
-                  <li key={category} aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))} style={{ flexGrow: grow }} className={`flex min-h-[88px] min-w-[100px] basis-[100px] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}>
+                  <li key={category} aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))} style={{ flexGrow: grow }} className={`flex min-h-[88px] min-w-[6.25rem] basis-[6.25rem] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}>
                     <span aria-hidden="true" className="flex min-w-0 flex-col items-start gap-1 text-[length:var(--label-s-size)] font-semibold text-ink">
                       <AppIcon name={categories[category].icon} weight="duotone" size={18} className={categoryFg[category]} />
                       <span className="max-w-full truncate">{copy.categories[category]}</span>
                     </span>
-                    <span aria-hidden="true" className="text-[13px] font-semibold text-ink">{pesos(amount)}</span>
+                    <span aria-hidden="true" className="text-[0.8125rem] font-semibold text-ink">{pesos(amount)}</span>
                   </li>
                 );
               })}

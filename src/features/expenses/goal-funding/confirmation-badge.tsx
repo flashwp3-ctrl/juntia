@@ -30,7 +30,7 @@ export function confirmationText(state: ConfirmationState, name = "") {
 export function ConfirmationBadge({ state, name }: { state: ConfirmationState; name?: string }) {
   const { icon, tone, iconTone = "" } = looks[state];
   return (
-    <span data-confirmation={state} className={`${tone} inline-flex h-6 shrink-0 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[11px] leading-none font-semibold tracking-[.06em] whitespace-nowrap`}>
+    <span data-confirmation={state} className={`${tone} inline-flex h-6 shrink-0 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[0.6875rem] leading-none font-semibold tracking-[.06em] whitespace-nowrap`}>
       <AppIcon name={icon} weight="bold" size={12} className={iconTone} />
       {confirmationText(state, name)}
     </span>

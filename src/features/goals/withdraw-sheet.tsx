@@ -65,13 +65,13 @@ export function WithdrawSheet({ open, onClose, goal, available, today, idempoten
       <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-1 text-center">
           <p className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{goal.name}</p>
-          <p className="text-[13px] font-semibold text-ink tabular-nums">{copy.goals.withdrawSheet.max(cop(availableMinor))}</p>
-          <p className="text-[12px] text-ink-secondary">{copy.goals.withdrawSheet.onlyYours}</p>
+          <p className="text-[0.8125rem] font-semibold text-ink tabular-nums">{copy.goals.withdrawSheet.max(cop(availableMinor))}</p>
+          <p className="text-[0.75rem] text-ink-secondary">{copy.goals.withdrawSheet.onlyYours}</p>
         </div>
         <AmountInput label={copy.goals.withdrawSheet.amount} value={pesos} onValueChange={(next) => { setPesos(next); setInvalid(null); }} disabled={locked} className="w-full" fieldClassName="w-full" />
         <Input label={copy.goals.withdrawSheet.reason} placeholder={copy.goals.withdrawSheet.reasonPlaceholder} value={reason} maxLength={140} disabled={locked} onChange={(event) => { setReason(event.target.value); setInvalid(null); }} />
         <Input label={copy.goals.withdrawSheet.date} type="date" value={date} min={min} max={today} disabled={locked} onChange={(event) => { setDate(event.target.value); setInvalid(null); }} />
-        <p className="text-[13px] leading-[1.5] text-pretty text-ink-secondary">{copy.goals.withdrawSheet.explain}</p>
+        <p className="text-[0.8125rem] leading-[1.5] text-pretty text-ink-secondary">{copy.goals.withdrawSheet.explain}</p>
         {message ? <SheetError id={errorId}>{message}</SheetError> : null}
         {write.state.phase === "unknown" ? (
           <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />

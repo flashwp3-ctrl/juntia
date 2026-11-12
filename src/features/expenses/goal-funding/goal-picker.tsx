@@ -35,15 +35,15 @@ export function GoalPicker({ state, context, value, onSelect, onRetry, disabled 
   };
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[12px] font-medium text-ink-secondary">{copy.goalExpense.picker.title}</span>
-      {state.kind === "loading" ? <p role="status" className="text-[13px] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.picker.loading}</p> : null}
+      <span className="text-[0.75rem] font-medium text-ink-secondary">{copy.goalExpense.picker.title}</span>
+      {state.kind === "loading" ? <p role="status" className="text-[0.8125rem] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.picker.loading}</p> : null}
       {state.kind === "failed" ? (
-        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[13px] font-medium text-ink">
+        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] font-medium text-ink">
           <span>{copy.goalExpense.picker.failed}</span>
           <Button variant="secondary" icon="arrow-clockwise" onClick={onRetry}>{copy.goalExpense.picker.retry}</Button>
         </div>
       ) : null}
-      {state.kind === "ready" && goals.length === 0 ? <p className="rounded-[14px] bg-sunken px-3.5 py-3 text-[13px] text-ink">{copy.goalExpense.picker.empty[context]}</p> : null}
+      {state.kind === "ready" && goals.length === 0 ? <p className="rounded-[14px] bg-sunken px-3.5 py-3 text-[0.8125rem] text-ink">{copy.goalExpense.picker.empty[context]}</p> : null}
       {state.kind === "ready" ? (
         <div role="radiogroup" aria-label={copy.goalExpense.picker.title} className="flex flex-col gap-2">
           {goals.map((goal, index) => {
@@ -68,8 +68,8 @@ export function GoalPicker({ state, context, value, onSelect, onRetry, disabled 
                   <AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} />
                 </span>
                 <span aria-hidden="true" className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-[15px] font-semibold text-ink">{goal.name}</span>
-                  <span className={`text-[12px] ${selected ? "text-ink" : "text-ink-secondary"}`}>{enabled[index] ? copy.goalExpense.picker.balance(cop(goal.balanceMinor)) : copy.goalExpense.picker.noFunds}</span>
+                  <span className="truncate text-[0.9375rem] font-semibold text-ink">{goal.name}</span>
+                  <span className={`text-[0.75rem] ${selected ? "text-ink" : "text-ink-secondary"}`}>{enabled[index] ? copy.goalExpense.picker.balance(cop(goal.balanceMinor)) : copy.goalExpense.picker.noFunds}</span>
                 </span>
                 {selected ? <AppIcon name="check-circle" weight="fill" size={20} className="shrink-0 text-ink" /> : null}
               </button>
@@ -77,7 +77,7 @@ export function GoalPicker({ state, context, value, onSelect, onRetry, disabled 
           })}
         </div>
       ) : null}
-      <p className="flex items-start gap-2 text-[12px] leading-[1.45] text-[var(--comp-field-muted-fg)]">
+      <p className="flex items-start gap-2 text-[0.75rem] leading-[1.45] text-[var(--comp-field-muted-fg)]">
         <AppIcon name="info" size={14} className="mt-px shrink-0" />
         {copy.goalExpense.picker.note[context]}
       </p>

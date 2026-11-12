@@ -80,9 +80,9 @@ export function Toast({ tone = "success", message, action, onTimeout, durationMs
       className={`pointer-events-auto flex w-full min-w-0 items-center gap-3 rounded-[16px] py-2 pr-2 pl-4 ${action ? "" : "min-h-12 pr-4"} ${looks[tone]} ${className}`}
     >
       <AppIcon name={tone === "error" ? "warning-circle" : "check-circle"} weight="fill" size={20} className={`shrink-0 ${tone === "error" ? "text-danger" : ""}`} />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 text-[14px] leading-[1.4] font-medium text-pretty">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 text-[0.875rem] leading-[1.4] font-medium text-pretty">
         <span>{message}</span>
-        {action?.blocked ? <span id={blockedId} className="text-[12px] leading-[1.35] font-medium">{action.blocked}</span> : null}
+        {action?.blocked ? <span id={blockedId} className="text-[0.75rem] leading-[1.35] font-medium">{action.blocked}</span> : null}
       </span>
       {action ? (
         // Botón propio de 44 de alto (área táctil); el canto visual es el de 02·5: 13/600, radio 10.
@@ -92,7 +92,7 @@ export function Toast({ tone = "success", message, action, onTimeout, durationMs
           aria-disabled={action.busy || action.blocked ? true : undefined}
           aria-describedby={action.blocked ? blockedId : undefined}
           aria-busy={action.busy || undefined}
-          className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-3 text-[13px] font-semibold whitespace-nowrap motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${actionLooks[tone]} ${action.busy ? "cursor-progress" : action.blocked ? "cursor-not-allowed opacity-60" : ""}`}
+          className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-3 text-[0.8125rem] font-semibold whitespace-nowrap motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${actionLooks[tone]} ${action.busy ? "cursor-progress" : action.blocked ? "cursor-not-allowed opacity-60" : ""}`}
         >
           {action.busy ? <AppIcon name="circle-notch" weight="bold" size={15} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" /> : null}
           {action.busy ? (action.busyLabel ?? action.label) : action.label}

@@ -16,7 +16,7 @@ export function SignUpForm() {
   return (
     <>
       <BackToSignIn />
-      <h1 className="font-serif text-[40px] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.signUp.title}</h1>
+      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.signUp.title}</h1>
       {state.error && !state.field ? <InlineNotice tone="danger" icon="wifi-slash">{state.error}</InlineNotice> : null}
       <form action={action} noValidate className="flex flex-col gap-5">
         <Input label={copy.auth.signUp.nameLabel} name="displayName" autoComplete="nickname" placeholder={copy.auth.signUp.namePlaceholder} help={copy.auth.signUp.nameHelp} defaultValue={state.name} key={`name-${state.name ?? ""}`} error={fieldError("name")} />
@@ -24,7 +24,7 @@ export function SignUpForm() {
         <PasswordInput label={copy.auth.fields.password} name="password" autoComplete="new-password" placeholder={copy.auth.signUp.passwordPlaceholder} help={copy.auth.signUp.passwordHelp} error={fieldError("password")} />
         <div className="flex flex-col gap-2">
           <InlineNotice icon="info">{copy.auth.signUp.notice}</InlineNotice>
-          <label className="group flex min-h-11 cursor-pointer items-start gap-2.5 text-[13px] leading-[1.45] text-ink-secondary">
+          <label className="group flex min-h-11 cursor-pointer items-start gap-2.5 text-[0.8125rem] leading-[1.45] text-ink-secondary">
             <input type="checkbox" name="acknowledge" aria-invalid={state.field === "acknowledge" || undefined} className="peer sr-only" />
             <span aria-hidden="true" className="mt-px grid size-[22px] shrink-0 place-items-center rounded-[7px] border-[1.5px] border-border-emphasis text-transparent peer-checked:border-ink peer-checked:bg-ink peer-checked:text-canvas peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">
               <AppIcon name="check" weight="bold" size={14} />
@@ -35,7 +35,7 @@ export function SignUpForm() {
         </div>
         <SubmitButton pendingLabel={copy.auth.signUp.submitting}>{copy.auth.signUp.submit}</SubmitButton>
       </form>
-      <p className="text-[14px]">
+      <p className="text-[0.875rem]">
         <Link href="/entrar" className={`${authLink} relative inline-flex min-h-11 items-center`}>{copy.auth.signUp.haveAccount}</Link>
       </p>
     </>
