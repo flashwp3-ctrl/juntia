@@ -112,6 +112,38 @@ describe("Inicio con una fila en vuelo", () => {
     expect(pendingRows()).toHaveLength(0);
   });
 
+  it("F77-2: en el primer gasto del mes (sin movimientos), el héroe optimista dice $45.000 y, con la real, sigue en $45.000", async () => {
+    let resolve!: (value: ActionResult<SavedTransaction>) => void;
+    const held = new Promise<ActionResult<SavedTransaction>>((done) => { resolve = done; });
+    const pending = row({ transactionDate: "2026-11-05" });
+    function Held() {
+      const { track } = useAnnotate();
+      useEffect(() => { void track(pending, () => held); }, [track]);
+      return null;
+    }
+    const view = render(wrapHome(<><Held />{home([], "2026-11")}</>));
+    await vi.waitFor(() => expect(hero()).toBe("$45.000"));
+    expect(screen.getByRole("heading", { name: copy.home.spentIn("noviembre") })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: copy.home.empty.title })).toBeNull();
+    await act(async () => { resolve({ ok: true, value: { ...saved("real-1"), transactionDate: "2026-11-05" } }); });
+    expect(hero()).toBe("$45.000");
+    view.rerender(wrapHome(<><Held />{home([{ ...pending.transaction, id: "real-1" }], "2026-11")}</>));
+    expect(hero()).toBe("$45.000");
+    expect(pendingRows()).toHaveLength(0);
+  });
+
+  it("F77-2: en Yo con pareja y sin movimientos (consumo 0), el héroe optimista también sale; con solo un ingreso en vuelo, ningún héroe de $0", async () => {
+    const empty = { privateMinor: "0", sharedPartMinor: "0", consumptionMinor: "0" };
+    const first = render(wrapHome(<><Flight pending={row({ transactionDate: "2026-11-05" })} /><HomeView rows={[]} month="2026-11" today="2026-11-05" shared={{ parts: [], summary: empty }} /></>));
+    await vi.waitFor(() => expect(hero()).toBe("$45.000"));
+    first.unmount();
+    const income = row({ transactionDate: "2026-11-05", type: "income", categoryId: "income" });
+    render(wrapHome(<><Flight pending={income} />{home([], "2026-11")}</>));
+    await vi.waitFor(() => expect(pendingRows()).toHaveLength(1));
+    expect(hero()).toBeUndefined();
+    expect(screen.queryByRole("heading", { name: copy.home.spentIn("noviembre") })).toBeNull();
+  });
+
   it("F05: rechazada, la fila se va y el total vuelve a lo confirmado", async () => {
     mount(<><Flight pending={row({ transactionDate: "2026-10-23" })} outcome={{ ok: false, error: "invalid" }} />{home()}</>);
     await act(async () => {});

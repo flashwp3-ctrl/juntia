@@ -30,15 +30,17 @@ function usePendingTotal(confirmedMinor: string, month: string, knownIds: readon
  * F05: el titular y el número héroe de Inicio de Yo, con los gastos en vuelo sumados. Sin gasto (ni confirmado ni en vuelo),
  * el titular de «sin gastos» y ningún importe, como antes.
  */
-export function HomeHeroTotal({ confirmedMinor, month, knownIds, headingId, titles, headingClassName, amountClassName }: {
-  confirmedMinor: string; month: string; knownIds: readonly string[]; headingId: string;
-  titles: { spent: string; none: string }; headingClassName: string; amountClassName: string;
+const HERO_HEADING = "font-serif text-balance text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]";
+const HERO_AMOUNT = "text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]";
+
+export function HomeHeroTotal({ confirmedMinor, month, knownIds, headingId, titles }: {
+  confirmedMinor: string; month: string; knownIds: readonly string[]; headingId: string; titles: { spent: string; none: string };
 }) {
   const total = usePendingTotal(confirmedMinor, month, knownIds);
   return (
     <>
-      <h2 id={headingId} className={headingClassName}>{total > 0n ? titles.spent : titles.none}</h2>
-      {total > 0n ? <CountingAmount amountMinor={total.toString()} className={amountClassName} /> : null}
+      <h2 id={headingId} className={HERO_HEADING}>{total > 0n ? titles.spent : titles.none}</h2>
+      {total > 0n ? <CountingAmount amountMinor={total.toString()} className={HERO_AMOUNT} /> : null}
     </>
   );
 }
@@ -62,12 +64,23 @@ export function PendingHomeRows({ month, today, knownIds }: { month: string; tod
   ));
 }
 
-/** El estado vacío de Inicio, salvo que ya haya una creación en vuelo: entonces, esa fila. */
-export function HomeEmpty({ month, today, empty }: { month: string; today: string; empty: ReactNode }) {
+/**
+ * El estado vacío de Inicio, salvo que ya haya una creación en vuelo: entonces, esa fila. F77-2 (revisión del PR #77): si la
+ * fila en vuelo es un gasto, también el héroe con su total optimista (lo confirmado del mes es 0: no hay movimientos, ni
+ * propios ni, en Yo con pareja, partes compartidas). Sin gasto en vuelo (solo un ingreso), ningún héroe de $0.
+ */
+export function HomeEmpty({ month, today, title, empty }: { month: string; today: string; title: string; empty: ReactNode }) {
+  const rows = usePendingRows();
   const pending = useMonthPending(month, []);
   if (pending.length === 0) return empty;
+  const spending = pendingSpendMinor(rows, month, []) > 0n;
   return (
     <div className="flex flex-col gap-6 pt-5 lg:pt-8">
+      {spending ? (
+        <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
+          <HomeHeroTotal confirmedMinor="0" month={month} knownIds={[]} headingId="home-hero" titles={{ spent: title, none: title }} />
+        </section>
+      ) : null}
       <section aria-labelledby="home-recent" className="flex flex-col gap-1">
         <h2 id="home-recent" className="pb-1 font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
         <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">

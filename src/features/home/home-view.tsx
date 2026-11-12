@@ -77,7 +77,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
     return (
       <>
       {scope}
-      <HomeEmpty month={month} today={today} empty={
+      <HomeEmpty month={month} today={today} title={copy.home.spentIn(name)} empty={
         <div className="flex flex-col gap-6 pt-2">
           <ExitState icon="receipt" title={copy.home.empty.title} description={copy.home.empty.description} actions={<AnnotateFirst label={copy.home.empty.action} />} />
           {goals && (goals.goals.length > 0 || BigInt(goals.setAsideMinor) > 0n) ? <div className="flex flex-col gap-6 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /><GoalsModule goals={goals} context="me" today={today} /></div> : null}
@@ -105,8 +105,6 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
           knownIds={privateIds}
           headingId="home-hero"
           titles={{ spent: copy.home.spentIn(name), none: copy.home.noExpenses(name) }}
-          headingClassName="font-serif text-balance text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] text-ink lg:text-[length:var(--display-l-size)] lg:leading-[var(--display-l-line)] lg:tracking-[var(--display-l-tracking)]"
-          amountClassName="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]"
         />
         {shared ? (
           <div className="mt-1 flex flex-wrap gap-x-8 gap-y-2">
