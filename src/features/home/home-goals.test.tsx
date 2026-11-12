@@ -83,9 +83,11 @@ describe("Inicio · Nosotros desde 1024 (F03 de la auditoría de Impeccable; com
     expect(at.balance).toContain("lg:col-start-2 lg:row-start-1");
     expect(at.recent).toContain("lg:col-start-1 lg:row-start-2");
     expect(at.breakdown).toContain("lg:col-start-2 lg:row-start-2");
-    // En móvil, el orden de lectura es el del DOM y no cambia: saldo, metas, en qué se fue y recientes.
-    const order = [...container.querySelectorAll<HTMLElement>("[data-home-cell]")].map((cell) => cell.dataset.homeCell);
-    expect(order).toEqual(["goals", "breakdown", "recent"]);
+    // F77-1: el orden del DOM (el de lectura y tabulación). En la fila 1 de escritorio, metas → módulo de Balance; en móvil el
+    // módulo está oculto y la línea de saldo va primera. La fila 2 conserva el orden móvil (desviación aceptada).
+    const grid = container.querySelector<HTMLElement>("[data-home-cell='goals']")!.parentElement!;
+    const order = [...grid.children].map((cell) => (cell as HTMLElement).dataset.homeCell ?? ((cell as HTMLElement).dataset.balanceLine !== undefined ? "balance" : cell.className.startsWith("lg:hidden") ? "balance-line" : cell.tagName.toLowerCase()));
+    expect(order).toEqual(["balance-line", "button", "goals", "balance", "breakdown", "recent"]);
   });
 
   it("sin la lectura de metas, «Recientes» sube a la primera fila y no deja un hueco", () => {

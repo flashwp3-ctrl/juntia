@@ -72,9 +72,12 @@ export function CoupleHomeView({ month, today, summary, balance, rows, members, 
         {/* PR D (T061; 04·7, RESPONSIVE «Shared Balance»): por debajo de 1024, la línea de saldo con «Ver balance»; desde
             1024, el módulo con barras de 16 px, «Desglose» y «Registrar liquidación». */}
         <div className="lg:hidden"><BalanceLine balance={balance} members={members} /></div>
-        <div data-balance-line="" className="hidden lg:col-start-2 lg:row-start-1 lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
         <AnnotateCta />
         {goals ? <div data-home-cell="goals" className="lg:col-start-1 lg:row-start-1"><GoalsModule goals={goals} context="us" today={today} /></div> : null}
+        {/* F77-1 (revisión del gestor del PR #77): el módulo de Balance va DESPUÉS de las metas en el DOM, para que la fila 1
+            de escritorio se lea y se tabule metas → balance (WCAG 1.3.2, 2.4.3). En móvil está oculto y la línea de saldo
+            sigue primera. La fila 2 («En qué se fue» antes que «Recientes») conserva el orden móvil: desviación aceptada. */}
+        <div data-balance-line="" className="hidden lg:col-start-2 lg:row-start-1 lg:block"><BalancePanel balance={balance} members={members} today={today} variant="module" /></div>
         {spentBy.length > 0 ? (
           <section aria-labelledby="couple-breakdown" data-home-cell="breakdown" className="flex flex-col gap-3 lg:col-start-2 lg:row-start-2 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
             {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
