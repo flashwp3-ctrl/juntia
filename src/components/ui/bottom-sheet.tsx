@@ -5,15 +5,17 @@
 // 800 px/s hacia abajo pide cerrar; MOTION_SYSTEM.md §2) y el alto del teclado nativo con `visualViewport`. La
 // confirmación de cambios sin guardar la decide quien abre la hoja: el arrastre y Escape pasan por `onOpenChange`.
 // `adaptive` (refactorización del proveedor de Anotar, 10 nov 2026): por debajo de 768 px es esta hoja y desde 768 el diálogo
-// centrado de 520 px de §Modal (RESPONSIVE_SPECIFICATIONS.md, Sheets y diálogos), en el MISMO árbol: cruzar 768 px con la hoja
-// abierta cambia solo la presentación, sin volver a montar el contenido (lo escrito, el foco, el cursor y el desplazamiento).
+// de 520 px de §Modal (RESPONSIVE_SPECIFICATIONS.md, Sheets y diálogos), anclado arriba desde la decisión de los fundadores
+// del 12 nov 2026 (antes, centrado), en el MISMO árbol: cruzar 768 px con la hoja abierta cambia solo la presentación, sin
+// volver a montar el contenido (lo escrito, el foco, el cursor y el desplazamiento).
 import * as Dialog from "@radix-ui/react-dialog";
 import * as m from "motion/react-m";
 import { AnimatePresence, animate, useMotionValue, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { copy } from "@/lib/copy/es";
 import { dialog, sheet, sheetDismiss } from "@/lib/motion/tokens";
 import { Button } from "./button";
+import { DIALOG_FRAME_ANCHORED, DIALOG_PANEL_HEIGHT } from "./modal";
 type BottomSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,8 +35,11 @@ type BottomSheetProps = {
   draggable?: boolean;
   /** Parada `full` pedida desde fuera (por ejemplo, al abrir los detalles de E2). */
   expanded?: boolean;
-  /** Con `bare`: desde 768 px, el diálogo centrado de 520 px de §Modal, sin volver a montar el contenido al cruzar 768 (hoja de Anotar). */
+  /** Con `bare`: desde 768 px, el diálogo de 520 px de §Modal, anclado arriba, sin volver a montar el contenido al cruzar 768 (hoja de Anotar). */
   adaptive?: boolean;
+  /** Como hoja, en la parada del contenido: mientras esta clave no cambie, la hoja no se acorta (crece si hace falta). Así lo
+   *  que está arriba no se mueve cuando el contenido pierde alto (Gasto → Ingreso en Anotar; decisión del 12 nov 2026). */
+  holdKey?: string;
 };
 
 const WIDE = "(min-width: 768px)";
@@ -51,9 +56,10 @@ export function useWide() {
 }
 
 const standard = [0.2, 0, 0, 1] as const; // ease.standard, como §Modal
-// La presentación de diálogo es la de `Modal` con `bare` (modal.tsx): las mismas clases y el mismo movimiento.
-const DIALOG_FRAME = "pointer-events-none fixed inset-0 grid place-items-center p-4 z-[var(--z-modal)]";
-const DIALOG_PANEL = "pointer-events-auto flex max-h-[calc(100dvh-32px)] w-full flex-col overflow-y-auto rounded-[var(--radius-2xl)] bg-overlay text-ink shadow-overlay focus-visible:outline-none max-w-[520px] gap-3.5 px-[22px] pt-5 pb-[22px]";
+// La presentación de diálogo es la de `Modal` con `bare` (modal.tsx): las mismas clases y el mismo movimiento. Desde 768 px,
+// anclado arriba (decisión de los fundadores del 12 nov 2026; ver `DIALOG_FRAME_ANCHORED`).
+const DIALOG_FRAME = `${DIALOG_FRAME_ANCHORED} z-[var(--z-modal)]`;
+const DIALOG_PANEL = `pointer-events-auto flex ${DIALOG_PANEL_HEIGHT} w-full flex-col overflow-y-auto rounded-[var(--radius-2xl)] bg-overlay text-ink shadow-overlay focus-visible:outline-none max-w-[520px] gap-3.5 px-[22px] pt-5 pb-[22px]`;
 
 /** Lo que tapa el teclado nativo por debajo del viewport visual (0 sin teclado o sin `visualViewport`). */
 function useKeyboardInset(active: boolean) {
@@ -70,7 +76,7 @@ function useKeyboardInset(active: boolean) {
   return inset;
 }
 
-export function BottomSheet({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close, onCloseAutoFocus, onOpenAutoFocus, bare = false, draggable = false, expanded: expandedProp = false, adaptive = false }: BottomSheetProps) {
+export function BottomSheet({ open, onOpenChange, title, description, trigger, children, closeLabel = copy.primitives.close, onCloseAutoFocus, onOpenAutoFocus, bare = false, draggable = false, expanded: expandedProp = false, adaptive = false, holdKey }: BottomSheetProps) {
   const reduced = useReducedMotion();
   const wide = useWide();
   const asDialog = adaptive && wide;
@@ -120,6 +126,21 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
   };
 
   const max = `calc(100dvh - ${96 + inset}px)`;
+  // `holdKey`: el alto más grande que tuvo el área de la hoja desde que se abrió con esta clave y esta parada, como alto mínimo
+  // (nunca por encima del máximo de la parada, que ya descuenta el teclado). Se mide antes de pintar, así que no hay un
+  // fotograma con la hoja corta. Como diálogo no hace falta: anclado arriba, el diálogo se acorta por abajo.
+  const body = useRef<HTMLDivElement | null>(null);
+  const held = useRef({ key: "", height: 0 });
+  const holding = holdKey !== undefined && open && !asDialog && !(draggable && expanded);
+  const holdId = `${holdKey}|${max}`;
+  useLayoutEffect(() => {
+    const node = body.current;
+    if (!node) return;
+    if (!holding) { held.current = { key: "", height: 0 }; node.style.minHeight = ""; return; }
+    if (held.current.key !== holdId) { held.current = { key: holdId, height: 0 }; node.style.minHeight = ""; }
+    held.current.height = Math.max(held.current.height, node.offsetHeight);
+    node.style.minHeight = `min(${held.current.height}px, ${max})`;
+  });
   // Adaptable: el contenido de la hoja va siempre dentro del mismo marco (como diálogo, el de §Modal; como hoja, uno que no
   // pinta nada), así que el árbol de React es el mismo a los dos lados de 768 px.
   const framed = (node: ReactNode) => (adaptive ? <div className={asDialog ? DIALOG_FRAME : "contents"}>{node}</div> : node);
@@ -167,6 +188,7 @@ export function BottomSheet({ open, onOpenChange, title, description, trigger, c
                     </div>
                   )}
                   <div
+                    ref={body}
                     style={asDialog ? undefined : { maxHeight: max, height: draggable && expanded ? max : undefined }}
                     className={asDialog ? "contents" : `flex min-h-0 flex-col overflow-y-auto overscroll-contain px-5 ${bare ? "gap-3.5 pt-0" : "gap-4 pt-0 pb-[calc(20px+env(safe-area-inset-bottom))]"}`}
                   >

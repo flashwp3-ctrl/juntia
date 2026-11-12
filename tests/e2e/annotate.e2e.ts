@@ -247,6 +247,39 @@ for (const scheme of ["light", "dark"] as const) {
   }
 }
 
+// Decisión de los fundadores del 12 nov 2026: el diálogo de escritorio se ancla arriba y la hoja móvil conserva su alto entre
+// Gasto e Ingreso. Ingreso quita la rejilla y «Dinero del mes»; el segmentado que se acaba de pulsar no se mueve más de 1 px
+// (ni al ir ni al volver), en 390, 768 y 1440 px. Se mide cuando termina la entrada (opacidad 1 y sin transform).
+for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }]) {
+  test(`Gasto ↔ Ingreso: el segmentado no se mueve (${viewport.width} px)`, async ({ browser, baseURL }, testInfo) => {
+    const user = await seedUser({ role: `segmentado-${viewport.width}`, index: testInfo.parallelIndex });
+    const context = await browser.newContext({ baseURL, viewport });
+    const page = await context.newPage();
+    await signedInHome(page, user);
+    await page.locator("[data-annotate-trigger]:visible").first().click();
+    const sheet = page.getByRole("dialog");
+    const categories = sheet.getByRole("radiogroup", { name: copy.annotate.category });
+    await expect(categories).toBeVisible();
+    await page.waitForFunction(() => {
+      const el = document.querySelector("[data-bottom-sheet], [data-modal]");
+      return Boolean(el) && getComputedStyle(el!).opacity === "1" && getComputedStyle(el!).transform === "none";
+    });
+    const type = sheet.getByRole("radiogroup", { name: copy.annotate.type });
+    // Dos fotogramas tras el cambio: la posición ya es la del nuevo diseño.
+    const settledTop = async () => { await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))); return (await type.boundingBox())!.y; };
+    const before = await settledTop();
+    await sheet.getByRole("radio", { name: copy.annotate.income }).click();
+    await expect(sheet.getByRole("radio", { name: copy.categories.market })).toHaveCount(0);
+    const income = await settledTop();
+    expect(Math.abs(income - before), `Gasto → Ingreso movió el segmentado ${income - before} px`).toBeLessThanOrEqual(1);
+    await sheet.getByRole("radio", { name: copy.annotate.expense }).click();
+    await expect(categories).toBeVisible();
+    const back = await settledTop();
+    expect(Math.abs(back - before), `Ingreso → Gasto movió el segmentado ${back - before} px`).toBeLessThanOrEqual(1);
+    await context.close();
+  });
+}
+
 // Teclado de la rejilla (grupo de radio) y los dos campos que ya no viven tras «Editar detalles»: la descripción se guarda y la
 // fecha se cambia desde el chip.
 test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde el chip", async ({ page }, testInfo) => {
