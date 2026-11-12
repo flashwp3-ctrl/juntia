@@ -25,6 +25,9 @@ import { GoalEntryRow } from "./goal-entry-row";
 import { GoalHistory } from "./goal-history";
 import { GoalImmersive } from "./goal-immersive";
 import { GoalStatusDialog } from "./goal-status-dialog";
+import { takeReturnFocus } from "./goal-journey";
+import { membersByGoal } from "./members";
+import type { GoalMemberTransport } from "@/lib/db/types";
 
 configure({ asyncUtilTimeout: 5000 });
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }));
@@ -192,7 +195,7 @@ describe("Metas en Yo y Nosotros (Q11; FR-035)", () => {
     expect(screen.getByText("$11.340.000", { selector: "[data-goals-total]" })).toBeTruthy();
   });
 
-  it("Yo: personales y, aparte, compartidas con «Tus aportes»; el total personal no suma las compartidas", () => {
+  it("Yo: personales y, aparte, compartidas con «Tu disponible» (T084); el total personal no suma las compartidas", () => {
     render(<GoalsScreen data={{ context: "me", goals: [bike(), japan()], members: { [BIKE]: bikeMembers, [JAPAN]: japanMembers }, totals: { balanceMinor: minor(1050000n), myAvailableMinor: minor(1050000n), count: 1 } }} people={people} today={TODAY} actions={actions()} />);
     const mine = screen.getByRole("region", { name: copy.goals.sections.mine });
     const shared = screen.getByRole("region", { name: copy.goals.sections.shared });
@@ -200,6 +203,9 @@ describe("Metas en Yo y Nosotros (Q11; FR-035)", () => {
     expect(within(mine).queryByRole("link", { name: /^Japón/ })).toBeNull();
     expect(within(shared).getByRole("link", { name: /^Japón/ })).toBeTruthy();
     expect(within(shared).getByText(copy.goals.yourShare("$6.120.000"))).toBeTruthy();
+    expect(within(shared).getByText("Tu disponible $6.120.000")).toBeTruthy();
+    expect(within(shared).getByText("Cada una muestra tu disponible. No se suman a tus metas.")).toBeTruthy();
+    expect(shared.textContent).not.toContain("Tus aportes");
     // 1.050.000, nunca 1.050.000 + 6.120.000.
     expect(screen.getByText("$1.050.000", { selector: "[data-goals-total]" })).toBeTruthy();
     expect(screen.queryByText("$7.170.000")).toBeNull();
@@ -353,10 +359,12 @@ describe("La fila de un asiento de meta (FR-044; ADR-011 fila 5)", () => {
     expect(container.querySelector("[data-goal-chip]")?.className).toMatch(/bg-saving-subtle/);
   });
 
-  it("retiro: «Retiro de meta · reasignación» con `arrow-u-up-left`, sin «+», sin ficha ni color de ingreso", () => {
+  it("retiro: «Retiro de la meta» con su motivo y `arrow-u-up-left`, sin «+», sin ficha ni color de ingreso (T084)", () => {
     const { container } = render(<ul><li><GoalEntryRow entry={entry({ goalId: BIKE, goalName: "Bicicleta de ruta", kind: "withdrawal", amountMinor: minor(200000n), fundingMode: null, reason: "La bicicleta puede esperar" })} people={people} dateLabel="Hoy" variant="activity" /></li></ul>);
     const row = container.querySelector("[data-goal-entry]") as HTMLElement;
-    expect(within(row).getByText(copy.goals.activity.withdrawal)).toBeTruthy();
+    expect(within(row).getByText("Retiro de la meta")).toBeTruthy();
+    expect(within(row).getByText("Bicicleta de ruta · La bicicleta puede esperar · Sara")).toBeTruthy();
+    expect(row.textContent).not.toMatch(/reasignación/);
     expect(icon(row, "arrow-u-up-left")).toBeTruthy();
     expect(icon(row, "arrow-down-left")).toBeNull();
     expect(row.textContent).not.toContain("+");
@@ -376,7 +384,7 @@ describe("Historial de una meta (US-5.6, US-5.7; FR-043)", { timeout: 15000 }, (
     entry({ id: "a2222222-2222-4222-8222-222222222222", memberUserId: TOMAS, createdBy: TOMAS, amountMinor: minor(400000n), effectiveDate: "2026-10-15" }),
     entry({ id: "a3333333-3333-4333-8333-333333333333", amountMinor: minor(550000n), effectiveDate: "2026-09-20", voided: true, voidedReason: "void" }),
   ];
-  const history = (writes = actions()) => render(<GoalHistory goal={japan()} entries={entries} members={japanMembers} today={TODAY} actions={writes} />);
+  const history = (writes = actions()) => render(<GoalHistory goal={japan()} entries={entries} members={japanMembers} people={people} today={TODAY} actions={writes} />);
 
   it("por persona: «Sara $6.120.000 · 11 aportes» y «Tomás $5.220.000 · 10 aportes»; aportes por mes", () => {
     history();
@@ -503,7 +511,7 @@ describe("Revisión del gestor del PR #68", { timeout: 15000 }, () => {
   it("anular un aporte cuyos fondos ya se usaron (Q13): lo dice con su texto, nunca «no admite esta operación»", async () => {
     const user = userEvent.setup();
     const writes = actions({ voidEntry: vi.fn(async () => ({ status: "rejected" as const, error: "insufficientFunds" as const, detail: { availableMinor: minor(100000n) } })) });
-    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} today={TODAY} actions={writes} />);
+    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} people={people} today={TODAY} actions={writes} />);
     await user.click(screen.getByRole("button", { name: copy.goals.history.void.action }));
     const dialog = screen.getByRole("alertdialog", { name: copy.goals.history.void.title });
     await user.click(within(dialog).getByRole("button", { name: copy.goals.history.void.confirm }));
@@ -513,7 +521,7 @@ describe("Revisión del gestor del PR #68", { timeout: 15000 }, () => {
 
   it("anular con resultado desconocido: cerrar pide «¿Cerrar sin confirmar?» (FR-093)", async () => {
     const user = userEvent.setup();
-    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} today={TODAY} actions={actions({ voidEntry: vi.fn(async () => ({ status: "unknown" as const })) })} />);
+    render(<GoalHistory goal={japan()} entries={[entry({})]} members={japanMembers} people={people} today={TODAY} actions={actions({ voidEntry: vi.fn(async () => ({ status: "unknown" as const })) })} />);
     await user.click(screen.getByRole("button", { name: copy.goals.history.void.action }));
     await user.click(screen.getByRole("button", { name: copy.goals.history.void.confirm }));
     expect(await screen.findByText(copy.writes.unknown)).toBeTruthy();
@@ -744,5 +752,125 @@ describe("Orden de la pila por ámbito (Inicio en Yo)", () => {
     const { container } = render(<GoalStack goals={[sharedRecent, personalOld, personalNew]} members={{}} today={TODAY} context="me" fan={false} seeAllHref="/metas" />);
     const ids = [...container.querySelectorAll("[data-stack-layer] [data-goal-card]")].map((node) => node.getAttribute("data-goal-card"));
     expect(ids).toEqual([personalNew.id, personalOld.id, sharedRecent.id]);
+  });
+});
+
+// T084: la simulación completa de la guía de salida interna contra juntia-dev (12 de noviembre de 2026, código f23fb97).
+describe("T084 · fallos de la simulación de la guía de salida", { timeout: 15000 }, () => {
+  const media = () => vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce"), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  afterEach(() => vi.unstubAllGlobals());
+  // Tomás anuló su único aporte: `goal_member_balances` ya no tiene fila suya (la vista agrupa asientos vivos).
+  const onlySara: GoalMemberTransport[] = [{ goal_id: JAPAN, user_id: SARA, contributed_minor: minor(6120000n), withdrawn_minor: "0", used_minor: "0", available_minor: minor(6120000n), contribution_count: 11 }];
+  const voidedByTomas = [
+    entry({ id: "b1111111-1111-4111-8111-111111111111", memberUserId: TOMAS, createdBy: TOMAS, amountMinor: minor(400000n), voided: true, voidedReason: "void" }),
+    entry({ id: "b2222222-2222-4222-8222-222222222222", memberUserId: TOMAS, createdBy: TOMAS, amountMinor: minor(300000n), effectiveDate: "2026-10-21", voided: true, voidedReason: "undo" }),
+  ];
+
+  it("1 · en una compartida, los dos integrantes siempre están, con $0 si no tienen nada; en una personal, nadie inventado", () => {
+    const members = membersByGoal(onlySara, people, [{ id: JAPAN, scope: "shared" }, { id: BIKE, scope: "personal" }]);
+    expect(members[JAPAN].map(({ name, availableMinor, contributionCount }) => ({ name, availableMinor, contributionCount }))).toEqual([
+      { name: "Sara", availableMinor: minor(6120000n), contributionCount: 11 },
+      { name: "Tomás", availableMinor: "0", contributionCount: 0 },
+    ]);
+    expect(members[BIKE]).toEqual([]);
+    // Una personal con asientos: solo su dueña, nunca la otra persona de la pareja.
+    const bikeRow: GoalMemberTransport = { goal_id: BIKE, user_id: SARA, contributed_minor: minor(1050000n), withdrawn_minor: "0", used_minor: "0", available_minor: minor(1050000n), contribution_count: 2 };
+    expect(membersByGoal([bikeRow], people, [{ id: BIKE, scope: "personal" }])[BIKE].map(({ name }) => name)).toEqual(["Sara"]);
+  });
+
+  it("1 · un aporte ANULADO o DESHECHO conserva su autor aunque esa persona se haya quedado sin aportes vivos", () => {
+    const members = membersByGoal(onlySara, people, [{ id: JAPAN, scope: "shared" }])[JAPAN];
+    render(<GoalHistory goal={japan()} entries={voidedByTomas} members={members} people={people} today={TODAY} actions={actions()} />);
+    const rows = [...document.querySelectorAll("[data-goal-entry]")];
+    expect(rows).toHaveLength(2);
+    // El más reciente (22 oct) es el ANULADO; el del 21, el DESHECHO. Los dos dicen de quién son.
+    expect(rows[0].textContent).toContain(copy.goals.history.by("Tomás"));
+    expect(rows[0].textContent).toContain(copy.goals.history.voided);
+    expect(rows[1].textContent).toContain(copy.goals.history.by("Tomás"));
+    expect(rows[1].textContent).toContain(copy.goals.history.undone);
+    for (const row of rows) expect(row.textContent).not.toMatch(/De ·/);
+    // «Aportes por persona» y el filtro siguen teniendo a Tomás, con $0.
+    expect(screen.getByText(copy.goals.immersive.member("Tomás", "$0", 0))).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Tomás" })).toBeTruthy();
+  });
+
+  it("1 · aunque la lista de saldos no lo traiga, el autor sale de las personas de la pareja", () => {
+    const sara = membersByGoal(onlySara, people, [{ id: JAPAN, scope: "shared" }])[JAPAN].slice(0, 1);
+    render(<GoalHistory goal={japan()} entries={voidedByTomas} members={sara} people={people} today={TODAY} actions={actions()} />);
+    expect(screen.getAllByText(copy.goals.history.by("Tomás"), { exact: false })).toHaveLength(2);
+  });
+
+  it("1 · «Disponible por persona» muestra a Tomás con $0 en la meta inmersiva", () => {
+    media();
+    const members = membersByGoal(onlySara, people, [{ id: JAPAN, scope: "shared" }])[JAPAN];
+    render(<GoalImmersive goal={japan()} members={members} entries={voidedByTomas} people={people} today={TODAY} context="us" actions={actions()} />);
+    const list = screen.getByRole("list", { name: copy.goals.immersive.available });
+    expect([...list.querySelectorAll("[data-member-available]")].map((line) => line.textContent)).toEqual(["Tu disponible $6.120.000", "Disponible de Tomás $0"]);
+  });
+
+  it("1 · una compartida lograda sin fondos de nadie sigue con la cinta llena aunque ahora traiga a los dos en $0", () => {
+    const zeroes = membersByGoal([], people, [{ id: JAPAN, scope: "shared" }])[JAPAN];
+    expect(zeroes).toHaveLength(2);
+    const { container } = render(<GoalCard goal={japan({ status: "completed", balanceMinor: "0", progressPercent: 0 })} members={zeroes} today={TODAY} context="us" />);
+    expect(container.querySelectorAll("[data-ribbon-part]")).toHaveLength(1);
+  });
+
+  it("2 · «Anular aporte» solo si lo disponible de quien mira cubre el aporte entero (la regla del servidor, JT204)", () => {
+    // Sara aportó 500.000 y 200.000 y retiró 400.000: le quedan 300.000. El de 500.000 ya no se puede anular; el de 200.000, sí.
+    const list = [
+      entry({ id: "c1111111-1111-4111-8111-111111111111", amountMinor: minor(500000n), effectiveDate: "2026-10-10" }),
+      entry({ id: "c2222222-2222-4222-8222-222222222222", amountMinor: minor(200000n), effectiveDate: "2026-10-12" }),
+      entry({ id: "c3333333-3333-4333-8333-333333333333", kind: "withdrawal", amountMinor: minor(400000n), fundingMode: null, reason: "Otro plan", effectiveDate: "2026-10-14" }),
+    ];
+    render(<GoalHistory goal={japan({ myAvailableMinor: minor(300000n) })} entries={list} members={japanMembers} people={people} today={TODAY} actions={actions()} />);
+    const rowOf = (id: string) => document.querySelector(`[data-entry-id="${id}"]`) as HTMLElement;
+    expect(within(rowOf("c1111111-1111-4111-8111-111111111111")).queryByRole("button", { name: copy.goals.history.void.action })).toBeNull();
+    expect(within(rowOf("c2222222-2222-4222-8222-222222222222")).getByRole("button", { name: copy.goals.history.void.action })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: copy.goals.history.void.action })).toHaveLength(1);
+  });
+
+  it("3 · Escape y × dejan dicha la tarjeta de origen: Metas devuelve el foco a esta meta, también si se llegó por URL", async () => {
+    media();
+    const user = userEvent.setup();
+    takeReturnFocus();
+    const { unmount } = render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    await act(async () => {});
+    await user.keyboard("{Escape}");
+    expect(router.push).toHaveBeenCalledWith("/metas");
+    expect(takeReturnFocus()).toBe(JAPAN);
+    unmount();
+    const second = render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    const close = screen.getByRole("link", { name: copy.goals.immersive.close });
+    close.addEventListener("click", (event) => event.preventDefault());
+    await user.click(close);
+    second.unmount();
+    // Y Metas lo usa: el foco llega a la tarjeta de Japón, no a BODY.
+    render(<GoalsScreen data={{ context: "us", goals: [japan()], members: { [JAPAN]: japanMembers }, totals: null }} people={people} today={TODAY} actions={actions()} />);
+    expect(document.activeElement).toBe(document.querySelector(`[data-goal-card="${JAPAN}"]`));
+  });
+
+  it("8 · textos de los fundadores: «Retiro de la meta», el uso sin «no es un gasto nuevo» y «Tu disponible»", () => {
+    expect(copy.goals.history.withdrawal).toBe("Retiro de la meta");
+    expect(copy.goals.activity.withdrawal).toBe("Retiro de la meta");
+    expect(copy.goals.activity.withdrawalMeta("Japón", "Tomás", null)).toBe("Japón · Tomás");
+    expect(copy.goals.activity.usage("Japón")).toBe("Uso de Japón");
+    expect(copy.goalExpense.detail.use("Japón", "Sara")).toBe("Uso de Japón · Aportes de Sara");
+    expect(copy.goals.yourShare("$6.120.000")).toBe("Tu disponible $6.120.000");
+    // Ningún texto de interfaz conserva lo anterior (los comentarios del módulo de copy sí pueden citarlo).
+    const strings = readFileSync("src/lib/copy/es.ts", "utf8").split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
+    expect(strings).not.toMatch(/reasignación|no es un gasto nuevo|Tus aportes \$\{/);
+  });
+
+  it("4 · la nota de archivar solo aparece cuando bloquea (saldo o solicitud pendiente)", () => {
+    const description = () => screen.getByRole("alertdialog", { name: copy.goals.statusDialog.archiveTitle }).textContent ?? "";
+    const { unmount } = render(<GoalStatusDialog kind="archive" goal={japan({ balanceMinor: "0", myAvailableMinor: "0", progressPercent: 0 })} idempotencyKey={KEY} actions={actions()} onClose={vi.fn()} onDone={vi.fn()} />);
+    expect(description()).toContain(copy.goals.statusDialog.archiveDescription);
+    expect(description()).not.toContain(copy.goals.errors.cannotArchive);
+    unmount();
+    const second = render(<GoalStatusDialog kind="archive" goal={japan()} idempotencyKey={KEY} actions={actions()} onClose={vi.fn()} onDone={vi.fn()} />);
+    expect(description()).toContain(copy.goals.errors.cannotArchive);
+    second.unmount();
+    render(<GoalStatusDialog kind="archive" goal={japan({ balanceMinor: "0", hasPendingRequest: true })} idempotencyKey={KEY} actions={actions()} onClose={vi.fn()} onDone={vi.fn()} />);
+    expect(description()).toContain(copy.goals.errors.cannotArchive);
   });
 });

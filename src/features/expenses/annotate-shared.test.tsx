@@ -108,16 +108,19 @@ describe("E1 en Nosotros (US-2.1, Q5; decisión 1 de los fundadores)", () => {
     expect(summary()?.textContent ?? "").toContain(copy.shared.summary.parts([["Sara", "$93.201"], ["Tomás", "$93.200"]]));
   });
 
-  it("recuerda el último pagador, reparto y participantes de esa persona (Tomás · Porcentaje 55/45)", async () => {
+  // T084 (6b), decisión de los fundadores del 12 de noviembre de 2026: el pagador por defecto es quien anota, aunque el último
+  // gasto lo pagara el otro; el reparto y los participantes se siguen recordando. Cambia Q5 y FR-021 de la 003 en ese punto.
+  it("recuerda el reparto y los participantes (Porcentaje 55/45), pero pagó quien anota aunque la última vez pagara Tomás", async () => {
     const { user } = setup({ last: { payerUserId: TOMAS, splitMode: "percent", percents: { [SARA]: 55, [TOMAS]: 45 }, participants: [SARA, TOMAS] } });
     await open(user);
-    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.paid("Tomás", copy.shared.mode.percentOf([55, 45])));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.paid("Sara", copy.shared.mode.percentOf([55, 45])));
+    expect(summary()?.textContent ?? "").not.toContain("Pagó Tomás");
   });
 
-  it("recuerda también un solo participante: «Pagó Tomás · 100 %» sobre «Sara» (decisión 4; comp 02·5 N3)", async () => {
+  it("recuerda también un solo participante: «Pagó Sara · 100 %» sobre «Sara» (decisión 4; comp 02·5 N3; T084)", async () => {
     const { user } = setup({ last: { payerUserId: TOMAS, splitMode: "percent", percents: { [SARA]: 100, [TOMAS]: 0 }, participants: [SARA] } });
     await open(user);
-    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Tomás"));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.single("Sara"));
     // Comp 02·5 N3 (2a oficial): la segunda línea dice quién asume el gasto.
     expect(summary()?.textContent ?? "").toContain("Sara");
   });
@@ -255,7 +258,7 @@ describe("Guardar en Nosotros", () => {
     expect(vi.mocked(shared.create).mock.calls[0][0]).toMatchObject({ payerUserId: TOMAS, participants: [SARA] });
   });
 
-  it("una vez guardado, la siguiente apertura recuerda lo último (Tomás · Porcentaje 70/30)", async () => {
+  it("una vez guardado «Pagó Tomás · 70/30», la siguiente apertura recuerda el 70/30 y vuelve a «Pagó Sara» (T084)", async () => {
     const shared = sharedActions({ create: vi.fn(async () => ({ status: "ok" as const, value: savedShared({ payerUserId: TOMAS, splitMode: "percent", splitPercents: [70, 30], parts: { [SARA]: "10500000", [TOMAS]: "4500000" } }) })) });
     const { user } = setup({ shared });
     await open(user);
@@ -271,7 +274,7 @@ describe("Guardar en Nosotros", () => {
     await screen.findByRole("button", { name: copy.annotate.undo });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await open(user);
-    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.paid("Tomás", copy.shared.mode.percentOf([70, 30])));
+    expect(summary()?.textContent ?? "").toContain(copy.shared.summary.paid("Sara", copy.shared.mode.percentOf([70, 30])));
   });
 });
 

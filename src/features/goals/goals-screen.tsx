@@ -2,7 +2,7 @@
 // 004 PR C (T045, T046) / FR-030, FR-035, FR-036, FR-085–FR-087, FR-103; US-4.1, US-4.3, US-4.8, US-4.10; Q11; 04·3, 04·6.
 // Nosotros: solo metas compartidas, con «Apartado en metas compartidas» (de `goals_totals`, nunca sumando páginas) y «Es
 // dinero apartado, no gastado. Sigue donde lo tengan.». Yo: «Tus metas» (personales, con su total) y, aparte, «Metas
-// compartidas» con «Tus aportes $X» de cada una, sin un total que sume las dos (decisión 22.11). Las archivadas salen del
+// compartidas» con «Tu disponible $X» de cada una (T084; antes «Tus aportes»), sin un total que sume las dos (decisión 22.11). Las archivadas salen del
 // listado principal y quedan en «Archivadas», de solo lectura. Sin metas: 04·6 con `flag-banner` y «Crear una meta». La
 // hoja de crear guarda el contexto con el que se abrió (FR-099).
 import Link from "next/link";

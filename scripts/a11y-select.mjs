@@ -60,7 +60,7 @@ const SHARED = [
   // Metas: la pila y las tarjetas de Inicio, las filas y el formato de Actividad, las cargas de Inicio y las acciones del
   // layout; con ellas, su dominio y su capa de datos (y las migraciones de metas, que la alimentan). La exportación y
   // planning.ts, que la importa, también.
-  /^src\/features\/goals\/(?:actions|goal-actions|format|goal-entry-row|goal-stack|goal-card|goal-journey|goal-ribbon|goal-sheet-frame|load|funding-load|types)\.tsx?$/,
+  /^src\/features\/goals\/(?:actions|goal-actions|format|goal-entry-row|goal-stack|goal-card|goal-journey|goal-ribbon|goal-sheet-frame|load|funding-load|members|types)\.tsx?$/,
   /^src\/domain\/goals\//, /^src\/lib\/db\/(?:goals|goal-usage|metrics|planning|export)\.ts$/, /^supabase\/migrations\/[^/]*_goal[^/]*\.sql$/,
 ];
 

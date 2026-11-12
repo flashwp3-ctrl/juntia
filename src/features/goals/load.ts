@@ -11,9 +11,10 @@ import { activeCouple } from "@/features/couple/shared-load";
 import { DbError, mapDbError } from "@/lib/db/errors";
 import { getGoal, goalActivity, goalEntries, goalMemberBalancesFor, goalTotals, listGoals } from "@/lib/db/goals";
 import { metricMonths } from "@/lib/db/metrics";
-import type { GoalEntryTransport, GoalMemberTransport, GoalTransport, PlanningContext } from "@/lib/db/types";
+import type { GoalEntryTransport, GoalTransport, PlanningContext } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/server";
 import type { GoalActivityData, GoalEntryView, GoalMemberView, GoalPerson, GoalsScreenData, GoalView, HomeGoals } from "./types";
+import { membersByGoal } from "./members";
 import type { UsageRequestView } from "@/features/expenses/goal-funding/types";
 import { monthFunding, pendingRequests } from "./funding-load";
 
@@ -43,20 +44,6 @@ export const toEntryView = (row: GoalEntryTransport, goalName?: string): GoalEnt
   voided: row.voided, voidedReason: row.voided_reason, createdBy: row.created_by, createdAt: row.created_at,
 });
 
-function toMembers(rows: readonly GoalMemberTransport[], people: readonly GoalPerson[]): Record<string, GoalMemberView[]> {
-  const byGoal: Record<string, GoalMemberView[]> = {};
-  for (const row of rows) {
-    const person = people.find((candidate) => candidate.userId === row.user_id);
-    if (!person) continue;
-    (byGoal[row.goal_id] ??= []).push({
-      ...person, contributedMinor: row.contributed_minor, withdrawnMinor: row.withdrawn_minor, usedMinor: row.used_minor,
-      availableMinor: row.available_minor, contributionCount: Number(row.contribution_count),
-    });
-  }
-  for (const list of Object.values(byGoal)) list.sort((a, b) => a.joinOrder - b.joinOrder);
-  return byGoal;
-}
-
 /** Quién puede aparecer en una meta: la pareja activa o, sin ella, solo quien mira. Nunca el correo. */
 export async function goalPeople(): Promise<GoalPerson[]> {
   const couple = await activeCouple();
@@ -73,7 +60,7 @@ export async function loadGoalsScreen(context: PlanningContext, people: readonly
     const client = await createClient();
     const [rows, totals] = await Promise.all([listGoals(client, context), goalTotals(client, context === "us" ? "shared" : "personal")]);
     const goals = rows.map(toGoalView).sort(byCreation);
-    const members = toMembers(await goalMemberBalancesFor(client, goals.map(({ id }) => id)), people);
+    const members = membersByGoal(await goalMemberBalancesFor(client, goals.map(({ id }) => id)), people, goals);
     const total = totals[0];
     return { context, goals, members, totals: total ? { balanceMinor: total.balance_minor, myAvailableMinor: total.my_available_minor, count: Number(total.goal_count) } : null };
   }, volver);
@@ -90,7 +77,8 @@ export async function loadGoalDetail(goalId: string, context: PlanningContext, p
     const row = await getGoal(client, goalId, context === "us" ? "shared" : undefined);
     if (!row) return null;
     const [balances, entries, requests] = await Promise.all([goalMemberBalancesFor(client, [goalId]), goalEntries(client, goalId), row.goal_scope === "shared" ? pendingRequests(client, goalId) : Promise.resolve([])]);
-    return { goal: toGoalView(row), members: toMembers(balances, people)[goalId] ?? [], entries: entries.map((entry) => toEntryView(entry)), requests };
+    const goal = toGoalView(row);
+    return { goal, members: membersByGoal(balances, people, [goal])[goalId] ?? [], entries: entries.map((entry) => toEntryView(entry)), requests };
   }, volver);
 }
 
@@ -104,7 +92,7 @@ export async function loadHomeGoals(context: PlanningContext, month: string, peo
     // ninguna, Inicio no consulta `usage_requests`, y la revalidación tras anotar no paga esa lectura.
     const pending = context === "us" && goals.some((goal) => goal.hasPendingRequest);
     const [balances, requests] = await Promise.all([goalMemberBalancesFor(client, goals.map(({ id }) => id)), pending ? pendingRequests(client) : Promise.resolve([])]);
-    return { setAsideMinor: metrics[0]?.aporte_a_metas ?? "0", goals, members: toMembers(balances, people), requests, people: [...people] };
+    return { setAsideMinor: metrics[0]?.aporte_a_metas ?? "0", goals, members: membersByGoal(balances, people, goals), requests, people: [...people] };
   }, volver);
 }
 
