@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { TIMED_OUT } from "@/features/shared/use-write";
 import { moneyFromPesos } from "@/domain/money";
 import type { PendingRow } from "../types";
-import { confirm, drop, launch, ListRegistry, MAX_REFRESHES, NO_FLIGHTS, pendingSpendMinor, reconcile, refreshRound } from "./flights";
+import { confirm, drop, forgetSaved, launch, ListRegistry, MAX_REFRESHES, NO_FLIGHTS, pendingSpendMinor, reconcile, refreshRound } from "./flights";
 import { initialSheet, isBusy, reduceSheet, type SheetState } from "./sheet-machine";
 import { blocksUndo, checkOutcome, mayRun, pendingOf, reduceUndo, sendOutcome, type UndoIntent, type UndoState } from "./undo-machine";
 
@@ -126,6 +126,14 @@ describe("filas en vuelo (flights)", () => {
     expect(pendingSpendMinor(flights, "2026-11", [])).toBe(9000000n);
     expect(pendingSpendMinor(drop(flights, ["k1"]), "2026-11", [])).toBe(4500000n);
     expect(pendingSpendMinor(drop(flights, ["k1", "k2"]), "2026-11", [])).toBe(0n);
+  });
+
+  it("F05: deshacer una creación confirmada retira su temporal y el total vuelve, sin esperar a las revalidaciones", () => {
+    const flights = confirm(launch(launch(NO_FLIGHTS, row("k1")), row("k2")), "k1", "real-1");
+    const after = forgetSaved(flights, "real-1");
+    expect(after.map(({ key }) => key)).toEqual(["k2"]);
+    expect(pendingSpendMinor(after, "2026-11", [])).toBe(4500000n);
+    expect(forgetSaved(after, "otra")).toBe(after);
   });
 
   it("F05: solo cuenta gastos del mes de la lista (un ingreso nunca entra en el héroe)", () => {

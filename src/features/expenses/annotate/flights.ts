@@ -31,6 +31,15 @@ export const drop = (flights: Flights, keys: readonly string[]): Flights => {
 };
 
 /**
+ * F05: la creación confirmada se anuló («Deshacer» o ya no existe): su fila temporal se va ya, sin esperar a las
+ * revalidaciones, y deja de sumar al total. Antes podía quedarse hasta el tope de 3 revalidaciones.
+ */
+export const forgetSaved = (flights: Flights, savedId: string): Flights => {
+  const next = flights.filter((flight) => flight.savedId !== savedId);
+  return next.length === flights.length ? flights : next;
+};
+
+/**
  * Una lista informa de los ids reales que trae. (a) La fila confirmada cuyo id ya está se retira. (b) Si llegó por una
  * revalidación (`revalidated`) y la fila ya no le corresponde a ninguna lista montada (`hasMonth`), también.
  */

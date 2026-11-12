@@ -154,7 +154,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     onLaunch: () => { submittedFrom.current = currentRoute(); sendSheet({ type: "hide" }); },
     onReturn: () => sendSheet({ type: "restore" }),
   });
-  const { askRefresh, registry, track } = flights;
+  const { askRefresh, registry, track, forget } = flights;
 
   // E5 (reveal-machine). Terminar en la pantalla es ir a Actividad del mes, tras pedir otra revalidación.
   const reveal = useReveal({
@@ -179,13 +179,14 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
     action: "void_transaction", id: saved.id, idempotencyKey, done: copy.annotate.undone[saved.type],
     send: () => actionsRef.current.voidTransaction({ idempotencyKey, transactionId: saved.id, expectedVersion: saved.version, reason: "undo" }),
     check: (input) => (actionsRef.current.check ? actionsRef.current.check(input) : Promise.resolve({ state: "error" as const })),
-    onOk: () => unhighlight(saved.id),
+    // F05: anulada, su fila temporal (si la lista aún no traía la real) se va y deja de sumar al total del héroe.
+    onOk: () => { unhighlight(saved.id); forget(saved.id); },
     rejected: (error) => {
-      if (error === "alreadyDeleted" || error === "notFound") unhighlight(saved.id);
+      if (error === "alreadyDeleted" || error === "notFound") { unhighlight(saved.id); forget(saved.id); }
       return error === "versionConflict" ? copy.annotate.undoChanged : error === "alreadyDeleted" || error === "notFound" ? copy.transaction.errors.alreadyDeleted
         : error === "sessionExpired" ? copy.errors.sessionExpired : copy.errors.unexpected;
     },
-  }, "send"), [actionsRef, runUndo, unhighlight]);
+  }, "send"), [actionsRef, forget, runUndo, unhighlight]);
 
   // F57-4: «Deshacer» de un gasto compartido (FR-024) y de Mover a Pareja (FR-034), con el contrato común.
   const undoShared = useCallback((saved: SavedShared, idempotencyKey: string) => runUndo({

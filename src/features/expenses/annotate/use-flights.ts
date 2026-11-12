@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ContextChoice } from "@/lib/context-preference";
 import type { ActionResult, PendingRow, SavedTransaction } from "../types";
-import { confirm, drop, launch, ListRegistry, NO_FLIGHTS, reconcile, REFRESH_EVERY_MS, refreshRound, type Flights } from "./flights";
+import { confirm, drop, forgetSaved, launch, ListRegistry, NO_FLIGHTS, reconcile, REFRESH_EVERY_MS, refreshRound, type Flights } from "./flights";
 
 /** Lo que una lista hace con el proveedor: montar su mes (con sus contextos) e informar de los ids reales que trae. */
 export type ListScope = {
@@ -90,5 +90,8 @@ export function useFlights({ refresh, onLaunch, onReturn }: FlightHooks) {
     return () => clearInterval(handle);
   }, [waitingForReal, askRefresh]);
 
-  return { rows: flights, scope, track, askRefresh, registry };
+  /** F05: una creación confirmada que se anuló deja de estar en vuelo. */
+  const forget = useCallback((savedId: string) => setFlights((current) => forgetSaved(current, savedId)), []);
+
+  return { rows: flights, scope, track, askRefresh, registry, forget };
 }
