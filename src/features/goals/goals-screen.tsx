@@ -2,7 +2,7 @@
 // 004 PR C (T045, T046) / FR-030, FR-035, FR-036, FR-085–FR-087, FR-103; US-4.1, US-4.3, US-4.8, US-4.10; Q11; 04·3, 04·6.
 // Nosotros: solo metas compartidas, con «Apartado en metas compartidas» (de `goals_totals`, nunca sumando páginas) y «Es
 // dinero apartado, no gastado. Sigue donde lo tengan.». Yo: «Tus metas» (personales, con su total) y, aparte, «Metas
-// compartidas» con «Tus aportes $X» de cada una, sin un total que sume las dos (decisión 22.11). Las archivadas salen del
+// compartidas» con «Tu disponible $X» de cada una (T084; antes «Tus aportes»), sin un total que sume las dos (decisión 22.11). Las archivadas salen del
 // listado principal y quedan en «Archivadas», de solo lectura. Sin metas: 04·6 con `flag-banner` y «Crear una meta». La
 // hoja de crear guarda el contexto con el que se abrió (FR-099).
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { copy } from "@/lib/copy/es";
 import { cop } from "./format";
 import { GoalCard, goalTypeIcon } from "./goal-card";
 import { GoalFormSheet } from "./goal-form-sheet";
-import { takeReturnFocus } from "./goal-journey";
+import { restoreReturnFocus } from "./goal-journey";
 import { GoalStack } from "./goal-stack";
 import type { GoalActions, GoalPerson, GoalsScreenData, GoalView } from "./types";
 
@@ -41,7 +41,7 @@ function Archived({ goals }: { goals: readonly GoalView[] }) {
       <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
         {goals.map((goal) => (
           <li key={goal.id}>
-            <Link href={`/metas/${goal.id}`} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
+            <Link href={`/metas/${goal.id}`} data-goal-return={goal.id} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
               <span aria-hidden="true" data-goal-tint={goal.goalType} className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--goal-tint-bg)] text-[color:var(--goal-tint-icon)]"><AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} /></span>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[0.9375rem] font-semibold">{goal.name}</span>
@@ -71,8 +71,8 @@ export function GoalsScreen({ data, today, actions }: Props) {
 
   // Al volver de la meta inmersiva, el foco vuelve a la tarjeta de origen (MOTION_SYSTEM §4).
   useEffect(() => {
-    const id = takeReturnFocus();
-    if (id) document.querySelector<HTMLElement>(`[data-goal-card="${id}"]`)?.focus({ preventScroll: false });
+    // F80-1: la tarjeta o la fila archivada de esa meta; si no está en esta pantalla, el título de Metas.
+    restoreReturnFocus();
   }, []);
 
   const sheet = creating ? (

@@ -1,9 +1,10 @@
 // 004 PR C (T048, T050) / FR-042–FR-044; US-5.2, US-6.1; ExpenseRow, variante aporte (COMPONENT_SPECIFICATIONS) y
 // DESIGN_SYSTEM §3, «Forma = tipo de fila»: un asiento de meta nunca parece un gasto ni un ingreso.
 // - Aporte: ficha redonda con fondo de ahorro y `piggy-bank`, «+» y verde de ahorro, «ahorro, no es consumo».
-// - Retiro: ficha redonda neutra con `arrow-u-up-left`, «Retiro de meta · reasignación», sin «+», sin ficha ni color de
-//   ingreso (glosario §9; ADR-011 fila 5).
-// - Uso: «Uso de {meta} · no es un gasto nuevo»; el gasto real ya está en el consumo.
+// - Retiro: ficha redonda neutra con `arrow-u-up-left`, «Retiro de la meta» con su motivo si lo hay, sin «+», sin ficha ni
+//   color de ingreso (glosario §9; ADR-011 fila 5; texto de los fundadores del 12 de noviembre de 2026, T084).
+// - Uso: «Uso de {meta}»; el gasto real ya está en el consumo del mes (T084: sin «no es un gasto nuevo»).
+// - Autor: de las personas de la pareja (`people`), nunca de los saldos, que omiten a quien no tiene asientos vivos (T084).
 // - Anulado: sigue en la lista, tachado y marcado ANULADO (o DESHECHO, si fue el «Deshacer» de 6 s; o USO QUITADO, si se quitó
 //   el uso de la meta desde el gasto: 004 PR D, T063).
 import type { ReactNode } from "react";
@@ -43,7 +44,7 @@ export function entryMeta(entry: GoalEntryView, people: readonly GoalPerson[], v
     if (variant === "activity") return copy.goals.activity.contributionMeta(who);
     return [copy.goals.history.by(who), entry.fundingMode ? copy.goals.contribute.modes[entry.fundingMode] : null].filter(Boolean).join(" · ");
   }
-  if (entry.kind === "withdrawal") return variant === "activity" ? copy.goals.activity.withdrawalMeta(entry.goalName ?? "", who) : [entry.reason, who].filter(Boolean).join(" · ");
+  if (entry.kind === "withdrawal") return variant === "activity" ? copy.goals.activity.withdrawalMeta(entry.goalName ?? "", who, entry.reason) : [entry.reason, who].filter(Boolean).join(" · ");
   // 004 PR D (B4): en Actividad, el uso dice de quién son los aportes que se usaron.
   const description = entry.transactionDescription ?? copy.goals.history.usageFallback;
   return variant === "activity" ? copy.goalExpense.detail.rowMeta(who, description) : description;

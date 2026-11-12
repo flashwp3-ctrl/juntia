@@ -22,7 +22,8 @@ export const copy = {
     withdraw: {errors:{reason:"Escribe un motivo de hasta 140 caracteres."}},
     // 004 PR C (T045–T050; 04·3, 04·6, 04·7; GoalCard, GoalStack, S5). Copy nuevo para revisión de los fundadores en el PR;
     // los textos de los comps se copian tal cual. Glosario §9: «Registrar aporte», nunca «Depositar» ni «Invertir»; un
-    // retiro es «Retiro de meta · reasignación», nunca «Ingreso»; nunca «Llegarán», «te alcanza» ni «Total gastado».
+    // retiro es «Retiro de la meta» (decisión de los fundadores del 12 de noviembre de 2026, T084: antes «Retiro de meta ·
+    // reasignación»), nunca «Ingreso»; nunca «Llegarán», «te alcanza» ni «Total gastado».
     title: "Metas",
     scope: { shared: "COMPARTIDA", personal: "PERSONAL" },
     types: { travel: "Viaje", home: "Vivienda", wedding: "Boda", vehicle: "Vehículo", education: "Educación", emergency: "Emergencias", other: "Otra" },
@@ -34,8 +35,9 @@ export const copy = {
       us: "Apartado en metas compartidas", usNote: "Es dinero apartado, no gastado. Sigue donde lo tengan.",
       me: "Apartado en tus metas", meNote: "Es dinero apartado, no gastado. Sigue donde lo tengas.",
     },
-    sections: { mine: "Tus metas", shared: "Metas compartidas", sharedNote: "Cada una muestra tus aportes. No se suman a tus metas.", archived: "Archivadas" },
-    yourShare: (amount: string) => `Tus aportes ${amount}`,
+    sections: { mine: "Tus metas", shared: "Metas compartidas", sharedNote: "Cada una muestra tu disponible. No se suman a tus metas.", archived: "Archivadas" },
+    // T084 (8): la cifra es lo disponible (`my_available_minor`), como en la meta inmersiva (F06).
+    yourShare: (amount: string) => `Tu disponible ${amount}`,
     ofTarget: (balance: string, target: string) => `${balance} de ${target}`,
     percent: (value: number) => `${value} %`,
     due: (month: string) => `Para ${month}`,
@@ -106,7 +108,7 @@ export const copy = {
     withdrawSheet: {
       title: "Retirar de la meta", amount: "Monto a retirar", reason: "Motivo", reasonPlaceholder: "Para qué lo usas",
       max: (amount: string) => `Puedes retirar hasta ${amount}`,
-      explain: "Retirar libera dinero que apartaste. Es una reasignación, no un ingreso.",
+      explain: "Retirar libera dinero que apartaste. No es un ingreso.",
       onlyYours: "Solo se retira de tus propios aportes.",
       nothing: "No tienes aportes disponibles en esta meta.",
       date: "Fecha",
@@ -116,7 +118,7 @@ export const copy = {
     history: {
       title: "Historial", filter: "Filtrar por persona", all: "Todos", empty: "Todavía no hay movimientos en esta meta.",
       monthTotal: (amount: string) => `Aportes ${amount}`,
-      contribution: "Aporte", withdrawal: "Retiro de meta · reasignación", usage: (description: string) => `Uso · ${description}`, usageFallback: "Uso en un gasto",
+      contribution: "Aporte", withdrawal: "Retiro de la meta", usage: (description: string) => `Uso · ${description}`, usageFallback: "Uso en un gasto",
       by: (name: string) => `De ${name}`,
       voided: "ANULADO", undone: "DESHECHO",
       void: { action: "Anular aporte", title: "¿Anular este aporte?", description: "Sale del saldo de la meta y de los aportes de su mes. Sigue en el historial, marcado como anulado.", confirm: "Anular aporte", keep: "Conservar", done: "Aporte anulado", rejected: "No se anuló el aporte." },
@@ -130,8 +132,9 @@ export const copy = {
     },
     activity: {
       contribution: (goal: string) => `Aporte a ${goal}`, contributionMeta: (name: string) => `${name} · ahorro, no es consumo`,
-      withdrawal: "Retiro de meta · reasignación", withdrawalMeta: (goal: string, name: string) => `${goal} · ${name}`,
-      usage: (goal: string) => `Uso de ${goal} · no es un gasto nuevo`, usageMeta: (description: string) => description,
+      withdrawal: "Retiro de la meta", withdrawalMeta: (goal: string, name: string, reason: string | null) => [goal, reason, name].filter(Boolean).join(" · "),
+      // T084 (8): el uso sí cuenta en el gasto del mes; la fila ya no dice «no es un gasto nuevo».
+      usage: (goal: string) => `Uso de ${goal}`, usageMeta: (description: string) => description,
       setAside: "Apartado", spent: (month: string) => `Gasto ${month}`, filter: "Aportes",
     },
     home: {
@@ -227,7 +230,7 @@ export const copy = {
     },
     detail: {
       title: "Pagado con una meta",
-      use: (goal: string, name: string) => `Uso de ${goal} · Aportes de ${name} · no es un gasto nuevo`,
+      use: (goal: string, name: string) => `Uso de ${goal} · Aportes de ${name}`,
       rowMeta: (name: string, description: string) => `Aportes de ${name} · ${description}`,
       pending: (amount: string, name: string) => `${amount} pendientes de ${name}`,
       approvedNote: (name: string) => `${name} aprobó el uso de sus fondos.`,
@@ -306,7 +309,8 @@ export const copy = {
       history: "Historial",
       historyBy: (name: string, date: string) => `${name} · ${date}`,
       historyByMe: (date: string) => `Tú · ${date}`,
-      notSaved: (amount: string) => `Tu cambio a ${amount} no se guardó.`,
+      // T084 (7), decisión de los fundadores del 12 de noviembre de 2026: lo que escribió la persona, junto al valor vigente.
+      yourChange: (amount: string) => `Tu cambio: ${amount}`,
       notSavedOff: "Tu desactivación no se guardó.",
       historyValue: {
         create: (amount: string) => `Creó con ${amount}`,

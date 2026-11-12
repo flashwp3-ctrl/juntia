@@ -13,6 +13,7 @@ import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
 import { accessibleName, cop, longestWordEm, overlineOf, paceOf, reached, surplusOf, targetMonthLabel } from "./format";
 import { GoalRibbon } from "./goal-ribbon";
+import { isEmptyMember } from "./members";
 import { rememberOrigin, useViewTransitionsSupported } from "./goal-journey";
 import type { GoalMemberView, GoalType, GoalView, PlanningContext } from "./types";
 
@@ -75,7 +76,7 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
   const completed = goal.status === "completed";
   const suggest = goal.status === "active" && reached(goal);
   const surplus = surplusOf(goal);
-  const ribbonMembers = completed && members.length === 0 ? [{ userId: "lleno", name: "", joinOrder: 1 as const, availableMinor: goal.targetMinor }] : members;
+  const ribbonMembers = completed && members.every(isEmptyMember) ? [{ userId: "lleno", name: "", joinOrder: 1 as const, availableMinor: goal.targetMinor }] : members;
   const [scope, when] = overlineOf(goal).split(" · ");
   const open = (event: MouseEvent<HTMLAnchorElement>) => {
     if (onPeekClick) { onPeekClick(event); if (event.defaultPrevented) return; }
@@ -87,6 +88,7 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
         <Link
           href={`/metas/${goal.id}`}
           data-goal-card={goal.id}
+          data-goal-return={goal.id}
           // Sin arrastre nativo del enlace: el gesto de la pila (deslizar) no compite con arrastrar y soltar.
           draggable={false}
           onClick={open}
