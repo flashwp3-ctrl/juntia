@@ -32,7 +32,12 @@ const ordered = (members: readonly SheetMember[]) => [...members].sort((a, b) =>
 const me = (members: readonly SheetMember[]) => members.find((member) => member.isMe) ?? ordered(members)[0];
 const DIGITS = /^[0-9]{1,9}$/;
 
-/** Primera apertura (Q5): «Pagó: yo» y 50/50 entre los dos; o lo último que usó esta persona (decisión 1). */
+/**
+ * Al abrir (Q5): «Pagó: yo» y 50/50 entre los dos; o el reparto que usó esta persona la última vez (decisión 1). El pagador
+ * es siempre quien anota: decisión de los fundadores del 12 de noviembre de 2026 (T084, 6b), que cambia Q5 y FR-021 de la
+ * 003 en ese punto. En la simulación, Sara guardó gastos como «Pagó Tomás» sin darse cuenta porque se recordaba el último
+ * pagador. `last.payerUserId` se sigue leyendo (del último gasto, `couple_expenses`), pero ya no decide el valor por defecto.
+ */
 export function initialSplit(members: readonly SheetMember[], last: LastSplit | null): SplitDraft {
   const all = ordered(members).map((member) => member.userId);
   const valid = last && members.some((m) => m.userId === last.payerUserId) && last.participants.length > 0 && last.participants.every((id) => all.includes(id));
@@ -41,7 +46,7 @@ export function initialSplit(members: readonly SheetMember[], last: LastSplit | 
   const percents = last.splitMode === "percent" && last.percents && participants.length > 1
     ? Object.fromEntries(participants.map((id) => [id, String(last.percents![id] ?? 0)])) : {};
   const mode: SplitMode = participants.length === 1 ? "equal" : last.splitMode;
-  return { payerUserId: last.payerUserId, mode, participants, percents, amounts: {}, amountsTouched: false };
+  return { payerUserId: me(members).userId, mode, participants, percents, amounts: {}, amountsTouched: false };
 }
 
 type SavedSplit = Pick<SavedShared, "payerUserId" | "splitMode" | "splitPercents" | "parts">;

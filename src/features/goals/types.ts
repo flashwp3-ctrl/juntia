@@ -37,7 +37,7 @@ export type GoalEntryView = {
 
 export type GoalTotalsView = { balanceMinor: string; myAvailableMinor: string; count: number };
 
-/** Metas de un contexto, leídas en una consulta (Q11). Yo: `personal` y, aparte, `shared` con «Tus aportes». */
+/** Metas de un contexto, leídas en una consulta (Q11). Yo: `personal` y, aparte, `shared` con «Tu disponible». */
 export type GoalsScreenData = {
   context: PlanningContext;
   goals: GoalView[];

@@ -10,7 +10,9 @@
 //   (`write_status`); nunca dice que no se guardó, y cerrar pregunta antes. Nada se guarda en el navegador (FR-094).
 // - Conflicto de versión (JT011) o un presupuesto que el otro creó antes (JT219): no se sobrescribe nada. Se pide la página
 //   otra vez y, cuando llega, la hoja dice quién lo cambió y el valor vigente; «Revisar» edita sobre esa versión con una
-//   clave nueva, porque es otra intención.
+//   clave nueva, porque es otra intención. Decisión de los fundadores del 12 de noviembre de 2026 (T084, 7): cuando llega lo
+//   vigente, el campo pasa a ese valor y lo que escribió la persona queda debajo como «Tu cambio: $Y» (también después de
+//   «Revisar», como referencia), para decidir sin sobrescribir a ciegas. «Revisar» y el contrato de versión no cambian.
 // - Una categoría con un presupuesto desactivado se vuelve a activar editándolo (la clave única es por categoría).
 // - Desactivar envía `null`; los gastos y el historial quedan (Q7). Este PR no añade ningún «Deshacer» (FR-095).
 import { useRouter } from "next/navigation";
@@ -144,6 +146,9 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
   const [invalid, setInvalid] = useState<string | null>(null);
   const [conflict, setConflict] = useState<Conflict | null>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
+  /** T084 (7): el límite en pesos que la persona intentó guardar y perdió por un conflicto. */
+  const [yours, setYours] = useState<string | null>(null);
+  const [shownFresh, setShownFresh] = useState<string | null>(null);
   const errorId = `${useId()}-error`;
   const op = useRef<BudgetWriteAction>("create_budget");
 
@@ -164,8 +169,8 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     onDone(payload.op === "create" || payload.reactivate ? "created" : payload.limitPesos === null ? "deactivated" : "updated");
   }, [onDone]);
   const onRejected = useCallback((error: WriteError, payload: Payload) => {
-    if (error === "versionConflict" && payload.op === "update") { setConflict({ kind: "version", budgetId: payload.budgetId, expected: payload.expectedVersion, attempted: payload.limitPesos }); router.refresh(); }
-    else if (error === "budgetExists" && payload.op === "create") { setConflict({ kind: "exists", categoryId: payload.categoryId, attempted: payload.limitPesos }); router.refresh(); }
+    if (error === "versionConflict" && payload.op === "update") { setConflict({ kind: "version", budgetId: payload.budgetId, expected: payload.expectedVersion, attempted: payload.limitPesos }); setYours(payload.limitPesos); router.refresh(); }
+    else if (error === "budgetExists" && payload.op === "create") { setConflict({ kind: "exists", categoryId: payload.categoryId, attempted: payload.limitPesos }); setYours(payload.limitPesos); router.refresh(); }
     else if (error === "notFound") router.refresh();
   }, [router]);
   const write = useWrite<Payload, SavedBudget>({ action: "create_budget", run, check, onOk, onRejected });
@@ -212,6 +217,12 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
   const fresh = conflict?.kind === "version"
     ? rows.find((item) => item.budgetId === conflict.budgetId && item.version !== null && item.version !== conflict.expected) ?? null
     : conflict?.kind === "exists" ? rows.find((item) => item.categoryId === conflict.categoryId && item.budgetId) ?? null : null;
+  // T084 (7): en cuanto llega lo vigente, el campo lo muestra (una vez por versión vigente; ajuste durante el render, sin efecto).
+  const freshKey = fresh ? `${fresh.budgetId}:${fresh.version}:${fresh.limitMinor}` : null;
+  if (freshKey !== shownFresh) {
+    setShownFresh(freshKey);
+    if (fresh) setLimit(pesosOf(fresh.limitMinor));
+  }
   const author = fresh ? (conflict?.kind === "exists" ? fresh.history.at(-1) : fresh.history[0]) : undefined;
   // Si el cambio que ganó es de quien mira (otra pestaña u otro dispositivo), se dice en primera persona (PR #67, 3).
   const conflictTitle = !conflict ? "" : author?.byMe
@@ -256,6 +267,9 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
         disabled={locked || conflict !== null}
         aria-invalid={invalid ? true : undefined}
         aria-describedby={message ? errorId : undefined}
+        // T084 (7): la ayuda del campo, enlazada por el primitivo. Mientras se revisa lo vigente («Revisando…») no se dice nada:
+        // el campo todavía tiene lo que escribió la persona.
+        help={yours !== null && (fresh || !conflict) ? copy.plan.sheet.yourChange(formatMoney({ amountMinor: BigInt(yours) * 100n, currency: "COP" })) : undefined}
         className="w-full"
         fieldClassName="w-full"
       />
@@ -271,7 +285,8 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
                 <AppIcon name="warning" weight="bold" size={18} className="mt-px shrink-0 text-warning" />
                 <span className="flex flex-col gap-0.5">
                   <span className="font-semibold">{conflictTitle}</span>
-                  <span>{conflict.attempted === null ? copy.plan.sheet.notSavedOff : copy.plan.sheet.notSaved(formatMoney({ amountMinor: BigInt(conflict.attempted) * 100n, currency: "COP" }))}</span>
+                  {/* Un cambio de límite se ve junto al campo («Tu cambio: $Y»); una desactivación no tiene cifra y se dice aquí. */}
+                  {conflict.attempted === null ? <span>{copy.plan.sheet.notSavedOff}</span> : null}
                   <span>{fresh.limitMinor === null ? copy.plan.sheet.currentOff : copy.plan.sheet.current(money(fresh.limitMinor))}</span>
                 </span>
               </span>

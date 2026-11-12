@@ -4,8 +4,12 @@
 // `goal_member_balances`, una sola sentencia) y filtros Todos/Sara/Tomás. La lista llega completa por cursor
 // (`goal_entries`, FR-096); el total de aportes de cada mes suma esa lista completa, sin anulados.
 // «Anular aporte» (Q13): solo en los aportes propios no anulados, con confirmación; anula con auditoría y el asiento sigue
-// en la lista, marcado. Si esos fondos ya se usaron, el servidor lo rechaza y se dice. Resultado desconocido: el diálogo
-// queda abierto con «Reintentar» (misma clave) y «Comprobar estado».
+// en la lista, marcado. T084 (fallo 2): el botón sigue la misma regla que el servidor (`goal_entry_write`, JT204): solo si
+// lo disponible de quien mira cubre el aporte entero; si ya se retiró o usó una parte, no se ofrece. Si aun así el servidor
+// lo rechaza (otra pestaña), se dice. Resultado desconocido: el diálogo queda abierto con «Reintentar» (misma clave) y
+// «Comprobar estado».
+// T084 (fallo 1): el autor de cada asiento sale de las personas de la pareja (`people`), no de los saldos: quien se quedó
+// sin aportes vivos sigue teniendo nombre en sus asientos anulados o deshechos.
 import { useRouter } from "next/navigation";
 import { useCallback, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,16 +24,16 @@ import { cop } from "./format";
 import { goalRejection } from "./goal-errors";
 import { UnconfirmedClose } from "./goal-sheet-frame";
 import { GoalEntryRow } from "./goal-entry-row";
-import type { GoalActions, GoalEntryView, GoalMemberView, GoalView, VoidEntryPayload } from "./types";
+import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, VoidEntryPayload } from "./types";
 
-type Props = { goal: GoalView; entries: readonly GoalEntryView[]; members: readonly GoalMemberView[]; today: string; actions: GoalActions };
+type Props = { goal: GoalView; entries: readonly GoalEntryView[]; members: readonly GoalMemberView[]; people: readonly GoalPerson[]; today: string; actions: GoalActions };
 const overline = "text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary";
 const byDate = (a: GoalEntryView, b: GoalEntryView) => (a.effectiveDate !== b.effectiveDate ? (a.effectiveDate > b.effectiveDate ? -1 : 1) : a.createdAt > b.createdAt ? -1 : 1);
 
-export function GoalHistory({ goal, entries, members, today, actions }: Props) {
+export function GoalHistory({ goal, entries, members, people, today, actions }: Props) {
   const router = useRouter();
   const titleId = useId();
-  const me = members.find((member) => member.isMe)?.userId ?? null;
+  const me = people.find((person) => person.isMe)?.userId ?? null;
   const shared = goal.scope === "shared";
   const [who, setWho] = useState("all");
   const [target, setTarget] = useState<{ entry: GoalEntryView; key: string } | null>(null);
@@ -47,7 +51,8 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
     for (const entry of visible) groups.set(entry.effectiveDate.slice(0, 7), [...(groups.get(entry.effectiveDate.slice(0, 7)) ?? []), entry]);
     return [...groups];
   }, [visible]);
-  const canVoid = (entry: GoalEntryView) => entry.kind === "contribution" && !entry.voided && entry.memberUserId === me && goal.status !== "archived";
+  const canVoid = (entry: GoalEntryView) => entry.kind === "contribution" && !entry.voided && entry.memberUserId === me && goal.status !== "archived"
+    && BigInt(goal.myAvailableMinor) >= BigInt(entry.amountMinor);
   const open = (entry: GoalEntryView) => { write.reset(); setDone(null); setTarget({ entry, key: newIdempotencyKey() }); };
 
   return (
@@ -76,7 +81,7 @@ export function GoalHistory({ goal, entries, members, today, actions }: Props) {
             <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
               {list.map((entry) => (
                 <li key={entry.id}>
-                  <GoalEntryRow entry={entry} people={members} dateLabel={dayLabel(entry.effectiveDate, today)} variant="history"
+                  <GoalEntryRow entry={entry} people={people} dateLabel={dayLabel(entry.effectiveDate, today)} variant="history"
                     action={canVoid(entry) ? <Button size="sm" variant="ghost" icon="minus-circle" label={copy.goals.history.void.action} onClick={() => open(entry)} /> : undefined} />
                 </li>
               ))}

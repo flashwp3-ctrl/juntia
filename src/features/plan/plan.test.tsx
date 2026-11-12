@@ -215,16 +215,24 @@ describe("Hoja de presupuesto (FR-011, FR-018, FR-093; US-2 escenarios 2, 6 y 7)
     expect(router.refresh).toHaveBeenCalled();
     // Mientras llega la página nueva, no se inventa quién cambió ni cuánto.
     expect(within(sheet).getByText(copy.plan.sheet.checkingLatest)).toBeTruthy();
+    expect(within(sheet).queryByText("Tu cambio: $850.000")).toBeNull();
     const changed: BudgetChange = { id: "77777777-7777-4777-8777-777777777777", budgetId: MARKET, kind: "raise", limitMinor: minor(950000n), previousLimitMinor: minor(900000n), byName: "Tomás", changedAt: "2026-10-24T15:00:00.000Z", date: "2026-10-24" };
     const fresh: PlanRow = { ...market, version: 3, limitMinor: minor(950000n), history: [changed, ...market.history] };
     view.rerender(<BudgetSheet {...all} row={fresh} rows={[fresh, ...goldenRows.slice(1)]} />);
     expect(within(sheet).getByText(copy.plan.errors.versionConflict("Tomás"))).toBeTruthy();
     expect(within(sheet).getByText(copy.plan.sheet.current("$950.000"))).toBeTruthy();
-    // Revisión de acabado: se dice qué no se guardó, y el campo no admite otra escritura sobre la versión vieja.
-    expect(within(sheet).getByText(copy.plan.sheet.notSaved("$850.000"))).toBeTruthy();
-    expect((within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement).disabled).toBe(true);
+    // T084 (7), decisión de los fundadores del 12 de noviembre de 2026: el campo pasa al valor vigente y lo que escribió la
+    // persona queda a la vista como «Tu cambio: $Y». El campo sigue sin admitir otra escritura sobre la versión vieja.
+    const field = within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement;
+    expect(field.value).toBe("950.000");
+    expect(field.disabled).toBe(true);
+    expect(within(sheet).getByText(copy.plan.sheet.yourChange("$850.000"))).toBeTruthy();
+    expect(within(sheet).getByText("Tu cambio: $850.000")).toBeTruthy();
+    expect(field.getAttribute("aria-describedby")).toContain(within(sheet).getByText("Tu cambio: $850.000").id);
     await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.review }));
     expect((within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }) as HTMLInputElement).value).toBe("950.000");
+    // Después de «Revisar», «Tu cambio» se queda como referencia mientras decide.
+    expect(within(sheet).getByText("Tu cambio: $850.000")).toBeTruthy();
     await user.clear(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }));
     await user.type(within(sheet).getByRole("textbox", { name: copy.plan.sheet.limit }), "1000000");
     await user.click(within(sheet).getByRole("button", { name: copy.plan.sheet.saveChanges }));

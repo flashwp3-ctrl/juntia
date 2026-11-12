@@ -59,7 +59,7 @@ describe("Actividad con asientos de metas (FR-044, FR-071)", () => {
     expect(screen.getAllByText(copy.goals.activity.contribution("Japón")).length).toBeGreaterThan(0);
   });
 
-  it("Yo: un retiro aparece como reasignación, sin «+» ni color de ingreso, y no suma al gasto", () => {
+  it("Yo: un retiro aparece como «Retiro de la meta», sin «+» ni color de ingreso, y no suma al gasto", () => {
     const withdrawal = entry({ id: "79999999-9999-4999-8999-999999999999", goalName: "Bicicleta de ruta", kind: "withdrawal", amountMinor: "20000000", fundingMode: null, reason: "Cambio de planes", effectiveDate: "2026-10-20" });
     // Con los gastos privados reales de octubre (412.900) y un aporte y un retiro en el mes: el gasto sigue en 412.900.
     const { container } = render(
@@ -149,7 +149,7 @@ describe("Tabla de escritorio de Nosotros: los aportes en sus columnas (F07)", (
   });
 
   // F78-1: la tabla no pierde nada de la fila móvil. El retiro dice de qué meta salió; el uso, en qué se usó.
-  it("un retiro en la tabla dice de qué meta salió y quién («Japón · Tomás»), sin «+» ni color de ingreso", () => {
+  it("un retiro en la tabla dice de qué meta salió, por qué y quién («Japón · Cambio · Tomás»), sin «+» ni color de ingreso", () => {
     const withdrawal = entry({ id: "7ccccccc-cccc-4ccc-8ccc-cccccccccccc", kind: "withdrawal", memberUserId: "tomas", createdBy: "tomas", amountMinor: "10000000", fundingMode: null, reason: "Cambio", effectiveDate: "2026-10-10", createdAt: "2026-10-10T17:00:00.000Z" });
     const { container } = render(
       <AnnotateProvider actions={idle}><ActivityFiltersProvider>
@@ -157,8 +157,10 @@ describe("Tabla de escritorio de Nosotros: los aportes en sus columnas (F07)", (
       </ActivityFiltersProvider></AnnotateProvider>,
     );
     const cells = [...container.querySelectorAll(`table tbody tr[data-entry-id="${withdrawal.id}"] td`)];
-    expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.withdrawal, copy.goals.activity.withdrawalMeta("Japón", "Tomás"), "10 oct", "−$100.000"]);
-    expect(cells[1].textContent).toBe("Japón · Tomás");
+    expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.withdrawal, copy.goals.activity.withdrawalMeta("Japón", "Tomás", "Cambio"), "10 oct", "−$100.000"]);
+    // T084 (decisión de los fundadores del 12 de noviembre de 2026): «Retiro de la meta», con el motivo.
+    expect(cells[0].textContent).toBe("Retiro de la meta");
+    expect(cells[1].textContent).toBe("Japón · Cambio · Tomás");
     expect(cells[3].className).not.toMatch(/text-income|text-saving/);
   });
 
@@ -171,6 +173,8 @@ describe("Tabla de escritorio de Nosotros: los aportes en sus columnas (F07)", (
     );
     const cells = [...container.querySelectorAll(`table tbody tr[data-entry-id="${usage.id}"] td`)];
     expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.usage("Japón"), copy.goalExpense.detail.rowMeta("Sara", "Pasajes"), "12 oct", "−$300.000"]);
+    // T084: el uso sí cuenta en el gasto del mes; la fila ya no dice «no es un gasto nuevo».
+    expect(cells[0].textContent).toBe("Uso de Japón");
     // Lo mismo que dice la fila de la lista (móvil y 1024) para ese asiento.
     const listRow = container.querySelector<HTMLElement>(`li [data-entry-id="${usage.id}"]`)!;
     expect(listRow.textContent).toContain(cells[1].textContent!);

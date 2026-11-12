@@ -1,7 +1,8 @@
 "use client";
 // 004 PR C (T046) / FR-032, FR-033, FR-092, FR-093; Q15. «Dar por lograda» y «Archivar» con confirmación (`alertdialog`, foco
 // en la opción segura). Lograda: sigue admitiendo usos y retiros, no aportes. Archivar exige saldo 0 y ninguna solicitud
-// pendiente; si no se cumple, el servidor lo rechaza (JT214) y el diálogo lo explica. Llevan la versión leída; resultado
+// pendiente; si no se cumple, el servidor lo rechaza (JT214) y el diálogo lo explica. T084 (fallo 4): la nota «Para archivar…»
+// solo aparece cuando de verdad bloquea (saldo distinto de 0 o una solicitud pendiente, según lo leído). Llevan la versión leída; resultado
 // desconocido: «Reintentar» con la misma clave y «Comprobar estado».
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -22,9 +23,10 @@ export function GoalStatusDialog({ kind, goal, idempotencyKey, actions, onClose,
   const check = useCallback((input: Parameters<GoalActions["check"]>[0]) => actions.check(input), [actions]);
   const onRejected = useCallback(() => router.refresh(), [router]);
   const write = useWrite<GoalStatusPayload, SavedGoalStatus>({ action: kind === "complete" ? "complete_goal" : "archive_goal", run, check, onOk: onDone, onRejected });
+  const blocked = BigInt(goal.balanceMinor) !== 0n || goal.hasPendingRequest;
   const texts = kind === "complete"
     ? { title: copy.goals.statusDialog.completeTitle, description: copy.goals.statusDialog.completeDescription, confirm: copy.goals.statusDialog.completeConfirm }
-    : { title: copy.goals.statusDialog.archiveTitle, description: `${copy.goals.statusDialog.archiveDescription} ${copy.goals.errors.cannotArchive}`, confirm: copy.goals.statusDialog.archiveConfirm };
+    : { title: copy.goals.statusDialog.archiveTitle, description: blocked ? `${copy.goals.statusDialog.archiveDescription} ${copy.goals.errors.cannotArchive}` : copy.goals.statusDialog.archiveDescription, confirm: copy.goals.statusDialog.archiveConfirm };
   const [confirming, setConfirming] = useState(false);
   const rejection = write.state.phase === "rejected"
     ? goalRejection(write.state.error, { transition: kind === "complete" ? copy.goals.errors.cannotComplete : copy.goals.errors.cannotArchive })

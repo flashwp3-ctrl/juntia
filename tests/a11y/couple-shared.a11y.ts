@@ -213,7 +213,7 @@ if (JOB === "e2e") test.describe("Nosotros con pareja activa (PR C)", () => {
     await target44(page, new RegExp(`^${copy.shared.summary.open}`));
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: copy.shared.split.title })).toBeVisible();
-    // El foco en «Pagó», en quien pagó la última vez (Q5: aquí Tomás, que pagó el último gasto sembrado).
+    // El foco en «Pagó», en quien anota (T084, decisión de los fundadores del 12 de noviembre de 2026: ya no el último pagador).
     const payer = page.getByRole("radiogroup", { name: copy.shared.split.payer });
     await expect(payer.getByRole("radio", { checked: true })).toBeFocused();
     const before = await payer.getByRole("radio", { checked: true }).innerText();
