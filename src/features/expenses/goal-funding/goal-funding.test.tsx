@@ -196,15 +196,15 @@ describe("B1: solo metas del contexto de la hoja (FR-085; F63-3; US-7.1, US-7.1a
 });
 
 describe("FundingLedger: reparto ≠ fondos (FR-051; US-7.2; FR-113)", { timeout: 15000 }, () => {
-  it("propone lo proporcional a lo disponible en pesos enteros, separa el reparto de los fondos y pide aprobación solo en la fila del otro", async () => {
+  it("propone tu parte del reparto (F20), separa el reparto de los fondos y pide aprobación solo en la fila del otro", async () => {
     const { user } = setup();
     await openSheet(user);
     await fillExpense(user, "3000000");
     await chooseGoal(user, "Japón");
-    // 3.000.000 × 6,12/11,34 = 1.619.047,6 → mayor residuo: Sara 1.619.048, Tomás 1.380.952 (ADR-002).
+    // F20: con el reparto 50/50 de la hoja, Sara 1.500.000 y Tomás 1.500.000 (antes, lo proporcional: 1.619.048 y 1.380.952).
     expect(((field(copy.goalExpense.ledger.usage)) as HTMLInputElement).value).toBe("3.000.000");
-    expect(((field(copy.goalExpense.ledger.mine)) as HTMLInputElement).value).toBe("1.619.048");
-    expect(((field(copy.goalExpense.ledger.theirs("Tomás"))) as HTMLInputElement).value).toBe("1.380.952");
+    expect(((field(copy.goalExpense.ledger.mine)) as HTMLInputElement).value).toBe("1.500.000");
+    expect(((field(copy.goalExpense.ledger.theirs("Tomás"))) as HTMLInputElement).value).toBe("1.500.000");
     const split = screen.getByRole("region", { name: copy.goalExpense.ledger.splitTitle });
     expect(within(split).getByText(copy.goalExpense.ledger.splitNote)).toBeTruthy();
     const funds = screen.getByRole("region", { name: copy.goalExpense.ledger.fundsTitle });
@@ -218,11 +218,11 @@ describe("FundingLedger: reparto ≠ fondos (FR-051; US-7.2; FR-113)", { timeout
     await openSheet(user);
     await fillExpense(user, "3000000");
     await chooseGoal(user, "Japón");
-    await setField(user, copy.goalExpense.ledger.mine, "1600000");
-    expect(screen.getByText(copy.goalExpense.ledger.missing("$19.048"))).toBeTruthy();
+    await setField(user, copy.goalExpense.ledger.mine, "1400000");
+    expect(screen.getByText(copy.goalExpense.ledger.missing("$100.000"))).toBeTruthy();
     expect(isDisabled(screen.getByRole("button", { name: copy.goalExpense.submit.ask("Tomás") }))).toBe(true);
     await setField(user, copy.goalExpense.ledger.mine, "1700000");
-    expect(screen.getByText(copy.goalExpense.ledger.over("$80.952"))).toBeTruthy();
+    expect(screen.getByText(copy.goalExpense.ledger.over("$200.000"))).toBeTruthy();
     await setField(user, copy.goalExpense.ledger.mine, "1620000");
     await setField(user, copy.goalExpense.ledger.theirs("Tomás"), "1380000");
     expect(screen.getByText(copy.goalExpense.ledger.sum("$3.000.000", "$3.000.000"))).toBeTruthy();

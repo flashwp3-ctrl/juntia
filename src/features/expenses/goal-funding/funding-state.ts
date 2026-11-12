@@ -1,7 +1,11 @@
 // 004 PR D (T061) / FR-051, FR-090; Q16; COMPONENT_SPECIFICATIONS.md §FundingLedger. El estado de FundingLedger, puro: la
-// propuesta (proporcional a lo disponible, en pesos enteros con mayor residuo; `proposeFunding` del dominio, ADR-002) y la
-// validación que bloquea Guardar. La interfaz solo muestra; el servidor recalcula y la función SQL vuelve a validar
-// (FR-090). Los importes de la hoja son pesos enteros (`number`, como el monto de Anotar); las cuentas, en `bigint`.
+// propuesta y la validación que bloquea Guardar. La interfaz solo muestra; el servidor recalcula y la función SQL vuelve a
+// validar (FR-090). Los importes de la hoja son pesos enteros (`number`, como el monto de Anotar); las cuentas, en `bigint`.
+// F20 (auditoría de Impeccable; propuesta aprobada por los fundadores el 11 de noviembre de 2026; antes, Q16 opción i,
+// proporcional a lo disponible, que daba cifras como $160.676): «Tus fondos» empieza en TU PARTE DEL REPARTO del gasto
+// (50/50 de $300.000 → $150.000) y el otro aportante pone el resto; sin reparto (Yo, o un aportante solo), lo proporcional
+// redondeado a mil. Nunca por encima de lo disponible de nadie: lo que no cabe en uno pasa al otro. Solo es la propuesta: la
+// persona puede cambiarla y el servidor valida lo que se envía.
 import { proposeFunding } from "@/domain/goals";
 import type { Contributor } from "./types";
 
@@ -18,10 +22,43 @@ export type FundingStatus =
 
 const minorOf = (pesos: number) => BigInt(pesos) * 100n;
 
-/** Propuesta proporcional a lo disponible (Q16, opción i). Si el uso supera lo disponible de todos, no propone nada. */
-export function proposeFunds(contributors: readonly Contributor[], usagePesos: number | null): Funds {
+/** F20: tu parte del reparto del gasto, en pesos (`minePesos` de `expensePesos`). `null` si el gasto no tiene reparto. */
+export type OwnShare = { minePesos: bigint; expensePesos: bigint } | null;
+
+const pesosOf = (minor: string) => BigInt(minor) / 100n;
+const min = (a: bigint, b: bigint) => (a < b ? a : b);
+/** A mil pesos, la mitad hacia arriba. */
+const toThousand = (pesos: bigint) => ((pesos + 500n) / 1000n) * 1000n;
+
+/**
+ * La propuesta de fondos (F20). Con reparto, tu parte del uso; sin él, lo proporcional a lo disponible redondeado a mil; con
+ * un solo aportante, todo el uso. Cada parte con su tope en lo disponible; si el uso supera lo disponible de todos, nada.
+ */
+export function proposeFunds(contributors: readonly Contributor[], usagePesos: number | null, share: OwnShare = null): Funds {
   const empty = Object.fromEntries(contributors.map(({ userId }) => [userId, null]));
   if (!usagePesos || usagePesos <= 0 || contributors.length === 0) return empty;
+  const usage = BigInt(usagePesos);
+  const total = contributors.reduce((sum, { availableMinor }) => sum + pesosOf(availableMinor), 0n);
+  if (usage > total) return empty;
+  const me = contributors.find(({ isMe }) => isMe);
+  const others = contributors.filter(({ isMe }) => !isMe);
+  if (contributors.length > 2 || others.length > 1) return proportional(contributors, usagePesos, empty);
+  const other = others[0];
+  const myAvailable = me ? pesosOf(me.availableMinor) : 0n;
+  const target = !me ? 0n
+    : !other ? usage
+    : share && share.expensePesos > 0n ? (usage * share.minePesos) / share.expensePesos
+    : toThousand((usage * myAvailable) / total);
+  let mine = min(min(target, myAvailable), usage);
+  let theirs = usage - mine;
+  const theirAvailable = other ? pesosOf(other.availableMinor) : 0n;
+  if (theirs > theirAvailable) { mine += theirs - theirAvailable; theirs = theirAvailable; }
+  if (mine > myAvailable) return empty;
+  return { ...empty, ...(me ? { [me.userId]: Number(mine) } : {}), ...(other ? { [other.userId]: Number(theirs) } : {}) };
+}
+
+/** Más de dos aportantes (no ocurre en P0, que valida dos integrantes): lo proporcional con mayor residuo (ADR-002). */
+function proportional(contributors: readonly Contributor[], usagePesos: number, empty: Funds): Funds {
   try {
     const parts = proposeFunding(contributors.map(({ userId, joinOrder, availableMinor }) => ({ userId, joinOrder, amountMinor: BigInt(availableMinor) })), minorOf(usagePesos));
     return Object.fromEntries(parts.map(({ userId, amountMinor }) => [userId, Number(amountMinor / 100n)]));
