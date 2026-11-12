@@ -6,6 +6,10 @@
 // (50/50 de $300.000 → $150.000) y el otro aportante pone el resto; sin reparto (Yo, o un aportante solo), lo proporcional
 // redondeado a mil. Nunca por encima de lo disponible de nadie: lo que no cabe en uno pasa al otro. Solo es la propuesta: la
 // persona puede cambiarla y el servidor valida lo que se envía.
+// F77-3 (revisión del PR #77): la regla, la misma en los tres modos del reparto (igual, porcentaje y montos fijos): el uso se
+// reparte en proporción a lo ASIGNADO a cada integrante en el reparto del gasto (en montos fijos, esos montos; en igual y
+// porcentaje, las partes que ya calculó el dominio), en pesos enteros con mayor residuo y desempate por orden de ingreso
+// (`proposeFunding`, ADR-002). Con un uso igual al gasto, cada uno pone exactamente su parte. Después, los topes de disponible.
 import { proposeFunding } from "@/domain/goals";
 import type { Contributor } from "./types";
 
@@ -22,8 +26,8 @@ export type FundingStatus =
 
 const minorOf = (pesos: number) => BigInt(pesos) * 100n;
 
-/** F20: tu parte del reparto del gasto, en pesos (`minePesos` de `expensePesos`). `null` si el gasto no tiene reparto. */
-export type OwnShare = { minePesos: bigint; expensePesos: bigint } | null;
+/** F20/F77-3: lo asignado a cada integrante en el reparto del gasto, en pesos, con su orden de ingreso. `null` sin reparto. */
+export type SplitShares = { userId: string; joinOrder: number; pesos: bigint }[] | null;
 
 const pesosOf = (minor: string) => BigInt(minor) / 100n;
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
@@ -34,7 +38,7 @@ const toThousand = (pesos: bigint) => ((pesos + 500n) / 1000n) * 1000n;
  * La propuesta de fondos (F20). Con reparto, tu parte del uso; sin él, lo proporcional a lo disponible redondeado a mil; con
  * un solo aportante, todo el uso. Cada parte con su tope en lo disponible; si el uso supera lo disponible de todos, nada.
  */
-export function proposeFunds(contributors: readonly Contributor[], usagePesos: number | null, share: OwnShare = null): Funds {
+export function proposeFunds(contributors: readonly Contributor[], usagePesos: number | null, shares: SplitShares = null): Funds {
   const empty = Object.fromEntries(contributors.map(({ userId }) => [userId, null]));
   if (!usagePesos || usagePesos <= 0 || contributors.length === 0) return empty;
   const usage = BigInt(usagePesos);
@@ -45,9 +49,10 @@ export function proposeFunds(contributors: readonly Contributor[], usagePesos: n
   if (contributors.length > 2 || others.length > 1) return proportional(contributors, usagePesos, empty);
   const other = others[0];
   const myAvailable = me ? pesosOf(me.availableMinor) : 0n;
+  const fromSplit = me && other ? myPartOfUsage(shares, me.userId, usage) : null;
   const target = !me ? 0n
     : !other ? usage
-    : share && share.expensePesos > 0n ? (usage * share.minePesos) / share.expensePesos
+    : fromSplit !== null ? fromSplit
     : toThousand((usage * myAvailable) / total);
   let mine = min(min(target, myAvailable), usage);
   let theirs = usage - mine;
@@ -55,6 +60,18 @@ export function proposeFunds(contributors: readonly Contributor[], usagePesos: n
   if (theirs > theirAvailable) { mine += theirs - theirAvailable; theirs = theirAvailable; }
   if (mine > myAvailable) return empty;
   return { ...empty, ...(me ? { [me.userId]: Number(mine) } : {}), ...(other ? { [other.userId]: Number(theirs) } : {}) };
+}
+
+/** F77-3: tu parte del uso según el reparto (mayor residuo por `proposeFunding`), o `null` si el reparto no sirve (uso > gasto). */
+function myPartOfUsage(shares: SplitShares, myUserId: string, usage: bigint): bigint | null {
+  const weights = (shares ?? []).filter(({ pesos }) => pesos > 0n);
+  if (weights.length === 0) return null;
+  try {
+    const parts = proposeFunding(weights.map(({ userId, joinOrder, pesos }) => ({ userId, joinOrder, amountMinor: pesos * 100n })), usage * 100n);
+    return (parts.find(({ userId }) => userId === myUserId)?.amountMinor ?? 0n) / 100n;
+  } catch {
+    return null;
+  }
 }
 
 /** Más de dos aportantes (no ocurre en P0, que valida dos integrantes): lo proporcional con mayor residuo (ADR-002). */

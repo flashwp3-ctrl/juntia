@@ -58,7 +58,7 @@ import { isAmbiguousError, type ActionResult, type ExpenseActionError, type Expe
 import { ConfirmationBadge } from "./goal-funding/confirmation-badge";
 import { FundingEffect } from "./goal-funding/funding-effect";
 import { FundingLedger } from "./goal-funding/funding-ledger";
-import { evaluateFunding, proposeFunds, type Funds, type OwnShare } from "./goal-funding/funding-state";
+import { evaluateFunding, proposeFunds, type Funds, type SplitShares } from "./goal-funding/funding-state";
 import { GoalPicker, type PickerState } from "./goal-funding/goal-picker";
 import type { Contributor, FundingGoal, GoalExpensePayload, GoalFundingActions, SavedGoalExpense } from "./goal-funding/types";
 import { cop } from "@/features/goals/format";
@@ -301,14 +301,13 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     return { userId: member.userId, availableMinor: member.availableMinor, name: person?.name ?? "", joinOrder: person?.joinOrder ?? 1, isMe: sheetContext === "me" || Boolean(person?.isMe) };
   }).sort((a, b) => a.joinOrder - b.joinOrder), [members, sheetContext]);
   const contributors: Contributor[] = useMemo(() => (goal ? contributorsOf(goal) : []), [contributorsOf, goal]);
-  // F20: tu parte del reparto del gasto, de la que parte la propuesta de fondos. En Yo, o sin un reparto válido, `null`.
-  const ownShareOf = useCallback((draftSplit: SplitDraft | null, amountPesos: number | null): OwnShare => {
+  // F20/F77-3: lo asignado a cada integrante en el reparto del gasto, del que parte la propuesta de fondos. En Yo, o sin un
+  // reparto válido, `null`.
+  const ownShareOf = useCallback((draftSplit: SplitDraft | null, amountPesos: number | null): SplitShares => {
     if (sheetContext !== "us" || !draftSplit || amountPesos === null || amountPesos <= 0) return null;
     const status = evaluateSplit(draftSplit, amountPesos, members);
-    const mine = members.find((member) => member.isMe);
-    if (status.kind !== "ok" || !mine) return null;
-    const part = status.allocations.find((allocation) => allocation.userId === mine.userId);
-    return { minePesos: part ? part.amount.amountMinor / 100n : 0n, expensePesos: BigInt(amountPesos) };
+    if (status.kind !== "ok") return null;
+    return status.allocations.map(({ userId, amount }) => ({ userId, joinOrder: members.find((member) => member.userId === userId)?.joinOrder ?? 1, pesos: amount.amountMinor / 100n }));
   }, [members, sheetContext]);
   const fundingStatus = withGoal && goal ? evaluateFunding({ expensePesos: draft.amount, usagePesos: usage, funds, contributors }) : null;
   const splitStatus = split ? evaluateSplit(split, amount, members) : null;
