@@ -24,6 +24,7 @@ Esto no es evidencia de gate (ADR-011 §9.8): es iteración.
 | `09-presupuesto-conflicto-tu-cambio.png` | 7 | Sara guardó $850.000 en Mercado después de que Tomás lo pusiera en $950.000. El campo trae $950.000, debajo «Tu cambio: $850.000», y el aviso dice «Tomás cambió este presupuesto», «Ahora el límite es $950.000.» y «Revisar» |
 | `09b-presupuesto-revisar-tu-cambio.png` | 7 | Tras «Revisar»: el campo editable en $950.000 y «Tu cambio: $850.000» como referencia |
 | `10-metas-yo-tu-disponible.png` | 8 | Metas · Yo: «Cada una muestra tu disponible. No se suman a tus metas.» y «Tu disponible $X» bajo cada compartida |
+| `12-archivada-escape-foco-en-fila.png` | 3 (F80-1) | Una meta archivada abierta desde «Archivadas» y cerrada con Escape: el foco vuelve a su fila. Con × también (comprobado, sin captura) |
 | `11-metas-tras-cambiar-a-nosotros.png`, `11-metas-tras-cambiar-a-yo.png`, `11-plan-analisis-tras-cambiar-a-nosotros.png`, `11-plan-analisis-tras-cambiar-a-yo.png` | 5 | Metas y Análisis después de cambiar Yo↔Nosotros sin movimiento reducido, cuando terminó la transición: con su contenido |
 
 ## Sondas de esta pasada

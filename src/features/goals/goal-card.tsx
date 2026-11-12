@@ -88,6 +88,7 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
         <Link
           href={`/metas/${goal.id}`}
           data-goal-card={goal.id}
+          data-goal-return={goal.id}
           // Sin arrastre nativo del enlace: el gesto de la pila (deslizar) no compite con arrastrar y soltar.
           draggable={false}
           onClick={open}

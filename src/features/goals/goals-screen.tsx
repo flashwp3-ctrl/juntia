@@ -16,7 +16,7 @@ import { copy } from "@/lib/copy/es";
 import { cop } from "./format";
 import { GoalCard, goalTypeIcon } from "./goal-card";
 import { GoalFormSheet } from "./goal-form-sheet";
-import { takeReturnFocus } from "./goal-journey";
+import { restoreReturnFocus } from "./goal-journey";
 import { GoalStack } from "./goal-stack";
 import type { GoalActions, GoalPerson, GoalsScreenData, GoalView } from "./types";
 
@@ -41,7 +41,7 @@ function Archived({ goals }: { goals: readonly GoalView[] }) {
       <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
         {goals.map((goal) => (
           <li key={goal.id}>
-            <Link href={`/metas/${goal.id}`} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
+            <Link href={`/metas/${goal.id}`} data-goal-return={goal.id} className="flex min-h-14 items-center gap-3 py-2 text-ink hover:bg-sunken">
               <span aria-hidden="true" data-goal-tint={goal.goalType} className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--goal-tint-bg)] text-[color:var(--goal-tint-icon)]"><AppIcon name={goalTypeIcon[goal.goalType]} weight="duotone" size={20} /></span>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[15px] font-semibold">{goal.name}</span>
@@ -71,8 +71,8 @@ export function GoalsScreen({ data, today, actions }: Props) {
 
   // Al volver de la meta inmersiva, el foco vuelve a la tarjeta de origen (MOTION_SYSTEM §4).
   useEffect(() => {
-    const id = takeReturnFocus();
-    if (id) document.querySelector<HTMLElement>(`[data-goal-card="${id}"]`)?.focus({ preventScroll: false });
+    // F80-1: la tarjeta o la fila archivada de esa meta; si no está en esta pantalla, el título de Metas.
+    restoreReturnFocus();
   }, []);
 
   const sheet = creating ? (

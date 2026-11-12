@@ -73,7 +73,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented || open || document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
-      rememberOrigin(goal.id);
+      rememberOrigin(goal.id, true);
       router.push("/metas");
     };
     window.addEventListener("keydown", onKey);
@@ -86,7 +86,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
       <ViewTransition name={`goal-photo-${goal.id}`} share="goal-morph" default="none">
         <m.div layoutId={supported || reduced ? undefined : `goal-photo-${goal.id}`} data-goal-tint={goal.goalType} className="relative isolate flex min-h-[min(52vh,460px)] flex-col justify-end overflow-hidden bg-[var(--goal-tint-bg)] px-6 pt-[max(76px,env(safe-area-inset-top))] pb-12 text-ink lg:sticky lg:top-8 lg:min-h-[min(78vh,720px)] lg:rounded-[38px] lg:px-10 lg:pb-12">
           <GoalFallback goal={goal} size="immersive" />
-          <Link href="/metas" onClick={() => rememberOrigin(goal.id)} aria-label={copy.goals.immersive.close} className="absolute top-[max(16px,env(safe-area-inset-top))] right-4 z-10 grid size-11 place-items-center rounded-full bg-raised text-ink shadow-raised hover:bg-sunken lg:top-6 lg:right-6">
+          <Link href="/metas" onClick={(event) => rememberOrigin(goal.id, event.detail === 0)} aria-label={copy.goals.immersive.close} className="absolute top-[max(16px,env(safe-area-inset-top))] right-4 z-10 grid size-11 place-items-center rounded-full bg-raised text-ink shadow-raised hover:bg-sunken lg:top-6 lg:right-6">
             <AppIcon name="x" weight="bold" size={18} />
           </Link>
           <div className="relative flex flex-col gap-2">

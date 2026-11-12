@@ -837,7 +837,7 @@ describe("T084 · fallos de la simulación de la guía de salida", { timeout: 15
     await act(async () => {});
     await user.keyboard("{Escape}");
     expect(router.push).toHaveBeenCalledWith("/metas");
-    expect(takeReturnFocus()).toBe(JAPAN);
+    expect(takeReturnFocus()).toEqual({ goalId: JAPAN, keyboard: true });
     unmount();
     const second = render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
     const close = screen.getByRole("link", { name: copy.goals.immersive.close });
@@ -847,6 +847,51 @@ describe("T084 · fallos de la simulación de la guía de salida", { timeout: 15
     // Y Metas lo usa: el foco llega a la tarjeta de Japón, no a BODY.
     render(<GoalsScreen data={{ context: "us", goals: [japan()], members: { [JAPAN]: japanMembers }, totals: null }} people={people} today={TODAY} actions={actions()} />);
     expect(document.activeElement).toBe(document.querySelector(`[data-goal-card="${JAPAN}"]`));
+  });
+
+  // F80-1 (revisión de ChatGPT del PR #80): una archivada no tiene tarjeta en la pila, y una meta de otro contexto no está en
+  // la pantalla. El foco vuelve a su fila de «Archivadas» o, si no hay nada de esa meta, al título de Metas; nunca a BODY.
+  async function closeWith(how: "escape" | "x", goal: GoalView) {
+    const user = userEvent.setup();
+    takeReturnFocus();
+    const view = render(<GoalImmersive goal={goal} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    await act(async () => {});
+    if (how === "escape") await user.keyboard("{Escape}");
+    else {
+      const close = screen.getByRole("link", { name: copy.goals.immersive.close });
+      close.addEventListener("click", (event) => event.preventDefault());
+      await user.click(close);
+    }
+    view.unmount();
+  }
+  const metas = (goals: GoalView[]) => render(
+    <main><h1>{copy.nav.goals}</h1><GoalsScreen data={{ context: "us", goals, members: { [JAPAN]: japanMembers }, totals: null }} people={people} today={TODAY} actions={actions()} /></main>,
+  );
+
+  it.each(["escape", "x"] as const)("F80-1 · una archivada cerrada con %s devuelve el foco a su fila de «Archivadas»", async (how) => {
+    media();
+    const archived = japan({ status: "archived", balanceMinor: "0", myAvailableMinor: "0", progressPercent: 0 });
+    await closeWith(how, archived);
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    metas([archived, bike({ scope: "shared" })]);
+    const row = document.querySelector<HTMLElement>(`[data-goal-return="${JAPAN}"]`)!;
+    expect(row.closest("section")?.getAttribute("aria-labelledby")).toBe("goals-archived");
+    expect(row.hasAttribute("data-goal-card")).toBe(false);
+    expect(document.activeElement).toBe(row);
+    // Con el teclado (Escape) decide el navegador; con un toque en la ×, sin anillo (como F04).
+    expect(focus).toHaveBeenLastCalledWith(how === "escape" ? { preventScroll: false } : { preventScroll: false, focusVisible: false });
+    focus.mockRestore();
+  });
+
+  it.each(["escape", "x"] as const)("F80-1 · si la meta cerrada no está en la pantalla (%s), el foco va al título de Metas", async (how) => {
+    media();
+    await closeWith(how, japan());
+    // Metas en otro contexto: Japón no está, ni en la pila ni en «Archivadas».
+    metas([bike({ scope: "shared" })]);
+    const title = screen.getByRole("heading", { level: 1, name: copy.nav.goals });
+    expect(document.activeElement).toBe(title);
+    expect(title.getAttribute("tabindex")).toBe("-1");
+    expect(document.activeElement).not.toBe(document.body);
   });
 
   it("8 · textos de los fundadores: «Retiro de la meta», el uso sin «no es un gasto nuevo» y «Tu disponible»", () => {
