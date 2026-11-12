@@ -77,7 +77,14 @@ describe("ProfileForm (T040)", () => {
     await user.type(name, "Sara nueva");
     await submit();
     expect(await screen.findByText(copy.errors.sessionExpired)).toBeTruthy();
-    expect(screen.getByRole("link", { name: copy.account.signInAgain }).getAttribute("href")).toBe("/entrar?volver=%2Fcuenta%2Fperfil");
+    const again = screen.getByRole("link", { name: copy.account.signInAgain });
+    expect(again.getAttribute("href")).toBe("/entrar?volver=%2Fcuenta%2Fperfil");
+    // F10 (auditoría Impeccable, nov 2026): no es un enlace en línea de 17 px, sino un botón secundario sm (36 de alto) con
+    // área de 44 por ::after, dentro del aviso.
+    expect(again.className).toMatch(/(^|\s)h-9(\s|$)/);
+    expect(again.className).toContain("shadow-raised");
+    expect(again.className).toContain("after:-inset-y-1");
+    expect(screen.getByRole("alert").contains(again)).toBe(true);
     expect((name as HTMLInputElement).value).toBe("Sara nueva");
   });
 });

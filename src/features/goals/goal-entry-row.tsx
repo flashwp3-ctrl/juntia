@@ -22,7 +22,8 @@ type Props = {
   action?: ReactNode;
 };
 
-const chips: Record<GoalEntryView["kind"], { icon: AppIconName; className: string }> = {
+/** La ficha de cada tipo de asiento; Actividad la reutiliza en su tabla de escritorio (F07). */
+export const goalEntryChips: Record<GoalEntryView["kind"], { icon: AppIconName; className: string }> = {
   contribution: { icon: "piggy-bank", className: "bg-saving-subtle text-saving" },
   withdrawal: { icon: "arrow-u-up-left", className: "bg-sunken text-ink" },
   usage: { icon: "receipt", className: "border-[1.5px] border-dashed border-border-emphasis text-ink" },
@@ -47,8 +48,13 @@ function entryMeta(entry: GoalEntryView, people: readonly GoalPerson[], variant:
   return variant === "activity" ? copy.goalExpense.detail.rowMeta(who, description) : description;
 }
 
+/** La marca de un asiento anulado: ANULADO, DESHECHO (el «Deshacer» de 6 s) o USO QUITADO. */
+export function voidedLabel(entry: GoalEntryView) {
+  return entry.voidedReason === "undo" ? copy.goals.history.undone : entry.voidedReason === "remove_usage" ? copy.goalExpense.usageRemoved : copy.goals.history.voided;
+}
+
 export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Props) {
-  const chip = chips[entry.kind];
+  const chip = goalEntryChips[entry.kind];
   const amount = entry.kind === "contribution" ? `+${cop(entry.amountMinor)}` : `−${cop(entry.amountMinor)}`;
   const title = entryTitle(entry, variant);
   return (
@@ -64,7 +70,7 @@ export function GoalEntryRow({ entry, people, dateLabel, variant, action }: Prop
           <span className="whitespace-nowrap">{dateLabel}</span>
           {entry.voided ? (
             <span className="rounded-full border-[1.5px] border-dashed border-border-emphasis px-1.5 text-[10px] font-semibold tracking-[0.06em] text-ink">
-              {entry.voidedReason === "undo" ? copy.goals.history.undone : entry.voidedReason === "remove_usage" ? copy.goalExpense.usageRemoved : copy.goals.history.voided}
+              {voidedLabel(entry)}
             </span>
           ) : null}
         </span>

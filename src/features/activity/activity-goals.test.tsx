@@ -124,3 +124,39 @@ describe("Orden y filtros heredados (revisión del gestor del PR #68)", () => {
     expect(screen.queryByRole("radio", { name: copy.goals.activity.filter })).toBeNull();
   });
 });
+
+// F07 (auditoría Impeccable, nov 2026): «En la tabla de escritorio, las filas «Aporte a Japón» ocupan cuatro columnas
+// (colSpan={4}): la fecha va en el subtítulo, no en FECHA; no hay «Pagó · reparto»». RESPONSIVE: «desde xl, tabla de 5
+// columnas con encabezados».
+describe("Tabla de escritorio de Nosotros: los aportes en sus columnas (F07)", () => {
+  it("el aporte ocupa las cuatro columnas: título con su ficha redonda, «Sara · aporte», la fecha y +importe en verde ahorro", () => {
+    const { container } = couple();
+    const headers = [...container.querySelectorAll("table thead th")].map((th) => th.textContent);
+    expect(headers).toEqual([copy.activity.table.description, copy.activity.table.paidSplit, copy.activity.table.date, copy.activity.table.amount]);
+    const row = container.querySelector<HTMLElement>(`table tbody tr[data-entry-id="${goalEntries[0].id}"]`)!;
+    const cells = [...row.querySelectorAll("td")];
+    expect(cells).toHaveLength(4);
+    expect(cells.some((td) => td.hasAttribute("colspan"))).toBe(false);
+    expect(cells[0].textContent).toBe(copy.goals.activity.contribution("Japón"));
+    const chip = cells[0].querySelector<HTMLElement>("[data-goal-chip]")!;
+    expect(chip.className).toContain("rounded-full");
+    expect(chip.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("piggy-bank");
+    expect(cells[1].textContent).toBe(copy.activity.table.goalEntry("Sara", "contribution"));
+    expect(cells[1].textContent).toBe("Sara · aporte");
+    expect(cells[2].textContent).toBe("22 oct");
+    expect(cells[3].textContent).toBe("+$500.000");
+    expect(cells[3].className).toContain("text-saving");
+  });
+
+  it("un retiro en la tabla dice «Tomás · retiro», sin «+» ni color de ingreso", () => {
+    const withdrawal = entry({ id: "7ccccccc-cccc-4ccc-8ccc-cccccccccccc", kind: "withdrawal", memberUserId: "tomas", createdBy: "tomas", amountMinor: "10000000", fundingMode: null, reason: "Cambio", effectiveDate: "2026-10-10", createdAt: "2026-10-10T17:00:00.000Z" });
+    const { container } = render(
+      <AnnotateProvider actions={idle}><ActivityFiltersProvider>
+        <CoupleActivityView expenses={expenses} settlements={[]} month="2026-10" today="2026-10-31" navigation={{ previous: null, next: null }} members={members} summary={summary} goalEntries={[withdrawal]} setAsideMinor="0" />
+      </ActivityFiltersProvider></AnnotateProvider>,
+    );
+    const cells = [...container.querySelectorAll(`table tbody tr[data-entry-id="${withdrawal.id}"] td`)];
+    expect(cells.map((td) => td.textContent)).toEqual([copy.goals.activity.withdrawal, "Tomás · retiro", "10 oct", "−$100.000"]);
+    expect(cells[3].className).not.toMatch(/text-income|text-saving/);
+  });
+});

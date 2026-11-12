@@ -18,6 +18,8 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
   const ordered = [...members].sort((a, b) => a.joinOrder - b.joinOrder);
   const memberName = (userId: string) => members.find((member) => member.userId === userId)?.name ?? "";
   const cell = "align-top md:border-b-[length:var(--border-hairline)] md:border-border md:py-2.5";
+  // F12 (auditoría Impeccable, nov 2026): «Pagó · reparto» no se parte («Tomás · 50/50») y, desde 1280, «Gasto» tiene un
+  // ancho mínimo; con la rejilla 6/12 – 6/12 de BalanceScreen, cada gasto se lee en una línea.
   return (
     <section id="desglose" aria-labelledby="balance-breakdown-title" className="flex scroll-mt-6 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -42,8 +44,8 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
           <tbody role="rowgroup" className="block md:table-row-group">
             {expenses.map((row) => (
               <tr role="row" key={row.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b-[length:var(--border-hairline)] border-border py-2.5 md:table-row md:border-0 md:py-0">
-                <th role="rowheader" scope="row" className={`${cell} order-1 block min-w-0 pr-2 font-semibold break-words text-ink md:table-cell`}>{row.description ?? copy.categories[row.categoryId]}</th>
-                <td role="cell" className={`${cell} order-3 col-span-2 block pr-2 text-ink-secondary md:table-cell`}>{copy.shared.row.table(memberName(row.payerUserId), rowMode(row))}</td>
+                <th role="rowheader" scope="row" className={`${cell} order-1 block min-w-0 pr-2 font-semibold break-words text-ink md:table-cell xl:min-w-[9.5rem]`}>{row.description ?? copy.categories[row.categoryId]}</th>
+                <td role="cell" className={`${cell} order-3 col-span-2 block pr-2 text-ink-secondary md:table-cell md:whitespace-nowrap`}>{copy.shared.row.table(memberName(row.payerUserId), rowMode(row))}</td>
                 {ordered.map((member, index) => (
                   <td role="cell" key={member.userId} className={`${cell} ${index === 0 ? "order-4" : "order-5 text-right"} block pr-2 whitespace-nowrap text-ink md:table-cell md:text-right`}>
                     <span aria-hidden="true" className="mr-1 text-ink-secondary md:hidden">{member.name.charAt(0)}</span>

@@ -26,6 +26,7 @@ import type { SharedTransaction } from "@/lib/db/types";
 import { MonthNav, SearchField, type MonthNavigation } from "./activity-view";
 import { Segmented } from "@/components/ui/segmented";
 import { GoalEntryRow, entryTitle } from "@/features/goals/goal-entry-row";
+import { GoalEntryCells } from "./goal-entry-cells";
 import { FundingRowBadge } from "@/features/expenses/goal-funding/funding-context";
 import { cop } from "@/features/goals/format";
 import type { GoalEntryView } from "@/features/goals/types";
@@ -120,7 +121,9 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
           <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(summary?.count ?? 0)}</span>
         </div>
         {chips.length > 0 ? (
-          <div role="group" aria-label={copy.activity.categoryFilter} className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label={copy.activity.categoryFilter} className="flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:px-4 max-md:py-0.5 max-md:[scrollbar-width:none] md:flex-wrap">
+            {/* F16 (auditoría Impeccable, nov 2026): por debajo de 768 las fichas van en una fila con scroll horizontal, de borde a
+                borde de la tarjeta, en vez de partirse una por línea y empujar la lista fuera de la primera pantalla. */}
             {chips.map(([category, amountMinor]) => {
               const pressed = filters.categoryId === category;
               const amount = { amountMinor, currency: "COP" as const };
@@ -184,13 +187,8 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
             <tbody>
               {items.map((item) => {
                 const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
-                if (item.kind === "goal") {
-                  return (
-                    <tr key={item.row.id}>
-                      <td colSpan={4} className={`${cell} px-3`}><GoalEntryRow entry={item.row} people={members} dateLabel={dayLabel(item.row.effectiveDate, today)} variant="activity" /></td>
-                    </tr>
-                  );
-                }
+                // F07: el asiento de meta en las mismas columnas que los gastos, con su ficha redonda.
+                if (item.kind === "goal") return <GoalEntryCells key={item.row.id} entry={item.row} people={members} dateLabel={dayLabel(item.row.effectiveDate, today)} />;
                 if (item.kind === "settlement") {
                   return (
                     <tr key={item.row.id} className={item.row.id === selectedId ? "bg-sunken" : "hover:bg-sunken"}>

@@ -169,9 +169,15 @@ type PageHeaderProps = {
 // Encabezado del contenido. Por debajo de 1024: Mi cuenta a la izquierda, título y selector a la derecha (04·1, 04·6).
 // De 1024 a 1279: titular editorial y selector arriba a la derecha (decisión 5). Desde 1280 el selector está en el sidebar.
 // Si no caben en una línea (texto al 200 %), el selector baja de línea y sigue a la derecha: nunca se monta sobre el título.
+// F08 (auditoría Impeccable, nov 2026): el saludo «Hola, {nombre}» con nombres de 6 letras o más no cabía a 390 junto al
+// avatar y el selector. Primero escala: por debajo de 1024, un título de más de 10 caracteres junto al selector baja a
+// 6,2vw (24 px a 390; «Hola, Sara» y los destinos conservan su tamaño). Si aun así no cabe, cede ancho y se trunca con «…»;
+// solo baja de línea cuando no le quedan ni 6rem, que en rem crece con el texto ampliado. El relleno vertical con margen negativo deja sitio a tildes y descendentes
+// dentro del recorte sin cambiar el alto del encabezado.
 export function PageHeader({ title, variant = "destination", backHref = "/" }: PageHeaderProps) {
   const account = variant === "account";
   const back = variant === "back";
+  const long = !account && (title?.length ?? 0) > 10;
   return (
     <header className={`flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-3 pt-4 lg:gap-x-6 lg:pt-0 ${title ? "lg:border-b-[length:var(--border-hairline)] lg:border-border lg:pb-7" : ""}`}>
       {account || back ? (
@@ -184,7 +190,7 @@ export function PageHeader({ title, variant = "destination", backHref = "/" }: P
         <AccountButton className="-ml-0.5 lg:hidden" />
       )}
       {title ? (
-        <h1 className="max-w-full font-serif text-[clamp(25px,7.4vw,30px)] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(39px,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]">
+        <h1 className={`-my-[0.14em] min-w-0 max-w-full flex-[1_1_6rem] truncate py-[0.14em] font-serif ${long ? "text-[clamp(22px,6.2vw,30px)]" : "text-[clamp(25px,7.4vw,30px)]"} leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(39px,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]`}>
           {title}
         </h1>
       ) : null}

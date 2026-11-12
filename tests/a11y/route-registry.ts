@@ -38,7 +38,8 @@ export type RouteEntry = {
   themes?: readonly (typeof THEMES)[number][];
   /**
    * P0-1, PR D (T084, T098): `false` en los estados que solo hacen falta como captura (T098) y no añaden nada que axe no
-   * vea ya en otro estado de la misma hoja: E1 ingreso, E3 y E4. Así el job e2e no paga tres pasadas que se repiten.
+   * vea ya en otro estado de la misma hoja: E1 ingreso y E3. Así el job e2e no paga pasadas que se repiten. E4 sí se mide
+   * desde la auditoría Impeccable (F01, nov 2026): su fila «Guardando…» no sale en ningún otro estado.
    */
   axe?: boolean;
 };
@@ -82,7 +83,7 @@ export const registry: readonly RouteEntry[] = [
   { route: "/", state: "Anotar E1 ingreso", path: "/", session: "user", prepare: "annotateIncome", axe: false },
   { route: "/", state: "Anotar E2 detalles", path: "/", session: "user", prepare: "annotateDetails" },
   { route: "/", state: "Anotar E3 monto no válido", path: "/", session: "user", prepare: "annotateInvalid", axe: false },
-  { route: "/", state: "Anotar E4 guardando", path: "/", session: "user", prepare: "annotateSaving", axe: false },
+  { route: "/", state: "Anotar E4 guardando", path: "/", session: "user", prepare: "annotateSaving" },
   { route: "/", state: "Anotar error de guardado", path: "/", session: "user", prepare: "annotateFailed" },
   { route: "/", state: "Anotar E5 guardado", path: "/", session: "user", data: "recent", prepare: "annotateSaved" },
   { route: "/actividad/[id]", state: "Edición", path: "/actividad/{id}?mes=2026-10", session: "user", data: "golden", prepare: "edit" },

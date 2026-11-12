@@ -3,12 +3,12 @@
 // cambian y aplican; la seleccionada lleva anillo de 2 px e ícono Fill. El cambio de color usa la transición de 180 ms
 // del body (globals.css), que con movimiento reducido no existe. Persistencia aprobada (Q7): `profiles` + cookie.
 // La miniatura se pinta con los tokens del tema que representa (`data-theme` local), sin colores sueltos.
-import Link from "next/link";
 import { useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
 import type { Theme } from "@/lib/theme";
+import { SessionExpiredNotice } from "./account-ui";
 import { themeController } from "./theme-controller";
 import type { AccountActionResult } from "./types";
 
@@ -89,10 +89,7 @@ export function ThemeSelector({ initial, persist }: ThemeSelectorProps) {
       <p className="text-[13px] leading-[1.45] text-ink-secondary">{copy.account.appearance.help}</p>
       {problem === "failed" ? <InlineNotice tone="danger" icon="warning-circle">{copy.errors.saveFailed}</InlineNotice> : null}
       {problem === "sessionExpired" ? (
-        <InlineNotice tone="danger" icon="warning-circle">
-          {copy.errors.sessionExpired}{" "}
-          <Link href={`/entrar?volver=${encodeURIComponent("/cuenta/apariencia")}`} className="font-semibold text-ink underline underline-offset-2">{copy.account.signInAgain}</Link>
-        </InlineNotice>
+        <SessionExpiredNotice back="/cuenta/apariencia" />
       ) : null}
     </div>
   );

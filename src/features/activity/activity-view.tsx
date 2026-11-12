@@ -104,7 +104,9 @@ function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: re
         <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(rows.length)}</span>
       </div>
       {categories.length > 0 ? (
-        <div role="group" aria-label={copy.activity.categoryFilter} className="flex flex-wrap gap-1.5">
+        <div role="group" aria-label={copy.activity.categoryFilter} className="flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:px-4 max-md:py-0.5 max-md:[scrollbar-width:none] md:flex-wrap">
+          {/* F16 (auditoría Impeccable, nov 2026): por debajo de 768 las fichas van en una fila con scroll horizontal, de borde a
+              borde de la tarjeta, en vez de partirse una por línea y empujar la lista fuera de la primera pantalla. */}
           {categories.map(([category, amount]) => {
             const pressed = filters.categoryId === category;
             return (

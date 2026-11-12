@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { Avatar } from "@/components/ui/avatar";
+import { InlineNotice } from "@/components/ui/inline-notice";
 import { initialOf } from "@/domain/account";
 import { copy } from "@/lib/copy/es";
 
@@ -83,5 +84,27 @@ export function MenuGroup({ title, children }: { title: string; children: ReactN
       <h2 className="pb-0.5 font-serif text-[24px] leading-tight font-normal text-ink">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * F10 (auditoría Impeccable, nov 2026): el aviso de sesión caducada de Mi cuenta. «Entrar de nuevo» es su única salida, así
+ * que no va como enlace en línea (98 × 17 px) sino con la forma del botón secundario `sm` (36 de alto, área de 44 con
+ * `::after`; COMPONENT_SPECIFICATIONS §Button). Sigue siendo un enlace: navega a /entrar y vuelve a `back`.
+ */
+export function SessionExpiredNotice({ back }: { back: string }) {
+  return (
+    <InlineNotice tone="danger" icon="warning-circle">
+      {copy.errors.sessionExpired}
+      <span className="mt-2.5 flex">
+        <Link
+          href={`/entrar?volver=${encodeURIComponent(back)}`}
+          className="relative inline-flex h-9 shrink-0 items-center gap-2 rounded-[12px] bg-raised px-3 text-[length:var(--label-m-size)] leading-none font-semibold whitespace-nowrap text-ink shadow-raised after:absolute after:-inset-y-1 after:-inset-x-0 after:content-[''] hover:bg-sunken motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]"
+        >
+          <AppIcon name="sign-in" weight="bold" size={17} />
+          {copy.account.signInAgain}
+        </Link>
+      </span>
+    </InlineNotice>
   );
 }

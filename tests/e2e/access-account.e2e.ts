@@ -235,7 +235,7 @@ test("Exportar: el archivo JSON y el CSV llegan como descarga, con su nombre y u
     await sheet.getByRole("button", { name: copy.account.export.prepare }).click();
     await expect(sheet.getByText(copy.account.export.ready)).toBeVisible();
     const [download] = await Promise.all([page.waitForEvent("download"), sheet.getByRole("link", { name: copy.account.export.download }).click()]);
-    expect(download.suggestedFilename()).toMatch(new RegExp(`^juntia-movimientos-\\d{4}-\\d{2}-\\d{2}\\.${format}$`));
+    expect(download.suggestedFilename()).toMatch(new RegExp(`^juntia-datos-\\d{4}-\\d{2}-\\d{2}\\.${format}$`));
     expect(await download.failure()).toBeNull();
     expect((await stat(await download.path())).size).toBeGreaterThan(0);
     await page.keyboard.press("Escape");

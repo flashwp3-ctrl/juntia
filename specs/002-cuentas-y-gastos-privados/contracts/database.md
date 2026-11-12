@@ -164,8 +164,10 @@ en `config.toml`. Los proyectos alojados en Free usan la plantilla por defecto, 
 ## Exportación (route handler propio)
 
 `GET /api/export?format=json|csv` → `200` con `Content-Disposition: attachment;
-filename="juntia-movimientos-AAAA-MM-DD.<ext>"` y `Cache-Control: no-store`;
+filename="juntia-datos-AAAA-MM-DD.<ext>"` y `Cache-Control: no-store`;
 `401` sin sesión; `400` con formato no válido; `500` si falla la lectura (D5).
+El nombre era `juntia-movimientos-…` hasta la auditoría Impeccable de noviembre de 2026 (F23, aprobada por los
+fundadores el 11 de noviembre): el archivo también trae metas, aportes y presupuestos.
 
 JSON:
 

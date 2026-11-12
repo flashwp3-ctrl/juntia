@@ -9,7 +9,10 @@ import type { ReactNode } from "react";
 // Estado «nueva» (`isNew`): el fondo savingSubtle que se desvanece en 1,2 s (E5, PR D); con movimiento reducido el
 // resaltado se mantiene sin desvanecerse (MOTION_SYSTEM.md §2, «Reduced motion»).
 // Estado en vuelo (`pending`, UX lote 1, cambio 3): la fila de una creación que aún no tiene detalle. No es un enlace; dice
-// «Guardando…» en la meta y en su nombre accesible, y nunca afirma que se guardó.
+// «Guardando…» en la meta y en su nombre accesible, y nunca afirma que se guardó. F01 (auditoría Impeccable, nov 2026): el
+// estado se marca sin opacidad sobre el texto (la opacidad bajaba la meta a 3,44:1). Usa el lenguaje de «pendiente» del
+// sistema: contorno punteado `border.emphasis` (como el badge PENDIENTE, sin mover la geometría) y el reloj de arena junto
+// a «Guardando…», en `status.pending`.
 import Link from "next/link";
 import { formatMoney } from "@/domain/money";
 import type { Transaction } from "@/domain/transactions";
@@ -57,7 +60,13 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
         {/* Sobre el fondo savingSubtle de la fila nueva, la meta pasa a tinta (text.secondary da 4,38:1 en claro). */}
         <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
           <AppIcon name="lock-simple" size={12} className="shrink-0" />
-          <span className="truncate">{copy.row.onlyYou} · {dateLabel}{pendingLabel ? ` · ${pendingLabel}` : ""}</span>
+          <span className="truncate">{copy.row.onlyYou} · {dateLabel}{pendingLabel ? " ·" : ""}</span>
+          {pendingLabel ? (
+            <span data-pending-label="" className="flex shrink-0 items-center gap-1 font-semibold text-pending">
+              <AppIcon name="hourglass-medium" size={12} className="shrink-0" />
+              {pendingLabel}
+            </span>
+          ) : null}
         </span>
         {badge ? badge.node : null}
       </span>
@@ -69,7 +78,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
   const layout = "group -mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5";
   if (pending) {
     return (
-      <div data-pending={pending} aria-busy={pending === "saving" ? true : undefined} data-transaction-id={transaction.id} className={`${layout} ${pending === "saving" ? "opacity-80" : ""} ${className}`}>
+      <div data-pending={pending} aria-busy={pending === "saving" ? true : undefined} data-transaction-id={transaction.id} className={`${layout} ${pending === "saving" ? "outline-[length:var(--border-strong)] -outline-offset-[1.5px] outline-border-emphasis outline-dashed" : ""} ${className}`}>
         {content}
       </div>
     );

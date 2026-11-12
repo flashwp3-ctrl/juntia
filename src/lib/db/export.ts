@@ -84,7 +84,8 @@ export async function exportTransactions(client: SupabaseClient, format: ExportF
   const collections=planningMoney({transactions,settlements,goals,goal_entries,usage_requests,budgets});
 
   const exportedAt = bogotaInstant(now);
-  const filename = `juntia-movimientos-${exportedAt.slice(0, 10)}.${format}`;
+  // F23 (propuesta aprobada por los fundadores, 11 nov 2026): el archivo trae movimientos, metas, aportes y presupuestos.
+  const filename = `juntia-datos-${exportedAt.slice(0, 10)}.${format}`;
   if (format === "json") {
     const body = JSON.stringify({ exported_at: exportedAt, currency: "COP", note: copy.export.fileNote, ...collections }, null, 2);
     return { body, filename, contentType: "application/json; charset=utf-8" };

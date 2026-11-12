@@ -68,7 +68,7 @@ it("JSON: la estructura del contrato, importes como texto y nada interno, anulad
   expect(response.status).toBe(200);
   expect(response.headers.get("content-type")).toMatch(/^application\/json/);
   expect(response.headers.get("cache-control")).toBe("no-store");
-  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-movimientos-\d{4}-\d{2}-\d{2}\.json"$/);
+  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-datos-\d{4}-\d{2}-\d{2}\.json"$/);
   const text = await response.text();
   forbidden(text);
   const body = JSON.parse(text);
@@ -93,7 +93,7 @@ it("CSV: RFC 4180 con BOM, las mismas columnas, fórmulas neutralizadas y nada i
   expect(response.status).toBe(200);
   expect(response.headers.get("content-type")).toBe("text/csv; charset=utf-8");
   expect(response.headers.get("cache-control")).toBe("no-store");
-  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-movimientos-\d{4}-\d{2}-\d{2}\.csv"$/);
+  expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="juntia-datos-\d{4}-\d{2}-\d{2}\.csv"$/);
   const bytes = new Uint8Array(await response.clone().arrayBuffer());
   expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
   const text = (await response.text()).replace(/^﻿/, "");

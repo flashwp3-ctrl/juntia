@@ -4,7 +4,7 @@
 // la nota «04·7 (sidebar): bloque bosque con el atajo N visible» del diseño. En el celular no cambia nada.
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AppShell } from "@/components/shell/app-shell";
+import { AppShell, PageHeader } from "@/components/shell/app-shell";
 import { ContextProvider } from "@/components/shell/context-selector";
 import { AccountProvider } from "@/features/account/account-context";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
@@ -41,5 +41,26 @@ describe("Bloque lateral «Anotar gasto» (UX lote 1, cambio 4)", () => {
 
   it("la clave de copy del rótulo ya no existe", () => {
     expect("shortcutLabel" in copy.nav).toBe(false);
+  });
+});
+
+// F08 (auditoría Impeccable, nov 2026): «Hola, Tomás» + avatar + selector no cabían en una línea a 390 y el selector bajaba.
+// El título escala si es largo y, si aun así no cabe, se trunca antes de dejar caer el selector.
+describe("PageHeader: el saludo cede antes que el selector (F08)", () => {
+  const header = (title: string, variant?: "destination" | "account") =>
+    render(<AccountProvider displayName="Sara" theme="system"><ContextProvider><PageHeader title={title} variant={variant} /></ContextProvider></AccountProvider>).container.querySelector("h1")!;
+
+  it("un título largo junto al selector escala por debajo de 1024 y se trunca, sin cambiar el tamaño de escritorio", () => {
+    const h1 = header("Hola, Alejandro");
+    expect(h1.className).toContain("text-[clamp(22px,6.2vw,30px)]");
+    expect(h1.className).toContain("truncate");
+    expect(h1.className).toContain("min-w-0");
+    expect(h1.className).toContain("flex-[1_1_6rem]");
+    expect(h1.className).toContain("lg:text-[clamp(39px,3.7vw,var(--display-xl-size))]");
+  });
+
+  it("«Hola, Sara» y los destinos conservan su tamaño; sin selector (Mi cuenta) no escala", () => {
+    for (const title of ["Hola, Sara", copy.nav.activity]) expect(header(title).className).toContain("text-[clamp(25px,7.4vw,30px)]");
+    expect(header("Seguridad y sesión", "account").className).toContain("text-[clamp(25px,7.4vw,30px)]");
   });
 });
