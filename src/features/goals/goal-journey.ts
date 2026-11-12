@@ -24,13 +24,20 @@ export function takeReturnFocus(): Origin | null {
   return taken;
 }
 
-/** Enfoca el destino de vuelta: la entrada de esa meta (la visible, si hay varias) o, si no está, el título de la página. */
+// F80-2 (revisión de ChatGPT del PR #80): GoalStack deja montadas, dentro de `li.sr-only`, las metas a partir de la cuarta. Una
+// entrada así (o dentro de `[hidden]` o `aria-hidden`, o que el navegador no pinta) nunca es destino: se vuelve a «Ver todas» de
+// su pila y, si no hay, al título.
+const HIDDEN = '.sr-only, [hidden], [aria-hidden="true"]';
+const shown = (node: HTMLElement) => !node.closest(HIDDEN) && (typeof node.checkVisibility !== "function" || node.checkVisibility());
+
+/** Enfoca el destino de vuelta: la entrada visible de esa meta, «Ver todas» de su pila o, si no, el título de la página. */
 export function restoreReturnFocus(): HTMLElement | null {
   const taken = takeReturnFocus();
   if (!taken) return null;
   const options = taken.keyboard ? {} : { focusVisible: false };
   const entries = [...document.querySelectorAll<HTMLElement>(`[data-goal-return="${taken.goalId}"]`)];
-  const entry = entries.find((node) => node.getClientRects().length > 0) ?? entries[0];
+  const seeAll = entries.map((node) => node.closest("[data-goal-stack]")?.querySelector<HTMLElement>("[data-goal-see-all]") ?? null).find((node) => node !== null && shown(node));
+  const entry = entries.find(shown) ?? seeAll;
   if (entry) {
     entry.focus({ preventScroll: false, ...options });
     return entry;

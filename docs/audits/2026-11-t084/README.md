@@ -25,6 +25,7 @@ Esto no es evidencia de gate (ADR-011 §9.8): es iteración.
 | `09b-presupuesto-revisar-tu-cambio.png` | 7 | Tras «Revisar»: el campo editable en $950.000 y «Tu cambio: $850.000» como referencia |
 | `10-metas-yo-tu-disponible.png` | 8 | Metas · Yo: «Cada una muestra tu disponible. No se suman a tus metas.» y «Tu disponible $X» bajo cada compartida |
 | `12-archivada-escape-foco-en-fila.png` | 3 (F80-1) | Una meta archivada abierta desde «Archivadas» y cerrada con Escape: el foco vuelve a su fila. Con × también (comprobado, sin captura) |
+| `13-cuarta-meta-escape-foco-visible.png` | 3 (F80-2) | Cuatro metas: «Ver todas», abrir la cuarta, Escape. Next conserva el estado de Metas, así que la lista sigue abierta y el foco va a la tarjeta visible de «Meta cuatro» (350×228, fuera de `.sr-only`). Cuando la pila vuelve cerrada, la tarjeta oculta no es destino y el foco va a «Ver todas» (prueba de componente) |
 | `11-metas-tras-cambiar-a-nosotros.png`, `11-metas-tras-cambiar-a-yo.png`, `11-plan-analisis-tras-cambiar-a-nosotros.png`, `11-plan-analisis-tras-cambiar-a-yo.png` | 5 | Metas y Análisis después de cambiar Yo↔Nosotros sin movimiento reducido, cuando terminó la transición: con su contenido |
 
 ## Sondas de esta pasada

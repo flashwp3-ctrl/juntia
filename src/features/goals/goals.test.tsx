@@ -883,6 +883,28 @@ describe("T084 · fallos de la simulación de la guía de salida", { timeout: 15
     focus.mockRestore();
   });
 
+  // F80-2 (revisión de ChatGPT del PR #80): la cuarta meta sigue montada en la pila, dentro de `li.sr-only`. Volver de ella nunca
+  // enfoca esa tarjeta invisible: va a «Ver todas» de su pila.
+  it("F80-2 · cuatro metas, se vuelve de la cuarta: el foco va a «Ver todas», nunca a la tarjeta oculta", async () => {
+    media();
+    const fourth = extra(3);
+    const goals = [japan(), extra(1), extra(2), fourth];
+    await closeWith("escape", fourth);
+    const first = metas(goals);
+    const hiddenCard = document.querySelector<HTMLElement>(`[data-goal-return="${fourth.id}"]`)!;
+    expect(hiddenCard.closest(".sr-only")).not.toBeNull();
+    const active = document.activeElement as HTMLElement;
+    expect(active).not.toBe(hiddenCard);
+    expect(active.closest(".sr-only, [hidden], [aria-hidden='true']")).toBeNull();
+    expect(active).toBe(screen.getByRole("button", { name: copy.goals.stack.seeAll }));
+    // Una de las tres que se ven sí recibe el foco en su tarjeta.
+    first.unmount();
+    await closeWith("escape", extra(1));
+    metas(goals);
+    const shownCard = [...document.querySelectorAll<HTMLElement>(`[data-goal-return="${extra(1).id}"]`)].find((node) => !node.closest(".sr-only"));
+    expect(document.activeElement).toBe(shownCard);
+  });
+
   it.each(["escape", "x"] as const)("F80-1 · si la meta cerrada no está en la pantalla (%s), el foco va al título de Metas", async (how) => {
     media();
     await closeWith(how, japan());
