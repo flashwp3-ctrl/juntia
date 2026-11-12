@@ -728,8 +728,8 @@ export const copy = {
     categoryFilter: "Filtrar por categoría", categoryChip: (category: string, amount: string) => `${category}, ${amount} pesos`,
     results: (count: number) => (count === 1 ? "1 movimiento coincide" : `${count} movimientos coinciden`),
     table: { caption: "Movimientos del mes", description: "Descripción", date: "Fecha", amount: "Monto", paidSplit: "Pagó · Reparto",
-      // F07 (auditoría Impeccable, nov 2026): un asiento de meta en la tabla de escritorio, en la columna «Pagó · Reparto».
-      goalEntry: (name: string, kind: "contribution" | "withdrawal" | "usage") => `${name} · ${{ contribution: "aporte", withdrawal: "retiro", usage: "uso de meta" }[kind]}` },
+      // F07 (auditoría Impeccable, nov 2026): un aporte en la tabla de escritorio, en la columna «Pagó · Reparto».
+      goalContribution: (name: string) => `${name} · aporte` },
     // PR C de la 003 (04·1 ACTIVIDAD en Nosotros, 04·6 SIN ACTIVIDAD).
     spentTogether: (month: string) => `Gasto compartido de ${month}`,
     // F57-7: el resumen del mes dice que hay gastos y la lista llegó vacía. Copy nuevo para revisión de los fundadores.

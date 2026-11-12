@@ -1,12 +1,15 @@
 // F07 (auditoría Impeccable, nov 2026); RESPONSIVE_SPECIFICATIONS: «desde xl, tabla con encabezados». Un asiento de meta
 // (aporte, retiro o uso) en la tabla de escritorio de Actividad, en las MISMAS columnas que los gastos: la ficha redonda y
-// el título en DESCRIPCIÓN, «Sara · aporte» en PAGÓ · REPARTO, la fecha en FECHA y el importe en MONTO (tabla de Nosotros).
+// el título en DESCRIPCIÓN, quién y de qué en PAGÓ · REPARTO, la fecha en FECHA y el importe en MONTO (tabla de Nosotros).
+// F78-1 (revisión del gestor): nada de lo que dice la fila móvil desaparece en la tabla. La columna 2 repite la línea
+// secundaria de GoalEntryRow (`entryMeta`) para el retiro («Japón · Tomás») y el uso («Aportes de Sara · Pasajes»); en el
+// aporte dice «Sara · aporte», porque «ahorro, no es consumo» ya lo cuentan la ficha de ahorro y el «+» verde.
 // Antes ocupaba la fila entera (`colSpan`) con la fecha en el subtítulo y la tabla dejaba de escanearse justo ahí.
 // Conserva lo que dice GoalEntryRow: la ficha de cada tipo (DESIGN_SYSTEM §3, «Forma = tipo de fila»), «+» y verde de
 // ahorro solo en el aporte, «−» sin color de ingreso en retiro y uso, y anulado tachado con su marca.
 import { AppIcon } from "@/components/ui/app-icon";
 import { cop, personName } from "@/features/goals/format";
-import { entryTitle, goalEntryChips, voidedLabel } from "@/features/goals/goal-entry-row";
+import { entryMeta, entryTitle, goalEntryChips, voidedLabel } from "@/features/goals/goal-entry-row";
 import type { GoalEntryView, GoalPerson } from "@/features/goals/types";
 import { copy } from "@/lib/copy/es";
 
@@ -35,7 +38,7 @@ export function GoalEntryCells({ entry, people, dateLabel }: Props) {
           ) : null}
         </span>
       </td>
-      <td className={`${cell} text-[13px] text-ink-secondary`}>{copy.activity.table.goalEntry(who, entry.kind)}</td>
+      <td className={`${cell} text-[13px] text-ink-secondary`}>{entry.kind === "contribution" ? copy.activity.table.goalContribution(who) : entryMeta(entry, people, "activity")}</td>
       <td className={`${cell} font-mono text-[13px] text-ink-secondary`}>{dateLabel}</td>
       <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap tabular-nums ${entry.voided ? "text-ink-secondary line-through" : entry.kind === "contribution" ? "text-saving" : "text-ink-secondary"}`}>{amount}</td>
     </tr>

@@ -36,7 +36,8 @@ export function entryTitle(entry: GoalEntryView, variant: Props["variant"]) {
   return variant === "activity" ? copy.goals.activity.usage(goal) : copy.goals.history.usage(entry.transactionDescription ?? copy.goals.history.usageFallback);
 }
 
-function entryMeta(entry: GoalEntryView, people: readonly GoalPerson[], variant: Props["variant"]) {
+/** La línea secundaria del asiento; Actividad la repite en su tabla de escritorio (F07, F78-1). */
+export function entryMeta(entry: GoalEntryView, people: readonly GoalPerson[], variant: Props["variant"]) {
   const who = personName(people, entry.memberUserId ?? entry.createdBy);
   if (entry.kind === "contribution") {
     if (variant === "activity") return copy.goals.activity.contributionMeta(who);
