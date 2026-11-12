@@ -80,8 +80,8 @@ export function Modal({ open, onOpenChange, title, description, trigger, childre
                 >
                   {bare ? children : (
                     <>
-                      <Dialog.Title className={confirm ? "font-serif text-[25px] leading-[1.04] font-medium tracking-[-0.015em]" : titleClass}>{title}</Dialog.Title>
-                      {description ? <Dialog.Description className={confirm ? "text-[14px] leading-[1.5] text-pretty text-ink-secondary" : "text-[length:var(--body-m-size)] leading-[var(--body-m-line)] text-ink-secondary"}>{description}</Dialog.Description> : null}
+                      <Dialog.Title className={confirm ? "font-serif text-[1.5625rem] leading-[1.04] font-medium tracking-[-0.015em]" : titleClass}>{title}</Dialog.Title>
+                      {description ? <Dialog.Description className={confirm ? "text-[0.875rem] leading-[1.5] text-pretty text-ink-secondary" : "text-[length:var(--body-m-size)] leading-[var(--body-m-line)] text-ink-secondary"}>{description}</Dialog.Description> : null}
                       {children}
                       <div className="flex flex-wrap justify-end gap-2 pt-1">
                         {actions ?? (

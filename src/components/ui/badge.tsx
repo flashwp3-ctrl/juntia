@@ -23,7 +23,7 @@ export function Badge({ status }: { status: BadgeStatus }) {
   const { icon, text, tone } = statuses[status];
   const iconTone = iconTones[status] ?? "";
   return (
-    <span className={`${tone} inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[11px] font-semibold leading-none tracking-[.06em] whitespace-nowrap`}>
+    <span className={`${tone} inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] px-[9px] text-[0.6875rem] font-semibold leading-none tracking-[.06em] whitespace-nowrap`}>
       <AppIcon name={icon} weight="bold" size={12} className={iconTone} />
       {text}
     </span>

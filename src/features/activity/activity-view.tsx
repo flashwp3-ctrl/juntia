@@ -50,11 +50,15 @@ function MonthArrow({ target, direction }: { target: string | null; direction: "
 
 export function MonthNav({ month, navigation }: { month: string; navigation: MonthNavigation }) {
   return (
-    // Las flechas quedan en los extremos de la fila: no se mueven con el largo del nombre del mes ni con el texto al 200 %.
-    <div className="flex items-center gap-2 xl:max-w-[360px]">
-      <MonthArrow target={navigation.previous} direction="previous" />
-      <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink" aria-live="polite">{monthTitle(month)}</p>
-      <MonthArrow target={navigation.next} direction="next" />
+    // Las flechas quedan en los extremos de la fila: no se mueven con el largo del nombre del mes. F13: con la letra al 200 % las
+    // dos flechas miden 88 px y «Noviembre» ya no cabe entre ellas; por debajo de 16rem (nunca a 16 px: a 320 la fila mide
+    // 17,5rem) el mes sube a su propia línea y las flechas quedan debajo, en los extremos.
+    <div className="@container xl:max-w-[360px]">
+      <div className="flex items-center gap-2 @max-[16rem]:flex-wrap @max-[16rem]:justify-between">
+        <MonthArrow target={navigation.previous} direction="previous" />
+        <p className="min-w-0 flex-1 text-center font-serif text-[length:var(--title-m-fit)] leading-[var(--title-m-line)] font-medium text-ink @max-[16rem]:order-first @max-[16rem]:basis-full" aria-live="polite">{monthTitle(month)}</p>
+        <MonthArrow target={navigation.next} direction="next" />
+      </div>
     </div>
   );
 }
@@ -89,7 +93,7 @@ function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: re
         <span className="flex flex-wrap items-end gap-x-6 gap-y-2">
           <p className="flex flex-col gap-0.5">
             <span id={titleId} className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.spentIn(monthName(month))}</span>
-            <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">
+            <span className="text-[length:var(--money-m-fit)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">
               {spent ? formatMoney(summary.expenseTotal) : copy.home.noExpenses(monthName(month))}
             </span>
           </p>
@@ -97,18 +101,19 @@ function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: re
           {setAsideMinor !== undefined && BigInt(setAsideMinor) > 0n ? (
             <p data-set-aside="" className="flex flex-col gap-0.5">
               <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.goals.activity.setAside}</span>
-              <span className="text-[17px] leading-[var(--money-m-line)] font-semibold text-saving tabular-nums">{cop(setAsideMinor)}</span>
+              <span className="text-[1.0625rem] leading-[var(--money-m-line)] font-semibold text-saving tabular-nums">{cop(setAsideMinor)}</span>
             </p>
           ) : null}
         </span>
         <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(rows.length)}</span>
       </div>
       {categories.length > 0 ? (
-        <div role="group" aria-label={copy.activity.categoryFilter} className="flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:-my-1 max-md:px-4 max-md:py-1.5 max-md:[scrollbar-width:none] md:flex-wrap">
+        <div role="group" aria-label={copy.activity.categoryFilter} className="relative flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:-my-1 max-md:px-4 max-md:py-1.5 max-md:[scrollbar-width:none] md:flex-wrap">
           {/* F16 (auditoría Impeccable, nov 2026): por debajo de 768 las fichas van en una fila con scroll horizontal, de borde a
               borde de la tarjeta, en vez de partirse una por línea y empujar la lista fuera de la primera pantalla. F78-2: el
               scroller recorta también en vertical; 6 px de relleno dejan sitio al anillo de foco (--border-focus + --focus-offset =
-              4 px fuera de la ficha) y el margen negativo de 4 px conserva el alto de antes. */}
+              4 px fuera de la ficha) y el margen negativo de 4 px conserva el alto de antes. F13: el scroller es «relative» para ser el bloque
+                contenedor de los nombres sr-only (absolutos) de las fichas; sin eso no los recortaba y ensanchaban la página a 390. */}
           {categories.map(([category, amount]) => {
             const pressed = filters.categoryId === category;
             return (
@@ -117,7 +122,7 @@ function Summary({ rows, month, filters, onCategory, setAsideMinor }: { rows: re
                 type="button"
                 aria-pressed={pressed}
                 onClick={() => onCategory(pressed ? null : category)}
-                className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[13px] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}
+                className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[0.8125rem] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}
               >
                 {/* Nombre por texto oculto, no por aria-label (WCAG 2.5.3): «Transporte, 45.000 pesos». */}
                 <span className="sr-only">{copy.activity.categoryChip(copy.categories[category], pesos(amount))}</span>
@@ -218,20 +223,20 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
             <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
               <td className={`${cell} rounded-l-[14px]`}>
                 {savingOf(pending, transaction.id) ? (
-                  <span data-pending="saving" aria-busy="true" data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                  <span data-pending="saving" aria-busy="true" data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                     <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
                     <span className="truncate">{rowTitle(transaction)}</span>
-                    <span className="shrink-0 text-[12px] font-medium text-ink-secondary">{copy.row.pending.saving}</span>
+                    <span className="shrink-0 text-[0.75rem] font-medium text-ink-secondary">{copy.row.pending.saving}</span>
                   </span>
                 ) : (
-                  <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-temp={pending.get(transaction.id) === "confirmed" ? "" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                  <Link href={detailHref(transaction.id, month)} aria-current={current ? "page" : undefined} data-temp={pending.get(transaction.id) === "confirmed" ? "" : undefined} data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                     <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />
                     <span className="truncate">{rowTitle(transaction)}</span>
                   </Link>
                 )}
               </td>
-              <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}<FundingRowBadge transactionId={transaction.id} /></td>
-              <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
+              <td className={`${cell} font-mono text-[0.8125rem] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink group-data-[new]:text-ink"}`}>{dayLabel(transaction.transactionDate, today)}<FundingRowBadge transactionId={transaction.id} /></td>
+              <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[0.9375rem] font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-income" : "text-expense"}`}>{signedAmount(transaction)}</td>
             </tr>
           );
         })}
@@ -284,7 +289,7 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
           <SearchField value={filters.query} onChange={filters.setQuery} />
           <Segmented
             role="radiogroup"
-            label={copy.activity.type}
+            label={copy.activity.type} wrap
             value={type}
             onValueChange={filters.setType}
             options={setAsideMinor !== undefined

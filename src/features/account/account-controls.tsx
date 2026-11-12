@@ -23,11 +23,11 @@ const exportPrimary =
 function SignOutRowButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" aria-busy={pending || undefined} disabled={pending} className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
+    <button type="submit" aria-busy={pending || undefined} disabled={pending} className="grid min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
       <Tile icon="sign-out" tone="neutral" />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold text-ink">{pending ? copy.account.signOut.loading : copy.account.signOut.label}</span>
-        {pending ? null : <span className="text-[13px] leading-[1.4] text-ink-secondary">{copy.account.signOut.hint}</span>}
+        <span className="text-[0.9375rem] font-semibold text-ink">{pending ? copy.account.signOut.loading : copy.account.signOut.label}</span>
+        {pending ? null : <span className="text-[0.8125rem] leading-[1.4] text-ink-secondary">{copy.account.signOut.hint}</span>}
       </span>
       {pending ? <AppIcon name="circle-notch" weight="bold" size={18} className="text-ink motion-safe:animate-[button-spin_0.8s_linear_infinite]" /> : <span />}
     </button>
@@ -76,12 +76,12 @@ export function PasswordChange({ email }: { email: string }) {
           const result = await requestPasswordChange();
           setStatus(result.ok ? "sent" : result.error === "sessionExpired" ? "sessionExpired" : "failed");
         })}
-        className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left"
+        className="grid min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left"
       >
         <Tile icon="key" tone="transport" />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[15px] font-semibold text-ink">{pending ? copy.account.security.changing : copy.account.security.change}</span>
-          <span className="text-[13px] leading-[1.4] text-ink-secondary">{sent ? copy.account.security.sentHint : copy.account.security.changeHint}</span>
+          <span className="text-[0.9375rem] font-semibold text-ink">{pending ? copy.account.security.changing : copy.account.security.change}</span>
+          <span className="text-[0.8125rem] leading-[1.4] text-ink-secondary">{sent ? copy.account.security.sentHint : copy.account.security.changeHint}</span>
         </span>
         {pending ? <AppIcon name="circle-notch" weight="bold" size={18} className="text-ink motion-safe:animate-[button-spin_0.8s_linear_infinite]" /> : sent ? <span /> : <AppIcon name="caret-right" size={18} className="text-ink-secondary" />}
       </button>
@@ -114,7 +114,7 @@ export function AccountSectionsNav() {
             key={section.href}
             href={section.href}
             aria-current={current ? "page" : undefined}
-            className={`flex min-h-[52px] items-center gap-3 rounded-[16px] px-2.5 py-1.5 text-[15px] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-overlay font-semibold text-ink shadow-raised" : "font-medium text-ink hover:bg-sunken"}`}
+            className={`flex min-h-[52px] items-center gap-3 rounded-[16px] px-2.5 py-1.5 text-[0.9375rem] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-overlay font-semibold text-ink shadow-raised" : "font-medium text-ink hover:bg-sunken"}`}
           >
             <Tile icon={section.icon} tone={section.tone} size={34} />
             {section.label}
@@ -176,11 +176,11 @@ export function ExportEntry() {
   ];
   return (
     <>
-      <button ref={triggerRef} type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
+      <button ref={triggerRef} type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="grid min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2.5 text-left">
         <Tile icon="download-simple" tone="services" />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[15px] font-semibold text-ink">{copy.account.privacy.export}</span>
-          <span className="text-[13px] leading-[1.4] text-ink-secondary">{copy.account.privacy.exportHint}</span>
+          <span className="text-[0.9375rem] font-semibold text-ink">{copy.account.privacy.export}</span>
+          <span className="text-[0.8125rem] leading-[1.4] text-ink-secondary">{copy.account.privacy.exportHint}</span>
         </span>
         <AppIcon name="caret-right" size={18} className="text-ink-secondary" />
       </button>
@@ -189,9 +189,9 @@ export function ExportEntry() {
           (COMPONENT_SPECIFICATIONS §BottomSheet: gesto, ×, Escape o scrim). */}
       <BottomSheet open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} onCloseAutoFocus={returnFocus} bare adaptive>
         <div className="flex flex-col gap-4 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
-          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
             <span />
-            <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.account.export.title}</DialogTitle>
+            <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.account.export.title}</DialogTitle>
             <button type="button" onClick={() => { setOpen(false); reset(); }} aria-label={copy.account.export.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
               <AppIcon name="x" weight="bold" size={16} />
             </button>
@@ -219,8 +219,8 @@ export function ExportEntry() {
                   className={`grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3 rounded-[16px] px-3.5 py-3 text-left ${selected ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)]"}`}
                 >
                   <span className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold text-ink">{option.label}</span>
-                    <span className="text-[12px] leading-[1.4] text-[var(--comp-field-muted-fg)]">{option.hint}</span>
+                    <span className="text-[0.9375rem] font-semibold text-ink">{option.label}</span>
+                    <span className="text-[0.75rem] leading-[1.4] text-[var(--comp-field-muted-fg)]">{option.hint}</span>
                   </span>
                   <span aria-hidden="true" className={`grid size-[22px] place-items-center rounded-full border-2 ${selected ? "border-ink" : "border-border-emphasis"}`}>
                     {selected ? <span className="size-2.5 rounded-full bg-ink" /> : null}
@@ -229,7 +229,7 @@ export function ExportEntry() {
               );
             })}
           </div>
-          <ul className="flex flex-col text-[14px] leading-[1.45] text-ink-secondary">
+          <ul className="flex flex-col text-[0.875rem] leading-[1.45] text-ink-secondary">
             {[["check", copy.account.export.includes], ["lock-simple", copy.account.export.excludes], ["info", copy.account.export.notRestore]].map(([icon, text]) => (
               <li key={text} className="flex items-start gap-2.5 py-[7px]"><AppIcon name={icon as AppIconName} size={18} className="mt-px shrink-0 text-ink" />{text}</li>
             ))}

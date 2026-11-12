@@ -18,8 +18,8 @@ export function RecoverForm({ notice }: { notice: RecoverNotice }) {
     <>
       <BackToSignIn />
       {notice && !sent ? <InlineNotice tone="danger" icon="warning-circle">{notice === "otherBrowser" ? copy.auth.recover.otherBrowser : copy.auth.recover.linkExpired}</InlineNotice> : null}
-      <h1 className="font-serif text-[40px] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.recover.title}</h1>
-      <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">{copy.auth.recover.description}</p>
+      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.recover.title}</h1>
+      <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">{copy.auth.recover.description}</p>
       <form action={action} noValidate className="flex flex-col gap-5">
         <Input label={copy.auth.fields.email} name="email" type="email" autoComplete="email" inputMode="email" defaultValue={state.email} key={`email-${state.email ?? ""}`} readOnly={sent} error={state.field === "email" ? state.error : undefined} />
         {sent ? <InlineNotice tone="success" icon="check-circle">{state.notice}</InlineNotice> : null}

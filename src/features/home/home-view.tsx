@@ -49,11 +49,11 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
   const title = row.description ?? copy.categories[row.categoryId];
   const date = dayLabel(row.transactionDate, today);
   return (
-    <HighlightSharedPart id={row.id} className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+    <HighlightSharedPart id={row.id} className="row-stack grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2">
       <span className={`grid size-10 place-items-center rounded-[12px] ${tileBg[row.categoryId]}`}><AppIcon name={categories[row.categoryId].icon} weight="duotone" size={20} className={categoryFg[row.categoryId]} /></span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
-        <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary">
+        <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{title}</span>
+        <span className="flex min-w-0 items-center gap-1 text-[0.75rem] leading-[1.35] text-ink-secondary">
           <AppIcon name="users-three" size={12} className="shrink-0" />
           <span className="truncate"><span>{copy.row.sharedPart(formatMoney(row.myPart))}</span>{` · ${date}`}</span>
         </span>
@@ -126,13 +126,13 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
                   key={category}
                   aria-label={copy.activity.categoryChip(copy.categories[category], pesos(amount))}
                   style={{ flexGrow: weight(amount) }}
-                  className={`flex min-h-[88px] min-w-[100px] basis-[100px] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}
+                  className={`flex min-h-[88px] min-w-[6.25rem] basis-[6.25rem] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[category]}`}
                 >
                   <span aria-hidden="true" className="flex min-w-0 flex-col items-start gap-1 text-[length:var(--label-s-size)] font-semibold text-ink">
                     <AppIcon name={categories[category].icon} weight="duotone" size={18} className={categoryFg[category]} />
                     <span className="max-w-full truncate">{copy.categories[category]}</span>
                   </span>
-                  <span aria-hidden="true" className="text-[13px] font-semibold text-ink">{pesos(amount)}</span>
+                  <span aria-hidden="true" className="text-[0.8125rem] font-semibold text-ink">{pesos(amount)}</span>
                 </li>
               ))}
             </ul>

@@ -121,7 +121,7 @@ function Counter({ minor }: { minor: string }) {
     return () => controls.stop();
   }, [value, reduced]);
   return (
-    <span className="block text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]">
+    <span className="block text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-ink lg:text-[length:var(--money-xl-size)] lg:tracking-[var(--money-xl-tracking)]">
       <span aria-hidden="true" data-counting-value="" className="tabular-nums">{reduced ? final : shown}</span>
       <span className="sr-only">{final}</span>
     </span>
@@ -173,7 +173,7 @@ function BudgetLine({ row, context, elapsed }: { row: AnalysisCategory; context:
       </span>
       {/* F22 (auditoría de Impeccable): los mismos badges que Plan, al final de la línea de estado. */}
       <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
+        <span className={`flex items-center gap-[5px] text-[0.75rem] font-medium tabular-nums ${tone}`}>
           {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
           {status}
         </span>
@@ -249,13 +249,13 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
                       aria-label={copy.activity.categoryChip(copy.categories[row.categoryId], pesos({ amountMinor: BigInt(row.consumedMinor), currency: "COP" }))}
                       // Las fichas crecen en ancho hasta su proporción (stagger de 40 ms) cuando el capítulo entra.
                       style={{ flexGrow: weight(row.consumedMinor), transform: phase === "waiting" ? "scaleX(.6)" : undefined, transformOrigin: "left", transition: phase === "shown" ? undefined : `transform 420ms ${enter} ${index * 40}ms` }}
-                      className={`flex min-h-[80px] min-w-[104px] basis-[104px] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[row.categoryId]}`}
+                      className={`flex min-h-[80px] min-w-[6.5rem] basis-[6.5rem] flex-col justify-between gap-1.5 rounded-[16px] px-3 py-2.5 ${tileBg[row.categoryId]}`}
                     >
                       <span aria-hidden="true" className="flex min-w-0 flex-col items-start gap-1 text-[length:var(--label-s-size)] font-semibold text-ink">
                         <AppIcon name={categoryIcons[row.categoryId].icon} weight="duotone" size={18} className={categoryFg[row.categoryId]} />
                         <span className="max-w-full truncate">{copy.categories[row.categoryId]}</span>
                       </span>
-                      <span aria-hidden="true" className="text-[13px] font-semibold text-ink tabular-nums">{pesos({ amountMinor: BigInt(row.consumedMinor), currency: "COP" })}</span>
+                      <span aria-hidden="true" className="text-[0.8125rem] font-semibold text-ink tabular-nums">{pesos({ amountMinor: BigInt(row.consumedMinor), currency: "COP" })}</span>
                     </li>
                   ))}
                 </ul>
@@ -268,10 +268,10 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
                   <ul aria-labelledby="analysis-budgets" className="flex flex-col">
                     {budgets.map((row) => <BudgetLine key={row.categoryId} row={row} context={context} elapsed={elapsed} />)}
                   </ul>
-                  {elapsed !== null ? <p className="text-[12px] leading-[1.45] text-ink-secondary">{copy.analysis.where.elapsed(elapsed)}</p> : null}
+                  {elapsed !== null ? <p className="text-[0.75rem] leading-[1.45] text-ink-secondary">{copy.analysis.where.elapsed(elapsed)}</p> : null}
                 </div>
               ) : spentRows.length > 0 ? (
-                <p className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.analysis.where.noBudgets[context]}</p>
+                <p className="text-[0.8125rem] leading-[1.45] text-pretty text-ink-secondary">{copy.analysis.where.noBudgets[context]}</p>
               ) : null}
             </>
           )}
@@ -281,7 +281,7 @@ export function AnalysisScreen({ data }: { data: AnalysisData }) {
           {(phase) => (
             <>
               {data.history.length > 0 ? <MonthChart months={data.history} selected={month} waiting={phase === "waiting"} /> : null}
-              {data.history.length <= 1 ? <p className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{data.history.length === 0 ? copy.analysis.compared.empty : copy.analysis.compared.first}</p> : null}
+              {data.history.length <= 1 ? <p className="text-[0.8125rem] leading-[1.45] text-pretty text-ink-secondary">{data.history.length === 0 ? copy.analysis.compared.empty : copy.analysis.compared.first}</p> : null}
             </>
           )}
         </Chapter>

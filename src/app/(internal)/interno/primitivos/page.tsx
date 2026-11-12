@@ -29,7 +29,7 @@ export default async function InternalPrimitivesPage() {
     <main id="contenido" className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 py-10 md:px-7 xl:px-10 xl:py-14">
       <header className="flex max-w-[760px] flex-col gap-3">
         <span className="font-mono text-[length:var(--meta-mono-size)] tracking-[.06em] text-ink-secondary uppercase">{copy.internal.eyebrow}</span>
-        <h1 className="font-serif text-[length:clamp(32px,6vw,var(--display-l-size))] leading-none font-medium tracking-[var(--display-l-tracking)] text-balance">{copy.internal.title}</h1>
+        <h1 className="font-serif text-[length:clamp(2rem,6vw,var(--display-l-size))] leading-none font-medium tracking-[var(--display-l-tracking)] text-balance">{copy.internal.title}</h1>
         <p className="text-[length:var(--body-l-size)] leading-[var(--body-l-line)] text-ink-secondary text-pretty">{copy.internal.note}</p>
       </header>
       <div className="grid gap-6 xl:grid-cols-2">

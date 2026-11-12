@@ -86,19 +86,19 @@ export function SettlementDetail({ settlement, members, actions: given, closeHre
           </Link>
         </div>
         <h2 id="settlement-title" className={`font-serif text-[length:var(--title-l-size)] leading-[1.1] font-medium text-ink ${voided ? "line-through" : ""}`}>{title}</h2>
-        <p className={`text-[length:var(--money-l-size)] leading-none font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums ${voided ? "line-through" : ""}`}>{formatMoney(settlement.amount)}</p>
-        <p className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-ink-secondary">
+        <p className={`text-[length:var(--money-l-fit)] leading-none font-semibold tracking-[var(--money-l-tracking)] text-ink tabular-nums ${voided ? "line-through" : ""}`}>{formatMoney(settlement.amount)}</p>
+        <p className="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-ink-secondary">
           <span>{copy.shared.row.settlement}</span>
-          {voided ? <span className="inline-flex h-6 items-center rounded-[8px] bg-sunken px-[9px] text-[11px] font-semibold tracking-[.06em] text-ink">{copy.balance.settlement.voidedBadge}</span> : null}
+          {voided ? <span className="inline-flex h-6 items-center rounded-[8px] bg-sunken px-[9px] text-[0.6875rem] font-semibold tracking-[.06em] text-ink">{copy.balance.settlement.voidedBadge}</span> : null}
         </p>
       </header>
       <dl className="flex flex-col">
-        <div className={row}><dt className="text-[12px] font-medium text-ink-secondary">{copy.balance.settlement.date}</dt><dd className="text-[15px] font-semibold text-ink">{longDate(settlement.settlementDate)}</dd></div>
-        {settlement.note ? <div className={row}><dt className="text-[12px] font-medium text-ink-secondary">{copy.balance.settlement.note}</dt><dd className="min-w-0 text-right text-[15px] font-semibold break-words text-ink">{settlement.note}</dd></div> : null}
+        <div className={row}><dt className="text-[0.75rem] font-medium text-ink-secondary">{copy.balance.settlement.date}</dt><dd className="text-[0.9375rem] font-semibold text-ink">{longDate(settlement.settlementDate)}</dd></div>
+        {settlement.note ? <div className={row}><dt className="text-[0.75rem] font-medium text-ink-secondary">{copy.balance.settlement.note}</dt><dd className="min-w-0 text-right text-[0.9375rem] font-semibold break-words text-ink">{settlement.note}</dd></div> : null}
       </dl>
-      <p className="text-[12px] text-ink-secondary">{copy.balance.settlement.by(name(settlement.createdBy), instantInBogota(settlement.createdAt))}</p>
-      {voided && settlement.voidedAt ? <p className="text-[12px] text-ink-secondary">{copy.balance.settlement.voidedBy(name(settlement.voidedBy), instantInBogota(settlement.voidedAt))}</p> : null}
-      <p className="text-[12px] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settlements.note}</p>
+      <p className="text-[0.75rem] text-ink-secondary">{copy.balance.settlement.by(name(settlement.createdBy), instantInBogota(settlement.createdAt))}</p>
+      {voided && settlement.voidedAt ? <p className="text-[0.75rem] text-ink-secondary">{copy.balance.settlement.voidedBy(name(settlement.voidedBy), instantInBogota(settlement.voidedAt))}</p> : null}
+      <p className="text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settlements.note}</p>
       {!voided && actions?.voidSettlement ? (
         <Button variant="ghost" icon="minus-circle" className="self-start" onClick={() => { write.reset(); setKey(newIdempotencyKey()); }}>{copy.balance.settlement.void.action}</Button>
       ) : null}
@@ -114,7 +114,7 @@ export function SettlementDetail({ settlement, members, actions: given, closeHre
         locked={write.locked}
         onConfirm={() => { if (key) void write.submit({ idempotencyKey: key, settlementId: settlement.id, expectedVersion: settlement.version, reason: "void" }); }}
       >
-        {rejectedText ? <p role="alert" className="rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[13px] font-medium text-ink">{rejectedText}</p> : null}
+        {rejectedText ? <p role="alert" className="rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[0.8125rem] font-medium text-ink">{rejectedText}</p> : null}
         {write.state.phase === "unknown" ? (
           <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
         ) : null}

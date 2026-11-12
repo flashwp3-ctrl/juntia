@@ -92,7 +92,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           <div className="relative flex flex-col gap-2">
             <p className={`${overlineClass} text-pending`}>{overlineOf(goal)}</p>
             <ViewTransition name={`goal-title-${goal.id}`} share="goal-morph" default="none">
-              <h1 id="goal-title" ref={title} tabIndex={-1} onBlur={(event) => event.currentTarget.removeAttribute("data-quiet-focus")} className="max-w-[18ch] font-serif text-[clamp(44px,13vw,84px)] leading-[0.98] font-medium tracking-[-0.02em] text-balance outline-none focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-4 focus-visible:outline-focus focus-visible:outline-solid data-[quiet-focus]:focus-visible:outline-none lg:text-[clamp(56px,6vw,112px)]">
+              <h1 id="goal-title" ref={title} tabIndex={-1} onBlur={(event) => event.currentTarget.removeAttribute("data-quiet-focus")} className="max-w-[18ch] font-serif text-[clamp(2.75rem,13vw,5.25rem)] leading-[0.98] font-medium tracking-[-0.02em] text-balance outline-none focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-4 focus-visible:outline-focus focus-visible:outline-solid data-[quiet-focus]:focus-visible:outline-none lg:text-[clamp(3.5rem,6vw,7rem)]">
                 {goal.name}
               </h1>
             </ViewTransition>
@@ -103,24 +103,24 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
       <div className="relative -mt-7 flex flex-col gap-6 rounded-t-[28px] bg-canvas px-5 pt-6 pb-10 shadow-sheet lg:mt-0 lg:rounded-none lg:bg-transparent lg:px-0 lg:pt-0 lg:shadow-none">
         <section aria-label={copy.goals.immersive.target} className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-            <p className="text-[clamp(40px,11vw,56px)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums">{copy.goals.percent(goal.progressPercent)}</p>
-            <p className="pb-1 text-[15px] font-semibold text-ink tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</p>
+            <p className="text-[clamp(2.5rem,11vw,3.5rem)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums">{copy.goals.percent(goal.progressPercent)}</p>
+            <p className="pb-1 text-[0.9375rem] font-semibold text-ink tabular-nums">{copy.goals.ofTarget(cop(goal.balanceMinor), cop(goal.targetMinor))}</p>
           </div>
           <ViewTransition name={`goal-ribbon-${goal.id}`} share="goal-morph" default="none">
             <div><GoalRibbon members={members} targetMinor={goal.targetMinor} pacePercent={pace.kind === "line" ? pace.elapsedPercent : null} size="immersive" grow /></div>
           </ViewTransition>
           {goal.status === "completed" ? (
-            <p className="flex items-center gap-2 text-[14px] font-semibold text-ink"><AppIcon name="flag-checkered" weight="fill" size={18} />{copy.goals.status.completed}</p>
+            <p className="flex items-center gap-2 text-[0.875rem] font-semibold text-ink"><AppIcon name="flag-checkered" weight="fill" size={18} />{copy.goals.status.completed}</p>
           ) : active && reached(goal) ? (
-            <p className="flex flex-col gap-0.5 text-[14px] text-ink"><span className="flex items-center gap-2 font-semibold"><AppIcon name="check-circle" weight="fill" size={18} className="text-saving" />{copy.goals.reached[context]}</span><span className="text-[13px] text-ink-secondary">{copy.goals.reachedHint}</span></p>
+            <p className="flex flex-col gap-0.5 text-[0.875rem] text-ink"><span className="flex items-center gap-2 font-semibold"><AppIcon name="check-circle" weight="fill" size={18} className="text-saving" />{copy.goals.reached[context]}</span><span className="text-[0.8125rem] text-ink-secondary">{copy.goals.reachedHint}</span></p>
           ) : null}
-          {surplus > 0n ? <p className="text-[13px] font-medium text-ink-secondary">{copy.goals.surplus(cop(surplus))}</p> : null}
+          {surplus > 0n ? <p className="text-[0.8125rem] font-medium text-ink-secondary">{copy.goals.surplus(cop(surplus))}</p> : null}
           {pace.kind === "line" ? (
-            <p className="flex flex-wrap items-center gap-2 text-[13px] text-ink-secondary">
-              <span className="rounded-full border-[1.5px] border-dashed border-projection px-1.5 text-[11px] font-semibold">{copy.goals.pace.estimate}</span>{pace.text}
+            <p className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-ink-secondary">
+              <span className="rounded-full border-[1.5px] border-dashed border-projection px-1.5 text-[0.6875rem] font-semibold">{copy.goals.pace.estimate}</span>{pace.text}
             </p>
-          ) : pace.kind === "pastDue" ? <p className="text-[13px] text-ink-secondary">{pace.text}</p> : null}
-          {goal.hasPendingRequest ? <p className="flex items-center gap-2 text-[13px] font-medium text-ink"><AppIcon name="clock" size={16} />{copy.goals.pending}</p> : null}
+          ) : pace.kind === "pastDue" ? <p className="text-[0.8125rem] text-ink-secondary">{pace.text}</p> : null}
+          {goal.hasPendingRequest ? <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-ink"><AppIcon name="clock" size={16} />{copy.goals.pending}</p> : null}
         </section>
 
         {members.length > 0 ? (
@@ -129,10 +129,10 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
               <li key={member.userId} className="flex items-center gap-3">
                 <Avatar person={member.joinOrder} initial={initialOf(member.name)} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[14px] font-semibold text-ink">{member.name}</span>
+                  <span className="text-[0.875rem] font-semibold text-ink">{member.name}</span>
                   {/* F06 (propuesta aprobada el 11 de noviembre de 2026): arriba, lo DISPONIBLE de cada uno; el historial dice lo
                       aportado. Si ya se usó o retiró algo, también lo aportado, para que las dos cifras cuadren a la vista. */}
-                  <span data-member-available="" className="text-[12px] text-ink-secondary tabular-nums">
+                  <span data-member-available="" className="text-[0.75rem] text-ink-secondary tabular-nums">
                     {member.isMe ? copy.goals.immersive.availableMine(cop(member.availableMinor)) : copy.goals.immersive.availableOf(member.name, cop(member.availableMinor))}
                     {member.contributedMinor !== member.availableMinor ? copy.goals.immersive.contributedSuffix(cop(member.contributedMinor), member.isMe) : null}
                   </span>
@@ -142,15 +142,15 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           </ul>
         ) : null}
 
-        {archived ? <p className="rounded-[14px] bg-sunken px-3 py-2.5 text-[13px] font-medium text-ink">{copy.goals.immersive.readOnly}</p> : (
+        {archived ? <p className="rounded-[14px] bg-sunken px-3 py-2.5 text-[0.8125rem] font-medium text-ink">{copy.goals.immersive.readOnly}</p> : (
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               {active ? <Button size="lg" icon="piggy-bank" onClick={() => show("contribute")}>{copy.goals.immersive.contribute}</Button> : null}
               {/* Sin aportes propios disponibles no hay nada que retirar: la acción se deshabilita y se dice por qué (Q14). */}
               <Button size="lg" variant="secondary" icon="arrow-u-up-left" onClick={() => show("withdraw")} disabled={!canWithdraw} aria-describedby={canWithdraw ? undefined : "goal-withdraw-nothing"} className={active ? "" : "col-span-2"}>{copy.goals.immersive.withdraw}</Button>
             </div>
-            {canWithdraw ? null : <p id="goal-withdraw-nothing" className="text-[13px] text-ink-secondary">{copy.goals.withdrawSheet.nothing}</p>}
-            {goal.status === "completed" ? <p className="text-[13px] text-ink-secondary">{copy.goals.immersive.completedNote}</p> : null}
+            {canWithdraw ? null : <p id="goal-withdraw-nothing" className="text-[0.8125rem] text-ink-secondary">{copy.goals.withdrawSheet.nothing}</p>}
+            {goal.status === "completed" ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goals.immersive.completedNote}</p> : null}
             <div role="group" aria-label={copy.goals.immersive.more} className="flex flex-wrap gap-2">
               <Button variant="ghost" icon="pencil-simple" onClick={() => show("edit")}>{copy.goals.immersive.edit}</Button>
               {active ? <Button variant="ghost" icon="flag-checkered" onClick={() => show("complete")}>{copy.goals.immersive.complete}</Button> : null}

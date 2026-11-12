@@ -61,7 +61,7 @@ export function GoalHistory({ goal, entries, members, people, today, actions }: 
       {shared && members.length > 0 ? (
         <ul aria-label={copy.goals.immersive.members} className="flex flex-col gap-1">
           {members.map((member) => (
-            <li key={member.userId} className="text-[13px] font-medium text-ink tabular-nums">{copy.goals.immersive.member(member.name, cop(member.contributedMinor), member.contributionCount)}</li>
+            <li key={member.userId} className="text-[0.8125rem] font-medium text-ink tabular-nums">{copy.goals.immersive.member(member.name, cop(member.contributedMinor), member.contributionCount)}</li>
           ))}
         </ul>
       ) : null}
@@ -99,7 +99,7 @@ export function GoalHistory({ goal, entries, members, people, today, actions }: 
           <Button variant="danger" loading={write.pending} onClick={() => target && void write.submit({ idempotencyKey: target.key, entryId: target.entry.id, reason: "void" })}>{copy.goals.history.void.confirm}</Button>
         )}
       >
-        {write.state.phase === "rejected" ? <p role="alert" className="text-[13px] font-medium text-ink">{goalRejection(write.state.error, { voiding: true, available: write.state.detail?.availableMinor ? cop(write.state.detail.availableMinor) : undefined, prefix: copy.goals.history.void.rejected })}</p> : null}
+        {write.state.phase === "rejected" ? <p role="alert" className="text-[0.8125rem] font-medium text-ink">{goalRejection(write.state.error, { voiding: true, available: write.state.detail?.availableMinor ? cop(write.state.detail.availableMinor) : undefined, prefix: copy.goals.history.void.rejected })}</p> : null}
         {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirming(true)} /> : null}
         <UnconfirmedClose open={confirming} onOpenChange={setConfirming} onRetry={() => void write.retry()} onClose={() => setTarget(null)} />
       </ConfirmDialog>

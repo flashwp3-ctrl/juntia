@@ -110,9 +110,9 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
   const message = invalid ?? (write.state.phase === "rejected" ? rejectedMessage(write.state.error) : null);
   const body = (
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span />
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.balance.settle.title}</DialogTitle>
+        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.balance.settle.title}</DialogTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>
@@ -125,14 +125,14 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
         </span>
         <p className="text-[length:var(--body-m-size)] font-medium text-ink">{copy.balance.settle.direction(debtor.name, creditor.name)}</p>
         {mode === "all" ? (
-          <p aria-hidden="true" className="rounded-[18px] px-4 py-1 text-[clamp(32px,9vw,40px)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums shadow-[0_0_0_2px_var(--color-border-strong)]">
+          <p aria-hidden="true" className="rounded-[18px] px-4 py-1 text-[clamp(2rem,9vw,2.5rem)] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums shadow-[0_0_0_2px_var(--color-border-strong)]">
             {formatMoney(amount ?? { amountMinor: 0n, currency: "COP" })}
           </p>
         ) : (
           // «Otro»: el monto se escribe en el mismo lugar (04·2), en pesos enteros, a lo ancho de la hoja.
           <AmountInput label={copy.balance.settle.otherAmount} value={other} onValueChange={(next) => { setOther(next); setInvalid(null); }} disabled={locked} className="w-full self-stretch text-left" fieldClassName="w-full" />
         )}
-        <p className="text-[12px] leading-[1.4] text-pretty text-ink-secondary">{copy.balance.settle.pending(formatMoney(pending))}</p>
+        <p className="text-[0.75rem] leading-[1.4] text-pretty text-ink-secondary">{copy.balance.settle.pending(formatMoney(pending))}</p>
       </div>
       <div className="flex flex-col items-center gap-3">
         <Segmented
@@ -149,18 +149,18 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
         <Input label={copy.balance.settle.note} value={note} maxLength={140} disabled={locked} onChange={(event) => setNote(event.target.value)} />
       </div>
       {remaining !== null && !message ? (
-        <p className="flex items-start gap-2 rounded-[14px] bg-saving-subtle px-3 py-2.5 text-[13px] font-medium text-ink">
+        <p className="flex items-start gap-2 rounded-[14px] bg-saving-subtle px-3 py-2.5 text-[0.8125rem] font-medium text-ink">
           <AppIcon name="check-circle" weight="fill" size={18} className="mt-px shrink-0 text-saving" />
           {remaining === 0n ? copy.balance.settle.afterAll : copy.balance.settle.afterPartial(debtor.name, creditor.name, formatMoney({ amountMinor: remaining, currency: "COP" }))}
         </p>
       ) : null}
       {message ? (
-        <p id={errorId} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[13px] font-medium text-ink">
+        <p id={errorId} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[0.8125rem] font-medium text-ink">
           <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-danger" />
           {message}
         </p>
       ) : null}
-      <p className="text-[12px] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settle.disclaimer}</p>
+      <p className="text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settle.disclaimer}</p>
       {write.state.phase === "unknown" ? (
         <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} />
       ) : (

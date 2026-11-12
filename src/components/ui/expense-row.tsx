@@ -56,9 +56,9 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
       <span className="sr-only">{name}</span>
       <CategoryIcon kind="category" category={transaction.categoryId} />
       <span aria-hidden="true" className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-[15px] leading-[1.3] font-semibold text-ink">{title}</span>
+        <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{title}</span>
         {/* Sobre el fondo savingSubtle de la fila nueva, la meta pasa a tinta (text.secondary da 4,38:1 en claro). */}
-        <span className="flex min-w-0 items-center gap-1 text-[12px] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
+        <span className="flex min-w-0 items-center gap-1 text-[0.75rem] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
           <AppIcon name="lock-simple" size={12} className="shrink-0" />
           <span className="truncate">{copy.row.onlyYou} · {dateLabel}{pendingLabel ? " ·" : ""}</span>
           {pendingLabel ? (
@@ -75,7 +75,7 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
       </span>
     </>
   );
-  const layout = "group -mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5";
+  const layout = "row-stack group -mx-2 grid min-h-[60px] grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] px-2 py-2.5";
   if (pending) {
     return (
       <div data-pending={pending} aria-busy={pending === "saving" ? true : undefined} data-transaction-id={transaction.id} className={`${layout} ${pending === "saving" ? "outline-[length:var(--border-strong)] -outline-offset-[1.5px] outline-border-emphasis outline-dashed" : ""} ${className}`}>

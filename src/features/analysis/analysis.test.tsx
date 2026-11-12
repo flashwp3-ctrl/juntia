@@ -264,7 +264,7 @@ describe("PlanningNote (Q4, decisión 22.4; DEC-G04; FR-063, FR-113)", () => {
     expect(text(chapter(copy.analysis.chapters.amount))).not.toContain("3.740.000");
     for (const heading of screen.getAllByRole("heading")) expect(text(heading)).not.toContain("3.740.000");
     const value = document.querySelector("[data-planning-value]")!;
-    expect(value.className).toContain("text-[17px]");
+    expect(value.className).toContain("text-[1.0625rem]");
     expect(value.className).toContain("font-semibold");
   });
 });

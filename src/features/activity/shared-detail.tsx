@@ -50,8 +50,8 @@ export function SharedDetail({ expense, members, closeHref }: { expense: SharedT
             <span className="sr-only">{copy.detail.close}</span>
           </Link>
         </div>
-        <h2 id={titleId} className="max-w-full font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] break-words text-ink xl:text-[30px]">{title}</h2>
-        <p className="text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-expense">{formatMoney(expense.amount)}</p>
+        <h2 id={titleId} className="max-w-full font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] break-words text-ink xl:text-[1.875rem]">{title}</h2>
+        <p className="text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] text-expense">{formatMoney(expense.amount)}</p>
         {expense.movedFromMe ? <p className="text-[length:var(--body-s-size)] font-medium text-ink-secondary">{copy.move.movedFromMe}</p> : null}
       </div>
       <dl className="flex flex-col">

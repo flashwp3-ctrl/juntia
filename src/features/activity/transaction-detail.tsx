@@ -19,7 +19,7 @@ const hit = "grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)]
 /** Encabezado móvil: Volver y el tipo de movimiento, como en 04·1. Oculto desde 1280, donde manda el de Actividad. */
 export function DetailHeader({ title, backHref }: { title: string; backHref: string }) {
   return (
-    <header className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 pt-4 xl:hidden">
+    <header className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 pt-4 xl:hidden">
       <Link href={backHref} className={`${hit} -ml-1 bg-raised shadow-raised hover:bg-sunken`}>
         <AppIcon name="caret-left" weight="bold" size={20} />
         <span className="sr-only">{copy.detail.back}</span>
@@ -55,10 +55,10 @@ export function TransactionDetail({ transaction, closeHref }: { transaction: Tra
             <span className="sr-only">{copy.detail.close}</span>
           </Link>
         </div>
-        <h2 id={titleId} className="max-w-full font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] break-words text-ink xl:text-[30px]">
+        <h2 id={titleId} className="max-w-full font-serif text-[length:var(--title-l-size)] leading-[var(--title-l-line)] font-medium tracking-[var(--title-l-tracking)] break-words text-ink xl:text-[1.875rem]">
           {rowTitle(transaction)}
         </h2>
-        <p className={`text-[length:var(--money-l-size)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] ${transaction.type === "income" ? "text-income" : "text-expense"}`}>
+        <p className={`text-[length:var(--money-l-fit)] leading-[var(--money-l-line)] font-semibold tracking-[var(--money-l-tracking)] ${transaction.type === "income" ? "text-income" : "text-expense"}`}>
           {signedAmount(transaction)}
         </p>
       </div>

@@ -68,7 +68,7 @@ const STALE: ReadonlySet<WriteError> = new Set(["alreadyInCouple", "invitationGo
 
 function HowRow({ icon, text }: { icon: AppIconName; text: string }) {
   return (
-    <li className="flex items-start gap-2.5 py-[7px] text-[14px] leading-[1.45] text-ink-secondary">
+    <li className="flex items-start gap-2.5 py-[7px] text-[0.875rem] leading-[1.45] text-ink-secondary">
       <AppIcon name={icon} size={18} className="mt-px shrink-0 text-ink" />
       <span className="min-w-0 text-pretty"><RichText text={text} /></span>
     </li>
@@ -78,7 +78,7 @@ function HowRow({ icon, text }: { icon: AppIconName; text: string }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-[26px] flex flex-col">
-      <h2 className="pb-0.5 font-serif text-[24px] leading-tight font-normal text-ink">{title}</h2>
+      <h2 className="pb-0.5 font-serif text-[1.5rem] leading-tight font-normal text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -106,8 +106,8 @@ function ActiveCouple({ members }: { members: Member[] }) {
               <li key={item.userId} className={`flex min-h-14 items-center gap-3 py-2 ${index < all.length - 1 ? "border-b-[length:var(--border-hairline)] border-border" : ""}`}>
                 <Avatar person={item.joinOrder} initial={initialOf(item.name)} size={36} />
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold break-words text-ink">{item.name}</span>
-                  <span className="text-[12px] text-ink-secondary">{item.isMe ? copy.couple.active.you(role) : role}</span>
+                  <span className="text-[0.9375rem] font-semibold break-words text-ink">{item.name}</span>
+                  <span className="text-[0.75rem] text-ink-secondary">{item.isMe ? copy.couple.active.you(role) : role}</span>
                 </span>
               </li>
             );
@@ -158,12 +158,12 @@ function IssuedLink({ link, expiresAt, children }: { link: string; expiresAt: st
           <AppIcon name="link" weight="duotone" size={22} />
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[15px] font-semibold text-ink">{copy.couple.invite.ready}</span>
+          <span className="text-[0.9375rem] font-semibold text-ink">{copy.couple.invite.ready}</span>
           {/* Sobre surface.sunken, el texto secundario usa el tono de campo (text.secondary daría 4,29:1 en claro). */}
-          <span className="text-[12px] text-[var(--comp-field-muted-fg)]">{copy.couple.invite.readyLine(invitationDay(expiresAt))}</span>
+          <span className="text-[0.75rem] text-[var(--comp-field-muted-fg)]">{copy.couple.invite.readyLine(invitationDay(expiresAt))}</span>
         </span>
       </div>
-      <Input ref={field} label={copy.couple.invite.link} value={link} readOnly onFocus={(event) => event.currentTarget.select()} inputClassName="text-[14px] text-ellipsis" help={copy.couple.invite.once} />
+      <Input ref={field} label={copy.couple.invite.link} value={link} readOnly onFocus={(event) => event.currentTarget.select()} inputClassName="text-[0.875rem] text-ellipsis" help={copy.couple.invite.once} />
       {children}
       <div role="status" className="empty:hidden">{copied ? <InlineNotice tone="success" icon="check-circle">{copy.couple.invite.copied}</InlineNotice> : null}</div>
       <div className="flex flex-col gap-2">
@@ -283,16 +283,16 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   return (
     <>
       <Container open={open} onOpenChange={(next) => { if (!next) requestClose(); }} title={title} bare>
-        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center">
+        <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center">
           <span />
-          <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+          <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
           <button type="button" onClick={requestClose} aria-label={copy.primitives.close} aria-disabled={inFlight || undefined} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken aria-disabled:bg-sunken aria-disabled:text-ink-secondary aria-disabled:shadow-none">
             <AppIcon name="x" weight="bold" size={16} />
           </button>
         </div>
         {/* Desde #51, la hoja sin pie propio (bare) deja al contenido su relleno inferior y el safe area; el diálogo de escritorio ya lo trae. */}
         <form noValidate onSubmit={submitCreate} className={`flex min-w-0 flex-col gap-3.5 ${wide ? "" : "pb-[calc(20px+env(safe-area-inset-bottom))]"}`}>
-          <p className="text-[14px] leading-[1.5] text-pretty text-ink-secondary">{lead}</p>
+          <p className="text-[0.875rem] leading-[1.5] text-pretty text-ink-secondary">{lead}</p>
           <Input
             label={copy.couple.invite.email}
             type="email"
@@ -309,14 +309,14 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
           />
 
           {mode === "regenerate" && busy ? (
-            <p role="status" className="flex items-center gap-2 text-[14px] text-ink-secondary">
+            <p role="status" className="flex items-center gap-2 text-[0.875rem] text-ink-secondary">
               <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
               {copy.couple.invite.generating}
             </p>
           ) : null}
           {notice ? <InlineNotice tone="danger" icon="warning-circle">{notice}</InlineNotice> : null}
           {checkOfThisOk && linkCheck.state === "checking" ? (
-            <p role="status" className="flex items-center gap-2 text-[14px] text-ink-secondary">
+            <p role="status" className="flex items-center gap-2 text-[0.875rem] text-ink-secondary">
               <AppIcon name="circle-notch" weight="bold" size={17} className="motion-safe:animate-[button-spin_0.8s_linear_infinite]" />
               {copy.writes.checking}
             </p>
@@ -418,10 +418,10 @@ export function PartnerScreen({ view, actions, openInvite = false }: { view: Par
         <>
           <CoupleStatus state="solo" title={copy.couple.none.title} line={copy.couple.none.line} me={{ initial: initialOf(myName) }} />
           <div className="mt-[26px] flex flex-col gap-3.5">
-            <h2 className="font-serif text-[clamp(26px,7.4vw,30px)] leading-[1.1] font-normal text-balance text-ink">{copy.couple.none.heading}</h2>
-            <p className="text-[15px] leading-[1.5] text-pretty text-ink-secondary">{copy.couple.none.description}</p>
+            <h2 className="font-serif text-[clamp(1.625rem,7.4vw,1.875rem)] leading-[1.1] font-normal text-balance text-ink">{copy.couple.none.heading}</h2>
+            <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">{copy.couple.none.description}</p>
             <Button size="lg" icon="user-plus" onClick={() => open("create")}>{copy.couple.none.invite}</Button>
-            <p className="text-[13px] leading-[1.45] text-ink-secondary">{copy.couple.none.invited}</p>
+            <p className="text-[0.8125rem] leading-[1.45] text-ink-secondary">{copy.couple.none.invited}</p>
           </div>
         </>
       ) : null}
@@ -434,7 +434,7 @@ export function PartnerScreen({ view, actions, openInvite = false }: { view: Par
             me={{ initial: initialOf(myName) }}
           />
           <div className="mt-5 flex flex-col gap-3">
-            <p className="text-[14px] leading-[1.5] text-pretty text-ink-secondary">{view.expired ? copy.couple.pending.expiredDescription : copy.couple.pending.description}</p>
+            <p className="text-[0.875rem] leading-[1.5] text-pretty text-ink-secondary">{view.expired ? copy.couple.pending.expiredDescription : copy.couple.pending.description}</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" icon="arrow-clockwise" className="min-w-0 flex-1" onClick={() => open("regenerate")}>{copy.couple.pending.regenerate}</Button>
               <CancelInvitation view={view} actions={actions} onDone={() => setAnnouncement(copy.couple.cancel.done)} />

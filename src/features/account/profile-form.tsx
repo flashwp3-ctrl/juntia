@@ -51,7 +51,7 @@ export function ProfileForm({ initialName, email, save, person = 1 }: ProfileFor
       ) : null}
       <div className="flex items-center gap-4">
         <Avatar person={person} initial={invalid ? "?" : initialOf(name)} size={88} />
-        <p className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.account.profile.avatarNote}</p>
+        <p className="text-[0.8125rem] leading-[1.45] text-pretty text-ink-secondary">{copy.account.profile.avatarNote}</p>
       </div>
       <Input
         label={copy.account.profile.nameLabel}
@@ -73,7 +73,7 @@ export function ProfileForm({ initialName, email, save, person = 1 }: ProfileFor
         <Button variant="ghost" size="lg" disabled={pending || name === saved} onClick={() => { setName(saved); setTouched(false); setStatus("editing"); }}>{copy.account.profile.cancel}</Button>
       </div>
       {status === "saved" ? (
-        <div role="status" className="flex items-center gap-2.5 rounded-[16px] bg-inverse px-4 py-3.5 text-[14px] font-medium text-[var(--color-surface-canvas)] shadow-overlay">
+        <div role="status" className="flex items-center gap-2.5 rounded-[16px] bg-inverse px-4 py-3.5 text-[0.875rem] font-medium text-[var(--color-surface-canvas)] shadow-overlay">
           <AppIcon name="check-circle" weight="fill" size={20} />
           {copy.account.profile.saved}
         </div>

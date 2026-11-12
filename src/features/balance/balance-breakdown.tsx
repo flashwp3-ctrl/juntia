@@ -37,17 +37,17 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
         // F78-4: red de seguridad. Si algún caso aún no cabe (texto ampliado, importes muy largos), la tabla se desplaza dentro
         // de su propio contenedor y nunca da scroll horizontal a la página.
         <div data-breakdown-scroll="" className="min-w-0 md:overflow-x-auto">
-          <table role="table" className="block w-full border-collapse text-left text-[13px] tabular-nums md:table">
+          <table role="table" className="block w-full border-collapse text-left text-[0.8125rem] tabular-nums md:table">
             <caption className="sr-only">{copy.balance.breakdown.caption(name)}</caption>
             <thead role="rowgroup" className="sr-only md:not-sr-only md:table-header-group">
-              <tr role="row" className="text-[11px] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">
+              <tr role="row" className="text-[0.6875rem] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">
                 <th role="columnheader" scope="col" className="pr-[8px] pb-2 font-semibold">{copy.balance.breakdown.expense}</th>
                 <th role="columnheader" scope="col" className="pr-[8px] pb-2 font-semibold">{copy.balance.breakdown.payer}</th>
                 {ordered.map((member) => <th role="columnheader" key={member.userId} scope="col" className="pr-[8px] pb-2 text-right font-semibold [overflow-wrap:anywhere]">{copy.balance.breakdown.partOf(member.name)}</th>)}
                 <th role="columnheader" scope="col" className="pb-2 text-right font-semibold">{copy.balance.breakdown.amount}</th>
               </tr>
             </thead>
-            <tbody role="rowgroup" className="block md:table-row-group">
+            <tbody role="rowgroup" className="block max-md:@container md:table-row-group">
               {expenses.map((row) => (
                 <tr role="row" key={row.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b-[length:var(--border-hairline)] border-border py-2.5 md:table-row md:border-0 md:py-0">
                   <th role="rowheader" scope="row" className={`${cell} order-1 block min-w-0 pr-[8px] font-semibold [overflow-wrap:anywhere] text-ink md:table-cell`}>{row.description ?? copy.categories[row.categoryId]}</th>
@@ -55,7 +55,7 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
                     {memberName(row.payerUserId)} <span className="whitespace-nowrap">· {rowMode(row)}</span>
                   </td>
                   {ordered.map((member, index) => (
-                    <td role="cell" key={member.userId} className={`${cell} ${index === 0 ? "order-4" : "order-5 text-right"} block pr-[8px] whitespace-nowrap text-ink md:table-cell md:text-right`}>
+                    <td role="cell" key={member.userId} className={`${cell} ${index === 0 ? "order-4" : "order-5 text-right @max-[16rem]:text-left"} block pr-[8px] whitespace-nowrap @max-[16rem]:col-span-2 text-ink md:table-cell md:text-right`}>
                       <span aria-hidden="true" className="mr-1 text-ink-secondary md:hidden">{member.name.charAt(0)}</span>
                       {formatMoney(row.allocations.find((part) => part.userId === member.userId)?.amount ?? { amountMinor: 0n, currency: "COP" })}
                     </td>
@@ -66,9 +66,9 @@ export function BalanceBreakdown({ month, expenses, members, totalMinor, navigat
             </tbody>
             {totalMinor ? (
               <tfoot role="rowgroup" className="block md:table-footer-group">
-                <tr role="row" className="flex items-baseline justify-between gap-3 md:table-row">
-                  <th role="rowheader" scope="row" colSpan={2 + ordered.length} className="block pt-2.5 pr-[8px] text-[13px] font-semibold text-ink md:table-cell">{copy.balance.breakdown.total}</th>
-                  <td role="cell" className="block pt-2.5 text-right text-[15px] font-semibold whitespace-nowrap text-ink md:table-cell">{formatMoney({ amountMinor: BigInt(totalMinor), currency: "COP" })}</td>
+                <tr role="row" className="flex flex-wrap items-baseline justify-between gap-3 md:table-row">
+                  <th role="rowheader" scope="row" colSpan={2 + ordered.length} className="block pt-2.5 pr-[8px] text-[0.8125rem] font-semibold text-ink md:table-cell">{copy.balance.breakdown.total}</th>
+                  <td role="cell" className="ml-auto block pt-2.5 text-right text-[0.9375rem] font-semibold whitespace-nowrap text-ink md:table-cell">{formatMoney({ amountMinor: BigInt(totalMinor), currency: "COP" })}</td>
                 </tr>
               </tfoot>
             ) : null}

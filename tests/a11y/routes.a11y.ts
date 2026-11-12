@@ -280,7 +280,16 @@ for (const colorScheme of THEMES) {
             amount: node.getAttribute("inputmode") === "numeric",
             value: (node as HTMLInputElement).value,
             size: parseFloat(getComputedStyle(node).fontSize),
-            body: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--body-m-size")),
+            // F13: el token está en rem; una sonda con `font-size: var(--body-m-size)` da su valor en px para compararlo con el
+            // tamaño calculado del Input (antes se leía el texto del token, que ahora es «0.9375rem»).
+            body: (() => {
+              const probe = document.createElement("span");
+              probe.style.fontSize = "var(--body-m-size)";
+              document.body.appendChild(probe);
+              const px = parseFloat(getComputedStyle(probe).fontSize);
+              probe.remove();
+              return px;
+            })(),
             frame: node.parentElement!.getBoundingClientRect().height,
             clipped: node.scrollWidth > node.clientWidth,
           })));

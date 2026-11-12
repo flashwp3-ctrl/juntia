@@ -38,7 +38,7 @@ export function AccountPageTitle({ title, backHref = "/cuenta" }: { title: strin
         <AppIcon name="caret-left" weight="bold" size={22} />
         <span className="sr-only">{copy.account.back}</span>
       </Link>
-      <h1 className="font-serif text-[clamp(26px,7.4vw,30px)] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink md:text-[34px] xl:text-[40px]">{title}</h1>
+      <h1 className="font-serif text-[clamp(1.625rem,7.4vw,1.875rem)] leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink md:text-[2.125rem] xl:text-[2.5rem]">{title}</h1>
     </header>
   );
 }
@@ -49,8 +49,8 @@ export function ProfileHeader({ displayName, email, framed = false, person = 1 }
     <div className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-4 ${framed ? "rounded-[24px] bg-raised p-5 shadow-raised" : ""}`}>
       <Avatar person={person} initial={initialOf(displayName)} size={72} />
       <span className="flex min-w-0 flex-col gap-1.5">
-        <span className="font-serif text-[clamp(30px,9vw,40px)] leading-none font-medium tracking-[-0.01em] break-words text-ink">{displayName}</span>
-        <span className="text-[14px] [overflow-wrap:anywhere] text-ink-secondary">{email}</span>
+        <span className="font-serif text-[clamp(1.875rem,9vw,2.5rem)] leading-none font-medium tracking-[-0.01em] break-words text-ink">{displayName}</span>
+        <span className="text-[0.875rem] [overflow-wrap:anywhere] text-ink-secondary">{email}</span>
       </span>
       <Link href="/cuenta/perfil" className="relative col-span-full inline-flex h-11 items-center gap-2 justify-self-start rounded-[var(--radius-md)] bg-raised px-4 text-[length:var(--label-m-size)] font-semibold text-ink shadow-raised">
         <AppIcon name="pencil-simple" weight="bold" size={17} />
@@ -64,13 +64,13 @@ type MenuItemProps = { href: string; icon: AppIconName; tone: TileTone; title: s
 
 export function AccountMenuItem({ href, icon, tone, title, hint, value, last = false }: MenuItemProps) {
   return (
-    <Link href={href} className={`grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 ${last ? "" : "border-b-[length:var(--border-hairline)] border-border"}`}>
+    <Link href={href} className={`row-stack grid min-h-16 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 py-2.5 ${last ? "" : "border-b-[length:var(--border-hairline)] border-border"}`}>
       <Tile icon={icon} tone={tone} />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold text-ink">{title}</span>
-        {hint ? <span className="text-[13px] leading-[1.4] text-pretty text-ink-secondary">{hint}</span> : null}
+        <span className="text-[0.9375rem] font-semibold text-ink">{title}</span>
+        {hint ? <span className="text-[0.8125rem] leading-[1.4] text-pretty text-ink-secondary">{hint}</span> : null}
       </span>
-      <span className="flex items-center gap-2 text-[14px] font-medium text-ink-secondary">
+      <span className="flex items-center gap-2 text-[0.875rem] font-medium text-ink-secondary">
         {value}
         <AppIcon name="caret-right" size={18} />
       </span>
@@ -81,7 +81,7 @@ export function AccountMenuItem({ href, icon, tone, title, hint, value, last = f
 export function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-[26px] flex flex-col">
-      <h2 className="pb-0.5 font-serif text-[24px] leading-tight font-normal text-ink">{title}</h2>
+      <h2 className="pb-0.5 font-serif text-[1.5rem] leading-tight font-normal text-ink">{title}</h2>
       {children}
     </section>
   );

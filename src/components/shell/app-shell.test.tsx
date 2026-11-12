@@ -52,15 +52,15 @@ describe("PageHeader: el saludo cede antes que el selector (F08)", () => {
 
   it("un título largo junto al selector escala por debajo de 1024 y se trunca, sin cambiar el tamaño de escritorio", () => {
     const h1 = header("Hola, Alejandro");
-    expect(h1.className).toContain("text-[clamp(22px,6.2vw,30px)]");
+    expect(h1.className).toContain("text-[clamp(1.375rem,6.2vw,1.875rem)]");
     expect(h1.className).toContain("truncate");
     expect(h1.className).toContain("min-w-0");
     expect(h1.className).toContain("flex-[1_1_6rem]");
-    expect(h1.className).toContain("lg:text-[clamp(39px,3.7vw,var(--display-xl-size))]");
+    expect(h1.className).toContain("lg:text-[clamp(2.4375rem,3.7vw,var(--display-xl-size))]");
   });
 
   it("«Hola, Sara» y los destinos conservan su tamaño; sin selector (Mi cuenta) no escala", () => {
-    for (const title of ["Hola, Sara", copy.nav.activity]) expect(header(title).className).toContain("text-[clamp(25px,7.4vw,30px)]");
-    expect(header("Seguridad y sesión", "account").className).toContain("text-[clamp(25px,7.4vw,30px)]");
+    for (const title of ["Hola, Sara", copy.nav.activity]) expect(header(title).className).toContain("text-[clamp(1.5625rem,7.4vw,1.875rem)]");
+    expect(header("Seguridad y sesión", "account").className).toContain("text-[clamp(1.5625rem,7.4vw,1.875rem)]");
   });
 });

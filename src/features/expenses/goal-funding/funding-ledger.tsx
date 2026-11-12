@@ -28,7 +28,7 @@ type Props = {
 };
 
 const block = "flex flex-col gap-3 rounded-[18px] border-[1.5px] border-border p-3.5";
-const overline = "text-[11px] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary";
+const overline = "text-[0.6875rem] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary";
 const pesos = (value: number) => formatMoney(moneyFromPesos(BigInt(value)));
 
 export function statusLine(status: FundingStatus, usagePesos: number | null, contributors: readonly Contributor[]) {
@@ -62,9 +62,9 @@ export function FundingLedger({ contributors, usagePesos, onUsage, funds, onFund
       {split ? (
         <section aria-label={copy.goalExpense.ledger.splitTitle} className={block}>
           <h3 aria-hidden="true" className={overline}>{copy.goalExpense.ledger.splitTitle}</h3>
-          <p className="text-[14px] font-semibold text-ink">{split.first}</p>
-          <p className="text-[13px] text-ink-secondary">{split.second}</p>
-          <p className="text-[12px] leading-[1.45] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.ledger.splitNote}</p>
+          <p className="text-[0.875rem] font-semibold text-ink">{split.first}</p>
+          <p className="text-[0.8125rem] text-ink-secondary">{split.second}</p>
+          <p className="text-[0.75rem] leading-[1.45] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.ledger.splitNote}</p>
         </section>
       ) : null}
       <section aria-label={copy.goalExpense.ledger.fundsTitle} className={block}>
@@ -76,7 +76,7 @@ export function FundingLedger({ contributors, usagePesos, onUsage, funds, onFund
             <div key={contributor.userId} className="flex flex-col gap-1.5">
               {/* Badge «Pide aprobación» en la fila del otro integrante (FundingLedger): neutro, borde punteado, como PENDIENTE. */}
               {contributor.isMe ? null : (
-                <span className="inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] border-[length:var(--border-strong)] border-dashed border-border-emphasis bg-[var(--comp-badge-pending-bg)] px-[9px] text-[11px] leading-none font-semibold tracking-[.06em] text-pending">
+                <span className="inline-flex h-6 items-center gap-[5px] self-start rounded-[8px] border-[length:var(--border-strong)] border-dashed border-border-emphasis bg-[var(--comp-badge-pending-bg)] px-[9px] text-[0.6875rem] leading-none font-semibold tracking-[.06em] text-pending">
                   <AppIcon name="hourglass-medium" weight="bold" size={12} />
                   {copy.goalExpense.ledger.needsApproval}
                 </span>
@@ -94,11 +94,11 @@ export function FundingLedger({ contributors, usagePesos, onUsage, funds, onFund
             </div>
           );
         })}
-        <p className="text-[12px] leading-[1.45] text-[var(--comp-field-muted-fg)]">
+        <p className="text-[0.75rem] leading-[1.45] text-[var(--comp-field-muted-fg)]">
           {partner ? copy.goalExpense.ledger.when(partner.name) : copy.goalExpense.ledger.whenMine}
         </p>
       </section>
-      <p id={statusId} role="status" aria-live="polite" className={`text-[13px] font-semibold ${invalid && status.kind !== "noUsage" ? "text-danger" : "text-ink"}`}>
+      <p id={statusId} role="status" aria-live="polite" className={`text-[0.8125rem] font-semibold ${invalid && status.kind !== "noUsage" ? "text-danger" : "text-ink"}`}>
         {statusLine(status, usagePesos, contributors)}
       </p>
     </div>

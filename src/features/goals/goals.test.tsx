@@ -17,6 +17,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, SavedEntry } from "./types";
 import { GoalCard } from "./goal-card";
+import { longestWordEm } from "./format";
 import { FAN_REST_DELAY_MS, GoalStack, SWIPE, swipeStep } from "./goal-stack";
 import { GoalsScreen } from "./goals-screen";
 import { ContributeSheet } from "./contribute-sheet";
@@ -939,5 +940,29 @@ describe("T084 · fallos de la simulación de la guía de salida", { timeout: 15
     second.unmount();
     render(<GoalStatusDialog kind="archive" goal={japan({ balanceMinor: "0", hasPendingRequest: true })} idempotencyKey={KEY} actions={actions()} onClose={vi.fn()} onDone={vi.fn()} />);
     expect(description()).toContain(copy.goals.errors.cannotArchive);
+  });
+});
+
+// F79-2 (revisión del PR #79): con la letra ampliada el título de la tarjeta crece (mínimo en rem) hasta donde cabe entera su
+// palabra más larga; el ancho estimado nunca queda por debajo del real, o la palabra se recortaría.
+describe("Título de la tarjeta con el texto ampliado", () => {
+  // Anchos medidos con canvas sobre Brygada 1918 500 en Chromium (em, sin tracking), nov 2026.
+  const measured: Record<string, number> = { Emergencias: 6.099, Bicicleta: 4.076, "Japón": 2.781, familiares: 4.762, Vacaciones: 5.251, "Electrodomésticos": 8.704, Universitario: 6.188, Apartamento: 6.209, MMMMMMMMMM: 9.11, iiiiiiiiii: 3.21 };
+  it.each(Object.entries(measured))("«%s»: la estimación no queda por debajo de lo medido (%s em)", (word, width) => {
+    expect(longestWordEm(word)).toBeGreaterThanOrEqual(width);
+  });
+
+  it("usa la palabra más larga del nombre", () => {
+    expect(longestWordEm("Vacaciones familiares")).toBe(longestWordEm("Vacaciones"));
+  });
+
+  it("el título lleva su ancho y un tamaño con mínimo en rem", () => {
+    const { container } = render(<GoalCard goal={japan({ name: "Emergencias" })} members={japanMembers} today={TODAY} context="us" />);
+    const title = container.querySelector("[data-goal-title]") as HTMLElement;
+    expect(title.style.getPropertyValue("--title-em")).toBe(String(longestWordEm("Emergencias")));
+    expect(title.className).toContain("text-[clamp(1.625rem,8vw,2rem)]");
+    expect(title.className).toContain("max-md:text-[max(clamp(26px,8vw,2rem),min(clamp(1.625rem,8vw,2rem),calc((100vw_-_2.5rem_-_88px_+_(1rem_-_16px)*3)/var(--title-em))))]");
+    // Sin contención de tamaño: la tarjeta se ajusta a su contenido en Inicio (F79-2).
+    expect(title.parentElement?.className).not.toContain("@container");
   });
 });

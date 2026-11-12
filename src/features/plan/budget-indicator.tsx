@@ -33,19 +33,19 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
   const consumed = BigInt(row.consumedMinor);
   if (row.limitMinor === null) {
     return (
-      <li data-budget-state="none" className="flex items-center justify-between gap-3 py-3">
+      <li data-budget-state="none" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3">
         <span className="flex min-w-0 items-center gap-2.5">
           <CategoryIcon kind="category" category={row.categoryId} size="sm" />
           <span className="flex min-w-0 flex-col">
             <span className="text-[length:var(--body-m-size)] font-semibold text-ink">{name}</span>
-            <span className="text-[12px] text-ink-secondary tabular-nums">{copy.plan.noBudget(formatMoney(money(consumed)))}</span>
+            <span className="text-[0.75rem] text-ink-secondary tabular-nums">{copy.plan.noBudget(formatMoney(money(consumed)))}</span>
           </span>
         </span>
         <button
           type="button"
           onClick={() => onOpen(row)}
           aria-label={copy.plan.createFor(name)}
-          className="relative -mr-2 inline-flex h-11 shrink-0 items-center rounded-[var(--radius-md)] px-2.5 text-[13px] font-semibold text-ink underline underline-offset-4 hover:bg-sunken"
+          className="relative -mr-2 inline-flex h-11 shrink-0 items-center rounded-[var(--radius-md)] px-2.5 text-[0.8125rem] font-semibold text-ink underline underline-offset-4 hover:bg-sunken"
         >
           {copy.plan.create}
         </button>
@@ -65,7 +65,7 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
   // presentacional): la barra y el estado siguen siendo contenido legible, y el botón los lleva como descripción.
   return (
     <li data-budget-state={state} className="relative flex flex-col gap-1.5 border-b-[length:var(--border-hairline)] border-border py-3">
-      <span className="flex w-full items-center justify-between gap-3">
+      <span className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span className="flex min-w-0 items-center gap-2.5 text-[length:var(--body-m-size)] font-medium text-ink">
           <CategoryIcon kind="category" category={row.categoryId} size="sm" />
           {name}
@@ -86,7 +86,7 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
       </span>
       {/* El badge va al final de la línea de estado: la fila de arriba queda en una línea, como el comp, a 390 y a 1440. */}
       <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span id={statusId} className={`flex items-center gap-[5px] text-[12px] font-medium tabular-nums ${tone}`}>
+        <span id={statusId} className={`flex items-center gap-[5px] text-[0.75rem] font-medium tabular-nums ${tone}`}>
           {state === "near" ? <AppIcon name="warning" weight="bold" size={13} /> : state === "over" ? <AppIcon name="warning-circle" weight="bold" size={13} className="text-danger" /> : null}
           {status}
         </span>

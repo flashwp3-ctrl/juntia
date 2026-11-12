@@ -68,7 +68,7 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
   }, [router]);
 
   const notes = (
-    <p className="text-[12px] leading-[1.5] text-pretty text-ink-secondary">
+    <p className="text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">
       {copy.plan.who[context]}
       {last ? <> {copy.plan.lastChange(describe(last.change, copy.categories[last.row.categoryId], context), shortDate(last.change.date))}</> : null}
     </p>
@@ -82,7 +82,7 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
     // bajo el resumen, a la izquierda, y la lista ocupa la derecha.
     <div className="flex flex-col gap-7 pt-4 pb-6 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-14 lg:gap-y-6 lg:pt-8">
       <section aria-labelledby="plan-summary" className="flex flex-col gap-3 lg:col-start-1 lg:row-start-1">
-        <h2 id="plan-summary" className="text-[12px] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">{copy.plan.summary.title(name)}</h2>
+        <h2 id="plan-summary" className="text-[0.75rem] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">{copy.plan.summary.title(name)}</h2>
         <p className="font-serif text-[length:var(--title-l-size)] leading-[1.15] font-medium tracking-[var(--title-l-tracking)] text-balance text-ink">
           {data.spentMinor !== null && BigInt(data.spentMinor) > 0n ? copy.plan.summary[context](money(data.spentMinor)) : copy.plan.summary.none(name)}
         </p>
@@ -119,7 +119,7 @@ export function PlanScreen({ data, actions }: { data: PlanData; actions: PlanAct
             <span className="flex min-w-0 flex-col gap-2">
               <span className="flex flex-col gap-0.5">
                 <span className="text-[length:var(--body-m-size)] font-semibold text-ink">{copy.plan.empty.title}</span>
-                <span className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">{copy.plan.empty[context]}</span>
+                <span className="text-[0.8125rem] leading-[1.45] text-pretty text-ink-secondary">{copy.plan.empty[context]}</span>
               </span>
               {/* Texto al 200 %: el botón parte su texto en dos líneas antes que salirse (FR-101). */}
               <Button variant="ghost" icon="plus" className="h-auto! min-h-11 max-w-full self-start py-2.5 text-left whitespace-normal!" onClick={() => open(null)}>{copy.plan.empty.action}</Button>

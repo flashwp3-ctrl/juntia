@@ -98,7 +98,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchField value={filters.query} onChange={filters.setQuery} />
           {setAsideMinor !== undefined ? (
-            <Segmented role="radiogroup" label={copy.activity.type} value={type} onValueChange={filters.setType}
+            <Segmented role="radiogroup" label={copy.activity.type} wrap value={type} onValueChange={filters.setType}
               options={[{ value: "all", label: copy.activity.all }, { value: "expense", label: copy.activity.expenses }, { value: "goals", label: copy.goals.activity.filter }] as const} />
           ) : null}
         </div>
@@ -108,30 +108,31 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
           <span className="flex flex-wrap items-end gap-x-6 gap-y-2">
             <p className="flex flex-col gap-0.5">
               <span id={titleId} className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{setAsideMinor !== undefined ? copy.goals.activity.spent(monthName(month)) : copy.activity.spentTogether(monthName(month))}</span>
-              <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">{formatMoney({ amountMinor: total, currency: "COP" })}</span>
+              <span className="text-[length:var(--money-m-fit)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink">{formatMoney({ amountMinor: total, currency: "COP" })}</span>
             </p>
             {/* DEC-G04: lo apartado va al lado, nunca dentro del gasto. */}
             {setAsideMinor !== undefined && BigInt(setAsideMinor) > 0n ? (
               <p data-set-aside="" className="flex flex-col gap-0.5">
                 <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.goals.activity.setAside}</span>
-                <span className="text-[17px] leading-[var(--money-m-line)] font-semibold text-saving tabular-nums">{cop(setAsideMinor)}</span>
+                <span className="text-[1.0625rem] leading-[var(--money-m-line)] font-semibold text-saving tabular-nums">{cop(setAsideMinor)}</span>
               </p>
             ) : null}
           </span>
           <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.activity.count(summary?.count ?? 0)}</span>
         </div>
         {chips.length > 0 ? (
-          <div role="group" aria-label={copy.activity.categoryFilter} className="flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:-my-1 max-md:px-4 max-md:py-1.5 max-md:[scrollbar-width:none] md:flex-wrap">
+          <div role="group" aria-label={copy.activity.categoryFilter} className="relative flex gap-1.5 max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:-my-1 max-md:px-4 max-md:py-1.5 max-md:[scrollbar-width:none] md:flex-wrap">
             {/* F16 (auditoría Impeccable, nov 2026): por debajo de 768 las fichas van en una fila con scroll horizontal, de borde a
                 borde de la tarjeta, en vez de partirse una por línea y empujar la lista fuera de la primera pantalla. F78-2: el
                 scroller recorta también en vertical; 6 px de relleno dejan sitio al anillo de foco (--border-focus + --focus-offset =
-                4 px fuera de la ficha) y el margen negativo de 4 px conserva el alto de antes. */}
+                4 px fuera de la ficha) y el margen negativo de 4 px conserva el alto de antes. F13: el scroller es «relative» para ser el bloque
+                contenedor de los nombres sr-only (absolutos) de las fichas; sin eso no los recortaba y ensanchaban la página a 390. */}
             {chips.map(([category, amountMinor]) => {
               const pressed = filters.categoryId === category;
               const amount = { amountMinor, currency: "COP" as const };
               return (
                 <button key={category} type="button" aria-pressed={pressed} onClick={() => filters.setCategory(pressed ? null : category, month)}
-                  className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[13px] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}>
+                  className={`group flex min-h-11 shrink-0 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-[0.8125rem] font-semibold text-ink motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${pressed ? "bg-sunken shadow-[inset_0_0_0_2px_var(--color-text-primary)]" : "shadow-[0_0_0_1.5px_var(--color-border-subtle)] hover:bg-sunken"}`}>
                   <span className="sr-only">{copy.activity.categoryChip(copy.categories[category], pesos(amount))}</span>
                   <CategoryIcon kind="category" category={category} size="sm" />
                   <span aria-hidden="true">{copy.categories[category]}</span>
@@ -144,7 +145,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
       </section>
       <p aria-live="polite" className="sr-only">{filtering ? copy.activity.results(visibleExpenses.length + visibleGoals.length) : ""}</p>
       {stale ? (
-        <div role="status" className="flex flex-col items-start gap-3 rounded-[16px] bg-sunken px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+        <div role="status" className="flex flex-col items-start gap-3 rounded-[16px] bg-sunken px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           <span>{copy.activity.coupleStale.text}</span>
           <Button variant="secondary" icon="arrow-clockwise" onClick={() => router.refresh()}>{copy.activity.coupleStale.action}</Button>
         </div>
@@ -196,14 +197,14 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                     <tr key={item.row.id} className={item.row.id === selectedId ? "bg-sunken" : "hover:bg-sunken"}>
                       {/* PR D (T062): la liquidación lleva a su detalle, con «Anular»; anulada, sigue en el historial y lo dice. */}
                       <td className={`${cell} rounded-l-[14px]`}>
-                        <Link href={detailHref(item.row.id, month)} aria-current={item.row.id === selectedId ? "page" : undefined} data-settlement-id={item.row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                        <Link href={detailHref(item.row.id, month)} aria-current={item.row.id === selectedId ? "page" : undefined} data-settlement-id={item.row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                           <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink"><AppIcon name="arrows-left-right" size={15} /></span>
                           <span className={`truncate ${item.row.status === "voided" ? "line-through" : ""}`}>{copy.shared.row.settlementTitle(memberName(members, item.row.fromUserId), memberName(members, item.row.toUserId))}</span>
                         </Link>
                       </td>
-                      <td className={`${cell} text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{item.row.status === "voided" ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement}</td>
-                      <td className={`${cell} font-mono text-[13px] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{dayLabel(item.row.settlementDate, today)}</td>
-                      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{formatMoney(item.row.amount)}</td>
+                      <td className={`${cell} text-[0.8125rem] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{item.row.status === "voided" ? `${copy.shared.row.settlement} · ${copy.balance.settlements.voided}` : copy.shared.row.settlement}</td>
+                      <td className={`${cell} font-mono text-[0.8125rem] ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{dayLabel(item.row.settlementDate, today)}</td>
+                      <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[0.9375rem] font-semibold whitespace-nowrap ${item.row.id === selectedId ? "text-ink" : "text-ink-secondary"}`}>{formatMoney(item.row.amount)}</td>
                     </tr>
                   );
                 }
@@ -212,17 +213,17 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                 return (
                   <tr key={row.id} data-new={row.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
                     <td className={`${cell} rounded-l-[14px]`}>
-                      <Link href={detailHref(row.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[15px] font-semibold text-ink">
+                      <Link href={detailHref(row.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                         <CategoryIcon kind="category" category={row.categoryId} size="sm" />
                         <span className="truncate">{row.description ?? copy.categories[row.categoryId]}</span>
                       </Link>
                     </td>
-                    <td className={`${cell} text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>
+                    <td className={`${cell} text-[0.8125rem] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>
                       {copy.shared.row.table(memberName(members, row.payerUserId), rowMode(row))}{row.movedFromMe ? ` · ${copy.move.movedFromMe}` : ""}
                       <FundingRowBadge transactionId={row.id} />
                     </td>
-                    <td className={`${cell} font-mono text-[13px] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{dayLabel(row.transactionDate, today)}</td>
-                    <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[15px] font-semibold whitespace-nowrap text-expense`}>{formatMoney(row.amount)}</td>
+                    <td className={`${cell} font-mono text-[0.8125rem] ${current ? "text-ink" : "text-ink-secondary group-hover:text-ink"}`}>{dayLabel(row.transactionDate, today)}</td>
+                    <td className={`${cell} rounded-r-[14px] pr-3 text-right text-[0.9375rem] font-semibold whitespace-nowrap text-expense`}>{formatMoney(row.amount)}</td>
                   </tr>
                 );
               })}

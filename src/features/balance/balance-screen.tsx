@@ -57,7 +57,7 @@ export function BalanceScreen({ data, members, today }: { data: BalanceData; mem
               ))}
             </ul>
           )}
-          <p className="pt-2 text-[12px] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settlements.note}</p>
+          <p className="pt-2 text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">{copy.balance.settlements.note}</p>
         </section>
       </div>
     </div>

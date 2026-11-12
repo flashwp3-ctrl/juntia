@@ -37,8 +37,8 @@ export function BalanceLine({ balance, members }: { balance: readonly MemberBala
   const creditor = current ? members.find((member) => member.userId === current.toUserId) : null;
   return (
     <section aria-labelledby="balance-line-title" data-balance-line="" className="flex flex-col gap-2.5 rounded-[var(--radius-xl)] p-4 shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="balance-line-title" className="inline-flex min-h-6 items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-border-emphasis px-2.5 text-[11px] font-semibold tracking-[var(--overline-tracking)] text-ink">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <h2 id="balance-line-title" className="inline-flex min-h-6 items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-border-emphasis px-2.5 text-[0.6875rem] font-semibold tracking-[var(--overline-tracking)] text-ink">
           {current ? copy.couple.home.pending : copy.couple.home.settledBadge}
         </h2>
         <Link href="/balance" className="inline-flex min-h-11 items-center gap-1 text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">
@@ -54,7 +54,7 @@ export function BalanceLine({ balance, members }: { balance: readonly MemberBala
           </span>
           <span className="text-[length:var(--body-m-size)] font-medium text-ink">{copy.couple.home.owes(debtor.name, creditor.name)}</span>
           {struck ? <s className="text-[length:var(--body-m-size)] text-ink-secondary tabular-nums">{formatMoney(struck)}</s> : null}
-          <span className="text-[length:var(--money-m-size)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink tabular-nums">{formatMoney(current.amount)}</span>
+          <span className="text-[length:var(--money-m-fit)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink tabular-nums">{formatMoney(current.amount)}</span>
         </p>
       ) : (
         <p className="text-[length:var(--body-m-size)] font-medium text-ink">

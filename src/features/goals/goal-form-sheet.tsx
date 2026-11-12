@@ -118,7 +118,7 @@ export function GoalFormSheet({ open, onClose, goal, context, today, idempotency
               una sola fila de escritorio «Emergencias» se salía de su casilla. Las etiquetas nunca se cortan. */}
           <div data-goal-types="" className="grid grid-cols-4 gap-2">
             {GOAL_TYPES.map((type) => (
-              <label key={type} lang="es" className="group relative flex min-h-[64px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-2 text-center text-[12px] leading-tight font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] shadow-[0_0_0_1.5px_var(--color-border-subtle)] has-[:checked]:bg-saving-subtle has-[:checked]:shadow-[inset_0_0_0_2px_var(--color-text-primary)] has-[:focus-visible]:outline-[length:var(--border-focus)] has-[:focus-visible]:outline-offset-[var(--focus-offset)] has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-solid">
+              <label key={type} lang="es" className="group relative flex min-h-[64px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-2 text-center text-[0.75rem] leading-tight font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] shadow-[0_0_0_1.5px_var(--color-border-subtle)] has-[:checked]:bg-saving-subtle has-[:checked]:shadow-[inset_0_0_0_2px_var(--color-text-primary)] has-[:focus-visible]:outline-[length:var(--border-focus)] has-[:focus-visible]:outline-offset-[var(--focus-offset)] has-[:focus-visible]:outline-focus has-[:focus-visible]:outline-solid">
                 <input type="radio" name={`${id}-type`} value={type} checked={goalType === type} onChange={() => setGoalType(type)} className="absolute inset-0 m-0 cursor-pointer appearance-none rounded-[14px] opacity-0" />
                 <AppIcon name={goalTypeIcon[type]} weight="duotone" size={22} className="text-saving" />
                 <span>{copy.goals.types[type]}</span>
@@ -130,25 +130,25 @@ export function GoalFormSheet({ open, onClose, goal, context, today, idempotency
         <fieldset disabled={locked} className="flex flex-col gap-2">
           <legend className="pb-1 text-[length:var(--label-m-size)] font-semibold text-ink">{copy.goals.sheet.month}</legend>
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1.5 text-[12px] font-medium text-ink-secondary">
+            <label className="flex flex-col gap-1.5 text-[0.75rem] font-medium text-ink-secondary">
               {copy.goals.sheet.monthLabel}
               <select value={month} disabled={locked} onChange={(event) => setMonth(event.target.value)} className={select}>
                 <option value="">{copy.goals.sheet.clearMonth}</option>
                 {copy.dates.months.map((label, index) => <option key={label} value={String(index + 1).padStart(2, "0")}>{label}</option>)}
               </select>
             </label>
-            <label className="flex flex-col gap-1.5 text-[12px] font-medium text-ink-secondary">
+            <label className="flex flex-col gap-1.5 text-[0.75rem] font-medium text-ink-secondary">
               {copy.goals.sheet.yearLabel}
               <select value={year} disabled={locked || month === ""} onChange={(event) => setYear(event.target.value)} className={select}>
                 {years.map((value) => <option key={value} value={value}>{value}</option>)}
               </select>
             </label>
           </div>
-          <p className="text-[12px] text-ink-secondary">{copy.goals.sheet.monthHelp}</p>
+          <p className="text-[0.75rem] text-ink-secondary">{copy.goals.sheet.monthHelp}</p>
         </fieldset>
-        {editing ? null : <p className="flex items-start gap-2 text-[13px] leading-[1.45] text-ink-secondary"><AppIcon name={context === "us" ? "users-three" : "lock-simple"} size={16} className="mt-0.5 shrink-0" />{copy.goals.sheet.scopeNote[context]}</p>}
+        {editing ? null : <p className="flex items-start gap-2 text-[0.8125rem] leading-[1.45] text-ink-secondary"><AppIcon name={context === "us" ? "users-three" : "lock-simple"} size={16} className="mt-0.5 shrink-0" />{copy.goals.sheet.scopeNote[context]}</p>}
         {conflict ? (
-          <div role="alert" data-goal-conflict="" className="flex flex-col gap-2.5 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+          <div role="alert" data-goal-conflict="" className="flex flex-col gap-2.5 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
             {fresh ? (
               <>
                 <span className="flex items-start gap-2.5">

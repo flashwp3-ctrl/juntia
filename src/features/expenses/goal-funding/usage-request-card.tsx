@@ -105,41 +105,41 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
 
   return (
     <article aria-labelledby={titleId} data-usage-request={status} className="flex flex-col gap-2.5 rounded-[var(--radius-xl)] bg-raised p-4 shadow-raised">
-      <div className="flex flex-wrap items-center gap-2">{badge}<span className="text-[12px] font-medium text-ink-secondary">{request.goalName}</span></div>
+      <div className="flex flex-wrap items-center gap-2">{badge}<span className="text-[0.75rem] font-medium text-ink-secondary">{request.goalName}</span></div>
       <h3 id={titleId} className={compact && !(role === "member" && status === "pending") ? "sr-only" : "font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink"}>
         {role === "member" && status === "pending" ? copy.goalExpense.request.title(requester) : copy.goalExpense.request.expense(description, cop(request.transactionAmountMinor))}
       </h3>
       {role === "member" ? (
         <>
-          {status === "pending" ? <p className="text-[14px] font-semibold text-ink">{copy.goalExpense.request.expense(description, cop(request.transactionAmountMinor))}</p> : null}
-          {request.splitLabel ? <p className="text-[13px] text-ink-secondary">{copy.goalExpense.request.split(request.splitLabel)}</p> : null}
-          {BigInt(request.usedMinor) > 0n ? <p className="text-[13px] text-ink-secondary">{copy.goalExpense.request.used(requester, cop(request.usedMinor))}</p> : null}
+          {status === "pending" ? <p className="text-[0.875rem] font-semibold text-ink">{copy.goalExpense.request.expense(description, cop(request.transactionAmountMinor))}</p> : null}
+          {request.splitLabel ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.split(request.splitLabel)}</p> : null}
+          {BigInt(request.usedMinor) > 0n ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.used(requester, cop(request.usedMinor))}</p> : null}
           {status === "pending" && available !== null && after !== null ? (
-            <p className="text-[14px] font-semibold text-ink tabular-nums">
+            <p className="text-[0.875rem] font-semibold text-ink tabular-nums">
               <span className="sr-only">{copy.goalExpense.request.yoursLabel(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
               <span aria-hidden="true">{copy.goalExpense.request.yours(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
             </p>
           ) : null}
-          {status === "pending" ? <p className="text-[12px] leading-[1.45] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.request.rejectNote}</p> : null}
+          {status === "pending" ? <p className="text-[0.75rem] leading-[1.45] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.request.rejectNote}</p> : null}
         </>
       ) : (
         <>
-          {status === "pending" ? <p className="text-[14px] text-ink">{copy.goalExpense.request.waiting(member)}</p> : null}
-          <p className="text-[13px] text-ink-secondary">{copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
-          {status === "pending" ? <p className="text-[12px] font-semibold text-ink-secondary">{copy.goalExpense.request.noExpiry}</p> : null}
+          {status === "pending" ? <p className="text-[0.875rem] text-ink">{copy.goalExpense.request.waiting(member)}</p> : null}
+          <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
+          {status === "pending" ? <p className="text-[0.75rem] font-semibold text-ink-secondary">{copy.goalExpense.request.noExpiry}</p> : null}
         </>
       )}
-      {status === "approved" && !done ? <p className="text-[13px] text-ink-secondary">{copy.goalExpense.detail.approvedNote(member)}</p> : null}
-      {status === "rejected" && !done ? <p className="text-[13px] text-ink-secondary">{copy.goalExpense.detail.rejectedNote(member)}</p> : null}
-      {result ? <p role="status" className="text-[13px] font-semibold text-ink">{result}</p> : null}
+      {status === "approved" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.approvedNote(member)}</p> : null}
+      {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.rejectedNote(member)}</p> : null}
+      {result ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{result}</p> : null}
       {write.state.phase === "rejected" ? (
-        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           <span>{requestRejection(write.state.error, write.state.detail, request.goalName)}</span>
           {blocked ? <Button variant="secondary" icon="arrow-clockwise" className={wrapLabelMd} onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
         </div>
       ) : null}
       {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirmingClose(true)} /> : null}
-      {unconfirmed && write.state.phase !== "unknown" ? <p role="status" className="text-[13px] font-semibold text-ink">{copy.goalExpense.request.closedUnconfirmed}</p> : null}
+      {unconfirmed && write.state.phase !== "unknown" ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{copy.goalExpense.request.closedUnconfirmed}</p> : null}
       <UnconfirmedClose open={confirmingClose} onOpenChange={setConfirmingClose} onRetry={() => void write.retry()} onClose={() => { setUnconfirmed(true); write.reset(); router.refresh(); }} />
       {status === "pending" && !blocked && write.state.phase !== "unknown" ? (
         role === "member" ? (

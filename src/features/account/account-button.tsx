@@ -25,7 +25,7 @@ export function AccountButton({ className = "" }: { className?: string }) {
   }
   return (
     <Link href="/cuenta" aria-label={copy.nav.account} title={copy.nav.account} data-account-button="" className={`${hit} group grid size-11 shrink-0 place-items-center rounded-[16px] ${className}`}>
-      <span aria-hidden="true" className={`grid size-10 place-items-center rounded-[14px] ${personFill[account.person]} text-[15px] font-semibold text-[var(--comp-avatar-fg)] shadow-[0_0_0_2px_var(--color-surface-canvas),0_0_0_3.5px_var(--color-border-strong)] motion-safe:transition-transform motion-safe:duration-[var(--duration-instant)] group-active:scale-[.96]`}>
+      <span aria-hidden="true" className={`grid size-10 place-items-center rounded-[14px] ${personFill[account.person]} text-[0.9375rem] font-semibold text-[var(--comp-avatar-fg)] shadow-[0_0_0_2px_var(--color-surface-canvas),0_0_0_3.5px_var(--color-border-strong)] motion-safe:transition-transform motion-safe:duration-[var(--duration-instant)] group-active:scale-[.96]`}>
         {account.initial}
       </span>
       <span aria-hidden="true" className="absolute -right-[3px] -bottom-[3px] grid size-5 place-items-center rounded-[8px] bg-raised text-ink shadow-[0_0_0_2px_var(--color-surface-canvas)]">
@@ -42,16 +42,16 @@ export function SidebarAccount({ current }: { current: boolean }) {
     <Link
       href="/cuenta"
       aria-current={current ? "page" : undefined}
-      className={`${hit} mt-auto flex size-12 items-center justify-center gap-2.5 self-center rounded-[16px] xl:size-auto xl:min-h-14 xl:justify-start xl:self-stretch xl:p-2.5 motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-[var(--comp-nav-active-bg)] shadow-raised" : "hover:bg-[var(--comp-nav-active-bg)] xl:bg-sunken"}`}
+      className={`${hit} mt-auto flex size-12 shrink-0 items-center justify-center gap-2.5 self-center rounded-[16px] xl:size-auto xl:min-h-14 xl:justify-start xl:self-stretch xl:p-2.5 motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)] ${current ? "bg-[var(--comp-nav-active-bg)] shadow-raised" : "hover:bg-[var(--comp-nav-active-bg)] xl:bg-sunken"}`}
     >
       {account ? (
-        <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-[13px] ${personFill[account.person]} text-[14px] font-semibold text-[var(--comp-avatar-fg)]`}>{account.initial}</span>
+        <span aria-hidden="true" className={`grid size-9 shrink-0 place-items-center rounded-[13px] ${personFill[account.person]} text-[0.875rem] font-semibold text-[var(--comp-avatar-fg)]`}>{account.initial}</span>
       ) : (
         <AppIcon name="user-circle" weight={current ? "fill" : "regular"} size={24} />
       )}
       <span className="sr-only flex min-w-0 flex-col xl:not-sr-only">
-        <span className="truncate text-[14px] leading-5 font-semibold text-ink">{name}</span>
-        {account ? <span className="text-[12px] leading-4 break-words text-[var(--comp-field-muted-fg)]">{account.partnerName ? copy.account.withPartner(account.partnerName) : copy.nav.account}</span> : null}
+        <span className="truncate text-[0.875rem] leading-5 font-semibold text-ink">{name}</span>
+        {account ? <span className="text-[0.75rem] leading-4 break-words text-[var(--comp-field-muted-fg)]">{account.partnerName ? copy.account.withPartner(account.partnerName) : copy.nav.account}</span> : null}
       </span>
       <AppIcon name="caret-right" size={18} className="ml-auto hidden shrink-0 text-ink-secondary xl:block" />
     </Link>

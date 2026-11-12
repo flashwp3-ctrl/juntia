@@ -125,7 +125,7 @@ function CategoryChoice({ ids, value, disabled, onSelect }: { ids: readonly Cate
             data-category-choice=""
             onClick={() => onSelect(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
-            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[12px] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${value === id ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[0.75rem] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${value === id ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
           >
             <AppIcon name={categories[id].icon} weight="duotone" size={22} className={fg} />
             <span>{copy.categories[id]}</span>
@@ -241,14 +241,14 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
   const consumed = chosenRow && BigInt(chosenRow.consumedMinor) > 0n ? chosenRow.consumedMinor : null;
   const body = (
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span />
-        <DialogTitle className="text-center font-serif text-[23px] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>
       </div>
-      <p className="-mt-2 flex items-center justify-center gap-1.5 text-center text-[12px] font-medium text-ink-secondary">
+      <p className="-mt-2 flex items-center justify-center gap-1.5 text-center text-[0.75rem] font-medium text-ink-secondary">
         <AppIcon name={context === "us" ? "users-three" : "lock-simple"} weight="bold" size={13} />
         {copy.plan.sheet.context[context]}
       </p>
@@ -273,12 +273,12 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
         className="w-full"
         fieldClassName="w-full"
       />
-      <div className="flex flex-col gap-1 text-[12px] leading-[1.5] text-pretty text-ink-secondary">
+      <div className="flex flex-col gap-1 text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">
         {consumed ? <p>{copy.plan.sheet.thisMonth(money(consumed), monthName(month))}</p> : null}
         <p>{copy.plan.sheet.rule(monthName(month))}</p>
       </div>
       {conflict ? (
-        <div role="alert" className="flex flex-col gap-2.5 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[13px] leading-[1.45] font-medium text-ink">
+        <div role="alert" className="flex flex-col gap-2.5 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           {fresh ? (
             <>
               <span className="flex items-start gap-2.5">
@@ -305,7 +305,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
         </div>
       ) : null}
       {message ? (
-        <p id={errorId} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[13px] font-medium text-ink">
+        <p id={errorId} role="alert" className="flex items-start gap-2 rounded-[14px] bg-danger-subtle px-3 py-2.5 text-[0.8125rem] font-medium text-ink">
           <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-danger" />
           {message}
         </p>
@@ -320,17 +320,17 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
           {target.kind === "edit" && editing?.limitMinor !== null ? (
             <>
               <Button variant="ghost" className="w-full" disabled={locked} onClick={() => submit(true)}>{copy.plan.sheet.deactivate}</Button>
-              <p className="text-center text-[12px] leading-[1.5] text-pretty text-ink-secondary">{copy.plan.sheet.deactivateNote}</p>
+              <p className="text-center text-[0.75rem] leading-[1.5] text-pretty text-ink-secondary">{copy.plan.sheet.deactivateNote}</p>
             </>
           ) : null}
         </div>
       )}
       {target.kind === "edit" && editing && editing.history.length > 0 ? (
         <section className="flex flex-col gap-2 border-t-[length:var(--border-hairline)] border-border pt-4">
-          <h3 id={`${errorId}-history`} className="text-[12px] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">{copy.plan.sheet.history}</h3>
+          <h3 id={`${errorId}-history`} className="text-[0.75rem] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase">{copy.plan.sheet.history}</h3>
           <ul aria-labelledby={`${errorId}-history`} className="flex flex-col">
             {editing.history.map((change) => (
-              <li key={change.id} className="flex items-baseline justify-between gap-3 py-1.5 text-[13px] leading-[1.4]">
+              <li key={change.id} className="flex items-baseline justify-between gap-3 py-1.5 text-[0.8125rem] leading-[1.4]">
                 <span className="font-medium text-ink">{historyValue(change)}</span>
                 <span className="shrink-0 text-ink-secondary">{context === "me" ? copy.plan.sheet.historyByMe(shortDate(change.date)) : copy.plan.sheet.historyBy(change.byName, shortDate(change.date))}</span>
               </li>

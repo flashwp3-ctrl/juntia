@@ -58,23 +58,23 @@ function AnnotateTrigger({ variant }: { variant: "bar" | "side" }) {
 }
 
 const sideItem =
-  `${hitSquare} flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-[46px] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]`;
+  `${hitSquare} flex h-12 w-12 items-center justify-center gap-3 self-center rounded-[15px] xl:h-auto xl:min-h-[2.875rem] xl:w-auto xl:justify-start xl:self-stretch xl:px-3.5 text-[length:var(--body-m-size)] motion-safe:transition-colors motion-safe:duration-[var(--duration-instant)]`;
 const sideActive = "bg-[var(--comp-nav-active-bg)] text-ink font-semibold shadow-raised";
 const sideIdle = "text-ink-secondary xl:text-[var(--comp-nav-muted-fg)] font-medium hover:bg-[var(--comp-nav-active-bg)]";
 
 function SideNav({ pathname }: { pathname: string | null }) {
   const onAccount = isCurrent(ACCOUNT_HREF, pathname);
   return (
-    <aside className="fixed inset-y-0 left-0 z-[var(--z-nav)] hidden w-[76px] flex-col overflow-y-auto border-r-[length:var(--border-hairline)] border-border bg-[var(--comp-sidebar-bg)] px-3 py-6 lg:flex xl:w-[248px] xl:px-[18px] xl:py-7">
+    <aside className="fixed inset-y-0 left-0 z-[var(--z-nav)] hidden w-[76px] flex-col overflow-y-auto border-r-[length:var(--border-hairline)] border-border bg-[var(--comp-sidebar-bg)] px-3 py-6 lg:flex xl:w-[15.5rem] xl:px-[18px] xl:py-7">
       {/* Marca: «J» en el rail, «Juntia» con su punto bosque en el sidebar. */}
-      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[26px] leading-none font-medium tracking-[-0.015em] text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[28px]">
+      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[1.75rem]">
         <span aria-hidden="true" className="hidden size-3 rounded-[4px] bg-primary xl:block" />
         <span aria-hidden="true" className="xl:hidden">{copy.shell.brand.charAt(0)}</span>
         <span className="sr-only xl:not-sr-only">{copy.shell.brand}</span>
       </p>
       {/* Desde 1280 el selector vive aquí, bajo la marca (§15.3); por debajo, arriba a la derecha del contenido. */}
       <ContextSelector stretch className="mb-3.5 hidden xl:block" />
-      <nav aria-label={copy.shell.navigation} className="flex flex-col gap-1.5">
+      <nav aria-label={copy.shell.navigation} className="flex shrink-0 flex-col gap-1.5">
         {navDestinations.map((destination) => {
           const current = isCurrent(destination.href, pathname);
           return (
@@ -141,7 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {copy.shell.skip}
       </a>
       <SideNav pathname={pathname} />
-      <div className="lg:pl-[76px] xl:pl-[248px]">
+      <div className="lg:pl-[76px] xl:pl-[15.5rem]">
         <div
           className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:px-10 xl:pt-10 ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
         >
@@ -190,7 +190,7 @@ export function PageHeader({ title, variant = "destination", backHref = "/" }: P
         <AccountButton className="-ml-0.5 lg:hidden" />
       )}
       {title ? (
-        <h1 className={`-my-[0.14em] min-w-0 max-w-full flex-[1_1_6rem] truncate py-[0.14em] font-serif ${long ? "text-[clamp(22px,6.2vw,30px)]" : "text-[clamp(25px,7.4vw,30px)]"} leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(39px,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]`}>
+        <h1 className={`-my-[0.14em] min-w-0 max-w-full flex-[1_1_6rem] truncate py-[0.14em] font-serif ${long ? "text-[clamp(1.375rem,6.2vw,1.875rem)]" : "text-[clamp(1.5625rem,7.4vw,1.875rem)]"} leading-none font-medium tracking-[var(--display-xl-tracking)] text-ink lg:text-[clamp(2.4375rem,3.7vw,var(--display-xl-size))] lg:leading-[var(--display-xl-line)]`}>
           {title}
         </h1>
       ) : null}
