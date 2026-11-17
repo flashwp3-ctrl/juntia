@@ -608,7 +608,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   const footer = (
     // «Guardar sube con el teclado» (comp 1c y 2a): en la hoja móvil el pie va fijo al fondo del área desplazable, en las
     // dos vistas. Desde 768 px (diálogo) el pie no es fijo y el relleno es el del diálogo. El aviso de error sube con él.
-    <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
+    <div className="flex flex-col gap-3.5 max-md:sticky max-md:bottom-0 max-md:mt-auto max-md:z-[1] max-md:-mx-5 max-md:bg-overlay max-md:px-5 max-md:pt-2 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
       {errorNotice}
       {sharedNotice}
       {goalNotice}
@@ -676,7 +676,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   ) : null;
 
   const body = (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-3.5">
+    <form noValidate onSubmit={submit} className="flex grow flex-col gap-3.5">
       {view === "split" && splitView ? splitView : view === "goal" && goalView ? goalView : (
         <>
           {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
@@ -802,5 +802,5 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
     </form>
   );
 
-  return <BottomSheet open={open} onOpenChange={requestClose} title={title} onOpenAutoFocus={onOpenAutoFocus} onCloseAutoFocus={onCloseAutoFocus} bare draggable adaptive>{body}</BottomSheet>;
+  return <BottomSheet open={open} onOpenChange={requestClose} title={title} onOpenAutoFocus={onOpenAutoFocus} onCloseAutoFocus={onCloseAutoFocus} bare draggable adaptive holdKey={view}>{body}</BottomSheet>;
 }
