@@ -173,6 +173,53 @@ async function fieldCorners(page: Page, scope: string) {
   return results;
 }
 
+// Decisión de los fundadores del 17 nov 2026. Un solo evaluate sobre la página ya cargada, sin navegar ni esperar:
+// 1. Ancho: `scrollWidth <= clientWidth` del documento. El 11 nov entró a producción Actividad a 585 px de ancho a 390
+//    (nombres sr-only absolutos que escapaban del scroller de fichas) y ningún gate lo vio. Si se desborda, devuelve los
+//    elementos más externos que pasan del borde derecho sin que los recorte un `overflow-x` distinto de visible. El recorte
+//    sigue la cadena de bloques contenedores, no el DOM: un absoluto solo lo recorta un ancestro posicionado o algo por
+//    encima de él, que es justo lo que falló en Actividad. Los fijos no alargan el documento y no cuentan.
+// 2. Campos: por debajo de md, cada campo de texto con caja (también el de fecha invisible de Anotar) calcula ≥ 16 px, para
+//    que Safari de iPhone no amplíe la página al enfocarlo (globals.css, --field-text-min).
+const TEXT_FIELDS = 'input:not([type="hidden"], [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"]), textarea, select';
+async function layoutChecks(page: Page) {
+  return page.evaluate((selector) => {
+    const root = document.documentElement;
+    const viewport = root.clientWidth;
+    const describe = (element: Element) => {
+      const classes = (element.getAttribute("class") ?? "").trim().split(/\s+/).slice(0, 6).join(".");
+      const text = (element.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
+      return `<${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ""}${classes ? `.${classes}` : ""}> «${text}» hasta ${Math.round(element.getBoundingClientRect().right)} px`;
+    };
+    const clipped = (element: Element) => {
+      let node: Element = element;
+      for (;;) {
+        const position = getComputedStyle(node).position;
+        if (position === "fixed") return true;
+        let parent = node.parentElement;
+        if (position === "absolute") {
+          while (parent && parent !== root && getComputedStyle(parent).position === "static" && getComputedStyle(parent).transform === "none") parent = parent.parentElement;
+        }
+        if (!parent || parent === root) return false;
+        if (getComputedStyle(parent).overflowX !== "visible") return true;
+        node = parent;
+      }
+    };
+    const offenders: Element[] = [];
+    if (root.scrollWidth > viewport) {
+      for (const element of document.body.querySelectorAll("*")) {
+        if (element.getBoundingClientRect().right <= viewport + 0.5) continue;
+        if (offenders.some((outer) => outer.contains(element)) || clipped(element)) continue;
+        offenders.push(element);
+      }
+    }
+    const fields = [...document.querySelectorAll(selector)].filter((field) => field.getClientRects().length > 0).map((field) => ({
+      name: field.getAttribute("aria-label") ?? field.getAttribute("placeholder") ?? (field as HTMLInputElement).labels?.[0]?.textContent?.trim() ?? field.getAttribute("type") ?? field.tagName.toLowerCase(),
+      size: parseFloat(getComputedStyle(field).fontSize),
+    }));
+    return { scrollWidth: root.scrollWidth, clientWidth: viewport, offenders: offenders.slice(0, 8).map(describe), fields };
+  }, TEXT_FIELDS);
+}
 
 for (const colorScheme of THEMES) {
   for (const width of [390, 1440]) {
@@ -207,6 +254,13 @@ for (const colorScheme of THEMES) {
         const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
         console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
         expect(blocking).toEqual([]);
+        const layout = await layoutChecks(page);
+        console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ancho ${layout.scrollWidth}/${layout.clientWidth}; campos ${layout.fields.map(({ name, size }) => `«${name}» ${size}`).join(", ") || "ninguno"}`);
+        expect.soft(layout.scrollWidth, `ancho del documento a ${layout.clientWidth} px; se salen: ${layout.offenders.join(" · ") || "(ninguno sin recorte)"}`).toBeLessThanOrEqual(layout.clientWidth);
+        if (width < 768) {
+          const small = layout.fields.filter(({ size }) => size < 16);
+          expect.soft(small, `campos de texto por debajo de 16 px a ${width} (Safari de iPhone amplía al enfocarlos)`).toEqual([]);
+        }
         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
@@ -299,7 +353,8 @@ for (const colorScheme of THEMES) {
               expect.soft(size >= 28 && size <= 40, `AmountInput «${value}»: ${size} px fuera de 28–40`).toBe(true);
               expect.soft(clipped, `AmountInput «${value}»: sin cortar`).toBe(false);
             } else {
-              expect.soft(size, `Input: body.m`).toBe(body);
+              // 17 nov 2026: por debajo de md el campo calcula al menos 16 px (globals.css, --field-text-min).
+              expect.soft(size, `Input: body.m${width < 768 ? ", con suelo de 16 px" : ""}`).toBe(width < 768 ? Math.max(16, body) : body);
             }
             expect.soft(frame, `${amount ? "AmountInput" : "Input"} «${value}»: alto del marco`).toBe(amount ? 64 : 48);
           }

@@ -114,6 +114,22 @@ body {
     cursor: not-allowed;
   }
   :focus-visible { outline: var(--border-focus) solid var(--color-focus-ring); outline-offset: var(--focus-offset); }
+  /* Decisión de los fundadores del 17 nov 2026: Safari de iPhone amplía la página al enfocar un campo de menos de 16 px y
+     la deja así. En el celular (por debajo de md) y con puntero táctil (iPad, un teléfono en horizontal), todo campo de
+     texto calcula al menos 1rem. La regla va en la capa base y sobre el elemento, así que gana a lo que el campo hereda de
+     su marco (Input, la búsqueda de Actividad, la descripción y la fecha de Anotar, las partes del reparto) y pierde con
+     una utilidad puesta en el propio campo, como el clamp de AmountInput (28–40 px). Un campo con su propio tamaño
+     (los select de la meta, el enlace de invitación) usa `max(var(--field-text-min), …)`. max(1rem, 1em) conserva un
+     tamaño heredado mayor. */
+  :root { --field-text-min: 0rem; }
+  @media (width < 48rem), (pointer: coarse) {
+    :root { --field-text-min: 1rem; }
+    input:not([type="hidden"], [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"]),
+    textarea,
+    select {
+      font-size: max(var(--field-text-min), 1em);
+    }
+  }
   /* Autocompletado del navegador: sin el fondo propio de Chrome dentro del marco del campo, con el texto en tinta. */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
