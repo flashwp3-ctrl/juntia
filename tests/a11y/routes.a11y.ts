@@ -22,7 +22,9 @@ const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
 // del PR; sin la variable, con un valor desconocido o en el barrido, todo el registro (route-registry.ts, routeAreaFilter).
 const areas = routeAreaFilter();
 const inAreas = (route: string) => !areas || areas.has(routeArea(route));
-const entries = (JOB === "e2e" ? e2eEntries : appEntries).filter((entry) => entry.axe !== false && inAreas(entry.route));
+// F82-1 (revisión del PR #82): `axe: false` evita repetir axe, no la geometría. Esos estados se visitan igual, solo para
+// layoutChecks (sin AxeBuilder), con el mismo filtro por área.
+const entries = (JOB === "e2e" ? e2eEntries : appEntries).filter((entry) => inAreas(entry.route));
 const INTERNAL = "/interno/primitivos";
 const NOT_FOUND = "/ruta-que-no-existe";
 const PRODUCT = ["/", "/actividad", "/metas", "/plan", "/balance", "/cuenta"] as const;
@@ -177,10 +179,13 @@ async function fieldCorners(page: Page, scope: string) {
 // 1. Ancho: `scrollWidth <= clientWidth` del documento. El 11 nov entró a producción Actividad a 585 px de ancho a 390
 //    (nombres sr-only absolutos que escapaban del scroller de fichas) y ningún gate lo vio. Si se desborda, devuelve los
 //    elementos más externos que pasan del borde derecho sin que los recorte un `overflow-x` distinto de visible. El recorte
-//    sigue la cadena de bloques contenedores, no el DOM: un absoluto solo lo recorta un ancestro posicionado o algo por
-//    encima de él, que es justo lo que falló en Actividad. Los fijos no alargan el documento y no cuentan.
-// 2. Campos: por debajo de md, cada campo de texto con caja (también el de fecha invisible de Anotar) calcula ≥ 16 px, para
-//    que Safari de iPhone no amplíe la página al enfocarlo (globals.css, --field-text-min).
+//    sigue la cadena de bloques contenedores, no el DOM: un absoluto solo lo recorta su bloque contenedor o algo por encima
+//    de él, que es justo lo que falló en Actividad. F82-2: el bloque contenedor lo crea un ancestro posicionado (solo para
+//    absolutos) o uno con transform, filter, perspective, contain (paint, layout, strict, content) o will-change de esas
+//    propiedades (también para fijos). Un fijo sin ese ancestro va contra la ventana, no alarga el documento y no cuenta.
+// 2. Campos: con la media de globals.css (`(width < 48rem), (pointer: coarse)`), cada campo de texto con caja (también el
+//    de fecha invisible de Anotar) calcula al menos 1rem, para que Safari de iPhone no amplíe la página al enfocarlo. F82-3:
+//    la media y el valor real de 1rem se leen en la página (`floor`, `null` si la media no aplica).
 const TEXT_FIELDS = 'input:not([type="hidden"], [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"]), textarea, select';
 async function layoutChecks(page: Page) {
   return page.evaluate((selector) => {
@@ -191,14 +196,22 @@ async function layoutChecks(page: Page) {
       const text = (element.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
       return `<${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ""}${classes ? `.${classes}` : ""}> «${text}» hasta ${Math.round(element.getBoundingClientRect().right)} px`;
     };
+    const establishesContainingBlock = (element: Element, forFixed: boolean) => {
+      const style = getComputedStyle(element);
+      if (!forFixed && style.position !== "static") return true;
+      return style.transform !== "none" || style.filter !== "none" || style.perspective !== "none"
+        || /\b(paint|layout|strict|content)\b/.test(style.contain) || /\b(transform|filter|perspective)\b/.test(style.willChange);
+    };
     const clipped = (element: Element) => {
       let node: Element = element;
       for (;;) {
         const position = getComputedStyle(node).position;
-        if (position === "fixed") return true;
         let parent = node.parentElement;
-        if (position === "absolute") {
-          while (parent && parent !== root && getComputedStyle(parent).position === "static" && getComputedStyle(parent).transform === "none") parent = parent.parentElement;
+        if (position === "absolute" || position === "fixed") {
+          const forFixed = position === "fixed";
+          while (parent && parent !== root && !establishesContainingBlock(parent, forFixed)) parent = parent.parentElement;
+          // Un fijo contra la ventana no alarga el documento: no es culpable.
+          if (forFixed && (!parent || parent === root)) return true;
         }
         if (!parent || parent === root) return false;
         if (getComputedStyle(parent).overflowX !== "visible") return true;
@@ -217,15 +230,27 @@ async function layoutChecks(page: Page) {
       name: field.getAttribute("aria-label") ?? field.getAttribute("placeholder") ?? (field as HTMLInputElement).labels?.[0]?.textContent?.trim() ?? field.getAttribute("type") ?? field.tagName.toLowerCase(),
       size: parseFloat(getComputedStyle(field).fontSize),
     }));
-    return { scrollWidth: root.scrollWidth, clientWidth: viewport, offenders: offenders.slice(0, 8).map(describe), fields };
+    const floor = matchMedia("(width < 48rem), (pointer: coarse)").matches ? parseFloat(getComputedStyle(root).fontSize) : null;
+    return { scrollWidth: root.scrollWidth, clientWidth: viewport, offenders: offenders.slice(0, 8).map(describe), fields, floor };
   }, TEXT_FIELDS);
+}
+
+async function assertLayout(page: Page, label: string) {
+  const layout = await layoutChecks(page);
+  console.log(`${label}: ancho ${layout.scrollWidth}/${layout.clientWidth}; campos ${layout.fields.map(({ name, size }) => `«${name}» ${size}`).join(", ") || "ninguno"}${layout.floor === null ? "" : ` (suelo ${layout.floor})`}`);
+  expect.soft(layout.scrollWidth, `ancho del documento a ${layout.clientWidth} px; se salen: ${layout.offenders.join(" · ") || "(ninguno sin recorte)"}`).toBeLessThanOrEqual(layout.clientWidth);
+  const { floor } = layout;
+  if (floor !== null) {
+    expect.soft(layout.fields.filter(({ size }) => size < floor), `campos de texto por debajo de 1rem (${floor} px): Safari de iPhone amplía al enfocarlos`).toEqual([]);
+  }
 }
 
 for (const colorScheme of THEMES) {
   for (const width of [390, 1440]) {
     for (const entry of entries) {
       // Decisión 21: el nivel ligero de cada PR es 390; 1440 es parte del barrido completo (@sweep, a mano).
-      test(`${entry.route} · ${entry.state} · ${colorScheme} · ${width}px`, width === 390 ? {} : { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
+      const geometryOnly = entry.axe === false;
+      test(`${entry.route} · ${entry.state} · ${geometryOnly ? "solo geometría · " : ""}${colorScheme} · ${width}px`, width === 390 ? {} : { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
         const page = await openWithSession(browser, base, entry, colorScheme, width, testInfo.parallelIndex, baseURL!);
         const route = entry.route;
         await page.setViewportSize({ width, height: 900 });
@@ -244,6 +269,11 @@ for (const colorScheme of THEMES) {
           await expect(page.locator("[data-skeleton-visible]").first()).toBeAttached();
         }
         await reach(page, entry, testInfo.parallelIndex);
+        if (geometryOnly) {
+          await assertLayout(page, `${colorScheme} ${route} · ${entry.state} ${width}px (solo geometría)`);
+          if (page !== base) await page.context().close();
+          return;
+        }
         // Los momentos de motion de las rutas de producto se miden en su estado base, no con una hoja o un aviso abiertos.
         const isProduct = (PRODUCT as readonly string[]).includes(route) && !entry.prepare;
         // Flakes del PR C («/recuperar · A4b · dark · 390») y del gate del PR #66 («/cuenta/pareja · M3b enlace listo · light
@@ -254,13 +284,7 @@ for (const colorScheme of THEMES) {
         const blocking = result.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
         console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ${result.violations.length} violaciones, ${blocking.length} serias o críticas`);
         expect(blocking).toEqual([]);
-        const layout = await layoutChecks(page);
-        console.log(`${colorScheme} ${route} · ${entry.state} ${width}px: ancho ${layout.scrollWidth}/${layout.clientWidth}; campos ${layout.fields.map(({ name, size }) => `«${name}» ${size}`).join(", ") || "ninguno"}`);
-        expect.soft(layout.scrollWidth, `ancho del documento a ${layout.clientWidth} px; se salen: ${layout.offenders.join(" · ") || "(ninguno sin recorte)"}`).toBeLessThanOrEqual(layout.clientWidth);
-        if (width < 768) {
-          const small = layout.fields.filter(({ size }) => size < 16);
-          expect.soft(small, `campos de texto por debajo de 16 px a ${width} (Safari de iPhone amplía al enfocarlos)`).toEqual([]);
-        }
+        await assertLayout(page, `${colorScheme} ${route} · ${entry.state} ${width}px`);
         const durations = await page.evaluate(() => getComputedStyle(document.body).transitionDuration.split(",").map((value) => value.trim()));
         // Aserciones de movimiento con expect.soft: la prueba falla igual, pero informa de todas a la vez.
         expect.soft(durations.every((value) => value === "0s"), "transición de tema").toBe(true);
@@ -344,17 +368,19 @@ for (const colorScheme of THEMES) {
               probe.remove();
               return px;
             })(),
+            // F82-3: el suelo de globals.css, leído en la página: la misma media y el valor real de 1rem; null si no aplica.
+            floor: matchMedia("(width < 48rem), (pointer: coarse)").matches ? parseFloat(getComputedStyle(document.documentElement).fontSize) : null,
             frame: node.parentElement!.getBoundingClientRect().height,
             clipped: node.scrollWidth > node.clientWidth,
           })));
-          for (const { amount, value, size, body, frame, clipped } of sizes) {
+          for (const { amount, value, size, body, floor, frame, clipped } of sizes) {
             console.log(`${colorScheme} ${route} ${width}px: ${amount ? "AmountInput" : "Input"} «${value}» a ${size} px, marco de ${frame} px${clipped ? ", cortado" : ""}`);
             if (amount) {
               expect.soft(size >= 28 && size <= 40, `AmountInput «${value}»: ${size} px fuera de 28–40`).toBe(true);
               expect.soft(clipped, `AmountInput «${value}»: sin cortar`).toBe(false);
             } else {
-              // 17 nov 2026: por debajo de md el campo calcula al menos 16 px (globals.css, --field-text-min).
-              expect.soft(size, `Input: body.m${width < 768 ? ", con suelo de 16 px" : ""}`).toBe(width < 768 ? Math.max(16, body) : body);
+              // 17 nov 2026: con la media de globals.css, el campo calcula al menos 1rem (--field-text-min).
+              expect.soft(size, `Input: body.m${floor === null ? "" : `, con suelo de ${floor} px`}`).toBe(floor === null ? body : Math.max(floor, body));
             }
             expect.soft(frame, `${amount ? "AmountInput" : "Input"} «${value}»: alto del marco`).toBe(amount ? 64 : 48);
           }
