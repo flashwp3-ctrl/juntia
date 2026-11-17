@@ -46,7 +46,7 @@ const summary = (values: Values) => [
   values.targetMonth ? targetMonthLabel(values.targetMonth) : copy.goals.noDate,
 ].join(" · ");
 const valuesOf = (goal: GoalView): Values => ({ name: goal.name, goalType: goal.goalType, targetPesos: String(BigInt(goal.targetMinor) / 100n), targetMonth: goal.targetMonth });
-const select = "min-h-12 w-full rounded-[var(--radius-md)] bg-sunken px-3 text-[length:var(--body-m-size)] font-medium text-ink shadow-[var(--comp-field-inset)] focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-[var(--focus-offset)] focus-visible:outline-focus focus-visible:outline-solid disabled:opacity-60";
+const select = "min-h-12 w-full rounded-[var(--radius-md)] bg-sunken px-3 text-[length:max(var(--field-text-min),var(--body-m-size))] font-medium text-ink shadow-[var(--comp-field-inset)] focus-visible:outline-[length:var(--border-focus)] focus-visible:outline-offset-[var(--focus-offset)] focus-visible:outline-focus focus-visible:outline-solid disabled:opacity-60";
 
 export function GoalFormSheet({ open, onClose, goal, context, today, idempotencyKey, actions, onDone }: Props) {
   const router = useRouter();

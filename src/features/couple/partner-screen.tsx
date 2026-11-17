@@ -163,7 +163,7 @@ function IssuedLink({ link, expiresAt, children }: { link: string; expiresAt: st
           <span className="text-[0.75rem] text-[var(--comp-field-muted-fg)]">{copy.couple.invite.readyLine(invitationDay(expiresAt))}</span>
         </span>
       </div>
-      <Input ref={field} label={copy.couple.invite.link} value={link} readOnly onFocus={(event) => event.currentTarget.select()} inputClassName="text-[0.875rem] text-ellipsis" help={copy.couple.invite.once} />
+      <Input ref={field} label={copy.couple.invite.link} value={link} readOnly onFocus={(event) => event.currentTarget.select()} inputClassName="text-[length:max(var(--field-text-min),0.875rem)] text-ellipsis" help={copy.couple.invite.once} />
       {children}
       <div role="status" className="empty:hidden">{copied ? <InlineNotice tone="success" icon="check-circle">{copy.couple.invite.copied}</InlineNotice> : null}</div>
       <div className="flex flex-col gap-2">
