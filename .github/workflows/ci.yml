@@ -39,7 +39,8 @@ on:
         type: boolean
         default: false
 # Maestro §15.10, decisión 21: en cada PR, el nivel ligero de accesibilidad (cada estado una vez, a 390, en los dos temas);
-# con «Run workflow» y a11y_sweep, solo el barrido completo (@sweep; playwright.config.ts). Sin el input (pull_request), vacío.
+# con «Run workflow» y a11y_sweep, solo el barrido completo (@sweep; playwright.config.ts), en los jobs app y a11y-session.
+# Sin el input (pull_request), vacío.
 env:
   A11Y_LEVEL: ${{ inputs.a11y_sweep && 'sweep' || '' }}
 permissions:
@@ -257,13 +258,17 @@ jobs:
         run: node scripts/ci.mjs summary
 
   e2e:
-    # T052 (002, PR B) / FR-065–FR-067; contracts/ci.md: Supabase del runner con Auth y Mailpit, build con sus variables,
-    # la spec E2E 1 (`test:e2e:smoke`) y axe de los estados con sesión o que necesitan la respuesta real de Auth.
-    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # T052 (002, PR B) / FR-065–FR-067; contracts/ci.md: Supabase del runner con Auth y Mailpit, build con sus variables y
+    # las specs E2E que elige el selector por área (`test:e2e:smoke`), incluidas las @mail. Decisión de los fundadores del
+    # 17 nov 2026: el axe con sesión sale de este job al job `a11y-session`, que corre en paralelo con su propio Supabase y
+    # su propio build (gate del PR #82: 609 s de 660 s, y P0-4 añade pruebas).
+    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate; el barrido de accesibilidad a mano
+    # (a11y_sweep) corre solo en `a11y-session` (decisión 21.2).
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     # Decisión de los fundadores del 10 nov 2026: 12 min, para que el presupuesto de 660 s (scripts/ci.mjs) avise antes de que
-    # GitHub cancele el job (antes, 10 min sobre un presupuesto de 480 s).
+    # GitHub cancele el job (antes, 10 min sobre un presupuesto de 480 s). Desde el 17 nov 2026, cada uno de los dos jobs
+    # con Supabase (`e2e` y `a11y-session`) conserva el mismo presupuesto y el mismo tope.
     timeout-minutes: 12
     env:
       SITE_URL: http://localhost:3400
@@ -304,6 +309,8 @@ jobs:
           done <<< "$status"
       - name: Restore the Next build cache
         # Igual que en el job app, con su propia clave: este job compila con las variables públicas del Supabase del runner.
+        # `a11y-session` compila con las mismas variables y usa la MISMA clave a propósito (17 nov 2026): cada job restaura la
+        # caché del otro; el que termina segundo no la vuelve a guardar (la entrada ya existe: aviso, no fallo).
         uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/.next/cache
@@ -337,38 +344,13 @@ jobs:
         # 004 PR B (T035, F64-5; specs/004-presupuestos-y-metas/contracts/ci.md): las specs 1–3 siempre y la 4 o la 5 según
         # el área del PR; lo compartido, lo desconocido o sin base (Run workflow), todas las existentes. El resumen del job
         # dice qué corrió, por qué y qué specs previstas todavía no existen.
-        if: '!inputs.a11y_sweep'
         env:
           E2E_BASE: ${{ github.event.pull_request.base.sha }}
         run: node scripts/e2e-select.mjs --base "$E2E_BASE"
       - name: E2E smoke (selected specs)
-        id: smoke
-        # Decisión 21.2: el barrido a mano solo corre la accesibilidad.
-        if: '!inputs.a11y_sweep'
         env:
           E2E_SPECS: ${{ steps.select.outputs.specs }}
         run: node scripts/ci.mjs run test:e2e:smoke
-      - name: Select light accessibility files by area
-        id: select_a11y
-        # Decisión de los fundadores del 11 nov 2026 (maestro §15.10, decisión 21; contracts/ci.md): el nivel ligero corre los
-        # archivos a11y del área del PR, con el criterio de las specs E2E; lo compartido, lo desconocido o sin base, todos. El
-        # barrido a mano (a11y_sweep) no selecciona: corre entero. El resumen del job dice qué archivos corrieron y por qué.
-        if: always() && !inputs.a11y_sweep
-        # Si el script se cae antes de escribir su salida, el paso de axe recibe A11Y_FILES vacío y corre todos (regla 4).
-        continue-on-error: true
-        env:
-          A11Y_BASE: ${{ github.event.pull_request.base.sha }}
-        run: node scripts/a11y-select.mjs --base "$A11Y_BASE"
-      - name: Axe of the states that need a session or the Auth API
-        # skip=true: el PR solo toca archivos neutros; el resumen del selector lo dice.
-        if: always() && (steps.smoke.outcome != 'skipped' || inputs.a11y_sweep) && steps.select_a11y.outputs.skip != 'true'
-        env:
-          A11Y_JOB: e2e
-          # Vacíos (barrido a mano o selector sin salida): todos los archivos y todo el registro (scripts/ci.mjs, npmArgs;
-          # tests/a11y/route-registry.ts, routeAreaFilter).
-          A11Y_FILES: ${{ steps.select_a11y.outputs.files }}
-          A11Y_ROUTE_AREAS: ${{ steps.select_a11y.outputs.route_areas }}
-        run: node scripts/ci.mjs run test:a11y
       - name: T054 · spec 1 with 1, 2 and 4 workers (manual runs only)
         if: github.event_name == 'workflow_dispatch' && inputs.measure_workers
         shell: bash
@@ -396,6 +378,127 @@ jobs:
         if: always()
         run: supabase stop
       - name: Publish e2e timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary
+
+  a11y-session:
+    # Decisión de los fundadores del 17 nov 2026: el control 5 (axe) de los estados que necesitan una sesión o la respuesta
+    # real de Auth (ADR-011 §5, «Axe en dos jobs», punto 2) sale del job `e2e` y corre aquí, EN PARALELO, con su propio
+    # Supabase y su propio build: el arranque de Supabase se paga dos veces (costo aceptado) y el build reusa la caché de
+    # `.next` del job `e2e` (misma clave). Contiene el nivel ligero de cada PR (selector por área, con el control de ancho de
+    # routes.a11y.ts) y, con «Run workflow» y a11y_sweep, el barrido completo (decisión 21.2). Los casos siguen eligiéndose
+    # con A11Y_JOB=e2e, que nombra el modo «con Supabase en el runner» de tests/a11y, no el job de GitHub.
+    # El selector corre primero, antes de Supabase: si el PR solo toca archivos neutros (skip=true), los demás pasos se
+    # saltan y el job termina en segundos.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-24.04
+    # El mismo tope y el mismo presupuesto (660 s, scripts/ci.mjs) que el job `e2e`; el barrido a mano solo tiene el tope.
+    timeout-minutes: 12
+    env:
+      SITE_URL: http://localhost:3400
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+        with:
+          # La historia que el selector necesita para git diff <base>...HEAD; sin ella, todos los archivos (regla 4).
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Select light accessibility files by area
+        id: select_a11y
+        # Decisión de los fundadores del 11 nov 2026 (maestro §15.10, decisión 21; contracts/ci.md): el nivel ligero corre los
+        # archivos a11y del área del PR, con el criterio de las specs E2E; lo compartido, lo desconocido o sin base, todos. El
+        # barrido a mano (a11y_sweep) no selecciona: corre entero. El resumen del job dice qué archivos corrieron y por qué.
+        # Solo usa módulos de Node: no necesita `npm ci`.
+        if: '!inputs.a11y_sweep'
+        # Si el script se cae antes de escribir su salida, `skip` queda vacío (el job sigue) y el paso de axe recibe
+        # A11Y_FILES vacío y corre todos (regla 4).
+        continue-on-error: true
+        env:
+          A11Y_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/a11y-select.mjs --base "$A11Y_BASE"
+      # Desde aquí, cada paso que cuesta tiempo lleva `steps.select_a11y.outputs.skip != 'true'`: skip=true es un PR que solo
+      # toca archivos neutros, y el resumen del selector lo dice.
+      - uses: supabase/setup-cli@v3
+        if: steps.select_a11y.outputs.skip != 'true'
+        with:
+          version: 2.121.0
+      - name: Start Supabase with Auth and Mailpit
+        if: steps.select_a11y.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+            case "$name" in
+              API_URL) printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$value" >> "$GITHUB_ENV" ;;
+              PUBLISHABLE_KEY) printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+      - name: Restore the Next build cache
+        # La misma clave que el job `e2e` (mismas variables públicas del Supabase del runner): ver el comentario de allí.
+        if: steps.select_a11y.outputs.skip != 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-
+      - name: Install and build with the runner's Supabase
+        if: steps.select_a11y.outputs.skip != 'true'
+        run: node scripts/ci.mjs run ci build
+      - name: Install Chromium (own time limit, one retry)
+        # El mismo paso que en los jobs app y e2e (PR C de la 002; docs/TESTING.md §9).
+        if: steps.select_a11y.outputs.skip != 'true'
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          started=$(date +%s%3N)
+          try() { for attempt in 1 2; do timeout 150 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 150 s"; sudo pkill -x apt-get || true; done; return 1; }
+          try npx playwright install --only-shell chromium
+          if node -e "require('@playwright/test').chromium.launch().then((b) => b.close(), () => process.exit(1))"; then
+            echo "Chromium arranca con las librerías del runner: sin install-deps"
+          else
+            try npx playwright install-deps chromium
+          fi
+          echo "{\"command\":\"chromium\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
+      - name: Axe of the states that need a session or the Auth API
+        if: steps.select_a11y.outputs.skip != 'true'
+        env:
+          A11Y_JOB: e2e
+          # Vacíos (barrido a mano o selector sin salida): todos los archivos y todo el registro (scripts/ci.mjs, npmArgs;
+          # tests/a11y/route-registry.ts, routeAreaFilter).
+          A11Y_FILES: ${{ steps.select_a11y.outputs.files }}
+          A11Y_ROUTE_AREAS: ${{ steps.select_a11y.outputs.route_areas }}
+        run: node scripts/ci.mjs run test:a11y
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          # Nombre propio: dos artefactos con el mismo nombre en un run chocan.
+          name: playwright-a11y-session
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Stop Supabase
+        if: always() && steps.select_a11y.outputs.skip != 'true'
+        run: supabase stop
+      - name: Publish a11y-session timings
         if: always()
         env:
           JOB_STATUS: ${{ job.status }}

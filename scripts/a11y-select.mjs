@@ -1,7 +1,7 @@
 // Decisión de los fundadores del 11 nov 2026 (maestro §15.10, decisión 21); specs/004-presupuestos-y-metas/contracts/ci.md,
 // «Selector de accesibilidad por área». Determinista, con el mismo criterio que scripts/e2e-select.mjs: recibe los archivos
 // cambiados del PR (`git diff --name-only <base>...HEAD`) y devuelve los archivos `tests/a11y/*.a11y.ts` del NIVEL LIGERO que
-// corren en el paso de axe del job `e2e`, y las áreas del registro que recorre routes.a11y.ts (`A11Y_ROUTE_AREAS`, opción C
+// corren en el paso de axe del job `a11y-session` (hasta el 17 nov 2026, en el job `e2e`), y las áreas del registro que recorre routes.a11y.ts (`A11Y_ROUTE_AREAS`, opción C
 // del gestor). Reglas, en orden: (1) un archivo a11y cambiado → ese archivo (routes.a11y.ts, el registro completo); (2) un
 // archivo de código de un área → los archivos y las áreas del registro de esa área; (3) neutros, nada; (4) lo compartido, lo
 // desconocido, una base que no se puede calcular o un fallo del script → todos, con el registro completo. El barrido `@sweep`
@@ -177,7 +177,7 @@ export function summary(result) {
   return [
     "### Accesibilidad de nivel ligero del PR (selector por área, contracts/ci.md)",
     "",
-    ...(result.skip ? ["- Ninguno: el paso de axe con sesión se salta (solo archivos neutros)"] : []),
+    ...(result.skip ? ["- Ninguno: el job `a11y-session` se salta Supabase, el build y axe (solo archivos neutros)"] : []),
     ...result.run.map((file) => `- Corre: \`${file}\`${file === ROUTES_FILE ? ` — registro: ${result.routeAreas ? `solo ${result.routeAreas.join(", ")}` : "completo"}` : ""}`),
     ...ALL.filter((file) => !result.files.includes(file)).map((file) => `- No corre: \`${file}\` (el PR no toca su área)`),
     ...result.missing.map((file) => `- \`${file}\`: todavía no existe; no se pasa ni se da por aprobado`),
@@ -202,7 +202,8 @@ function main(argv) {
   const text = summary(result);
   process.stderr.write(`${text}\n`);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${text}\n`);
-  // `route_areas` vacío = todo el registro; `skip=true` = ningún archivo (el paso de axe con sesión se salta).
+  // `route_areas` vacío = todo el registro; `skip=true` = ningún archivo (el job `a11y-session` salta
+  // Supabase, el build y axe).
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `files=${result.run.join(" ")}\nroute_areas=${(result.routeAreas ?? []).join(" ")}\nskip=${result.skip}\n`);
   process.stdout.write(`${result.run.join(" ")}\n`);
 }

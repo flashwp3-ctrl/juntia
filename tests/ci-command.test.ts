@@ -7,7 +7,24 @@
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { npmArgs } from "../scripts/ci.mjs";
+import { jobBudget, npmArgs } from "../scripts/ci.mjs";
+
+// Decisión de los fundadores del 17 nov 2026: el job e2e se parte en `e2e` y `a11y-session`, y cada uno conserva el
+// presupuesto de 660 s, que bloquea igual que antes; el barrido a mano solo avisa.
+describe("presupuesto de job (scripts/ci.mjs, jobBudget)", () => {
+  it("e2e y a11y-session: < 660 s y bloquea", () => {
+    expect(jobBudget({ GITHUB_JOB: "e2e", A11Y_LEVEL: "" })).toEqual({ seconds: 660, blocking: true });
+    expect(jobBudget({ GITHUB_JOB: "a11y-session", A11Y_LEVEL: "" })).toEqual({ seconds: 660, blocking: true });
+  });
+
+  it("el barrido a mano (A11Y_LEVEL=sweep) en a11y-session no bloquea por presupuesto", () => {
+    expect(jobBudget({ GITHUB_JOB: "a11y-session", A11Y_LEVEL: "sweep" })).toEqual({ seconds: 660, blocking: false });
+  });
+
+  it("los demás jobs: el < 6 min del gate, solo aviso", () => {
+    for (const job of ["app", "db", "evidence", undefined]) expect(jobBudget({ GITHUB_JOB: job }), String(job)).toEqual({ seconds: 360, blocking: false });
+  });
+});
 
 /** `npm <args> --list`: el comando real del job, solo listando. */
 function list(env: Record<string, string>) {
