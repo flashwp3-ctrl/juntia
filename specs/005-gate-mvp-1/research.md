@@ -100,13 +100,19 @@ Windows y que es un problema del port, no de la app).
   `requestAnimationFrame` desde el primer fotograma, registra la **posición de layout**
   de cada elemento visible, **identificado por su nodo**. Marca el primer fotograma con
   esqueleto y el primero con el contenido final.
-  - **Sin transformaciones** (F85-5): `getBoundingClientRect` con las transformaciones
-    anuladas por una hoja `!important` solo durante la medida, dentro del mismo
-    fotograma. Así una animación de Motion no cuenta como desplazamiento.
+  - **Sin transformaciones** (F85-5, F85-11): la suma de `offsetLeft` y `offsetTop` por
+    la cadena de `offsetParent`, que no incluye transformaciones de ningún tipo ni
+    escribe nada en la página.
+    - La primera idea (una hoja `!important` con `transform: none`) se descartó: una
+      transición CSS activa gana en la cascada.
+    - El precio es una resolución de 1 px: todo movimiento de 1 px o más se detecta, y
+      uno subpíxel puede avisar de más.
+    - Alternativa documentada: pausar las animaciones con `getAnimations()` durante la
+      medida.
   - **Fixed y sticky aparte:** las coordenadas de los elementos `fixed` son del
     viewport, y los `sticky` solo se comparan entre fotogramas con el mismo scroll.
-  - `offsetTop` y `offsetLeft` se descartaron porque son enteros. La elección y los
-    controles están en el contrato.
+  - **Calibración motor a motor:** que valga en un motor no se da por hecho en otro. La
+    elección y los controles están en el contrato.
 - **Comparador** (`scripts/cls-frames/compare.mjs`): entre esos dos fotogramas, un
   desplazamiento es un nodo presente en dos fotogramas seguidos cuya esquina superior
   izquierda cambió. Los nodos que aparecen o desaparecen no cuentan (como en la API

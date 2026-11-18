@@ -22,7 +22,9 @@ explica cómo pedirlo; la revisión legal se exige antes de abrir la app a terce
 
 Revisión del PR #85 (ChatGPT, en `1a529d8`): este contrato recoge F85-1 (ciclo de claves
 foráneas), F85-2 (Auth no es atómico con los datos), F85-3 (consentimientos y
-exportaciones verificables) y F85-8 (ADR-010).
+exportaciones verificables) y F85-8 (ADR-010). Segunda ronda, en `4a820fe`: F85-10
+(bloqueo de la fase 0 persistido paso a paso, `--abort` seguro y renovación) y F85-12
+(confirmación de cada persona por su propio canal).
 
 ## 1. Hechos del esquema que lo condicionan
 
@@ -84,7 +86,25 @@ script se detiene sin escribir**.
 | `group_id` | El grupo, o `null` | Con dos UUID, que son **exactamente** los dos `group_members` activos de ese grupo. Con uno, que no tiene pareja activa; si la tiene, se detiene y dice que el caso es el de la pareja |
 | `approvals[]` | Por persona: su UUID, fecha y hora, canal (por ejemplo, mensaje escrito al gestor) y la huella SHA-256 del texto literal de su aprobación | Una por cada UUID de `users`, de personas distintas, cada una con su propia fecha. El texto no entra al manifiesto: lo guarda la persona |
 | `exports[]` | Por persona: su UUID, la fecha de la exportación y la huella SHA-256 y el tamaño del archivo JSON que descargó (los calcula ella) | Una por cada UUID de `users`. Si hay pareja, las dos |
+| `confirmations[]` (F85-12) | Por persona: su UUID; el canal y el identificador del mensaje en el que **ella misma** confirmó al gestor (por ejemplo, la hora y el hilo de su mensaje escrito); la fecha de recepción; la huella SHA-256 del texto de ese mensaje; y los tres valores que el mensaje tiene que repetir: el `request_id`, el alcance («solo yo» o «la pareja completa», con las huellas cortas de los UUID) y la huella de su aprobación | Una por cada UUID de `users`, de canales distintos, con el `request_id`, el alcance y la huella de la aprobación **iguales** a los del manifiesto. Si falta una o no coincide, se detiene |
 | `backup` | En producción: el nombre de la copia del día y la huella de su manifiesto | Que existe y es del mismo día. En `juntia-dev`: `null` |
+
+**Por qué hay confirmaciones además de aprobaciones** (revisión del PR #85, F85-12): el
+script puede comprobar que las aprobaciones existen y son coherentes, pero no que sean
+auténticas, porque quien opera el script podría rellenarlas. La garantía está en el paso
+humano:
+
+1. **El gestor manda a cada persona**, por separado, el `request_id`, el alcance y la
+   huella de su aprobación.
+2. **Cada persona responde por su propio canal**, con un mensaje escrito que los repite.
+   La respuesta no sale del canal de la otra persona ni pasa por el operador.
+3. **El gestor valida los dos registros** antes de la fase 0: canales distintos, valores
+   que coinciden y fechas posteriores a la aprobación.
+4. **Solo entonces escribe `confirmations[]`.** Los mensajes originales se quedan en sus
+   canales, fuera del repositorio.
+
+El script no puede probar la autenticidad. Lo que hace es impedir que se olvide el paso:
+sin confirmaciones coherentes, no arranca.
 
 Además, el script calcula el **cierre** del alcance: todas las filas que nombran a las
 personas o a su grupo, y las que esas filas referencian o las referencian a ellas. Si una
@@ -111,21 +131,56 @@ procedimiento no promete atomicidad entre los dos: promete **un estado verificab
 recuperación idempotente**.
 
 **Estado de la operación:** `deletion-<id>.state.json`, junto al manifiesto, fuera del
-repositorio. Lo escribe `run.mjs` de forma atómica (temporal y renombrado) al terminar
-cada fase:
+repositorio. `run.mjs` lo escribe de forma atómica (temporal y renombrado) **después de
+cada paso que cambia algo fuera del archivo**: cada bloqueo, cada cierre de sesiones,
+cada renovación del bloqueo, el `commit` de la fase 1 y cada borrado de Auth (F85-10). La
+fase en curso es:
 
 `planned → locked → data_deleted → auth_deleted → verified`
 
 | Fase | Qué hace | Si falla |
 | --- | --- | --- |
-| **0 · `locked`** | Valida el manifiesto (§3). Bloquea en Auth a cada persona del alcance (`ban_duration` con la API de administración) y cierra sus sesiones, para que nadie pueda entrar y crear un perfil nuevo entre fases. Espera la vida de los tokens de acceso vigentes (el valor del panel de Auth, que el manifiesto copia) | Se puede deshacer: `run.mjs --abort <id>` levanta el bloqueo. No se ha borrado nada |
+| **0 · `locked`** | Valida el manifiesto (§3). Después, **por cada persona y en orden**: la bloquea en Auth y guarda el estado; cierra sus sesiones y guarda el estado. Al final, espera la vida de los tokens de acceso vigentes (el valor del panel de Auth, que el manifiesto copia), salvo que el estado muestre que ya pasó. Detalle en §4.1 | Se puede deshacer con `run.mjs --abort <id>`, que levanta los bloqueos que el estado registra, también si solo se bloqueó a una de las dos (§4.1). No se ha borrado nada |
 | **1 · `data_deleted`** | **Una transacción** (`psql -1`, `ON_ERROR_STOP`), como dueño: <br>1. Recuento previo por tabla. <br>2. Suspende por nombre los triggers de §1. <br>3. `update goal_ledger_entries set confirmation_id = null` en las metas del alcance. <br>4. Borra en orden de dependencias: `goal_usage_confirmations`; `goal_usage_allocations`; ledger (`void` primero, después el resto); metas; versiones y presupuestos; asignaciones y movimientos; liquidaciones; invitaciones, miembros y grupo; idempotencia; auditoría; categorías propias; perfiles; filas de `signup_allowlist`. <br>5. Reactiva los triggers con `enable trigger`. <br>6. `set constraints all immediate`. <br>7. Comprueba que no queda ninguna fila que nombre a los UUID. <br>8. `check-invariants.sql` sobre lo que queda | **Dentro de esta fase, cualquier fallo revierte la transacción entera**, incluidos el `update`, los `delete` y la suspensión de triggers: los datos y los triggers quedan como estaban y el estado sigue en `locked`. Se diagnostica y se repite la fase |
 | **2 · `auth_deleted`** | Por cada UUID, en orden: si la API dice que el usuario existe, lo borra; si dice que no existe, lo da por borrado. Escribe el estado **después de cada usuario** (`auth_deleted: [uuid…]`) | El estado queda en `data_deleted`, con los usuarios que ya se borraron. Se repite la fase con `run.mjs --resume <id>`: es idempotente, porque un usuario que ya no existe cuenta como hecho. Mientras tanto, los usuarios que quedan siguen bloqueados (fase 0) y sin datos |
 | **3 · `verified`** | Para cada UUID: la API de administración no lo encuentra; ninguna tabla de `juntia_data` lo nombra; no está en `signup_allowlist`. Y, si había pareja, el grupo tampoco existe | Si algo no cuadra, el estado no pasa a `verified` y el borrado **no se da por completado**. Se repite la fase que falte |
 
-`run.mjs --resume <id>` lee el estado y sigue desde la primera fase no terminada. Las
+`run.mjs --resume <id>` lee el estado y sigue desde el primer paso no terminado. Las
 fases 1 y 2 detectan su propio trabajo hecho (recuentos a cero, usuarios ausentes) y no
 repiten nada.
+
+### 4.1 El bloqueo de la fase 0 (revisión del PR #85, F85-10)
+
+- **Estado por persona.** Cada persona tiene su registro:
+  `{ uuid, ban: "pending" | "applied" | "lifted", banned_until, sessions_revoked, ban_checked_at }`.
+  Se guarda tras cada llamada a la API, así que una interrupción a mitad deja escrito
+  exactamente quién quedó bloqueado y quién no.
+- **Duración del bloqueo.** El bloqueo se pone con `ban_duration` de **720 h** (30 días),
+  no indefinido. Así, un procedimiento abandonado sin `--abort` no deja una cuenta
+  bloqueada para siempre.
+- **Renovación.** Al empezar cada fase y cada `--resume`, `run.mjs` lee de la API el
+  `banned_until` de cada persona que aún existe en Auth:
+  - si quedan **menos de 7 días**, renueva el bloqueo otras 720 h y guarda el estado;
+  - si el bloqueo ha caducado, lo vuelve a poner y vuelve a cerrar las sesiones **antes**
+    de seguir. Si es antes de la fase 1, comprueba además que la persona no creó datos
+    nuevos (recuentos iguales a los del manifiesto); si los creó, se detiene.
+
+  Así el bloqueo sigue vigente hasta `verified` o hasta `--abort`, aunque pasen horas o
+  días entre fases.
+- **`--abort`**:
+  - **Cuándo se acepta:** solo desde `planned` o `locked`. Desde `data_deleted` se
+    rechaza, porque los datos ya no están: la única salida es `--resume` hasta
+    `verified`.
+  - **Qué hace:** para cada persona con `ban` en `applied` o `pending`, consulta la API y,
+    si está bloqueada, levanta el bloqueo (`ban_duration: "none"`). Guarda el estado
+    después de cada persona.
+  - **Es idempotente:** se puede repetir hasta que todas estén en `lifted`. Un bloqueo
+    parcial (la primera bloqueada y la segunda no) se deshace igual.
+  - **Al terminar,** el estado pasa a `aborted`. Para volver a intentarlo hace falta una
+    petición nueva, con su manifiesto y sus confirmaciones.
+- **Cierre de sesiones:** se hace con la API de administración. Lo que no se puede
+  revocar al momento (un token de acceso ya emitido) se cubre con la espera de su vida
+  útil, que el estado también registra.
 
 ## 5. Quién y dónde
 
@@ -140,7 +195,7 @@ repiten nada.
 
 ## 6. Pruebas
 
-`tests/integration/account-deletion.test.ts` (PR A, job `db`, +5–12 s). Las pruebas
+`tests/integration/account-deletion.test.ts` (PR A, job `db`, +8–18 s). Las pruebas
 inyectan en `run.mjs` un cliente de Auth del runner que se puede hacer fallar.
 
 1. **Ciclo real (F85-1):** se siembra una pareja con el dataset dorado de P0-1 a P0-3,
@@ -170,6 +225,22 @@ inyectan en `run.mjs` un cliente de Auth del runner que se puede hacer fallar.
    se detiene antes de la fase 0 y no escribe nada.
 7. **Cierre:** una fila fuera del alcance que apunta a una de dentro detiene el script
    antes de la fase 0.
+8. **Huellas válidas sin confirmaciones propias (F85-12):** un manifiesto con
+   aprobaciones y exportaciones coherentes pero sin `confirmations[]`, con una sola
+   confirmación, con las dos del mismo canal o con una que repite otro `request_id` o
+   otro alcance. Se rechaza antes de la fase 0, sin escribir nada.
+9. **Bloqueo parcial (F85-10):** el cliente de Auth falla al bloquear a la segunda
+   persona. El estado registra a la primera como `applied` y a la segunda como
+   `pending`. Entonces:
+   - `--abort` levanta solo el bloqueo de la primera y termina en `aborted`, sin
+     datos borrados;
+   - en otra corrida igual, `--resume` bloquea a la segunda y sigue.
+10. **Interrupción larga (F85-10):** con un reloj inyectado, el proceso se para en
+    `locked` y se reanuda cuando al bloqueo le quedan menos de 7 días, y otra vez cuando
+    ya ha caducado. En el primer caso, `--resume` renueva el bloqueo. En el segundo, lo
+    vuelve a poner y cierra las sesiones antes de la fase 1. En los dos, el procedimiento
+    termina en `verified`.
+11. **`--abort` tardío:** desde `data_deleted` se rechaza, y el estado no cambia.
 
 Si `db` se acerca a 600 s, la prueba pasa al tramo `lab-interaction` del job `release`
 ([ci.md](ci.md)).
@@ -177,8 +248,12 @@ Si `db` se acerca a 600 s, la prueba pasa al tramo `lab-interaction` del job `re
 ## 7. Ensayo en `juntia-dev` (V15)
 
 El gestor siembra con `db:dev:reset` una pareja (con una solicitud aprobada) y una
-persona sola, escribe los dos manifiestos con aprobaciones y exportaciones de prueba, y
-ejecuta los dos casos hasta `verified`. **Evidencia:**
+persona sola, y escribe los dos manifiestos con aprobaciones, exportaciones y
+confirmaciones de prueba. Ejecuta tres corridas:
+- los dos casos completos, hasta `verified`;
+- un manifiesto con huellas válidas pero **sin confirmaciones**, que tiene que ser
+  rechazado (F85-12);
+- un `--abort` desde `locked`, que tiene que dejar las cuentas desbloqueadas. **Evidencia:**
 
 - el `request_id` y las huellas cortas de los UUID;
 - los recuentos por tabla antes y después;

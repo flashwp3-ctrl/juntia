@@ -274,7 +274,7 @@ FR-095.
 | `tests/a11y/routes.a11y.ts` (`@sweep`) | FR-042: 200 % en hojas, diálogos, A1–A6 e invitación; **raíz al 200 % a 1440 en Inicio · Yo y Metas** (hoy falla: 1.447 px, se corrige en B); FR-046: el foco vuelve al disparador también al llegar por URL; **Anotar con monto escrito, de 390 a 1024 px y vuelta**: el monto sigue (R8) | Barrido, a mano |
 | `tests/e2e/goals.e2e.ts` | El caso del gesto con `Input.dispatchTouchEvent` (CDP) se salta fuera de Chromium con su motivo; el gesto real lo cubre FR-070 en iPhone | E2E · sin coste |
 | `tests/evidence/release-*.capture.ts`, `inp.capture.ts` | FR-050, FR-052, FR-053, FR-054, FR-043 (research R6, R7) | Laboratorio · `release` |
-| `tests/evidence/cls-frames.capture.ts`, `scripts/cls-frames/*` | FR-051: posición de layout sin transformaciones, fixed y sticky aparte, y seis controles en los tres motores, entre ellos una animación con transformación y un scroll con sticky (F85-5; [contracts/cls-comparator.md](contracts/cls-comparator.md)) | Laboratorio · `release` |
+| `tests/evidence/cls-frames.capture.ts`, `scripts/cls-frames/*` | FR-051: posición de layout por la cadena de `offsetParent`, que no incluye transformaciones ni transiciones; fixed y sticky aparte; siete controles calibrados motor a motor, entre ellos una animación con transformación, una transición CSS en curso y un scroll con sticky (F85-5, F85-11; [contracts/cls-comparator.md](contracts/cls-comparator.md)) | Laboratorio · `release` |
 | `tests/cls-frames.test.ts` | El comparador puro con fotogramas sintéticos: un bloque que se mueve 1 px se detecta; uno que aparece o desaparece no cuenta; el desplazamiento por scroll no cuenta; un bloque `fixed` se compara en coordenadas del viewport y uno `sticky` solo entre fotogramas con el mismo scroll (F85-5) | Vitest (proyecto `domain` o el de `scripts/`) · `app` |
 | `playwright.config.ts` | Proyectos `e2e-webkit` (Desktop Safari, `tests/e2e`), `evidence-webkit` y `evidence-firefox` (solo `cls-frames.capture.ts`). Ninguno entra en `test:e2e:smoke` ni en `test:a11y` | Config |
 | `.github/workflows/ci.yml` + `tests/ci-workflow.test.ts` | Job `release` con entrada `release_lab`, matriz de 17 tramos, `timeout-minutes: 20`, nunca en `pull_request`; job `inputs-guard` y exclusión mutua de `release_lab` con las demás entradas, probada evaluando los `if` en las 16 combinaciones (F85-4) ([contracts/ci.md](contracts/ci.md)) | CI |
@@ -366,7 +366,8 @@ ninguna prueba nueva lleva un job por encima de ~600 s; si no cabe, va a `@sweep
 | `e2e` | 321 s | 0 (ninguna spec nueva; un `skip` fuera de Chromium) | 0 | 321 s | — |
 | `a11y-session` | 398 s | +40–80 s (10–20 casos ligeros nuevos, a ~4 s por estado con los dos temas en el mismo contexto) | 0–10 s | ≤ 490 s | Por encima de **560 s** estimados, los estados restantes de FR-041 van solo a `@sweep` |
 | `@sweep` (a mano, en `a11y-session`) | ≈ 430 s (run 43050756971, 11 nov, antes de #82) | +60–150 s (200 % en hojas y diálogos, raíz a 1440, 768 px, foco por URL) | — | 500–650 s, a medir en el paso 2 | Si pasa de 600 s, el barrido se reparte en dos tramos con `--shard` (decisión del plan, [contracts/ci.md](contracts/ci.md)) |
-| `release` (nuevo, a mano) | — | 17 tramos en paralelo, cada uno de ~325–655 s estimados con su arranque (una ruta por tramo de CLS en Chromium; dos tramos de WebKit E2E; tres por motor para el comparador) | — | ≈ 145–150 min facturados por lanzamiento completo | Cada tramo que mida más de 600 s se parte en dos (F85-7) |
+| `release` (nuevo, a mano) | — | 17 tramos en paralelo, cada uno de ~325–655 s estimados con su arranque (una ruta por tramo de CLS en Chromium; dos tramos de WebKit E2E; tres por motor para el comparador) | — | ≈ 145–155 min facturados por lanzamiento completo | Cada tramo que mida más de 600 s se parte en dos (F85-7) |
+| `inputs-guard` (nuevo, en el gate y a mano) | — | Segundos: valida las entradas solo en `workflow_dispatch`, y en `pull_request` corre y pasa para que el gate no se omita (F85-9) | — | 1 min facturado por run; el gate arranca 10–20 s más tarde | — |
 | `evidence` | sin cambios | 0 | 0 | — | — |
 
 **Minutos de Actions de P0-4 (estimación, recalculada en F85-7 con el arranque de cada
@@ -376,11 +377,12 @@ tramo):**
 | --- | --- |
 | Gate del PR A | ≈ 30 |
 | Uno o dos gates del PR B | ≈ 30–60 |
-| `release` completo, dos lanzamientos: el punto de control del A (que también calibra el comparador) y el candidato, a ≈ 145–150 cada uno | ≈ 290–300 |
+| `release` completo, dos lanzamientos: el punto de control del A (que también calibra el comparador) y el candidato, a ≈ 145–155 cada uno | ≈ 290–310 |
 | `release` parcial tras un PR B, con `release_legs` | ≈ 20–60 |
 | Dos barridos | ≈ 20 |
 | Run completo del candidato | ≈ 30 |
-| **Total** | **≈ 420–500 min**, unos 21–25 % del mes |
+| `inputs-guard` en cada run del gate y lanzamiento a mano (1 min facturado cada uno, F85-9) | ≈ 5–10 |
+| **Total** | **≈ 425–520 min**, unos 21–26 % del mes |
 
 El PR C y este PR no gastan. **Antes de F85-7, el plan estimaba 220–305 min:** contaba
 seis tramos que no cabían en ~600 s con su arranque. El paso 2 no lanza `release` si el
@@ -568,7 +570,7 @@ historia.
 | Añadido | Por qué hace falta | Alternativa más simple descartada porque |
 | --- | --- | --- |
 | Job `release` con 17 tramos | Las mediciones de FR-050 (350 cargas), FR-051 (dos motores) y FR-020 (WebKit) no caben en ~600 s ni deben correr en cada PR; con el arranque de cada tramo (200–430 s), solo cabe una ruta de CLS por tramo en Chromium (F85-7) | Meterlas en `evidence`: un solo tramo de más de una hora, por encima del tope de 20 min y de la regla de ~600 s. Menos tramos con más cargas: pasan de 600 s |
-| Job `inputs-guard` | `release_lab` no puede combinarse con otra entrada sin lanzar dos laboratorios a la vez (F85-4) | Condiciones `if` sin guardia: con una combinación inválida no correría nada y el run saldría verde sin hacer nada |
+| Job `inputs-guard`, también en `pull_request` | `release_lab` no puede combinarse con otra entrada sin lanzar dos laboratorios a la vez (F85-4). Corre y pasa en cada PR no borrador porque, si se omitiera, GitHub omitiría los cuatro jobs del gate que dependen de él (F85-9) | Condiciones `if` sin guardia: con una combinación inválida no correría nada y el run saldría verde sin hacer nada. Dependientes con `always()` que aceptan un guardia omitido: cada uno tendría que distinguir a mano «omitido en un PR» de «fallido a mano», y un error en uno solo desbloquearía un lanzamiento inválido |
 | Comparador por fotogramas propio | WebKit y Firefox no exponen `layout-shift` (Q7) | Revisión humana fotograma a fotograma: descartada por los fundadores (Q7, opción b) |
 | Bloqueo de tabla en el servidor para forzar el esqueleto | WebKit y Firefox no tienen emulación de CPU ni de red en Playwright | Retrasar la respuesta con `page.route`: cambia lo que se carga y en qué orden, y no prueba el streaming real (R5) |
 | Tres proyectos de Playwright fuera del gate | WebKit una vez (Q3) y el comparador en dos motores (Q7) | Un proyecto por navegador para todo: metería WebKit en `test:e2e:smoke` |

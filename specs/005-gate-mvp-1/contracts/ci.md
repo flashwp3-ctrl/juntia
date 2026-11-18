@@ -5,11 +5,18 @@ de `specs/004-presupuestos-y-metas/contracts/ci.md` y del PR #83, y dice solo lo
 cambia. **Nada de esto está implementado**: lo implementa el PR A. Presupuestos y techos
 **no se mueven** (cláusula anticliquet, `docs/TESTING.md` §9).
 
-Revisión del PR #85 (ChatGPT, en `1a529d8`): F85-4 (las entradas del laboratorio y de la
-evidencia se excluyen entre sí) y F85-7 (presupuesto de los tramos de CLS, recalculado
-con el arranque).
+Revisión del PR #85 (ChatGPT):
 
-## Jobs del gate: sin cambios de forma
+- **En `1a529d8`:** F85-4 (las entradas del laboratorio y de la evidencia se excluyen
+  entre sí) y F85-7 (presupuesto de los tramos de CLS, recalculado con el arranque).
+- **En `4a820fe`:** F85-9 (el guardia de entradas corre también en `pull_request`, para
+  no omitir el gate).
+
+## Jobs del gate: mismo contenido, un `needs` más
+
+Los cuatro jobs del gate ganan `needs: inputs-guard` y la condición `!inputs.release_lab`
+(abajo). El guardia corre y pasa en cada `pull_request` no borrador, así que el gate se
+ejecuta igual que hoy (F85-9).
 
 | Job | Presupuesto | Qué añade P0-4 | Estimado |
 | --- | --- | --- | --- |
@@ -39,28 +46,58 @@ exclusiva.** Con ella, no se puede pedir `capture_evidence`, `a11y_sweep` ni
 
 | Lanzamiento | `inputs-guard` | `app` | `db` | `e2e` | `a11y-session` | `evidence` | `release` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `pull_request` (no borrador) | — | sí | sí | sí | sí | no | no |
+| `pull_request` en borrador | no corre | no | no | no | no | no | no |
+| `pull_request` (no borrador) | **corre y pasa** (no valida nada) | **sí** | **sí** | **sí** | **sí** | no | no |
 | `workflow_dispatch` sin entradas | pasa | sí | sí | sí (las cinco) | sí | no | no |
 | `a11y_sweep` | pasa | barrido | no cambia | no (salvo `measure_workers`, F83-1) | barrido | no | no |
 | `capture_evidence` | pasa | no | no | no | no | sí | no |
 | **`release_lab`** | pasa | no | no | no | no | no | **sí** |
 | **`release_lab` con cualquier otra entrada** | **falla** con `::error` («`release_lab` no se combina con otras entradas») | no | no | no | no | no | no |
 
-- **Un job nuevo, `inputs-guard`**, solo en `workflow_dispatch`, con un paso que falla
-  cuando `release_lab` llega acompañada de otra entrada. Así el lanzamiento acaba en
-  rojo y dice por qué, en lugar de no correr nada en silencio.
+- **Un job nuevo, `inputs-guard`**, con un paso que falla cuando `release_lab` llega
+  acompañada de otra entrada. Así el lanzamiento acaba en rojo y dice por qué, en lugar
+  de no correr nada en silencio.
+- **El guardia corre también en `pull_request`** (revisión del PR #85, F85-9). Su
+  condición es la unión de las de sus dependientes:
+  `github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)`.
+  - En `pull_request` termina bien sin validar nada: el paso de validación lleva
+    `if: github.event_name == 'workflow_dispatch'`.
+  - Por qué hace falta: un job con `needs` y un `if` sin función de estado lleva un
+    `success()` implícito, que exige que todas sus dependencias terminen bien. **Si el
+    guardia se omitiera en un PR, GitHub omitiría también `app`, `db`, `e2e` y
+    `a11y-session`**, y un check omitido puede contar como satisfecho: el gate no
+    correría y parecería verde.
+- **Alternativa descartada:** que los dependientes acepten un guardia omitido con
+  `always()` o `!cancelled()` y comprueben `needs.inputs-guard.result` a mano. Con esa
+  opción, cada dependiente tiene que distinguir «omitido en un PR» de «fallido en un
+  lanzamiento manual», y una condición mal escrita en uno solo desbloquearía un
+  lanzamiento inválido. Con el guardia siempre presente, el `success()` implícito hace
+  ese trabajo en todos los jobs y no hay nada que escribir a mano.
+- **Coste:**
+  - en minutos, un job de segundos por run, que GitHub factura como 1 minuto;
+  - en reloj, el gate arranca unos 10–20 s más tarde, lo que tarda el runner del
+    guardia;
+  - los presupuestos de job no cambian, porque cada job mide desde su propio inicio.
 - **Condiciones:**
   - `app`, `db`, `e2e` y `a11y-session` ganan `&& !inputs.release_lab`;
   - `evidence` gana `&& !inputs.release_lab`;
   - `release` exige `inputs.release_lab && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.measure_workers`;
-  - todos los de `workflow_dispatch` dependen de `inputs-guard` (`needs`), que dura
-    segundos.
+  - **todos** dependen de `inputs-guard` (`needs`), los del gate incluidos.
 - **Prueba:** `tests/ci-workflow.test.ts` no se conforma con buscar textos en el YAML.
-  Evalúa la expresión `if` de cada job, con un evaluador mínimo de las expresiones que
-  usa el workflow (`&&`, `||`, `!`, `==` y `inputs.*`), sobre las **16 combinaciones**
-  de las cuatro entradas booleanas, con y sin `pull_request`. La salida tiene que ser la
-  tabla de arriba. Si el workflow usa una expresión que el evaluador no conoce, la prueba
-  falla en lugar de adivinar. También afirma que `release` nunca corre en `pull_request`.
+  - **Evalúa los `if`:** la expresión de cada job, con un evaluador mínimo de las
+    expresiones que usa el workflow (`&&`, `||`, `!`, `==`, `inputs.*`,
+    `github.event_name` y `github.event.pull_request.draft`).
+  - **Simula `needs`** con las reglas de GitHub: un job cuyo `if` es falso se omite; un
+    `if` sin función de estado añade `success()`, así que el job se omite si alguna
+    dependencia no terminó bien; y un paso que falla hace fallar su job.
+  - **Casos:** las **16 combinaciones** de las cuatro entradas booleanas en
+    `workflow_dispatch`, más `pull_request` en borrador y no en borrador. El resultado
+    tiene que ser la tabla de arriba.
+  - **Lo que exige en un PR no borrador:** que el guardia termina bien y que `app`, `db`,
+    `e2e` y `a11y-session` **se ejecutan**, no solo que no fallan.
+  - **Lo que exige con una combinación inválida:** que el guardia falla y nada más corre.
+  - Si el workflow usa una expresión que el evaluador no conoce, la prueba falla en
+    lugar de adivinar. También afirma que `release` nunca corre en `pull_request`.
 
 ## Job nuevo: `release` (solo a mano)
 
@@ -122,13 +159,13 @@ librerías por `apt`, 60–180 s: **~260–430 s**.
 | Tramo | Navegador | Qué corre | Cargas | Ejecución | Total estimado |
 | --- | --- | --- | --- | --- | --- |
 | `cls-inicio-yo`, `cls-inicio-nosotros`, `cls-actividad`, `cls-balance`, `cls-plan`, `cls-analisis`, `cls-metas` (7 tramos) | Chromium | `release-cls.capture.ts` con **una ruta por tramo**: 40 cargas en claro y 10 en oscuro, con la API y el grabador a la vez (concordancia, contrato del comparador §5, control 6) | 50 | ~200 s | **~400–450 s** cada uno |
-| `cls-controls-chromium` | Chromium | Los cinco controles del comparador, 10 cargas cada uno | 50 | ~125 s | ~325–375 s |
+| `cls-controls-chromium` | Chromium | Los controles 1 a 6 del comparador, 10 cargas cada uno, más 10 del movimiento de 0,5 px | 70 | ~175 s | ~375–425 s |
 | `lab-interaction` | Chromium | `inp.capture.ts` (tres variantes, 10 interacciones), `release-lcp.capture.ts` (40 cargas), `release-goalstack.capture.ts` (criterio de D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms, CPU 4×), `release-long-lists.capture.ts`; `--workers 1` | — | ~250–330 s | **~450–580 s** |
 | `webkit-e2e-1`, `webkit-e2e-2` | WebKit | `--project e2e-webkit --shard=N/2`: las cinco specs, primero sin `@serial` y después `@serial` con un worker, como el gate | — | ~75–125 s | **~340–560 s** cada uno |
-| `webkit-cls-1` | WebKit | Los cinco controles | 50 | ~125 s | ~390–560 s |
+| `webkit-cls-1` | WebKit | Los controles 1 a 6 (70 cargas) | 70 | ~175 s | ~440–610 s |
 | `webkit-cls-2` | WebKit | A1, A2 y A4 (sin sesión), Inicio en Yo y en Nosotros, 15 cargas cada una | 75 | ~225 s | **~490–655 s** |
 | `webkit-cls-3` | WebKit | Actividad, Balance, Plan, Análisis y Metas, 15 cargas cada una | 75 | ~225 s | **~490–655 s** |
-| `firefox-cls-1`, `-2`, `-3` | Firefox | Lo mismo que los tres de WebKit | 50 / 75 / 75 | 125–225 s | ~390–655 s |
+| `firefox-cls-1`, `-2`, `-3` | Firefox | Lo mismo que los tres de WebKit | 70 / 75 / 75 | 175–225 s | ~440–655 s |
 
 **Los tramos de WebKit y Firefox con 75 cargas** pueden pasar de 600 s si la instalación
 del navegador va lenta. **Si el punto de control del PR A mide más de 600 s** en un tramo,
@@ -147,7 +184,8 @@ spec, y las 15 de fuera de Chromium son la decisión del plan del contrato del c
 | `webkit-e2e`, 2 tramos | ~16 |
 | `webkit-cls`, 3 tramos | ~29 |
 | `firefox-cls`, 3 tramos | ~29 |
-| **Total** | **≈ 145–150 min** |
+| `inputs-guard` | 1 |
+| **Total** | **≈ 145–155 min** (con los controles 5 y de 0,5 px de F85-11, unos 3 min más que en `4a820fe`) |
 
 Antes de esta corrección, el plan daba ≈ 55 min, con seis tramos que no cabían.
 
