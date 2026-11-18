@@ -58,7 +58,7 @@ Se enuncian una vez. Una tarea que las incumpla no está terminada.
 3. **Los agentes no lanzan CI** (`AGENTS.md` 15a; regla del gestor). Cada PR de código tiene **una** pasada del gate, la de marcarlo listo (`ready_for_review`), que hace el gestor tras la revisión con el PR en borrador. Las únicas pasadas a mano son las que este archivo nombra: el punto de control del PR A (T045), las de los pasos 2 y 4 y los parciales de `release` de un PR B (T069). Las correcciones de una revisión se juntan en **un solo push**. Ninguna se relanza «para ver si pasa» (FR-092): un fallo se diagnostica con el log del run.
 4. **Dos `workflow_dispatch` sobre la misma rama se cancelan** (grupo `ci-<ref>`). Los runs a mano van **en serie**, nunca a la vez.
 5. **Presupuestos que no se mueven** (FR-095; cláusula anticliquet). `e2e` y `a11y-session` < 660 s (bloquean); **ninguna prueba nueva lleva un job por encima de ~600 s**: lo que no cabe va a `@sweep` o al job `release`. Un tramo de `release` que mida más de 600 s se **parte** en dos, nunca se acorta quitando cargas ([contracts/ci.md](contracts/ci.md), F85-7).
-6. **El PR A no toca `src/`**. Ningún PR de este slice añade dependencias, migraciones, pantallas ni specs E2E. El PR C solo toca `.md`, `.png` y `.txt` bajo `specs/` y no lanza CI.
+6. **El PR A no modifica código de producto de `src/`**: solo puede añadir o modificar los `*.test.ts` y `*.test.tsx` que especifican T013, T015 y T016 (F86-4). Ningún PR de este slice añade dependencias, migraciones, pantallas ni specs E2E. El PR C solo toca `.md`, `.png` y `.txt` bajo `specs/` y no lanza CI.
 7. **Evidencia** (`AGENTS.md` 12 y 18; ADR-011 §9.8). Lo automatizado se acredita con CI sobre el commit que se fusiona (o sobre el candidato), con el número de run; lo de laboratorio y lo humano, con una salida reproducible en `evidence.md`. Nada se marca «verificado» sin salida. Un fallo se registra tal cual y va al PR B o a los fundadores; el umbral no se mueve.
 8. **Privacidad de la evidencia: la regla única del plan** («PR C · Evidencia y cierre», F85-6), que sustituye a cualquier otra:
    - al repositorio, solo capturas con datos de prueba (runner o `juntia-dev`) o de producción **anonimizadas** de forma opaca por quien las hizo, más recuentos, tiempos, huellas cortas e identificadores de run o de despliegue;
@@ -86,7 +86,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 | I7 | T010, T103 | El inventario de FR-002 y FR-003 se **clasifica pronto** (paso 0b), para que las tareas heredadas sin salida tengan dueño y paso antes del candidato; la tabla final la cierra el PR C, como dice el plan | Una tarea heredada descubierta en el PR C obligaría a otro run |
 | I8 | T013–T016 | US-08, US-21 y US-13 ya se cumplen en el código; sus pruebas cubren un hueco de **cobertura**, no un comportamiento nuevo, y pasan desde el principio (regla 1) | FR-012 cierra huecos de la tabla de cobertura |
 | I9 | T011, T055 | Las salidas del paso 0b entran en `evidence.md` en el siguiente PR del slice que la toque (A o B) y, como muy tarde, en el C | `evidence.md` la crea el PR A |
-| I10 | T069 | «Un run de `release` del tramo afectado» (plan, salida del PR B): para el residuo de F13, `lab-interaction`, `cls-inicio-yo` y `cls-metas`; para F02, `cls-inicio-yo`, `cls-inicio-nosotros` y `cls-metas`; para otra corrección, los tramos de las rutas que toque | La geometría del abanico afecta al rendimiento y al CLS de las rutas que lo pintan |
+| I10 | T069 | Solo para verificar un PR B, nunca para un candidato (T071–T073 van siempre completos, F86-2). «Un run de `release` del tramo afectado» (plan, salida del PR B): para el residuo de F13, `lab-interaction`, `cls-inicio-yo` y `cls-metas`; para F02, `cls-inicio-yo`, `cls-inicio-nosotros` y `cls-metas`; para otra corrección, los tramos de las rutas que toque | La geometría del abanico afecta al rendimiento y al CLS de las rutas que lo pintan |
 
 ---
 
@@ -176,7 +176,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 
 ## Phase 1: PR A · Pruebas y arneses (paso 1)
 
-**Purpose**: los huecos de FR-012, la matriz de estados (FR-041), los casos `@sweep` que faltan (FR-042, FR-046, Q11), los cinco arneses de laboratorio (FR-050–FR-054, FR-043), el comparador de CLS por fotogramas (FR-051), el proyecto WebKit de las cinco specs (FR-020), la siembra de listas largas, el job `release` con su guardia de entradas, y el procedimiento de borrado en fases (D2, opción a). **Ninguna línea de `src/`** (regla 6).
+**Purpose**: los huecos de FR-012, la matriz de estados (FR-041), los casos `@sweep` que faltan (FR-042, FR-046, Q11), los cinco arneses de laboratorio (FR-050–FR-054, FR-043), el comparador de CLS por fotogramas (FR-051), el proyecto WebKit de las cinco specs (FR-020), la siembra de listas largas, el job `release` con su guardia de entradas, y el procedimiento de borrado en fases (D2, opción a). **Ningún cambio de código de producto en `src/`**; solo las pruebas de T013, T015 y T016 (regla 6).
 
 **FR**: FR-011, FR-012, FR-020 (proyecto), FR-041, FR-042, FR-043, FR-046, FR-050–FR-054, FR-067, FR-090, FR-093, FR-095.
 
@@ -255,7 +255,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
 - [ ] T022 `playwright.config.ts`: tres proyectos nuevos, **ninguno** en `test:e2e:smoke` ni en `test:a11y`:
   - `e2e-webkit`: `devices["Desktop Safari"]`, `testDir` de `e2e`, `reducedMotion: "reduce"`;
   - `evidence-webkit` y `evidence-firefox`: solo `tests/evidence/cls-frames.capture.ts`.
-  - Una prueba (en `tests/ci-command.test.ts` o la que ya lea la config) afirma que los comandos del gate siguen fijando sus proyectos de Chromium.
+  - Una prueba nueva en `tests/playwright-projects.test.ts` (no en `tests/ci-command.test.ts`, que es de T037; F86-3) afirma que los comandos del gate siguen fijando sus proyectos de Chromium y que ningún proyecto nuevo entra en `test:e2e:smoke` ni en `test:a11y`.
   - Cumple: FR-020, FR-051, FR-093; research R3.
   - Quién: agente. Depende de: T001.
   - Evidencia: CI (job `app`, la prueba de config).
@@ -570,7 +570,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 **FR**: FR-032, FR-042, FR-053 (si falla), FR-067 (copy), FR-094 y los de cada hallazgo.
 
-### Grupo 3A — pruebas primero (T056–T059 `[P]` al escribirlas)
+### Grupo 3A — pruebas primero (T056–T058 `[P]` al escribirlas; T059 sin `[P]` hasta conocer sus archivos, F86-3)
 
 - [ ] T056 [P] [US4] **Residuo de F13**: la prueba es el caso `@sweep` (b) de T020, que hoy falla. Si la corrección cambia la lógica de presentación del abanico (cuándo se presenta abanico o pila), un test de **componentes** en `src/features/goals/` que lo afirme. jsdom no calcula diseño: la geometría solo la ve el barrido (research R9)
   - Cumple: FR-042; Q11.
@@ -590,9 +590,9 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: CI.
   - Terminado cuando: los casos fallan antes de T062 y T063.
 
-- [ ] T059 [P] Una prueba por **cada hallazgo** de T055 que sea defecto, en la capa más baja que detecta su fallo, con el criterio literal copiado
+- [ ] T059 Una prueba por **cada hallazgo** de T055 que sea defecto, en la capa más baja que detecta su fallo, con el criterio literal copiado
   - Cumple: FR-094.
-  - Quién: agente. Depende de: T055.
+  - Quién: agente. Depende de: T055. Sin `[P]` (F86-3): sus archivos destino solo se conocen con los hallazgos; puede ir a la vez que T056–T058 solo si no comparte ninguno.
   - Evidencia: CI.
   - Terminado cuando: cada prueba falla antes de su corrección.
 
@@ -690,7 +690,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: CI + laboratorio.
   - Terminado cuando: `webkit-e2e-1` y `-2` verdes (un fallo solo de WebKit es un defecto del gate; si es del arnés, se documenta con su salida y lo decide la revisión de B, nunca «superado»); CLS = 0 sin redondear en las siete rutas de Chromium y por fotogramas en WebKit y Firefox; INP < 200 ms en las tres variantes; GoalStack pasa D3; LCP y listas largas registrados.
 
-- [ ] T074 **Humana (gestor)**: registrar los tres runs en la checklist §1 y en `evidence.md`. Si algo falló: el defecto va a un PR B (Phase 3), el candidato nuevo vuelve a T071–T073 (con los parciales que bastan según I10), y nada se marca superado. Si el abanico falla D3, T055
+- [ ] T074 **Humana (gestor)**: registrar los tres runs en la checklist §1 y en `evidence.md`. Si algo falló: el defecto va a un PR B (Phase 3) y **cada commit candidato nuevo pasa T071, T072 y T073 completos**, con las cinco specs en WebKit (FR-020, FR-092; F86-2); los parciales de `release` solo valen como verificación del PR B (T069, I10). Nada se marca superado. Si el abanico falla D3, T055
   - Cumple: regla 7; spec, «Edge Cases».
   - Quién: gestor. Depende de: T071–T073.
   - Evidencia: revisión.
@@ -843,9 +843,9 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión.
   - Terminado cuando: pasan los 7 días sin fallo crítico.
 
-- [ ] T096 **Condicional (fallo durante el periodo)**: un **fallo crítico** (dinero, privacidad, pérdida de datos o accesibilidad básica) **para el periodo**: se corrige en un PR B (Phase 3), el candidato nuevo pasa T071–T074 y los pasos 5 y 6 que su cambio afecte, y **los 7 días vuelven a empezar** (T094). Un fallo **no crítico** va a la lista de MVP-2 (T101), sin despliegue
+- [ ] T096 **Condicional (fallo durante el periodo; se activa en cualquier día del periodo, F86-1)**: un **fallo crítico** (dinero, privacidad, pérdida de datos o accesibilidad básica) **para el periodo** en cuanto aparece: se corrige en un PR B (Phase 3), el candidato nuevo pasa T071–T074 completos y los pasos 5 y 6 que su cambio afecte, y después **se repiten T094 y T095**: los 7 días vuelven a empezar. Un fallo **no crítico** va a la lista de MVP-2 (T101), sin despliegue
   - Cumple: D4; FR-082, FR-083.
-  - Quién: gestor; los fundadores clasifican. Depende de: T095.
+  - Quién: gestor; los fundadores clasifican. Depende de: T094 (inicio del periodo), no de T095 (F86-1).
   - Evidencia: revisión.
   - Terminado cuando: cada fallo tiene destino escrito.
 
@@ -875,7 +875,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 - [ ] T101 [US7] **Humana (gestor; los fundadores aceptan)**: **lista de MVP-2** con dueño: los fallos no críticos del uso diario, la revisión de la tabla de idempotencia, el #53, «Descartar», el cierre con View Transition, RUM y el nivel 2. Los dos la aceptan por escrito
   - Cumple: FR-083; Q2, Q5, Q11, Q12.
-  - Quién: gestor; los dos. Depende de: T096, T099, T100.
+  - Quién: gestor; los dos. Depende de: T099, T100 y, si se activó, T096.
   - Evidencia: revisión.
   - Terminado cuando: cada fila tiene dueño y la aceptación de los dos consta por rol y fecha.
 
@@ -916,7 +916,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión.
   - Terminado cuando: no queda ninguna casilla vacía.
 
-- [ ] T106 [P] **Comprobación de privacidad y formato** (regla 8): `git diff --name-only main` del PR solo lista `.md`, `.png` y `.txt` bajo `specs/005-gate-mvp-1/`; ninguna captura de producción sin anonimizar; ningún `.mov`, `.mp4`, nombre identificable, correo, token ni texto de aprobación
+- [ ] T106 **Comprobación de privacidad y formato** (regla 8): `git diff --name-only main` del PR solo lista `.md`, `.png` y `.txt` bajo `specs/005-gate-mvp-1/`; ninguna captura de producción sin anonimizar; ningún `.mov`, `.mp4`, nombre identificable, correo, token ni texto de aprobación
   - Cumple: regla 8 (F85-6); `AGENTS.md` 15a.
   - Quién: agente; lo confirma el gestor. Depende de: T103–T105.
   - Evidencia: revisión.
@@ -980,7 +980,7 @@ Dos puntos del desglose obligan a decidir algo que la spec, el plan y sus contra
 - **Phase 2**: después del merge del PR A. T053 puede hacerse en cualquier momento después.
 - **Phase 3 (PR B)**: después de las fases 0b y 2.
 - **Phase 4**: después del último PR de código. Sus tres runs, en serie.
-- **Phase 5 → 6 → 7 → 8 → 9**, en orden. Un fallo crítico en 7 vuelve a 3 y reinicia 7 (D4).
+- **Phase 5 → 6 → 7 → 8 → 9**, en orden. Un fallo crítico en cualquier día de 7 activa T096 (que depende de T094), vuelve a 3 y a 4 completo, y repite T094 y T095 (D4; F86-1).
 
 ### User Story Dependencies
 
@@ -1000,9 +1000,9 @@ Grupos 1A–1F en paralelo entre sí (archivos distintos; `juntia-dev` por turno
 
 - **Paso 0b:** T004, T006, T007, T008, T009 y T010, el mismo día y en cualquier orden.
 - **PR A:** T012, T013, T015, T016, T018, T021, T022, T029, T031, T035 y T038 desde el primer día; después, T024–T028.
-- **PR B:** las pruebas T056–T059.
+- **PR B:** las pruebas T056–T058 (T059, solo si sus archivos no coinciden con los de esas).
 - **Paso 5:** T077, T078 y T080. **Paso 6:** T081, T083–T086, T089 y T090. **Paso 7:** T098 y T099.
-- **PR C:** T104–T107.
+- **PR C:** T104, T105 y T107; T106 después de T103–T105.
 
 ## Parallel Example: arranque del PR A
 
@@ -1082,7 +1082,8 @@ Este PR, como el del plan, no gasta minutos.
 | T019 | `tests/a11y/route-registry.ts` | Accesibilidad, nivel ligero | Estados de FR-041 | Fila 16 de ADR-011; decisión 21 |
 | T020, T056 | `tests/a11y/routes.a11y.ts` (`@sweep`) | Barrido | 200 %, raíz a 1440, 768 px con monto, foco por URL | Geometría real: jsdom no calcula diseño |
 | T021 | `tests/e2e/goals.e2e.ts` | E2E (existente) | `skip` fuera de Chromium | Sin coste; el gesto real va al iPhone (FR-070) |
-| T022, T037 | `tests/ci-command.test.ts` | Unidad | Proyectos del gate y presupuesto de `release` | Configuración, sin red |
+| T022 | `tests/playwright-projects.test.ts` | Unidad | Proyectos del gate fuera de WebKit y Firefox | Configuración, sin red |
+| T037 | `tests/ci-command.test.ts` | Unidad | Presupuesto de `release` | Configuración, sin red |
 | T028 | `tests/dev-target-tools.test.ts` | Unidad | Guardia de la siembra de `juntia-dev` | Infraestructura de pruebas |
 | T029, T034 | `tests/cls-frames.test.ts` | Unidad (proyecto `components`) | Regla del comparador y «sin texto» | Función pura con fotogramas sintéticos y una fixture real |
 | T035 | `tests/ci-workflow.test.ts` | Unidad | `if` y `needs` del workflow en 18 casos | Evaluación del YAML sin lanzar CI |
