@@ -14,6 +14,8 @@ description: "Lista de tareas de la especificación 004 · Presupuestos opcional
 
 **Status**: Draft — fase Tasks. No avanza a Implement sin el merge de su PR documental (ADR-012 §3.1).
 
+> **Estado real (nota del PR documental de cierre, 004-T085, 18 de noviembre de 2026).** Las casillas de este archivo **no se marcaron** durante la implementación, aunque los PR A a E (#66, #67, #68, #69 y #71) están en `main` y en producción. **El estado de cada tarea está en [evidence.md](evidence.md)**, con su run o su salida; esa es la fuente (FR-003 de la especificación 005). Las casillas no se marcan ahora a posteriori para no presentar como verificado algo cuya salida no se vuelva a comprobar una por una. Las decisiones posteriores que cambian textos de esta especificación están en el maestro §15.10, decisiones 23 y 24.
+
 **Cómo se escribió.** A partir de `.specify/templates/tasks-template.md` y de su override `.specify/templates/overrides/tasks-template.md`, a mano, **sin invocar la skill `speckit-tasks`** (está marcada `disable-model-invocation`; mismo procedimiento que la 003). La pasada de consistencia que haría `speckit-analyze` está en el [Anexo B](#anexo-b--cobertura-y-consistencia).
 
 **Quién lo ejecuta**: el agente de cada PR, a partir de este archivo mergeado. Cada tarea lleva sus rutas, el requisito que cumple, **cómo se itera** y **cuál es su prueba**. **Las tareas no deciden y no amplían el alcance**: si una no se puede cumplir sin decidir algo que no está en la spec, el plan o sus auxiliares, la implementación se detiene y lo reporta (`AGENTS.md` 17). Las tareas **Humanas** las ejecuta la persona que nombran; el agente las prepara y pega su salida.
@@ -419,6 +421,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
   - Cumple: SC-013.
 - [ ] T084 **Humana (fundadores)**: **salida interna** (SC-012): con sus cuentas reales, crear una meta individual y otra compartida, aportar cada uno, registrar un gasto con meta con una aprobación, crear un presupuesto, desactivarlo, comprobar que gastos y metas siguen y explicar sin ayuda la diferencia entre gasto y ahorro destinado (quickstart, §2–§7)
 - [ ] T085 **Humana (gestor)**: con la salida interna aprobada, actualizar el estado de P0-3 en el maestro y en `AGENTS.md`/`CLAUDE.md` en un PR documental aparte (no en un PR de código)
+  - **`[PENDIENTE T084]`** Texto preparado para marcar la casilla cuando se complete: «Hecha el ___ de noviembre de 2026 en el PR #___ (PR documental de cierre de P0-3, mergeado por ___): estado de P0-3 en el maestro §15.1 y reconciliación de las decisiones 23 a 25 (filas 1–18 de la spec 005 y 19–22 de su plan); evidencia en [evidence.md](evidence.md), «Cierre de P0-3».» La reconciliación ya está en ese PR; falta la salida interna (T084). `AGENTS.md` y `CLAUDE.md` **no** se tocan en ese PR porque lanzarían CI (`AGENTS.md` 15a): su línea de estado va en un PR aparte, o en el PR documental de declaración de MVP-1 que ya prevé la spec 005 («Reparto en PR»).
 
 ---
 

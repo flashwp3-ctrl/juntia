@@ -60,7 +60,7 @@ Se reutiliza la máquina del PR C y D de la 003 sin cambiar sus reglas (F57-8, F
   ninguna consulta a metas personales, ni para pintarlas deshabilitadas (F63-3).
 - **En Yo** lee las vistas de contexto con `context = 'me'` y `goals_overview` entera en
   **una consulta**, que la interfaz separa por `goal_scope`: «Tus metas» (`personal`) y,
-  aparte, «Metas compartidas» con «Tus aportes» = `my_available_minor` (decisión 22.11).
+  aparte, «Metas compartidas» con «Tu disponible» = `my_available_minor` (decisión 22.11, enmendada por la 23.4 el 12 de noviembre de 2026; antes «Tus aportes»).
   El total de «Tus metas» sale de `goals_totals` con `goal_scope = 'personal'` y nunca
   incluye una compartida. El selector de B1 en Yo ofrece solo `goal_scope = 'personal'`.
 - **Pruebas de F64-3**, en integración y componentes: en Yo aparecen **todas** las metas

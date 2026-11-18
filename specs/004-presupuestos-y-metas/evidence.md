@@ -1476,3 +1476,52 @@ a las preguntas del PR #71). Lo que no tiene run ni salida queda pendiente, con 
   - `A11Y_ROUTE_AREAS=presupuestos npm run e2e:dev -- tests/a11y/routes.a11y.ts`: **exit 0**; `/plan` y `/plan/analisis` en claro y oscuro.
   - Componentes del registro de rutas y de los selectores: **107/107**.
   - `npm run verify`: **exit 0, 83,69 s**.
+
+## Cierre de P0-3 · 004-T084 y 004-T085
+
+### 004-T084 · salida interna de los fundadores
+
+**`[PENDIENTE T084]`** Los fundadores todavía no la han hecho. Se completa en este mismo PR documental cuando el
+gestor pase sus notas, con este formato y sin datos reales (solo fechas, quién y el resultado de cada paso):
+
+- Fecha y dispositivos: ___
+- Pasos de la guía (quickstart §2–§7): meta individual y compartida, aporte de cada uno, gasto con meta con una
+  aprobación, presupuesto creado y desactivado, gastos y metas que siguen: ___
+- ¿Explican sin ayuda la diferencia entre gasto y ahorro destinado (SC-012)?: ___
+- Hallazgos y a dónde van (PR B de la 005, lista de MVP-2 o ninguno): ___
+- Aprobación: ___ (los dos, por escrito)
+
+La simulación previa de la guía (12 de noviembre de 2026, `docs/audits/2026-11-t084/`) **no** sustituye a esta
+salida: la hizo un agente contra `juntia-dev`, no los fundadores con sus cuentas.
+
+### 004-T085 · PR documental de cierre
+
+Este PR reconcilia los documentos con las decisiones de los fundadores posteriores a la especificación 004 (maestro
+§15.10, decisiones 23, 24 y 25): las filas 1 a 18 de «Contradicciones para el PR documental T085» de la spec 005 y
+las filas 19 a 22 de su plan. La lista de cada reconciliación, con su documento, está en la descripción del PR. El
+texto de aceptación de P0-3 del maestro §15.1 y la casilla de T085 en [tasks.md](tasks.md) quedan preparados y
+**sin marcar** hasta la salida interna.
+
+Los runs de cierre de P0-3 que todavía no estaban en este archivo (004-T080 y 004-T082) los registra la tarea
+T103 de la 005; su referencia está en `specs/005-gate-mvp-1/evidence.md`, inventario de verificaciones heredadas.
+
+### Lecciones de P0-3
+
+1. **`response.text()` no lee un RSC transmitido.** En Playwright, `response.text()` devuelve "" con las respuestas
+   RSC en streaming, y el `.catch(() => "")` lo ocultaba. Las comprobaciones de privacidad del prefetch de la spec 4
+   (`goals.e2e.ts`) y de la spec 3 (`couple-settle.e2e.ts`, ya en `main`) **no inspeccionaban ningún cuerpo**: eran
+   vacías y no podían fallar (PR B, `7de0fed`; arriba, «Hallazgo»). Se corrigió con `tests/support/rsc-capture.ts`,
+   que intercepta con `page.route` y lee el cuerpo con `route.fetch()`, más un **control positivo** en cada
+   comprobación. Práctica escrita en `docs/TESTING.md` §5 (no es una regla dura nueva): una comprobación de ausencia lleva siempre su control
+   positivo, y nunca se lee un RSC transmitido con `response.text()` ni con un `catch` silencioso. La spec 5 sigue con
+   su propia captura; migrarla a `rsc-capture.ts` es un seguimiento.
+2. **El desborde de Actividad llegó a producción.** El 11 de noviembre de 2026 Actividad medía 585 px de ancho a
+   390 (unos `sr-only` del carrusel de fichas, sin bloque contenedor que los recortara), y ningún gate lo detectó:
+   axe no mide el ancho y el barrido solo miraba el scroll de las rutas, no de cada estado. Desde el PR #82 (17 de
+   noviembre de 2026, decisión 23.6) la pasada de accesibilidad comprueba el ancho del documento en **cada pantalla y
+   estado**, siguiendo la cadena de bloques contenedores, y la mutación (quitar `relative` del carrusel) la hace
+   fallar.
+3. **Se agotaron los minutos de CI.** Iterar en CI, los runs completos de cierre y los laboratorios de la 005
+   consumieron los 2.000 minutos mensuales de GitHub Free del repositorio privado. Las defensas de `AGENTS.md` 15a
+   (borradores, un solo push por revisión, iterar contra `juntia-dev`) redujeron el gasto pero no bastaron. Los
+   fundadores hicieron público el repositorio el 18 de noviembre de 2026 (decisión 25.1).

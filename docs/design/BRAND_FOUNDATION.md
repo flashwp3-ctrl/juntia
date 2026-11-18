@@ -38,9 +38,11 @@ Dirección oficial: **I2 · Bosque & Arena**. Versión 1.0 (lote 1 de 5). Estado
 | Registrar aporte | Depositar / Invertir |
 | Destinado neto (para planificar) | Total gastado (para gasto + aportes) |
 | Porcentaje 55/45 | Proporcional (si no es por ingresos) |
-| Retiro de meta · reasignación | Ingreso |
+| Retiro de la meta (decisión de los fundadores del 12 de noviembre de 2026; antes «Retiro de meta · reasignación») | Ingreso |
 
 ## 5. Fotografía (metas)
+
+> **No aplica a MVP-1** (decisión de los fundadores del 17 de noviembre de 2026; maestro §15.10, decisión 24.13): las metas no tienen foto en MVP-1 y usan el fallback de abajo. Las reglas de foto y sus [V] pasan a MVP-2, con ADR-014.
 - **Fuentes:** predeterminadas por tipo de meta (viaje, boda, vivienda…), subidas por el usuario, o **fallback sin foto**.
 - **Focal point:** se guarda `focal: {x,y}` en %; recorte con `object-position`. El sujeto va en el tercio superior y el inferior queda para el texto.
 - **Scrim:** degradado superior 0→35% (etiqueta) e inferior 50%→82% (título + cifras). El texto blanco debe medir ≥ 4,5:1 sobre el scrim. [V]

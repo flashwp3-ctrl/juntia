@@ -7,16 +7,16 @@ Enfoque mobile-first: el diseño base es de 390 px y los breakpoints se aplican 
 | --- | --- | --- | --- | --- |
 | xs | 360 | Barra inferior flotante (4 destinos + Anotar al centro) | 1 columna, margen 20 (cards 14) | Importe héroe 36 px, titular 26. Las fichas de categoría con menos de 20% muestran solo ícono e importe abreviado (K). |
 | sm | 390 | Igual | 1 columna | Base del diseño. Héroe 42 px. |
-| md | 768 | Barra inferior centrada (máx. 560 px de ancho) | 12 columnas, margen 28 | Meta (7 col) + balance y Anotar (5 col). Recientes y categorías en 2 columnas. Las hojas pasan a diálogos centrados de 520 px. |
+| md | 768 | Barra inferior centrada (máx. 560 px de ancho) | 12 columnas, margen 28 | Meta (7 col) + balance y Anotar (5 col). Recientes y categorías en 2 columnas. Las hojas pasan a diálogos de 520 px, anclados arriba (decisión de los fundadores del 12 de noviembre de 2026). |
 | lg | 1024 | **Rail lateral de 76 px** (íconos + Anotar), sin barra inferior | 12 columnas, margen 28 | Meta 7/12 · balance + Anotar 5/12. Sin la tarjeta de resumen «gasto vs. apartado» (se muestra en el texto del héroe). |
 | xl | 1280 | **Sidebar de 248 px** con contexto, navegación, Anotar fijo y perfil | 12 columnas, margen 28–40 | Aparece la tarjeta resumen junto al héroe. Actividad en modo maestro-detalle desde 1280. |
-| 2xl | 1440 | Sidebar de 248 px | Máximo 1440, margen 40 | Héroe 52–58 px, foto de meta de 470 px de alto. Detalle de 400 px fijo a la derecha en Actividad. |
+| 2xl | 1440 | Sidebar de 248 px | Máximo 1440, margen 40 | Héroe 52–58 px, foto de meta de 470 px de alto (sin foto en MVP-1: maestro §15.10, decisión 24.13). Detalle de 400 px fijo a la derecha en Actividad. |
 
 ## Reglas por patrón
 - **Contexto Yo/Nosotros:** arriba a la derecha del contenido en móvil, tablet y lg; dentro del sidebar en xl y 2xl.
 - **Anotar gasto:** botón central de la barra en móvil y tablet; botón al final del rail en lg; bloque bosque en el sidebar en xl y 2xl, con el atajo `N` visible. Siempre a un toque.
-- **Sheets y diálogos:** bottom sheet con dos paradas por debajo de md; desde md, diálogo centrado de 520 px con scrim, foco atrapado y Escape para cerrar. La meta inmersiva nunca es un diálogo: es una ruta.
-- **Metas:** pila apilada hasta md; desde lg, la pila se abre en abanico (la tarjeta trasera girada 4°) y aparece «+» para crear una meta. La meta inmersiva usa la foto a pantalla completa y la hoja en móvil; desde lg, la foto ocupa 820 px y el panel de información va a la derecha (I2·4).
+- **Sheets y diálogos:** bottom sheet con dos paradas por debajo de md; desde md, diálogo de 520 px **anclado arriba** (`max(48px, 8dvh)` más el inset seguro, centrado en horizontal, crece por abajo), con scrim, foco atrapado y Escape para cerrar. Las confirmaciones siguen centradas. (Decisión de los fundadores del 12 de noviembre de 2026, PR #81; antes «diálogo centrado».) La meta inmersiva nunca es un diálogo: es una ruta.
+- **Metas:** pila apilada hasta md; desde lg, la pila se abre en abanico (la tarjeta trasera girada 4°) y aparece «+» para crear una meta. La meta inmersiva usa la foto a pantalla completa y la hoja en móvil; desde lg, la foto ocupa 820 px y el panel de información va a la derecha (I2·4). En MVP-1 no hay fotos (maestro §15.10, decisión 24.13, 17 de noviembre de 2026): se usa el fallback aprobado de GoalCard.
 - **Listas:** 3 columnas lógicas en móvil (ficha · texto · importe). Desde xl, tabla de 5 columnas con encabezados y el detalle en un panel lateral, sin cambiar de ruta. La fila seleccionada usa fondo sunken.
 - **Gráficos:** en móvil, 6 meses con etiquetas abreviadas; desde lg, 12 meses con tooltip accesible por teclado. Siempre hay una tabla equivalente oculta.
 - **Shared Balance:** en móvil, pantalla propia con barras de 28 px; desde lg, un módulo en Inicio con barras de 16 px y enlace al desglose.
@@ -32,6 +32,6 @@ Enfoque mobile-first: el diseño base es de 390 px y los breakpoints se aplican 
 ## Cuenta
 - **360:** el título del encabezado baja a serif 30 para que entren el AccountButton (44) y el segmented. Las filas pasan a 2 líneas con texto al 200%.
 - **390:** pantalla apilada sin barra inferior. Hojas para invitar; diálogo de confirmación centrado.
-- **768:** una columna centrada de 600 px. Las hojas pasan a diálogo de 520.
+- **768:** una columna centrada de 600 px. Las hojas pasan a diálogo de 520, anclado arriba.
 - **1024:** rail de 76 con avatar «Mi cuenta» al pie. Contenido en una columna de 680.
 - **1280 / 1440:** sidebar con el perfil al pie. Dos columnas: identidad y secciones (360) + sección abierta (máx. 680). Sin columnas más anchas de 680 para que la lectura no se estire.

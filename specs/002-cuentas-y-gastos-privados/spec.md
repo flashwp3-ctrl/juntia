@@ -56,7 +56,7 @@ documental.
 - Q7: ¿Se aprueba la persistencia del tema `[P][V]`? → A: **Sí**: en `profiles` y en una cookie que lee el script bloqueante. Su `[V]` se ejecuta antes de cerrar el plan.
 - Q8: ¿Qué es «calendario» en P0-1? → A: El resumen del mes de Actividad con **flechas de mes anterior y siguiente**, y la fecha de cada movimiento elegida en Anotar. Sin vista de cuadrícula.
 - Q9: ¿Quién se puede registrar? → A: **Hasta MVP-1, solo los correos de los dos fundadores**, con una lista permitida que valida la base de datos. El aviso de términos dice que es una versión privada de prueba, sin texto legal inventado. Los términos definitivos son pendiente de lanzamiento.
-- Q10: ¿Dónde vive Supabase? → A: Proyecto **Free en la cuenta de la segunda fundadora**, región **São Paulo**, con el correo de Supabase para P0-1. Un servidor de correo propio queda para antes de MVP-1.
+- Q10: ¿Dónde vive Supabase? → A: Proyecto **Free en la cuenta de la segunda fundadora**, región **São Paulo**, con el correo de Supabase para P0-1. Un servidor de correo propio queda para antes de MVP-1. **Enmienda del 17 de noviembre de 2026** (maestro §15.10, decisión 24.8, y nota de la decisión 16): el correo propio queda para el **lanzamiento público**, no para MVP-1.
 - Q11: ¿Qué recuperación hace falta antes de datos reales? → A: Antes del primer dato real, **una copia completa de la base, cifrada y guardada fuera de Supabase, y una restauración de prueba en local**, con salida en la evidencia. Después, una copia semanal con un comando documentado que ejecuta un fundador.
 - Q12: ¿Exportar entra en P0-1? → A: **Sí**, JSON y CSV de los movimientos privados propios. P0-3 lo completa con la pareja y las metas.
 
@@ -466,7 +466,7 @@ decisión 12» tiene salida real o una excepción formal aprobada.
 
 - Pareja, invitaciones, gastos compartidos, repartos, balances, liquidaciones y Mover a Pareja (P0-2).
 - Presupuestos, Spending Story, metas, `total_destinado_neto` y Análisis (P0-3).
-- Eliminar cuenta (bloqueo legal, §15.6.1), términos legales definitivos y servidor de correo propio (antes de MVP-1).
+- Eliminar cuenta (bloqueo legal, §15.6.1), términos legales definitivos y servidor de correo propio (antes de MVP-1; desde el 17 de noviembre de 2026, al lanzamiento público, con un procedimiento manual de eliminación ensayado en MVP-1: maestro §15.10, decisión 24.8).
 - Categorías propias, recurrentes, adjuntos, reembolsos parciales, offline y vista de calendario en cuadrícula.
 - Copia de seguridad automática (Q11).
 

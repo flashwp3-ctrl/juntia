@@ -24,9 +24,11 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 | Autenticación | Correo + contraseña, verificación, recuperación por enlace |
 | Invitaciones | 7 días, un uso, una activa, correo asociado y verificado |
 | Exportación | JSON + CSV autorizados |
-| Eliminación de cuenta | Bloqueo legal de lanzamiento |
+| Eliminación de cuenta | Bloqueo legal de lanzamiento. Desde el 17 nov 2026, del **lanzamiento público**; en MVP-1, procedimiento manual ensayado (maestro §15.6.1 y §15.10, decisión 24.8) |
 
 **Estado del handoff: READY WITH BLOCKERS.** Las decisiones funcionales de P0 están cerradas. Bloquean el lanzamiento, no la implementación: el procedimiento de eliminación de cuenta y la confirmación técnica de las capacidades de Supabase.
+
+> **Precisión del maestro (prevalece).** La confirmación técnica de Supabase **no** es un pendiente de lanzamiento: se resuelve con las verificaciones de §15.6.3 del maestro (nota final de §15.6). La eliminación de cuenta en la interfaz es del **lanzamiento público**; en MVP-1 vale un procedimiento manual, documentado y ensayado (§15.6.1, enmienda del 17 de noviembre de 2026; decisión 24.8).
 
 ## Alcance MVP-1 (decidido el 2 nov 2026)
 **P0 — entra en MVP-1**
@@ -76,7 +78,7 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 **Perfil.** Nombre visible editable; correo visible y no editable; cambio de contraseña por enlace seguro; avatar con inicial y color del sistema; sin foto. No altera autorías.
 **Pareja e invitaciones.** Solo la propietaria; caducidad de 7 días; token de un solo uso guardado como hash; una invitación activa por pareja; asociada al correo; aceptación solo con una cuenta verificada con ese correo; enlace compartido a mano; sin correos ni notificaciones propias. Sin sesión: guardar la intención, autenticar, volver y revalidar token, correo, caducidad, membresía y disponibilidad. Una pareja activa por usuario, dos integrantes, validado en el servidor y sin carreras. Sin salir, expulsar ni transferir en P0 (ADR-003).
 **Preferencias.** Solo Claro/Oscuro/Sistema, sin flash. Se retiraron reparto por defecto, color editable, moneda y notificaciones. COP fijo. El formulario de gasto conserva 50/50, porcentaje e importe.
-**Datos.** Exportar JSON + CSV con solo lo autorizado (nunca privados del otro, tokens ni datos internos); no es restauración. Eliminar cuenta se comunica como no disponible: **bloqueo de lanzamiento** hasta tener un procedimiento real, verificable y revisado legalmente.
+**Datos.** Exportar JSON + CSV con solo lo autorizado (nunca privados del otro, tokens ni datos internos); no es restauración. Eliminar cuenta se comunica como no disponible: **bloqueo de lanzamiento** hasta tener un procedimiento real, verificable y revisado legalmente. (Desde el 17 nov 2026, del lanzamiento público; en MVP-1, procedimiento manual ensayado y la interfaz explica cómo pedirlo: maestro §15.10, decisión 24.8.)
 
 ## Stack de UI sugerido [P]
 - Íconos: `@phosphor-icons/react` con un wrapper `AppIcon` e imports individuales.
@@ -112,9 +114,9 @@ Lote 5 de 5. Paquete de diseño listo para revisión. **Todavía no se implement
 - **Teclado** [A]: Todo se puede operar con teclado: segmentados con flechas, hojas con Escape, atajo N para Anotar y foco que vuelve al disparador.
 - **Lectores de pantalla** [A]: Filas con nombre completo. Barras con `role="img"` y aria-label con cifras. Gráficos con tabla equivalente. aria-live para guardados, liquidaciones y cambio de contexto.
 - **Reduced motion** [A]: Cada momento tiene su alternativa documentada en MOTION_SYSTEM, sin desplazamientos ni escalas y con counters que muestran el valor final.
-- **Texto ampliado** [P]: Hasta 200% sin pérdida: las filas pasan a 2 líneas, los segmentados se apilan y los importes usan clamp.
+- **Texto ampliado** [P]: Hasta 200% sin pérdida: las filas pasan a 2 líneas, los segmentados se apilan y los importes usan clamp. (Técnica decidida el 11 de noviembre de 2026: todo el texto en `rem`, F13; maestro §15.9 y §15.10, decisión 23.1.)
 - **Gestos** [A]: Todo gesto tiene una alternativa: cerrar la meta con ×, recorrer la pila con «Ver todas» y arrastrar la hoja con su botón.
-- **Fotos** [V]: Scrim calculado por luminancia y texto con 4,5:1 o más sobre la zona del scrim. Las fotos son decorativas (alt vacío) y el nombre de la meta va en el texto.
+- **Fotos** [V] (**no aplica a MVP-1**: sin fotos de metas hasta MVP-2, maestro §15.10, decisión 24.13): Scrim calculado por luminancia y texto con 4,5:1 o más sobre la zona del scrim. Las fotos son decorativas (alt vacío) y el nombre de la meta va en el texto.
 - **Teclado propio** [P]: Descartado: se usa el teclado nativo para no reimplementar foco, dictado ni pegar.
 - **Validación real** [V]: No se ejecutaron pruebas con VoiceOver, TalkBack ni axe en dispositivo: está pendiente para la fase de implementación.
 
@@ -170,9 +172,9 @@ A = aprobado · P = propuesta de refinamiento · V = pendiente de validación t�
 - [V] Flujo de confirmación: goal_usage_confirmations, bloqueo sin consentimiento, revalidación al confirmar.
 - [V] Atomicidad de gasto + goal_usage + asignaciones, idempotencia, conversión auditada sin ventana con dos gastos activos, goal_usage_confirmations y RLS de metas.
 - [V] Protección de ediciones concurrentes de presupuesto (versión u optimistic lock + aviso al otro integrante). Por probar en Claude Code.
-- Detección de luminancia de la foto para el scrim (en cliente o en servidor).
+- Detección de luminancia de la foto para el scrim (en cliente o en servidor). No aplica a MVP-1: fotos de metas en MVP-2 (decisión 24.13).
 - View Transitions con App Router y el back-swipe de iOS.
-- Teclado nativo en Android con teclados de terceros.
+- Teclado nativo en Android con teclados de terceros. Prorrogado más allá de MVP-1 como excepción formal (maestro §15.10, decisión 24.6).
 
 ## Rendimiento
 - **Umbrales medibles (bloquean la aceptación):** CLS = 0 en las cargas con skeleton de las rutas clave · INP < 200 ms al abrir Anotar y al guardar · mediana < 10 s para registrar un gasto habitual tras el onboarding, en teléfono real (US-12) · sin scroll horizontal en 360, 390, 430, 1024 y 1440 · objetivos táctiles ≥ 44 px.

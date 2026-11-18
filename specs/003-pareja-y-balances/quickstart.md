@@ -36,7 +36,9 @@ a la vez → ninguno acepta la del otro sin anular la suya.
 ## 3. Compartir y ver (US-2, US-3, US-4)
 
 1. Tomás en Nosotros: Anotar → $186.400 → Mercado → Guardar. El resumen decía
-   «Pagó: yo · 50/50» (primera vez, Q5). Nosotros sube; el saldo se tacha.
+   «Pagó: yo · 50/50» (primera vez, Q5; desde el 12 de noviembre de 2026 el
+   pagador por defecto es siempre quien anota, decisión 23.3, y solo se recuerda
+   el reparto). Nosotros sube; el saldo se tacha.
 2. Sara en Nosotros: ve el gasto «Pagó Tomás · 50/50». En Yo ve «Compartido · tu
    parte $93.200» y su total de Yo suma solo la parte.
 3. Sara anota en Yo un gasto privado. Tomás, en Nosotros y en Yo, no lo ve. Con

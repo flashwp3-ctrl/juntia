@@ -136,7 +136,8 @@ npx --yes supabase@2.121.0 db push --linked
    plantilla por defecto, el enlace se abre en el mismo navegador donde se hizo el
    registro o la recuperación; en otro navegador, el registro queda verificado y
    lleva a Entrar, y la recuperación pide un enlace nuevo. El SMTP propio sigue
-   previsto antes de MVP-1 (decisión 16.10).
+   previsto antes de MVP-1 (decisión 16.10); desde el 17 de noviembre de 2026, al
+   lanzamiento público (decisión 24.8).
 2. **URL del sitio y de redirección:** producción → su dominio; `juntia-dev` →
    `http://localhost:3400` (3000 hasta el 7 de noviembre de 2026) y los previews de Vercel. Las Redirect URLs tienen que
    cubrir `<origen>/auth/confirm?next=…` (con `/**` basta).
