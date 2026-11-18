@@ -59,6 +59,14 @@ Pasa el guardia de destino y toma el bloqueo de `juntia-dev` (decisión 18). El 
 - **`allocations_check_sum` no se suspende** (T042, N1): con el gasto borrado en la misma transacción, la comprobación
   diferida no encuentra el movimiento y no rechaza el borrado. Lo demuestra el caso 1 de
   `tests/integration/account-deletion.test.ts`.
+- **Auditoría de terceros (F87-1):** nunca se borra la auditoría de un actor externo al alcance. Si un actor de fuera dejó
+  auditoría sobre una entidad del alcance, el cierre se detiene antes de la fase 0 y nombra la fila; la fase 1 solo borra
+  la auditoría de los actores del alcance.
+- **Manifiesto fijo (F87-2):** el estado guarda la SHA-256 del manifiesto completo, en forma canónica y sin campos
+  excluidos. `--resume` y `--abort` lo rechazan si cambió, antes de tocar Auth o la base. Justo antes de la fase 1 se
+  repiten la pertenencia, el cierre y los recuentos del plan.
+- **Caída tras el COMMIT (F87-5):** el estado marca «fase 1 en curso» antes del SQL. Al reanudar, si el alcance ya está
+  vacío, la transacción se confirmó: no se repite y se conservan los recuentos del plan, con la recuperación registrada.
 - **Categorías propias:** el esquema no tiene categorías por persona (`categories` es el catálogo común).
 - **Salida para la evidencia:** `request_id`, huellas cortas de los UUID, fechas de aprobaciones y exportaciones,
   secuencia de fases y recuentos por tabla. Nunca correos, nombres, importes ni textos.
