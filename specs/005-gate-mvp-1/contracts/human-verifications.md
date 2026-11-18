@@ -9,15 +9,23 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 
 - **Dónde:** en producción, con las cuentas reales, salvo que la fila diga `juntia-dev`.
   Solo se escriben datos reales legítimos: nada de gastos de prueba en producción.
-- **Cada fila de dispositivo** registra: fecha, persona, modelo de iPhone, versión de
-  iOS, navegador y su versión, commit desplegado (lo enseña el panel de Vercel o la
-  etiqueta), resultado y evidencia.
-- **Evidencia en el repositorio:** solo `.md`, `.png` y `.txt` bajo
-  `specs/005-gate-mvp-1/evidence/`. Los vídeos se quedan con los fundadores; al
-  repositorio van fotogramas PNG y la tabla de tiempos.
-- **Sin datos personales en la evidencia:** las capturas que se suben enseñan importes de
-  la pareja solo si los dos lo aceptan; si no, se recortan o se usan las de `juntia-dev`.
-  Nunca contraseñas, correos completos ni tokens.
+- **Cada fila de dispositivo** registra: fecha, rol («fundador 1», «fundador 2», «la
+  dueña», «el gestor»), modelo de iPhone, versión de iOS, navegador y su versión, commit
+  desplegado (lo enseña el panel de Vercel o la etiqueta), resultado y evidencia.
+- **Privacidad de la evidencia: una sola regla**, la de [../plan.md](../plan.md), «PR C ·
+  Evidencia y cierre» (F85-6). En corto:
+  - **al repositorio** (solo `.md`, `.png` y `.txt` bajo `specs/005-gate-mvp-1/evidence/`)
+    entran capturas con datos de prueba (runner o `juntia-dev`) o capturas de producción
+    **anonimizadas**, con importes, nombres, comercios, notas, metas y correos tapados de
+    forma opaca por quien las hizo, más recuentos, tiempos e identificadores;
+  - **se quedan con los fundadores** las imágenes y los clips originales, los nombres
+    identificables y las firmas;
+  - una captura de producción solo entra cuando el hallazgo no se reproduce con el
+    dataset;
+  - nunca contraseñas, tokens ni textos de aprobaciones.
+
+  «Captura PNG» en los protocolos de abajo significa siempre una captura que cumple esta
+  regla.
 - **Un fallo es un fallo:** se registra tal cual y va a B o a los fundadores. Nada se
   marca «verificado» sin salida (`AGENTS.md` 12).
 - **Quién es quién:** «los dos» son los dos fundadores; «la dueña» es la fundadora dueña
@@ -176,7 +184,8 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   - una nota en cada eje: uso diario, legibilidad, rapidez y carácter visual;
   - las tres preguntas de §6.7: qué es claro, qué impresiona, qué estorba;
   - la decisión: «apruebo» o «no apruebo».
-- **Evidencia:** las dos valoraciones literales en `evidence.md`. Un fallo crítico
+- **Evidencia:** las dos valoraciones en `evidence.md`, identificadas por rol («fundador
+  1», «fundador 2»), sin nombres ni datos de la pareja. Un fallo crítico
   (dinero, privacidad, pérdida de datos o accesibilidad básica) impide aprobar; los
   demás van a la lista de MVP-2 con dueño (FR-083).
 

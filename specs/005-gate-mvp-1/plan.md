@@ -66,7 +66,7 @@ Enfoque, con el detalle y las alternativas en [research.md](research.md):
 
 **Constraints**: ningún job del gate por encima de ~600 s (presupuesto de 660 s en `e2e` y `a11y-session`, cláusula anticliquet); 2.000 minutos de Actions al mes; ninguna spec E2E nueva; el PR C solo `.md`, `.png` y `.txt`; ningún agente ve la contraseña de producción ni lanza CI (lo lanza el gestor); nada de datos reales en el repositorio (solo recuentos, huellas y tiempos).
 
-**Scale/Scope**: 2 personas y una pareja. 0 migraciones, 0 pantallas, 0 specs E2E. Pruebas nuevas: unas 6 de dominio, componentes e integración; 10–20 casos de axe del nivel ligero; casos `@sweep` nuevos; 5 arneses de laboratorio. 1 job nuevo de CI, solo a mano. 4 documentos nuevos del slice más `release-checklist.md`.
+**Scale/Scope**: 2 personas y una pareja. 0 migraciones, 0 pantallas, 0 specs E2E. Pruebas nuevas: unas 6 de dominio, componentes e integración; 10–20 casos de axe del nivel ligero; casos `@sweep` nuevos; 5 arneses de laboratorio. 2 jobs nuevos de CI, solo a mano (`release` y su guardia de entradas, `inputs-guard`). 4 documentos nuevos del slice más `release-checklist.md`.
 
 ## Constitution Check — comprobación de jerarquía
 
@@ -112,7 +112,7 @@ Ningún `[P]` que afecte al alcance queda abierto (spec, «Inventario de `[P]`»
 | ADR-011 | Capas, tope de specs, presupuestos de job; «solo Chromium» en el gate (WebKit y Firefox solo en el job `release`, por Q3 y Q7) | Aceptado | No |
 | ADR-012, ADR-013 | Flujo de especificación; acceso a datos | Aceptados | No |
 | ADR-014 (fotos de metas) | Fuera de MVP-1 (decisión de los fundadores del 17 nov 2026) | No existe; no lo necesita este slice | No |
-| **Nota a ADR-007 y ADR-013** para el borrado manual: el script suspende por nombre los triggers de solo inserción dentro de una transacción como dueño | Lo exige D2, opción (a) (fundadores, 18 nov 2026). No es un ADR nuevo: es una operación administrativa excepcional | **Por escribir en el PR documental T085** (fila 19, abajo) | No |
+| **Nota a ADR-007 y ADR-013** para el borrado manual: el script suspende por nombre los triggers de solo inserción dentro de una transacción como dueño | Lo exige D2, opción (a) (fundadores, 18 nov 2026). No es un ADR nuevo: es una operación administrativa excepcional | **Por escribir en el PR documental T085** (fila 19, abajo), con la excepción de ADR-010 para el ledger de metas (fila 22, F85-8) | No |
 
 ### Erratas que afectan al slice
 
@@ -140,6 +140,15 @@ Ninguna pendiente en `docs/design/README.md`.
   alguno > 50 ms) con CPU 4×.
 - **Fila 21 · Periodo de uso de Q10 (D4, opción a):** despliegues de producción congelados
   durante los 7 días; un fallo crítico se corrige y los 7 días vuelven a empezar.
+- **Fila 22 · ADR-010, «los aportes no se borran» (revisión del PR #85, F85-8):**
+  - ADR-010 y el maestro (DEC-G01..G06, decisión 22) dicen que el ledger de metas es de
+    solo inserción y que una corrección es un asiento `void`;
+  - la reconciliación añade una **única excepción**: el borrado de los asientos de una
+    persona o una pareja **solo** con el procedimiento autorizado y ensayado de
+    [contracts/account-deletion.md](contracts/account-deletion.md), con el manifiesto de
+    aprobaciones y exportaciones, nunca desde la app ni para corregir datos.
+
+  Va junto a la nota a ADR-007 y ADR-013 de la fila 19.
 
 **Resultado del gate**: **PASA**, sin decisiones abiertas. D1–D4 las decidieron los
 fundadores el 18 de noviembre de 2026 (opción a en las cuatro).
@@ -199,7 +208,7 @@ scripts/
 ├── cls-frames/recorder.js                # A: la parte que corre en la página (también para el Mac, R11)
 ├── cls-frames/compare.mjs                # A: el comparador puro, con su prueba
 ├── dev-target/seed-long-lists.mjs        # A: cuenta de listas largas en juntia-dev (FR-043), con el guardia
-└── account-deletion/                     # A: el procedimiento de D2 (SQL + Bash)
+└── account-deletion/                     # A: el procedimiento de D2 (SQL + run.mjs con fases y estado)
 playwright.config.ts                      # A: proyectos e2e-webkit, evidence-webkit, evidence-firefox
 .github/workflows/ci.yml                  # A: job `release`, solo workflow_dispatch
 tests/ci-workflow.test.ts                 # A: el job `release` nunca corre en pull_request
@@ -265,12 +274,12 @@ FR-095.
 | `tests/a11y/routes.a11y.ts` (`@sweep`) | FR-042: 200 % en hojas, diálogos, A1–A6 e invitación; **raíz al 200 % a 1440 en Inicio · Yo y Metas** (hoy falla: 1.447 px, se corrige en B); FR-046: el foco vuelve al disparador también al llegar por URL; **Anotar con monto escrito, de 390 a 1024 px y vuelta**: el monto sigue (R8) | Barrido, a mano |
 | `tests/e2e/goals.e2e.ts` | El caso del gesto con `Input.dispatchTouchEvent` (CDP) se salta fuera de Chromium con su motivo; el gesto real lo cubre FR-070 en iPhone | E2E · sin coste |
 | `tests/evidence/release-*.capture.ts`, `inp.capture.ts` | FR-050, FR-052, FR-053, FR-054, FR-043 (research R6, R7) | Laboratorio · `release` |
-| `tests/evidence/cls-frames.capture.ts`, `scripts/cls-frames/*` | FR-051 con sus controles positivos y negativos ([contracts/cls-comparator.md](contracts/cls-comparator.md)) | Laboratorio · `release` |
-| `tests/cls-frames.test.ts` | El comparador puro con fotogramas sintéticos: un bloque que se mueve 1 px se detecta; uno que aparece o desaparece no cuenta; el desplazamiento por scroll no cuenta | Vitest (proyecto `domain` o el de `scripts/`) · `app` |
+| `tests/evidence/cls-frames.capture.ts`, `scripts/cls-frames/*` | FR-051: posición de layout sin transformaciones, fixed y sticky aparte, y seis controles en los tres motores, entre ellos una animación con transformación y un scroll con sticky (F85-5; [contracts/cls-comparator.md](contracts/cls-comparator.md)) | Laboratorio · `release` |
+| `tests/cls-frames.test.ts` | El comparador puro con fotogramas sintéticos: un bloque que se mueve 1 px se detecta; uno que aparece o desaparece no cuenta; el desplazamiento por scroll no cuenta; un bloque `fixed` se compara en coordenadas del viewport y uno `sticky` solo entre fotogramas con el mismo scroll (F85-5) | Vitest (proyecto `domain` o el de `scripts/`) · `app` |
 | `playwright.config.ts` | Proyectos `e2e-webkit` (Desktop Safari, `tests/e2e`), `evidence-webkit` y `evidence-firefox` (solo `cls-frames.capture.ts`). Ninguno entra en `test:e2e:smoke` ni en `test:a11y` | Config |
-| `.github/workflows/ci.yml` + `tests/ci-workflow.test.ts` | Job `release` con entrada `release_lab`, matriz de seis tramos, `timeout-minutes: 20`, nunca en `pull_request` ([contracts/ci.md](contracts/ci.md)) | CI |
+| `.github/workflows/ci.yml` + `tests/ci-workflow.test.ts` | Job `release` con entrada `release_lab`, matriz de 17 tramos, `timeout-minutes: 20`, nunca en `pull_request`; job `inputs-guard` y exclusión mutua de `release_lab` con las demás entradas, probada evaluando los `if` en las 16 combinaciones (F85-4) ([contracts/ci.md](contracts/ci.md)) | CI |
 | `scripts/dev-target/seed-long-lists.mjs` | FR-043 en `juntia-dev`: una cuenta con ≥ 500 movimientos en un mes, aportes y versiones de presupuesto, con el guardia de destino | Herramienta de dev |
-| `scripts/account-deletion/` + `tests/integration/account-deletion.test.ts` | D2, opción (a): sin pareja, todo lo de la persona; con pareja, la pareja completa ([contracts/account-deletion.md](contracts/account-deletion.md)) | Integración · `db` |
+| `scripts/account-deletion/` + `tests/integration/account-deletion.test.ts` | D2, opción (a): sin pareja, todo lo de la persona; con pareja, la pareja completa. Manifiesto con las dos aprobaciones y exportaciones (F85-3); fases con estado y recuperación idempotente de Auth (F85-2); el ciclo `confirmation_id` ↔ `usage_entry_id` se rompe anulando `confirmation_id` (F85-1). Siete pruebas, incluidos los fallos de Auth en el primer y el segundo usuario ([contracts/account-deletion.md](contracts/account-deletion.md)) | Integración · `db` |
 | `docs/TESTING.md` | §3 y §9: el job `release`, sus tramos, su tope y que no es del gate. **No** toca el texto del nivel 2 (lo enmienda T085, fila 17) | Documento |
 
 **Punto de control:** un run de `release` (`gh workflow run` por el gestor) sobre el
@@ -280,7 +289,7 @@ arnés. Si el comparador no es fiable, **se para** y vuelve a los fundadores con
 WebKit» (FR-051); el resto del PR A sigue.
 
 **Criterios de salida:** gate verde en el último commit con `a11y-session` < 600 s; el run
-de `release` con los seis tramos terminados (los arneses pueden registrar fallos de
+de `release` con los 17 tramos terminados (los arneses pueden registrar fallos de
 producto, que son hallazgos para B, no fallos del PR); `states-matrix.md` sin celdas sin
 dueño; prueba del comparador y de `ci-workflow` en verde; revisión humana.
 
@@ -296,7 +305,7 @@ en dos PR si las correcciones tocan áreas que el selector clasifica distinto (Q
 | **Monto perdido al cruzar 768 px** | **Ya corregido** en `829c420` (PR #74), con `annotate-presentation.test.tsx` | Sin código, salvo que el caso `@sweep` o el iPhone en horizontal lo reproduzcan (R8) | La existente; la de `@sweep` del PR A |
 | **Marco de foco del monto** | **Ya corregido** en `829c420` | Igual (R8) | La existente (02·5, «sin marco al abrir, anillo después») |
 | **F02** · S1 y S5 detrás del esqueleto | Solo si la mediana del paso 0b supera 1 s o un fundador lo juzga un defecto (Q4) | S5: precarga de la meta del frente **del mismo contexto**. S1: la coreografía de contexto arranca con lo que no es dato y los números esperan en su sitio a los datos del contexto correcto. **Nunca** precarga del otro contexto (R10) | Componentes de la transición (ningún número del contexto anterior con el título nuevo); las comprobaciones de HTML, RSC y prefetch de las specs 1, 3, 4 y 5 siguen verdes; nueva medición en iPhone |
-| **«Cómo pedir la eliminación»** en Mi cuenta → Privacidad | Siempre (FR-067): hoy el texto dice que no está disponible, pero no cómo pedirla | Una frase de copy en `src/lib/copy/es.ts`; el texto lo aprueban los fundadores en la revisión de B ([contracts/account-deletion.md](contracts/account-deletion.md) §6) | Componentes de la pantalla de privacidad |
+| **«Cómo pedir la eliminación»** en Mi cuenta → Privacidad | Siempre (FR-067): hoy el texto dice que no está disponible, pero no cómo pedirla | Una frase de copy en `src/lib/copy/es.ts`; el texto lo aprueban los fundadores en la revisión de B ([contracts/account-deletion.md](contracts/account-deletion.md) §8) | Componentes de la pantalla de privacidad |
 | Hallazgos de A, del barrido, del laboratorio y de las revisiones | Si son defectos | Según el hallazgo | Según el hallazgo |
 
 **Criterios de salida:** gate verde; si toca rendimiento o esqueletos, un run de `release`
@@ -311,10 +320,32 @@ FR-002 (inventario heredado sin filas «abiertas»), FR-003 (salidas de tareas a
 FR-030 (S1–S5), FR-034 (criterios del handoff), FR-056 (CWV sin «p75») y SC-001 a SC-012,
 las dos valoraciones de FR-081 y la lista de MVP-2 de FR-083.
 
-**Formato:** solo `.md`, `.png` y `.txt` bajo `specs/` (`AGENTS.md` 15a). Los clips de
-vídeo de los iPhone **no entran** al repositorio (un `.mov` o `.mp4` lanzaría CI y no
-aporta lo que no dé un fotograma): se guardan con los fundadores y al repositorio van
-fotogramas PNG y la tabla de tiempos. **Decisión del plan.**
+**Formato:** solo `.md`, `.png` y `.txt` bajo `specs/` (`AGENTS.md` 15a).
+
+**Regla única de privacidad de la evidencia (F85-6), para los PR A–C y para la
+checklist:**
+
+- **Al repositorio solo entran:**
+  - capturas hechas con datos de prueba (el dataset sembrado en el runner o en
+    `juntia-dev`);
+  - o capturas de producción **anonimizadas**: importes, nombres, comercios, notas,
+    metas y correos tapados de forma opaca antes de guardarlas, por la persona que la
+    hizo;
+  - y recuentos, tiempos, huellas cortas e identificadores de run o de despliegue.
+- **Se quedan con los fundadores, fuera del repositorio:**
+  - las imágenes y los clips originales de producción;
+  - cualquier nombre identificable;
+  - las firmas.
+
+  La checklist y `evidence.md` dicen por rol («un fundador», «la dueña», «el gestor») y
+  fecha quién hizo o aprobó cada cosa.
+- **Prefiere los datos de prueba:** una captura de producción solo entra anonimizada, y
+  solo cuando el hallazgo no se reproduce con el dataset.
+- **Los clips de vídeo** de los iPhone no entran nunca: un `.mov` o un `.mp4` lanzaría
+  CI, y no aportan lo que no dé un fotograma. Al repositorio van fotogramas PNG,
+  anonimizados si son de producción, y la tabla de tiempos.
+
+Esta regla sustituye cualquier otra de este plan o de sus contratos.
 
 **No lanza CI.** Si una salida exige un cambio de código, ese cambio va en un PR B
 adicional, no en el C.
@@ -331,17 +362,29 @@ ninguna prueba nueva lleva un job por encima de ~600 s; si no cabe, va a `@sweep
 | Job | Base | PR A | PR B | Estimado tras P0-4 | Si no cabe |
 | --- | --- | --- | --- | --- | --- |
 | `app` | 280–310 s | +5–10 s (dominio, componentes, comparador puro) | +2–10 s (pruebas de las correcciones) | ≤ 330 s | — |
-| `db` | 408–547 s | +3–15 s (US-08 en la vista; borrado de D2) | 0 | ≤ 565 s | La prueba de borrado pasa a `release` (tramo `lab-interaction`) si `db` se acerca a 600 s |
+| `db` | 408–547 s | +7–20 s (US-08 en la vista; las siete pruebas del borrado de D2) | 0 | ≤ 570 s | La prueba de borrado pasa a `release` (tramo `lab-interaction`) si `db` se acerca a 600 s |
 | `e2e` | 321 s | 0 (ninguna spec nueva; un `skip` fuera de Chromium) | 0 | 321 s | — |
 | `a11y-session` | 398 s | +40–80 s (10–20 casos ligeros nuevos, a ~4 s por estado con los dos temas en el mismo contexto) | 0–10 s | ≤ 490 s | Por encima de **560 s** estimados, los estados restantes de FR-041 van solo a `@sweep` |
 | `@sweep` (a mano, en `a11y-session`) | ≈ 430 s (run 43050756971, 11 nov, antes de #82) | +60–150 s (200 % en hojas y diálogos, raíz a 1440, 768 px, foco por URL) | — | 500–650 s, a medir en el paso 2 | Si pasa de 600 s, el barrido se reparte en dos tramos con `--shard` (decisión del plan, [contracts/ci.md](contracts/ci.md)) |
-| `release` (nuevo, a mano) | — | seis tramos en paralelo, cada uno ≤ ~600 s estimados | — | ≈ 55 min facturados por lanzamiento | Cada tramo se parte en dos si su medición pasa de 600 s |
+| `release` (nuevo, a mano) | — | 17 tramos en paralelo, cada uno de ~325–655 s estimados con su arranque (una ruta por tramo de CLS en Chromium; dos tramos de WebKit E2E; tres por motor para el comparador) | — | ≈ 145–150 min facturados por lanzamiento completo | Cada tramo que mida más de 600 s se parte en dos (F85-7) |
 | `evidence` | sin cambios | 0 | 0 | — | — |
 
-**Minutos de Actions de P0-4 (estimación):** gate del PR A ≈ 30 min y uno o dos gates del B
-≈ 30–60 min; tres lanzamientos de `release` (punto de control del A, paso 2 si hace falta,
-candidato) ≈ 110–165 min; dos barridos ≈ 20 min; el run completo del candidato ≈ 30 min.
-**Total ≈ 220–305 min**, unos 11–15 % del mes. El PR C y este PR no gastan.
+**Minutos de Actions de P0-4 (estimación, recalculada en F85-7 con el arranque de cada
+tramo):**
+
+| Partida | Minutos |
+| --- | --- |
+| Gate del PR A | ≈ 30 |
+| Uno o dos gates del PR B | ≈ 30–60 |
+| `release` completo, dos lanzamientos: el punto de control del A (que también calibra el comparador) y el candidato, a ≈ 145–150 cada uno | ≈ 290–300 |
+| `release` parcial tras un PR B, con `release_legs` | ≈ 20–60 |
+| Dos barridos | ≈ 20 |
+| Run completo del candidato | ≈ 30 |
+| **Total** | **≈ 420–500 min**, unos 21–25 % del mes |
+
+El PR C y este PR no gastan. **Antes de F85-7, el plan estimaba 220–305 min:** contaba
+seis tramos que no cabían en ~600 s con su arranque. El paso 2 no lanza `release` si el
+commit del punto de control del A es el que llega a `main`.
 
 ## Verificaciones humanas
 
@@ -373,10 +416,10 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 | SC | Dónde | PR / paso |
 | --- | --- | --- |
 | SC-001 | Run completo del candidato (cinco specs y ensayo de restauración) | Paso 4a; C |
-| SC-002 | Tramo `webkit-e2e` del job `release` | Paso 4c; C |
+| SC-002 | Tramos `webkit-e2e-1` y `-2` del job `release` | Paso 4c; C |
 | SC-003 | Tabla de FR-002 en `evidence.md` | C |
 | SC-004 | `@sweep` del candidato | Paso 4b; A (casos), B (correcciones) |
-| SC-005 | Tramos `lab-cls-*` (Chromium, 40 cargas) y `*-cls` (comparador) | A (arneses); paso 4c |
+| SC-005 | Tramos `cls-*` (Chromium, 40 + 10 cargas por ruta), `webkit-cls-*` y `firefox-cls-*` (comparador) | A (arneses); paso 4c |
 | SC-006 | Tramo `lab-interaction` (INP) | A; paso 4c |
 | SC-007 | iPhone de cada fundador | Paso 6–7 |
 | SC-008 | Exportación real; red de la checklist de humo; registros de Vercel | Pasos 6–7 |
@@ -392,7 +435,7 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
   43045655895). El tramo usa el mismo patrón que Chromium (tope propio, reintento, matar
   el `apt-get` colgado) y, si falla por la red, se relanza solo ese tramo. Nunca en el
   gate.
-- **WebKit de Linux no es Safari de iOS.** El tramo `webkit-e2e` prueba el motor, no el
+- **WebKit de Linux no es Safari de iOS.** Los tramos `webkit-e2e-*` prueban el motor, no el
   teléfono. Por eso el humo, VoiceOver, el teclado y el CLS en iPhone siguen siendo
   verificaciones de dispositivo, no se sustituyen.
 - **Una prueba de tiempo que solo falla en WebKit** (por ejemplo, el cronómetro de la spec
@@ -524,7 +567,8 @@ historia.
 
 | Añadido | Por qué hace falta | Alternativa más simple descartada porque |
 | --- | --- | --- |
-| Job `release` con seis tramos | Las mediciones de FR-050 (280 cargas), FR-051 (dos motores) y FR-020 (WebKit) no caben en ~600 s ni deben correr en cada PR | Meterlas en `evidence`: un solo tramo de más de 30 min, por encima del tope de 20 min y de la regla de ~600 s |
+| Job `release` con 17 tramos | Las mediciones de FR-050 (350 cargas), FR-051 (dos motores) y FR-020 (WebKit) no caben en ~600 s ni deben correr en cada PR; con el arranque de cada tramo (200–430 s), solo cabe una ruta de CLS por tramo en Chromium (F85-7) | Meterlas en `evidence`: un solo tramo de más de una hora, por encima del tope de 20 min y de la regla de ~600 s. Menos tramos con más cargas: pasan de 600 s |
+| Job `inputs-guard` | `release_lab` no puede combinarse con otra entrada sin lanzar dos laboratorios a la vez (F85-4) | Condiciones `if` sin guardia: con una combinación inválida no correría nada y el run saldría verde sin hacer nada |
 | Comparador por fotogramas propio | WebKit y Firefox no exponen `layout-shift` (Q7) | Revisión humana fotograma a fotograma: descartada por los fundadores (Q7, opción b) |
 | Bloqueo de tabla en el servidor para forzar el esqueleto | WebKit y Firefox no tienen emulación de CPU ni de red en Playwright | Retrasar la respuesta con `page.route`: cambia lo que se carga y en qué orden, y no prueba el streaming real (R5) |
 | Tres proyectos de Playwright fuera del gate | WebKit una vez (Q3) y el comparador en dos motores (Q7) | Un proyecto por navegador para todo: metería WebKit en `test:e2e:smoke` |

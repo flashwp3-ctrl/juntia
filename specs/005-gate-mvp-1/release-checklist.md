@@ -6,6 +6,16 @@ del [plan](plan.md) y se firman en el PR C. Cada casilla lleva su evidencia (enl
 `evidence.md`, a `evidence/` o la salida resumida), **sin secretos ni datos personales**.
 Protocolos: [contracts/human-verifications.md](contracts/human-verifications.md).
 
+**Privacidad (F85-6):** se aplica la regla única del [plan](plan.md), «PR C · Evidencia y
+cierre».
+
+- **Al repositorio:** solo capturas con datos de prueba o capturas de producción
+  anonimizadas, y recuentos, tiempos e identificadores de run o de despliegue.
+- **Con los fundadores:** las imágenes originales, los nombres identificables y las
+  firmas.
+- Aquí se escribe solo el rol («fundador 1», «fundador 2», «la dueña», «el gestor») y la
+  fecha.
+
 **Commit candidato:** `________` · **Etiqueta:** `mvp-1-____-__-__` · **Despliegue de Vercel:** `________`
 
 ## 1. Antes de etiquetar (paso 4)
@@ -71,7 +81,8 @@ Protocolos: [contracts/human-verifications.md](contracts/human-verifications.md)
 
 - [ ] Procedimiento manual de [contracts/account-deletion.md](contracts/account-deletion.md)
       ensayado en `juntia-dev`, con recuentos antes y después, en los dos casos de D2
-      (opción a: sin pareja y con pareja)
+      (opción a: sin pareja y con pareja), cada uno con su manifiesto de aprobaciones y
+      exportaciones y hasta el estado `verified` (sin datos ni cuentas de Auth)
 - [ ] Mi cuenta → Privacidad dice en producción que la eliminación no está disponible y
       cómo pedirla
 - [ ] **Al lanzamiento público, no a MVP-1:** eliminación en la interfaz, términos legales
@@ -87,7 +98,9 @@ Protocolos: [contracts/human-verifications.md](contracts/human-verifications.md)
 
 ## Firmas
 
-| Rol | Nombre | Fecha |
+Las firmas se quedan con los fundadores (F85-6). Aquí solo consta que existen:
+
+| Rol | Firmada (sí/no) | Fecha |
 | --- | --- | --- |
-| Gestor | | |
-| Fundador | | |
+| El gestor | | |
+| Un fundador (fundador 1 o fundador 2) | | |

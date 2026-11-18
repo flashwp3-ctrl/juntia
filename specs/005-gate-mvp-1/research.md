@@ -84,8 +84,9 @@ job por encima de ~600 s):
   la revisión de B; no se marca «superado».
 
 **Estimación del tramo:** preparación y Supabase ~150 s, build ~60–90 s, WebKit con sus
-librerías 60–180 s (descarga y `apt`), cinco specs 150–250 s → **420–670 s**. Si la
-medición del PR A pasa de 600 s, el tramo se parte en dos con `--shard`.
+librerías 60–180 s (descarga y `apt`), cinco specs 150–250 s → **420–670 s** en un solo
+tramo. Como puede pasar de 600 s, **el escenario base son dos tramos con `--shard=1/2` y
+`2/2`** (`webkit-e2e-1` y `-2`, ~340–560 s cada uno; F85-7).
 
 **Descartado:** correr WebKit en el gate (Q3 dice «una vez»); WebKit en Windows en local
 como evidencia (la memoria del gestor registra que el WebKit de Playwright se cae en
@@ -96,10 +97,16 @@ Windows y que es un problema del port, no de la app).
 **Decisión:** un grabador en la página y un comparador puro, separados.
 
 - **Grabador** (`scripts/cls-frames/recorder.js`, inyectado con `addInitScript`): en cada
-  `requestAnimationFrame` desde el primer fotograma, registra la caja
-  (`getBoundingClientRect` más el desplazamiento de la página) de cada elemento visible
-  **identificado por su nodo**, y marca el primer fotograma con esqueleto y el primero
-  con el contenido final.
+  `requestAnimationFrame` desde el primer fotograma, registra la **posición de layout**
+  de cada elemento visible, **identificado por su nodo**. Marca el primer fotograma con
+  esqueleto y el primero con el contenido final.
+  - **Sin transformaciones** (F85-5): `getBoundingClientRect` con las transformaciones
+    anuladas por una hoja `!important` solo durante la medida, dentro del mismo
+    fotograma. Así una animación de Motion no cuenta como desplazamiento.
+  - **Fixed y sticky aparte:** las coordenadas de los elementos `fixed` son del
+    viewport, y los `sticky` solo se comparan entre fotogramas con el mismo scroll.
+  - `offsetTop` y `offsetLeft` se descartaron porque son enteros. La elección y los
+    controles están en el contrato.
 - **Comparador** (`scripts/cls-frames/compare.mjs`): entre esos dos fotogramas, un
   desplazamiento es un nodo presente en dos fotogramas seguidos cuya esquina superior
   izquierda cambió. Los nodos que aparecen o desaparecen no cuentan (como en la API
@@ -157,12 +164,21 @@ Yo y en Nosotros, Actividad, Balance, Plan, Análisis y Metas), con:
 
 Consolida 003-T054 y T068 y 004-T040, T054 (CLS de Metas) y T079 (spec, FR-050).
 
-**Tiempo:** 7 rutas × 50 cargas × ~4 s ≈ 23 min: no cabe en un tramo. Se reparte en dos
-tramos (`lab-cls-a`: Inicio Yo, Inicio Nosotros, Actividad y Balance; `lab-cls-b`: Plan,
-Análisis, Metas y la calibración del comparador en Chromium), de ~10–12 min de ejecución
-cada uno. **Si un tramo pasa de 600 s medido, se parte otra vez** (decisión del plan; la
-regla de ~600 s aplica también a lo que se lanza a mano). Ver
-[contracts/ci.md](contracts/ci.md).
+**Tiempo (recalculado en F85-7):**
+
+- **La carga:** 50 cargas por ruta × ~4 s ≈ 200 s de ejecución por ruta.
+- **El arranque:** cada tramo arranca con preparación, Supabase, `npm ci` y build, y
+  Chromium, que suman **~200–250 s** antes de la primera carga (pasos de los runs del
+  #81 al #83).
+- **El límite:** con el límite de ~600 s, **solo cabe una ruta por tramo**, ~400–450 s.
+  La primera versión del plan ponía 200 y 150 cargas en dos tramos: 800 y 600 s de
+  ejecución sin el arranque, y no cabían.
+- **Escenario base:** siete tramos `cls-*`, uno por ruta, más `cls-controls-chromium`
+  para los controles del comparador (~325–375 s).
+- **Si un tramo pasa de 600 s medido, se parte otra vez** (decisión del plan; la regla
+  de ~600 s aplica también a lo que se lanza a mano).
+
+Ver [contracts/ci.md](contracts/ci.md), «Presupuesto por tramo».
 
 ## R7 · LCP, INP, GoalStack con 6 metas y listas largas
 
@@ -366,6 +382,13 @@ nada.
   inserción**: sus triggers rechazan `delete` para cualquier rol (004 research R1).
 - Gastos compartidos, asignaciones, liquidaciones, metas compartidas y solicitudes
   mezclan a las dos personas.
+- **Hay un ciclo de claves foráneas no diferibles** (F85-1):
+  `goal_ledger_entries.confirmation_id` ↔ `goal_usage_confirmations.usage_entry_id`,
+  cerrado por cada solicitud aprobada. Hay también una autorreferencia no diferible,
+  `voids_entry_id`. El ciclo se rompe anulando `confirmation_id`, porque el otro lado no
+  admite `NULL` en una solicitud aprobada.
+- **El borrado de Auth no puede ser atómico con el de datos** (F85-2): va en fases con
+  estado y recuperación idempotente.
 
 Por eso el alcance con pareja no se podía elegir en el plan: fue **D2**, y los fundadores
 eligieron la opción (a) el 18 de noviembre de 2026. Sin pareja, se borra todo lo de la
