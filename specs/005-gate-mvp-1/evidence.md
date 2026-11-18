@@ -120,7 +120,8 @@ Las filas que la spec agrupa con estados distintos se separan (002-T086, 002-T10
 | 004-T079 · CLS con esqueleto de Análisis | necesita ejecución | Gestor · T023 (paso 1), T073 (paso 4) | 004 evidence §T083: pendiente |
 | 004-T080 · gate del PR E | salida real (sin registrar) | Gestor · T103 (paso 8, registrarla) | Run 43045655895 sobre `383d23b` (head del PR #71): `app` y `e2e` en verde, `db` cancelado. Run 43061973171 completo sobre `main` `e771330`: los cuatro jobs en verde. El presupuesto de un solo job lo sustituye la partición del PR #83 (contradicción 11). El merge sin `db` no tiene registro en el repositorio (ver §3) |
 | 004-T082 · barrido de cierre de P0-3 y cinco specs | salida real (sin registrar) | Gestor · T103 (paso 8, registrarla); FR-040 lo repite en T072 (paso 4) | Barrido 43050756971 (`workflow_dispatch` sobre `main` `ac520b9`, success) y run completo 43061973171 (`e771330`, success) |
-| 004-T041, T056, T069, T081 · revisiones visuales | necesita ejecución | Los dos · T006 (paso 0b) y T082 (paso 6, FR-033); registro en T103 | 004 evidence §T083: «Pendiente de los fundadores». La aprobación de T069 y T081 (11 nov 2026) solo consta en notas del gestor fuera del repositorio. T041 y T056 no tienen ningún registro |
+| 004-T041, T056 · revisiones visuales | necesita ejecución (falta el registro) | Los dos · T006 (paso 0b) y T082 (paso 6, FR-033); registro en T103 | 004 evidence §T083: «Pendiente de los fundadores». Se cierran en la revisión de S1–S5 |
+| 004-T069, T081 · revisiones visuales | salida real: aprobación de los fundadores del 11 nov 2026 registrada por el gestor | Nadie: hecha; T103 la pasa a la evidencia de la 004 | T069 aprobado con las dos desviaciones (la ficha «Cómo se pagó» y las metas logradas en B1); T081 aprobado (Análisis y PlanningNote) |
 | 004-T084 · salida interna de P0-3 | necesita ejecución | Los dos · T002 (paso 0) | 004 evidence §T083: pendiente. `docs/audits/2026-11-t084/` es la simulación y no cuenta (FR-001) |
 | 004-T085 · PR documental de cierre de P0-3 | necesita ejecución | Gestor · T003 (paso 0) | Sin PR. Depende de T002 y de T042 (N1) |
 | Decisión 21.2 · barrido «antes de MVP-1» | necesita ejecución | Gestor · T051 (paso 2), T072 (paso 4) | FR-040 |
@@ -200,12 +201,12 @@ Las filas que la spec agrupa con estados distintos se separan (002-T086, 002-T10
 | T066 | Capturas del PR D e Impeccable | salida real | Nadie: hecha | 004 evidence §T066 |
 | T067 | INP de Anotar con meta | necesita ejecución | Gestor · T025 (paso 1), T073 (paso 4) | Pendiente |
 | T068 | Barrido @sweep del PR D | salida real | Nadie: hecha | Run 42951372008 (el fallido 42939346411 y su arreglo, en 004 evidence); gate 42958244114 |
-| T069 | Aprobar FundingLedger, ConfirmationBadge, B3 y copy | necesita ejecución (falta el registro) | Los dos confirman · T082 (paso 6); registro en T103 | Aprobada el 11 nov 2026 según notas del gestor fuera del repositorio; no consta en el repositorio |
+| T069 | Aprobar FundingLedger, ConfirmationBadge, B3 y copy | salida real: aprobación de los fundadores del 11 nov 2026 registrada por el gestor | Nadie: hecha; registro en T103 | Aprobado con las dos desviaciones (la ficha «Cómo se pagó» y las metas logradas en B1) |
 | T070–T077, T072a (9) | Análisis, PlanningNote, accesos, exportación, spec 5 ampliada | salida real | Nadie: hecha | PR #71 (merge `ac520b9`); 004 evidence §PR E (T076 en §T076) |
 | T078 | Capturas del PR E e Impeccable | salida real | Nadie: hecha | 004 evidence §T078 |
 | T079 | CLS = 0 con esqueleto de Análisis | necesita ejecución | Gestor · T023 (paso 1), T073 (paso 4) | Pendiente |
 | T080 | Gate del PR E | salida real (sin registrar) | Gestor · T103 (registro) | Runs 43045655895 (`app` y `e2e` en verde; `db` cancelado) y 43061973171 (completo sobre `main`, en verde) |
-| T081 | Aprobar Análisis y PlanningNote | necesita ejecución (falta el registro) | Los dos confirman · T082; registro en T103 | Igual que T069 |
+| T081 | Aprobar Análisis y PlanningNote | salida real: aprobación de los fundadores del 11 nov 2026 registrada por el gestor | Nadie: hecha; registro en T103 | Aprobado (Análisis y PlanningNote) |
 | T082 | Barrido de cierre de P0-3 y cinco specs | salida real (sin registrar) | Gestor · T103 (registro) | Runs 43050756971 y 43061973171 |
 | T083 | Cerrar la tabla de `[V]` | necesita ejecución | Gestor · T103 (paso 8) | La tabla existe (004 evidence §T083), con filas pendientes. Se cierran con T023, T025 y T026 → T073; con T082 (revisión visual) y con T002 (salida interna) |
 | T084 | Salida interna de P0-3 | necesita ejecución | Los dos · T002 (paso 0) | Pendiente; la simulación no cuenta |
@@ -231,15 +232,15 @@ Ninguno es un defecto de producto, así que ninguno va al PR B. Todos van a T011
 
 | Tabla | Salida real | Necesita ejecución | EXCEPCIÓN APROBADA | No aplica | Filas |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Inventario de la spec (§1) | 2 | 25 | 4 | 1 | 32 |
+| Inventario de la spec (§1) | 3 | 25 | 4 | 1 | 33 |
 | 001 (41 tareas, 42 filas) | 38 | 2 | 2 | 0 | 42 |
 | 002 (12 tareas, 13 filas) | 1 | 11 | 1 | 0 | 13 |
 | 003 (5 tareas) | 0 | 5 | 0 | 0 | 5 |
-| 004 (89 tareas) | 78 | 11 | 0 | 0 | 89 |
-| **Tareas 001–004** | **117** | **29** | **3** | **0** | **149 filas / 147 tareas** |
+| 004 (89 tareas) | 80 | 9 | 0 | 0 | 89 |
+| **Tareas 001–004** | **119** | **27** | **3** | **0** | **149 filas / 147 tareas** |
 
 Sin tarea en 005: 7 puntos, todos para T011 y ninguno para el PR B.
-Registros pendientes en `evidence.md` (T103): 004-T080 y 004-T082 (runs sin registrar) y las aprobaciones de 004-T069 y T081.
+Registros pendientes en `evidence.md` (T103): 004-T080 y 004-T082 (runs sin registrar) y las aprobaciones de 004-T069 y T081 (11 nov 2026, registradas por el gestor el 18 nov 2026).
 
 ## PR A
 
