@@ -94,11 +94,22 @@ describe("comparador de CLS por fotogramas (§4)", () => {
   // (research R5: «el comparador mide la carga completa»); sin ventana verificable, inconcluso, nunca verde.
   it("sin esqueleto, la ventana va del primer fotograma útil al final: un bloque que baja 20 px se detecta", () => {
     const quiet = compareLoad({ frames: [frame(0, [], { main: false }), frame(16, [MAIN, LIST]), frame(32, [MAIN, LIST])] });
-    expect(quiet).toMatchObject({ ventana: { desde: 1, hasta: 1 }, desplazamientos: [] });
+    expect(quiet).toMatchObject({ ventana: { desde: 1, hasta: 2 }, desplazamientos: [] });
     expect(quiet.incompleta).toBeUndefined();
     const shifted = compareLoad({ frames: [frame(0, [MAIN, LIST]), frame(16, [MAIN, [2, "normal", 0, 220, 390, 300]]), frame(32, [MAIN, [2, "normal", 0, 220, 390, 300]])] });
     expect(shifted.desplazamientos).toEqual([expect.objectContaining({ id: 2, desde: 0, hasta: 1, dy: 20 })]);
     expect(summarize([shifted])[0].clsCeroPorFotogramas).toBe(false);
+  });
+
+  // Revisión del PR #87, F87-9: sin esqueleto, la ventana no se cierra en el primer par igual. Bloque en 0, 0, 20, 20 px.
+  it("sin esqueleto, un desplazamiento después del primer par de fotogramas iguales también se detecta (0, 0, 20, 20 px)", () => {
+    const at = (y: number): Box => [2, "normal", 0, 200 + y, 390, 300];
+    const result = compareLoad({ frames: [frame(0, [MAIN, at(0)]), frame(16, [MAIN, at(0)]), frame(32, [MAIN, at(20)]), frame(48, [MAIN, at(20)])] });
+    expect(result.ventana).toEqual({ desde: 0, hasta: 3 });
+    expect(result.desplazamientos).toEqual([expect.objectContaining({ id: 2, desde: 1, hasta: 2, dy: 20 })]);
+    expect(summarize([result])[0].clsCeroPorFotogramas).toBe(false);
+    // Una secuencia sin esqueleto que no termina quieta es inconclusa.
+    expect(compareLoad({ frames: [frame(0, [MAIN, at(0)]), frame(16, [MAIN, at(20)])] })).toMatchObject({ ventana: null, incompleta: true });
   });
 
   it("sin ventana verificable la carga es inconclusa y la ruta nunca sale verde", () => {

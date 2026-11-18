@@ -22,6 +22,14 @@ export function windowOf(frames) {
   const skeleton = frames.findIndex((frame) => frame.skeleton);
   const from = skeleton >= 0 ? skeleton : frames.findIndex((frame) => frame.main && frame.boxes.length > 0);
   if (from < 0) return { window: null, incomplete: true };
+  // F87-9: sin esqueleto, la ventana llega hasta el ÚLTIMO fotograma grabado (la estabilización final que espera el
+  // grabador), no al primer par de fotogramas iguales: un desplazamiento posterior también cuenta. Hace falta que la
+  // secuencia termine quieta (dos últimos fotogramas iguales); si no, la carga es inconclusa.
+  if (skeleton < 0) {
+    const last = frames.length - 1, end = frames[last], before = frames[last - 1];
+    if (last <= from || !end.main || !sameBoxes(before, end)) return { window: null, incomplete: true };
+    return { window: { desde: from, hasta: last }, incomplete: false };
+  }
   for (let i = from; i < frames.length - 1; i++) {
     const frame = frames[i], next = frames[i + 1];
     // Final: sin esqueleto, con el `main` de la ruta y dos fotogramas seguidos sin cambios de caja.
