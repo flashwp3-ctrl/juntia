@@ -32,10 +32,47 @@ Llenan T004–T011 (interpretación I9: entran en el siguiente PR del slice que 
 
 ## Cobertura de dinero y privacidad (FR-011, I5)
 
-Llena T017; la cierra T103.
+Llena T017; la cierra T103. Parte de la tabla de la spec («Cobertura de dinero y privacidad») y actualiza las filas que
+el PR A cubre. Ninguna prueba se duplica en otra capa: US-08 está en dominio y en integración porque cada capa detecta un
+fallo distinto (la aritmética y la agregación de la vista; Anexo A de [tasks.md](tasks.md)).
 
-| Historia o punto | Prueba (archivo · caso) | Capa | Job |
-| --- | --- | --- | --- |
+| Historia | Cubierta por | Estado |
+| --- | --- | --- |
+| US-01 Gasto privado sin presupuesto | 11a, money SC-007, budgets.test (null ≠ 0), dataset de octubre | — |
+| US-02 Cena en pareja | balances.test, 11_shared_money, E2E 3 | — |
+| US-03 70/30 | allocations.test | — |
+| US-04 Presupuesto activo y desactivado | planningScenarios.us04, plan.test, 12_budgets, E2E 5 | — |
+| US-05 Privacidad RLS | 06, 08, 11a, 13a, controlled-tables, money SC-007, casos de privacidad de las E2E | — |
+| US-06 Auditoría | 05, 08, 11 (anulación de liquidaciones), money | — |
+| US-07 Presupuesto sugerido | — | **No aplica**: fuera de MVP-1 («No bloquea MVP-1», §4) |
+| US-08 Sin doble conteo | 11a, dataset de octubre; **dominio** `src/domain/allocations/allocations.test.ts` «US-08 literal: 400.000 al 50/50 → 400.000 del grupo, 200.000 a cada persona, nunca 800.000»; **integración** `tests/integration/money-us08.test.ts` «US-08 literal en la vista: …» (`couple_month_summary` y `couple_balance` en una sentencia) | Cerrado por el PR A (T013, T014) |
+| US-09 Liquidez | componentes (analysis, goal-funding, goals) | — |
+| US-10 Corrección tras liquidar | balances.test, concurrency | — |
+| US-11 Miembros salientes | `supabase/tests/01_privileges` (lista exacta de funciones, sin salida ni expulsión); couple.test (LimitNote) | Se cita, sin prueba nueva (T016) |
+| US-12 Captura rápida | E2E 2 (tiempo de laboratorio y doble toque) | Falta la mediana en teléfono real → FR-055 (T093) |
+| US-13 Presupuesto ausente | componentes de plan y presupuestos, E2E 5; **componentes** «US-13 · … no exige presupuesto (005 T016)» en `src/features/auth/sign-up-form.test.tsx`, `src/features/expenses/annotate-sheet.test.tsx`, `src/features/home/home.test.tsx` y `src/features/couple/couple.test.tsx` | Cerrado por el PR A (T016) |
+| US-14 Transición de contexto | casos de cookie, HTML, RSC y prefetch en las E2E 1, 3, 4 y 5 | — |
+| US-15 Escritorio | comprobaciones a 1440 del barrido | Juicio humano → FR-030, FR-080 |
+| US-16 Shared Balance | componentes (settle, shared-balance) | Juicio humano → FR-030 |
+| US-17 Movimiento reducido | routes.a11y, casos @serial de las E2E 2 y 3 | Más la revisión humana → FR-031 |
+| US-18 Meta individual | planningScenarios.us18, metrics, 13a | — |
+| US-19 Meta compartida | planningScenarios.us19, E2E 4, 13_goals | — |
+| US-20 Gasto con meta | goals (integración), metrics, 13_goals | — |
+| US-21 Reserva frente a transferencia | goals.test (`transferred_declared`); **componentes** `src/features/goals/goals.test.tsx` «US-21 · modo del aporte, tal cual y nunca verificado (005 T015)» | Cerrado por el PR A (T015) |
+| US-22 Privacidad de metas | 13_goals, 13a, 13b, metrics, E2E 4 | — |
+| US-23 Retiro y anulación seguros | 13_goals, goal-races, goals (integración) | — |
+
+| Punto de §15.6.3 | Cubierto por |
+| --- | --- |
+| 1. Atomicidad de Mover a Pareja | 11_shared_money, concurrency, E2E 3 |
+| 2. Idempotencia | 08, 10, 11, 12, 13; money, shared-money, goals |
+| 3. `goal_usage_confirmations` | 13_goals, goals, goal-races |
+| 4. RLS de metas | 13a, 13b, metrics, E2E 4 |
+| 5. Registro inicial del gasto con meta | 13_goals, goals |
+| 6. Autorización posterior de fondos ajenos | 13_goals, goals, goal-races, E2E 4 |
+| 7. Ediciones concurrentes de presupuesto | 12_budgets, budgets (integración), E2E 5 |
+
+**Borrado de cuenta (FR-067, D2):** `tests/integration/account-deletion.test.ts`, once casos del contrato §6 (T039).
 
 ## Inventario heredado (FR-002, FR-003)
 
