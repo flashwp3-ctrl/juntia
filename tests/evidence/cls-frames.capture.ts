@@ -135,6 +135,14 @@ const count = (n = 10) => LOADS ?? n;
 /** Los controles con esqueleto corren en Inicio · Nosotros: su retención (settlements) deja el esqueleto ~1,5 s. */
 const CONTROL_ROUTE: SessionRoute = "inicio-nosotros";
 const width = (i: number) => (i % 2 ? 1440 : 390);
+/**
+ * Controles negativos 4 a 6: se cuentan solo los desplazamientos de los bloques del propio control (su ruta nombra la clase
+ * `cls-control-N`). Decisión del gestor del 18 nov 2026, tras el punto de control (run 44349192421): en Firefox a 390,
+ * nodos de la app se desplazan 10 px en x en el primer par de fotogramas, en las siete rutas y también en estos controles,
+ * mientras el bloque del control no se movía; eso es un hallazgo de la ruta (PR B), no del método. Los demás desplazamientos
+ * se siguen registrando en la línea de la carga.
+ */
+const ownShifts = (result: { desplazamientos: { ruta: string | null }[] }) => result.desplazamientos.filter((shift) => /cls-control-/.test(shift.ruta ?? "")).length;
 /** La ruta del nodo (`etiqueta.clase>…`) termina en el propio `main`. */
 const IS_MAIN = /(^|>)main(\.[^>]*)?$/;
 
@@ -187,7 +195,7 @@ if (SET === "controls") {
       const page = await sessionLoad(browser, baseURL!, CONTROL_ROUTE, "light", width(i), init);
       const cls = browserName === "chromium" ? await page.evaluate(() => (window as unknown as { __cls: number }).__cls) : null;
       const result = await measured(page, { control: `4 · ${variant}`, ruta: CONTROL_ROUTE, motor: engine(browser), tema: "claro", ancho: width(i), carga: i + 1, clsApi: cls });
-      if (result.desplazamientos.length === 0) ok++;
+      if (ownShifts(result) === 0) ok++;
       if (cls === 0) api++;
     }
     controlRows.push({ control: "4 · transformación", motor: engine(browser), cumple: ok, cargas: count() });
@@ -207,7 +215,7 @@ if (SET === "controls") {
         return { id, positions: positions.size };
       });
       const result = await measured(page, { control: 5, ruta: CONTROL_ROUTE, motor: engine(browser), tema: "claro", ancho: width(i), carga: i + 1, bloque: own });
-      if (result.desplazamientos.length === 0 && own.id !== null && own.positions === 1) ok++;
+      if (ownShifts(result) === 0 && own.id !== null && own.positions === 1) ok++;
     }
     controlRows.push({ control: "5 · transición CSS en curso", motor: engine(browser), cumple: ok, cargas: count() });
   });
@@ -218,7 +226,7 @@ if (SET === "controls") {
     for (let i = 0; i < count(); i++) {
       const page = await sessionLoad(browser, baseURL!, CONTROL_ROUTE, "light", width(i), [CONTROLS.scroll]);
       const result = await measured(page, { control: 6, ruta: CONTROL_ROUTE, motor: engine(browser), tema: "claro", ancho: width(i), carga: i + 1 });
-      if (result.desplazamientos.length === 0) ok++;
+      if (ownShifts(result) === 0) ok++;
     }
     controlRows.push({ control: "6 · scroll con sticky y fixed", motor: engine(browser), cumple: ok, cargas: count() });
   });

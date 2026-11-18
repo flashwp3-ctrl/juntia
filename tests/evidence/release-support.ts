@@ -92,7 +92,7 @@ export const RECORDER = readFileSync("scripts/cls-frames/recorder.js", "utf8");
 /** Observador de la API Layout Instability (Chromium): CLS sin redondear y las fuentes de cada desplazamiento. */
 export const CLS_OBSERVER = `(() => { const w = window; w.__cls = 0; w.__shifts = [];
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (!e.hadRecentInput) { w.__cls += e.value;
-    w.__shifts.push({ value: e.value, sources: (e.sources || []).map((s) => ({ node: s.node ? s.node.nodeName : null, from: [s.previousRect.x, s.previousRect.y], to: [s.currentRect.x, s.currentRect.y] })) }); } } })
+    w.__shifts.push({ value: e.value, t: e.startTime, sources: (e.sources || []).map((s) => ({ node: s.node ? s.node.nodeName : null, from: [s.previousRect.x, s.previousRect.y], to: [s.currentRect.x, s.currentRect.y] })) }); } } })
     .observe({ type: "layout-shift", buffered: true }); } catch { w.__cls = null; } })();`;
 
 type Frames = Parameters<typeof compareLoad>[0];

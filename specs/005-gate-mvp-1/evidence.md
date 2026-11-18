@@ -300,6 +300,11 @@ Capturas con datos sembrados, a 390 px.
 | Detalle de Actividad bajo la hoja «Editar gasto» con texto al 200 %. En la hoja, además, el título queda bajo el botón de cerrar y «Entretenimiento» se parte | documento 402/390 px; la hoja 390/390 | [evidence/hallazgo-texto-200-detalle-edicion-390.png](evidence/hallazgo-texto-200-detalle-edicion-390.png) | PR B (FR-042) |
 | Detalle de Actividad bajo «¿Eliminar este gasto?» con texto al 200 % | documento 402/390 px; el diálogo 326/326 | [evidence/hallazgo-texto-200-detalle-eliminar-390.png](evidence/hallazgo-texto-200-detalle-eliminar-390.png) | PR B (FR-042) |
 | Inicio · Yo con la raíz al 200 % a 1440 (residuo de F13, I3) | documento 1.447/1.440 px | — (caso `@sweep` b) | PR B (T056, T060) |
+| CLS > 0 con la API en las siete rutas de FR-050, sobre todo a 390; causa común: un `DIV` del shell que se desplaza −4 px en x | 25–29 de 50 cargas por ruta; máximo 0,0057 (Balance) | artefactos `release-cls-*` del run 44349192421 (vídeos de las cargas con desplazamiento) | PR B (FR-050) |
+| Firefox a 390: nodos de la app que se desplazan 10 px en x en el primer par de fotogramas, en las siete rutas con sesión (hipótesis: barra de scroll clásica; candidato `scrollbar-gutter: stable`) | 8 de 15 cargas por ruta (todas las de 390) | artefactos `release-firefox-cls-2` y `-3` del run 44349192421 | PR B (FR-051) |
+| INP > 200 ms | privado 390: guardar 256 ms; privado 1440: abrir 248 ms y guardar 264 ms; compartido 1440: abrir 256 ms | artefacto `release-lab-interaction` | PR B (FR-052) |
+| E2E en WebKit (FR-020): 7 fallos en el shard 1 y 4 en el 2. Navegaciones interrumpidas por la redirección del cliente, RSC vacíos, un `toBeFocused`, un `getByText('ACTIVA')` con dos coincidencias | 11 fallos | logs de `release (webkit-e2e-1)` y `(webkit-e2e-2)` | Revisión del PR B (R3) |
+| GoalStack no cumple D3 en la primera interacción: primer deslizamiento a 390 (93,5 %, 199,9 ms) y primer hover a 1440 (89,5 %, 66,6 ms) | 2 de 15 animaciones | artefacto `release-lab-interaction` | Fundadores (decisión 22.2), vía el gestor |
 | A vigilar en el gate: «rectángulos distintos del aviso» de Anotar, intermitente en `juntia-dev`. Falló en «Inicio con datos extremos · dark», «Actividad con datos extremos» (claro y oscuro) y en el estado anterior al PR «Actividad con datos · dark»; todos pasan al repetir | 2 rectángulos en 10 cuadros | — | Gate del PR A (T050) |
 
 ## Barrido (`@sweep`)
@@ -358,9 +363,9 @@ Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cad
 
 | Motor y versión | Método | 1 | 2 (1 px) | 2 (0,5 px, solo se registra) | 3 | 4 | 4: API = 0 | 5 | 6 | 7 | ¿Fiable? | Run |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| chromium 156.0.8078.4 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | discrepancias: analisis 11, balance 1, inicio-nosotros 2, metas 3, plan 4 (ver abajo) | **pendiente**: controles 1–6 cumplen; el control 7 tiene ≥ 2 discrepancias sin explicar en varias rutas | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| chromium 156.0.8078.4 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | discrepancias: analisis 11, balance 1, inicio-nosotros 2, metas 3, plan 4 (ver abajo) | **pendiente**: controles 1–6 cumplen; el control 7 se explica con el parcial de los tramos `cls-*` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | webkit 27.2 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | — | 10 de 10 | 10 de 10 | no aplica (sin API) | **sí** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| firefox 157.0 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 5 de 10 | — | 5 de 10 | 10 de 10 | no aplica (sin API) | **no** con la lectura actual: 4 y 5 dan 5 de 10 (ver abajo) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| firefox 157.0 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 5 de 10 | — | 5 de 10 | 10 de 10 | no aplica (sin API) | **sí**, tras recalibrar 4–6 midiendo solo el bloque del control (decisión del gestor); se confirma con un parcial de `firefox-cls-1` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 | Ruta | Motor | Cargas | Con desplazamientos | CLS = 0 por fotogramas | Run |
 | --- | --- | ---: | ---: | --- | --- |
@@ -459,25 +464,37 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
   fotogramas, que coincide con el fotograma en que actúa el control. Es el mismo desplazamiento de 10 px que aparece en
   Firefox a 390 en las siete rutas con sesión (8 de 15 cargas cada una, las de 390), junto a otro de 1 px de una etiqueta de
   la barra inferior. Por eso no es el caso de T047 («`offsetTop` no coherente con su layout en los controles 4 a 6»).
-  Queda por saber si es un desplazamiento real de la app en Firefox (hallazgo para el PR B) o algo del entorno, como la barra
-  de scroll al aparecer. Pendiente de decisión.
+  **Decisión del gestor (18 nov 2026):** el método es fiable en Firefox; los controles 4 a 6 se recalibran midiendo solo el
+  bloque del control (`cls-frames.capture.ts`, `ownShifts`), sin T047 ni T048. El desplazamiento de 10 px es un hallazgo de
+  producto en Firefox para el PR B. Hipótesis del gestor para que el PR B la compruebe primero: la barra de scroll clásica
+  de Firefox, que aparece cuando el contenido pasa del alto de la ventana; candidato, `scrollbar-gutter: stable` en `html`.
+  Se confirma con un parcial de `firefox-cls-1`.
 - **Chromium 156: control 7 con discrepancias.** Análisis 11, Plan 4, Metas 3, Inicio · Nosotros 2, Balance 1; Actividad e
   Inicio · Yo, 0. Casi todas son «API > 0 y fotogramas = 0» (Análisis 9 de 11; Plan y Metas, todas): la API ve CLS que el
   comparador no ve dentro de su ventana. El artefacto no guarda cuándo ocurre cada desplazamiento de la API, así que hoy no
   se puede saber si cae fuera de la ventana (antes del esqueleto o después del primer fotograma final) o si el comparador no
-  lo ve. Por contrato, con dos o más sin explicar, el método no es fiable en Chromium. Pendiente de decisión.
+  lo ve. Por contrato, con dos o más sin explicar, el método no es fiable en Chromium. **Decisión del gestor (18 nov 2026):**
+  el arnés registra el instante de cada desplazamiento de la API (`startTime`) frente a la ventana del comparador
+  (`antes`, `dentro`, `después`, con un fotograma de margen) y calcula también la concordancia dentro de la ventana
+  (`concordanciaEnVentana`). Se relanzan solo los tramos `cls-*` para explicar las discrepancias.
 - **Producto, FR-050: CLS > 0 con la API en las siete rutas**, sobre todo a 390 (entre 25 y 29 de 50 cargas por ruta;
-  máximo 0,0057 en Balance). Las fuentes más frecuentes en los fotogramas: una etiqueta de la barra inferior fija que se
-  mueve 1 px en x y nodos que se mueven 4 px en x y luego salen del DOM. Hallazgo para el PR B.
+  máximo 0,0057 en Balance). **La causa principal es común a las siete rutas:** según la API, un `DIV` se desplaza −4 px en x
+  con el mismo valor (7,5·10⁻⁵) en 23 a 25 de las cargas a 390 de cada ruta (en Inicio · Yo, es la única fuente). Es una
+  pieza del shell con CPU 6× y red lenta, no siete CLS distintos. En los fotogramas aparecen además una etiqueta de la barra
+  inferior que se mueve 1 px en x y nodos que salen del DOM. Encima de esa causa común, cada ruta tiene sus fuentes propias:
+  Análisis y Plan, un `SPAN` −19 px; Balance, filas `TR` 39 px hacia abajo (0,0057); Metas, un `SPAN` −20 px. Hallazgo
+  para el PR B. No es un fallo del arnés: el control 4 de Chromium da CLS = 0 con la API en las mismas condiciones del
+  comparador, y el grabador no escribe en la página.
 - **WebKit E2E (FR-020): 7 fallos en el shard 1 y 4 en el 2.** Navegaciones de `page.goto` interrumpidas por la
   redirección del cliente (`/entrar?volver=…`, `/crear-cuenta?volver=…`); capturas de RSC vacías («RSC del cambio», «RSC en
   Nosotros»); un `toBeFocused`; y un `getByText('ACTIVA')` con dos coincidencias. Según research R3, un fallo solo de WebKit
   se documenta con su salida y lo decide la revisión del PR B, sea de la prueba o del producto; no se marca superado.
 - **INP (FR-052): por encima de 200 ms** en privado (390: guardar 256 ms; 1440: abrir 248 ms y guardar 264 ms) y en
   compartido a 1440 (abrir 256 ms). Hallazgo para el PR B.
-- **GoalStack (D3): dos animaciones no cumplen.** El primer deslizamiento a 390 (93,5 %, un fotograma de 199,9 ms) y el
-  primer hover a 1440 (89,5 %, 66,6 ms). Las demás cumplen. Según D3, la pantalla cae a la lista y vuelve a los fundadores
-  (T055, decisión 22.2).
+- **GoalStack (D3): dos animaciones no cumplen**, las dos la **primera** interacción: el primer deslizamiento a 390
+  (93,5 %, un fotograma de 199,9 ms) y el primer hover a 1440 (89,5 %, 66,6 ms). Las demás cumplen. El gestor lo lleva a
+  los fundadores (decisión 22.2); que falle solo la primera sugiere un arranque en frío que quizá se pueda arreglar antes de
+  cambiar la pantalla.
 - **LCP y listas largas: cumplen.** LCP con medianas de 242 a 944 ms, todas ≤ 2,5 s. En las 12 vistas de listas largas,
   ningún solape ni scroll horizontal.
 - **Tramos de más de 600 s (T046):** `cls-actividad`, `cls-inicio-yo`, `webkit-cls-2`, `webkit-cls-3` y `firefox-cls-2`.
@@ -486,6 +503,10 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
   Nosotros; Actividad, Balance y Plan | Análisis y Metas). `firefox-cls-2` también, y `firefox-cls-3` (596 s) por simetría
   con WebKit, porque sus conjuntos son los mismos. Ninguna carga se quita. Pasan de 17 a 23 tramos. Los tramos nuevos se miden
   en el paso 2 (T052, I6).
+  **Minutos:** el run 44349192421 facturó 176 minutos (todos sus jobs). Con 23 tramos y las duraciones medidas, un
+  lanzamiento completo se proyecta en unos 204 minutos (cada tramo partido paga su arranque dos veces). Riesgo: cada mitad
+  de `cls-inicio-yo` se proyecta en unos 640 s, porque el arranque (~270 s) no se parte y sus cargas son lentas (~15 s
+  cada una, frente a ~4 s en las demás rutas). Lo mide el parcial siguiente; si pasa de 600 s, se vuelve a partir.
 
 ## Tabla de CWV (FR-056)
 

@@ -31,7 +31,7 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
   const half = (list: typeof plan, which: string) => list.filter((_, i) => (i < list.length / 2) === (which === "1"));
   const light = plan.slice(0, LIGHT), dark = plan.slice(LIGHT);
   const chosen = new Set(part ? [...half(light, part), ...half(dark, part)] : plan);
-  const tally = { cargas: 0, apiMayorQueCero: 0, porFotogramas: 0, coinciden: 0, discrepancias: 0, sinVentana: 0 };
+  const tally = { cargas: 0, apiMayorQueCero: 0, porFotogramas: 0, coinciden: 0, discrepancias: 0, sinVentana: 0, coincidenEnVentana: 0, discrepanciasEnVentana: 0 };
   for (const [index, load] of plan.entries()) {
     if (!chosen.has(load)) continue;
     const { theme, width } = load;
@@ -47,8 +47,16 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     await expect(page.locator("main").first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator("[data-skeleton]")).toHaveCount(0, { timeout: 60_000 });
     const meta = { ruta: ROUTE, motor, tema: themeLabel(theme), ancho: width, carga: index + 1 };
-    const { result } = await readFrames(page, meta);
-    const api = await page.evaluate(() => { const w = window as unknown as { __cls: number; __shifts: unknown[] }; return { cls: w.__cls, shifts: w.__shifts }; });
+    const { result, frames: recorded } = await readFrames(page, meta);
+    const api = await page.evaluate(() => { const w = window as unknown as { __cls: number; __shifts: { value: number; t: number }[] }; return { cls: w.__cls, shifts: w.__shifts }; });
+    // Control 7, decisión del gestor del 18 nov 2026 (run 44349192421): el instante de cada desplazamiento de la API frente a
+    // la ventana del comparador (del primer fotograma con esqueleto al primer final), con un fotograma de margen. Mismo reloj:
+    // `startTime` de la API y el `t` de requestAnimationFrame del grabador son de `performance.now()`.
+    const FRAME = 17;
+    const span = result.ventana ? { desde: recorded.frames[result.ventana.desde].t, hasta: recorded.frames[result.ventana.hasta].t } : null;
+    const moment = (t: number) => (!span ? "sin ventana" : t < span.desde - FRAME ? "antes" : t > span.hasta + FRAME ? "después" : "dentro");
+    const timed = api.shifts.map((shift) => ({ ...shift, momento: moment(shift.t) }));
+    const inWindow = timed.filter((shift) => shift.momento === "dentro").reduce((sum, shift) => sum + shift.value, 0);
     const video = page.video();
     await context.close();
     const path = video ? await video.path().catch(() => null) : null;
@@ -56,12 +64,15 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     // Control 7: una carga tiene desplazamientos por fotogramas si y solo si la API da CLS > 0. Sin ventana (el esqueleto
     // no llegó a pintarse) el comparador no dice nada: se cuenta aparte, no como acuerdo.
     const agree = result.ventana ? frames === api.cls > 0 : null;
+    // La misma concordancia con solo la parte de la API que cae dentro de la ventana (lo que el comparador compara).
+    const agreeInWindow = result.ventana ? frames === inWindow > 0 : null;
+    if (agreeInWindow === true) tally.coincidenEnVentana++; else if (agreeInWindow === false) tally.discrepanciasEnVentana++;
     tally.cargas++; if (api.cls > 0) tally.apiMayorQueCero++; if (frames) tally.porFotogramas++;
     if (agree === true) tally.coinciden++; else if (agree === false) tally.discrepancias++; else tally.sinVentana++;
     // Vídeo solo de las cargas con desplazamiento o discrepancia, para la revisión humana; no entra al repositorio.
     const keepVideo = frames || api.cls > 0 || agree === false;
     if (path && !keepVideo) rmSync(path, { force: true });
-    await record("release-cls.jsonl", { ...meta, rotulo: "laboratorio · API Layout Instability", cpu: "6×", red: NETWORK, cls: api.cls, fuentes: api.shifts, porFotogramas: result.desplazamientos.length, ventana: result.ventana, concordancia: agree, video: keepVideo ? path : null });
+    await record("release-cls.jsonl", { ...meta, rotulo: "laboratorio · API Layout Instability", cpu: "6×", red: NETWORK, cls: api.cls, clsEnVentana: inWindow, ventanaMs: span, fuentes: timed, porFotogramas: result.desplazamientos.length, ventana: result.ventana, concordancia: agree, concordanciaEnVentana: agreeInWindow, video: keepVideo ? path : null });
     await record("cls-frames.jsonl", { ...result, control: 7, clsApi: api.cls });
     expect.soft(api.cls, `${ROUTE} ${themeLabel(theme)} ${width} carga ${index + 1}`).toBe(0);
   }
