@@ -11,12 +11,13 @@ export const metadata = { title: copy.shell.brand };
 // cualquier diferencia de ancho mueve el inicio de la línea al llegar la fuente (CLS > 0). «Onest Fallback» y
 // «Brygada Fallback» (sin «1918»: next/font no entrecomilla el respaldo y un nombre con un token que empieza por cifra
 // invalida todo el font-family) se definen en globals.css con un size-adjust por peso. font-display sigue siendo swap.
-const serif = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "normal", variable: "--font-brygada", adjustFontFallback: false, fallback: ["Brygada Fallback"] });
+const serif = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "normal", variable: "--font-brygada", adjustFontFallback: false, fallback: ["Brygada Fallback", "Brygada Fallback Times"] });
 // La itálica es la misma familia («Brygada 1918»), en una llamada aparte para no precargarla: ninguna pantalla de la 001 la
 // usa y su archivo (24 KB) competiría con el de los titulares en la carga lenta. Se descarga solo si algún texto la pide.
-const serifItalic = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "italic", preload: false, variable: "--font-brygada-italic", adjustFontFallback: false, fallback: ["Brygada Fallback"] });
+const serifItalic = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "italic", preload: false, variable: "--font-brygada-italic", adjustFontFallback: false, fallback: ["Brygada Fallback", "Brygada Fallback Times"] });
 const sans = Onest({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-onest", adjustFontFallback: false, fallback: ["Onest Fallback"] });
-const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: "500", variable: "--font-spline-mono" });
+// Respaldo monoespaciado propio (globals.css, PR B de P0-4): el de next/font era Arial, proporcional y sin nombre de Linux.
+const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: "500", variable: "--font-spline-mono", adjustFontFallback: false, fallback: ["Spline Mono Fallback"] });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
