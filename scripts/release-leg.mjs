@@ -77,8 +77,24 @@ export function legPlan(leg) {
  * @param {string | undefined} requested
  */
 export function legRequested(leg, requested) {
-  const items = (requested ?? "").split(",").map((item) => item.trim()).filter(Boolean);
-  return items.length === 0 || items.some((item) => leg === item || leg.startsWith(item));
+  return validateLegs(requested).includes(leg);
+}
+
+/**
+ * F87-3 (revisión del PR #87): la selección de \`release_legs\`, validada entera ANTES de la matriz (paso de \`inputs-guard\`).
+ * Vacía (o solo espacios) = todos los tramos. Lanza con un elemento vacío (\`a,,b\`, \`,\`), con un nombre o prefijo que no
+ * coincide con ningún tramo (\`webkit-clss\`) o si la selección no deja ningún tramo. Devuelve los tramos elegidos.
+ * @param {string | undefined} requested
+ * @returns {string[]}
+ */
+export function validateLegs(requested) {
+  const raw = (requested ?? "").trim();
+  if (raw === "") return [...LEGS];
+  const items = raw.split(",").map((item) => item.trim());
+  if (items.some((item) => item === "")) throw new Error(`release_legs tiene un elemento vacío: «${raw}»`);
+  const unknown = items.filter((item) => !LEGS.some((leg) => leg === item || leg.startsWith(item)));
+  if (unknown.length) throw new Error(`release_legs no coincide con ningún tramo: ${unknown.join(", ")}`);
+  return LEGS.filter((leg) => items.some((item) => leg === item || leg.startsWith(item)));
 }
 
 const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
@@ -86,7 +102,17 @@ if (isMain) {
   const [mode, leg] = process.argv.slice(2);
   const output = (line) => { if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${line}\n`); console.log(line); };
   const summary = (line) => { if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${line}\n`); };
-  if (mode === "requested") {
+  if (mode === "validate") {
+    // F87-3: en inputs-guard, antes de la matriz. Un error deja el workflow en rojo y no arranca ningún tramo.
+    try {
+      const legs = validateLegs(process.env.RELEASE_LEGS);
+      console.log(`release_legs válida: ${legs.length} de ${LEGS.length} tramos (${legs.join(", ")})`);
+      summary(`release_legs: ${legs.length} de ${LEGS.length} tramos.`);
+    } catch (error) {
+      console.log(`::error title=release_legs::${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
+    }
+  } else if (mode === "requested") {
     const run = legRequested(leg, process.env.RELEASE_LEGS);
     output(`run=${run}`);
     // Un tramo no pedido termina en segundos y lo dice; nunca se presenta como aprobado.

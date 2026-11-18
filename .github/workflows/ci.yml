@@ -74,6 +74,18 @@ jobs:
         run: |
           if [ "$INVALID" = "true" ]; then echo "::error title=Entradas::release_lab no se combina con otras entradas (capture_evidence, a11y_sweep, measure_workers)"; exit 1; fi
           echo "Entradas válidas"
+      # F87-3 (revisión del PR #87): con release_lab, la selección de release_legs se valida entera antes de la matriz. Un
+      # elemento vacío o un nombre que no coincide con ningún tramo deja el run en rojo, en vez de 25 tramos «no pedido».
+      - uses: actions/checkout@v7
+        if: github.event_name == 'workflow_dispatch' && inputs.release_lab
+        with:
+          sparse-checkout: scripts/release-leg.mjs
+          sparse-checkout-cone-mode: false
+      - name: Validate release_legs
+        if: github.event_name == 'workflow_dispatch' && inputs.release_lab
+        env:
+          RELEASE_LEGS: ${{ inputs.release_legs }}
+        run: node scripts/release-leg.mjs validate
 
   app:
     # Un borrador no corre (se lanza a mano con «Run workflow»); un lanzamiento manual sí.

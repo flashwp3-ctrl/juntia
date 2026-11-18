@@ -5,10 +5,11 @@
 // como texto (el repositorio no tiene un parser de YAML propio) y afirma la forma que el gate necesita, para que un cambio
 // del workflow no junte los jobs, no deje un paso de axe en `e2e` ni haga que `a11y-session` arranque Supabase en un PR que
 // solo toca archivos neutros.
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SUPABASE_JOBS } from "../scripts/ci.mjs";
-import { CLS_FRAMES_SETS, LEGS, legPlan } from "../scripts/release-leg.mjs";
+import { CLS_FRAMES_SETS, LEGS, legPlan, legRequested, validateLegs } from "../scripts/release-leg.mjs";
 
 const workflow = readFileSync(".github/workflows/ci.yml", "utf8").replace(/\r\n/g, "\n");
 
@@ -315,5 +316,43 @@ describe("tramos partidos en T046, sin quitar cargas", () => {
     expect([...set("routes-1a"), ...set("routes-1b")]).toEqual(set("routes-1"));
     expect([...set("routes-2a"), ...set("routes-2b")]).toEqual(set("routes-2"));
     for (const engine of ["webkit", "firefox"]) for (const part of ["2a", "2b", "3a", "3b"]) expect(legPlan(`${engine}-cls-${part}`).commands[0].env.CLS_FRAMES_SET).toBe(CLS_FRAMES_SETS[part as keyof typeof CLS_FRAMES_SETS]);
+  });
+});
+
+// Revisión del PR #87, F87-3: «un release_legs mal escrito deja los tramos "no pedido" y el run en verde; release_legs=,
+// corre todo». La selección se valida entera en inputs-guard, antes de la matriz, y un error deja el run en rojo.
+describe("release_legs validada antes de la matriz (F87-3)", () => {
+  it("vacía, todos; nombres y prefijos válidos, sus tramos; vacíos, desconocidos o sin coincidencias, error", () => {
+    expect(validateLegs("")).toEqual([...LEGS]);
+    expect(validateLegs("  ")).toEqual([...LEGS]);
+    expect(validateLegs("cls-metas, webkit-cls")).toEqual(LEGS.filter((leg) => leg === "cls-metas" || leg.startsWith("webkit-cls")));
+    for (const bad of [",", "cls-metas,", ",cls-metas", "cls-metas,,webkit-cls", "webkit-clss", "cls-metas,nada"]) expect(() => validateLegs(bad), bad).toThrow(/release_legs/);
+    expect(legRequested("cls-metas", "cls-metas")).toBe(true);
+    expect(legRequested("cls-plan", "cls-metas")).toBe(false);
+  });
+
+  it("la línea de órdenes del guardia falla con ::error y sale con 1; con una selección válida, 0", () => {
+    const run = (value: string) => spawnSync(process.execPath, ["scripts/release-leg.mjs", "validate"], { encoding: "utf8", env: { ...process.env, RELEASE_LEGS: value, GITHUB_STEP_SUMMARY: "", GITHUB_OUTPUT: "" } });
+    for (const bad of ["webkit-clss", ","]) {
+      const result = run(bad);
+      expect(result.status, bad).toBe(1);
+      expect(result.stdout, bad).toMatch(/::error title=release_legs::/);
+    }
+    expect(run("cls-metas,firefox-cls-1").status).toBe(0);
+  });
+
+  it("inputs-guard valida release_legs solo con release_lab, con su propio paso", () => {
+    const step = steps("inputs-guard").find((item) => item.name === "Validate release_legs");
+    expect(step?.text).toMatch(/node scripts\/release-leg\.mjs validate/);
+    expect(/^ {8}if: (.+)$/m.exec(step!.text)?.[1]).toBe("github.event_name == 'workflow_dispatch' && inputs.release_lab");
+  });
+});
+
+// Revisión del PR #87, F87-6: el modo exploratorio del comparador (CLS_FRAMES_EXPLORE=1) es solo para iterar; ningún tramo
+// de `release`, y por tanto ningún candidato del paso 4, lo activa.
+describe("modo exploratorio del comparador fuera de release (F87-6)", () => {
+  it("ningún tramo fija CLS_FRAMES_EXPLORE y el workflow no lo menciona", () => {
+    for (const leg of LEGS) for (const command of legPlan(leg).commands) expect(command.env, leg).not.toHaveProperty("CLS_FRAMES_EXPLORE");
+    expect(workflow).not.toMatch(/CLS_FRAMES_EXPLORE/);
   });
 });
