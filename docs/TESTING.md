@@ -366,6 +366,32 @@ la matriz completa de las rutas implementadas, por la misma razón.
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
 
+### Laboratorio a mano — job `release` (005, no es del gate)
+
+Lo que necesita CPU emulada, muchas cargas u otro motor no cabe en el gate (spec 005,
+FR-093) y corre en el job `release` de `.github/workflows/ci.yml`
+([specs/005-gate-mvp-1/contracts/ci.md](../specs/005-gate-mvp-1/contracts/ci.md)):
+
+- **Solo a mano**, con «Run workflow» y la entrada `release_lab`. **Nunca corre en un
+  PR** y no forma parte del gate; lo lanza el gestor en el punto de control del PR A
+  de la 005 y sobre el commit candidato.
+- **`release_lab` es exclusiva:** con `capture_evidence`, `a11y_sweep` o
+  `measure_workers`, el job `inputs-guard` falla con un error y no corre nada más.
+  Todos los jobs dependen de `inputs-guard`, que también corre (y pasa sin validar)
+  en cada PR no borrador. `tests/ci-workflow.test.ts` evalúa los `if` y simula los
+  `needs` en las 16 combinaciones de entradas.
+- **`release_legs`** (texto, vacío = todos): nombres o prefijos de tramo separados por
+  comas, para repetir solo los afectados. Un tramo no pedido termina en segundos con
+  «no pedido» en el resumen; nunca cuenta como aprobado.
+- **17 tramos**, cada uno con su Supabase, su build y su navegador
+  (`scripts/release-leg.mjs` dice qué corre cada uno): `cls-inicio-yo`,
+  `cls-inicio-nosotros`, `cls-actividad`, `cls-balance`, `cls-plan`, `cls-analisis`,
+  `cls-metas`, `cls-controls-chromium`, `lab-interaction`, `webkit-e2e-1` y `-2` (las
+  cinco specs en WebKit), `webkit-cls-1` a `-3` y `firefox-cls-1` a `-3` (el
+  comparador de CLS por fotogramas).
+- **Tope de 20 min** por tramo (`timeout-minutes`) y **aviso a 600 s** (§9). Un tramo
+  que mida más de 600 s se parte en dos; nunca se le quitan cargas.
+
 ### Fuera de CI — el gate visual humano
 
 El maestro §10.1 marca **«Visual y motion»** como bloqueante para cada flujo
@@ -716,6 +742,7 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | Job `e2e` (specs E2E y axe con sesión en su nivel ligero; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026, y decisión de los fundadores del 10 nov 2026, abajo) | **< 11 min (660 s)**; hasta el 10 nov 2026, < 8 min (480 s) |
 | Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 12 min (10 min hasta el 10 nov 2026; corre en el job `e2e`) |
 | Nocturno / post-merge | **< 15 min** |
+| Job `release` (laboratorio a mano de la 005, por tramo; no es del gate, §3) | **aviso a 600 s**, nunca bloquea; tope duro del job 20 min |
 
 > **Decisión de los fundadores del 10 de noviembre de 2026:** el tope del job `e2e` sube de 480 s a 660 s. Medición del
 > gate del PR #67 (run 42849936048): 517 s con las specs 1, 2, 3 y 5 (Supabase 139 s, build 89 s, E2E 69 s, axe con sesión
