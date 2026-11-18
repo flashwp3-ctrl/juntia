@@ -13,6 +13,7 @@
 import { act, configure, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
+import { Profiler } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import type { GoalActions, GoalEntryView, GoalMemberView, GoalPerson, GoalView, SavedEntry } from "./types";
@@ -680,6 +681,24 @@ describe("Abanico · hover y foco", () => {
     const { root, layer } = fan();
     fireEvent.pointerEnter(layer(1), { pointerType: "touch" });
     expect(root.hasAttribute("data-fan-active")).toBe(false);
+  });
+
+  // 005 · PR B, corrección 4 (FR-053; D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms con CPU 4×). Laboratorio del run
+  // 44349192421: el PRIMER hover a 1440 dio 89,5 % y un fotograma de 66,6 ms. Hasta aquí el hover ponía el estado en React: volvía a
+  // pintar las seis capas `m.li` con `layout`, y Motion medía otra vez todo el documento en el fotograma de la interacción. El
+  // efecto es solo CSS (globals.css, `data-fan-active`): el atributo se pone en el DOM y React no vuelve a pintar nada.
+  it("hover y salida no vuelven a pintar la pila (corrección 4 del PR B: arranque en frío del abanico)", async () => {
+    vi.useFakeTimers();
+    let commits = 0;
+    const view = render(<Profiler id="stack" onRender={() => { commits++; }}><GoalStack goals={[japan(), extra(1), extra(2)]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} /></Profiler>);
+    const layer = (index: number) => view.container.querySelector(`[data-fan-layer="${index}"]`) as HTMLElement;
+    await act(async () => { vi.advanceTimersByTime(FAN_REST_DELAY_MS * 2); await Promise.resolve(); });
+    const before = commits;
+    fireEvent.pointerEnter(layer(1), { pointerType: "mouse" });
+    fireEvent.pointerLeave(layer(1), { pointerType: "mouse" });
+    act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS); });
+    expect(commits).toBe(before);
+    vi.useRealTimers();
   });
 
   it("el foco de teclado (focus-visible) activa el mismo efecto", () => {

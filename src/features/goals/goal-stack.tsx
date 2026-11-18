@@ -110,7 +110,14 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   useEffect(() => () => { if (staysTimer.current) clearTimeout(staysTimer.current); }, []);
   // Abanico: la tarjeta con hover o foco de teclado. Reacciona al instante y vuelve al reposo a los 60 ms; si el puntero pasa a
   // otra dentro de ese margen, va directo a la nueva. El efecto visual vive en globals.css, solo con puntero fino y desde lg.
-  const [active, setActive] = useState<number | null>(null);
+  // 005 · PR B (corrección 4, D3): `data-fan-active` se pone en el DOM, no en el estado de React. Con estado, cada hover volvía a
+  // pintar las capas `m.li` con `layout` y Motion medía otra vez el documento en el fotograma de la interacción; el primer hover a
+  // 1440 no llegaba a 55 fps con la CPU a 4× (run 44349192421). El efecto es solo CSS.
+  const fanRef = useRef<HTMLDivElement>(null);
+  const setActive = (index: number | null) => {
+    if (index === null) fanRef.current?.removeAttribute("data-fan-active");
+    else fanRef.current?.setAttribute("data-fan-active", String(index));
+  };
   const rest = useRef<ReturnType<typeof setTimeout> | null>(null);
   // La capa con foco de teclado: al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
   const focused = useRef<number | null>(null);
@@ -158,7 +165,7 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // abanico aprobados (08·7; MOTION_SYSTEM §4.1).
   return (
     <div data-goal-stack="" className={`flex flex-col gap-2 ${fan ? "lg:w-fit lg:max-w-full" : ""}`}>
-      <div className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined} data-fan-active={fan && active !== null ? active : undefined}>
+      <div ref={fanRef} className="lg:flex lg:items-start lg:gap-6" data-fan={fan ? "" : undefined}>
         <ul aria-label={label} ref={listRef}
           // En la lista y no en la tarjeta: al soltar, la pila ya cambió de frontal y la tarjeta arrastrada pasó atrás.
           onClickCapture={swipe ? (event) => { if (now() - dragEndedAt.current < 350) { event.preventDefault(); event.stopPropagation(); } } : undefined}
@@ -178,7 +185,9 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                 onPointerLeave={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") leave(); } : undefined}
                 onFocus={fan && shown ? focusIn(index) : undefined}
                 onBlur={fan && shown ? focusOut : undefined}
-                className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-y" : ""}`}
+                // 005 · PR B (corrección 4, D3): la capa arrastrable existe antes del primer deslizamiento (antes se creaba y pintaba en el
+                // primer fotograma del gesto: 93,5 % y uno de 199,9 ms con CPU 4×, run 44349192421). Solo la frontal, solo en la pila.
+                className={`${shown ? layerClass(visible, index, fan) : "sr-only"} ${index === 0 && swipe ? "touch-pan-y will-change-transform" : ""}`}
                 // Deslizar horizontal recorre la pila (solo la frontal y fuera del abanico); el vertical es de la página.
                 {...(index === 0 && swipe ? {
                   drag: "x" as const, dragConstraints: { left: 0, right: 0 }, dragElastic: reduced ? 0 : 0.5, dragSnapToOrigin: true,
