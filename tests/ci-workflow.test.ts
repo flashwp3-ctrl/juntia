@@ -85,15 +85,107 @@ describe("gate partido en e2e y a11y-session (decisión de los fundadores del 17
     }
   });
 
-  it("el barrido de accesibilidad a mano corre solo en a11y-session (y en app); e2e no se lanza con él", () => {
-    expect(field("e2e", "if")).toMatch(/!inputs\.a11y_sweep/);
-    expect(field("a11y-session", "if")).not.toMatch(/a11y_sweep/);
-    // Con el barrido, el selector no corre: A11Y_FILES y A11Y_ROUTE_AREAS quedan vacíos y corre todo.
-    expect(steps("a11y-session").find((step) => /id: select_a11y/.test(step.text))?.text).toMatch(/if: '!inputs\.a11y_sweep'/);
-  });
 
   it("db y evidence no cambian de disparo", () => {
     expect(field("db", "if")).toBe("(github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)");
     expect(field("evidence", "if")).toBe("github.event_name == 'workflow_dispatch' && inputs.capture_evidence");
+  });
+});
+
+// Revisión del PR #83, F83-1: lanzado a mano con a11y_sweep y measure_workers, el job e2e no arrancaba y la medición T054
+// desaparecía sin error. Aquí se EVALÚAN las condiciones `if` reales del workflow para cada combinación de inputs, con un
+// evaluador pequeño de las expresiones que usa ci.yml (contextos, literales, ==, !=, !, &&, ||, paréntesis, always() y
+// failure()); no es un intérprete completo de GitHub Actions.
+type Context = { event: "pull_request" | "workflow_dispatch"; draft?: boolean; inputs: Record<string, boolean | string | null>; skip?: string };
+
+function evaluate(expression: string, context: Context): unknown {
+  const source = expression.trim().replace(/^'(.*)'$/, "$1").replace(/^\$\{\{(.*)\}\}$/, "$1");
+  const tokens = source.match(/'[^']*'|==|!=|&&|\|\||[!()]|[A-Za-z_][\w.-]*\(\)|[A-Za-z_][\w.-]*/g) ?? [];
+  let index = 0;
+  const peek = () => tokens[index];
+  const take = (expected?: string) => {
+    const token = tokens[index++];
+    if (expected && token !== expected) throw new Error(`Se esperaba ${expected} y llegó ${token} en ${source}`);
+    return token;
+  };
+  const truthy = (value: unknown) => value !== false && value !== null && value !== undefined && value !== "" && value !== 0;
+  const value = (path: string): unknown => {
+    const fixed: Record<string, unknown> = {
+      "github.event_name": context.event,
+      "github.event.pull_request.draft": context.event === "pull_request" ? context.draft ?? false : null,
+      "steps.select_a11y.outputs.skip": context.skip ?? "",
+      true: true, false: false, null: null,
+    };
+    if (path in fixed) return fixed[path];
+    if (path.startsWith("inputs.")) return context.event === "workflow_dispatch" ? context.inputs[path.slice(7)] ?? false : null;
+    throw new Error(`Contexto no previsto por el evaluador: ${path}`);
+  };
+  const primary = (): unknown => {
+    const token = take();
+    if (token === "(") { const result = or(); take(")"); return result; }
+    if (token === "always()") return true;
+    if (token === "failure()") return false;
+    if (token.startsWith("'")) return token.slice(1, -1);
+    return value(token);
+  };
+  const unary = (): unknown => {
+    if (peek() === "!") { take(); return !truthy(unary()); }
+    const left = primary();
+    if (peek() === "==" || peek() === "!=") { const op = take(); const right = primary(); return op === "==" ? left === right : left !== right; }
+    return left;
+  };
+  const and = (): unknown => { let left = unary(); while (peek() === "&&") { take(); const right = unary(); left = truthy(left) ? right : left; } return left; };
+  const or = (): unknown => { let left = and(); while (peek() === "||") { take(); const right = and(); left = truthy(left) ? left : right; } return left; };
+  const result = or();
+  if (index !== tokens.length) throw new Error(`Sobra «${tokens.slice(index).join(" ")}» en ${source}`);
+  return truthy(result);
+}
+
+const stepIf = (job: string, match: RegExp) => {
+  const step = steps(job).find((item) => match.test(item.name) || match.test(item.text));
+  if (!step) throw new Error(`No hay paso ${match} en ${job}`);
+  return /^ {8}if: (.+)$/m.exec(step.text)?.[1] ?? "success()";
+};
+const runs = (expression: string, context: Context) => (expression === "success()" ? true : evaluate(expression, context));
+
+const CASES: { name: string; context: Context; jobs: string[]; e2eSteps?: Record<string, boolean>; a11ySelect?: boolean }[] = [
+  { name: "pull_request listo", context: { event: "pull_request", inputs: {} }, jobs: ["app", "db", "e2e", "a11y-session"],
+    e2eSteps: { select: true, smoke: true, t054: false }, a11ySelect: true },
+  { name: "pull_request en borrador", context: { event: "pull_request", draft: true, inputs: {} }, jobs: [] },
+  { name: "Run workflow sin inputs", context: { event: "workflow_dispatch", inputs: {} }, jobs: ["app", "db", "e2e", "a11y-session"],
+    e2eSteps: { select: true, smoke: true, t054: false }, a11ySelect: true },
+  { name: "capture_evidence", context: { event: "workflow_dispatch", inputs: { capture_evidence: true } }, jobs: ["evidence"] },
+  { name: "a11y_sweep", context: { event: "workflow_dispatch", inputs: { a11y_sweep: true } }, jobs: ["app", "a11y-session"], a11ySelect: false },
+  { name: "a11y_sweep + measure_workers (F83-1)", context: { event: "workflow_dispatch", inputs: { a11y_sweep: true, measure_workers: true } },
+    jobs: ["app", "e2e", "a11y-session"], e2eSteps: { select: false, smoke: false, t054: true }, a11ySelect: false },
+  { name: "measure_workers", context: { event: "workflow_dispatch", inputs: { measure_workers: true } }, jobs: ["app", "db", "e2e", "a11y-session"],
+    e2eSteps: { select: true, smoke: true, t054: true }, a11ySelect: true },
+];
+
+describe("qué jobs y pasos arrancan con cada combinación de inputs (F83-1)", () => {
+  it("el evaluador sigue la lógica de GitHub en las formas que usa ci.yml", () => {
+    const pr: Context = { event: "pull_request", inputs: {} };
+    expect(evaluate("'!inputs.a11y_sweep'", pr)).toBe(true);
+    expect(evaluate("github.event_name == 'workflow_dispatch' && inputs.capture_evidence", pr)).toBe(false);
+    expect(evaluate("always() && steps.select_a11y.outputs.skip != 'true'", { ...pr, skip: "true" })).toBe(false);
+    expect(() => evaluate("secrets.TOKEN", pr)).toThrow(/no previsto/);
+  });
+
+  it.each(CASES)("$name", ({ context, jobs: expected, e2eSteps, a11ySelect }) => {
+    const started = [...jobs().keys()].filter((job) => runs(field(job, "if") ?? "success()", context));
+    expect(started.sort()).toEqual([...expected].sort());
+    if (e2eSteps) {
+      expect({
+        select: runs(stepIf("e2e", /^Select E2E specs by area$/), context),
+        smoke: runs(stepIf("e2e", /^E2E smoke \(selected specs\)$/), context),
+        t054: runs(stepIf("e2e", /^T054/), context),
+      }).toEqual(e2eSteps);
+    }
+    if (a11ySelect !== undefined) {
+      expect(runs(stepIf("a11y-session", /^Select light accessibility files by area$/), context)).toBe(a11ySelect);
+      // Sin selector (barrido) la salida skip queda vacía: axe corre entero.
+      expect(runs(stepIf("a11y-session", /^Axe of the states/), context)).toBe(true);
+      expect(runs(stepIf("a11y-session", /^Axe of the states/), { ...context, skip: "true" })).toBe(false);
+    }
   });
 });

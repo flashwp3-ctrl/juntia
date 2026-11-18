@@ -263,8 +263,10 @@ jobs:
     # 17 nov 2026: el axe con sesión sale de este job al job `a11y-session`, que corre en paralelo con su propio Supabase y
     # su propio build (gate del PR #82: 609 s de 660 s, y P0-4 añade pruebas).
     # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate; el barrido de accesibilidad a mano
-    # (a11y_sweep) corre solo en `a11y-session` (decisión 21.2).
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # (a11y_sweep) corre solo en `a11y-session` (decisión 21.2), así que con él este job no arranca, SALVO que también se pida
+    # la medición T054 (measure_workers): revisión del PR #83, F83-1. Entonces arranca, el selector y el smoke se saltan
+    # (guardias por paso) y solo mide, como antes de la partición.
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && (!inputs.a11y_sweep || inputs.measure_workers)) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     # Decisión de los fundadores del 10 nov 2026: 12 min, para que el presupuesto de 660 s (scripts/ci.mjs) avise antes de que
     # GitHub cancele el job (antes, 10 min sobre un presupuesto de 480 s). Desde el 17 nov 2026, cada uno de los dos jobs
@@ -344,10 +346,13 @@ jobs:
         # 004 PR B (T035, F64-5; specs/004-presupuestos-y-metas/contracts/ci.md): las specs 1–3 siempre y la 4 o la 5 según
         # el área del PR; lo compartido, lo desconocido o sin base (Run workflow), todas las existentes. El resumen del job
         # dice qué corrió, por qué y qué specs previstas todavía no existen.
+        # F83-1: con a11y_sweep el job solo arranca para T054; ni selecciona ni corre el smoke.
+        if: '!inputs.a11y_sweep'
         env:
           E2E_BASE: ${{ github.event.pull_request.base.sha }}
         run: node scripts/e2e-select.mjs --base "$E2E_BASE"
       - name: E2E smoke (selected specs)
+        if: '!inputs.a11y_sweep'
         env:
           E2E_SPECS: ${{ steps.select.outputs.specs }}
         run: node scripts/ci.mjs run test:e2e:smoke
