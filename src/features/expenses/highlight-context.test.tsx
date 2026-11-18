@@ -5,6 +5,7 @@
 // Criterio: una fila que solo necesita saber si es la recién guardada (E5) no se vuelve a pintar al abrir o cerrar la hoja;
 // sí cuando cambia el resaltado.
 import { act, configure, render, screen, waitFor } from "@testing-library/react";
+import { Profiler } from "react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
@@ -26,8 +27,8 @@ const actions: ExpenseActions = {
 };
 
 const renders = { row: 0 };
+const countRow = () => { renders.row++; };
 function Row({ id }: { id: string }) {
-  renders.row++;
   return <span data-testid="row" data-new={useHighlightId() === id ? "" : undefined}>{id}</span>;
 }
 function Trigger() {
@@ -38,7 +39,7 @@ function Trigger() {
 describe("el resaltado de E5 en su propio contexto (corrección 3 del PR B)", () => {
   it("abrir y cerrar la hoja no vuelve a pintar las filas; guardar sí, para resaltar la nueva", async () => {
     const user = userEvent.setup();
-    render(<AnnotateProvider actions={actions} today="2026-11-05" context="me"><Trigger /><Row id={saved.id} /></AnnotateProvider>);
+    render(<AnnotateProvider actions={actions} today="2026-11-05" context="me"><Trigger /><Profiler id="row" onRender={countRow}><Row id={saved.id} /></Profiler></AnnotateProvider>);
     const before = renders.row;
     await user.click(screen.getByRole("button", { name: copy.nav.annotate }));
     await screen.findByRole("dialog", { name: copy.annotate.title.expense });
