@@ -13,10 +13,15 @@ const sameBoxes = (a, b) => {
   return key(a) === key(b);
 };
 
-/** Índices de la ventana: el primer fotograma con esqueleto y el primer fotograma final (§3.5), o null. */
+/**
+ * Índices de la ventana: del primer fotograma con esqueleto al primer fotograma final (§3.5). Sin esqueleto (rutas de
+ * acceso; research R5: «el comparador mide la carga completa»), del primer fotograma útil (con el `main` de la ruta y
+ * alguna caja) al primer final (revisión del PR #87, F87-4). Sin ventana verificable, la carga es incompleta: nunca verde.
+ */
 export function windowOf(frames) {
-  const from = frames.findIndex((frame) => frame.skeleton);
-  if (from < 0) return { window: null, incomplete: false };
+  const skeleton = frames.findIndex((frame) => frame.skeleton);
+  const from = skeleton >= 0 ? skeleton : frames.findIndex((frame) => frame.main && frame.boxes.length > 0);
+  if (from < 0) return { window: null, incomplete: true };
   for (let i = from; i < frames.length - 1; i++) {
     const frame = frames[i], next = frames[i + 1];
     // Final: sin esqueleto, con el `main` de la ruta y dos fotogramas seguidos sin cambios de caja.
@@ -31,6 +36,9 @@ export function windowOf(frames) {
  * @param {{ frames: { t: number, scroll: number[], skeleton: boolean, main: boolean, boxes: [number, string, number, number, number, number][] }[] }} load
  * @param {Record<string, unknown>} [meta]
  * @param {Record<string | number, string>} [paths]
+ * @returns {{ fotogramas: number, ventana: { desde: number, hasta: number } | null, incompleta?: boolean,
+ *   desplazamientos: { id: number, clase: string, desde: number, hasta: number, dx: number, dy: number, ruta: string | null }[],
+ *   [meta: string]: unknown }}
  */
 export function compareLoad(load, meta = {}, paths = {}) {
   const frames = load.frames ?? [];

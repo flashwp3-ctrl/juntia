@@ -73,6 +73,24 @@ async function publicLoad(browser: Browser, baseURL: string, route: PublicRoute,
   return page;
 }
 
+/**
+ * Revisión del PR #87, F87-6: la calibración y las rutas BLOQUEAN el tramo. Falla si un control exigido no cumple todas sus
+ * cargas, si una ruta tiene una carga sin ventana verificable (inconclusa) o si muestra desplazamientos. Modo exploratorio
+ * explícito, `CLS_FRAMES_EXPLORE=1`, solo para iterar: lo negativo o inconcluso sale como aviso visible (anotación y
+ * `::warning::`), nunca como verde en silencio. Ningún tramo de `release` lo activa (scripts/release-leg.mjs; lo comprueba
+ * tests/ci-workflow.test.ts), así que el candidato del paso 4 nunca lo usa. Los JSONL quedan como diagnóstico.
+ */
+const EXPLORE = process.env.CLS_FRAMES_EXPLORE === "1";
+function verdict(ok: boolean, message: string) {
+  if (ok) return;
+  if (EXPLORE) {
+    test.info().annotations.push({ type: "warning", description: `modo exploratorio: ${message}` });
+    console.log(`::warning title=Comparador (exploratorio)::${message}`);
+    return;
+  }
+  expect(ok, message).toBe(true);
+}
+
 if (SET !== "controls") {
   // CLS_FRAMES_ROUTES (opcional, solo en local): limita las rutas del conjunto.
   const only = (process.env.CLS_FRAMES_ROUTES ?? "").split(",").filter(Boolean);
@@ -83,6 +101,9 @@ if (SET !== "controls") {
         const page = route in SESSION_ROUTES ? await sessionLoad(browser, baseURL!, route as SessionRoute, theme, width) : await publicLoad(browser, baseURL!, route as PublicRoute, theme, width);
         loads.push(await measured(page, { ruta: route, motor: engine(browser), tema: themeLabel(theme), ancho: width, carga: index + 1 }));
       }
+      const [row] = summarize(loads.filter((load) => load.ruta === route));
+      verdict(row.incompletas === 0, `${route} · ${row.motor}: ${row.incompletas} de ${row.cargas} cargas sin ventana verificable (inconclusas)`);
+      verdict(row.conDesplazamientos === 0, `${route} · ${row.motor}: ${row.conDesplazamientos} de ${row.cargas} cargas con desplazamientos por fotogramas`);
     });
   }
   test("@release comparador · resumen por ruta y motor", async () => {
@@ -156,6 +177,7 @@ if (SET === "controls") {
       if (result.desplazamientos.some((s: { dy: number; ruta: string | null }) => Math.abs(s.dy - 40) <= 1 && IS_MAIN.test(s.ruta ?? ""))) ok++;
     }
     controlRows.push({ control: "1 · positivo", motor: engine(browser), cumple: ok, cargas: count() });
+    verdict(ok === count(), `control 1 · positivo · ${engine(browser)}: ${ok} de ${count()}`);
   });
 
   test("@release control 2 · resolución: 1 px detectado; 0,5 px solo se registra", async ({ browser, baseURL }) => {
@@ -172,6 +194,7 @@ if (SET === "controls") {
       if (result.desplazamientos.length) half++;
     }
     controlRows.push({ control: "2 · 1 px", motor: engine(browser), cumple: ok, cargas: count() });
+    verdict(ok === count(), `control 2 · 1 px · ${engine(browser)}: ${ok} de ${count()}`);
     controlRows.push({ control: "2 · 0,5 px (solo se registra)", motor: engine(browser), cumple: half, cargas: count(), nota: "vistas, sin resultado exigido" });
   });
 
@@ -184,6 +207,7 @@ if (SET === "controls") {
       if (result.desplazamientos.length === 0) ok++;
     }
     controlRows.push({ control: "3 · ruta quieta", motor: engine(browser), cumple: ok, cargas: count() });
+    verdict(ok === count(), `control 3 · ruta quieta · ${engine(browser)}: ${ok} de ${count()}`);
   });
 
   test("@release control 4 · animación con transformación (Web Animations y estilo en línea) → cero; en Chromium, la API también", async ({ browser, baseURL, browserName }) => {
@@ -199,7 +223,11 @@ if (SET === "controls") {
       if (cls === 0) api++;
     }
     controlRows.push({ control: "4 · transformación", motor: engine(browser), cumple: ok, cargas: count() });
-    if (browserName === "chromium") controlRows.push({ control: "4 · API CLS = 0 en las mismas cargas", motor: engine(browser), cumple: api, cargas: count() });
+    verdict(ok === count(), `control 4 · transformación · ${engine(browser)}: ${ok} de ${count()}`);
+    if (browserName === "chromium") {
+      controlRows.push({ control: "4 · API CLS = 0 en las mismas cargas", motor: engine(browser), cumple: api, cargas: count() });
+      verdict(api === count(), `control 4 · API CLS = 0 · ${engine(browser)}: ${api} de ${count()}`);
+    }
   });
 
   test("@release control 5 · transición CSS en curso → cero y la posición medida del bloque no cambia", async ({ browser, baseURL }) => {
@@ -218,6 +246,7 @@ if (SET === "controls") {
       if (ownShifts(result) === 0 && own.id !== null && own.positions === 1) ok++;
     }
     controlRows.push({ control: "5 · transición CSS en curso", motor: engine(browser), cumple: ok, cargas: count() });
+    verdict(ok === count(), `control 5 · transición CSS en curso · ${engine(browser)}: ${ok} de ${count()}`);
   });
 
   test("@release control 6 · scroll con sticky y fixed → cero", async ({ browser, baseURL }) => {
@@ -229,6 +258,7 @@ if (SET === "controls") {
       if (ownShifts(result) === 0) ok++;
     }
     controlRows.push({ control: "6 · scroll con sticky y fixed", motor: engine(browser), cumple: ok, cargas: count() });
+    verdict(ok === count(), `control 6 · scroll con sticky y fixed · ${engine(browser)}: ${ok} de ${count()}`);
   });
 
   test("@release resumen de fiabilidad del motor (controles 1 a 6; el 7 sale de release-cls en Chromium)", async ({ browserName }) => {

@@ -90,9 +90,23 @@ describe("comparador de CLS por fotogramas (§4)", () => {
     expect(summarize([quiet, shifted])).toEqual([{ ruta: "inicio-yo", motor: "webkit", cargas: 2, conDesplazamientos: 1, incompletas: 0, clsCeroPorFotogramas: false }]);
   });
 
-  it("una carga sin esqueleto no tiene ventana y no puede tener desplazamientos; una sin fotograma final se marca incompleta", () => {
-    expect(compareLoad({ frames: [frame(0, [MAIN]), frame(16, [MAIN])] })).toMatchObject({ ventana: null, desplazamientos: [] });
-    expect(compareLoad({ frames: [frame(0, [MAIN], { skeleton: true }), frame(16, [MAIN], { skeleton: true })] })).toMatchObject({ ventana: null, incompleta: true });
+  // Revisión del PR #87, F87-4: sin esqueleto (acceso), la ventana va del primer fotograma útil a la estabilización final
+  // (research R5: «el comparador mide la carga completa»); sin ventana verificable, inconcluso, nunca verde.
+  it("sin esqueleto, la ventana va del primer fotograma útil al final: un bloque que baja 20 px se detecta", () => {
+    const quiet = compareLoad({ frames: [frame(0, [], { main: false }), frame(16, [MAIN, LIST]), frame(32, [MAIN, LIST])] });
+    expect(quiet).toMatchObject({ ventana: { desde: 1, hasta: 1 }, desplazamientos: [] });
+    expect(quiet.incompleta).toBeUndefined();
+    const shifted = compareLoad({ frames: [frame(0, [MAIN, LIST]), frame(16, [MAIN, [2, "normal", 0, 220, 390, 300]]), frame(32, [MAIN, [2, "normal", 0, 220, 390, 300]])] });
+    expect(shifted.desplazamientos).toEqual([expect.objectContaining({ id: 2, desde: 0, hasta: 1, dy: 20 })]);
+    expect(summarize([shifted])[0].clsCeroPorFotogramas).toBe(false);
+  });
+
+  it("sin ventana verificable la carga es inconclusa y la ruta nunca sale verde", () => {
+    const noMain = compareLoad({ frames: [frame(0, [LIST], { main: false }), frame(16, [LIST], { main: false })] });
+    expect(noMain).toMatchObject({ ventana: null, incompleta: true });
+    const neverFinal = compareLoad({ frames: [frame(0, [MAIN], { skeleton: true }), frame(16, [MAIN], { skeleton: true })] });
+    expect(neverFinal).toMatchObject({ ventana: null, incompleta: true });
+    expect(summarize([noMain])[0]).toMatchObject({ incompletas: 1, clsCeroPorFotogramas: false });
   });
 });
 
