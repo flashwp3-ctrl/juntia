@@ -141,7 +141,9 @@ const inAuth = async (id: string) => (await supabaseAuth({ admin, db }).getUser(
 const bannedNow = async (id: string) => { const u = await supabaseAuth({ admin, db }).getUser(id); return u.exists && !!u.bannedUntil && Date.parse(u.bannedUntil) > Date.now(); };
 const sessions = (id: string) => Number(runnerSql(`select count(*) from auth.sessions where user_id='${id}'`));
 
-describe("borrado manual en fases (contracts/account-deletion.md §6)", () => {
+// Cada caso siembra parejas reales y recorre las fases completas (dos veces en los casos 9 y 10): tope propio, en el runner
+// y en juntia-dev, en vez del de Vitest por defecto.
+describe("borrado manual en fases (contracts/account-deletion.md §6)", { timeout: 180_000 }, () => {
   it("1 · ciclo real (F85-1): se borra la pareja del dataset dorado; la tercera persona, intacta; triggers activos; invariantes", async () => {
     const pair = await couple({ golden: true });
     const third = await loner();
@@ -354,7 +356,7 @@ describe("borrado manual en fases (contracts/account-deletion.md §6)", () => {
 });
 
 // Revisión del PR #87 (ChatGPT, en 33036fd): F87-1, F87-2 y F87-5.
-describe("borrado manual · revisión del PR #87", () => {
+describe("borrado manual · revisión del PR #87", { timeout: 180_000 }, () => {
   /** Base que cuenta sus llamadas y puede fallar al lanzar la fase 1, antes o después del COMMIT. */
   const countingDb = (fail?: "before" | "after") => {
     const calls: string[] = [];
@@ -424,6 +426,13 @@ describe("borrado manual · revisión del PR #87", () => {
     expect(interrupted.phase).toBe("locked");
     expect(interrupted.phase1_started).toBeTruthy();
     expect(total(counts([pair.sara.id, pair.tomas.id], pair.groupId))).toBe(0);
+    // F87-8: con la fase 1 empezada, --abort se rechaza siempre, sin levantar ningún bloqueo.
+    const aborting = testAuth(fakeClock());
+    const before = readFileSync(statePathFor(path), "utf8");
+    await expect(runDeletion({ manifestPath: path, mode: "abort", auth: aborting.auth, db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^abort: la fase 1 ya empezó/);
+    expect(aborting.calls).toEqual([]);
+    expect(readFileSync(statePathFor(path), "utf8")).toBe(before);
+    for (const id of [pair.sara.id, pair.tomas.id]) expect(await bannedNow(id)).toBe(true);
     const resumed = countingDb();
     const result = await runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db: resumed.db, sleep: noSleep, target: "juntia-dev" });
     expect(result.phase).toBe("verified");
@@ -431,5 +440,42 @@ describe("borrado manual · revisión del PR #87", () => {
     expect(result.counts_before).toEqual(interrupted.counts_at_plan);
     expect(total(result.counts_before)).toBeGreaterThan(0);
     expect(result.recovery?.motivo).toMatch(/se confirmó antes de guardar el estado/);
+  });
+
+  // F87-10: la recuperación decide por identificadores, no por recuentos.
+  /** Interrumpe con `phase1_started` y sin SQL; devuelve una auditoría planeada de Sara, para tocarla desde fuera. */
+  async function interruptedBeforeSql() {
+    const pair = await couple();
+    const path = manifest([pair.sara.id, pair.tomas.id], pair.groupId);
+    await expect(runDeletion({ manifestPath: path, auth: testAuth(fakeClock()).auth, db: countingDb("before").db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/parada antes/);
+    expect(state(path)).toMatchObject({ phase: "locked", phase1_started: expect.any(String) });
+    const planned = runnerSql(`select id from juntia_data.audit_events where actor_user_id='${pair.sara.id}' order by occurred_at limit 1`);
+    const entity = runnerSql(`select entity_id from juntia_data.audit_events where id='${planned}'`);
+    return { pair, path, planned, entity };
+  }
+
+  it("F87-10 · mismos recuentos con identificadores distintos: indeterminate, sin borrar ni verificar", async () => {
+    const { pair, path, planned, entity } = await interruptedBeforeSql();
+    // Desde fuera: desaparece una fila planeada y aparece otra de la misma tabla. Los recuentos quedan iguales.
+    runnerSql(`begin; set local session_replication_role='replica'; delete from juntia_data.audit_events where id='${planned}';
+      insert into juntia_data.audit_events(actor_user_id,entity_type,entity_id,action) values('${pair.sara.id}','transaction','${entity}','update'); commit;`);
+    expect(counts([pair.sara.id, pair.tomas.id], pair.groupId)).toEqual(state(path).counts_at_plan);
+    const next = countingDb();
+    await expect(runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db: next.db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^indeterminate:/);
+    expect(state(path).phase).toBe("indeterminate");
+    expect(next.calls).not.toContain("fase 1");
+    expect(total(counts([pair.sara.id, pair.tomas.id], pair.groupId))).toBeGreaterThan(0);
+    await expect(runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^indeterminate:/);
+    await expect(runDeletion({ manifestPath: path, mode: "abort", auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^abort:/);
+  });
+
+  it("F87-10 · desaparición externa parcial tras phase1_started: se detiene antes de la fase 1, nunca verified", async () => {
+    const { pair, path, planned } = await interruptedBeforeSql();
+    runnerSql(`begin; set local session_replication_role='replica'; delete from juntia_data.audit_events where id='${planned}'; commit;`);
+    const next = countingDb();
+    await expect(runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db: next.db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^phase1: el alcance cambió/);
+    expect(next.calls).not.toContain("fase 1");
+    expect(state(path).phase).not.toBe("verified");
+    expect(total(counts([pair.sara.id, pair.tomas.id], pair.groupId))).toBeGreaterThan(0);
   });
 });

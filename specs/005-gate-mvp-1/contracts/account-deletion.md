@@ -182,6 +182,20 @@ repiten nada.
   revocar al momento (un token de acceso ya emitido) se cubre con la espera de su vida
   útil, que el estado también registra.
 
+### 4.2 Paradas que concilia una persona (revisión del PR #87, F87-1, F87-8, F87-10 y F87-11)
+
+El procedimiento no decide solo en estos casos: se detiene, deja el estado escrito y la decisión es de personas.
+
+| Situación | Qué hace el script | Qué hacen las personas |
+| --- | --- | --- |
+| **`blocked_external_link`**: un actor de fuera del alcance dejó auditoría sobre una entidad del alcance (F87-1, F87-11) | Se detiene antes de la fase 0 y nombra la fila (`audit_events <id>`), sin datos. No escribe nada. **Nunca se borra la auditoría de un actor externo** | El gestor registra el bloqueo con la fila implicada (identificador, sin datos) y se lo comunica a los fundadores. La decisión sobre ese registro (conservarlo, anonimizarlo o suprimirlo) **es de los fundadores**. Hasta entonces, la petición no avanza |
+| **`indeterminate`**: con la fase 1 empezada, el alcance tiene identificadores que no estaban en el plan (F87-10) | Pasa a `indeterminate`, se detiene y no vuelve a ejecutar nada: ni `--resume` ni `--abort` siguen | El gestor concilia el alcance a mano (qué filas son nuevas y de dónde salen) antes de cualquier otro paso |
+| **Fase 1 empezada**: el estado tiene `phase1_started` (F87-8) | `--abort` se rechaza siempre: la transacción pudo confirmarse y levantar los bloqueos dejaría cuentas sin datos desbloqueadas | La única salida es `--resume` |
+
+La recuperación de una fase 1 interrumpida decide por los **identificadores** del alcance que el plan guarda por tabla
+(F87-10), no por los recuentos: si ninguno de los del plan existe y el alcance está vacío, la transacción se confirmó; si
+queda alguno, se repite la fase 1, que exige que los identificadores sean exactamente los del plan.
+
 ## 5. Quién y dónde
 
 - **En el ensayo:** el gestor, en `juntia-dev`, con el guardia de destino y un solo

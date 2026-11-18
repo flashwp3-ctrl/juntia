@@ -105,7 +105,8 @@ export function manifestHash(manifest) {
     : value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])])) : value;
   return createHash("sha256").update(JSON.stringify(canonical(manifest))).digest("hex");
 }
-const total = (counts) => Object.values(counts ?? {}).reduce((sum, n) => sum + Number(n), 0);
+/** F87-10: los identificadores del alcance como lista plana `tabla/clave`. */
+const flatIds = (ids) => Object.entries(ids ?? {}).flatMap(([table, list]) => list.map((key) => `${table}/${key}`));
 
 /** Escritura atómica del estado: temporal y renombrado (F85-10). */
 function writeState(path, state) {
@@ -208,11 +209,14 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
     const facts = databaseFacts(db, manifest);
     checkFacts(facts, manifest);
     // Cierre del alcance y recuento de referencia, de solo lectura, antes de escribir nada (§3).
-    const counts = parseCounts(db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" }), "COUNTS");
+    const closure = db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" });
+    const counts = parseCounts(closure, "COUNTS");
+    // F87-10: los identificadores del alcance por tabla, para saber después si una fase 1 interrumpida se confirmó.
+    const ids = parseCounts(closure, "IDS");
     state = {
       request_id: manifest.request_id, manifest_sha256: manifestHash(manifest), phase: "planned", history: [{ phase: "planned", at: iso() }],
       people: manifest.users.map((uuid) => ({ uuid, ban: "pending", banned_until: null, sessions_revoked: false, ban_checked_at: null })),
-      email_sha256: facts.emails, counts_at_plan: counts, tokens_wait_until: null, auth_deleted: [], counts_before: null, counts_after: null,
+      email_sha256: facts.emails, counts_at_plan: counts, ids_at_plan: ids, tokens_wait_until: null, auth_deleted: [], counts_before: null, counts_after: null,
     };
     writeState(statePath, state);
   } else {
@@ -227,6 +231,10 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
 
   if (mode === "abort") {
     if (state.phase === "aborted") return state;
+    // F87-8 (revisión del PR #87): una operación que empezó a borrar ya no se cancela. Con `phase1_started`, la transacción
+    // pudo confirmarse; levantar los bloqueos dejaría cuentas sin datos desbloqueadas. Solo --resume.
+    if (state.phase1_started) stop("abort", "la fase 1 ya empezó (puede haberse confirmado): --abort no se acepta; la única salida es --resume");
+    if (state.phase === "indeterminate") stop("abort", "estado indeterminate: lo concilia el gestor; --abort no se acepta");
     if (!["planned", "locked"].includes(state.phase)) stop("abort", `--abort solo desde planned o locked; el estado está en ${state.phase}: la única salida es --resume hasta verified`);
     for (const person of state.people) {
       if (person.ban === "lifted") continue;
@@ -240,6 +248,7 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
   }
   if (state.phase === "aborted") stop("state", "la petición se abortó: hace falta una petición nueva, con su manifiesto y sus confirmaciones");
   if (state.phase === "verified") return state;
+  if (state.phase === "indeterminate") stop("indeterminate", "el estado quedó indeterminate: el gestor concilia el alcance a mano; el procedimiento no sigue solo");
 
   /** Bloqueo y cierre de sesiones de una persona, guardando el estado tras cada llamada (§4.1). */
   const lock = async (person) => {
@@ -288,15 +297,30 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
   }
 
   // Fase 1 · data_deleted.
-  const scopeCounts = () => parseCounts(db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" }), "COUNTS");
+  const scope = () => {
+    const out = db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" });
+    return { counts: parseCounts(out, "COUNTS"), ids: parseCounts(out, "IDS") };
+  };
   if (state.phase === "locked" && state.phase1_started) {
-    // F87-5: la fase 1 empezó y el estado no llegó a guardar su resultado. Si los datos del alcance ya no están, la
-    // transacción se confirmó: se conservan los recuentos del plan y se registra la recuperación, sin repetir el SQL.
-    const now = scopeCounts();
-    if (total(now) === 0 && total(state.counts_at_plan) > 0) {
+    // F87-5 y F87-10: la fase 1 empezó y el estado no llegó a guardar su resultado. Se decide por IDENTIFICADORES:
+    // - en el alcance hay alguno que no estaba en el plan → «indeterminate»: se detiene y lo concilia el gestor;
+    // - ninguno de los planeados existe y el alcance está vacío → la transacción se confirmó: recuperado, con los recuentos
+    //   del plan, sin repetir el SQL;
+    // - queda alguno de los planeados → no se confirmó: la fase 1 vuelve a correr con normalidad (y su comprobación exige
+    //   que los identificadores sean exactamente los del plan).
+    const now = scope();
+    const planned = new Set(flatIds(state.ids_at_plan));
+    const current = flatIds(now.ids);
+    const unplanned = current.filter((key) => !planned.has(key));
+    if (unplanned.length) {
+      state.indeterminate = { at: iso(), motivo: "el alcance tiene identificadores que no estaban en el plan", filas: unplanned.length };
+      enter("indeterminate");
+      stop("indeterminate", `${unplanned.length} identificador(es) del alcance no estaban en el plan: el gestor concilia antes de seguir`);
+    }
+    if (current.length === 0 && planned.size > 0) {
       state.counts_before = state.counts_at_plan;
-      state.counts_after = now;
-      state.recovery = { at: iso(), motivo: "la fase 1 se confirmó antes de guardar el estado; recuentos previos del plan" };
+      state.counts_after = now.counts;
+      state.recovery = { at: iso(), motivo: "la fase 1 se confirmó antes de guardar el estado: ninguno de los identificadores del plan existe; recuentos previos del plan" };
       enter("data_deleted");
     }
   }
@@ -304,8 +328,10 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
     await renew();
     // F87-2: las comprobaciones de pertenencia y de alcance se repiten justo antes de borrar.
     checkFacts(databaseFacts(db, manifest), manifest);
-    const now = scopeCounts();
-    if (JSON.stringify(now) !== JSON.stringify(state.counts_at_plan)) stop("phase1", "el alcance cambió desde el plan (recuentos distintos): se detiene antes de la fase 1");
+    const now = scope();
+    if (JSON.stringify(now.counts) !== JSON.stringify(state.counts_at_plan)) stop("phase1", "el alcance cambió desde el plan (recuentos distintos): se detiene antes de la fase 1");
+    // F87-10: además de los recuentos, los identificadores tienen que ser exactamente los del plan.
+    if (JSON.stringify(now.ids) !== JSON.stringify(state.ids_at_plan)) stop("phase1", "el alcance cambió desde el plan (identificadores distintos): se detiene antes de la fase 1");
     // F87-5: «fase 1 en curso» queda en el estado ANTES de lanzar el SQL.
     state.phase1_started = iso(); save();
     const output = db.files([join(HERE, "delete-account.sql"), ...extraSqlFiles], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" });

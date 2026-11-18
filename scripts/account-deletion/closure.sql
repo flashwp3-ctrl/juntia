@@ -4,3 +4,5 @@
 -- terminar y nada se escribe en `juntia_data`.
 \ir scope.sql
 select 'COUNTS '||counts::text from del_counts;
+-- F87-10: los identificadores del alcance (`IDS {…}`), que run.mjs guarda en el estado del plan y compara después.
+select 'IDS '||ids::text from del_ids;

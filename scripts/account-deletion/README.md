@@ -67,6 +67,15 @@ Pasa el guardia de destino y toma el bloqueo de `juntia-dev` (decisión 18). El 
   repiten la pertenencia, el cierre y los recuentos del plan.
 - **Caída tras el COMMIT (F87-5):** el estado marca «fase 1 en curso» antes del SQL. Al reanudar, si el alcance ya está
   vacío, la transacción se confirmó: no se repite y se conservan los recuentos del plan, con la recuperación registrada.
+- **`blocked_external_link` (F87-11):** si el cierre se detiene por la auditoría de un actor externo, el gestor registra el
+  bloqueo con la fila implicada (identificador, sin datos) y lo comunica a los fundadores. La decisión sobre ese registro
+  (conservar, anonimizar o suprimir) vuelve a ellos; el script no decide nada solo y la regla de F87-1 no cambia.
+- **`--abort` tras empezar a borrar (F87-8):** con `phase1_started` en el estado, `--abort` se rechaza siempre: la única salida
+  es `--resume`.
+- **Recuperación por identificadores (F87-10):** el plan guarda los identificadores del alcance por tabla (la huella del
+  correo en `signup_allowlist`). Con la fase 1 interrumpida: ninguno de los planeados existe → recuperado; queda alguno → se
+  repite la fase 1, que exige los identificadores del plan; aparece alguno no planeado → `indeterminate`, se detiene y lo
+  concilia el gestor. Detalle en el contrato, §4.2.
 - **Categorías propias:** el esquema no tiene categorías por persona (`categories` es el catálogo común).
 - **Salida para la evidencia:** `request_id`, huellas cortas de los UUID, fechas de aprobaciones y exportaciones,
   secuencia de fases y recuentos por tabla. Nunca correos, nombres, importes ni textos.

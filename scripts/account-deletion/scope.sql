@@ -113,3 +113,24 @@ create temp view del_counts as select jsonb_build_object(
  'profiles',(select count(*) from juntia_data.profiles where user_id in(select id from del_users)),
  'signup_allowlist',(select count(*) from juntia_data.signup_allowlist where email in(select lower(email) from auth.users where id in(select id from del_users)))
 ) as counts;
+
+-- F87-10 (revisión del PR #87): los IDENTIFICADORES del alcance por tabla, no solo sus recuentos. La clave de cada fila es
+-- su clave primaria; en `signup_allowlist`, la huella del correo y nunca el correo. Solo identificadores, sin datos.
+create temp view del_ids as select jsonb_build_object(
+ 'goal_usage_confirmations',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.goal_usage_confirmations where id in(select id from del_confirmations)),
+ 'goal_usage_allocations',(select coalesce(jsonb_agg(entry_id||':'||member_user_id order by entry_id||':'||member_user_id),'[]') from juntia_data.goal_usage_allocations where entry_id in(select id from del_entries)),
+ 'goal_ledger_entries',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.goal_ledger_entries where id in(select id from del_entries)),
+ 'savings_goals',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.savings_goals where id in(select id from del_goals)),
+ 'budget_versions',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.budget_versions where budget_id in(select id from del_budgets)),
+ 'budgets',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.budgets where id in(select id from del_budgets)),
+ 'transaction_allocations',(select coalesce(jsonb_agg(transaction_id||':'||user_id order by transaction_id||':'||user_id),'[]') from juntia_data.transaction_allocations where transaction_id in(select id from del_transactions)),
+ 'transactions',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.transactions where id in(select id from del_transactions)),
+ 'settlements',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.settlements where id in(select id from del_settlements)),
+ 'group_invitations',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.group_invitations where id in(select id from del_invitations)),
+ 'group_members',(select coalesce(jsonb_agg(group_id||':'||user_id order by group_id||':'||user_id),'[]') from juntia_data.group_members where group_id in(select id from del_groups)),
+ 'groups',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.groups where id in(select id from del_groups)),
+ 'idempotency_records',(select coalesce(jsonb_agg(actor_user_id||':'||action||':'||idempotency_key order by actor_user_id||':'||action||':'||idempotency_key),'[]') from juntia_data.idempotency_records where actor_user_id in(select id from del_users)),
+ 'audit_events',(select coalesce(jsonb_agg(id::text order by id::text),'[]') from juntia_data.audit_events where actor_user_id in(select id from del_users)),
+ 'profiles',(select coalesce(jsonb_agg(user_id::text order by user_id::text),'[]') from juntia_data.profiles where user_id in(select id from del_users)),
+ 'signup_allowlist',(select coalesce(jsonb_agg(md5(email) order by md5(email)),'[]') from juntia_data.signup_allowlist where email in(select lower(email) from auth.users where id in(select id from del_users)))
+) as ids;
