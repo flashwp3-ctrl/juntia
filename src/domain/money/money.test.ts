@@ -27,3 +27,19 @@ describe("Money — contrato de precisión", () => {
     expect(formatMoney(moneyFromPesos(9007199254740993n))).toBe("$9.007.199.254.740.993");
   });
 });
+
+// 005 · PR B, corrección 3 (FR-052; maestro §15.7, INP < 200 ms). Laboratorio del run 44349192421: guardar en Anotar a 1440
+// pasó de 200 ms, y el perfil de CPU de esa interacción atribuyó a formatMoney la mayor parte del JavaScript propio: construía
+// un Intl.NumberFormat en cada llamada, y cada fila y cada total lo llaman al volver a pintarse. Criterio: el formateador se
+// construye una vez y el resultado no cambia.
+describe("formatMoney — un solo formateador (corrección 3 del PR B)", () => {
+  it("no construye un Intl.NumberFormat por llamada", () => {
+    const spy = vi.spyOn(Intl, "NumberFormat");
+    try {
+      expect([formatMoney(moneyFromPesos(412_900n)), formatMoney(moneyFromPesos(-1_500n)), formatMoney(moneyFromPesos(0n))]).toEqual(["$412.900", "-$1.500", "$0"]);
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});

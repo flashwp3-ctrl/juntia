@@ -77,6 +77,12 @@ type AnnotateState = {
 const AnnotateContext = createContext<AnnotateState | null>(null);
 /** Las filas en vuelo, aparte del estado de la hoja: Inicio y Actividad las leen sin re-pintarse con cada cambio de la hoja. */
 const PendingContext = createContext<{ rows: readonly PendingRow[]; scope: ListScope }>({ rows: NO_FLIGHTS, scope: { enter: () => () => {}, report: () => {}, filter: () => {} } });
+/**
+ * 005 · PR B (corrección 3, INP): el resaltado de E5, aparte del estado de la hoja. Las filas de Inicio y las listas de Actividad
+ * solo necesitan saber cuál es la recién guardada; leyendo el contexto entero se volvían a pintar en cada apertura y cada
+ * cierre de la hoja, y abrir o guardar costaba más con cada fila (laboratorio del run 44349192421).
+ */
+const HighlightContext = createContext<string | null>(null);
 
 type AnnotateProviderProps = {
   children: ReactNode;
@@ -332,6 +338,7 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
   const pending = singleUndo.state;
   return (
     <AnnotateContext.Provider value={state}>
+     <HighlightContext.Provider value={highlightId}>
      <PendingContext.Provider value={pendingContext}>
       {children}
       {sheet.mounted ? (
@@ -382,13 +389,14 @@ export function AnnotateProvider({ children, actions, today, couple = null, shar
         onDismissUndo={singleUndo.dismiss}
       />
      </PendingContext.Provider>
+     </HighlightContext.Provider>
     </AnnotateContext.Provider>
   );
 }
 
 /** La fila resaltada de E5, o `null` fuera del proveedor (una vista que se pinta también sin Anotar). */
 export function useHighlightId() {
-  return useContext(AnnotateContext)?.highlightId ?? null;
+  return useContext(HighlightContext);
 }
 
 /** Las creaciones en vuelo (UX lote 1, cambio 3), o ninguna fuera del proveedor. */
