@@ -70,7 +70,8 @@ Protocolos: [contracts/human-verifications.md](contracts/human-verifications.md)
 ## 7. Eliminación de cuenta y pendientes de lanzamiento (FR-067, Q8)
 
 - [ ] Procedimiento manual de [contracts/account-deletion.md](contracts/account-deletion.md)
-      ensayado en `juntia-dev`, con recuentos antes y después (alcance según D2)
+      ensayado en `juntia-dev`, con recuentos antes y después, en los dos casos de D2
+      (opción a: sin pareja y con pareja)
 - [ ] Mi cuenta → Privacidad dice en producción que la eliminación no está disponible y
       cómo pedirla
 - [ ] **Al lanzamiento público, no a MVP-1:** eliminación en la interfaz, términos legales

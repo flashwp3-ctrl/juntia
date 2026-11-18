@@ -10,7 +10,7 @@ cambia. **Nada de esto está implementado**: lo implementa el PR A. Presupuestos
 | Job | Presupuesto | Qué añade P0-4 | Estimado |
 | --- | --- | --- | --- |
 | `app` | < 360 s, avisa | Dominio (US-08), componentes (US-21, US-13), prueba del comparador puro | ≤ 330 s |
-| `db` | < 360 s, avisa (hoy 408–547 s por el ensayo de restauración) | Integración de US-08 en la vista; la del borrado si D2 lo pide | ≤ 565 s |
+| `db` | < 360 s, avisa (hoy 408–547 s por el ensayo de restauración) | Integración de US-08 en la vista; la del borrado (D2) | ≤ 565 s |
 | `e2e` | < 660 s, bloquea | Nada. El `skip` del gesto fuera de Chromium no cuesta | 321 s |
 | `a11y-session` | < 660 s, bloquea | Estados de FR-041 en el nivel ligero, hasta 560 s estimados | ≤ 490 s |
 
@@ -58,7 +58,7 @@ release:
 | --- | --- | --- | --- | --- |
 | `lab-cls-a` | Chromium | `release-cls.capture.ts` con Inicio Yo, Inicio Nosotros, Actividad y Balance; `--workers 1` | FR-050 | 550–650 s |
 | `lab-cls-b` | Chromium | `release-cls.capture.ts` con Plan, Análisis y Metas, y la calibración del comparador en Chromium (contrato del comparador §5) | FR-050, FR-051 | 500–620 s |
-| `lab-interaction` | Chromium | `inp.capture.ts` (tres variantes), `release-lcp.capture.ts`, `release-goalstack.capture.ts`, `release-long-lists.capture.ts`; `--workers 1` | FR-052, FR-053, FR-054, FR-043 | 450–580 s |
+| `lab-interaction` | Chromium | `inp.capture.ts` (tres variantes), `release-lcp.capture.ts`, `release-goalstack.capture.ts` (criterio de D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms, CPU 4×), `release-long-lists.capture.ts`; `--workers 1` | FR-052, FR-053, FR-054, FR-043 | 450–580 s |
 | `webkit-e2e` | WebKit | `--project e2e-webkit` con las cinco specs: primero sin `@serial` y después `@serial` con un worker, como el gate | FR-020 | 420–670 s |
 | `webkit-cls` | WebKit | `--project evidence-webkit` (`cls-frames.capture.ts`) | FR-051 | 400–550 s |
 | `firefox-cls` | Firefox | `--project evidence-firefox` (`cls-frames.capture.ts`) | FR-051 | 400–550 s |

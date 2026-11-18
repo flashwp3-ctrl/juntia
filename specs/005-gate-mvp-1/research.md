@@ -2,7 +2,8 @@
 
 Fase 0 del plan. Cada punto dice qué se decidió, por qué y qué se descartó. **Nada aquí
 reabre Q1–Q12.** Las decisiones de este archivo son **decisiones del plan**: locales y
-reversibles; las que no lo son están en `plan.md`, D1–D4. Ninguna ejecución de este
+reversibles; las que no lo eran son D1–D4 de `plan.md`, decididas por los fundadores el
+18 de noviembre de 2026 (opción a en las cuatro). Ninguna ejecución de este
 archivo es evidencia del gate: el gate es CI sobre el commit candidato y las
 verificaciones humanas con su salida (`AGENTS.md` 12 y 15a).
 
@@ -36,7 +37,8 @@ Estado de partida comprobado en `main` (`94675ca`, 17 nov 2026):
 - **El candidato es `main` tras el último PR de código.** El PR C solo toca documentos,
   así que la etiqueta va en el commit de código, no en el merge del C.
 
-**Pendiente:** si el PR A puede adelantarse a FR-001 → D1.
+**D1, opción (a) (fundadores, 18 nov 2026):** el PR A se itera en borrador antes de
+FR-001 y no se mergea hasta que T084 y T085 estén cerrados.
 
 ## R2 · Dónde va cada prueba nueva y cuánto cuesta
 
@@ -176,7 +178,12 @@ regla de ~600 s aplica también a lo que se lanza a mano). Ver
 - **GoalStack con 6 metas (FR-053):** seis metas sembradas en el runner; se recorre el
   abanico a 1440 (hover y foco de cada carta) y la pila a 390 (deslizamiento por teclado
   y por puntero) con CPU 4×. La medida son los intervalos entre `requestAnimationFrame`
-  durante cada animación y las tareas largas (`longtask`). El criterio de «falla» es D3.
+  durante cada animación y las tareas largas (`longtask`). **Criterio (D3, opción a;
+  fundadores, 18 nov 2026): pasa con ≥ 55 fps**, es decir, **≥ 95 % de los fotogramas en
+  ≤ 18,2 ms y ninguno > 50 ms**, con CPU 4×, en cada animación (hover y foco de cada
+  carta a 1440; deslizamiento por teclado y por puntero a 390). El arnés escribe, por
+  animación, el porcentaje de fotogramas en ≤ 18,2 ms, el fotograma más largo y si pasa.
+  Si una falla, la pantalla cae a la lista y vuelve a los fundadores (decisión 22.2).
 - **Listas largas (FR-043):** dos partes:
   - en el runner, `release-long-lists.capture.ts` siembra una cuenta con 600
     movimientos en un mes, 120 aportes y 40 versiones de presupuesto, y comprueba a 390
@@ -360,7 +367,9 @@ nada.
 - Gastos compartidos, asignaciones, liquidaciones, metas compartidas y solicitudes
   mezclan a las dos personas.
 
-Por eso el alcance con pareja no se puede elegir en el plan → **D2**. El procedimiento,
-sus precondiciones y su verificación están en
-[contracts/account-deletion.md](contracts/account-deletion.md) para la opción recomendada;
-se ajusta a la que elijan los fundadores.
+Por eso el alcance con pareja no se podía elegir en el plan: fue **D2**, y los fundadores
+eligieron la opción (a) el 18 de noviembre de 2026. Sin pareja, se borra todo lo de la
+persona; con pareja, la pareja completa, con el «sí» de las dos. El procedimiento, sus
+precondiciones y su verificación están en
+[contracts/account-deletion.md](contracts/account-deletion.md). La suspensión de triggers
+como dueño va como nota a ADR-007 y ADR-013 en el PR documental T085.

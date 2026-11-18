@@ -5,10 +5,19 @@ manual documentado y ensayado en `juntia-dev`**, que ejecuta el gestor con el «
 persona y cuyo resultado es verificable; la interfaz sigue diciendo «no disponible» y
 explica cómo pedirlo; la revisión legal se exige antes de abrir la app a terceros.
 
-> **Este contrato está condicionado a D2** ([../plan.md](../plan.md), «Para los
-> fundadores»). Está escrito para la opción recomendada, **(a)**. Si los fundadores
-> eligen otra, el PR A lo ajusta antes de escribir el script. **Nada se ejecuta contra
-> producción** por este plan: solo el ensayo en `juntia-dev`.
+> **D2, decidido** (fundadores, 18 nov 2026): opción **(a)** ([../plan.md](../plan.md),
+> «Para los fundadores»).
+>
+> - **Sin pareja activa:** se borra todo lo de la persona.
+> - **Con pareja activa:** se borra la pareja completa, con el «sí» escrito de las dos y
+>   la exportación previa de cada una.
+>
+> **Consecuencia que se decide con ella:** el script suspende los triggers de solo
+> inserción dentro de una transacción como dueño (§3). Se registra como **nota a ADR-007
+> y ADR-013 en el PR documental T085** (fila 19 de la lista de T085 del plan), no como ADR
+> nuevo.
+>
+> **Nada se ejecuta contra producción** por este plan: solo el ensayo en `juntia-dev`.
 
 ## 1. Hechos del esquema que lo condicionan
 
@@ -28,7 +37,7 @@ Comprobados en las migraciones de `main` (`94675ca`):
 - **Mezcla de personas:** gastos compartidos y sus asignaciones, liquidaciones, metas
   compartidas con su ledger y solicitudes, e invitaciones nombran a las dos.
 
-## 2. Alcance (opción a de D2)
+## 2. Alcance (D2, opción a)
 
 | Caso | Qué se borra | Consentimiento |
 | --- | --- | --- |

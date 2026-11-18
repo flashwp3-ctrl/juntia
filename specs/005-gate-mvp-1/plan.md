@@ -10,9 +10,10 @@
 > toca cada PR, qué pruebas añade, cuánto suma a cada job del CI, en qué orden y
 > quién hace cada verificación humana. No amplía el alcance ni reabre ninguna
 > respuesta de Q1–Q12. Lo que es una **decisión del plan** (local y reversible) se
-> marca así para que el revisor la pueda objetar. Lo que obliga a decidir y no está
-> en la spec va marcado **`[NECESITA DECISIÓN]`**, con opciones y recomendación, en
-> «Para los fundadores», al final; el plan no lo cierra. En este archivo, `[P]`
+> marca así para que el revisor la pueda objetar. Lo que obligaba a decidir y no estaba
+> en la spec fue a los fundadores como `[NECESITA DECISIÓN]` (D1–D4, en «Para los
+> fundadores», al final), con opciones y recomendación; **lo decidieron el 18 de
+> noviembre de 2026** y el plan lo aplica. En este archivo, `[P]`
 > significa **propuesta** y `[V]` **verificación pendiente** (maestro §15.9).
 
 ## Summary
@@ -44,8 +45,8 @@ Enfoque, con el detalle y las alternativas en [research.md](research.md):
   candidato en Chromium y **una vez en WebKit**, en el job `release`.
 - **Ningún job del gate pasa de ~600 s.** Las estimaciones por job están en
   «Presupuesto de CI por PR»; lo que no cabe va al barrido `@sweep` o al job `release`.
-- **Sin dependencias nuevas, sin migraciones, sin ADR nuevo** (salvo lo que decidan los
-  fundadores en D2).
+- **Sin dependencias nuevas, sin migraciones, sin ADR nuevo.** D2 deja una nota a
+  ADR-007 y ADR-013 para el PR documental T085.
 
 ## Technical Context
 
@@ -111,7 +112,7 @@ Ningún `[P]` que afecte al alcance queda abierto (spec, «Inventario de `[P]`»
 | ADR-011 | Capas, tope de specs, presupuestos de job; «solo Chromium» en el gate (WebKit y Firefox solo en el job `release`, por Q3 y Q7) | Aceptado | No |
 | ADR-012, ADR-013 | Flujo de especificación; acceso a datos | Aceptados | No |
 | ADR-014 (fotos de metas) | Fuera de MVP-1 (decisión de los fundadores del 17 nov 2026) | No existe; no lo necesita este slice | No |
-| **Posible nota a ADR-007/ADR-013** para el borrado manual (suspende triggers de solo inserción como dueño) | Solo si los fundadores eligen una opción de D2 que lo exija | **[NECESITA DECISIÓN] D2** | No bloquea el plan; bloquea el ensayo de FR-067 |
+| **Nota a ADR-007 y ADR-013** para el borrado manual: el script suspende por nombre los triggers de solo inserción dentro de una transacción como dueño | Lo exige D2, opción (a) (fundadores, 18 nov 2026). No es un ADR nuevo: es una operación administrativa excepcional | **Por escribir en el PR documental T085** (fila 19, abajo) | No |
 
 ### Erratas que afectan al slice
 
@@ -124,8 +125,24 @@ Ninguna pendiente en `docs/design/README.md`.
 | Filas 1–18 de «Contradicciones para el PR documental T085» de la spec | Maestro, `docs/TESTING.md`, `docs/design/`, specs 002–004 | Manda la decisión más reciente de los fundadores, ya en el código | T085 o el que lo suceda (fuera de esta spec) | No para el plan; T085 es condición de entrada (FR-001) |
 | `docs/TESTING.md` §3 «Nivel 2» describe un nocturno con WebKit que no existe | `docs/TESTING.md`; Q3 | Manda Q3: cinco specs a mano en Chromium y una vez en WebKit (fila 17) | T085; el PR A documenta el job `release` en `docs/TESTING.md` sin tocar el texto del nivel 2 | No |
 
-**Resultado del gate**: **PASA.** Quedan cuatro decisiones abiertas (D1–D4, al final) que
-no bloquean el plan: bloquean pasos concretos de la ejecución, y cada una dice cuál.
+**Para el PR documental T085**, además de las filas 1–18 de la spec:
+
+- **Fila 19 · Nota a ADR-007 y ADR-013 (D2, opción a; fundadores, 18 nov 2026):** el
+  borrado manual de cuenta de MVP-1 suspende por nombre los triggers de solo inserción
+  (`audit_events_append_only`, `budget_versions_append_only`,
+  `goal_ledger_append_only`, `goal_allocations_append_only` y `settlements_guard`)
+  dentro de una sola transacción como dueño de las tablas, los reactiva antes del
+  `commit` y comprueba las invariantes. Es una operación administrativa excepcional, con
+  el «sí» escrito de la persona (o de las dos, si hay pareja), no un camino de la app
+  ([contracts/account-deletion.md](contracts/account-deletion.md)).
+- **Fila 20 · Criterio de la decisión 22.2 (D3, opción a):** «falla el rendimiento del
+  abanico con 6 metas» = menos de 55 fps (menos del 95 % de fotogramas en ≤ 18,2 ms, o
+  alguno > 50 ms) con CPU 4×.
+- **Fila 21 · Periodo de uso de Q10 (D4, opción a):** despliegues de producción congelados
+  durante los 7 días; un fallo crítico se corrige y los 7 días vuelven a empezar.
+
+**Resultado del gate**: **PASA**, sin decisiones abiertas. D1–D4 las decidieron los
+fundadores el 18 de noviembre de 2026 (opción a en las cuatro).
 
 ## Project Structure
 
@@ -141,7 +158,7 @@ specs/005-gate-mvp-1/
 │   ├── ci.md                     # Jobs, presupuestos, job `release`, orden de los runs a mano
 │   ├── cls-comparator.md         # Comparador por fotogramas (Q7): entrada, salida, controles, fiabilidad
 │   ├── human-verifications.md    # Quién, cuándo, cómo y qué evidencia deja cada verificación humana
-│   └── account-deletion.md       # Procedimiento manual de borrado (Q8), condicionado a D2
+│   └── account-deletion.md       # Procedimiento manual de borrado (Q8; D2, opción a)
 ├── states-matrix.md              # FR-041: la crea el PR A
 ├── evidence.md                   # La crea el PR A; la cierra el PR C
 ├── evidence/                     # Salidas .txt y capturas .png (PR A–C)
@@ -165,7 +182,7 @@ tests/
 ├── src/features/**/*.test.tsx            # A: US-21 (etiquetas) y US-13 (nunca se exige presupuesto)
 ├── integration/
 │   ├── money-us08.test.ts                # A: US-08 en la vista, una sentencia
-│   └── account-deletion.test.ts          # A: el procedimiento de D2 sobre el runner (si D2 lo pide)
+│   └── account-deletion.test.ts          # A: el procedimiento de D2 sobre el runner
 ├── a11y/
 │   ├── route-registry.ts                 # A: estados que falten en la matriz de FR-041
 │   └── routes.a11y.ts                    # A: casos @sweep: 200 % en hojas, diálogos, A1–A6 e invitación;
@@ -182,7 +199,7 @@ scripts/
 ├── cls-frames/recorder.js                # A: la parte que corre en la página (también para el Mac, R11)
 ├── cls-frames/compare.mjs                # A: el comparador puro, con su prueba
 ├── dev-target/seed-long-lists.mjs        # A: cuenta de listas largas en juntia-dev (FR-043), con el guardia
-└── account-deletion/                     # A: el procedimiento de D2 (SQL + Bash), si D2 lo pide
+└── account-deletion/                     # A: el procedimiento de D2 (SQL + Bash)
 playwright.config.ts                      # A: proyectos e2e-webkit, evidence-webkit, evidence-firefox
 .github/workflows/ci.yml                  # A: job `release`, solo workflow_dispatch
 tests/ci-workflow.test.ts                 # A: el job `release` nunca corre en pull_request
@@ -203,7 +220,7 @@ entrada (FR-001) y lo que cada paso necesita del anterior:
 | --- | --- | --- | --- | --- |
 | **0** | **Entrada al gate**: T084 real (salida interna de los fundadores con cuentas reales) y el PR documental T085 mergeado | Fundadores; gestor | — | FR-001 |
 | **0b** | **Mediciones en producción que alimentan el PR B**, sobre lo que ya está en producción: F02 (10 + 10 por fundador), primera pasada de S1–S5 con y sin movimiento, VoiceOver, contraste, teclado y safe areas, y comprobar 002-T097 (FR-004) | Fundadores; gestor | Producción con P0-3 | Hallazgos para B; FR-032 decidido |
-| **1** | **PR A** · pruebas, arneses y job `release` | Agente; revisión; gestor marca listo | Paso 0 (ver D1) | Gate verde; un run de `release` en su último commit (calibración del comparador) |
+| **1** | **PR A** · pruebas, arneses y job `release` | Agente; revisión; gestor marca listo | Paso 0 para marcarlo listo y mergearlo; el borrador puede empezar antes (D1) | Gate verde; un run de `release` en su último commit (calibración del comparador) |
 | **2** | **Barrido y laboratorio sobre `main` con A**: `@sweep` a mano y `release` si A no lo cubrió | Gestor | PR A mergeado | Hallazgos para B |
 | **3** | **PR B** · correcciones (puede partirse por áreas, Q1) | Agente; revisión; gestor | Pasos 0b y 2 | Gate verde |
 | **4** | **Commit candidato** = `main` tras el último PR de código. Sobre él, en serie (nunca en paralelo, porque dos `workflow_dispatch` sobre la misma rama se cancelan): (a) run completo con las cinco specs y el ensayo de restauración; (b) `@sweep`; (c) `release` completo, con WebKit | Gestor | Paso 3 | FR-010, FR-020, FR-040, FR-050–FR-054 |
@@ -213,8 +230,18 @@ entrada (FR-001) y lo que cada paso necesita del anterior:
 | **8** | **PR C** · evidencia y cierre, solo documentos | Agente; fundadores | Paso 7 | `evidence.md` y checklist firmadas |
 | **9** | PR documental de **declaración** de MVP-1 (fuera de esta spec, FR-082) | Gestor; fundadores | PR C mergeado, los dos aprueban | Estado del maestro, `AGENTS.md` y `CLAUDE.md` |
 
-El ensayo del borrado de cuenta (FR-067) puede hacerse en cualquier momento después de
-D2 y del PR A; no depende del candidato porque corre en `juntia-dev`.
+**D1, opción (a):** el PR A se escribe e itera en borrador antes de FR-001, y el paso 0b
+también puede adelantarse; el PR A no se marca listo ni se mergea hasta que T084 y T085
+estén cerrados.
+
+**D4, opción (a):** durante los 7 días del paso 7, **los despliegues de producción se
+congelan**. Si aparece un fallo crítico (dinero, privacidad, pérdida de datos o
+accesibilidad básica), el periodo se para, se corrige en un PR B, el candidato nuevo pasa
+el paso 4 (y los pasos 5 y 6 que su cambio afecte) y **los 7 días vuelven a empezar**. Un
+fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
+
+El ensayo del borrado de cuenta (FR-067) puede hacerse en cualquier momento después del
+PR A; no depende del candidato porque corre en `juntia-dev`.
 
 ## PR A · Pruebas y arneses que faltan
 
@@ -222,10 +249,10 @@ D2 y del PR A; no depende del candidato porque corre en `juntia-dev`.
 estados (FR-041), los casos `@sweep` que faltan (FR-042, FR-046 y la comprobación de Q11),
 los cinco arneses de laboratorio, el comparador de CLS por fotogramas (FR-051), el
 proyecto WebKit de las cinco specs (FR-020), la cuenta de listas largas (FR-043), el job
-`release` y, si D2 lo pide, el procedimiento de borrado con su prueba.
+`release` y el procedimiento de borrado con su prueba (D2, opción a).
 
 **FR:** FR-011, FR-012, FR-041, FR-042 (pruebas), FR-043 (siembra y capturas), FR-046
-(pruebas), FR-050–FR-054 (arneses), FR-067 (procedimiento, según D2), FR-090, FR-093,
+(pruebas), FR-050–FR-054 (arneses), FR-067 (procedimiento, D2 opción a), FR-090, FR-093,
 FR-095.
 
 | Archivo | Qué | Capa · job |
@@ -243,7 +270,7 @@ FR-095.
 | `playwright.config.ts` | Proyectos `e2e-webkit` (Desktop Safari, `tests/e2e`), `evidence-webkit` y `evidence-firefox` (solo `cls-frames.capture.ts`). Ninguno entra en `test:e2e:smoke` ni en `test:a11y` | Config |
 | `.github/workflows/ci.yml` + `tests/ci-workflow.test.ts` | Job `release` con entrada `release_lab`, matriz de seis tramos, `timeout-minutes: 20`, nunca en `pull_request` ([contracts/ci.md](contracts/ci.md)) | CI |
 | `scripts/dev-target/seed-long-lists.mjs` | FR-043 en `juntia-dev`: una cuenta con ≥ 500 movimientos en un mes, aportes y versiones de presupuesto, con el guardia de destino | Herramienta de dev |
-| `scripts/account-deletion/` + `tests/integration/account-deletion.test.ts` | Solo si D2 elige una opción con script ([contracts/account-deletion.md](contracts/account-deletion.md)) | Integración · `db` |
+| `scripts/account-deletion/` + `tests/integration/account-deletion.test.ts` | D2, opción (a): sin pareja, todo lo de la persona; con pareja, la pareja completa ([contracts/account-deletion.md](contracts/account-deletion.md)) | Integración · `db` |
 | `docs/TESTING.md` | §3 y §9: el job `release`, sus tramos, su tope y que no es del gate. **No** toca el texto del nivel 2 (lo enmienda T085, fila 17) | Documento |
 
 **Punto de control:** un run de `release` (`gh workflow run` por el gestor) sobre el
@@ -304,7 +331,7 @@ ninguna prueba nueva lleva un job por encima de ~600 s; si no cabe, va a `@sweep
 | Job | Base | PR A | PR B | Estimado tras P0-4 | Si no cabe |
 | --- | --- | --- | --- | --- | --- |
 | `app` | 280–310 s | +5–10 s (dominio, componentes, comparador puro) | +2–10 s (pruebas de las correcciones) | ≤ 330 s | — |
-| `db` | 408–547 s | +3–15 s (US-08 en la vista; borrado si D2) | 0 | ≤ 565 s | La prueba de borrado pasa a `release` (tramo `lab-interaction`) si `db` se acerca a 600 s |
+| `db` | 408–547 s | +3–15 s (US-08 en la vista; borrado de D2) | 0 | ≤ 565 s | La prueba de borrado pasa a `release` (tramo `lab-interaction`) si `db` se acerca a 600 s |
 | `e2e` | 321 s | 0 (ninguna spec nueva; un `skip` fuera de Chromium) | 0 | 321 s | — |
 | `a11y-session` | 398 s | +40–80 s (10–20 casos ligeros nuevos, a ~4 s por estado con los dos temas en el mismo contexto) | 0–10 s | ≤ 490 s | Por encima de **560 s** estimados, los estados restantes de FR-041 van solo a `@sweep` |
 | `@sweep` (a mano, en `a11y-session`) | ≈ 430 s (run 43050756971, 11 nov, antes de #82) | +60–150 s (200 % en hojas y diálogos, raíz a 1440, 768 px, foco por URL) | — | 500–650 s, a medir en el paso 2 | Si pasa de 600 s, el barrido se reparte en dos tramos con `--shard` (decisión del plan, [contracts/ci.md](contracts/ci.md)) |
@@ -336,10 +363,10 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 | Exportación JSON y CSV con datos reales | FR-060 | Cada fundador | 6 | Recuentos por tipo, sin contenido |
 | Recuperación de acceso | FR-063 | Cada fundador | 6 | Fecha y resultado; límite de envío copiado del panel |
 | Vuelta atrás de un despliegue | FR-064 | Dueña de Vercel con el gestor | 6 | Identificadores de despliegue antes y después |
-| **7 días consecutivos de uso diario** | FR-080, FR-081 | Los dos | 7 | Valoración de cada uno, por separado |
+| **7 días consecutivos de uso diario**, con despliegues congelados (D4) | FR-080, FR-081 | Los dos | 7 | Valoración de cada uno, por separado |
 | **Restauración real** de la copia con el esquema de P0-3 | FR-061 | Un fundador, en su equipo, con el gestor | 7 | Manifiesto y log de `restore-plain.sh`, sin datos |
 | Registros de Vercel de una semana | FR-013 | Dueña de Vercel, o el gestor con su «sí» y solo lectura | 7 | Búsquedas hechas y su resultado, sin pegar líneas con datos |
-| Ensayo del borrado de cuenta | FR-067 | Gestor, en `juntia-dev` | Tras D2 y A | Recuentos antes y después |
+| Ensayo del borrado de cuenta | FR-067 | Gestor, en `juntia-dev` | Tras el PR A | Recuentos antes y después |
 
 ## Dónde se mide cada criterio de éxito
 
@@ -376,7 +403,8 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
   WebKit».
 - **El Mac es prestado y se usa una vez.** Si el CLS en iPhone sale distinto de 0, B
   corrige y hace falta el Mac otra vez. Se pide para el paso 6 con margen de una semana.
-- **Un despliegue durante los 7 días** cambia lo que se está aprobando: D4.
+- **Un fallo crítico durante los 7 días** reinicia el periodo (D4, opción a): puede
+  alargar P0-4 una semana o más.
 - **Concurrencia de `workflow_dispatch`.** Dos lanzamientos sobre la misma rama se
   cancelan (grupo `ci-<ref>`). Los runs del paso 4 van en serie.
 - **`juntia-dev` compartido.** Un solo agente a la vez (decisión 18); la siembra de
@@ -387,24 +415,30 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 - Ningún requisito de la spec queda sin dueño: FR-001–FR-004 (pasos 0 y 0b, C), FR-010–FR-015
   (A, pasos 4–7), FR-020–FR-022 (A, pasos 4–6), FR-030–FR-034 (pasos 0b y 6, B, C),
   FR-040–FR-046 (A, B, pasos 4 y 6), FR-050–FR-056 (A, pasos 4 y 6–7, C), FR-060–FR-069
-  (checklist, pasos 6–7, A según D2), FR-070–FR-072 (pasos 0b y 6), FR-080–FR-083 (paso 7, C),
+  (checklist, pasos 6–7, A con D2), FR-070–FR-072 (pasos 0b y 6), FR-080–FR-083 (paso 7, C),
   FR-090–FR-095 (A y B).
 - Ninguna decisión nueva significativa se toma en el plan. Las del plan (tramos del job
   `release`, método de forzar el esqueleto, formato de evidencia, `--shard` del barrido
-  si hace falta, técnica condicional de F02) son locales y reversibles. Las que no lo son
-  están en D1–D4.
+  si hace falta, técnica condicional de F02) son locales y reversibles. Las que no lo
+  eran (D1–D4) las decidieron los fundadores el 18 de noviembre de 2026.
 - Ningún `[P]` que afecte al alcance queda abierto.
 - Specs E2E: siguen en 5 de 4–6. Presupuestos de job: no se mueven.
 - Este PR no toca `docs/TESTING.md`, `AGENTS.md`, `.github/`, `scripts/` ni `package.json`.
 
-**Resultado:** **PASA**, con D1–D4 abiertas para los fundadores.
+**Resultado:** **PASA**, sin decisiones abiertas.
 
 ## Para los fundadores
 
-Nada de este plan reabre Q1–Q12. Cuatro puntos obligan a decidir algo que la spec no
-decide; el plan no los cierra.
+Nada de este plan reabre Q1–Q12. Cuatro puntos obligaban a decidir algo que la spec no
+decidía. **Los fundadores aprobaron las cuatro recomendaciones el 18 de noviembre de
+2026** («dale acepto», Alejandro, comunicado por el gestor; la segunda fundadora lo
+confirma con el merge de este PR). Cada punto conserva su contexto y sus opciones como
+historia.
 
-### D1 · ¿Puede empezar el PR A antes de que P0-3 esté aceptada? `[NECESITA DECISIÓN]`
+### D1 · ¿Puede empezar el PR A antes de que P0-3 esté aceptada?
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**. El PR A se itera en borrador
+  ya; no se marca listo ni se mergea hasta que T084 y T085 estén cerrados.
 
 - **Contexto:** FR-001 dice que P0-4 «empieza con P0-3 aceptada»: T084 real y T085
   mergeado. Hoy no lo están (T084 espera los resultados de los fundadores; T085 no está
@@ -416,11 +450,16 @@ decide; el plan no los cierra.
   - (b) El PR A puede mergearse antes de FR-001, porque no toca producto; B, C y el
     candidato sí esperan.
   - (c) Nada de P0-4 empieza hasta FR-001, ni el borrador.
-- **Recomendación: (a).** Respeta FR-001 en lo que cuenta (nada de P0-4 entra en `main`
+- **Recomendación (aceptada): (a).** Respeta FR-001 en lo que cuenta (nada de P0-4 entra en `main`
   sin P0-3 aceptada) y no deja parado el trabajo que más tarda en construirse, el
   comparador.
 
-### D2 · Alcance del borrado manual de cuenta cuando la persona tiene pareja `[NECESITA DECISIÓN]`
+### D2 · Alcance del borrado manual de cuenta cuando la persona tiene pareja
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**. Sin pareja, se borra todo lo de
+  la persona; con pareja, la pareja completa, con el «sí» de las dos y la exportación
+  previa de cada una. La suspensión de triggers como dueño va como nota a ADR-007 y
+  ADR-013 en el PR documental T085 (fila 19).
 
 - **Contexto:** Q8 fija un procedimiento manual ensayado en `juntia-dev`, pero no qué se
   borra. Hoy ninguna tabla tiene `on delete cascade` hacia `auth.users`; los movimientos,
@@ -439,14 +478,17 @@ decide; el plan no los cierra.
     la salida de un integrante (ADR-003) y cómo se ve en la pantalla de la otra persona.
   - (c) En MVP-1 solo se ensaya el caso sin pareja; con pareja, la petición espera al
     lanzamiento público.
-- **Recomendación: (a).** Es verificable con recuentos a cero, no inventa una pantalla y
+- **Recomendación (aceptada): (a).** Es verificable con recuentos a cero, no inventa una pantalla y
   respeta ADR-003. **Consecuencia que se decide con ella:** el script suspende por nombre
   los triggers de solo inserción dentro de una transacción como dueño, igual que el
   protocolo de restauración de `docs/TESTING.md`. Recomiendo registrarlo como **nota a
   ADR-007 y ADR-013 en el PR documental T085**, no como ADR nuevo, porque no cambia la
   arquitectura sino que añade una operación administrativa excepcional.
 
-### D3 · Criterio de «falla» del abanico con 6 metas (FR-053) `[NECESITA DECISIÓN]`
+### D3 · Criterio de «falla» del abanico con 6 metas (FR-053)
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**. ≥ 55 fps: ≥ 95 % de fotogramas
+  en ≤ 18,2 ms y ninguno > 50 ms, con CPU 4×.
 
 - **Contexto:** la decisión 22.2 dice que si «falla el rendimiento del abanico con 6
   metas en gama media», la pantalla cae a la lista y vuelve a los fundadores. Ni la 22.2
@@ -457,10 +499,13 @@ decide; el plan no los cierra.
     foco y el deslizamiento, con CPU 4× a 1440 (abanico) y a 390 (pila).
   - (b) 60 fps estrictos (≤ 16,7 ms en el 95 %).
   - (c) Sin umbral numérico: el gestor mide y los fundadores juzgan con la grabación.
-- **Recomendación: (a).** Usa un número que el paquete de diseño ya aprobó para el mismo
+- **Recomendación (aceptada): (a).** Usa un número que el paquete de diseño ya aprobó para el mismo
   tipo de movimiento y lo hace medible en el laboratorio.
 
-### D4 · ¿Qué pasa con los 7 días si hay que desplegar durante el periodo? `[NECESITA DECISIÓN]`
+### D4 · ¿Qué pasa con los 7 días si hay que desplegar durante el periodo?
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**. Despliegues congelados durante
+  el periodo; si hay un fallo crítico, se corrige y los 7 días vuelven a empezar.
 
 - **Contexto:** Q10 pide 7 días consecutivos de uso diario real antes de aprobar, sin
   decir sobre qué versión. Un fallo crítico durante el periodo obliga a corregir y
@@ -472,7 +517,7 @@ decide; el plan no los cierra.
   - (b) Igual que (a), pero tras la corrección basta con **3 días** más sobre el candidato
     nuevo.
   - (c) Sin congelación: cualquier despliegue sigue contando.
-- **Recomendación: (a).** Lo que se declara es lo que los dos usaron una semana; un fallo
+- **Recomendación (aceptada): (a).** Lo que se declara es lo que los dos usaron una semana; un fallo
   crítico ya impide aprobar (Q10) y reiniciar es la lectura literal.
 
 ## Complexity Tracking

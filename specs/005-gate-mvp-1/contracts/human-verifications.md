@@ -166,7 +166,12 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   escritorio, con una meta individual y una compartida, aportes de los dos, un gasto con
   meta sin doble conteo y un presupuesto creado y desactivado (FR-080).
 - **El periodo:** 7 días consecutivos de uso real, con al menos un fin de semana y una
-  liquidación. Despliegues durante el periodo: D4.
+  liquidación.
+- **Despliegues durante el periodo (D4, opción a; fundadores, 18 nov 2026):** los
+  despliegues de producción **se congelan**. Si aparece un fallo crítico, el periodo se
+  para, se corrige en un PR B, el candidato nuevo pasa el paso 4 y **los 7 días vuelven
+  a empezar** desde el día del nuevo despliegue. El gestor registra en `evidence.md` la
+  fecha de inicio de cada periodo y, si lo hubo, el motivo del reinicio.
 - **Al final, cada fundador por separado y sin leer la del otro:**
   - una nota en cada eje: uso diario, legibilidad, rapidez y carácter visual;
   - las tres preguntas de §6.7: qué es claro, qué impresiona, qué estorba;
@@ -188,7 +193,7 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 - **Evidencia:** el manifiesto y el log de la restauración, sin datos (los scripts ya los
   escriben así).
 
-### V15 · Ensayo del borrado de cuenta (FR-067, Q8) — tras D2 y el PR A
+### V15 · Ensayo del borrado de cuenta (FR-067, Q8; D2, opción a) — tras el PR A
 
 - **Quién:** el gestor, en `juntia-dev`, con el guardia de destino.
 - **Cómo:** [account-deletion.md](account-deletion.md).
