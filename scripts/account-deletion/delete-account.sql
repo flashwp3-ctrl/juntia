@@ -38,7 +38,9 @@ delete from juntia_data.group_invitations where id in(select id from del_invitat
 delete from juntia_data.group_members where group_id in(select id from del_groups);
 delete from juntia_data.groups where id in(select id from del_groups);
 delete from juntia_data.idempotency_records where actor_user_id in(select id from del_users);
-delete from juntia_data.audit_events where actor_user_id in(select id from del_users) or entity_id in(select id from del_entities);
+-- F87-1: solo la auditoría de los actores del alcance. La de un actor externo sobre una entidad del alcance detiene el
+-- procedimiento antes (cierre de scope.sql), así que aquí nunca se borra.
+delete from juntia_data.audit_events where actor_user_id in(select id from del_users);
 -- «Categorías propias»: el esquema no tiene categorías por persona (`categories` es el catálogo común), no hay nada que borrar.
 delete from juntia_data.profiles where user_id in(select id from del_users);
 delete from juntia_data.signup_allowlist where email in(select lower(email) from auth.users where id in(select id from del_users));

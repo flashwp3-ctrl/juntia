@@ -70,6 +70,10 @@ begin
     where a.entry_id not in(select id from del_entries) and a.member_user_id in(select id from del_users) limit 1),
   (select 'budget_versions '||v.id from juntia_data.budget_versions v
     where v.budget_id not in(select id from del_budgets) and v.changed_by in(select id from del_users) limit 1),
+  -- F87-1 (revisión del PR #87): nunca se borra la auditoría de un actor externo al alcance. Si un actor de fuera dejó
+  -- auditoría sobre una entidad del alcance, el procedimiento se detiene y la nombra, sin borrar nada.
+  (select 'audit_events '||a.id from juntia_data.audit_events a where a.actor_user_id not in(select id from del_users)
+    and a.entity_id in(select id from del_entities) limit 1),
   -- Dentro → fuera: una fila del alcance que cuelga de otra que no se borra.
   (select 'transactions '||t.id from juntia_data.transactions t where t.id in(select id from del_transactions)
     and t.group_id is not null and t.group_id not in(select id from del_groups) limit 1),
@@ -105,7 +109,7 @@ create temp view del_counts as select jsonb_build_object(
  'group_members',(select count(*) from juntia_data.group_members where group_id in(select id from del_groups)),
  'groups',(select count(*) from juntia_data.groups where id in(select id from del_groups)),
  'idempotency_records',(select count(*) from juntia_data.idempotency_records where actor_user_id in(select id from del_users)),
- 'audit_events',(select count(*) from juntia_data.audit_events where actor_user_id in(select id from del_users) or entity_id in(select id from del_entities)),
+ 'audit_events',(select count(*) from juntia_data.audit_events where actor_user_id in(select id from del_users)),
  'profiles',(select count(*) from juntia_data.profiles where user_id in(select id from del_users)),
  'signup_allowlist',(select count(*) from juntia_data.signup_allowlist where email in(select lower(email) from auth.users where id in(select id from del_users)))
 ) as counts;

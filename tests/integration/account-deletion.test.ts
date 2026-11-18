@@ -352,3 +352,84 @@ describe("borrado manual en fases (contracts/account-deletion.md §6)", () => {
     await runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev" });
   });
 });
+
+// Revisión del PR #87 (ChatGPT, en 33036fd): F87-1, F87-2 y F87-5.
+describe("borrado manual · revisión del PR #87", () => {
+  /** Base que cuenta sus llamadas y puede fallar al lanzar la fase 1, antes o después del COMMIT. */
+  const countingDb = (fail?: "before" | "after") => {
+    const calls: string[] = [];
+    let armed = true;
+    const wrapped = {
+      query: (sql: string) => { calls.push("query"); return db.query(sql); },
+      files: (files: string[], vars: Record<string, string>) => {
+        const phase1 = files.some((f) => f.endsWith("delete-account.sql"));
+        calls.push(phase1 ? "fase 1" : "cierre");
+        if (phase1 && armed && fail === "before") { armed = false; throw new Error("parada antes de la fase 1"); }
+        const output = db.files(files, vars);
+        if (phase1 && armed && fail === "after") { armed = false; throw new Error("caída después del COMMIT"); }
+        return output;
+      },
+    };
+    return { db: wrapped, calls };
+  };
+
+  it("F87-1 · nunca se borra la auditoría de un actor externo: con una sobre una entidad del alcance, se detiene antes de la fase 0", async () => {
+    const pair = await couple();
+    const third = await loner();
+    const shared = runnerSql(`select id from juntia_data.transactions where group_id='${pair.groupId}' and status='active' limit 1`);
+    const audit = randomUUID();
+    runnerSql(`insert into juntia_data.audit_events(id,actor_user_id,entity_type,entity_id,action) values('${audit}','${third.id}','transaction','${shared}','update')`);
+    try {
+      const path = manifest([pair.sara.id, pair.tomas.id], pair.groupId);
+      const { auth, calls } = testAuth(fakeClock());
+      await expect(runDeletion({ manifestPath: path, auth, db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(new RegExp(`ACCOUNT_DELETION_CLOSURE: audit_events ${audit}`));
+      expect(existsSync(statePathFor(path))).toBe(false);
+      expect(calls).toEqual([]);
+      expect(runnerSql(`select count(*) from juntia_data.audit_events where id='${audit}'`)).toBe("1");
+    } finally {
+      runnerSql(`begin; set local session_replication_role='replica'; delete from juntia_data.audit_events where id='${audit}'; commit;`);
+    }
+  });
+
+  it("F87-2 · con el mismo request_id y otro alcance, --resume y --abort se rechazan sin SQL ni Auth", async () => {
+    const pair = await couple();
+    const third = await loner();
+    const path = manifest([pair.sara.id, pair.tomas.id], pair.groupId);
+    const stopping = countingDb("before");
+    await expect(runDeletion({ manifestPath: path, auth: testAuth(fakeClock()).auth, db: stopping.db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/parada antes/);
+    expect(state(path).phase).toBe("locked");
+    const original = readFileSync(path, "utf8");
+    for (const change of [(m: Record<string, unknown>) => { m.users = [pair.sara.id, third.id]; }, (m: Record<string, unknown>) => { m.group_id = randomUUID(); }]) {
+      const m = JSON.parse(original);
+      change(m);
+      writeFileSync(path, JSON.stringify(m, null, 2));
+      for (const mode of ["resume", "abort"] as const) {
+        const next = countingDb();
+        const { auth, calls } = testAuth(fakeClock());
+        await expect(runDeletion({ manifestPath: path, mode, auth, db: next.db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/^(state|manifest):/);
+        expect(next.calls, mode).toEqual([]);
+        expect(calls, mode).toEqual([]);
+      }
+    }
+    writeFileSync(path, original);
+    expect((await runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev" })).phase).toBe("verified");
+  });
+
+  it("F87-5 · caída después del COMMIT de la fase 1: --resume no repite el SQL y conserva los recuentos originales", async () => {
+    const pair = await couple();
+    const path = manifest([pair.sara.id, pair.tomas.id], pair.groupId);
+    const crashing = countingDb("after");
+    await expect(runDeletion({ manifestPath: path, auth: testAuth(fakeClock()).auth, db: crashing.db, sleep: noSleep, target: "juntia-dev" })).rejects.toThrow(/caída después del COMMIT/);
+    const interrupted = state(path);
+    expect(interrupted.phase).toBe("locked");
+    expect(interrupted.phase1_started).toBeTruthy();
+    expect(total(counts([pair.sara.id, pair.tomas.id], pair.groupId))).toBe(0);
+    const resumed = countingDb();
+    const result = await runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db: resumed.db, sleep: noSleep, target: "juntia-dev" });
+    expect(result.phase).toBe("verified");
+    expect(resumed.calls).not.toContain("fase 1");
+    expect(result.counts_before).toEqual(interrupted.counts_at_plan);
+    expect(total(result.counts_before)).toBeGreaterThan(0);
+    expect(result.recovery?.motivo).toMatch(/se confirmó antes de guardar el estado/);
+  });
+});

@@ -96,6 +96,17 @@ export function validateManifest(manifest, { target }) {
   return m;
 }
 
+/**
+ * F87-2 (revisión del PR #87): huella SHA-256 de la representación canónica (claves ordenadas) del manifiesto COMPLETO. No
+ * hay campos operativos excluidos: cualquier cambio del manifiesto después del plan hace rechazar --resume y --abort.
+ */
+export function manifestHash(manifest) {
+  const canonical = (value) => Array.isArray(value) ? value.map(canonical)
+    : value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])])) : value;
+  return createHash("sha256").update(JSON.stringify(canonical(manifest))).digest("hex");
+}
+const total = (counts) => Object.values(counts ?? {}).reduce((sum, n) => sum + Number(n), 0);
+
 /** Escritura atómica del estado: temporal y renombrado (F85-10). */
 function writeState(path, state) {
   const temp = `${path}.${process.pid}.${randomUUID().slice(0, 8)}.tmp`;
@@ -199,7 +210,7 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
     // Cierre del alcance y recuento de referencia, de solo lectura, antes de escribir nada (§3).
     const counts = parseCounts(db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" }), "COUNTS");
     state = {
-      request_id: manifest.request_id, phase: "planned", history: [{ phase: "planned", at: iso() }],
+      request_id: manifest.request_id, manifest_sha256: manifestHash(manifest), phase: "planned", history: [{ phase: "planned", at: iso() }],
       people: manifest.users.map((uuid) => ({ uuid, ban: "pending", banned_until: null, sessions_revoked: false, ban_checked_at: null })),
       email_sha256: facts.emails, counts_at_plan: counts, tokens_wait_until: null, auth_deleted: [], counts_before: null, counts_after: null,
     };
@@ -208,6 +219,8 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
     if (!existsSync(statePath)) stop("state", "no hay estado para este request_id");
     state = JSON.parse(readFileSync(statePath, "utf8"));
     if (state.request_id !== manifest.request_id) stop("state", "el estado es de otro request_id");
+    // F87-2: con el mismo request_id, otro alcance no se ejecuta nunca. Antes de tocar Auth o la base.
+    if (state.manifest_sha256 !== manifestHash(manifest)) stop("state", "el manifiesto cambió desde el plan (su huella no coincide con la del estado): hace falta una petición nueva");
   }
   const save = () => writeState(statePath, state);
   const enter = (phase) => { state.phase = phase; state.history.push({ phase, at: iso() }); save(); log(`fase: ${phase}`); };
@@ -275,8 +288,26 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
   }
 
   // Fase 1 · data_deleted.
+  const scopeCounts = () => parseCounts(db.files([join(HERE, "closure.sql")], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" }), "COUNTS");
+  if (state.phase === "locked" && state.phase1_started) {
+    // F87-5: la fase 1 empezó y el estado no llegó a guardar su resultado. Si los datos del alcance ya no están, la
+    // transacción se confirmó: se conservan los recuentos del plan y se registra la recuperación, sin repetir el SQL.
+    const now = scopeCounts();
+    if (total(now) === 0 && total(state.counts_at_plan) > 0) {
+      state.counts_before = state.counts_at_plan;
+      state.counts_after = now;
+      state.recovery = { at: iso(), motivo: "la fase 1 se confirmó antes de guardar el estado; recuentos previos del plan" };
+      enter("data_deleted");
+    }
+  }
   if (state.phase === "locked") {
     await renew();
+    // F87-2: las comprobaciones de pertenencia y de alcance se repiten justo antes de borrar.
+    checkFacts(databaseFacts(db, manifest), manifest);
+    const now = scopeCounts();
+    if (JSON.stringify(now) !== JSON.stringify(state.counts_at_plan)) stop("phase1", "el alcance cambió desde el plan (recuentos distintos): se detiene antes de la fase 1");
+    // F87-5: «fase 1 en curso» queda en el estado ANTES de lanzar el SQL.
+    state.phase1_started = iso(); save();
     const output = db.files([join(HERE, "delete-account.sql"), ...extraSqlFiles], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" });
     state.counts_before = parseCounts(output, "COUNTS_BEFORE");
     state.counts_after = parseCounts(output, "COUNTS_AFTER");
