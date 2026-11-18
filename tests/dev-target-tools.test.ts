@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { acquireDevLock, alive, killTree, TreeStillAliveError, unlockDevLock } from "../scripts/dev-target/lock.mjs";
 import { runInSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
-import { planE2E } from "../scripts/dev-target/e2e-plan.mjs";
+import { planE2E, planIntegration } from "../scripts/dev-target/e2e-plan.mjs";
 import {measurementConfig,measurementPlan} from "../scripts/dev-target/playwright-measurement.mjs";
 
 describe("lector TAP de test:db:dev", () => {
@@ -375,4 +375,16 @@ it('dos pasadas por proyecto: sin mail; serial con un worker; conserva rutas y g
 it('el completo incluye E2E y axe en ambas pasadas, sin reintentos de medición',()=>{const plan=measurementPlan(planE2E([]),'2:false');expect(plan).toHaveLength(4);expect(plan.filter((s:{a11yJob?:string})=>s.a11yJob==='e2e')).toHaveLength(2);for(const step of plan)expect(step.args).toEqual(expect.arrayContaining(['--retries','0']));});
 it('la medición no abre workers, grep-invert ni config como argumentos de usuario',()=>{for(const args of [['--workers','4'],['--grep-invert','@mail'],['--config','evil']])expect(()=>planE2E(args)).toThrow();});
 
+});
+
+// 005, tasks.md regla 2: «mientras se itera, solo las pruebas afectadas» también en la integración.
+describe("test:integration:dev dirigido (planIntegration)", () => {
+  it("sin argumentos, todo el proyecto; con un nombre o la ruta de un archivo de tests/integration/, solo ese", () => {
+    expect(planIntegration([])).toEqual([]);
+    expect(planIntegration(["money-us08", "tests/integration/account-deletion.test.ts", "tests\\integration\\goals.test.ts"]))
+      .toEqual(["money-us08", "tests/integration/account-deletion.test.ts", "tests/integration/goals.test.ts"]);
+  });
+  it("rechaza opciones y rutas fuera de tests/integration/ antes del guardia", () => {
+    for (const arg of ["--project", "-t", "--config=evil", "../scripts/x.test.ts", "tests/e2e/goals.e2e.ts", "tests/integration/../../x"]) expect(() => planIntegration([arg])).toThrow(/test:integration:dev no acepta/);
+  });
 });

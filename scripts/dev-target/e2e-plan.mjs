@@ -110,3 +110,17 @@ export function planE2E(args, root = process.cwd()) {
   if (files.a11y.length > 0) steps.push(step("a11y"));
   return steps;
 }
+
+const INTEGRATION_FILTER = /^(?:tests\/integration\/)?[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.test\.ts)?$/;
+/**
+ * 005 (tasks.md, regla 2: «solo las pruebas afectadas»): `npm run test:integration:dev -- <nombre>` reenvía a Vitest
+ * solo filtros de archivo de `tests/integration/` (un nombre como `money-us08`, o su ruta). Cualquier otra cosa
+ * (opciones, rutas fuera de la carpeta) se rechaza antes del guardia y del bloqueo. Sin argumentos, todo el proyecto.
+ */
+export function planIntegration(args) {
+  const normal = (arg) => arg.replace(/\\/g, "/");
+  for (const arg of args) {
+    if (!INTEGRATION_FILTER.test(normal(arg))) throw new Error(`test:integration:dev no acepta «${arg}»: solo nombres o rutas de archivos de tests/integration/.`);
+  }
+  return args.map(normal);
+}
