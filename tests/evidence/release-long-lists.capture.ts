@@ -38,19 +38,21 @@ async function loadMore(page: Page, total: Locator) {
   return { cargarMas: `${clicks} pulsaciones`, totalAntes: before, totalDespues: await total.innerText() };
 }
 
-for (const width of [390, 1440] as const) {
-  test(`@release listas largas · ${width}px`, async ({ browser, baseURL }) => {
+for (const [width, theme] of [[390, "light"], [1440, "light"], [390, "dark"], [1440, "dark"]] as const) {
+  test(`@release listas largas · ${width}px · ${theme}`, async ({ browser, baseURL }) => {
     test.setTimeout(10 * 60_000);
     const user = await seedUser({ role: "listas-largas", index: test.info().parallelIndex, displayName: "Listas largas" });
     runnerSql(longListsSql({ userId: user.id, today: todayInBogota() }));
     const expected = JSON.parse(runnerSql(`select jsonb_build_object('total',(select sum(amount_minor) from juntia_data.transactions where owner_user_id='${user.id}' and status='active'),
       'goal',(select id from juntia_data.savings_goals where owner_user_id='${user.id}' and name='Listas largas'))::text`));
     const host = new URL(baseURL!).hostname;
-    const context = await browser.newContext({ baseURL, viewport: { width, height: 900 }, reducedMotion: "reduce" });
-    await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/", sameSite: "Lax" }]);
+    await user.client.rpc("set_theme", { p_theme: theme });
+    const context = await browser.newContext({ baseURL, viewport: { width, height: 900 }, colorScheme: theme, reducedMotion: "reduce" });
+    await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/", sameSite: "Lax" },
+      { name: "juntia_theme", value: theme, domain: host, path: "/", sameSite: "Lax" }]);
     await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
     const page = await context.newPage();
-    const shot = (name: string) => page.screenshot({ path: `${OUT}/release-long-lists--${name}--${width}.png`, fullPage: true, animations: "disabled" });
+    const shot = (name: string) => page.screenshot({ path: `${OUT}/release-long-lists--${name}--${width}--${theme === "light" ? "claro" : "oscuro"}.png`, fullPage: true, animations: "disabled" });
 
     // Actividad: el mes en curso con 600 movimientos.
     await page.goto("/actividad");
@@ -59,7 +61,7 @@ for (const width of [390, 1440] as const) {
     const activity = { vista: "actividad", ...(await loadMore(page, activityTotal)), recuento: copy.activity.count(LONG_LISTS.movements), totalSembradoMinor: String(expected.total),
       ...(await geometry(page, page.locator("main li, main tbody tr"))) };
     await shot("actividad");
-    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, ...activity });
+    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, tema: theme, ...activity });
 
     // Historial de aportes de la meta.
     await page.goto(`/metas/${expected.goal}`);
@@ -69,7 +71,7 @@ for (const width of [390, 1440] as const) {
     await expect(entries.first()).toBeVisible();
     const goal = { vista: "historial de aportes", ...(await loadMore(page, history)), filasEsperadas: LONG_LISTS.contributions, ...(await geometry(page, entries)) };
     await shot("aportes");
-    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, ...goal });
+    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, tema: theme, ...goal });
 
     // Historial del presupuesto: la hoja de edición de Plan, con sus 40 versiones.
     await page.goto("/plan");
@@ -79,7 +81,7 @@ for (const width of [390, 1440] as const) {
     const versions = sheet.getByRole("list").last().getByRole("listitem");
     const budget = { vista: "historial de presupuesto", versionesVistas: await versions.count(), versionesEsperadas: LONG_LISTS.budgetVersions, ...(await geometry(page, versions)) };
     await shot("presupuesto");
-    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, ...budget });
+    await record("release-long-lists.jsonl", { rotulo: "laboratorio", ancho: width, tema: theme, ...budget });
 
     for (const row of [activity, goal, budget]) {
       expect.soft(row.solapes, `${row.vista} ${width}: filas solapadas`).toBe(0);

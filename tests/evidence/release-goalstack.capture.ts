@@ -1,7 +1,7 @@
 // 005 · T026 (FR-053; D3, opción a; research R7). GoalStack con 6 metas compartidas sembradas en el runner, en Metas, con
 // movimiento activo y CPU 4×:
 //   · a 1440, el abanico: hover y foco de teclado de cada carta;
-//   · a 390, la pila: deslizamiento por puntero (arrastre de la carta del frente) y por teclado. La pila no tiene un gesto
+//   · a 390, la pila: deslizamiento con el dedo (táctil por CDP, como la E2E de la pila) y por teclado. La pila no tiene un gesto
 //     de teclado propio (Motion `drag`); por teclado se mide el recorrido con Tab por sus cartas, que es lo que la persona
 //     hace con el teclado (observación para la revisión, no un cambio de alcance).
 // Por animación: los intervalos entre requestAnimationFrame y las tareas largas (`longtask`); escribe el % de fotogramas en
@@ -20,10 +20,12 @@ const FRAME_MS = 18.2, LONG_MS = 50, WINDOW_MS = 700;
 async function measure(page: Page, action: () => Promise<void>) {
   await page.evaluate(() => {
     const w = window as unknown as { __anim: { frames: number[]; long: number[]; on: boolean; start: number } };
-    w.__anim = { frames: [], long: [], on: true, start: 0 };
-    try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (w.__anim.on) w.__anim.long.push(e.duration); }).observe({ type: "longtask" }); } catch { /* sin longtask */ }
+    // Cada medida tiene su objeto: el bucle y el observador de la anterior se paran con ella y no suman a esta.
+    const anim = { frames: [] as number[], long: [] as number[], on: true, start: 0 };
+    w.__anim = anim;
+    try { const obs = new PerformanceObserver((l) => { if (!anim.on) { obs.disconnect(); return; } for (const e of l.getEntries()) anim.long.push(e.duration); }); obs.observe({ type: "longtask" }); } catch { /* sin longtask */ }
     let last = performance.now();
-    const tick = (now: number) => { if (!w.__anim.on) return; w.__anim.frames.push(now - last); last = now; requestAnimationFrame(tick); };
+    const tick = (now: number) => { if (!anim.on) return; anim.frames.push(now - last); last = now; requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   });
   await page.evaluate(() => { (window as unknown as { __anim: { start: number } }).__anim.start = performance.now(); });
@@ -51,7 +53,7 @@ for (const width of [1440, 390] as const) {
     }
     await pair.sara.client.rpc("set_theme", { p_theme: "light" });
     // Movimiento activo: se mide la animación real, no la versión reducida.
-    const live = await browser.newContext({ baseURL, viewport: { width, height: 900 }, reducedMotion: "no-preference" });
+    const live = await browser.newContext({ baseURL, viewport: { width, height: 900 }, reducedMotion: "no-preference", ...(width === 390 ? { hasTouch: true, isMobile: true } : {}) });
     const host = new URL(baseURL!).hostname;
     await live.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "us", domain: host, path: "/", sameSite: "Lax" }]);
     await live.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
@@ -77,18 +79,26 @@ for (const width of [1440, 390] as const) {
         rows.push({ animacion: `foco carta ${i + 1}`, ...(await measure(page, async () => { await page.keyboard.press(i === 0 ? "Shift+Tab" : "Tab"); if (i === 0) await page.keyboard.press("Tab"); })) });
       }
     } else {
+      // El deslizamiento, con un dedo por CDP (`Input.dispatchTouchEvent`), como la E2E de la pila (goals.e2e.ts): pasa por
+      // el compositor y respeta `touch-action`. Un arrastre de ratón con la CPU a 4× puede leerse como un clic y abrir la meta.
+      const touchDrag = async (x: number, y: number, dx: number) => {
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+        for (let step = 1; step <= 10; step += 1) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + (dx * step) / 10, y }] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      };
+      // La caja de la carta del frente se lee del DOM, sin esperar a un localizador que se vuelve a pintar en cada fotograma.
+      const frontBox = () => page.evaluate(() => {
+        const card = [...document.querySelectorAll<HTMLElement>("[data-goal-stack] [data-swipe]")].find((node) => node.getClientRects().length > 0);
+        const rect = card?.getBoundingClientRect();
+        return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null;
+      });
       for (let i = 0; i < 6; i++) {
-        const front = stack.locator("[data-swipe]").filter({ visible: true }).first();
-        const box = await front.boundingBox();
-        if (!box) break;
-        rows.push({ animacion: `deslizar con puntero ${i + 1}`, ...(await measure(page, async () => {
-          await page.mouse.move(box.x + box.width * 0.7, box.y + 40);
-          await page.mouse.down();
-          await page.mouse.move(box.x + box.width * 0.7 - 140, box.y + 40, { steps: 8 });
-          await page.mouse.up();
-        })) });
+        const box = await frontBox();
+        if (!box || !page.url().endsWith("/metas")) break;
+        rows.push({ animacion: `deslizar con el dedo ${i + 1}`, ...(await measure(page, async () => { await touchDrag(box.x + box.width * 0.7, box.y + 40, -160); })) });
       }
-      await stack.locator("[data-swipe] a, [data-swipe] button").first().focus();
+      const focusable = stack.locator("a, button").filter({ visible: true });
+      if ((await focusable.count()) > 0) await focusable.first().focus();
       for (let i = 0; i < 3; i++) rows.push({ animacion: `teclado: Tab por la pila ${i + 1}`, ...(await measure(page, async () => { await page.keyboard.press("Tab"); })) });
     }
     for (const row of rows) await record("release-goalstack.jsonl", { rotulo: "laboratorio", criterio: "≥ 95 % en ≤ 18,2 ms y ninguno > 50 ms (D3)", ...conditions, ...row });
