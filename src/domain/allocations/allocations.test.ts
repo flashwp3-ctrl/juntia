@@ -46,3 +46,16 @@ it("55/45 → uno → dos restaura; 100/0 → uno → dos vuelve a 50/50 (FR-019
     expect(again.values).toEqual(restored);
   }
 });
+// 005 T013 · FR-012 (US-08), SC-001: «gasto grupal 400.000 al 50/50 → 400.000 del grupo, 200.000 a cada persona, nunca
+// 800.000». El total del grupo es el importe del gasto una sola vez; las partes son la parte de cada persona.
+it("US-08 literal: 400.000 al 50/50 → 400.000 del grupo, 200.000 a cada persona, nunca 800.000", () => {
+  const amount = pesos(400000n);
+  const result = splitAmount(amount, "equal", members);
+  expect(result).toEqual([{ userId: "sara", amount: pesos(200000n) }, { userId: "tomas", amount: pesos(200000n) }]);
+  const sumOfParts = result.reduce((sum, part) => sum + part.amount.amountMinor, 0n);
+  expect(sumOfParts).toBe(amount.amountMinor);
+  expect(validateSplit(amount, result)).toEqual({ valid: true, missing: pesos(0n), excess: pesos(0n) });
+  const groupTotal = amount.amountMinor;
+  expect(groupTotal).toBe(pesos(400000n).amountMinor);
+  expect(groupTotal).not.toBe(pesos(800000n).amountMinor);
+});

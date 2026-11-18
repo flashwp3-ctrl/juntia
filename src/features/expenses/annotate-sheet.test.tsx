@@ -970,3 +970,20 @@ describe("Fila optimista (UX lote 1, cambio 3)", { timeout: 15000 }, () => {
 });
 
 export type { CreatePayload };
+
+// 005 T016 · FR-012 (US-13): «ni el registro, ni Anotar, ni Inicio, ni la invitación a la pareja exigen crear un
+// presupuesto». Anotar se completa sin ningún presupuesto: Guardar se habilita con monto y categoría, y nada lo pide.
+describe("US-13 · Anotar no exige presupuesto (005 T016)", { timeout: 15000 }, () => {
+  it("sin ningún presupuesto: se guarda con monto y categoría, sin aviso ni bloqueo de presupuesto", async () => {
+    const actions = mockActions();
+    const { user, trigger } = setup(actions);
+    await user.click(trigger);
+    const dialog = await sheet();
+    await user.type(amount(), "45000");
+    await user.click(screen.getByRole("radio", { name: copy.categories.market }));
+    expect(isDisabled(saveButton())).toBe(false);
+    expect(dialog.textContent).not.toMatch(/presupuesto/i);
+    await user.click(saveButton());
+    expect(actions.create).toHaveBeenCalledTimes(1);
+  });
+});

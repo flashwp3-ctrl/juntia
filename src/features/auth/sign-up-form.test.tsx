@@ -36,3 +36,17 @@ describe("Enlaces de acceso en tinta subrayada (F09)", () => {
     expect(link.className).not.toContain("text-saving");
   });
 });
+
+// 005 T016 · FR-012 (US-13): «ni el registro, ni Anotar, ni Inicio, ni la invitación a la pareja exigen crear un
+// presupuesto». El registro se completa sin ningún presupuesto: sus campos son los tres de siempre más el aviso, el
+// botón principal está habilitado y nada pide crear un presupuesto.
+describe("US-13 · el registro no exige presupuesto (005 T016)", () => {
+  it("sin ningún presupuesto: sin campo ni aviso de presupuesto, y Crear cuenta habilitado", () => {
+    const { container } = render(<SignUpForm />);
+    const submit = screen.getByRole("button", { name: copy.auth.signUp.submit });
+    expect(submit.hasAttribute("disabled")).toBe(false);
+    expect(submit.getAttribute("aria-disabled")).not.toBe("true");
+    expect(container.textContent).not.toMatch(/presupuesto/i);
+    expect(container.querySelectorAll("input:not([type=hidden])").length).toBe(4);
+  });
+});

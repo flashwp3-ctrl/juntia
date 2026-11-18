@@ -120,3 +120,20 @@ describe("Inicio en Yo (T062)", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 });
+
+// 005 T016 · FR-012 (US-13): «ni el registro, ni Anotar, ni Inicio, ni la invitación a la pareja exigen crear un
+// presupuesto». Inicio se pinta sin ningún presupuesto, con datos y vacío, y su control principal (Anotar) está habilitado.
+describe("US-13 · Inicio no exige presupuesto (005 T016)", () => {
+  it("sin ningún presupuesto: ni aviso ni bloqueo que pida crearlo, y Anotar habilitado", () => {
+    for (const rows of [saraPrivateOctober2026, []]) {
+      const { container, unmount } = wrap(october(rows));
+      expect(container.textContent).not.toMatch(/presupuesto/i);
+      if (rows.length === 0) {
+        const annotate = screen.getByRole("button", { name: copy.home.empty.action });
+        expect(annotate.hasAttribute("disabled")).toBe(false);
+        expect(annotate.getAttribute("aria-disabled")).not.toBe("true");
+      }
+      unmount();
+    }
+  });
+});
