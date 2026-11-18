@@ -383,7 +383,7 @@ FR-093) y corre en el job `release` de `.github/workflows/ci.yml`
 - **`release_legs`** (texto, vacío = todos): nombres o prefijos de tramo separados por
   comas, para repetir solo los afectados. Un tramo no pedido termina en segundos con
   «no pedido» en el resumen; nunca cuenta como aprobado.
-- **23 tramos** (17 en el diseño; 5 de ellos, partidos en dos en T046 porque pasaron de 600 s en el punto de control, sin quitar cargas), cada uno con su Supabase, su build y su navegador
+- **25 tramos** (17 en el diseño; los que pasaron de 600 s, partidos en T046 sin quitar cargas: los de rutas de WebKit y Firefox en dos, y Inicio en Yo y Actividad de Chromium en tres), cada uno con su Supabase, su build y su navegador
   (`scripts/release-leg.mjs` dice qué corre cada uno): `cls-inicio-yo`,
   `cls-inicio-nosotros`, `cls-actividad`, `cls-balance`, `cls-plan`, `cls-analisis`,
   `cls-metas`, `cls-controls-chromium`, `lab-interaction`, `webkit-e2e-1` y `-2` (las

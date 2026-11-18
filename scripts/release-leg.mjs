@@ -1,4 +1,4 @@
-// 005 · contracts/ci.md, «Job nuevo: release» (FR-020, FR-050–FR-054, FR-093; F85-7). Los tramos del job `release` (17, y 23 desde T046)
+// 005 · contracts/ci.md, «Job nuevo: release» (FR-020, FR-050–FR-054, FR-093; F85-7). Los tramos del job `release` (17, y 25 desde T046)
 // (solo `workflow_dispatch` con `release_lab`, nunca en un PR, no es del gate) y qué ejecuta cada uno. El workflow solo
 // llama a este script, así que la prueba (tests/ci-workflow.test.ts) afirma la matriz y los comandos sin lanzar CI.
 //
@@ -19,8 +19,10 @@ export const CLS_ROUTES = ["inicio-yo", "inicio-nosotros", "actividad", "balance
  * tramos de rutas de WebKit y Firefox reparten sus rutas en `a` y `b`.
  */
 export const SPLIT_CLS_ROUTES = ["inicio-yo", "actividad"];
+/** En tercios desde el parcial 44355668184: las mitades midieron 607–639 s (cargas de ~15 s y ~270 s de arranque). */
+export const CLS_PARTS = 3;
 export const LEGS = [
-  ...CLS_ROUTES.flatMap((route) => (SPLIT_CLS_ROUTES.includes(route) ? [`cls-${route}-1`, `cls-${route}-2`] : [`cls-${route}`])),
+  ...CLS_ROUTES.flatMap((route) => (SPLIT_CLS_ROUTES.includes(route) ? Array.from({ length: CLS_PARTS }, (_, i) => `cls-${route}-${i + 1}`) : [`cls-${route}`])),
   "cls-controls-chromium", "lab-interaction", "webkit-e2e-1", "webkit-e2e-2",
   "webkit-cls-1", "webkit-cls-2a", "webkit-cls-2b", "webkit-cls-3a", "webkit-cls-3b",
   "firefox-cls-1", "firefox-cls-2a", "firefox-cls-2b", "firefox-cls-3a", "firefox-cls-3b",
@@ -39,11 +41,11 @@ const lab = (...args) => playwright(...args, "--grep", "@release");
  */
 export function legPlan(leg) {
   if (!LEGS.includes(leg)) throw new Error(`Tramo desconocido: ${leg}`);
-  const cls = /^cls-(.+?)(?:-([12]))?$/.exec(leg);
+  const cls = /^cls-(.+?)(?:-([1-9]))?$/.exec(leg);
   if (cls && CLS_ROUTES.includes(cls[1]) && (cls[2] === undefined) === !SPLIT_CLS_ROUTES.includes(cls[1])) {
     // FR-050: 40 cargas en claro y 10 en oscuro de una ruta, con la API y el grabador a la vez (control 7); partida, la mitad.
     return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/release-cls.capture.ts", "--workers", "1"),
-      env: { RELEASE_CLS_ROUTE: cls[1], ...(cls[2] ? { RELEASE_CLS_PART: `${cls[2]}/2` } : {}) } }] };
+      env: { RELEASE_CLS_ROUTE: cls[1], ...(cls[2] ? { RELEASE_CLS_PART: `${cls[2]}/${CLS_PARTS}` } : {}) } }] };
   }
   if (leg === "cls-controls-chromium") {
     return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: "controls" } }] };

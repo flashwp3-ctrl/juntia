@@ -286,7 +286,7 @@ describe("guardia de entradas y job release (005 T035; contracts/ci.md)", () => 
     expect(field("release", "if")).toBe("github.event_name == 'workflow_dispatch' && inputs.release_lab && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.measure_workers");
   });
 
-  it("release: ubuntu-24.04, 20 min, fail-fast false y la matriz de los tramos de scripts/release-leg.mjs (23 tras T046)", () => {
+  it("release: ubuntu-24.04, 20 min, fail-fast false y la matriz de los tramos de scripts/release-leg.mjs (25 tras T046)", () => {
     expect(field("release", "runs-on")).toBe("ubuntu-24.04");
     expect(field("release", "timeout-minutes")).toBe("20");
     const job = jobs().get("release") ?? "";
@@ -305,7 +305,8 @@ describe("tramos partidos en T046, sin quitar cargas", () => {
   it("las dos mitades de una ruta de CLS de Chromium son 1/2 y 2/2 de la misma ruta", () => {
     for (const route of ["inicio-yo", "actividad"]) {
       expect(LEGS).not.toContain(`cls-${route}`);
-      expect([1, 2].map((n) => legPlan(`cls-${route}-${n}`).commands[0].env)).toEqual([{ RELEASE_CLS_ROUTE: route, RELEASE_CLS_PART: "1/2" }, { RELEASE_CLS_ROUTE: route, RELEASE_CLS_PART: "2/2" }]);
+      expect([1, 2, 3].map((n) => legPlan(`cls-${route}-${n}`).commands[0].env)).toEqual([1, 2, 3].map((n) => ({ RELEASE_CLS_ROUTE: route, RELEASE_CLS_PART: `${n}/3` })));
+      expect(LEGS).not.toContain(`cls-${route}-4`);
     }
   });
   it("los tramos de rutas de WebKit y Firefox, a y b, cubren las mismas rutas que antes", async () => {

@@ -363,9 +363,9 @@ Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cad
 
 | Motor y versión | Método | 1 | 2 (1 px) | 2 (0,5 px, solo se registra) | 3 | 4 | 4: API = 0 | 5 | 6 | 7 | ¿Fiable? | Run |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| chromium 156.0.8078.4 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | discrepancias: analisis 11, balance 1, inicio-nosotros 2, metas 3, plan 4 (ver abajo) | **pendiente**: controles 1–6 cumplen; el control 7 se explica con el parcial de los tramos `cls-*` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| chromium 156.0.8078.4 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | discrepancias: analisis 11, balance 1, inicio-nosotros 2, metas 3, plan 4 (ver abajo) | **sí**: controles 1–6, 10 de 10; control 7 explicado con el parcial [44355668184](https://github.com/flashwp3-ctrl/juntia/actions/runs/44355668184) (abajo) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | webkit 27.2 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | — | 10 de 10 | 10 de 10 | no aplica (sin API) | **sí** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| firefox 157.0 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 5 de 10 | — | 5 de 10 | 10 de 10 | no aplica (sin API) | **sí**, tras recalibrar 4–6 midiendo solo el bloque del control (decisión del gestor); se confirma con un parcial de `firefox-cls-1` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| firefox 157.0 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 5 de 10 | — | 5 de 10 | 10 de 10 | no aplica (sin API) | **sí**, tras recalibrar 4–6 midiendo solo el bloque del control (decisión del gestor); confirmado en el parcial [44355668184](https://github.com/flashwp3-ctrl/juntia/actions/runs/44355668184) (`firefox-cls-1` en verde) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 | Ruta | Motor | Cargas | Con desplazamientos | CLS = 0 por fotogramas | Run |
 | --- | --- | ---: | ---: | --- | --- |
@@ -497,6 +497,31 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
   cambiar la pantalla.
 - **LCP y listas largas: cumplen.** LCP con medianas de 242 a 944 ms, todas ≤ 2,5 s. En las 12 vistas de listas largas,
   ningún solape ni scroll horizontal.
+- **Parcial [44355668184](https://github.com/flashwp3-ctrl/juntia/actions/runs/44355668184)** (sobre `1167376`, lanzado por
+  el gestor con `release_legs`: los nueve tramos `cls-*` y `firefox-cls-1`; facturó 110 minutos):
+
+  | Ruta | Cargas | Discrepancias del control 7 | De ellas, con la API solo **después** de la ventana | Dentro de la ventana |
+  | --- | ---: | ---: | ---: | --- |
+  | Inicio · Yo (2 mitades) | 50 | 0 | — | 0 |
+  | Inicio · Nosotros | 50 | 1 | 1 | 0 |
+  | Actividad (2 mitades) | 50 | 0 | — | 0 |
+  | Balance | 50 | 6 | 6 | 0 |
+  | Plan | 50 | 2 | 2 | 0 |
+  | Análisis | 50 | 4 | 4 | 1: aviso de más explicado |
+  | Metas | 50 | 2 | 2 | 0 |
+
+  - **Control 7, explicado: el método es fiable en Chromium.** Todas las discrepancias «API > 0, fotogramas = 0» vienen de
+    desplazamientos que la API registra **después** del primer fotograma final, fuera de la ventana que el comparador
+    compara por contrato (§1, §4). Dentro de la ventana queda una sola, en Análisis (carga 50, oscuro, 1440). Es un aviso
+    de más: el comparador vio un `span.sr-only` (texto solo para lectores de pantalla, recortado a 1 px) moverse 59 px, y
+    la API no lo cuenta. Queda listada aparte, como prevé el control 7. Cero discrepancias sin explicar.
+  - **Los tramos `cls-*` siguen en rojo por producto, no por el arnés.** Las 187 aserciones que fallan son todas
+    «CLS = 0» por carga (`expect.soft`); todas las cargas terminaron y no hay ningún otro error. Es el resultado esperado
+    hasta el PR B: la causa común del shell (el `DIV` de −4 px a 390) y las fuentes propias de cada ruta.
+  - **Firefox:** `firefox-cls-1` en verde con la recalibración (controles 4–6 midiendo solo el bloque del control).
+  - **Tiempos:** las mitades de Inicio · Yo y de Actividad midieron 607–639 s (arranque ~270 s y cargas de ~15 s). Se parten
+    en **tercios** (`RELEASE_CLS_PART` k/3, sin quitar cargas: 18, 16 y 16), proyectados en ~506–509 s cada uno. **25
+    tramos**; un lanzamiento completo se proyecta en unos **213 minutos**.
 - **Tramos de más de 600 s (T046):** `cls-actividad`, `cls-inicio-yo`, `webkit-cls-2`, `webkit-cls-3` y `firefox-cls-2`.
   **T046, hecho en el PR A:** `cls-actividad` y `cls-inicio-yo` se parten en `-1` y `-2` (25 cargas cada mitad: 20 en
   claro y 5 en oscuro). `webkit-cls-2` y `webkit-cls-3` se parten en `a` y `b` por rutas (A1, A2 y A4 | Inicio en Yo y en

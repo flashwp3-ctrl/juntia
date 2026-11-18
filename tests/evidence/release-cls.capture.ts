@@ -26,11 +26,14 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     ...Array.from({ length: LIGHT }, (_, i) => ({ theme: "light" as Theme, width: i % 2 ? 1440 : 390 })),
     ...Array.from({ length: DARK }, (_, i) => ({ theme: "dark" as Theme, width: i % 2 ? 1440 : 390 })),
   ];
-  // T046: RELEASE_CLS_PART=1/2 o 2/2 corre la mitad de las cargas (claro y oscuro repartidos); entre las dos, las 50.
-  const part = /^([12])\/2$/.exec(process.env.RELEASE_CLS_PART ?? "")?.[1];
-  const half = (list: typeof plan, which: string) => list.filter((_, i) => (i < list.length / 2) === (which === "1"));
+  // T046: RELEASE_CLS_PART=k/N corre la parte k de N de las cargas, con claro y oscuro repartidos en tramos contiguos; entre
+  // las N partes, las 50. Tercios desde el parcial 44355668184 (las mitades seguían por encima de 600 s).
+  const partMatch = /^([1-9])\/([1-9])$/.exec(process.env.RELEASE_CLS_PART ?? "");
+  const [k, n] = partMatch ? [Number(partMatch[1]), Number(partMatch[2])] : [1, 1];
+  const part = partMatch ? `${k}/${n}` : null;
+  const slice = (list: typeof plan) => list.filter((_, i) => Math.floor((i * n) / list.length) === k - 1);
   const light = plan.slice(0, LIGHT), dark = plan.slice(LIGHT);
-  const chosen = new Set(part ? [...half(light, part), ...half(dark, part)] : plan);
+  const chosen = new Set(part ? [...slice(light), ...slice(dark)] : plan);
   const tally = { cargas: 0, apiMayorQueCero: 0, porFotogramas: 0, coinciden: 0, discrepancias: 0, sinVentana: 0, coincidenEnVentana: 0, discrepanciasEnVentana: 0 };
   for (const [index, load] of plan.entries()) {
     if (!chosen.has(load)) continue;
@@ -76,5 +79,5 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     await record("cls-frames.jsonl", { ...result, control: 7, clsApi: api.cls });
     expect.soft(api.cls, `${ROUTE} ${themeLabel(theme)} ${width} carga ${index + 1}`).toBe(0);
   }
-  await record("release-cls.jsonl", { kind: "resumen", ruta: ROUTE, parte: part ? `${part}/2` : "completa", motor, ...tally, clsCero: tally.apiMayorQueCero === 0, control7: tally.discrepancias >= 2 ? "no fiable en Chromium (dos o más discrepancias)" : `${tally.discrepancias} discrepancia(s) a investigar` });
+  await record("release-cls.jsonl", { kind: "resumen", ruta: ROUTE, parte: part ?? "completa", motor, ...tally, clsCero: tally.apiMayorQueCero === 0, control7: tally.discrepancias >= 2 ? "no fiable en Chromium (dos o más discrepancias)" : `${tally.discrepancias} discrepancia(s) a investigar` });
 });

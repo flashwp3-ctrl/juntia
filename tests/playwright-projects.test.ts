@@ -48,7 +48,7 @@ describe("proyectos de Playwright del job release, fuera del gate (005 T022)", (
   // contracts/ci.md: cada tramo de `release` corre lo que dice scripts/release-leg.mjs. Un tramo por tipo, con --list: el
   // proyecto, los archivos y la etiqueta @release resuelven pruebas (con `--project x archivo`, Playwright tomaba el
   // archivo por otro proyecto).
-  it.each(["cls-metas", "cls-actividad-1", "cls-controls-chromium", "lab-interaction", "webkit-e2e-1", "firefox-cls-2b"])("el tramo %s lista pruebas", (leg) => {
+  it.each(["cls-metas", "cls-actividad-3", "cls-controls-chromium", "lab-interaction", "webkit-e2e-1", "firefox-cls-2b"])("el tramo %s lista pruebas", (leg) => {
     const plan = legPlan(leg);
     for (const command of plan.commands) {
       const result = listedProjects(["exec", "--", ...command.args.filter((arg: string) => arg !== "--reporter=line"), "--list"], command.env);
