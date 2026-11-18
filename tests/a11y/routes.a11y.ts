@@ -456,6 +456,10 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       await twoFrames(page);
       const result = await overflow(page);
       console.log(`200 % · ${state}: página ${result.doc.scrollWidth}/${result.doc.clientWidth}; ${result.dialogs.map((d) => `«${d.name}» ${d.scrollWidth}/${d.clientWidth}`).join(", ") || "sin hoja"}`);
+      // Con desbordamiento, una captura con los datos sembrados para la lista de hallazgos (no es evidencia por sí sola).
+      if (result.doc.scrollWidth > result.doc.clientWidth || result.dialogs.some((d) => d.scrollWidth > d.clientWidth)) {
+        await page.screenshot({ path: `test-results/a11y-200/texto-200--${state.replace(/[^\p{L}\p{N}]+/gu, "-")}--390.png`, fullPage: false, animations: "disabled" });
+      }
       expect.soft(result.doc.scrollWidth, `${state}: scroll horizontal de la página al 200 %`).toBeLessThanOrEqual(result.doc.clientWidth);
       for (const dialog of result.dialogs) expect.soft(dialog.scrollWidth, `${state}: «${dialog.name}» se sale al 200 %`).toBeLessThanOrEqual(dialog.clientWidth);
       if (page !== base) await page.context().close();
