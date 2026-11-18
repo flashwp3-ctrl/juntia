@@ -14,6 +14,10 @@ import { isAbsolute, join, relative, sep } from "node:path";
 const BASE = (project) => ["test", "--project", project, "--grep-invert", "@mail", "--reporter=list"];
 const PROJECTS = new Set(["e2e", "a11y"]);
 const TEST_FILE = /^tests\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(e2e|a11y)\.ts$/;
+// 005 (tasks.md T023–T027 y T032: «corre en local con una ruta y pocas cargas»): sin Docker en local (decisión 17), la única
+// base para iterar un arnés de laboratorio es juntia-dev. Un archivo tests/evidence/*.capture.ts corre en el proyecto
+// `evidence` con un worker: es iteración, nunca evidencia (la evidencia sale solo del job `release` o `evidence` del CI).
+const EVIDENCE_FILE = /^tests\/evidence\/[A-Za-z0-9_.-]+\.capture\.ts$/;
 const GIT_REF = /^[A-Za-z0-9][A-Za-z0-9._/~^-]{0,99}$/;
 
 function reject(arg, why) {
@@ -27,6 +31,7 @@ const validRef = (value) => GIT_REF.test(value) && !value.includes("..");
 function testFile(arg) {
   const path = arg.replace(/\\/g, "/");
   if (path.split("/").includes("..")) return null;
+  if (EVIDENCE_FILE.test(path)) return { path, project: "evidence" };
   const match = path.match(TEST_FILE);
   return match ? { path, project: match[1] } : null;
 }
@@ -49,7 +54,7 @@ export function planE2E(args, root = process.cwd()) {
       { label: "axe con sesión (A11Y_JOB=e2e)", project: "a11y", a11yJob: "e2e", args: BASE("a11y") },
     ];
   }
-  const files = { e2e: [], a11y: [] };
+  const files = { e2e: [], a11y: [], evidence: [] };
   const flags = [];
   let project = null;
   for (let index = 0; index < args.length; index++) {
@@ -99,16 +104,20 @@ export function planE2E(args, root = process.cwd()) {
   const step = (name) => (name === "a11y"
     ? { label: "axe dirigido (A11Y_JOB=e2e)", project: "a11y", a11yJob: "e2e", args: [...BASE("a11y"), ...files.a11y, ...flags] }
     : { label: "E2E dirigido (sin @mail)", project: "e2e", args: [...BASE("e2e"), ...files.e2e, ...flags] });
+  const evidence = files.evidence.length
+    ? [{ label: "arnés de laboratorio (iteración, no evidencia)", project: "evidence", a11yJob: undefined, args: ["test", "--project=evidence", ...files.evidence, "--workers", "1", "--retries", "0", "--reporter=list", ...flags] }]
+    : [];
+  if (evidence.length && files.e2e.length === 0 && files.a11y.length === 0 && !project) return evidence;
   if (project) {
     // F55-4: un archivo de un proyecto no se corre con --project del otro.
     const other = project === "e2e" ? "a11y" : "e2e";
     if (files[other].length > 0) reject(`--project ${project}`, `${files[other][0]} es del proyecto ${other}`);
-    return [step(project)];
+    return [step(project), ...evidence];
   }
   const steps = [];
   if (files.e2e.length > 0 || files.a11y.length === 0) steps.push(step("e2e"));
   if (files.a11y.length > 0) steps.push(step("a11y"));
-  return steps;
+  return [...steps, ...evidence];
 }
 
 const INTEGRATION_FILTER = /^(?:tests\/integration\/)?[A-Za-z0-9_][A-Za-z0-9_-]*(?:\.test\.ts)?$/;

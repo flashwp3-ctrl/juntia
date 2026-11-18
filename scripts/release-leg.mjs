@@ -22,6 +22,8 @@ export const LEGS = [
 export const CLS_FRAMES_SETS = { 1: "controls", 2: "routes-1", 3: "routes-2" };
 
 const playwright = (...args) => ["playwright", "test", ...args, "--retries", "0", "--reporter=line"];
+/** Los arneses del laboratorio llevan la etiqueta @release; el job `evidence` la excluye y los tramos solo corren esa. */
+const lab = (...args) => playwright(...args, "--grep", "@release");
 
 /**
  * El plan de un tramo: su navegador y sus comandos (argumentos de `npx` y variables). Lanza con un tramo desconocido.
@@ -33,13 +35,13 @@ export function legPlan(leg) {
   const route = /^cls-(.+)$/.exec(leg)?.[1];
   if (route && CLS_ROUTES.includes(route)) {
     // FR-050: 40 cargas en claro y 10 en oscuro de una ruta, con la API y el grabador a la vez (control 7).
-    return { browser: "chromium", commands: [{ label: leg, args: playwright("--project", "evidence", "tests/evidence/release-cls.capture.ts", "--workers", "1"), env: { RELEASE_CLS_ROUTE: route } }] };
+    return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/release-cls.capture.ts", "--workers", "1"), env: { RELEASE_CLS_ROUTE: route } }] };
   }
   if (leg === "cls-controls-chromium") {
-    return { browser: "chromium", commands: [{ label: leg, args: playwright("--project", "evidence", "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: "controls" } }] };
+    return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: "controls" } }] };
   }
   if (leg === "lab-interaction") {
-    return { browser: "chromium", commands: [{ label: leg, args: playwright("--project", "evidence", "tests/evidence/inp.capture.ts", "tests/evidence/release-lcp.capture.ts",
+    return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/inp.capture.ts", "tests/evidence/release-lcp.capture.ts",
       "tests/evidence/release-goalstack.capture.ts", "tests/evidence/release-long-lists.capture.ts", "--workers", "1"), env: {} }] };
   }
   const e2e = /^webkit-e2e-([12])$/.exec(leg);
@@ -47,14 +49,14 @@ export function legPlan(leg) {
     // Las cinco specs una vez en WebKit (FR-020), como el gate: primero sin @serial y después @serial con un worker.
     const shard = `--shard=${e2e[1]}/2`;
     return { browser: "webkit", commands: [
-      { label: `${leg} (sin @serial)`, args: playwright("--project", "e2e-webkit", shard, "--grep-invert", "@serial"), env: {} },
-      { label: `${leg} (@serial, 1 worker)`, args: playwright("--project", "e2e-webkit", shard, "--grep", "@serial", "--workers", "1", "--pass-with-no-tests"), env: {} },
+      { label: `${leg} (sin @serial)`, args: playwright("--project=e2e-webkit", shard, "--grep-invert", "@serial"), env: {} },
+      { label: `${leg} (@serial, 1 worker)`, args: playwright("--project=e2e-webkit", shard, "--grep", "@serial", "--workers", "1", "--pass-with-no-tests"), env: {} },
     ] };
   }
   const frames = /^(webkit|firefox)-cls-([123])$/.exec(leg);
   if (frames) {
     const browser = /** @type {"webkit" | "firefox"} */ (frames[1]);
-    return { browser, commands: [{ label: leg, args: playwright("--project", `evidence-${browser}`, "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: CLS_FRAMES_SETS[frames[2]] } }] };
+    return { browser, commands: [{ label: leg, args: lab(`--project=evidence-${browser}`, "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: CLS_FRAMES_SETS[frames[2]] } }] };
   }
   throw new Error(`Tramo sin plan: ${leg}`);
 }

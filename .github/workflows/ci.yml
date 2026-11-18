@@ -612,7 +612,8 @@ jobs:
         env:
           # PR D: con un filtro, solo los estados nuevos del PR; el resto ya tiene su evidencia en su PR.
           EVIDENCE_FILTER: ${{ inputs.evidence_filter }}
-        run: npx playwright test --project evidence --grep-invert @serial --workers 4 --retries 0 --reporter=line
+        # 005: los arneses del job `release` (etiqueta @release) no corren aquí.
+        run: npx playwright test --project evidence --grep-invert "@serial|@release" --workers 4 --retries 0 --reporter=line
       - name: Serial evidence (PR C states and CLS, PR D lab INP; alters the runner database)
         if: always()
         # --output propio: Playwright vacía su carpeta de salida al empezar y borraría las capturas del paso anterior.

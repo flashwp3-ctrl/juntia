@@ -43,7 +43,7 @@ const CI_ONLY = {
   ],
   e2e: [
     ["E2E etiquetadas @mail", "registro, recuperación y Mailpit; solo en el job e2e (lista abajo)"],
-    ["Proyecto evidence (capturas, anchos, tema, INP)", "evidencia bajo demanda en CI; nunca de dev (ADR-011 §9.8)"],
+    ["Proyecto evidence completo (capturas, anchos, tema, INP)", "evidencia bajo demanda en CI; nunca de dev (ADR-011 §9.8). Un arnés de tests/evidence/ pedido por archivo corre aquí solo como iteración (005)"],
   ],
 };
 const ALWAYS = [["Evidencia de [V] y de puntos de control", "solo cuenta la salida del CI sobre el commit (ADR-011 §9.8); esto es iteración"]];
