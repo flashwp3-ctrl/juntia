@@ -4,15 +4,15 @@
 
 **Created**: 2026-11-17
 
-**Status**: Draft — etapa Specify. Las preguntas marcadas **`[NECESITA DECISIÓN]`** (Q1–Q12) van a los fundadores con opciones y recomendación; esta spec no las responde. No avanza a Plan sin sus respuestas y sin el merge de su PR documental (ADR-012 §3.1).
+**Status**: Draft — etapa Specify con las decisiones resueltas. Los fundadores respondieron las doce preguntas (Q1–Q12) el 17 de noviembre de 2026 aceptando todas las recomendaciones («Sí, las 12»). Lista para el merge de su PR documental y, después, para la etapa Plan (ADR-012 §3.1). Los requisitos que aplican una respuesta citan la opción elegida.
 
 **Input**: User description: "Especificación 005 · P0-4 de Juntia, «Gate privado conjunto "funcional + espectacular"» (maestro §11): ejecutar las pruebas de dinero y privacidad, incluido el ledger de metas; smoke E2E de release; revisar S1–S5 con datos reales y movimiento reducido; revisar 360/390/430/768/1024/1440, teclado, safe areas, listas largas, modo oscuro y estados completos; verificar Core Web Vitals con los medios disponibles y documentar qué no se puede medir aún en p75 real; checklist de release y exportación (recuperación, respaldo y restauración); aprobación de los dos fundadores. Solo aquí se declara MVP-1. Sin funcionalidades nuevas."
 
 > **Qué es este documento.** Dice **qué** se comprueba en P0-4, **con qué
 > evidencia** y **qué falta** para declarar MVP-1. **No decide nada**: cada
-> requisito cita la decisión que aplica, y lo que no está decidido va a los
+> requisito cita la decisión que aplica. Lo que no estaba decidido fue a los
 > fundadores como `[NECESITA DECISIÓN]`, con opciones y la recomendación del
-> redactor. Jerarquía: maestro (§15 prevalece) > ADR > paquete de `docs/design/` y
+> redactor, y quedó respondido el 17 de noviembre de 2026 («Clarifications»). Jerarquía: maestro (§15 prevalece) > ADR > paquete de `docs/design/` y
 > `docs/CONVENTIONS.md` > esta spec (`AGENTS.md` §2). En este archivo, `[P]`
 > significa **propuesta** y `[V]` **verificación pendiente**, según el maestro
 > §15.9; no significan «paralelizable», que solo vale dentro de `tasks.md` (ADR-012
@@ -26,8 +26,8 @@
 >
 > **Desviación de la plantilla, a propósito.** Como en la 003 y la 004, la
 > plantilla de Spec Kit limita a tres las aclaraciones; aquí hay doce, porque el
-> encargo pide que todo lo no decidido llegue a los fundadores. Se marcan
-> `[NECESITA DECISIÓN]` en lugar de `[NEEDS CLARIFICATION]`.
+> encargo pide que todo lo no decidido llegue a los fundadores. Se marcaron
+> `[NECESITA DECISIÓN]` en lugar de `[NEEDS CLARIFICATION]`; hoy están resueltas.
 
 ### Fuentes que aplica
 
@@ -76,24 +76,49 @@ lista está en «Contradicciones para el PR documental T085».
 
 ## Clarifications
 
-Doce preguntas **`[NECESITA DECISIÓN]`** para los fundadores. Cada una lleva
-contexto, opciones y la recomendación del redactor. Los requisitos que dependen de
-una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
+Las doce respuestas son **decisiones de los fundadores del 17 de noviembre de
+2026**, que aceptaron las recomendaciones de la etapa Specify tal como se
+propusieron («Sí, las 12»). Alejandro las comunicó al gestor en nombre de los dos.
+Esta spec las registra y las aplica; no las toma. El PR documental posterior las
+lleva al maestro §15.10, con las enmiendas que exigen («Contradicciones para el PR
+documental T085», filas 14 a 18). Cada pregunta conserva su número, su contexto y
+sus opciones como historia; los requisitos citan la opción elegida.
 
-### Q1 · Forma de la especificación y reparto en PR `[NECESITA DECISIÓN]`
+### Session 2026-11-17
 
+- Q1 → **(a)**: tres PR: A, pruebas y arneses; B, correcciones; C, evidencia y cierre (solo documentos).
+- Q2 → **(a)**: el issue #53 se difiere a MVP-2 como límite conocido; vuelve a los fundadores si la doble fila molesta en el uso diario.
+- Q3 → **(a)**: sin spec E2E nueva; las cinco specs sobre el commit candidato en Chromium y una vez en WebKit, más la checklist de humo de los fundadores en producción; el nivel 2 nocturno se difiere a MVP-2.
+- Q4 → **(a)**: F02 se mide primero en producción con iPhone; se corrige en el PR B si la mediana supera 1 s o si un fundador lo juzga un defecto.
+- Q5 → **(c)**: solo laboratorio en MVP-1, con LCP y la tabla de «no medible en p75 real»; la medición de campo (RUM) pasa a MVP-2.
+- Q6 → **(a) para el Mac y (c) para Android**: el CLS en iPhone con el inspector de Safari se ejecuta antes de MVP-1 con un Mac prestado; las verificaciones de Android, incluidos los springs a 55 fps, se prorrogan más allá de MVP-1 como excepción formal, y su revalidación pasa a ser condición de abrir la app a un tercero. Enmienda la decisión 19.2.
+- Q7 → **(a)**: CLS fuera de Chromium con un comparador por fotogramas en WebKit y Firefox; si no es fiable, vuelve a los fundadores con «solo WebKit».
+- Q8 → **(a)**: la eliminación de cuenta y los pendientes de la decisión 16 aplican al lanzamiento público; en MVP-1, un procedimiento manual de eliminación ensayado en `juntia-dev`. Enmienda el §15.6.1 y la decisión 16.
+- Q9 → **(a)**: copia semanal, más una antes de cada migración de producción, más una restauración real con el esquema de P0-3 antes de declarar MVP-1; pérdida máxima aceptada, 7 días.
+- Q10 → **(a)**: escenario de pareja de §4 en móvil y escritorio, más 7 días consecutivos de uso diario real y notas separadas en cuatro ejes.
+- Q11 → **(a)**: entran el residuo de F13 al 200 %, la pérdida del monto al cruzar 768 px y el marco de foco si incumple el handoff; «Descartar» y el cierre con View Transition van a MVP-2; «Tu disponible · aportaste» se aprueba en la revisión de S5.
+- Q12 → **(a)**: sin purga de la tabla de idempotencia en MVP-1; se mide su tamaño y se revisa en MVP-2.
+
+### Contexto y opciones de cada pregunta
+
+Lo que se presentó a los fundadores en la etapa Specify. Se conserva como historia.
+
+#### Q1 · Forma de la especificación y reparto en PR
+
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, tres PR (A, B y C).
 - **Contexto:** P0-4 no construye pantallas; hace tres tipos de trabajo: pruebas y arneses que faltan (código de pruebas), correcciones de los defectos que salgan y verificaciones humanas con su evidencia. Las specs 003 y 004 usaron cuatro y cinco PR.
 - **Opciones:**
   - (a) **Tres PR**:
-    - **A · Pruebas y arneses que faltan**: huecos de cobertura de FR-012, arnés de LCP y CLS fuera de Chromium según Q7, y la lista de estados de FR-041.
-    - **B · Correcciones**: los defectos que encuentren A, el barrido y la revisión de S1–S5, según Q4 y Q11.
+    - **A · Pruebas y arneses que faltan**: huecos de cobertura de FR-012, arnés de LCP y CLS fuera de Chromium (Q7), y la lista de estados de FR-041.
+    - **B · Correcciones**: los defectos que encuentren A, el barrido y la revisión de S1–S5, más lo que decidan Q4 y Q11.
     - **C · Evidencia y cierre**: el registro del gate en `evidence.md`, la checklist de release, las verificaciones de dispositivo y la aprobación de los fundadores, solo documentos.
   - (b) Un PR por eje (pruebas, responsive y accesibilidad, rendimiento, release, aprobación): cinco PR más pequeños, con más gates de CI.
   - (c) Un solo PR de código y uno de evidencia.
-- **Recomendación: (a).** Separa lo que gasta CI (A y B) de lo que solo es documento (C, que no lanza CI, `AGENTS.md` 15a). B puede partirse si las correcciones tocan áreas distintas. El orden es A → barrido y revisión → B → C.
+- **Recomendación (aceptada): (a).** Separa lo que gasta CI (A y B) de lo que solo es documento (C, que no lanza CI, `AGENTS.md` 15a). B puede partirse si las correcciones tocan áreas distintas. El orden es A → barrido y revisión → B → C.
 
-### Q2 · Issue #53, fila optimista doble (F51-11): ¿entra en P0-4? `[NECESITA DECISIÓN]`
+#### Q2 · Issue #53, fila optimista doble (F51-11): ¿entra en P0-4?
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, se difiere a MVP-2 como límite conocido.
 - **Contexto:**
   - **Qué pasa:** la fila temporal de Anotar se oculta cuando la lista trae el `savedId`, que solo se conoce al responder la acción. Si una navegación trae la fila real antes, se ven dos filas durante la ventana, normalmente de menos de 1 s.
   - **Qué no rompe:**
@@ -108,12 +133,13 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
   - (a) **Diferir a MVP-2** como límite conocido documentado. Se conserva la prueba que lo describe y el issue sigue abierto.
   - (b) Entrar en P0-4 con su ADR antes del plan, una migración y pruebas pgTAP e integración.
   - (c) Entrar en P0-4 con una heurística de cliente. Ya se rechazó el 11 de noviembre: podría ocultar otro gasto idéntico.
-- **Recomendación: (a).** Es solo visual, breve y no afecta a dinero, privacidad ni totales. Además, (b) cambia el contrato de las funciones de dinero justo antes del gate, y eso obligaría a repetir las pruebas de idempotencia de P0-1 y P0-2.
+- **Recomendación (aceptada): (a).** Es solo visual, breve y no afecta a dinero, privacidad ni totales. Además, (b) cambia el contrato de las funciones de dinero justo antes del gate, y eso obligaría a repetir las pruebas de idempotencia de P0-1 y P0-2.
   - **Condición:** si en la revisión de S2 (FR-030) los fundadores ven la doble fila con datos reales y la juzgan un defecto de uso diario, la decisión vuelve a ellos con (b).
   - Con (a), el issue pasa a la lista «Fuera de MVP-1».
 
-### Q3 · Smoke E2E de release y el «nivel 2» que no existe `[NECESITA DECISIÓN]`
+#### Q3 · Smoke E2E de release y el «nivel 2» que no existe
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, sin spec nueva: cinco specs en Chromium y una vez en WebKit, más la checklist de humo en producción; nivel 2 a MVP-2.
 - **Contexto:**
   - **Lo que hay:** cinco specs E2E de seis posibles (`docs/TESTING.md`, «Tope»). Cubren las cuatro familias de smoke de §10.1, US-12 y Mi cuenta, y corren en CI contra el Supabase limpio del runner, solo en Chromium.
   - **Lo que `docs/TESTING.md` §3 describe pero no existe:** un «Nivel 2 — al mergear a `main` y de noche», con las cinco specs en Chromium y WebKit, snapshots de 5 rutas y rendimiento. **Ese workflow no existe:** `ci.yml` solo corre en `pull_request` y `workflow_dispatch`.
@@ -125,10 +151,11 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - El nivel 2 nocturno se registra como no implementado y se difiere a MVP-2, en el PR documental.
   - (b) **Sexta spec E2E «Release smoke»** contra un preview o contra producción con cuentas de prueba. Contra producción mete datos de prueba en producción y necesita cuentas fuera de la lista permitida (decisión 16.9).
   - (c) **Crear ahora el workflow nocturno** de `docs/TESTING.md` §3. Gasta minutos de CI cada noche: con la cuenta Free, unos 15 minutos × 30 días ≈ 450 de 2.000.
-- **Recomendación: (a).** Usa la cobertura que ya existe sin gastar la sexta plaza ni minutos diarios, y prueba producción como la usarán los dos. WebKit se corre **una vez** porque los dos fundadores usan iPhone (Safari), y hoy ninguna spec ha corrido en WebKit.
+- **Recomendación (aceptada): (a).** Usa la cobertura que ya existe sin gastar la sexta plaza ni minutos diarios, y prueba producción como la usarán los dos. WebKit se corre **una vez** porque los dos fundadores usan iPhone (Safari), y hoy ninguna spec ha corrido en WebKit.
 
-### Q4 · F02: S1 y S5 detrás de un esqueleto con la latencia real `[NECESITA DECISIÓN]`
+#### Q4 · F02: S1 y S5 detrás de un esqueleto con la latencia real
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, medir primero en producción y corregir si la mediana supera 1 s o si un fundador lo juzga un defecto.
 - **Contexto:**
   - **El hallazgo:** la auditoría previa al gate (F02, «Importante», `docs/audits/2026-11-impeccable.md`) midió contra `juntia-dev` 1,5–3 s de esqueleto al cambiar Yo ↔ Nosotros y al abrir una meta. En ese tiempo la coreografía de S1 y S5 no llega a verse.
   - **Por qué pesa:** S1 y S5 son dos de las cinco experiencias insignia del gate «espectacular» (§6.4).
@@ -139,12 +166,13 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - **La técnica la elige el plan**, dentro de MOTION_SYSTEM §1: animar solo después de recibir datos del contexto correcto (US-14).
   - (b) Corregir sin medir, con prefetch del otro contexto y de la meta frontal.
   - (c) Aceptar el comportamiento actual como límite de MVP-1.
-- **Recomendación: (a).** Evita una corrección que podría no hacer falta en producción.
+- **Recomendación (aceptada): (a).** Evita una corrección que podría no hacer falta en producción.
   - **El umbral de 1 s es una propuesta del redactor**, no una decisión del maestro. Los fundadores pueden fijar otro.
   - **El prefetch del otro contexto debe respetar** FR-085 de la 004 y FR-037 a FR-039 de la 003: nada de un ámbito en el HTML, el RSC o la caché del otro.
 
-### Q5 · Core Web Vitals: qué se mide y qué se declara no medible `[NECESITA DECISIÓN]`
+#### Q5 · Core Web Vitals: qué se mide y qué se declara no medible
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(c)**, laboratorio en MVP-1 y medición de campo en MVP-2.
 - **Contexto:**
   - **Lo que pide el maestro:** DEC-V04 y §10.2 piden LCP ≤ 2,5 s, INP ≤ 200 ms y CLS ≤ 0,1 **en el p75 de experiencias reales**. Si no hay tráfico suficiente, se reporta laboratorio «y no se presenta como p75 medido». §15.7 fija los umbrales que **bloquean**: CLS = 0 en las cargas con skeleton, INP < 200 ms al abrir Anotar y al guardar.
   - **Lo que hay:** con dos personas, un p75 real no tiene significado estadístico. La app no tiene medición de campo (RUM).
@@ -157,10 +185,11 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - Una tabla que diga, por métrica, «laboratorio» o «no medible en p75 real: motivo».
   - (b) Añadir medición de campo (por ejemplo Vercel Speed Insights o `web-vitals` hacia un endpoint propio) durante el uso diario de Q10. Es una dependencia y una telemetría nuevas, y necesitaría su revisión de privacidad.
   - (c) (a) ahora y (b) en MVP-2, cuando haya más uso.
-- **Recomendación: (c).** (a) cumple §10.2 literalmente («reportar métricas de laboratorio… y no presentarlas como p75 medido»), y (b) añadiría telemetría justo antes del gate para un p75 de dos personas. LCP no tiene umbral en §15.7: se reporta y, si supera 2,5 s en laboratorio, es un hallazgo que se trae a los fundadores, no un bloqueo automático.
+- **Recomendación (aceptada): (c).** (a) cumple §10.2 literalmente («reportar métricas de laboratorio… y no presentarlas como p75 medido»), y (b) añadiría telemetría justo antes del gate para un p75 de dos personas. LCP no tiene umbral en §15.7: se reporta y, si supera 2,5 s en laboratorio, es un hallazgo que se trae a los fundadores, no un bloqueo automático.
 
-### Q6 · Verificaciones que necesitan un Android o un Mac, sin dispositivo `[NECESITA DECISIÓN]`
+#### Q6 · Verificaciones que necesitan un Android o un Mac, sin dispositivo
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a) para el Mac** (CLS en iPhone antes de MVP-1) y **(c) para Android** (excepción prorrogada más allá de MVP-1, revalidación antes de abrir la app a un tercero).
 - **Contexto:**
   - **Las excepciones vigentes:** la decisión 19.2 aprobó cinco excepciones formales «a revalidar antes del lanzamiento de MVP-1, en cuanto haya un Android o un Mac». Están en `specs/002` y son:
     - T090, sombras táctiles en un Android de gama media.
@@ -174,14 +203,15 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
   - (a) **Conseguir los dispositivos para el gate**: un Android de gama media prestado o comprado y un Mac prestado, y ejecutar las seis verificaciones contra producción con las cuentas reales.
   - (b) **Dispositivo real remoto**: un servicio de pruebas en la nube contra `juntia-dev`, nunca contra producción ni con datos reales. Es un servicio externo nuevo y quizá de pago.
   - (c) **Prorrogar las excepciones más allá de MVP-1**, con los cinco datos de la decisión 12, incluida la de los springs. Requiere enmendar la decisión 19.2, que dice «antes del lanzamiento de MVP-1».
-- **Recomendación: (a) para el Mac y (c) para Android.**
+- **Recomendación (aceptada): (a) para el Mac y (c) para Android.**
   - **Por qué (a) para el Mac:** el CLS en iPhone afecta a los dos usuarios reales.
   - **Por qué (c) para Android:** ninguno de los dos usuarios de MVP-1 usa Android, así que el riesgo residual no alcanza a nadie hasta que haya un usuario de Android.
   - **Con (c), dos cosas:** la revalidación pasa a ser condición de abrir la app a un tercero, y la mitigación sigue siendo la emulación de Chrome y axe.
   - **Si los fundadores eligen (c)**, el PR documental enmienda la decisión 19.2.
 
-### Q7 · CLS = 0 fuera de Chromium (decisión 19.4): ¿con qué método? `[NECESITA DECISIÓN]`
+#### Q7 · CLS = 0 fuera de Chromium (decisión 19.4): ¿con qué método?
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, comparador por fotogramas en WebKit y Firefox.
 - **Contexto:**
   - **La obligación:** la decisión 19.4 aplazó «CLS = 0 en Firefox y WebKit» como criterio obligatorio antes de MVP-1, con el gestor como dueño. La decisión 12 la marcaba «sin excepción posible».
   - **Por qué no se ha medido:** el arnés R2 usa la API Layout Instability y el screencast de CDP, que solo existen en Chromium. WebKit y Firefox no exponen `layout-shift`.
@@ -193,12 +223,13 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - La evidencia sale de un run de CI lanzado a mano.
   - (b) **Revisión humana fotograma a fotograma** de las grabaciones, sin comparador.
   - (c) **Medir solo WebKit**, que es el motor de los dos usuarios, y dejar Firefox en excepción formal. Exige enmendar la 19.4.
-- **Recomendación: (a) sobre WebKit y Firefox**, con las mismas rutas clave que FR-050.
+- **Recomendación (aceptada): (a) sobre WebKit y Firefox**, con las mismas rutas clave que FR-050.
   - **Por qué:** es objetivo y repetible, y no reabre una decisión «sin excepción».
   - **Si el método no se puede construir** con fiabilidad dentro del PR A, la pregunta vuelve a los fundadores con (c).
 
-### Q8 · Eliminación de cuenta y los «pendientes de lanzamiento»: ¿bloquean MVP-1 privado? `[NECESITA DECISIÓN]`
+#### Q8 · Eliminación de cuenta y los «pendientes de lanzamiento»: ¿bloquean MVP-1 privado?
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, aplican al lanzamiento público; en MVP-1, procedimiento manual ensayado.
 - **Contexto:**
   - **Lo que dice el maestro:** el §15.6.1 dice que la eliminación de cuenta «bloquea **declarar el lanzamiento privado**», y exige un procedimiento real, verificable y revisado legalmente.
   - **Los pendientes de la decisión 16:** suma a ese bloqueo cuatro «pendientes de lanzamiento»:
@@ -216,13 +247,14 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - **Requiere enmendar** el §15.6.1 y la decisión 16.
   - (b) **Cumplir el §15.6.1 tal como está**: construir y someter a revisión legal la eliminación de cuenta antes de MVP-1. Es una funcionalidad nueva dentro de un gate que no las admite.
   - (c) (a) sin procedimiento manual: la eliminación queda totalmente fuera hasta el lanzamiento público.
-- **Recomendación: (a).**
+- **Recomendación (aceptada): (a).**
   - **Por qué:** las dos personas son a la vez las dueñas de los datos y las del producto. Un procedimiento manual ensayado protege su derecho sin construir una funcionalidad en el gate.
   - **El resto ya era coherente:** los otros pendientes quedan donde los fundadores ya los pusieron, al final del producto.
   - **El enfoque no cambia:** es una enmienda del maestro y la hace el PR documental, no esta spec.
 
-### Q9 · Respaldo y recuperación: cuánto dato puede perderse `[NECESITA DECISIÓN]`
+#### Q9 · Respaldo y recuperación: cuánto dato puede perderse
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, semanal más antes de cada migración más restauración real; pérdida máxima 7 días.
 - **Contexto:**
   - **Lo vigente:**
     - La decisión 16.11 fija una copia completa cifrada fuera de Supabase antes del primer dato real y, después, una copia semanal manual.
@@ -235,10 +267,11 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
   - (a) **Semanal, más una copia antes de cada migración de producción, más una restauración real** de una copia con el esquema de P0-3 en el equipo de un fundador antes de declarar MVP-1. Pérdida máxima aceptada: 7 días.
   - (b) Copia diaria manual, con una pérdida máxima de 1 día y más trabajo para un fundador.
   - (c) Pasar a un plan de Supabase con PITR, con su coste.
-- **Recomendación: (a).** Es lo ya decidido más dos puntos que la protegen donde más riesgo hay: las migraciones y el esquema nuevo. Que la pérdida máxima sea 7 días es una decisión de los fundadores y queda escrita como tal.
+- **Recomendación (aceptada): (a).** Es lo ya decidido más dos puntos que la protegen donde más riesgo hay: las migraciones y el esquema nuevo. Que la pérdida máxima sea 7 días es una decisión de los fundadores y queda escrita como tal.
 
-### Q10 · Aprobación de los fundadores: cuánto uso diario y cómo se registra `[NECESITA DECISIÓN]`
+#### Q10 · Aprobación de los fundadores: cuánto uso diario y cómo se registra
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, sesión guiada más 7 días consecutivos de uso diario real.
 - **Contexto:**
   - **Lo que pide el maestro:** «ambos aprueban uso diario, legibilidad, rapidez y carácter visual» (§11). Ambos completan US-01 a US-04, US-18 a US-23 y S1–S5 en teléfono y desktop, «tareas completadas sin explicación externa», con comentarios por separado (§10.4).
   - **Lo que no dice:** ni cuánto uso diario hace falta antes de aprobar ni la forma del registro.
@@ -250,12 +283,13 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - **Para declarar MVP-1:** los dos aprueban sin fallos críticos abiertos.
   - (b) Solo la sesión guiada, sin periodo de uso.
   - (c) Un periodo más largo, de 14 días.
-- **Recomendación: (a).** Siete días cubren una semana completa de gastos reales, con un fin de semana y una liquidación. Es lo mínimo para que «uso diario» signifique algo.
+- **Recomendación (aceptada): (a).** Siete días cubren una semana completa de gastos reales, con un fin de semana y una liquidación. Es lo mínimo para que «uso diario» signifique algo.
   - **Qué es un fallo crítico:** un defecto de dinero, privacidad, pérdida de datos o accesibilidad básica (§12.4).
   - **Los fallos menores** van a la lista de MVP-2 con dueño.
 
-### Q11 · Defectos y pedidos de usabilidad abiertos: ¿cuáles entran en P0-4? `[NECESITA DECISIÓN]`
+#### Q11 · Defectos y pedidos de usabilidad abiertos: ¿cuáles entran en P0-4?
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, entra lo que incumple un criterio del gate; el refinamiento va a MVP-2.
 - **Contexto:** quedan abiertos, sin corregir, estos puntos:
   - **Residuo de F13:** con la raíz al 200 %, Inicio · Yo a 1440 mide 1.447 px, por el abanico en px (`docs/audits/2026-11-impeccable/f13/README.md` §3). Las hojas, los diálogos, A1–A6 y la invitación no se capturaron al 200 %.
   - **Goal Journey sin View Transition al cerrar:** limitación conocida, `specs/004-presupuestos-y-metas/evidence.md`.
@@ -273,15 +307,16 @@ una respuesta la citan como «(según Q#)». Ninguna se da por respondida.
     - **Se aprueba en pantalla:** «Tu disponible · aportaste», en la revisión de S5.
   - (b) Todo entra en P0-4.
   - (c) Nada entra: solo los defectos que encuentre el barrido.
-- **Recomendación: (a).** Respeta «no se baja el estándar» y «no se añaden funcionalidades» a la vez. «Descartar» es una funcionalidad nueva de recuperación, no la corrección de un defecto.
+- **Recomendación (aceptada): (a).** Respeta «no se baja el estándar» y «no se añaden funcionalidades» a la vez. «Descartar» es una funcionalidad nueva de recuperación, no la corrección de un defecto.
 
-### Q12 · Tabla de idempotencia: ¿se purga antes de MVP-1? `[NECESITA DECISIÓN]`
+#### Q12 · Tabla de idempotencia: ¿se purga antes de MVP-1?
 
+- **Decidido** (fundadores, 17 nov 2026): opción **(a)**, sin purga en MVP-1; se mide y se revisa en MVP-2.
 - **Contexto:** `specs/002-cuentas-y-gastos-privados/data-model.md` deja la purga de los registros de idempotencia para revisar «antes de MVP-1». Con dos personas, el crecimiento es de cientos de filas al mes. Purgar mal rompería la recuperación de una respuesta perdida, porque `write_status` lee esos registros.
 - **Opciones:**
   - (a) **Sin purga en MVP-1.** El gate mide y registra el tamaño de la tabla y la revisión pasa a MVP-2.
   - (b) Definir ahora una retención (por ejemplo, 90 días) con su migración y sus pruebas.
-- **Recomendación: (a).** Medir no cuesta nada y purgar es un cambio de esquema sin necesidad hoy.
+- **Recomendación (aceptada): (a).** Medir no cuesta nada y purgar es un cambio de esquema sin necesidad hoy.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -309,7 +344,7 @@ cobertura que esta spec cierra, y registra la salida.
 ### User Story 2 - El humo de release pasa en producción con cuentas reales (Priority: P1)
 
 Los dos fundadores recorren en producción, con sus cuentas y dispositivos, la checklist
-de humo de release (según Q3), y el gestor corre las cinco specs E2E en WebKit una vez.
+de humo de release (Q3, opción a), y el gestor corre las cinco specs E2E en WebKit una vez.
 
 **Why this priority**: es la única prueba del despliegue real; CI usa un Supabase limpio.
 
@@ -364,7 +399,7 @@ completa la matriz de estados de §6.3 con el dataset y con listas largas.
 
 El gestor mide en laboratorio los umbrales de §15.7 y los proxies de CWV, consolida las
 tareas de laboratorio pendientes de las specs 003 y 004 y escribe la tabla de «no
-medible en p75 real» (según Q5).
+medible en p75 real» (Q5, opción c).
 
 **Why this priority**: §15.7 bloquea la aceptación; §10.2 exige no presentar laboratorio como p75.
 
@@ -399,7 +434,7 @@ de despliegue.
 
 ### User Story 7 - Los dos aprueban y se declara MVP-1 (Priority: P1)
 
-Tras el periodo de uso diario (según Q10), cada fundador registra por separado su
+Tras 7 días consecutivos de uso diario real (Q10, opción a), cada fundador registra por separado su
 valoración; si los dos aprueban y no hay fallos críticos abiertos, el PR documental
 de cierre declara MVP-1.
 
@@ -416,13 +451,13 @@ de cierre declara MVP-1.
 ### Edge Cases
 
 - **Una verificación falla en el gate:** el umbral no se mueve. Se corrige el defecto (PR B) o vuelve a los fundadores. Nunca se marca «superada» (`AGENTS.md` 12; §15.10, decisión 12).
-- **Una verificación no se puede ejecutar por falta de dispositivo:** solo se admite la excepción formal de la decisión 12, con sus cinco datos y aprobada por los dos (según Q6). Su estado es «EXCEPCIÓN APROBADA», nunca «verificado».
+- **Una verificación no se puede ejecutar por falta de dispositivo:** solo se admite la excepción formal de la decisión 12, con sus cinco datos y aprobada por los dos (Q6: hoy solo las de Android, prorrogadas más allá de MVP-1). Su estado es «EXCEPCIÓN APROBADA», nunca «verificado».
 - **El barrido destapa un defecto en una pantalla ya aceptada:** es un defecto del gate, no una regresión de su slice. Se corrige en el PR B con su prueba en la capa más baja.
 - **Un hallazgo pide una funcionalidad nueva:** va a la lista de MVP-2 con dueño. No entra en P0-4 sin decisión de los fundadores.
 - **Producción se suspende por inactividad (plan Free):** la checklist de release incluye cómo detectarlo y reactivarlo (§7.5). No se usa un «ping» como garantía.
 - **Se descubre un dato real anotado antes de la primera copia (decisión 19.3):** se registra tal cual en la evidencia, se hace la copia de inmediato y se informa a los fundadores. No se reescribe la historia.
 - **El job de CI supera su presupuesto con las pruebas nuevas:** el hallazgo es la suite, no el techo (cláusula anticliquet); cuenta el margen de la partición del job `e2e`.
-- **La doble fila del #53 aparece durante el uso diario:** según Q2.
+- **La doble fila del #53 aparece durante el uso diario:** el issue está diferido a MVP-2 (Q2, opción a); si un fundador la juzga un defecto de uso diario, vuelve a los fundadores con la opción (b) y su ADR.
 - **Un fundador aprueba y el otro no:** no se declara MVP-1. Las notas del que no aprueba se convierten en defectos o en decisiones.
 
 ## Requirements *(mandatory)*
@@ -470,9 +505,9 @@ Cada requisito dice su **evidencia**:
 - **FR-014**: Las comprobaciones de aislamiento de la superficie interna (001-T072, partes 1 y 2) se **repiten en producción** con el commit candidato: HTML, RSC, 404 y host no autorizado. Son controles de aislamiento y no admiten excepción (decisión 12). **Evidencia:** la salida de la sonda.
 - **FR-015**: Se comprueba que ninguna clave privilegiada está en variables `NEXT_PUBLIC_*` del despliegue de producción, y que las migraciones aplicadas en producción coinciden, una a una, con las del repositorio en el commit candidato. **Evidencia:** la salida de la comprobación, sin valores de claves.
 
-#### Smoke de release (según Q3)
+#### Smoke de release (Q3, opción a)
 
-- **FR-020**: Las cinco specs E2E corren **completas** sobre el commit candidato, lanzadas a mano: Chromium en el gate y **una vez en WebKit**, sin crear una sexta spec (según Q3). **Evidencia:** CI.
+- **FR-020**: Las cinco specs E2E corren **completas** sobre el commit candidato, lanzadas a mano: Chromium en el gate y **una vez en WebKit**, sin crear una sexta spec (Q3, opción a). **Evidencia:** CI.
 - **FR-021**: La **checklist de humo en producción** la recorren los dos fundadores, cada uno con su cuenta y su teléfono:
   - entrar;
   - anotar un gasto privado real;
@@ -493,7 +528,7 @@ Cada requisito dice su **evidencia**:
   - con la alternativa documentada en MOTION_SYSTEM (US-17).
   - Lo objetivo ya está en CI (los casos de movimiento reducido de las specs 2 y 3 y del registro de axe) y se cita, no se duplica.
   - **Evidencia:** CI más revisión humana.
-- **FR-032**: **F02** (S1 y S5 detrás del esqueleto) se mide en producción y se trata según Q4. Si hay corrección, conserva el aislamiento de contexto: nada de un ámbito en el HTML, el RSC, el prefetch ni la caché del otro (FR-085 de la 004; FR-037 a FR-039 de la 003). **Evidencia:** laboratorio o dispositivo, y CI de privacidad si se corrige.
+- **FR-032**: **F02** (S1 y S5 detrás del esqueleto) se mide en producción, en el iPhone de cada fundador, con 10 cambios de contexto y 10 aperturas de meta cada uno (Q4, opción a). Se corrige en el PR B si la mediana hasta el contenido supera 1 s o si un fundador lo juzga un defecto en la revisión de S1 o S5. Si hay corrección, conserva el aislamiento de contexto: nada de un ámbito en el HTML, el RSC, el prefetch ni la caché del otro (FR-085 de la 004; FR-037 a FR-039 de la 003). **Evidencia:** laboratorio o dispositivo, y CI de privacidad si se corrige.
 - **FR-033**: Las `[P]` que siguen pendientes de aprobación en pantalla se aprueban en esta revisión, cada una por separado:
   - «Tu disponible · aportaste»;
   - la paleta propuesta;
@@ -509,7 +544,7 @@ Cada requisito dice su **evidencia**:
   - **Los estados:** sin movimientos, sin pareja, sin presupuesto, con presupuesto, sin metas, con metas, meta completada, retiro rechazado, exceso, datos extremos, error, carga, latencia, movimiento reducido, oscuro, muchos movimientos, textos largos y permisos denegados.
   - **Lo que no se cubre:** un estado sin cobertura se añade al registro de accesibilidad del PR A, o se justifica como «no aplica».
   - **Evidencia:** CI más capturas.
-- **FR-042**: **Texto al 200 %** sin pérdida en todas las pantallas, también en hojas, diálogos, acceso (A1–A6) e invitación, que la pasada de F13 no capturó. El residuo de Inicio · Yo a 1440 (1.447 px) se trata según Q11. **Evidencia:** CI más capturas.
+- **FR-042**: **Texto al 200 %** sin pérdida en todas las pantallas, también en hojas, diálogos, acceso (A1–A6) e invitación, que la pasada de F13 no capturó. El residuo de Inicio · Yo a 1440 (1.447 px) se corrige en el PR B (Q11, opción a). **Evidencia:** CI más capturas.
 - **FR-043**: **Listas largas** con una cuenta sembrada en `juntia-dev`, con dos órdenes de magnitud por encima del uso esperado y al menos 500 movimientos en un mes, para Actividad, el historial de aportes y el de presupuestos. Paginación estable, totales de una sola lectura (FR-096 de la 004) y nada solapado a 390 ni a 1440. **Evidencia:** capturas más la integración existente de más de 500 filas.
 - **FR-044**: **Teclado virtual y safe areas** en el iPhone de cada fundador:
   - Anotar con el teclado nativo;
@@ -526,15 +561,15 @@ Cada requisito dice su **evidencia**:
   - el foco vuelve al disparador, también al llegar por URL (lección T084 punto 3).
   - **Evidencia:** CI (barrido) más revisión humana.
 
-#### Rendimiento y Core Web Vitals (según Q5)
+#### Rendimiento y Core Web Vitals (Q5, opción c)
 
 - **FR-050**: **CLS = 0** sin redondear en las cargas con esqueleto de las rutas clave, con 40 cargas por ruta como en la 001. Las rutas son Inicio (Yo y Nosotros), Actividad, Balance, Plan, Análisis y Metas. Consolida 003-T054 y T068 y 004-T040, T054 (CLS de Metas) y T079. **Evidencia:** laboratorio, en Chromium.
-- **FR-051**: **CLS = 0 fuera de Chromium**, en WebKit y Firefox, con el método de Q7 (002-T093; decisión 19.4). **Evidencia:** laboratorio con el método aprobado.
+- **FR-051**: **CLS = 0 fuera de Chromium**, en WebKit y Firefox, con el comparador por fotogramas (Q7, opción a): entre el primer fotograma con esqueleto y el contenido final, ningún bloque cambia de posición, en las rutas de FR-050, con sesión contra `juntia-dev` y sin sesión. Si el método no resulta fiable en el PR A, vuelve a los fundadores con «solo WebKit» (002-T093; decisión 19.4). **Evidencia:** laboratorio, run de CI lanzado a mano.
 - **FR-052**: **INP < 200 ms** al abrir Anotar y al guardar, en gasto privado, compartido y con meta, con CPU 4× a 390 y 1440. Consolida 003-T054 y 004-T067. **Evidencia:** laboratorio.
 - **FR-053**: **Rendimiento del abanico de GoalStack con 6 metas** en gama media emulada (004-T054; decisión 22.2): CPU, red y versión del navegador declaradas. Si falla, la pantalla cae a la lista y vuelve a los fundadores, como dice la 22.2. **Evidencia:** laboratorio.
-- **FR-054**: **LCP de laboratorio** en Inicio y Actividad a 390 (4G emulado, CPU 4×) y a 1440. Se reporta contra 2,5 s como **proxy**, rotulado «laboratorio» (§10.2; según Q5). **Evidencia:** laboratorio.
+- **FR-054**: **LCP de laboratorio** en Inicio y Actividad a 390 (4G emulado, CPU 4×) y a 1440. Se reporta contra 2,5 s como **proxy**, rotulado «laboratorio» (§10.2; Q5, opción c). Si supera 2,5 s, es un hallazgo que se trae a los fundadores, no un bloqueo automático. **Evidencia:** laboratorio.
 - **FR-055**: **US-12 · mediana < 10 s** para un gasto habitual en el iPhone de cada fundador, con al menos 10 gastos y el método escrito (002-T087; decisión 19.1). Los tiempos de CI no la sustituyen. **Evidencia:** dispositivo.
-- **FR-056**: La **tabla de Core Web Vitals** dice, por métrica (LCP, INP, CLS), qué se midió, dónde y con qué método. Lo que no puede medirse en p75 real lo dice con su motivo (dos usuarios y sin medición de campo, según Q5). Nada se rotula «p75». **Evidencia:** la tabla en `evidence.md`.
+- **FR-056**: La **tabla de Core Web Vitals** dice, por métrica (LCP, INP, CLS), qué se midió, dónde y con qué método. Lo que no puede medirse en p75 real lo dice con su motivo (dos usuarios y sin medición de campo; la medición de campo pasa a MVP-2, Q5, opción c). Nada se rotula «p75». **Evidencia:** la tabla en `evidence.md`.
 
 #### Checklist de release, exportación, respaldo y recuperación
 
@@ -545,14 +580,14 @@ Cada requisito dice su **evidencia**:
   - comprueba que no contiene nada privado del otro.
   - El contenido ya lo prueban la integración (`export`, `planning-export`) y la descarga, la spec E2E 1; aquí se confirma con datos reales.
   - **Evidencia:** CI más revisión humana.
-- **FR-061**: **Copia real y restauración** según Q9: una copia cifrada de producción con el esquema de P0-3, restaurada en un PostgreSQL 17 limpio del equipo de un fundador, con `check-invariants.sql` y el manifiesto de recuentos y huellas (`specs/002-cuentas-y-gastos-privados/quickstart.md` §4.1 a §4.3). Ningún agente ve la contraseña de producción (decisión 19.3). **Evidencia:** la salida de la restauración, sin datos.
-- **FR-062**: La **frecuencia de las copias y la pérdida máxima aceptada** quedan escritas según Q9, con un dueño y un recordatorio. **Evidencia:** la checklist.
+- **FR-061**: **Copia real y restauración** antes de declarar MVP-1 (Q9, opción a): una copia cifrada de producción con el esquema de P0-3, restaurada en un PostgreSQL 17 limpio del equipo de un fundador, con `check-invariants.sql` y el manifiesto de recuentos y huellas (`specs/002-cuentas-y-gastos-privados/quickstart.md` §4.1 a §4.3). Ningún agente ve la contraseña de producción (decisión 19.3). **Evidencia:** la salida de la restauración, sin datos.
+- **FR-062**: La **frecuencia de las copias y la pérdida máxima aceptada** quedan escritas en la checklist (Q9, opción a): copia semanal manual y una antes de cada migración de producción; pérdida máxima aceptada, 7 días. Con un dueño y un recordatorio. **Evidencia:** la checklist.
 - **FR-063**: **Recuperación de acceso** en producción con el correo de Supabase: la recuperación por enlace funciona para cada fundador. Se documentan el límite de envío y qué hacer si se alcanza. **Evidencia:** revisión humana.
 - **FR-064**: **Vuelta atrás de un despliegue:** un procedimiento escrito para volver al despliegue anterior en Vercel sin tocar la base de datos, ensayado una vez sobre un preview o un despliegue anterior. **Evidencia:** la salida del ensayo.
-- **FR-065**: **Migración de producción:** antes de cada una, una copia (según Q9) y el «sí» de un fundador antes de cada paso de escritura. Es la regla vigente del gestor, que la checklist hace explícita. **Evidencia:** la checklist.
+- **FR-065**: **Migración de producción:** antes de cada una, una copia (Q9, opción a) y el «sí» de un fundador antes de cada paso de escritura. Es la regla vigente del gestor, que la checklist hace explícita. **Evidencia:** la checklist.
 - **FR-066**: **Suspensión del plan Free** (§7.5): la checklist dice cómo detectar que el proyecto está pausado, cómo reactivarlo y que no se usa un «ping» como garantía. **Evidencia:** la checklist.
-- **FR-067**: **Eliminación de cuenta y pendientes de lanzamiento** según Q8. Con la opción (a): el procedimiento manual escrito, ensayado en `juntia-dev` y con salida verificable, y la interfaz que dice cómo pedirlo. **Evidencia:** la salida del ensayo y la decisión registrada.
-- **FR-068**: **Tabla de idempotencia** según Q12: su tamaño medido y registrado. **Evidencia:** la consulta.
+- **FR-067**: **Eliminación de cuenta y pendientes de lanzamiento** (Q8, opción a): aplican al lanzamiento público, no a MVP-1. Para MVP-1, el procedimiento manual de eliminación escrito, ensayado en `juntia-dev` y con salida verificable, y la interfaz que sigue diciendo «no disponible» y explica cómo pedirlo. La revisión legal se exige antes de abrir la app a terceros. **Evidencia:** la salida del ensayo.
+- **FR-068**: **Tabla de idempotencia** (Q12, opción a): sin purga en MVP-1; su tamaño medido y registrado, y la revisión, en la lista de MVP-2. **Evidencia:** la consulta.
 - **FR-069**: La **checklist de release** es un documento del slice (`specs/005-gate-mvp-1/release-checklist.md`), creado en el plan, con todas las casillas de FR-060 a FR-068 marcadas con su evidencia. Es la evidencia de la fila P0-4 del backlog («Checklist de release + exportación»). **Evidencia:** la checklist firmada por el gestor y un fundador.
 
 #### Verificaciones de dispositivo (decisiones 19.1 y 19.2)
@@ -564,14 +599,12 @@ Cada requisito dice su **evidencia**:
   - US-12 (FR-055);
   - el back-swipe de iOS frente al cierre de Goal Journey (MOTION_SYSTEM `[V]`; 004).
   - **Evidencia:** dispositivo.
-- **FR-071**: Las verificaciones que necesitan un Android o un Mac se resuelven según Q6:
-  - 002-T086 (Android), T090, T092, T094 y T095;
-  - los springs a ≥ 55 fps en Android de gama media, de MOTION_SYSTEM.
-  - Cada una termina con salida real o con «EXCEPCIÓN APROBADA» y sus cinco datos.
-  - **Evidencia:** dispositivo o excepción registrada.
+- **FR-071**: Las verificaciones que necesitan un Android o un Mac se resuelven así (Q6):
+  - **Mac, opción (a):** 002-T094, el CLS en iPhone con el inspector de Safari, se ejecuta antes de declarar MVP-1 con un Mac prestado, contra producción y con las cuentas reales. **Evidencia:** dispositivo.
+  - **Android, opción (c):** 002-T086 (parte Android), T090, T092 y T095, más los springs a ≥ 55 fps en Android de gama media de MOTION_SYSTEM, quedan como «EXCEPCIÓN APROBADA» **prorrogada más allá de MVP-1**, con los cinco datos de la decisión 12. Su revalidación pasa a ser condición de abrir la app a un tercero, y la mitigación sigue siendo la emulación de Chrome y axe. **Evidencia:** la excepción registrada, con los springs añadidos.
 - **FR-072**: La persistencia del tema en `profiles` y la cookie (`[P][V]`, decisión 16.7) tiene una salida explícita: el tema elegido en un dispositivo se aplica sin parpadeo al entrar en el otro. **Evidencia:** dispositivo o CI.
 
-#### Aprobación de los fundadores (según Q10)
+#### Aprobación de los fundadores (Q10, opción a)
 
 - **FR-080**: Los dos fundadores, con cuentas y dispositivos distintos, completan el **escenario de pareja de §4** en móvil y en escritorio, incluidas una meta individual y una compartida, aportes independientes, un gasto con meta sin doble conteo y un presupuesto que crean y desactivan. **Evidencia:** revisión humana.
 - **FR-081**: Tras el periodo de uso diario de Q10, cada fundador escribe **por separado** su valoración en cuatro ejes (uso diario, legibilidad, rapidez y carácter visual) y en las tres preguntas de §6.7 (qué es claro, qué impresiona y qué estorba). **Evidencia:** las dos notas en `evidence.md`.
@@ -585,25 +618,26 @@ Cada requisito dice su **evidencia**:
 
 #### Pruebas y CI (ADR-011, `docs/TESTING.md`)
 
-- **FR-090**: P0-4 **no añade specs E2E** (según Q3); el total sigue en 5 de un tope de 4–6. Las pruebas nuevas van en dominio, componentes o integración (FR-012) o son arneses de laboratorio fuera del gate de PR (`tests/evidence/`).
+- **FR-090**: P0-4 **no añade specs E2E** (Q3, opción a); el total sigue en 5 de un tope de 4–6. Las pruebas nuevas van en dominio, componentes o integración (FR-012) o son arneses de laboratorio fuera del gate de PR (`tests/evidence/`).
 - **FR-091**: Las capas de base de datos se iteran contra `juntia-dev` con sus guardias (decisión 18). El gate es CI sobre el commit candidato.
 - **FR-092**: El barrido `@sweep` y las cinco specs en WebKit se lanzan a mano y **una vez por commit candidato**. No se relanzan «para ver si pasan» (`AGENTS.md` 15a).
-- **FR-093**: Los arneses de laboratorio nuevos (LCP; CLS fuera de Chromium según Q7) viven en el proyecto `evidence` y no corren en el gate de PR.
+- **FR-093**: Los arneses de laboratorio nuevos (LCP; CLS fuera de Chromium con el comparador por fotogramas, Q7) viven en el proyecto `evidence` y no corren en el gate de PR.
 - **FR-094**: Cada corrección del PR B lleva su prueba en la capa más baja que detecta el fallo, con el procedimiento de `docs/TESTING.md` §6.
 - **FR-095**: Los presupuestos de job no se mueven. El margen para las pruebas nuevas sale de la partición del job `e2e` que hace otra sesión (decisión de los fundadores del 17 de noviembre de 2026); si aun así se supera un presupuesto, se aplica la cláusula anticliquet.
 
 #### Fuera de alcance de MVP-1 (explícito)
 
 - **Fotos de metas** y ADR-014 (Storage privado), que pasan a MVP-2 (decisión de los fundadores del 17 de noviembre de 2026), junto con sus `[V]` de scrim y luminancia.
-- **Correo propio (SMTP), «Entrar con Google» y Resend**: el correo de autenticación sigue siendo el de Supabase (decisión de los fundadores del 5 de noviembre de 2026; según Q8 para su relación con la decisión 16).
+- **Correo propio (SMTP), «Entrar con Google» y Resend**: el correo de autenticación sigue siendo el de Supabase (decisión de los fundadores del 5 de noviembre de 2026; Q8, opción a: el correo propio pasa al lanzamiento público).
 - **Landing, demo pública y case study** (§3; ADR-008).
 - **IA, Jev, Gemini, OCR, voz, scraping, precios y ofertas** (§2.4; DEC-S01).
 - **Modo offline** y cola de sincronización (§7.5; ADR-006).
 - **Grupos de 3 o más**, salir o expulsar de la pareja (ADR-003), presupuestos sugeridos (DEC-R01-S), aportes programados, recurrentes y multimoneda.
-- **Issue #53** (fila optimista doble), si se elige Q2 (a).
-- **Nivel 2 nocturno** de `docs/TESTING.md` §3, si se elige Q3 (a).
-- **Medición de campo (RUM)**, si se elige Q5 (c).
-- **Eliminación de cuenta en la interfaz**, términos legales definitivos, apertura del registro y cierre de la enumeración por la API de Auth, si se elige Q8 (a): aplican al lanzamiento público.
+- **Issue #53** (fila optimista doble), a MVP-2 (Q2, opción a).
+- **Nivel 2 nocturno** de `docs/TESTING.md` §3, a MVP-2 (Q3, opción a).
+- **Medición de campo (RUM)**, a MVP-2 (Q5, opción c).
+- **Eliminación de cuenta en la interfaz**, términos legales definitivos, apertura del registro y cierre de la enumeración por la API de Auth: aplican al lanzamiento público (Q8, opción a).
+- **Verificaciones en Android** (002-T086 parte Android, T090, T092, T095 y los springs a 55 fps): prorrogadas más allá de MVP-1 como excepción formal; se revalidan antes de abrir la app a un tercero (Q6, opción c).
 
 ### Key Entities
 
@@ -621,7 +655,7 @@ P0-4 no crea datos de producto. Sus entidades son registros de evidencia:
 ### Measurable Outcomes
 
 - **SC-001**: El commit candidato tiene **todos los jobs de CI en verde**, con las cinco specs E2E y el ensayo de restauración con N1–N11, y la salida pegada en la evidencia.
-- **SC-002**: Las cinco specs E2E pasan **una vez en WebKit** sobre el commit candidato (según Q3).
+- **SC-002**: Las cinco specs E2E pasan **una vez en WebKit** sobre el commit candidato (Q3, opción a).
 - **SC-003**: **Cero filas «abiertas»** en el inventario de verificaciones heredadas; cada una tiene salida real, «EXCEPCIÓN APROBADA» o «no aplica» con motivo.
 - **SC-004**: **Cero violaciones serias o críticas** de axe, cero scroll horizontal y cero fallos de geometría en el barrido completo: siete anchos, dos temas, 200 %, teclado y 44 px.
 - **SC-005**: **CLS = 0** sin redondear en las rutas clave con esqueleto en Chromium (40 cargas por ruta) y, con el método de Q7, en WebKit y Firefox.
@@ -636,7 +670,7 @@ P0-4 no crea datos de producto. Sus entidades son registros de evidencia:
 ## Assumptions
 
 - **P0-1, P0-2 y P0-3 están en producción** (`juntia-alpha.vercel.app`) y los fundadores las usan con datos reales; P0-3 se acepta antes de empezar P0-4 (FR-001).
-- **Los dos fundadores usan iPhone** y ninguno tiene Android (decisión 12); sobre el Mac, según Q6.
+- **Los dos fundadores usan iPhone** y ninguno tiene Android (decisión 12); para el CLS en iPhone se consigue un Mac prestado (Q6, opción a).
 - **El catálogo, las pantallas y el dataset dorado** son los de la 004; P0-4 no añade pantallas.
 - **El job `e2e` partido en dos** lo entrega otra sesión antes del PR A; si no llega, la cláusula anticliquet sigue valiendo.
 - **El correo de autenticación** sigue siendo el de Supabase, con su límite de envío.
@@ -705,15 +739,15 @@ actualizan.
 
 | Origen | Verificación | Estado registrado | Cierre en P0-4 |
 | --- | --- | --- | --- |
-| 002-T086 | Teclado nativo con la hoja de Anotar: iPhone; Android con teclado de terceros | iPhone **aplazada (19.1)**; Android **EXCEPCIÓN APROBADA (19.2)** | FR-044; FR-071 (según Q6) |
+| 002-T086 | Teclado nativo con la hoja de Anotar: iPhone; Android con teclado de terceros | iPhone **aplazada (19.1)**; Android **EXCEPCIÓN APROBADA (19.2)** | FR-044; Android prorrogada más allá de MVP-1 (Q6, opción c) |
 | 002-T087 | US-12, mediana < 10 s en teléfono real | **Aplazada (19.1)** | FR-055 |
 | 002-T089 (001-T073) | Contraste en iPhone, dos temas | **Aplazada (19.1)** | FR-070 |
-| 002-T090 (001-T074) | Sombras táctiles en Android de gama media | **EXCEPCIÓN APROBADA (19.2)** | FR-071 (según Q6) |
+| 002-T090 (001-T074) | Sombras táctiles en Android de gama media | **EXCEPCIÓN APROBADA (19.2)** | Prorrogada más allá de MVP-1 (Q6, opción c) |
 | 002-T091 (001-T075) | VoiceOver con Anotar real | **Aplazada (19.1)** | FR-070 |
-| 002-T092 (001-T075) | TalkBack | **EXCEPCIÓN APROBADA (19.2)** | FR-071 (según Q6) |
-| 002-T093 | CLS = 0 en Firefox y WebKit | **Aplazada (19.4)**, gestor | FR-051 (según Q7) |
-| 002-T094 | CLS en iPhone con el inspector de Safari | **EXCEPCIÓN APROBADA (19.2)** | FR-071 (según Q6) |
-| 002-T095 | Respaldo tipográfico de Onest en Android | **EXCEPCIÓN APROBADA (19.2)** | FR-071 (según Q6) |
+| 002-T092 (001-T075) | TalkBack | **EXCEPCIÓN APROBADA (19.2)** | Prorrogada más allá de MVP-1 (Q6, opción c) |
+| 002-T093 | CLS = 0 en Firefox y WebKit | **Aplazada (19.4)**, gestor | FR-051 (Q7, opción a) |
+| 002-T094 | CLS en iPhone con el inspector de Safari | **EXCEPCIÓN APROBADA (19.2)** | FR-071, con un Mac prestado antes de MVP-1 (Q6, opción a) |
+| 002-T095 | Respaldo tipográfico de Onest en Android | **EXCEPCIÓN APROBADA (19.2)** | Prorrogada más allá de MVP-1 (Q6, opción c) |
 | 002-T097 | Primera copia real y su restauración | **Pendiente** en la evidencia | FR-004, FR-061 |
 | 002-T036 | Correo de verificación de la segunda fundadora en dev y prod | Parcial | FR-003 |
 | 002-T101, T103, T105 | Revisión del PR D, salida interna, cierre de F0-b | Pendientes en la evidencia | FR-003 |
@@ -730,8 +764,8 @@ actualizan.
 | 004-T041, T056, T069, T081 | Revisiones visuales de los fundadores | Parciales | FR-003, FR-033 |
 | 004-T084, T085 | Salida interna de P0-3 y PR documental | Pendientes | FR-001 |
 | Decisión 21.2 | Barrido completo «antes de MVP-1» | — | FR-040 |
-| Decisión 16.16 | Enumeración por la API de Auth, riesgo aceptado «hasta MVP-1» | Riesgo aceptado | FR-067 (según Q8) |
-| `specs/002` data-model | Purga de la tabla de idempotencia «antes de MVP-1» | Sin revisar | FR-068 (según Q12) |
+| Decisión 16.16 | Enumeración por la API de Auth, riesgo aceptado «hasta MVP-1» | Riesgo aceptado | Al lanzamiento público (Q8, opción a) |
+| `specs/002` data-model | Purga de la tabla de idempotencia «antes de MVP-1» | Sin revisar | FR-068: sin purga, se mide (Q12, opción a) |
 
 ## Inventario de `[V]`
 
@@ -739,13 +773,13 @@ actualizan.
 | --- | --- | --- | --- |
 | Contraste en dispositivo real | DESIGN_SYSTEM [V] (a); handoff | Aplazada (19.1) | FR-070 · fundadores · dispositivo |
 | VoiceOver, TalkBack y axe en dispositivo | Handoff, «Validación real» | VoiceOver aplazada; TalkBack en excepción; axe solo en CI | FR-070, FR-071 · fundadores |
-| Sombras táctiles en gama media | DESIGN_SYSTEM [V] (c) | EXCEPCIÓN APROBADA | FR-071 (según Q6) |
-| Springs a ≥ 55 fps en Android de gama media con foto | MOTION_SYSTEM | **Sin dueño ni excepción** | FR-071 (según Q6). Sin fotos en MVP-1, se mide con la meta inmersiva sin foto |
+| Sombras táctiles en gama media | DESIGN_SYSTEM [V] (c) | EXCEPCIÓN APROBADA | Prorrogada más allá de MVP-1 (Q6, opción c) |
+| Springs a ≥ 55 fps en Android de gama media con foto | MOTION_SYSTEM | **Sin dueño ni excepción** | Entra en la excepción de Android, prorrogada más allá de MVP-1 (Q6, opción c), con sus cinco datos; se revalida con la meta inmersiva sin foto |
 | Gesto de cierre frente al back-swipe de iOS | MOTION_SYSTEM; §15.6.2 punto 1 | Aplazada (19.1) | FR-070 · fundadores · dispositivo |
-| View Transitions con App Router | MOTION_SYSTEM; §15.6.2 punto 1 | Cerrada para la apertura; el cierre no usa View Transition (limitación) | Según Q11 |
+| View Transitions con App Router | MOTION_SYSTEM; §15.6.2 punto 1 | Cerrada para la apertura; el cierre no usa View Transition (limitación) | A MVP-2 (Q11, opción a) |
 | Altura del teclado nativo (`visualViewport`) | RESPONSIVE | iPhone aplazada; Android en excepción | FR-044; FR-071 |
 | Rendimiento del abanico con 6 metas o más | RESPONSIVE; §15.6.2 punto 4 | Pendiente (004-T054) | FR-053 · gestor · laboratorio |
-| Teclado nativo en Android con teclados de terceros | §15.6.2 punto 3 | Excepción (19.2) | FR-071 (según Q6) |
+| Teclado nativo en Android con teclados de terceros | §15.6.2 punto 3 | Excepción (19.2) | Prorrogada más allá de MVP-1 (Q6, opción c) |
 | Persistencia del tema en `profiles` y cookie | COMPONENT_SPECIFICATIONS §ThemeSelector | Sin cierre explícito encontrado | FR-072 |
 | Ediciones concurrentes de presupuesto | Handoff; COMPONENT_SPECIFICATIONS | Cerrada (004, PR A y B) | Se repite en FR-010 |
 | `goal_usage_confirmations`, atomicidad del gasto con meta, RLS de metas | Handoff, «Pendiente» | Cerradas (004, con run) | Se repite en FR-010 |
@@ -793,17 +827,13 @@ release y exportación firmada (FR-069).
 
 ## Specs E2E que añade P0-4
 
-**Ninguna** (según Q3). El total sigue en 5 de 4–6; la sexta plaza queda libre.
+**Ninguna** (Q3, opción a). El total sigue en 5 de 4–6; la sexta plaza queda libre.
 
 ## ADR, erratas y conflictos
 
 - **ADR que aplican:** ADR-001 a ADR-004, ADR-007, ADR-010, ADR-011, ADR-012 y ADR-013.
-- **ADR nuevo:** ninguno con las recomendaciones. Si Q2 se responde (b), hace falta un ADR bajo ADR-013 antes del plan. ADR-014 pasa a MVP-2.
-- **Enmiendas del maestro que dependen de las respuestas:**
-  - Q6 (c) enmienda la decisión 19.2.
-  - Q7 (c) enmienda la 19.4.
-  - Q8 (a) enmienda el §15.6.1 y la decisión 16.
-  - Las hace el PR documental posterior, no esta spec.
+- **ADR nuevo:** ninguno. El #53 se difiere (Q2, opción a), así que no hace falta el ADR bajo ADR-013. ADR-014 pasa a MVP-2.
+- **Enmiendas del maestro que exigen las respuestas:** filas 14 a 18 de «Contradicciones para el PR documental T085». La decisión 19.4 no se enmienda, porque Q7 eligió (a). Las hace el PR documental posterior, no esta spec.
 - **Erratas pendientes del paquete:** ninguna en `docs/design/README.md`.
 
 ## Contradicciones para el PR documental T085
@@ -822,18 +852,32 @@ ya está en el código.
 | 6 | **Tamaños de texto en px** | `docs/design/DESIGN_SYSTEM.md` §1.4 (tokens y clamps en px) | Texto en `rem` (F13, 11 nov; PR #79), con la excepción F79-3 |
 | 7 | **Campos táctiles a 16 px** | Ningún documento lo dice; `body.m` es 15 px en DESIGN_SYSTEM | 16 px en táctil (PR #82). Es un hueco de documentación, no una contradicción literal |
 | 8 | **Fotos de metas y ADR-014 «antes de P0-4»** | Maestro §15.6.2 punto 2 y decisión 22.6; `docs/adr/ADR-010-metas.md`; spec 004 Q6, FR-036, tabla de `[V]`, ADR; plan, tasks y research de la 004; handoff («Fotos», «Pendiente»); BRAND_FOUNDATION; DESIGN_SYSTEM [V] (b); COMPONENT_SPECIFICATIONS §GoalCard; RESPONSIVE (foto de 470 px) | Sin fotos en MVP-1; ADR-014 a MVP-2 (fundadores, 17 nov 2026) |
-| 9 | **Nivel 2 nocturno** | `docs/TESTING.md` §3 lo describe (cinco specs en Chromium y WebKit, snapshots, rendimiento) | No existe workflow nocturno ni post-merge (`.github/workflows/ci.yml`). Según Q3 |
-| 10 | **Correo propio «antes de MVP-1»** | Maestro decisión 16.10 y «Pendientes de lanzamiento» de la decisión 16; `specs/002` quickstart y spec | Correo y acceso, al final del producto (fundadores, 5 nov 2026). Según Q8 |
+| 9 | **Nivel 2 nocturno** | `docs/TESTING.md` §3 lo describe (cinco specs en Chromium y WebKit, snapshots, rendimiento) | No existe workflow nocturno ni post-merge (`.github/workflows/ci.yml`). Ver fila 17 |
+| 10 | **Correo propio «antes de MVP-1»** | Maestro decisión 16.10 y «Pendientes de lanzamiento» de la decisión 16; `specs/002` quickstart y spec | Correo y acceso, al final del producto (fundadores, 5 nov 2026). Ver fila 16 |
 | 11 | **Presupuesto del job `e2e`** | `docs/TESTING.md` §9 y decisiones 19.5 y 21.4 (un job, < 660 s) | El job se parte en dos (fundadores, 17 nov 2026); la tabla de presupuestos cambia con esa partición |
-| 12 | **«READY WITH BLOCKERS» del handoff** | `docs/design/HANDOFF_CLAUDE_CODE.md`, «Decisiones»: bloquean la eliminación de cuenta **y la confirmación técnica de Supabase** | La confirmación técnica no es un pendiente (maestro §15.6, nota final). La eliminación de cuenta, según Q8 |
+| 12 | **«READY WITH BLOCKERS» del handoff** | `docs/design/HANDOFF_CLAUDE_CODE.md`, «Decisiones»: bloquean la eliminación de cuenta **y la confirmación técnica de Supabase** | La confirmación técnica no es un pendiente (maestro §15.6, nota final). La eliminación de cuenta, al lanzamiento público (fila 16) |
 | 13 | **Casillas de `tasks.md`** | `specs/004-presupuestos-y-metas/tasks.md`: 0 de 89 marcadas pese a los PR A–E fusionados; `specs/001` igual en parte | El estado real está en las `evidence.md` (FR-003) |
 
-## Propuesta de reparto en PR (según Q1)
+### Enmiendas del maestro que exigen las decisiones del 17 de noviembre de 2026
+
+Las respuestas a Q1–Q12 cambian textos de rango superior. Esta spec no los toca: el
+PR documental las aplica al maestro (§15.10, como decisión nueva) y a los documentos
+que se citan.
+
+| # | Enmienda | Dónde | Origen |
+| --- | --- | --- | --- |
+| 14 | **Fotos de metas en MVP-2**, no «antes de P0-4»; ADR-014 a MVP-2; los `[V]` de scrim y luminancia salen de MVP-1 | Maestro decisión 22.6 y §15.6.2 punto 2; `docs/adr/ADR-010-metas.md`; spec 004 (Q6, FR-036, tabla de `[V]`, ADR) | Fundadores, 17 nov 2026 (ver fila 8) |
+| 15 | **Verificaciones de Android prorrogadas más allá de MVP-1** (002-T086 Android, T090, T092, T095 y los springs a 55 fps, que se añaden a la excepción); revalidación antes de abrir la app a un tercero. El CLS en iPhone (T094) sigue antes de MVP-1, con un Mac | Maestro decisión 19.2 (y la tabla «Lo que hereda P0-1» de la decisión 12); `specs/002-cuentas-y-gastos-privados/evidence.md` | Q6, opciones (a) y (c) |
+| 16 | **Eliminación de cuenta y pendientes de lanzamiento al lanzamiento público**: términos legales, correo propio, apertura del registro y enumeración por la API de Auth (16.16); en MVP-1, procedimiento manual ensayado y revisión legal antes de abrir a terceros | Maestro §15.6.1; decisión 16 («Pendientes de lanzamiento») y 16.10; handoff («READY WITH BLOCKERS», «Datos»); `specs/002` spec y quickstart | Q8, opción (a) (ver filas 10 y 12) |
+| 17 | **Nivel 2 nocturno no implementado, diferido a MVP-2**: `docs/TESTING.md` §3 lo describe como si existiera; dejar escrito que no existe y que en MVP-1 lo sustituyen las cinco specs a mano en Chromium y una vez en WebKit | `docs/TESTING.md` §3 («Nivel 2») | Q3, opción (a) (ver fila 9) |
+| 18 | **Issue #53 a MVP-2** como límite conocido; sin ADR en P0-4 | Issue #53; registro de límites conocidos en `src/features/expenses/annotate/machines.test.ts` (sin cambio de código) | Q2, opción (a) |
+
+## Reparto en PR (Q1, opción a)
 
 | PR | Contenido | Spec E2E | Lanza CI |
 | --- | --- | --- | --- |
-| **A · Pruebas y arneses** | Huecos de FR-012, matriz de estados de FR-041 en el registro de accesibilidad, arnés de LCP (FR-054), arnés de CLS fuera de Chromium (FR-051, según Q7), cuenta de listas largas en la siembra de `juntia-dev` (FR-043) | Ninguna | Sí |
+| **A · Pruebas y arneses** | Huecos de FR-012, matriz de estados de FR-041 en el registro de accesibilidad, arnés de LCP (FR-054), arnés de CLS fuera de Chromium (FR-051, comparador por fotogramas), cuenta de listas largas en la siembra de `juntia-dev` (FR-043) | Ninguna | Sí |
 | **Mediciones y revisiones** | Barrido `@sweep`, WebKit, laboratorio, dispositivo, revisión S1–S5, uso diario | — | Runs a mano |
-| **B · Correcciones** | Defectos que salgan de A y de las revisiones; F02 según Q4; lo que entre por Q11 | Ninguna | Sí |
+| **B · Correcciones** | Defectos que salgan de A y de las revisiones; F02 si la medición lo exige (Q4); el residuo de F13, la pérdida del monto al cruzar 768 px y el marco de foco (Q11) | Ninguna | Sí |
 | **C · Evidencia y cierre** | `evidence.md`, `release-checklist.md`, inventarios actualizados, valoraciones de los fundadores | — | No (solo `.md` y `.png`) |
 | **PR documental de declaración** | Estado del maestro, `AGENTS.md` y `CLAUDE.md`: «MVP-1 declarado» | — | Sí (toca `AGENTS.md` y `CLAUDE.md`) |
