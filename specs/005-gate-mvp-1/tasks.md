@@ -22,7 +22,7 @@ description: "Lista de tareas de la especificación 005 · Gate privado conjunto
 - **Gestor**: la sesión que coordina. Lanza los runs a mano, ejecuta las sondas y los ensayos, calcula y registra. No sustituye a una persona en lo que la spec pide a una persona.
 - **Fundadores**: «los dos», «cada fundador», «un fundador» o «la dueña» (la fundadora dueña del repositorio, de Vercel y de Supabase), según la tarea.
 
-**Las tareas no deciden y no amplían el alcance.** Si una no se puede cumplir sin decidir algo que no está en la spec, el plan o sus contratos, la implementación se detiene y lo reporta (`AGENTS.md` 17). Lo que obligó a decidir al desglosar está en [Decisiones abiertas](#decisiones-abiertas), marcado `[NECESITA DECISIÓN]`, sin cerrar.
+**Las tareas no deciden y no amplían el alcance.** Si una no se puede cumplir sin decidir algo que no está en la spec, el plan o sus contratos, la implementación se detiene y lo reporta (`AGENTS.md` 17). Lo que obligó a decidir al desglosar (N1 y N2) lo decidieron los fundadores el 18 de noviembre de 2026; está en [Decisiones de los fundadores sobre el desglose](#decisiones-de-los-fundadores-sobre-el-desglose).
 
 **Tests**: se rigen por `docs/TESTING.md` y ADR-011, que prevalecen sobre
 cualquier heurística genérica de generación de tests. Cada criterio va en **la
@@ -107,12 +107,12 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
   - Terminado cuando: los dos la dan por aprobada por escrito.
 
 - [ ] T003 **Humana (gestor)**: **PR documental de cierre de P0-3 (004-T085)**, mergeado. Incluye las filas 1–18 de «Contradicciones para el PR documental T085» de la spec y las filas 19–22 del plan:
-  - 19 · nota a ADR-007 y ADR-013 sobre la suspensión por nombre de los triggers de solo inserción en el borrado manual (D2), **con la lista de triggers que salga de la decisión abierta N1**;
+  - 19 · nota a ADR-007 y ADR-013 sobre la suspensión por nombre de los triggers de solo inserción en el borrado manual (D2), **con la lista de triggers que comunique T042** (N1, opción a: con o sin `allocations_check_sum`);
   - 20 · criterio de la decisión 22.2 (D3);
   - 21 · periodo de uso con despliegues congelados (D4);
   - 22 · la única excepción a «los aportes no se borran» de ADR-010 (F85-8).
   - Cumple: FR-001.
-  - Quién: gestor; lo aprueban los fundadores. Depende de: T002; N1 resuelta.
+  - Quién: gestor; lo aprueban los fundadores. Depende de: T002; T042 (el resultado del caso 1 de T039, N1).
   - Evidencia: revisión (el merge del PR).
   - Terminado cuando: el PR está en `main` y `specs/004-presupuestos-y-metas/evidence.md` registra 004-T084 y 004-T085.
 
@@ -291,7 +291,7 @@ No son decisiones: son lecturas necesarias para ejecutar donde el plan no fija e
   - Evidencia: laboratorio (tramo `lab-interaction`).
   - Terminado cuando: corre en local y su salida tiene una fila por animación.
 
-- [ ] T027 [P] [US4] `tests/evidence/release-long-lists.capture.ts`: siembra en el runner una cuenta con **600 movimientos en un mes, 120 aportes y 40 versiones de presupuesto**, y comprueba a 390 y 1440, en Actividad, el historial de aportes y el de presupuestos: «cargar más» no cambia el total; las cajas de las filas son disjuntas (nada se solapa); no hay scroll horizontal. Capturas PNG con los datos sembrados. No duplica la integración de más de 500 filas del paginador (004, F64-4)
+- [ ] T027 [P] [US4] `tests/evidence/release-long-lists.capture.ts`: siembra en el runner una cuenta con **600 movimientos en un mes, 120 aportes y 40 versiones de presupuesto**, y comprueba a 390 y 1440, en Actividad, el historial de aportes y el de presupuestos: «cargar más» no cambia el total; las cajas de las filas son disjuntas (nada se solapa); no hay scroll horizontal. Capturas PNG con los datos sembrados, que **revisan los fundadores** junto a las de T054 (N2, opción a). No duplica la integración de más de 500 filas del paginador (004, F64-4)
   - Cumple: FR-043; research R7.
   - Quién: agente. Depende de: T022.
   - Evidencia: laboratorio (tramo `lab-interaction`) más capturas.
@@ -416,7 +416,7 @@ El contrato completo es [contracts/ci.md](contracts/ci.md).
   - Evidencia: revisión.
   - Terminado cuando: la sección no presenta `release` como nivel 2.
 
-### Grupo 1F — borrado manual de cuenta en fases (T039 primero; T040 y T041 después; T042 condicional)
+### Grupo 1F — borrado manual de cuenta en fases (el caso 1 de T039 primero y pronto, para T042; el resto de T039, T040 y T041 después)
 
 El contrato completo es [contracts/account-deletion.md](contracts/account-deletion.md) (D2, opción a). **Nada de este grupo se ejecuta contra producción.**
 
@@ -435,6 +435,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Cumple: FR-067; D2; F85-1, F85-2, F85-3, F85-10, F85-12.
   - Quién: agente, con el lock de `juntia-dev` para iterar. Depende de: T001.
   - Evidencia: CI (job `db`, +8–18 s). Si `db` se acerca a 600 s, la prueba pasa al tramo `lab-interaction` (contrato §6).
+  - **El caso 1 se escribe y se corre primero, pronto, contra `juntia-dev`**, con el PR A en borrador (D1), para que T042 comunique su resultado antes de redactar 004-T085 (N1, opción a).
   - Terminado cuando: los once casos fallan sin el procedimiento.
 
 - [ ] T040 [US6] `scripts/account-deletion/delete-account.sql`: la fase 1 del contrato §4, en **una transacción** (`psql -1`, `ON_ERROR_STOP`) como dueño de las tablas:
@@ -465,9 +466,9 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: CI (T039).
   - Terminado cuando: los once casos de T039 pasan en `juntia-dev` y en el gate.
 
-- [ ] T042 [US6] **Condicional, ver N1**: si el caso 1 de T039 demuestra que `allocations_check_sum` rechaza un borrado completo en el que el gasto también desaparece, se añade **por nombre** a la lista de triggers suspendidos de T040, y la lista llega a la nota de ADR-007 y ADR-013 por la vía que decidan los fundadores en N1
+- [ ] T042 [US6] **Resultado del caso 1 de T039 (N1, decidido: opción a con b de respaldo)**: el agente comunica al gestor si `allocations_check_sum` rechaza un borrado completo en el que el gasto también desaparece. **Si lo rechaza**, se añade **por nombre** a la lista de triggers suspendidos de T040. El gestor escribe la lista resultante (con o sin ese trigger) en la fila 19 de 004-T085 (T003). **Si 004-T085 ya se mergeó** sin ella, un PR documental corto añade el nombre a la nota de ADR-007 y ADR-013 **antes de marcar listo el PR A** (T050); el PR A no edita la nota
   - Cumple: FR-067; contrato §1 («Triggers de restricción diferidos»).
-  - Quién: agente; la nota, según N1. Depende de: T039.
+  - Quién: agente (resultado y T040); gestor (la nota en 004-T085 o el PR documental de respaldo). Depende de: el caso 1 de T039.
   - Evidencia: CI (T039).
   - Terminado cuando: el resultado (hace falta o no) está escrito en la descripción del PR A y comunicado al gestor **antes** de redactar 004-T085.
 
@@ -517,7 +518,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 - [ ] T050 **Humana (gestor)**: con **T002 y T003 cerrados** (FR-001; D1), marcar el PR A como listo (la única pasada del gate) y comprobar en el último commit: los cuatro jobs en verde; `a11y-session` **< 600 s**; `db` lejos de 600 s (si se acerca, la prueba de T039 pasa a `lab-interaction` antes del merge); `ci-workflow` y el comparador en verde; `states-matrix.md` sin celdas sin dueño. Pedir el merge a la dueña
   - Cumple: FR-001, FR-095; criterios de salida del PR A.
-  - Quién: gestor; merge, la dueña. Depende de: T002, T003, T049.
+  - Quién: gestor; merge, la dueña. Depende de: T002, T003, T042 (y su PR documental de respaldo, si hizo falta), T049.
   - Evidencia: CI (run del gate).
   - Terminado cuando: el PR A está en `main`.
 
@@ -550,11 +551,11 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión. El `request_id` y las huellas cortas de los UUID; recuentos por tabla antes y después; la secuencia de estados; la salida de `check-invariants.sql`; la comprobación de Auth.
   - Terminado cuando: la casilla del ensayo de la [checklist](release-checklist.md) §7 tiene su evidencia.
 
-- [ ] T054 [US4] **Humana (gestor)**: ejecutar `scripts/dev-target/seed-long-lists.mjs` en `juntia-dev` con el lock (la cuenta no se borra al resetear sin avisar), y hacer las **capturas PNG a 390 y 1440** de Actividad, el historial de aportes y el de presupuestos con la app local contra `juntia-dev`. Cómo la recorren los fundadores: **N2**
+- [ ] T054 [US4] **Humana (gestor)**: ejecutar `scripts/dev-target/seed-long-lists.mjs` en `juntia-dev` con el lock (la cuenta no se borra al resetear sin avisar), y hacer las **capturas PNG a 390 y 1440** de Actividad, el historial de aportes y el de presupuestos con la app local contra `juntia-dev`. **N2, decidido (opción a):** los fundadores no la recorren en el teléfono; **revisan estas capturas y las del arnés del runner (T027)**
   - Cumple: FR-043.
-  - Quién: gestor. Depende de: T050; N2 resuelta.
+  - Quién: gestor (siembra y capturas); los dos revisan las capturas. Depende de: T050, T028; las capturas de T027 del punto de control (T045).
   - Evidencia: capturas (datos de prueba) más la integración de más de 500 filas existente y T027.
-  - Terminado cuando: las capturas están en `specs/005-gate-mvp-1/evidence/`.
+  - Terminado cuando: las capturas están en `specs/005-gate-mvp-1/evidence/` y los dos dejaron su revisión escrita (lo que vean defectuoso va a T055).
 
 - [ ] T055 **Humana (gestor)**: **lista final de hallazgos para el PR B**: T011 más el PR A (T045, T049), T051–T054 y las revisiones. Cada uno: defecto (con su capa de prueba), funcionalidad nueva (MVP-2, FR-083) o fallo crítico. Si el abanico **falla D3** en T045 o T052, la pantalla cae a la lista y **vuelve a los fundadores** (decisión 22.2) antes de entrar en B. Las salidas pendientes del paso 0b entran en `evidence.md` (I9)
   - Cumple: FR-053, FR-083, FR-094; spec, «Edge Cases».
@@ -946,27 +947,31 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 ---
 
-## Decisiones abiertas
+## Decisiones de los fundadores sobre el desglose
 
-Dos puntos del desglose obligan a decidir algo que la spec, el plan y sus contratos no deciden. **No se cierran aquí.**
+Dos puntos del desglose obligaban a decidir algo que la spec, el plan y sus contratos no decidían. Se presentaron como `[NECESITA DECISIÓN]` y **los fundadores aprobaron las dos recomendaciones el 18 de noviembre de 2026** («Sí, N1 y N2», Alejandro, comunicado por el gestor). Cada punto conserva su contexto y sus opciones como historia.
 
-### N1 · `[NECESITA DECISIÓN]` ¿Cómo llega `allocations_check_sum` a la nota de ADR-007 y ADR-013 si hace falta suspenderlo?
+### N1 · ¿Cómo llega `allocations_check_sum` a la nota de ADR-007 y ADR-013 si hace falta suspenderlo?
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**, con **(b)** como respaldo. El PR A corre pronto el caso 1 de T039 contra `juntia-dev` y comunica el resultado (T042); el gestor lo escribe en la nota de 004-T085. Si 004-T085 ya se mergeó, un PR documental corto añade el nombre antes de marcar listo el PR A. Lo aplican T003, T039, T042 y T050.
 
 - **Contexto:** el contrato del borrado (§1) dice que, si el trigger diferido `allocations_check_sum` rechaza un borrado completo, se añade por nombre a la lista de triggers suspendidos «y a la nota de T085, en el mismo PR A». Pero con D1 el PR A **no se mergea hasta que 004-T085 esté mergeado**: cuando el PR A lo descubra, la nota de 004-T085 ya puede estar en `main` sin ese trigger. Además, `allocations_check_sum` no es un trigger de solo inserción, que es lo que D2 decidió suspender: es una comprobación diferida de que las asignaciones suman el gasto. Y una nota de ADR no se cambia dentro de un PR de código (`AGENTS.md` 17).
 - **Opciones:**
   - (a) **Averiguarlo antes de redactar 004-T085.** El agente del PR A corre pronto el caso 1 de T039 contra `juntia-dev` (D1 permite el borrador) y comunica el resultado (T042); el gestor escribe en la fila 19 de 004-T085 la lista con o sin `allocations_check_sum`.
   - (b) **Un PR documental corto** que añade el nombre a la nota después de 004-T085 y antes de marcar listo el PR A.
   - (c) **El PR A edita la nota** (un `.md` de `docs/adr/`) con la aprobación expresa de los fundadores en su revisión.
-- **Recomendación: (a), con (b) como respaldo** si 004-T085 se mergea antes de tener el resultado. Mantiene la nota completa en una sola reconciliación y el PR de código sin cambios de ADR. (c) mezcla una nota de ADR con código.
+- **Recomendación (aceptada): (a), con (b) como respaldo** si 004-T085 se mergea antes de tener el resultado. Mantiene la nota completa en una sola reconciliación y el PR de código sin cambios de ADR. (c) mezcla una nota de ADR con código.
 
-### N2 · `[NECESITA DECISIÓN]` ¿Cómo recorren los fundadores la cuenta de listas largas de `juntia-dev`?
+### N2 · ¿Cómo recorren los fundadores la cuenta de listas largas de `juntia-dev`?
+
+- **Decidido** (fundadores, 18 nov 2026): opción **(a)**. Capturas a 390 y 1440 tomadas por el gestor con la app local contra `juntia-dev`, más las del arnés del runner; los fundadores las revisan. Lo aplican T027 y T054.
 
 - **Contexto:** research R7 dice que `seed-long-lists.mjs` crea la cuenta en `juntia-dev` «para que los fundadores la recorran con su teléfono». Pero `juntia-dev` no tiene un despliegue propio: la app se usa contra él solo en desarrollo, en local (decisión 17). FR-043 pide como evidencia «capturas más la integración existente de más de 500 filas», no un recorrido en el teléfono.
 - **Opciones:**
   - (a) **Capturas, sin teléfono.** El gestor hace las capturas a 390 y 1440 con la app local contra `juntia-dev` (T054) y el arnés del runner deja las suyas (T027); los fundadores las revisan.
   - (b) **Teléfono en la red local.** Un fundador sirve la app local contra `juntia-dev` en su red (`next dev` escuchando en la red) y los dos la abren en su iPhone.
   - (c) **Un despliegue de preview de Vercel contra `juntia-dev`.** Es configuración nueva en Vercel (variables de un entorno de preview), que hace la dueña.
-- **Recomendación: (a).** Cumple FR-043 tal como está escrito, no toca Vercel ni la red de nadie, y las listas largas en el teléfono real ya las ve cada fundador con su uso diario a escala real. (b) es razonable si los fundadores quieren el recorrido táctil.
+- **Recomendación (aceptada): (a).** Cumple FR-043 tal como está escrito, no toca Vercel ni la red de nadie, y las listas largas en el teléfono real ya las ve cada fundador con su uso diario a escala real. (b) es razonable si los fundadores quieren el recorrido táctil.
 
 ---
 
@@ -1034,7 +1039,7 @@ Task: "T035 Test del workflow en tests/ci-workflow.test.ts"
 | 9 · Declaración | Phase 9 | T109 | 1 | Gestor; fundadores |
 | **Total** | | **T001–T109** | **109** | |
 
-De las 109, son **condicionales** T042, T046–T048, T058, T062–T064, T066, T070 y T096: solo se ejecutan si se cumple su condición.
+De las 109, son **condicionales** T046–T048, T058, T062–T064, T066, T070 y T096: solo se ejecutan si se cumple su condición.
 
 ### Costo de CI esperado por paso
 
@@ -1203,4 +1208,4 @@ Ninguno exige cambiar la spec ni el plan. Tres diferencias entre documentos, res
 2. **Nombre de la etiqueta:** la celda del paso 5 del plan dice «`db-prod-*` o `release-mvp-1-*`»; R13 y la checklist dicen `mvp-1-YYYY-MM-DD` → I4.
 3. **Proyecto de Vitest del comparador:** el plan dice «`domain` o el de `scripts/`»; la configuración ya lo recoge en `components` → I2.
 
-Y dos puntos que sí obligan a decidir: N1 y N2, en [Decisiones abiertas](#decisiones-abiertas).
+Y dos puntos que obligaban a decidir, N1 y N2, ya decididos por los fundadores el 18 de noviembre de 2026 (opción a en los dos; en N1, con b de respaldo): [Decisiones de los fundadores sobre el desglose](#decisiones-de-los-fundadores-sobre-el-desglose).
