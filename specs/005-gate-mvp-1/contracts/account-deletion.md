@@ -192,6 +192,10 @@ El procedimiento no decide solo en estos casos: se detiene, deja el estado escri
 | **`indeterminate`**: con la fase 1 empezada, el alcance tiene identificadores que no estaban en el plan (F87-10) | Pasa a `indeterminate`, se detiene y no vuelve a ejecutar nada: ni `--resume` ni `--abort` siguen | El gestor concilia el alcance a mano (qué filas son nuevas y de dónde salen) antes de cualquier otro paso |
 | **Fase 1 empezada**: el estado tiene `phase1_started` (F87-8) | `--abort` se rechaza siempre: la transacción pudo confirmarse y levantar los bloqueos dejaría cuentas sin datos desbloqueadas | La única salida es `--resume` |
 
+**Bloqueos de la fase 1** (gate del PR #87, run 44384613716: `deadlock detected` con escrituras concurrentes): la
+transacción toma todas las tablas que toca, en un orden fijo y con `lock_timeout`, antes de leer nada. Si no las consigue,
+revierte sin cambiar nada; el error es recuperable, el estado sigue en `locked` y `--resume` reintenta.
+
 La recuperación de una fase 1 interrumpida decide por los **identificadores** del alcance que el plan guarda por tabla
 (F87-10), no por los recuentos: si ninguno de los del plan existe y el alcance está vacío, la transacción se confirmó; si
 queda alguno, se repite la fase 1, que exige que los identificadores sean exactamente los del plan.

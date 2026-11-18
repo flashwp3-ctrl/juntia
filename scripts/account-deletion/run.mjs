@@ -196,9 +196,9 @@ function checkFacts(facts, m) {
  * transacción de la fase 1, después del borrado).
  * @param {{ manifestPath: string, mode?: "run" | "resume" | "abort", auth: ReturnType<typeof supabaseAuth>,
  *   db: ReturnType<typeof psqlDatabase>, clock?: { now: () => number }, sleep?: (ms: number) => Promise<unknown>,
- *   target: string, extraSqlFiles?: string[], log?: (line: string) => void }} options
+ *   target: string, extraSqlFiles?: string[], lockTimeout?: string, log?: (line: string) => void }} options
  */
-export async function runDeletion({ manifestPath, mode = "run", auth, db, clock = { now: () => Date.now() }, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), target, extraSqlFiles = [], log = () => {} }) {
+export async function runDeletion({ manifestPath, mode = "run", auth, db, clock = { now: () => Date.now() }, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), target, extraSqlFiles = [], lockTimeout = "5s", log = () => {} }) {
   const manifest = validateManifest(JSON.parse(readFileSync(manifestPath, "utf8")), { target });
   const statePath = statePathFor(manifestPath);
   const iso = () => new Date(clock.now()).toISOString();
@@ -334,7 +334,17 @@ export async function runDeletion({ manifestPath, mode = "run", auth, db, clock 
     if (JSON.stringify(now.ids) !== JSON.stringify(state.ids_at_plan)) stop("phase1", "el alcance cambió desde el plan (identificadores distintos): se detiene antes de la fase 1");
     // F87-5: «fase 1 en curso» queda en el estado ANTES de lanzar el SQL.
     state.phase1_started = iso(); save();
-    const output = db.files([join(HERE, "delete-account.sql"), ...extraSqlFiles], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "" });
+    let output;
+    try {
+      output = db.files([join(HERE, "delete-account.sql"), ...extraSqlFiles], { users: usersArray(manifest.users), group_id: manifest.group_id ?? "", lock_timeout: lockTimeout });
+    } catch (error) {
+      // Gate del PR #87: sin los bloqueos en el tope (o con un interbloqueo), la transacción revierte sin cambiar nada. Es
+      // un error recuperable: el estado sigue en `locked` y `--resume` reintenta.
+      if (/lock timeout|deadlock detected|could not obtain lock/i.test(String(error?.message))) {
+        stop("lock", `la fase 1 no obtuvo los bloqueos de sus tablas en ${lockTimeout} (${String(error.message).replace(/^db:s*/, "")}); no se borró nada, el estado sigue en locked: reintenta con --resume`);
+      }
+      throw error;
+    }
     state.counts_before = parseCounts(output, "COUNTS_BEFORE");
     state.counts_after = parseCounts(output, "COUNTS_AFTER");
     enter("data_deleted");

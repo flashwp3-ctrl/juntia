@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import { runDeletion, psqlDatabase, supabaseAuth, shortHash, statePathFor } from "../../scripts/account-deletion/run.mjs";
 import { cleanPgEnv } from "../../scripts/dev-target/guard.mjs";
 import { runnerEnv } from "./support/env";
-import { runnerSql } from "./support/sql";
+import { runnerSql, spawnRunnerSql } from "./support/sql";
 import { assertTestTarget } from "../support/dev-target";
 import { seedCouple, seedGoldenMovements, seedUser, type SeededUser } from "../support/seed";
 
@@ -477,5 +477,33 @@ describe("borrado manual · revisión del PR #87", { timeout: 180_000 }, () => {
     expect(next.calls).not.toContain("fase 1");
     expect(state(path).phase).not.toBe("verified");
     expect(total(counts([pair.sara.id, pair.tomas.id], pair.groupId))).toBeGreaterThan(0);
+  });
+});
+
+// Gate del PR #87 (run 44384613716): «deadlock detected» con escrituras concurrentes. La fase 1 toma todas sus tablas en un
+// orden fijo y con `lock_timeout`; si no las consigue, revierte sin cambiar nada, el estado sigue en `locked` y `--resume`
+// reintenta.
+describe("borrado manual · bloqueos de la fase 1", { timeout: 180_000 }, () => {
+  it("con una tabla retenida por otra sesión, falla limpio por lock_timeout (recuperable) y --resume termina después", async () => {
+    const pair = await couple();
+    const path = manifest([pair.sara.id, pair.tomas.id], pair.groupId);
+    const before = counts([pair.sara.id, pair.tomas.id], pair.groupId);
+    // Otra sesión retiene audit_events (ACCESS SHARE choca con el ACCESS EXCLUSIVE de la fase 1) hasta soltarla.
+    const holder = spawnRunnerSql();
+    const held = new Promise<void>((resolve) => holder.stdout.on("data", (chunk) => { if (String(chunk).includes("held")) resolve(); }));
+    holder.stdin.write("begin; lock table juntia_data.audit_events in access share mode; select 'held';\n");
+    await held;
+    try {
+      await expect(runDeletion({ manifestPath: path, auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev", lockTimeout: "1s" }))
+        .rejects.toThrow(/^lock: la fase 1 no obtuvo los bloqueos.*reintenta con --resume/);
+      expect(state(path).phase).toBe("locked");
+      expect(counts([pair.sara.id, pair.tomas.id], pair.groupId)).toEqual(before);
+      expect(triggersEnabled()).toBe(allEnabled);
+    } finally {
+      await new Promise<void>((resolve) => { holder.on("close", () => resolve()); holder.stdin.end("commit;\n"); });
+    }
+    const result = await runDeletion({ manifestPath: path, mode: "resume", auth: testAuth(fakeClock()).auth, db, sleep: noSleep, target: "juntia-dev" });
+    expect(result.phase).toBe("verified");
+    expect(result.counts_before).toEqual(before);
   });
 });

@@ -20,7 +20,7 @@
     "check:theme-script": "node scripts/check-theme-script.mjs",
     "verify": "node scripts/verify.mjs",
     "test:db": "supabase test db",
-    "test:integration": "vitest run --project=integration",
+    "test:integration": "vitest run --project=integration --project=integration-deletion",
     "db:types:check": "node scripts/check-db-types.mjs",
     "db:restore-drill": "bash scripts/restore-drill.sh",
     "db:dev:reset": "node scripts/dev-target/run.mjs reset",

@@ -8,6 +8,18 @@
 -- no encuentra el movimiento y no comprueba nada. Lo demuestra el caso 1 de tests/integration/account-deletion.test.ts
 -- (T042, N1).
 
+-- 0. Bloqueos (gate del PR #87, run 44384613716: «deadlock detected» con escrituras concurrentes). Antes de leer nada, la
+--    transacción toma TODAS las tablas que toca en un orden fijo y con un tope de espera: o los consigue todos, o falla
+--    limpio por `lock_timeout` y revierte, sin haber cambiado nada. `run.mjs` lo informa como error recuperable y el
+--    estado sigue en `locked`: `--resume` reintenta. Mientras dura la transacción, estas tablas no admiten otras lecturas
+--    ni escrituras (segundos, en un procedimiento manual).
+set local lock_timeout = :'lock_timeout';
+lock table juntia_data.goal_usage_confirmations, juntia_data.goal_usage_allocations, juntia_data.goal_ledger_entries,
+  juntia_data.savings_goals, juntia_data.budget_versions, juntia_data.budgets, juntia_data.transaction_allocations,
+  juntia_data.transactions, juntia_data.settlements, juntia_data.group_invitations, juntia_data.group_members,
+  juntia_data.groups, juntia_data.idempotency_records, juntia_data.audit_events, juntia_data.profiles,
+  juntia_data.signup_allowlist in access exclusive mode;
+
 -- 1. Alcance, cierre y recuento previo.
 \ir scope.sql
 select 'COUNTS_BEFORE '||counts::text from del_counts;

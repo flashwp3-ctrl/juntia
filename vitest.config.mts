@@ -6,6 +6,10 @@ export default defineConfig({
   test: { ...(process.env.JUNTIA_TEST_TARGET === "dev" ? {maxWorkers:2} : {}), projects: [
     { extends: true, test: { name: "domain", environment: "node", globals: true, include: ["src/domain/**/*.test.ts"] } },
     { extends: true, test: { name: "components", environment: "jsdom", include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.ts"], exclude: ["src/domain/**", "tests/integration/**"], setupFiles: ["./vitest.setup.ts"] } },
-    { extends: true, test: { name: "integration", ...(process.env.JUNTIA_TEST_TARGET === "dev" ? {testTimeout:60000,hookTimeout:60000} : {}), environment: "node", include: ["tests/integration/**/*.test.ts"] } },
+    { extends: true, test: { name: "integration", ...(process.env.JUNTIA_TEST_TARGET === "dev" ? {testTimeout:60000,hookTimeout:60000} : {}), environment: "node", include: ["tests/integration/**/*.test.ts"], exclude: ["tests/integration/account-deletion.test.ts"] } },
+    // 005, gate del PR #87 (run 44384613716): el borrado de cuentas toma sus tablas en ACCESS EXCLUSIVE; en paralelo con los
+    // demás archivos que escriben en ellas acababa en «deadlock detected». Corre DESPUÉS de toda la integración (groupOrder 1),
+    // solo, en el mismo comando (`test:integration` pide los dos proyectos).
+    { extends: true, test: { name: "integration-deletion", ...(process.env.JUNTIA_TEST_TARGET === "dev" ? {testTimeout:60000,hookTimeout:60000} : {}), environment: "node", include: ["tests/integration/account-deletion.test.ts"], sequence: { groupOrder: 1 } } },
   ] },
 });

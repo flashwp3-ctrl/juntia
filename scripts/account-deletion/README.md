@@ -76,6 +76,10 @@ Pasa el guardia de destino y toma el bloqueo de `juntia-dev` (decisión 18). El 
   correo en `signup_allowlist`). Con la fase 1 interrumpida: ninguno de los planeados existe → recuperado; queda alguno → se
   repite la fase 1, que exige los identificadores del plan; aparece alguno no planeado → `indeterminate`, se detiene y lo
   concilia el gestor. Detalle en el contrato, §4.2.
+- **Bloqueos de la fase 1 (gate del PR #87):** la transacción toma todas sus tablas en `ACCESS EXCLUSIVE`, en un orden fijo y
+  con `lock_timeout` (5 s por defecto), antes de leer nada. O los consigue todos, o revierte sin cambiar nada con el error
+  `lock: …`: el estado sigue en `locked` y `--resume` reintenta. Mientras dura, la app no puede leer ni escribir en esas
+  tablas (segundos): conviene hacerlo con poco uso.
 - **Categorías propias:** el esquema no tiene categorías por persona (`categories` es el catálogo común).
 - **Salida para la evidencia:** `request_id`, huellas cortas de los UUID, fechas de aprobaciones y exportaciones,
   secuencia de fases y recuentos por tabla. Nunca correos, nombres, importes ni textos.

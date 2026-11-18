@@ -166,7 +166,7 @@ async function testIntegration(env, filters = []) {
   const report = join(dir, "vitest.json");
   try {
     // Timeouts de 60 s: cada prueba cruza la red hasta East US (ADR-011 §9.5); en CI se usan los de Vitest.
-    const run = await node("node_modules/vitest/vitest.mjs", ["run", "--project", "integration", "--testTimeout=60000", "--hookTimeout=60000", "--reporter=default", "--reporter=json", `--outputFile.json=${report}`, ...filters], env)("vitest --project integration");
+    const run = await node("node_modules/vitest/vitest.mjs", ["run", "--project", "integration", "--project", "integration-deletion", "--testTimeout=60000", "--hookTimeout=60000", "--reporter=default", "--reporter=json", `--outputFile.json=${report}`, ...filters], env)("vitest --project integration --project integration-deletion");
     if (existsSync(report)) {
       const results = JSON.parse(readFileSync(report, "utf8")).testResults ?? [];
       for (const file of results) for (const test of file.assertionResults ?? []) {
