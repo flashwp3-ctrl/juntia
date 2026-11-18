@@ -21,6 +21,11 @@ const LOADS = Number(process.env.CLS_FRAMES_LOADS ?? 0) || null;
 const SETS: Record<string, (SessionRoute | PublicRoute)[]> = {
   "routes-1": ["a1", "a2", "a4", "inicio-yo", "inicio-nosotros"],
   "routes-2": ["actividad", "balance", "plan", "analisis", "metas"],
+  // T046: los tramos de rutas de WebKit y Firefox partidos (más de 600 s en el punto de control), sin quitar cargas.
+  "routes-1a": ["a1", "a2", "a4"],
+  "routes-1b": ["inicio-yo", "inicio-nosotros"],
+  "routes-2a": ["actividad", "balance", "plan"],
+  "routes-2b": ["analisis", "metas"],
 };
 /** 10 cargas en claro y 5 en oscuro, alternando 390 y 1440 (§6). */
 const schedule = (light = 10, dark = 5) => [...Array.from({ length: LOADS ?? light }, (_, i) => ({ theme: "light" as Theme, width: i % 2 ? 1440 : 390 })),

@@ -1,4 +1,4 @@
-// 005 · contracts/ci.md, «Job nuevo: release» (FR-020, FR-050–FR-054, FR-093; F85-7). Los 17 tramos del job `release`
+// 005 · contracts/ci.md, «Job nuevo: release» (FR-020, FR-050–FR-054, FR-093; F85-7). Los tramos del job `release` (17, y 23 desde T046)
 // (solo `workflow_dispatch` con `release_lab`, nunca en un PR, no es del gate) y qué ejecuta cada uno. El workflow solo
 // llama a este script, así que la prueba (tests/ci-workflow.test.ts) afirma la matriz y los comandos sin lanzar CI.
 //
@@ -13,13 +13,20 @@ import { pathToFileURL } from "node:url";
 
 /** Las siete rutas con sesión de FR-050, una por tramo de Chromium. */
 export const CLS_ROUTES = ["inicio-yo", "inicio-nosotros", "actividad", "balance", "plan", "analisis", "metas"];
+/**
+ * T046 (F85-7; regla 5): los tramos que midieron más de 600 s en el punto de control (run 44349192421) se parten en dos
+ * SIN quitar cargas. Las rutas de CLS de Chromium partidas reparten sus 50 cargas en dos mitades (RELEASE_CLS_PART); los
+ * tramos de rutas de WebKit y Firefox reparten sus rutas en `a` y `b`.
+ */
+export const SPLIT_CLS_ROUTES = ["inicio-yo", "actividad"];
 export const LEGS = [
-  ...CLS_ROUTES.map((route) => `cls-${route}`),
+  ...CLS_ROUTES.flatMap((route) => (SPLIT_CLS_ROUTES.includes(route) ? [`cls-${route}-1`, `cls-${route}-2`] : [`cls-${route}`])),
   "cls-controls-chromium", "lab-interaction", "webkit-e2e-1", "webkit-e2e-2",
-  "webkit-cls-1", "webkit-cls-2", "webkit-cls-3", "firefox-cls-1", "firefox-cls-2", "firefox-cls-3",
+  "webkit-cls-1", "webkit-cls-2a", "webkit-cls-2b", "webkit-cls-3a", "webkit-cls-3b",
+  "firefox-cls-1", "firefox-cls-2a", "firefox-cls-2b", "firefox-cls-3a", "firefox-cls-3b",
 ];
 /** Los conjuntos del arnés del comparador por tramo (contracts/cls-comparator.md §5 y §6). */
-export const CLS_FRAMES_SETS = { 1: "controls", 2: "routes-1", 3: "routes-2" };
+export const CLS_FRAMES_SETS = { "1": "controls", "2a": "routes-1a", "2b": "routes-1b", "3a": "routes-2a", "3b": "routes-2b" };
 
 const playwright = (...args) => ["playwright", "test", ...args, "--retries", "0", "--reporter=line"];
 /** Los arneses del laboratorio llevan la etiqueta @release; el job `evidence` la excluye y los tramos solo corren esa. */
@@ -32,10 +39,11 @@ const lab = (...args) => playwright(...args, "--grep", "@release");
  */
 export function legPlan(leg) {
   if (!LEGS.includes(leg)) throw new Error(`Tramo desconocido: ${leg}`);
-  const route = /^cls-(.+)$/.exec(leg)?.[1];
-  if (route && CLS_ROUTES.includes(route)) {
-    // FR-050: 40 cargas en claro y 10 en oscuro de una ruta, con la API y el grabador a la vez (control 7).
-    return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/release-cls.capture.ts", "--workers", "1"), env: { RELEASE_CLS_ROUTE: route } }] };
+  const cls = /^cls-(.+?)(?:-([12]))?$/.exec(leg);
+  if (cls && CLS_ROUTES.includes(cls[1]) && (cls[2] === undefined) === !SPLIT_CLS_ROUTES.includes(cls[1])) {
+    // FR-050: 40 cargas en claro y 10 en oscuro de una ruta, con la API y el grabador a la vez (control 7); partida, la mitad.
+    return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/release-cls.capture.ts", "--workers", "1"),
+      env: { RELEASE_CLS_ROUTE: cls[1], ...(cls[2] ? { RELEASE_CLS_PART: `${cls[2]}/2` } : {}) } }] };
   }
   if (leg === "cls-controls-chromium") {
     return { browser: "chromium", commands: [{ label: leg, args: lab("--project=evidence", "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: "controls" } }] };
@@ -53,7 +61,7 @@ export function legPlan(leg) {
       { label: `${leg} (@serial, 1 worker)`, args: playwright("--project=e2e-webkit", shard, "--grep", "@serial", "--workers", "1", "--pass-with-no-tests"), env: {} },
     ] };
   }
-  const frames = /^(webkit|firefox)-cls-([123])$/.exec(leg);
+  const frames = /^(webkit|firefox)-cls-(1|2a|2b|3a|3b)$/.exec(leg);
   if (frames) {
     const browser = /** @type {"webkit" | "firefox"} */ (frames[1]);
     return { browser, commands: [{ label: leg, args: lab(`--project=evidence-${browser}`, "tests/evidence/cls-frames.capture.ts", "--workers", "1"), env: { CLS_FRAMES_SET: CLS_FRAMES_SETS[frames[2]] } }] };

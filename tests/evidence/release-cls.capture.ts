@@ -26,8 +26,15 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     ...Array.from({ length: LIGHT }, (_, i) => ({ theme: "light" as Theme, width: i % 2 ? 1440 : 390 })),
     ...Array.from({ length: DARK }, (_, i) => ({ theme: "dark" as Theme, width: i % 2 ? 1440 : 390 })),
   ];
+  // T046: RELEASE_CLS_PART=1/2 o 2/2 corre la mitad de las cargas (claro y oscuro repartidos); entre las dos, las 50.
+  const part = /^([12])\/2$/.exec(process.env.RELEASE_CLS_PART ?? "")?.[1];
+  const half = (list: typeof plan, which: string) => list.filter((_, i) => (i < list.length / 2) === (which === "1"));
+  const light = plan.slice(0, LIGHT), dark = plan.slice(LIGHT);
+  const chosen = new Set(part ? [...half(light, part), ...half(dark, part)] : plan);
   const tally = { cargas: 0, apiMayorQueCero: 0, porFotogramas: 0, coinciden: 0, discrepancias: 0, sinVentana: 0 };
-  for (const [index, { theme, width }] of plan.entries()) {
+  for (const [index, load] of plan.entries()) {
+    if (!chosen.has(load)) continue;
+    const { theme, width } = load;
     const context = await sessionContext(browser, baseURL!, pair, { theme, width, context: spec.context, recordVideo: true });
     const page = await context.newPage();
     await page.addInitScript(CLS_OBSERVER);
@@ -58,5 +65,5 @@ test(`@release CLS de 40 cargas · ${ROUTE}`, async ({ browser, baseURL, browser
     await record("cls-frames.jsonl", { ...result, control: 7, clsApi: api.cls });
     expect.soft(api.cls, `${ROUTE} ${themeLabel(theme)} ${width} carga ${index + 1}`).toBe(0);
   }
-  await record("release-cls.jsonl", { kind: "resumen", ruta: ROUTE, motor, ...tally, clsCero: tally.apiMayorQueCero === 0, control7: tally.discrepancias >= 2 ? "no fiable en Chromium (dos o más discrepancias)" : `${tally.discrepancias} discrepancia(s) a investigar` });
+  await record("release-cls.jsonl", { kind: "resumen", ruta: ROUTE, parte: part ? `${part}/2` : "completa", motor, ...tally, clsCero: tally.apiMayorQueCero === 0, control7: tally.discrepancias >= 2 ? "no fiable en Chromium (dos o más discrepancias)" : `${tally.discrepancias} discrepancia(s) a investigar` });
 });

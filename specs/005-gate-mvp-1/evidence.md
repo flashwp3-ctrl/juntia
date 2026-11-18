@@ -481,6 +481,11 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
 - **LCP y listas largas: cumplen.** LCP con medianas de 242 a 944 ms, todas ≤ 2,5 s. En las 12 vistas de listas largas,
   ningún solape ni scroll horizontal.
 - **Tramos de más de 600 s (T046):** `cls-actividad`, `cls-inicio-yo`, `webkit-cls-2`, `webkit-cls-3` y `firefox-cls-2`.
+  **T046, hecho en el PR A:** `cls-actividad` y `cls-inicio-yo` se parten en `-1` y `-2` (25 cargas cada mitad: 20 en
+  claro y 5 en oscuro). `webkit-cls-2` y `webkit-cls-3` se parten en `a` y `b` por rutas (A1, A2 y A4 | Inicio en Yo y en
+  Nosotros; Actividad, Balance y Plan | Análisis y Metas). `firefox-cls-2` también, y `firefox-cls-3` (596 s) por simetría
+  con WebKit, porque sus conjuntos son los mismos. Ninguna carga se quita. Pasan de 17 a 23 tramos. Los tramos nuevos se miden
+  en el paso 2 (T052, I6).
 
 ## Tabla de CWV (FR-056)
 
