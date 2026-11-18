@@ -17,7 +17,7 @@ export type Prepare = "networkError" | "invalidCredentials" | "unverified" | "si
  * de hoy, para que lo anotado en E5 quede arriba en Inicio. En la ruta, `{id}` es el primer movimiento sembrado
  * (Taxi a la oficina), `{future}` el mes futuro.
  */
-export type Data = "golden" | "current" | "future" | "recent";
+export type Data = "golden" | "current" | "future" | "recent" | "extreme";
 export type RouteEntry = {
   route: string;
   state: string;
@@ -32,6 +32,11 @@ export type RouteEntry = {
    * `tests.seed_couple` y un segundo usuario sembrado (M1).
    */
   couple?: "pending" | "expired" | "active";
+  /**
+   * 005 T019 (FR-041): `achieved`, una meta personal con un nombre de 60 caracteres, aportada hasta su objetivo y dada por
+   * lograda con las funciones reales. En la ruta, `{goal}` es esa meta.
+   */
+  goals?: "achieved";
   /** A6 necesita una cuenta que todavía no completó la primera entrada. */
   firstEntryPending?: boolean;
   status?: number;
@@ -94,6 +99,16 @@ export const registry: readonly RouteEntry[] = [
   // una pareja se audita en tests/a11y/goals.a11y.ts.
   { route: "/metas/[id]", state: "Meta no encontrada", path: "/metas/00000000-0000-4000-8000-000000000000", session: "user" },
   { route: "/plan", state: "Plan", path: "/plan", session: "user" },
+  // 005 T019 (FR-041; specs/005-gate-mvp-1/states-matrix.md, «Altas propuestas para T019»): estados de la matriz que no tenían
+  // axe en ningún tema. Nivel ligero: cada uno una vez, a 390, en los dos temas.
+  { route: "/", state: "Nosotros sin gastos compartidos", path: "/", session: "user", couple: "active", prepare: "us" },
+  { route: "/balance", state: "Balance sin gastos compartidos", path: "/balance", session: "user", couple: "active", prepare: "us" },
+  { route: "/", state: "Inicio con meta lograda", path: "/", session: "user", goals: "achieved" },
+  { route: "/metas", state: "Metas con meta lograda", path: "/metas", session: "user", goals: "achieved" },
+  { route: "/metas/[id]", state: "Meta lograda", path: "/metas/{goal}", session: "user", goals: "achieved" },
+  { route: "/", state: "Inicio con datos extremos", path: "/", session: "user", data: "extreme" },
+  { route: "/actividad", state: "Actividad con datos extremos", path: "/actividad", session: "user", data: "extreme" },
+  { route: "/actividad/[id]", state: "Detalle con datos extremos", path: "/actividad/{id}", session: "user", data: "extreme" },
   // 004 PR E (T072): Análisis con una cuenta sola y sin movimientos (el mes vacío); con la pareja dorada, en analysis.a11y.ts.
   { route: "/plan/analisis", state: "Análisis sin datos", path: "/plan/analisis", session: "user" },
   { route: "/balance", state: "Balance", path: "/balance", session: "user" },

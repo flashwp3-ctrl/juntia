@@ -12,7 +12,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
-import { seedUser } from "../support/seed";
+import { seedCouple, seedMovements, seedUser } from "../support/seed";
+import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
 
@@ -424,3 +425,98 @@ for (const colorScheme of JOB === "e2e" && inAreas("/cuenta") ? THEMES : []) {
     });
   }
 }
+
+// ─── 005 · T020 (FR-040, FR-042, FR-046; Q11; research R8). Casos nuevos del barrido (@sweep, a mano), con sesión ──────────
+// (a) texto al 200 % en hojas, diálogos, acceso A1–A6 e invitación; (b) raíz al 200 % a 1440 en Inicio · Yo y en Metas,
+// sin scroll horizontal: Inicio · Yo FALLA en `main` hasta el PR B (1.447 px, residuo de F13; interpretación I3, sin
+// `fixme` que lo esconda); Metas, con el abanico de Nosotros, hoy mide 1.440 en juntia-dev; (c) Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue; (d) al llegar por URL a la meta
+// inmersiva y cerrar con Escape, el foco vuelve a su tarjeta (lección 004-T084, punto 3).
+const root200 = (page: Page) => page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+const overflow = (page: Page) => page.evaluate(() => {
+  const doc = { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth };
+  const dialogs = [...document.querySelectorAll<HTMLElement>("[role='dialog'], [role='alertdialog']")].filter((node) => node.getClientRects().length > 0)
+    .map((node) => ({ name: node.getAttribute("aria-label") ?? node.querySelector("h1, h2, h3")?.textContent?.trim() ?? "diálogo", scrollWidth: node.scrollWidth, clientWidth: node.clientWidth }));
+  return { doc, dialogs };
+});
+const twoFrames = (page: Page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
+  // (a) Los estados del registro que abren una hoja o un diálogo, el acceso A1–A6 y la invitación sin sesión.
+  const TEXT_200 = ["A1", "A2", "A3", "A4", "A5", "A6", "M5 sin sesión", "Anotar E1 gasto", "Anotar E2 detalles", "Edición", "Diálogo de eliminar",
+    "M3 crear invitación", "M4 confirmación de anular", "D2 · hoja de exportar"];
+  for (const state of TEXT_200) {
+    test(`texto al 200 %: ${state} · teléfono (390) · sin scroll horizontal en la página ni en la hoja`, { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
+      const entry = [...e2eEntries, ...appEntries].find((item) => item.state === state);
+      if (!entry) throw new Error(`El registro no tiene el estado ${state}`);
+      const page = await openWithSession(browser, base, entry, "light", 390, testInfo.parallelIndex, baseURL!);
+      await page.setViewportSize({ width: 390, height: 900 });
+      if (entry.session !== "recovery") await page.goto(targetPath(page, entry));
+      await reach(page, entry, testInfo.parallelIndex);
+      await root200(page);
+      await twoFrames(page);
+      const result = await overflow(page);
+      console.log(`200 % · ${state}: página ${result.doc.scrollWidth}/${result.doc.clientWidth}; ${result.dialogs.map((d) => `«${d.name}» ${d.scrollWidth}/${d.clientWidth}`).join(", ") || "sin hoja"}`);
+      expect.soft(result.doc.scrollWidth, `${state}: scroll horizontal de la página al 200 %`).toBeLessThanOrEqual(result.doc.clientWidth);
+      for (const dialog of result.dialogs) expect.soft(dialog.scrollWidth, `${state}: «${dialog.name}» se sale al 200 %`).toBeLessThanOrEqual(dialog.clientWidth);
+      if (page !== base) await page.context().close();
+    });
+  }
+
+  // (b) y (d) con la pareja del dataset dorado: Inicio en Yo (Bicicleta de ruta) y Metas en Nosotros, con el abanico de Japón.
+  for (const target of [{ name: "Inicio · Yo", path: "/", context: "me" }, { name: "Metas", path: "/metas", context: "us" }] as const) {
+    test(`raíz al 200 % a 1440: ${target.name} sin scroll horizontal (residuo de F13)`, { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+      const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
+      await seedMovements(pair.sara, "recent");
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+      const host = new URL(baseURL!).hostname;
+      await context.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: target.context, domain: host, path: "/" }]);
+      await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), target.context);
+      const page = await context.newPage();
+      await page.goto(target.path);
+      await expect(page.locator("[data-goal-stack]").first()).toBeVisible();
+      await root200(page);
+      await twoFrames(page);
+      const { doc } = await overflow(page);
+      console.log(`raíz 200 % · ${target.name} · 1440: ${doc.scrollWidth}/${doc.clientWidth}`);
+      expect(doc.scrollWidth, `${target.name}: el documento mide ${doc.scrollWidth} px a 1440 con la raíz al 200 %`).toBeLessThanOrEqual(doc.clientWidth);
+      await context.close();
+    });
+  }
+
+  test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
+    const entry = e2eEntries.find((item) => item.state === "Anotar E1 gasto")!;
+    const page = await openWithSession(browser, base, { ...entry, prepare: undefined }, "light", 390, testInfo.parallelIndex, baseURL!);
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto("/");
+    await page.locator("[data-annotate-trigger]:visible").click();
+    const amount = page.getByRole("textbox", { name: copy.annotate.amount });
+    await expect(amount).toBeFocused();
+    await page.keyboard.type("45000");
+    const typed = await amount.inputValue();
+    for (const width of [1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await twoFrames(page);
+      await expect(page.getByRole("textbox", { name: copy.annotate.amount }), `a ${width} px el monto sigue`).toHaveValue(typed);
+    }
+    if (page !== base) await page.context().close();
+  });
+
+  test("al llegar por URL a la meta inmersiva y cerrar con Escape, el foco vuelve a su tarjeta (FR-046; 004-T084 punto 3)", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
+    const japan = runnerSql(`select id from juntia_data.savings_goals where group_id='${pair.groupId}' and name='Japón'`);
+    const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+    const host = new URL(baseURL!).hostname;
+    await context.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "us", domain: host, path: "/" }]);
+    await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+    const page = await context.newPage();
+    await page.goto(`/metas/${japan}`);
+    await expect(page.getByRole("heading", { name: "Japón" }).first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL(/\/metas$/);
+    await expect.poll(() => page.evaluate((id) => {
+      const active = document.activeElement as HTMLElement | null;
+      return !!active && (active.getAttribute("href")?.includes(id) === true || active.textContent?.includes("Japón") === true);
+    }, japan), { message: "el foco está en la tarjeta de Japón" }).toBe(true);
+    await context.close();
+  });
+});

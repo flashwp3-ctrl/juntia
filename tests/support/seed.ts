@@ -155,11 +155,18 @@ export const futureMonth = () => shiftMonth(todayInBogota().slice(0, 7), 3);
  * lleva a hoy si lo pasa), para que lo que se anota hoy quede arriba en Inicio, como en E5. Devuelve los movimientos
  * creados, en el orden del dataset.
  */
-export async function seedMovements(user: SeededUser, data: "golden" | "current" | "future" | "recent") {
+export async function seedMovements(user: SeededUser, data: "golden" | "current" | "future" | "recent" | "extreme"): Promise<Awaited<ReturnType<typeof createTransaction>>[]> {
   const today = todayInBogota();
   const month = today.slice(0, 7);
   const day = (date: string) => (data === "recent" && date.slice(8) > today.slice(8) ? today.slice(8) : date.slice(8));
   const rows = saraPrivateOctober2026.map((row) => ({ ...row, transactionDate: data === "current" || data === "recent" ? `${month}-${day(row.transactionDate)}` : row.transactionDate }));
+  // 005 T019 (FR-041, «datos extremos»): el máximo de COP y la descripción más larga que admite el esquema (140), primero,
+  // para que `{id}` lo abra; después, las filas de `recent`.
+  if (data === "extreme") {
+    const first = await createTransaction(user.client, { idempotencyKey: randomUUID(), type: "expense", amount: moneyFromPesos(999_999_999n), categoryId: "home",
+      transactionDate: today, description: "Remodelación completa del apartamento con muebles nuevos, electrodomésticos, pintura, pisos y el trasteo de todo lo que había en él".padEnd(140, ".") });
+    return [first, ...(await seedMovements(user, "recent"))];
+  }
   const extra = data === "future" ? [{ type: "expense" as const, amount: moneyFromPesos(38000n), categoryId: "transport" as const, transactionDate: `${futureMonth()}-14`, description: "Tiquete de bus" }] : [];
   const created = [];
   // Por src/lib/db (la misma capa que usará Anotar) y no por SQL directo.
