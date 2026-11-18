@@ -677,6 +677,8 @@ export const copy = {
       partnerLater: "Cuando invites a tu pareja, aquí verás qué comparten y qué sigue siendo solo tuyo.", yourData: "Tus datos",
       export: "Exportar mis datos", exportHint: "JSON y CSV con tus movimientos, metas y presupuestos",
       deleteTitle: "Eliminar tu cuenta", deleteDescription: "La solicitud de eliminación todavía no está disponible en la app. Nada se borra sin que lo confirmes.",
+      // 005 · PR B (T061; FR-067, contrato de borrado §8): cómo pedirla. Redacción para aprobar por los fundadores (T067).
+      deleteHowTo: "Para pedirla, escribe a quien administra Juntia. Te pedirá que confirmes por escrito y solo después la hará a mano; si compartes datos con tu pareja, cada persona confirma por su cuenta.",
     },
     // 004 PR E (T076; FR-080, FR-081; I4): «qué incluye» dice el alcance que el PR A dio al archivo. Copy para los fundadores.
     export: {
