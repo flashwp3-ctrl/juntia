@@ -314,38 +314,173 @@ Llenan T051 y T072.
 Rotulado siempre **«laboratorio»**, con método, emulación, navegador y versión. Llenan T049 (primera salida, punto de
 control) y T073 (candidato).
 
+### Duración por tramo (punto de control, T045)
+
+Run [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) sobre `4ddd9e9`, lanzado por el gestor con `release_lab=true`. «Tramo» = el paso «Run the leg»; «Job» = todo el job, con arranque. Aviso a 600 s (`jobBudget`).
+
+| Tramo | Conclusión | Job | Tramo | > 600 s |
+| --- | --- | ---: | ---: | --- |
+| `cls-actividad` | failure (registra fallos de producto o de la prueba; ver abajo) | 895 s | 633 s | **sí → T046** |
+| `cls-analisis` | failure (registra fallos de producto o de la prueba; ver abajo) | 407 s | 184 s | no |
+| `cls-balance` | failure (registra fallos de producto o de la prueba; ver abajo) | 426 s | 197 s | no |
+| `cls-controls-chromium` | success | 484 s | 208 s | no |
+| `cls-inicio-nosotros` | failure (registra fallos de producto o de la prueba; ver abajo) | 424 s | 198 s | no |
+| `cls-inicio-yo` | failure (registra fallos de producto o de la prueba; ver abajo) | 1008 s | 736 s | **sí → T046** |
+| `cls-metas` | failure (registra fallos de producto o de la prueba; ver abajo) | 486 s | 204 s | no |
+| `cls-plan` | failure (registra fallos de producto o de la prueba; ver abajo) | 495 s | 190 s | no |
+| `firefox-cls-1` | success | 488 s | 224 s | no |
+| `firefox-cls-2` | success | 639 s | 392 s | **sí → T046** |
+| `firefox-cls-3` | success | 596 s | 330 s | no |
+| `lab-interaction` | success | 588 s | 324 s | no |
+| `webkit-cls-1` | success | 547 s | 240 s | no |
+| `webkit-cls-2` | success | 717 s | 428 s | **sí → T046** |
+| `webkit-cls-3` | success | 677 s | 356 s | **sí → T046** |
+| `webkit-e2e-1` | failure (registra fallos de producto o de la prueba; ver abajo) | 394 s | 90 s | no |
+| `webkit-e2e-2` | failure (registra fallos de producto o de la prueba; ver abajo) | 377 s | 75 s | no |
+
 ### CLS en Chromium (FR-050)
 
-| Tramo | Run | Cargas | CLS > 0 | Máximo | Rótulo |
-| --- | --- | --- | --- | --- | --- |
+Laboratorio · API Layout Instability · Chromium, CPU 6× y red lenta (400 ms, 400 kbps). 40 cargas en claro y 10 en oscuro, alternando 390 y 1440. CLS sin redondear.
+
+| Tramo | Run | Cargas | CLS > 0 | Dónde (tema y ancho: cargas) | Máximo | Control 7: coinciden / discrepancias | Rótulo |
+| --- | --- | ---: | ---: | --- | ---: | --- | --- |
+| `cls-actividad` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 27 | claro 390: 20; claro 1440: 2; oscuro 390: 5 | 0,0017210471322016462 | 50 / 0 | laboratorio · chromium 156.0.8078.4 |
+| `cls-analisis` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 27 | claro 390: 18; claro 1440: 2; oscuro 390: 5; oscuro 1440: 2 | 0,0009792307692307693 | 39 / 11 | laboratorio · chromium 156.0.8078.4 |
+| `cls-balance` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 26 | claro 390: 20; claro 1440: 1; oscuro 390: 5 | 0,005721249678497942 | 49 / 1 | laboratorio · chromium 156.0.8078.4 |
+| `cls-inicio-nosotros` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 27 | claro 390: 20; claro 1440: 2; oscuro 390: 5 | 0,0008104659636488339 | 48 / 2 | laboratorio · chromium 156.0.8078.4 |
+| `cls-inicio-yo` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 25 | claro 390: 20; oscuro 390: 5 | 0,0000746565368787591 | 50 / 0 | laboratorio · chromium 156.0.8078.4 |
+| `cls-metas` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 28 | claro 390: 20; claro 1440: 2; oscuro 390: 5; oscuro 1440: 1 | 0,0008463437796771131 | 47 / 3 | laboratorio · chromium 156.0.8078.4 |
+| `cls-plan` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 29 | claro 390: 20; claro 1440: 2; oscuro 390: 5; oscuro 1440: 2 | 0,0005943131644375858 | 46 / 4 | laboratorio · chromium 156.0.8078.4 |
 
 ### Comparador por fotogramas, por motor y control (FR-051)
 
-| Motor y versión | Método (§3.2) | Control 1 | 2 | 3 | 4 | 5 | 6 | 7 | ¿Fiable? | Run |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cadena de `offsetParent` (método principal). Controles en Inicio · Nosotros (lectura retenida 1,5 s), 10 cargas cada uno; se cuentan los desplazamientos desde el fotograma en que actúa el control (lectura de ejecución 2).
+
+| Motor y versión | Método | 1 | 2 (1 px) | 2 (0,5 px, solo se registra) | 3 | 4 | 4: API = 0 | 5 | 6 | 7 | ¿Fiable? | Run |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| chromium 156.0.8078.4 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | discrepancias: analisis 11, balance 1, inicio-nosotros 2, metas 3, plan 4 (ver abajo) | **pendiente**: controles 1–6 cumplen; el control 7 tiene ≥ 2 discrepancias sin explicar en varias rutas | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| webkit 27.2 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | — | 10 de 10 | 10 de 10 | no aplica (sin API) | **sí** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| firefox 157.0 | principal | 10 de 10 | 10 de 10 | 10 de 10 | 10 de 10 | 5 de 10 | — | 5 de 10 | 10 de 10 | no aplica (sin API) | **no** con la lectura actual: 4 y 5 dan 5 de 10 (ver abajo) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 | Ruta | Motor | Cargas | Con desplazamientos | CLS = 0 por fotogramas | Run |
-| --- | --- | --- | --- | --- | --- |
+| --- | --- | ---: | ---: | --- | --- |
+| a1 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| a2 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| a4 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-yo | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-nosotros | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| balance | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| plan | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| analisis | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| metas | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| a1 | firefox 157.0 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| a2 | firefox 157.0 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| a4 | firefox 157.0 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-yo | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-nosotros | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| balance | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| plan | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| analisis | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| metas | firefox 157.0 | 15 | 8 | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 ### INP (FR-052)
 
+Laboratorio · Chromium, CPU 4×. Por variante y ancho, la peor de 10 interacciones.
+
 | Variante | Ancho | CPU | Interacciones | INP abrir | INP guardar | < 200 ms | Run |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| privado | 390 | 4× | 10 | 184 ms | 256 ms | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| privado | 1440 | 4× | 10 | 248 ms | 264 ms | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| compartido | 390 | 4× | 10 | 168 ms | 112 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| compartido | 1440 | 4× | 10 | 256 ms | 80 ms | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| con meta | 390 | 4× | 10 | 128 ms | 112 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| con meta | 1440 | 4× | 10 | 160 ms | 64 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 ### LCP (FR-054)
 
 | Ruta | Ancho | Condiciones | Cargas | Mediana | Máximo | Rótulo | Run |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| inicio | 390 | 4G emulado (150 ms, 1,6 Mbps / 750 kbps); CPU 4× | 10 | 944 ms | 1200 ms | laboratorio · chromium 156.0.8078.4 | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio | 1440 | sin emulación; CPU sin emulación | 10 | 434 ms | 520 ms | laboratorio · chromium 156.0.8078.4 | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | 390 | 4G emulado (150 ms, 1,6 Mbps / 750 kbps); CPU 4× | 10 | 920 ms | 1032 ms | laboratorio · chromium 156.0.8078.4 | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | 1440 | sin emulación; CPU sin emulación | 10 | 242 ms | 292 ms | laboratorio · chromium 156.0.8078.4 | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 ### GoalStack con 6 metas (FR-053; D3)
 
+Criterio de D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms. CPU 4×, movimiento activo. A 390, deslizamiento táctil por CDP y Tab; a 1440, hover y foco de las cartas del abanico (tres visibles).
+
 | Animación | Ancho | % en ≤ 18,2 ms | Fotograma más largo | Pasa | Run |
-| --- | --- | --- | --- | --- | --- |
+| --- | --- | ---: | ---: | --- | --- |
+| hover carta 1 | 1440 | 89,5 % | 66,6 ms | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| hover carta 2 | 1440 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| hover carta 3 | 1440 | 95 % | 33,3 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| foco carta 1 | 1440 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| foco carta 2 | 1440 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| foco carta 3 | 1440 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 1 | 390 | 93,5 % | 199,9 ms | **no** | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 2 | 390 | 97,5 % | 50 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 3 | 390 | 97,6 % | 33,3 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 4 | 390 | 97,6 % | 33,4 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 5 | 390 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| deslizar con el dedo 6 | 390 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| teclado: Tab por la pila 1 | 390 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| teclado: Tab por la pila 2 | 390 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| teclado: Tab por la pila 3 | 390 | 100 % | 16,8 ms | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 
 ### Listas largas (FR-043)
 
-| Vista | Ancho | Filas | Solapes | Scroll horizontal | «Cargar más» y total | Run |
-| --- | --- | --- | --- | --- | --- | --- |
+| Vista | Ancho | Tema | Filas | Solapes | Scroll horizontal | «Cargar más» y total | Run |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| actividad | 390 | claro | 618 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de aportes | 390 | claro | 120 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de presupuesto | 390 | claro | 40 | 0 | no | 40 de 40 versiones | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | 1440 | claro | 618 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de aportes | 1440 | claro | 120 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de presupuesto | 1440 | claro | 40 | 0 | no | 40 de 40 versiones | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | 390 | oscuro | 618 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de aportes | 390 | oscuro | 120 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de presupuesto | 390 | oscuro | 40 | 0 | no | 40 de 40 versiones | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | 1440 | oscuro | 618 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de aportes | 1440 | oscuro | 120 | 0 | no | no existe: la lista llega entera (paginador del servidor) | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| historial de presupuesto | 1440 | oscuro | 40 | 0 | no | 40 de 40 versiones | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+
+Capturas PNG (datos sembrados) en el artefacto `release-lab-interaction`; las revisan los fundadores con las de T054 (N2).
+
+### Lectura del punto de control (T049)
+
+Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace falta, de los fundadores (T047, T048, T055).
+
+- **WebKit 27.2: fiable.** Los seis controles dan 10 de 10, y las diez rutas dan «CLS = 0 por fotogramas» (15 cargas cada una).
+- **Firefox 157: los controles 4 y 5 dan 5 de 10.** No falla el método con las transformaciones: el bloque de cada control
+  no cambia de posición en ningún fotograma de las 20 cargas (`positions: 1`), y las 10 cargas a 1440 pasan. Las 10 que
+  fallan son todas a 390. En ellas, nodos de la app que después salen del DOM se desplazan 10 px en x en el primer par de
+  fotogramas, que coincide con el fotograma en que actúa el control. Es el mismo desplazamiento de 10 px que aparece en
+  Firefox a 390 en las siete rutas con sesión (8 de 15 cargas cada una, las de 390), junto a otro de 1 px de una etiqueta de
+  la barra inferior. Por eso no es el caso de T047 («`offsetTop` no coherente con su layout en los controles 4 a 6»).
+  Queda por saber si es un desplazamiento real de la app en Firefox (hallazgo para el PR B) o algo del entorno, como la barra
+  de scroll al aparecer. Pendiente de decisión.
+- **Chromium 156: control 7 con discrepancias.** Análisis 11, Plan 4, Metas 3, Inicio · Nosotros 2, Balance 1; Actividad e
+  Inicio · Yo, 0. Casi todas son «API > 0 y fotogramas = 0» (Análisis 9 de 11; Plan y Metas, todas): la API ve CLS que el
+  comparador no ve dentro de su ventana. El artefacto no guarda cuándo ocurre cada desplazamiento de la API, así que hoy no
+  se puede saber si cae fuera de la ventana (antes del esqueleto o después del primer fotograma final) o si el comparador no
+  lo ve. Por contrato, con dos o más sin explicar, el método no es fiable en Chromium. Pendiente de decisión.
+- **Producto, FR-050: CLS > 0 con la API en las siete rutas**, sobre todo a 390 (entre 25 y 29 de 50 cargas por ruta;
+  máximo 0,0057 en Balance). Las fuentes más frecuentes en los fotogramas: una etiqueta de la barra inferior fija que se
+  mueve 1 px en x y nodos que se mueven 4 px en x y luego salen del DOM. Hallazgo para el PR B.
+- **WebKit E2E (FR-020): 7 fallos en el shard 1 y 4 en el 2.** Navegaciones de `page.goto` interrumpidas por la
+  redirección del cliente (`/entrar?volver=…`, `/crear-cuenta?volver=…`); capturas de RSC vacías («RSC del cambio», «RSC en
+  Nosotros»); un `toBeFocused`; y un `getByText('ACTIVA')` con dos coincidencias. Según research R3, un fallo solo de WebKit
+  se documenta con su salida y lo decide la revisión del PR B, sea de la prueba o del producto; no se marca superado.
+- **INP (FR-052): por encima de 200 ms** en privado (390: guardar 256 ms; 1440: abrir 248 ms y guardar 264 ms) y en
+  compartido a 1440 (abrir 256 ms). Hallazgo para el PR B.
+- **GoalStack (D3): dos animaciones no cumplen.** El primer deslizamiento a 390 (93,5 %, un fotograma de 199,9 ms) y el
+  primer hover a 1440 (89,5 %, 66,6 ms). Las demás cumplen. Según D3, la pantalla cae a la lista y vuelve a los fundadores
+  (T055, decisión 22.2).
+- **LCP y listas largas: cumplen.** LCP con medianas de 242 a 944 ms, todas ≤ 2,5 s. En las 12 vistas de listas largas,
+  ningún solape ni scroll horizontal.
+- **Tramos de más de 600 s (T046):** `cls-actividad`, `cls-inicio-yo`, `webkit-cls-2`, `webkit-cls-3` y `firefox-cls-2`.
 
 ## Tabla de CWV (FR-056)
 
