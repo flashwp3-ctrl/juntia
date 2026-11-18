@@ -266,6 +266,7 @@ solo esa etiqueta.
 | `npm run test:integration:dev -- account-deletion money-us08` | 12 de 12 (238 s, latencia a East US) |
 | `npm run e2e:dev -- tests/evidence/cls-frames.capture.ts` con `CLS_FRAMES_SET=routes-1` y pocas cargas | Corre; acceso sin ventana (sin esqueleto) y sin desplazamientos; Inicio · Nosotros retiene ~1,8 s de esqueleto |
 | Vitest de dominio y componentes de lo tocado, `tsc --noEmit`, `eslint .` | En verde |
+| `npm run e2e:dev` completo (T044), una vez antes del push final | E2E 39 de 39. Axe con sesión 110 de 125: los 15 fallos (12 tiempos agotados o elementos no encontrados en el primer lote paralelo, por la latencia de `juntia-dev`, y 3 «rectángulos distintos del aviso») pasan todos al repetir esos archivos y estados (19 de 19) |
 
 ### Preparación del punto de control (T045)
 
@@ -298,7 +299,7 @@ Capturas con datos sembrados, a 390 px.
 | Detalle de Actividad bajo la hoja «Editar gasto» con texto al 200 %. En la hoja, además, el título queda bajo el botón de cerrar y «Entretenimiento» se parte | documento 402/390 px; la hoja 390/390 | [evidence/hallazgo-texto-200-detalle-edicion-390.png](evidence/hallazgo-texto-200-detalle-edicion-390.png) | PR B (FR-042) |
 | Detalle de Actividad bajo «¿Eliminar este gasto?» con texto al 200 % | documento 402/390 px; el diálogo 326/326 | [evidence/hallazgo-texto-200-detalle-eliminar-390.png](evidence/hallazgo-texto-200-detalle-eliminar-390.png) | PR B (FR-042) |
 | Inicio · Yo con la raíz al 200 % a 1440 (residuo de F13, I3) | documento 1.447/1.440 px | — (caso `@sweep` b) | PR B (T056, T060) |
-| A vigilar en el gate: «rectángulos distintos del aviso» de Anotar en «Inicio con datos extremos · dark · 390px» falló una vez y pasó al repetir | 2 rectángulos en 10 cuadros, una vez | — | Gate del PR A (T050) |
+| A vigilar en el gate: «rectángulos distintos del aviso» de Anotar, intermitente en `juntia-dev`. Falló en «Inicio con datos extremos · dark», «Actividad con datos extremos» (claro y oscuro) y en el estado anterior al PR «Actividad con datos · dark»; todos pasan al repetir | 2 rectángulos en 10 cuadros | — | Gate del PR A (T050) |
 
 ## Barrido (`@sweep`)
 
