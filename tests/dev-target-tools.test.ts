@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { acquireDevLock, alive, killTree, TreeStillAliveError, unlockDevLock } from "../scripts/dev-target/lock.mjs";
 import { runInSession } from "../scripts/dev-target/session.mjs";
 import { readTap } from "../scripts/dev-target/tap.mjs";
-import { planE2E } from "../scripts/dev-target/e2e-plan.mjs";
+import { planE2E, planIntegration } from "../scripts/dev-target/e2e-plan.mjs";
 import {measurementConfig,measurementPlan} from "../scripts/dev-target/playwright-measurement.mjs";
 
 describe("lector TAP de test:db:dev", () => {
@@ -375,4 +375,57 @@ it('dos pasadas por proyecto: sin mail; serial con un worker; conserva rutas y g
 it('el completo incluye E2E y axe en ambas pasadas, sin reintentos de medición',()=>{const plan=measurementPlan(planE2E([]),'2:false');expect(plan).toHaveLength(4);expect(plan.filter((s:{a11yJob?:string})=>s.a11yJob==='e2e')).toHaveLength(2);for(const step of plan)expect(step.args).toEqual(expect.arrayContaining(['--retries','0']));});
 it('la medición no abre workers, grep-invert ni config como argumentos de usuario',()=>{for(const args of [['--workers','4'],['--grep-invert','@mail'],['--config','evil']])expect(()=>planE2E(args)).toThrow();});
 
+});
+
+// 005, tasks.md regla 2: «mientras se itera, solo las pruebas afectadas» también en la integración.
+describe("test:integration:dev dirigido (planIntegration)", () => {
+  it("sin argumentos, todo el proyecto; con un nombre o la ruta de un archivo de tests/integration/, solo ese", () => {
+    expect(planIntegration([])).toEqual([]);
+    expect(planIntegration(["money-us08", "tests/integration/account-deletion.test.ts", "tests\\integration\\goals.test.ts"]))
+      .toEqual(["money-us08", "tests/integration/account-deletion.test.ts", "tests/integration/goals.test.ts"]);
+  });
+  it("rechaza opciones y rutas fuera de tests/integration/ antes del guardia", () => {
+    for (const arg of ["--project", "-t", "--config=evil", "../scripts/x.test.ts", "tests/e2e/goals.e2e.ts", "tests/integration/../../x"]) expect(() => planIntegration([arg])).toThrow(/test:integration:dev no acepta/);
+  });
+});
+
+// 005 (T023–T027, T032): un arnés de laboratorio se itera en local contra juntia-dev; nunca es evidencia.
+describe("e2e:dev con un arnés de tests/evidence/ (iteración, no evidencia)", () => {
+  it("un archivo .capture.ts corre solo en el proyecto evidence, con un worker y sin reintentos", () => {
+    expect(planE2E(["tests/evidence/cls-frames.capture.ts"])).toEqual([{ label: "arnés de laboratorio (iteración, no evidencia)", project: "evidence", a11yJob: undefined,
+      args: ["test", "--project=evidence", "tests/evidence/cls-frames.capture.ts", "--workers", "1", "--retries", "0", "--reporter=list"] }]);
+  });
+  it("rechaza un .capture.ts fuera de tests/evidence/ o que no existe", () => {
+    expect(() => planE2E(["tests/e2e/x.capture.ts"])).toThrow(/no acepta/);
+    expect(() => planE2E(["tests/evidence/no-existe.capture.ts"])).toThrow(/no existe/);
+  });
+});
+
+// 005 T028 (FR-043; decisión 18): la siembra de listas largas pasa el guardia ANTES de escribir.
+describe("seed-long-lists: guardia de destino antes de escribir (T028)", () => {
+  it("con otro destino se niega y no crea ningún cliente ni escribe nada", async () => {
+    const { seedLongLists } = await import("../scripts/dev-target/seed-long-lists.mjs");
+    const deps = vi.fn();
+    const production = { JUNTIA_DEV_SUPABASE_URL: "https://enwaxmwgldqohfawxhdm.supabase.co", JUNTIA_DEV_PUBLISHABLE_KEY: "sb_publishable_x", JUNTIA_DEV_SECRET_KEY: "sb_secret_y",
+      JUNTIA_DEV_DB_URL: "postgresql://postgres:pw@db.enwaxmwgldqohfawxhdm.supabase.co:5432/postgres" };
+    await expect(seedLongLists({ fileEnv: production, deps, password: "x".repeat(12) })).rejects.toThrow(/Guardia de destino/);
+    const other = { ...production, JUNTIA_DEV_SUPABASE_URL: "https://otroproyecto.supabase.co", JUNTIA_DEV_DB_URL: "postgresql://postgres:pw@db.otroproyecto.supabase.co:5432/postgres" };
+    await expect(seedLongLists({ fileEnv: other, deps, password: "x".repeat(12) })).rejects.toThrow(/Guardia de destino/);
+    expect(deps).not.toHaveBeenCalled();
+  });
+
+  it("con juntia-dev siembra la misma cuenta del arnés y es idempotente (no duplica la cuenta)", async () => {
+    const { seedLongLists } = await import("../scripts/dev-target/seed-long-lists.mjs");
+    const dev = { JUNTIA_DEV_SUPABASE_URL: "https://itfrhnadovezpahikuol.supabase.co", JUNTIA_DEV_PUBLISHABLE_KEY: "sb_publishable_x", JUNTIA_DEV_SECRET_KEY: "sb_secret_y",
+      JUNTIA_DEV_DB_URL: "postgresql://postgres:pw@db.itfrhnadovezpahikuol.supabase.co:5432/postgres" };
+    const statements: string[] = [];
+    let existing: string | null = null;
+    const createUser = vi.fn(async () => { existing = "11111111-1111-4111-8111-111111111111"; return { id: existing }; });
+    const deps = () => ({ sql: (text: string) => { statements.push(text); return "600 movimientos, 120 aportes, 40 versiones de presupuesto"; }, admin: { findUser: async () => existing, createUser } });
+    await seedLongLists({ fileEnv: dev, deps, password: "x".repeat(12), today: "2026-11-18" });
+    await seedLongLists({ fileEnv: dev, deps, today: "2026-11-18" });
+    expect(createUser).toHaveBeenCalledTimes(1);
+    expect(statements.filter((text) => text.includes("Listas largas") && text.includes("generate_series(1,600)"))).toHaveLength(2);
+    expect(statements.join("\n")).toContain("if exists(select 1 from juntia_data.savings_goals where owner_user_id='11111111-1111-4111-8111-111111111111' and name='Listas largas') then return");
+  });
 });

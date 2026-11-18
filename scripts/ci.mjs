@@ -21,10 +21,13 @@ export const SUPABASE_JOBS = ["e2e", "a11y-session"];
  * El presupuesto de un job y si bloquea. Maestro §15.10, decisión 19.5 y decisión de los fundadores del 10 nov 2026 (gate del
  * PR #67, run 42849936048): < 660 s (antes 480 s) en los jobs con Supabase; los demás, el < 6 min del gate (ADR-011 §4), que
  * solo avisa. El barrido de accesibilidad a mano (A11Y_LEVEL=sweep) nunca bloquea por presupuesto: solo tiene el tope del job.
+ * 005 (contracts/ci.md, «Presupuesto»): el job `release` (laboratorio a mano, no es del gate) avisa a 600 s por tramo y
+ * nunca bloquea; su tope duro es el `timeout-minutes` del job. Un tramo que pase de 600 s se parte en dos (F85-7).
  * @param {Record<string, string | undefined>} [env]
  * @returns {{ seconds: number, blocking: boolean }}
  */
 export function jobBudget(env = process.env) {
+  if (env.GITHUB_JOB === "release") return { seconds: 600, blocking: false };
   const supabase = SUPABASE_JOBS.includes(env.GITHUB_JOB ?? "");
   return { seconds: supabase ? 660 : 360, blocking: supabase && env.A11Y_LEVEL !== "sweep" };
 }

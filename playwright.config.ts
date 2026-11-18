@@ -29,6 +29,11 @@ export default defineConfig({
     { name: "e2e", testDir: "tests/e2e", testMatch: "**/*.e2e.ts", use: { ...devices["Desktop Chrome"] } },
     // Evidencia del PR (T053, T057): capturas, pasada de anchos y arnés de tema. Solo bajo demanda; no es del gate.
     { name: "evidence", testDir: "tests/evidence", testMatch: "**/*.capture.ts", use: { ...devices["Desktop Chrome"] } },
+    // 005 (FR-020, FR-051, FR-093; research R3): solo para el job `release`, a mano. Ninguno entra en test:e2e:smoke ni en
+    // test:a11y, que fijan sus proyectos de Chromium (tests/playwright-projects.test.ts). WebKit en Windows no es evidencia.
+    { name: "e2e-webkit", testDir: "tests/e2e", testMatch: "**/*.e2e.ts", use: { ...devices["Desktop Safari"], reducedMotion: "reduce" } },
+    { name: "evidence-webkit", testDir: "tests/evidence", testMatch: "**/cls-frames.capture.ts", use: { ...devices["Desktop Safari"] } },
+    { name: "evidence-firefox", testDir: "tests/evidence", testMatch: "**/cls-frames.capture.ts", use: { ...devices["Desktop Firefox"] } },
   ],
   webServer: {
     ...server,

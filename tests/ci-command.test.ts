@@ -21,6 +21,12 @@ describe("presupuesto de job (scripts/ci.mjs, jobBudget)", () => {
     expect(jobBudget({ GITHUB_JOB: "a11y-session", A11Y_LEVEL: "sweep" })).toEqual({ seconds: 660, blocking: false });
   });
 
+  // 005 T037 (FR-095; contracts/ci.md, «Presupuesto»): «jobBudget devuelve 600 s sin bloquear para release».
+  it("release: 600 s por tramo, solo aviso (el tope duro es timeout-minutes)", () => {
+    expect(jobBudget({ GITHUB_JOB: "release" })).toEqual({ seconds: 600, blocking: false });
+    expect(jobBudget({ GITHUB_JOB: "release", A11Y_LEVEL: "sweep" })).toEqual({ seconds: 600, blocking: false });
+  });
+
   it("los demás jobs: el < 6 min del gate, solo aviso", () => {
     for (const job of ["app", "db", "evidence", undefined]) expect(jobBudget({ GITHUB_JOB: job }), String(job)).toEqual({ seconds: 360, blocking: false });
   });

@@ -11,13 +11,13 @@
 // el gate sigue siendo `verify` más los jobs de CI sobre el mismo commit (ADR-011 §9.8).
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { findPsql, linkedRefs as linkedRefsOf, loadEnvTest as loadEnvTestAt } from "./env.mjs";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join, relative, resolve } from "node:path";
+import { delimiter, dirname, join, relative } from "node:path";
 import { performance } from "node:perf_hooks";
-import { parseEnv } from "node:util";
 import { appOrigin, appPort, assertPortFree } from "../app-port.mjs";
 import { measurementPlan } from './playwright-measurement.mjs';
-import { planE2E } from "./e2e-plan.mjs";
+import { planE2E, planIntegration } from "./e2e-plan.mjs";
 import { checkDevTarget, cleanPgEnv, dbUrlWithoutPassword, DEV_REF } from "./guard.mjs";
 import { runInSession } from "./session.mjs";
 import { readTap } from "./tap.mjs";
@@ -43,7 +43,7 @@ const CI_ONLY = {
   ],
   e2e: [
     ["E2E etiquetadas @mail", "registro, recuperación y Mailpit; solo en el job e2e (lista abajo)"],
-    ["Proyecto evidence (capturas, anchos, tema, INP)", "evidencia bajo demanda en CI; nunca de dev (ADR-011 §9.8)"],
+    ["Proyecto evidence completo (capturas, anchos, tema, INP)", "evidencia bajo demanda en CI; nunca de dev (ADR-011 §9.8). Un arnés de tests/evidence/ pedido por archivo corre aquí solo como iteración (005)"],
   ],
 };
 const ALWAYS = [["Evidencia de [V] y de puntos de control", "solo cuenta la salida del CI sobre el commit (ADR-011 §9.8); esto es iteración"]];
@@ -54,25 +54,6 @@ let secrets = [];
 
 const redact = (text) => secrets.reduce((out, secret) => (secret ? out.split(secret).join("‹oculto›") : out), text);
 const git = (...args) => spawnSync("git", args, { cwd: ROOT, encoding: "utf8" }).stdout?.trim() ?? "";
-
-function loadEnvTest() {
-  const commonDir = resolve(ROOT, git("rev-parse", "--path-format=absolute", "--git-common-dir"));
-  const mainRoot = dirname(commonDir);
-  const path = [join(ROOT, ".env.test"), join(mainRoot, ".env.test")].find((candidate) => existsSync(candidate));
-  if (!path) throw new Error(`No existe .env.test (ni en ${ROOT} ni en ${mainRoot}). Cópialo de .env.test.example y rellénalo desde el panel de juntia-dev (docs/TESTING.md §2).`);
-  const ignored = spawnSync("git", ["check-ignore", "-q", path], { cwd: dirname(path) }).status === 0;
-  if (!ignored) throw new Error(`${path} no está ignorado por git: no se usa una clave secreta en un archivo que se podría versionar.`);
-  return { path, commonDir, fileEnv: parseEnv(readFileSync(path, "utf8")) };
-}
-
-/** psql del PATH o, en Windows, el de una instalación de PostgreSQL (el cliente de la copia de la decisión 17). */
-function findPsql() {
-  if (spawnSync("psql", ["--version"], { encoding: "utf8" }).status === 0) return null;
-  const base = "C:\\Program Files\\PostgreSQL";
-  const versions = existsSync(base) ? readdirSync(base).filter((name) => /^\d+$/.test(name)).sort((a, b) => Number(b) - Number(a)) : [];
-  for (const version of versions) if (existsSync(join(base, version, "bin", "psql.exe"))) return join(base, version, "bin");
-  throw new Error("No se encuentra psql. Instala el cliente de PostgreSQL 17 (solo «Command Line Tools») o añádelo al PATH.");
-}
 
 function childEnv(target, psqlDir, extra = {}) {
   // F48-1: ninguna PG* heredada llega a un hijo; psql y la CLI reciben las suyas de cleanPgEnv.
@@ -180,12 +161,12 @@ async function testDb(env) {
   return failed ? 1 : 0;
 }
 
-async function testIntegration(env) {
+async function testIntegration(env, filters = []) {
   const dir = mkdtempSync(join(tmpdir(), "juntia-dev-"));
   const report = join(dir, "vitest.json");
   try {
     // Timeouts de 60 s: cada prueba cruza la red hasta East US (ADR-011 §9.5); en CI se usan los de Vitest.
-    const run = await node("node_modules/vitest/vitest.mjs", ["run", "--project", "integration", "--testTimeout=60000", "--hookTimeout=60000", "--reporter=default", "--reporter=json", `--outputFile.json=${report}`], env)("vitest --project integration");
+    const run = await node("node_modules/vitest/vitest.mjs", ["run", "--project", "integration", "--project", "integration-deletion", "--testTimeout=60000", "--hookTimeout=60000", "--reporter=default", "--reporter=json", `--outputFile.json=${report}`, ...filters], env)("vitest --project integration --project integration-deletion");
     if (existsSync(report)) {
       const results = JSON.parse(readFileSync(report, "utf8")).testResults ?? [];
       for (const file of results) for (const test of file.assertionResults ?? []) {
@@ -233,13 +214,11 @@ async function main() {
   const started = performance.now();
   // Los argumentos se validan antes del guardia y del bloqueo: uno que cambiaría el destino o la configuración no llega a nada.
   const plan = command === "e2e" ? measurementPlan(planE2E(process.argv.slice(3)), process.env.JUNTIA_PLAYWRIGHT_MEASURE) : null;
+  const filters = command === "test:integration" ? planIntegration(process.argv.slice(3)) : [];
   if (plan && process.argv.length > 3) console.log(`e2e:dev dirigido: ${plan.map((step) => step.label).join(" · ")}. El completo, una vez antes de cada push.`);
-  const { path, commonDir, fileEnv } = loadEnvTest();
+  const { path, commonDir, fileEnv } = loadEnvTestAt(ROOT);
   // F48-5: el enlace de la CLI se lee en el worktree y en el checkout principal; cualquiera que no sea dev para el comando.
-  const linkedRefs = [["el worktree", ROOT], ["el checkout principal", dirname(commonDir)]]
-    .map(([where, dir]) => ({ where, path: join(dir, "supabase", ".temp", "project-ref") }))
-    .filter(({ path }, index, all) => existsSync(path) && all.findIndex((other) => other.path === path) === index)
-    .map(({ where, path }) => ({ where, ref: readFileSync(path, "utf8") }));
+  const linkedRefs = linkedRefsOf(ROOT, commonDir);
   const target = checkDevTarget({ fileEnv, processEnv: process.env, linkedRefs });
   const db = new URL(target.dbUrl);
   secrets = [target.secretKey, target.dbUrl, db.password, decodeURIComponent(db.password), encodeURIComponent(decodeURIComponent(db.password))].filter((value) => value && value.length >= 6);
@@ -260,7 +239,7 @@ async function main() {
       // Como el job db: pgTAP corre sobre una base recién reiniciada. Las pruebas suponen tablas vacías (04 y 07 fallan
       // con los usuarios y movimientos que dejan la integración y las E2E en dev).
       : command === "test:db" ? (await reset(target, env)) || await testDb(env)
-      : command === "test:integration" ? await testIntegration(env)
+      : command === "test:integration" ? await testIntegration(env, filters)
       : await e2e(target, env, plan);
     });
   } finally {

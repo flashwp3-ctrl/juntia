@@ -1,6 +1,7 @@
 // 003 T002 · FR-019/019a/020: «las partes suman exactamente el importe», pesos enteros y desempate por ingreso (ADR-002).
 import { moneyFromPesos as pesos } from "../money";
 import { splitAmount, validateSplit, nextSplitOnParticipantsChange, SPLIT_VERSION } from ".";
+import { gasto_consumo } from "../metrics";
 const members = [{ userId: "sara", joinOrder: 1 }, { userId: "tomas", joinOrder: 2 }];
 const parts = (amount: bigint, mode: "equal" | "percent" | "amount", values: Record<string, number | bigint> = {}) => splitAmount(pesos(amount), mode, members, values).map(p => p.amount.amountMinor / 100n);
 it("aplica los ejemplos obligatorios de FR-019a sin dar el residuo al pagador", () => {
@@ -45,4 +46,23 @@ it("55/45 → uno → dos restaura; 100/0 → uno → dos vuelve a 50/50 (FR-019
     expect(again.mode).toBe(sara === 55 ? "percent" : "equal");
     expect(again.values).toEqual(restored);
   }
+});
+// 005 T013 · FR-012 (US-08), SC-001: «gasto grupal 400.000 al 50/50 → 400.000 del grupo, 200.000 a cada persona, nunca
+// 800.000». El total del grupo es el importe del gasto una sola vez; las partes son la parte de cada persona.
+it("US-08 literal: 400.000 al 50/50 → 400.000 del grupo, 200.000 a cada persona, nunca 800.000", () => {
+  const amount = pesos(400000n);
+  const result = splitAmount(amount, "equal", members);
+  expect(result).toEqual([{ userId: "sara", amount: pesos(200000n) }, { userId: "tomas", amount: pesos(200000n) }]);
+  const sumOfParts = result.reduce((sum, part) => sum + part.amount.amountMinor, 0n);
+  expect(sumOfParts).toBe(amount.amountMinor);
+  expect(validateSplit(amount, result)).toEqual({ valid: true, missing: pesos(0n), excess: pesos(0n) });
+  // Revisión del PR #87, F87-7: el total del grupo y el de cada persona salen de la función de dominio real que agrega el
+  // consumo (`gasto_consumo`), no de una constante: el gasto del grupo cuenta una vez, y cada persona, su parte.
+  const month = "2026-10";
+  const expense = (amountMinor: bigint) => ({ amountMinor, transactionDate: "2026-10-03", type: "expense", status: "active" });
+  const groupTotal = gasto_consumo([expense(amount.amountMinor)], month);
+  expect(groupTotal).toBe(pesos(400000n).amountMinor);
+  expect(groupTotal).not.toBe(pesos(800000n).amountMinor);
+  for (const part of result) expect(gasto_consumo([expense(part.amount.amountMinor)], month)).toBe(pesos(200000n).amountMinor);
+  expect(result.reduce((sum, part) => sum + gasto_consumo([expense(part.amount.amountMinor)], month), 0n)).toBe(groupTotal);
 });

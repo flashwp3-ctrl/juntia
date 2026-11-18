@@ -406,7 +406,10 @@ test("gasto con meta en dos sesiones: Sara pide fondos a Tomás, él aprueba uno
 // `touch-action`; `Input.synthesizeScrollGesture` no desplaza en el Chromium sin interfaz. En Inicio, con movimientos, para
 // que la página tenga recorrido de sobra con cualquier alto de viewport; el punto de partida sale de la parte visible de la
 // tarjeta (por encima de la barra inferior fija), no de coordenadas fijas: la geometría del CI no es la de una máquina local.
-test("pila de metas en móvil: el scroll vertical sobre la tarjeta mueve la página y deslizar a la izquierda trae la siguiente", async ({ browser, baseURL }) => {
+test("pila de metas en móvil: el scroll vertical sobre la tarjeta mueve la página y deslizar a la izquierda trae la siguiente", async ({ browser, baseURL, browserName }) => {
+  // 005 T021 (FR-020, FR-090; research R3): CDP solo existe en Chromium. Fuera de él (el proyecto e2e-webkit del job
+  // `release`) el caso se salta; no se reescribe con otro mecanismo.
+  test.skip(browserName !== "chromium", "Input.dispatchTouchEvent es CDP, solo Chromium. El gesto real lo cubre la verificación en el iPhone de los fundadores (FR-070).");
   const pair = await seedCouple({ index: test.info().parallelIndex });
   await seedSharedMovements(pair, "recent");
   const today = todayInBogota();

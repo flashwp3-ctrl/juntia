@@ -7,7 +7,7 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
-import { seedMovements, seedUser } from "../support/seed";
+import { seedCouple, seedMovements, seedSharedMovements, seedUser } from "../support/seed";
 
 const OUT = "test-results/evidence";
 const RUNS = 5;
@@ -86,4 +86,63 @@ for (const width of [390, 1440]) {
     console.log(JSON.stringify(row));
     await context.close();
   });
+}
+
+// ─── 005 · T025 (FR-052, SC-006; research R7). INP al abrir Anotar y al guardar en las TRES variantes (privado, compartido y
+// con meta), 10 interacciones por variante, CPU 4×, a 390 y 1440, con el umbral < 200 ms escrito en la salida. Laboratorio
+// del tramo `lab-interaction` del job `release` (etiqueta @release, --workers 1); los dos casos de arriba siguen en el job
+// `evidence`. Consolida 003-T054 y 004-T067. Salida: test-results/evidence/inp-release.jsonl. INP_RUNS reduce en local.
+const VARIANT_RUNS = Number(process.env.INP_RUNS ?? 0) || 10;
+const VARIANTS = ["privado", "compartido", "con meta"] as const;
+for (const variant of VARIANTS) {
+  for (const width of [390, 1440]) {
+    test(`@release INP de Anotar · ${variant} · ${width}px · CPU 4×`, async ({ browser, baseURL }, testInfo) => {
+      test.setTimeout(10 * 60_000);
+      await mkdir(OUT, { recursive: true });
+      const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
+      await seedMovements(pair.sara, "recent");
+      await seedSharedMovements(pair, "recent");
+      const context = variant === "compartido" ? "us" : "me";
+      const browserContext = await browser.newContext({ baseURL, viewport: { width, height: 900 }, reducedMotion: "no-preference" });
+      const host = new URL(baseURL!).hostname;
+      await browserContext.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: context, domain: host, path: "/", sameSite: "Lax" }]);
+      await browserContext.addInitScript((value) => window.localStorage.setItem("juntia:context", value), context);
+      const page = await browserContext.newPage();
+      const cdp = await browserContext.newCDPSession(page);
+      await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+      await page.goto("/");
+      await expect(page.locator("[data-annotate-trigger]:visible")).toBeVisible();
+      await observe(page);
+      const latest = () => page.evaluate(() => Math.max(0, ...(window as unknown as { __inp: { id: number }[] }).__inp.map((entry) => entry.id)));
+      let last = await latest();
+      const opens: number[] = [];
+      const saves: number[] = [];
+      for (let run = 0; run < VARIANT_RUNS; run++) {
+        await page.locator("[data-annotate-trigger]:visible").click();
+        const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+        await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+        const open = await nextInteraction(page, last);
+        opens.push(open.duration);
+        await page.keyboard.type(String(1000 + run));
+        await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
+        if (variant === "con meta") {
+          await sheet.getByRole("button", { name: new RegExp(`^${copy.goalExpense.paidWith.label}:`) }).click();
+          await sheet.getByRole("radiogroup", { name: copy.goalExpense.paidWith.label }).getByRole("radio", { name: copy.goalExpense.paidWith.goal }).click();
+          await sheet.getByRole("radiogroup", { name: copy.goalExpense.picker.title }).getByRole("radio", { name: /^Bicicleta de ruta/ }).click();
+        }
+        // Solo cuentan abrir y guardar: las interacciones intermedias se descartan.
+        last = await latest();
+        await sheet.getByRole("button", { name: /^(Guardar|Registrar)/ }).click();
+        const save = await nextInteraction(page, last);
+        saves.push(save.duration);
+        await expect(sheet).toBeHidden({ timeout: 30_000 });
+        last = await latest();
+      }
+      const row = { kind: "laboratorio", variante: variant, width, cpu: "4x", interacciones: VARIANT_RUNS, open: opens, save: saves,
+        inpOpen: Math.max(...opens), inpSave: Math.max(...saves), umbral: "< 200 ms", under200: Math.max(...opens, ...saves) < 200 };
+      await appendFile(`${OUT}/inp-release.jsonl`, `${JSON.stringify(row)}\n`);
+      console.log(JSON.stringify(row));
+      await browserContext.close();
+    });
+  }
 }

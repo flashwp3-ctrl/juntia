@@ -966,3 +966,29 @@ describe("Título de la tarjeta con el texto ampliado", () => {
     expect(title.parentElement?.className).not.toContain("@container");
   });
 });
+
+// 005 T015 · FR-012 (US-21): «Apartado en Juntia» y «Transferencia declarada» se pintan tal cual salen de `es.ts`
+// (`modes.reserved`, `modes.transferred_declared`) y ningún texto de la fila, la hoja ni la ayuda presenta el dinero como
+// verificado por un banco (palabras prohibidas del glosario §9: «Depositado en tu cuenta», «Transferencia verificada»).
+describe("US-21 · modo del aporte, tal cual y nunca verificado (005 T015)", () => {
+  const FORBIDDEN = /Depositad|Depositar|verificad|Invert|banco|bancari/i;
+  it("la fila del historial pinta cada modo con la cadena exacta de es.ts", () => {
+    for (const fundingMode of ["reserved", "transferred_declared"] as const) {
+      const { container, unmount } = render(<ul><li><GoalEntryRow entry={entry({ fundingMode })} people={people} dateLabel="22 oct" variant="history" /></li></ul>);
+      const row = container.querySelector("[data-goal-entry]") as HTMLElement;
+      expect(within(row).getByText(`${copy.goals.history.by("Sara")} · ${copy.goals.contribute.modes[fundingMode]}`)).toBeTruthy();
+      expect(row.textContent).not.toMatch(FORBIDDEN);
+      unmount();
+    }
+    expect(copy.goals.contribute.modes).toEqual({ reserved: "Apartado en Juntia", transferred_declared: "Transferencia declarada" });
+  });
+  it("la hoja de aporte, con «Transferencia declarada» elegida, enseña su ayuda y nada la presenta como verificada", async () => {
+    const user = userEvent.setup();
+    render(<ContributeSheet open onClose={vi.fn()} goal={japan()} context="us" today={TODAY} idempotencyKey={KEY} actions={actions()} onDone={vi.fn()} />);
+    const dialog = screen.getByRole("dialog", { name: copy.goals.contribute.title });
+    await user.click(within(dialog).getByRole("radio", { name: copy.goals.contribute.modes.transferred_declared }));
+    expect(within(dialog).getByText(copy.goals.contribute.modeHelp)).toBeTruthy();
+    expect(within(dialog).getByRole("radio", { name: copy.goals.contribute.modes.reserved })).toBeTruthy();
+    expect(dialog.textContent).not.toMatch(FORBIDDEN);
+  });
+});

@@ -38,6 +38,14 @@ on:
         description: "Decision 21.2: full accessibility sweep (seven widths, 200 % text, keyboard, 44 px; tests tagged @sweep). Manual, launched by the manager"
         type: boolean
         default: false
+      release_lab:
+        description: "005 (contracts/ci.md): the release lab job (CLS, frame comparator, INP, LCP, GoalStack, long lists, WebKit E2E). Exclusive: not combined with any other input. Not a gate"
+        type: boolean
+        default: false
+      release_legs:
+        description: "005: with release_lab, only these legs (names or prefixes, comma separated, e.g. cls-metas,webkit-cls; empty = all 17)"
+        type: string
+        default: ""
 # Maestro §15.10, decisión 21: en cada PR, el nivel ligero de accesibilidad (cada estado una vez, a 390, en los dos temas);
 # con «Run workflow» y a11y_sweep, solo el barrido completo (@sweep; playwright.config.ts), en los jobs app y a11y-session.
 # Sin el input (pull_request), vacío.
@@ -50,10 +58,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  inputs-guard:
+    # 005 (contracts/ci.md, «Entradas a mano»; F85-4, F85-9). `release_lab` es exclusiva: con cualquier otra entrada, este job
+    # falla con ::error y nada más corre. Corre también en cada pull_request no borrador, donde termina bien sin validar: todos
+    # los demás jobs dependen de él (needs) con el success() implícito de su `if`, así que, si se omitiera en un PR, GitHub
+    # omitiría también el gate y un check omitido podría contar como satisfecho. tests/ci-workflow.test.ts lo simula.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Reject release_lab combined with other inputs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INVALID: ${{ inputs.release_lab && (inputs.capture_evidence || inputs.a11y_sweep || inputs.measure_workers) }}
+        run: |
+          if [ "$INVALID" = "true" ]; then echo "::error title=Entradas::release_lab no se combina con otras entradas (capture_evidence, a11y_sweep, measure_workers)"; exit 1; fi
+          echo "Entradas válidas"
+      # F87-3 (revisión del PR #87): con release_lab, la selección de release_legs se valida entera antes de la matriz. Un
+      # elemento vacío o un nombre que no coincide con ningún tramo deja el run en rojo, en vez de 25 tramos «no pedido».
+      - uses: actions/checkout@v7
+        if: github.event_name == 'workflow_dispatch' && inputs.release_lab
+        with:
+          sparse-checkout: scripts/release-leg.mjs
+          sparse-checkout-cone-mode: false
+      - name: Validate release_legs
+        if: github.event_name == 'workflow_dispatch' && inputs.release_lab
+        env:
+          RELEASE_LEGS: ${{ inputs.release_legs }}
+        run: node scripts/release-leg.mjs validate
+
   app:
     # Un borrador no corre (se lanza a mano con «Run workflow»); un lanzamiento manual sí.
-    # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # Un lanzamiento manual solo de evidencia (capture_evidence) o del laboratorio (release_lab) no repite el gate.
+    needs: inputs-guard
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.release_lab) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -121,7 +159,8 @@ jobs:
   db:
     # Un lanzamiento manual solo de evidencia (capture_evidence) no repite el gate; el barrido de accesibilidad (a11y_sweep)
     # tampoco necesita las pruebas SQL.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    needs: inputs-guard
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.release_lab) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -266,7 +305,8 @@ jobs:
     # (a11y_sweep) corre solo en `a11y-session` (decisión 21.2), así que con él este job no arranca, SALVO que también se pida
     # la medición T054 (measure_workers): revisión del PR #83, F83-1. Entonces arranca, el selector y el smoke se saltan
     # (guardias por paso) y solo mide, como antes de la partición.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && (!inputs.a11y_sweep || inputs.measure_workers)) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    needs: inputs-guard
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.release_lab && (!inputs.a11y_sweep || inputs.measure_workers)) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     # Decisión de los fundadores del 10 nov 2026: 12 min, para que el presupuesto de 660 s (scripts/ci.mjs) avise antes de que
     # GitHub cancele el job (antes, 10 min sobre un presupuesto de 480 s). Desde el 17 nov 2026, cada uno de los dos jobs
@@ -397,7 +437,8 @@ jobs:
     # con A11Y_JOB=e2e, que nombra el modo «con Supabase en el runner» de tests/a11y, no el job de GitHub.
     # El selector corre primero, antes de Supabase: si el PR solo toca archivos neutros (skip=true), los demás pasos se
     # saltan y el job termina en segundos.
-    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    needs: inputs-guard
+    if: (github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.release_lab) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-24.04
     # El mismo tope y el mismo presupuesto (660 s, scripts/ci.mjs) que el job `e2e`; el barrido a mano solo tiene el tope.
     timeout-minutes: 12
@@ -511,7 +552,8 @@ jobs:
 
   evidence:
     # T053, T057 (002, PR B) y T072, T073 (PR C): evidencia del PR, solo bajo demanda. No forma parte del gate.
-    if: github.event_name == 'workflow_dispatch' && inputs.capture_evidence
+    needs: inputs-guard
+    if: github.event_name == 'workflow_dispatch' && inputs.capture_evidence && !inputs.release_lab
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -582,7 +624,8 @@ jobs:
         env:
           # PR D: con un filtro, solo los estados nuevos del PR; el resto ya tiene su evidencia en su PR.
           EVIDENCE_FILTER: ${{ inputs.evidence_filter }}
-        run: npx playwright test --project evidence --grep-invert @serial --workers 4 --retries 0 --reporter=line
+        # 005: los arneses del job `release` (etiqueta @release) no corren aquí.
+        run: npx playwright test --project evidence --grep-invert "@serial|@release" --workers 4 --retries 0 --reporter=line
       - name: Serial evidence (PR C states and CLS, PR D lab INP; alters the runner database)
         if: always()
         # --output propio: Playwright vacía su carpeta de salida al empezar y borraría las capturas del paso anterior.
@@ -600,3 +643,124 @@ jobs:
       - name: Stop Supabase
         if: always()
         run: supabase stop
+
+  release:
+    # 005 (contracts/ci.md, «Job nuevo: release»; FR-020, FR-050–FR-054, FR-093). Laboratorio del release, SOLO a mano
+    # («Run workflow» con release_lab, sola): nunca corre en un PR y no es del gate. Lo lanza el gestor en el punto de control
+    # del PR A y sobre el commit candidato. Cada tramo es un job de la matriz con su Supabase, su build y su navegador; lo
+    # que corre cada uno está en scripts/release-leg.mjs. Presupuesto: 600 s sin bloquear (scripts/ci.mjs, jobBudget); el
+    # tope duro es timeout-minutes. Un tramo que mida más de 600 s se parte en dos (F85-7), nunca se le quitan cargas.
+    needs: inputs-guard
+    if: github.event_name == 'workflow_dispatch' && inputs.release_lab && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.measure_workers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # T046: los tramos de más de 600 s del punto de control (run 44349192421), partidos sin quitar cargas; Inicio en Yo y
+        # Actividad, en tercios desde el parcial 44355668184.
+        leg: [cls-inicio-yo-1, cls-inicio-yo-2, cls-inicio-yo-3, cls-inicio-nosotros, cls-actividad-1, cls-actividad-2, cls-actividad-3, cls-balance, cls-plan, cls-analisis, cls-metas,
+              cls-controls-chromium, lab-interaction, webkit-e2e-1, webkit-e2e-2,
+              webkit-cls-1, webkit-cls-2a, webkit-cls-2b, webkit-cls-3a, webkit-cls-3b,
+              firefox-cls-1, firefox-cls-2a, firefox-cls-2b, firefox-cls-3a, firefox-cls-3b]
+    env:
+      SITE_URL: http://localhost:3400
+    steps:
+      - name: Start job clock
+        run: echo "JOB_STARTED_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Leg requested by release_legs
+        # Vacío = todos. Un tramo no pedido termina aquí, en segundos, con «no pedido» en el resumen; nunca como aprobado.
+        id: leg
+        env:
+          RELEASE_LEGS: ${{ inputs.release_legs }}
+        run: |
+          node scripts/release-leg.mjs requested "${{ matrix.leg }}"
+          node scripts/release-leg.mjs browser "${{ matrix.leg }}"
+      - uses: supabase/setup-cli@v3
+        if: steps.leg.outputs.run == 'true'
+        with:
+          version: 2.121.0
+      - name: Start Supabase with Auth and Mailpit
+        if: steps.leg.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
+          supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { echo "Supabase start failed (raw log withheld because it may contain credentials)"; exit 1; }
+          seconds=$(($(date +%s)-started))
+          echo "supabase start: ${seconds} s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # El comando imprime credenciales: capturar y enmascarar antes de cualquier salida.
+          status=$(supabase status -o env 2>/dev/null)
+          while IFS='=' read -r name value; do
+            value=${value#\"}; value=${value%\"}
+            [ -z "$value" ] || echo "::add-mask::$value"
+            case "$name" in
+              API_URL|PUBLISHABLE_KEY|SECRET_KEY|DB_URL) printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV" ;;
+            esac
+            case "$name" in
+              API_URL) printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$value" >> "$GITHUB_ENV" ;;
+              PUBLISHABLE_KEY) printf 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n' "$value" >> "$GITHUB_ENV" ;;
+            esac
+          done <<< "$status"
+      - name: Restore the Next build cache
+        # La clave del job `e2e` (mismas variables públicas del Supabase del runner).
+        if: steps.leg.outputs.run == 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-e2e-${{ hashFiles('package-lock.json') }}-
+      - name: Install and build with the runner's Supabase
+        if: steps.leg.outputs.run == 'true'
+        run: node scripts/ci.mjs run ci build
+      - name: Install the leg's browser (own time limit, one retry)
+        # El patrón de Chromium de los demás jobs (PR C de la 002): descarga con tope y un reintento; si el navegador no
+        # arranca con las librerías del runner, install-deps con tope y un reintento, matando antes el apt-get colgado.
+        # WebKit y Firefox suelen necesitar sus librerías por apt (60–180 s, contracts/ci.md): tope de 240 s por intento.
+        if: steps.leg.outputs.run == 'true'
+        timeout-minutes: 10
+        shell: bash
+        env:
+          BROWSER: ${{ steps.leg.outputs.browser }}
+        run: |
+          started=$(date +%s%3N)
+          try() { for attempt in 1 2; do timeout 240 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 240 s"; sudo pkill -x apt-get || true; done; return 1; }
+          if [ "$BROWSER" = "chromium" ]; then try npx playwright install --only-shell chromium; else try npx playwright install "$BROWSER"; fi
+          if node -e "require('@playwright/test')[process.env.BROWSER].launch().then((b) => b.close(), () => process.exit(1))"; then
+            echo "$BROWSER arranca con las librerías del runner: sin install-deps"
+          else
+            try npx playwright install-deps "$BROWSER"
+          fi
+          echo "{\"command\":\"$BROWSER\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
+      - name: Install Arial and Georgia for the font fallbacks
+        # Como en `evidence`: los respaldos de Onest y Brygada se ajustan sobre Arial y Georgia; sin ellas, otra geometría.
+        if: steps.leg.outputs.run == 'true'
+        shell: bash
+        run: |
+          echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+          sudo apt-get install -y -qq ttf-mscorefonts-installer > /dev/null
+          fc-list | grep -c -i -E "arial|georgia"
+      - name: Run the leg
+        if: steps.leg.outputs.run == 'true'
+        run: node scripts/release-leg.mjs run "${{ matrix.leg }}"
+      - uses: actions/upload-artifact@v6
+        if: always() && steps.leg.outputs.run == 'true'
+        with:
+          name: release-${{ matrix.leg }}
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Stop Supabase
+        if: always() && steps.leg.outputs.run == 'true'
+        run: supabase stop
+      - name: Publish release timings
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: node scripts/ci.mjs summary

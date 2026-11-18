@@ -5,9 +5,11 @@
 // como texto (el repositorio no tiene un parser de YAML propio) y afirma la forma que el gate necesita, para que un cambio
 // del workflow no junte los jobs, no deje un paso de axe en `e2e` ni haga que `a11y-session` arranque Supabase en un PR que
 // solo toca archivos neutros.
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SUPABASE_JOBS } from "../scripts/ci.mjs";
+import { CLS_FRAMES_SETS, LEGS, legPlan, legRequested, validateLegs } from "../scripts/release-leg.mjs";
 
 const workflow = readFileSync(".github/workflows/ci.yml", "utf8").replace(/\r\n/g, "\n");
 
@@ -33,10 +35,11 @@ const field = (job: string, key: string) => new RegExp(`^ {4}${key}: (.+)$`, "m"
 const cacheKey = (job: string) => /^ {10}key: (.+)$/m.exec(steps(job).find((step) => step.name === "Restore the Next build cache")?.text ?? "")?.[1];
 
 describe("gate partido en e2e y a11y-session (decisión de los fundadores del 17 nov 2026)", () => {
-  it("los dos jobs existen y corren en paralelo: ninguno espera a otro", () => {
+  it("los dos jobs existen y corren en paralelo: ninguno espera a otro job del gate", () => {
     expect([...jobs().keys()]).toEqual(expect.arrayContaining(["app", "db", "e2e", "a11y-session", "evidence"]));
-    expect(field("e2e", "needs")).toBeUndefined();
-    expect(field("a11y-session", "needs")).toBeUndefined();
+    // 005 (contracts/ci.md, F85-9): la única dependencia es el guardia de entradas, que tarda segundos.
+    expect(field("e2e", "needs")).toBe("inputs-guard");
+    expect(field("a11y-session", "needs")).toBe("inputs-guard");
   });
 
   it("e2e corre las specs del selector y ninguna auditoría de axe; a11y-session, axe y ninguna spec E2E", () => {
@@ -86,9 +89,9 @@ describe("gate partido en e2e y a11y-session (decisión de los fundadores del 17
   });
 
 
-  it("db y evidence no cambian de disparo", () => {
-    expect(field("db", "if")).toBe("(github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)");
-    expect(field("evidence", "if")).toBe("github.event_name == 'workflow_dispatch' && inputs.capture_evidence");
+  it("db y evidence no cambian de disparo, salvo la exclusión de release_lab (005, contracts/ci.md)", () => {
+    expect(field("db", "if")).toBe("(github.event_name == 'workflow_dispatch' && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.release_lab) || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)");
+    expect(field("evidence", "if")).toBe("github.event_name == 'workflow_dispatch' && inputs.capture_evidence && !inputs.release_lab");
   });
 });
 
@@ -149,16 +152,16 @@ const stepIf = (job: string, match: RegExp) => {
 const runs = (expression: string, context: Context) => (expression === "success()" ? true : evaluate(expression, context));
 
 const CASES: { name: string; context: Context; jobs: string[]; e2eSteps?: Record<string, boolean>; a11ySelect?: boolean }[] = [
-  { name: "pull_request listo", context: { event: "pull_request", inputs: {} }, jobs: ["app", "db", "e2e", "a11y-session"],
+  { name: "pull_request listo", context: { event: "pull_request", inputs: {} }, jobs: ["inputs-guard", "app", "db", "e2e", "a11y-session"],
     e2eSteps: { select: true, smoke: true, t054: false }, a11ySelect: true },
   { name: "pull_request en borrador", context: { event: "pull_request", draft: true, inputs: {} }, jobs: [] },
-  { name: "Run workflow sin inputs", context: { event: "workflow_dispatch", inputs: {} }, jobs: ["app", "db", "e2e", "a11y-session"],
+  { name: "Run workflow sin inputs", context: { event: "workflow_dispatch", inputs: {} }, jobs: ["inputs-guard", "app", "db", "e2e", "a11y-session"],
     e2eSteps: { select: true, smoke: true, t054: false }, a11ySelect: true },
-  { name: "capture_evidence", context: { event: "workflow_dispatch", inputs: { capture_evidence: true } }, jobs: ["evidence"] },
-  { name: "a11y_sweep", context: { event: "workflow_dispatch", inputs: { a11y_sweep: true } }, jobs: ["app", "a11y-session"], a11ySelect: false },
+  { name: "capture_evidence", context: { event: "workflow_dispatch", inputs: { capture_evidence: true } }, jobs: ["inputs-guard", "evidence"] },
+  { name: "a11y_sweep", context: { event: "workflow_dispatch", inputs: { a11y_sweep: true } }, jobs: ["inputs-guard", "app", "a11y-session"], a11ySelect: false },
   { name: "a11y_sweep + measure_workers (F83-1)", context: { event: "workflow_dispatch", inputs: { a11y_sweep: true, measure_workers: true } },
-    jobs: ["app", "e2e", "a11y-session"], e2eSteps: { select: false, smoke: false, t054: true }, a11ySelect: false },
-  { name: "measure_workers", context: { event: "workflow_dispatch", inputs: { measure_workers: true } }, jobs: ["app", "db", "e2e", "a11y-session"],
+    jobs: ["inputs-guard", "app", "e2e", "a11y-session"], e2eSteps: { select: false, smoke: false, t054: true }, a11ySelect: false },
+  { name: "measure_workers", context: { event: "workflow_dispatch", inputs: { measure_workers: true } }, jobs: ["inputs-guard", "app", "db", "e2e", "a11y-session"],
     e2eSteps: { select: true, smoke: true, t054: true }, a11ySelect: true },
 ];
 
@@ -187,5 +190,169 @@ describe("qué jobs y pasos arrancan con cada combinación de inputs (F83-1)", (
       expect(runs(stepIf("a11y-session", /^Axe of the states/), context)).toBe(true);
       expect(runs(stepIf("a11y-session", /^Axe of the states/), { ...context, skip: "true" })).toBe(false);
     }
+  });
+});
+
+// 005 · T035 (FR-092, FR-093, FR-095; contracts/ci.md, «Entradas a mano», F85-4 y F85-9). No basta con buscar textos: se
+// EVALÚAN los `if` con el evaluador de arriba (que falla ante una expresión que no conoce) y se SIMULA `needs` con las
+// reglas de GitHub: un job cuyo `if` es falso se omite; un `if` sin función de estado lleva `success()` implícito, así que el
+// job se omite si una dependencia no terminó bien; un paso que falla hace fallar su job. El único paso que puede fallar en
+// esta simulación es la validación de `inputs-guard`, que se simula con su condición (`INVALID`).
+type Outcome = "success" | "failure" | "skipped";
+const GATE = ["app", "db", "e2e", "a11y-session"];
+const BOOLEAN_INPUTS = ["release_lab", "capture_evidence", "a11y_sweep", "measure_workers"] as const;
+const needsOf = (job: string) => (field(job, "needs") ?? "").split(/[\s,[\]]+/).filter(Boolean);
+
+function guardStepFails(context: Context) {
+  const step = steps("inputs-guard").find((item) => /^Reject release_lab combined with other inputs$/.test(item.name));
+  if (!step) throw new Error("inputs-guard no tiene su paso de validación");
+  const stepRuns = runs(/^ {8}if: (.+)$/m.exec(step.text)?.[1] ?? "success()", context);
+  const invalid = /^ {10}INVALID: (.+)$/m.exec(step.text)?.[1];
+  if (!invalid) throw new Error("La validación no declara su condición INVALID");
+  return stepRuns && evaluate(invalid, context);
+}
+
+function simulate(context: Context): Record<string, Outcome> {
+  const result: Record<string, Outcome> = {};
+  const resolve = (job: string): Outcome => {
+    if (result[job]) return result[job];
+    const needs = needsOf(job);
+    for (const dependency of needs) resolve(dependency);
+    const expression = field(job, "if") ?? "success()";
+    const statusFunction = /\b(success|failure|always|cancelled)\(\)/.test(expression);
+    if (!statusFunction && !needs.every((dependency) => result[dependency] === "success")) return (result[job] = "skipped");
+    if (!runs(expression, context)) return (result[job] = "skipped");
+    return (result[job] = job === "inputs-guard" && guardStepFails(context) ? "failure" : "success");
+  };
+  for (const job of jobs().keys()) resolve(job);
+  return result;
+}
+
+/** La tabla «Entradas a mano» del contrato, para cada combinación de las cuatro entradas booleanas. */
+function expected(inputs: Record<string, boolean>): { ran: string[]; guard: Outcome } {
+  const others = inputs.capture_evidence || inputs.a11y_sweep || inputs.measure_workers;
+  if (inputs.release_lab) return others ? { ran: [], guard: "failure" } : { ran: ["release"], guard: "success" };
+  if (inputs.capture_evidence) return { ran: ["evidence"], guard: "success" };
+  if (inputs.a11y_sweep) return { ran: ["app", "a11y-session", ...(inputs.measure_workers ? ["e2e"] : [])], guard: "success" };
+  return { ran: [...GATE], guard: "success" };
+}
+
+const COMBINATIONS = Array.from({ length: 16 }, (_, mask) => Object.fromEntries(BOOLEAN_INPUTS.map((name, bit) => [name, Boolean(mask & (1 << bit))])));
+const label = (inputs: Record<string, boolean>) => BOOLEAN_INPUTS.filter((name) => inputs[name]).join(" + ") || "sin entradas";
+const ran = (outcomes: Record<string, Outcome>) => Object.entries(outcomes).filter(([job, outcome]) => job !== "inputs-guard" && outcome !== "skipped").map(([job]) => job).sort();
+
+describe("guardia de entradas y job release (005 T035; contracts/ci.md)", () => {
+  it("todos los jobs dependen de inputs-guard, y el guardia de nada", () => {
+    expect(needsOf("inputs-guard")).toEqual([]);
+    for (const job of [...jobs().keys()].filter((name) => name !== "inputs-guard")) expect(needsOf(job), job).toEqual(["inputs-guard"]);
+  });
+
+  it("la validación del guardia falla de verdad con ::error y exit 1 cuando INVALID es true", () => {
+    const step = steps("inputs-guard").find((item) => item.name === "Reject release_lab combined with other inputs")!;
+    expect(step.text).toMatch(/if \[ "\$INVALID" = "true" \]; then echo "::error[^"]*release_lab no se combina con otras entradas[^"]*"; exit 1; fi/);
+  });
+
+  it.each(COMBINATIONS.map((inputs) => [label(inputs), inputs] as const))("workflow_dispatch · %s", (_, inputs) => {
+    const outcomes = simulate({ event: "workflow_dispatch", inputs });
+    const want = expected(inputs);
+    expect(outcomes["inputs-guard"]).toBe(want.guard);
+    expect(ran(outcomes)).toEqual([...want.ran].sort());
+    for (const job of want.ran) expect(outcomes[job], job).toBe("success");
+  });
+
+  it("pull_request no borrador: el guardia corre y termina bien sin validar, y app, db, e2e y a11y-session SE EJECUTAN", () => {
+    const outcomes = simulate({ event: "pull_request", draft: false, inputs: {} });
+    expect(outcomes["inputs-guard"]).toBe("success");
+    for (const job of GATE) expect(outcomes[job], job).toBe("success");
+    expect(outcomes.release).toBe("skipped");
+    expect(outcomes.evidence).toBe("skipped");
+    expect(guardStepFails({ event: "pull_request", draft: false, inputs: {} })).toBe(false);
+  });
+
+  it("pull_request en borrador: no corre nada, ni el guardia", () => {
+    const outcomes = simulate({ event: "pull_request", draft: true, inputs: {} });
+    expect(Object.values(outcomes).every((outcome) => outcome === "skipped")).toBe(true);
+  });
+
+  it("con una combinación inválida el guardia falla y nada más corre", () => {
+    for (const other of ["capture_evidence", "a11y_sweep", "measure_workers"]) {
+      const outcomes = simulate({ event: "workflow_dispatch", inputs: { release_lab: true, [other]: true } });
+      expect(outcomes["inputs-guard"], other).toBe("failure");
+      expect(ran(outcomes), other).toEqual([]);
+    }
+  });
+
+  it("release nunca corre en pull_request, en borrador o no", () => {
+    for (const draft of [true, false]) expect(runs(field("release", "if")!, { event: "pull_request", draft, inputs: {} })).toBe(false);
+    expect(field("release", "if")).toBe("github.event_name == 'workflow_dispatch' && inputs.release_lab && !inputs.capture_evidence && !inputs.a11y_sweep && !inputs.measure_workers");
+  });
+
+  it("release: ubuntu-24.04, 20 min, fail-fast false y la matriz de los tramos de scripts/release-leg.mjs (25 tras T046)", () => {
+    expect(field("release", "runs-on")).toBe("ubuntu-24.04");
+    expect(field("release", "timeout-minutes")).toBe("20");
+    const job = jobs().get("release") ?? "";
+    expect(job).toMatch(/^ {6}fail-fast: false$/m);
+    const matrix = /^ {8}leg: \[([^\]]+)\]/m.exec(job.replace(/\n {14}/g, " "))?.[1].split(",").map((leg) => leg.trim());
+    expect(matrix).toEqual([...LEGS]);
+  });
+
+  it("sin disparadores schedule ni push", () => {
+    expect(workflow).not.toMatch(/^ {2}(schedule|push):/m);
+  });
+});
+
+// 005 T046 (F85-7; regla 5): un tramo de más de 600 s se parte en dos sin quitar cargas.
+describe("tramos partidos en T046, sin quitar cargas", () => {
+  it("las dos mitades de una ruta de CLS de Chromium son 1/2 y 2/2 de la misma ruta", () => {
+    for (const route of ["inicio-yo", "actividad"]) {
+      expect(LEGS).not.toContain(`cls-${route}`);
+      expect([1, 2, 3].map((n) => legPlan(`cls-${route}-${n}`).commands[0].env)).toEqual([1, 2, 3].map((n) => ({ RELEASE_CLS_ROUTE: route, RELEASE_CLS_PART: `${n}/3` })));
+      expect(LEGS).not.toContain(`cls-${route}-4`);
+    }
+  });
+  it("los tramos de rutas de WebKit y Firefox, a y b, cubren las mismas rutas que antes", async () => {
+    const source = await import("node:fs").then((fs) => fs.readFileSync("tests/evidence/cls-frames.capture.ts", "utf8"));
+    const set = (name: string) => JSON.parse(new RegExp(`"${name}": (\\[[^\\]]*\\])`).exec(source)![1]);
+    expect([...set("routes-1a"), ...set("routes-1b")]).toEqual(set("routes-1"));
+    expect([...set("routes-2a"), ...set("routes-2b")]).toEqual(set("routes-2"));
+    for (const engine of ["webkit", "firefox"]) for (const part of ["2a", "2b", "3a", "3b"]) expect(legPlan(`${engine}-cls-${part}`).commands[0].env.CLS_FRAMES_SET).toBe(CLS_FRAMES_SETS[part as keyof typeof CLS_FRAMES_SETS]);
+  });
+});
+
+// Revisión del PR #87, F87-3: «un release_legs mal escrito deja los tramos "no pedido" y el run en verde; release_legs=,
+// corre todo». La selección se valida entera en inputs-guard, antes de la matriz, y un error deja el run en rojo.
+describe("release_legs validada antes de la matriz (F87-3)", () => {
+  it("vacía, todos; nombres y prefijos válidos, sus tramos; vacíos, desconocidos o sin coincidencias, error", () => {
+    expect(validateLegs("")).toEqual([...LEGS]);
+    expect(validateLegs("  ")).toEqual([...LEGS]);
+    expect(validateLegs("cls-metas, webkit-cls")).toEqual(LEGS.filter((leg) => leg === "cls-metas" || leg.startsWith("webkit-cls")));
+    for (const bad of [",", "cls-metas,", ",cls-metas", "cls-metas,,webkit-cls", "webkit-clss", "cls-metas,nada"]) expect(() => validateLegs(bad), bad).toThrow(/release_legs/);
+    expect(legRequested("cls-metas", "cls-metas")).toBe(true);
+    expect(legRequested("cls-plan", "cls-metas")).toBe(false);
+  });
+
+  it("la línea de órdenes del guardia falla con ::error y sale con 1; con una selección válida, 0", () => {
+    const run = (value: string) => spawnSync(process.execPath, ["scripts/release-leg.mjs", "validate"], { encoding: "utf8", env: { ...process.env, RELEASE_LEGS: value, GITHUB_STEP_SUMMARY: "", GITHUB_OUTPUT: "" } });
+    for (const bad of ["webkit-clss", ","]) {
+      const result = run(bad);
+      expect(result.status, bad).toBe(1);
+      expect(result.stdout, bad).toMatch(/::error title=release_legs::/);
+    }
+    expect(run("cls-metas,firefox-cls-1").status).toBe(0);
+  });
+
+  it("inputs-guard valida release_legs solo con release_lab, con su propio paso", () => {
+    const step = steps("inputs-guard").find((item) => item.name === "Validate release_legs");
+    expect(step?.text).toMatch(/node scripts\/release-leg\.mjs validate/);
+    expect(/^ {8}if: (.+)$/m.exec(step!.text)?.[1]).toBe("github.event_name == 'workflow_dispatch' && inputs.release_lab");
+  });
+});
+
+// Revisión del PR #87, F87-6: el modo exploratorio del comparador (CLS_FRAMES_EXPLORE=1) es solo para iterar; ningún tramo
+// de `release`, y por tanto ningún candidato del paso 4, lo activa.
+describe("modo exploratorio del comparador fuera de release (F87-6)", () => {
+  it("ningún tramo fija CLS_FRAMES_EXPLORE y el workflow no lo menciona", () => {
+    for (const leg of LEGS) for (const command of legPlan(leg).commands) expect(command.env, leg).not.toHaveProperty("CLS_FRAMES_EXPLORE");
+    expect(workflow).not.toMatch(/CLS_FRAMES_EXPLORE/);
   });
 });

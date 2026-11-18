@@ -293,3 +293,22 @@ describe("/invitacion M5–M7", () => {
     expect(await screen.findByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeTruthy();
   });
 });
+
+// 005 T016 · FR-012 (US-13): «ni el registro, ni Anotar, ni Inicio, ni la invitación a la pareja exigen crear un
+// presupuesto». La invitación se crea sin ningún presupuesto: con un correo válido se envía, y nada pide crearlo.
+describe("US-13 · la invitación a la pareja no exige presupuesto (005 T016)", () => {
+  it("sin ningún presupuesto: Invitar y Crear enlace habilitados, y la invitación se crea", async () => {
+    const user = userEvent.setup();
+    const acts = actions();
+    const { container } = render(<PartnerScreen view={none} actions={acts} />);
+    expect(container.textContent).not.toMatch(/presupuesto/i);
+    await user.click(screen.getByRole("button", { name: copy.couple.none.invite }));
+    const dialog = screen.getByRole("dialog", { name: copy.couple.invite.title });
+    await user.type(within(dialog).getByRole("textbox", { name: copy.couple.invite.email }), "tomas@correo.com");
+    const create = within(dialog).getByRole("button", { name: copy.couple.invite.create });
+    expect(create.hasAttribute("disabled")).toBe(false);
+    expect(dialog.textContent).not.toMatch(/presupuesto/i);
+    await user.click(create);
+    expect(acts.create).toHaveBeenCalledTimes(1);
+  });
+});

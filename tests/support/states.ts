@@ -4,6 +4,9 @@ import { randomUUID } from "node:crypto";
 import { expect, type Browser, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import type { RouteEntry } from "../a11y/route-registry";
+import { moneyFromPesos } from "../../src/domain/money";
+import { todayInBogota } from "../../src/domain/transactions";
+import { completeGoal, contributeToGoal, createGoal, getGoal } from "../../src/lib/db/goals";
 import { futureMonth, recoveryLink, seedCoupleState, seedMovements, seedUnconfirmedUser, seedUser } from "./seed";
 
 const paths = new WeakMap<Page, string>();
@@ -169,6 +172,11 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
       await page.getByRole("button", { name: copy.couple.pending.cancel }).click();
       return expect(page.getByRole("alertdialog", { name: copy.couple.cancel.title }).getByRole("button", { name: copy.couple.cancel.keep })).toBeFocused();
     case "us": // El contexto recordado es Nosotros (addInitScript en openWithSession).
+      // 005 T019: con pareja activa no hay «Todavía no disponible»: se espera la vista de Nosotros ya cargada.
+      if (entry.couple === "active") {
+        await expect(page.locator("[aria-busy='true']")).toHaveCount(0);
+        return expect(page.locator("main").first()).toBeVisible();
+      }
       return expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
     case "search":
       await page.getByRole("searchbox", { name: copy.activity.searchLabel }).fill("farmacia");
@@ -182,6 +190,15 @@ async function reachState(page: Page, entry: RouteEntry, index: number) {
   }
 }
 
+/** 005 T019: una meta personal con nombre largo (60), aportada hasta su objetivo y dada por lograda; devuelve su id. */
+async function seedAchievedGoal(user: { client: import("@supabase/supabase-js").SupabaseClient }) {
+  const goal = await createGoal(user.client, { idempotencyKey: randomUUID(), context: "me", name: "Viaje por la costa pacífica con toda la familia en enero 27", goalType: "travel", target: moneyFromPesos(2000000n), targetMonth: null });
+  await contributeToGoal(user.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(2000000n), entryDate: todayInBogota(), fundingMode: "reserved" });
+  const row = await getGoal(user.client, goal.id);
+  await completeGoal(user.client, { idempotencyKey: randomUUID(), goalId: goal.id, expectedVersion: row.version });
+  return goal.id;
+}
+
 /** Página con la sesión que necesita la entrada: ninguna, una de usuario sembrada o la de recuperación de /auth/confirm. */
 export async function openWithSession(browser: Browser, page: Page, entry: RouteEntry, colorScheme: "light" | "dark", width: number, index: number, baseURL: string, cookies: { name: string; value: string; domain: string; path: string }[] = []) {
   if (entry.session === "none" && cookies.length === 0) return page;
@@ -193,11 +210,14 @@ export async function openWithSession(browser: Browser, page: Page, entry: Route
     await target.goto(await recoveryLink(user.email, baseURL));
     await expect(target).toHaveURL(/\/nueva-contrasena$/);
   } else if (entry.session === "user") {
-    const user = await seedUser({ role: entry.firstEntryPending ? "estado-a6" : "estado", index, firstEntryCompleted: !entry.firstEntryPending });
+    const user = await seedUser({ role: entry.firstEntryPending ? "estado-a6" : "estado", index, firstEntryCompleted: !entry.firstEntryPending,
+      // 005 T019: con datos extremos, también el nombre más largo que admite el perfil (60).
+      ...(entry.data === "extreme" ? { displayName: "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A" } : {}) });
     await context.addCookies(user.cookies);
     const created = entry.data ? await seedMovements(user, entry.data) : [];
     if (entry.couple) await seedCoupleState(user, entry.couple, index);
-    paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()));
+    const goal = entry.goals === "achieved" ? await seedAchievedGoal(user) : "";
+    paths.set(target, entry.path.replace("{id}", created[0]?.id ?? "").replace("{future}", futureMonth()).replace("{goal}", goal));
     // El contexto recordado en el dispositivo: localStorage y la cookie que lee el servidor (F44-1). Sin cookie, el
     // servidor pinta el Skeleton y el cliente recarga; los estados se auditan con la preferencia ya resuelta.
     const choice = entry.prepare === "us" ? "us" : "me";
