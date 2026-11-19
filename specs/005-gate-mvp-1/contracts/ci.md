@@ -128,6 +128,15 @@ release:
   - `npm ci` y build;
   - el navegador del tramo, con el patrón de Chromium: tope propio, un reintento y matar
     el `apt-get` colgado;
+  - **PR B (decisión del gestor del 19 nov 2026):** los `.deb` de `install-deps` en caché
+    (`actions/cache`, clave `apt-<SO>-<navegador>-<hash de package-lock.json>`), repuestos en
+    el archivo de apt antes de instalar y guardados solo tras una instalación buena; apt con
+    `Acquire::Retries 5` y `Acquire::http::Timeout 30`. Motivo: en los runs 44433137464,
+    44437546506 y 44439996119, tramos de WebKit cayeron antes de la primera prueba porque
+    `install-deps` superó dos veces 240 s bajando ~114 MB del mirror. **Limitación aceptada:**
+    el primer lanzamiento después de cambiar `package-lock.json` va en frío (sin caché) y
+    puede volver a caer en esa instalación; los tramos que arrancan a la vez no comparten la
+    caché hasta que uno la guarda;
   - Arial y Georgia como en `evidence` (los respaldos de fuentes cambian la geometría);
   - el comando del tramo;
   - artefacto `release-<tramo>` con `test-results/` y los `.jsonl`;

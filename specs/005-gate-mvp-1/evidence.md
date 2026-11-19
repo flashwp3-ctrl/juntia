@@ -304,7 +304,7 @@ Capturas con datos sembrados, a 390 px.
 | Firefox a 390: nodos de la app que se desplazan 10 px en x en el primer par de fotogramas, en las siete rutas con sesión (hipótesis: barra de scroll clásica; candidato `scrollbar-gutter: stable`) | 8 de 15 cargas por ruta (todas las de 390) | artefactos `release-firefox-cls-2` y `-3` del run 44349192421 | PR B (FR-051) |
 | INP > 200 ms | privado 390: guardar 256 ms; privado 1440: abrir 248 ms y guardar 264 ms; compartido 1440: abrir 256 ms | artefacto `release-lab-interaction` | PR B (FR-052) |
 | E2E en WebKit (FR-020): 7 fallos en el shard 1 y 4 en el 2. Navegaciones interrumpidas por la redirección del cliente, RSC vacíos, un `toBeFocused`, un `getByText('ACTIVA')` con dos coincidencias | 11 fallos | logs de `release (webkit-e2e-1)` y `(webkit-e2e-2)` | Revisión del PR B (R3) |
-| GoalStack no cumple D3 en la primera interacción: primer deslizamiento a 390 (93,5 %, 199,9 ms) y primer hover a 1440 (89,5 %, 66,6 ms) | 2 de 15 animaciones | artefacto `release-lab-interaction` | Fundadores (decisión 22.2), vía el gestor |
+| GoalStack no cumple D3 en la primera interacción: primer deslizamiento a 390 (93,5 %, 199,9 ms) y primer hover a 1440 (89,5 %, 66,6 ms) | 2 de 15 animaciones | artefacto `release-lab-interaction` | PR B: el hover cumple (100 %, 16,8 ms); el primer deslizamiento queda en un fotograma de ~85 ms → **EXCEPCIÓN APROBADA para MVP-1** (fundadores, 18 nov 2026), ver «GoalStack con 6 metas» |
 | A vigilar en el gate: «rectángulos distintos del aviso» de Anotar, intermitente en `juntia-dev`. Falló en «Inicio con datos extremos · dark», «Actividad con datos extremos» (claro y oscuro) y en el estado anterior al PR «Actividad con datos · dark»; todos pasan al repetir | 2 rectángulos en 10 cuadros | — | Gate del PR A (T050) |
 
 ## Barrido (`@sweep`)
@@ -415,6 +415,20 @@ Laboratorio · Chromium, CPU 4×. Por variante y ancho, la peor de 10 interaccio
 ### GoalStack con 6 metas (FR-053; D3)
 
 Criterio de D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms. CPU 4×, movimiento activo. A 390, deslizamiento táctil por CDP y Tab; a 1440, hover y foco de las cartas del abanico (tres visibles).
+
+**EXCEPCIÓN APROBADA (fundadores, 18 nov 2026, «Excepción MVP-1»; vía el gestor):** el primer deslizamiento de la pila a 390
+no cumple D3 por un solo fotograma lento, y se acepta para MVP-1. La pila **no** pasa a lista. Se revisa cuando se trate la
+precarga en F02.
+
+| Medida (PR B) | Primer deslizamiento a 390 | Primer hover a 1440 | Run |
+| --- | --- | --- | --- |
+| Antes (punto de control) | 93,5 %, fotograma de 199,9 ms | 89,5 %, 66,6 ms | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| Con el PR B (`7f48c7c`: hover sin estado de React, capas precalentadas) | 97,5 %, 66,7 ms | 100 %, 16,8 ms | [44425161264](https://github.com/flashwp3-ctrl/juntia/actions/runs/44425161264) |
+| Con la atribución LoAF del arnés (`64f92e5`) | 97,7 %, **85 ms** | 100 %, 16,8 ms | [44437546506](https://github.com/flashwp3-ctrl/juntia/actions/runs/44437546506) |
+
+**Causa** (Long Animation Frames, solo en la prueba): en ese fotograma, 71 ms de render de React (planificador,
+`MessagePort.onmessage`) y 10 ms del `IntersectionObserver` con el que el `<Link>` de Next vigila los enlaces visibles para la
+precarga por viewport. Ningún `touchstart` ni `fetch` en él. Del segundo al sexto deslizamiento, 100 % y 16,8 ms.
 
 | Animación | Ancho | % en ≤ 18,2 ms | Fotograma más largo | Pasa | Run |
 | --- | --- | ---: | ---: | --- | --- |
