@@ -70,8 +70,8 @@ está probada sin la salida de ese job en ese commit.
 desarrolla, las capas de base de datos se iteran contra `juntia-dev`, que es
 desechable, y no contra el CI: los minutos de GitHub Free no alcanzaban para iterar
 en CI (desde el 18 de noviembre de 2026 el repositorio es público y los minutos ya no
-limitan, maestro §15.10, decisión 25.1; la regla sigue vigente mientras no se decida
-otra cosa). El CI corre solo en los puntos de control del `tasks.md` y en el gate
+limitan, maestro §15.10, decisión 25.1; los fundadores decidieron mantener la regla
+igual). El CI corre solo en los puntos de control del `tasks.md` y en el gate
 final, y solo su salida cuenta como evidencia. Los correos reales y el ensayo de
 restauración siguen solo en CI. Comandos, guardia y límites: «Iterar contra
 `juntia-dev`», al final de esta sección.
