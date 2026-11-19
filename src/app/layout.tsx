@@ -16,8 +16,7 @@ const serif = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "
 // usa y su archivo (24 KB) competiría con el de los titulares en la carga lenta. Se descarga solo si algún texto la pide.
 const serifItalic = Brygada_1918({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: "italic", preload: false, variable: "--font-brygada-italic", adjustFontFallback: false, fallback: ["Brygada Fallback"] });
 const sans = Onest({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-onest", adjustFontFallback: false, fallback: ["Onest Fallback"] });
-// Respaldo monoespaciado propio (globals.css, PR B de P0-4): el de next/font era Arial, proporcional y sin nombre de Linux.
-const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: "500", variable: "--font-spline-mono", adjustFontFallback: false, fallback: ["Spline Mono Fallback"] });
+const mono = Spline_Sans_Mono({ subsets: ["latin"], weight: "500", variable: "--font-spline-mono" });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
