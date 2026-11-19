@@ -43,13 +43,17 @@ async function measured(page: Page, meta: Record<string, unknown>, file = "cls-f
   const at = await page.evaluate(() => (window as unknown as { __clsControlAt?: number }).__clsControlAt ?? null);
   const control = at === null ? result.desplazamientos : result.desplazamientos.filter((shift: { hasta: number }) => shift.hasta >= at);
   const previous = at === null ? [] : result.desplazamientos.filter((shift: { hasta: number }) => shift.hasta < at);
+  // 005 · PR B (decisión del gestor del 19 nov 2026; R5): bajo la retención, en Firefox algunas cargas no llegan a pintar el
+  // esqueleto y la lectura falla: la página enseña el estado de error de la ruta en vez de la ruta (parcial 44433137464,
+  // 4 de 8 cargas a 390 en Inicio · Yo y Actividad). Esa carga no mide la ruta: la marca quien llama, nunca cuenta como CLS = 0.
+  const harnessError = await page.evaluate(() => document.querySelector('[data-provisional-state="danger"]') !== null);
   const video = page.video();
   await page.context().close();
   // Vídeo solo de las cargas con desplazamiento, para la revisión humana (§7).
   const path = video ? await video.path().catch(() => null) : null;
   if (path && result.desplazamientos.length === 0) rmSync(path, { force: true });
-  await record(file, { ...result, controlEnFotograma: at, desplazamientosDelControl: control.length, anterioresAlControl: previous.length, video: result.desplazamientos.length && path ? path : null });
-  return { ...result, desplazamientos: control, anterioresAlControl: previous };
+  await record(harnessError ? "cls-frames-invalidas.jsonl" : file, { ...result, controlEnFotograma: at, desplazamientosDelControl: control.length, anterioresAlControl: previous.length, video: result.desplazamientos.length && path ? path : null });
+  return { ...result, desplazamientos: control, anterioresAlControl: previous, harnessError };
 }
 
 async function sessionLoad(browser: Browser, baseURL: string, route: SessionRoute, theme: Theme, width: number, init: string[] = []) {
@@ -97,10 +101,27 @@ if (SET !== "controls") {
   for (const route of (SETS[SET] ?? []).filter((name) => only.length === 0 || only.includes(name))) {
     test(`@release comparador · ${route}`, async ({ browser, baseURL }) => {
       test.setTimeout(20 * 60_000);
+      // Cargas inválidas por el arnés (R5; decisión del gestor del 19 nov 2026): se registran aparte, se repiten una vez y nunca
+      // cuentan como CLS = 0. Si la repetición también es inválida, la ruta no puede salir en verde.
+      let invalid = 0, invalidAgain = 0;
       for (const [index, { theme, width }] of schedule().entries()) {
-        const page = route in SESSION_ROUTES ? await sessionLoad(browser, baseURL!, route as SessionRoute, theme, width) : await publicLoad(browser, baseURL!, route as PublicRoute, theme, width);
-        loads.push(await measured(page, { ruta: route, motor: engine(browser), tema: themeLabel(theme), ancho: width, carga: index + 1 }));
+        const meta = { ruta: route, motor: engine(browser), tema: themeLabel(theme), ancho: width, carga: index + 1 };
+        const load = async () => measured(route in SESSION_ROUTES ? await sessionLoad(browser, baseURL!, route as SessionRoute, theme, width) : await publicLoad(browser, baseURL!, route as PublicRoute, theme, width), meta);
+        let result = await load();
+        if (result.harnessError) {
+          invalid++;
+          await record("cls-frames.jsonl", { kind: "inválida por el arnés (R5)", ...meta, intento: 1, desplazamientos: result.desplazamientos.length });
+          result = await load();
+          if (result.harnessError) {
+            invalidAgain++;
+            await record("cls-frames.jsonl", { kind: "inválida por el arnés (R5)", ...meta, intento: 2, desplazamientos: result.desplazamientos.length });
+            continue;
+          }
+        }
+        loads.push(result);
       }
+      await record("cls-frames.jsonl", { kind: "inválidas por el arnés (R5)", ruta: route, motor: engine(browser), invalidas: invalid, repetidasInvalidas: invalidAgain });
+      verdict(invalidAgain === 0, `${route} · ${engine(browser)}: ${invalidAgain} cargas inválidas por el arnés también al repetir (estado de error en vez de la ruta; R5)`);
       const [row] = summarize(loads.filter((load) => load.ruta === route));
       verdict(row.incompletas === 0, `${route} · ${row.motor}: ${row.incompletas} de ${row.cargas} cargas sin ventana verificable (inconclusas)`);
       verdict(row.conDesplazamientos === 0, `${route} · ${row.motor}: ${row.conDesplazamientos} de ${row.cargas} cargas con desplazamientos por fotogramas`);
