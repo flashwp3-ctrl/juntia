@@ -372,9 +372,9 @@ Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cad
 | a1 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | a2 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | a4 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| inicio-yo | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-yo | webkit 27.2 | 15 | 0 | sí. **NO VALE (PR B):** medía el estado de error de la ruta, no la ruta; ver la nota de WebKit en «Lectura del punto de control» | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | inicio-nosotros | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| actividad | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | webkit 27.2 | 15 | 0 | sí. **NO VALE (PR B):** medía el estado de error de la ruta, no la ruta; ver la nota de WebKit en «Lectura del punto de control» | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | balance | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | plan | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | analisis | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
@@ -472,6 +472,13 @@ Capturas PNG (datos sembrados) en el artefacto `release-lab-interaction`; las re
 Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace falta, de los fundadores (T047, T048, T055).
 
 - **WebKit 27.2: fiable.** Los seis controles dan 10 de 10, y las diez rutas dan «CLS = 0 por fotogramas» (15 cargas cada una).
+  **Corrección del PR B (parcial [44441922501](https://github.com/flashwp3-ctrl/juntia/actions/runs/44441922501); decisión del gestor
+  del 19 nov 2026):** las medidas de WebKit en **Inicio · Yo y Actividad no valen**. Con la pareja sembrada, la retención de
+  `transactions` bloquea también el layout de (app) (`couple_expenses`): no se pinta el esqueleto y la carga termina en el
+  estado de error de la ruta. Con la clasificación nueva del comparador, 15 de 15 cargas de cada ruta salieron «inválidas por el
+  arnés (R5)» también al repetir; los «0 desplazamientos» de esta fila medían ese estado. Desde `db55699`, Firefox y WebKit
+  miden esas dos rutas con una cuenta sin pareja (contrato del comparador §6); la parte compartida queda medida en Chromium
+  (FR-050, sin retención).
 - **Firefox 157: los controles 4 y 5 dan 5 de 10.** No falla el método con las transformaciones: el bloque de cada control
   no cambia de posición en ningún fotograma de las 20 cargas (`positions: 1`), y las 10 cargas a 1440 pasan. Las 10 que
   fallan son todas a 390. En ellas, nodos de la app que después salen del DOM se desplazan 10 px en x en el primer par de
