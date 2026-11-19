@@ -3,8 +3,8 @@
 // (aprobados en su forma, decisión 22.3). Una solicitud de fondos, vista por cada parte:
 // - B4, quien pide: PENDIENTE DE {nombre}, que el gasto ya está registrado y falta solo el uso de los fondos del otro, cuánto
 //   pide y de qué meta, «No vence» y «Cancelar solicitud».
-// - B5, a quien se pide: el gasto, el reparto, lo que ya usó quien pide, «Tus aportes en {meta} $antes → $después» y que si
-//   rechaza el gasto sigue; «Aprobar $X» y «Rechazar».
+// - B5, a quien se pide: el gasto, el reparto, lo que ya usó quien pide, «Tu disponible en {meta}: $antes → $después» (antes
+//   «Tus aportes…»; fundadores, 19 nov 2026) y que si rechaza el gasto sigue; «Aprobar $X» y «Rechazar».
 // - B6 y B7: APROBADO o {nombre} NO APROBÓ, con su nota; ya sin acciones.
 // Cada acción lleva la versión leída y su propia clave (nace la primera vez y se reutiliza en cada reintento), con los tres
 // resultados de la máquina de escritura (FR-093). Una versión vieja, una solicitud ya resuelta o unos aportes que cambiaron

@@ -218,8 +218,10 @@ export const copy = {
       expense: (description: string, amount: string) => `${description} · ${amount}`,
       split: (mode: string) => `Reparto ${mode}`,
       used: (name: string, amount: string) => `${name} ya usó ${amount} de sus aportes`,
-      yours: (goal: string, before: string, after: string) => `Tus aportes en ${goal} ${before} → ${after}`,
-      yoursLabel: (goal: string, before: string, after: string) => `Tus aportes en ${goal}: antes ${before}, después ${after}`,
+      // Fundadores, 19 nov 2026: «Tu disponible», no «Tus aportes»: la cifra de antes es lo disponible de quien aprueba (como
+      // en Metas · Yo, decisión del 12 nov), no lo que aportó. Antes «Tus aportes en {meta} $X → $Y», el texto del comp B5.
+      yours: (goal: string, before: string, after: string) => `Tu disponible en ${goal}: ${before} → ${after}`,
+      yoursLabel: (goal: string, before: string, after: string) => `Tu disponible en ${goal}: antes ${before}, después ${after}`,
       rejectNote: "Si rechazas, el gasto sigue registrado y tus aportes no cambian.",
       approve: (amount: string) => `Aprobar ${amount}`, approving: "Aprobando…", reject: "Rechazar", rejecting: "Rechazando…",
       approved: (goal: string) => `Aprobaste el uso de tus fondos en ${goal}.`,
