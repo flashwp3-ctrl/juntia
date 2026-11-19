@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { exitLinkClass } from "@/components/shell/exit-link";
+import { StableLabel } from "@/components/ui/stable-label";
 import { ExitState } from "@/components/shell/provisional-state";
 import { ActivityScreen } from "@/features/activity/activity-screen";
 import { loadMonth, loadTransaction, monthParam, today } from "@/features/activity/load";
@@ -28,7 +29,7 @@ function NotFound({ back }: { back: string }) {
       icon="receipt"
       title={copy.detail.notFound.title}
       description={copy.detail.notFound.description}
-      actions={<Link href={back} className={exitLinkClass}>{copy.detail.back}</Link>}
+      actions={<Link href={back} className={exitLinkClass}><StableLabel text={copy.detail.back} /></Link>}
     />
   );
 }

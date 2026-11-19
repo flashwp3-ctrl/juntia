@@ -305,7 +305,7 @@ export function ActivityView({ rows, month, today, navigation, selectedId, goalE
           icon="magnifying-glass"
           title={copy.activity.noResults.title}
           description={copy.activity.noResults.description}
-          actions={<Button variant="secondary" onClick={filters.clear}>{copy.activity.noResults.clear}</Button>}
+          actions={<Button variant="secondary" onClick={filters.clear} stableWidth>{copy.activity.noResults.clear}</Button>}
         />
       ) : (
         <>

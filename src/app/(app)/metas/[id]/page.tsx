@@ -3,6 +3,7 @@
 // las personales y las compartidas de su pareja. Inexistente, de otro contexto o de otra persona: «No encontramos esta meta».
 import Link from "next/link";
 import { exitLinkClass } from "@/components/shell/exit-link";
+import { StableLabel } from "@/components/ui/stable-label";
 import { ExitState } from "@/components/shell/provisional-state";
 import { ContextView } from "@/features/context/context-view";
 import { LoadError } from "@/features/context/load-error";
@@ -27,7 +28,7 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
     <GoalImmersive goal={loaded.value.goal} members={loaded.value.members} entries={loaded.value.entries} people={people} today={now} context={context!} actions={goalActions} requests={loaded.value.requests} />
   ) : (
     <ExitState icon="flag-banner" headingLevel={1} title={copy.goals.immersive.notFound.title} description={copy.goals.immersive.notFound.description}
-      actions={<Link href="/metas" className={exitLinkClass}>{copy.goals.immersive.back}</Link>} />
+      actions={<Link href="/metas" className={exitLinkClass}><StableLabel text={copy.goals.immersive.back} /></Link>} />
   );
   return <ContextView server={context} pending={<GoalSkeleton />} me={context === "me" ? view : null} us={context !== "us" ? undefined : !members ? <UsUnavailable /> : view} />;
 }

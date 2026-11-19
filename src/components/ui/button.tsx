@@ -5,6 +5,7 @@ import { useReducedMotion } from "motion/react";
 import type { ComponentPropsWithRef, MouseEvent, ReactNode } from "react";
 import { snappy } from "@/lib/motion/tokens";
 import { AppIcon, type AppIconName } from "./app-icon";
+import { StableLabel } from "./stable-label";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -38,13 +39,16 @@ type ButtonProps = Omit<ComponentPropsWithRef<"button">, "disabled" | "children"
   loading?: boolean;
   /** Etiqueta en gerundio del catálogo mientras carga («Guardando…»). */
   loadingLabel?: string;
+  /** 005 · PR B: el texto en una caja del ancho que mide en Onest (`StableLabel`), para acciones centradas que no deben moverse al llegar la fuente. */
+  stableWidth?: boolean;
 } & (
   | { children: ReactNode; label?: never }
   // Botón de solo ícono: el nombre accesible sale del catálogo (§Button, A11y).
   | { children?: never; label: string; icon: AppIconName }
 );
 
-export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", tabIndex = 0, ...rest }: ButtonProps) {
+export function Button({ variant = "primary", size = "md", icon, disabled = false, loading = false, loadingLabel, children, label, className = "", onClick, type = "button", tabIndex = 0, stableWidth = false, ...rest }: ButtonProps) {
+  const text = stableWidth && typeof children === "string" ? <StableLabel text={children} /> : children;
   const reduced = useReducedMotion();
   const inert = disabled || loading;
   // F17-R1: en danger, el texto va en --comp-danger-text-fg y los íconos en status.danger (4,28:1 sobre dangerSubtle ≥ 3:1).
@@ -74,7 +78,7 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
       <span className="grid">
         <span aria-hidden={loading || undefined} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "invisible" : ""}`}>
           {icon ? <AppIcon name={icon} weight="bold" size={17} className={iconTone} /> : null}
-          {children}
+          {text}
         </span>
         <span aria-hidden={!loading || undefined} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "" : "invisible"}`}>
           <AppIcon name="circle-notch" weight="bold" size={17} className={`${iconTone} motion-safe:animate-[button-spin_0.8s_linear_infinite]`} />

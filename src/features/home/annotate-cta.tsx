@@ -27,5 +27,5 @@ export function AnnotateCta() {
 
 export function AnnotateFirst({ label }: { label: string }) {
   const { openFrom } = useAnnotate();
-  return <Button icon="plus" onClick={(event) => openFrom(event.currentTarget)}>{label}</Button>;
+  return <Button icon="plus" onClick={(event) => openFrom(event.currentTarget)} stableWidth>{label}</Button>;
 }

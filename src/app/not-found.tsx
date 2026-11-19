@@ -20,6 +20,7 @@ import { ContextProvider } from "@/components/shell/context-selector";
 import { ExitState } from "@/components/shell/provisional-state";
 import { copy } from "@/lib/copy/es";
 import { exitLinkClass } from "@/components/shell/exit-link";
+import { StableLabel } from "@/components/ui/stable-label";
 
 async function withAccount(children: ReactNode) {
   try {
@@ -49,7 +50,7 @@ export default async function NotFound() {
               headingLevel={1}
               title={copy.states.notFound}
               description={copy.states.notFoundDescription}
-              actions={<Link href="/" className={exitLinkClass}>{copy.states.home}</Link>}
+              actions={<Link href="/" className={exitLinkClass}><StableLabel text={copy.states.home} /></Link>}
             />
           </main>
         </AppShell>

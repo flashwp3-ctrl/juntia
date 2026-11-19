@@ -18,7 +18,7 @@ export function LoadError() {
       title={copy.load.error.title}
       description={copy.load.error.description}
       actions={
-        <Button variant="secondary" icon="arrow-clockwise" loading={pending} loadingLabel={copy.primitives.loading} onClick={() => start(() => router.refresh())}>
+        <Button variant="secondary" icon="arrow-clockwise" loading={pending} loadingLabel={copy.primitives.loading} onClick={() => start(() => router.refresh())} stableWidth>
           {copy.states.retry}
         </Button>
       }
