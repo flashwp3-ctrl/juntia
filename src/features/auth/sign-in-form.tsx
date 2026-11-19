@@ -6,6 +6,7 @@ import { useActionState, useEffect, useSyncExternalStore } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
+import { StableLabel } from "@/components/ui/stable-label";
 import { ForgetInvitationIntent } from "@/features/couple/invitation-return";
 import { resend, signIn, type FormState } from "./actions";
 import { linkNoticeFromHash } from "./confirm";
@@ -80,11 +81,12 @@ export function SignInForm({ volver, notice }: Props) {
         <SubmitButton icon="sign-in" pendingLabel={copy.auth.signIn.submitting}>{copy.auth.signIn.submit}</SubmitButton>
       </form>
       <p className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[0.875rem]">
-        <Link href="/recuperar" className={`${authLink} relative inline-flex min-h-11 items-center`}>{copy.auth.signIn.forgot}</Link>
+        <Link href="/recuperar" className={`${authLink} relative inline-flex min-h-11 items-center`}><StableLabel text={copy.auth.signIn.forgot} /></Link>
         {/* Alineado a la derecha, su ancho cambia unos píxeles al llegar la fuente. Con dirección rtl, el punto de partida
             que mide Layout Instability es su esquina derecha, que no se mueve (CLS 0,000009 medido en el runner). El texto
-            no tiene signos que la dirección pueda reordenar. */}
-        <Link href="/crear-cuenta" className={`${authLink} relative inline-flex min-h-11 items-center [direction:rtl]`}>{copy.auth.signIn.createAccount}</Link>
+            no tiene signos que la dirección pueda reordenar. PR B: en Firefox el primer fotograma se pinta antes que Onest y que su
+            respaldo, y el comparador (que mide el borde izquierdo) lo veía moverse 15 px: el texto va en caja del ancho que mide en Onest. */}
+        <Link href="/crear-cuenta" className={`${authLink} relative inline-flex min-h-11 items-center [direction:rtl]`}><StableLabel text={copy.auth.signIn.createAccount} /></Link>
       </p>
     </>
   );

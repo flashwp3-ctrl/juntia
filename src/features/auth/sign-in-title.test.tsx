@@ -23,3 +23,13 @@ describe("titular de A1: la primera línea no corta con la columna de 20rem o m�
     expect(lead.className).not.toMatch(/(^| )whitespace-nowrap/);
   });
 });
+
+// 005 · PR B (CLS, FR-051): parcial 44447680371, con el titular ya quieto: en Firefox «Entrar» se movía 9 px y «Crear cuenta»
+// 15 px en el primer fotograma. Criterio: sus textos en una caja del ancho que mide en Onest.
+describe("acciones de A1 con caja de ancho fijo (PR B)", () => {
+  it("«Entrar», «Olvidé mi contraseña» y «Crear cuenta» llevan su texto en StableLabel", () => {
+    const { container } = render(<SignInForm volver="/" notice={null} />);
+    const labels = [...container.querySelectorAll<HTMLElement>("[data-stable-label]")].map((label) => label.textContent);
+    expect(labels).toEqual(expect.arrayContaining([copy.auth.signIn.submit, copy.auth.signIn.forgot, copy.auth.signIn.createAccount]));
+  });
+});

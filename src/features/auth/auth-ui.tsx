@@ -58,7 +58,9 @@ export function PasswordInput(props: Omit<ComponentProps<typeof Input>, "type" |
 export function SubmitButton({ children, pendingLabel, icon, variant = "primary" }: { children: string; pendingLabel: string; icon?: ComponentProps<typeof Button>["icon"]; variant?: "primary" | "secondary" | "ghost" }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" variant={variant} icon={icon} loading={pending} loadingLabel={pendingLabel} className="w-full">
+    // 005 · PR B (CLS, FR-051): el contenido va centrado en un botón de todo el ancho; en Firefox el primer fotograma se pinta antes
+    // que Onest y que su respaldo local, y «Entrar» se movía 9 px (parcial 44447680371). Texto en caja del ancho que mide en Onest.
+    <Button type="submit" size="lg" variant={variant} icon={icon} loading={pending} loadingLabel={pendingLabel} className="w-full" stableWidth>
       {children}
     </Button>
   );
