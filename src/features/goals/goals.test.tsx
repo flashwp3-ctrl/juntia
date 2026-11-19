@@ -1023,3 +1023,48 @@ describe("«Ver todas» con caja de ancho fijo (PR B)", () => {
     expect(document.querySelector("[data-goal-see-all] [data-stable-label]")?.textContent).toBe(copy.goals.stack.seeAll);
   });
 });
+
+// 005 · PR B, revisión del #90 (F90-1): `data-fan-active` vive en el DOM y React no lo reconcilia. Guardaba un índice de capa: si un
+// router.refresh reordenaba las metas, se activaba otra tarjeta mientras el foco seguía en la de antes. Criterio: el efecto sigue a
+// la misma META (por id) tras un nuevo orden, sin eventos de puntero, y se apaga si deja de ser visible.
+describe("abanico: el efecto sigue a la meta, no al índice (F90-1)", () => {
+  const focusLayer = (container: HTMLElement, index: number) => {
+    const link = container.querySelector(`[data-fan-layer="${index}"] [data-goal-card]`) as HTMLElement;
+    link.matches = ((selector: string): boolean => selector === ":focus-visible") as unknown as typeof link.matches;
+    fireEvent.focus(link);
+    return link.getAttribute("data-goal-card");
+  };
+  const activeId = (container: HTMLElement) => {
+    const value = container.querySelector("[data-fan]")?.getAttribute("data-fan-active");
+    return value == null ? null : container.querySelector(`[data-fan-layer="${value}"] [data-goal-card]`)?.getAttribute("data-goal-card") ?? null;
+  };
+  it("tras reordenar, sigue en la meta enfocada; si deja de verse, se apaga", () => {
+    const a = japan(), b = extra(1), c = extra(2), d = extra(3);
+    const view = render(<GoalStack goals={[a, b, c]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
+    const focusedId = focusLayer(view.container, 1);
+    expect(activeId(view.container)).toBe(focusedId);
+    const others = [a, b, c].filter((goal) => goal.id !== focusedId);
+    const target = [a, b, c].find((goal) => goal.id === focusedId)!;
+    // Nuevo orden con la enfocada al final de las visibles (C y B cambian de sitio), sin eventos.
+    view.rerender(<GoalStack goals={[others[0], others[1], target]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
+    expect(activeId(view.container)).toBe(focusedId);
+    // Ya no está entre las metas: el efecto se apaga.
+    view.rerender(<GoalStack goals={[...others, d]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
+    expect(view.container.querySelector("[data-fan]")?.hasAttribute("data-fan-active")).toBe(false);
+  });
+});
+
+// 005 · PR B, revisión del #90 (F90-2): el precalentamiento de capas (`will-change`) solo para las tarjetas VISIBLES del abanico;
+// las metas ocultas (sr-only) conservan data-fan-tilt y data-fan-card pero no data-fan-layer.
+describe("abanico: will-change solo en las capas visibles (F90-2)", () => {
+  it("las reglas con will-change exigen data-fan-layer", () => {
+    const css = readFileSync("src/app/globals.css", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const rules = [...css.matchAll(/([^{}]+)\{[^{}]*will-change[^{}]*\}/g)].map((match) => match[1].trim()).filter((selector) => selector.includes("data-fan"));
+    expect(rules).toEqual(["[data-fan] [data-fan-layer] [data-fan-tilt]", "[data-fan] [data-fan-layer] [data-fan-card]"]);
+  });
+  it("con 6 metas, solo 3 tarjetas llevan data-fan-layer (las que reciben will-change)", () => {
+    const view = render(<GoalStack goals={[japan(), extra(1), extra(2), extra(3), extra(4), extra(5)]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
+    expect(view.container.querySelectorAll("[data-fan-layer] [data-fan-card]")).toHaveLength(3);
+    expect(view.container.querySelectorAll("[data-fan-card]")).toHaveLength(6);
+  });
+});

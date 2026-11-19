@@ -115,18 +115,32 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   // pintar las capas `m.li` con `layout` y Motion medía otra vez el documento en el fotograma de la interacción; el primer hover a
   // 1440 no llegaba a 55 fps con la CPU a 4× (run 44349192421). El efecto es solo CSS.
   const fanRef = useRef<HTMLDivElement>(null);
-  const setActive = (index: number | null) => {
-    if (index === null) fanRef.current?.removeAttribute("data-fan-active");
+  // F90-1 (revisión del #90): el DOM guarda el índice de capa, pero el estado del efecto se guarda por META (id). Tras un render
+  // que cambie el orden, el número de metas o `fan`, un efecto vuelve a poner el atributo en el índice actual de esa meta, o lo
+  // quita si ya no está entre las visibles. Así un router.refresh no activa otra tarjeta mientras el foco sigue en la misma.
+  const activeId = useRef<string | null>(null);
+  const visibleIds = useRef<readonly string[]>([]);
+  const paint = () => {
+    const index = activeId.current === null ? -1 : visibleIds.current.indexOf(activeId.current);
+    if (index < 0) fanRef.current?.removeAttribute("data-fan-active");
     else fanRef.current?.setAttribute("data-fan-active", String(index));
   };
+  const setActive = (id: string | null) => { activeId.current = id; paint(); };
   const rest = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // La capa con foco de teclado: al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
-  const focused = useRef<number | null>(null);
+  // La meta con foco de teclado: al salir el ratón, el efecto vuelve a ella en lugar de apagarse.
+  const focused = useRef<string | null>(null);
   useEffect(() => () => { if (rest.current) clearTimeout(rest.current); }, []);
-  const enter = (index: number) => { if (rest.current) clearTimeout(rest.current); rest.current = null; setActive(index); };
+  const enter = (id: string) => { if (rest.current) clearTimeout(rest.current); rest.current = null; setActive(id); };
   const leave = () => { if (rest.current) clearTimeout(rest.current); rest.current = setTimeout(() => { rest.current = null; setActive(focused.current); }, FAN_REST_DELAY_MS); };
-  const focusIn = (index: number) => (event: FocusEvent<HTMLElement>) => { if ((event.target as HTMLElement).matches?.(":focus-visible")) { focused.current = index; enter(index); } };
+  const focusIn = (id: string) => (event: FocusEvent<HTMLElement>) => { if ((event.target as HTMLElement).matches?.(":focus-visible")) { focused.current = id; enter(id); } };
   const focusOut = () => { focused.current = null; leave(); };
+  // Las metas visibles del abanico, en orden de capa (las mismas cuentas que abajo, antes de la salida temprana).
+  const frontIndex = Math.max(0, frontId === null ? 0 : goals.findIndex((goal) => goal.id === frontId));
+  const shownKey = fan ? [...goals.slice(frontIndex), ...goals.slice(0, frontIndex)].slice(0, 3).map((goal) => goal.id).join(",") : "";
+  useEffect(() => {
+    visibleIds.current = shownKey ? shownKey.split(",") : [];
+    paint();
+  });
   if (goals.length === 0) return null;
   const start = Math.max(0, frontId === null ? 0 : goals.findIndex((goal) => goal.id === frontId));
   const ordered = [...goals.slice(start), ...goals.slice(0, start)];
@@ -182,9 +196,9 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
                 data-fan-layer={fan && shown ? index : undefined}
                 // El área de hover es el `li`, que no se mueve: el movimiento va en los envoltorios de dentro. Así, con el puntero
                 // en el borde de abajo o en una esquina, la tarjeta no se escapa de debajo y no hay bucle de entrar y salir.
-                onPointerEnter={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") enter(index); } : undefined}
+                onPointerEnter={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") enter(goal.id); } : undefined}
                 onPointerLeave={fan && shown ? (event: React.PointerEvent) => { if (event.pointerType === "mouse") leave(); } : undefined}
-                onFocus={fan && shown ? focusIn(index) : undefined}
+                onFocus={fan && shown ? focusIn(goal.id) : undefined}
                 onBlur={fan && shown ? focusOut : undefined}
                 // 005 · PR B (corrección 4, D3): la capa arrastrable existe antes del primer deslizamiento (antes se creaba y pintaba en el
                 // primer fotograma del gesto: 93,5 % y uno de 199,9 ms con CPU 4×, run 44349192421). Solo la frontal, solo en la pila.
