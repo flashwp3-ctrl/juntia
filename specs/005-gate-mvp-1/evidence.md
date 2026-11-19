@@ -304,7 +304,7 @@ Capturas con datos sembrados, a 390 px.
 | Firefox a 390: nodos de la app que se desplazan 10 px en x en el primer par de fotogramas, en las siete rutas con sesión (hipótesis: barra de scroll clásica; candidato `scrollbar-gutter: stable`) | 8 de 15 cargas por ruta (todas las de 390) | artefactos `release-firefox-cls-2` y `-3` del run 44349192421 | PR B (FR-051) |
 | INP > 200 ms | privado 390: guardar 256 ms; privado 1440: abrir 248 ms y guardar 264 ms; compartido 1440: abrir 256 ms | artefacto `release-lab-interaction` | PR B (FR-052) |
 | E2E en WebKit (FR-020): 7 fallos en el shard 1 y 4 en el 2. Navegaciones interrumpidas por la redirección del cliente, RSC vacíos, un `toBeFocused`, un `getByText('ACTIVA')` con dos coincidencias | 11 fallos | logs de `release (webkit-e2e-1)` y `(webkit-e2e-2)` | Revisión del PR B (R3) |
-| GoalStack no cumple D3 en la primera interacción: primer deslizamiento a 390 (93,5 %, 199,9 ms) y primer hover a 1440 (89,5 %, 66,6 ms) | 2 de 15 animaciones | artefacto `release-lab-interaction` | Fundadores (decisión 22.2), vía el gestor |
+| GoalStack no cumple D3 en la primera interacción: primer deslizamiento a 390 (93,5 %, 199,9 ms) y primer hover a 1440 (89,5 %, 66,6 ms) | 2 de 15 animaciones | artefacto `release-lab-interaction` | PR B: el hover cumple (100 %, 16,8 ms); el primer deslizamiento queda en un fotograma de ~85 ms → **EXCEPCIÓN APROBADA para MVP-1** (fundadores, 18 nov 2026), ver «GoalStack con 6 metas» |
 | A vigilar en el gate: «rectángulos distintos del aviso» de Anotar, intermitente en `juntia-dev`. Falló en «Inicio con datos extremos · dark», «Actividad con datos extremos» (claro y oscuro) y en el estado anterior al PR «Actividad con datos · dark»; todos pasan al repetir | 2 rectángulos en 10 cuadros | — | Gate del PR A (T050) |
 
 ## Barrido (`@sweep`)
@@ -345,6 +345,10 @@ Run [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/443491924
 
 ### CLS en Chromium (FR-050)
 
+**EXCEPCIÓN APROBADA para MVP-1** (fundadores, 19 nov 2026, «Excepción MVP-1»; vía el gestor): el residuo de CLS por fuentes
+que llegan tarde. Detalle, medida y causa en «Excepciones aprobadas de §15.7», abajo. Los tramos que siguen en rojo solo por él
+quedan como **«rojo por excepción aprobada»**; las aserciones no se debilitan.
+
 Laboratorio · API Layout Instability · Chromium, CPU 6× y red lenta (400 ms, 400 kbps). 40 cargas en claro y 10 en oscuro, alternando 390 y 1440. CLS sin redondear.
 
 | Tramo | Run | Cargas | CLS > 0 | Dónde (tema y ancho: cargas) | Máximo | Control 7: coinciden / discrepancias | Rótulo |
@@ -359,6 +363,10 @@ Laboratorio · API Layout Instability · Chromium, CPU 6× y red lenta (400 ms, 
 
 ### Comparador por fotogramas, por motor y control (FR-051)
 
+**EXCEPCIÓN APROBADA para MVP-1** (fundadores, 19 nov 2026, «Excepción MVP-1»; vía el gestor): el residuo de CLS por fuentes
+que llegan tarde. Detalle, medida y causa en «Excepciones aprobadas de §15.7», abajo. Los tramos que siguen en rojo solo por él
+quedan como **«rojo por excepción aprobada»**; las aserciones no se debilitan.
+
 Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cadena de `offsetParent` (método principal). Controles en Inicio · Nosotros (lectura retenida 1,5 s), 10 cargas cada uno; se cuentan los desplazamientos desde el fotograma en que actúa el control (lectura de ejecución 2).
 
 | Motor y versión | Método | 1 | 2 (1 px) | 2 (0,5 px, solo se registra) | 3 | 4 | 4: API = 0 | 5 | 6 | 7 | ¿Fiable? | Run |
@@ -372,9 +380,9 @@ Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cad
 | a1 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | a2 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | a4 | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| inicio-yo | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| inicio-yo | webkit 27.2 | 15 | 0 | sí. **NO VALE (PR B):** medía el estado de error de la ruta, no la ruta; ver la nota de WebKit en «Lectura del punto de control» | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | inicio-nosotros | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
-| actividad | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| actividad | webkit 27.2 | 15 | 0 | sí. **NO VALE (PR B):** medía el estado de error de la ruta, no la ruta; ver la nota de WebKit en «Lectura del punto de control» | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | balance | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | plan | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
 | analisis | webkit 27.2 | 15 | 0 | sí | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
@@ -415,6 +423,20 @@ Laboratorio · Chromium, CPU 4×. Por variante y ancho, la peor de 10 interaccio
 ### GoalStack con 6 metas (FR-053; D3)
 
 Criterio de D3: ≥ 95 % de fotogramas en ≤ 18,2 ms y ninguno > 50 ms. CPU 4×, movimiento activo. A 390, deslizamiento táctil por CDP y Tab; a 1440, hover y foco de las cartas del abanico (tres visibles).
+
+**EXCEPCIÓN APROBADA (fundadores, 18 nov 2026, «Excepción MVP-1»; vía el gestor):** el primer deslizamiento de la pila a 390
+no cumple D3 por un solo fotograma lento, y se acepta para MVP-1. La pila **no** pasa a lista. Se revisa cuando se trate la
+precarga en F02.
+
+| Medida (PR B) | Primer deslizamiento a 390 | Primer hover a 1440 | Run |
+| --- | --- | --- | --- |
+| Antes (punto de control) | 93,5 %, fotograma de 199,9 ms | 89,5 %, 66,6 ms | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) |
+| Con el PR B (`7f48c7c`: hover sin estado de React, capas precalentadas) | 97,5 %, 66,7 ms | 100 %, 16,8 ms | [44425161264](https://github.com/flashwp3-ctrl/juntia/actions/runs/44425161264) |
+| Con la atribución LoAF del arnés (`64f92e5`) | 97,7 %, **85 ms** | 100 %, 16,8 ms | [44437546506](https://github.com/flashwp3-ctrl/juntia/actions/runs/44437546506) |
+
+**Causa** (Long Animation Frames, solo en la prueba): en ese fotograma, 71 ms de render de React (planificador,
+`MessagePort.onmessage`) y 10 ms del `IntersectionObserver` con el que el `<Link>` de Next vigila los enlaces visibles para la
+precarga por viewport. Ningún `touchstart` ni `fetch` en él. Del segundo al sexto deslizamiento, 100 % y 16,8 ms.
 
 | Animación | Ancho | % en ≤ 18,2 ms | Fotograma más largo | Pasa | Run |
 | --- | --- | ---: | ---: | --- | --- |
@@ -458,6 +480,13 @@ Capturas PNG (datos sembrados) en el artefacto `release-lab-interaction`; las re
 Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace falta, de los fundadores (T047, T048, T055).
 
 - **WebKit 27.2: fiable.** Los seis controles dan 10 de 10, y las diez rutas dan «CLS = 0 por fotogramas» (15 cargas cada una).
+  **Corrección del PR B (parcial [44441922501](https://github.com/flashwp3-ctrl/juntia/actions/runs/44441922501); decisión del gestor
+  del 19 nov 2026):** las medidas de WebKit en **Inicio · Yo y Actividad no valen**. Con la pareja sembrada, la retención de
+  `transactions` bloquea también el layout de (app) (`couple_expenses`): no se pinta el esqueleto y la carga termina en el
+  estado de error de la ruta. Con la clasificación nueva del comparador, 15 de 15 cargas de cada ruta salieron «inválidas por el
+  arnés (R5)» también al repetir; los «0 desplazamientos» de esta fila medían ese estado. Desde `db55699`, Firefox y WebKit
+  miden esas dos rutas con una cuenta sin pareja (contrato del comparador §6); la parte compartida queda medida en Chromium
+  (FR-050, sin retención).
 - **Firefox 157: los controles 4 y 5 dan 5 de 10.** No falla el método con las transformaciones: el bloque de cada control
   no cambia de posición en ningún fotograma de las 20 cargas (`positions: 1`), y las 10 cargas a 1440 pasan. Las 10 que
   fallan son todas a 390. En ellas, nodos de la app que después salen del DOM se desplazan 10 px en x en el primer par de
@@ -533,6 +562,22 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
   de `cls-inicio-yo` se proyecta en unos 640 s, porque el arranque (~270 s) no se parte y sus cargas son lentas (~15 s
   cada una, frente a ~4 s en las demás rutas). Lo mide el parcial siguiente; si pasa de 600 s, se vuelve a partir.
 
+## Excepciones aprobadas de §15.7 (umbrales del gate)
+
+Las dos son de los fundadores y valen para **MVP-1**; se revisan después. Ninguna cambia un umbral ni una aserción: el
+laboratorio sigue midiendo y el tramo afectado queda **«rojo por excepción aprobada»**.
+
+| Umbral (§15.7) | Qué no cumple | Medida (laboratorio) | Causa | Decisión | Se revisa |
+| --- | --- | --- | --- | --- | --- |
+| GoalStack ≥ 55 fps (D3; FR-053) | El primer deslizamiento de la pila a 390 | 97,7 %, un fotograma de ~85 ms ([44437546506](https://github.com/flashwp3-ctrl/juntia/actions/runs/44437546506)); el resto de animaciones cumple | 71 ms de render de React + el `IntersectionObserver` de la precarga por viewport del `<Link>` (LoAF) | Excepción MVP-1, 18 nov 2026; la pila **no** pasa a lista | Con F02 (precarga) |
+| CLS = 0 con esqueleto (FR-050, FR-051) | Fuentes que llegan tarde: texto libre que cambia de corte o de ancho al llegar Onest o Brygada | **Chromium**, CPU 6× y red lenta, 50 cargas por ruta ([44445684478](https://github.com/flashwp3-ctrl/juntia/actions/runs/44445684478)): Plan 4/50, CLS máx. 0,025 (el párrafo «Los presupuestos son opcionales…» a 390); Metas 3/50, 0,0023 (el título de la tarjeta de meta, en Brygada); Balance 3/50, 0,0026 (filas de liquidaciones y fichas). Todo después de la ventana del esqueleto, a ~20–210 ms del primer fotograma final. **Firefox**, por fotogramas ([44451461265](https://github.com/flashwp3-ctrl/juntia/actions/runs/44451461265)): A2 `/crear-cuenta` a 390, 8/15 cargas, el formulario sube 16 px y la etiqueta de aceptación 34 px en el primer pintado | Los respaldos de D-01 igualan el ancho medio, no el de cada cadena; en Firefox, además, el primer fotograma se pinta antes de cargar la fuente y su respaldo local | Excepción MVP-1, 19 nov 2026; **D-01 no cambia** | Después de MVP-1 |
+
+Lo que el PR B sí corrigió de CLS (antes en el punto de control, 23–28 de 50 cargas por ruta en Chromium y 8/15 en Firefox): el
+selector Yo/Nosotros, las etiquetas de la barra inferior y las acciones centradas o alineadas a la derecha (cajas de ancho fijo
+en em, opción A); las cifras (cara de respaldo sobre Verdana, afinado de D-01); el titular, el botón y los enlaces de A1 en
+Firefox. Rutas en verde en el último laboratorio: Chromium Actividad, Análisis, Inicio en Yo y en Nosotros; Firefox y WebKit,
+todas salvo A2 en Firefox.
+
 ## Tabla de CWV (FR-056)
 
 Llena T103. **Regla: ninguna cifra se rotula «p75».** Lo no medible dice «no medible en p75 real: motivo».
@@ -556,6 +601,12 @@ sistema, fecha y commit desplegado.
 ## Periodo de uso (D4)
 
 Llenan T094–T096.
+
+## Aprobaciones de los fundadores en el PR B (T067)
+
+| Qué | Requisito | Texto o alcance | Aprobado | Dónde |
+| --- | --- | --- | --- | --- |
+| Cómo pedir la eliminación de la cuenta (Mi cuenta → Privacidad) | FR-067; contrato de borrado §8; T057, T061 | «Para pedirla, escribe a quien administra Juntia. Te pedirá que confirmes por escrito y solo después la hará a mano; si compartes datos con tu pareja, cada persona confirma por su cuenta.» | Fundadores, 19 nov 2026, vía el gestor | `src/lib/copy/es.ts` (`account.privacy.deleteHowTo`), PR B |
 
 ## Valoraciones (FR-081)
 

@@ -84,6 +84,16 @@
 @font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 104.90%; ascent-override: 92.47%; descent-override: 29.08%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 500; size-adjust: 105.08%; ascent-override: 92.31%; descent-override: 29.02%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600; size-adjust: 99.00%; ascent-override: 97.98%; descent-override: 30.81%; line-gap-override: 0%; }
+/* PR B de P0-4 (afinado de la calibración de D-01 para las cifras; aprobado por el gestor el 19 nov 2026). D-01 se calibró con
+   las cadenas de texto de es.ts; con tabular-nums (html), las cifras de Onest miden 0,672 em y las de este respaldo 0,583 em
+   (400/500) y 0,551 (600), y los importes alineados a la derecha se movían 19–29 px al llegar Onest (Plan, Balance y Metas,
+   parcial 44439996119). Solo para U+0030–0039, Verdana (cifras de 0,636 em; 0,711 en negrita): size-adjust = 0,672 / 0,6357 y
+   0,673 / 0,7109, con las mismas sobreescrituras verticales de Onest (970 y 305) divididas por el ajuste, así que la línea no
+   cambia de alto. Van después de las caras generales: para las cifras gana esta; sin Verdana (Android), la de Arial, como antes.
+   La estrategia de D-01 no cambia (swap con respaldo de métricas ajustadas) y en reposo nada cambia. */
+@font-face { font-family: "Onest Fallback"; src: local("Verdana"); font-weight: 400; unicode-range: U+0030-0039; size-adjust: 105.71%; ascent-override: 91.76%; descent-override: 28.85%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Verdana"); font-weight: 500; unicode-range: U+0030-0039; size-adjust: 105.71%; ascent-override: 91.76%; descent-override: 28.85%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Verdana Bold"), local("Verdana-Bold"); font-weight: 600; unicode-range: U+0030-0039; size-adjust: 94.67%; ascent-override: 102.46%; descent-override: 32.22%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 400; size-adjust: 104.15%; ascent-override: 88.33%; descent-override: 24.00%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 500; size-adjust: 105.01%; ascent-override: 87.61%; descent-override: 23.81%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold"), local("Georgia-Bold"); font-style: normal; font-weight: 600; size-adjust: 90.79%; ascent-override: 101.33%; descent-override: 27.53%; line-gap-override: 0%; }
@@ -92,6 +102,9 @@
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia Italic"), local("Georgia-Italic"); font-style: italic; font-weight: 500; size-adjust: 97.70%; ascent-override: 94.17%; descent-override: 25.59%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold Italic"), local("Georgia-BoldItalic"); font-style: italic; font-weight: 600; size-adjust: 84.98%; ascent-override: 108.26%; descent-override: 29.42%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold Italic"), local("Georgia-BoldItalic"); font-style: italic; font-weight: 700; size-adjust: 86.97%; ascent-override: 105.78%; descent-override: 28.75%; line-gap-override: 0%; }
+/* PR B de P0-4: aquí hubo respaldos con nombres de Liberation (Linux) y uno monoespaciado propio. No resolvían el
+   desplazamiento del selector (lo resolvió la opción A: cajas de ancho fijo en em) y se retiraron para volver a los respaldos de
+   D-01 tal cual; con ellos, Firefox medía A1 sin desplazamientos (run 44349192421). */
 
 html { font-variant-numeric: tabular-nums; }
 body {
@@ -258,8 +271,14 @@ html[data-context="us"] [data-context-selector]:not([data-hydrated]) [data-value
    (260/28/1) como curva linear(), 580 ms. Con movimiento reducido: sin desplazamiento, escala ni giro; solo la sombra, 120 ms. */
 :root { --spring-card-linear: linear(0, 0.046 3.6%, 0.148 7.1%, 0.274 10.5%, 0.403 14%, 0.524 17.5%, 0.630 21%, 0.720 24.5%, 0.794 28%, 0.852 31.5%, 0.897 35%, 0.930 38.4%, 0.955 41.9%, 0.973 45.4%, 0.985 48.9%, 0.993 52.4%, 0.998 55.9%, 1.001 59.4%, 1.003 62.9%, 1.004 66.3%, 1.004 69.8%, 1.004 73.3%, 1.003 76.8%, 1.003 80.3%, 1.002 83.8%, 1.002 87.3%, 1.001 90.8%, 1.001 94.2%, 1.001 97.7%, 1); }
 @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  /* 005 · PR B (corrección 4, D3): las capas de composición de las tarjetas existen antes del primer hover. Sin `will-change`,
+     el primer hover las creaba y pintaba en el mismo fotograma (89,5 % en ≤ 18,2 ms y uno de 66,6 ms con CPU 4×, run
+     44349192421); los siguientes ya cumplían. Son tres tarjetas de 280 × 228 px, solo con puntero fino y desde lg. */
   [data-fan] [data-fan-tilt] { transform-origin: 0 100%; transition: rotate 580ms var(--spring-card-linear); }
   [data-fan] [data-fan-card] { transform-origin: bottom center; transition: translate 580ms var(--spring-card-linear), scale 580ms var(--spring-card-linear); }
+  /* F90-2 (revisión del #90): solo las tarjetas visibles (las que llevan data-fan-layer); las ocultas de la lista no. */
+  [data-fan] [data-fan-layer] [data-fan-tilt] { will-change: rotate; }
+  [data-fan] [data-fan-layer] [data-fan-card] { will-change: translate, scale; }
   [data-fan] [data-fan-card] [data-goal-card] { transition: box-shadow 180ms cubic-bezier(.2, 0, 0, 1); }
   [data-fan-active="1"] [data-fan-layer="1"] [data-fan-tilt] { rotate: -4deg; }
   [data-fan-active="2"] [data-fan-layer="2"] [data-fan-tilt] { rotate: -7deg; }

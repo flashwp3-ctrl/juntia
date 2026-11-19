@@ -19,11 +19,29 @@ const FRAME_MS = 18.2, LONG_MS = 50, WINDOW_MS = 700;
 /** Registra los intervalos entre fotogramas y las tareas largas mientras dura `action` más WINDOW_MS. */
 async function measure(page: Page, action: () => Promise<void>) {
   await page.evaluate(() => {
-    const w = window as unknown as { __anim: { frames: number[]; long: number[]; on: boolean; start: number } };
+    const w = window as unknown as { __anim: { frames: number[]; long: number[]; loaf: unknown[]; on: boolean; start: number } };
     // Cada medida tiene su objeto: el bucle y el observador de la anterior se paran con ella y no suman a esta.
-    const anim = { frames: [] as number[], long: [] as number[], on: true, start: 0 };
+    const anim = { frames: [] as number[], long: [] as number[], loaf: [] as unknown[], on: true, start: 0 };
     w.__anim = anim;
     try { const obs = new PerformanceObserver((l) => { if (!anim.on) { obs.disconnect(); return; } for (const e of l.getEntries()) anim.long.push(e.duration); }); obs.observe({ type: "longtask" }); } catch { /* sin longtask */ }
+    // 005 · PR B (corrección 4; encargo del gestor del 19 nov 2026, solo en la prueba): qué causa cada fotograma largo (> 50 ms).
+    // Long Animation Frames da los scripts que corrieron en él: invocador (p. ej. «HTMLAnchorElement.ontouchstart» o
+    // «Window.fetch.then»), tipo, archivo y función, duración y estilo/layout forzados; y cuánto fue render y estilo/layout.
+    type Script = { invoker: string; invokerType: string; sourceURL: string; sourceFunctionName: string; sourceCharPosition: number; duration: number; forcedStyleAndLayoutDuration: number };
+    type Frame = PerformanceEntry & { blockingDuration: number; renderStart: number; styleAndLayoutStart: number; scripts: Script[] };
+    try {
+      const loaf = new PerformanceObserver((l) => {
+        if (!anim.on) { loaf.disconnect(); return; }
+        for (const e of l.getEntries() as Frame[]) {
+          if (e.duration <= 50) continue;
+          const end = e.startTime + e.duration;
+          anim.loaf.push({ ms: Math.round(e.duration), bloqueo: Math.round(e.blockingDuration), render: e.renderStart ? Math.round(end - e.renderStart) : 0,
+            estiloLayout: e.styleAndLayoutStart ? Math.round(end - e.styleAndLayoutStart) : 0,
+            scripts: e.scripts.map((x) => ({ invocador: x.invoker.slice(0, 80), tipo: x.invokerType, archivo: x.sourceURL.split("/").pop(), funcion: x.sourceFunctionName, posicion: x.sourceCharPosition, ms: Math.round(x.duration), forzado: Math.round(x.forcedStyleAndLayoutDuration) })) });
+        }
+      });
+      loaf.observe({ type: "long-animation-frame" });
+    } catch { /* sin LoAF */ }
     let last = performance.now();
     const tick = (now: number) => { if (!anim.on) return; anim.frames.push(now - last); last = now; requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
@@ -32,13 +50,13 @@ async function measure(page: Page, action: () => Promise<void>) {
   await action();
   // La ventana de medida se cuenta en la página (sin esperas fijas, ADR-011 §6, regla 4).
   await page.waitForFunction((ms) => performance.now() - (window as unknown as { __anim: { start: number } }).__anim.start >= ms, WINDOW_MS);
-  const data = await page.evaluate(() => { const w = window as unknown as { __anim: { frames: number[]; long: number[]; on: boolean; start: number } }; w.__anim.on = false; return w.__anim; });
+  const data = await page.evaluate(() => { const w = window as unknown as { __anim: { frames: number[]; long: number[]; loaf: unknown[]; on: boolean; start: number } }; w.__anim.on = false; return w.__anim; });
   const frames = data.frames.slice(1);
   const within = frames.filter((ms) => ms <= FRAME_MS).length;
   const percent = frames.length ? (100 * within) / frames.length : 0;
   const longest = frames.length ? Math.max(...frames) : 0;
   return { fotogramas: frames.length, porcentajeEn18_2ms: Number(percent.toFixed(1)), fotogramaMasLargoMs: Number(longest.toFixed(1)),
-    tareasLargas: data.long.map((ms) => Math.round(ms)), pasa: percent >= 95 && longest <= LONG_MS };
+    tareasLargas: data.long.map((ms) => Math.round(ms)), fotogramasLargos: data.loaf, pasa: percent >= 95 && longest <= LONG_MS };
 }
 
 for (const width of [1440, 390] as const) {

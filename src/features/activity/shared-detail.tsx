@@ -21,9 +21,11 @@ import type { SharedTransaction } from "@/lib/db/types";
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 border-b-[length:var(--border-hairline)] border-border py-2.5">
+    // 005 · PR B (corrección 5, FR-042): con el texto al 200 %, etiqueta y valor no cabían en una línea a 390 y empujaban la página
+    // (402 px bajo «Editar gasto» y «¿Eliminar este gasto?»). La fila envuelve: el valor baja, alineado a la derecha.
+    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b-[length:var(--border-hairline)] border-border py-2.5">
       <dt className="text-[length:var(--body-m-size)] text-ink-secondary">{label}</dt>
-      <dd className="flex items-center gap-2 text-right text-[length:var(--body-m-size)] font-medium text-ink">{children}</dd>
+      <dd className="ml-auto flex min-w-0 items-center gap-2 text-right text-[length:var(--body-m-size)] font-medium text-ink">{children}</dd>
     </div>
   );
 }

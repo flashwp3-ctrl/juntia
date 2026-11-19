@@ -434,3 +434,14 @@ describe("Plan (FR-020; US-1, US-2 escenarios 4 y 6)", () => {
     expect(screen.getByText(copy.plan.saved.deactivated).closest("[aria-live]")).toBeTruthy();
   });
 });
+
+// 005 · PR B (CLS, FR-050; gestor, 19 nov 2026): «Crear» de una categoría sin presupuesto va alineado a la derecha y se movía
+// 5 px al llegar Onest (parcial 44443835179, Plan a 1440). Criterio: su texto en una caja del ancho que mide en Onest.
+describe("«Crear» con caja de ancho fijo (PR B)", () => {
+  it("el texto del botón va en StableLabel", () => {
+    render(<ul><BudgetIndicator row={{ ...market, limitMinor: null }} context="us" onOpen={vi.fn()} /></ul>);
+    const label = screen.getByRole("button", { name: copy.plan.createFor(copy.categories[market.categoryId]) }).querySelector<HTMLElement>("[data-stable-label]");
+    expect(label?.textContent).toBe(copy.plan.create);
+    expect(label?.style.width).toMatch(/em$/);
+  });
+});

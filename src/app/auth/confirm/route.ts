@@ -35,6 +35,6 @@ export async function GET(request: NextRequest) {
     }
   }
   const response = applyTo(NextResponse.redirect(new URL(outcome.to, request.url), 303));
-  if (theme) response.cookies.set(THEME_COOKIE, theme, themeCookieOptions);
+  if (theme) response.cookies.set(THEME_COOKIE, theme, themeCookieOptions(request.nextUrl.hostname));
   return response;
 }

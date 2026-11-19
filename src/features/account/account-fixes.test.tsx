@@ -24,7 +24,8 @@ describe("Exportar: encabezado de hoja con «×» (F11)", () => {
     const close = within(sheet).getByRole("button", { name: copy.account.export.close });
     const title = within(sheet).getByRole("heading", { name: copy.account.export.title });
     // El mismo marco que liquidar y las hojas de metas: título y «×» en la misma fila, antes de las opciones.
-    expect(close.parentElement).toBe(title.parentElement);
+    // El título va en su celda (SheetTitle, PR B de P0-4), en la misma fila que la «×».
+    expect(close.parentElement).toBe(title.parentElement!.parentElement);
     expect(close.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("x");
     expect(close.compareDocumentPosition(within(sheet).getByRole("radiogroup")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(sheet).getAllByRole("button", { name: copy.account.export.close })).toHaveLength(1);

@@ -7,10 +7,13 @@ import { copy } from "@/lib/copy/es";
 
 const parts = (date: string) => date.split("-").map(Number);
 
+// 005 · PR B (corrección 3, INP): un solo formateador; se llama en cada fila al volver a pintarse.
+const thousands = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
+
 /** «412.900»: el importe en pesos con separador de miles, sin símbolo, para nombres accesibles y fichas. */
 export function pesos(money: Money): string {
   const absolute = money.amountMinor < 0n ? -money.amountMinor : money.amountMinor;
-  return new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format((absolute + 50n) / 100n);
+  return thousands.format((absolute + 50n) / 100n);
 }
 
 /** «octubre». */

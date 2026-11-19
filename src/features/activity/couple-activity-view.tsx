@@ -150,7 +150,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
           <Button variant="secondary" icon="arrow-clockwise" onClick={() => router.refresh()}>{copy.activity.coupleStale.action}</Button>
         </div>
       ) : items.length === 0 ? (
-        <ExitState icon="magnifying-glass" title={copy.activity.noResults.title} description={copy.activity.noResults.description} actions={<Button variant="secondary" onClick={filters.clear}>{copy.activity.noResults.clear}</Button>} />
+        <ExitState icon="magnifying-glass" title={copy.activity.noResults.title} description={copy.activity.noResults.description} actions={<Button variant="secondary" onClick={filters.clear} stableWidth>{copy.activity.noResults.clear}</Button>} />
       ) : (
         <>
           <div className="flex flex-col gap-4 xl:hidden">

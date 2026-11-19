@@ -356,3 +356,28 @@ describe("modo exploratorio del comparador fuera de release (F87-6)", () => {
     expect(workflow).not.toMatch(/CLS_FRAMES_EXPLORE/);
   });
 });
+
+// 005 · PR B (decisión del gestor del 19 nov 2026): en los runs 44433137464 y 44437546506, tres tramos de WebKit fallaron antes
+// de correr una sola prueba: `playwright install-deps webkit` bajaba ~114 MB del mirror de apt y superó dos veces los 240 s.
+// Criterio: los .deb de install-deps se guardan en caché por navegador y versión de Playwright y se reponen antes de instalar,
+// con reintentos y tiempo de espera de apt; la caché solo se guarda cuando la instalación terminó bien.
+describe("instalación del navegador del tramo, con caché de paquetes (PR B)", () => {
+  const install = () => steps("release").find((step) => step.name === "Install the leg's browser (own time limit, one retry)")!;
+  it("restaura los .deb antes de instalar, con una clave por navegador y versión de Playwright (package-lock.json)", () => {
+    const names = steps("release").map((step) => step.name);
+    const restore = steps("release").find((step) => step.name === "Restore the leg's apt packages");
+    expect(restore?.text).toMatch(/uses: actions\/cache\/restore@v6/);
+    expect(restore?.text).toMatch(/key: apt-\$\{\{ runner\.os \}\}-\$\{\{ steps\.leg\.outputs\.browser \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}/);
+    expect(names.indexOf("Restore the leg's apt packages")).toBeLessThan(names.indexOf("Install the leg's browser (own time limit, one retry)"));
+  });
+  it("apt con reintentos y tiempo de espera, y los .deb restaurados en el archivo de apt antes de install-deps", () => {
+    const text = install().text;
+    expect(text).toMatch(/Acquire::Retries "5"; Acquire::http::Timeout "30";/);
+    expect(text.indexOf("/var/cache/apt/archives/")).toBeLessThan(text.indexOf("try npx playwright install-deps"));
+  });
+  it("guarda la caché solo si no la había y la instalación terminó bien", () => {
+    const save = steps("release").find((step) => step.name === "Save the leg's apt packages");
+    expect(save?.text).toMatch(/uses: actions\/cache\/save@v6/);
+    expect(/^ {8}if: (.+)$/m.exec(save!.text)?.[1]).toBe("steps.leg.outputs.run == 'true' && steps.apt.outputs.cache-hit != 'true' && steps.browser.outcome == 'success'");
+  });
+});

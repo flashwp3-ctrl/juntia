@@ -79,6 +79,7 @@ export function ContextSelector({ stretch = false, className = "" }: ContextSele
         value={value}
         onValueChange={choose}
         stretch={stretch}
+        fixedWidth
       />
     </div>
   );

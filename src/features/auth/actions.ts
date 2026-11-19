@@ -9,6 +9,7 @@ import { copy } from "@/lib/copy/es";
 import { completeFirstEntry, ensureProfile } from "@/lib/db/profile";
 import { getSessionClaims } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase/server";
+import { cookieSecure } from "@/lib/cookie-security";
 import { THEME_COOKIE, themeCookieOptions } from "@/lib/theme";
 import { newPasswordResult, recoverResult, resendResult, signInResult, signOutResult, signUpResult, type AuthErrorLike, type AuthResult } from "./auth-errors";
 import { isRecentRecovery } from "./recovery-session";
@@ -55,7 +56,7 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
   });
   const result = signUpResult(error);
   if (result.kind !== "redirect") return toState(result, kept);
-  (await cookies()).set(PENDING_EMAIL, email, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 3600, secure: process.env.NODE_ENV === "production" });
+  (await cookies()).set(PENDING_EMAIL, email, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 3600, secure: cookieSecure((await headers()).get("host")) });
   redirect(result.to);
 }
 
@@ -82,7 +83,7 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   let firstEntryCompleted: boolean;
   try {
     const profile = await ensureProfile(supabase);
-    (await cookies()).set(THEME_COOKIE, profile.theme, themeCookieOptions);
+    (await cookies()).set(THEME_COOKIE, profile.theme, themeCookieOptions((await headers()).get("host")));
     firstEntryCompleted = profile.firstEntryCompleted;
   } catch {
     return { email, error: copy.auth.networkError };

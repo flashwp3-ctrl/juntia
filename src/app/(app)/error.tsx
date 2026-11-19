@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/app-shell";
 import { exitLinkClass } from "@/components/shell/exit-link";
+import { StableLabel } from "@/components/ui/stable-label";
 import { ExitState } from "@/components/shell/provisional-state";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/lib/copy/es";
@@ -21,8 +22,8 @@ export default function RouteError({ reset }: { error: Error & { digest?: string
         description={copy.states.errorDescription}
         actions={
           <>
-            <Button variant="secondary" onClick={() => reset()}>{copy.states.retry}</Button>
-            <Link href="/" className={exitLinkClass}>{copy.states.home}</Link>
+            <Button variant="secondary" onClick={() => reset()} stableWidth>{copy.states.retry}</Button>
+            <Link href="/" className={exitLinkClass}><StableLabel text={copy.states.home} /></Link>
           </>
         }
       />

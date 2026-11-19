@@ -5,6 +5,7 @@ import * as m from "motion/react-m";
 import { useReducedMotion } from "motion/react";
 import { useId, useRef, type KeyboardEvent } from "react";
 import { snappy } from "@/lib/motion/tokens";
+import { onestSemiboldEm } from "@/lib/text-fit";
 
 export type SegmentedOption<T extends string> = { value: T; label: string };
 
@@ -24,11 +25,17 @@ type SegmentedProps<T extends string> = {
   wrap?: boolean;
   /** PR C de la 003: el reparto se deshabilita con un solo participante (FR-019a). */
   disabled?: boolean;
+  /**
+   * 005 · PR B (opción A): cada segmento con el ancho que su texto mide en Onest, en em (escala con la letra). Así la caja no
+   * cambia cuando la fuente pasa del respaldo a Onest: alineado a la derecha, el selector Yo/Nosotros se desplazaba 4 px (10 en
+   * Firefox) a 390 en todas las rutas. Solo para segmentos que se ajustan a su texto, no con `stretch`.
+   */
+  fixedWidth?: boolean;
 };
 
 const knobClass = "absolute inset-0 -z-10 rounded-[11px] bg-[var(--comp-segmented-knob-bg)] shadow-raised";
 
-export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false, wrap = stretch, disabled = false }: SegmentedProps<T>) {
+export function Segmented<T extends string>({ role, label, options, value, onValueChange, stretch = false, wrap = stretch, disabled = false, fixedWidth = false }: SegmentedProps<T>) {
   const reduced = useReducedMotion();
   const knobId = `${useId()}-knob`;
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -71,6 +78,7 @@ export function Segmented<T extends string>({ role, label, options, value, onVal
             disabled={disabled}
             onClick={() => onValueChange(option.value)}
             onKeyDown={(event) => move(event, index)}
+            style={fixedWidth && !stretch ? { width: `calc(${onestSemiboldEm(option.label)}em + 1.5rem)` } : undefined}
             className={`relative isolate inline-flex min-h-[38px] min-w-[44px] items-center justify-center rounded-[11px] px-3 text-[length:var(--label-m-size)] font-semibold whitespace-nowrap ${stretch ? "flex-1" : ""} text-ink after:absolute after:inset-x-0 after:-inset-y-[3px] after:content-['']`}
           >
             {selected ? (

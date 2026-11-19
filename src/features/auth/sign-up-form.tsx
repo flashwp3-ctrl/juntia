@@ -8,7 +8,7 @@ import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
 import { signUp, type FormState } from "./actions";
-import { BackToSignIn, PasswordInput, SubmitButton, authLink } from "./auth-ui";
+import { BackToSignIn, PasswordInput, SubmitButton, authLink, AuthTitle } from "./auth-ui";
 
 export function SignUpForm() {
   const [state, action] = useActionState<FormState, FormData>(signUp, {});
@@ -16,7 +16,7 @@ export function SignUpForm() {
   return (
     <>
       <BackToSignIn />
-      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.signUp.title}</h1>
+      <AuthTitle>{copy.auth.signUp.title}</AuthTitle>
       {state.error && !state.field ? <InlineNotice tone="danger" icon="wifi-slash">{state.error}</InlineNotice> : null}
       <form action={action} noValidate className="flex flex-col gap-5">
         <Input label={copy.auth.signUp.nameLabel} name="displayName" autoComplete="nickname" placeholder={copy.auth.signUp.namePlaceholder} help={copy.auth.signUp.nameHelp} defaultValue={state.name} key={`name-${state.name ?? ""}`} error={fieldError("name")} />

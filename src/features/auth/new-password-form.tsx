@@ -5,14 +5,14 @@ import { useActionState } from "react";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
 import { setNewPassword, type FormState } from "./actions";
-import { BackToSignIn, PasswordInput, SubmitButton } from "./auth-ui";
+import { BackToSignIn, PasswordInput, SubmitButton, AuthTitle } from "./auth-ui";
 
 export function NewPasswordForm() {
   const [state, action] = useActionState<FormState, FormData>(setNewPassword, {});
   return (
     <>
       <BackToSignIn />
-      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.newPassword.title}</h1>
+      <AuthTitle>{copy.auth.newPassword.title}</AuthTitle>
       {state.error && !state.field ? <InlineNotice tone="danger" icon="wifi-slash">{state.error}</InlineNotice> : null}
       <form action={action} noValidate className="flex flex-col gap-5">
         <PasswordInput label={copy.auth.newPassword.label} name="password" autoComplete="new-password" help={copy.auth.newPassword.help} error={state.field === "password" ? state.error : undefined} />

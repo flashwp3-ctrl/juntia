@@ -719,25 +719,48 @@ jobs:
       - name: Install and build with the runner's Supabase
         if: steps.leg.outputs.run == 'true'
         run: node scripts/ci.mjs run ci build
+      - name: Restore the leg's apt packages
+        # 005 · PR B (decisión del gestor del 19 nov 2026): en los runs 44433137464 y 44437546506, tres tramos de WebKit cayeron
+        # antes de la primera prueba porque install-deps bajaba ~114 MB del mirror de apt y superó dos veces los 240 s. Los .deb
+        # se guardan por navegador y versión de Playwright (package-lock.json) y se reponen antes de instalar; apt solo baja lo
+        # que falte. Sin caché (la primera vez, o con un lockfile nuevo), el camino es el de antes.
+        id: apt
+        if: steps.leg.outputs.run == 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-${{ runner.os }}-${{ steps.leg.outputs.browser }}-${{ hashFiles('package-lock.json') }}
       - name: Install the leg's browser (own time limit, one retry)
         # El patrón de Chromium de los demás jobs (PR C de la 002): descarga con tope y un reintento; si el navegador no
         # arranca con las librerías del runner, install-deps con tope y un reintento, matando antes el apt-get colgado.
         # WebKit y Firefox suelen necesitar sus librerías por apt (60–180 s, contracts/ci.md): tope de 240 s por intento.
+        # PR B: apt con reintentos y espera acotada, y los .deb de la caché en su archivo antes de install-deps.
+        id: browser
         if: steps.leg.outputs.run == 'true'
         timeout-minutes: 10
         shell: bash
         env:
           BROWSER: ${{ steps.leg.outputs.browser }}
+          DEBS: ${{ runner.temp }}/apt-debs
         run: |
           started=$(date +%s%3N)
+          echo 'Acquire::Retries "5"; Acquire::http::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/80-juntia-retries > /dev/null
           try() { for attempt in 1 2; do timeout 240 "$@" && return 0; echo "::warning::$* (intento $attempt) falló o superó 240 s"; sudo pkill -x apt-get || true; done; return 1; }
           if [ "$BROWSER" = "chromium" ]; then try npx playwright install --only-shell chromium; else try npx playwright install "$BROWSER"; fi
           if node -e "require('@playwright/test')[process.env.BROWSER].launch().then((b) => b.close(), () => process.exit(1))"; then
             echo "$BROWSER arranca con las librerías del runner: sin install-deps"
           else
+            if compgen -G "$DEBS/*.deb" > /dev/null; then sudo cp "$DEBS"/*.deb /var/cache/apt/archives/; echo "$(ls "$DEBS"/*.deb | wc -l) paquetes de la caché"; fi
             try npx playwright install-deps "$BROWSER"
+            mkdir -p "$DEBS" && cp /var/cache/apt/archives/*.deb "$DEBS"/ 2>/dev/null || true
           fi
           echo "{\"command\":\"$BROWSER\",\"seconds\":$(( ($(date +%s%3N) - started) / 1000 )),\"status\":0}" >> "$RUNNER_TEMP/juntia-ci-$GITHUB_JOB.jsonl"
+      - name: Save the leg's apt packages
+        if: steps.leg.outputs.run == 'true' && steps.apt.outputs.cache-hit != 'true' && steps.browser.outcome == 'success'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/apt-debs
+          key: apt-${{ runner.os }}-${{ steps.leg.outputs.browser }}-${{ hashFiles('package-lock.json') }}
       - name: Install Arial and Georgia for the font fallbacks
         # Como en `evidence`: los respaldos de Onest y Brygada se ajustan sobre Arial y Georgia; sin ellas, otra geometría.
         if: steps.leg.outputs.run == 'true'

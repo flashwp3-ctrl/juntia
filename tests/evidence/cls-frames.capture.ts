@@ -14,7 +14,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { summarize } from "../../scripts/cls-frames/compare.mjs";
 import { CLS_OBSERVER, PUBLIC_ROUTES, RECORDER, SESSION_ROUTES, loadWithHold, publicContext, readFrames, record, seedReleaseCouple, sessionContext,
   themeLabel, type PublicRoute, type SessionRoute, type Theme } from "./release-support";
-import type { SeededCouple } from "../support/seed";
+import { seedMovements, seedUser, type SeededCouple } from "../support/seed";
 
 const SET = process.env.CLS_FRAMES_SET ?? "routes-1";
 const LOADS = Number(process.env.CLS_FRAMES_LOADS ?? 0) || null;
@@ -43,19 +43,41 @@ async function measured(page: Page, meta: Record<string, unknown>, file = "cls-f
   const at = await page.evaluate(() => (window as unknown as { __clsControlAt?: number }).__clsControlAt ?? null);
   const control = at === null ? result.desplazamientos : result.desplazamientos.filter((shift: { hasta: number }) => shift.hasta >= at);
   const previous = at === null ? [] : result.desplazamientos.filter((shift: { hasta: number }) => shift.hasta < at);
+  // 005 · PR B (decisión del gestor del 19 nov 2026; R5): bajo la retención, en Firefox algunas cargas no llegan a pintar el
+  // esqueleto y la lectura falla: la página enseña el estado de error de la ruta en vez de la ruta (parcial 44433137464,
+  // 4 de 8 cargas a 390 en Inicio · Yo y Actividad). Esa carga no mide la ruta: la marca quien llama, nunca cuenta como CLS = 0.
+  const harnessError = await page.evaluate(() => document.querySelector('[data-provisional-state="danger"]') !== null);
   const video = page.video();
   await page.context().close();
   // Vídeo solo de las cargas con desplazamiento, para la revisión humana (§7).
   const path = video ? await video.path().catch(() => null) : null;
   if (path && result.desplazamientos.length === 0) rmSync(path, { force: true });
-  await record(file, { ...result, controlEnFotograma: at, desplazamientosDelControl: control.length, anterioresAlControl: previous.length, video: result.desplazamientos.length && path ? path : null });
-  return { ...result, desplazamientos: control, anterioresAlControl: previous };
+  await record(harnessError ? "cls-frames-invalidas.jsonl" : file, { ...result, controlEnFotograma: at, desplazamientosDelControl: control.length, anterioresAlControl: previous.length, video: result.desplazamientos.length && path ? path : null });
+  return { ...result, desplazamientos: control, anterioresAlControl: previous, harnessError };
 }
+
+/**
+ * 005 · PR B (decisión del gestor del 19 nov 2026, R5, opción a acotada): en Firefox, Inicio · Yo y Actividad se miden con una
+ * cuenta SIN pareja. Retienen `transactions`, y con una pareja activa el layout de (app) también lee de ahí (couple_expenses):
+ * la retención bloqueaba el layout entero, no se pintaba el esqueleto y la lectura acababa en el estado de error (parcial
+ * 44433137464, la mitad de las cargas a 390). Sin pareja, el layout no lee esa vista y la retención solo frena la página. En los
+ * demás rutas, y en Chromium (cuyo arnés de CLS no retiene), sigue la pareja: la parte compartida queda medida ahí. WebKit pasó a
+ * la cuenta sin pareja con el parcial 44441922501 (abajo).
+ */
+// WebKit, desde el parcial 44441922501: con la pareja, 15 de 15 cargas de cada una de esas dos rutas acababan en el estado de
+// error también al repetir (los «0 desplazamientos» que daba desde el punto de control eran ese estado, no la ruta).
+const SOLO_ROUTES: Partial<Record<string, readonly SessionRoute[]>> = { firefox: ["inicio-yo", "actividad"], webkit: ["inicio-yo", "actividad"] };
+let solo: Pick<SeededCouple, "sara"> | null = null;
+const usesSolo = (browser: Browser, route: SessionRoute) => (SOLO_ROUTES[browser.browserType().name()] ?? []).includes(route);
 
 async function sessionLoad(browser: Browser, baseURL: string, route: SessionRoute, theme: Theme, width: number, init: string[] = []) {
   const spec = SESSION_ROUTES[route];
-  pair ??= await seedReleaseCouple(test.info().parallelIndex);
-  const context = await sessionContext(browser, baseURL, pair, { theme, width, context: spec.context, recordVideo: true });
+  let owner: Pick<SeededCouple, "sara">;
+  if (usesSolo(browser, route)) {
+    if (!solo) { const sara = await seedUser({ role: "cls-sin-pareja", index: test.info().parallelIndex }); await seedMovements(sara, "recent"); solo = { sara }; }
+    owner = solo;
+  } else owner = pair ??= await seedReleaseCouple(test.info().parallelIndex);
+  const context = await sessionContext(browser, baseURL, owner, { theme, width, context: spec.context, recordVideo: true });
   const page = await context.newPage();
   await page.addInitScript(RECORDER);
   for (const script of init) await page.addInitScript(script);
@@ -68,8 +90,36 @@ async function publicLoad(browser: Browser, baseURL: string, route: PublicRoute,
   const page = await context.newPage();
   await page.addInitScript(RECORDER);
   for (const script of init) await page.addInitScript(script);
+  // Diagnóstico de A1 (solo la prueba): en el PRIMER fotograma con el titular, cuántas líneas ocupa su primera línea, su ancho y
+  // qué fuentes están ya cargadas. Con eso se sabe con qué fuente se pintó antes de llegar Brygada.
+  if (route === "a1") await page.addInitScript(() => {
+    const w = window as unknown as { __a1First?: unknown };
+    const look = () => {
+      const line = document.querySelector("h1 span.block");
+      if (!line) { requestAnimationFrame(look); return; }
+      const range = document.createRange(); range.selectNodeContents(line);
+      w.__a1First = { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width),
+        brygada: document.fonts.check('500 44px "Brygada 1918"'), georgia: document.fonts.check('500 44px Georgia'), respaldo: document.fonts.check('500 44px "Brygada Fallback"'),
+        estado: [...document.fonts].filter((face) => /Brygada/.test(face.family)).map((face) => `${face.family}·${face.weight}·${face.style}:${face.status}`) };
+    };
+    requestAnimationFrame(look);
+  });
   await page.goto(PUBLIC_ROUTES[route]);
   await expect(page.locator("main").first()).toBeVisible();
+  // 005 · PR B, diagnóstico de A1 en Firefox (solo la prueba): el titular cambia de corte de línea al llegar Brygada (−43 px en
+  // 15 de 15 cargas), aunque en Chromium cabe con su respaldo calibrado (330,8 px en una columna de 342 a 390). Se registra si
+  // las caras locales de respaldo resolvieron en este motor y con qué ancho se pintó la primera línea al empezar.
+  if (route === "a1") {
+    const fonts = await page.evaluate(async () => {
+      const faces = [...document.fonts].filter((face) => /Fallback/.test(face.family)).map((face) => ({ familia: face.family.replace(/"/g, ""), peso: face.weight, estilo: face.style, rango: face.unicodeRange, estado: face.status }));
+      const line = document.querySelector("h1 span.block");
+      const range = document.createRange(); if (line) range.selectNodeContents(line);
+      const first = (window as unknown as { __a1First?: unknown }).__a1First ?? null;
+      return { primerFotograma: first, caras: faces, primeraLinea: line ? { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width), fuente: getComputedStyle(line).fontFamily } : null,
+        brygadaCargada: document.fonts.check('500 44px "Brygada 1918"') };
+    });
+    await record("cls-frames-fuentes.jsonl", { ruta: route, motor: engine(browser), ancho: width, tema: themeLabel(theme), ...fonts });
+  }
   return page;
 }
 
@@ -97,10 +147,27 @@ if (SET !== "controls") {
   for (const route of (SETS[SET] ?? []).filter((name) => only.length === 0 || only.includes(name))) {
     test(`@release comparador · ${route}`, async ({ browser, baseURL }) => {
       test.setTimeout(20 * 60_000);
+      // Cargas inválidas por el arnés (R5; decisión del gestor del 19 nov 2026): se registran aparte, se repiten una vez y nunca
+      // cuentan como CLS = 0. Si la repetición también es inválida, la ruta no puede salir en verde.
+      let invalid = 0, invalidAgain = 0;
       for (const [index, { theme, width }] of schedule().entries()) {
-        const page = route in SESSION_ROUTES ? await sessionLoad(browser, baseURL!, route as SessionRoute, theme, width) : await publicLoad(browser, baseURL!, route as PublicRoute, theme, width);
-        loads.push(await measured(page, { ruta: route, motor: engine(browser), tema: themeLabel(theme), ancho: width, carga: index + 1 }));
+        const meta = { ruta: route, motor: engine(browser), tema: themeLabel(theme), ancho: width, carga: index + 1 };
+        const load = async () => measured(route in SESSION_ROUTES ? await sessionLoad(browser, baseURL!, route as SessionRoute, theme, width) : await publicLoad(browser, baseURL!, route as PublicRoute, theme, width), meta);
+        let result = await load();
+        if (result.harnessError) {
+          invalid++;
+          await record("cls-frames.jsonl", { kind: "inválida por el arnés (R5)", ...meta, intento: 1, desplazamientos: result.desplazamientos.length });
+          result = await load();
+          if (result.harnessError) {
+            invalidAgain++;
+            await record("cls-frames.jsonl", { kind: "inválida por el arnés (R5)", ...meta, intento: 2, desplazamientos: result.desplazamientos.length });
+            continue;
+          }
+        }
+        loads.push(result);
       }
+      await record("cls-frames.jsonl", { kind: "inválidas por el arnés (R5)", ruta: route, motor: engine(browser), cuenta: route in SESSION_ROUTES && usesSolo(browser, route as SessionRoute) ? "sin pareja (R5, opción a)" : route in SESSION_ROUTES ? "pareja" : "sin sesión", invalidas: invalid, repetidasInvalidas: invalidAgain });
+      verdict(invalidAgain === 0, `${route} · ${engine(browser)}: ${invalidAgain} cargas inválidas por el arnés también al repetir (estado de error en vez de la ruta; R5)`);
       const [row] = summarize(loads.filter((load) => load.ruta === route));
       verdict(row.incompletas === 0, `${route} · ${row.motor}: ${row.incompletas} de ${row.cargas} cargas sin ventana verificable (inconclusas)`);
       verdict(row.conDesplazamientos === 0, `${route} · ${row.motor}: ${row.conDesplazamientos} de ${row.cargas} cargas con desplazamientos por fotogramas`);

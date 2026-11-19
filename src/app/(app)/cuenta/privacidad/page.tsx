@@ -29,7 +29,7 @@ export default function PrivacyPage() {
       </MenuGroup>
       <MenuGroup title={copy.account.privacy.yourData}>
         <ExportEntry />
-        <div className="pt-2.5"><LimitNote title={copy.account.privacy.deleteTitle} description={copy.account.privacy.deleteDescription} /></div>
+        <div className="pt-2.5"><LimitNote title={copy.account.privacy.deleteTitle} description={copy.account.privacy.deleteDescription} detail={copy.account.privacy.deleteHowTo} /></div>
       </MenuGroup>
     </>
   );

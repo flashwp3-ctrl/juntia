@@ -84,7 +84,7 @@ export function GoalsScreen({ data, today, actions }: Props) {
     const empty = copy.goals.empty[context];
     return (
       <div className="flex flex-col gap-8 pb-6">
-        <ExitState icon="flag-banner" title={empty.title} description={empty.description} actions={<Button size="lg" icon="plus" onClick={create}>{empty.action}</Button>} />
+        <ExitState icon="flag-banner" title={empty.title} description={empty.description} actions={<Button size="lg" icon="plus" onClick={create} stableWidth>{empty.action}</Button>} />
         <Archived goals={archived} />
         {sheet}
       </div>

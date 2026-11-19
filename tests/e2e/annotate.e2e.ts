@@ -33,6 +33,10 @@ async function signedInHome(page: Page, user: SeededUser) {
 const ringOf = (sheet: Locator) => sheet.getByRole("textbox", { name: copy.annotate.amount }).evaluate((node) => getComputedStyle(node.parentElement!).outlineStyle);
 
 async function annotate(page: Page, pesos: string) {
+  // 005 · PR B (corrección 6, FR-020): el atajo `n` lo escucha el proveedor de Anotar al hidratar. En WebKit, Inicio ya estaba
+  // pintado y la hidratación aún no había terminado: la tecla no abría la hoja (run 44349192421, «element(s) not found»). Se
+  // espera la marca de hidratación del shell, no un tiempo.
+  await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
   await page.locator("body").focus();
   await page.keyboard.press("n");
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });

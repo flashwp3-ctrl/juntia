@@ -16,7 +16,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DialogTitle, Modal } from "@/components/ui/modal";
+import { SheetTitle, Modal } from "@/components/ui/modal";
 import { Segmented } from "@/components/ui/segmented";
 import { initialOf } from "@/domain/account";
 import { formatMoney, moneyFromPesos, type Money } from "@/domain/money";
@@ -112,7 +112,7 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span />
-        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.balance.settle.title}</DialogTitle>
+        <SheetTitle>{copy.balance.settle.title}</SheetTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>

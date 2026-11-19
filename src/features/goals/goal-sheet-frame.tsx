@@ -8,7 +8,7 @@ import { useState, type ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
-import { DialogTitle } from "@/components/ui/modal";
+import { SheetTitle } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
 import { copy } from "@/lib/copy/es";
 
@@ -36,7 +36,7 @@ export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, chi
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-saving-subtle text-saving"><AppIcon name={icon} weight="duotone" size={22} /></span>
-        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+        <SheetTitle>{title}</SheetTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.primitives.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>
