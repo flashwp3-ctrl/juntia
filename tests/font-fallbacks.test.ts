@@ -41,17 +41,9 @@ describe("respaldos de fuente que resuelven también en Linux (corrección 1 del
     }
   });
 
-  it("Brygada: tras Georgia, una familia calibrada contra Times New Roman / Liberation Serif con las ocho caras", () => {
-    const times = of("Brygada Fallback Times");
-    expect(times.map((face) => `${face.style} ${face.weight}`)).toEqual(
-      ["normal 400", "normal 500", "normal 600", "normal 700", "italic 400", "italic 500", "italic 600", "italic 700"]);
-    for (const face of times) {
-      expect(face.sources.some((name) => name.startsWith(LINUX["Times New Roman"]))).toBe(true);
-      expect(face.sources.some((name) => name.startsWith("Times New Roman"))).toBe(true);
-      // Brygada es más ancha que Times en todas sus caras (medido sobre las cadenas de es.ts): el ajuste nunca es ≤ 100 %.
-      expect(face.sizeAdjust).toBeGreaterThan(100);
-    }
-    expect(layout).toMatch(/fallback: \["Brygada Fallback", "Brygada Fallback Times"\]/);
+  it("Brygada: sin segunda familia de respaldo (la de Times se retiró: en Firefox alargaba el título en cursiva de A1)", () => {
+    expect(of("Brygada Fallback Times")).toHaveLength(0);
+    expect(layout).toMatch(/fallback: \["Brygada Fallback"\]/);
   });
 
   it("Spline Sans Mono: respaldo monoespaciado (Courier New / Liberation Mono, mismo avance de 0,6 em), no el Arial de next/font", () => {

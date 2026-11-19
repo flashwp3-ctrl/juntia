@@ -96,21 +96,12 @@
    Firefox resuelven local() por el nombre exacto, sin los alias de fontconfig: el respaldo no cargaba, el texto se pintaba
    con la fuente por defecto y, al llegar la fuente, el selector Yo/Nosotros crecía 4 px (10 px en Firefox) a 390 en las siete
    rutas (run 44349192421). Liberation Sans, Serif y Mono (fonts-liberation) tienen las métricas de Arial, Times New Roman y
-   Courier New. Onest añade Liberation Sans a sus caras (mismo ajuste). Brygada no tiene equivalente de Georgia en Linux: tras
-   «Brygada Fallback» va «Brygada Fallback Times», calibrada contra Times New Roman con el método de D-01 sobre las 937 cadenas
-   de es.ts (media de la relación de anchos): 400 → 1,1435; 500 → 1,1534; 600 → 1,0881 y 700 → 1,1099 (Times Bold); itálicas
-   1,0797 · 1,0907 · 1,0748 · 1,1001. El mismo método reproduce los valores de D-01 (Onest/Arial 500 → 1,0511; 600 → 0,9914).
+   Courier New. Onest añade Liberation Sans a sus caras (mismo ajuste). Brygada no tiene equivalente de Georgia en Linux; una
+   familia calibrada contra Times / Liberation Serif se probó y se retiró: en Firefox resolvía y el título en cursiva de A1
+   ganaba una línea hasta llegar Brygada (43 px en 15 de 15 cargas, parcial 44425161264).
    Spline Sans Mono avanza 0,6 em, igual que Courier New (medido 0,6000 frente a 0,6001): su respaldo es Courier New o
    Liberation Mono sin ajuste de tamaño, en vez del Arial con 134,59 % que generaba next/font (proporcional y sin nombre de
-   Linux). Verticales: Brygada 920/250 y Spline Sans Mono 963,5/236,5 sobre 1000, divididas por el ajuste. */
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman"), local("TimesNewRomanPSMT"), local("Liberation Serif"), local("LiberationSerif"); font-style: normal; font-weight: 400; size-adjust: 114.35%; ascent-override: 80.45%; descent-override: 21.86%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman"), local("TimesNewRomanPSMT"), local("Liberation Serif"), local("LiberationSerif"); font-style: normal; font-weight: 500; size-adjust: 115.34%; ascent-override: 79.76%; descent-override: 21.68%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"), local("LiberationSerif-Bold"); font-style: normal; font-weight: 600; size-adjust: 108.81%; ascent-override: 84.55%; descent-override: 22.98%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Bold"), local("TimesNewRomanPS-BoldMT"), local("Liberation Serif Bold"), local("LiberationSerif-Bold"); font-style: normal; font-weight: 700; size-adjust: 110.99%; ascent-override: 82.89%; descent-override: 22.52%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Italic"), local("TimesNewRomanPS-ItalicMT"), local("Liberation Serif Italic"), local("LiberationSerif-Italic"); font-style: italic; font-weight: 400; size-adjust: 107.97%; ascent-override: 85.21%; descent-override: 23.15%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Italic"), local("TimesNewRomanPS-ItalicMT"), local("Liberation Serif Italic"), local("LiberationSerif-Italic"); font-style: italic; font-weight: 500; size-adjust: 109.07%; ascent-override: 84.35%; descent-override: 22.92%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Bold Italic"), local("TimesNewRomanPS-BoldItalicMT"), local("Liberation Serif Bold Italic"), local("LiberationSerif-BoldItalic"); font-style: italic; font-weight: 600; size-adjust: 107.48%; ascent-override: 85.60%; descent-override: 23.26%; line-gap-override: 0%; }
-@font-face { font-family: "Brygada Fallback Times"; src: local("Times New Roman Bold Italic"), local("TimesNewRomanPS-BoldItalicMT"), local("Liberation Serif Bold Italic"), local("LiberationSerif-BoldItalic"); font-style: italic; font-weight: 700; size-adjust: 110.01%; ascent-override: 83.63%; descent-override: 22.73%; line-gap-override: 0%; }
+   Linux). Verticales de Spline Sans Mono: 963,5/236,5 sobre 1000. */
 @font-face { font-family: "Spline Mono Fallback"; src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("LiberationMono"); font-weight: 500; size-adjust: 100%; ascent-override: 96.35%; descent-override: 23.65%; line-gap-override: 0%; }
 
 html { font-variant-numeric: tabular-nums; }
