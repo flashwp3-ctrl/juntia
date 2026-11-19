@@ -825,6 +825,8 @@ La **confirmación técnica de capacidades de Supabase** que antes figuraba como
 
 CLS = 0 en las cargas con skeleton de las rutas clave · INP < 200 ms al abrir Anotar y al guardar · mediana < 10 s para registrar un gasto habitual en teléfono real tras el onboarding (US-12) · sin scroll horizontal en 360, 390, 430, 1024 y 1440 · objetivos táctiles ≥ 44 px. Lighthouse 95+ sigue siendo aspiracional y **no** reemplaza estos umbrales. **Verificado hasta ahora: nada.** No se ejecutó ninguna medición durante la fase de diseño.
 
+> **Excepción para MVP-1 del 19 de noviembre de 2026** (§15.10, decisión 26.1). El CLS = 0 admite un único residuo: el de las fuentes que llegan tarde. En Chromium, con CPU y red lentas, son 3–4 de cada 50 cargas de Plan, Metas y Balance, con CLS ≤ 0,025. En Firefox, el primer pintado de `/crear-cuenta` a 390. Safari da 0. D-01 no cambia y la excepción se revisa después de MVP-1. Fuera de ese residuo, el umbral sigue bloqueando.
+
 ### 15.8 Lo que esta actualización NO cambia
 
 Siguen vigentes sin modificación: DEC-R01 (presupuesto opcional, `null` ≠ cero), DEC-R17 (no afirmar «te alcanza»), DEC-G01..G03 y G05..G06, los ADR-001 a ADR-010 de §12.2, las exclusiones del MVP-1 de §2.4 y §12.4, la arquitectura de §7, el gate humano conjunto de §10.4 y la definición de terminado de §10.3.
@@ -889,7 +891,7 @@ Un `[P]` no se da por cerrado dentro de un PR de código sin que una persona lo 
 
 ### 15.10 Decisiones de los fundadores del 3 de noviembre de 2026
 
-Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 25 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
+Tomadas por los dos fundadores en la hoja de decisiones previa a la especificación 001, con contexto, capturas del diseño y opciones. Las diez coinciden con la recomendación del gestor y no llevan notas. Las decisiones 11 a 26 se tomaron después, por separado, y se registran debajo de la tabla. Esta sección es su registro; lo que cambian en otros documentos se aplicó en el mismo PR.
 
 | # | Decisión | Elección | Consecuencia |
 | --- | --- | --- | --- |
@@ -1198,6 +1200,15 @@ Los dos fundadores la tomaron el 17 de noviembre de 2026 sobre las doce pregunta
 | 25.6 | N2 · Listas largas | Los fundadores no recorren en el teléfono la cuenta de listas largas de `juntia-dev`: revisan las capturas de 005-T027 y T054 |
 
 D1 a D4 se tomaron sobre el plan de la 005 (PR #85, «Para los fundadores») y N1 y N2 sobre sus tareas (PR #86); los fundadores aceptaron las recomendaciones tal como estaban propuestas, y Alejandro las comunicó al gestor en nombre de los dos. Ningún presupuesto de CI, umbral ni spec E2E cambia con esta decisión.
+
+#### Decisión 26: residuo de CLS por fuentes tardías
+
+Tomada por los fundadores el 19 de noviembre de 2026, con las mediciones del PR B de P0-4. Alejandro la comunicó al gestor en nombre de los dos.
+
+| # | Tema | Elección |
+| --- | --- | --- |
+| 26.1 | CLS = 0 de §15.7 con fuentes que llegan tarde | **Excepción para MVP-1.** Cubre solo este residuo:<br>- **Chromium**, con CPU y red lentas: en Plan, Metas y Balance, 3–4 de cada 50 cargas tienen un CLS ≤ 0,025. Es texto libre que cambia de ancho cuando llegan Onest o Brygada 1918.<br>- **Firefox**: en `/crear-cuenta` a 390, 8 de 15 cargas se desplazan 16–34 px en el primer pintado, antes de que haya fuentes.<br>- **Safari** da 0 en todas las pantallas.<br>D-01, el respaldo calibrado de la 001 (`specs/001-frontend-foundation/evidence.md`), no cambia. La excepción se revisa después de MVP-1. El umbral no se mueve: fuera de este residuo, CLS = 0 sigue bloqueando |
+| 26.2 | Calibración de D-01 para las cifras | **Afinado**, hecho en el PR B de P0-4 (18 de noviembre de 2026): una cara de respaldo **solo para dígitos**, con `unicode-range` U+0030–0039 sobre Verdana y `size-adjust` de 105,71 % / 94,67 %. Donde no hay Verdana, el respaldo es el de siempre |
 
 #### Dataset dorado: quién lo produce y cuándo
 
