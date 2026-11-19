@@ -345,6 +345,10 @@ Run [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/443491924
 
 ### CLS en Chromium (FR-050)
 
+**EXCEPCIÓN APROBADA para MVP-1** (fundadores, 19 nov 2026, «Excepción MVP-1»; vía el gestor): el residuo de CLS por fuentes
+que llegan tarde. Detalle, medida y causa en «Excepciones aprobadas de §15.7», abajo. Los tramos que siguen en rojo solo por él
+quedan como **«rojo por excepción aprobada»**; las aserciones no se debilitan.
+
 Laboratorio · API Layout Instability · Chromium, CPU 6× y red lenta (400 ms, 400 kbps). 40 cargas en claro y 10 en oscuro, alternando 390 y 1440. CLS sin redondear.
 
 | Tramo | Run | Cargas | CLS > 0 | Dónde (tema y ancho: cargas) | Máximo | Control 7: coinciden / discrepancias | Rótulo |
@@ -358,6 +362,10 @@ Laboratorio · API Layout Instability · Chromium, CPU 6× y red lenta (400 ms, 
 | `cls-plan` | [44349192421](https://github.com/flashwp3-ctrl/juntia/actions/runs/44349192421) | 50 | 29 | claro 390: 20; claro 1440: 2; oscuro 390: 5; oscuro 1440: 2 | 0,0005943131644375858 | 46 / 4 | laboratorio · chromium 156.0.8078.4 |
 
 ### Comparador por fotogramas, por motor y control (FR-051)
+
+**EXCEPCIÓN APROBADA para MVP-1** (fundadores, 19 nov 2026, «Excepción MVP-1»; vía el gestor): el residuo de CLS por fuentes
+que llegan tarde. Detalle, medida y causa en «Excepciones aprobadas de §15.7», abajo. Los tramos que siguen en rojo solo por él
+quedan como **«rojo por excepción aprobada»**; las aserciones no se debilitan.
 
 Método (§3.2) en los tres motores: suma de `offsetLeft`/`offsetTop` por la cadena de `offsetParent` (método principal). Controles en Inicio · Nosotros (lectura retenida 1,5 s), 10 cargas cada uno; se cuentan los desplazamientos desde el fotograma en que actúa el control (lectura de ejecución 2).
 
@@ -553,6 +561,22 @@ Hechos del run 44349192421; las decisiones sobre ellos son del gestor y, si hace
   lanzamiento completo se proyecta en unos 204 minutos (cada tramo partido paga su arranque dos veces). Riesgo: cada mitad
   de `cls-inicio-yo` se proyecta en unos 640 s, porque el arranque (~270 s) no se parte y sus cargas son lentas (~15 s
   cada una, frente a ~4 s en las demás rutas). Lo mide el parcial siguiente; si pasa de 600 s, se vuelve a partir.
+
+## Excepciones aprobadas de §15.7 (umbrales del gate)
+
+Las dos son de los fundadores y valen para **MVP-1**; se revisan después. Ninguna cambia un umbral ni una aserción: el
+laboratorio sigue midiendo y el tramo afectado queda **«rojo por excepción aprobada»**.
+
+| Umbral (§15.7) | Qué no cumple | Medida (laboratorio) | Causa | Decisión | Se revisa |
+| --- | --- | --- | --- | --- | --- |
+| GoalStack ≥ 55 fps (D3; FR-053) | El primer deslizamiento de la pila a 390 | 97,7 %, un fotograma de ~85 ms ([44437546506](https://github.com/flashwp3-ctrl/juntia/actions/runs/44437546506)); el resto de animaciones cumple | 71 ms de render de React + el `IntersectionObserver` de la precarga por viewport del `<Link>` (LoAF) | Excepción MVP-1, 18 nov 2026; la pila **no** pasa a lista | Con F02 (precarga) |
+| CLS = 0 con esqueleto (FR-050, FR-051) | Fuentes que llegan tarde: texto libre que cambia de corte o de ancho al llegar Onest o Brygada | **Chromium**, CPU 6× y red lenta, 50 cargas por ruta ([44445684478](https://github.com/flashwp3-ctrl/juntia/actions/runs/44445684478)): Plan 4/50, CLS máx. 0,025 (el párrafo «Los presupuestos son opcionales…» a 390); Metas 3/50, 0,0023 (el título de la tarjeta de meta, en Brygada); Balance 3/50, 0,0026 (filas de liquidaciones y fichas). Todo después de la ventana del esqueleto, a ~20–210 ms del primer fotograma final. **Firefox**, por fotogramas ([44451461265](https://github.com/flashwp3-ctrl/juntia/actions/runs/44451461265)): A2 `/crear-cuenta` a 390, 8/15 cargas, el formulario sube 16 px y la etiqueta de aceptación 34 px en el primer pintado | Los respaldos de D-01 igualan el ancho medio, no el de cada cadena; en Firefox, además, el primer fotograma se pinta antes de cargar la fuente y su respaldo local | Excepción MVP-1, 19 nov 2026; **D-01 no cambia** | Después de MVP-1 |
+
+Lo que el PR B sí corrigió de CLS (antes en el punto de control, 23–28 de 50 cargas por ruta en Chromium y 8/15 en Firefox): el
+selector Yo/Nosotros, las etiquetas de la barra inferior y las acciones centradas o alineadas a la derecha (cajas de ancho fijo
+en em, opción A); las cifras (cara de respaldo sobre Verdana, afinado de D-01); el titular, el botón y los enlaces de A1 en
+Firefox. Rutas en verde en el último laboratorio: Chromium Actividad, Análisis, Inicio en Yo y en Nosotros; Firefox y WebKit,
+todas salvo A2 en Firefox.
 
 ## Tabla de CWV (FR-056)
 
