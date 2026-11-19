@@ -95,7 +95,12 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
   // F05: el héroe y «Solo tuyos» suman los gastos en vuelo que la lista aún no trae (los mismos ids que avisa `HomeScope`).
   const privateIds = rows.map(({ id }) => id);
   return (
-    <div className="flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
+    // 005 · PR B (corrección 5, FR-042; residuo de F13, research R9): las dos columnas de abajo exigen, además de lg, que este
+    // bloque mida 55,75rem, el ancho que tiene al empezar lg (1024 − 76 del rail − 56 de margen = 892 px). A la escala normal
+    // es lo mismo que lg; con la raíz al 200 % (el caso del barrido) el bloque no llega y se apila, como con la letra del sistema
+    // al 200 %, que dobla también las media queries. Medido: lo que desbordaba a 1440 (1.447 px) era la columna de 5/12 con la
+    // tarjeta de meta, cuyo título no se parte; no el abanico, que en Inicio no se usa.
+    <div className="@container/home flex flex-col gap-6 pt-5 lg:gap-10 lg:pt-8">
       {scope}
       <section aria-labelledby="home-hero" className="flex flex-col gap-1.5 lg:gap-2.5">
         <p className="hidden text-[length:var(--body-s-size)] text-ink-secondary lg:block">{copy.home.dateLine(longDate(today), daysLeftInMonth(today))}</p>
@@ -111,8 +116,8 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
       {/* DEC-G04: el ahorro del mes, aparte del héroe y nunca sumado a él. */}
       {goals ? <div className="lg:-mt-4 lg:max-w-[560px]"><SetAsideLine goals={goals} context="me" /></div> : null}
       <AnnotateCta />
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-10">
-        <div className="flex flex-col gap-6 lg:order-2">
+      <div className="flex flex-col gap-6 lg:@min-[55.75rem]/home:grid lg:@min-[55.75rem]/home:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:@min-[55.75rem]/home:items-start lg:@min-[55.75rem]/home:gap-10">
+        <div className="flex flex-col gap-6 lg:@min-[55.75rem]/home:order-2">
         {spentBy.length > 0 ? (
           <section aria-labelledby="home-breakdown" className="flex flex-col gap-3 lg:rounded-[var(--radius-xl)] lg:p-5 lg:shadow-[0_0_0_1.5px_var(--color-border-subtle)]">
             {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
@@ -140,7 +145,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
         ) : null}
         {goals ? <GoalsModule goals={goals} context="me" today={today} /> : null}
         </div>
-        <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:order-1">
+        <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:@min-[55.75rem]/home:order-1">
           <div className="flex items-baseline justify-between gap-3 pb-1">
             <h2 id="home-recent" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
