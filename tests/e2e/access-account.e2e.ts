@@ -17,7 +17,7 @@ import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
 import { confirmLink } from "../support/mailpit";
 import { seedMovements, seedUser } from "../support/seed";
-import { expect, signInContext, test } from "./fixtures";
+import { attachNavigations, expect, recordNavigations, routerSettled, signInContext, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
 test.use({ storageState: anonymous });
@@ -31,8 +31,10 @@ async function mailLink(email: string, type: "signup" | "recovery") {
   return link!;
 }
 
-async function signUpWith(page: Page, name: string, email: string, password: string) {
-  await page.goto("/crear-cuenta");
+test.afterEach(async ({}, testInfo) => { await attachNavigations(testInfo); });
+
+async function signUpWith(page: Page, name: string, email: string, password: string, { navigate = true } = {}) {
+  if (navigate) await page.goto("/crear-cuenta");
   await page.getByRole("textbox", { name: copy.auth.signUp.nameLabel }).fill(name);
   await page.getByRole("textbox", { name: copy.auth.fields.email }).fill(email);
   await page.getByLabel(copy.auth.fields.password, { exact: true }).fill(password);
@@ -40,13 +42,20 @@ async function signUpWith(page: Page, name: string, email: string, password: str
   await page.getByRole("button", { name: copy.auth.signUp.submit }).click();
   await expect(page).toHaveURL(/\/verificar-correo$/);
   await expect(page.getByRole("heading", { level: 1, name: copy.auth.verifyEmail.title })).toBeVisible();
+  await routerSettled(page);
   return (await page.locator("main").innerText()).trim();
 }
 
 async function signInWith(page: Page, email: string, password: string) {
   await page.getByRole("textbox", { name: copy.auth.fields.email }).fill(email);
   await page.getByLabel(copy.auth.fields.password, { exact: true }).fill(password);
+  // Entrar navega con una carga completa (`window.location.assign`, sign-in-form.tsx). 005 · PR B (corrección 6): en WebKit la URL
+  // cambia antes de que el documento nuevo esté listo; sin esperar su carga, la prueba leía el documento de /entrar (:130, tema
+  // claro) o su `goto` siguiente chocaba con la hidratación (:106).
+  const loaded = page.waitForEvent("load");
   await page.getByRole("button", { name: copy.auth.signIn.submit }).click();
+  await loaded;
+  await routerSettled(page);
 }
 
 // `@mail`: envían o leen un correo (Mailpit o el envío de registro y recuperación). Solo en CI; `e2e:dev` las excluye
@@ -55,6 +64,7 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 con «Invit
   const email = `signup-${randomUUID().slice(0, 8)}@seed.test`;
   const password = `Clave-${randomUUID().slice(0, 8)}`;
   runnerSql(`insert into juntia_data.signup_allowlist(email) values (${sqlText(email)})`);
+  recordNavigations(page);
   try {
     await signUpWith(page, "Sara Nueva", email, password);
     expect(userCount(email)).toBe("1");
@@ -74,6 +84,7 @@ test("registro permitido: Mailpit → A1 con aviso → entrar → A6 con «Invit
     await page.getByRole("button", { name: copy.auth.firstEntry.continue }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("heading", { level: 1, name: copy.home.greeting("Sara Nueva") })).toBeVisible();
+    await routerSettled(page);
 
     // Enlace ya usado: aviso de enlace caducado, sin ningún dato de la cuenta.
     await page.context().clearCookies();
@@ -168,6 +179,7 @@ test("Mi cuenta: perfil, apariencia en oscuro y un segundo dispositivo oscuro an
 });
 
 test("recuperación uniforme; /auth/confirm caducado → aviso sin datos; enlace válido → A5", { tag: "@mail" }, async ({ page }) => {
+  recordNavigations(page);
   await page.goto("/recuperar");
   const email = page.getByRole("textbox", { name: copy.auth.fields.email });
   await email.fill(`nadie-${randomUUID().slice(0, 8)}@seed.test`);
@@ -401,7 +413,9 @@ test("invitación → M5 sin datos → entrar → volver → M6 → aceptar → 
 
   // Sara ve M1 al recargar; el enlace usado ya no sirve (M7).
   await page.reload();
-  await expect(page.getByText(copy.couple.status.active, { exact: true })).toBeVisible();
+  // 005 · PR B (corrección 6): `getByText` estricto contaba también un nodo oculto en WebKit («resolved to 2 elements»). Lo que se
+  // exige es que se vea UNA: un duplicado visible seguiría fallando.
+  await expect(page.getByText(copy.couple.status.active, { exact: true }).filter({ visible: true })).toHaveCount(1);
   await tab.goto(link);
   await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.invalid })).toBeVisible();
   await other.close();
@@ -421,7 +435,10 @@ test("invitación → M5 → crear la cuenta y verificarla → la intención del
     await tab.goto(link);
     await expect(tab.getByRole("heading", { level: 1, name: copy.couple.invitation.signedOut.title })).toBeVisible();
     await tab.getByRole("link", { name: copy.couple.invitation.signedOut.signUp }).click();
-    await signUpWith(tab, "Tomás", email, password);
+    // 005 · PR B (corrección 6): el enlace ya navega a /crear-cuenta con `volver`; un `goto` encima chocaba con esa navegación en
+    // WebKit y, en Chromium, la cancelaba sin decirlo (la prueba no pasaba por el enlace que dice probar).
+    await expect(tab).toHaveURL(/\/crear-cuenta\?volver=%2Finvitacion$/);
+    await signUpWith(tab, "Tomás", email, password, { navigate: false });
     // El enlace de verificación no conserva `volver` (research R5): vuelve por la intención guardada en el dispositivo.
     await tab.goto(await mailLink(email, "signup"));
     await expect(tab).toHaveURL(/\/entrar\?aviso=verificado$/);

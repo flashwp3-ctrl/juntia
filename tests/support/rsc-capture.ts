@@ -22,7 +22,12 @@ export async function captureRsc(page: Page) {
     const body = new Promise<string>((resolve, reject) => { settle = resolve; fail = reject; });
     // Sin esto, un rechazo que nadie espera todavía sería un error no manejado; al leerlo con `read`, falla igual.
     body.catch(() => {});
-    fetched.push({ path: new URL(route.request().url()).pathname, underUs: underUsCookie(await route.request().headerValue("cookie")), body });
+    // 005 · PR B (corrección 6, FR-020): WebKit no expone la cabecera Cookie en la petición interceptada (la añade su capa de red
+    // después), y todas salían como «no de Nosotros»: la lista quedaba vacía (run 44349192421, cuatro fallos «RSC del cambio»).
+    // Sin cabecera, cuenta la cookie que el contexto tiene para esa URL en el instante de interceptarla, que es la que viaja.
+    const header = await route.request().headerValue("cookie");
+    const jar = header === null ? (await page.context().cookies(route.request().url())).map(({ name, value }) => `${name}=${value}`).join("; ") : header;
+    fetched.push({ path: new URL(route.request().url()).pathname, underUs: underUsCookie(jar), body });
     try {
       const response = await route.fetch();
       const text = await response.text();
