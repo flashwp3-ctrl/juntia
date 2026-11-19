@@ -122,7 +122,9 @@ export function GoalCard({ goal, members, today, context, peek = false, fanned =
           {peek ? <span aria-hidden="true" data-peek-percent="" className={`absolute top-3.5 right-4 rounded-full ${fanned ? "lg:top-16" : ""} bg-raised px-2.5 py-1 text-[0.8125rem] font-semibold tabular-nums shadow-raised`}>{copy.goals.percent(goal.progressPercent)}</span> : null}
           {/* F79-2: en la que asoma, este bloque es invisible y solo da alto; con la letra ampliada ese alto la hacía más larga que la del frente y
               asomaba por debajo de la pila (móvil). Por debajo de lg se quita: tapada por la del frente, la tarjeta mide su mínimo. */}
-          <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? "invisible max-lg:hidden" : ""}`}>
+          {/* 005 · PR B (corrección 5): fuera del abanico (la pila de Inicio, también desde lg) se quita en cualquier ancho; con la raíz al
+              200 % a 1440 la que asomaba medía más que la del frente y se veía por debajo. En el abanico sigue dando alto. */}
+          <span aria-hidden="true" className={`relative flex flex-col gap-2.5 ${peek ? (fanned ? "invisible max-lg:hidden" : "hidden") : ""}`}>
             <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="flex items-center gap-2">
                 <span className="text-[1.75rem] leading-none font-semibold tracking-[-0.02em] tabular-nums">{copy.goals.percent(goal.progressPercent)}</span>
