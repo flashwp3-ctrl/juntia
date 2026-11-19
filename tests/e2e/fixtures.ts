@@ -73,7 +73,10 @@ export function recordNavigations(page: Page) {
 export async function attachNavigations(testInfo: TestInfo) {
   const lines = navigationLogs.get(testInfo.testId);
   navigationLogs.delete(testInfo.testId);
-  if (lines && testInfo.status !== testInfo.expectedStatus) await testInfo.attach("navegaciones", { body: lines.join("\n"), contentType: "text/plain" });
+  if (!lines || testInfo.status === testInfo.expectedStatus) return;
+  await testInfo.attach("navegaciones", { body: lines.join("\n"), contentType: "text/plain" });
+  // El reporter de lista recorta el texto de los adjuntos (run 44437546506); la consola sale entera en el log del CI.
+  for (const line of lines) console.log(`navegación · ${testInfo.title.slice(0, 30)} · ${line}`);
 }
 
 export { expect } from "@playwright/test";
