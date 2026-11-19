@@ -29,3 +29,16 @@ describe("acciones centradas con caja de ancho fijo (PR B)", () => {
     expect(box("Guardar")).toBeNull();
   });
 });
+
+// 005 · PR B (gestor, 19 nov 2026): parcial 44449050533, A1 en Firefox: en el primer fotograma (fuente del sistema, más ancha que
+// Onest) el texto se partía en dos líneas DENTRO de su caja fija y el enlace bajaba 11 px. Criterio: no se parte mientras la
+// columna de contenido (contenedor «page») mida 17rem o más, es decir, a la escala normal; con el texto al 200 % la columna no
+// llega y vuelve a partirse, para que el botón lg y los demás no desborden.
+describe("StableLabel no se parte a la escala normal (PR B)", () => {
+  it("lleva nowrap solo desde 17rem del contenedor «page»", () => {
+    render(<Button stableWidth>Reintentar</Button>);
+    const label = box("Reintentar")!;
+    expect(label.className).toMatch(/@min-\[17rem\]\/page:whitespace-nowrap/);
+    expect(label.className).not.toMatch(/(^| )whitespace-nowrap/);
+  });
+});

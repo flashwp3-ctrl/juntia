@@ -148,7 +148,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           className={`mx-auto w-full max-w-[1192px] px-5 pt-3 md:px-7 lg:pt-9 lg:pb-16 xl:px-10 xl:pt-10 ${stacked ? "pb-12 md:pb-[calc(112px+env(safe-area-inset-bottom))]" : "pb-[calc(112px+env(safe-area-inset-bottom))]"}`}
         >
           {/* P0-1, PR C (T066, FR-044): sin el aviso de versión base de la 001; el servidor ya guarda los datos. */}
-          <div className="min-w-0">{children}</div>
+          {/* 005 · PR B: contenedor «page», la columna de contenido; StableLabel no se parte mientras mida 17rem o más. */}
+          <div className="@container/page min-w-0">{children}</div>
         </div>
       </div>
       <BottomBar pathname={pathname} stacked={stacked} />

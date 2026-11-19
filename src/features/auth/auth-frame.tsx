@@ -13,7 +13,8 @@ export function AuthFrame({ children }: { children: ReactNode }) {
         {copy.shell.brand}
       </p>
       <main id="contenido" className="mx-auto w-full max-w-[440px] px-6 pt-6 pb-12 md:pt-14 lg:mt-[min(9vh,96px)] lg:self-start lg:rounded-[28px] lg:bg-raised lg:px-10 lg:pt-10 lg:pb-10 lg:shadow-raised">
-        <div className="flex flex-col gap-5">{children}</div>
+        {/* 005 · PR B: contenedor «page», la columna de acceso; StableLabel no se parte mientras mida 17rem o más. */}
+        <div className="@container/page flex flex-col gap-5">{children}</div>
       </main>
     </div>
   );
