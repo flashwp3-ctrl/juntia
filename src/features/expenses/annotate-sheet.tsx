@@ -159,7 +159,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
     // y «Restaurantes» se salía de su ficha. Si la rejilla mide menos de 16rem (nunca a 16 px: a 320 mide 17,5rem), dos columnas y
     // el alto que pida el texto, como los segmentados de F79. A la escala normal, igual que antes.
     <div className="@container/cat">
-    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[minmax(64px,auto)] grid-cols-3 gap-2 @max-[16rem]/cat:grid-cols-2">
+    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-3 gap-2 @max-[16rem]/cat:auto-rows-[minmax(64px,auto)] @max-[16rem]/cat:grid-cols-2">
       {ids.map((id, index) => {
         const [bg, fg] = categories[id].tone.split(" ");
         const selected = value === id;

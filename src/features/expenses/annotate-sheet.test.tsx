@@ -176,8 +176,11 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const dialog = await sheet();
     expect(cells(dialog).map((cell) => cell.textContent)).toEqual(ORDER.map((id) => copy.categories[id]));
     expect(grid(dialog).className).toMatch(/grid-cols-3/);
-    // 3 × 64 + 2 × 8 = 208 px. PR B de P0-4: 64 px es el mínimo; con el texto al 200 % la ficha crece en vez de desbordarse.
-    expect(grid(dialog).className).toMatch(/auto-rows-\[minmax\(64px,auto\)\]/);
+    // 3 × 64 + 2 × 8 = 208 px, FIJO a la escala normal (comp 06, opción 1c). PR B de P0-4: solo con el texto ampliado (la rejilla
+    // por debajo de 16rem) la ficha crece en vez de desbordarse. Con minmax también a la escala normal, en el runner Linux una
+    // etiqueta que cortaba en más líneas subía la rejilla a 209,6 px (run 44543146238).
+    expect(grid(dialog).className).toMatch(/(^| )auto-rows-\[64px\]( |$)/);
+    expect(grid(dialog).className).toMatch(/@max-\[16rem\]\/cat:auto-rows-\[minmax\(64px,auto\)\]/);
     expect(grid(dialog).className).not.toMatch(/overflow-x-auto|flex-wrap/);
     // Cada celda: icono encima y nombre debajo, con el color de su categoría; ninguna seleccionada al abrir.
     for (const cell of cells(dialog)) {
