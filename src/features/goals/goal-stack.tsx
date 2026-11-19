@@ -18,7 +18,7 @@
 import Link from "next/link";
 import * as m from "motion/react-m";
 import type { PanInfo } from "motion/react";
-import { useEffect, useRef, useState, type FocusEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { AppIcon } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
@@ -136,9 +136,16 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   const focusOut = () => { focused.current = null; leave(); };
   // Las metas visibles del abanico, en orden de capa (las mismas cuentas que abajo, antes de la salida temprana).
   const frontIndex = Math.max(0, frontId === null ? 0 : goals.findIndex((goal) => goal.id === frontId));
-  const shownKey = fan ? [...goals.slice(frontIndex), ...goals.slice(0, frontIndex)].slice(0, 3).map((goal) => goal.id).join(",") : "";
-  useEffect(() => {
+  // Con «Ver todas» desplegado no hay abanico: ninguna visible, así que el hover o el foco que hubiera se olvidan.
+  const shownKey = fan && !listed ? [...goals.slice(frontIndex), ...goals.slice(0, frontIndex)].slice(0, 3).map((goal) => goal.id).join(",") : "";
+  // F90-3 (revisión del #90): antes de pintar (sin un fotograma con el índice viejo), y olvidando la meta activa y la enfocada
+  // si ya no están entre las visibles: si volvieran sin interacción, o tras un pointerleave, no se reactivan solas.
+  useLayoutEffect(() => {
     visibleIds.current = shownKey ? shownKey.split(",") : [];
+    const gone = (id: string | null) => id !== null && !visibleIds.current.includes(id);
+    if (gone(activeId.current)) activeId.current = null;
+    if (gone(focused.current)) focused.current = null;
+    // El `rest` pendiente se deja correr: lee las refs al dispararse, ya limpias. Cancelarlo dejaría activo un hover que terminó.
     paint();
   });
   if (goals.length === 0) return null;

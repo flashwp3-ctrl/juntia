@@ -1024,33 +1024,88 @@ describe("«Ver todas» con caja de ancho fijo (PR B)", () => {
   });
 });
 
-// 005 · PR B, revisión del #90 (F90-1): `data-fan-active` vive en el DOM y React no lo reconcilia. Guardaba un índice de capa: si un
-// router.refresh reordenaba las metas, se activaba otra tarjeta mientras el foco seguía en la de antes. Criterio: el efecto sigue a
-// la misma META (por id) tras un nuevo orden, sin eventos de puntero, y se apaga si deja de ser visible.
-describe("abanico: el efecto sigue a la meta, no al índice (F90-1)", () => {
-  const focusLayer = (container: HTMLElement, index: number) => {
-    const link = container.querySelector(`[data-fan-layer="${index}"] [data-goal-card]`) as HTMLElement;
+// 005 · PR B, revisión del #90 (F90-1 y F90-3): `data-fan-active` vive en el DOM y React no lo reconcilia. Criterios: (1) el efecto
+// sigue a la misma META (por id) cuando un nuevo render la cambia de capa; (2) cuando la meta deja de estar entre las visibles, el
+// efecto se apaga y no se reactiva solo si vuelve sin interacción, ni lo restaura un pointerleave; (3) al pasar a «Ver todas» y
+// volver, no se restaura un hover que ya terminó. Los fixtures empatan en stackOrder (misma creación, sin aportes) y se ordenan por
+// id: para que las capas cambien de verdad, se da un aporte reciente a la meta que tiene que pasar al frente.
+describe("abanico: el efecto sigue a la meta, no al índice (F90-1, F90-3)", () => {
+  const a = japan(), b = extra(1), c = extra(2), d = extra(3);
+  const recent = (goal: GoalView): GoalView => ({ ...goal, lastContributionDate: "2026-11-18", lastContributionCreatedAt: "2026-11-18T12:00:00Z" });
+  const stack = (goals: GoalView[]) => <GoalStack goals={goals} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />;
+  const fanRoot = (container: HTMLElement) => container.querySelector("[data-fan]") as HTMLElement;
+  const layerOf = (container: HTMLElement, id: string) => container.querySelector(`[data-goal-card="${id}"]`)?.closest("[data-fan-layer]")?.getAttribute("data-fan-layer") ?? null;
+  const focusGoal = (container: HTMLElement, id: string) => {
+    const link = container.querySelector(`[data-goal-card="${id}"]`) as HTMLElement;
     link.matches = ((selector: string): boolean => selector === ":focus-visible") as unknown as typeof link.matches;
     fireEvent.focus(link);
-    return link.getAttribute("data-goal-card");
   };
-  const activeId = (container: HTMLElement) => {
-    const value = container.querySelector("[data-fan]")?.getAttribute("data-fan-active");
-    return value == null ? null : container.querySelector(`[data-fan-layer="${value}"] [data-goal-card]`)?.getAttribute("data-goal-card") ?? null;
-  };
-  it("tras reordenar, sigue en la meta enfocada; si deja de verse, se apaga", () => {
-    const a = japan(), b = extra(1), c = extra(2), d = extra(3);
-    const view = render(<GoalStack goals={[a, b, c]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
-    const focusedId = focusLayer(view.container, 1);
-    expect(activeId(view.container)).toBe(focusedId);
-    const others = [a, b, c].filter((goal) => goal.id !== focusedId);
-    const target = [a, b, c].find((goal) => goal.id === focusedId)!;
-    // Nuevo orden con la enfocada al final de las visibles (C y B cambian de sitio), sin eventos.
-    view.rerender(<GoalStack goals={[others[0], others[1], target]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
-    expect(activeId(view.container)).toBe(focusedId);
-    // Ya no está entre las metas: el efecto se apaga.
-    view.rerender(<GoalStack goals={[...others, d]} members={{}} today={TODAY} context="us" onCreate={vi.fn()} />);
-    expect(view.container.querySelector("[data-fan]")?.hasAttribute("data-fan-active")).toBe(false);
+
+  it("los fixtures empatan: sin aportes, el orden de las capas no depende del array", () => {
+    const one = render(stack([a, b, c]));
+    const layers = [a, b, c].map((goal) => layerOf(one.container, goal.id));
+    one.unmount();
+    const two = render(stack([c, a, b]));
+    expect([a, b, c].map((goal) => layerOf(two.container, goal.id))).toEqual(layers);
+  });
+
+  it("tras un render que cambia la capa de la meta enfocada, el efecto la sigue", () => {
+    const view = render(stack([a, b, c]));
+    const before = layerOf(view.container, b.id);
+    expect(before).not.toBe("0");
+    focusGoal(view.container, b.id);
+    expect(fanRoot(view.container).getAttribute("data-fan-active")).toBe(before);
+    view.rerender(stack([a, recent(b), c]));
+    expect(layerOf(view.container, b.id)).toBe("0");
+    expect(fanRoot(view.container).getAttribute("data-fan-active")).toBe("0");
+  });
+
+  it("B con foco desaparece y reaparece sin interacción: ninguna tarjeta queda activa; tampoco tras un pointerleave", () => {
+    vi.useFakeTimers();
+    try {
+      const view = render(stack([a, b, c]));
+      focusGoal(view.container, b.id);
+      expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(true);
+      view.rerender(stack([a, c, d]));
+      expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(false);
+      view.rerender(stack([a, b, c]));
+      expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(false);
+      // Un hover que termina no restaura el foco obsoleto de B.
+      const layer = view.container.querySelector(`[data-goal-card="${c.id}"]`)!.closest("[data-fan-layer]") as HTMLElement;
+      fireEvent.pointerEnter(layer, { pointerType: "mouse" });
+      fireEvent.pointerLeave(layer, { pointerType: "mouse" });
+      act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS); });
+      expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("el puntero sale de C mientras la meta enfocada desaparece: C no queda activa", () => {
+    vi.useFakeTimers();
+    try {
+      const view = render(stack([a, b, c]));
+      focusGoal(view.container, b.id);
+      const layer = view.container.querySelector(`[data-goal-card="${c.id}"]`)!.closest("[data-fan-layer]") as HTMLElement;
+      fireEvent.pointerEnter(layer, { pointerType: "mouse" });
+      fireEvent.pointerLeave(layer, { pointerType: "mouse" });
+      view.rerender(stack([a, c, d]));
+      act(() => { vi.advanceTimersByTime(FAN_REST_DELAY_MS); });
+      expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("«Ver todas» y vuelta: no se restaura un hover que ya terminó", () => {
+    const view = render(stack([a, b, c]));
+    const layer = view.container.querySelector(`[data-goal-card="${b.id}"]`)!.closest("[data-fan-layer]") as HTMLElement;
+    fireEvent.pointerEnter(layer, { pointerType: "mouse" });
+    expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(true);
+    const seeAll = view.container.querySelector("[data-goal-see-all]") as HTMLElement;
+    fireEvent.click(seeAll);
+    fireEvent.click(view.container.querySelector("[data-goal-see-all]") as HTMLElement);
+    expect(fanRoot(view.container).hasAttribute("data-fan-active")).toBe(false);
   });
 });
 
