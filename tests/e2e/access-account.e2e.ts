@@ -118,6 +118,7 @@ test("ruta protegida sin sesión → /entrar → vuelve a la ruta, sin caché co
   // Un mes navegable para una cuenta sin movimientos (el mes en curso): desde F44-4, un mes fuera del intervalo redirige
   // al límite más cercano, y aquí se prueba que «volver» conserva la ruta y su query, no esa redirección.
   const month = todayInBogota().slice(0, 7);
+  recordNavigations(page);
   await page.goto(`/actividad?mes=${month}`);
   await expect(page).toHaveURL(new RegExp(`/entrar\\?volver=%2Factividad%3Fmes%3D${month}$`));
   // El usuario se siembra después de comprobar la redirección: sin protección, la prueba falla antes de sembrar.
@@ -169,6 +170,7 @@ test("Mi cuenta: perfil, apariencia en oscuro y un segundo dispositivo oscuro an
     }).observe(document, { childList: true, subtree: true });
   });
   const second = await other.newPage();
+  recordNavigations(second);
   await second.goto("/entrar");
   await signInWith(second, user.email, user.password);
   await expect(second).toHaveURL(/\/$/);

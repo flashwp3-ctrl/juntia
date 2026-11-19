@@ -58,8 +58,17 @@ export function recordNavigations(page: Page) {
   const started = Date.now();
   const lines: string[] = [];
   navigationLogs.set(test.info().testId, lines);
-  page.on("request", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) lines.push(`${Date.now() - started} ms · documento · ${request.method()} ${request.url()}`); });
-  page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) lines.push(`${Date.now() - started} ms · URL · ${frame.url()}`); });
+  // Líneas cortas (ruta y consulta, sin origen ni tokens largos): el reporter de lista recorta las líneas largas (run 44430973809).
+  const short = (url: string) => { const parsed = new URL(url); return `${parsed.pathname}${parsed.search}`.replace(/(token_hash|code)=[^&]+/g, "$1=…").slice(0, 70); };
+  const at = () => `${Date.now() - started} ms`;
+  page.on("request", (request) => {
+    if (!request.isNavigationRequest() || request.frame() !== page.mainFrame()) return;
+    const from = request.redirectedFrom();
+    lines.push(`${at()} doc ${request.method()} ${short(request.url())}${from ? ` (redirige ${short(from.url())})` : ""}`);
+  });
+  page.on("response", (response) => { if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) lines.push(`${at()} resp ${response.status()} ${short(response.url())}`); });
+  page.on("requestfailed", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) lines.push(`${at()} fallo ${short(request.url())} ${request.failure()?.errorText ?? ""}`.slice(0, 110)); });
+  page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) lines.push(`${at()} url ${short(frame.url())}`); });
 }
 export async function attachNavigations(testInfo: TestInfo) {
   const lines = navigationLogs.get(testInfo.testId);
