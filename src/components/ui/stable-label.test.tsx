@@ -17,6 +17,10 @@ describe("acciones centradas con caja de ancho fijo (PR B)", () => {
   it("«Reintentar» del estado de error lleva su texto en una caja del ancho que mide en Onest", () => {
     render(<LoadError />);
     expect(box(copy.states.retry)?.style.width).toBe(`${onestSemiboldEm(copy.states.retry)}em`);
+    // La cara de carga comparte la celda del botón: su texto también va en caja fija (parcial 44439996119: seguía moviendo 6 px).
+    const faces = screen.getByRole("button", { name: copy.states.retry }).querySelectorAll<HTMLElement>("[data-stable-label]");
+    expect([...faces].map((face) => face.textContent)).toEqual([copy.states.retry, copy.primitives.loading]);
+    for (const face of faces) expect(face.style.width).toBe(`${onestSemiboldEm(face.textContent!)}em`);
   });
 
   it("Button con stableWidth envuelve el texto; sin él, no cambia nada", () => {

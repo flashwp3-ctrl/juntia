@@ -82,7 +82,8 @@ export function Button({ variant = "primary", size = "md", icon, disabled = fals
         </span>
         <span aria-hidden={!loading || undefined} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? "" : "invisible"}`}>
           <AppIcon name="circle-notch" weight="bold" size={17} className={`${iconTone} motion-safe:animate-[button-spin_0.8s_linear_infinite]`} />
-          {loadingLabel ?? children}
+          {/* PR B: la cara de carga comparte la celda; sin caja fija, su texto («Cargando…») seguía moviendo el botón al llegar la fuente. */}
+          {stableWidth && typeof (loadingLabel ?? children) === "string" ? <StableLabel text={(loadingLabel ?? children) as string} /> : (loadingLabel ?? children)}
         </span>
       </span>
     </m.button>

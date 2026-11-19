@@ -185,6 +185,16 @@ control, y nunca en la app.
   Análisis y Metas, con el dataset sembrado en el runner. El esqueleto se fuerza
   reteniendo la lectura en el servidor durante 1,5 s (R5).
 - **Sin sesión:** entrar (A1), crear cuenta (A2) y recuperar (A4), sin retención.
+- **Cuenta por motor y ruta (PR B; decisión del gestor del 19 nov 2026, opción a acotada):** en **Firefox**, Inicio · Yo
+  y Actividad se miden con una cuenta sembrada **sin pareja**; en Chromium y WebKit, y en las demás rutas, con la pareja del
+  dataset. Motivo: esas dos rutas retienen `transactions`, y con una pareja activa el layout de (app) también lee de esa
+  tabla (`couple_expenses`), así que la retención bloqueaba el layout entero, no se pintaba el esqueleto y la lectura acababa
+  en el estado de error de la ruta (parcial 44433137464: la mitad de las cargas a 390 en Firefox; todas en local). Sin pareja,
+  la retención solo frena la página. La parte compartida queda medida en Chromium y WebKit. El resumen del run lo dice por
+  ruta y motor (`cuenta`).
+- **Cargas inválidas por el arnés (PR B):** una carga que termina en el estado de error de la ruta
+  (`data-provisional-state="danger"`) no mide la ruta: se registra aparte («inválida por el arnés (R5)»), se repite una vez y
+  nunca cuenta como CLS = 0. Si la repetición también es inválida, la ruta no puede salir en verde.
 - **Por ruta y motor, fuera de Chromium:** 10 cargas en tema claro y 5 en oscuro,
   alternando 390 y 1440. **Decisión del plan:** la spec no fija el número para fuera de
   Chromium. En Chromium, las 40 de FR-050 cubren el caso intermitente (D21-1 de la 001:

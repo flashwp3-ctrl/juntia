@@ -50,7 +50,7 @@ export async function seedReleaseCouple(index: number): Promise<SeededCouple> {
 }
 
 /** Contexto de Sara con su sesión, el tema guardado y el contexto (Yo o Nosotros) de la ruta. */
-export async function sessionContext(browser: Browser, baseURL: string, pair: SeededCouple, options: { theme: Theme; width: number; context: "me" | "us"; recordVideo?: boolean }) {
+export async function sessionContext(browser: Browser, baseURL: string, pair: Pick<SeededCouple, "sara">, options: { theme: Theme; width: number; context: "me" | "us"; recordVideo?: boolean }) {
   await pair.sara.client.rpc("set_theme", { p_theme: options.theme });
   const host = new URL(baseURL).hostname;
   const context = await browser.newContext({ baseURL, viewport: { width: options.width, height: 900 }, colorScheme: options.theme, reducedMotion: "reduce",

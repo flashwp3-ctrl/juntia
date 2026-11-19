@@ -14,7 +14,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { summarize } from "../../scripts/cls-frames/compare.mjs";
 import { CLS_OBSERVER, PUBLIC_ROUTES, RECORDER, SESSION_ROUTES, loadWithHold, publicContext, readFrames, record, seedReleaseCouple, sessionContext,
   themeLabel, type PublicRoute, type SessionRoute, type Theme } from "./release-support";
-import type { SeededCouple } from "../support/seed";
+import { seedMovements, seedUser, type SeededCouple } from "../support/seed";
 
 const SET = process.env.CLS_FRAMES_SET ?? "routes-1";
 const LOADS = Number(process.env.CLS_FRAMES_LOADS ?? 0) || null;
@@ -56,10 +56,25 @@ async function measured(page: Page, meta: Record<string, unknown>, file = "cls-f
   return { ...result, desplazamientos: control, anterioresAlControl: previous, harnessError };
 }
 
+/**
+ * 005 · PR B (decisión del gestor del 19 nov 2026, R5, opción a acotada): en Firefox, Inicio · Yo y Actividad se miden con una
+ * cuenta SIN pareja. Retienen `transactions`, y con una pareja activa el layout de (app) también lee de ahí (couple_expenses):
+ * la retención bloqueaba el layout entero, no se pintaba el esqueleto y la lectura acababa en el estado de error (parcial
+ * 44433137464, la mitad de las cargas a 390). Sin pareja, el layout no lee esa vista y la retención solo frena la página. En los
+ * demás motores y rutas sigue la pareja, así que la parte compartida queda medida en Chromium y WebKit.
+ */
+const SOLO_ROUTES: Partial<Record<string, readonly SessionRoute[]>> = { firefox: ["inicio-yo", "actividad"] };
+let solo: Pick<SeededCouple, "sara"> | null = null;
+const usesSolo = (browser: Browser, route: SessionRoute) => (SOLO_ROUTES[browser.browserType().name()] ?? []).includes(route);
+
 async function sessionLoad(browser: Browser, baseURL: string, route: SessionRoute, theme: Theme, width: number, init: string[] = []) {
   const spec = SESSION_ROUTES[route];
-  pair ??= await seedReleaseCouple(test.info().parallelIndex);
-  const context = await sessionContext(browser, baseURL, pair, { theme, width, context: spec.context, recordVideo: true });
+  let owner: Pick<SeededCouple, "sara">;
+  if (usesSolo(browser, route)) {
+    if (!solo) { const sara = await seedUser({ role: "cls-sin-pareja", index: test.info().parallelIndex }); await seedMovements(sara, "recent"); solo = { sara }; }
+    owner = solo;
+  } else owner = pair ??= await seedReleaseCouple(test.info().parallelIndex);
+  const context = await sessionContext(browser, baseURL, owner, { theme, width, context: spec.context, recordVideo: true });
   const page = await context.newPage();
   await page.addInitScript(RECORDER);
   for (const script of init) await page.addInitScript(script);
@@ -120,7 +135,7 @@ if (SET !== "controls") {
         }
         loads.push(result);
       }
-      await record("cls-frames.jsonl", { kind: "inválidas por el arnés (R5)", ruta: route, motor: engine(browser), invalidas: invalid, repetidasInvalidas: invalidAgain });
+      await record("cls-frames.jsonl", { kind: "inválidas por el arnés (R5)", ruta: route, motor: engine(browser), cuenta: route in SESSION_ROUTES && usesSolo(browser, route as SessionRoute) ? "sin pareja (R5, opción a)" : route in SESSION_ROUTES ? "pareja" : "sin sesión", invalidas: invalid, repetidasInvalidas: invalidAgain });
       verdict(invalidAgain === 0, `${route} · ${engine(browser)}: ${invalidAgain} cargas inválidas por el arnés también al repetir (estado de error en vez de la ruta; R5)`);
       const [row] = summarize(loads.filter((load) => load.ruta === route));
       verdict(row.incompletas === 0, `${route} · ${row.motor}: ${row.incompletas} de ${row.cargas} cargas sin ventana verificable (inconclusas)`);
