@@ -61,9 +61,12 @@ async function measured(page: Page, meta: Record<string, unknown>, file = "cls-f
  * cuenta SIN pareja. Retienen `transactions`, y con una pareja activa el layout de (app) también lee de ahí (couple_expenses):
  * la retención bloqueaba el layout entero, no se pintaba el esqueleto y la lectura acababa en el estado de error (parcial
  * 44433137464, la mitad de las cargas a 390). Sin pareja, el layout no lee esa vista y la retención solo frena la página. En los
- * demás motores y rutas sigue la pareja, así que la parte compartida queda medida en Chromium y WebKit.
+ * demás rutas, y en Chromium (cuyo arnés de CLS no retiene), sigue la pareja: la parte compartida queda medida ahí. WebKit pasó a
+ * la cuenta sin pareja con el parcial 44441922501 (abajo).
  */
-const SOLO_ROUTES: Partial<Record<string, readonly SessionRoute[]>> = { firefox: ["inicio-yo", "actividad"] };
+// WebKit, desde el parcial 44441922501: con la pareja, 15 de 15 cargas de cada una de esas dos rutas acababan en el estado de
+// error también al repetir (los «0 desplazamientos» que daba desde el punto de control eran ese estado, no la ruta).
+const SOLO_ROUTES: Partial<Record<string, readonly SessionRoute[]>> = { firefox: ["inicio-yo", "actividad"], webkit: ["inicio-yo", "actividad"] };
 let solo: Pick<SeededCouple, "sara"> | null = null;
 const usesSolo = (browser: Browser, route: SessionRoute) => (SOLO_ROUTES[browser.browserType().name()] ?? []).includes(route);
 
@@ -89,6 +92,19 @@ async function publicLoad(browser: Browser, baseURL: string, route: PublicRoute,
   for (const script of init) await page.addInitScript(script);
   await page.goto(PUBLIC_ROUTES[route]);
   await expect(page.locator("main").first()).toBeVisible();
+  // 005 · PR B, diagnóstico de A1 en Firefox (solo la prueba): el titular cambia de corte de línea al llegar Brygada (−43 px en
+  // 15 de 15 cargas), aunque en Chromium cabe con su respaldo calibrado (330,8 px en una columna de 342 a 390). Se registra si
+  // las caras locales de respaldo resolvieron en este motor y con qué ancho se pintó la primera línea al empezar.
+  if (route === "a1") {
+    const fonts = await page.evaluate(async () => {
+      const faces = [...document.fonts].filter((face) => /Fallback/.test(face.family)).map((face) => ({ familia: face.family.replace(/"/g, ""), peso: face.weight, estilo: face.style, rango: face.unicodeRange, estado: face.status }));
+      const line = document.querySelector("h1 span.block");
+      const range = document.createRange(); if (line) range.selectNodeContents(line);
+      return { caras: faces, primeraLinea: line ? { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width), fuente: getComputedStyle(line).fontFamily } : null,
+        brygadaCargada: document.fonts.check('500 44px "Brygada 1918"') };
+    });
+    await record("cls-frames-fuentes.jsonl", { ruta: route, motor: engine(browser), ancho: width, tema: themeLabel(theme), ...fonts });
+  }
   return page;
 }
 
