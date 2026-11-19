@@ -90,6 +90,20 @@ async function publicLoad(browser: Browser, baseURL: string, route: PublicRoute,
   const page = await context.newPage();
   await page.addInitScript(RECORDER);
   for (const script of init) await page.addInitScript(script);
+  // Diagnóstico de A1 (solo la prueba): en el PRIMER fotograma con el titular, cuántas líneas ocupa su primera línea, su ancho y
+  // qué fuentes están ya cargadas. Con eso se sabe con qué fuente se pintó antes de llegar Brygada.
+  if (route === "a1") await page.addInitScript(() => {
+    const w = window as unknown as { __a1First?: unknown };
+    const look = () => {
+      const line = document.querySelector("h1 span.block");
+      if (!line) { requestAnimationFrame(look); return; }
+      const range = document.createRange(); range.selectNodeContents(line);
+      w.__a1First = { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width),
+        brygada: document.fonts.check('500 44px "Brygada 1918"'), georgia: document.fonts.check('500 44px Georgia'), respaldo: document.fonts.check('500 44px "Brygada Fallback"'),
+        estado: [...document.fonts].filter((face) => /Brygada/.test(face.family)).map((face) => `${face.family}·${face.weight}·${face.style}:${face.status}`) };
+    };
+    requestAnimationFrame(look);
+  });
   await page.goto(PUBLIC_ROUTES[route]);
   await expect(page.locator("main").first()).toBeVisible();
   // 005 · PR B, diagnóstico de A1 en Firefox (solo la prueba): el titular cambia de corte de línea al llegar Brygada (−43 px en
@@ -100,7 +114,8 @@ async function publicLoad(browser: Browser, baseURL: string, route: PublicRoute,
       const faces = [...document.fonts].filter((face) => /Fallback/.test(face.family)).map((face) => ({ familia: face.family.replace(/"/g, ""), peso: face.weight, estilo: face.style, rango: face.unicodeRange, estado: face.status }));
       const line = document.querySelector("h1 span.block");
       const range = document.createRange(); if (line) range.selectNodeContents(line);
-      return { caras: faces, primeraLinea: line ? { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width), fuente: getComputedStyle(line).fontFamily } : null,
+      const first = (window as unknown as { __a1First?: unknown }).__a1First ?? null;
+      return { primerFotograma: first, caras: faces, primeraLinea: line ? { ancho: Math.round(range.getBoundingClientRect().width), lineas: range.getClientRects().length, columna: Math.round(line.getBoundingClientRect().width), fuente: getComputedStyle(line).fontFamily } : null,
         brygadaCargada: document.fonts.check('500 44px "Brygada 1918"') };
     });
     await record("cls-frames-fuentes.jsonl", { ruta: route, motor: engine(browser), ancho: width, tema: themeLabel(theme), ...fonts });
