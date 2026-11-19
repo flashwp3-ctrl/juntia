@@ -435,7 +435,26 @@ const root200 = (page: Page) => page.evaluate(() => { document.documentElement.s
 const overflow = (page: Page) => page.evaluate(() => {
   const doc = { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth };
   const dialogs = [...document.querySelectorAll<HTMLElement>("[role='dialog'], [role='alertdialog']")].filter((node) => node.getClientRects().length > 0)
-    .map((node) => ({ name: node.getAttribute("aria-label") ?? node.querySelector("h1, h2, h3")?.textContent?.trim() ?? "diálogo", scrollWidth: node.scrollWidth, clientWidth: node.clientWidth }));
+    .map((node) => {
+      // 005 · PR B (corrección 5): el título no se monta sobre ningún botón (la × de «Editar gasto») y ninguna opción se sale de
+      // su caja (las fichas de categoría con «Entretenimiento» y «Restaurantes»).
+      // El texto del título, no su caja: el texto que no cabe se sale de la caja sin agrandarla.
+      const heading = node.querySelector("h1, h2, h3");
+      const range = document.createRange();
+      if (heading) range.selectNodeContents(heading);
+      const title = heading ? range.getBoundingClientRect() : undefined;
+      const meets = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const titleOverButton = title && title.width > 1 ? [...node.querySelectorAll("button")].filter((button) => button.getClientRects().length > 0 && meets(title, button.getBoundingClientRect())).length : 0;
+      // El texto de cada opción frente a su caja (no `scrollHeight`, que cuenta el ::after del área táctil de F17-2).
+      const spilled = [...node.querySelectorAll<HTMLElement>("[role='radio']")].filter((radio) => {
+        if (radio.getClientRects().length === 0) return false;
+        const text = document.createRange();
+        text.selectNodeContents(radio);
+        const inner = text.getBoundingClientRect(), box = radio.getBoundingClientRect();
+        return inner.left < box.left - 0.5 || inner.right > box.right + 0.5 || inner.top < box.top - 0.5 || inner.bottom > box.bottom + 0.5;
+      }).map((radio) => radio.textContent?.trim() ?? "");
+      return { name: node.getAttribute("aria-label") ?? node.querySelector("h1, h2, h3")?.textContent?.trim() ?? "diálogo", scrollWidth: node.scrollWidth, clientWidth: node.clientWidth, titleOverButton, spilled };
+    });
   return { doc, dialogs };
 });
 const twoFrames = (page: Page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -457,11 +476,15 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       const result = await overflow(page);
       console.log(`200 % · ${state}: página ${result.doc.scrollWidth}/${result.doc.clientWidth}; ${result.dialogs.map((d) => `«${d.name}» ${d.scrollWidth}/${d.clientWidth}`).join(", ") || "sin hoja"}`);
       // Con desbordamiento, una captura con los datos sembrados para la lista de hallazgos (no es evidencia por sí sola).
-      if (result.doc.scrollWidth > result.doc.clientWidth || result.dialogs.some((d) => d.scrollWidth > d.clientWidth)) {
+      if (result.doc.scrollWidth > result.doc.clientWidth || result.dialogs.some((d) => d.scrollWidth > d.clientWidth || d.titleOverButton > 0 || d.spilled.length > 0)) {
         await page.screenshot({ path: `test-results/a11y-200/texto-200--${state.replace(/[^\p{L}\p{N}]+/gu, "-")}--390.png`, fullPage: false, animations: "disabled" });
       }
       expect.soft(result.doc.scrollWidth, `${state}: scroll horizontal de la página al 200 %`).toBeLessThanOrEqual(result.doc.clientWidth);
       for (const dialog of result.dialogs) expect.soft(dialog.scrollWidth, `${state}: «${dialog.name}» se sale al 200 %`).toBeLessThanOrEqual(dialog.clientWidth);
+      for (const dialog of result.dialogs) {
+        expect.soft(dialog.titleOverButton, `${state}: el título de «${dialog.name}» queda bajo un botón al 200 %`).toBe(0);
+        expect.soft(dialog.spilled, `${state}: opciones de «${dialog.name}» que se salen de su caja al 200 %`).toEqual([]);
+      }
       if (page !== base) await page.context().close();
     });
   }

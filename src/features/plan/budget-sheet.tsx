@@ -22,7 +22,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { categories, CategoryIcon } from "@/components/ui/category-icon";
-import { DialogTitle } from "@/components/ui/modal";
+import { SheetTitle } from "@/components/ui/modal";
 import { formatMoney } from "@/domain/money";
 import { CATEGORY_CATALOG, type CategoryId } from "@/domain/transactions";
 import { ConfirmDialog } from "@/features/expenses/confirm-dialog";
@@ -243,7 +243,7 @@ export function BudgetSheet({ open, onClose, context, row, rows, month, idempote
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
         <span />
-        <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+        <SheetTitle>{title}</SheetTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
           <AppIcon name="x" weight="bold" size={16} />
         </button>

@@ -36,7 +36,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { categories } from "@/components/ui/category-icon";
-import { DialogTitle } from "@/components/ui/modal";
+import { DialogTitle, SheetTitle } from "@/components/ui/modal";
 import { Segmented } from "@/components/ui/segmented";
 import { Toast } from "@/components/ui/toast";
 import { formatMoney, moneyFromPesos } from "@/domain/money";
@@ -155,7 +155,11 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
     refs.current[next]?.focus();
   };
   return (
-    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-3 gap-2">
+    // 005 · PR B (corrección 5, FR-042): con el texto al 200 %, tres columnas de 64 px de alto partían «Entretenimiento» letra a letra
+    // y «Restaurantes» se salía de su ficha. Si la rejilla mide menos de 16rem (nunca a 16 px: a 320 mide 17,5rem), dos columnas y
+    // el alto que pida el texto, como los segmentados de F79. A la escala normal, igual que antes.
+    <div className="@container/cat">
+    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[minmax(64px,auto)] grid-cols-3 gap-2 @max-[16rem]/cat:grid-cols-2">
       {ids.map((id, index) => {
         const [bg, fg] = categories[id].tone.split(" ");
         const selected = value === id;
@@ -177,6 +181,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
           </button>
         );
       })}
+    </div>
     </div>
   );
 }
@@ -683,7 +688,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
               izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
             <span />
-            <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+            <SheetTitle>{title}</SheetTitle>
             {closeButton}
           </div>
           <fieldset disabled={isSaving || isLocked} data-locked={isLocked ? "" : undefined} className="flex min-w-0 flex-col gap-3.5">

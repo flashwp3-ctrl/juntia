@@ -7,7 +7,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
 import { resend, type FormState } from "./actions";
-import { BackToSignIn, SubmitButton } from "./auth-ui";
+import { BackToSignIn, SubmitButton, AuthTitle } from "./auth-ui";
 
 export function VerifyEmail() {
   const [state, action] = useActionState<FormState, FormData>(resend, {});
@@ -17,7 +17,7 @@ export function VerifyEmail() {
       <span aria-hidden="true" className="mt-6 grid size-16 place-items-center rounded-[20px] bg-category-home-bg text-category-home-fg lg:mt-2">
         <AppIcon name="envelope-simple" weight="duotone" size={32} />
       </span>
-      <h1 className="font-serif text-[2.5rem] leading-none font-medium tracking-[-0.01em] text-ink">{copy.auth.verifyEmail.title}</h1>
+      <AuthTitle>{copy.auth.verifyEmail.title}</AuthTitle>
       <p className="text-[0.9375rem] leading-[1.5] text-pretty text-ink-secondary">
         {copy.auth.verifyEmail.description} {copy.auth.verifyEmail.spam}
       </p>

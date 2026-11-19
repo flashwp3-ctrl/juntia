@@ -154,8 +154,9 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const close = within(dialog).getByRole("button", { name: copy.annotate.close });
     const title = within(dialog).getByRole("heading", { name: copy.annotate.title.expense });
     expect(title.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // En la misma fila del encabezado y en su última columna: nada después de ella.
-    const header = title.parentElement!;
+    // En la misma fila del encabezado y en su última columna: nada después de ella. El título va en su celda (SheetTitle, PR B de
+    // P0-4: un contenedor para ajustar su tamaño con el texto al 200 %).
+    const header = title.parentElement!.parentElement!;
     expect(header.contains(close)).toBe(true);
     expect(header.lastElementChild).toBe(close);
     await user.click(close);
@@ -175,7 +176,8 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     const dialog = await sheet();
     expect(cells(dialog).map((cell) => cell.textContent)).toEqual(ORDER.map((id) => copy.categories[id]));
     expect(grid(dialog).className).toMatch(/grid-cols-3/);
-    expect(grid(dialog).className).toMatch(/auto-rows-\[64px\]/); // 3 × 64 + 2 × 8 = 208 px
+    // 3 × 64 + 2 × 8 = 208 px. PR B de P0-4: 64 px es el mínimo; con el texto al 200 % la ficha crece en vez de desbordarse.
+    expect(grid(dialog).className).toMatch(/auto-rows-\[minmax\(64px,auto\)\]/);
     expect(grid(dialog).className).not.toMatch(/overflow-x-auto|flex-wrap/);
     // Cada celda: icono encima y nombre debajo, con el color de su categoría; ninguna seleccionada al abrir.
     for (const cell of cells(dialog)) {

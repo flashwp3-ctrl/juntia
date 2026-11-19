@@ -9,7 +9,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { InlineNotice } from "@/components/ui/inline-notice";
-import { DialogTitle } from "@/components/ui/modal";
+import { SheetTitle } from "@/components/ui/modal";
 import { signOut, type FormState } from "@/features/auth/actions";
 import { copy } from "@/lib/copy/es";
 import { requestPasswordChange } from "./actions";
@@ -191,7 +191,7 @@ export function ExportEntry() {
         <div className="flex flex-col gap-4 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
             <span />
-            <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{copy.account.export.title}</DialogTitle>
+            <SheetTitle>{copy.account.export.title}</SheetTitle>
             <button type="button" onClick={() => { setOpen(false); reset(); }} aria-label={copy.account.export.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">
               <AppIcon name="x" weight="bold" size={16} />
             </button>

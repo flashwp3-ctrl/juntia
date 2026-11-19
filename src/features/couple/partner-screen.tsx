@@ -15,7 +15,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
-import { DialogTitle, Modal } from "@/components/ui/modal";
+import { SheetTitle, Modal } from "@/components/ui/modal";
 import { initialOf } from "@/domain/account";
 import { LimitNote } from "@/features/account/limit-note";
 import { newIdempotencyKey } from "@/features/expenses/idempotency";
@@ -285,7 +285,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
       <Container open={open} onOpenChange={(next) => { if (!next) requestClose(); }} title={title} bare>
         <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center">
           <span />
-          <DialogTitle className="text-center font-serif text-[1.4375rem] leading-[1.04] font-medium tracking-[-0.015em] text-balance">{title}</DialogTitle>
+          <SheetTitle>{title}</SheetTitle>
           <button type="button" onClick={requestClose} aria-label={copy.primitives.close} aria-disabled={inFlight || undefined} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken aria-disabled:bg-sunken aria-disabled:text-ink-secondary aria-disabled:shadow-none">
             <AppIcon name="x" weight="bold" size={16} />
           </button>
