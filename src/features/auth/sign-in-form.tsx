@@ -45,11 +45,15 @@ export function SignInForm({ volver, notice }: Props) {
       {notice === "sesion-cerrada" ? <><ForgetInvitationIntent /><InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice></> : null}
       {notice === "verificado" || linkNotice === copy.auth.signIn.verified ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}
       {linkNotice === copy.auth.recover.linkExpired ? <InlineNotice tone="danger" icon="warning-circle">{copy.auth.recover.linkExpired}</InlineNotice> : null}
-      <h1 className={`font-serif text-[clamp(2.125rem,calc((100vw-3rem)*0.128),2.875rem)] leading-[0.98] lg:text-[2.75rem] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>
+      <h1 className={`@container/title font-serif text-[clamp(2.125rem,calc((100vw-3rem)*0.128),2.875rem)] leading-[0.98] lg:text-[2.75rem] font-medium tracking-[-0.01em] text-ink ${notice || state.error ? "mt-1" : "mt-7 lg:mt-2"}`}>
         {/* Dos líneas, como el comp, y un tamaño con el que «Lo tuyo, lo mío y» cabe en la columna con la fuente real y con su
             respaldo (que mide un 3 % más): con 48 px la línea medía 360 px reales y 371 de respaldo en una columna de 360, y
             la llegada de la fuente movía el titular (CLS 0,0053 con el arnés de T053). A 390 px, 48 no cabía ni con la real. */}
-        <span className="block">{copy.auth.signIn.titleLead}</span>{" "}
+        {/* 005 · PR B (aprobado por el gestor, 19 nov 2026): en Firefox el primer fotograma se pinta antes que Brygada y que su
+            respaldo local, con la serif del sistema, y esta línea cortaba en dos; el titular subía 43 px al llegar Brygada (parcial
+            44445684478). Con la columna de 20rem o más (escala normal) no corta con ninguna fuente; con el texto al 200 % vuelve a
+            poder cortar (FR-042). En reposo mide 321 px de 342. */}
+        <span className="block @min-[20rem]/title:whitespace-nowrap">{copy.auth.signIn.titleLead}</span>{" "}
         <em className="block font-serif-italic italic">{copy.auth.signIn.titleEmphasis}</em>
       </h1>
       {state.resend ? (
