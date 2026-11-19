@@ -84,6 +84,16 @@
 @font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 400; size-adjust: 104.90%; ascent-override: 92.47%; descent-override: 29.08%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial"), local("ArialMT"); font-weight: 500; size-adjust: 105.08%; ascent-override: 92.31%; descent-override: 29.02%; line-gap-override: 0%; }
 @font-face { font-family: "Onest Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600; size-adjust: 99.00%; ascent-override: 97.98%; descent-override: 30.81%; line-gap-override: 0%; }
+/* PR B de P0-4 (afinado de la calibración de D-01 para las cifras; aprobado por el gestor el 19 nov 2026). D-01 se calibró con
+   las cadenas de texto de es.ts; con tabular-nums (html), las cifras de Onest miden 0,672 em y las de este respaldo 0,583 em
+   (400/500) y 0,551 (600), y los importes alineados a la derecha se movían 19–29 px al llegar Onest (Plan, Balance y Metas,
+   parcial 44439996119). Solo para U+0030–0039, Verdana (cifras de 0,636 em; 0,711 en negrita): size-adjust = 0,672 / 0,6357 y
+   0,673 / 0,7109, con las mismas sobreescrituras verticales de Onest (970 y 305) divididas por el ajuste, así que la línea no
+   cambia de alto. Van después de las caras generales: para las cifras gana esta; sin Verdana (Android), la de Arial, como antes.
+   La estrategia de D-01 no cambia (swap con respaldo de métricas ajustadas) y en reposo nada cambia. */
+@font-face { font-family: "Onest Fallback"; src: local("Verdana"); font-weight: 400; unicode-range: U+0030-0039; size-adjust: 105.71%; ascent-override: 91.76%; descent-override: 28.85%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Verdana"); font-weight: 500; unicode-range: U+0030-0039; size-adjust: 105.71%; ascent-override: 91.76%; descent-override: 28.85%; line-gap-override: 0%; }
+@font-face { font-family: "Onest Fallback"; src: local("Verdana Bold"), local("Verdana-Bold"); font-weight: 600; unicode-range: U+0030-0039; size-adjust: 94.67%; ascent-override: 102.46%; descent-override: 32.22%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 400; size-adjust: 104.15%; ascent-override: 88.33%; descent-override: 24.00%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia"); font-style: normal; font-weight: 500; size-adjust: 105.01%; ascent-override: 87.61%; descent-override: 23.81%; line-gap-override: 0%; }
 @font-face { font-family: "Brygada Fallback"; src: local("Georgia Bold"), local("Georgia-Bold"); font-style: normal; font-weight: 600; size-adjust: 90.79%; ascent-override: 101.33%; descent-override: 27.53%; line-gap-override: 0%; }
