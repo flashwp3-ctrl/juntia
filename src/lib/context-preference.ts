@@ -1,5 +1,7 @@
 // T044 / FR-026 (research R5): preferencia de interfaz del selector Yo/Nosotros en este dispositivo.
 // No es `scope` ni usa sus literales propuestos (FR-036; docs/GLOSSARY.md §10): no filtra ni autoriza nada.
+import { cookieSecure } from "./cookie-security";
+
 export type ContextChoice = "me" | "us";
 
 const KEY = "juntia:context";
@@ -47,7 +49,7 @@ export function writeStoredContext(value: ContextChoice): boolean {
 /** La cookie que lee el servidor; se reescribe solo si no dice ya lo mismo. */
 export function writeContextCookie(value: ContextChoice) {
   if (readContextCookie() === value) return;
-  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  const secure = cookieSecure(window.location.hostname) ? "; Secure" : "";
   document.cookie = `${CONTEXT_COOKIE}=${value}; Path=/; Max-Age=${CONTEXT_MAX_AGE}; SameSite=Lax${secure}`;
 }
 
