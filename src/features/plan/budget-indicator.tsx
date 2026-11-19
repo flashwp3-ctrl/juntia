@@ -13,6 +13,7 @@ import { CategoryIcon, type Category } from "@/components/ui/category-icon";
 import { budgetState, displayedPercent } from "@/domain/budgets";
 import { formatMoney } from "@/domain/money";
 import { copy } from "@/lib/copy/es";
+import { StableLabel } from "@/components/ui/stable-label";
 import { pesos } from "@/lib/format";
 import type { PlanContext, PlanRow } from "./types";
 
@@ -47,7 +48,8 @@ export function BudgetIndicator({ row, context, onOpen }: Props) {
           aria-label={copy.plan.createFor(name)}
           className="relative -mr-2 inline-flex h-11 shrink-0 items-center rounded-[var(--radius-md)] px-2.5 text-[0.8125rem] font-semibold text-ink underline underline-offset-4 hover:bg-sunken"
         >
-          {copy.plan.create}
+          {/* PR B (CLS): el texto en una caja del ancho que mide en Onest; alineado a la derecha, se movía al llegar la fuente. */}
+          <StableLabel text={copy.plan.create} />
         </button>
       </li>
     );

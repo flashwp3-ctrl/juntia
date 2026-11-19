@@ -22,6 +22,7 @@ import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { AppIcon } from "@/components/ui/app-icon";
 import { copy } from "@/lib/copy/es";
+import { StableLabel } from "@/components/ui/stable-label";
 import { usePrefersReducedMotion } from "@/lib/motion/reduced";
 import { GoalCard } from "./goal-card";
 import { stackOrder } from "./format";
@@ -143,9 +144,9 @@ export function GoalStack({ goals: given, members, today, context, onCreate, lab
   const footer = (
     <div className="flex min-h-11 items-center justify-between gap-3">
       <span className="text-[length:var(--label-s-size)] font-medium text-ink-secondary">{copy.goals.stack.count(goals.length)}</span>
-      {seeAllHref ? <Link href={seeAllHref} data-goal-see-all="" className={seeAllClass}>{copy.goals.stack.seeAll}</Link> : (
+      {seeAllHref ? <Link href={seeAllHref} data-goal-see-all="" className={seeAllClass}><StableLabel text={copy.goals.stack.seeAll} /></Link> : (
         <button type="button" data-goal-see-all="" onClick={() => setListed((value) => !value)} aria-expanded={listed} className={seeAllClass}>
-          {listed ? copy.goals.stack.collapse : copy.goals.stack.seeAll}
+          <StableLabel text={listed ? copy.goals.stack.collapse : copy.goals.stack.seeAll} />
         </button>
       )}
     </div>

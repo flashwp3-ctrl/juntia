@@ -1011,3 +1011,15 @@ describe("US-21 · modo del aporte, tal cual y nunca verificado (005 T015)", () 
     expect(dialog.textContent).not.toMatch(FORBIDDEN);
   });
 });
+
+// 005 · PR B (CLS, FR-050; gestor, 19 nov 2026): «Ver todas» va alineado a la derecha del pie y se movía 3 px al llegar Onest
+// (parcial 44443835179, Metas). Criterio: su texto en una caja del ancho que mide en Onest, en el enlace y en el botón.
+describe("«Ver todas» con caja de ancho fijo (PR B)", () => {
+  it("enlace (Inicio) y botón (Metas) llevan su texto en StableLabel", () => {
+    const { unmount } = render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" fan={false} seeAllHref="/metas" />);
+    expect(document.querySelector("[data-goal-see-all] [data-stable-label]")?.textContent).toBe(copy.goals.stack.seeAll);
+    unmount();
+    render(<GoalStack goals={[japan(), extra(1)]} members={{}} today={TODAY} context="us" />);
+    expect(document.querySelector("[data-goal-see-all] [data-stable-label]")?.textContent).toBe(copy.goals.stack.seeAll);
+  });
+});

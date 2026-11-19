@@ -11,6 +11,7 @@ import { ExitState } from "@/components/shell/provisional-state";
 import { formatMoney, type Money } from "@/domain/money";
 import { groupByDay, monthSummary, type CategoryId, type Transaction } from "@/domain/transactions";
 import { copy } from "@/lib/copy/es";
+import { StableLabel } from "@/components/ui/stable-label";
 import { dayLabel, daysLeftInMonth, longDate, monthName, pesos } from "@/lib/format";
 import { HighlightRow, HighlightSharedPart } from "@/features/expenses/highlight-row";
 import { AnnotateCta, AnnotateFirst } from "./annotate-cta";
@@ -123,7 +124,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
             {/* 004 PR E (T075; FR-021; Q5): de «En qué se fue» al análisis del mes. */}
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <h2 id="home-breakdown" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.breakdownTitle}</h2>
-              <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.analysis}</Link>
+              <Link href={`/plan/analisis?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4"><StableLabel text={copy.home.analysis} /></Link>
             </div>
             <ul className="flex flex-wrap gap-2">
               {spentBy.map(([category, amount]) => (
@@ -148,7 +149,7 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
         <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:@min-[55.75rem]/home:order-1">
           <div className="flex items-baseline justify-between gap-3 pb-1">
             <h2 id="home-recent" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
-            <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4">{copy.home.seeAll}</Link>
+            <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4"><StableLabel text={copy.home.seeAll} /></Link>
           </div>
           <ul className="flex flex-col divide-y-[length:var(--border-hairline)] divide-border">
             <PendingHomeRows month={month} today={today} knownIds={rows.map(({ id }) => id)} />
