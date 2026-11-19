@@ -602,6 +602,12 @@ sistema, fecha y commit desplegado.
 
 Llenan T094–T096.
 
+## Aprobaciones de los fundadores en el PR B (T067)
+
+| Qué | Requisito | Texto o alcance | Aprobado | Dónde |
+| --- | --- | --- | --- | --- |
+| Cómo pedir la eliminación de la cuenta (Mi cuenta → Privacidad) | FR-067; contrato de borrado §8; T057, T061 | «Para pedirla, escribe a quien administra Juntia. Te pedirá que confirmes por escrito y solo después la hará a mano; si compartes datos con tu pareja, cada persona confirma por su cuenta.» | Fundadores, 19 nov 2026, vía el gestor | `src/lib/copy/es.ts` (`account.privacy.deleteHowTo`), PR B |
+
 ## Valoraciones (FR-081)
 
 Llena T100.
