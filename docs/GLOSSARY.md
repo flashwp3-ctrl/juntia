@@ -245,7 +245,7 @@ Fuente de todas las filas: spec 004, `data-model.md` §§2–9 y `contracts/data
 | Historial de presupuesto | `budget_history` | Autor, vigencia, anterior y nuevo |
 | Metas visibles | `goals_overview` | Una fila por meta, con `goal_scope` |
 | Totales de metas | `goals_totals` | Una fila por `goal_scope`; nunca suma personales y compartidas |
-| Disponible por aportante | `goal_member_balances` | Aportado, retirado, usado y disponible. En Metas · Yo y en la meta inmersiva, lo propio se rotula **«Tu disponible»** (antes «Tus aportes»; maestro §15.10, decisión 23.4); «Tus aportes» se queda, desde el 19 de noviembre de 2026 solo en los mensajes de error: ese día los fundadores aprobaron que B5 diga «Tu disponible en {meta}: $X → $Y» («Sí, apruebo»; PR #91) |
+| Disponible por aportante | `goal_member_balances` | Aportado, retirado, usado y disponible. En Metas · Yo y en la meta inmersiva, lo propio se rotula **«Tu disponible»** (antes «Tus aportes»; maestro §15.10, decisión 23.4); «Tus aportes» se queda, a propósito, desde el 19 de noviembre de 2026 solo en los mensajes de error y en las notas de rechazo de la solicitud (`rejectNote` y `rejected` en `src/lib/copy/es.ts`): ese día los fundadores aprobaron que B5 diga «Tu disponible en {meta}: $X → $Y» («Sí, apruebo»; PR #91) |
 | Historial de meta | `goal_entries` | Aportes, retiros y usos; anulación marcada, no fila de consumo |
 | Actividad de metas | `goal_activity` | Asientos por contexto y mes |
 | Solicitudes visibles | `usage_requests` | Uso ajeno pendiente o resuelto |
