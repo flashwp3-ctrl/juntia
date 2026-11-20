@@ -349,7 +349,7 @@ describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", { timeou
     expect(router.refresh).toHaveBeenCalled();
   });
 
-  it("B5, a quien se pide: el gasto, el reparto, lo que ya usó Sara y «Tus aportes en Japón $5.220.000 → $3.840.000»; aprobar lleva la versión leída", async () => {
+  it("B5, a quien se pide: el gasto, el reparto, lo que ya usó Sara y «Tu disponible en Japón: $5.220.000 → $3.840.000» (fundadores, 19 nov 2026); aprobar lleva la versión leída", async () => {
     const user = userEvent.setup();
     const actions = goalFunding();
     render(<UsageRequestCard request={request()} people={tomasView} actions={actions} />);
@@ -357,6 +357,10 @@ describe("La solicitud en las dos sesiones (B4–B7; FR-053–FR-056)", { timeou
     expect(screen.getByText(copy.goalExpense.request.split("50/50"))).toBeTruthy();
     expect(screen.getByText(copy.goalExpense.request.used("Sara", "$1.620.000"))).toBeTruthy();
     expect(screen.getByText(copy.goalExpense.request.yoursLabel("Japón", "$5.220.000", "$3.840.000"))).toBeTruthy();
+    // El texto literal aprobado, lo visible y el nombre accesible. Nunca «Tus aportes»: la cifra es lo disponible, no lo aportado.
+    expect(screen.getByText("Tu disponible en Japón: $5.220.000 → $3.840.000")).toBeTruthy();
+    expect(screen.getByText("Tu disponible en Japón: antes $5.220.000, después $3.840.000")).toBeTruthy();
+    expect(screen.queryByText(/Tus aportes/)).toBeNull();
     expect(screen.getByText(copy.goalExpense.request.rejectNote)).toBeTruthy();
     expect(screen.queryByRole("button", { name: copy.goalExpense.request.cancel })).toBeNull();
     await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
