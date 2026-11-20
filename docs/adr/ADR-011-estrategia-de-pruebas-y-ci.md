@@ -1,6 +1,6 @@
 # ADR-011 — Estrategia de pruebas y CI
 
-**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit; 4 de noviembre de 2026, forma del nivel 1 (§5), sin Docker (§9) y axe en dos jobs (§5) · **Alcance:** P0 (MVP-1)
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 1) · **Origen:** decisión de los fundadores, 2 de noviembre de 2026 · **Condiciones aplicadas:** revisión independiente, 2 de noviembre de 2026 · **Enmienda:** 3 de noviembre de 2026, tras el preflight de Spec Kit; 4 de noviembre de 2026, forma del nivel 1 (§5), sin Docker (§9) y axe en dos jobs (§5) · **Notas fechadas:** 17 de noviembre de 2026, el job `e2e` partido en `e2e` y `a11y-session` (§4) y el nivel 2 sin implementar, diferido a MVP-2 (§5); 18 de noviembre de 2026, repositorio público y minutos (§5) · **Alcance:** P0 (MVP-1)
 
 > **Terminología.** En este ADR, «spec E2E *n*» es siempre una spec de Playwright
 > de la tabla de §3. Una **especificación** (001, 002…) es un slice de producto.
@@ -225,6 +225,13 @@ mira el PR y ve cuánto tarda en ponerse verde.
 | Job `e2e`: specs E2E y axe con sesión (enmienda del 6 de noviembre de 2026, maestro §15.10, decisión 19.5) | **< 8 min (480 s)** |
 | Nocturno / post-merge | **< 15 min** |
 
+> **Notas fechadas sobre esta tabla** (registradas en el PR documental de cierre de P0-3, 004-T085; no reescriben la tabla):
+>
+> - **10 de noviembre de 2026** (maestro §15.10, decisiones 19.5 y 21.4): el job `e2e` pasa a **< 660 s**, con 12 min de tope duro.
+> - **17 de noviembre de 2026** (maestro §15.10, decisión 24.14): el job `e2e` se parte en dos jobs **paralelos**, `e2e` (specs E2E) y **`a11y-session`** (axe con sesión, en su nivel ligero y, a mano, el barrido completo). Cada uno conserva **< 660 s** (bloquea) y 12 min de tope. Se partió en vez de subir el presupuesto, por la cláusula anticliquet. Existe además el job **`release`**, solo a mano y fuera del gate (especificación 005), con aviso a 600 s por tramo y 20 min de tope.
+> - **El nocturno no existe**: ver la nota del nivel 2 en §5. Su fila queda como presupuesto para cuando se implemente, en MVP-2.
+> - El detalle operativo está en `docs/TESTING.md` §9.
+
 La frase «mide el job» aplica **solo a esta segunda tabla**.
 
 #### Cuándo empiezan a bloquear
@@ -298,6 +305,8 @@ descarga por una restauración de coste comparable, no quitando trabajo.
 1. E2E completo: **las cinco specs**, en **Chromium + WebKit**
 2. axe en la matriz completa: 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
+
+> **Nota del 17 de noviembre de 2026** (maestro §15.10, decisión 24.3; Q3 de la especificación 005). **El nivel 2 nunca se implementó**: no hay workflow nocturno ni post-merge en `.github/workflows/ci.yml`. Se difiere a **MVP-2**. En MVP-1 lo sustituyen las corridas a mano que pide cada etapa: al cerrar P0-3, el barrido completo y las cinco specs con «Run workflow» (004-T082); para el candidato de MVP-1, las cinco specs en Chromium y una vez en WebKit (job `release`), más la checklist de humo de los fundadores en producción. Donde este ADR o `docs/TESTING.md` dicen que algo corre «en el nocturno», en MVP-1 corre en esas pasadas a mano.
 4. Rendimiento contra los umbrales del maestro §15.7
 
 El workflow no se escribe en este ADR. Lo implementa la especificación 001 junto
@@ -338,6 +347,8 @@ Desde esta enmienda el nivel 1 se organiza así. Sustituye a «jobs en paralelo�
 **Nomenclatura.** En esta sección, «job 1» a «job 5» numeran **controles**, no jobs de GitHub Actions. Desde esta enmienda, los controles 1, 2 y 5 corren en el job `app`. Los controles 3 y 4 tendrán jobs propios, cuyos nombres fija P0-1.
 
 Los presupuestos de §4 no cambian. El «gate de PR completo» se mide como el job más lento, que hoy es `app`. Las reglas de esta sección siguen intactas: los controles no aplicables se declaran y el contrapositivo vale («P0-1 no mergea sin el job 3»).
+
+> **Nota del 18 de noviembre de 2026** (maestro §15.10, decisión 25.1). El repositorio es **público** desde ese día: se habían agotado los 2.000 minutos mensuales de Actions de la cuenta Free con el repositorio privado. Mientras siga público, **los minutos dejan de ser una restricción**. Los puntos 1 a 5 de esta enmienda no cambian por esta nota: la forma de los jobs, el filtro de documentos, los borradores sin CI y la cancelación de runs obsoletos siguen valiendo. Los fundadores decidieron el mismo día **mantenerlos tal cual** (decisión 25.1): siguen siendo buena práctica y vuelven a importar si el repositorio pasa a privado.
 
 **Axe en dos jobs** (enmienda del 4 de noviembre de 2026, revisión del PR #37, plan de la especificación 002). Desde P0-1 las rutas de producto y de Mi cuenta exigen sesión, y la sesión necesita Supabase, que el job `app` no levanta. El **control 5 (axe en los dos temas) no cambia**; se reparte según **si el estado real que se audita necesita una sesión**, no según el grupo de rutas al que pertenece:
 

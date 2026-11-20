@@ -1,6 +1,6 @@
 # ADR-013 — Acceso a datos: `supabase-js` con funciones de Postgres, sin ORM
 
-**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite; y nota de precisión sobre cuándo corren las [V] definitivas («Verificación pendiente») · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
+**Estado:** Aceptado por los fundadores, 4 de noviembre de 2026 (maestro §15.10, decisión 15) · **Propuesto:** 4 de noviembre de 2026 · **Revisión:** tres rondas adversariales del PR #34, 4 de noviembre de 2026 · **Enmienda:** 4 de noviembre de 2026, nota de implementación de §2.3 tras el preflight del plan de P0-1; no cambia la decisión (ver «Enmienda» al final); y nota de la [V] 6 del mismo día, que precisa cómo se prueba la precisión sin relajar ningún límite; y nota de precisión sobre cuándo corren las [V] definitivas («Verificación pendiente») · **Nota:** 18 de noviembre de 2026, el borrado administrativo de cuenta (al final) · **Origen:** pendiente declarado en el maestro §15.10 («el mecanismo de acceso a datos […] necesita su propio ADR antes de P0-1») · **Alcance:** P0 completo, desde P0-1
 
 ## Contexto
 
@@ -600,10 +600,54 @@ con Supabase CLI 2.121.0 y PostgreSQL 17.11. La salida está en
   devuelven datos, solo un booleano; la prueba de privilegios efectivos incluye el
   rol nuevo.
 
+## Nota del 18 de noviembre de 2026 — el borrado administrativo de cuenta
+
+**No cambia la decisión.** Registra una operación administrativa excepcional,
+decidida por los fundadores al aprobar el plan de la especificación 005 (D2,
+opción a; maestro §15.10, decisiones 24.8 y 25.3) y escrita en el PR documental de
+cierre de P0-3 (004-T085). No es un ADR nuevo porque no cambia la arquitectura de
+acceso: no añade ninguna función expuesta, ningún rol ni ningún privilegio.
+
+- **Qué es.** El borrado manual de cuenta de MVP-1
+  (`specs/005-gate-mvp-1/contracts/account-deletion.md`;
+  `scripts/account-deletion/`). Lo ejecuta el gestor, con el «sí» escrito de cada
+  persona del alcance, ensayado en `juntia-dev`; en producción, con el
+  procedimiento de migraciones y el «sí» de un fundador antes de cada fase que
+  escribe. Ningún agente ve la contraseña de producción.
+- **Por qué no respeta §2.** §2 prohíbe la escritura directa sobre las tablas de
+  dinero y de membresía **por la API y por los roles de la app**. El
+  procedimiento no pasa por la API ni por `juntia_writer`: corre como **dueño de
+  las tablas**, por SQL, fuera de todo camino de petición, igual que el protocolo
+  de restauración de `docs/TESTING.md`.
+- **Sus límites.**
+  1. Una sola transacción (`psql -1`, `ON_ERROR_STOP`). Toma todas las tablas que
+     toca en un **orden fijo y con `lock_timeout`** antes de leer nada; si no las
+     consigue, revierte sin cambiar nada.
+  2. Suspende **por nombre** solo cinco triggers de solo inserción:
+     `audit_events_append_only`, `budget_versions_append_only`,
+     `goal_ledger_append_only`, `goal_allocations_append_only` y
+     `settlements_guard`. **`allocations_check_sum` no se suspende** (N1,
+     comprobado el 18 de noviembre de 2026 en `juntia-dev`). No toca los
+     `*_no_truncate`, las claves foráneas ni `session_replication_role`. Los
+     reactiva con `enable trigger` antes del `commit`; cualquier fallo revierte
+     también la suspensión.
+  3. Rompe el ciclo `confirmation_id ↔ usage_entry_id` con datos (poniendo a
+     `NULL` `goal_ledger_entries.confirmation_id`), porque suspender un trigger no
+     suspende una clave foránea.
+  4. **Nunca borra la auditoría de un actor externo**: si alguien de fuera del
+     alcance dejó auditoría sobre algo del alcance, se detiene antes de empezar.
+  5. Al final comprueba que ninguna fila nombra a las personas borradas y corre
+     `check-invariants.sql` sobre lo que queda.
+- **Lo que no cambia.** `juntia_writer` y `juntia_membership` siguen igual; la
+  app no gana ningún camino de borrado; la interfaz dice que la eliminación no
+  está disponible en la app y cómo pedirla. ADR-007 y ADR-010 llevan su nota del
+  mismo día.
+
 ## Referencias
 
 - `docs/JUNTIA_MASTER.md` §5, §7.1–7.5, §10.1, §15.6.3 y §15.10 (decisión 1 y el
-  pendiente de acceso a datos)
+  pendiente de acceso a datos; decisiones 24.8 y 25.3)
+- `specs/005-gate-mvp-1/contracts/account-deletion.md`
 - `docs/adr/ADR-001-conversion-privado-compartido.md`,
   `docs/adr/ADR-011-estrategia-de-pruebas-y-ci.md`
 - `docs/TESTING.md`

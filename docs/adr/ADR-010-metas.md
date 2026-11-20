@@ -1,6 +1,6 @@
 # ADR-010 — Metas
 
-**Estado:** Aceptado · **Origen:** documento maestro §12.2 · **Archivo creado:** 7 de noviembre de 2026, con la especificación 004 (P0-3) · **Alcance:** P0
+**Estado:** Aceptado, con notas del 7 de noviembre de 2026 y del 17 y 18 de noviembre de 2026 (fotos a MVP-2; borrado administrativo de cuenta) · **Origen:** documento maestro §12.2 · **Archivo creado:** 7 de noviembre de 2026, con la especificación 004 (P0-3) · **Alcance:** P0
 
 ## Decisión (maestro §12.2, sin cambios)
 
@@ -70,10 +70,41 @@ que exista una reversión autorizada y auditada» del uso; esa reversión no exi
 5. Con el uso quitado, el punto de extensión `juntia_private.transaction_goal_funded`
    (FR-035 de la 003) devuelve `false` y Mover a Pareja vuelve a estar disponible.
 
+## Nota · 18 de noviembre de 2026: la única excepción a «los aportes no se borran» (maestro §15.10, decisiones 24.8 y 25.3)
+
+**No cambia la decisión.** El ledger de metas sigue siendo de solo inserción: un
+aporte nunca se edita ni se borra, y una corrección es una anulación (nota de la
+decisión 22.13) o un asiento `void`. Esta nota, escrita en el PR documental de
+cierre de P0-3 (004-T085) por la revisión del plan de la 005 (F85-8), añade **una
+única excepción**:
+
+1. **El borrado de los asientos de una persona o de una pareja**, con sus usos,
+   asignaciones y solicitudes, **solo** con el procedimiento autorizado y ensayado
+   del borrado manual de cuenta de MVP-1
+   (`specs/005-gate-mvp-1/contracts/account-deletion.md`), con el manifiesto de
+   aprobaciones, confirmaciones y exportaciones. Nunca desde la app, nunca por una
+   función expuesta y nunca para corregir datos.
+2. **El ciclo entre `goal_ledger_entries.confirmation_id` y
+   `goal_usage_confirmations.usage_entry_id`** se rompe poniendo a `NULL`
+   `confirmation_id`, con `goal_ledger_append_only` suspendido, antes de borrar las
+   dos filas. Nunca el otro lado: una solicitud aprobada exige su `usage_entry_id`.
+   Los asientos `void` se borran antes que los asientos que anulan.
+3. Las demás reglas del procedimiento —una transacción como dueño, locks en orden
+   fijo con `lock_timeout`, la suspensión por nombre de solo cinco triggers
+   (`audit_events_append_only`, `budget_versions_append_only`,
+   `goal_ledger_append_only`, `goal_allocations_append_only` y
+   `settlements_guard`), `allocations_check_sum` sin suspender (N1) y la auditoría
+   de un actor externo nunca borrada— están en la nota del mismo día de ADR-007 y
+   en la de ADR-013.
+
 ## Fuera de P0-3
 
 La subida de fotos de las metas queda fuera de P0-3 (decisión 22.6) y necesitará
 un ADR propio, **ADR-014** (Storage privado de fotos de metas), antes de P0-4.
+
+> **Nota del 17 de noviembre de 2026** (maestro §15.10, decisión 24.13): las metas
+> **no tienen foto en MVP-1**; se queda el fallback aprobado de GoalCard y
+> **ADR-014 pasa a MVP-2**. El «antes de P0-4» de arriba queda sin efecto.
 
 ## Verificación pendiente [V]
 
@@ -88,3 +119,4 @@ contra aprobar); y `transaction_goal_funded` con datos.
 - `docs/JUNTIA_MASTER.md` §5.1, §5.6, §7.3, §12.2, §15.4, §15.5, §15.6.3 y §15.10 (decisión 22)
 - `specs/004-presupuestos-y-metas/spec.md`, Q13, Q14, Q17 y Q18, FR-040 a FR-059
 - ADR-001 punto 7 · ADR-007 (anulación auditada) · ADR-013 §2.4 y §3
+- `specs/005-gate-mvp-1/contracts/account-deletion.md` y `specs/005-gate-mvp-1/plan.md` (D2; fila 22 de la lista de T085, F85-8)

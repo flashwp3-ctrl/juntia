@@ -2030,6 +2030,8 @@ comunicó el gestor. Preview del commit de la dueña 050a769 en `feat/002-d-anno
 
 **Cuatro excepciones aprobadas** por los dos fundadores el 6 de noviembre de 2026 (decisión 19, 19.2), cada una con sus cinco datos y «EXCEPCIÓN APROBADA» en su tarea: T090, T092, T094 y T095. La parte de Android de T086 entra en la misma excepción (ver T086). Ninguna es de seguridad, autorización, aislamiento ni atomicidad.
 
+> **Enmienda del 17 de noviembre de 2026** (maestro §15.10, decisión 24.6, que enmienda la 19.2; Q6 de la spec 005, opciones (a) y (c)). Las excepciones de **Android** —T090, T092, T095 y la parte de Android de T086, más los springs a 55 fps de MOTION_SYSTEM, que se añaden— **se prorrogan más allá de MVP-1**: su revalidación pasa a ser condición para abrir la app a un tercero. **T094** (CLS en un iPhone real) **sale de la excepción**: se ejecuta antes de MVP-1 con un Mac prestado. Registrada en el PR documental de cierre de P0-3 (004-T085); el estado de estas tareas no cambia aquí.
+
 ### T097
 
 **Pendiente · Humana, con el momento cambiado por decisión 19** (19.3; los dos fundadores, 6 de noviembre de 2026): la primera copia real de producción con `scripts/backup.sh` y su restauración en PostgreSQL 17 con `scripts/restore-plain.sh` (quickstart §4.1 y §4.3) se hacen **antes del primer movimiento real en producción**, no antes del merge del PR D: producción todavía no tiene datos reales y una copia ahora no protege nada. La hace un fundador con el gestor; ningún agente ve la contraseña de producción. Se pegan el manifiesto y el log con `exit=0`, sin datos. **Sin esta salida, no se anota ningún dato real.**

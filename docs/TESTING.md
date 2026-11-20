@@ -68,8 +68,10 @@ está probada sin la salida de ese job en ese commit.
 
 **Iterar contra `juntia-dev` (decisión 18, ADR-011 §9.9).** Mientras se
 desarrolla, las capas de base de datos se iteran contra `juntia-dev`, que es
-desechable, y no contra el CI: los minutos de GitHub Free no alcanzan para iterar
-en CI. El CI corre solo en los puntos de control del `tasks.md` y en el gate
+desechable, y no contra el CI: los minutos de GitHub Free no alcanzaban para iterar
+en CI (desde el 18 de noviembre de 2026 el repositorio es público y los minutos ya no
+limitan, maestro §15.10, decisión 25.1; los fundadores decidieron mantener la regla
+igual). El CI corre solo en los puntos de control del `tasks.md` y en el gate
 final, y solo su salida cuenta como evidencia. Los correos reales y el ensayo de
 restauración siguen solo en CI. Comandos, guardia y límites: «Iterar contra
 `juntia-dev`», al final de esta sección.
@@ -284,7 +286,13 @@ Tres reglas, sin excepción:
 
 - **En cada PR de código, nivel ligero:** cada pantalla y cada estado registrado,
   **una vez**, a 390 px, en los dos temas. Sin sesión en el job `app` y con sesión
-  en el job `e2e`. Una violación seria o crítica rompe el PR.
+  en el job `a11y-session` (hasta el 17 de noviembre de 2026, en `e2e`; decisión 24.14).
+  Una violación seria o crítica rompe el PR. **Desde el 17 de noviembre de 2026**
+  (decisión 23.6, PR #82), la pasada común de `routes.a11y.ts` comprueba además en
+  cada estado que el documento no es más ancho que el viewport (si lo es, nombra los
+  elementos que escapan, siguiendo la cadena de bloques contenedores) y, por debajo
+  de 768 px, que ningún campo de texto visible baja de 16 px. Los estados con
+  `axe: false` se visitan solo para esas comprobaciones de geometría.
 - **Barrido completo, a mano:** los siete anchos, el texto al 200 %, el teclado
   completo y los objetivos de 44 px. Corre con «Run workflow» al cerrar cada etapa
   (fin de P0-2, fin de P0-3, antes de MVP-1) y en todo PR que cambie el diseño de
@@ -293,7 +301,7 @@ Tres reglas, sin excepción:
   ejemplo, con una etiqueta `@sweep` excluida de la pasada del PR).
 
 **Selector por área del nivel ligero con sesión (decisión de los fundadores del 11
-de noviembre de 2026; maestro §15.10, decisión 21).** En el job `e2e`,
+de noviembre de 2026; maestro §15.10, decisión 21).** En el job `a11y-session` (antes, `e2e`),
 `scripts/a11y-select.mjs` recibe los archivos cambiados del PR (`git diff
 --name-only <base>...HEAD`) y elige qué archivos `tests/a11y/*.a11y.ts` del nivel
 ligero corren, con el mismo criterio que el selector de specs E2E:
@@ -349,7 +357,7 @@ PR toca**, y una ruta implementada nunca se deja de auditar en la pasada complet
 **Dónde corre** (ADR-011 §5, enmienda «Axe en dos jobs»): según si el estado real
 necesita sesión, no según el grupo de rutas. Los estados sin sesión, en el job
 `app`; los que la necesitan (incluidas la primera entrada y la contraseña nueva
-con sesión de recuperación), en el job `e2e`, con sesión sembrada. Una prueba de
+con sesión de recuperación), en el job `a11y-session` (en `e2e` hasta el 17 de noviembre de 2026), con sesión sembrada. Una prueba de
 cobertura comprueba que entre los dos el control está completo en cada PR de
 código.
 
@@ -365,6 +373,13 @@ la matriz completa de las rutas implementadas, por la misma razón.
 2. axe en la matriz completa: 5 rutas × 2 temas
 3. Snapshots visuales de **las 5 rutas** — no de cada componente
 4. Rendimiento contra los umbrales del maestro §15.7
+
+> **El nivel 2 no existe** (nota del 17 de noviembre de 2026; maestro §15.10, decisión 24.3; Q3 de la spec 005).
+> Nunca se implementó: `.github/workflows/ci.yml` no tiene workflow nocturno ni post-merge. Se difiere a **MVP-2**.
+> En MVP-1 lo sustituyen las pasadas a mano de cada etapa: al cerrar P0-3, el barrido completo y las cinco specs con
+> «Run workflow» (004-T082); para el candidato de MVP-1, las cinco specs en Chromium y una vez en WebKit (job
+> `release`, abajo) y la checklist de humo de los fundadores en producción. Donde este documento dice que algo corre
+> «en el nocturno», en MVP-1 corre en esas pasadas.
 
 ### Laboratorio a mano — job `release` (005, no es del gate)
 
@@ -559,8 +574,19 @@ presupuesto, el problema no es el presupuesto: es que hay un test por componente
 5. **Retries 0 en local, 1 en CI.** Un test que necesita el segundo intento **dos
    veces** se saca a cuarentena y se arregla (§8).
 6. **Un solo navegador en los PRs:** Chromium, instalado con
-   `npx playwright install --with-deps chromium`. WebKit solo en el nocturno.
+   `npx playwright install --with-deps chromium`. WebKit solo en el nocturno
+   (que no existe, §3: en MVP-1, WebKit corre en el job `release`, a mano).
 7. **Nada de colores hex crudos** fuera de `styles/tokens.css`. Regla de lint.
+
+**Prácticas que dejó P0-3** (no son reglas duras nuevas; registran cómo se corrigieron dos fallos,
+`specs/004-presupuestos-y-metas/evidence.md`, «Lecciones de P0-3»):
+
+- **Un RSC transmitido no se lee con `response.text()`.** En Playwright devuelve "" y, con un `catch` silencioso,
+  las comprobaciones de privacidad del prefetch de las specs 3 y 4 pasaban sin leer ningún cuerpo. Se usa
+  `tests/support/rsc-capture.ts` (`page.route` y `route.fetch()`), y toda comprobación de **ausencia** lleva su
+  **control positivo**: la misma captura tiene que encontrar lo que sí debe estar.
+- **El ancho se comprueba en cada estado, no solo en cada ruta.** El desborde de Actividad del 11 de noviembre de 2026
+  (585 px a 390) llegó a producción. Desde el PR #82, la pasada común de accesibilidad lo comprueba (§3).
 
 ---
 
@@ -739,9 +765,10 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 | --- | --- |
 | E2E de humo en PR | **< 3 min** |
 | **Gate de PR completo** (el job más lento; hoy, `app`) | **< 6 min** |
-| Job `e2e` (specs E2E y axe con sesión en su nivel ligero; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026, y decisión de los fundadores del 10 nov 2026, abajo) | **< 11 min (660 s)**; hasta el 10 nov 2026, < 8 min (480 s) |
-| Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 12 min (10 min hasta el 10 nov 2026; corre en el job `e2e`) |
-| Nocturno / post-merge | **< 15 min** |
+| Job `e2e` (specs E2E; maestro §15.10, decisiones 19.5 y 21, 6–7 nov 2026, decisión de los fundadores del 10 nov 2026, abajo, y decisión 24.14 del 17 nov 2026) | **< 11 min (660 s)**, bloquea; tope duro 12 min. Hasta el 10 nov 2026, < 8 min (480 s). Hasta el 17 nov 2026 incluía el axe con sesión |
+| Job `a11y-session` (axe con sesión en su nivel ligero; decisión 24.14, 17 nov 2026, PR #83) | **< 11 min (660 s)**, bloquea; tope duro 12 min |
+| Barrido completo de accesibilidad (a mano, en cada hito; decisión 21.2) | sin tope de PR; tope duro del job 12 min (10 min hasta el 10 nov 2026). Corre en `a11y-session` (con sesión) y en `app` (sin sesión); hasta el 17 nov 2026, en `e2e` |
+| Nocturno / post-merge | **< 15 min**. No existe todavía (§3, «El nivel 2 no existe»): a MVP-2 |
 | Job `release` (laboratorio a mano de la 005, por tramo; no es del gate, §3) | **aviso a 600 s**, nunca bloquea; tope duro del job 20 min |
 
 > **Decisión de los fundadores del 10 de noviembre de 2026:** el tope del job `e2e` sube de 480 s a 660 s. Medición del
@@ -750,6 +777,16 @@ servicios y ejecución. Es lo que tarda el check en ponerse verde.
 > aplicó la (c) de `specs/004-presupuestos-y-metas/contracts/ci.md`. Con ella, el tope duro del job `e2e` (`timeout-minutes`
 > en `.github/workflows/ci.yml`) pasa de 10 a 12 minutos, para que el presupuesto avise antes de que GitHub cancele el job;
 > los demás jobs no cambian.
+
+> **Decisión de los fundadores del 17 de noviembre de 2026** (maestro §15.10, decisión 24.14): el job `e2e` se parte en
+> `e2e` y `a11y-session`, en paralelo, cada uno con su propio Supabase y su propio build (el de `a11y-session` reusa la
+> caché de `.next`), en vez de subir el presupuesto: el gate del PR #82 midió 609 s de 660 y P0-4 añade pruebas. Gate
+> del PR #83: `e2e` 321 s y `a11y-session` 398 s. Enmienda las decisiones 19.5 y 21.4 y ADR-011 §4. Si `a11y-session`
+> solo ve archivos neutros, se salta en segundos.
+>
+> **Repositorio público desde el 18 de noviembre de 2026** (decisión 25.1): los minutos de Actions dejan de ser una
+> restricción mientras siga público. Los presupuestos de esta tabla **no** cambian por eso: miden lo que espera quien
+> mira el PR, no lo que se factura.
 
 «Mide el job» aplica **solo a esta segunda tabla**.
 

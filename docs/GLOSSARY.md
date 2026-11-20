@@ -49,7 +49,7 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Gasto | tipo `expense` | §7.3 | «Gasto» · `ExpenseRow` variante gasto | En P0 puede ser privado o de grupo. Es lo único que consume presupuesto. |
 | Ingreso | tipo `income` | §7.3 | «Ingreso» · `ExpenseRow` variante ingreso (+) | **Privado únicamente** en P0. No cuenta como consumo (§5.3). |
 | Liquidación | tipo `settlement` · métrica `settlement` | §5.1, §7.3 | **«Liquidado»**, nunca «Pagado» cuando no hubo transferencia verificada | **No es un gasto**: no suma al consumo ni a las categorías. Solo grupal, entre dos miembros, sin categoría presupuestal. Juntia **nunca crea una transferencia**; registra la liquidación declarada. |
-| Pagador | `payer_user_id` | §7.3 | «pagó Tomás» | Aplica a gastos. En Mover a Pareja **el pagador original se mantiene** (handoff). |
+| Pagador | `payer_user_id` | §7.3 | «pagó Tomás» | Aplica a gastos. En Mover a Pareja **el pagador original se mantiene** (handoff). Al anotar un gasto compartido, el pagador por defecto es **quien anota**; se puede cambiar a cualquier integrante activo (maestro §15.10, decisiones 20.6 y 23.3). |
 | Origen y destino de una liquidación | `from_user_id` / `to_user_id` | §7.3 | «Tomás → Sara» | Aplica solo a liquidaciones. |
 | Fecha del movimiento | `transaction_date` | §5.2 | «hoy», «12 oct» | Define el mes presupuestal. `created_at`/`updated_at` son auditoría, no periodo. |
 | Anulación | estado `voided` | §5.4; spec 002, FR-013 y data-model §8 | — | Excluye el movimiento de los agregados **conservando** su rastro de auditoría. No es borrado. |
@@ -98,7 +98,7 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Estado de la meta | `active \| completed \| archived` | DEC-G01 | «Lo lograron» (completada) | Alcanzar el objetivo **no** implica que se haya comprado nada (DEC-G05). |
 | Asiento del libro de la meta | `goal_ledger_entries` | §7.3 | — | Registro inmutable y auditado. **No** se inserta como gasto ficticio en `transactions` (§7.3). |
 | Aporte a una meta (operación) | `goal_contribution` | §5.1, DEC-G02 | **«Registrar aporte»**, nunca «Depositar» ni «Invertir» (BRAND §4) | Es **destinación de dinero, no gasto de consumo**. No altera presupuesto, `net_owed` ni `group_total`. Un aporte **no es una transferencia**: «el dinero sigue donde lo tengan» (handoff). |
-| Retiro de una meta (operación) | `goal_withdrawal` | §5.1, DEC-G02 | **«Retiro de meta · reasignación»**, nunca «Ingreso» (BRAND §4) | Desasignación auditada de aportes **propios no consumidos**, con motivo. **No es ingreso ganado**: es reasignación. |
+| Retiro de una meta (operación) | `goal_withdrawal` | §5.1, DEC-G02 | **«Retiro de la meta»**, con su motivo, nunca «Ingreso» (BRAND §4). Hasta el 12 de noviembre de 2026, «Retiro de meta · reasignación» (maestro §15.10, decisión 23.4) | Desasignación auditada de aportes **propios no consumidos**, con motivo. **No es ingreso ganado**: es reasignación, aunque la interfaz ya no lo diga en el rótulo. |
 | Uso de fondos de una meta | `goal_usage` | §5.1, DEC-G02 | «Pagar con una meta» | Siempre vinculado a **un gasto real** (`transaction_id`). El gasto vinculado sí cuenta; el uso **no cuenta dos veces**. |
 | Reparto del uso por aportante | `goal_usage_allocations` | §7.3, DEC-G04 | `FundingLedger`: «Fondos de la meta · de quién son» | La suma es **exactamente** el uso total. El uso se atribuye a **los aportantes cuyos fondos se consumen**, no automáticamente al 50/50 del gasto. |
 | Confirmación de uso de fondos ajenos | `goal_usage_confirmations` | §7.3, DEC-G02, DEC-G06 | «PENDIENTE DE Tomás» · `ConfirmationBadge` | Sin confirmación **no se ejecuta**; no hay autorización implícita. **No vence.** Mientras está pendiente, esos fondos **no se descuentan ni cuentan como financiación**. Si se rechaza o cancela, **el gasto permanece** (§15.5). |
@@ -188,7 +188,7 @@ un defecto, no una preferencia de estilo.
 | Registrar aporte | Depositar / Invertir |
 | Destinado neto (para planificar) | Total gastado (para gasto + aportes) |
 | Porcentaje 55/45 | Proporcional (si no es por ingresos) |
-| Retiro de meta · reasignación | Ingreso |
+| Retiro de la meta (antes «Retiro de meta · reasignación», decisión 23.4) | Ingreso |
 
 Además: tuteo, frases cortas, es-CO, COP sin decimales, el nombre propio
 primero («Sara pagó»), sin emojis, sin exclamaciones de alarma y sin rankings de
@@ -234,7 +234,7 @@ Fuente de todas las filas: spec 004, `data-model.md` §§2–9 y `contracts/data
 | Categoría presupuestable | `category_kind = 'expense'` | Solo categorías de gasto; discriminador de la FK |
 | Tipo visual de meta | `goal_type` | Viaje, vivienda, boda, vehículo, educación, emergencias, otra |
 | Aporte registrado | `contribution` | Aporte a meta, nunca consumo |
-| Retiro propio | `withdrawal` | Retiro de meta · reasignación |
+| Retiro propio | `withdrawal` | «Retiro de la meta» (antes «Retiro de meta · reasignación», decisión 23.4) |
 | Uso aplicado | `usage` | Uso de meta vinculado a un gasto real |
 | Asiento de anulación | `void`, `voids_entry_id` | Anulado; no cambia ni borra el asiento original |
 | Asignación de un uso | `entry_kind = 'usage'` | Fondos por aportante; discriminador de la FK |
@@ -245,7 +245,7 @@ Fuente de todas las filas: spec 004, `data-model.md` §§2–9 y `contracts/data
 | Historial de presupuesto | `budget_history` | Autor, vigencia, anterior y nuevo |
 | Metas visibles | `goals_overview` | Una fila por meta, con `goal_scope` |
 | Totales de metas | `goals_totals` | Una fila por `goal_scope`; nunca suma personales y compartidas |
-| Disponible por aportante | `goal_member_balances` | Aportado, retirado, usado y disponible |
+| Disponible por aportante | `goal_member_balances` | Aportado, retirado, usado y disponible. En Metas · Yo y en la meta inmersiva, lo propio se rotula **«Tu disponible»** (antes «Tus aportes»; maestro §15.10, decisión 23.4); «Tus aportes» se queda, a propósito, desde el 19 de noviembre de 2026 solo en los mensajes de error y en las notas de rechazo de la solicitud (`rejectNote` y `rejected` en `src/lib/copy/es.ts`): ese día los fundadores aprobaron que B5 diga «Tu disponible en {meta}: $X → $Y» («Sí, apruebo»; PR #91) |
 | Historial de meta | `goal_entries` | Aportes, retiros y usos; anulación marcada, no fila de consumo |
 | Actividad de metas | `goal_activity` | Asientos por contexto y mes |
 | Solicitudes visibles | `usage_requests` | Uso ajeno pendiente o resuelto |

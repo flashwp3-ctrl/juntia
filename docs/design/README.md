@@ -8,10 +8,12 @@ Estos seis documentos se produjeron en el proyecto de Claude Design
 «Juntia: Responsive design y design system»
 (`https://claude.ai/design/p/caabf357-a0df-4048-886f-8c46c8979c5a`)
 y se importaron aquí para que el repositorio sea autosuficiente y ningún agente
-dependa de un servicio externo para leerlos. **Dos de los seis siguen intactos**:
-`BRAND_FOUNDATION.md` y `MOTION_SYSTEM.md`. Los otros cuatro tienen líneas
-corregidas —por reubicación, en revisión o por decisión de los fundadores— y
-cada una está en el **Log de cambios** más abajo.
+dependa de un servicio externo para leerlos. **Ninguno de los seis sigue
+intacto**: todos tienen líneas corregidas —por reubicación, en revisión o por
+decisión de los fundadores— y cada una está en el **Log de cambios** más abajo.
+(Hasta el 4 de noviembre de 2026 seguían intactos `BRAND_FOUNDATION.md` y
+`MOTION_SYSTEM.md`; el primero cambió con la decisión 14 y el segundo en el PR C
+de P0-3, registrado a posteriori por 004-T085.)
 
 ## Qué hay aquí
 
@@ -73,27 +75,39 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 | `COMPONENT_SPECIFICATIONS.md` | 35 | Placeholder del Input y prefijo «$» del monto sobre `surface.sunken`: se fija `linen.800` en claro y `text.secondary` en oscuro | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste, F16-1 de la revisión del PR #16).** El documento no fijaba su color y el PR B usaba `text.secondary`, que sobre `sunken` mide **4,30:1** en claro; WCAG 1.4.3 también exige contraste al placeholder. El primitivo existente `linen.800` #48443C mide **7,32:1** y sigue más tenue que el valor escrito (`text.primary`, 12,95:1). En oscuro, `text.secondary` #A29C92 sobre `sunken` #22262A mide 5,59:1 y no cambia. |
 | `COMPONENT_SPECIFICATIONS.md` | 41, 168 | Etiqueta del Segmented y texto del badge PRIVADO sobre `surface.sunken`: se fija `text.primary` | **Decisión de los fundadores, 3 de noviembre de 2026 (errata de contraste).** El comp pintaba ese texto con `text.secondary` #6C665B, que sobre `sunken` #E7DFD0 mide **4,30:1**; los documentos no fijaban el color. `text.primary` mide **12,95:1**. El 5,1:1 de `text.secondary` en `DESIGN_SYSTEM.md` está calculado sobre `canvas`, no sobre `sunken`. El estado `disabled` del Button (`sunken` + `text.secondary`) no cambia: WCAG 1.4.3 exime a los controles inactivos. |
 | `BRAND_FOUNDATION.md`, `DESIGN_SYSTEM.md`, `HANDOFF_CLAUDE_CODE.md`, `COMPONENT_SPECIFICATIONS.md` | 52; §1.4 y 66; 84, 127 y 149; 73 y 152 | Tipografía: Instrument Serif → **Brygada 1918**, Geist → **Onest**; Geist Mono → **Spline Sans Mono** | **Decisión de los fundadores, 4 de noviembre de 2026** (maestro §15.10, decisión 14), para Brygada 1918 y Onest. Spline Sans Mono fue propuesta del gestor: los dos fundadores la aprobaron el mismo día viendo las capturas del PR #32, y la marca de propuesta de la fila `meta.mono` de §1.4 se cerró. La auditoría de Impeccable marcó la pareja anterior como sobreusada; las tres fuentes nuevas pasan su detector, tienen licencia OFL y soportan el español. La escala de §1.4 se recalibró en el PR de implementación (#32): titulares de Brygada al 88 % de los tamaños anteriores, a 500 y 600, y la escala de Onest sin cambios. |
+| `COMPONENT_SPECIFICATIONS.md`, `DESIGN_SYSTEM.md`, `MOTION_SYSTEM.md` | §GoalCard, §GoalStack, §FundingLedger y Análisis; tokens `color.goal.tint.*` y su nota; §4.1 nueva | Tintes por tipo de meta en el fallback sin foto (`223260a`), hover y foco del abanico (`3b5ba60`), las dos desviaciones aprobadas del PR D (`87f0437`), la tabla «Ver cifras exactas» de Análisis (`8d215f2`) y el deslizamiento horizontal de la pila (`c0374fd`) | **Decisiones de los fundadores del 10 y 11 de noviembre de 2026**, aplicadas dentro de los PR de código de P0-3 (#68, #69, #71 y #73), **contra la política de edición de arriba**, y sin fila en este log. Se registran a posteriori en el PR documental de cierre de P0-3 (004-T085); el detalle de cada una está en su commit y en `specs/004-presupuestos-y-metas/evidence.md`. No se reescriben |
+| `COMPONENT_SPECIFICATIONS.md`, `RESPONSIVE_SPECIFICATIONS.md` | §BottomSheet y §Modal; tabla de breakpoints (md), «Sheets y diálogos» y Cuenta (768) | «Diálogo centrado de 520 px» → diálogo de 520 px **anclado arriba** desde md, centrado en horizontal y que crece por abajo; las confirmaciones siguen centradas | **Decisión de los fundadores, 12 de noviembre de 2026** (maestro §15.10, decisión 23.5), implementada en el PR #81 (17 nov) con `docs/audits/2026-11-dialogs/README.md`. Registrada por 004-T085 |
+| `DESIGN_SYSTEM.md` | §1.4, dos viñetas nuevas | Texto en `rem` en el código (los px son referencia a 16 px de raíz; excepción F79-3) y campos de texto de al menos 16 px por debajo de md o con puntero táctil | **Decisiones de los fundadores del 11 y el 17 de noviembre de 2026** (maestro §15.10, decisiones 23.1 y 23.6; PR #79 y #82). Registradas por 004-T085 |
+| `BRAND_FOUNDATION.md` | §4, tabla «Decir / No decir» | «Retiro de meta · reasignación» → «Retiro de la meta» | **Decisión de los fundadores, 12 de noviembre de 2026** (maestro §15.10, decisión 23.4; PR #80). El concepto no cambia: un retiro es reasignación, nunca ingreso. Registrada por 004-T085 |
+| `BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`, `DESIGN_SYSTEM.md`, `HANDOFF_CLAUDE_CODE.md`, `RESPONSIVE_SPECIFICATIONS.md` | BRAND §5; §GoalCard «Fotografía»; [V] finales; Accesibilidad «Fotos» y «Pendiente»; 2xl y «Metas» | Nota «no aplica a MVP-1» en las reglas de foto de metas y sus [V]; el texto aprobado se conserva para MVP-2 | **Decisión de los fundadores, 17 de noviembre de 2026** (maestro §15.10, decisión 24.13): metas sin foto en MVP-1, ADR-014 a MVP-2. Registrada por 004-T085 |
+| `HANDOFF_CLAUDE_CODE.md` | Decisiones (eliminación de cuenta y «READY WITH BLOCKERS»), «Datos», Accesibilidad («Texto ampliado») y «Pendiente» (Android) | Notas que remiten al maestro: la eliminación de cuenta va al lanzamiento público con un procedimiento manual en MVP-1; la confirmación técnica de Supabase no es un pendiente; la técnica del 200 % está decidida; el teclado de Android queda en la excepción prorrogada. El estado «READY WITH BLOCKERS» se conserva como historia | **Maestro §15.6 (nota final) y §15.10, decisiones 23.1, 24.6 y 24.8** (17 nov 2026). Registradas por 004-T085 |
+| `DESIGN_SYSTEM.md` | [V] finales | Las sombras táctiles en Android quedan en la excepción prorrogada más allá de MVP-1 | **Maestro §15.10, decisión 24.6** (17 nov 2026). Registrada por 004-T085 |
 
-**Intacto byte a byte** respecto a la importación: `MOTION_SYSTEM.md` (13000 B).
+**Intacto byte a byte** respecto a la importación: ninguno. `MOTION_SYSTEM.md` lo estuvo (13000 B) hasta el PR C de
+P0-3: 13000 B → **14208 B** (§4.1 nueva, hover y foco del abanico, `3b5ba60`).
 
 **Cambiados**, todos por las filas de arriba:
 
-- `BRAND_FOUNDATION.md`: 3981 B → 4204 B (línea 52, decisión 14) → **4199 B** (línea 52,
-  Spline Sans Mono aprobada).
+- `BRAND_FOUNDATION.md`: 3981 B → 4204 B (línea 52, decisión 14) → 4199 B (línea 52,
+  Spline Sans Mono aprobada) → **4524 B** (§4 y §5, 004-T085).
 - `HANDOFF_CLAUDE_CODE.md`: 21666 B → 21653 B (−22 B por las rutas de las
   líneas 5 y 6, +9 B por las dos sustituciones de `Settings`) → 21825 B
   (línea 131, ficha de los estados vacíos) → 22010 B (líneas 84, 127 y 149, decisión 14)
-  → **21954 B** (líneas 84 y 127, Spline Sans Mono aprobada).
-- `RESPONSIVE_SPECIFICATIONS.md`: 4270 B → **4221 B** (línea 16).
+  → 21954 B (líneas 84 y 127, Spline Sans Mono aprobada) → **23017 B** (Decisiones,
+  «Datos», Accesibilidad y «Pendiente», 004-T085).
+- `RESPONSIVE_SPECIFICATIONS.md`: 4270 B → 4221 B (línea 16) → **4706 B** (md, 2xl,
+  «Sheets y diálogos», «Metas» y Cuenta a 768, 004-T085).
 - `COMPONENT_SPECIFICATIONS.md`: 21146 B → 21256 B (línea 94) → 21653 B
   (líneas 27, 35, 36, 41 y 168, errata de contraste) → 21742 B (línea 41,
   precisión de la perilla) → 21962 B (línea 94, colores del sidebar y el rail) →
-  22022 B (líneas 73 y 152, decisión 14) → **22116 B** (línea 73, tamaños de
-  GoalCard con la escala recalibrada en el PR #32).
+  22022 B (líneas 73 y 152, decisión 14) → 22116 B (línea 73, tamaños de
+  GoalCard con la escala recalibrada en el PR #32) → 25551 B (PR de código de P0-3,
+  registrados a posteriori) → **26398 B** (§BottomSheet, §Modal y §GoalCard, 004-T085).
 - `DESIGN_SYSTEM.md`: 15066 B → 15102 B (línea 205) → 15541 B (tabla de §1.4 y
   línea 66, decisión 14) → 16540 B (líneas 50 a 53 y 66 a 68, escala
-  recalibrada en el PR #32) → **16531 B** (líneas 64, 66 y 67, Spline Sans Mono
-  aprobada).
+  recalibrada en el PR #32) → 16531 B (líneas 64, 66 y 67, Spline Sans Mono
+  aprobada) → 22880 B (tintes de meta del PR C de P0-3, registrados a posteriori) →
+  **23954 B** (§1.4 y [V] finales, 004-T085).
 
 ## Erratas conocidas
 

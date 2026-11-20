@@ -228,7 +228,7 @@ sentencia**; las que agregan llevan columnas de filtro (`context`, `month`,
 - **`context`** (`me`/`us`) es el **contexto de presentación**, el del selector Yo/Nosotros. Lo llevan las vistas que agregan por contexto: `budget_months`, `goal_activity` y `metric_months`.
 - **`goal_scope`** (`personal`/`shared`) es **de quién es la meta**: `personal` si tiene `owner_user_id`, `shared` si tiene `group_id`. Lo llevan `goals_overview` y `goals_totals`, que **no** tienen `context`.
 
-Una pantalla elige metas por `goal_scope`, con **una sola consulta**: en Nosotros, `goal_scope = 'shared'`; en Yo, todas las visibles, que la interfaz separa en «Tus metas» (`personal`) y «Metas compartidas» (`shared`, con «Tus aportes» = `my_available_minor`). Los totales salen de `goals_totals` por `goal_scope`: el total de las personales nunca incluye una compartida, y el «Apartado en metas compartidas» de Nosotros nunca incluye una personal.
+Una pantalla elige metas por `goal_scope`, con **una sola consulta**: en Nosotros, `goal_scope = 'shared'`; en Yo, todas las visibles, que la interfaz separa en «Tus metas» (`personal`) y «Metas compartidas» (`shared`, con «Tu disponible» = `my_available_minor`; hasta el 12 de noviembre de 2026, «Tus aportes», maestro §15.10, decisión 23.4). Los totales salen de `goals_totals` por `goal_scope`: el total de las personales nunca incluye una compartida, y el «Apartado en metas compartidas» de Nosotros nunca incluye una personal.
 
 | Vista | Qué |
 | --- | --- |
@@ -248,7 +248,7 @@ Una pantalla elige metas por `goal_scope`, con **una sola consulta**: en Nosotro
 | Módulo | Qué |
 | --- | --- |
 | `budgets/` | `BudgetMonth`, `budgetState(consumed, limit)` (cerca ≥ 85 % por comparación exacta), `displayedPercent` (truncado), `limitInForce(versions, month)` |
-| `goals/` | `Goal`, `LedgerEntry`, `memberAvailable`, `goalBalance`, `progress` (truncado), `proposeFunding(available, amount)` (proporcional, mayor residuo, pesos enteros, ADR-002), `goalPace` (Q9) |
+| `goals/` | `Goal`, `LedgerEntry`, `memberAvailable`, `goalBalance`, `progress` (truncado), `proposeFunding(available, amount)` (proporcional, mayor residuo, pesos enteros, ADR-002; desde F20, decisión 23.2, la interfaz le pasa como pesos la parte de cada uno en el reparto del gasto, `features/expenses/goal-funding/funding-state.ts`), `goalPace` (Q9) |
 | `metrics/` | `gasto_consumo`, `aporte_a_metas`, `retiro_de_metas`, `gasto_financiado_con_meta`, `total_destinado_neto`, con `NotAvailable` distinto de `0` (CONVENTIONS A.4; TESTING §6) |
 | `analysis/` | `monthComparison(current, previous)` (Q10) |
 | `golden/` | Partes A a D del dataset de P0-3, con fechas, y la prueba cronológica (spec, «Dataset dorado») |

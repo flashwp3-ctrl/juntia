@@ -43,10 +43,11 @@ producción** sin la confirmación del fundador en cada paso de escritura (ADR-0
    héroe de Inicio no cambia; aparece «Apartado para metas».
 3. «Deshacer» dentro de los 6 s: el aporte queda anulado y sigue en el historial.
 4. Tomás retira más de lo que tiene: «Puedes retirar hasta $X». Retira una parte con
-   motivo: la fila dice «Retiro de meta · reasignación», sin «+».
+   motivo: la fila dice «Retiro de la meta», con el motivo y sin «+» (antes «Retiro de
+   meta · reasignación»; maestro §15.10, decisión 23.4).
 5. Sara intenta retirar fondos de Tomás: no se ofrece.
 6. Sara crea una meta personal en Yo: Tomás nunca la ve. En Yo, Sara ve sus metas y,
-   aparte, las compartidas con «Tus aportes $X».
+   aparte, las compartidas con «Tu disponible $X» (antes «Tus aportes $X»; decisión 23.4).
 7. Abrir Japón: Goal Journey crece hasta la vista inmersiva; Escape cierra y el foco
    vuelve a la tarjeta. Con movimiento reducido, crossfade.
 
@@ -54,7 +55,8 @@ producción** sin la confirmación del fundador en cada paso de escritura (ADR-0
 
 1. Sara anota en Nosotros «Tiquetes a Tokio», 3.000.000, pagó Tomás, 50/50, «Con una
    meta»: Japón. B1 lista solo metas compartidas, sin las personales ni deshabilitadas.
-2. FundingLedger propone un reparto proporcional; Sara escribe 1.620.000 propios y
+2. FundingLedger propone la parte de cada uno en el reparto (F20, decisión 23.2; antes,
+   un reparto proporcional a lo disponible); Sara escribe 1.620.000 propios y
    1.380.000 de Tomás. B3 muestra Japón «ahora» y «si aprueba».
 3. «Registrar y pedir a Tomás»: el gasto ya existe; Japón baja solo los fondos de Sara;
    la tarjeta dice PENDIENTE DE TOMÁS y «No vence».

@@ -115,7 +115,7 @@ las siete migraciones de `main` y el código de `src/` afectado.
 | ADR-007 | Correcciones auditadas; nada se edita ni se borra | Aceptado | No |
 | ADR-010 + notas 22.13 y 22.17 | Ledger, anulación de aportes y reversión del uso | Aceptado | No |
 | ADR-011, ADR-012, ADR-013 | Pruebas y CI, flujo de especificación, acceso a datos | Aceptados | No |
-| **ADR-014** (fotos de metas) | Fuera de P0-3 (decisión 22.6); antes de P0-4 | No existe; no lo necesita este slice | No |
+| **ADR-014** (fotos de metas) | Fuera de P0-3 (decisión 22.6); antes de P0-4. Desde el 17 nov 2026, en MVP-2 (decisión 24.13) | No existe; no lo necesita este slice | No |
 
 **Ninguna decisión del plan es nueva y significativa**: las de research (R1 asientos
 `void`, R2 trigger que bloquea, R3 orden de bloqueos, R4/R7 historial de presupuestos,
