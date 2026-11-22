@@ -128,8 +128,8 @@ function initialDraft(mode: SheetMode, today: string): Draft {
   return { type: "expense", amount: null, categoryId: null, date: today, description: "" };
 }
 
-// Comp 06 «Categoría en Anotar gasto», opción 1c (aprobada el 6 nov 2026), y su variante «06b · 4 × 3» (fundadores, 22 nov
-// 2026): las 11 categorías siempre a la vista, en la misma casilla en 360, 390 y 1440, 4 columnas × 3 filas, 3 × 64 + 2 × 8 =
+// Comp 06 «Categoría en Anotar gasto», opción 1c (aprobada el 6 nov 2026), y su variante «06b · 4 × 3» (confirmada por los
+// fundadores el 22 nov 2026): las 11 categorías siempre a la vista, en la misma casilla en 360, 390 y 1440, 4 columnas × 3 filas, 3 × 64 + 2 × 8 =
 // 208 px. «Otra», la última, ocupa las dos últimas casillas y cierra la rejilla. Cada celda: icono encima, nombre debajo, con
 // el color de su categoría; la elegida, anillo de 2 px en tinta. Es un grupo de radio: Tab entra en la elegida (o en la
 // primera) y las flechas la cambian y mueven el foco (← → de a una, con vuelta; ↑ ↓ de a fila; Inicio y Fin a los extremos).
@@ -169,7 +169,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
     // crecen con el texto, como los segmentados de F79. Comp 06b · 4 × 3: «Restaurantes» mide 4,3 rem a 0,6875rem (11 px), así
     // que 4 columnas necesitan 18,75rem de rejilla (a 16 px: 300 px; a 360 mide 320). Por debajo, 3 columnas (a 320 px de
     // pantalla); por debajo de 16rem, 2 (el texto al 200 %: 512 px). Las etiquetas van a 11 px con −0,01 em y sin relleno lateral
-    // (R1 de la comp): a 12 px «Restaurantes» (76,3 px) no cabía en la ficha de 74 px a 360. Ninguna etiqueta se recorta.
+    // (R1 de la comp, confirmada por los fundadores el 22 nov 2026): a 12 px «Restaurantes» (76,3 px) no cabía en la ficha de 74 px a 360. Ninguna etiqueta se recorta.
     <div className="@container/cat">
     <div ref={gridRef} role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-4 gap-2 @max-[18.75rem]/cat:auto-rows-[minmax(64px,auto)] @max-[18.75rem]/cat:grid-cols-3 @max-[16rem]/cat:grid-cols-2">
       {ids.map((id, index) => {
