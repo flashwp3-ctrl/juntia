@@ -315,7 +315,7 @@ Cada celda de las secciones anteriores marcada «prueba» con axe ya incluye el 
 | Inicio · Nosotros | CS «Inicio en Nosotros» en `dark`; R «Nosotros» en `dark` | prueba |
 | Actividad | R «Actividad con datos», «Actividad búsqueda», «Actividad filtros» en `dark`; HS «actividad» en `dark`. Listas largas en oscuro: ver «Muchos movimientos» | prueba |
 | Detalle / Edición | R «Detalle», «Edición», «Diálogo de eliminar» en `dark`; CS «edición compartida con el aviso» | prueba |
-| Anotar (incl. con meta) | R «Anotar E1 gasto» a «Anotar E5 guardado» en `dark`; GE «B1–B3 …»; E2E `annotate.e2e.ts` «UX 2: rejilla de 3 × 3 fija, sin superposiciones (… px, dark)» | prueba |
+| Anotar (incl. con meta) | R «Anotar E1 gasto» a «Anotar E5 guardado» en `dark`; GE «B1–B3 …»; E2E `annotate.e2e.ts` «UX 2: rejilla de 4 × 3 fija, sin superposiciones (… px, dark)» | prueba |
 | Balance | B en `dark` («Balance por saldar», «hoja de liquidación», «detalle de liquidación», «confirmación de anular») | prueba |
 | Plan | P (`bothThemes`, cada estado en claro y oscuro) | prueba |
 | Análisis | AN (`bothThemes`) | prueba |

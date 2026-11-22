@@ -1,7 +1,7 @@
 // FR-010; COMPONENT_SPECIFICATIONS.md §CategoryIcon; DESIGN_SYSTEM.md §1.3 y §3 («Forma = tipo de fila»).
 import { AppIcon, type AppIconName } from "./app-icon";
 
-// Las diez categorías de DESIGN_SYSTEM.md §1.3 con su pictograma y sus tokens de fondo y tinta.
+// Las doce categorías de DESIGN_SYSTEM.md §1.3 (diez más Oficina y Ropa, 22 nov 2026) con su pictograma y sus tokens de fondo y tinta.
 export const categories = {
   market: { icon: "shopping-cart-simple", tone: "bg-category-market-bg text-category-market-fg" },
   restaurants: { icon: "fork-knife", tone: "bg-category-restaurants-bg text-category-restaurants-fg" },
@@ -11,6 +11,9 @@ export const categories = {
   entertainment: { icon: "film-slate", tone: "bg-category-entertainment-bg text-category-entertainment-fg" },
   shopping: { icon: "shopping-bag", tone: "bg-category-shopping-bg text-category-shopping-fg" },
   services: { icon: "wifi-high", tone: "bg-category-services-bg text-category-services-fg" },
+  // Fundadores, 22 nov 2026 (comp 06b · 4 × 3): el maletín se distingue de la bolsa de Compras; la camiseta, más que el gancho.
+  office: { icon: "briefcase", tone: "bg-category-office-bg text-category-office-fg" },
+  clothing: { icon: "t-shirt", tone: "bg-category-clothing-bg text-category-clothing-fg" },
   income: { icon: "arrow-down-left", tone: "bg-category-income-bg text-category-income-fg" },
   other: { icon: "tag", tone: "bg-category-other-bg text-category-other-fg" },
 } as const satisfies Record<string, { icon: AppIconName; tone: string }>;

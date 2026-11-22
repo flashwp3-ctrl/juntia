@@ -437,7 +437,7 @@ const overflow = (page: Page) => page.evaluate(() => {
   const dialogs = [...document.querySelectorAll<HTMLElement>("[role='dialog'], [role='alertdialog']")].filter((node) => node.getClientRects().length > 0)
     .map((node) => {
       // 005 · PR B (corrección 5): el título no se monta sobre ningún botón (la × de «Editar gasto») y ninguna opción se sale de
-      // su caja (las fichas de categoría con «Entretenimiento» y «Restaurantes»).
+      // su caja (las fichas de categoría con «Restaurantes»; «Entretenimiento» pasó a «Ocio» el 22 nov 2026).
       // El texto del título, no su caja: el texto que no cabe se sale de la caja sin agrandarla.
       const heading = node.querySelector("h1, h2, h3");
       const range = document.createRange();

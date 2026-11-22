@@ -5,7 +5,7 @@
 
 export const LONG_LISTS = { movements: 600, contributions: 120, budgetVersions: 40 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const CATEGORIES = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"];
+const CATEGORIES = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "office", "clothing", "other"];
 
 /**
  * SQL de una transacción que siembra la cuenta de `userId` en el mes de `today` (YYYY-MM-DD, Bogotá). Idempotente: si la

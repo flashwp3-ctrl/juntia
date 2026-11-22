@@ -208,12 +208,13 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
   });
 }
 
-// UX lote 1, cambio 2 (definitivo; comp 06, opción 1c «Rejilla fija de 3 × 3»). Las 9 categorías a la vista sin interactuar, en
-// la misma casilla en 360, 390 y 1440 px, en los dos temas: 3 columnas × 3 filas, 208 px de alto, objetivos de al menos 44 px y
-// ninguna superposición entre celdas ni con la descripción, la fecha o «Solo tú».
+// UX lote 1, cambio 2 (definitivo; comp 06, opción 1c), con la variante «06b · 4 × 3» de los fundadores del 22 nov 2026. Las 11
+// categorías a la vista sin interactuar, en la misma casilla en 360, 390 y 1440 px, en los dos temas: 4 columnas × 3 filas, con
+// «Otra» la última y a dos casillas, 208 px de alto (el de antes, por el teclado del iPhone), objetivos de al menos 44 px, ninguna
+// etiqueta cortada ni partida y ninguna superposición entre celdas ni con la descripción, la fecha o «Solo tú».
 for (const scheme of ["light", "dark"] as const) {
   for (const width of [360, 390, 1440]) {
-    test(`UX 2: rejilla de 3 × 3 fija, sin superposiciones (${width} px, ${scheme})`, async ({ browser, baseURL }, testInfo) => {
+    test(`UX 2: rejilla de 4 × 3 fija, sin superposiciones (${width} px, ${scheme})`, async ({ browser, baseURL }, testInfo) => {
       const user = await seedUser({ role: `rejilla-${scheme}-${width}`, index: testInfo.parallelIndex });
       const context = await browser.newContext({ baseURL, colorScheme: scheme, viewport: { width, height: width < 700 ? 844 : 900 }, reducedMotion: "reduce" });
       const page = await context.newPage();
@@ -223,8 +224,8 @@ for (const scheme of ["light", "dark"] as const) {
       const group = sheet.getByRole("radiogroup", { name: copy.annotate.category });
       await expect(group).toBeVisible();
       const radios = group.getByRole("radio");
-      await expect(radios).toHaveCount(9);
-      const order = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"] as const;
+      await expect(radios).toHaveCount(11);
+      const order = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "office", "clothing", "other"] as const;
       await expect(radios).toHaveText(order.map((id) => copy.categories[id]));
       for (const radio of await radios.all()) await expect(radio).toBeVisible();
       const box = async (locator: ReturnType<Page["locator"]>) => (await locator.boundingBox())!;
@@ -234,11 +235,25 @@ for (const scheme of ["light", "dark"] as const) {
       cells.forEach((cell, index) => {
         expect(cell.height, `alto de la celda ${index}`).toBeGreaterThanOrEqual(44);
         expect(cell.width, `ancho de la celda ${index}`).toBeGreaterThanOrEqual(44);
-        // Misma casilla: columna y fila salen del orden, no del contenido.
-        expect(Math.abs(cell.x - cells[index % 3].x), `columna de la celda ${index}`).toBeLessThanOrEqual(1);
-        expect(Math.abs(cell.y - cells[Math.floor(index / 3) * 3].y), `fila de la celda ${index}`).toBeLessThanOrEqual(1);
+        // Misma casilla: columna y fila salen del orden, no del contenido. «Otra» (la 11.ª) empieza en la tercera columna y llega
+        // al borde derecho de la cuarta.
+        expect(Math.abs(cell.x - cells[index % 4].x), `columna de la celda ${index}`).toBeLessThanOrEqual(1);
+        expect(Math.abs(cell.y - cells[Math.floor(index / 4) * 4].y), `fila de la celda ${index}`).toBeLessThanOrEqual(1);
         expect(cell.x + cell.width).toBeLessThanOrEqual(width + 0.5);
       });
+      expect(Math.abs(cells[10].x + cells[10].width - (cells[3].x + cells[3].width)), "«Otra» cierra la fila 3").toBeLessThanOrEqual(1);
+      // Ninguna etiqueta se corta ni se parte: cabe a lo ancho en su ficha y ocupa una sola línea.
+      const labels = await radios.evaluateAll((nodes) => nodes.map((node) => {
+        const label = node.querySelector("span")!;
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        return { text: label.textContent, width: label.getBoundingClientRect().width, room: node.clientWidth, lines: range.getClientRects().length, clipped: node.scrollWidth > node.clientWidth || node.scrollHeight > node.clientHeight };
+      }));
+      for (const label of labels) {
+        expect(label.lines, `«${label.text}» en una línea`).toBe(1);
+        expect(label.width, `«${label.text}» cabe en su ficha`).toBeLessThanOrEqual(label.room + 0.5);
+        expect(label.clipped, `«${label.text}» sin desbordar`).toBe(false);
+      }
       const others = [group.locator("xpath=following::label[1]"), sheet.getByLabel(copy.annotate.date).locator("xpath=.."), sheet.getByText(copy.annotate.onlyYou)];
       const all = [...cells, ...(await Promise.all(others.map(box)))];
       for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
@@ -300,16 +315,16 @@ test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde 
   await page.keyboard.press("ArrowRight");
   await expect(radio("transport")).toBeChecked();
   await expect(radio("transport")).toBeFocused();
-  await page.keyboard.press("ArrowDown");
-  await expect(radio("shopping")).toBeFocused();
+  await page.keyboard.press("ArrowDown"); // 4 columnas: Transporte → Servicios
+  await expect(radio("services")).toBeFocused();
   await page.keyboard.press("End");
   await expect(radio("other")).toBeChecked();
   await page.keyboard.press("Home");
   await expect(radio("market")).toBeChecked();
   await page.keyboard.press("ArrowLeft"); // da la vuelta
   await expect(radio("other")).toBeFocused();
-  await page.keyboard.press("ArrowUp"); // Otra (8) − 3 = Entretenimiento (5)
-  await expect(radio("entertainment")).toBeFocused();
+  await page.keyboard.press("ArrowUp"); // Otra (10) − 4 = Compras (6)
+  await expect(radio("shopping")).toBeFocused();
 
   await sheet.getByRole("textbox", { name: copy.annotate.description }).fill("Pan y café");
   const yesterday = new Date(`${todayInBogota()}T00:00:00Z`);
@@ -323,7 +338,7 @@ test("UX 2: flechas en la rejilla, descripción guardada y fecha cambiada desde 
   const rows = await listTransactions(user.client, day.slice(0, 7));
   const saved = rows.find((row) => row.transactionDate === day);
   expect(saved?.description).toBe("Pan y café");
-  expect(saved?.categoryId).toBe("entertainment");
+  expect(saved?.categoryId).toBe("shopping");
 });
 
 // Revisión del gestor del PR #51 contra la comp 1c. (1) La hoja móvil abre ajustada al contenido, no a la altura máxima: en 390

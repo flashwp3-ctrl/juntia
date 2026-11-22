@@ -21,7 +21,7 @@ import type { PlanContext, PlanRow } from "./types";
 const fills: Record<Category, string> = {
   market: "bg-category-market-fg", restaurants: "bg-category-restaurants-fg", home: "bg-category-home-fg", transport: "bg-category-transport-fg",
   health: "bg-category-health-fg", entertainment: "bg-category-entertainment-fg", shopping: "bg-category-shopping-fg", services: "bg-category-services-fg",
-  income: "bg-category-income-fg", other: "bg-category-other-fg",
+  office: "bg-category-office-fg", clothing: "bg-category-clothing-fg", income: "bg-category-income-fg", other: "bg-category-other-fg",
 };
 // Rayado coral del excedido (comp 04·2), con los tokens de peligro: sin hex.
 const striped = { backgroundImage: "repeating-linear-gradient(135deg, var(--color-status-danger) 0 4px, color-mix(in srgb, var(--color-status-danger) 55%, transparent) 4px 7px)" };

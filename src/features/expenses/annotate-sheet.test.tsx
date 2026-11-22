@@ -163,24 +163,37 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: copy.annotate.title.expense })).toBeNull());
   });
 
-  // UX lote 1, cambio 2 (definitivo, aprobado el 6 nov 2026: comp «06 Categoría en Anotar gasto», opción 1c «Rejilla fija de
-  // 3 × 3»). Las 9 categorías siempre visibles, en el mismo orden y casilla; la rejilla es un grupo de radio; debajo, SIEMPRE
-  // la descripción de una línea; la fecha («Hoy») abre el selector de fecha y «Solo tú» es solo un indicador.
-  const ORDER = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "other"] as const;
+  // UX lote 1, cambio 2 (definitivo, aprobado el 6 nov 2026: comp «06 Categoría en Anotar gasto», opción 1c), con la variante
+  // «06b · 4 × 3» de los fundadores del 22 nov 2026: las 11 categorías siempre visibles, en el mismo orden y casilla, Oficina y
+  // Ropa antes de «Otra», que queda la última y a dos casillas; la rejilla es un grupo de radio; debajo, SIEMPRE la descripción
+  // de una línea; la fecha («Hoy») abre el selector de fecha y «Solo tú» es solo un indicador.
+  const ORDER = ["market", "restaurants", "home", "transport", "health", "entertainment", "shopping", "services", "office", "clothing", "other"] as const;
   const grid = (dialog: HTMLElement) => within(dialog).getByRole("radiogroup", { name: copy.annotate.category });
   const cells = (dialog: HTMLElement) => within(grid(dialog)).getAllByRole("radio");
+  const classes = (node: HTMLElement) => node.className.split(/\s+/);
 
-  it("UX 2: las 9 categorías están a la vista sin interactuar, en la rejilla de 3 × 3 y en el orden de la comp", async () => {
+  it("UX 2: las 11 categorías están a la vista sin interactuar, en la rejilla de 4 × 3 y en el orden de la comp 06b", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
     const dialog = await sheet();
-    expect(cells(dialog).map((cell) => cell.textContent)).toEqual(ORDER.map((id) => copy.categories[id]));
-    expect(grid(dialog).className).toMatch(/grid-cols-3/);
+    const names = cells(dialog).map((cell) => cell.textContent);
+    expect(names).toEqual(ORDER.map((id) => copy.categories[id]));
+    // Los textos de la decisión del 22 nov 2026; «Ocio» es solo el texto de `entertainment`, y «Otra» queda la última.
+    expect(names).toEqual(expect.arrayContaining(["Oficina", "Ropa", "Ocio"]));
+    expect(names).not.toContain("Entretenimiento");
+    expect(names.at(-1)).toBe("Otra");
+    expect(classes(grid(dialog))).toContain("grid-cols-4");
+    // Vías de menos columnas: 3 por debajo de 18,75rem (una pantalla de 320 px), 2 por debajo de 16rem (el texto al 200 %).
+    expect(classes(grid(dialog))).toEqual(expect.arrayContaining(["@max-[18.75rem]/cat:grid-cols-3", "@max-[16rem]/cat:grid-cols-2"]));
+    // «Otra» cierra la rejilla a dos casillas; ninguna otra ocupa más de una.
+    expect(cells(dialog).filter((cell) => classes(cell).includes("col-span-2")).map((cell) => cell.textContent)).toEqual(["Otra"]);
+    // Etiquetas a 11 px con −0,01 em y sin relleno lateral (R1 de la comp 06b): «Restaurantes» cabe en la ficha de 74 px a 360.
+    for (const cell of cells(dialog)) expect(classes(cell)).toEqual(expect.arrayContaining(["text-[0.6875rem]", "tracking-[-0.01em]", "px-0"]));
     // 3 × 64 + 2 × 8 = 208 px, FIJO a la escala normal (comp 06, opción 1c). PR B de P0-4: solo con el texto ampliado (la rejilla
-    // por debajo de 16rem) la ficha crece en vez de desbordarse. Con minmax también a la escala normal, en el runner Linux una
+    // por debajo de 18,75rem) la ficha crece en vez de desbordarse. Con minmax también a la escala normal, en el runner Linux una
     // etiqueta que cortaba en más líneas subía la rejilla a 209,6 px (run 44543146238).
     expect(grid(dialog).className).toMatch(/(^| )auto-rows-\[64px\]( |$)/);
-    expect(grid(dialog).className).toMatch(/@max-\[16rem\]\/cat:auto-rows-\[minmax\(64px,auto\)\]/);
+    expect(classes(grid(dialog))).toContain("@max-[18.75rem]/cat:auto-rows-[minmax(64px,auto)]");
     expect(grid(dialog).className).not.toMatch(/overflow-x-auto|flex-wrap/);
     // Cada celda: icono encima y nombre debajo, con el color de su categoría; ninguna seleccionada al abrir.
     for (const cell of cells(dialog)) {
@@ -200,6 +213,18 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(dialog.innerHTML).not.toMatch(/dots-three/);
   });
 
+  it("comp 06b: Oficina lleva el maletín y Ropa la camiseta de Phosphor, cada una con su tinte", async () => {
+    const { user, trigger } = setup();
+    await user.click(trigger);
+    const dialog = await sheet();
+    for (const [id, icon] of [["office", "briefcase"], ["clothing", "t-shirt"]] as const) {
+      const cell = within(grid(dialog)).getByRole("radio", { name: copy.categories[id] });
+      expect(cell.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe(icon);
+      expect(classes(cell)).toContain(`bg-category-${id}-bg`);
+      expect(cell.querySelector("[data-icon]")?.getAttribute("class")).toContain(`text-category-${id}-fg`);
+    }
+  });
+
   it("UX 2: es un grupo de radio: Tab entra en la elegida y las flechas, Inicio y Fin se mueven por la rejilla", async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
@@ -214,13 +239,24 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     await user.keyboard("{ArrowRight}");
     expect(document.activeElement).toBe(radio("transport"));
     expect(radio("transport").getAttribute("aria-checked")).toBe("true");
-    await user.keyboard("{ArrowDown}"); // +3: Transporte → Compras (misma columna)
-    expect(document.activeElement).toBe(radio("shopping"));
+    await user.keyboard("{ArrowDown}"); // +4: Transporte → Servicios (misma columna)
+    expect(document.activeElement).toBe(radio("services"));
+    await user.keyboard("{ArrowDown}"); // bajo Servicios está la segunda casilla de «Otra»
+    expect(document.activeElement).toBe(radio("other"));
     await user.keyboard("{ArrowDown}"); // sin fila debajo: se queda
+    expect(document.activeElement).toBe(radio("other"));
+    await user.keyboard("{ArrowUp}"); // −4: Otra (10) → Compras (6), sobre su primera casilla
     expect(document.activeElement).toBe(radio("shopping"));
     await user.keyboard("{ArrowUp}");
-    expect(document.activeElement).toBe(radio("transport"));
-    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(radio("home"));
+    await user.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(document.activeElement).toBe(radio("market"));
+    await user.keyboard("{ArrowDown}"); // Mercado → Salud → Oficina
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(radio("office"));
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(radio("clothing"));
+    await user.keyboard("{Home}");
     expect(document.activeElement).toBe(radio("market"));
     await user.keyboard("{ArrowUp}"); // sin fila arriba: se queda
     expect(document.activeElement).toBe(radio("market"));

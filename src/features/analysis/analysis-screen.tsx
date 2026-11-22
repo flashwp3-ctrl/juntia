@@ -29,18 +29,18 @@ type Phase = "shown" | "waiting" | "entering";
 const tileBg: Record<CategoryId, string> = {
   market: "bg-category-market-bg", restaurants: "bg-category-restaurants-bg", home: "bg-category-home-bg", transport: "bg-category-transport-bg",
   health: "bg-category-health-bg", entertainment: "bg-category-entertainment-bg", shopping: "bg-category-shopping-bg",
-  services: "bg-category-services-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
+  services: "bg-category-services-bg", office: "bg-category-office-bg", clothing: "bg-category-clothing-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
 };
 // El relleno de la barra de presupuesto, el color del pictograma de la categoría, como BudgetIndicator en Plan.
 const barFill: Record<CategoryId, string> = {
   market: "bg-category-market-fg", restaurants: "bg-category-restaurants-fg", home: "bg-category-home-fg", transport: "bg-category-transport-fg",
   health: "bg-category-health-fg", entertainment: "bg-category-entertainment-fg", shopping: "bg-category-shopping-fg",
-  services: "bg-category-services-fg", income: "bg-category-income-fg", other: "bg-category-other-fg",
+  services: "bg-category-services-fg", office: "bg-category-office-fg", clothing: "bg-category-clothing-fg", income: "bg-category-income-fg", other: "bg-category-other-fg",
 };
 const categoryFg: Record<CategoryId, string> = {
   market: "text-category-market-fg", restaurants: "text-category-restaurants-fg", home: "text-category-home-fg", transport: "text-category-transport-fg",
   health: "text-category-health-fg", entertainment: "text-category-entertainment-fg", shopping: "text-category-shopping-fg",
-  services: "text-category-services-fg", income: "text-category-income-fg", other: "text-category-other-fg",
+  services: "text-category-services-fg", office: "text-category-office-fg", clothing: "text-category-clothing-fg", income: "text-category-income-fg", other: "text-category-other-fg",
 };
 const enter = "cubic-bezier(.2,0,0,1)";
 const overline = "text-[length:var(--overline-size)] leading-[var(--overline-line)] font-semibold tracking-[var(--overline-tracking)] text-ink-secondary uppercase";

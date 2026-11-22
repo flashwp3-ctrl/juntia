@@ -133,6 +133,12 @@ Claude Design `caabf357-a0df-4048-886f-8c46c8979c5a`, en los archivos
 `Juntia DS v1 - 01 Fundacion` a `05 Calidad y Handoff`, `03b Prototipo Motion`
 y `Juntia I2 - Bosque Arena` (más la exploración previa A→J).
 
+Después del paquete se añadieron, en el mismo proyecto, los comps `06 Categoria en Anotar gasto`
+(opción 1c, rejilla de 3 × 3, aprobada el 6 nov 2026), `07 Nosotros en Anotar gasto`,
+`08 Tintes de meta` y `06b Categoria 4x3` (22 nov 2026: Oficina y Ropa, rejilla de
+4 × 3; lo provisional está en la spec 005, «Decisiones de los fundadores que esta spec
+recoge»).
+
 **Por qué no se importaron:** no son HTML estático. Cargan `./support.js`, usan
 elementos propios `<x-dc>` y `<helmet>`, plantillas `{{ }}` y una clase
 `DCLogic`. Vendorizarlos exigiría arrastrar ~2,5 MB de runtime ajeno al producto

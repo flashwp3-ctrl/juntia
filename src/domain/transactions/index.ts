@@ -6,6 +6,8 @@ export const CATEGORY_CATALOG = [
   { id: "home", kind: "expense" }, { id: "transport", kind: "expense" },
   { id: "health", kind: "expense" }, { id: "entertainment", kind: "expense" },
   { id: "shopping", kind: "expense" }, { id: "services", kind: "expense" },
+  // Fundadores, 22 nov 2026 (comp 06b · 4 × 3): Oficina y Ropa entran antes de «Otra», que queda la última.
+  { id: "office", kind: "expense" }, { id: "clothing", kind: "expense" },
   { id: "income", kind: "income" }, { id: "other", kind: "expense" },
 ] as const;
 export type CategoryId = (typeof CATEGORY_CATALOG)[number]["id"];

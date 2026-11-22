@@ -84,7 +84,7 @@ Reglas de nombres e idioma: `docs/CONVENTIONS.md`.
 | Sin presupuesto | `budget === null` | §5.3, §7.3 | «Sin presupuesto · Crear presupuesto (opcional)» | **Nunca** «Presupuesto $0 · excedido» ni una barra vacía fingiendo límite (BRAND §4, DEC-R01). |
 | Restante | `budget_remaining` | §5.2 | «Quedan $X» | **Existe solo si hay presupuesto activo.** Puede ser negativo y se dice «Se pasaron por X», no se oculta en cero. |
 | Excedido | estado | `COMPONENT_SPECIFICATIONS.md` | «EXCEDIDO» · «CERCA DEL LÍMITE» (≥ 85%) | — |
-| Categoría | `categories` | §7.3 | «Mercado», «Restaurantes»… · `CategoryIcon` | Catálogo canónico del sistema en P0; categorías propias son P1. Las no asignadas **sí** cuentan en el total del contexto (§5.2). |
+| Categoría | `categories` | §7.3 | «Mercado», «Restaurantes»… · `CategoryIcon` | Catálogo canónico del sistema en P0; categorías propias son P1. Las no asignadas **sí** cuentan en el total del contexto (§5.2). Desde el 22 nov 2026 son once de gasto (Mercado, Restaurantes, Hogar, Transporte, Salud, Ocio, Compras, Servicios, Oficina, Ropa y Otra, la última) más Ingresos; «Ocio» es el texto de la clave `entertainment` (spec 005, decisiones de los fundadores). |
 | Asequibilidad | — | DEC-R17 | — | Juntia **nunca** dice «te alcanza», «puedes pagarlo» ni «es financieramente seguro». Un presupuesto holgado no demuestra tener el dinero. |
 
 ---
