@@ -4,10 +4,12 @@ import { moneyFromPesos } from "../money";
 import { CATEGORY_CATALOG, validateDraft, monthKey, todayInBogota, monthSummary, groupByDay, monthBounds, monthNavigation, shiftMonth, filterTransactions, matchesSearch, isSupportedMonth, clampMonth, type Transaction, type TransactionDraft } from "./index";
 const draft: TransactionDraft = { type: "expense", amount: moneyFromPesos(45000n), categoryId: "transport", transactionDate: "2026-10-03", description: null };
 const row = (overrides: Partial<Transaction> = {}): Transaction => ({ ...draft, id: "one", status: "active", version: 1, createdAt: "2026-10-03T12:00:00Z", updatedAt: "2026-10-03T12:00:00Z", ...overrides });
-it("conserva el catálogo literal y su orden (data-model §2.2)", () => {
+// data-model §2.2, más Oficina y Ropa (fundadores, 22 nov 2026; migración 20261122120000): «Otra» sigue la última de gasto.
+it("conserva el catálogo literal y su orden (data-model §2.2; comp 06b · 4 × 3)", () => {
   expect(CATEGORY_CATALOG.map(({ id, kind }) => [id, kind])).toEqual([
     ["market", "expense"], ["restaurants", "expense"], ["home", "expense"], ["transport", "expense"], ["health", "expense"],
-    ["entertainment", "expense"], ["shopping", "expense"], ["services", "expense"], ["income", "income"], ["other", "expense"],
+    ["entertainment", "expense"], ["shopping", "expense"], ["services", "expense"], ["office", "expense"], ["clothing", "expense"],
+    ["income", "income"], ["other", "expense"],
   ]);
 });
 it("valida tipo, pesos enteros, máximo, categoría, fecha y descripción", () => {

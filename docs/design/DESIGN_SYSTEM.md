@@ -38,11 +38,15 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 | Hogar | house-line | #DCE8EC | #2E5866 | 6,2:1 | #1C2A30 | #9CC3D1 | 7,8:1 |
 | Transporte | car-profile | #E9E2D2 | #5E5240 | 5,9:1 | #2A2721 | #CDBFA6 | 8,2:1 |
 | Salud | first-aid-kit | #D8EAE4 | #2C6656 | 5,3:1 | #1A2C27 | #92CDB9 | 8,1:1 |
-| Entretenimiento | film-slate | #F0E4BC | #6B5410 | 5,7:1 | #322C1A | #E2C774 | 8,4:1 |
+| Ocio | film-slate | #F0E4BC | #6B5410 | 5,7:1 | #322C1A | #E2C774 | 8,4:1 |
 | Compras | shopping-bag | #F1DCDD | #8A4048 | 5,5:1 | #33232A | #E6A9B0 | 7,5:1 |
 | Servicios | wifi-high | #E1E4EC | #44506A | 6,3:1 | #23262F | #B3BCD1 | 7,9:1 |
 | Ingresos | arrow-down-left | #F1E2C6 | #7A5418 | 5,3:1 | #2E2716 | #E3C27A | 8,6:1 |
-| Otra | dots-three-outline | #E7E3DA | #4F4B44 | 6,8:1 | #26272A | #C8C3BA | 8,5:1 |
+| Oficina | briefcase | #E3E4CF | #52532A | 6,2:1 | #272A1D | #C0CAA1 | 8,5:1 |
+| Ropa | t-shirt | #EEDCE5 | #684257 | 6,4:1 | #33232C | #D6B1C5 | 7,7:1 |
+| Otra | tag | #E7E3DA | #4F4B44 | 6,8:1 | #26272A | #C8C3BA | 8,5:1 |
+- **Doce categorías** (confirmado por los fundadores el 22 de noviembre de 2026; comp «Juntia DS v1 - 06b Categoria 4x3»; spec 005, «Decisiones de los fundadores que esta spec recoge»; migración `20261122120000_categories_office_clothing.sql`): entran **Oficina** (`office`) y **Ropa** (`clothing`), con tintes derivados de «Liquen» y «Malva polvo» (§2, tintes de meta); «Entretenimiento» pasa a **«Ocio»** (solo el texto; la clave sigue siendo `entertainment`). En la rejilla de Anotar (4 × 3, 208 px) el orden es el de esta tabla sin «Ingresos», «Otra» la última y a dos casillas, y las etiquetas van a 11 px con −0,01 em. Los contrastes son del ícono sobre su fondo; la etiqueta va en tinta (13,3:1 y 13,1:1 en claro; 12,8:1 y 12,9:1 en oscuro).
+- **«Otra» usa `tag`**, no `dots-three-outline`: los tres puntos se leen como «más» (comp 06, opción 1c, aprobada el 6 de noviembre de 2026; UX lote 1).
 
 ### 1.4 Tipografía
 | Token | Familia | Peso | Tamaño/Interlínea | Tracking | Uso |

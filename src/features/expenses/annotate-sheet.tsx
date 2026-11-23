@@ -128,22 +128,32 @@ function initialDraft(mode: SheetMode, today: string): Draft {
   return { type: "expense", amount: null, categoryId: null, date: today, description: "" };
 }
 
-// Comp 06 «Categoría en Anotar gasto», opción 1c «Rejilla fija de 3 × 3» (aprobada el 6 nov 2026): las 9 categorías siempre a
-// la vista, en la misma casilla en todos los anchos, 3 × 64 + 2 × 8 = 208 px. Cada celda: icono encima, nombre debajo, con el
-// color de su categoría; la elegida, anillo de 2 px en tinta. Es un grupo de radio: Tab entra en la elegida (o en la primera) y
-// las flechas la cambian y mueven el foco (← → de a una, con vuelta; ↑ ↓ de a fila; Inicio y Fin a los extremos).
-const COLUMNS = 3;
+// Comp 06 «Categoría en Anotar gasto», opción 1c (aprobada el 6 nov 2026), y su variante «06b · 4 × 3» (confirmada por los
+// fundadores el 22 nov 2026): las 11 categorías siempre a la vista, en la misma casilla en 360, 390 y 1440, 4 columnas × 3 filas, 3 × 64 + 2 × 8 =
+// 208 px. «Otra», la última, ocupa las dos últimas casillas y cierra la rejilla. Cada celda: icono encima, nombre debajo, con
+// el color de su categoría; la elegida, anillo de 2 px en tinta. Es un grupo de radio: Tab entra en la elegida (o en la
+// primera) y las flechas la cambian y mueven el foco (← → de a una, con vuelta; ↑ ↓ de a fila; Inicio y Fin a los extremos).
+// ↑ ↓ cuentan las columnas que pinta el navegador (4, 3 o 2); sin estilos (jsdom), las 4 de la escala normal.
+const COLUMNS = 4;
+function columnsOf(grid: HTMLElement | null) {
+  // El navegador devuelve las pistas resueltas («74px 74px 74px 74px»); sin estilos devuelve «none».
+  const value = grid ? getComputedStyle(grid).gridTemplateColumns : "none";
+  return /\d/.test(value) ? value.trim().split(/\s+/).length : COLUMNS;
+}
 function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly CategoryId[]; value: CategoryId | null; onSelect: (id: CategoryId) => void; onEnter: (id: CategoryId) => void }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const gridRef = useRef<HTMLDivElement>(null);
   const stop = Math.max(0, ids.findIndex((id) => id === value));
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const last = ids.length - 1;
+    const columns = columnsOf(gridRef.current);
     let next: number;
     switch (event.key) {
       case "ArrowRight": next = index === last ? 0 : index + 1; break;
       case "ArrowLeft": next = index === 0 ? last : index - 1; break;
-      case "ArrowDown": next = index + COLUMNS <= last ? index + COLUMNS : index; break;
-      case "ArrowUp": next = index - COLUMNS >= 0 ? index - COLUMNS : index; break;
+      // «Otra» ocupa dos casillas al final: si debajo no hay celda en la misma columna pero sí fila, ↓ va a la última.
+      case "ArrowDown": next = index + columns <= last ? index + columns : Math.floor(index / columns) < Math.floor(last / columns) ? last : index; break;
+      case "ArrowUp": next = index - columns >= 0 ? index - columns : index; break;
       case "Home": next = 0; break;
       case "End": next = last; break;
       // FR-035: Enter guarda también con el foco en una categoría (la elige y guarda); Espacio solo la elige.
@@ -155,14 +165,23 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
     refs.current[next]?.focus();
   };
   return (
-    // 005 · PR B (corrección 5, FR-042): con el texto al 200 %, tres columnas de 64 px de alto partían «Entretenimiento» letra a letra
-    // y «Restaurantes» se salía de su ficha. Si la rejilla mide menos de 16rem (nunca a 16 px: a 320 mide 17,5rem), dos columnas y
-    // el alto que pida el texto, como los segmentados de F79. A la escala normal, igual que antes.
+    // 005 · PR B (corrección 5, FR-042): con el texto ampliado, las fichas no parten palabras ni se desbordan; bajan columnas y
+    // crecen con el texto, como los segmentados de F79. Comp 06b · 4 × 3: «Restaurantes» mide 4,3 rem a 0,6875rem (11 px), así
+    // que 4 columnas necesitan 18,75rem de rejilla (a 16 px: 300 px; a 360 mide 320). Por debajo, 3 columnas (a 320 px de
+    // pantalla); por debajo de 16rem, 2 (el texto al 200 %: 512 px). Las etiquetas van a 11 px con −0,01 em y sin relleno lateral
+    // (R1 de la comp, confirmada por los fundadores el 22 nov 2026): a 12 px «Restaurantes» (76,3 px) no cabía en la ficha de 74 px a 360. Ninguna etiqueta se recorta.
+    // CI run 45202431574 (PR #92): en Linux, Chromium a densidad 1 no posiciona en subpíxeles y redondea el avance de cada glifo
+    // (el titular de A1 mide 328 px en el runner y 320,9 en Windows, +0,42 px por glifo), así que «Restaurantes» pasaba de los
+    // 74 px y `hyphens:auto` la partía. `text-rendering: geometricPrecision` le quita el hinting y usa métricas lineales, como
+    // Windows, iOS y Android; y a la escala normal (4 columnas) ninguna etiqueta se parte ni se guiona (nowrap y `hyphens:
+    // manual`). Con menos columnas (texto ampliado o 320 px) vuelve el corte accesible: `hyphens:auto` y `overflow-wrap:anywhere`.
     <div className="@container/cat">
-    <div role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-3 gap-2 @max-[16rem]/cat:auto-rows-[minmax(64px,auto)] @max-[16rem]/cat:grid-cols-2">
+    <div ref={gridRef} role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-4 gap-2 @max-[18.75rem]/cat:auto-rows-[minmax(64px,auto)] @max-[18.75rem]/cat:grid-cols-3 @max-[16rem]/cat:grid-cols-2">
       {ids.map((id, index) => {
         const [bg, fg] = categories[id].tone.split(" ");
         const selected = value === id;
+        // «Otra» cierra la rejilla a dos casillas (comp 06b, opción B de la casilla 12); con 11 categorías cierra también en 3 y 2.
+        const wide = id === "other";
         return (
           <button
             key={id}
@@ -174,7 +193,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
             tabIndex={index === stop ? 0 : -1}
             onClick={() => onSelect(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
-            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-center text-[0.75rem] leading-[1.15] font-semibold text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
+            className={`${wide ? "col-span-2 " : ""}flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-0 py-1.5 text-center text-[0.6875rem] leading-[1.15] font-semibold tracking-[-0.01em] text-ink whitespace-nowrap [hyphens:manual] [text-rendering:geometricPrecision] @max-[18.75rem]/cat:whitespace-normal @max-[18.75rem]/cat:[hyphens:auto] @max-[18.75rem]/cat:[overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
           >
             <AppIcon name={categories[id].icon} weight="duotone" size={22} className={fg} />
             <span>{copy.categories[id]}</span>
@@ -516,7 +535,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
   };
 
   const title = editing ? copy.annotate.editTitle[type] : copy.annotate.title[type];
-  // Gasto: las 9 en orden fijo. Ingreso: solo «Ingresos», que es su única categoría.
+  // Gasto: las 11 en orden fijo (comp 06b · 4 × 3). Ingreso: solo «Ingresos», que es su única categoría.
   const choices: readonly CategoryId[] = type === "income" ? ["income"] : expenseCategories;
   const saveLabel = editing ? copy.annotate.saveChanges
     : amount && amount > 0 ? copy.annotate.saveWithAmount(copy.annotate.save[type], formatMoney(moneyFromPesos(BigInt(amount)))) : copy.annotate.save[type];

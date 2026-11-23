@@ -18,6 +18,10 @@
   --color-category-shopping-fg: var(--category-shopping-fg);
   --color-category-services-bg: var(--category-services-bg);
   --color-category-services-fg: var(--category-services-fg);
+  --color-category-office-bg: var(--category-office-bg);
+  --color-category-office-fg: var(--category-office-fg);
+  --color-category-clothing-bg: var(--category-clothing-bg);
+  --color-category-clothing-fg: var(--category-clothing-fg);
   --color-category-income-bg: var(--category-income-bg);
   --color-category-income-fg: var(--category-income-fg);
   --color-category-other-bg: var(--category-other-bg);

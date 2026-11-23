@@ -562,7 +562,7 @@ export const copy = {
     cancel: "Cancelar", confirm: "Eliminar", deleting: "Eliminando…", done: { expense: "Gasto eliminado", income: "Ingreso eliminado" },
     failed: "No pudimos eliminar. Revisa tu conexión.", backToActivity: "Ir a Actividad",
   },
-  categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Entretenimiento", shopping: "Compras", services: "Servicios", income: "Ingresos", other: "Otra" },
+  categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Ocio", shopping: "Compras", services: "Servicios", office: "Oficina", clothing: "Ropa", income: "Ingresos", other: "Otra" },
   errors: { sessionExpired: "Tu sesión caducó. Vuelve a entrar para continuar.", unexpected: "Algo salió mal. Inténtalo de nuevo.", saveFailed: "No pudimos guardar. Revisa tu conexión.", network: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo." },
   transaction: { errors: { notFound: "No encontramos este movimiento.", versionConflict: "Este movimiento cambió en otro lugar. Recárgalo para ver lo último.", alreadyDeleted: "Este movimiento ya se eliminó." } },
   // P0-1, PR B (04·17). Copy nuevo para revisión de los fundadores en el PR.
@@ -795,7 +795,7 @@ export const copy = {
     sizesLabel: "Tamaños",
     buttonSizes: { sm: "sm · 36", md: "md · 44", lg: "lg · 52" },
     shapes: { square: "Cuadrada · gasto o ingreso", saving: "Círculo · aporte", settlement: "Contorno · liquidación", selected: "Seleccionada" },
-    categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Entretenimiento", shopping: "Compras", services: "Servicios", income: "Ingresos", other: "Otra" },
+    categories: { market: "Mercado", restaurants: "Restaurantes", home: "Hogar", transport: "Transporte", health: "Salud", entertainment: "Ocio", shopping: "Compras", services: "Servicios", office: "Oficina", clothing: "Ropa", income: "Ingresos", other: "Otra" },
     persons: { first: "person.1", second: "person.2", firstInitial: "A", secondInitial: "B" },
     variants: { primary: "primary", secondary: "secondary", ghost: "ghost", danger: "danger" },
     states: { normal: "Normal", disabled: "Disabled", loading: "Carga" },

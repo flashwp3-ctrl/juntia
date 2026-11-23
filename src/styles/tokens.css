@@ -275,6 +275,10 @@
   --category-shopping-fg: #8A4048;
   --category-services-bg: #E1E4EC;
   --category-services-fg: #44506A;
+  --category-office-bg: #E3E4CF; /* Oficina y Ropa: fundadores, 22 nov 2026, comp 06b · 4 × 3; de «Liquen» y «Malva polvo» */
+  --category-office-fg: #52532A;
+  --category-clothing-bg: #EEDCE5;
+  --category-clothing-fg: #684257;
   --category-income-bg: #F1E2C6;
   --category-income-fg: #7A5418;
   --category-other-bg: #E7E3DA;
@@ -381,6 +385,10 @@
   --category-shopping-fg: #E6A9B0;
   --category-services-bg: #23262F;
   --category-services-fg: #B3BCD1;
+  --category-office-bg: #272A1D;
+  --category-office-fg: #C0CAA1;
+  --category-clothing-bg: #33232C;
+  --category-clothing-fg: #D6B1C5;
   --category-income-bg: #2E2716;
   --category-income-fg: #E3C27A;
   --category-other-bg: #26272A;
@@ -487,6 +495,10 @@
     --category-shopping-fg: #E6A9B0;
     --category-services-bg: #23262F;
     --category-services-fg: #B3BCD1;
+    --category-office-bg: #272A1D;
+    --category-office-fg: #C0CAA1;
+    --category-clothing-bg: #33232C;
+    --category-clothing-fg: #D6B1C5;
     --category-income-bg: #2E2716;
     --category-income-fg: #E3C27A;
     --category-other-bg: #26272A;

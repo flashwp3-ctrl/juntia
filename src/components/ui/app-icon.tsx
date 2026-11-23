@@ -19,6 +19,8 @@ import { Clock } from "@phosphor-icons/react/dist/ssr/Clock";
 import { Compass } from "@phosphor-icons/react/dist/ssr/Compass";
 import { DotsThreeOutline } from "@phosphor-icons/react/dist/ssr/DotsThreeOutline";
 import { FilmSlate } from "@phosphor-icons/react/dist/ssr/FilmSlate";
+import { Briefcase } from "@phosphor-icons/react/dist/ssr/Briefcase";
+import { TShirt } from "@phosphor-icons/react/dist/ssr/TShirt";
 import { FirstAidKit } from "@phosphor-icons/react/dist/ssr/FirstAidKit";
 import { FlagBanner } from "@phosphor-icons/react/dist/ssr/FlagBanner";
 import { ForkKnife } from "@phosphor-icons/react/dist/ssr/ForkKnife";
@@ -104,6 +106,9 @@ const icons = {
   "film-slate": FilmSlate,
   "shopping-bag": ShoppingBag,
   "wifi-high": WifiHigh,
+  // Fundadores, 22 nov 2026 (comp 06b · 4 × 3): Oficina (maletín) y Ropa (camiseta).
+  briefcase: Briefcase,
+  "t-shirt": TShirt,
   "arrow-down-left": ArrowDownLeft,
   "dots-three-outline": DotsThreeOutline,
   "piggy-bank": PiggyBank,

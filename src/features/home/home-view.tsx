@@ -26,12 +26,12 @@ const weight = (amount: Money) => Number(amount.amountMinor) / 100;
 export const tileBg: Record<CategoryId, string> = {
   market: "bg-category-market-bg", restaurants: "bg-category-restaurants-bg", home: "bg-category-home-bg", transport: "bg-category-transport-bg",
   health: "bg-category-health-bg", entertainment: "bg-category-entertainment-bg", shopping: "bg-category-shopping-bg",
-  services: "bg-category-services-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
+  services: "bg-category-services-bg", office: "bg-category-office-bg", clothing: "bg-category-clothing-bg", income: "bg-category-income-bg", other: "bg-category-other-bg",
 };
 export const categoryFg: Record<CategoryId, string> = {
   market: "text-category-market-fg", restaurants: "text-category-restaurants-fg", home: "text-category-home-fg", transport: "text-category-transport-fg",
   health: "text-category-health-fg", entertainment: "text-category-entertainment-fg", shopping: "text-category-shopping-fg",
-  services: "text-category-services-fg", income: "text-category-income-fg", other: "text-category-other-fg",
+  services: "text-category-services-fg", office: "text-category-office-fg", clothing: "text-category-clothing-fg", income: "text-category-income-fg", other: "text-category-other-fg",
 };
 
 /**
