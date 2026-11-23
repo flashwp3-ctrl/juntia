@@ -189,6 +189,14 @@ describe("Hoja de Anotar (T077)", { timeout: 15000 }, () => {
     expect(cells(dialog).filter((cell) => classes(cell).includes("col-span-2")).map((cell) => cell.textContent)).toEqual(["Otra"]);
     // Etiquetas a 11 px con −0,01 em y sin relleno lateral (R1 de la comp 06b): «Restaurantes» cabe en la ficha de 74 px a 360.
     for (const cell of cells(dialog)) expect(classes(cell)).toEqual(expect.arrayContaining(["text-[0.6875rem]", "tracking-[-0.01em]", "px-0"]));
+    // CI run 45202431574: a la escala normal ninguna etiqueta se parte ni se guiona, y en Linux se mide sin redondear cada glifo
+    // (métricas lineales); con menos columnas (texto ampliado) vuelve el corte accesible.
+    for (const cell of cells(dialog)) {
+      expect(classes(cell)).toEqual(expect.arrayContaining(["whitespace-nowrap", "[hyphens:manual]", "[text-rendering:geometricPrecision]",
+        "@max-[18.75rem]/cat:whitespace-normal", "@max-[18.75rem]/cat:[hyphens:auto]", "@max-[18.75rem]/cat:[overflow-wrap:anywhere]"]));
+      expect(classes(cell)).not.toContain("[hyphens:auto]");
+      expect(classes(cell)).not.toContain("[overflow-wrap:anywhere]");
+    }
     // 3 × 64 + 2 × 8 = 208 px, FIJO a la escala normal (comp 06, opción 1c). PR B de P0-4: solo con el texto ampliado (la rejilla
     // por debajo de 18,75rem) la ficha crece en vez de desbordarse. Con minmax también a la escala normal, en el runner Linux una
     // etiqueta que cortaba en más líneas subía la rejilla a 209,6 px (run 44543146238).

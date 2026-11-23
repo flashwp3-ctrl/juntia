@@ -170,6 +170,11 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
     // que 4 columnas necesitan 18,75rem de rejilla (a 16 px: 300 px; a 360 mide 320). Por debajo, 3 columnas (a 320 px de
     // pantalla); por debajo de 16rem, 2 (el texto al 200 %: 512 px). Las etiquetas van a 11 px con −0,01 em y sin relleno lateral
     // (R1 de la comp, confirmada por los fundadores el 22 nov 2026): a 12 px «Restaurantes» (76,3 px) no cabía en la ficha de 74 px a 360. Ninguna etiqueta se recorta.
+    // CI run 45202431574 (PR #92): en Linux, Chromium a densidad 1 no posiciona en subpíxeles y redondea el avance de cada glifo
+    // (el titular de A1 mide 328 px en el runner y 320,9 en Windows, +0,42 px por glifo), así que «Restaurantes» pasaba de los
+    // 74 px y `hyphens:auto` la partía. `text-rendering: geometricPrecision` le quita el hinting y usa métricas lineales, como
+    // Windows, iOS y Android; y a la escala normal (4 columnas) ninguna etiqueta se parte ni se guiona (nowrap y `hyphens:
+    // manual`). Con menos columnas (texto ampliado o 320 px) vuelve el corte accesible: `hyphens:auto` y `overflow-wrap:anywhere`.
     <div className="@container/cat">
     <div ref={gridRef} role="radiogroup" aria-label={copy.annotate.category} className="grid auto-rows-[64px] grid-cols-4 gap-2 @max-[18.75rem]/cat:auto-rows-[minmax(64px,auto)] @max-[18.75rem]/cat:grid-cols-3 @max-[16rem]/cat:grid-cols-2">
       {ids.map((id, index) => {
@@ -188,7 +193,7 @@ function CategoryGrid({ ids, value, onSelect, onEnter }: { ids: readonly Categor
             tabIndex={index === stop ? 0 : -1}
             onClick={() => onSelect(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
-            className={`${wide ? "col-span-2 " : ""}flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-0 py-1.5 text-center text-[0.6875rem] leading-[1.15] font-semibold tracking-[-0.01em] text-ink [hyphens:auto] [overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
+            className={`${wide ? "col-span-2 " : ""}flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-0 py-1.5 text-center text-[0.6875rem] leading-[1.15] font-semibold tracking-[-0.01em] text-ink whitespace-nowrap [hyphens:manual] [text-rendering:geometricPrecision] @max-[18.75rem]/cat:whitespace-normal @max-[18.75rem]/cat:[hyphens:auto] @max-[18.75rem]/cat:[overflow-wrap:anywhere] disabled:cursor-not-allowed disabled:opacity-60 ${bg} ${selected ? "shadow-[0_0_0_2px_var(--color-text-primary)]" : ""}`}
           >
             <AppIcon name={categories[id].icon} weight="duotone" size={22} className={fg} />
             <span>{copy.categories[id]}</span>

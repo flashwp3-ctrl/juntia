@@ -242,17 +242,20 @@ for (const scheme of ["light", "dark"] as const) {
         expect(cell.x + cell.width).toBeLessThanOrEqual(width + 0.5);
       });
       expect(Math.abs(cells[10].x + cells[10].width - (cells[3].x + cells[3].width)), "«Otra» cierra la fila 3").toBeLessThanOrEqual(1);
-      // Ninguna etiqueta se corta ni se parte: cabe a lo ancho en su ficha y ocupa una sola línea.
+      // Ninguna etiqueta se corta ni se parte: cabe a lo ancho en su ficha y ocupa una sola línea. El mensaje lleva el ancho del
+      // texto, el de la ficha y si Onest ya estaba cargada, para que un fallo en el runner Linux diga por qué (run 45202431574).
       const labels = await radios.evaluateAll((nodes) => nodes.map((node) => {
         const label = node.querySelector("span")!;
         const range = document.createRange();
         range.selectNodeContents(label);
-        return { text: label.textContent, width: label.getBoundingClientRect().width, room: node.clientWidth, lines: range.getClientRects().length, clipped: node.scrollWidth > node.clientWidth || node.scrollHeight > node.clientHeight };
+        return { text: label.textContent, width: label.getBoundingClientRect().width, ink: range.getBoundingClientRect().width, room: node.clientWidth, lines: range.getClientRects().length, clipped: node.scrollWidth > node.clientWidth || node.scrollHeight > node.clientHeight,
+          onest: document.fonts.check("600 11px Onest"), rendering: getComputedStyle(node).textRendering };
       }));
       for (const label of labels) {
-        expect(label.lines, `«${label.text}» en una línea`).toBe(1);
-        expect(label.width, `«${label.text}» cabe en su ficha`).toBeLessThanOrEqual(label.room + 0.5);
-        expect(label.clipped, `«${label.text}» sin desbordar`).toBe(false);
+        const why = `texto ${label.ink.toFixed(2)} px, caja ${label.width.toFixed(2)} px, ficha ${label.room} px, Onest ${label.onest ? "cargada" : "sin cargar"}, ${label.rendering}`;
+        expect(label.lines, `«${label.text}» en una línea (${why})`).toBe(1);
+        expect(label.width, `«${label.text}» cabe en su ficha (${why})`).toBeLessThanOrEqual(label.room + 0.5);
+        expect(label.clipped, `«${label.text}» sin desbordar (${why})`).toBe(false);
       }
       const others = [group.locator("xpath=following::label[1]"), sheet.getByLabel(copy.annotate.date).locator("xpath=.."), sheet.getByText(copy.annotate.onlyYou)];
       const all = [...cells, ...(await Promise.all(others.map(box)))];
