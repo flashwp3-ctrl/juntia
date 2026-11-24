@@ -1,0 +1,444 @@
+# Feature Specification: 006 · Planes: viajes, salidas y eventos (MVP-2)
+
+**Feature Branch**: `claude/mvp2-planes-spec-b322a2` (la carpeta de la spec y la rama son independientes, ADR-012 §1.5)
+
+**Created**: 2026-11-24
+
+**Status**: Draft — etapa Specify hecha; **Clarify pendiente**. Las preguntas Q1–Q20 van a los fundadores. No avanza a Plan sin sus respuestas y sin el merge de su PR documental (ADR-012 §3.1). Depende además de dos ADR en estado **Propuesto**: ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta).
+
+**Input**: Petición de los fundadores del 24 de noviembre de 2026, aprobada por Alejandro ese día para especificarse y diseñarse en paralelo al gate de MVP-1: «Crear un plan, por ejemplo "Cartagena" o "ir al pueblo", y anotar en él los gastos de esa salida. Esos gastos se siguen viendo en Yo y en Nosotros. Un histórico ("en Cartagena nos gastamos $1.000.000"), abrir el detalle del plan y subirle una foto como en las metas, ver el desglose de quién pagó qué y saber si se pasaron del presupuesto del plan».
+
+> **Qué es este documento.** Dice **qué** construiría Planes y **por qué**. **No
+> decide nada**: lo que ya está decidido se cita; lo que no, va a los fundadores
+> como pregunta numerada en «Clarifications», con la recomendación del redactor.
+> Jerarquía: maestro (§15 prevalece) > ADR > paquete de `docs/design/` y
+> `docs/CONVENTIONS.md` > esta spec (`AGENTS.md` §2). En este archivo `[P]`
+> significa **propuesta** y `[V]` **verificación pendiente** (maestro §15.9); no
+> significan «paralelizable», que solo ocurre dentro de `tasks.md` (ADR-012 §3.2).
+>
+> **Contexto de fase.** MVP-1 está en su gate (P0-4, spec 005): alcance congelado
+> y siete días sin desplegar (decisión 25.5). **Nada de esta spec se implementa ni
+> se despliega antes de declarar MVP-1.** Este PR solo añade documentos.
+>
+> **Desviación de la plantilla, a propósito.** Como en la 003, la 004 y la 005, la
+> plantilla de Spec Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hay veinte
+> preguntas, porque el encargo pide que todo lo no decidido llegue a los
+> fundadores en lugar de resolverse en la spec.
+
+### Fuentes que aplica
+
+| Fuente | Qué aporta a Planes |
+| --- | --- |
+| Maestro §2.3, principios 1, 5, 6 y 8; §2.4 (DEC-R17) | Registrar antes de planificar; dimensiones financieras separadas; privacidad por defecto, **también en agregados**; sin culpa; no presumir liquidez |
+| Maestro §5.1 y §5.2 | `group_total`, `personal_consumption`, `gross_paid`, `net_owed`: un plan **no** añade métricas de dinero, solo agrupa gastos que ya cuentan una vez |
+| Maestro §5.3 (DEC-R01, ADR-004) | Presupuesto opcional, `null` ≠ cero, sin `COALESCE`; atribuciones no aditivas. El presupuesto de un plan **no** es un presupuesto mensual |
+| Maestro §5.4 y ADR-007 | Anulación auditada, nunca borrado silencioso de movimientos financieros; edición con versión |
+| Maestro §5.5 y ADR-003 | Un grupo nunca ve movimientos privados; al salir de la pareja se revoca el acceso a sus movimientos **y archivos** |
+| Maestro §5.6 (DEC-G01 a DEC-G06) | Analogía privada **XOR** compartida para la propiedad del plan; un uso de meta enlazado a un gasto no cuenta dos veces |
+| Maestro §7.1, §7.3 y §7.4 | «Supabase Storage privado (P1)»; RLS en tablas y **buckets privados**; vistas `security_invoker`; `attachments` (P1) como algo distinto de una portada |
+| Maestro §7.5 | «Limitar almacenamiento, adjuntos y consultas desde el principio» |
+| Maestro §11, «Después de MVP-1» | MVP-2 se prioriza «según evidencia»; Planes sale del uso real de los fundadores |
+| Maestro §15.3 | Navegación móvil de cinco posiciones, **sin sexta pestaña**; destinos de escritorio |
+| Maestro §15.5 | Pareja de exactamente dos; repartos; liquidaciones declarativas; Mover a Pareja; gasto con meta; exportación JSON + CSV |
+| Maestro §15.6.2 punto 2 y §15.10, decisiones 22.6 y 24.13 | Fotos de metas fuera de MVP-1; **ADR-014** (Storage privado de fotos) reservado para MVP-2; `[V]` de scrim y luminancia |
+| Maestro §15.10, decisiones 20.12, 22.11, 22.15, 23.3 y 24.8 | Edición de gastos compartidos por cualquiera de los dos con versión; metas en Yo y en Nosotros **sin un total que las sume**; archivar sin borrar lo que tiene historia; pagador por defecto; borrado manual de cuenta |
+| Spec 005, decisiones del 22 nov 2026 | Once categorías de gasto y rejilla de Anotar de 4 × 3 |
+| ADR-013 | Tablas en `juntia_data`, escrituras solo por funciones en `juntia_private`, vistas `security_invoker` en `public`, idempotencia y bloqueo del agregado |
+| ADR-011 y `docs/TESTING.md` | Capa más baja que detecta el fallo; tope de specs E2E; iteración contra `juntia-dev` |
+| ADR-014 **(Propuesto, este PR)** | Fotos de portada en Storage privado: límites, EXIF, borrado, costos |
+| ADR-015 **(Propuesto, este PR)** | Entidad del plan y su relación con los gastos (etiqueta adicional) |
+| `docs/design/` | I2 · Bosque & Arena, Phosphor con `AppIcon`, BRAND §4 (palabras prohibidas) y §5 (fotografía), GoalCard y su fallback `[A]`, BottomSheet, Modal, BudgetIndicator, SharedBalance |
+| `docs/GLOSSARY.md` | Términos existentes; ninguno se renombra |
+
+## Clarifications
+
+**Pendientes.** Ninguna de estas preguntas está respondida. Cada una trae su
+contexto, las opciones y la recomendación del redactor. Las marcadas **· ADR**
+dependen de un ADR propuesto en este PR: su respuesta decide si el ADR pasa a
+Aceptado tal como está o cambia.
+
+### Lo que ya está decidido y esta spec no reabre
+
+- Un gasto **existe una vez** y cuenta una vez en Yo, Nosotros, presupuestos
+  mensuales, balance y Análisis (US-08, DEC-G04). Un plan no cambia ninguna de
+  esas cifras.
+- Un gasto privado **nunca** es visible para la otra persona, ni por agregados,
+  ni por actividad compartida, ni por errores (§2.3.6, §7.4, US-05).
+- Presupuesto opcional; ausencia ≠ cero; nunca «te alcanza» (DEC-R01, DEC-R17).
+- Los movimientos financieros no se borran: se anulan con auditoría (§5.4).
+- Las metas no tienen foto en MVP-1; el fallback de GoalCard es `[A]` (24.13).
+- Navegación móvil de cinco posiciones, sin sexta pestaña (§15.3).
+- COP única; multimoneda es P2 (§3).
+
+### Contexto y opciones de cada pregunta
+
+#### Q1 · Forma de la especificación y reparto en PR
+
+- **Contexto:** Planes toca base de datos (tabla nueva, relación con `transactions`, RLS), Storage (fotos, ADR-014), Anotar (selector), Actividad y una pantalla nueva con su histórico.
+- **Opciones:** (a) una spec, la 006, con tres PR: A, base de datos, seguridad y dominio; B, planes, detalle, histórico y selector en Anotar, **sin fotos**; C, fotos de portada (ADR-014), con las fotos de metas si se responde (a) en Q16; (b) un solo PR; (c) dos specs, Planes y Fotos.
+- **Recomendación: (a).** Las fotos son lo más caro y lo más arriesgado y no son dinero; Planes funciona sin ellas con un fallback como el de GoalCard. Separarlas permite usar Planes antes y cerrar ADR-014 con calma.
+
+#### Q2 · Nombre visible e identificador · ADR-015
+
+- **Contexto:** «Plan» ya es un destino de la navegación (presupuestos y Análisis, ruta `/plan`, carpeta `src/features/plan`), y ADR-009 se llama «Planes» (planes de hosting). «Planes» junto a «Plan» confunde en la interfaz y en el código.
+- **Opciones:** (a) interfaz «Planes» y un identificador en inglés que no choque: `outings` (tabla `juntia_data.outings`, carpeta `src/features/outings`); (b) interfaz «Salidas»; (c) interfaz «Viajes»; (d) renombrar el destino «Plan» a «Presupuesto».
+- **Recomendación: (a).** «Planes» es la palabra de los fundadores y en Colombia «¿qué plan?» cubre viaje, salida y evento. El choque se resuelve en el código con `outings` y en la interfaz con la ubicación (Q3), sin renombrar un destino aprobado. Esta spec usa «plan» para el concepto y `outing` para los identificadores **[propuesta]**.
+
+#### Q3 · Dónde viven Planes en la navegación `[P]`
+
+- **Contexto:** No cabe una sexta pestaña (§15.3). Un plan agrupa movimientos de varios meses; Actividad recorre los movimientos por mes; Metas es ahorro y no debe mezclarse con gasto (§2.3.5).
+- **Opciones:** (a) vista dentro de Actividad («Movimientos · Planes»), ruta `/actividad/planes` y detalle `/actividad/planes/[id]`; en escritorio, el mismo segmento dentro de Actividad, sin destino nuevo; (b) sección dentro de Plan; (c) destino propio solo en escritorio, como Balance; (d) dentro de Metas.
+- **Recomendación: (a), y en Inicio una tarjeta del plan activo solo si hay uno.** Actividad ya es «lo que pasó» y un plan es una forma de leerlo; (b) suma confusión con el nombre (Q2); (d) mezcla gasto con ahorro. Un destino nuevo en escritorio (c) cambia la navegación aprobada y necesitaría decisión propia.
+
+#### Q4 · Planes privados y compartidos · ADR-015
+
+- **Contexto:** Las metas son privadas **XOR** compartidas (DEC-G01). «Ir al pueblo» puede ser solo de una persona.
+- **Opciones:** (a) igual que las metas: un plan es de una persona (`owner_user_id`) **XOR** de la pareja (`group_id`); (b) solo compartidos; (c) solo privados.
+- **Recomendación: (a).** Reutiliza el modelo y la RLS de las metas y cubre los dos casos sin inventar reglas.
+
+#### Q5 · Qué gastos admite cada plan · ADR-015
+
+- **Contexto:** Si un gasto **compartido** pudiera llevar un plan **privado**, la fila compartida mostraría a la otra persona que existe un plan suyo que no puede ver.
+- **Opciones:** (a) plan compartido ← gastos compartidos de esa pareja y, según Q6, gastos privados de cualquiera de los dos; plan privado ← solo gastos privados de su dueña; (b) solo gastos del mismo contexto que el plan.
+- **Recomendación: (a), con la restricción en la base de datos, no solo en la interfaz.** Un gasto compartido nunca lleva un plan privado.
+
+#### Q6 · Un gasto privado (Yo) en un plan compartido · privacidad
+
+- **Contexto:** En Cartagena, un recuerdo personal se anota en Yo pero «es del viaje». Los contratos dicen que un gasto privado no se revela ni por agregados (§2.3.6, §7.4, US-05). Si se suma al total del plan, la pareja vería un total distinto de la suma de lo que puede ver, y deduciría que hay gastos privados y cuánto.
+- **Opciones:**
+  - (a) **Se permite, con separación estricta.** El total compartido del plan, el que ven los dos, suma **solo** gastos compartidos. Quien tiene privados en el plan ve, debajo y aparte, «Tus gastos privados en este plan · $X · Solo tú lo ves», **sin sumarlo** al total compartido. La otra persona no ve ni el importe, ni el número de gastos, ni que existan, ni cambia ninguna fecha de «actualizado» del plan.
+  - (b) **No se permite:** un plan compartido solo admite gastos compartidos; el selector en Yo solo ofrece planes privados.
+  - (c) Se permite y se suma al total para quien lo anotó (cada uno vería un total distinto).
+- **Recomendación: (a).** Es la regla que ya aplican las metas en Yo (decisión 22.11: «sin un total que las sume») y cubre el caso real. (c) hace que «en Cartagena nos gastamos» sea un número distinto para cada uno y se descarta. Si los fundadores prefieren lo más simple, (b) es segura.
+- **Consecuencia de (a) para el «histórico»:** la frase «En Cartagena gastaron $X» usa solo el total compartido; nunca un consolidado con privados.
+
+#### Q7 · Qué es «el total del plan» y cómo se rotula
+
+- **Contexto:** El número héroe del detalle. No puede ser `total_destinado_neto` (DEC-G04, §15.4) ni sumar aportes a metas.
+- **Opciones:** (a) suma de los **gastos activos** etiquetados que la persona puede ver en el contexto del plan (en un plan compartido, el gasto completo del grupo, como `group_total`); rótulo «Gastaron en {plan}» en compartidos y «Gastaste en {plan}» en privados; (b) además, la parte de cada uno como héroe.
+- **Recomendación: (a).** Es `gasto_consumo` restringido al plan, sin aportes, retiros ni liquidaciones. Un gasto pagado con una meta cuenta por su importe completo (es gasto real; DEC-G04) y se marca «Pagado con una meta», sin restar nada.
+
+#### Q8 · Presupuesto del plan
+
+- **Contexto:** Opcional, como DEC-R01. No es un presupuesto mensual de ADR-004 y no debe mezclarse con ellos.
+- **Opciones:** (a) un importe total opcional por plan, sin categorías ni meses; sin presupuesto no hay barra, ni restante, ni exceso; con presupuesto, consumido, porcentaje y «Quedan $X» o «Se pasaron por $X» (GLOSSARY §4), más «Cerca del límite» desde el 85 %; editable por cualquiera de los dos en un plan compartido, con versión y auditoría y sin segunda aprobación, como §15.5; (b) presupuesto por categoría dentro del plan.
+- **Recomendación: (a).** Lo pidieron así. Nunca «te alcanza» ni «puedes gastar $X más» (DEC-R17). El presupuesto del plan **no** consume ni modifica los presupuestos mensuales, ni al revés.
+
+#### Q9 · Qué cuenta contra el presupuesto de un plan compartido
+
+- **Contexto:** Con Q6 (a), la dueña de los privados podría querer verlos contra el presupuesto.
+- **Opciones:** (a) solo el total compartido; (b) cada persona ve su barra con sus privados sumados.
+- **Recomendación: (a).** Una sola barra, la misma para los dos. (b) repite el problema de (c) en Q6.
+
+#### Q10 · «Quién pagó qué» y el balance dentro del plan
+
+- **Contexto:** El saldo real de la pareja es uno, acumulado (decisión 20.9), y las liquidaciones no pertenecen a un plan. Decir «Tomás le debe a Sara $X por Cartagena» haría creer que existen deudas por plan.
+- **Opciones:** (a) dentro del plan, por persona: **pagó** (suma de lo que pagó en gastos del plan) y **le corresponde** (suma de sus partes), con la diferencia rotulada «Diferencia en este plan»; un enlace «Ver el balance de la pareja» lleva a Balance, que es el único sitio donde se dice quién le debe a quién; sin liquidar por plan; (b) además, «Liquidar este plan»; (c) solo «pagó», sin «le corresponde».
+- **Recomendación: (a).** Reutiliza la lectura pagó/corresponde de SharedBalance, sin crear un segundo saldo. (b) necesitaría liquidaciones por plan, que el maestro no contempla (§5.1, §15.5).
+
+#### Q11 · Desglose por categoría
+
+- **Opciones:** (a) las categorías con gasto en el plan, de mayor a menor, con importe y porcentaje del total del plan, con los íconos de categoría; (b) solo las tres primeras y «Otras».
+- **Recomendación: (a)**, con un máximo visible y «Ver todas» si hay más de seis.
+
+#### Q12 · Estado del plan: activo y cerrado
+
+- **Contexto:** El histórico son los planes pasados.
+- **Opciones:** (a) `active | closed`; «Cerrar plan» es manual y reversible («Reabrir»); un plan cerrado sale del selector de Anotar pero se puede seguir asociando desde su detalle; (b) se cierra solo al pasar la fecha de fin; (c) cerrado no admite más gastos.
+- **Recomendación: (a).** Las fechas son opcionales, así que un cierre automático no siempre es posible, y los gastos se anotan a veces días después.
+
+#### Q13 · Fechas del plan
+
+- **Opciones:** (a) inicio y fin opcionales, fin ≥ inicio; **no restringen** qué gastos se pueden asociar (un tiquete se compra semanas antes); en el selector de «asociar después», los gastos dentro de las fechas aparecen primero; (b) las fechas restringen.
+- **Recomendación: (a).**
+
+#### Q14 · Eliminar un plan: qué pasa con sus gastos · ADR-015
+
+- **Contexto:** Un plan no es dinero; sus gastos sí. Nada con dinero se borra (§5.4).
+- **Opciones:** (a) «Eliminar plan» quita el plan y todas sus etiquetas en una operación atómica, idempotente y auditada; **los gastos no cambian** (ni importe, ni contexto, ni reparto, ni versión) y siguen en Actividad, Inicio, Balance, presupuestos y Análisis; la foto se borra de Storage (ADR-014); la confirmación lo dice: «Los N gastos seguirán en Actividad»; en un plan compartido, puede hacerlo cualquiera de los dos; (b) solo cerrar, nunca eliminar; (c) eliminar solo si no tiene gastos.
+- **Recomendación: (a).** Con un plan privado que tiene gastos de la dueña, igual. En un plan compartido con privados asociados (Q6 a), eliminar también quita esas etiquetas, sin revelar a quien elimina que existían; la confirmación cuenta solo los gastos que esa persona ve.
+
+#### Q15 · Asociar después y cambiar de plan
+
+- **Contexto:** Pedido explícito: asociar gastos ya anotados.
+- **Opciones:** (a) dos caminos: desde el detalle del plan, «Añadir gastos» abre una lista con selección múltiple (filtrada por contexto válido según Q5 y Q6, con los de las fechas del plan primero) y se aplica en una sola operación atómica e idempotente; y desde Editar gasto, un campo «Plan» que permite poner, cambiar o quitar el plan. (b) solo desde Editar gasto.
+- **Recomendación: (a).** Un gasto tiene **como máximo un plan** (ADR-015). Cambiar el plan de un gasto compartido lo puede hacer cualquiera de los dos (como 20.12) y queda auditado.
+- **Subpregunta:** ¿poner o quitar un plan cuenta como «edición» del gasto (sube su versión y muestra «Editado por X»)? **Recomendación: no.** La etiqueta no cambia dinero; vive fuera de la fila del gasto (ADR-015, opción recomendada) y su historial está en la auditoría. Si no sube la versión, no choca con una edición concurrente del monto.
+
+#### Q16 · Fotos: alcance y relación con las metas · ADR-014
+
+- **Contexto:** ADR-014 estaba reservado para «Storage privado de fotos de metas» (decisiones 22.6 y 24.13). Una foto de portada de plan es el mismo problema: archivo privado, EXIF, tamaño, RLS, borrado.
+- **Opciones:** (a) un solo mecanismo de portada para metas y planes (ADR-014 ampliado); en MVP-2 se activan las dos, con el focal point, el scrim y sus `[V]` de BRAND §5; (b) el mecanismo es común, pero en MVP-2 solo se activa en planes y las metas siguen con el fallback; (c) fotos solo en planes, con un mecanismo propio.
+- **Recomendación: (a), en el PR C de Q1.** Los fundadores pidieron «subirle una foto, igual que en las metas»; el diseño de las metas ya prevé la foto (GoalCard, meta inmersiva, `goal-photo-{id}`) y construir el mecanismo dos veces cuesta más. Si se quiere acotar, (b).
+
+#### Q17 · Fotos: límites, formatos y metadatos · ADR-014
+
+- **Opciones:** las de ADR-014: una portada por plan o meta; reencuadre y recodificación en el cliente a JPEG (lado largo ≤ 2048 px, objetivo ≤ 600 KB); entrada JPEG, PNG, WebP y HEIC/HEIF si el navegador la decodifica; rechazo de más de 15 MB de origen; **se eliminan todos los metadatos (EXIF, GPS, XMP)** y el servidor rechaza un archivo que los conserve.
+- **Recomendación:** las de ADR-014. Los números son `[V]` hasta medirlos con fotos reales de iPhone.
+
+#### Q18 · Selector de plan en Anotar `[P]`
+
+- **Contexto:** La rejilla de categorías es de 4 × 3 (spec 005, 22 nov 2026) y US-12 exige < 10 s para el gasto habitual. El selector no puede añadir un paso obligatorio.
+- **Opciones:** (a) una fila opcional «Plan» debajo de la rejilla, cerrada por defecto («Sin plan»); si hay un plan activo cuya fecha incluye hoy, aparece como sugerencia de un toque, **sin preseleccionarse**; al tocarla se abre una lista con los planes activos válidos para el contexto (Q5, Q6) y «Crear plan» al final; (b) preseleccionar el plan activo; (c) el plan solo en los detalles (E2).
+- **Recomendación: (a).** Preseleccionar (b) etiquetaría por error el mercado de la semana durante el viaje. (c) esconde la función que se pidió.
+
+#### Q19 · Copias, exportación y borrado de cuenta con fotos · ADR-014
+
+- **Contexto:** La copia semanal (decisiones 16.11, 19.3 y 24.9) es de la base de datos; los archivos de Storage **no** van en ella. La exportación es JSON + CSV (§15.5). El borrado manual de cuenta (24.8, 25.3) borra filas, no archivos.
+- **Opciones:** (a) las fotos son **reemplazables**: no entran en la copia ni en la exportación (que sí incluye los planes y sus gastos), y una restauración deja los planes con el fallback; el procedimiento de borrado de cuenta añade el paso de borrar los objetos de Storage de la persona o la pareja; (b) incluir las fotos en la copia semanal; (c) incluirlas en la exportación como archivos.
+- **Recomendación: (a)**, dicho en la interfaz al subir la foto («La foto no se incluye en la exportación»). (b) multiplica el tamaño de la copia y el trabajo manual.
+
+#### Q20 · Pruebas: specs E2E de Planes
+
+- **Contexto:** El tope de 4–6 specs E2E es de P0 (ADR-011); MVP-2 no tiene tope propio.
+- **Opciones:** (a) ninguna spec E2E nueva: ampliar la spec de gastos compartidos con «asociar a un plan» y su lectura en el detalle; la privacidad de Q6 se prueba en pgTAP y en integración, que es la capa más baja que la detecta; (b) una spec E2E nueva de Planes.
+- **Recomendación: (a)**, y que los fundadores digan si MVP-2 mantiene el tope de P0.
+
+## User Scenarios & Testing *(mandatory)*
+
+Los escenarios dan por buenas las recomendaciones de Q1–Q20. Si una respuesta
+cambia, el escenario que la aplica se reescribe en Clarify.
+
+### User Story 1 - Crear un plan y anotar en él (Priority: P1)
+
+Sara crea el plan «Cartagena», compartido, con fechas del 5 al 9 de diciembre y
+presupuesto de $3.000.000. Durante el viaje, al anotar un gasto en Nosotros,
+toca la sugerencia «Cartagena» debajo de las categorías y guarda.
+
+**Why this priority**: Es la petición original y el núcleo de valor.
+
+**Independent Test**: Crear un plan, anotar un gasto compartido con el plan y
+comprobar que aparece en el detalle del plan **y** sigue en Actividad, Inicio,
+Balance, presupuestos y Análisis con las mismas cifras de antes.
+
+**Acceptance Scenarios**:
+
+1. **Given** una pareja activa sin planes, **When** Sara crea «Cartagena» compartido, **Then** Tomás lo ve en Planes con las mismas fechas y presupuesto, y la auditoría registra quién lo creó.
+2. **Given** el plan activo con fechas que incluyen hoy, **When** Tomás abre Anotar en Nosotros, **Then** ve «Cartagena» como sugerencia **sin seleccionar**, y guardar sin tocarla deja el gasto sin plan.
+3. **Given** un gasto compartido de $180.000 al 50/50 anotado con el plan, **When** se abre Inicio, Balance y el presupuesto mensual de Restaurantes, **Then** sus cifras son idénticas a las de anotarlo sin plan (US-08).
+4. **Given** que se anota con el plan, **When** se mide el tiempo de un gasto habitual sin plan, **Then** sigue por debajo de 10 s (US-12) y el selector no añade ningún paso obligatorio.
+
+---
+
+### User Story 2 - Ver el detalle de un plan (Priority: P1)
+
+Tomás abre «Cartagena» y ve cuánto gastaron, cómo van frente al presupuesto, en
+qué se fue, quién pagó qué y la lista de gastos.
+
+**Why this priority**: Es la lectura que pidieron: total, presupuesto, desglose y quién pagó.
+
+**Independent Test**: Con un dataset fijo de gastos del plan, el detalle
+reproduce exactamente el total, el porcentaje, el desglose por categoría y el
+pagó/corresponde por persona.
+
+**Acceptance Scenarios**:
+
+1. **Given** el plan con $2.400.000 en gastos compartidos y presupuesto de $3.000.000, **When** Tomás abre el detalle, **Then** ve «Gastaron en Cartagena $2.400.000», 80 % del presupuesto y «Quedan $600.000», nunca «te alcanza».
+2. **Given** $3.300.000 en gastos, **When** abre el detalle, **Then** ve «Se pasaron por $300.000» con texto, forma y color, nunca solo color.
+3. **Given** un plan sin presupuesto, **When** abre el detalle, **Then** no hay barra, ni restante, ni exceso, ni «$0» (DEC-R01).
+4. **Given** gastos pagados por Sara y por Tomás con repartos distintos, **When** abre «Quién pagó», **Then** ve por persona «pagó» y «le corresponde» dentro del plan, la diferencia rotulada «Diferencia en este plan» y el enlace al balance de la pareja; en ninguna parte del plan dice «le debe».
+5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
+
+---
+
+### User Story 3 - Un gasto privado en un plan compartido (Priority: P1)
+
+Sara compra un recuerdo para ella en Cartagena, lo anota en Yo y lo asocia a
+«Cartagena». Tomás no debe enterarse por ningún camino.
+
+**Why this priority**: Es el punto de privacidad que puede romper el contrato más importante del producto.
+
+**Independent Test**: Con dos cuentas, comprobar por la interfaz **y por consultas directas a la API** que nada del gasto privado llega a Tomás.
+
+**Acceptance Scenarios**:
+
+1. **Given** el gasto privado de Sara de $150.000 en «Cartagena», **When** Sara abre el detalle, **Then** ve el total compartido sin cambios y, aparte, «Tus gastos privados en este plan · $150.000 · Solo tú lo ves», sin sumarlo.
+2. **Given** lo mismo, **When** Tomás abre el detalle, la lista, el desglose, el presupuesto, el histórico, Actividad, la exportación y cualquier vista o función de la API, **Then** no hay rastro: ni importe, ni número de gastos, ni categoría, ni cambio en «pagó», ni fecha de actualización distinta.
+3. **Given** que Sara elimina el plan, **When** la confirmación de Tomás o de Sara se muestra, **Then** cuenta solo los gastos que esa persona ve.
+
+---
+
+### User Story 4 - Asociar después gastos ya anotados (Priority: P2)
+
+Al volver del pueblo, Sara crea «Ir al pueblo» y le añade los cuatro gastos que
+ya había anotado.
+
+**Why this priority**: Pedido explícito, y es la forma más común de llegar tarde a la función.
+
+**Independent Test**: Crear un plan y asociar varios gastos existentes en una sola operación; repetir la operación no duplica nada.
+
+**Acceptance Scenarios**:
+
+1. **Given** cuatro gastos sin plan, **When** Sara usa «Añadir gastos» y elige los cuatro, **Then** los cuatro quedan en el plan en una sola operación, y un doble toque o un reintento no crea nada dos veces.
+2. **Given** un gasto compartido con plan, **When** Tomás le cambia el plan desde Editar gasto, **Then** queda en el nuevo plan, la auditoría registra el cambio y el gasto no muestra «Editado por Tomás» ni cambia su versión (según Q15).
+3. **Given** un gasto compartido, **When** alguien intenta asociarlo a un plan privado por la API, **Then** se rechaza (Q5).
+
+---
+
+### User Story 5 - Histórico de planes (Priority: P2)
+
+Meses después, Tomás abre Planes y ve los cerrados: «Cartagena · 5–9 dic · Gastaron $2.400.000».
+
+**Why this priority**: Pedido explícito; da valor al registro acumulado.
+
+**Independent Test**: Cerrar un plan y comprobar que pasa al histórico con su total, que sale del selector de Anotar y que se puede reabrir.
+
+**Acceptance Scenarios**:
+
+1. **Given** un plan activo, **When** se cierra, **Then** aparece en el histórico con nombre, fechas y total compartido, y deja de ofrecerse en Anotar.
+2. **Given** un plan cerrado, **When** se reabre, **Then** vuelve a activos sin perder nada.
+3. **Given** un gasto del plan que se anula, **When** se lee el histórico, **Then** el total ya no lo incluye (como todo agregado; §5.4).
+
+---
+
+### User Story 6 - Eliminar un plan sin perder gastos (Priority: P2)
+
+**Independent Test**: Eliminar un plan con gastos y comprobar que todos los gastos siguen activos, con el mismo importe, reparto, contexto y versión.
+
+**Acceptance Scenarios**:
+
+1. **Given** un plan con 12 gastos, **When** se elimina y se confirma «Los 12 gastos seguirán en Actividad», **Then** el plan desaparece, los 12 gastos siguen intactos y sin plan, y la auditoría lo registra.
+2. **Given** un plan con foto, **When** se elimina, **Then** el objeto se borra de Storage y su URL firmada deja de servir.
+
+---
+
+### User Story 7 - Foto de portada (Priority: P3)
+
+Sara sube una foto de la playa a «Cartagena».
+
+**Why this priority**: Pedida, pero no es dinero y tiene su propio ADR; Planes funciona sin ella.
+
+**Independent Test**: Subir una foto de iPhone con ubicación y comprobar que lo guardado no tiene EXIF ni GPS, que pesa dentro del límite y que solo la pareja la puede leer.
+
+**Acceptance Scenarios**:
+
+1. **Given** una foto HEIC de 4 MB con GPS, **When** Sara la sube, **Then** lo guardado es un JPEG ≤ 2048 px sin metadatos, y la pantalla dice que la foto no va en la exportación.
+2. **Given** la foto de un plan compartido, **When** una tercera cuenta pide el objeto o una URL firmada, **Then** se le niega.
+3. **Given** un plan sin foto, **When** se muestra, **Then** usa el fallback: tinte, inicial en serif e ícono Phosphor, como GoalCard `[A]`.
+
+---
+
+### Edge Cases
+
+- **Gasto anulado** en un plan: sale de todos los totales del plan y del histórico; la etiqueta se conserva para la auditoría.
+- **Mover a Pareja** un gasto privado con plan: si el plan es compartido de esa pareja, el gasto compartido nuevo hereda la etiqueta en la misma operación atómica (ADR-001); si es privado, el gasto nuevo queda sin plan y la confirmación lo dice. `[P]` hasta Q5/Q6.
+- **Deshacer** de Anotar o de Mover a Pareja: la etiqueta sigue al gasto o desaparece con él.
+- **Salida de la pareja** (cuando exista, ADR-003): quien sale pierde el acceso a los planes compartidos y a sus fotos; sus gastos privados pierden la etiqueta de un plan que ya no ve.
+- **Pareja provisional o descartada**: no se pueden crear planes compartidos (como el dinero compartido, 003 FR-010).
+- **Plan con cientos de gastos**: lista paginada; los totales salen de una sola lectura consistente.
+- **Nombre largo** (hasta 60 caracteres): sin desbordes a 360 px ni con texto al 200 %.
+- **Dos personas editan el plan a la vez**: la segunda escritura con versión vieja falla y lo explica (como 16.15).
+- **Foto que no se puede decodificar** (HEIC en un navegador sin soporte): mensaje claro y fallback, nunca un archivo a medias.
+- **Gasto con fecha futura** (16.13): se puede asociar.
+- **Ingresos y liquidaciones**: nunca llevan plan.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+#### Entidad y permisos (ADR-015, ADR-013)
+
+- **FR-001**: Un plan tiene nombre (1–60 caracteres), fechas de inicio y fin opcionales (fin ≥ inicio), presupuesto opcional (entero positivo en COP; `null` ≠ 0), tipo visual opcional para el fallback `[P]`, foto de portada opcional (ADR-014) y estado `active | closed`.
+- **FR-002**: Un plan es de una persona **XOR** de una pareja activa (según Q4). Los planes privados solo los ve y modifica su dueña; los compartidos, los dos integrantes activos.
+- **FR-003**: Las tablas viven en `juntia_data`, se leen por vistas `security_invoker` en `public` y se escriben solo por funciones de `juntia_private`, con idempotencia, auditoría, versión y bloqueo del agregado (ADR-013).
+- **FR-004**: Crear, editar, cerrar, reabrir y eliminar un plan quedan en `audit_events` con actor e instante.
+
+#### Relación con los gastos (ADR-015)
+
+- **FR-010**: Un gasto (`type = 'expense'`) tiene **como máximo un plan**. Ingresos y liquidaciones nunca llevan plan.
+- **FR-011**: La etiqueta **no cambia** el importe, el contexto, el reparto, la categoría, la fecha ni el pagador, y **no** altera `group_total`, `personal_consumption`, `gross_paid`, `net_owed`, los presupuestos mensuales, las cinco métricas DEC-G04 ni Análisis. Una prueba lo comprueba comparando las cifras con y sin etiqueta.
+- **FR-012**: Reglas de compatibilidad (según Q5 y Q6), impuestas en la base de datos: un gasto compartido solo admite un plan compartido de su misma pareja; un gasto privado admite un plan privado de su dueña y, si Q6 = (a), un plan compartido de una pareja activa de la que su dueña es integrante.
+- **FR-013**: Asociar, cambiar o quitar el plan de un gasto es una operación atómica e idempotente, auditada; la puede hacer quien puede editar el gasto (la dueña en privados; cualquiera de los dos en compartidos, como 20.12). Según Q15, no sube la versión del gasto.
+- **FR-014**: «Añadir gastos» asocia varios gastos en una sola operación; si uno no es compatible o cambió, la operación no aplica ninguno y lo explica.
+- **FR-015**: Mover a Pareja y su Deshacer conservan o quitan la etiqueta en la misma transacción, según el Edge Case correspondiente.
+
+#### Privacidad (§2.3.6, §7.4, US-05)
+
+- **FR-020**: Ninguna vista, función, agregado, recuento, fecha de actualización, error, exportación o evento de analítica revela a la otra persona un gasto privado asociado a un plan compartido.
+- **FR-021**: El total compartido de un plan suma solo gastos compartidos activos. Los privados propios se muestran aparte, rotulados «Solo tú lo ves», y nunca se suman a una cifra compartida (según Q6 y Q9).
+- **FR-022**: pgTAP prueba, con tres cuentas (dueña de los privados, pareja y tercera), cada vista y función de Planes, incluida la llamada directa sin filtros de cliente.
+
+#### Detalle del plan
+
+- **FR-030**: Héroe: «Gastaron en {plan}» (compartido) o «Gastaste en {plan}» (privado) con el total del FR-021. Nunca `total_destinado_neto`, nunca aportes ni liquidaciones.
+- **FR-031**: Presupuesto (según Q8 y Q9): sin presupuesto, nada; con presupuesto, consumido, porcentaje, «Quedan $X» o «Se pasaron por $X», y «Cerca del límite» desde el 85 %, con texto y forma además de color. Nunca «te alcanza» ni «puedes gastar» (DEC-R17).
+- **FR-032**: Desglose por categoría (según Q11), con `CategoryIcon`.
+- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos.
+- **FR-034**: Lista de gastos del plan con el mismo `ExpenseRow` de Actividad y la marca «Pagado con una meta» cuando aplique.
+- **FR-035**: Foto de portada o fallback (ADR-014; fallback como GoalCard `[A]`).
+
+#### Lista, histórico y navegación
+
+- **FR-040**: Planes vive donde diga Q3. Activos primero; cerrados en «Histórico», del más reciente al más antiguo, con nombre, fechas y total compartido.
+- **FR-041**: En Yo se ven los planes privados propios y, aparte, los compartidos; en Nosotros, solo los compartidos (como 22.11).
+- **FR-042**: Cerrar y reabrir según Q12; eliminar según Q14.
+
+#### Anotar y Editar
+
+- **FR-050**: Selector de plan según Q18: opcional, cerrado por defecto, sugerencia sin preselección, solo planes activos y compatibles con el contexto elegido, «Crear plan» al final.
+- **FR-051**: Cambiar de contexto en Anotar descarta un plan que deje de ser compatible y lo dice.
+- **FR-052**: Editar gasto muestra el campo «Plan» para poner, cambiar o quitar.
+- **FR-053**: Actividad muestra la etiqueta del plan en la fila, sin cambiar su altura a 390 px `[P]`.
+
+#### Fotos (ADR-014)
+
+- **FR-060**: Una portada por plan (y por meta si Q16 = a), en un bucket privado de Supabase Storage con RLS por dueña o pareja; lectura por URL firmada de vida corta.
+- **FR-061**: Límites, formatos y eliminación de metadatos según Q17 y ADR-014; el servidor rechaza lo que no cumpla.
+- **FR-062**: Reemplazar o quitar la foto borra el objeto anterior; eliminar el plan borra su foto.
+- **FR-063**: Copias, exportación y borrado de cuenta según Q19.
+
+#### Copy, accesibilidad, responsive y motion
+
+- **FR-070**: Todo el copy nuevo en `src/lib/copy/es.ts` (CONVENTIONS B.1), con las palabras prohibidas de GLOSSARY §9.
+- **FR-071**: Diseño a 390 y 1440 px, sin estirar el móvil; estados vacío, carga, error, sin presupuesto, excedido, cerrado, sin foto, con foto, muchos gastos y nombres largos; WCAG AA; texto al 200 %; movimiento reducido; iconos Phosphor con `AppIcon`.
+- **FR-072**: Las pantallas salen del prompt de Claude Design de `specs/006-planes/design-prompt.md` y sus `[P]` se aprueban viendo la pantalla.
+
+#### Pruebas y CI
+
+- **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define.
+- **FR-081**: pgTAP: RLS de planes y etiquetas con tres cuentas, compatibilidad de FR-012, idempotencia, eliminación sin tocar gastos, Storage con tres cuentas.
+- **FR-082**: E2E según Q20.
+
+#### Fuera de alcance (explícito)
+
+- Liquidar por plan; saldos o deudas por plan.
+- Presupuesto por categoría dentro de un plan.
+- Varios planes por gasto; planes anidados.
+- Enlace entre un plan y una meta de ahorro (p. ej. «Viaje a Japón») `[P]`, a valorar después.
+- Recibos o adjuntos por gasto (`attachments`, §7.3): no son portadas y no entran en ADR-014.
+- Multimoneda, conversión y gastos en el extranjero con otra moneda (P2).
+- Grupos de más de dos personas (P1).
+- Sugerencias automáticas de plan por ubicación, IA u OCR.
+
+### Key Entities *(propuestas; ADR-015)*
+
+- **Plan** (`juntia_data.outings` **[propuesta]**): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
+- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (opción recomendada de ADR-015).
+- **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, ruta del objeto, tamaño, ancho, alto, focal point `{x,y}`, `created_by`.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: Con y sin etiqueta de plan, todas las cifras de Inicio, Balance, presupuestos mensuales, Análisis y DEC-G04 son idénticas en el dataset de la etapa Plan (prueba de dominio e integración).
+- **SC-002**: Cero fugas: ninguna consulta de la otra cuenta ni de una tercera devuelve dato alguno de un gasto privado asociado a un plan compartido (pgTAP con tres cuentas).
+- **SC-003**: El gasto habitual sin plan sigue en mediana < 10 s en teléfono real (US-12); con la sugerencia del plan, un toque más como máximo.
+- **SC-004**: Eliminar un plan deja todos sus gastos con el mismo importe, reparto, contexto, categoría, fecha y versión.
+- **SC-005**: Ninguna foto guardada conserva EXIF, GPS ni XMP, y ninguna supera el límite de ADR-014.
+- **SC-006**: Los dos fundadores leen correctamente, sin ayuda, el total, el presupuesto y «quién pagó» de un plan real, y ninguno interpreta la diferencia del plan como una deuda.
+- **SC-007**: Sin scroll horizontal en 360, 390, 430, 1024 y 1440; CLS = 0 en las cargas con skeleton (§15.7, con la excepción 26.1).
+
+## Assumptions
+
+- MVP-1 está declarado antes de empezar a implementar; la spec 005 y sus excepciones siguen vigentes.
+- La pareja es de exactamente dos (§15.5); el modelo se escribe para N como el resto del dominio.
+- Supabase sigue en plan Free (16.10) cuando se implemente; los límites de Storage se verifican entonces (ADR-014 `[V]`).
+- El repositorio es público (25.1): este documento no contiene datos reales ni secretos; los ejemplos son hipotéticos.
+- Las cifras de los escenarios (Cartagena, $3.000.000) son hipotéticas y no forman parte del dataset dorado de MVP-1.
+
+## Lo que hace falta para pasar a Plan
+
+1. Respuestas de los fundadores a Q1–Q20, registradas como decisión del maestro §15.10 en el PR documental que las recoja.
+2. ADR-014 y ADR-015 revisados: Aceptados o enmendados según Q2, Q4–Q6, Q14–Q17 y Q19.
+3. Comps de Claude Design aprobados para las pantallas del prompt (`design-prompt.md`), con sus `[P]` marcados.
+4. MVP-1 declarado (spec 005).
