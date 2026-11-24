@@ -12,7 +12,8 @@ viendo la pantalla y no deciden el alcance. El alcance sale de
 `specs/006-planes/spec.md`:
 - Q1–Q20 están respondidas desde el 24 de noviembre de 2026, y la Q12 cambió: un
   plan cerrado queda bloqueado (pantalla 06·9).
-- Q21–Q23 siguen abiertas.
+- Q21–Q23 también están respondidas: un plan cerrado no se elimina sin reabrirlo, y
+  mover a Pareja un gasto de un plan privado cerrado pide reabrirlo.
 
 ---
 
@@ -138,7 +139,9 @@ viendo la pantalla y no deciden el alcance. El alcance sale de
 > - el campo «Plan» de Editar gasto en un gasto de un plan cerrado: de solo
 >   lectura, con «Cartagena 2024 está cerrado. Reábrelo para quitar este gasto»,
 >   mientras el resto del gasto (monto, categoría…) se sigue editando;
-> - el histórico con un plan reabierto que vuelve a activos.
+> - el histórico con un plan reabierto que vuelve a activos;
+> - la confirmación de Mover a Pareja bloqueada para un gasto de un plan privado
+>   cerrado: «Ir al pueblo está cerrado. Reábrelo para mover este gasto».
 >
 > **Motion** (describe, no animes de más): la tarjeta del plan crece hasta el
 > detalle con la misma continuidad que la meta inmersiva (`plan-photo-{id}`), y con

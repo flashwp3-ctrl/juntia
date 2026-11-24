@@ -1,7 +1,6 @@
 # ADR-015 — Planes: entidad propia y etiqueta adicional de los gastos
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores respondieron el 24 de noviembre de 2026 las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y Q12 la cambiaron (plan cerrado bloqueado, §5). Faltan tres cosas:
-- las respuestas a Q21–Q23, que salen de Q12;
+**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores respondieron el 24 de noviembre de 2026 las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y Q12 la cambiaron (plan cerrado bloqueado, §5). El mismo día aceptaron también las recomendaciones de Q21–Q23. Faltan dos cosas:
 - el paso a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10;
 - que MVP-1 esté declarado antes de implementar · **Origen:** especificación 006 · **Alcance:** MVP-2
 
@@ -70,7 +69,7 @@ Un trigger de la tabla de etiquetas, no la interfaz, impone (spec 006, Q5 y Q6):
 
 | Gasto | Plan privado de su dueña | Plan compartido de su pareja |
 | --- | --- | --- |
-| Privado | Sí | **Según Q6** (recomendado: sí, con separación estricta) |
+| Privado | Sí | Sí, con separación estricta (Q6) |
 | Compartido | **No, nunca** | Sí, solo de la misma pareja |
 | Ingreso o liquidación | No | No |
 
@@ -82,7 +81,7 @@ los dos en compartidos, 20.12).
 
 - **Total compartido del plan** = suma de `amount_minor` de los gastos **activos**
   compartidos etiquetados. Es `group_total` restringido al plan.
-- **Privados propios en un plan compartido** (si Q6 = a): cifra aparte, solo para su
+- **Privados propios en un plan compartido** (Q6): cifra aparte, solo para su
   dueña, **nunca sumada** a una cifra compartida. Es la regla de la decisión 22.11
   para las metas en Yo.
 - **Pagó / le corresponde** por persona dentro del plan: `gross_paid` y la suma de
@@ -106,12 +105,12 @@ otra persona **antes** de agregar.
 
   para corregir algo se reabre, se cambia y se vuelve a cerrar.
 - **El gasto sigue siendo dinero:** editar el importe de un gasto que está en un plan cerrado no toca la etiqueta y se permite. El total del plan cerrado lo refleja, porque se calcula y no se guarda.
-- **Pendientes de Q12:**
-  - si un plan cerrado se puede eliminar (Q21);
-  - si se puede anular un gasto suyo (Q22);
-  - qué pasa con Mover a Pareja de un gasto privado suyo (Q23).
-
-  La cascada de eliminar y la etiqueta en Mover a Pareja deben respetar lo que se responda. Si se exige reabrir antes, el trigger de bloqueo no necesita ninguna excepción.
+- **Eliminar un plan cerrado no se permite** (Q21): la función de eliminar exige `status = 'active'`. Así la cascada solo corre sobre planes activos, y el trigger de bloqueo no necesita ninguna excepción para ella.
+- **Anular un gasto de un plan cerrado se permite** (Q22): la anulación no toca la etiqueta, que se conserva para la auditoría, y el gasto sale del total calculado.
+- **Mover a Pareja un gasto privado de un plan cerrado** (Q23): la etiqueta vive en `outing_transactions` y su clave es `transaction_id`. Como el gasto nuevo tiene otro id, pasar la etiqueta significa borrar la fila del gasto anulado e insertar la del nuevo, en la misma transacción de ADR-001.
+  - Si el plan es **compartido**, ese traspaso es la **única excepción** al trigger de bloqueo. Solo la puede usar la función de Mover a Pareja y su Deshacer, con el mismo `outing_id`, y no cambia los gastos del plan, solo su id.
+  - Si el plan es **privado**, la función rechaza la operación antes de anular nada y pide reabrirlo.
+  - Alternativa de implementación que el plan puede preferir: conservar la etiqueta del gasto anulado y añadir la del nuevo, sin borrar nada. Si se elige, el trigger solo necesita la excepción para la inserción, y las lecturas ya excluyen los gastos anulados.
 - **Eliminar:** borra el plan; la cascada borra sus etiquetas, **incluidas las de
   gastos privados de la otra persona** sin revelárselas a quien elimina; los gastos
   no cambian; la foto se borra según ADR-014. Auditoría con actor, instante y número
@@ -158,7 +157,9 @@ otra persona **antes** de agregar.
    - quitarla;
    - cambiar un gasto de plan, desde uno cerrado o hacia uno cerrado;
    - editar el plan.
-   La edición del importe de uno de sus gastos, en cambio, sigue funcionando.
+   La edición del importe y la anulación de uno de sus gastos, en cambio, siguen funcionando. Además:
+   - eliminar un plan cerrado se rechaza;
+   - la excepción de Mover a Pareja solo la puede usar esa función y su Deshacer, nunca una llamada directa.
 4. Que las cifras de Inicio, Balance, presupuestos, Análisis y DEC-G04 son idénticas
    con y sin etiquetas, con el dataset de la etapa Plan.
 

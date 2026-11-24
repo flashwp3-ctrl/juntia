@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-24
 
-**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Siguen abiertas Q21–Q23, que salen de la nueva Q12. No avanza a Plan sin esas respuestas y sin el merge de su PR documental (ADR-012 §3.1). Depende además de dos ADR en estado **Propuesto**: ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta).
+**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** No avanza a Plan sin el merge de su PR documental (ADR-012 §3.1). Depende además de dos ADR en estado **Propuesto**: ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta).
 
 **Input**: Petición de los fundadores del 24 de noviembre de 2026, aprobada por Alejandro ese día para especificarse y diseñarse en paralelo al gate de MVP-1: «Crear un plan, por ejemplo "Cartagena" o "ir al pueblo", y anotar en él los gastos de esa salida. Esos gastos se siguen viendo en Yo y en Nosotros. Un histórico ("en Cartagena nos gastamos $1.000.000"), abrir el detalle del plan y subirle una foto como en las metas, ver el desglose de quién pagó qué y saber si se pasaron del presupuesto del plan».
 
@@ -21,7 +21,7 @@
 > se despliega antes de declarar MVP-1.** Este PR solo añade documentos.
 >
 > **Desviación de la plantilla, a propósito.** Como en la 003, la 004 y la 005, la
-> plantilla de Spec Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hay veinte
+> plantilla de Spec Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hubo veintitrés
 > preguntas, porque el encargo pide que todo lo no decidido llegue a los
 > fundadores en lugar de resolverse en la spec.
 
@@ -108,8 +108,17 @@ volverlo a cerrar». La regla que resulta:
    aunque esté en un plan cerrado, porque esa edición no depende del plan, y el
    total del plan cerrado refleja el cambio.
 
-La regla 5 deja tres casos sin decidir: Q21, Q22 y Q23. Son preguntas nuevas,
-abiertas en esta misma sesión y pendientes de respuesta.
+La regla 5 dejó tres casos sin decidir, que se abrieron como Q21, Q22 y Q23. Los
+fundadores los respondieron el mismo 24 de noviembre de 2026 aceptando las tres
+recomendaciones. Alejandro: «Sí, las tres».
+
+| # | Respuesta |
+| --- | --- |
+| Q21 | (a) Un plan cerrado **no se elimina**: primero se reabre |
+| Q22 | (a) Anular un gasto de un plan cerrado **se permite**. El gasto sale del total del plan y la etiqueta se conserva para la auditoría |
+| Q23 | Mover a Pareja un gasto privado que está en un plan cerrado:<br>- si el plan es **compartido** (a), la etiqueta pasa al gasto nuevo en la misma operación;<br>- si el plan es **privado** (b), la operación se bloquea y la confirmación pide reabrirlo |
+
+El contexto y las opciones de cada una se conservan abajo.
 
 #### Q21 · Eliminar un plan cerrado
 
@@ -274,8 +283,8 @@ de arriba. Las marcadas **· ADR** dependen de un ADR propuesto en este PR.
 
 ## User Scenarios & Testing *(mandatory)*
 
-Los escenarios dan por buenas las recomendaciones de Q1–Q20. Si una respuesta
-cambia, el escenario que la aplica se reescribe en Clarify.
+Los escenarios aplican las respuestas de los fundadores a Q1–Q23 (24 nov 2026). Si una
+respuesta cambia, el escenario que la aplica se reescribe.
 
 ### User Story 1 - Crear un plan y anotar en él (Priority: P1)
 
@@ -379,7 +388,9 @@ falta un taxi del viaje: reabre el plan, lo añade y lo vuelve a cerrar.
    **Then** se rechaza sin cambiar nada, y la interfaz explica: «Cartagena 2024 está cerrado. Reábrelo para cambiarlo» (según Q12).
 4. **Given** un plan cerrado, **When** Sara lo reabre, añade un gasto y lo vuelve a cerrar, **Then** el plan conserva todo lo anterior más el gasto nuevo, y la auditoría registra las tres operaciones.
 5. **Given** un gasto de un plan cerrado, **When** alguien edita su importe desde Actividad, **Then** la edición se guarda como cualquier otra y el total del plan cerrado refleja el importe nuevo (según Q12).
-6. **Given** un gasto de un plan cerrado que se anula, **When** se lee el histórico, **Then** el total ya no lo incluye (§5.4; según Q22, pendiente).
+6. **Given** un gasto de un plan cerrado que se anula, **When** se lee el histórico, **Then** el total ya no lo incluye y la etiqueta se conserva para la auditoría (§5.4; según Q22).
+7. **Given** un gasto privado de Sara en el plan compartido cerrado «Cartagena 2024», **When** lo mueve a Pareja, **Then** el gasto compartido nuevo queda en «Cartagena 2024» en la misma operación, y el plan sigue cerrado (según Q23).
+8. **Given** un gasto privado de Sara en su plan privado cerrado «Ir al pueblo», **When** intenta moverlo a Pareja, **Then** la operación no se ejecuta y la confirmación dice: «Ir al pueblo está cerrado. Reábrelo para mover este gasto» (según Q23).
 
 ---
 
@@ -391,7 +402,7 @@ falta un taxi del viaje: reabre el plan, lo añade y lo vuelve a cerrar.
 
 1. **Given** un plan con 12 gastos, **When** se elimina y se confirma «Los 12 gastos seguirán en Actividad», **Then** el plan desaparece, los 12 gastos siguen intactos y sin plan, y la auditoría lo registra.
 2. **Given** un plan con foto, **When** se elimina, **Then** el objeto se borra de Storage y su URL firmada deja de servir.
-3. **Given** un plan cerrado, **When** alguien intenta eliminarlo, **Then** se le pide reabrirlo primero (según Q21, pendiente).
+3. **Given** un plan cerrado, **When** alguien intenta eliminarlo, **Then** la acción no se ofrece, la base de datos la rechaza y la interfaz dice «Reábrelo para eliminarlo» (según Q21).
 
 ---
 
@@ -414,7 +425,7 @@ Sara sube una foto de la playa a «Cartagena».
 ### Edge Cases
 
 - **Gasto anulado** en un plan: sale de todos los totales del plan y del histórico; la etiqueta se conserva para la auditoría.
-- **Mover a Pareja** un gasto privado con plan: si el plan es compartido de esa pareja, el gasto compartido nuevo hereda la etiqueta en la misma operación atómica (ADR-001); si es privado, el gasto nuevo queda sin plan y la confirmación lo dice (según Q5 y Q6). Si el plan está **cerrado**, según Q23 (pendiente).
+- **Mover a Pareja** un gasto privado con plan: si el plan es compartido de esa pareja, el gasto compartido nuevo hereda la etiqueta en la misma operación atómica (ADR-001); si es privado, el gasto nuevo queda sin plan y la confirmación lo dice (según Q5 y Q6). Si el plan está **cerrado**: cuando es compartido, la etiqueta pasa igual; cuando es privado, la operación se bloquea y pide reabrirlo (según Q23). El Deshacer sigue la misma regla.
 - **Deshacer** de Anotar o de Mover a Pareja: la etiqueta sigue al gasto o desaparece con él.
 - **Salida de la pareja** (cuando exista, ADR-003): quien sale pierde el acceso a los planes compartidos y a sus fotos; sus gastos privados pierden la etiqueta de un plan que ya no ve.
 - **Pareja provisional o descartada**: no se pueden crear planes compartidos (como el dinero compartido, 003 FR-010).
@@ -424,7 +435,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **Foto que no se puede decodificar** (HEIC en un navegador sin soporte): mensaje claro y fallback, nunca un archivo a medias.
 - **Gasto con fecha futura** (16.13): se puede asociar.
 - **Ingresos y liquidaciones**: nunca llevan plan.
-- **Gasto de un plan cerrado**: su importe se puede editar desde Actividad y el total del plan cerrado lo refleja (según Q12). Anularlo y moverlo a Pareja se resuelven en Q22 y Q23 (pendientes).
+- **Gasto de un plan cerrado**: su importe se puede editar desde Actividad y el total del plan cerrado lo refleja (según Q12). Anularlo también se permite: sale del total y la etiqueta se conserva (según Q22). Moverlo a Pareja sigue la regla de Q23.
 - **Cerrar mientras otra persona asocia un gasto**: el cierre bloquea el plan. Una asociación concurrente que llegue después falla, no aplica nada y lo explica.
 
 ## Requirements *(mandatory)*
@@ -442,7 +453,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 - **FR-010**: Un gasto (`type = 'expense'`) tiene **como máximo un plan**. Ingresos y liquidaciones nunca llevan plan.
 - **FR-011**: La etiqueta **no cambia** el importe, el contexto, el reparto, la categoría, la fecha ni el pagador, y **no** altera `group_total`, `personal_consumption`, `gross_paid`, `net_owed`, los presupuestos mensuales, las cinco métricas DEC-G04 ni Análisis. Una prueba lo comprueba comparando las cifras con y sin etiqueta.
-- **FR-012**: Reglas de compatibilidad (según Q5 y Q6), impuestas en la base de datos: un gasto compartido solo admite un plan compartido de su misma pareja; un gasto privado admite un plan privado de su dueña y, si Q6 = (a), un plan compartido de una pareja activa de la que su dueña es integrante.
+- **FR-012**: Reglas de compatibilidad (según Q5 y Q6), impuestas en la base de datos: un gasto compartido solo admite un plan compartido de su misma pareja; un gasto privado admite un plan privado de su dueña y un plan compartido de una pareja activa de la que su dueña es integrante.
 - **FR-013**: Asociar, cambiar o quitar el plan de un gasto es una operación atómica e idempotente, auditada; la puede hacer quien puede editar el gasto (la dueña en privados; cualquiera de los dos en compartidos, como 20.12). No sube la versión del gasto (según Q15). **Se rechaza si el plan de origen o el de destino está cerrado** (según Q12), también si se llama directamente a la API.
 - **FR-014**: «Añadir gastos» asocia varios gastos en una sola operación; si uno no es compatible o cambió, o si el plan está cerrado, la operación no aplica ninguno y lo explica.
 - **FR-015**: Mover a Pareja y su Deshacer conservan o quitan la etiqueta en la misma transacción, según el Edge Case correspondiente.
@@ -470,8 +481,14 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-043**: Un plan cerrado **queda bloqueado** (según Q12):
   - la base de datos rechaza editar su nombre, sus fechas, su presupuesto o su foto, y asociarle o quitarle gastos;
   - la interfaz no ofrece esas acciones y explica que hay que reabrirlo;
-  - su total **sí** cambia si se edita el importe de uno de sus gastos (según Q12) y, según Q22, si se anula uno.
-- **FR-044**: Eliminar un plan según Q14; si está cerrado, según Q21 (pendiente).
+  - su total **sí** cambia si se edita el importe de uno de sus gastos (según Q12) o si se anula uno; en ese caso la etiqueta se conserva (según Q22);
+  - no se puede eliminar: primero se reabre (según Q21).
+- **FR-044**: Eliminar un plan según Q14, solo si está activo (según Q21).
+- **FR-045**: Mover a Pareja un gasto privado que está en un plan cerrado (según Q23):
+  - si el plan es compartido de esa pareja, la etiqueta pasa al gasto nuevo en la misma operación atómica. No cuenta como una asociación y no requiere reabrir el plan;
+  - si el plan es privado, la operación se rechaza antes de anular nada y pide reabrirlo.
+
+  El Deshacer sigue la misma regla.
 
 #### Anotar y Editar
 
@@ -482,7 +499,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 #### Fotos (ADR-014)
 
-- **FR-060**: Una portada por plan (y por meta si Q16 = a), en un bucket privado de Supabase Storage con RLS por dueña o pareja; lectura por URL firmada de vida corta.
+- **FR-060**: Una portada por plan y por meta (según Q16), en un bucket privado de Supabase Storage con RLS por dueña o pareja; lectura por URL firmada de vida corta.
 - **FR-061**: Límites, formatos y eliminación de metadatos según Q17 y ADR-014; el servidor rechaza lo que no cumpla.
 - **FR-062**: Reemplazar o quitar la foto borra el objeto anterior; eliminar el plan borra su foto.
 - **FR-063**: Copias, exportación y borrado de cuenta según Q19.
@@ -515,7 +532,7 @@ Sara sube una foto de la playa a «Cartagena».
 ### Key Entities *(propuestas; ADR-015)*
 
 - **Plan** (`juntia_data.outings` **[propuesta]**): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
-- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (opción recomendada de ADR-015).
+- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
 - **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, ruta del objeto, tamaño, ancho, alto, focal point `{x,y}`, `created_by`.
 
 ## Success Criteria *(mandatory)*
@@ -540,8 +557,8 @@ Sara sube una foto de la playa a «Cartagena».
 
 ## Lo que hace falta para pasar a Plan
 
-1. Que los fundadores respondan Q21–Q23.
-2. Que las respuestas Q1–Q23 queden registradas como decisión del maestro §15.10, en el PR documental que las recoja.
-3. Que ADR-014 y ADR-015 pasen a Aceptado en ese mismo PR. Ya reflejan las respuestas Q1–Q20; ADR-015 solo espera Q21–Q23.
+1. Que las respuestas Q1–Q23, todas dadas el 24 de noviembre de 2026, queden registradas como decisión del maestro §15.10, en el PR documental que las recoja.
+2. Que ADR-014 y ADR-015 pasen a Aceptado en ese mismo PR. Ya reflejan todas las respuestas.
+3. Que la revisión de este PR termine sin hallazgos abiertos.
 4. Que los fundadores aprueben los comps de Claude Design de las pantallas del prompt (`design-prompt.md`), con sus `[P]` marcados.
 5. Que MVP-1 esté declarado (spec 005).
