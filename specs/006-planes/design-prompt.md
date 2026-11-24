@@ -8,9 +8,11 @@ system»), como una página nueva **«06 Planes»**, para que herede los tokens,
 fuentes y los componentes del sistema.
 
 **Qué es y qué no.** Los comps que salgan son **propuestas** `[P]`: se aprueban
-viendo la pantalla y no deciden el alcance, que depende de las respuestas a Q1–Q20
-de `specs/006-planes/spec.md`. Los comps siguen la **recomendación** de cada
-pregunta; donde una respuesta cambie, se ajusta el comp.
+viendo la pantalla y no deciden el alcance. El alcance sale de
+`specs/006-planes/spec.md`:
+- Q1–Q20 están respondidas desde el 24 de noviembre de 2026, y la Q12 cambió: un
+  plan cerrado queda bloqueado (pantalla 06·9).
+- Q21–Q23 siguen abiertas.
 
 ---
 
@@ -121,9 +123,22 @@ pregunta; donde una respuesta cambie, se ajusta el comp.
 > el scrim con cuatro fotos: playa con cielo claro (horizontal), boda en tonos
 > claros (vertical), interior oscuro y sujeto pegado al borde.
 >
-> **06·8 Confirmaciones.** «¿Eliminar Cartagena? Los 12 gastos seguirán en
-> Actividad, sin plan. La foto se borra.»; «¿Cerrar Cartagena? Deja de aparecer al
-> anotar. Puedes reabrirlo.»
+> **06·8 Confirmaciones.**
+> - Eliminar: «¿Eliminar Cartagena? Los 12 gastos seguirán en Actividad, sin
+>   plan. La foto se borra.»
+> - Cerrar: «¿Cerrar Cartagena? Deja de aparecer al anotar y queda bloqueado:
+>   para añadir o quitar gastos, o cambiar el nombre, las fechas, el presupuesto o
+>   la foto, primero hay que reabrirlo.»
+>
+> **06·9 Plan cerrado.** Un plan cerrado queda bloqueado (decisión de los
+> fundadores). Diseña:
+> - el detalle de un plan cerrado, con el badge CERRADO, sin las acciones de
+>   añadir, quitar ni editar, y una sola acción visible, «Reabrir para cambiar
+>   algo»;
+> - el campo «Plan» de Editar gasto en un gasto de un plan cerrado: de solo
+>   lectura, con «Cartagena 2024 está cerrado. Reábrelo para quitar este gasto»,
+>   mientras el resto del gasto (monto, categoría…) se sigue editando;
+> - el histórico con un plan reabierto que vuelve a activos.
 >
 > **Motion** (describe, no animes de más): la tarjeta del plan crece hasta el
 > detalle con la misma continuidad que la meta inmersiva (`plan-photo-{id}`), y con

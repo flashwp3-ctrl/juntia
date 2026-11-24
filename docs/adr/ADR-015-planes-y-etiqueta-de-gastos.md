@@ -1,6 +1,9 @@
 # ADR-015 — Planes: entidad propia y etiqueta adicional de los gastos
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). No se implementa hasta que los fundadores respondan las preguntas de la especificación 006 que lo afectan (Q2, Q4, Q5, Q6, Q14 y Q15) y MVP-1 esté declarado · **Origen:** especificación 006 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores respondieron el 24 de noviembre de 2026 las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y Q12 la cambiaron (plan cerrado bloqueado, §5). Faltan tres cosas:
+- las respuestas a Q21–Q23, que salen de Q12;
+- el paso a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10;
+- que MVP-1 esté declarado antes de implementar · **Origen:** especificación 006 · **Alcance:** MVP-2
 
 ## Contexto
 
@@ -95,7 +98,20 @@ otra persona **antes** de agregar.
 
 ### 5. Ciclo de vida
 
-- **Cerrar / reabrir:** cambia `status`; un plan cerrado no se ofrece en Anotar.
+- **Cerrar y reabrir** (decisión de los fundadores del 24 nov 2026, spec 006, Q12): cambia `status`. Es manual y reversible, lo puede hacer cualquiera de los dos en un plan compartido, y queda con versión y auditoría.
+- **Un plan cerrado queda bloqueado, también en la base de datos:**
+  - no se ofrece en Anotar ni en el campo «Plan» de Editar gasto;
+  - las funciones rechazan editar su nombre, fechas, presupuesto o portada;
+  - un trigger de `outing_transactions` rechaza **insertar o borrar** etiquetas de un plan cerrado, también si se intenta cambiar el plan de un gasto desde o hacia uno cerrado;
+
+  para corregir algo se reabre, se cambia y se vuelve a cerrar.
+- **El gasto sigue siendo dinero:** editar el importe de un gasto que está en un plan cerrado no toca la etiqueta y se permite. El total del plan cerrado lo refleja, porque se calcula y no se guarda.
+- **Pendientes de Q12:**
+  - si un plan cerrado se puede eliminar (Q21);
+  - si se puede anular un gasto suyo (Q22);
+  - qué pasa con Mover a Pareja de un gasto privado suyo (Q23).
+
+  La cascada de eliminar y la etiqueta en Mover a Pareja deben respetar lo que se responda. Si se exige reabrir antes, el trigger de bloqueo no necesita ninguna excepción.
 - **Eliminar:** borra el plan; la cascada borra sus etiquetas, **incluidas las de
   gastos privados de la otra persona** sin revelárselas a quien elimina; los gastos
   no cambian; la foto se borra según ADR-014. Auditoría con actor, instante y número
@@ -137,7 +153,13 @@ otra persona **antes** de agregar.
    Postgres del stack (las acciones referenciales no aplican RLS).
 2. pgTAP de las vistas del plan con tres cuentas: ninguna devuelve datos de un
    privado ajeno, ni en recuentos, ni en `max(updated_at)`, ni en errores.
-3. Que las cifras de Inicio, Balance, presupuestos, Análisis y DEC-G04 son idénticas
+3. Que el bloqueo del plan cerrado no se puede saltar llamando directamente a las funciones. Hay que probar cuatro casos:
+   - asociar una etiqueta;
+   - quitarla;
+   - cambiar un gasto de plan, desde uno cerrado o hacia uno cerrado;
+   - editar el plan.
+   La edición del importe de uno de sus gastos, en cambio, sigue funcionando.
+4. Que las cifras de Inicio, Balance, presupuestos, Análisis y DEC-G04 son idénticas
    con y sin etiquetas, con el dataset de la etapa Plan.
 
 ## Referencias

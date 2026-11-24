@@ -1,6 +1,6 @@
 # ADR-014 — Fotos de portada en Storage privado (metas y planes)
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). No se implementa hasta que los fundadores lo acepten y MVP-1 esté declarado · **Origen:** número reservado por el maestro §15.10, decisiones 22.6 y 24.13 («ADR-014, Storage privado de fotos de metas», a MVP-2), ampliado a los planes de la especificación 006 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores aceptaron el 24 de noviembre de 2026 las recomendaciones de la spec 006 que lo afectan (Q1, Q16, Q17 y Q19). Con Q16 = (a), las portadas se activan en MVP-2 para las metas y para los planes. La portada de un plan cerrado no se cambia ni se quita sin reabrirlo (Q12). Pasa a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10, y no se implementa antes de declarar MVP-1 · **Origen:** número reservado por el maestro §15.10, decisiones 22.6 y 24.13 («ADR-014, Storage privado de fotos de metas», a MVP-2), ampliado a los planes de la especificación 006 · **Alcance:** MVP-2
 
 ## Contexto
 
