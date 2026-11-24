@@ -64,9 +64,11 @@ Lo que no se puede romper:
     | Eliminar | `outing` | `delete` |
 
   - `idempotency_records.action` recibe las acciones nuevas de escritura;
-  - columna nueva, `visible_to_user_id uuid null`. Cuando tiene valor, el evento solo
-    puede llegar a esa persona: es el caso de los eventos derivados de gastos
-    privados (§5, «Eliminar»).
+  - columna nueva, `visible_to_user_id uuid null`. Es una **clasificación**, no un
+    permiso ni un filtro (F94-8). Marca que el evento queda clasificado para
+    acceso exclusivo de esa persona **cuando exista un lector autorizado**. Es el
+    caso de los eventos derivados de gastos privados (§5, «Eliminar»). Por sí sola
+    no da acceso a nadie ni se lo quita a nadie.
 
   Todo lo demás se conserva tal cual:
   - solo inserción (`audit_events_append_only` y `audit_events_no_truncate`);
@@ -165,7 +167,10 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
   gastos privados de la otra persona**, sin revelárselas a quien elimina. Los gastos
   no cambian, y la foto se borra según ADR-014.
   - **Confirmación previa:** puede contar los gastos que ve **quien elimina**,
-    incluidos sus propios privados, porque solo se le muestra a esa persona.
+    incluidos sus propios privados, porque solo se le muestra a esa persona. Ese
+    conteo se lee de las **tablas del plan** (`outing_transactions` con
+    `transactions`, a través de las vistas `security_invoker` del plan), **nunca de
+    `audit_events`** (F94-8).
   - **Auditoría compartida (F94-1):** el evento `outing / delete` guarda solo el
     actor, la operación, el id del plan, el instante y, como mucho, el **número de
     gastos compartidos** que tenía. **Nunca** guarda un número que incluya
@@ -175,13 +180,20 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
   - **Auditoría personal de las etiquetas privadas:** la etiqueta de cada gasto
     privado que cae por la cascada se registra en un evento aparte,
     `outing_tag / untag`, por dueña. Ese evento lleva una columna nueva y
-    obligatoria, `visible_to_user_id`, con el id de **la dueña del gasto**, y
-    cualquier lectura futura de la auditoría la tiene que respetar.
+    obligatoria, `visible_to_user_id`, con el id de **la dueña del gasto**,
+    **también cuando el actor es la otra persona**. El evento queda clasificado
+    para acceso exclusivo de la dueña cuando exista un lector autorizado.
   - La regla vale para cualquier evento sobre un plan compartido: un dato derivado
     de privados solo va en un evento con `visible_to_user_id`.
-  - Hoy `audit_events` no tiene ninguna lectura para `authenticated`. La regla
-    impide que una lectura futura o una exportación de la auditoría filtre
-    privados.
+  - **Hoy nadie lee `audit_events` desde la app:** `authenticated` no tiene
+    ninguna política ni ningún permiso de lectura, y este ADR no los añade.
+  - **Contrato para futuros lectores (F94-8).** Cualquier lector autorizado que se
+    añada después tiene que aplicar el filtro de visibilidad **antes** de devolver
+    nada, sea una vista, una función, una exportación o una herramienta de soporte.
+    El filtro es `visible_to_user_id is null or visible_to_user_id = auth.uid()`, y
+    aplica a las filas, a los conteos, a las fechas (`max(occurred_at)`) y a los
+    errores. Añadir un lector así es un cambio de este contrato y se revisa contra
+    este ADR.
 - **Gasto anulado:** conserva su etiqueta (auditoría) y sale de las cifras.
 - **Mover a Pareja (ADR-001):** dentro de la misma transacción.
   - Si el plan es compartido de esa pareja, la etiqueta pasa al gasto compartido
@@ -232,13 +244,23 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
    - la excepción de Mover a Pareja solo la puede usar esa función y su Deshacer, nunca una llamada directa.
 4. Que las cifras de Inicio, Balance, presupuestos, Análisis y DEC-G04 son idénticas
    con y sin etiquetas, con el dataset de la etapa Plan.
-5. **Eliminar sin filtrar privados (F94-1).** Plan compartido con dos gastos
-   compartidos y uno privado de Sara; Sara lo elimina. Se leen la confirmación y
-   la auditoría con las dos identidades:
-   - la confirmación de Sara cuenta 3 y la de Tomás, 2;
-   - el evento `outing / delete` dice 2 y no menciona el gasto privado;
-   - el evento `outing_tag / untag` lleva `visible_to_user_id` = Sara;
-   - el mismo caso con Tomás como quien elimina da el mismo evento compartido.
+5. **Eliminar sin filtrar privados (F94-1 y F94-8).** Plan compartido con dos
+   gastos compartidos y uno privado de Sara. Son tres verificaciones separadas:
+   1. **Confirmación previa**, leída con la identidad de cada persona desde las
+      vistas del plan: la de Sara cuenta 3 y la de Tomás, 2.
+   2. **Contenido de la auditoría, en pgTAP con inspección privilegiada** (como
+      dueño de las tablas, no como `authenticated`). Se ejecuta dos veces: primero
+      elimina Sara y luego, sobre un plan igual, elimina Tomás. En los dos casos:
+      - el evento `outing / delete` contiene solo datos compartidos (actor,
+        operación, plan, instante y «2»), sin ningún dato del gasto privado;
+      - el evento `outing_tag / untag` registra `visible_to_user_id` = Sara,
+        **también cuando el actor es Tomás**.
+   3. **Permisos:** Sara, Tomás y una tercera cuenta, como `authenticated`, siguen
+      **sin poder leer** `audit_events` directamente. Un `select` falla o no
+      devuelve filas, y lo mismo ocurre con los conteos.
+
+   El contrato para futuros lectores (§5) no se prueba aquí, porque hoy no existe
+   ningún lector. Se prueba en el PR que añada uno.
 6. **Cifras compartidas sin privados propios (F94-3).** Se calculan dos veces, con
    la identidad de Sara y con la de Tomás, antes y después de que Sara etiquete un
    gasto privado en el plan:

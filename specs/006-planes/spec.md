@@ -342,7 +342,10 @@ Sara compra un recuerdo para ella en Cartagena, lo anota en Yo y lo asocia a
 1. **Given** el gasto privado de Sara de $150.000 en «Cartagena», **When** Sara abre el detalle, **Then** ve el total compartido sin cambios y, aparte, «Tus gastos privados en este plan · $150.000 · Solo tú lo ves», sin sumarlo.
 2. **Given** lo mismo, **When** Tomás abre el detalle, la lista, el desglose, el presupuesto, el histórico, Actividad, la exportación y cualquier vista o función de la API, **Then** no hay rastro: ni importe, ni número de gastos, ni categoría, ni cambio en «pagó», ni fecha de actualización distinta.
 3. **Given** un plan compartido con dos gastos compartidos y uno privado de Sara, **When** cualquiera de los dos va a eliminarlo, **Then** la confirmación cuenta los gastos que ve esa persona (3 para Sara, 2 para Tomás).
-4. **Given** lo mismo, **When** Sara elimina el plan, **Then** el evento compartido de auditoría registra 2 gastos compartidos y nada del privado. La etiqueta del privado se audita en un evento aparte, visible solo para Sara (ADR-015 §5; F94-1). El resultado es igual si elimina Tomás.
+4. **Given** lo mismo, **When** Sara elimina el plan (y, en un plan igual, Tomás), **Then** tres verificaciones separadas (ADR-015 §5 y `[V]` 5; F94-1 y F94-8):
+   - **Inspección privilegiada en pgTAP:** el evento compartido de auditoría registra 2 gastos compartidos y nada del privado. La etiqueta del privado se audita en un evento aparte, clasificado para acceso exclusivo de Sara cuando exista un lector autorizado (`visible_to_user_id` = Sara), también cuando el actor es Tomás.
+   - **Permisos:** ni Sara, ni Tomás, ni una tercera cuenta pueden leer `audit_events` directamente.
+   - **Origen de la confirmación:** el conteo de la confirmación previa sale de las tablas del plan, nunca de la auditoría.
 5. **Given** el plan antes y después de que Sara etiquete su gasto privado, **When** se leen con la identidad de Sara y con la de Tomás las siguientes cifras, **Then** las ocho son idénticas en las cuatro lecturas, y solo aparece o cambia la línea «Tus gastos privados» de Sara (ADR-015 §4; F94-3):
    - total;
    - desglose por categoría y sus porcentajes;
@@ -454,7 +457,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-002**: Un plan es de una persona **XOR** de una pareja activa (según Q4). Los planes privados solo los ve y modifica su dueña; los compartidos, los dos integrantes activos.
 - **FR-003**: Las tablas viven en `juntia_data`, se leen por vistas `security_invoker` en `public` y se escriben solo por funciones de `juntia_private`, con idempotencia, auditoría, versión y bloqueo del agregado (ADR-013).
 - **FR-004**: Crear, editar, cerrar, reabrir y eliminar un plan quedan en `audit_events` con actor e instante. No se crea otro sistema de auditoría: el PR A amplía con una migración versionada las restricciones de `audit_events` (`entity_type` y `action`) y de `idempotency_records.action`, y añade `visible_to_user_id`. Se conservan la regla de solo inserción, los permisos y la ausencia de lectura para `authenticated`. Hay pgTAP para las cinco operaciones (ADR-015 §1; F94-6).
-- **FR-005**: La auditoría compartida de un plan compartido nunca guarda un dato derivado de gastos privados: ni recuentos, ni ids. Lo que dependa de privados va en un evento con `visible_to_user_id` = su dueña (ADR-015 §5; F94-1).
+- **FR-005**: La auditoría compartida de un plan compartido nunca guarda un dato derivado de gastos privados: ni recuentos, ni ids. Lo que dependa de privados va en un evento con `visible_to_user_id` = su dueña. Esa columna clasifica, pero no da permisos ni filtra. Hoy nadie lee `audit_events` desde la app, y un lector autorizado futuro tendrá que filtrar por ella antes de devolver filas, conteos o fechas. La confirmación previa de eliminar se lee de las tablas del plan, nunca de la auditoría (ADR-015 §5; F94-1 y F94-8).
 
 #### Relación con los gastos (ADR-015)
 

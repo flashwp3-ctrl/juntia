@@ -142,9 +142,14 @@ Los números son `[V]` hasta medirlos con fotos reales de iPhone en `juntia-dev`
   - datos después de `EOI`.
 
   Si encuentra uno, **rechaza**; no intenta limpiar. `[V]`: confirmar que el
-  `toBlob('image/jpeg')` de Safari y Chrome produce solo segmentos de esta lista; si
-  alguno añade otro, por ejemplo un perfil ICC, el cliente lo quita antes de subir,
-  y la lista **no** se amplía sin revisar este ADR.
+  `toBlob('image/jpeg')` de Safari, Chrome y Firefox produce, en las dos variantes
+  (`full` y `thumb`), solo segmentos de esta lista.
+
+  Si algún navegador emite otro, por ejemplo un perfil ICC, el cliente lo quita de
+  forma segura antes de subir: recorre los marcadores y descarta el segmento
+  completo, sin tocar los datos de imagen. El servidor vuelve a validar la lista
+  blanca de todos modos. La lista **no** se amplía en silencio: ampliarla exige
+  revisar este ADR.
 
   Después de validar, sube las dos variantes con la sesión de quien llama, así que
   la RLS del bucket se aplica.
@@ -260,9 +265,16 @@ la foto a pantalla completa).
      `404`/`403`, también si el navegador la tenía en caché (revalidación con
      `no-cache`);
    - un `304` con ETag no descarga de Storage.
-3. Fotos reales de iPhone (HEIC y JPEG con GPS) y salida del `toBlob` de Safari y
-   Chrome: lo guardado contiene **solo** segmentos de la lista blanca de §4, la
-   orientación es correcta y el tamaño cumple.
+3. **Matriz de la lista blanca (F94-9).** Cada combinación se mide por separado,
+   con un registro de los segmentos encontrados:
+   - entradas: fotos reales de iPhone (HEIC y JPEG con GPS);
+   - salida: el `toBlob` de Safari (iOS y macOS), Chrome y Firefox;
+   - variantes: `full` y `thumb`.
+
+   Resultado esperado en cada combinación: lo guardado contiene **solo** segmentos
+   de la lista blanca de §4, la orientación es correcta y el tamaño cumple. Si un
+   navegador emite un segmento extra, se registra cuál es y se comprueba que el
+   cliente lo quita de forma segura y el servidor acepta el resultado.
 4. **Pruebas negativas de la lista blanca (F94-5):** el servidor rechaza un JPEG
    con `APP1` (EXIF con GPS), uno con un `APP2` (ICC), uno con un `COM`, uno con
    `APP0` que trae miniatura, uno con bytes después de `EOI` y uno con un `SOF`
