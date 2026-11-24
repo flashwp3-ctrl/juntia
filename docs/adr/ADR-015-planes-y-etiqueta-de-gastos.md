@@ -42,6 +42,40 @@ Lo que no se puede romper:
   (`active | closed`), `version`, `created_by`, `created_at`, `updated_at`.
 - Controlada según ADR-013: escritura solo por funciones `security definer` de
   `juntia_writer`, idempotentes, con bloqueo del plan y auditoría.
+- **Auditoría: se amplía `juntia_data.audit_events`, no se crea otro sistema.** Hoy
+  sus restricciones solo admiten las entidades y acciones de P0. La primera
+  versión (`20261105000200_controlled_tables.sql`, líneas 34 y 36) admitía solo
+  `transaction` y `create | update | void`, y `idempotency_records` tenía su propia
+  lista de acciones en la línea 43. La lista vigente la fija
+  `20261107221547_budgets.sql`, líneas 52 a 56.
+
+  El **PR A** de la 006 las amplía con una migración versionada, como hicieron la
+  003 y la 004 (borrar la restricción y crearla de nuevo con la lista ampliada):
+  - `entity_type`: añade `outing`, `outing_tag` y `cover_photo` (ADR-014);
+  - `action`: añade `close`, `reopen`, `delete`, `tag` y `untag`;
+  - las cinco operaciones del plan se auditan con estas parejas:
+
+    | Operación | `entity_type` | `action` |
+    | --- | --- | --- |
+    | Crear | `outing` | `create` |
+    | Editar | `outing` | `update` |
+    | Cerrar | `outing` | `close` |
+    | Reabrir | `outing` | `reopen` |
+    | Eliminar | `outing` | `delete` |
+
+  - `idempotency_records.action` recibe las acciones nuevas de escritura;
+  - columna nueva, `visible_to_user_id uuid null`. Cuando tiene valor, el evento solo
+    puede llegar a esa persona: es el caso de los eventos derivados de gastos
+    privados (§5, «Eliminar»).
+
+  Todo lo demás se conserva tal cual:
+  - solo inserción (`audit_events_append_only` y `audit_events_no_truncate`);
+  - inserción solo por `juntia_writer` con `actor_user_id = auth.uid()`;
+  - **ninguna** política de lectura para `authenticated`;
+  - el contrato de privacidad del §5 («Eliminar»).
+
+  Cada una de las cinco operaciones tiene su pgTAP: el evento correcto, el actor
+  correcto y que un `update` o `delete` posterior del evento falla.
 
 ### 2. La relación con el gasto es una etiqueta en una tabla aparte
 
@@ -91,9 +125,25 @@ los dos en compartidos, 20.12).
   plan privado). No es un `budgets` de ADR-004 y no se suma ni se resta con ellos.
 - Ninguna cifra del plan entra en las cinco métricas de DEC-G04, ni las altera.
 
+**Regla de agregación del detalle compartido (F94-3).** En un plan compartido,
+**todas** las cifras compartidas se calculan **exclusivamente** sobre los gastos
+**compartidos** (`group_id` igual al del plan) y **activos** de esa pareja que
+llevan la etiqueta del plan. Eso incluye el total, el desglose por categoría, los
+porcentajes, el presupuesto, «pagó», «le corresponde» y «diferencia en este plan».
+
+El filtro va **explícito** en la vista o en la función: `t.group_id = o.group_id
+and t.status = 'active'`. Así quedan fuera **también los privados de quien
+consulta**, que la RLS sí le deja ver. La RLS de `transactions` es una **defensa
+adicional**, no el filtro que define el agregado. La única cifra que incluye
+privados es la línea aparte «Tus gastos privados en este plan». Sale de una lectura
+distinta, filtrada por `owner_user_id = auth.uid()`, y nunca se combina con las
+cifras compartidas.
+
+En un plan privado, las cifras salen de los gastos privados activos de su dueña
+etiquetados en él.
+
 Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
-`security_invoker`, de modo que la RLS de `transactions` excluye los privados de la
-otra persona **antes** de agregar.
+`security_invoker`.
 
 ### 5. Ciclo de vida
 
@@ -111,14 +161,34 @@ otra persona **antes** de agregar.
   - Si el plan es **compartido**, ese traspaso es la **única excepción** al trigger de bloqueo. Solo la puede usar la función de Mover a Pareja y su Deshacer, con el mismo `outing_id`, y no cambia los gastos del plan, solo su id.
   - Si el plan es **privado**, la función rechaza la operación antes de anular nada y pide reabrirlo.
   - Alternativa de implementación que el plan puede preferir: conservar la etiqueta del gasto anulado y añadir la del nuevo, sin borrar nada. Si se elige, el trigger solo necesita la excepción para la inserción, y las lecturas ya excluyen los gastos anulados.
-- **Eliminar:** borra el plan; la cascada borra sus etiquetas, **incluidas las de
-  gastos privados de la otra persona** sin revelárselas a quien elimina; los gastos
-  no cambian; la foto se borra según ADR-014. Auditoría con actor, instante y número
-  de etiquetas **visibles para quien elimina**.
+- **Eliminar:** borra el plan, y la cascada borra sus etiquetas, **incluidas las de
+  gastos privados de la otra persona**, sin revelárselas a quien elimina. Los gastos
+  no cambian, y la foto se borra según ADR-014.
+  - **Confirmación previa:** puede contar los gastos que ve **quien elimina**,
+    incluidos sus propios privados, porque solo se le muestra a esa persona.
+  - **Auditoría compartida (F94-1):** el evento `outing / delete` guarda solo el
+    actor, la operación, el id del plan, el instante y, como mucho, el **número de
+    gastos compartidos** que tenía. **Nunca** guarda un número que incluya
+    privados, ni los ids de etiquetas o gastos privados. En el ejemplo, Sara
+    elimina un plan con dos gastos compartidos y uno privado suyo: el evento dice
+    «2», no «3».
+  - **Auditoría personal de las etiquetas privadas:** la etiqueta de cada gasto
+    privado que cae por la cascada se registra en un evento aparte,
+    `outing_tag / untag`, por dueña. Ese evento lleva una columna nueva y
+    obligatoria, `visible_to_user_id`, con el id de **la dueña del gasto**, y
+    cualquier lectura futura de la auditoría la tiene que respetar.
+  - La regla vale para cualquier evento sobre un plan compartido: un dato derivado
+    de privados solo va en un evento con `visible_to_user_id`.
+  - Hoy `audit_events` no tiene ninguna lectura para `authenticated`. La regla
+    impide que una lectura futura o una exportación de la auditoría filtre
+    privados.
 - **Gasto anulado:** conserva su etiqueta (auditoría) y sale de las cifras.
-- **Mover a Pareja (ADR-001):** dentro de la misma transacción, la etiqueta pasa al
-  gasto compartido nuevo si el plan es compartido de esa pareja; si es privado, se
-  quita y la confirmación lo dice. Su Deshacer lo revierte igual.
+- **Mover a Pareja (ADR-001):** dentro de la misma transacción.
+  - Si el plan es compartido de esa pareja, la etiqueta pasa al gasto compartido
+    nuevo.
+  - Si es privado y está **activo**, la etiqueta se quita y la confirmación lo dice.
+  - Si es privado y está **cerrado**, la operación se rechaza (Q23, arriba).
+  - Su Deshacer sigue las mismas reglas.
 
 ## Alternativas consideradas
 
@@ -162,6 +232,23 @@ otra persona **antes** de agregar.
    - la excepción de Mover a Pareja solo la puede usar esa función y su Deshacer, nunca una llamada directa.
 4. Que las cifras de Inicio, Balance, presupuestos, Análisis y DEC-G04 son idénticas
    con y sin etiquetas, con el dataset de la etapa Plan.
+5. **Eliminar sin filtrar privados (F94-1).** Plan compartido con dos gastos
+   compartidos y uno privado de Sara; Sara lo elimina. Se leen la confirmación y
+   la auditoría con las dos identidades:
+   - la confirmación de Sara cuenta 3 y la de Tomás, 2;
+   - el evento `outing / delete` dice 2 y no menciona el gasto privado;
+   - el evento `outing_tag / untag` lleva `visible_to_user_id` = Sara;
+   - el mismo caso con Tomás como quien elimina da el mismo evento compartido.
+6. **Cifras compartidas sin privados propios (F94-3).** Se calculan dos veces, con
+   la identidad de Sara y con la de Tomás, antes y después de que Sara etiquete un
+   gasto privado en el plan:
+   - total, desglose por categoría, porcentajes, presupuesto, «pagó», «le
+     corresponde» y «diferencia»;
+   - las ocho cifras son idénticas en las cuatro lecturas;
+   - solo cambia la línea «Tus gastos privados» de Sara.
+7. **Auditoría ampliada (F94-6).** pgTAP de crear, editar, cerrar, reabrir y
+   eliminar un plan: el evento y el actor son los correctos, y el evento no se
+   puede editar ni borrar.
 
 ## Referencias
 

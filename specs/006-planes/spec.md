@@ -341,7 +341,13 @@ Sara compra un recuerdo para ella en Cartagena, lo anota en Yo y lo asocia a
 
 1. **Given** el gasto privado de Sara de $150.000 en «Cartagena», **When** Sara abre el detalle, **Then** ve el total compartido sin cambios y, aparte, «Tus gastos privados en este plan · $150.000 · Solo tú lo ves», sin sumarlo.
 2. **Given** lo mismo, **When** Tomás abre el detalle, la lista, el desglose, el presupuesto, el histórico, Actividad, la exportación y cualquier vista o función de la API, **Then** no hay rastro: ni importe, ni número de gastos, ni categoría, ni cambio en «pagó», ni fecha de actualización distinta.
-3. **Given** que Sara elimina el plan, **When** la confirmación de Tomás o de Sara se muestra, **Then** cuenta solo los gastos que esa persona ve.
+3. **Given** un plan compartido con dos gastos compartidos y uno privado de Sara, **When** cualquiera de los dos va a eliminarlo, **Then** la confirmación cuenta los gastos que ve esa persona (3 para Sara, 2 para Tomás).
+4. **Given** lo mismo, **When** Sara elimina el plan, **Then** el evento compartido de auditoría registra 2 gastos compartidos y nada del privado. La etiqueta del privado se audita en un evento aparte, visible solo para Sara (ADR-015 §5; F94-1). El resultado es igual si elimina Tomás.
+5. **Given** el plan antes y después de que Sara etiquete su gasto privado, **When** se leen con la identidad de Sara y con la de Tomás las siguientes cifras, **Then** las ocho son idénticas en las cuatro lecturas, y solo aparece o cambia la línea «Tus gastos privados» de Sara (ADR-015 §4; F94-3):
+   - total;
+   - desglose por categoría y sus porcentajes;
+   - consumido y restante del presupuesto;
+   - «pagó», «le corresponde» y «diferencia» de cada persona.
 
 ---
 
@@ -401,7 +407,7 @@ falta un taxi del viaje: reabre el plan, lo añade y lo vuelve a cerrar.
 **Acceptance Scenarios**:
 
 1. **Given** un plan con 12 gastos, **When** se elimina y se confirma «Los 12 gastos seguirán en Actividad», **Then** el plan desaparece, los 12 gastos siguen intactos y sin plan, y la auditoría lo registra.
-2. **Given** un plan con foto, **When** se elimina, **Then** el objeto se borra de Storage y su URL firmada deja de servir.
+2. **Given** un plan con foto, **When** se elimina, **Then** desde el commit de la eliminación la ruta de lectura de la portada responde `404` a las dos personas, también lo que el navegador tenía en caché. Las dos variantes del archivo se borran de Storage después, con reintentos (ADR-014 §5; F94-2).
 3. **Given** un plan cerrado, **When** alguien intenta eliminarlo, **Then** la acción no se ofrece, la base de datos la rechaza y la interfaz dice «Reábrelo para eliminarlo» (según Q21).
 
 ---
@@ -417,7 +423,7 @@ Sara sube una foto de la playa a «Cartagena».
 **Acceptance Scenarios**:
 
 1. **Given** una foto HEIC de 4 MB con GPS, **When** Sara la sube, **Then** lo guardado es un JPEG ≤ 2048 px sin metadatos, y la pantalla dice que la foto no va en la exportación.
-2. **Given** la foto de un plan compartido, **When** una tercera cuenta pide el objeto o una URL firmada, **Then** se le niega.
+2. **Given** la foto de un plan compartido, **When** una tercera cuenta pide la portada por la ruta de lectura o el objeto directamente a Storage, **Then** se le niega.
 3. **Given** un plan sin foto, **When** se muestra, **Then** usa el fallback: tinte, inicial en serif e ícono Phosphor, como GoalCard `[A]`.
 
 ---
@@ -447,7 +453,8 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-001**: Un plan tiene nombre (1–60 caracteres), fechas de inicio y fin opcionales (fin ≥ inicio), presupuesto opcional (entero positivo en COP; `null` ≠ 0), tipo visual opcional para el fallback `[P]`, foto de portada opcional (ADR-014) y estado `active | closed`.
 - **FR-002**: Un plan es de una persona **XOR** de una pareja activa (según Q4). Los planes privados solo los ve y modifica su dueña; los compartidos, los dos integrantes activos.
 - **FR-003**: Las tablas viven en `juntia_data`, se leen por vistas `security_invoker` en `public` y se escriben solo por funciones de `juntia_private`, con idempotencia, auditoría, versión y bloqueo del agregado (ADR-013).
-- **FR-004**: Crear, editar, cerrar, reabrir y eliminar un plan quedan en `audit_events` con actor e instante.
+- **FR-004**: Crear, editar, cerrar, reabrir y eliminar un plan quedan en `audit_events` con actor e instante. No se crea otro sistema de auditoría: el PR A amplía con una migración versionada las restricciones de `audit_events` (`entity_type` y `action`) y de `idempotency_records.action`, y añade `visible_to_user_id`. Se conservan la regla de solo inserción, los permisos y la ausencia de lectura para `authenticated`. Hay pgTAP para las cinco operaciones (ADR-015 §1; F94-6).
+- **FR-005**: La auditoría compartida de un plan compartido nunca guarda un dato derivado de gastos privados: ni recuentos, ni ids. Lo que dependa de privados va en un evento con `visible_to_user_id` = su dueña (ADR-015 §5; F94-1).
 
 #### Relación con los gastos (ADR-015)
 
@@ -461,7 +468,7 @@ Sara sube una foto de la playa a «Cartagena».
 #### Privacidad (§2.3.6, §7.4, US-05)
 
 - **FR-020**: Ninguna vista, función, agregado, recuento, fecha de actualización, error, exportación o evento de analítica revela a la otra persona un gasto privado asociado a un plan compartido.
-- **FR-021**: El total compartido de un plan suma solo gastos compartidos activos. Los privados propios se muestran aparte, rotulados «Solo tú lo ves», y nunca se suman a una cifra compartida (según Q6 y Q9).
+- **FR-021**: **Todas** las cifras del detalle de un plan compartido se calculan con un filtro explícito y exclusivo: los gastos compartidos activos de esa pareja. Son el total, el desglose y sus porcentajes, el presupuesto, «pagó», «le corresponde» y «diferencia». Ese filtro deja fuera también los privados de quien consulta, y la RLS es una defensa adicional, no el filtro (ADR-015 §4; F94-3). Los privados propios se muestran aparte, rotulados «Solo tú lo ves», y nunca se suman a una cifra compartida (según Q6 y Q9).
 - **FR-022**: pgTAP prueba, con tres cuentas (dueña de los privados, pareja y tercera), cada vista y función de Planes, incluida la llamada directa sin filtros de cliente.
 
 #### Detalle del plan
@@ -499,7 +506,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 #### Fotos (ADR-014)
 
-- **FR-060**: Una portada por plan y por meta (según Q16), en un bucket privado de Supabase Storage con RLS por dueña o pareja; lectura por URL firmada de vida corta.
+- **FR-060**: Una portada por plan y por meta (según Q16), en un bucket privado de Supabase Storage con RLS por dueña o pareja. Cada portada es una unidad lógica con dos variantes, `full` y `thumb`. Se lee por una ruta autenticada de la app que comprueba la autorización vigente en cada petición, con `Cache-Control: private, no-cache` y ETag (ADR-014 §2; F94-2 y F94-4). Que los fundadores prefieran URL firmadas sería una excepción a §5.5 que tendrían que decidir ellos.
 - **FR-061**: Límites, formatos y eliminación de metadatos según Q17 y ADR-014; el servidor rechaza lo que no cumpla.
 - **FR-062**: Reemplazar o quitar la foto borra el objeto anterior; eliminar el plan borra su foto.
 - **FR-063**: Copias, exportación y borrado de cuenta según Q19.
@@ -533,7 +540,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 - **Plan** (`juntia_data.outings` **[propuesta]**): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
 - **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
-- **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, ruta del objeto, tamaño, ancho, alto, focal point `{x,y}`, `created_by`.
+- **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, `full_path` y `thumb_path` (rutas deterministas bajo `…/{cover_id}/`), bytes y `sha256` de cada variante, ancho, alto, focal point `{x,y}`, `status` (`pending | ready`) y `created_by`. Las dos variantes son una sola portada lógica: se suben, reemplazan, borran, barren y restauran juntas (ADR-014 §2 y §5).
 
 ## Success Criteria *(mandatory)*
 

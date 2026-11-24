@@ -89,7 +89,9 @@ viendo la pantalla y no deciden el alcance. El alcance sale de
 > $600.000», excedido con «Se pasaron por $300.000»); «En qué se fue», desglose por
 > categoría con `CategoryIcon`, importe y porcentaje (máximo seis y «Ver todas»);
 > «Quién pagó», con Sara (petróleo) y Tomás (arena): pagó, le corresponde,
-> diferencia en este plan y el enlace al balance; la lista de gastos con
+> diferencia en este plan y el enlace al balance. El bloque «Quién pagó / le
+> corresponde / diferencia» solo aparece en los planes compartidos; en los
+> personales se omite. Sigue la lista de gastos con
 > `ExpenseRow`; acciones «Añadir gastos», «Editar», «Cerrar plan» / «Reabrir»,
 > «Eliminar plan». A 1440: foto y cifras en una columna fija a la izquierda y los
 > bloques a la derecha, como la meta inmersiva en escritorio. Incluye la variante

@@ -39,20 +39,62 @@ galerías, no avatares (el perfil sigue sin foto, §15.5).
 
 ### 2. Dónde y con qué permisos
 
-- **Un bucket privado**, `covers`, nunca público. Rutas
-  `u/{owner_user_id}/{cover_id}.jpg` para lo privado y `g/{group_id}/{cover_id}.jpg`
-  para lo de la pareja.
+- **Un bucket privado**, `covers`, nunca público.
+- **Una portada lógica tiene dos variantes** (F94-4), en rutas deterministas bajo un
+  mismo prefijo:
+  - `u/{owner_user_id}/{cover_id}/full.jpg` y `u/{owner_user_id}/{cover_id}/thumb.jpg`
+    para lo privado;
+  - `g/{group_id}/{cover_id}/full.jpg` y `g/{group_id}/{cover_id}/thumb.jpg` para lo
+    de la pareja.
+
+  `full` tiene lado largo ≤ 2048 px y `thumb`, ≤ 640 px. **La unidad es el
+  prefijo `…/{cover_id}/`**: subir, reemplazar, borrar, barrer y restaurar operan
+  siempre sobre las dos variantes juntas.
 - **Metadatos en una tabla controlada**, `juntia_data.cover_photos` (ADR-013 §2):
-  propietaria XOR pareja, ruta, bytes, ancho, alto, focal point `{x,y}` en %,
-  `created_by`. La meta o el plan apuntan a su `cover_id`.
+  - propietaria XOR pareja;
+  - `full_path` y `thumb_path`, explícitos y obligatorios, que deben coincidir con
+    la convención (una restricción lo comprueba);
+  - `full_bytes`, `thumb_bytes`, ancho y alto;
+  - `sha256` de cada variante, que se usa como ETag (§2, «Lectura»);
+  - focal point `{x,y}` en %, `created_by` y `status` (`pending | ready`).
+
+  La meta o el plan apuntan a su `cover_id` solo cuando la portada está `ready`,
+  es decir, cuando las dos variantes ya se subieron.
 - **RLS en `storage.objects`** para el bucket `covers`: leer, crear y borrar solo si
   el primer segmento de la ruta es `u` y el segundo es `auth.uid()`, o si es `g` y
   quien llama es integrante activa de esa pareja, con las mismas auxiliares de
   membresía de ADR-013 §5.1 (`juntia_membership`). Sin `update`: reemplazar es subir
   otro objeto y borrar el anterior.
-- **Lectura por URL firmada** de vida corta (propuesta: 10 minutos), emitida en el
-  servidor después de comprobar el permiso, con `Cache-Control` privado. Nunca una
-  URL pública ni un enlace que sirva a quien no tenga sesión.
+- **Lectura (F94-2). Recomendación: (a), una ruta autenticada de la app.** Por
+  ejemplo `GET /api/covers/{cover_id}/{full|thumb}`. En **cada** petición:
+  1. lee la sesión;
+  2. comprueba la autorización **vigente** contra la base de datos: la persona es
+     dueña o integrante activa de la pareja, y la portada está `ready` y enlazada a
+     una meta o un plan que esa persona ve;
+  3. descarga el objeto de Storage con la sesión de quien pide, y la RLS del bucket
+     se aplica como segunda barrera;
+  4. responde con `Cache-Control: private, no-cache` y `ETag` = `sha256`.
+
+  Con `no-cache`, el navegador puede guardar la imagen, pero **revalida en cada
+  uso**. Una revalidación con el ETag vigente responde `304` sin volver a descargar
+  de Storage, así que el egress apenas crece. Una portada de ~600 KB cabe de sobra
+  en el límite de 4,5 MB por respuesta de Vercel.
+
+  **Por qué (a) y no URL firmadas.** En Supabase, una URL firmada es un **token al
+  portador**: se valida al emitirla, no en cada descarga. Mientras dura sirve a
+  quien la tenga, aunque no tenga sesión, y una caché puede alargar ese acceso. Eso
+  no cumple lo que promete el maestro §5.5: revocar «inmediatamente» el acceso a
+  los archivos al salir de la pareja. Con (a), el acceso termina en la siguiente
+  petición, incluido lo que el navegador ya tenía guardado, porque `no-cache` lo
+  obliga a revalidar.
+
+  **Alternativa (b):** mantener las URL firmadas (10 minutos) y documentar que son
+  transferibles mientras duran; limitar la caché a `private, max-age` ≤ la vida de
+  la URL; y dejar como `[V]` la medición del plazo real de revocación. (b) **no
+  cumple §5.5 al pie de la letra**: si los fundadores la prefieren por costo, es una
+  decisión suya y se registra como excepción a §5.5. Hasta entonces, **(a) es la
+  propuesta de este ADR**.
+- Nunca una URL pública.
 - **Salida de la pareja** (cuando exista, ADR-003): se pierde el acceso a las fotos
   de la pareja con la misma membresía que revoca el resto (§5.5).
 
@@ -78,12 +120,34 @@ Los números son `[V]` hasta medirlos con fotos reales de iPhone en `juntia-dev`
   máximo y se recodifica a JPEG en un `<canvas>`. Un JPEG que sale de un canvas no
   lleva EXIF. La orientación se aplica **antes** de recodificar, para que la foto no
   quede girada al perder la etiqueta.
-- **Segunda barrera, en el servidor:** la subida pasa por una acción del servidor
-  que comprueba la firma del archivo (`FF D8 FF`), el tamaño, las dimensiones y
-  **la ausencia de los segmentos APP1 (EXIF/XMP) y APP13 (IPTC)**, recorriendo los
-  marcadores del JPEG, sin librería nueva. Si encuentra uno, **rechaza**; no intenta
-  limpiar. Después sube el objeto con la sesión de quien llama, así que la RLS del
-  bucket se aplica.
+- **Segunda barrera, en el servidor: lista blanca de segmentos (F94-5).** La subida
+  pasa por una acción del servidor que recorre **todos** los marcadores del JPEG
+  de las dos variantes, sin librería nueva, y **solo acepta** esta secuencia:
+
+  | Marcador | Qué es | Condición |
+  | --- | --- | --- |
+  | `SOI` (`FFD8`) | Inicio | Primero, una vez |
+  | `APP0` (`FFE0`) con identificador `JFIF\0` | Cabecera JFIF | Opcional, una vez, sin miniatura incrustada (`Xthumbnail = Ythumbnail = 0`) |
+  | `DQT` (`FFDB`), `DHT` (`FFC4`), `DRI` (`FFDD`) | Tablas y reinicio | Cualquier número |
+  | `SOF0` (`FFC0`) o `SOF2` (`FFC2`) | Baseline o progresivo | Una vez; 8 bits; 1 o 3 componentes; dimensiones dentro de §3 |
+  | `SOS` (`FFDA`), datos y `RST0`–`RST7` (`FFD0`–`FFD7`) | Imagen | — |
+  | `EOI` (`FFD9`) | Fin | Último, **sin bytes después** |
+
+  **Todo lo demás se rechaza**, también si no lleva datos personales:
+  - `APP1`–`APP15`, incluidos `APP1` (EXIF/XMP), `APP2` (ICC/FlashPix), `APP13`
+    (IPTC) y `APP14` (Adobe);
+  - `COM` (`FFFE`);
+  - cualquier otro `SOFn`;
+  - marcadores desconocidos;
+  - datos después de `EOI`.
+
+  Si encuentra uno, **rechaza**; no intenta limpiar. `[V]`: confirmar que el
+  `toBlob('image/jpeg')` de Safari y Chrome produce solo segmentos de esta lista; si
+  alguno añade otro, por ejemplo un perfil ICC, el cliente lo quita antes de subir,
+  y la lista **no** se amplía sin revisar este ADR.
+
+  Después de validar, sube las dos variantes con la sesión de quien llama, así que
+  la RLS del bucket se aplica.
 - **Límite de Vercel:** el cuerpo de una función es de 4,5 MB como máximo; con el
   tope de 1,5 MB de lo guardado, la subida cabe por la acción del servidor.
 - **El focal point** lo elige la persona al subir (arrastrar el encuadre) y se
@@ -91,14 +155,35 @@ Los números son `[V]` hasta medirlos con fotos reales de iPhone en `juntia-dev`
 
 ### 5. Borrado
 
-- **Reemplazar o quitar** la foto: una operación atómica e idempotente actualiza la
-  tabla y, tras confirmarse, borra el objeto anterior con la API de Storage. Si el
-  borrado del objeto falla, queda un **huérfano** registrado para reintentar; la
-  interfaz ya no lo muestra.
-- **Eliminar un plan** (spec 006, Q14) o una meta que se pueda eliminar: igual.
-- **Barrido de huérfanos:** un script manual compara `storage.objects` del bucket con
-  `cover_photos` y borra lo que sobra. Lo corre el gestor antes de cada copia y antes
-  de cada borrado de cuenta.
+- **Cuándo deja de servir una portada (F94-2).** Deja de servir **en el commit de la
+  transacción SQL** que la desenlaza o borra la fila: desde ese momento, la ruta de
+  lectura de §2 responde `404` porque la autorización vigente ya no la encuentra. El
+  borrado del archivo en Storage ocurre **después**, fuera de la transacción, y
+  puede reintentarse. Ese retraso no reabre el acceso, porque la ruta no sirve
+  nada que la base de datos no autorice. **No se afirma** que el archivo
+  desaparece al instante.
+- **Reemplazar** la foto: se suben las dos variantes nuevas bajo un `cover_id`
+  nuevo, en estado `pending`. Luego, una operación atómica e idempotente enlaza
+  el `cover_id` nuevo y desenlaza el anterior. Tras confirmarse, se borra con la
+  API de Storage **el prefijo completo** del anterior, es decir, las dos variantes.
+  Si el borrado falla, ese `cover_id` queda registrado como huérfano para
+  reintentar. La interfaz ya no lo muestra.
+- **Quitar** la foto, **eliminar un plan** (spec 006, Q14) o una meta que se pueda
+  eliminar: igual, sin `cover_id` nuevo.
+- **Barrido de huérfanos.** Un script manual agrupa los objetos del bucket por
+  prefijo `…/{cover_id}/` y compara cada grupo con `cover_photos`:
+  - un prefijo cuyo `cover_id` está `ready` y enlazado **se conserva entero**, con
+    sus dos variantes;
+  - un prefijo sin fila, o con fila desenlazada, o `pending` desde hace más de 24 h,
+    se borra entero;
+  - una fila `ready` a la que le falte alguna variante se desenlaza, y la meta o el
+    plan vuelven al fallback.
+
+  **Nunca se borra una variante suelta.** Lo corre el gestor antes de cada copia y
+  antes de cada borrado de cuenta.
+- **Restauración.** Tras restaurar la base de datos, el mismo script desenlaza las
+  filas cuyas variantes no existan en Storage, y esas metas o planes vuelven al
+  fallback. Una portada lógica se restaura entera o no se restaura.
 - **Borrado de cuenta (MVP-1 manual, 24.8 y 25.3):** el procedimiento de
   `specs/005-gate-mvp-1/contracts/account-deletion.md` añade un paso: listar y
   borrar con la API de Storage los objetos de `u/{id}/` de cada persona y, si se
@@ -120,11 +205,12 @@ y de Vercel al implementar `[V]`; no se dan por buenas aquí.
   al año. El riesgo no es el espacio sino los huérfanos, que el barrido controla.
 - **Transferencia (egress) de Supabase Free:** del orden de unos pocos GB al mes.
   Una portada de 600 KB vista 20 veces al día por dos personas son unos 700 MB al
-  mes **sin caché**. Con `Cache-Control` privado de un día en la URL firmada y
-  variantes pequeñas para las tarjetas, baja a decenas de MB. Por eso:
-  - se guarda también una **miniatura** de lado ≤ 640 px (≈ 80 KB) para listas y
-    tarjetas, y la grande solo en el detalle y la meta inmersiva;
-  - las URL firmadas se reutilizan mientras no caduquen.
+  mes **sin caché**. Con la ruta de §2 (`no-cache` con ETag), la mayoría de los usos
+  son `304`, que no descargan de Storage. Además:
+  - la variante `thumb`, de lado ≤ 640 px (≈ 80 KB), se usa en listas y
+    tarjetas, y la `full` solo en el detalle y la meta inmersiva;
+  - la ruta corre en Vercel: el tráfico de la función y la transferencia de Hobby
+    también son `[V]`. Para dos personas son del orden de MB al mes.
 - **Transformación de imágenes de Supabase:** es de pago; **no se usa**. Las dos
   variantes se generan en el cliente.
 - **Optimización de imágenes de Vercel Hobby:** tiene cuota mensual; las portadas se
@@ -167,14 +253,33 @@ la foto a pantalla completa).
 ## Verificación pendiente [V]
 
 1. RLS de `storage.objects` en la versión de Supabase del stack, con tres cuentas
-   (dueña, pareja, tercera): leer, crear, borrar y pedir URL firmada.
-2. Fotos reales de iPhone (HEIC y JPEG con GPS): lo guardado no tiene APP1 ni APP13,
-   la orientación es correcta, el tamaño cumple.
-3. El rechazo del servidor con un JPEG que conserva EXIF.
-4. Las cuotas vigentes de Supabase Free (almacenamiento y egress) y de Vercel Hobby
-   (optimización de imágenes) en la fecha de implementación.
-5. El scrim y la luminancia de BRAND §5, si se activan las fotos de las metas.
-6. Que una fila borrada de `storage.objects` sin la API deja el archivo, para
+   (dueña, pareja, tercera): leer, crear y borrar.
+2. **Ruta de lectura (F94-2):**
+   - con tres cuentas, solo la dueña o la pareja obtienen `200`;
+   - tras desenlazar la portada o perder la membresía, la **siguiente** petición da
+     `404`/`403`, también si el navegador la tenía en caché (revalidación con
+     `no-cache`);
+   - un `304` con ETag no descarga de Storage.
+3. Fotos reales de iPhone (HEIC y JPEG con GPS) y salida del `toBlob` de Safari y
+   Chrome: lo guardado contiene **solo** segmentos de la lista blanca de §4, la
+   orientación es correcta y el tamaño cumple.
+4. **Pruebas negativas de la lista blanca (F94-5):** el servidor rechaza un JPEG
+   con `APP1` (EXIF con GPS), uno con un `APP2` (ICC), uno con un `COM`, uno con
+   `APP0` que trae miniatura, uno con bytes después de `EOI` y uno con un `SOF`
+   distinto de 0 y 2.
+5. **Reemplazo más barrido (F94-4):**
+   1. se sube la portada A (`full` y `thumb`);
+   2. se reemplaza por B;
+   3. se corre el barrido.
+
+   Resultado esperado: el prefijo de A desaparece entero, B conserva sus **dos**
+   variantes y la ruta sirve las dos. Además, si `thumb` de B se borra a mano, el
+   barrido desenlaza B y el plan vuelve al fallback.
+6. Las cuotas vigentes de Supabase Free (almacenamiento y egress) y de Vercel Hobby
+   (optimización de imágenes, transferencia y funciones) en la fecha de
+   implementación.
+7. El scrim y la luminancia de BRAND §5, si se activan las fotos de las metas.
+8. Que una fila borrada de `storage.objects` sin la API deja el archivo, para
    documentar el paso del borrado de cuenta con la salida real.
 
 ## Referencias
