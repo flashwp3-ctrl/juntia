@@ -5,7 +5,7 @@ import { AccountPageTitle, MenuGroup } from "@/features/account/account-ui";
 import { loadAccount } from "@/features/account/load-account";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.account.security.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.account.security.title };
 
 export default async function SecurityPage() {
   const account = await loadAccount();

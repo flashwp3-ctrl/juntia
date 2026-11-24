@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Logo } from "@/components/brand/logo";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -49,10 +50,8 @@ const linkSecondary = "inline-flex h-[52px] w-full items-center justify-center g
 
 function Brand() {
   return (
-    <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
-      <span className="size-[9px] rounded-[3px] bg-primary" />
-      {copy.shell.brand}
-    </p>
+    // Marca 1c (09b): isotipo de 26 + «Juntia» a 28, con caja fija.
+    <div className="lg:hidden"><Logo size={28} /></div>
   );
 }
 

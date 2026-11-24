@@ -3,6 +3,7 @@
 // dispositivo.»). A1b no dice cuál de los dos falló (US-1.4).
 import Link from "next/link";
 import { useActionState, useEffect, useSyncExternalStore } from "react";
+import { Logo } from "@/components/brand/logo";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Input } from "@/components/ui/input";
 import { copy } from "@/lib/copy/es";
@@ -38,10 +39,8 @@ export function SignInForm({ volver, notice }: Props) {
   }, [notice]);
   return (
     <>
-      <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
-        <span className="size-[9px] rounded-[3px] bg-primary" />
-        {copy.shell.brand}
-      </p>
+      {/* Marca 1c (09b): isotipo de 26 + «Juntia» a 28, con caja fija. */}
+      <div className="lg:hidden"><Logo size={28} /></div>
       {/* PR B de la 003 (contracts/server-actions.md §3, punto 6): al cerrar sesión se borra la invitación guardada. */}
       {notice === "sesion-cerrada" ? <><ForgetInvitationIntent /><InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.signedOut}</InlineNotice></> : null}
       {notice === "verificado" || linkNotice === copy.auth.signIn.verified ? <InlineNotice tone="success" icon="check-circle">{copy.auth.signIn.verified}</InlineNotice> : null}

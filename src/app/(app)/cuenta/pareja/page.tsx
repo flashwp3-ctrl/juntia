@@ -8,7 +8,7 @@ import { loadCouple } from "@/features/couple/load";
 import { PartnerScreen, type PartnerView } from "@/features/couple/partner-screen";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.account.partner.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.account.partner.title };
 
 const actions = { create: createInvitationAction, regenerate: regenerateInvitationAction, cancel: cancelInvitationAction, checkStatus: checkInvitationWriteAction, currentInvitation: currentInvitationAction };
 

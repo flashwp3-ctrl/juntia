@@ -70,6 +70,7 @@ Convención: `categoria.grupo.variante` → variable CSS `--categoria-grupo-vari
 - **Campos de texto (decisión de los fundadores del 17 de noviembre de 2026; maestro §15.10, decisión 23.6; PR #82).** Por debajo de md o con puntero táctil, todo campo de texto (`input`, `textarea`, `select`) calcula **al menos 16 px** (`max(1rem, 1em)`), aunque su token sea `body.m` (15 px): Safari de iPhone amplía la página al enfocar un campo más pequeño. AmountInput conserva su `clamp`; con ratón en escritorio no cambia nada.
 - `font-variant-numeric: tabular-nums` global. Importes héroe fluidos: `money.l: clamp(32px, 8vw, 40px)`, `money.xl: clamp(40px, 4vw, 52px)`.
 - Pesos previstos en la implementación: 400, 500, 600 (Onest); 400–700 con itálicas (Brygada 1918); 500 (Spline Sans Mono). Son el subconjunto que carga Juntia, no todos los pesos de cada familia. Las tres familias son decisión de los fundadores (maestro §15.10, decisión 14): Brygada 1918 y Onest desde la decisión, y Spline Sans Mono, propuesta del gestor, aprobada el 4 de noviembre de 2026 viendo las capturas del PR #32.
+- **Familias vigentes: Brygada 1918 (titulares y logotipo, este en Medium Itálica), Onest (interfaz y cifras) y Spline Sans Mono (metadatos).** Instrument Serif, Geist y Geist Mono son las familias del paquete original, sustituidas por la decisión 14; solo se nombran en la calibración siguiente como referencia de medida, no se cargan ni se usan.
 - **Calibración de la decisión 14.** Brygada 1918 es más ancha que Instrument Serif: los titulares van al 88 % de los tamaños anteriores, con interlineado 1,04 y tracking −0,015 em, como en la comparativa de parejas. Va a **500** porque a 400 se queda delgada en oscuro; `title.m` sube a **600** para que el encabezado pequeño no dependa solo del tamaño. Onest mide casi lo mismo que Geist (ancho medio 469 frente a 467 sobre 1000 y altura de x 527 frente a 530), así que `money.*`, `body.*`, `label.*` y `overline` conservan sus valores. Spline Sans Mono tiene el mismo ancho de celda que Geist Mono (600 sobre 1000) y `meta.mono` también se conserva.
 - Titulares del shell (fuera de la tabla, por ser fluidos): título de página `clamp(25px, 7.4vw, 30px)` en móvil y `clamp(39px, 3.7vw, 56px)` desde `lg`; titular de estado 28 px en móvil y 35 px desde `lg`; marca 26 px en el rail y 28 px en el sidebar. AmountInput: 0,68 em por carácter en su `clamp` (Onest 600 tabular mide hasta 0,590 em por carácter en importes formateados, frente a 0,537 de Geist).
 
@@ -298,6 +299,38 @@ Contraste de la acción: texto #F7F3EB sobre #2D4B3D = 8,7:1 · #F3EFE7 sobre #3
 - **Forma = tipo de fila:** gasto → ficha cuadrada de categoría · aporte → círculo con fondo de ahorro y piggy-bank · liquidación → círculo de contorno con arrows-left-right · ingreso → ficha arena con arrow-down-left.
 - **Mapa semántico:** navegación Inicio=`house-simple`, Actividad=`receipt`, Metas=`flag-banner`, Plan=`chart-pie-slice`, Balance=`scales` (solo escritorio), Nosotros=`users-three`, Perfil=`user-circle`; acciones y estados Agregar=`plus`, Guardar=`floppy-disk`, Editar=`pencil-simple`, Buscar=`magnifying-glass`, Filtrar=`funnel-simple`, Compartir=`share-network`, Dividir=`arrows-split`, Liquidar=`arrows-left-right`, Aportar=`piggy-bank`, Retirar=`arrow-u-up-left`, Meta completada=`flag-checkered`, Volver=`caret-left`, Confirmar=`check`, Advertencia=`warning`, Error=`warning-circle`, Éxito=`check-circle`, Por saldar=`clock`, Privado=`lock-simple`, Sin movimientos=`tray`, Fecha=`calendar-blank`.
 - Wrapper tipado `<AppIcon name weight size label? />`; import individual de `@phosphor-icons/react`; los íconos decorativos van con `aria-hidden` y los botones de solo ícono con `aria-label`. Área táctil ≥ 44×44.
+
+## 3a. Marca · 1c «La J que se construye»
+**[A] Decisión de los fundadores del 23 de noviembre de 2026**, viendo el comp «Juntia DS v1 - 09b Marca 1c» (Claude Design, proyecto `caabf357-a0df-4048-886f-8c46c8979c5a`; las tres direcciones, en «09 Marca»). Registro en la spec 005, «Decisiones de los fundadores que esta spec recoge». MVP-1 no exigía el logo definitivo; los fundadores lo adelantaron.
+
+- **Forma.** Una J de dos piezas con una junta entre ellas: el **fuste** (bosque) y la **curva** (arena). La junta es la idea —dos piezas que encajan sin fundirse— y nunca se cierra. Logotipo: «Juntia» en **Brygada 1918 Medium Itálica**, −0,005 em, sin modificar. Lockup: isotipo = 0,92 × el cuerpo de «Juntia», separación = 0,27 × el cuerpo, centrados en vertical.
+- **Geometría.** Una sola fuente: `src/components/brand/logo-geometry.ts`. Maestro sobre rejilla de 32 (fuste 7 × 17, curva de radio 10,5 con contraforma 3,5, junta de 2 unidades). **Versión pequeña** sobre rejilla de 16 ajustada al píxel (fuste de 3 px, junta de 2 px, contraforma de 4 px): solo para la pestaña del navegador.
+- **Versiones y color** (primitivos existentes; tokens `--comp-brand-stem`, `--comp-brand-curve` y `--comp-brand-wordmark`):
+
+| Versión | Fuste | Curva | «Juntia» | Fondo |
+| --- | --- | --- | --- | --- |
+| A color, claro | `forest.700` #2D4B3D | `sand.500` #C49A55 | `forest.700` | lino o blanco |
+| A color, oscuro | `forest.300` #93C2A6 | `sand.300` #E0C08C | `charcoal.50` #F3EFE7 | carbón |
+| Una tinta | #1A1C1A | #1A1C1A | #1A1C1A | claro, sin color |
+| Negativo | lino | lino | lino | carbón o bosque |
+| Pestaña clara (`icon.svg`) | `forest.700` | `sand.600` #9C7330 | — | pestaña del navegador |
+| Icono de iPhone y `favicon.ico` | `linen.100` #F7F3EB | `sand.400` #D3B07A | — | baldosa `forest.700` |
+
+  Contrastes: «Juntia» bosque sobre lino 8,7:1; lino claro sobre carbón 16,0:1; una tinta 17,2:1. Isotipo en oscuro: 9,2:1 y 10,6:1 sobre carbón. La curva en arena 500 da 2,3:1 sobre lino (WCAG exime los logotipos; el fuste bosque sostiene la lectura); por eso en la pestaña clara pasa al arena 600, 4,3:1 sobre blanco. Arena #D3B07A sobre bosque: **4,7:1** (el 09 decía 6,7:1, que es el valor del arena 200 #EAD5AE).
+- **Espacio mínimo:** x = ½ del alto del isotipo, alrededor del lockup y del isotipo solo. **Tamaños mínimos:** isotipo maestro **24 px**; lockup, isotipo de 20 px con «Juntia» a 22 px. Por debajo de 24 px, solo la versión pequeña.
+- **Archivos** (estáticos en `src/app`, generados por `scripts/brand/generate-assets.mjs`): `icon.svg` (versión pequeña, colores por `prefers-color-scheme`), `favicon.ico` (16 y 32 px sobre baldosa bosque: un `.ico` no cambia con el tema y el bosque mide 1,3:1 sobre la pestaña oscura), `apple-icon.png` (180 px, fondo bosque lleno, sin transparencia ni esquinas), `opengraph-image.png` y `twitter-image.png` (1200 × 630). **Sin manifest ni service worker**: la PWA está aplazada por los fundadores.
+- **Imagen para compartir.** Bosque liso; logotipo centrado; frase **«Lo tuyo, lo mío y lo nuestro.»** (la A, elegida el 23 nov 2026) y «FINANZAS EN PAREJA» en `sand.200`. Composición centrada para que el recorte cuadrado de WhatsApp conserve el logotipo. **Una sola para todos los enlaces, también la invitación: nunca nombres, montos ni datos.** Ninguna página define su propia tarjeta.
+- **En la app** (componente `<Logo>`, SVG `role="img"` con nombre accesible «Juntia», ancho y alto fijos; «Juntia» con `textLength` para que la caja no cambie al llegar la itálica):
+  - acceso a 390: arriba de la columna, isotipo de 26 + «Juntia» a 28, en Entrar, Primera entrada y la invitación;
+  - acceso desde 1024: arriba a la izquierda del lienzo, isotipo de 28 + «Juntia» a 30;
+  - sidebar desde 1280: isotipo de 26 + «Juntia» a 28;
+  - rail de 1024 a 1279: el isotipo solo, a 28 px, en lugar de la «J»;
+  - **a 390 dentro de la app no hay logo**: la app no tiene barra superior con marca y no se añade (fundadores, 23 nov 2026).
+- **Prohibido:** cerrar la junta, unir las piezas o invertir sus colores; rotar, inclinar más, contornear, sombrear o aplicar degradados; el bosque del isotipo sobre un fondo oscuro; «Juntia» en redonda dentro del logo; el maestro por debajo de 24 px; añadir datos de la persona o de la pareja a la imagen para compartir.
+- **[V] pendientes de verificar en navegador real** (no se dan por hechos):
+  1. que Safari (macOS e iOS) use el `icon.svg` con tema; si no, debe mostrar la baldosa del `favicon.ico`;
+  2. que Chrome y Edge cambien el color del `icon.svg` al pasar al tema oscuro sin recargar;
+  3. los colores reales de las pestañas de Safari 26 (en el comp son aproximados).
 
 ## 4. Cambios propuestos respecto a I2 y al maestro
 - [P] Sara lila → petróleo; Hogar lavanda → azul tenue; superficie oscura 1 #1C1F20 → #191C1F.

@@ -82,6 +82,7 @@ otras dos ediciones del handoff son sustantivas y están justificadas en el Log.
 | `BRAND_FOUNDATION.md`, `COMPONENT_SPECIFICATIONS.md`, `DESIGN_SYSTEM.md`, `HANDOFF_CLAUDE_CODE.md`, `RESPONSIVE_SPECIFICATIONS.md` | BRAND §5; §GoalCard «Fotografía»; [V] finales; Accesibilidad «Fotos» y «Pendiente»; 2xl y «Metas» | Nota «no aplica a MVP-1» en las reglas de foto de metas y sus [V]; el texto aprobado se conserva para MVP-2 | **Decisión de los fundadores, 17 de noviembre de 2026** (maestro §15.10, decisión 24.13): metas sin foto en MVP-1, ADR-014 a MVP-2. Registrada por 004-T085 |
 | `HANDOFF_CLAUDE_CODE.md` | Decisiones (eliminación de cuenta y «READY WITH BLOCKERS»), «Datos», Accesibilidad («Texto ampliado») y «Pendiente» (Android) | Notas que remiten al maestro: la eliminación de cuenta va al lanzamiento público con un procedimiento manual en MVP-1; la confirmación técnica de Supabase no es un pendiente; la técnica del 200 % está decidida; el teclado de Android queda en la excepción prorrogada. El estado «READY WITH BLOCKERS» se conserva como historia | **Maestro §15.6 (nota final) y §15.10, decisiones 23.1, 24.6 y 24.8** (17 nov 2026). Registradas por 004-T085 |
 | `DESIGN_SYSTEM.md` | [V] finales | Las sombras táctiles en Android quedan en la excepción prorrogada más allá de MVP-1 | **Maestro §15.10, decisión 24.6** (17 nov 2026). Registrada por 004-T085 |
+| `DESIGN_SYSTEM.md` | §1.4 (viñeta nueva) y §3a nueva | §1.4: las familias vigentes (Brygada 1918, Onest y Spline Sans Mono) y que Instrument Serif, Geist y Geist Mono solo quedan como referencia de medida. §3a: la marca 1c «La J que se construye» (versiones, color, espacio y tamaños mínimos, versión pequeña, archivos, imagen para compartir, uso en la app, prohibiciones y tres [V]) | **Decisión de los fundadores, 23 de noviembre de 2026**, viendo el comp `09b Marca 1c`; las cuatro decisiones, en la spec 005. Registrada en el PR de la marca |
 
 **Intacto byte a byte** respecto a la importación: ninguno. `MOTION_SYSTEM.md` lo estuvo (13000 B) hasta el PR C de
 P0-3: 13000 B → **14208 B** (§4.1 nueva, hover y foco del abanico, `3b5ba60`).
@@ -107,7 +108,8 @@ P0-3: 13000 B → **14208 B** (§4.1 nueva, hover y foco del abanico, `3b5ba60`)
   línea 66, decisión 14) → 16540 B (líneas 50 a 53 y 66 a 68, escala
   recalibrada en el PR #32) → 16531 B (líneas 64, 66 y 67, Spline Sans Mono
   aprobada) → 22880 B (tintes de meta del PR C de P0-3, registrados a posteriori) →
-  **23954 B** (§1.4 y [V] finales, 004-T085).
+  23954 B (§1.4 y [V] finales, 004-T085) → 25015 B en `b3ab468` (§1.3, cuatro por tres, PR #92) →
+  **30123 B** (§1.4 y §3a, marca 1c).
 
 ## Erratas conocidas
 
@@ -139,6 +141,12 @@ Después del paquete se añadieron, en el mismo proyecto, los comps `06 Categori
 4 × 3, confirmado por los fundadores el 22 de noviembre de 2026; la decisión está en la
 spec 005, «Decisiones de los fundadores que esta spec recoge», y las doce categorías en
 `DESIGN_SYSTEM.md` §1.3).
+
+También `09 Marca` (tres direcciones de logo; los fundadores eligieron la **1c, «La J que se construye»**, el 23 de
+noviembre de 2026) y **`09b Marca 1c`**, su pulido: logo maestro, versión pequeña de 16 px dibujada al píxel, icono de
+iPhone, imagen para compartir y el logo en la app a 390 y 1440. **Aprobado por los fundadores el 23 de noviembre de 2026**
+con cuatro decisiones (spec 005, «Decisiones de los fundadores que esta spec recoge»); la marca está en
+`DESIGN_SYSTEM.md` §3a.
 
 **Por qué no se importaron:** no son HTML estático. Cargan `./support.js`, usan
 elementos propios `<x-dc>` y `<helmet>`, plantillas `{{ }}` y una clase

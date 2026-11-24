@@ -16,7 +16,7 @@ import { UsUnavailable } from "@/features/context/us-unavailable";
 import { copy } from "@/lib/copy/es";
 import { serverContext } from "@/lib/server-context";
 
-export const metadata = { title: `${copy.nav.balance} · ${copy.shell.brand}` };
+export const metadata = { title: copy.nav.balance };
 
 export default async function BalancePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [context, query] = await Promise.all([serverContext(), searchParams]);

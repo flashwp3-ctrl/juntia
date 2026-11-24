@@ -2,9 +2,24 @@ import { Brygada_1918, Onest, Spline_Sans_Mono } from "next/font/google";
 import { MotionProvider } from "@/components/motion-provider";
 import { SHELL_END_ID } from "@/components/shell/shell-end";
 import { themeScript } from "@/lib/theme-script";
+import type { Metadata } from "next";
 import "./globals.css";
 import { copy } from "@/lib/copy/es";
-export const metadata = { title: copy.shell.brand };
+
+// Marca 1c (comp 09b, fundadores 23 nov 2026). Los iconos y la imagen para compartir son archivos estáticos de src/app
+// (favicon.ico, icon.svg, apple-icon.png, opengraph-image.png y twitter-image.png): Next añade sus etiquetas. La tarjeta es
+// la misma para todos los enlaces, también /invitacion: ninguna página define openGraph ni twitter, así que ninguna puede
+// llevar datos a la tarjeta. metadataBase sale de SITE_URL, la variable de los enlaces de Auth; sin ella, Next usa la URL de
+// producción o de preview de Vercel.
+const siteUrl = process.env.SITE_URL?.trim();
+export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  title: { default: copy.shell.brand, template: `%s · ${copy.shell.brand}` },
+  description: copy.share.description,
+  applicationName: copy.shell.brand,
+  openGraph: { type: "website", locale: "es_CO", siteName: copy.shell.brand, title: copy.shell.brand, description: copy.share.description },
+  twitter: { card: "summary_large_image", title: copy.shell.brand, description: copy.share.description },
+};
 
 // Decisión 14 (maestro §15.10): Brygada 1918 en titulares, Onest en interfaz y cifras, Spline Sans Mono en metadatos.
 // D-01 (T077): el respaldo automático de next/font usa un solo size-adjust para todos los pesos. En los textos centrados,

@@ -18,6 +18,9 @@ export const targetPath = (page: Page, entry: RouteEntry) => paths.get(page) ?? 
  * y espera a que la hoja (o el diálogo) tenga el foco en el monto. Los importes salen del dataset dorado de la spec.
  */
 async function openAnnotate(page: Page) {
+  // Marca 1c: el oyente de `N` llega al hidratar, y con las etiquetas de la imagen para compartir la hidratación puede llegar
+  // después del `load`. Se espera la marca de hidratación del shell, como annotate.e2e.ts (005, PR B, corrección 6).
+  await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
   await page.locator("body").focus();
   await page.keyboard.press("n");
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });

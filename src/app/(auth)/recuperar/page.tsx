@@ -2,7 +2,7 @@
 import { RecoverForm } from "@/features/auth/recover-form";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.auth.recover.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.recover.title };
 
 type Props = { searchParams: Promise<{ enlace?: string | string[] }> };
 

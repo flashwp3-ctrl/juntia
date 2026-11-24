@@ -309,6 +309,10 @@
   --comp-nav-muted-fg: var(--linen-800);
   --comp-shell-muted-fg: var(--linen-800);
   --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(26,28,26,.10); /* COMPONENT_SPECIFICATIONS.md §AppShell: sombra difusa 10 % en claro */
+  /* Marca 1c (comp 09b, fundadores 23 nov 2026): fuste, curva y logotipo. Mismos primitivos, ningún color nuevo. */
+  --comp-brand-stem: var(--forest-700);
+  --comp-brand-curve: var(--sand-500);
+  --comp-brand-wordmark: var(--forest-700);
 }
 
 [data-theme="dark"] {
@@ -417,6 +421,9 @@
   --comp-nav-muted-fg: var(--charcoal-200);
   --comp-shell-muted-fg: var(--color-text-secondary);
   --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(0,0,0,.45);
+  --comp-brand-stem: var(--forest-300);
+  --comp-brand-curve: var(--sand-300);
+  --comp-brand-wordmark: var(--charcoal-50);
 }
 
 /* Sin JavaScript, el tema sigue al sistema. Paridad comprobada por T014. */
@@ -527,5 +534,8 @@
     --comp-nav-muted-fg: var(--charcoal-200);
     --comp-shell-muted-fg: var(--color-text-secondary);
     --comp-tabbar-shadow: var(--elevation-raised), 0 10px 28px rgba(0,0,0,.45);
+    --comp-brand-stem: var(--forest-300);
+    --comp-brand-curve: var(--sand-300);
+    --comp-brand-wordmark: var(--charcoal-50);
   }
 }

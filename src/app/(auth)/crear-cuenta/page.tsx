@@ -2,7 +2,7 @@
 import { SignUpForm } from "@/features/auth/sign-up-form";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.auth.signUp.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.signUp.title };
 
 export default function SignUpPage() {
   return <SignUpForm />;

@@ -5,7 +5,7 @@ import { FirstEntry } from "@/features/auth/first-entry";
 import { loadAccount } from "@/features/account/load-account";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.auth.firstEntry.startTitle} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.firstEntry.startTitle };
 
 type Props = { searchParams: Promise<{ volver?: string | string[] }> };
 
