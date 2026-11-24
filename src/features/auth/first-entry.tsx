@@ -4,6 +4,7 @@
 // espacio del navegador), «Empezar por mi cuenta» elegida por defecto. «Continuar» completa la primera entrada y, con
 // «Invitar a mi pareja», abre M3 en Mi pareja.
 import { useActionState, useState } from "react";
+import { Logo } from "@/components/brand/logo";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { copy } from "@/lib/copy/es";
@@ -32,10 +33,8 @@ export function FirstEntry({ name, volver }: { name: string; volver: string }) {
   const [choice, setChoice] = useState<"start" | "invite">("start");
   return (
     <>
-      <p aria-hidden="true" className="flex items-center gap-2 font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink lg:hidden">
-        <span className="size-[9px] rounded-[3px] bg-primary" />
-        {copy.shell.brand}
-      </p>
+      {/* Marca 1c (09b): isotipo de 26 + «Juntia» a 28, con caja fija. */}
+      <div className="lg:hidden"><Logo size={28} /></div>
       <h1 className="mt-6 font-serif text-[clamp(2.5rem,12vw,3rem)] leading-none font-medium tracking-[-0.01em] break-words text-ink lg:mt-2">{copy.auth.firstEntry.greeting(name)}</h1>
       <p className="text-[0.9375rem] leading-[1.5] text-ink-secondary">{copy.auth.firstEntry.description}</p>
       <div role="radiogroup" aria-label={copy.auth.firstEntry.howToStart} className="flex flex-col gap-2.5">

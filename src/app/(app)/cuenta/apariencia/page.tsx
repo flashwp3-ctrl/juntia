@@ -5,7 +5,7 @@ import { loadAccount } from "@/features/account/load-account";
 import { ThemeSelector } from "@/features/account/theme-selector";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.account.appearance.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.account.appearance.title };
 
 export default async function AppearancePage() {
   const account = await loadAccount();

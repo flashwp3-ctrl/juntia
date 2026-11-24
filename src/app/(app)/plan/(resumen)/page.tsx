@@ -18,7 +18,7 @@ import type { PlanActions } from "@/features/plan/types";
 import { copy } from "@/lib/copy/es";
 import { serverContext } from "@/lib/server-context";
 
-export const metadata = { title: `${copy.nav.plan} · ${copy.shell.brand}` };
+export const metadata = { title: copy.nav.plan };
 
 const actions: PlanActions = { create: createBudgetAction, update: updateBudgetAction, check: checkBudgetWriteAction };
 

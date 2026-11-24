@@ -2,7 +2,7 @@
 import { VerifyEmail } from "@/features/auth/verify-email";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.auth.verifyEmail.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.verifyEmail.title };
 
 export default function VerifyEmailPage() {
   return <VerifyEmail />;

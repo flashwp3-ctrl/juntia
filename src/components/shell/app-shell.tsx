@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
+import { Logo } from "@/components/brand/logo";
 import { AppIcon } from "@/components/ui/app-icon";
 import { AccountButton, SidebarAccount } from "@/features/account/account-button";
 import { copy } from "@/lib/copy/es";
@@ -66,12 +67,11 @@ function SideNav({ pathname }: { pathname: string | null }) {
   const onAccount = isCurrent(ACCOUNT_HREF, pathname);
   return (
     <aside className="fixed inset-y-0 left-0 z-[var(--z-nav)] hidden w-[76px] flex-col overflow-y-auto border-r-[length:var(--border-hairline)] border-border bg-[var(--comp-sidebar-bg)] px-3 py-6 lg:flex xl:w-[15.5rem] xl:px-[18px] xl:py-7">
-      {/* Marca: «J» en el rail, «Juntia» con su punto bosque en el sidebar. */}
-      <p className="flex items-center justify-center gap-2 pb-[18px] font-serif text-[1.625rem] leading-none font-medium tracking-[-0.015em] text-ink xl:justify-start xl:px-2.5 xl:pb-[22px] xl:text-[1.75rem]">
-        <span aria-hidden="true" className="hidden size-3 rounded-[4px] bg-primary xl:block" />
-        <span aria-hidden="true" className="xl:hidden">{copy.shell.brand.charAt(0)}</span>
-        <span className="sr-only xl:not-sr-only">{copy.shell.brand}</span>
-      </p>
+      {/* Marca 1c (09b): el isotipo de 28 en el rail, en lugar de la «J»; el logotipo (isotipo de 26 + «Juntia» a 28) en el sidebar. */}
+      <div className="flex justify-center pb-[18px] xl:justify-start xl:px-2.5 xl:pb-[22px]">
+        <Logo variant="isotype" size={28} className="xl:hidden" />
+        <Logo size={28} className="hidden xl:block" />
+      </div>
       {/* Desde 1280 el selector vive aquí, bajo la marca (§15.3); por debajo, arriba a la derecha del contenido. */}
       <ContextSelector stretch className="mb-3.5 hidden xl:block" />
       <nav aria-label={copy.shell.navigation} className="flex shrink-0 flex-col gap-1.5">

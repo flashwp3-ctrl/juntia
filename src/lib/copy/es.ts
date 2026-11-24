@@ -382,6 +382,9 @@ export const copy = {
     nextMonth: (label: string) => `Análisis del mes siguiente: ${label}`,
   },
   shell: { skip: "Ir al contenido", navigation: "Navegación principal", brand: "Juntia" },
+  // Marca 1c (comp 09b, fundadores 23 nov 2026). La misma tarjeta para todos los enlaces, también la invitación: sin datos.
+  // La descripción la eligieron los fundadores el 24 nov 2026 (la opción 2).
+  share: { description: "Las cuentas de la pareja, claras: quién pagó, cuánto le toca a cada uno y lo que ahorran juntos.", imageAlt: "Juntia. Lo tuyo, lo mío y lo nuestro. Finanzas en pareja." },
   nav: { home: "Inicio", activity: "Actividad", goals: "Metas", plan: "Plan", balance: "Balance", account: "Mi cuenta", annotate: "Anotar", annotateBlock: "Anotar gasto", shortcut: "N" },
   context: { me: "Yo", us: "Nosotros", label: "Contexto", announce: (label: string) => `Ahora ves: ${label}` },
   // P0-1, PR D (02·5, 02·6, 02·1, 04·1). Copy nuevo para revisión de los fundadores en el PR.

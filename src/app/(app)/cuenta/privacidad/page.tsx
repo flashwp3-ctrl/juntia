@@ -7,7 +7,7 @@ import { AccountPageTitle, MenuGroup, Tile } from "@/features/account/account-ui
 import { LimitNote } from "@/features/account/limit-note";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.account.privacy.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.account.privacy.title };
 
 export default function PrivacyPage() {
   return (

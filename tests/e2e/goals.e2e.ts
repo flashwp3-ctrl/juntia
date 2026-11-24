@@ -248,6 +248,10 @@ async function captureActions(page: Page) {
 }
 
 async function openAnnotate(page: Page) {
+  // Marca 1c: con las etiquetas de la imagen para compartir, la hidratación de Inicio llega después del `load` bajo el
+  // `route("**/*")` de captureActions, y la tecla caía antes del oyente (4 de 4 fallos; 5 de 5 sin esas etiquetas). Se espera
+  // la marca de hidratación del shell, como annotate.e2e.ts desde el PR B de la 005 (corrección 6), no un tiempo.
+  await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
   await page.locator("body").focus();
   await page.keyboard.press("n");
   const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });

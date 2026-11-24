@@ -17,6 +17,7 @@ import { copy } from "../../src/lib/copy/es";
 import { runnerSql } from "../integration/support/sql";
 import { confirmLink } from "../support/mailpit";
 import { seedMovements, seedUser } from "../support/seed";
+import { expectedShareOrigin, shareOriginProblem } from "../support/share-origin";
 import { attachNavigations, expect, recordNavigations, routerSettled, signInContext, test } from "./fixtures";
 
 const anonymous = { cookies: [], origins: [] };
@@ -352,6 +353,78 @@ test("F44-1: sin cookie de contexto o con una no válida no viaja nada privado; 
     await expect(page.getByRole("heading", { name: copy.us.title })).toBeVisible();
     expect(leaks(await page.locator("main").innerText())).toEqual([]);
     await context.close();
+  }
+});
+
+// Marca 1c (comp 09b, fundadores 23 nov 2026). El <head> que leen el navegador y WhatsApp: iconos que responden, título con
+// plantilla y una sola tarjeta para todos los enlaces. /invitacion lleva la misma que /entrar y nada del enlace (el token
+// viaja en el fragmento; el HTML sin datos de la pareja ya lo prueba el caso de la invitación). Y la entrada no se mueve
+// al llegar el logotipo: el SVG tiene ancho y alto fijos (CLS de la API en Chromium, a 390 y 1440).
+test("marca: <head> con iconos y la misma tarjeta en /invitacion, sin datos; la entrada no se mueve con el logo", async ({ page, browserName, baseURL }) => {
+  // F93-1: la tarjeta anuncia una URL absoluta y WhatsApp la descarga tal cual, así que se comprueba el origen, no solo la
+  // ruta. Es el de SITE_URL (la variable de metadataBase) y, sin ella, el de la app. En las pruebas (CI y e2e:dev),
+  // SITE_URL es el origen del servidor de pruebas: la URL anunciada se pide tal cual, sin cambiarle el origen.
+  const shareOrigin = expectedShareOrigin({ SITE_URL: process.env.SITE_URL }, baseURL!);
+  expect(shareOrigin, "en las pruebas, SITE_URL es el servidor de pruebas").toBe(new URL(baseURL!).origin);
+  const token = "Zx9-".repeat(10) + "abc";
+  const head = async (path: string) => {
+    await page.goto(path);
+    const meta = (key: string) => page.locator(`head meta[property="${key}"], head meta[name="${key}"]`).first().getAttribute("content");
+    return {
+      title: await page.title(),
+      ogImage: await meta("og:image"),
+      ogTitle: await meta("og:title"),
+      ogDescription: await meta("og:description"),
+      twitterCard: await meta("twitter:card"),
+      twitterImage: await meta("twitter:image"),
+      html: await page.locator("head").innerHTML(),
+    };
+  };
+  const entrar = await head("/entrar");
+  const invitation = await head(`/invitacion#t=${token}`);
+  expect(entrar.title).toBe(`${copy.auth.signIn.submit} · ${copy.shell.brand}`);
+  expect(invitation.title).toBe(`${copy.couple.invitation.pageTitle} · ${copy.shell.brand}`);
+  for (const card of [entrar, invitation]) {
+    expect(card.ogTitle).toBe(copy.shell.brand);
+    expect(card.ogDescription).toBe(copy.share.description);
+    expect(card.twitterCard).toBe("summary_large_image");
+    expect(shareOriginProblem(card.ogImage, shareOrigin), "origen de og:image").toBeNull();
+    expect(shareOriginProblem(card.twitterImage, shareOrigin), "origen de twitter:image").toBeNull();
+    expect(new URL(card.ogImage!).pathname).toBe("/opengraph-image.png");
+    expect(new URL(card.twitterImage!).pathname).toBe("/twitter-image.png");
+  }
+  expect(invitation.ogImage).toBe(entrar.ogImage);
+  expect(invitation.twitterImage).toBe(entrar.twitterImage);
+  expect(invitation.html.includes(token), "el token no llega al <head>").toBe(false);
+
+  // Los iconos y la tarjeta responden sin sesión (WhatsApp no tiene cookie) y con su tipo.
+  const links = await page.locator('head link[rel="icon"], head link[rel="apple-touch-icon"]').evaluateAll((nodes) => nodes.map((n) => ({ rel: n.getAttribute("rel"), href: n.getAttribute("href")!, type: n.getAttribute("type"), sizes: n.getAttribute("sizes") })));
+  expect(links.map((l) => new URL(l.href, page.url()).pathname).sort()).toEqual(["/apple-icon.png", "/favicon.ico", "/icon.svg"]);
+  expect(links.find((l) => l.href.includes("apple-icon"))?.sizes).toBe("180x180");
+  const types: Record<string, string> = { "/favicon.ico": "image/x-icon", "/icon.svg": "image/svg+xml", "/apple-icon.png": "image/png", "/opengraph-image.png": "image/png", "/twitter-image.png": "image/png" };
+  // Los iconos van relativos al documento; la tarjeta, absoluta: se pide la URL anunciada, con su origen.
+  for (const url of [...links.map((l) => new URL(l.href, page.url()).href), entrar.ogImage!, entrar.twitterImage!]) {
+    const response = await page.request.get(url, { maxRedirects: 0 });
+    expect(response.status(), url).toBe(200);
+    expect(response.headers()["content-type"], url).toContain(types[new URL(url).pathname]);
+  }
+
+  // CLS de la entrada con el logotipo, a 390 y a 1440 (la API Layout Instability solo existe en Chromium).
+  if (browserName === "chromium") {
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.addInitScript(() => {
+        (window as unknown as { __cls: number }).__cls = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!entry.hadRecentInput) (window as unknown as { __cls: number }).__cls += entry.value;
+        }).observe({ type: "layout-shift", buffered: true });
+      });
+      await page.goto("/entrar");
+      const logo = page.getByRole("img", { name: copy.shell.brand });
+      await expect(logo).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls), `CLS a ${width}`).toBe(0);
+    }
   }
 });
 

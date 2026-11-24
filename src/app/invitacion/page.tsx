@@ -7,7 +7,7 @@ import { acceptInvitationAction, checkInvitationWriteAction, inspectInvitationAc
 import { InvitationScreen } from "@/features/couple/invitation-screen";
 import { copy } from "@/lib/copy/es";
 
-export const metadata: Metadata = { title: `${copy.couple.invitation.pageTitle} · ${copy.shell.brand}`, referrer: "no-referrer" };
+export const metadata: Metadata = { title: copy.couple.invitation.pageTitle, referrer: "no-referrer" };
 
 const actions = { inspect: inspectInvitationAction, accept: acceptInvitationAction, checkStatus: checkInvitationWriteAction };
 

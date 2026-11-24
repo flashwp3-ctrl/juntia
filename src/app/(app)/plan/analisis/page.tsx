@@ -17,7 +17,7 @@ import { activeCouple } from "@/features/couple/shared-load";
 import { copy } from "@/lib/copy/es";
 import { serverContext } from "@/lib/server-context";
 
-export const metadata = { title: `${copy.analysis.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.analysis.title };
 
 export default async function AnalysisPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [context, query] = await Promise.all([serverContext(), searchParams]);

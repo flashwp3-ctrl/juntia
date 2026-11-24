@@ -3,7 +3,7 @@ import { safeReturnPath } from "@/domain/account";
 import { SignInForm } from "@/features/auth/sign-in-form";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.auth.signIn.submit} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.signIn.submit };
 
 type Props = { searchParams: Promise<{ volver?: string | string[]; aviso?: string | string[] }> };
 

@@ -8,7 +8,7 @@ import { copy } from "@/lib/copy/es";
 import { getSessionClaims } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: `${copy.auth.newPassword.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.auth.newPassword.title };
 
 export default async function NewPasswordPage() {
   const claims = await getSessionClaims(await createClient());

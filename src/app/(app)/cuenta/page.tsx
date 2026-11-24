@@ -10,7 +10,7 @@ import { loadCoupleForShell, partnerOf, personOf } from "@/features/couple/load"
 import { ProfileSection } from "@/features/account/profile-section";
 import { copy } from "@/lib/copy/es";
 
-export const metadata = { title: `${copy.account.title} · ${copy.shell.brand}` };
+export const metadata = { title: copy.account.title };
 
 export default async function AccountPage() {
   const [account, couple] = await Promise.all([loadAccount(), loadCoupleForShell()]);
