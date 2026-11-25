@@ -49,6 +49,16 @@ vuelve a los fundadores antes de entrar en una spec.
 | Renombrar la pestaña «Plan» (presupuestos) a «Presupuesto» | Solo si en el uso real se confunde con «Planes». La spec 006 (Q2 y Q3) evita el choque sin renombrar un destino aprobado |
 | Avisarle a la pareja cuando se elimina o se reabre un plan compartido | Hoy no existen notificaciones en Juntia: requiere decidir primero el mecanismo de avisos |
 
+## Propuestas de los fundadores pendientes de análisis
+
+Las propuestas de esta sección **no están aprobadas**, no tienen número de spec y
+no forman parte de MVP-2 por estar aquí. Cada una espera el análisis del gestor y
+una decisión formal de los fundadores sobre alcance, prioridad y hoja de ruta.
+
+| Propuesta | Documento | Estado |
+| --- | --- | --- |
+| **Planificación financiera integral.** Agrupa cuatro bloques provisionales: A, recurrentes; B, presupuesto integral y provisiones; C, cuentas, activos, deudas y patrimonio; D, proyecciones y escenarios. Incluye las precisiones de los fundadores del 25 nov 2026 | `docs/propuestas/planificacion-financiera-integral.md` | Registrada el 25 nov 2026. **Pendiente del análisis de su sección 6**, que se hace al terminar el trabajo documental de Planes, solo como documentación y sin tocar el gate de MVP-1. Se solapa con las filas 3 (recurrentes), 6 (DEC-R01-S) y 7 (aportes programados) de la tabla de funcionalidades; el análisis decide cómo se relacionan |
+
 ## Fuera de MVP-2 (para no confundir)
 
 Grupos de más de dos (P1), offline robusto, multidivisa, OCR, voz, IA, precios y
