@@ -156,8 +156,8 @@ registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
      {meta}», que no se asigna a ninguno de los dos.
   2. No cambia el «pagó» ni la diferencia de ninguna persona.
   3. Cuenta completo en el total del plan y en el desglose por categoría (Q7).
-- **«Le corresponde» `[P]`, lectura propuesta por el redactor y pendiente de
-  confirmar con los fundadores.** Para que la opción A se cumpla, la parte pagada
+- **«Le corresponde»: confirmado por los fundadores el 25 de noviembre de 2026**
+  (Alejandro: «Sí, confirmado»). Lo propuso el redactor. Para que la opción A se cumpla, la parte pagada
   con la meta tampoco entra en «le corresponde». Si un gasto de importe A tiene
   usos de meta aplicados por U (con 0 < U ≤ A):
   - la línea «Pagado con la meta {meta}» suma U, con una línea por meta;
@@ -169,12 +169,12 @@ registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
   Así se cumple que Σ «pagó» + Σ líneas de meta = total del plan, que Σ «le
   corresponde» = Σ «pagó» y que las diferencias suman cero. Solo cuentan los usos
   **aplicados** y no anulados; una solicitud pendiente no cuenta (004, FR-053).
-  **La duda está en la consecuencia:** la «Diferencia en este plan» deja de
-  coincidir con lo que ese gasto mueve en Balance, que sigue con el reparto
-  completo. Ya era una cifra informativa, sin «le debe» (Q10), y el enlace a
-  Balance se mantiene. La alternativa es que «le corresponde» reparta el importe
-  completo A; entonces las diferencias no suman cero y la meta crea una
-  diferencia aparente, que es lo que la opción A quiere evitar.
+  **Matiz aceptado por los fundadores:** la «Diferencia en este plan» es
+  informativa, sin «le debe» (Q10). Puede no coincidir con lo que ese gasto mueve
+  en Balance, que conserva el reparto completo y sigue siendo **el único saldo
+  real** de la pareja. El enlace a Balance se mantiene. Se descartó repartir el
+  importe completo A en «le corresponde», porque con eso las diferencias no suman
+  cero y la meta crea una diferencia aparente.
 
 ### Preguntas de la etapa Specify
 
@@ -363,7 +363,7 @@ pagó/corresponde por persona.
 3. **Given** un plan sin presupuesto, **When** abre el detalle, **Then** no hay barra, ni restante, ni exceso, ni «$0» (DEC-R01).
 4. **Given** gastos pagados por Sara y por Tomás con repartos distintos, **When** abre «Quién pagó», **Then** ve por persona «pagó» y «le corresponde» dentro del plan, la diferencia rotulada «Diferencia en este plan» y el enlace al balance de la pareja; en ninguna parte del plan dice «le debe».
 5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
-6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7; «le corresponde» según la lectura `[P]` de Q24).
+6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7).
 
 ---
 
@@ -518,7 +518,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-030**: Héroe: «Gastaron en {plan}» (compartido) o «Gastaste en {plan}» (privado) con el total del FR-021. Nunca `total_destinado_neto`, nunca aportes ni liquidaciones.
 - **FR-031**: Presupuesto (según Q8 y Q9): sin presupuesto, nada; con presupuesto, consumido, porcentaje, «Quedan $X» o «Se pasaron por $X», y «Cerca del límite» desde el 85 %, con texto y forma además de color. Nunca «te alcanza» ni «puedes gastar» (DEC-R17).
 - **FR-032**: Desglose por categoría (según Q11), con `CategoryIcon`.
-- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie y no cambia el «pagó» ni la diferencia de ninguna persona, aunque cuenta completo en el total y en el desglose (según Q24 y Q7). En «le corresponde» se excluye también la parte pagada con la meta, como propone la lectura `[P]` de Q24, pendiente de confirmar; solo cuentan los usos aplicados y no anulados (ADR-015 §4).
+- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie y no cambia el «pagó» ni la diferencia de ninguna persona, aunque cuenta completo en el total y en el desglose (según Q24 y Q7). En «le corresponde» también se excluye la parte pagada con la meta: se reparte solo A − U, con el mismo reparto del gasto, y solo cuentan los usos aplicados y no anulados (según Q24; ADR-015 §4). La «Diferencia en este plan» es informativa y puede no coincidir con lo que ese gasto mueve en Balance, que conserva el reparto completo y sigue siendo el único saldo real de la pareja.
 - **FR-034**: Lista de gastos del plan con el mismo `ExpenseRow` de Actividad y la marca «Pagado con una meta» cuando aplique.
 - **FR-035**: Foto de portada o fallback (ADR-014; fallback como GoalCard `[A]`).
 
@@ -609,6 +609,6 @@ Sara sube una foto de la playa a «Cartagena».
 1. ~~Que las respuestas Q1–Q23 queden registradas como decisión del maestro §15.10.~~ **Hecho:** decisión 27, en el PR documental posterior al #94, con Q24 incluida.
 2. ~~Que ADR-014 y ADR-015 pasen a Aceptado.~~ **Hecho** en ese mismo PR, con fecha del 25 de noviembre de 2026.
 3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
-4. Que los fundadores confirmen la lectura `[P]` de «le corresponde» de Q24.
+4. ~~Que los fundadores confirmen la lectura de «le corresponde» de Q24.~~ **Hecho:** confirmada el 25 de noviembre de 2026, junto con el matiz de Balance.
 5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los dos ajustes pendientes hechos y sus `[P]` marcados.
 6. Que MVP-1 esté declarado (spec 005).

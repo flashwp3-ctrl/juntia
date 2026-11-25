@@ -150,13 +150,16 @@ propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Esa pa
 no entra en el `gross_paid` del pagador, y por eso no cambia el «pagó» ni la
 diferencia de ninguna persona. Una solicitud pendiente no cuenta.
 
-«Le corresponde» es una lectura `[P]`, pendiente de confirmar con los
-fundadores (spec 006, Q24). Si el gasto de importe A lleva usos por U, «le
-corresponde» reparte solo A − U con el mismo reparto, con mayor residuo y pesos
-enteros (ADR-002). Se cumplen dos igualdades: Σ pagó + Σ líneas de meta = total, y
-Σ le corresponde = Σ pagó. La diferencia de ese gasto en el plan deja de coincidir
-con lo que mueve en Balance, que conserva el reparto completo (004, FR-058). Ni el
-balance de la pareja ni ADR-010 cambian.
+«Le corresponde», confirmado por los fundadores el 25 de noviembre de 2026 (spec
+006, Q24). Si el gasto de importe A lleva usos aplicados por U, «le corresponde»
+reparte solo A − U con el mismo reparto, con mayor residuo y pesos enteros
+(ADR-002). Se cumplen dos igualdades: Σ pagó + Σ líneas de meta = total, y Σ le
+corresponde = Σ pagó.
+
+**Matiz de Balance, aceptado por los fundadores.** La «Diferencia en este plan» es
+informativa y puede no coincidir con lo que ese gasto mueve en Balance. Balance
+conserva el reparto completo (004, FR-058) y sigue siendo **el único saldo real**
+de la pareja (20.9). Ni el balance de la pareja ni ADR-010 cambian.
 
 Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 `security_invoker`.
