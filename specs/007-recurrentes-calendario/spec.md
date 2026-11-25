@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-25
 
-**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas aún no están registradas en el maestro §15.10. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19).
+**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas y D1–D7 están registradas en el maestro §15.10, decisión 29. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19).
 
 **Input**: Descripción con que Alejandro invocó `/speckit-specify` el 25 de noviembre de 2026, redactada a partir de la decisión 28 (filas 28.6, 28.8, 28.9, 28.11, 28.13 y 28.17), la propuesta de los fundadores (bloque A, A.1 a A.5), el análisis (§4 fila «R», §6, §9 y §12 N-6) y `docs/BACKLOG_MVP2.md` (filas 3, 4 y 7):
 
@@ -70,7 +70,7 @@ transmitió su texto a esta sesión. Aceptaron las recomendaciones de la etapa
 Specify **salvo Q4, Q6 y Q15**, y precisaron Q7, Q12, Q13, Q17 y Q18. Las
 preguntas, con su contexto y la recomendación original, se conservan abajo tal
 como se plantearon («Contexto y opciones de cada pregunta»); **si difieren, manda
-esta tabla**. Las respuestas aún no están registradas en el maestro §15.10.
+esta tabla**. Las respuestas están registradas en el maestro §15.10, decisión 29.
 Las marcadas **· ADR-x** dejan detalle al candidato del análisis §6, que se
 escribe como **Propuesto** y se acepta antes de la etapa Plan (`AGENTS.md` 17).
 
@@ -1019,7 +1019,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 ## Lo que hace falta para pasar a Plan
 
-1. ~~Que los fundadores respondan Q1–Q19.~~ **Hecho** el 25 de noviembre de 2026 (Session 2026-11-25 · Clarify). Falta registrarlas como decisión del maestro §15.10, en un PR documental aparte.
+1. ~~Que los fundadores respondan Q1–Q19.~~ **Hecho** el 25 de noviembre de 2026 (Session 2026-11-25 · Clarify). Registradas, con D1–D7, en el maestro §15.10, **decisión 29**, que también recoge lo que falta para pasar a Plan (29.10).
 2. ~~Que los fundadores confirmen las decisiones D1 a D7 de la revisión F101.~~ **Hecho** el 25 de noviembre de 2026, con precisiones en D3, D4 y D5 («Precisiones de la revisión F101»).
 3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse.
 4. Que la revisión del PR de esta spec termine sin hallazgos abiertos.

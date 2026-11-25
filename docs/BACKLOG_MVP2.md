@@ -42,11 +42,11 @@ absorbidas no se borran: conservan su origen.
 
 Nombres provisionales, **sin número de spec**. La letra es la etiqueta de trabajo
 del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §4), no un
-nombre de producto. Ninguna está abierta.
+nombre de producto. Solo Recurrentes y calendario está abierta, como spec 007.
 
 | Paso | Spec (provisional) | Capacidades de la propuesta | Origen | Estado |
 | --- | --- | --- | --- | --- |
-| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3 y 28.6 | Sin abrir. Su documentación puede adelantarse durante el gate solo tras los cuatro prerrequisitos de la 28.19 (28.17; estado en la sección siguiente), y se pausa durante el Plan y las Tasks de Planes (28.18) |
+| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3, 28.6 y 29 | **Abierta como spec `specs/007-recurrentes-calendario/`**, en documentación activa durante el gate (28.17; prerrequisitos de la 28.19 en la sección siguiente). Specify y Clarify hechos: Q1–Q19 y D1–D7 respondidas el 25 nov 2026 (PR #101, merge `a2204ef`) y registradas en la decisión 29 del maestro. **Q15 sigue abierta** hasta los comps (29.4). Para pasar a Plan faltan ADR-a, ADR-b y ADR-d, el prompt de diseño y los comps (29.10). Se pausa durante el Plan y las Tasks de Planes, y no se implementa hasta que Planes esté aceptada (28.18) |
 | 2 | **Presupuesto integral v1**, sin liquidez (P1) | B.1–B.4, B.6; C.9 solo teórico | Decisiones 28.3 y 28.7 | Sin abrir. Capa nueva; nombre preferido «Distribución mensual», **sin cerrar** |
 | 3 | **Créditos y deudas** (D) | C.5, C.6, simulador de amortización de un crédito | Decisiones 28.3, 28.10, 28.12, 28.14 y 28.15 | Sin abrir |
 | 4 | **Cuentas, activos y patrimonio** (K) | C.1, C.3, C.4, C.7, C.8 | Decisiones 28.3, 28.9 y 28.11 | Sin abrir |
