@@ -8,7 +8,7 @@ system»), como una página nueva **«06 Planes»**, para que herede los tokens,
 fuentes y los componentes del sistema.
 
 **Resultado (25 de noviembre de 2026):** los comps están en dos archivos de ese
-proyecto, sin aprobar todavía. Dónde están, los ajustes pendientes y sus `[V]`:
+proyecto, **aprobados** por los fundadores ese mismo día (decisión 27.5). Dónde están, los ajustes hechos y las `[V]` abiertas:
 `design-comps.md`.
 
 **Qué es y qué no.** Los comps que salgan son **propuestas** `[P]`: se aprueban

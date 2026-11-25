@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-24
 
-**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** El PR de la spec (#94) se mergeó el 25 de noviembre de 2026; no avanza a Plan hasta cumplir «Lo que hace falta para pasar a Plan» (ADR-012 §3.1). La decisión está registrada en el maestro §15.10, decisión 27, y ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta) están **Aceptados** desde el 25 de noviembre de 2026. Q24 la decidió Alejandro el 25 de noviembre de 2026 (Session 2026-11-25).
+**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** El PR de la spec (#94) se mergeó el 25 de noviembre de 2026; no avanza a Plan hasta cumplir «Lo que hace falta para pasar a Plan» (ADR-012 §3.1). La decisión está registrada en el maestro §15.10, decisión 27, y ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta) están **Aceptados** desde el 25 de noviembre de 2026. Q24 la decidió Alejandro el 25 de noviembre de 2026 (Session 2026-11-25). Los comps se aprobaron ese mismo día (decisión 27.5): para pasar a Plan solo falta declarar MVP-1.
 
 **Input**: Petición de los fundadores del 24 de noviembre de 2026, aprobada por Alejandro ese día para especificarse y diseñarse en paralelo al gate de MVP-1: «Crear un plan, por ejemplo "Cartagena" o "ir al pueblo", y anotar en él los gastos de esa salida. Esos gastos se siguen viendo en Yo y en Nosotros. Un histórico ("en Cartagena nos gastamos $1.000.000"), abrir el detalle del plan y subirle una foto como en las metas, ver el desglose de quién pagó qué y saber si se pasaron del presupuesto del plan».
 
@@ -590,7 +590,7 @@ Sara sube una foto de la playa a «Cartagena».
 #### Lista, histórico y navegación
 
 - **FR-040**: Planes vive donde diga Q3. Activos primero; cerrados en «Histórico», del más reciente al más antiguo, con nombre, fechas y total compartido.
-- **FR-041**: En Yo se ven los planes privados propios y, aparte, los compartidos; en Nosotros, solo los compartidos (como 22.11).
+- **FR-041**: En Yo se ven los planes privados propios y, aparte, los compartidos; en Nosotros, solo los compartidos (como 22.11). En Yo, la tarjeta de un plan de la pareja muestra su **total compartido**, el mismo que ven los dos; nunca suma los privados de quien mira, que siguen aparte en el detalle (Q6 y Q9), ni se suma con los planes personales (decisión de los fundadores del 25 de noviembre de 2026, decisión 27.5; `design-comps.md`).
 - **FR-042**: Cerrar y reabrir (según Q12): manual y reversible. En un plan compartido, lo puede hacer cualquiera de los dos. Es idempotente y queda auditado.
 - **FR-043**: Un plan cerrado **queda bloqueado** (según Q12):
   - la base de datos rechaza editar su nombre, sus fechas, su presupuesto o su foto, y asociarle o quitarle gastos;
@@ -678,5 +678,5 @@ Sara sube una foto de la playa a «Cartagena».
 2. ~~Que ADR-014 y ADR-015 pasen a Aceptado.~~ **Hecho** en ese mismo PR, con fecha del 25 de noviembre de 2026.
 3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
 4. ~~Que los fundadores confirmen la lectura de «le corresponde» de Q24.~~ **Hecho:** confirmada el 25 de noviembre de 2026, junto con el matiz de Balance.
-5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los **tres** ajustes obligatorios hechos (la foto de 15 MB, la variante de eliminar con 13 gastos y la línea de Q24 en «Quién pagó» de 06·3), con la decisión `[P]` sobre el total compartido en Yo tomada y con sus demás `[P]` marcados.
-6. Que MVP-1 esté declarado (spec 005).
+5. ~~Que los fundadores aprueben los comps de Claude Design.~~ **Hecho:** aprobados el 25 de noviembre de 2026 con los tres ajustes obligatorios hechos y la decisión sobre el total compartido en Yo tomada (decisión 27.5; `design-comps.md`). Las `[V]` de diseño que quedan (scrim con la foto clara y licencia de las fotos de muestra) pasan a la implementación.
+6. Que MVP-1 esté declarado (spec 005). **Es lo único que falta.**
