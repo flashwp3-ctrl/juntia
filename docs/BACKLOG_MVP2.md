@@ -17,7 +17,8 @@ decisión 28, 25 de noviembre de 2026). MVP-2 = Planes + Recurrentes y calendari
 + Presupuesto integral v1 (28.2). Orden: Planes → Recurrentes y calendario →
 Presupuesto integral v1 → Créditos y deudas → Cuentas, activos y patrimonio →
 Flujo y liquidez → Proyecciones y escenarios; estadísticas y sugerencias es
-independiente (28.3). Los nombres son provisionales y ninguna spec tiene número:
+independiente (28.3). Planes conserva su número y su nombre (spec 006). Las specs
+nuevas posteriores tienen nombres provisionales y ninguna tiene número: cada una
 lo recibe al abrirse, de una en una. Como máximo una spec en implementación y otra
 en documentación activa (28.18), solo cuando se cumplan los cuatro prerrequisitos
 de la 28.19.
@@ -29,9 +30,9 @@ de la 28.19.
 | 1 | **Planes: viajes, salidas y eventos.** Agrupar gastos en un plan con total, presupuesto opcional, desglose por categoría, quién pagó, foto e histórico, sin cambiar ninguna cifra de dinero | Petición de los fundadores del 24 nov 2026, aprobada por Alejandro para especificarse y diseñarse en paralelo al gate | **Primera funcionalidad de MVP-2.** Spec `specs/006-planes/`: Q1–Q23 respondidas el 24 nov 2026 (Q12 cambiada) y Q24 el 25 nov 2026; decisión 27 del maestro; ADR-014 y ADR-015 aceptados el 25 nov 2026; comps aprobados el 25 nov 2026 (decisión 27.5; `specs/006-planes/design-comps.md`). Para pasar a Plan solo falta declarar MVP-1 |
 | 2 | Fotos de portada de las metas | Decisiones 22.6 y 24.13; ADR-014 | Va con Planes, en su PR C (spec 006, Q16; ADR-014 aceptado) |
 | 3 | Recurrentes | Maestro §11, MVP-2 | **Absorbida en Recurrentes y calendario** (decisiones 28.3 y 28.6) |
-| 4 | Presets de captura | Maestro §11, MVP-2 | **Absorbida en Recurrentes y calendario**, como concepto distinto y en PR propios (decisión 28.6; Q17) |
+| 4 | Presets de captura | Maestro §11, MVP-2 | **Absorbida en Recurrentes y calendario**, como concepto distinto de las recurrencias (decisión 28.6; Q17). Se evalúa separarlos en PR independientes dentro de la misma spec, sin que retrasen innecesariamente el núcleo; si comparten tabla o entidad lo decide el Plan de la spec |
 | 5 | Estadísticas mejores | Maestro §11, MVP-2 | Pasa a la spec de **estadísticas y sugerencias**, independiente y priorizada según evidencia; ya no forma parte de MVP-2 (decisiones 28.2 y 28.6; Q4) |
-| 6 | Sugerencia voluntaria de presupuestos con historial suficiente (DEC-R01-S) | Maestro §8.2 y §11 | Pasa a la spec de **estadísticas y sugerencias**, cuando haya varios meses de historial real (decisiones 28.2 y 28.6; Q4). DEC-R01-S no cambia |
+| 6 | Sugerencia voluntaria de presupuestos con historial suficiente (DEC-R01-S) | Maestro §8.2 y §11 | Pasa a la spec de **estadísticas y sugerencias** (decisiones 28.2 y 28.6; Q4). Esa spec se prioriza según la evidencia de uso; eso es independiente del umbral funcional de DEC-R01-S, que no cambia: con un periodo razonablemente completo admite una hipótesis editable con incertidumbre, y el umbral exacto se calibra con evidencia (maestro §5.3) |
 | 7 | Aportes programados y metas avanzadas | Maestro §11, MVP-2 | Los **aportes programados**, absorbidos en Recurrentes y calendario como recurrencia de tipo «aporte a meta» (decisión 28.6; Q4); su lugar en el presupuesto, en el Presupuesto integral v1 (B.6). «Metas avanzadas» sigue sin contenido definido |
 
 El orden de las filas 3 a 7 es el del maestro, no una prioridad. Las filas

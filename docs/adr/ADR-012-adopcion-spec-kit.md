@@ -157,9 +157,10 @@ versión.
 > un PR documental de una spec **nunca** es el gate de otra, y pausar la
 > documentación de una spec no deshace ni salta ninguno de sus gates ya
 > mergeados. Cada spec en vuelo tiene su rama y su worktree (`AGENTS.md` 14b).
-> **La regla no se ejerce todavía:** antes hay que verificar cómo eligen la
-> spec activa los scripts de Spec Kit y que dos worktrees no escriben en la
-> spec equivocada (`[V]` 4 de este ADR; prerrequisito 3 de la decisión 28.19).
+> **La regla no se ejerce todavía:** antes deben cumplirse los cuatro
+> prerrequisitos de la decisión 28.19. El que toca a este ADR es el 3:
+> verificar cómo eligen la spec activa los scripts de Spec Kit y que dos
+> worktrees no escriben en la spec equivocada (`[V]` 4 de este ADR).
 > Esta nota no cambia el estado del ADR ni ningún otro punto de la decisión.
 
 #### 3.2 `[P]` — **se conserva como «paralelizable», solo dentro de `specs/*/tasks.md`**
