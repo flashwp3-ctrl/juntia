@@ -2,6 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-25
+**Updated**: 2026-11-25, tras Clarify
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -13,7 +14,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,14 +32,16 @@
 
 ## Notes
 
-- **Sin marcadores en línea, a propósito.** Como en las specs 003 a 006, lo no
-  decidido no se marca con `[NEEDS CLARIFICATION]` sino como preguntas
-  numeradas (Q1–Q19) en «Clarifications», con la recomendación del redactor.
-  El ítem queda sin marcar hasta que los fundadores las respondan en Clarify.
-- **Criterios de aceptación pendientes de Clarify.** Varios FR remiten a una
-  pregunta abierta (FR-004 → Q6, FR-010 → Q3, FR-012 → Q4, FR-015 → Q5,
-  FR-041 → Q14, FR-044 → Q15, FR-050 → Q16, FR-093 → Q19). Su criterio exacto
-  se fija con la respuesta.
+- **Clarify hecho el 25 de noviembre de 2026.** Los fundadores respondieron
+  Q1–Q19; las respuestas y sus precisiones están en «Session 2026-11-25 ·
+  Clarify» de la spec. No queda ningún `[NEEDS CLARIFICATION]` ni ninguna
+  pregunta sin respuesta.
+- **Queda un ítem sin marcar, a propósito.** Q15 no está cerrada: FR-045 a
+  FR-047 dicen qué se explora y con qué condiciones, pero si hay total de gastos
+  previstos se decide viendo los comps, y su tratamiento de estimados, rangos,
+  estados y privacidad lo fija ADR-b. También quedan para ADR-a la identidad
+  estable de las instancias (FR-005), la regla quincenal (FR-009b, propuesta
+  `[P]`) y si las ocurrencias de un periodo pausado existen como canceladas.
 - **Detalles de implementación.** La spec nombra `transactions`, el ledger de
   metas, `America/Bogota`, pgTAP y `src/lib/copy/es.ts` porque son contratos ya
   decididos del maestro, de ADR-011 y de CONVENTIONS, no elecciones nuevas
