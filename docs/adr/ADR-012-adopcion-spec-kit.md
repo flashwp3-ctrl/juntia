@@ -522,11 +522,19 @@ Queda pendiente:
    | 17 | Los casos 6, 10 y 11, repetidos con las funciones finales | `PARA` en los cuatro: la ruta absoluta en `feature.json`, `SPECIFY_INIT_DIR` en la línea del comando y exportada, y `..` en `feature.json` |
    | 18 | **F100-9.** Validación del destino de una spec nueva para `c` (rama `tmp/n8-sin-prefijo`, `specs/007-prueba-recurrentes`) | `PARA` desde el worktree equivocado, con un número ocupado (006), al saltarse un número (008), si falla `git fetch` (proxy inalcanzable) y si no hay `gh` (`PATH` sin `gh`). Después de todo eso, `git status` está vacío: no se creó nada |
    | 19 | **F100-9.** Procedimiento de spec nueva de punta a punta, parte del script, en `c` | `speckit_new_target` da `OK: destino libre … (número 007)`. `create-new-feature.sh --number 7 --short-name prueba-recurrentes` crea `specs/007-prueba-recurrentes/spec.md` y escribe `feature.json` con `specs/007-prueba-recurrentes`. `speckit_check` y `speckit_scope` dan `OK`. Con un archivo de más en `src/`, `speckit_scope` da `PARA` y lo lista. El número 007 deja de estar libre para otra spec nueva |
+   | 20 | **F100-10.** Renombre hacia fuera de la spec (`git mv specs/007-…/spec.md src/spec.md`) | La función de la tercera pasada da `OK`. `speckit_scope` da `PARA` y lista `src/spec.md` |
+   | 21 | **F100-10.** Renombre hacia dentro (`git mv README.md specs/007-…/README.md`) | La tercera pasada da `OK`. `speckit_scope` da `PARA` y lista `README.md` |
+   | 22 | **F100-10.** Un archivo nuevo con espacios en el nombre dentro de la spec (positivo) | La tercera pasada da `PARA`. `speckit_scope` da `OK` |
+   | 23 | **F100-10.** Falla `git status` (simulado: una función `git` que devuelve 128 en `status`) | La tercera pasada da `OK`. `speckit_scope` da `PARA: git status falló` |
+   | 24 | **F100-10.** Un cambio dentro de la spec (positivo) | `OK` |
+   | 25 | **F100-11.** No existe `origin/main`, o falla `git ls-tree` (simulado con una función `git`) | `PARA: no existe origin/main` y `PARA: git ls-tree falló`. Con `ls-tree` fallando, la función de la tercera pasada sigue adelante y da `OK`. Sin fallos, `specs/008-otra` da `OK` (positivo) |
 
    Los casos 1 a 13 son de la segunda pasada, con la comprobación de entonces,
    que solo recibía la spec. Los casos 14 a 19 son de la tercera, con las
-   funciones finales de abajo, que también repiten los negativos (caso 17) y el
-   positivo (caso 15) de la segunda.
+   funciones de entonces, que también repiten los negativos (caso 17) y el
+   positivo (caso 15) de la segunda. Los casos 20 a 25 son de la cuarta, con las
+   funciones finales de abajo. Esas funciones solo cambian `speckit_scope` y la
+   numeración de `speckit_new_target`.
 
    Salida seleccionada, recortada. Las preparaciones y restauraciones de estado
    entre casos están en la salida completa del PR.
@@ -603,7 +611,7 @@ Queda pendiente:
      Sin ensayar quedan:
      - **los enlaces simbólicos.** La canonización de Git los resuelve, pero
        ese caso no se ejecutó;
-     - **la parte de la skill en una spec nueva** (condición 5, paso 3).
+     - **la parte de la skill en una spec nueva** (condición 6, paso 3).
        `speckit-specify` lleva `disable-model-invocation` y solo la invoca una
        persona (Decisión §1.4), así que un agente no puede ensayarla. Lo que sí
        está ensayado es el script que crea el directorio, `spec.md` y
@@ -641,10 +649,23 @@ Queda pendiente:
         que el `specs/` padre está físicamente en el worktree, que el número es
         el siguiente libre en `origin/main` (tras `git fetch`), en el `specs/`
         local y en los PR abiertos (con `gh`), y que el directorio no existe en
-        ninguno de los tres sitios. **Si `git fetch` o `gh` fallan, para.**
-      - `speckit_scope`: que todos los cambios del worktree, versionados o no,
-        están dentro de la spec asignada. `feature.json` está ignorado y no
-        cuenta.
+        ninguno de los tres sitios. **Para si falla cualquier fuente de la
+        numeración:** `git fetch`, `origin/main` inexistente, `git ls-tree`,
+        `specs/` local o `gh`.
+      - `speckit_scope`: comprueba **los artefactos de una operación de Spec
+        Kit**. Se ejecuta justo después de la operación y antes de añadir
+        cualquier otro cambio documental autorizado. Comprueba, ruta por ruta
+        (`git status -z --no-renames`, con el exit de git comprobado), que los
+        cambios pendientes y no ignorados del worktree actual están dentro de la
+        spec asignada; `feature.json` está ignorado y no cuenta.
+        - **No** detecta escrituras en otro worktree, que las cubren
+          `speckit_identity` y `speckit_check` antes de la operación.
+        - **No** sustituye la revisión del diff completo del PR.
+        - **No** limita qué más puede llevar el PR: los ADR propuestos, el
+          diseño y las reconciliaciones que la decisión 28.17 permite durante
+          el gate siguen sus propios procedimientos y PR. No hay ninguna
+          excepción genérica para `docs/`; simplemente se añaden después de
+          `speckit_scope`.
 
       ```bash
       # Comprobaciones de Spec Kit (ADR-012, [V] 4). Git Bash, en la raíz del worktree,
@@ -687,15 +708,18 @@ Queda pendiente:
 
       # 3. Destino de una spec nueva, antes de crear nada: número libre y directorio bajo specs/.
       speckit_new_target() {
-        local WT="$1" BRANCH="$2" SPEC="$3" TOP PR USED MAX NEXT
+        local WT="$1" BRANCH="$2" SPEC="$3" TOP MAIN LOCAL PR USED MAX NEXT
         [[ "$SPEC" =~ ^specs/[0-9]{3}-[a-z0-9-]+$ ]] || { echo "PARA: '$SPEC' no tiene la forma specs/NNN-nombre"; return 1; }
         speckit_identity "$WT" "$BRANCH" || return 1
         TOP=$(git rev-parse --show-toplevel)
         [[ "$(git -C specs rev-parse --show-toplevel 2>/dev/null)" == "$TOP" && "$(git -C specs rev-parse --show-prefix 2>/dev/null)" == "specs/" ]] \
           || { echo "PARA: specs/ no está físicamente en $TOP/specs/"; return 1; }
         git fetch --quiet origin || { echo "PARA: git fetch falló; no se puede comprobar el número"; return 1; }
+        git rev-parse --quiet --verify origin/main >/dev/null || { echo "PARA: no existe origin/main"; return 1; }
+        MAIN=$(git ls-tree --name-only origin/main specs/) || { echo "PARA: git ls-tree falló"; return 1; }
+        LOCAL=$(ls specs) || { echo "PARA: no se puede leer specs/"; return 1; }
         PR=$(gh pr list --state open --limit 200 --json files -q '.[].files[].path') || { echo "PARA: gh falló; no se puede comprobar el número"; return 1; }
-        USED=$( { git ls-tree --name-only origin/main specs/ | sed 's#^specs/##'; ls specs; printf '%s\n' "$PR" | sed -n 's#^specs/\([^/]*\)/.*#\1#p'; } \
+        USED=$( { printf '%s\n' "$MAIN" | sed 's#^specs/##'; printf '%s\n' "$LOCAL"; printf '%s\n' "$PR" | sed -n 's#^specs/\([^/]*\)/.*#\1#p'; } \
                 | sed -n 's/^\([0-9][0-9][0-9]\)-.*/\1/p' | sort -u)
         MAX=$(printf '%s\n' "$USED" | tail -n 1); NEXT=$(printf '%03d' $((10#${MAX:-0} + 1)))
         [[ "${SPEC#specs/}" == "$NEXT-"* ]] || { echo "PARA: el número libre es $NEXT (ocupados: $(echo $USED))"; return 1; }
@@ -704,12 +728,15 @@ Queda pendiente:
         echo "OK: destino libre $TOP/$SPEC/ (número $NEXT)"
       }
 
-      # 4. Alcance: los cambios del worktree (versionados o no) están todos dentro de la spec.
+      # 4. Alcance de una operación de Spec Kit: justo después de ella, los cambios pendientes
+      #    y no ignorados de este worktree están todos dentro de la spec. Ruta por ruta.
       speckit_scope() {
-        local WT="$1" BRANCH="$2" SPEC="$3" OUT
+        local WT="$1" BRANCH="$2" SPEC="$3" RECS R OUT=""
         speckit_identity "$WT" "$BRANCH" || return 1
-        OUT=$(git status --porcelain=v1 --untracked-files=all | grep -v " $SPEC/")
-        [[ -z "$OUT" ]] || { echo "PARA: cambios fuera de $SPEC/:"; echo "$OUT"; return 1; }
+        mapfile -d '' RECS < <(git status --porcelain=v1 -z --no-renames --untracked-files=all)
+        wait $! || { echo "PARA: git status falló"; return 1; }
+        for R in "${RECS[@]}"; do [[ "${R:3}" == "$SPEC/"* ]] || OUT+="${R:3}"$'\n'; done
+        [[ -z "$OUT" ]] || { echo "PARA: cambios fuera de $SPEC/:"; printf '%s' "$OUT"; return 1; }
         echo "OK: todos los cambios están en $SPEC/"
       }
       ```
@@ -723,8 +750,8 @@ Queda pendiente:
       ```
 
       Con una skill (`speckit-plan`, `speckit-tasks`…) se usa sin override, y
-      la skill se invoca solo después del `OK`. Al terminar se ejecuta
-      `speckit_scope` antes de hacer commit.
+      la skill se invoca solo después del `OK`. Justo al terminar la
+      operación, y antes de añadir otros cambios, se ejecuta `speckit_scope`.
 
       **Recuperar `feature.json`:** un worktree nuevo no lo tiene. Es el caso,
       por ejemplo, de retomar la 006 en el Plan. Primero `speckit_identity` y,
@@ -760,10 +787,11 @@ Queda pendiente:
          `mkdir -p` sobre él, que ya existe, reescribe `spec.md` y vuelve a
          escribir el mismo valor en `feature.json`. **Esta parte no está
          ensayada** (véase «Alcance de la verificación»).
-      4. **Comprobar después de la skill, antes del commit:**
-         `speckit_check` y `speckit_scope`. Garantizan que, haga lo que haga la
-         skill, `feature.json` sigue apuntando a la spec asignada y todos los
-         cambios están dentro de ella. Si no, no se hace commit (condición 7).
+      4. **Comprobar justo después de la skill**, antes de añadir cualquier
+         otro cambio: `speckit_check` y `speckit_scope`. Garantizan que, haga
+         lo que haga la skill, `feature.json` sigue apuntando a la spec
+         asignada y los cambios pendientes de este worktree están dentro de
+         ella. Si no, no se sigue ni se hace commit (condición 7).
 
       La sugerencia de `create-new-feature.sh` de exportar
       `SPECIFY_FEATURE_DIRECTORY` con una ruta absoluta **no se sigue**.
