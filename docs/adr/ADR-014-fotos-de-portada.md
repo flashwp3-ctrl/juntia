@@ -1,6 +1,6 @@
 # ADR-014 — Fotos de portada en Storage privado (metas y planes)
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores aceptaron el 24 de noviembre de 2026 las recomendaciones de la spec 006 que lo afectan (Q1, Q16, Q17 y Q19). Con Q16 = (a), las portadas se activan en MVP-2 para las metas y para los planes. La portada de un plan cerrado no se cambia ni se quita sin reabrirlo (Q12). Pasa a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10, y no se implementa antes de declarar MVP-1 · **Origen:** número reservado por el maestro §15.10, decisiones 22.6 y 24.13 («ADR-014, Storage privado de fotos de metas», a MVP-2), ampliado a los planes de la especificación 006 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (25 de noviembre de 2026; maestro §15.10, decisión 27.2). Propuesto el 24 de noviembre de 2026. Los fundadores aceptaron ese día las recomendaciones de la spec 006 que lo afectan (Q1, Q16, Q17 y Q19). Con Q16 = (a), las portadas se activan en MVP-2 para las metas y para los planes. La portada de un plan cerrado no se cambia ni se quita sin reabrirlo (Q12). La revisión del PR #94 cerró F94-1 a F94-10. No se implementa antes de declarar MVP-1, y sus `[V]` siguen pendientes · **Origen:** número reservado por el maestro §15.10, decisiones 22.6 y 24.13 («ADR-014, Storage privado de fotos de metas», a MVP-2), ampliado a los planes de la especificación 006 · **Alcance:** MVP-2
 
 ## Contexto
 
@@ -29,7 +29,7 @@
 - El borrado manual de cuenta (24.8, 25.3) borra filas. **Borrar una fila de
   `storage.objects` no borra el archivo**: se borra con la API de Storage.
 
-## Decisión propuesta
+## Decisión
 
 ### 1. Qué cubre
 

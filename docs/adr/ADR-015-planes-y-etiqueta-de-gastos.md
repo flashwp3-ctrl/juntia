@@ -1,8 +1,6 @@
 # ADR-015 — Planes: entidad propia y etiqueta adicional de los gastos
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores respondieron el 24 de noviembre de 2026 las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y Q12 la cambiaron (plan cerrado bloqueado, §5). El mismo día aceptaron también las recomendaciones de Q21–Q23. Faltan dos cosas:
-- el paso a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10;
-- que MVP-1 esté declarado antes de implementar · **Origen:** especificación 006 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (25 de noviembre de 2026; maestro §15.10, decisión 27.3). Propuesto el 24 de noviembre de 2026. Los fundadores respondieron ese día las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y cambiaron Q12 (plan cerrado bloqueado, §5). El mismo día aceptaron también las recomendaciones de Q21–Q23. El 25 de noviembre de 2026 Alejandro decidió Q24 (gasto compartido pagado con una meta compartida, §4; decisión 27.4). La revisión del PR #94 cerró F94-1 a F94-10. No se implementa antes de declarar MVP-1, y sus `[V]` siguen pendientes · **Origen:** especificación 006 · **Alcance:** MVP-2
 
 ## Contexto
 
@@ -25,7 +23,7 @@ Lo que no se puede romper:
 - La tabla `transactions` es una **tabla controlada** (ADR-013 §2): solo la escriben
   funciones de `juntia_private`, y su versión protege las ediciones concurrentes.
 
-## Decisión propuesta
+## Decisión
 
 ### 1. El plan es una entidad propia, no una categoría ni una meta
 
@@ -34,7 +32,7 @@ Lo que no se puede romper:
 - **No es una meta:** las metas son ahorro y tienen ledger (ADR-010). Un plan no
   guarda dinero, no tiene aportes ni saldo; solo agrupa gastos. Mezclarlos
   confundiría gasto con ahorro (§2.3.5).
-- **Tabla `juntia_data.outings`** **[propuesta]** (el identificador evita el choque
+- **Tabla `juntia_data.outings`** (el identificador evita el choque
   con el destino «Plan», la ruta `/plan` y `src/features/plan`; spec 006, Q2):
   `id`, `owner_user_id` **XOR** `group_id` (como DEC-G01), `name`, `starts_on`,
   `ends_on` (opcionales, fin ≥ inicio), `budget_minor` (nullable, > 0 si existe,
@@ -81,7 +79,7 @@ Lo que no se puede romper:
 
 ### 2. La relación con el gasto es una etiqueta en una tabla aparte
 
-**Tabla `juntia_data.outing_transactions`** **[propuesta]**:
+**Tabla `juntia_data.outing_transactions`**:
 `transaction_id` (PK y FK: **como máximo un plan por gasto**), `outing_id` (FK con
 `on delete cascade`), `tagged_by`, `tagged_at`.
 
@@ -143,6 +141,22 @@ cifras compartidas.
 
 En un plan privado, las cifras salen de los gastos privados activos de su dueña
 etiquetados en él.
+
+**Gasto compartido pagado con una meta compartida (Q24, opción A; decisión 27.4,
+25 de noviembre de 2026).** Cuenta completo en el total y en el desglose por
+categoría (Q7). En «Quién pagó», la parte pagada con la meta, que es la suma de
+los usos **aplicados y no anulados** de ese gasto (entradas `usage` de `goal_ledger_entries` sin su `void`), aparece como una línea
+propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Esa parte
+no entra en el `gross_paid` del pagador, y por eso no cambia el «pagó» ni la
+diferencia de ninguna persona. Una solicitud pendiente no cuenta.
+
+«Le corresponde» es una lectura `[P]`, pendiente de confirmar con los
+fundadores (spec 006, Q24). Si el gasto de importe A lleva usos por U, «le
+corresponde» reparte solo A − U con el mismo reparto, con mayor residuo y pesos
+enteros (ADR-002). Se cumplen dos igualdades: Σ pagó + Σ líneas de meta = total, y
+Σ le corresponde = Σ pagó. La diferencia de ese gasto en el plan deja de coincidir
+con lo que mueve en Balance, que conserva el reparto completo (004, FR-058). Ni el
+balance de la pareja ni ADR-010 cambian.
 
 Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 `security_invoker`.

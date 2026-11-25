@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-24
 
-**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** No avanza a Plan sin el merge de su PR documental (ADR-012 §3.1). Depende además de dos ADR en estado **Propuesto**: ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta).
+**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** El PR de la spec (#94) se mergeó el 25 de noviembre de 2026; no avanza a Plan hasta cumplir «Lo que hace falta para pasar a Plan» (ADR-012 §3.1). La decisión está registrada en el maestro §15.10, decisión 27, y ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta) están **Aceptados** desde el 25 de noviembre de 2026. Q24 la decidió Alejandro el 25 de noviembre de 2026 (Session 2026-11-25).
 
 **Input**: Petición de los fundadores del 24 de noviembre de 2026, aprobada por Alejandro ese día para especificarse y diseñarse en paralelo al gate de MVP-1: «Crear un plan, por ejemplo "Cartagena" o "ir al pueblo", y anotar en él los gastos de esa salida. Esos gastos se siguen viendo en Yo y en Nosotros. Un histórico ("en Cartagena nos gastamos $1.000.000"), abrir el detalle del plan y subirle una foto como en las metas, ver el desglose de quién pagó qué y saber si se pasaron del presupuesto del plan».
 
@@ -45,8 +45,8 @@
 | Spec 005, decisiones del 22 nov 2026 | Once categorías de gasto y rejilla de Anotar de 4 × 3 |
 | ADR-013 | Tablas en `juntia_data`, escrituras solo por funciones en `juntia_private`, vistas `security_invoker` en `public`, idempotencia y bloqueo del agregado |
 | ADR-011 y `docs/TESTING.md` | Capa más baja que detecta el fallo; tope de specs E2E; iteración contra `juntia-dev` |
-| ADR-014 **(Propuesto, este PR)** | Fotos de portada en Storage privado: límites, EXIF, borrado, costos |
-| ADR-015 **(Propuesto, este PR)** | Entidad del plan y su relación con los gastos (etiqueta adicional) |
+| ADR-014 **(Aceptado, 25 nov 2026)** | Fotos de portada en Storage privado: límites, EXIF, borrado, costos |
+| ADR-015 **(Aceptado, 25 nov 2026)** | Entidad del plan y su relación con los gastos (etiqueta adicional) |
 | `docs/design/` | I2 · Bosque & Arena, Phosphor con `AppIcon`, BRAND §4 (palabras prohibidas) y §5 (fotografía), GoalCard y su fallback `[A]`, BottomSheet, Modal, BudgetIndicator, SharedBalance |
 | `docs/GLOSSARY.md` | Términos existentes; ninguno se renombra |
 
@@ -138,10 +138,48 @@ El contexto y las opciones de cada una se conservan abajo.
 - **Opciones:** (a) se permite. La etiqueta pasa al gasto nuevo si el plan es compartido de esa pareja, como consecuencia de una operación de dinero y no como una asociación. Si el plan es privado, la confirmación avisa que el gasto saldrá de un plan cerrado. (b) Se bloquea mientras el plan esté cerrado, y la confirmación pide reabrirlo.
 - **Recomendación: (b) para un plan privado cerrado y (a) para uno compartido.** Con (a) en un plan compartido, el plan no pierde nada. Con un plan privado cerrado, el gasto saldría del plan sin reabrirlo, que es lo que la regla 3 quiere evitar.
 
+### Session 2026-11-25
+
+Alejandro decidió Q24 el 25 de noviembre de 2026, con la opción A. Queda
+registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
+
+#### Q24 · Gasto compartido pagado con una meta compartida, en «Quién pagó»
+
+- **Contexto:** Q7 cuenta completo un gasto pagado con una meta. En el balance de
+  la pareja, ese gasto conserva su pagador y su reparto, porque los fondos de la
+  meta no tocan el reparto (004, FR-058; DEC-G06). En «Quién pagó» de un plan, en
+  cambio, atribuirle a una persona un pago que salió de la meta muestra una
+  diferencia que nadie sintió. Por ejemplo, el regalo de la boda pagado con la
+  meta «Regalos».
+- **Respuesta, opción A:**
+  1. El gasto aparece en «Quién pagó» como una línea propia, «Pagado con la meta
+     {meta}», que no se asigna a ninguno de los dos.
+  2. No cambia el «pagó» ni la diferencia de ninguna persona.
+  3. Cuenta completo en el total del plan y en el desglose por categoría (Q7).
+- **«Le corresponde» `[P]`, lectura propuesta por el redactor y pendiente de
+  confirmar con los fundadores.** Para que la opción A se cumpla, la parte pagada
+  con la meta tampoco entra en «le corresponde». Si un gasto de importe A tiene
+  usos de meta aplicados por U (con 0 < U ≤ A):
+  - la línea «Pagado con la meta {meta}» suma U, con una línea por meta;
+  - el «pagó» del pagador suma A − U;
+  - «le corresponde» reparte A − U con el mismo reparto del gasto, en pesos
+    enteros, con el algoritmo de mayor residuo de ADR-002. Si U = A, el gasto no
+    suma nada a ninguna persona.
+
+  Así se cumple que Σ «pagó» + Σ líneas de meta = total del plan, que Σ «le
+  corresponde» = Σ «pagó» y que las diferencias suman cero. Solo cuentan los usos
+  **aplicados** y no anulados; una solicitud pendiente no cuenta (004, FR-053).
+  **La duda está en la consecuencia:** la «Diferencia en este plan» deja de
+  coincidir con lo que ese gasto mueve en Balance, que sigue con el reparto
+  completo. Ya era una cifra informativa, sin «le debe» (Q10), y el enlace a
+  Balance se mantiene. La alternativa es que «le corresponde» reparta el importe
+  completo A; entonces las diferencias no suman cero y la meta crea una
+  diferencia aparente, que es lo que la opción A quiere evitar.
+
 ### Preguntas de la etapa Specify
 
 Las Q1–Q20 se conservan tal como se plantearon. Las respuestas están en la tabla
-de arriba. Las marcadas **· ADR** dependen de un ADR propuesto en este PR.
+de arriba. Las marcadas **· ADR** dependen de ADR-014 o ADR-015, propuestos en el PR #94 y aceptados el 25 de noviembre de 2026 (decisión 27).
 
 ### Lo que ya está decidido y esta spec no reabre
 
@@ -325,6 +363,7 @@ pagó/corresponde por persona.
 3. **Given** un plan sin presupuesto, **When** abre el detalle, **Then** no hay barra, ni restante, ni exceso, ni «$0» (DEC-R01).
 4. **Given** gastos pagados por Sara y por Tomás con repartos distintos, **When** abre «Quién pagó», **Then** ve por persona «pagó» y «le corresponde» dentro del plan, la diferencia rotulada «Diferencia en este plan» y el enlace al balance de la pareja; en ninguna parte del plan dice «le debe».
 5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
+6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7; «le corresponde» según la lectura `[P]` de Q24).
 
 ---
 
@@ -479,7 +518,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-030**: Héroe: «Gastaron en {plan}» (compartido) o «Gastaste en {plan}» (privado) con el total del FR-021. Nunca `total_destinado_neto`, nunca aportes ni liquidaciones.
 - **FR-031**: Presupuesto (según Q8 y Q9): sin presupuesto, nada; con presupuesto, consumido, porcentaje, «Quedan $X» o «Se pasaron por $X», y «Cerca del límite» desde el 85 %, con texto y forma además de color. Nunca «te alcanza» ni «puedes gastar» (DEC-R17).
 - **FR-032**: Desglose por categoría (según Q11), con `CategoryIcon`.
-- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos.
+- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie y no cambia el «pagó» ni la diferencia de ninguna persona, aunque cuenta completo en el total y en el desglose (según Q24 y Q7). En «le corresponde» se excluye también la parte pagada con la meta, como propone la lectura `[P]` de Q24, pendiente de confirmar; solo cuentan los usos aplicados y no anulados (ADR-015 §4).
 - **FR-034**: Lista de gastos del plan con el mismo `ExpenseRow` de Actividad y la marca «Pagado con una meta» cuando aplique.
 - **FR-035**: Foto de portada o fallback (ADR-014; fallback como GoalCard `[A]`).
 
@@ -539,11 +578,11 @@ Sara sube una foto de la playa a «Cartagena».
 - Grupos de más de dos personas (P1).
 - Sugerencias automáticas de plan por ubicación, IA u OCR.
 
-### Key Entities *(propuestas; ADR-015)*
+### Key Entities *(ADR-015 y ADR-014, aceptados)*
 
-- **Plan** (`juntia_data.outings` **[propuesta]**): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
-- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
-- **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, `full_path` y `thumb_path` (rutas deterministas bajo `…/{cover_id}/`), bytes y `sha256` de cada variante, ancho, alto, focal point `{x,y}`, `status` (`pending | ready`) y `created_by`. Las dos variantes son una sola portada lógica: se suben, reemplazan, borran, barren y restauran juntas (ADR-014 §2 y §5).
+- **Plan** (`juntia_data.outings`): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
+- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions`): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
+- **Foto de portada** (`juntia_data.cover_photos`, ADR-014): id, propietaria XOR pareja, `full_path` y `thumb_path` (rutas deterministas bajo `…/{cover_id}/`), bytes y `sha256` de cada variante, ancho, alto, focal point `{x,y}`, `status` (`pending | ready`) y `created_by`. Las dos variantes son una sola portada lógica: se suben, reemplazan, borran, barren y restauran juntas (ADR-014 §2 y §5).
 
 ## Success Criteria *(mandatory)*
 
@@ -567,8 +606,9 @@ Sara sube una foto de la playa a «Cartagena».
 
 ## Lo que hace falta para pasar a Plan
 
-1. Que las respuestas Q1–Q23, todas dadas el 24 de noviembre de 2026, queden registradas como decisión del maestro §15.10, en el PR documental que las recoja.
-2. Que ADR-014 y ADR-015 pasen a Aceptado en ese mismo PR. Ya reflejan todas las respuestas.
-3. Que la revisión de este PR termine sin hallazgos abiertos.
-4. Que los fundadores aprueben los comps de Claude Design de las pantallas del prompt (`design-prompt.md`), con sus `[P]` marcados.
-5. Que MVP-1 esté declarado (spec 005).
+1. ~~Que las respuestas Q1–Q23 queden registradas como decisión del maestro §15.10.~~ **Hecho:** decisión 27, en el PR documental posterior al #94, con Q24 incluida.
+2. ~~Que ADR-014 y ADR-015 pasen a Aceptado.~~ **Hecho** en ese mismo PR, con fecha del 25 de noviembre de 2026.
+3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
+4. Que los fundadores confirmen la lectura `[P]` de «le corresponde» de Q24.
+5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los dos ajustes pendientes hechos y sus `[P]` marcados.
+6. Que MVP-1 esté declarado (spec 005).
