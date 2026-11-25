@@ -1,8 +1,11 @@
 # Análisis de la propuesta de planificación financiera integral (sección 6)
 
 **Estado:** análisis del gestor, **para decisión de los fundadores** (25 de
-noviembre de 2026). **No es una decisión, no amplía el alcance y no es
-autoridad.** Analiza `docs/propuestas/planificacion-financiera-integral.md` (en
+noviembre de 2026). Incluye las **respuestas propuestas de los fundadores (25 nov
+2026)** a las preguntas de §9 y la resolución de los hallazgos F98-1 a F98-6 de
+la revisión adversarial (§11). Las respuestas **todavía no son decisiones del
+maestro**: lo serán cuando un PR documental las registre en §15.10 (§10). **No es
+una decisión, no amplía el alcance y no es autoridad.** Analiza `docs/propuestas/planificacion-financiera-integral.md` (en
 adelante, «la propuesta»), sus bloques provisionales A–D y las precisiones de su
 §8. No modifica el maestro, los ADR, la spec 006 ni el alcance de MVP-1. Donde
 este documento recomienda algo, decide quien corresponde: los fundadores.
@@ -70,9 +73,29 @@ especificar:
 - datos manuales que envejecen sin que se note;
 - la deriva hacia un ERP.
 
-**Decisiones que necesito de los fundadores** (§9): 16 preguntas. Las tres que
-desbloquean todo lo demás son **Q1** (qué entra en MVP-2), **Q3** (el orden) y
-**Q9** (el modelo de privacidad para ingresos, cuentas, deudas y activos).
+**Respuestas propuestas de los fundadores** (§9, 25 nov 2026). Aceptaron la
+recomendación en 15 de las 16 preguntas, con precisiones en Q7, Q9, Q12, Q13 y
+Q15:
+
+- MVP-2 = Planes + Recurrentes + Presupuesto integral v1 (Q1);
+- los grupos de más de dos van detrás de la planificación (Q2);
+- el orden del análisis (Q3);
+- privacidad por defecto, con agregados y escenarios compartidos solo sobre lo
+  compartido (Q9).
+
+**Q8 sigue abierta**: la revisión mostró que la cuota inicial no puede ser un
+aporte a meta (F98-1). §9 trae la Q8 revisada con cuatro opciones y una
+recomendación.
+
+**Al aplicar las respuestas aparecen siete contradicciones o tensiones nuevas**
+(§12). Ninguna bloquea. Las que más importan:
+
+- MVP-2 y MVP-3 del maestro §11 cambian (N-1, N-2) y van al PR de la decisión 28;
+- la fila 4 del backlog, presets de captura, queda sin ubicar: es una pregunta
+  nueva (N-1);
+- el objetivo orientativo de 2026 es muy ajustado frente al gate de MVP-1 (N-4);
+- el nombre de la capa de P1 no debe llevar «plan», porque chocaría con «Plan» y
+  «Planes» (N-5).
 
 ---
 
@@ -147,11 +170,11 @@ Ninguna capacidad está completa hoy.
 | C.6 | Amortización y abonos a capital | **Nueva** | La propuesta §8.4 limita: COP, tasa fija y cuota fija |
 | C.7 | Inmuebles de inversión | **Nueva** | Compone C.4, C.5 y el arriendo (ingreso **compartido**, §3) |
 | C.8 | Patrimonio neto | **Nueva** | El mayor riesgo de privacidad por agregados (§7.2) |
-| C.9 | Fondo de emergencia | **Base** | La meta `emergency` existe; falta la cobertura en meses, que depende de B (gastos esenciales) |
+| C.9 | Fondo de emergencia | **Base** | La meta `emergency` existe; falta la cobertura en meses. **Una meta no acredita que el dinero exista ni que sea líquido** (DEC-G03; F98-4): en P1 solo cabe una cobertura **teórica**; la real espera a K y P2 |
 | D.1 | Proyecciones por horizonte | **Nueva** | **Choca con la 22.9** («sin extrapolar») y con «Llegarán en abril» de GLOSSARY §9 |
 | D.2 | Escenarios independientes | **Nueva** | — |
 | D.3 | Ingresos inciertos en escenarios | **Nueva** | Depende de A.3 |
-| D.4 | Simulador de reducción de deuda | **Nueva** | Sale casi gratis del motor de C.6 (§4) |
+| D.4 | Simulador de reducción de deuda | **Nueva** | Sale casi gratis del motor de C.6. Va **dentro de D** cuando su ADR esté aceptado, sin esperar a E (Q12; F98-3) |
 | D.5 | Simulador de decisiones | **Nueva**; el maestro §3 menciona «simulaciones avanzadas de metas» en P1 | DEC-R17: «no emitir autorización de gasto» ya está en la propuesta |
 | D.6 | Varios objetivos a la vez | **Nueva** | — |
 | D.7 | Visualización temporal | **Nueva** | Real y proyectado distinguibles sin depender del color (maestro §6.1.1 regla 4) |
@@ -204,8 +227,34 @@ propuesta §6). Cada una se pensó para que **entregue valor sin la siguiente**
 | Spec provisional | Capacidades | Valor por sí sola | Fuera de ella |
 | --- | --- | --- | --- |
 | **R · Recurrentes y calendario** | A.1, A.2, A.3 (estados y rango simples), A.4, A.5; **fila 3**; **fila 7** como recurrencia de tipo «aporte a meta» | Saber qué viene este mes y el siguiente. Confirmar en un toque lo esperado sin teclearlo (crea un gasto real o un aporte real con su idempotencia). Nunca crea movimientos reales por su cuenta (A.2) | Amortización, saldos, proyecciones |
-| **P1 · Presupuesto integral v1 (sin liquidez)** | B.1, B.2, B.3 (sobre metas), B.4 (meses futuros del plan del mes), B.6; C.9 básico (cobertura con gastos esenciales declarados o históricos, rotulada «estimada») | Repartir el ingreso previsto entre destinos y ver asignado, ejecutado y pendiente. Las provisiones reutilizan metas | Cuentas, saldos y cualquier cifra de «disponible» |
-| **D · Créditos y deudas** | C.5, C.6, **D.4 básico** (cuota obligatoria frente a abonos, reducción de plazo frente a reducción de cuota); vínculo con la recurrencia de la cuota | Saber cuánto se debe, cuánto es interés y cuánto capital, y qué cambia con un abono. El motor de amortización hace casi todo D.4 | Tasas variables, UVR y tarjetas de crédito (propuesta §8.4) |
+| **P1 · Presupuesto integral v1 (sin liquidez)** | B.1, B.2, B.3 (sobre metas), B.4 (meses futuros del plan del mes), B.6; C.9 **teórico** (F98-4, abajo) | Repartir el ingreso previsto entre destinos y ver asignado, ejecutado y pendiente. Las provisiones reutilizan metas | Cuentas, saldos y cualquier cifra de «disponible»; la cobertura con recursos líquidos reales |
+| **D · Créditos y deudas** | C.5, C.6, **simulador de amortización** (D.4 del crédito: cuota obligatoria frente a abonos, reducción de plazo frente a reducción de cuota); vínculo con la recurrencia de la cuota; reclasificación auditada de las cuotas «sin desglosar» (F98-1) | Saber cuánto se debe, cuánto es interés y cuánto capital, y qué cambia con un abono. El motor de amortización hace casi todo D.4 | Tasas variables, UVR y tarjetas de crédito (Q14); el simulador integral entre bloques (E) |
+
+**Fondo de emergencia en P1 (F98-4).** Una meta registra lo que alguien apartó en
+Juntia («apartado en Juntia» o «transferencia declarada», DEC-G03). No acredita que
+el dinero exista ni que sea líquido. En P1 solo se muestra una **cobertura
+teórica**:
+
+- se calcula como el saldo de la meta de emergencia dividido entre los gastos
+  esenciales **declarados** por la persona;
+- se rotula «teórica», con sus dos supuestos a la vista: que lo apartado existe y
+  que los gastos esenciales declarados son correctos;
+- nunca se usa para afirmar solvencia, para autorizar un gasto ni para decir «te
+  alcanza» (DEC-R17).
+
+La cobertura con recursos líquidos reales espera a K (cuentas) y a P2 (liquidez).
+
+**Simulación de deuda antes de E (F98-3).** No hay contradicción con Q12 si se
+separan dos cosas:
+
+- **el simulador de amortización de un crédito** (D.4 aplicado a una deuda): es
+  aritmética determinista sobre un crédito declarado. Entra en D en cuanto su ADR
+  (ADR-e) esté aceptado;
+- **el simulador integral** (D.4 cruzado con liquidez, fondo de emergencia o
+  varios objetivos; D.5 y D.6): necesita P2 y va en E.
+
+Lo que D **no** muestra es el «efecto sobre el fondo de emergencia» de la
+propuesta D.4: necesita liquidez, y por eso es de E.
 | **K · Cuentas, activos y patrimonio** | C.1, C.3, C.4, C.7, C.8; ajustes de saldo sin ingresos ni gastos ficticios (propuesta §8.3) | Una foto del patrimonio con la fecha de cada dato | Liquidez prevista |
 | **P2 · Flujo y liquidez** | B.7, C.2 | Flujo previsto frente a real, y disponibilidad por tipo de recurso, declarada y fechada | Escenarios |
 | **E · Proyecciones y escenarios** | D.1, D.2, D.3, D.5, D.6, D.7, D.8 | Comparar decisiones con supuestos visibles | — |
@@ -225,8 +274,8 @@ Juntos harían una spec del tamaño de la 004, que ya necesitó cinco PR.
 análisis de dependencias (§5) dice que B.1 a B.4 y B.6 **solo necesitan A**,
 además de los presupuestos y las metas que ya existen. La cuota de un crédito
 entra en el plan del mes como **un compromiso recurrente** por su salida de caja
-completa. Hasta que exista D, se rotula «cuota (sin desglosar)», sin afirmar
-cuánto es capital. Registrar inmuebles o inversiones no es requisito de nada en
+completa. Hasta que exista D, se rotula «cuota (sin desglosar)», con las cuatro
+condiciones de F98-1 (§9, Q8). Registrar inmuebles o inversiones no es requisito de nada en
 P1. Solo B.7 y C.2 (lo «disponible») necesitan cuentas, y por eso quedan en P2.
 
 ---
@@ -242,8 +291,8 @@ flowchart LR
     PL[Planes<br/>spec 006, MVP-2]
   end
   R[R · Recurrentes<br/>A.1–A.5]
-  P1[P1 · Presupuesto integral v1<br/>B.1–B.4, B.6, C.9 básico]
-  D[D · Créditos y deudas<br/>C.5, C.6, D.4 básico]
+  P1[P1 · Presupuesto integral v1<br/>B.1–B.4, B.6, C.9 teórico]
+  D[D · Créditos y deudas<br/>C.5, C.6, simulador de amortización]
   K[K · Cuentas, activos y patrimonio<br/>C.1, C.3, C.4, C.7, C.8]
   P2[P2 · Flujo y liquidez<br/>B.7, C.2]
   E[E · Proyecciones y escenarios<br/>D.1–D.8]
@@ -275,7 +324,7 @@ flowchart LR
 | C.5 ↔ A.1 | No es estricta | La cuota puede existir como recurrente antes que el crédito (P1); D la vincula después |
 | C.7 | C.4 + C.5 + A (arriendo) | Compone activo, deuda y flujo |
 | C.8 | C.1 + C.4 + C.5 | Activos menos pasivos |
-| C.9 completo | C.1 (recursos reservados reales) | La versión básica de P1 usa el saldo de la meta, rotulado «apartado en Juntia» (DEC-G03) |
+| C.9 completo | C.1 + P2 (recursos líquidos reales) | La versión de P1 es solo teórica: saldo de la meta entre gastos esenciales declarados (F98-4) |
 | B.7, C.2 | C.1 + A | La liquidez necesita saldos (la propuesta §B.7 ya lo dice) |
 | D.1–D.3, D.5–D.8 | A + B + C.5 (+ C.1 para la liquidez) | Proyectan lo previsto sobre la posición |
 | B.5 | Historial (existe) | Independiente de todo lo demás |
@@ -293,12 +342,12 @@ antes de la etapa Plan de la spec que lo necesita (`AGENTS.md` 17).
 | ADR-b | **Previsto frente a real en las métricas** | ¿Qué cifras pueden mezclar lo previsto y lo real, y con qué rótulo? Regla mínima: ninguna de las métricas de §5.1 ni de DEC-G04 incluye nunca algo previsto | R, P1 |
 | ADR-c | **Plan del mes (ampliación de ADR-004)** | ¿El presupuesto integral es una capa nueva o extiende `budgets`? ¿Admite un total, ingresos y meses futuros? ¿Cómo evita contar dos veces una obligación recurrente que además tiene categoría presupuestada (B.1)? | P1 |
 | ADR-d | **Aportes programados y provisiones (ampliación de ADR-010)** | ¿Una provisión es una meta con vencimiento? ¿El aporte programado es solo una sugerencia que se confirma, nunca un asiento automático? ¿Cómo se cubre una obligación anual con la prima (B.3)? | R, P1 |
-| ADR-e | **Créditos y amortización** | El sistema v1: COP, tasa fija, cuota fija, método francés. La conversión de tasa efectiva anual a mensual y su redondeo, alineados con ADR-002. Seguros y cargos como componentes aparte. Abonos: reducción de plazo o de cuota. Titularidad legal frente a responsabilidad acordada. **Cómo se registra el pago de la cuota sin que el capital cuente como consumo** (choca con `gasto_consumo`, §5.1). Cómo se verifica contra tablas anonimizadas (propuesta §8.4) | D |
+| ADR-e | **Créditos y amortización** | El sistema v1: COP, tasa fija, cuota fija, método francés. La conversión de tasa efectiva anual a mensual y su redondeo, alineados con ADR-002. Seguros y cargos como componentes aparte. Abonos: reducción de plazo o de cuota. Titularidad legal frente a responsabilidad acordada. **Cómo se registra el pago de la cuota sin que el capital cuente como consumo** (choca con `gasto_consumo`, §5.1), y cómo se reclasifican de forma auditada y sin duplicar las cuotas históricas «sin desglosar» (F98-1). Que el simulador de amortización es aritmética determinista y no una proyección de la 22.9 (Q12; F98-3). El procedimiento de evidencia de §9, Q15 (F98-6) | D |
 | ADR-f | **Modelo de saldos de cuentas** | ¿Declarativo, derivado de movimientos o mixto con conciliación explícita (propuesta C.1)? ¿Cómo se corrige un saldo sin crear ingresos ni gastos ficticios? ¿Qué es una transferencia entre cuentas propias? **¿Cuál es la política de inferencia que exige DEC-R17** antes de mostrar algo «disponible»? | K, P2 |
 | ADR-g | **Privacidad de ingresos, cuentas, deudas, activos y escenarios** | Qué se comparte, ítem por ítem o por categoría. Si los agregados compartidos se calculan **solo con ítems compartidos**. La copropiedad y el porcentaje de participación. Si los escenarios son privados por defecto. Cómo evitar las fugas por resta, por indicadores y por diferencias entre escenarios (propuesta §8.5). Exportación y borrado de cuenta | P1 (ingresos), D, K, E |
 | ADR-h | **Frescura de los datos** (propuesta §8.3) | Estados «confirmado», «estimado» y «proyectado». La fecha de última actualización como dato obligatorio. Los umbrales de «desactualizado». Recordatorios solo dentro de la app. Cómo marca una proyección que usa datos viejos | K, E (y R para los estimados) |
 | ADR-i | **Motor de proyecciones y escenarios** | Si es determinista y puro en el dominio. Si un escenario es una capa de supuestos sobre los datos reales, nunca una copia que se edita. El horizonte máximo. Si se guardan resultados o solo supuestos. Cómo se compara sin afirmar asequibilidad (DEC-R17). Cómo se amplía la 22.9 | E |
-| ADR-j | **Ingreso compartido** (solo si Q7 elige compartirlo) | Si un ingreso de pareja tiene reparto, cómo afecta a Balance (hoy no lo afecta) y qué pasa con el contrato de §7.3 | C.7 |
+| ADR-j | **Ingreso compartido** (la respuesta propuesta de Q7 lo aplaza; se revisa antes de K) | Cómo se distinguen la recepción efectiva, el derecho económico de cada uno y la transferencia posterior entre la pareja (F98-2). Si un ingreso de pareja tiene reparto, cómo afecta a Balance (hoy no lo afecta). Qué pasa con el contrato de §7.3 | K (C.7) |
 
 **Ampliaciones probables sin ADR nuevo:**
 
@@ -318,7 +367,8 @@ antes de la etapa Plan de la spec que lo necesita (`AGENTS.md` 17).
 | **Cuota = consumo** | La cuota completa de $2.700.000 entra a `gasto_consumo`, aunque parte es capital, que reduce un pasivo | Hasta D: se rotula como compromiso sin desglosar y se documenta la limitación. Con D: la regla de ADR-e. **Es la decisión de modelo más delicada**, porque toca una métrica de §5.1 |
 | **Provisión: aporte + pago** | Se aparta $640.000 al mes y luego el seguro de $7.680.000 cuenta otra vez | Ya resuelto por el gasto con meta: un gasto real más un uso, y `total_destinado_neto` lo neutraliza (DEC-G04, ejemplo B) |
 | **Transferencias** | Pasar del ahorro al CDT aparece como gasto o como ingreso | Tipo propio, fuera de `transactions` y de toda métrica de consumo (ADR-f) |
-| **Cuota inicial de un inmueble sobre planos** | Hoy solo se puede anotar como gasto (por ejemplo, en «Hogar»), y eso infla el consumo; en realidad construye un activo | Decidir antes de R cómo se registra mientras no exista K (Q8) |
+| **Cuota inicial de un inmueble sobre planos** | Hoy solo se puede anotar como gasto (por ejemplo, en «Hogar»), y eso infla el consumo; en realidad construye un activo. **Anotarla como aporte a una meta es peor** (F98-1): el saldo seguiría disponible para financiar otro gasto aunque el dinero ya esté en la constructora | Q8 revisada (§9). Nunca se presenta como ahorro disponible algo ya entregado a un tercero |
+| **Arriendo compartido** (F98-2) | El arriendo de un inmueble de los dos llega completo a la cuenta de A. Si se anotara un 50 % de ingreso para cada uno, B tendría un ingreso de caja que no recibió | Q7: en v1, el ingreso lo anota quien lo recibe, por lo recibido. Se distinguen tres cosas que v1 no mezcla: **recepción efectiva** (lo que llegó a la cuenta de A, un ingreso real de A), **derecho económico** (la participación del 50 % de B, que v1 no registra como dinero) y **transferencia posterior** (si A le pasa su parte a B, eso es un ingreso real de B y una salida de A, que v1 no puede modelar sin ADR-j y queda como limitación documentada). Nunca se crea un ingreso ficticio para un reparto no ejecutado |
 | **Valorización como ingreso** | El inmueble «sube» y la cifra entra al flujo | Una valoración nunca es un movimiento: es un dato declarado con fecha (C.4) |
 | **Doble atribución en pareja** | El patrimonio compartido se suma entero al de cada uno | Participación explícita por persona; los agregados individuales usan solo esa parte (C.8; como US-08) |
 | **Redondeo de amortización** | La tabla de Juntia diverge del extracto en unos pesos por cuota y el saldo deriva | Algoritmo versionado como ADR-002 y prueba contra tablas anonimizadas; mostrar «estimado» y la diferencia con el extracto declarado |
@@ -343,10 +393,12 @@ Consecuencias que el ADR-g debería fijar (recomendadas):
    - un «meses de cobertura» compartido revela gastos privados.
 
    Solo se calculan con datos compartidos.
-4. **Escenarios:** privados por defecto. Un escenario compartido **solo puede
-   usar datos compartidos**. Si usara el ingreso privado de A, la diferencia entre
-   escenarios («+$4.300.000 al mes») lo revelaría. Comparar un escenario
-   compartido con uno privado no se permite.
+4. **Escenarios** (respuesta propuesta de Q9): privados por defecto. Un escenario
+   compartido **solo puede usar datos compartidos**: si usara el ingreso privado de
+   A, la diferencia entre escenarios («+$4.300.000 al mes») lo revelaría. Un
+   escenario privado puede usar los datos propios y los compartidos a los que su
+   dueño tiene acceso, y sus resultados nunca se muestran a la pareja ni entran
+   en una cifra compartida.
 5. **Proyecciones de metas compartidas:** el ritmo de aporte de cada persona ya es
    visible para la pareja (DEC-G06, aportes con autor), pero el ingreso del que
    sale no lo es. Una proyección compartida no puede usar ingresos privados.
@@ -418,122 +470,148 @@ y la persona que solo quiere organizar el mes espera por módulos que no usa.
 | 6 | **E · Proyecciones y escenarios** | Comparar decisiones | P2, D |
 | — | **S · Estadísticas y sugerencias** | Lectura del historial; DEC-R01-S | Independiente; según la evidencia de uso |
 
-Nunca dos de estas specs abiertas a la vez (propuesta §6). Entre una y otra,
-semanas de uso real, como pide el maestro §11 («priorización según evidencia»).
+### 8.3 Cadencia entre specs (F98-5)
+
+Se conservan:
+
+- la entrega incremental;
+- una spec a la vez (propuesta §6);
+- la aceptación de cada spec antes de la siguiente;
+- la priorización según evidencia (maestro §11).
+
+**No hay una espera fija de varias semanas entre todas las specs.** Una spec
+siguiente empieza cuando sus dependencias están aceptadas. El periodo de
+observación con datos reales depende del riesgo de cada spec:
+
+| Spec | Observación antes de avanzar | Por qué |
+| --- | --- | --- |
+| R | Ninguna fija: la siguiente puede empezar al aceptarla | P1 se valida con los recurrentes ya configurados, no con meses de historia |
+| P1 | Al menos un ciclo mensual completo con el plan del mes, **para validarla**, no para bloquear D | Asignado, ejecutado y pendiente solo se pueden comprobar al cerrar un mes |
+| D | Contraste con las referencias externas de Q15 antes de aceptarla | El riesgo es la exactitud del cálculo, que no se ve con el uso |
+| K | Al menos un ciclo de actualización de saldos (umbrales de Q16) antes de P2 | P2 depende de saldos frescos; hay que ver si la carga de mantenerlos es razonable (§7.4) |
+| P2, E | Según la evidencia de K | — |
+| S | Varios meses de historial real | DEC-R01-S lo exige (maestro §8.2) |
+
+Nada de esto cambia el gate de MVP-1 (spec 005; decisión 25.5) ni permite
+saltarse las verificaciones humanas, las revisiones adversariales o los criterios
+de aceptación.
+
+**Objetivo orientativo de los fundadores:** terminar 2026 con Planes y
+Recurrentes funcionando y, si el avance y la calidad lo permiten, también el
+Presupuesto integral v1. **No es un compromiso de fecha y no autoriza a recortar
+alcance ni calidad.** Es muy ajustado; la tensión está en §12, N-4.
 
 ---
 
-## 9. Preguntas para los fundadores
+## 9. Preguntas para los fundadores y respuestas propuestas
 
-Cada pregunta trae sus opciones y la recomendación del gestor. Ninguna está
-decidida.
+Los fundadores respondieron el 25 de noviembre de 2026 (Alejandro lo comunicó al
+gestor). Son **respuestas propuestas**: no son decisiones del maestro hasta que
+un PR documental las registre (§10). La tabla conserva la recomendación del
+análisis para que se vea dónde coincide y dónde la respuesta añade una precisión.
 
-**Hoja de ruta**
+| # | Pregunta | Recomendación del análisis | Respuesta propuesta (25 nov 2026) |
+| --- | --- | --- | --- |
+| Q1 | ¿Qué entra en MVP-2? (a) Planes y backlog actual · (b) Planes + R + P1 · (c) todo | (b) | **(b).** Lo demás se desarrolla de forma progresiva, sin límites artificiales que impidan avanzar si las entregas terminan antes |
+| Q2 | ¿Grupos de más de dos? (a) siguen en MVP-3 · (b) detrás de la planificación · (c) sin fecha | (b), con las tablas nuevas modeladas para N | **(b).** Se mantiene la compatibilidad de arquitectura con N miembros, sin construir ahora su experiencia |
+| Q3 | ¿Orden? (a) el de §8.2 · (b) el del análisis | (b) | **(b):** Planes → R → P1 → D → K → P2 → E |
+| Q4 | ¿Filas 3, 6 y 7? (a) 3 y 7 en R, y 5 y 6 como spec S · (b) sueltas | (a) | **(a).** S, priorizada según evidencia |
+| Q5 | ¿Planes? (a) primero y sin cambios · (b) rediseñar | (a) | **(a)** |
+| Q6 | ¿Forma del presupuesto integral? (a) capa nueva · (b) ampliar `budgets` | (a) | **(a).** Los presupuestos por categoría y sus métricas quedan intactos |
+| Q7 | ¿Ingreso compartido? (a) privado · (b) de pareja con ADR-j | (a) en v1 | **(a), con precisión:** se distingue la participación económica del dinero efectivamente recibido, sin ingresos ficticios por repartos no ejecutados. Limitación documentada; el ingreso compartido se revisa después (F98-2, §7.1) |
+| Q8 | Cuota del crédito y cuota inicial antes de D y K | (b) y (c) | **Sin respuesta: necesita ajuste** (F98-1). Ver la Q8 revisada, abajo |
+| Q9 | ¿Modelo de privacidad? (a) privado por defecto, sin total del hogar · (b) total del hogar con consentimiento | (a) | **(a), con precisión.** Se comparte explícitamente cada elemento cuando su spec lo soporte. Los agregados y escenarios compartidos usan solo lo compartido. Los escenarios privados pueden usar lo propio y lo compartido a lo que su dueño tenga acceso, sin exponer resultados privados (§7.2) |
+| Q10 | ¿Dónde vive lo nuevo? (a) rutas hijas de Plan · (b) destino nuevo | (a) | **(a).** R y P1 como rutas hijas de Plan; la navegación de patrimonio se evalúa con comps en su spec |
+| Q11 | ¿Avisos? (a) dentro de la app · (b) push o correo | (a) | **(a)**, inicialmente |
+| Q12 | ¿Proyecciones? (a) sí, con ADR-i · (b) no | (a), solo en E | **(a), con precisión:** simulaciones deterministas con supuestos visibles. Las proyecciones integrales van en E, pero el simulador de amortización puede autorizarse dentro de D con su ADR. El análisis histórico conserva sus restricciones (22.9) (F98-3, §4) |
+| Q13 | ¿Tope E2E? (a) se mantiene · (b) tope propio | (a) para R y P1 | **(a)** para R y P1; se revisa antes de D y K. El tope no impide probar los invariantes importantes en su capa |
+| Q14 | ¿Crédito v1? (a) COP, tasa fija, cuota fija, sin UVR ni tarjetas · (b) con tarjetas | (a) | **(a):** método francés, componentes separados, abonos con reducción de plazo o de cuota. Fuera por ahora: UVR, tasa variable y tarjetas |
+| Q15 | ¿Tablas de amortización? (a) anonimizadas por un fundador · (b) sintéticas | (a) + (b) | **(a) + (b), con precisión:** contraste con referencias bancarias reales tratadas fuera del repositorio, y casos sintéticos reproducibles para las pruebas, diferenciando las dos clases de evidencia. Procedimiento abajo (F98-6) |
+| Q16 | ¿Desactualización? (a) umbrales por tipo · (b) solo la fecha | (a) | **(a):** umbrales por tipo de dato, visibles y calibrables con evidencia de uso |
 
-- **Q1 · ¿Qué entra en MVP-2?**
-  - (a) Solo Planes y el backlog actual.
-  - (b) Planes + R + P1.
-  - (c) Planes + todos los bloques.
-  - **Recomendación: (b).** Es lo que entrega valor sin la posición patrimonial.
-    D y K irían a una MVP-3 de planificación; P2 y E, después.
-- **Q2 · ¿Cambia la prioridad de los grupos de más de dos?**
-  - (a) Se queda en MVP-3.
-  - (b) Pasa detrás de la planificación financiera.
-  - (c) Sin fecha.
-  - **Recomendación: (b).** Las tablas nuevas se siguen modelando con dueño XOR
-    grupo, como hoy, para no cerrar la puerta. La demo pública y la landing de
-    MVP-3 no dependen de esta decisión.
-- **Q3 · ¿Qué orden de specs?**
-  - (a) El de la propuesta §8.2.
-  - (b) El de este análisis (§8), con P1 antes de deudas y patrimonio.
-  - **Recomendación: (b).**
-- **Q4 · ¿Cómo se relaciona con las filas 3, 6 y 7 del backlog?**
-  - (a) La fila 3 (recurrentes) y la fila 7 (aportes programados) se absorben en
-    R; las filas 5 y 6 quedan como una spec S independiente.
-  - (b) Todas siguen como filas sueltas.
-  - **Recomendación: (a).**
-- **Q5 · ¿Cómo encaja con Planes?**
-  - (a) Planes sigue primero y sin cambios; el ahorro de un viaje sigue siendo una
-    meta, y un vínculo meta↔plan se considera más adelante.
-  - (b) Se rediseña Planes para incluir provisiones.
-  - **Recomendación: (a).** La spec 006 no se toca (propuesta §2).
+### Q8 revisada · Cómo registrar la cuota inicial sobre planos y la cuota del crédito antes de D y K (F98-1)
 
-**Modelo**
+**Qué cambió.** La recomendación anterior para la cuota inicial era la opción (c):
+aportes a una meta de tipo vivienda con transferencia declarada. **Se retira.** Un
+aporte deja saldo en la meta (DEC-G05), y ese saldo puede financiar otro gasto
+(`goal_usage`, ADR-010). Si la cuota ya se pagó a la constructora, Juntia mostraría
+como apartado un dinero que ya no está en poder de la persona. Corregirlo exigiría
+otra dimensión financiera o tocar el ledger, y ninguna de las dos se propone aquí.
 
-- **Q6 · ¿Qué forma tiene el presupuesto integral?**
-  - (a) Una capa nueva, el «plan del mes», que asigna el ingreso previsto a
-    destinos y deja los presupuestos por categoría tal cual.
-  - (b) Ampliar `budgets` con ingresos, un total del mes y destinos que no son
-    gasto.
-  - **Recomendación: (a).** No reabre ADR-004 ni la 22.8 y es opcional por
-    separado.
-- **Q7 · ¿Ingreso compartido (arriendo de un inmueble de los dos)?**
-  - (a) Sigue privado: cada uno anota su parte.
-  - (b) Ingreso de pareja con reparto, con su ADR-j.
-  - **Recomendación: (a) en v1.** Se revisa con K.
-- **Q8 · ¿Cómo se registran la cuota del crédito y la cuota inicial sobre planos
-  antes de D y K?**
-  - (a) Como hoy: un gasto, con la limitación documentada de que infla
-    `gasto_consumo`.
-  - (b) Como recurrencia confirmada que es un gasto real, rotulada «cuota (sin
-    desglosar)».
-  - (c) La cuota inicial, como aportes a una meta de tipo vivienda con
-    transferencia declarada.
-  - **Recomendación: (b) para la cuota del crédito y (c) para la cuota inicial**,
-    hasta que D y K las reclasifiquen.
-- **Q9 · ¿Qué modelo de privacidad?** Ingresos, cuentas, deudas, activos y
-  escenarios privados por defecto; compartir ítem por ítem; agregados compartidos
-  solo con ítems compartidos; sin «total del hogar» mixto; escenarios compartidos
-  solo con datos compartidos (§7.2).
-  - (a) Así.
-  - (b) Permitir un total del hogar con el consentimiento de los dos.
-  - **Recomendación: (a).** La (b) revela por resta lo que cada uno no comparte.
+**Distinción que se mantiene.** Dinero **reservado para** pagar una cuota (ahorro,
+todavía de la persona) no es dinero **entregado a** la constructora (salida
+real). Una meta solo puede representar lo primero.
 
-**Experiencia**
+**Opciones para la cuota inicial**, todas compatibles con ADR-010 y DEC-G04, sin
+dimensión nueva y sin tocar el ledger:
 
-- **Q10 · ¿Dónde vive lo nuevo?**
-  - (a) R y P1 como rutas hijas de **Plan**, igual que Análisis (22.5); para K se
-    decide con comps.
-  - (b) Un destino nuevo ya.
-  - **Recomendación: (a).** Además, si «Plan» y «Planes» se confunden en el uso
-    real, se reabre la idea de renombrar la pestaña, que ya está en el backlog.
-- **Q11 · ¿Cómo se avisa (D.8, recordatorios de §8.3)?**
-  - (a) Solo dentro de la app, al abrirla.
-  - (b) Notificaciones push o correo.
-  - **Recomendación: (a).** No hay mecanismo de avisos y el correo propio está
-    aplazado al final del producto.
-- **Q12 · ¿Las proyecciones amplían la 22.9?** Simulaciones con supuestos
-  visibles, rangos y «estimado», nunca «llegarás», y Análisis sin cambios.
-  - (a) Sí, con ADR-i.
-  - (b) No: nada de proyecciones.
-  - **Recomendación: (a), y solo en E.**
+- **(a) Gasto real al pagar.** Cada cuota pagada se confirma desde su recurrencia
+  (R) como un gasto real, rotulado «Cuota inicial · {inmueble}».
+  - Lo bueno: la salida de caja aparece una vez, y nada queda como ahorro
+    disponible.
+  - Lo malo: infla `gasto_consumo`, igual que la cuota del crédito. Aplican las
+    cuatro condiciones de abajo.
+- **(b) Meta para reservar y gasto con meta al pagar.** Si la persona aparta el
+  dinero antes de pagarlo, lo aporta a una meta, y al pagar registra un gasto con
+  esa meta.
+  - Lo bueno: el pago consume el saldo (es un `goal_usage`), así que nada pagado
+    queda disponible, y `total_destinado_neto` no lo cuenta dos veces (DEC-G04,
+    ejemplo B).
+  - Lo malo: son dos pasos al mes y el mismo efecto en `gasto_consumo` que (a).
+    Solo tiene sentido si de verdad se reserva antes de pagar.
+- **(c) Solo la obligación prevista.** La recurrencia aparece en el calendario y en
+  el plan del mes como compromiso. Al confirmarla, se marca «pagada fuera de
+  Juntia», un **estado de la instancia prevista**, sin gasto ni aporte.
+  - Lo bueno: no toca ninguna métrica.
+  - Lo malo: la salida real desaparece de todas las cifras de Juntia (gasto y
+    flujo neto). La limitación tiene que verse en el plan del mes.
+- **(d) Aporte a meta con transferencia declarada**, la recomendación anterior.
+  **Se descarta**, por lo dicho arriba.
 
-**Calidad**
+**Recomendación: (a) por defecto, con (b) como camino opcional** para quien reserva
+antes de pagar. (c) queda como alternativa si los fundadores prefieren no inflar el
+consumo a costa de no ver la salida. **Nunca (d).** Cuando exista K, la
+reclasificación de estas cuotas a un activo («derechos adquiridos», C.4) sigue las
+mismas cuatro condiciones.
 
-- **Q13 · ¿Qué tope E2E rige para estas specs?**
-  - (a) Se mantiene el de P0: amplían las cinco specs existentes y, como mucho,
-    usan la sexta plaza.
-  - (b) Se modifica ADR-011 con un tope propio para la planificación.
-  - **Recomendación: (a) para R y P1**, y revisar antes de D y K.
-- **Q14 · ¿Qué alcance tiene el crédito v1?** COP, tasa fija, cuota fija (método
-  francés), seguros y cargos como componentes fijos, abonos con reducción de
-  plazo o de cuota.
-  - (a) Así, sin UVR, sin tasa variable y sin tarjetas de crédito.
-  - (b) Incluir tarjetas de crédito.
-  - **Recomendación: (a).** Las tarjetas tienen otra mecánica (cupo, pago mínimo,
-    diferido).
-- **Q15 · ¿Quién prepara las tablas de amortización anonimizadas?**
-  - (a) Un fundador las anonimiza fuera del repositorio y entrega solo los datos
-    ficticios coherentes; ningún agente ve un extracto real.
-  - (b) El gestor fabrica casos sintéticos sin referencia real.
-  - **Recomendación: (a) + (b).** Los sintéticos para las propiedades, y uno o
-    dos anonimizados para contrastar con un banco colombiano.
-- **Q16 · ¿Cuándo se desactualiza un dato y qué pasa?**
-  - (a) Un umbral por tipo, que fija el ADR-h (por ejemplo, saldos a 30 días y
-    valoraciones a 12 meses); lo que lo usa lo dice.
-  - (b) Sin umbral: solo se muestra la fecha.
-  - **Recomendación: (a).** Los umbrales concretos se calibran con el uso, como
-    DEC-R01-S.
+**Cuota del crédito «sin desglosar».** La respuesta anterior se mantiene: un gasto
+real confirmado desde su recurrencia, rotulado «cuota (sin desglosar)». La revisión
+la acepta si cumple **cuatro condiciones**:
+
+1. se identifica su limitación en las métricas de consumo: la cuota completa entra
+   en `gasto_consumo`, y eso se dice donde aparece;
+2. Juntia no afirma qué parte es capital ni qué parte es interés;
+3. D define cómo vincular o reclasificar los movimientos históricos de forma
+   auditada y sin duplicarlos (ADR-e);
+4. la migración futura no inventa intereses ni capital: lo que no se puede
+   reconstruir con datos declarados queda «sin desglosar».
+
+### Procedimiento de evidencia de amortización (Q15; F98-6)
+
+Una tabla sintética no equivale a una tabla bancaria anonimizada, y quitar nombres
+y números de cuenta no basta: los importes, la tasa, el plazo y las fechas pueden
+identificar a una persona. Por eso hay **dos clases de evidencia, que no se
+mezclan**:
+
+1. **Casos sintéticos reproducibles, en el repositorio.**
+   - Créditos inventados (capital, tasa efectiva anual, plazo, seguros fijos y
+     abonos), con su tabla esperada calculada por el gestor.
+   - Pruebas de propiedad: el capital amortizado suma el capital inicial, y la
+     cuota es fija salvo abono.
+   - Son la evidencia de las pruebas, y no derivan de ningún crédito real.
+2. **Contraste con referencias reales, fuera del repositorio.**
+   - Un fundador compara, en su equipo, la salida de Juntia para un caso
+     sintético que reproduce las condiciones de su crédito con la tabla o el
+     extracto del banco.
+   - En el repositorio queda **solo el resultado, sin datos**: fecha, tipo de
+     crédito, número de cuotas comparadas, diferencia máxima por cuota en pesos y
+     su causa si la hay (redondeo, seguro), y quién lo hizo.
+   - Ningún agente ve el extracto. Ningún importe, tasa, plazo ni fecha real entra
+     al repositorio, ni siquiera alterado.
+
+El ADR-e fija la tolerancia aceptada (por ejemplo, unos pocos pesos por cuota por
+redondeo) y qué pasa si se supera. Esta evidencia externa es un criterio de
+aceptación de D, no una prueba de CI.
 
 ---
 
@@ -543,9 +621,12 @@ decidida.
    enlaza este análisis y pasa a «análisis entregado, pendiente de decisión de los
    fundadores». **No se añaden filas** a «Funcionalidades», **no se tocan** las
    filas 3, 6 y 7 y no se asignan números de spec.
-2. **Cuando los fundadores respondan:**
+2. **Cuando los fundadores confirmen sus respuestas propuestas (§9) y respondan la
+   Q8 revisada:**
    - un PR documental registra sus respuestas como una decisión nueva del maestro
-     §15.10 (la siguiente es la 28), igual que se hizo con Planes en la 27;
+     §15.10 (la siguiente es la 28), igual que se hizo con Planes en la 27. El
+     mismo PR resuelve en el maestro las contradicciones N-1 y N-2 de §12 (§11
+     «MVP-2» y «MVP-3»);
    - el mismo PR crea en el backlog filas con los nombres provisionales elegidos
      (R, P1…), cada una con su origen («decisión 28.x»);
    - las filas 3 y 7 se marcan «absorbida en R» si Q4 lo confirma, sin borrarlas.
@@ -557,6 +638,40 @@ decidida.
 4. **La propuesta original no se modifica:** queda como registro de lo que
    pidieron los fundadores. Este análisis tampoco es autoridad. Si un documento
    posterior lo contradice, manda la decisión registrada.
+
+---
+
+## 11. Hallazgos de la revisión adversarial (F98-1 a F98-6)
+
+Revisión pasada por el gestor el 25 de noviembre de 2026. Cada hallazgo se
+resolvió en el texto, sin introducir dimensiones financieras nuevas ni tocar el
+ledger de metas.
+
+| # | Hallazgo | Resolución | Dónde |
+| --- | --- | --- | --- |
+| F98-1 | Una cuota inicial ya pagada, anotada como aporte a una meta, seguiría disponible para financiar otro gasto. La «cuota sin desglosar» necesita condiciones | Se retira la recomendación de registrarla como aporte. Q8 revisada con opciones (a)–(d) y recomendación (a) + (b). Cuatro condiciones para la cuota del crédito | §9, Q8 revisada; §7.1; ADR-e |
+| F98-2 | Un 50 % de participación en el arriendo no es un ingreso recibido | Se distinguen recepción efectiva, derecho económico y transferencia posterior. v1 solo registra la recepción efectiva, y nunca un ingreso ficticio | §7.1; Q7; ADR-j |
+| F98-3 | D.4 dentro de D contradecía «proyecciones solo en E» | Se separa el simulador de amortización de un crédito (D, con su ADR) del simulador integral (E) | §4; §2 (D.4); ADR-e |
+| F98-4 | Una meta no acredita recursos existentes ni líquidos | En P1, solo cobertura **teórica**, rotulada, con sus supuestos y sin usarla para afirmar solvencia; la real espera a K y P2 | §4; §2 (C.9); §5 |
+| F98-5 | La espera fija de semanas entre specs no tenía base de riesgo | Periodos de observación por spec y por riesgo; objetivo orientativo de 2026 sin compromiso de fecha | §8.3 |
+| F98-6 | Una tabla sintética no es una bancaria anonimizada, y anonimizar importes no basta | Dos clases de evidencia separadas: sintética en el repositorio y contraste externo documentado sin datos | §9, procedimiento de evidencia |
+
+---
+
+## 12. Contradicciones y tensiones nuevas al aplicar las respuestas
+
+Ninguna bloquea el análisis. Las que tocan al maestro se resuelven en el PR de la
+decisión 28, no aquí.
+
+| # | Qué choca | Con qué | Propuesta |
+| --- | --- | --- | --- |
+| N-1 | Q1: MVP-2 = Planes + R + P1 | El maestro §11 define MVP-2 como «recurrentes, presets de captura, estadísticas mejores, sugerencia voluntaria de presupuestos y aportes programados». P1 no está; **la fila 4 (presets de captura) no la ubica ninguna respuesta**, y la fila 5 (estadísticas) va a la spec S, priorizada por evidencia | La decisión 28 redefine MVP-2 y dice qué pasa con la fila 4: dentro de MVP-2, en S o aplazada. Pregunta para los fundadores |
+| N-2 | Q2: grupos de más de dos detrás de la planificación | El maestro §11 pone «ampliación a grupos N si la pareja lo necesita» en MVP-3, junto con la demo pública, la landing y la PWA más completa | La decisión 28 mueve solo los grupos N. El resto de MVP-3 no se toca sin otra pregunta |
+| N-3 | Q12: simulador de amortización en D | La decisión 22.9 («sin extrapolar») y GLOSSARY §9 («Llegarán en abril» no se dice) | La 22.9 rige para Análisis y no cambia. ADR-e declara que el simulador es aritmética sobre un crédito declarado, y su copy es condicional («con estos supuestos, terminarías en…»), nunca una fecha afirmada |
+| N-4 | F98-5: objetivo orientativo para 2026 (Planes + R y, si se puede, P1) | El gate de MVP-1: 7 días de uso con despliegues congelados (24.10, 25.5). Planes no puede implementarse antes de declarar MVP-1 (decisión 27). R y P1 necesitan antes sus ADR (a, b, c, d), comps aprobados y revisiones | **No es una contradicción formal, porque el objetivo no es un compromiso**, pero es muy ajustado: quedan unas cinco semanas. La forma de acercarse sin recortar calidad es preparar la documentación de R (spec y ADR-a/b/d) mientras corre el gate, como se hizo con Planes |
+| N-5 | Q10: R y P1 como rutas hijas de Plan | «Plan» es el destino de presupuestos; «Planes» (006) vive en Actividad (spec 006, Q2 y Q3); el «plan del mes» de este análisis es un tercer uso de la palabra | El nombre de la capa de P1 **no debe llevar «plan»**. Se elige en su spec, con el glosario. Se reconsidera con evidencia la idea del backlog de renombrar la pestaña «Plan» |
+| N-6 | Q10: el calendario financiero (A.4) en Plan | La decisión 16.8 dejó el «calendario» de lo real en Actividad, con flechas de mes | No es una contradicción: Actividad sigue siendo lo real, y el calendario de R muestra solo lo previsto y su estado. La spec R debe decir cómo enlaza una instancia confirmada con su movimiento en Actividad |
+| N-7 | Q7 (ingreso privado en v1) frente a C.7 (flujo de un inmueble compartido) | El flujo de caja de un inmueble de los dos no se puede calcular sin un ingreso compartido | C.7 de un inmueble compartido depende de ADR-j, que debe escribirse antes de K. Hasta entonces, K solo puede mostrar el flujo de inmuebles privados o la parte declarada por cada uno |
 
 ---
 
