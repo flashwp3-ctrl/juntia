@@ -154,9 +154,9 @@ registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
 - **Respuesta, opción A:**
   1. El gasto aparece en «Quién pagó» como una línea propia, «Pagado con la meta
      {meta}», que no se asigna a ninguno de los dos.
-  2. La parte cubierta con la meta **no se atribuye a ninguna persona** en las
-     cifras del plan: ni en su «pagó» ni en su «le corresponde», y por eso
-     tampoco mueve su diferencia del plan.
+  2. La porción cubierta por la meta no se asigna como pago ni consumo a ninguna
+     persona. Al cambiar U, se recalculan `plan_paid`, `plan_share` y la
+     diferencia informativa del plan; el Balance real permanece intacto.
   3. Cuenta completo en el total del plan y en el desglose por categoría (Q7).
 - **Cifras derivadas del plan, no métricas canónicas (F95-1).** El «pagó» y el
   «le corresponde» de «Quién pagó» son cifras **propias del plan**, con nombre
@@ -180,8 +180,8 @@ registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
 
   Se cumple que Σ `plan_paid` + Σ líneas de meta = total del plan, que Σ
   `plan_share` = Σ `plan_paid` y que las diferencias suman cero. Solo cuentan los
-  usos **aplicados** y no anulados; una solicitud pendiente, rechazada o
-  cancelada no descuenta nada (004, FR-053).
+  usos **aplicados** y no anulados; los fondos de una solicitud pendiente, rechazada o
+  cancelada no descuentan nada, y los propios ya aplicados siguen contando (004, FR-052, FR-053 y FR-055).
 - **Regla de reparto de `plan_share` (F95-2).** Los pesos salen de la
   **proporción de las asignaciones originales** del gasto en
   `transaction_allocations`, sea cual sea el modo con que se anotó (50/50,
@@ -393,23 +393,41 @@ pagó/corresponde por persona.
 5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
 6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7).
 
-**Matriz de aceptación de Q24 (F95-3).** Gasto compartido de A = $400.000 en el
-plan, pagado por Sara, reparto 50/50, con la meta compartida «Regalos». Se cubre
-con pruebas de dominio y de integración de servidor, **sin spec E2E nueva**
-(según Q20). En cada caso se compara, antes y después, `gross_paid`, `net_owed`,
-las asignaciones originales de `transaction_allocations` y las cinco métricas de
-DEC-G04: **Planes no altera ninguna**. Anular o editar el gasto las mueve igual que sin Planes, y la prueba lo compara contra el mismo caso sin etiqueta. Por Planes solo cambian, cuando se indica, la línea de
-la meta, `plan_paid`, `plan_share` y la diferencia del plan.
+**Matriz de aceptación de Q24 (F95-3, F95-5 y F95-6).** Gasto compartido de
+A = $400.000 en el plan, pagado por Sara, reparto 50/50, con la meta compartida
+«Regalos». U es la suma de los asientos de uso **vivos** (aplicados y no
+anulados) de ese gasto; varios asientos vivos de la misma meta se suman en una
+sola línea y el gasto cuenta una vez. Los fondos propios se aplican al registrar
+el gasto; los de la otra persona quedan pendientes hasta que ella apruebe, y un
+rechazo o una cancelación solo excluye lo que nunca se aplicó (004, FR-052,
+FR-053 y FR-055). Se cubre con pruebas de dominio y de integración de servidor,
+**sin spec E2E nueva** (según Q20).
 
-| Caso | Resultado esperado en el plan |
-| --- | --- |
-| Uso parcial aplicado (U = $150.000) | La línea «Pagado con la meta Regalos» muestra $150.000; `plan_paid` de Sara $250.000; `plan_share` $125.000 y $125.000; diferencia +$125.000 y −$125.000; total $400.000 |
-| Solicitud pendiente de uso | No se descuenta: sin línea de meta; `plan_paid` $400.000; `plan_share` $200.000 y $200.000 |
-| Solicitud aprobada | Las cifras se recalculan con el U aprobado, como en el uso parcial |
-| Solicitud rechazada o cancelada | No se descuenta nada: como sin meta |
-| «Quitar el uso de la meta» | La línea desaparece y las cifras vuelven al caso sin meta |
-| Anular el gasto | Sale de todas las cifras del plan: total, desglose, línea de meta, `plan_paid` y `plan_share` |
-| Editar el gasto con un uso vivo | Se mantiene U ≤ A (004, Q17: bajar el monto por debajo de lo usado se rechaza); con otro monto válido, las cifras del plan se recalculan sobre el A nuevo |
+| Caso | U | Resultado esperado en el plan |
+| --- | --- | --- |
+| Uso parcial aplicado de fondos propios | $150.000 | Línea «Pagado con la meta Regalos» $150.000; `plan_paid` de Sara $250.000; `plan_share` $125.000 y $125.000; diferencia +$125.000 y −$125.000; total $400.000 |
+| Solicitud pendiente, sin fondos propios aplicados | $0 | Sin línea de meta; `plan_paid` de Sara $400.000; `plan_share` $200.000 y $200.000 |
+| Solicitud pendiente con fondos propios aplicados: Sara aplica $100.000 suyos y pide $150.000 de Tomás | $100.000 | Línea $100.000; `plan_paid` de Sara $300.000; `plan_share` $150.000 y $150.000 |
+| Esa solicitud, aprobada | $250.000 | Los dos asientos vivos de la meta ($100.000 + $150.000) se suman en una línea de $250.000, sin duplicar el gasto; `plan_paid` de Sara $150.000; `plan_share` $75.000 y $75.000; total $400.000 |
+| Esa solicitud, rechazada o cancelada | $100.000 | Lo propio sigue aplicado: igual que la pendiente con fondos propios. Solo se excluyen los $150.000 que nunca se aplicaron |
+| «Quitar el uso de la meta» | $0 | La línea desaparece y las cifras vuelven al caso sin meta |
+| Anular el gasto | — | Sale de todas las cifras del plan: total, desglose, línea de meta, `plan_paid` y `plan_share` |
+| Editar el gasto con un uso vivo | sin cambio | Se mantiene U ≤ A (004, Q17: bajar el monto por debajo de lo usado se rechaza); con otro monto válido, las cifras del plan se recalculan sobre el A nuevo |
+
+Cada caso se comprueba con **dos comparaciones distintas** (F95-6):
+
+1. **Invariancia por etiqueta.** Para cada estado y cada operación de la
+   matriz, se compara el mismo escenario con la etiqueta del plan y sin ella:
+   `gross_paid`, `net_owed`, las asignaciones de `transaction_allocations`,
+   Balance y las cinco métricas de DEC-G04 **coinciden exactamente**. Planes no
+   altera ninguna métrica canónica.
+2. **Transición de financiación.** Antes y después de aprobar, quitar el uso,
+   editar o anular, las métricas canónicas **cambian exactamente como dice la spec
+   004**: al aprobar o al quitar un uso cambian, entre otras,
+   `gasto_financiado_con_meta` y `total_destinado_neto`, y al anular el gasto
+   cambia todo lo que ese gasto aportaba. El cambio es el mismo con etiqueta y sin
+   ella. En el plan solo cambian, además, la línea de la meta, `plan_paid`,
+   `plan_share` y la diferencia del plan.
 
 ---
 
@@ -608,7 +626,7 @@ Sara sube una foto de la playa a «Cartagena».
 #### Pruebas y CI
 
 - **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define. Para Q24, además:
-  - la matriz de Q24 de US-2, en dominio y en integración de servidor, con la comparación de `gross_paid`, `net_owed`, `transaction_allocations` y DEC-G04 antes y después;
+  - la matriz de Q24 de US-2, en dominio y en integración de servidor, incluidos los dos casos de solicitud pendiente (sin y con fondos propios aplicados), el rechazo que conserva lo propio y la suma de los dos asientos vivos de la misma meta al aprobar (F95-5), cada uno con las dos comparaciones de la matriz (F95-6): **invariancia por etiqueta** (el mismo escenario con y sin etiqueta da `gross_paid`, `net_owed`, `transaction_allocations`, Balance y DEC-G04 idénticos) y **transición de financiación** (antes y después de aprobar, quitar, editar o anular, las métricas canónicas cambian exactamente como dice la spec 004, igual con y sin etiqueta);
   - `plan_share` con uso de meta en los tres modos de reparto (F95-2): 50/50 con una base A − U impar en pesos (p. ej., A = $400.001 y U = $150.000: $125.001 y $125.000, el peso sobrante a quien entró antes en la pareja); Porcentaje 70/30; Importe $300.000 + $100.000 con U = $150.000 ($187.500 y $62.500); e Importe con una asignación de $0, que da 0;
   - en todos, Σ `plan_paid` + Σ líneas de meta = total, Σ `plan_share` = Σ `plan_paid`, y `transaction_allocations` sin modificar.
 - **FR-081**: pgTAP: RLS de planes y etiquetas con tres cuentas, compatibilidad de FR-012, idempotencia, eliminación sin tocar gastos, Storage con tres cuentas.

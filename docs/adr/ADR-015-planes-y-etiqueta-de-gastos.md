@@ -149,8 +149,8 @@ etiquetados en él.
 25 de noviembre de 2026).** Cuenta completo en el total y en el desglose por
 categoría (Q7). En «Quién pagó», la parte pagada con la meta, que es la suma de
 los usos **aplicados y no anulados** de ese gasto (entradas `usage` de `goal_ledger_entries` sin su `void`), aparece como una línea
-propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Una
-solicitud pendiente, rechazada o cancelada no cuenta.
+propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Varios asientos vivos de la misma meta (los fondos propios aplicados al registrar y los ajenos al aprobar) se suman en esa línea y el gasto cuenta una vez. Los fondos de una
+solicitud pendiente, rechazada o cancelada no cuentan; los propios ya aplicados siguen contando (004, FR-052, FR-053 y FR-055).
 
 Para un gasto de importe A con usos aplicados por U (0 ≤ U ≤ A), confirmado por
 los fundadores el 25 de noviembre de 2026 (spec 006, Q24):
@@ -304,11 +304,18 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 7. **Auditoría ampliada (F94-6).** pgTAP de crear, editar, cerrar, reabrir y
    eliminar un plan: el evento y el actor son los correctos, y el evento no se
    puede editar ni borrar.
-8. **Gasto pagado con una meta (Q24; F95-1 a F95-3).** La matriz de Q24 de la
+8. **Gasto pagado con una meta (Q24; F95-1 a F95-6).** La matriz de Q24 de la
    spec 006 (US-2), en dominio e integración, con `plan_share` en 50/50,
-   Porcentaje e Importe, una base impar y una asignación de 0. En cada caso,
-   `gross_paid`, `net_owed`, `transaction_allocations` y las cinco métricas de
-   DEC-G04 son iguales con y sin la etiqueta del plan.
+   Porcentaje e Importe, una base impar y una asignación de 0, y con los dos casos
+   de solicitud pendiente, el rechazo que conserva lo propio y la suma de asientos
+   vivos al aprobar. Cada caso, con dos comparaciones:
+   - **invariancia por etiqueta:** el mismo escenario con y sin la etiqueta del
+     plan da `gross_paid`, `net_owed`, `transaction_allocations`, Balance y las
+     cinco métricas de DEC-G04 idénticos;
+   - **transición de financiación:** antes y después de aprobar, quitar, editar o
+     anular, las métricas canónicas cambian exactamente como dice la spec 004
+     (por ejemplo, `gasto_financiado_con_meta` y `total_destinado_neto` al aprobar
+     o quitar un uso), igual con y sin etiqueta.
 
 ## Referencias
 
