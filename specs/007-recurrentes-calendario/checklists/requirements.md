@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-25
-**Updated**: 2026-11-25, tras Clarify y la revisión F101
+**Updated**: 2026-11-25, tras Clarify y las rondas 1 y 2 de la revisión F101
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -48,6 +48,9 @@
   con precisiones en D3, D4 y D5; ya no queda ninguna pendiente. El ítem de
   criterios de aceptación sigue sin marcar solo por Q15. La tabla «Compatibilidad de vínculos» y la
   tabla de estados dan criterio verificable a FR-014a, FR-017, FR-018 y FR-018a.
+- **Ronda 2 de la revisión aplicada.** F101-13 a F101-17 y el ajuste de FR-004
+  se corrigieron sin decisiones nuevas de los fundadores; la tabla de estados se
+  recorrió completa tras los cambios.
 - **Detalles de implementación.** La spec nombra `transactions`, el ledger de
   metas, `America/Bogota`, pgTAP y `src/lib/copy/es.ts` porque son contratos ya
   decididos del maestro, de ADR-011 y de CONVENTIONS, no elecciones nuevas
