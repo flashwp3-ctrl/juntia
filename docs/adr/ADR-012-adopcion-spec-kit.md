@@ -1,6 +1,6 @@
 # ADR-012 — Adopción parcial de GitHub Spec Kit
 
-**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Enmienda:** §3.4, decisión de los fundadores tras las dos demostraciones del PR #9, 3 de noviembre de 2026 · **Alcance:** P0, flujo de especificación de cada slice
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Enmienda:** §3.4, decisión de los fundadores tras las dos demostraciones del PR #9, 3 de noviembre de 2026 · **Nota:** §3.1 y `[V]` 4, gates por spec con dos specs en vuelo, 25 de noviembre de 2026 (maestro §15.10, decisión 28) · **Alcance:** P0, flujo de especificación de cada slice
 
 ## Contexto
 
@@ -149,6 +149,18 @@ skill `speckit-*`, ningún script y ninguna plantilla lo referencian, y los
 scripts siguen funcionando sin él. Si una versión futura de Spec Kit
 introdujera una referencia, el grep de V2 se repite en el PR que suba la
 versión.
+
+> **Nota del 25 de noviembre de 2026** (maestro §15.10, decisiones 28.18 y
+> 28.19). Los cuatro gates de arriba son **por spec**. Dos specs pueden estar
+> en etapas distintas a la vez, solo dentro de la regla de la decisión 28.18:
+> como máximo una en implementación y una en documentación activa. El merge de
+> un PR documental de una spec **nunca** es el gate de otra, y pausar la
+> documentación de una spec no deshace ni salta ninguno de sus gates ya
+> mergeados. Cada spec en vuelo tiene su rama y su worktree (`AGENTS.md` 14b).
+> **La regla no se ejerce todavía:** antes hay que verificar cómo eligen la
+> spec activa los scripts de Spec Kit y que dos worktrees no escriben en la
+> spec equivocada (`[V]` 4 de este ADR; prerrequisito 3 de la decisión 28.19).
+> Esta nota no cambia el estado del ADR ni ningún otro punto de la decisión.
 
 #### 3.2 `[P]` — **se conserva como «paralelizable», solo dentro de `specs/*/tasks.md`**
 
@@ -437,6 +449,13 @@ Queda pendiente:
 3. **La auditoría del primer `tasks.md`** contra la matriz de capas (Decisión
    §4, F7-4). No es del PR de inicialización: es condición del PR que entregue
    el primer `tasks.md`, y su resultado decide si hace falta un preset.
+4. **La selección de la spec activa con dos specs en vuelo** (nota del 25 de
+   noviembre de 2026 en §3.1; maestro §15.10, decisión 28.19, prerrequisito
+   3). Antes de documentar una spec en paralelo con otra hay que comprobar,
+   ejecutándolo, cómo eligen los scripts de `.specify/scripts/` la spec activa
+   (por la rama, por `SPECIFY_FEATURE` o por cualquier otro mecanismo que
+   usen) y que dos worktrees, cada uno con su rama, no escriben en la spec del
+   otro. La salida se pega en el PR que la registre. **No está verificado.**
 
 ## Dependencias
 
