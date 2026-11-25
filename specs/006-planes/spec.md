@@ -154,22 +154,50 @@ registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
 - **Respuesta, opción A:**
   1. El gasto aparece en «Quién pagó» como una línea propia, «Pagado con la meta
      {meta}», que no se asigna a ninguno de los dos.
-  2. No cambia el «pagó» ni la diferencia de ninguna persona.
+  2. La parte cubierta con la meta **no se atribuye a ninguna persona** en las
+     cifras del plan: ni en su «pagó» ni en su «le corresponde», y por eso
+     tampoco mueve su diferencia del plan.
   3. Cuenta completo en el total del plan y en el desglose por categoría (Q7).
-- **«Le corresponde»: confirmado por los fundadores el 25 de noviembre de 2026**
-  (Alejandro: «Sí, confirmado»). Lo propuso el redactor. Para que la opción A se cumpla, la parte pagada
-  con la meta tampoco entra en «le corresponde». Si un gasto de importe A tiene
-  usos de meta aplicados por U (con 0 < U ≤ A):
+- **Cifras derivadas del plan, no métricas canónicas (F95-1).** El «pagó» y el
+  «le corresponde» de «Quién pagó» son cifras **propias del plan**, con nombre
+  propio: `plan_paid` y `plan_share`. **No son `gross_paid`** (maestro §5.1:
+  «total que la persona pagó originalmente») ni la suma de
+  `transaction_allocations`, y no las reutilizan. Para un gasto de importe A con
+  usos de meta aplicados por U (0 ≤ U ≤ A):
   - la línea «Pagado con la meta {meta}» suma U, con una línea por meta;
-  - el «pagó» del pagador suma A − U;
-  - «le corresponde» reparte A − U con el mismo reparto del gasto, en pesos
-    enteros, con el algoritmo de mayor residuo de ADR-002. Si U = A, el gasto no
-    suma nada a ninguna persona.
+  - `plan_paid` del pagador suma A − U;
+  - `plan_share` reparte A − U entre los participantes (regla de reparto abajo).
+    Si U = A, el gasto no suma nada a ninguna persona.
 
-  Así se cumple que Σ «pagó» + Σ líneas de meta = total del plan, que Σ «le
-  corresponde» = Σ «pagó» y que las diferencias suman cero. Solo cuentan los usos
-  **aplicados** y no anulados; una solicitud pendiente no cuenta (004, FR-053).
-  **Matiz aceptado por los fundadores:** la «Diferencia en este plan» es
+  **Lo que no cambia nunca:** `gross_paid` (sigue siendo A para el pagador), las
+  asignaciones originales de `transaction_allocations`, `net_owed`, Balance y
+  las cinco métricas de DEC-G04. **Lo que sí se recalcula:** `plan_paid`,
+  `plan_share` y la diferencia del plan, cada vez que U cambia (uso aplicado,
+  aprobado, quitado o anulado). Ejemplo: Sara paga $400.000, 50/50, y después se
+  aplican $150.000 de una meta. `gross_paid` de Sara sigue en $400.000 y Balance
+  no cambia; en el plan, `plan_paid` pasa de $400.000 a $250.000, `plan_share`
+  de $200.000 a $125.000 cada uno y la diferencia de +$200.000 a +$125.000.
+
+  Se cumple que Σ `plan_paid` + Σ líneas de meta = total del plan, que Σ
+  `plan_share` = Σ `plan_paid` y que las diferencias suman cero. Solo cuentan los
+  usos **aplicados** y no anulados; una solicitud pendiente, rechazada o
+  cancelada no descuenta nada (004, FR-053).
+- **Regla de reparto de `plan_share` (F95-2).** Los pesos salen de la
+  **proporción de las asignaciones originales** del gasto en
+  `transaction_allocations`, sea cual sea el modo con que se anotó (50/50,
+  Porcentaje o Importe; 003, FR-019). Sobre la base A − U se aplica el algoritmo
+  de mayor residuo de ADR-002, en pesos enteros, con el desempate por orden de
+  ingreso a la pareja (nota de ADR-002, decisión 20.8). `transaction_allocations`
+  no se modifica. Una asignación de 0 da 0. Ejemplo en modo Importe: $400.000
+  repartidos Sara $300.000 y Tomás $100.000 (75/25), con $150.000 de meta: la
+  base es $250.000 y `plan_share` da $187.500 y $62.500, no los importes
+  originales.
+- **Confirmación:** los fundadores confirmaron el 25 de noviembre de 2026
+  (Alejandro: «Sí, confirmado») que la parte de la meta tampoco cuenta en «le
+  corresponde» y que solo cuentan los usos aplicados. La propuesta fue del
+  redactor. Los nombres `plan_paid` y `plan_share` y la regla de proporción
+  corrigen la redacción (F95-1 y F95-2) sin cambiar esa decisión.
+- **Matiz aceptado por los fundadores:** la «Diferencia en este plan» es
   informativa, sin «le debe» (Q10). Puede no coincidir con lo que ese gasto mueve
   en Balance, que conserva el reparto completo y sigue siendo **el único saldo
   real** de la pareja. El enlace a Balance se mantiene. Se descartó repartir el
@@ -365,6 +393,24 @@ pagó/corresponde por persona.
 5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
 6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7).
 
+**Matriz de aceptación de Q24 (F95-3).** Gasto compartido de A = $400.000 en el
+plan, pagado por Sara, reparto 50/50, con la meta compartida «Regalos». Se cubre
+con pruebas de dominio y de integración de servidor, **sin spec E2E nueva**
+(según Q20). En cada caso se compara, antes y después, `gross_paid`, `net_owed`,
+las asignaciones originales de `transaction_allocations` y las cinco métricas de
+DEC-G04: **Planes no altera ninguna**. Anular o editar el gasto las mueve igual que sin Planes, y la prueba lo compara contra el mismo caso sin etiqueta. Por Planes solo cambian, cuando se indica, la línea de
+la meta, `plan_paid`, `plan_share` y la diferencia del plan.
+
+| Caso | Resultado esperado en el plan |
+| --- | --- |
+| Uso parcial aplicado (U = $150.000) | La línea «Pagado con la meta Regalos» muestra $150.000; `plan_paid` de Sara $250.000; `plan_share` $125.000 y $125.000; diferencia +$125.000 y −$125.000; total $400.000 |
+| Solicitud pendiente de uso | No se descuenta: sin línea de meta; `plan_paid` $400.000; `plan_share` $200.000 y $200.000 |
+| Solicitud aprobada | Las cifras se recalculan con el U aprobado, como en el uso parcial |
+| Solicitud rechazada o cancelada | No se descuenta nada: como sin meta |
+| «Quitar el uso de la meta» | La línea desaparece y las cifras vuelven al caso sin meta |
+| Anular el gasto | Sale de todas las cifras del plan: total, desglose, línea de meta, `plan_paid` y `plan_share` |
+| Editar el gasto con un uso vivo | Se mantiene U ≤ A (004, Q17: bajar el monto por debajo de lo usado se rechaza); con otro monto válido, las cifras del plan se recalculan sobre el A nuevo |
+
 ---
 
 ### User Story 3 - Un gasto privado en un plan compartido (Priority: P1)
@@ -518,7 +564,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-030**: Héroe: «Gastaron en {plan}» (compartido) o «Gastaste en {plan}» (privado) con el total del FR-021. Nunca `total_destinado_neto`, nunca aportes ni liquidaciones.
 - **FR-031**: Presupuesto (según Q8 y Q9): sin presupuesto, nada; con presupuesto, consumido, porcentaje, «Quedan $X» o «Se pasaron por $X», y «Cerca del límite» desde el 85 %, con texto y forma además de color. Nunca «te alcanza» ni «puedes gastar» (DEC-R17).
 - **FR-032**: Desglose por categoría (según Q11), con `CategoryIcon`.
-- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie y no cambia el «pagó» ni la diferencia de ninguna persona, aunque cuenta completo en el total y en el desglose (según Q24 y Q7). En «le corresponde» también se excluye la parte pagada con la meta: se reparte solo A − U, con el mismo reparto del gasto, y solo cuentan los usos aplicados y no anulados (según Q24; ADR-015 §4). La «Diferencia en este plan» es informativa y puede no coincidir con lo que ese gasto mueve en Balance, que conserva el reparto completo y sigue siendo el único saldo real de la pareja.
+- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. «Pagó» y «le corresponde» son las cifras derivadas del plan `plan_paid` y `plan_share`, nunca `gross_paid` ni las asignaciones guardadas (ADR-015 §4; F95-1). Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie, y cuenta completo en el total y en el desglose (según Q24 y Q7). La parte cubierta con la meta (U, solo usos aplicados y no anulados) no se atribuye a nadie: `plan_paid` del pagador suma A − U y `plan_share` reparte A − U con la proporción de las asignaciones originales, en cualquier modo de reparto, con el mayor residuo y el desempate de ADR-002 (F95-2). Las cifras del plan se recalculan cuando U cambia; `gross_paid`, `transaction_allocations`, `net_owed`, Balance y DEC-G04 no cambian. Lo cubre la matriz de Q24 de US-2. La «Diferencia en este plan» es informativa y puede no coincidir con lo que ese gasto mueve en Balance, que conserva el reparto completo y sigue siendo el único saldo real de la pareja.
 - **FR-034**: Lista de gastos del plan con el mismo `ExpenseRow` de Actividad y la marca «Pagado con una meta» cuando aplique.
 - **FR-035**: Foto de portada o fallback (ADR-014; fallback como GoalCard `[A]`).
 
@@ -561,7 +607,10 @@ Sara sube una foto de la playa a «Cartagena».
 
 #### Pruebas y CI
 
-- **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define.
+- **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define. Para Q24, además:
+  - la matriz de Q24 de US-2, en dominio y en integración de servidor, con la comparación de `gross_paid`, `net_owed`, `transaction_allocations` y DEC-G04 antes y después;
+  - `plan_share` con uso de meta en los tres modos de reparto (F95-2): 50/50 con una base A − U impar en pesos (p. ej., A = $400.001 y U = $150.000: $125.001 y $125.000, el peso sobrante a quien entró antes en la pareja); Porcentaje 70/30; Importe $300.000 + $100.000 con U = $150.000 ($187.500 y $62.500); e Importe con una asignación de $0, que da 0;
+  - en todos, Σ `plan_paid` + Σ líneas de meta = total, Σ `plan_share` = Σ `plan_paid`, y `transaction_allocations` sin modificar.
 - **FR-081**: pgTAP: RLS de planes y etiquetas con tres cuentas, compatibilidad de FR-012, idempotencia, eliminación sin tocar gastos, Storage con tres cuentas.
 - **FR-082**: Ninguna spec E2E nueva: MVP-2 mantiene el tope de P0 (según Q20). El bloqueo del plan cerrado se prueba en dos capas:
   - pgTAP, con llamadas directas a la API;
@@ -610,5 +659,5 @@ Sara sube una foto de la playa a «Cartagena».
 2. ~~Que ADR-014 y ADR-015 pasen a Aceptado.~~ **Hecho** en ese mismo PR, con fecha del 25 de noviembre de 2026.
 3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
 4. ~~Que los fundadores confirmen la lectura de «le corresponde» de Q24.~~ **Hecho:** confirmada el 25 de noviembre de 2026, junto con el matiz de Balance.
-5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los dos ajustes pendientes hechos y sus `[P]` marcados.
+5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los **tres** ajustes obligatorios hechos (la foto de 15 MB, la variante de eliminar con 13 gastos y la línea de Q24 en «Quién pagó» de 06·3), con la decisión `[P]` sobre el total compartido en Yo tomada y con sus demás `[P]` marcados.
 6. Que MVP-1 esté declarado (spec 005).

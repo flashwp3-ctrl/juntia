@@ -118,9 +118,12 @@ los dos en compartidos, 20.12).
 - **Privados propios en un plan compartido** (Q6): cifra aparte, solo para su
   dueña, **nunca sumada** a una cifra compartida. Es la regla de la decisión 22.11
   para las metas en Yo.
-- **Pagó / le corresponde** por persona dentro del plan: `gross_paid` y la suma de
-  `transaction_allocations` restringidos al plan. **No es `net_owed`** y no se
-  rotula como deuda; el único saldo de la pareja sigue siendo el de Balance (20.9).
+- **Pagó / le corresponde** por persona dentro del plan: cifras derivadas
+  **propias del plan**, `plan_paid` y `plan_share`. Sin usos de meta coinciden con
+  `gross_paid` y con la suma de `transaction_allocations` restringidos al plan;
+  con usos de meta se calculan sobre A − U (Q24, abajo). **No reutilizan ni
+  redefinen `gross_paid`** (maestro §5.1), **no son `net_owed`** y no se rotulan
+  como deuda; el único saldo de la pareja sigue siendo el de Balance (20.9).
 - **Presupuesto del plan:** compara solo con el total compartido (o el total de un
   plan privado). No es un `budgets` de ADR-004 y no se suma ni se resta con ellos.
 - Ninguna cifra del plan entra en las cinco métricas de DEC-G04, ni las altera.
@@ -146,15 +149,28 @@ etiquetados en él.
 25 de noviembre de 2026).** Cuenta completo en el total y en el desglose por
 categoría (Q7). En «Quién pagó», la parte pagada con la meta, que es la suma de
 los usos **aplicados y no anulados** de ese gasto (entradas `usage` de `goal_ledger_entries` sin su `void`), aparece como una línea
-propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Esa parte
-no entra en el `gross_paid` del pagador, y por eso no cambia el «pagó» ni la
-diferencia de ninguna persona. Una solicitud pendiente no cuenta.
+propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Una
+solicitud pendiente, rechazada o cancelada no cuenta.
 
-«Le corresponde», confirmado por los fundadores el 25 de noviembre de 2026 (spec
-006, Q24). Si el gasto de importe A lleva usos aplicados por U, «le corresponde»
-reparte solo A − U con el mismo reparto, con mayor residuo y pesos enteros
-(ADR-002). Se cumplen dos igualdades: Σ pagó + Σ líneas de meta = total, y Σ le
-corresponde = Σ pagó.
+Para un gasto de importe A con usos aplicados por U (0 ≤ U ≤ A), confirmado por
+los fundadores el 25 de noviembre de 2026 (spec 006, Q24):
+
+- `plan_paid` del pagador suma **A − U**.
+- `plan_share` reparte **A − U** con pesos iguales a la **proporción de las
+  asignaciones originales** de `transaction_allocations`, sea cual sea el modo de
+  reparto (50/50, Porcentaje o Importe; 003, FR-019): mayor residuo, pesos
+  enteros y desempate por orden de ingreso a la pareja (ADR-002, nota de la
+  decisión 20.8). Una asignación de 0 da 0. Ejemplo en modo Importe: $400.000 =
+  $300.000 + $100.000, con U = $150.000, da $187.500 y $62.500.
+- Se cumplen dos igualdades: Σ `plan_paid` + Σ líneas de meta = total, y Σ
+  `plan_share` = Σ `plan_paid`.
+
+**Intacto:** `gross_paid` (sigue siendo A para el pagador, maestro §5.1),
+`transaction_allocations`, `net_owed`, Balance y las cinco métricas de DEC-G04.
+**Recalculado:** `plan_paid`, `plan_share` y la diferencia del plan, cada vez que
+U cambia (uso aplicado, solicitud aprobada, «Quitar el uso de la meta», anulación
+del gasto o del uso). Son cifras de lectura: no se guardan, se derivan en la
+función pura del dominio y en la vista.
 
 **Matiz de Balance, aceptado por los fundadores.** La «Diferencia en este plan» es
 informativa y puede no coincidir con lo que ese gasto mueve en Balance. Balance
@@ -288,6 +304,11 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 7. **Auditoría ampliada (F94-6).** pgTAP de crear, editar, cerrar, reabrir y
    eliminar un plan: el evento y el actor son los correctos, y el evento no se
    puede editar ni borrar.
+8. **Gasto pagado con una meta (Q24; F95-1 a F95-3).** La matriz de Q24 de la
+   spec 006 (US-2), en dominio e integración, con `plan_share` en 50/50,
+   Porcentaje e Importe, una base impar y una asignación de 0. En cada caso,
+   `gross_paid`, `net_owed`, `transaction_allocations` y las cinco métricas de
+   DEC-G04 son iguales con y sin la etiqueta del plan.
 
 ## Referencias
 
