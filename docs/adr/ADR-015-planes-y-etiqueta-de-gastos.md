@@ -304,11 +304,15 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 7. **Auditoría ampliada (F94-6).** pgTAP de crear, editar, cerrar, reabrir y
    eliminar un plan: el evento y el actor son los correctos, y el evento no se
    puede editar ni borrar.
-8. **Gasto pagado con una meta (Q24; F95-1 a F95-6).** La matriz de Q24 de la
+8. **Gasto pagado con una meta (Q24; F95-1 a F95-8).** La matriz de Q24 de la
    spec 006 (US-2), en dominio e integración, con `plan_share` en 50/50,
    Porcentaje e Importe, una base impar y una asignación de 0, y con los dos casos
    de solicitud pendiente, el rechazo que conserva lo propio y la suma de asientos
-   vivos al aprobar. Cada caso, con dos comparaciones:
+   vivos al aprobar. Incluye las dos reversiones que parten de la solicitud
+   aprobada con dos asientos vivos (F95-8): «Quitar el uso de la meta», que anula
+   los dos usos y devuelve a cada aportante lo suyo, y anular el gasto, que anula
+   el gasto y los dos usos en una sola operación atómica e idempotente, sin un
+   orden fijo entre ellos (ADR-010). Cada caso, con dos comparaciones:
    - **invariancia por etiqueta:** el mismo escenario con y sin la etiqueta del
      plan da `gross_paid`, `net_owed`, `transaction_allocations`, Balance y las
      cinco métricas de DEC-G04 idénticos;
