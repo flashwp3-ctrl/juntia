@@ -16,8 +16,8 @@ lanza CI).
 
 | # | Funcionalidad | Origen | Estado |
 | --- | --- | --- | --- |
-| 1 | **Planes: viajes, salidas y eventos.** Agrupar gastos en un plan con total, presupuesto opcional, desglose por categoría, quién pagó, foto e histórico, sin cambiar ninguna cifra de dinero | Petición de los fundadores del 24 nov 2026, aprobada por Alejandro para especificarse y diseñarse en paralelo al gate | **Primera funcionalidad de MVP-2.** Spec `specs/006-planes/`: Q1–Q23 respondidas el 24 nov 2026 (Q12 cambiada); sin preguntas abiertas; ADR-014 y ADR-015 propuestos; prompt de diseño en `specs/006-planes/design-prompt.md` |
-| 2 | Fotos de portada de las metas | Decisiones 22.6 y 24.13; ADR-014 | Propuesto junto con Planes (spec 006, Q16) |
+| 1 | **Planes: viajes, salidas y eventos.** Agrupar gastos en un plan con total, presupuesto opcional, desglose por categoría, quién pagó, foto e histórico, sin cambiar ninguna cifra de dinero | Petición de los fundadores del 24 nov 2026, aprobada por Alejandro para especificarse y diseñarse en paralelo al gate | **Primera funcionalidad de MVP-2.** Spec `specs/006-planes/`: Q1–Q23 respondidas el 24 nov 2026 (Q12 cambiada) y Q24 el 25 nov 2026; decisión 27 del maestro; ADR-014 y ADR-015 aceptados el 25 nov 2026; comps `[P]` sin aprobar (`specs/006-planes/design-comps.md`) |
+| 2 | Fotos de portada de las metas | Decisiones 22.6 y 24.13; ADR-014 | Va con Planes, en su PR C (spec 006, Q16; ADR-014 aceptado) |
 | 3 | Recurrentes | Maestro §11, MVP-2 | Sin especificar |
 | 4 | Presets de captura | Maestro §11, MVP-2 | Sin especificar |
 | 5 | Estadísticas mejores | Maestro §11, MVP-2 | Sin especificar |
@@ -38,6 +38,16 @@ El orden de las filas 3 a 7 es el del maestro, no una prioridad: el maestro dice
 | Purga de la tabla de idempotencia (medir y revisar) | Decisión 24.12 |
 | Revisión de la excepción de CLS por fuentes tardías | Decisión 26.1 |
 | Revisión de la excepción del GoalStack a 390 con la precarga de F02 | Decisión 25.4 |
+
+## Ideas sin decidir
+
+Ideas que salieron de Planes. Ninguna está decidida ni especificada, y cada una
+vuelve a los fundadores antes de entrar en una spec.
+
+| Idea | Cuándo se reconsidera |
+| --- | --- |
+| Renombrar la pestaña «Plan» (presupuestos) a «Presupuesto» | Solo si en el uso real se confunde con «Planes». La spec 006 (Q2 y Q3) evita el choque sin renombrar un destino aprobado |
+| Avisarle a la pareja cuando se elimina o se reabre un plan compartido | Hoy no existen notificaciones en Juntia: requiere decidir primero el mecanismo de avisos |
 
 ## Fuera de MVP-2 (para no confundir)
 

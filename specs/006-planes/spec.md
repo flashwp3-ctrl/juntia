@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-24
 
-**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** No avanza a Plan sin el merge de su PR documental (ADR-012 §3.1). Depende además de dos ADR en estado **Propuesto**: ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta).
+**Status**: Draft. Specify y Clarify hechos: los fundadores respondieron Q1–Q20 el 24 de noviembre de 2026, aceptaron todas las recomendaciones salvo la de Q12 (que cambia) y confirmaron que MVP-2 mantiene el tope E2E de P0. Las tres preguntas que salieron de la nueva Q12 (Q21–Q23) también están respondidas, el mismo día. **No queda ninguna pregunta abierta.** El PR de la spec (#94) se mergeó el 25 de noviembre de 2026; no avanza a Plan hasta cumplir «Lo que hace falta para pasar a Plan» (ADR-012 §3.1). La decisión está registrada en el maestro §15.10, decisión 27, y ADR-014 (fotos) y ADR-015 (entidad del plan y etiqueta) están **Aceptados** desde el 25 de noviembre de 2026. Q24 la decidió Alejandro el 25 de noviembre de 2026 (Session 2026-11-25).
 
 **Input**: Petición de los fundadores del 24 de noviembre de 2026, aprobada por Alejandro ese día para especificarse y diseñarse en paralelo al gate de MVP-1: «Crear un plan, por ejemplo "Cartagena" o "ir al pueblo", y anotar en él los gastos de esa salida. Esos gastos se siguen viendo en Yo y en Nosotros. Un histórico ("en Cartagena nos gastamos $1.000.000"), abrir el detalle del plan y subirle una foto como en las metas, ver el desglose de quién pagó qué y saber si se pasaron del presupuesto del plan».
 
@@ -45,8 +45,8 @@
 | Spec 005, decisiones del 22 nov 2026 | Once categorías de gasto y rejilla de Anotar de 4 × 3 |
 | ADR-013 | Tablas en `juntia_data`, escrituras solo por funciones en `juntia_private`, vistas `security_invoker` en `public`, idempotencia y bloqueo del agregado |
 | ADR-011 y `docs/TESTING.md` | Capa más baja que detecta el fallo; tope de specs E2E; iteración contra `juntia-dev` |
-| ADR-014 **(Propuesto, este PR)** | Fotos de portada en Storage privado: límites, EXIF, borrado, costos |
-| ADR-015 **(Propuesto, este PR)** | Entidad del plan y su relación con los gastos (etiqueta adicional) |
+| ADR-014 **(Aceptado, 25 nov 2026)** | Fotos de portada en Storage privado: límites, EXIF, borrado, costos |
+| ADR-015 **(Aceptado, 25 nov 2026)** | Entidad del plan y su relación con los gastos (etiqueta adicional) |
 | `docs/design/` | I2 · Bosque & Arena, Phosphor con `AppIcon`, BRAND §4 (palabras prohibidas) y §5 (fotografía), GoalCard y su fallback `[A]`, BottomSheet, Modal, BudgetIndicator, SharedBalance |
 | `docs/GLOSSARY.md` | Términos existentes; ninguno se renombra |
 
@@ -138,10 +138,76 @@ El contexto y las opciones de cada una se conservan abajo.
 - **Opciones:** (a) se permite. La etiqueta pasa al gasto nuevo si el plan es compartido de esa pareja, como consecuencia de una operación de dinero y no como una asociación. Si el plan es privado, la confirmación avisa que el gasto saldrá de un plan cerrado. (b) Se bloquea mientras el plan esté cerrado, y la confirmación pide reabrirlo.
 - **Recomendación: (b) para un plan privado cerrado y (a) para uno compartido.** Con (a) en un plan compartido, el plan no pierde nada. Con un plan privado cerrado, el gasto saldría del plan sin reabrirlo, que es lo que la regla 3 quiere evitar.
 
+### Session 2026-11-25
+
+Alejandro decidió Q24 el 25 de noviembre de 2026, con la opción A. Queda
+registrada en el maestro §15.10, decisión 27.4, y en ADR-015 §4.
+
+#### Q24 · Gasto compartido pagado con una meta compartida, en «Quién pagó»
+
+- **Contexto:** Q7 cuenta completo un gasto pagado con una meta. En el balance de
+  la pareja, ese gasto conserva su pagador y su reparto, porque los fondos de la
+  meta no tocan el reparto (004, FR-058; DEC-G06). En «Quién pagó» de un plan, en
+  cambio, atribuirle a una persona un pago que salió de la meta muestra una
+  diferencia que nadie sintió. Por ejemplo, el regalo de la boda pagado con la
+  meta «Regalos».
+- **Respuesta, opción A:**
+  1. El gasto aparece en «Quién pagó» como una línea propia, «Pagado con la meta
+     {meta}», que no se asigna a ninguno de los dos.
+  2. La porción cubierta por la meta no se asigna como pago ni consumo a ninguna
+     persona. Al cambiar U, se recalculan `plan_paid`, `plan_share` y la
+     diferencia informativa del plan; el Balance real permanece intacto.
+  3. Cuenta completo en el total del plan y en el desglose por categoría (Q7).
+- **Cifras derivadas del plan, no métricas canónicas (F95-1).** El «pagó» y el
+  «le corresponde» de «Quién pagó» son cifras **propias del plan**, con nombre
+  propio: `plan_paid` y `plan_share`. **No son `gross_paid`** (maestro §5.1:
+  «total que la persona pagó originalmente») ni la suma de
+  `transaction_allocations`, y no las reutilizan. Para un gasto de importe A con
+  usos de meta aplicados por U (0 ≤ U ≤ A):
+  - la línea «Pagado con la meta {meta}» suma U, con una línea por meta;
+  - `plan_paid` del pagador suma A − U;
+  - `plan_share` reparte A − U entre los participantes (regla de reparto abajo).
+    Si U = A, el gasto no suma nada a ninguna persona.
+
+  **Lo que no cambia nunca:** `gross_paid` (sigue siendo A para el pagador), las
+  asignaciones originales de `transaction_allocations`, `net_owed`, Balance y
+  las cinco métricas de DEC-G04. **Lo que sí se recalcula:** `plan_paid`,
+  `plan_share` y la diferencia del plan, cada vez que U cambia (uso aplicado,
+  aprobado, quitado o anulado). Ejemplo: Sara paga $400.000, 50/50, y después se
+  aplican $150.000 de una meta. `gross_paid` de Sara sigue en $400.000 y Balance
+  no cambia; en el plan, `plan_paid` pasa de $400.000 a $250.000, `plan_share`
+  de $200.000 a $125.000 cada uno y la diferencia de +$200.000 a +$125.000.
+
+  Se cumple que Σ `plan_paid` + Σ líneas de meta = total del plan, que Σ
+  `plan_share` = Σ `plan_paid` y que las diferencias suman cero. Solo cuentan los
+  usos **aplicados** y no anulados; los fondos de una solicitud pendiente, rechazada o
+  cancelada no descuentan nada, y los propios ya aplicados siguen contando (004, FR-052, FR-053 y FR-055).
+- **Regla de reparto de `plan_share` (F95-2).** Los pesos salen de la
+  **proporción de las asignaciones originales** del gasto en
+  `transaction_allocations`, sea cual sea el modo con que se anotó (50/50,
+  Porcentaje o Importe; 003, FR-019). Sobre la base A − U se aplica el algoritmo
+  de mayor residuo de ADR-002, en pesos enteros, con el desempate por orden de
+  ingreso a la pareja (nota de ADR-002, decisión 20.8). `transaction_allocations`
+  no se modifica. Una asignación de 0 da 0. Ejemplo en modo Importe: $400.000
+  repartidos Sara $300.000 y Tomás $100.000 (75/25), con $150.000 de meta: la
+  base es $250.000 y `plan_share` da $187.500 y $62.500, no los importes
+  originales.
+- **Confirmación:** los fundadores confirmaron el 25 de noviembre de 2026
+  (Alejandro: «Sí, confirmado») que la parte de la meta tampoco cuenta en «le
+  corresponde» y que solo cuentan los usos aplicados. La propuesta fue del
+  redactor. Los nombres `plan_paid` y `plan_share` y la regla de proporción
+  corrigen la redacción (F95-1 y F95-2) sin cambiar esa decisión.
+- **Matiz aceptado por los fundadores:** la «Diferencia en este plan» es
+  informativa, sin «le debe» (Q10). Puede no coincidir con lo que ese gasto mueve
+  en Balance, que conserva el reparto completo y sigue siendo **el único saldo
+  real** de la pareja. El enlace a Balance se mantiene. Se descartó repartir el
+  importe completo A en «le corresponde», porque con eso las diferencias no suman
+  cero y la meta crea una diferencia aparente.
+
 ### Preguntas de la etapa Specify
 
 Las Q1–Q20 se conservan tal como se plantearon. Las respuestas están en la tabla
-de arriba. Las marcadas **· ADR** dependen de un ADR propuesto en este PR.
+de arriba. Las marcadas **· ADR** dependen de ADR-014 o ADR-015, propuestos en el PR #94 y aceptados el 25 de noviembre de 2026 (decisión 27).
 
 ### Lo que ya está decidido y esta spec no reabre
 
@@ -325,6 +391,44 @@ pagó/corresponde por persona.
 3. **Given** un plan sin presupuesto, **When** abre el detalle, **Then** no hay barra, ni restante, ni exceso, ni «$0» (DEC-R01).
 4. **Given** gastos pagados por Sara y por Tomás con repartos distintos, **When** abre «Quién pagó», **Then** ve por persona «pagó» y «le corresponde» dentro del plan, la diferencia rotulada «Diferencia en este plan» y el enlace al balance de la pareja; en ninguna parte del plan dice «le debe».
 5. **Given** un gasto del plan pagado con una meta, **When** abre el detalle, **Then** el gasto cuenta por su importe completo y lleva la marca «Pagado con una meta»; ningún aporte, retiro ni liquidación aparece en el total.
+6. **Given** «Boda de Ana» con $860.000 en gastos compartidos: el regalo de $400.000, pagado por completo con la meta compartida «Regalos», y $460.000 más, de los que Sara pagó $300.000 y Tomás $160.000, a repartir 50/50, **When** abre «Quién pagó», **Then** ve la línea «Pagado con la meta Regalos · $400.000», sin asignar a nadie; Sara pagó $300.000 y le corresponden $230.000; Tomás pagó $160.000 y le corresponden $230.000; la diferencia en este plan es +$70.000 y −$70.000; el total del plan es $860.000 y el regalo suma $400.000 en su categoría (según Q24 y Q7).
+
+**Matriz de aceptación de Q24 (F95-3, F95-5 y F95-6).** Gasto compartido de
+A = $400.000 en el plan, pagado por Sara, reparto 50/50, con la meta compartida
+«Regalos». U es la suma de los asientos de uso **vivos** (aplicados y no
+anulados) de ese gasto; varios asientos vivos de la misma meta se suman en una
+sola línea y el gasto cuenta una vez. Los fondos propios se aplican al registrar
+el gasto; los de la otra persona quedan pendientes hasta que ella apruebe, y un
+rechazo o una cancelación solo excluye lo que nunca se aplicó (004, FR-052,
+FR-053 y FR-055). Se cubre con pruebas de dominio y de integración de servidor,
+**sin spec E2E nueva** (según Q20).
+
+| Caso | U | Resultado esperado en el plan |
+| --- | --- | --- |
+| Uso parcial aplicado de fondos propios | $150.000 | Línea «Pagado con la meta Regalos» $150.000; `plan_paid` de Sara $250.000; `plan_share` $125.000 y $125.000; diferencia +$125.000 y −$125.000; total $400.000 |
+| Solicitud pendiente, sin fondos propios aplicados | $0 | Sin línea de meta; `plan_paid` de Sara $400.000; `plan_share` $200.000 y $200.000 |
+| Solicitud pendiente con fondos propios aplicados: Sara aplica $100.000 suyos y pide $150.000 de Tomás | $100.000 | Línea $100.000; `plan_paid` de Sara $300.000; `plan_share` $150.000 y $150.000 |
+| Esa solicitud, aprobada | $250.000 | Los dos asientos vivos de la meta ($100.000 + $150.000) se suman en una línea de $250.000, sin duplicar el gasto; `plan_paid` de Sara $150.000; `plan_share` $75.000 y $75.000; total $400.000 |
+| Esa solicitud, rechazada o cancelada | $100.000 | Lo propio sigue aplicado: igual que la pendiente con fondos propios. Solo se excluyen los $150.000 que nunca se aplicaron |
+| «Quitar el uso de la meta», desde una financiación con un solo uso vigente (uso parcial) | $0 | La línea desaparece y las cifras vuelven al caso sin meta |
+| «Quitar el uso de la meta», **desde la solicitud aprobada** (U = $250.000, dos asientos vivos) (F95-8) | $0 | Una sola operación atómica e idempotente anula los dos asientos de uso, sin un orden fijo entre ellos (ADR-010). Vuelven $100.000 a Sara y $150.000 a Tomás. No queda financiación viva: desaparece la línea de la meta, `plan_paid` de Sara vuelve a $400.000 y `plan_share` a $200.000 y $200.000; el total sigue en $400.000 |
+| Anular el gasto, **desde la solicitud aprobada** (U = $250.000, dos asientos vivos) (F95-8) | — | En una sola operación atómica e idempotente se anulan el gasto y los dos usos, sin un orden fijo entre ellos (ADR-010). No queda financiación viva; los fondos vuelven a quien los aportó ($100.000 a Sara y $150.000 a Tomás), y el gasto sale de todos los agregados activos del plan: total, desglose, línea de meta, `plan_paid` y `plan_share` |
+| Editar el gasto con un uso vivo | sin cambio | Se mantiene U ≤ A (004, Q17: bajar el monto por debajo de lo usado se rechaza); con otro monto válido, las cifras del plan se recalculan sobre el A nuevo |
+
+Cada caso se comprueba con **dos comparaciones distintas** (F95-6):
+
+1. **Invariancia por etiqueta.** Para cada estado y cada operación de la
+   matriz, se compara el mismo escenario con la etiqueta del plan y sin ella:
+   `gross_paid`, `net_owed`, las asignaciones de `transaction_allocations`,
+   Balance y las cinco métricas de DEC-G04 **coinciden exactamente**. Planes no
+   altera ninguna métrica canónica.
+2. **Transición de financiación.** Antes y después de aprobar, quitar el uso,
+   editar o anular, las métricas canónicas **cambian exactamente como dice la spec
+   004**: al aprobar o al quitar un uso cambian, entre otras,
+   `gasto_financiado_con_meta` y `total_destinado_neto`, y al anular el gasto
+   cambia todo lo que ese gasto aportaba. El cambio es el mismo con etiqueta y sin
+   ella. En el plan solo cambian, además, la línea de la meta, `plan_paid`,
+   `plan_share` y la diferencia del plan.
 
 ---
 
@@ -479,7 +583,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **FR-030**: Héroe: «Gastaron en {plan}» (compartido) o «Gastaste en {plan}» (privado) con el total del FR-021. Nunca `total_destinado_neto`, nunca aportes ni liquidaciones.
 - **FR-031**: Presupuesto (según Q8 y Q9): sin presupuesto, nada; con presupuesto, consumido, porcentaje, «Quedan $X» o «Se pasaron por $X», y «Cerca del límite» desde el 85 %, con texto y forma además de color. Nunca «te alcanza» ni «puedes gastar» (DEC-R17).
 - **FR-032**: Desglose por categoría (según Q11), con `CategoryIcon`.
-- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos.
+- **FR-033**: «Quién pagó» (según Q10): por persona, «pagó» y «le corresponde» dentro del plan, y «Diferencia en este plan»; enlace al balance de la pareja; sin «le debe» ni liquidar por plan. Solo en planes compartidos. «Pagó» y «le corresponde» son las cifras derivadas del plan `plan_paid` y `plan_share`, nunca `gross_paid` ni las asignaciones guardadas (ADR-015 §4; F95-1). Un gasto pagado con una meta compartida aparece como una línea propia, «Pagado con la meta {meta}», que no se asigna a nadie, y cuenta completo en el total y en el desglose (según Q24 y Q7). La parte cubierta con la meta (U, solo usos aplicados y no anulados) no se atribuye a nadie: `plan_paid` del pagador suma A − U y `plan_share` reparte A − U con la proporción de las asignaciones originales, en cualquier modo de reparto, con el mayor residuo y el desempate de ADR-002 (F95-2). Las cifras del plan se recalculan cuando U cambia; `gross_paid`, `transaction_allocations`, `net_owed`, Balance y DEC-G04 no cambian. Lo cubre la matriz de Q24 de US-2. La «Diferencia en este plan» es informativa y puede no coincidir con lo que ese gasto mueve en Balance, que conserva el reparto completo y sigue siendo el único saldo real de la pareja.
 - **FR-034**: Lista de gastos del plan con el mismo `ExpenseRow` de Actividad y la marca «Pagado con una meta» cuando aplique.
 - **FR-035**: Foto de portada o fallback (ADR-014; fallback como GoalCard `[A]`).
 
@@ -522,7 +626,10 @@ Sara sube una foto de la playa a «Cartagena».
 
 #### Pruebas y CI
 
-- **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define.
+- **FR-080**: Dominio: total del plan, presupuesto (sin, dentro, cerca, excedido), desglose y pagó/corresponde, con un dataset fijo que la etapa Plan define. Para Q24, además:
+  - la matriz de Q24 de US-2, en dominio y en integración de servidor, incluidos los dos casos de solicitud pendiente (sin y con fondos propios aplicados), el rechazo que conserva lo propio y la suma de los dos asientos vivos de la misma meta al aprobar (F95-5) y las dos reversiones que parten de la solicitud aprobada con dos asientos vivos, quitar el uso y anular el gasto (F95-8), cada uno con las dos comparaciones de la matriz (F95-6): **invariancia por etiqueta** (el mismo escenario con y sin etiqueta da `gross_paid`, `net_owed`, `transaction_allocations`, Balance y DEC-G04 idénticos) y **transición de financiación** (antes y después de aprobar, quitar, editar o anular, las métricas canónicas cambian exactamente como dice la spec 004, igual con y sin etiqueta);
+  - `plan_share` con uso de meta en los tres modos de reparto (F95-2): 50/50 con una base A − U impar en pesos (p. ej., A = $400.001 y U = $150.000: $125.001 y $125.000, el peso sobrante a quien entró antes en la pareja); Porcentaje 70/30; Importe $300.000 + $100.000 con U = $150.000 ($187.500 y $62.500); e Importe con una asignación de $0, que da 0;
+  - en todos, Σ `plan_paid` + Σ líneas de meta = total, Σ `plan_share` = Σ `plan_paid`, y `transaction_allocations` sin modificar.
 - **FR-081**: pgTAP: RLS de planes y etiquetas con tres cuentas, compatibilidad de FR-012, idempotencia, eliminación sin tocar gastos, Storage con tres cuentas.
 - **FR-082**: Ninguna spec E2E nueva: MVP-2 mantiene el tope de P0 (según Q20). El bloqueo del plan cerrado se prueba en dos capas:
   - pgTAP, con llamadas directas a la API;
@@ -539,11 +646,11 @@ Sara sube una foto de la playa a «Cartagena».
 - Grupos de más de dos personas (P1).
 - Sugerencias automáticas de plan por ubicación, IA u OCR.
 
-### Key Entities *(propuestas; ADR-015)*
+### Key Entities *(ADR-015 y ADR-014, aceptados)*
 
-- **Plan** (`juntia_data.outings` **[propuesta]**): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
-- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions` **[propuesta]**): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
-- **Foto de portada** (`juntia_data.cover_photos` **[propuesta]**, ADR-014): id, propietaria XOR pareja, `full_path` y `thumb_path` (rutas deterministas bajo `…/{cover_id}/`), bytes y `sha256` de cada variante, ancho, alto, focal point `{x,y}`, `status` (`pending | ready`) y `created_by`. Las dos variantes son una sola portada lógica: se suben, reemplazan, borran, barren y restauran juntas (ADR-014 §2 y §5).
+- **Plan** (`juntia_data.outings`): id, `owner_user_id` XOR `group_id`, nombre, `starts_on`, `ends_on`, `budget_minor` (nullable), `outing_type` `[P]`, `cover_photo_id` (nullable), `status`, `version`, `created_by`, auditoría.
+- **Etiqueta de plan de un gasto** (`juntia_data.outing_transactions`): `transaction_id` (único: un plan por gasto), `outing_id`, `tagged_by`, `tagged_at`. Tabla aparte de `transactions` (ADR-015 §2).
+- **Foto de portada** (`juntia_data.cover_photos`, ADR-014): id, propietaria XOR pareja, `full_path` y `thumb_path` (rutas deterministas bajo `…/{cover_id}/`), bytes y `sha256` de cada variante, ancho, alto, focal point `{x,y}`, `status` (`pending | ready`) y `created_by`. Las dos variantes son una sola portada lógica: se suben, reemplazan, borran, barren y restauran juntas (ADR-014 §2 y §5).
 
 ## Success Criteria *(mandatory)*
 
@@ -567,8 +674,9 @@ Sara sube una foto de la playa a «Cartagena».
 
 ## Lo que hace falta para pasar a Plan
 
-1. Que las respuestas Q1–Q23, todas dadas el 24 de noviembre de 2026, queden registradas como decisión del maestro §15.10, en el PR documental que las recoja.
-2. Que ADR-014 y ADR-015 pasen a Aceptado en ese mismo PR. Ya reflejan todas las respuestas.
-3. Que la revisión de este PR termine sin hallazgos abiertos.
-4. Que los fundadores aprueben los comps de Claude Design de las pantallas del prompt (`design-prompt.md`), con sus `[P]` marcados.
-5. Que MVP-1 esté declarado (spec 005).
+1. ~~Que las respuestas Q1–Q23 queden registradas como decisión del maestro §15.10.~~ **Hecho:** decisión 27, en el PR documental posterior al #94, con Q24 incluida.
+2. ~~Que ADR-014 y ADR-015 pasen a Aceptado.~~ **Hecho** en ese mismo PR, con fecha del 25 de noviembre de 2026.
+3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
+4. ~~Que los fundadores confirmen la lectura de «le corresponde» de Q24.~~ **Hecho:** confirmada el 25 de noviembre de 2026, junto con el matiz de Balance.
+5. Que los fundadores aprueben los comps de Claude Design (`design-comps.md`), con los **tres** ajustes obligatorios hechos (la foto de 15 MB, la variante de eliminar con 13 gastos y la línea de Q24 en «Quién pagó» de 06·3), con la decisión `[P]` sobre el total compartido en Yo tomada y con sus demás `[P]` marcados.
+6. Que MVP-1 esté declarado (spec 005).

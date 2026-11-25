@@ -7,6 +7,10 @@ iniciarla con `/design-login`). Pegarlo en el proyecto de Claude Design
 system»), como una página nueva **«06 Planes»**, para que herede los tokens, las
 fuentes y los componentes del sistema.
 
+**Resultado (25 de noviembre de 2026):** los comps están en dos archivos de ese
+proyecto, sin aprobar todavía. Dónde están, los ajustes pendientes y sus `[V]`:
+`design-comps.md`.
+
 **Qué es y qué no.** Los comps que salgan son **propuestas** `[P]`: se aprueban
 viendo la pantalla y no deciden el alcance. El alcance sale de
 `specs/006-planes/spec.md`:

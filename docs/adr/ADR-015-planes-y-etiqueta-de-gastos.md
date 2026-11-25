@@ -1,8 +1,6 @@
 # ADR-015 — Planes: entidad propia y etiqueta adicional de los gastos
 
-**Estado:** **Propuesto** (24 de noviembre de 2026). Los fundadores respondieron el 24 de noviembre de 2026 las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y Q12 la cambiaron (plan cerrado bloqueado, §5). El mismo día aceptaron también las recomendaciones de Q21–Q23. Faltan dos cosas:
-- el paso a **Aceptado** en el PR documental que registre la decisión en el maestro §15.10;
-- que MVP-1 esté declarado antes de implementar · **Origen:** especificación 006 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (25 de noviembre de 2026; maestro §15.10, decisión 27.3). Propuesto el 24 de noviembre de 2026. Los fundadores respondieron ese día las preguntas de la spec 006 que lo afectan: aceptaron Q2, Q4, Q5, Q6, Q14 y Q15 tal como se recomendaron, y cambiaron Q12 (plan cerrado bloqueado, §5). El mismo día aceptaron también las recomendaciones de Q21–Q23. El 25 de noviembre de 2026 Alejandro decidió Q24 (gasto compartido pagado con una meta compartida, §4; decisión 27.4). La revisión del PR #94 cerró F94-1 a F94-10. No se implementa antes de declarar MVP-1, y sus `[V]` siguen pendientes · **Origen:** especificación 006 · **Alcance:** MVP-2
 
 ## Contexto
 
@@ -25,7 +23,7 @@ Lo que no se puede romper:
 - La tabla `transactions` es una **tabla controlada** (ADR-013 §2): solo la escriben
   funciones de `juntia_private`, y su versión protege las ediciones concurrentes.
 
-## Decisión propuesta
+## Decisión
 
 ### 1. El plan es una entidad propia, no una categoría ni una meta
 
@@ -34,7 +32,7 @@ Lo que no se puede romper:
 - **No es una meta:** las metas son ahorro y tienen ledger (ADR-010). Un plan no
   guarda dinero, no tiene aportes ni saldo; solo agrupa gastos. Mezclarlos
   confundiría gasto con ahorro (§2.3.5).
-- **Tabla `juntia_data.outings`** **[propuesta]** (el identificador evita el choque
+- **Tabla `juntia_data.outings`** (el identificador evita el choque
   con el destino «Plan», la ruta `/plan` y `src/features/plan`; spec 006, Q2):
   `id`, `owner_user_id` **XOR** `group_id` (como DEC-G01), `name`, `starts_on`,
   `ends_on` (opcionales, fin ≥ inicio), `budget_minor` (nullable, > 0 si existe,
@@ -81,7 +79,7 @@ Lo que no se puede romper:
 
 ### 2. La relación con el gasto es una etiqueta en una tabla aparte
 
-**Tabla `juntia_data.outing_transactions`** **[propuesta]**:
+**Tabla `juntia_data.outing_transactions`**:
 `transaction_id` (PK y FK: **como máximo un plan por gasto**), `outing_id` (FK con
 `on delete cascade`), `tagged_by`, `tagged_at`.
 
@@ -120,9 +118,12 @@ los dos en compartidos, 20.12).
 - **Privados propios en un plan compartido** (Q6): cifra aparte, solo para su
   dueña, **nunca sumada** a una cifra compartida. Es la regla de la decisión 22.11
   para las metas en Yo.
-- **Pagó / le corresponde** por persona dentro del plan: `gross_paid` y la suma de
-  `transaction_allocations` restringidos al plan. **No es `net_owed`** y no se
-  rotula como deuda; el único saldo de la pareja sigue siendo el de Balance (20.9).
+- **Pagó / le corresponde** por persona dentro del plan: cifras derivadas
+  **propias del plan**, `plan_paid` y `plan_share`. Sin usos de meta coinciden con
+  `gross_paid` y con la suma de `transaction_allocations` restringidos al plan;
+  con usos de meta se calculan sobre A − U (Q24, abajo). **No reutilizan ni
+  redefinen `gross_paid`** (maestro §5.1), **no son `net_owed`** y no se rotulan
+  como deuda; el único saldo de la pareja sigue siendo el de Balance (20.9).
 - **Presupuesto del plan:** compara solo con el total compartido (o el total de un
   plan privado). No es un `budgets` de ADR-004 y no se suma ni se resta con ellos.
 - Ninguna cifra del plan entra en las cinco métricas de DEC-G04, ni las altera.
@@ -143,6 +144,38 @@ cifras compartidas.
 
 En un plan privado, las cifras salen de los gastos privados activos de su dueña
 etiquetados en él.
+
+**Gasto compartido pagado con una meta compartida (Q24, opción A; decisión 27.4,
+25 de noviembre de 2026).** Cuenta completo en el total y en el desglose por
+categoría (Q7). En «Quién pagó», la parte pagada con la meta, que es la suma de
+los usos **aplicados y no anulados** de ese gasto (entradas `usage` de `goal_ledger_entries` sin su `void`), aparece como una línea
+propia por meta, «Pagado con la meta {meta}», que no se asigna a nadie. Varios asientos vivos de la misma meta (los fondos propios aplicados al registrar y los ajenos al aprobar) se suman en esa línea y el gasto cuenta una vez. Los fondos de una
+solicitud pendiente, rechazada o cancelada no cuentan; los propios ya aplicados siguen contando (004, FR-052, FR-053 y FR-055).
+
+Para un gasto de importe A con usos aplicados por U (0 ≤ U ≤ A), confirmado por
+los fundadores el 25 de noviembre de 2026 (spec 006, Q24):
+
+- `plan_paid` del pagador suma **A − U**.
+- `plan_share` reparte **A − U** con pesos iguales a la **proporción de las
+  asignaciones originales** de `transaction_allocations`, sea cual sea el modo de
+  reparto (50/50, Porcentaje o Importe; 003, FR-019): mayor residuo, pesos
+  enteros y desempate por orden de ingreso a la pareja (ADR-002, nota de la
+  decisión 20.8). Una asignación de 0 da 0. Ejemplo en modo Importe: $400.000 =
+  $300.000 + $100.000, con U = $150.000, da $187.500 y $62.500.
+- Se cumplen dos igualdades: Σ `plan_paid` + Σ líneas de meta = total, y Σ
+  `plan_share` = Σ `plan_paid`.
+
+**Intacto:** `gross_paid` (sigue siendo A para el pagador, maestro §5.1),
+`transaction_allocations`, `net_owed`, Balance y las cinco métricas de DEC-G04.
+**Recalculado:** `plan_paid`, `plan_share` y la diferencia del plan, cada vez que
+U cambia (uso aplicado, solicitud aprobada, «Quitar el uso de la meta», anulación
+del gasto o del uso). Son cifras de lectura: no se guardan, se derivan en la
+función pura del dominio y en la vista.
+
+**Matiz de Balance, aceptado por los fundadores.** La «Diferencia en este plan» es
+informativa y puede no coincidir con lo que ese gasto mueve en Balance. Balance
+conserva el reparto completo (004, FR-058) y sigue siendo **el único saldo real**
+de la pareja (20.9). Ni el balance de la pareja ni ADR-010 cambian.
 
 Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 `security_invoker`.
@@ -271,6 +304,22 @@ Todas se calculan en funciones puras del dominio, con pruebas, y en vistas
 7. **Auditoría ampliada (F94-6).** pgTAP de crear, editar, cerrar, reabrir y
    eliminar un plan: el evento y el actor son los correctos, y el evento no se
    puede editar ni borrar.
+8. **Gasto pagado con una meta (Q24; F95-1 a F95-8).** La matriz de Q24 de la
+   spec 006 (US-2), en dominio e integración, con `plan_share` en 50/50,
+   Porcentaje e Importe, una base impar y una asignación de 0, y con los dos casos
+   de solicitud pendiente, el rechazo que conserva lo propio y la suma de asientos
+   vivos al aprobar. Incluye las dos reversiones que parten de la solicitud
+   aprobada con dos asientos vivos (F95-8): «Quitar el uso de la meta», que anula
+   los dos usos y devuelve a cada aportante lo suyo, y anular el gasto, que anula
+   el gasto y los dos usos en una sola operación atómica e idempotente, sin un
+   orden fijo entre ellos (ADR-010). Cada caso, con dos comparaciones:
+   - **invariancia por etiqueta:** el mismo escenario con y sin la etiqueta del
+     plan da `gross_paid`, `net_owed`, `transaction_allocations`, Balance y las
+     cinco métricas de DEC-G04 idénticos;
+   - **transición de financiación:** antes y después de aprobar, quitar, editar o
+     anular, las métricas canónicas cambian exactamente como dice la spec 004
+     (por ejemplo, `gasto_financiado_con_meta` y `total_destinado_neto` al aprobar
+     o quitar un uso), igual con y sin etiqueta.
 
 ## Referencias
 
