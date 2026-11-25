@@ -271,10 +271,19 @@ la foto a pantalla completa).
    - salida: el `toBlob` de Safari (iOS y macOS), Chrome y Firefox;
    - variantes: `full` y `thumb`.
 
-   Resultado esperado en cada combinación: lo guardado contiene **solo** segmentos
-   de la lista blanca de §4, la orientación es correcta y el tamaño cumple. Si un
-   navegador emite un segmento extra, se registra cuál es y se comprueba que el
-   cliente lo quita de forma segura y el servidor acepta el resultado.
+   Resultado esperado en cada combinación (F94-10), según si el navegador puede
+   decodificar la entrada (§3: HEIC/HEIF solo se acepta si el navegador la
+   decodifica; Chrome y Firefox, en general, no lo hacen):
+   - **Si la decodifica:** se verifican las dos variantes; en cada una, que lo
+     guardado contiene **solo** segmentos de la lista blanca de §4, que la
+     orientación es correcta, que las dimensiones cumplen y que el servidor lo
+     acepta. Si un navegador emite un segmento extra, se registra cuál es y se
+     comprueba que el cliente lo quita de forma segura y el servidor acepta el
+     resultado.
+   - **Si no puede decodificarla:** se verifica un error claro de formato no
+     compatible, sin subir nada a Storage ni crear una portada.
+   - **En los dos casos:** se registra el formato real que entregó el selector de
+     archivos, porque iOS puede convertir el HEIC a JPEG antes de entregarlo.
 4. **Pruebas negativas de la lista blanca (F94-5):** el servidor rechaza un JPEG
    con `APP1` (EXIF con GPS), uno con un `APP2` (ICC), uno con un `COM`, uno con
    `APP0` que trae miniatura, uno con bytes después de `EOI` y uno con un `SOF`

@@ -425,7 +425,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 **Acceptance Scenarios**:
 
-1. **Given** una foto HEIC de 4 MB con GPS, **When** Sara la sube, **Then** lo guardado es un JPEG ≤ 2048 px sin metadatos, y la pantalla dice que la foto no va en la exportación.
+1. **Given** una foto HEIC de 4 MB con GPS, **When** Sara la sube desde un navegador que la decodifica (o el selector de archivos la entrega ya convertida a JPEG), **Then** lo guardado es un JPEG ≤ 2048 px sin metadatos, y la pantalla dice que la foto no va en la exportación. Si el navegador no puede decodificarla, ver el caso límite «Foto que no se puede decodificar» (Q17, ADR-014 `[V]` 3).
 2. **Given** la foto de un plan compartido, **When** una tercera cuenta pide la portada por la ruta de lectura o el objeto directamente a Storage, **Then** se le niega.
 3. **Given** un plan sin foto, **When** se muestra, **Then** usa el fallback: tinte, inicial en serif e ícono Phosphor, como GoalCard `[A]`.
 
@@ -441,7 +441,7 @@ Sara sube una foto de la playa a «Cartagena».
 - **Plan con cientos de gastos**: lista paginada; los totales salen de una sola lectura consistente.
 - **Nombre largo** (hasta 60 caracteres): sin desbordes a 360 px ni con texto al 200 %.
 - **Dos personas editan el plan a la vez**: la segunda escritura con versión vieja falla y lo explica (como 16.15).
-- **Foto que no se puede decodificar** (HEIC en un navegador sin soporte): mensaje claro y fallback, nunca un archivo a medias.
+- **Foto que no se puede decodificar** (HEIC en un navegador sin soporte): mensaje claro de formato no compatible y fallback; no se sube nada a Storage ni se crea una portada.
 - **Gasto con fecha futura** (16.13): se puede asociar.
 - **Ingresos y liquidaciones**: nunca llevan plan.
 - **Gasto de un plan cerrado**: su importe se puede editar desde Actividad y el total del plan cerrado lo refleja (según Q12). Anularlo también se permite: sale del total y la etiqueta se conserva (según Q22). Moverlo a Pareja sigue la regla de Q23.
