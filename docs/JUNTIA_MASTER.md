@@ -1212,7 +1212,7 @@ Tomada por los fundadores el 19 de noviembre de 2026, con las mediciones del PR 
 
 #### Decisión 27: Planes, primera funcionalidad de MVP-2
 
-Los fundadores respondieron el 24 de noviembre de 2026 las preguntas Q1–Q23 de la especificación 006 (`specs/006-planes/spec.md`, «Clarifications»). Alejandro las comunicó al gestor en nombre de los dos, y la segunda fundadora las confirmó con el merge del PR de la especificación (#94, 25 de noviembre de 2026). La 27.4 la tomó Alejandro el 25 de noviembre de 2026. **Nada de esto se implementa antes de declarar MVP-1** (spec 005).
+Los fundadores respondieron el 24 de noviembre de 2026 las preguntas Q1–Q23 de la especificación 006 (`specs/006-planes/spec.md`, «Clarifications»). Alejandro las comunicó al gestor en nombre de los dos, y la segunda fundadora las confirmó con el merge del PR de la especificación (#94, 25 de noviembre de 2026). La 27.4 la tomó Alejandro el 25 de noviembre de 2026, y la 27.5 la tomaron los dos fundadores ese mismo día (Alejandro la comunicó en nombre de los dos). **Nada de esto se implementa antes de declarar MVP-1** (spec 005).
 
 | # | Tema | Elección |
 | --- | --- | --- |
@@ -1220,6 +1220,7 @@ Los fundadores respondieron el 24 de noviembre de 2026 las preguntas Q1–Q23 de
 | 27.2 | ADR-014, fotos de portada | **Aceptado** el 25 de noviembre de 2026: portada privada en Storage para metas y planes, las dos en MVP-2. Enmienda la 24.13 solo en que ADR-014 deja de ser solo de metas |
 | 27.3 | ADR-015, planes y etiqueta de gastos | **Aceptado** el 25 de noviembre de 2026 |
 | 27.4 | Gasto compartido pagado con una meta compartida, dentro de un plan (Q24, opción A) | La parte cubierta con la meta aparece en «Quién pagó» como una línea propia, «Pagado con la meta {meta}», que no se asigna a ninguno de los dos. El gasto cuenta completo en el total del plan y en el desglose por categoría (Q7). El «pagó» y el «le corresponde» de un plan son **cifras derivadas propias del plan** (ADR-015 §4), no `gross_paid` ni las asignaciones guardadas: descuentan la parte cubierta con la meta, solo con usos aplicados, y reparten lo que queda con la proporción de las asignaciones originales (confirmado por los fundadores el 25 de noviembre de 2026). Se recalculan cuando cambia el uso de la meta. Quedan intactos `gross_paid` (§5.1), las asignaciones originales, `net_owed`, Balance, que sigue siendo el único saldo real, y ADR-010. La «Diferencia en este plan» es informativa y puede no coincidir con Balance |
+| 27.5 | Comps de Planes y total en Yo | **Comps aprobados** el 25 de noviembre de 2026: «Juntia DS v1 - 10a Planes 06-1-06-4» y «10b Planes 06-5-06-9», del proyecto de Claude Design `caabf357-a0df-4048-886f-8c46c8979c5a`, con los tres ajustes obligatorios hechos: la foto hasta 15 MB, las variantes de eliminar con 13 y 12 gastos, y la línea de Q24 en 06·3h. **Decisión visual:** en Yo, la tarjeta de un plan de la pareja muestra el total compartido, el mismo que ven los dos, y nunca suma los privados de quien mira (Q6, Q9). El detalle y las `[V]` que siguen abiertas están en `specs/006-planes/design-comps.md` |
 
 #### Dataset dorado: quién lo produce y cuándo
 
