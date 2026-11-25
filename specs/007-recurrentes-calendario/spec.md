@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-25
 
-**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas aún no están registradas en el maestro §15.10. La revisión adversarial F101 se aplicó; sus puntos **[DF]** están pendientes de confirmación de los fundadores. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19).
+**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas aún no están registradas en el maestro §15.10. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19).
 
 **Input**: Descripción con que Alejandro invocó `/speckit-specify` el 25 de noviembre de 2026, redactada a partir de la decisión 28 (filas 28.6, 28.8, 28.9, 28.11, 28.13 y 28.17), la propuesta de los fundadores (bloque A, A.1 a A.5), el análisis (§4 fila «R», §6, §9 y §12 N-6) y `docs/BACKLOG_MVP2.md` (filas 3, 4 y 7):
 
@@ -80,7 +80,7 @@ escribe como **Propuesto** y se acepta antes de la etapa Plan (`AGENTS.md` 17).
 | Q2 | Nombres visibles e identificadores | **(a)**: se deciden con los comps y entran en GLOSSARY solo aprobados |
 | Q3 | Instancia prevista: fila o cálculo · ADR-a | **Recomendación aceptada**: lo decide ADR-a, con la restricción de que nada previsto va a `transactions` |
 | Q4 | Confirmar y vincular · ADR-a | **Cambia.** Confirmar: **(c)**, un toque con los datos de la versión de la instancia (F101-6) si el importe es fijo, con la opción de abrir Anotar antes de guardar; Anotar si es estimado o en rango. Vincular: **(b)**, sugerido y confirmado por la persona, más búsqueda manual; nunca automático y solo con movimientos compatibles (F101-1). Precisiones abajo |
-| Q5 | Estados de una instancia | **Recomendación aceptada**: cinco estados; «omitido» se deshace; anular el movimiento real devuelve la instancia a pendiente (alcance precisado en F101-3 y F101-4 **[DF]**) |
+| Q5 | Estados de una instancia | **Recomendación aceptada**: cinco estados; «omitido» se deshace; anular el movimiento real devuelve la instancia a pendiente (alcance precisado en F101-3 y F101-4, D1) |
 | Q6 | Editar una recurrencia · ADR-a | **Cambia a (c)**: la edición cambia solo las instancias futuras sin resolver. Precisiones abajo |
 | Q7 | Frecuencias y reglas de fecha | **Recomendación aceptada, con precisiones**: día de referencia y colisión quincenal (abajo) |
 | Q8 | Recurrencias en Nosotros | **(a)**: privada XOR compartida, elegida al crearla y **sin conversión posterior** en ningún sentido (F101-11); cualquiera de los dos edita las compartidas con versión. Los aportes programados son siempre privados (Q12) |
@@ -101,8 +101,8 @@ Presupuesto integral, Créditos, Patrimonio ni Flujo y liquidez.
 
 Las filas Q4, Q5, Q8, Q9 y Q10 llevan la referencia a la revisión F101 que las
 precisa (subsección «Precisiones de la revisión F101», abajo). Esas precisiones
-no cambian ninguna respuesta; las marcadas **[DF]** están pendientes de
-confirmación de los fundadores.
+no cambian ninguna respuesta; las que dependían de los fundadores (D1 a D7)
+están confirmadas.
 
 #### Precisiones de los fundadores
 
@@ -208,10 +208,21 @@ cualquier caso, **el total de previstos no es liquidez ni disponibilidad**
 #### Precisiones de la revisión F101
 
 La revisión adversarial del PR #101 sobre `7fb3bef` dio doce hallazgos (F101-1 a
-F101-12). Los que son corrección directa se aplican en la spec. Los marcados
-**[DF]** dependen de una decisión de los fundadores: se escriben con la opción
-recomendada y llevan la marca **«pendiente de confirmación de los fundadores
-(revisión F101)»** hasta que respondan. Ninguno reabre una respuesta de Clarify.
+F101-12). Los que son corrección directa se aplican en la spec. Siete dependían
+de una decisión de los fundadores (D1 a D7). **Los fundadores los confirmaron el
+25 de noviembre de 2026**, con precisiones en D3, D4 y D5; el gestor transmitió
+su texto. Ninguno reabre una respuesta de Clarify, y Q15 sigue abierta hasta los
+comps.
+
+| Decisión | Hallazgo | Respuesta de los fundadores |
+| --- | --- | --- |
+| D1 | F101-4 · anular devuelve a pendiente | Aceptada tal como se recomendó |
+| D2 | F101-5 · confirmación anticipada solo si el hecho ya ocurrió | Aceptada tal como se recomendó |
+| D3 | F101-8 (i) · omitir una instancia futura | Aceptada, con precisión: deshacer la omisión la devuelve a prevista o pendiente según su fecha, si el ciclo de vida de la recurrencia lo permite |
+| D4 | F101-8 (ii) · deshacer una omisión tras finalizar a mano | Aceptada, con precisión: no reactiva una recurrencia finalizada a mano o archivada; se distingue de la terminación automática, que conserva las obligaciones pendientes |
+| D5 | F101-8 (iv) · pausar un compromiso de N ocurrencias | Aceptada, con precisiones (abajo) |
+| D6 | F101-9 · eliminar con historia | Aceptada tal como se recomendó |
+| D7 | F101-7 · el disparador es lograda o archivada | Aceptada tal como se recomendó |
 
 - **F101-1 · Compatibilidad de vínculos.** Que alguien pueda ver un movimiento no
   lo hace vinculable. Solo se vincula un movimiento del **mismo tipo**, del **mismo
@@ -235,51 +246,61 @@ recomendada y llevan la marca **«pendiente de confirmación de los fundadores
   las sustituciones quedan auditados; se respetan ADR-001, ADR-010 y ADR-015. El
   mecanismo lo resuelve ADR-a. Ninguna función existente de MVP-1 ni de Planes se
   bloquea por tener una instancia vinculada.
-- **F101-4 · Anulación [DF].** Al anular **económicamente** el movimiento real de
+- **F101-4 · Anulación (D1).** Al anular **económicamente** el movimiento real de
   una instancia confirmada, la instancia vuelve a **pendiente de resolución**, con
   su fecha prevista y su versión histórica, **aunque su fecha no haya llegado**.
   Así una edición posterior de la regla no la reescribe (Q6). Se quita la
   excepción «o a prevista si la fecha aún no llegó». Cómo se representa el estado
-  lo decide ADR-a. *Pendiente de confirmación de los fundadores (revisión F101).*
-- **F101-5 · Confirmación anticipada [DF].** Confirmar o vincular antes de la
+  lo decide ADR-a.
+- **F101-5 · Confirmación anticipada (D2).** Confirmar o vincular antes de la
   fecha prevista solo se permite si el hecho económico **ya ocurrió**: fecha
   efectiva igual a hoy o anterior. Los aportes conservan la regla de la 004
   (FR-040: hoy o pasado). La regla general de fechas futuras de los movimientos
-  anotados a mano no cambia (16.13; 002, Q13). *Pendiente de confirmación de los
-  fundadores (revisión F101).*
+  anotados a mano no cambia (16.13; 002, Q13).
 - **F101-6 · Versión al confirmar.** La confirmación y el borrador se rellenan con
   los datos de la **versión de la regla que corresponde a la instancia** (importe,
   categoría, pagador y reparto), no con la regla vigente. Es un contrato que ADR-a
   conserva aunque calcule las ocurrencias futuras al vuelo.
-- **F101-7 · Aportes y estado de la meta [DF solo en el disparador].** La pausa
+- **F101-7 · Aportes y estado de la meta (D7 en el disparador).** La pausa
   automática se dispara cuando la meta pasa **formalmente** a lograda («Dar por
-  lograda», manual, 22.15) o a archivada; llegar al 100 % no basta. *El disparador
-  está pendiente de confirmación de los fundadores (revisión F101).* Además, sin
-  marca: las instancias anteriores se conservan (Q18) pero no se pueden confirmar
-  mientras la meta no esté activa; no se reanuda hacia una meta que no está activa;
-  el estado de la meta y la autorización se revalidan en la misma operación que
-  registra el aporte, con la concurrencia entre confirmar y lograr o archivar
-  cubierta. ADR-010 y los estados de Metas no cambian.
+  lograda», manual, 22.15) o a archivada; llegar al 100 % no basta. Las instancias
+  anteriores se conservan (Q18) pero no se pueden confirmar mientras la meta no
+  esté activa; no se reanuda hacia una meta que no está activa; el estado de la
+  meta y la autorización se revalidan en la misma operación que registra el
+  aporte, con la concurrencia entre confirmar y lograr o archivar cubierta.
+  ADR-010 y los estados de Metas no cambian.
 - **F101-8 · Casos de la tabla de estados.**
-  - (i) **[DF]** Se puede omitir una instancia **futura** con una acción
-    explícita. *Pendiente de confirmación de los fundadores (revisión F101).*
-  - (ii) **[DF]** Con la recurrencia finalizada a mano, deshacer una omisión no
-    está disponible: nada se reactiva en silencio y lo cancelado sigue cancelado.
-    *Pendiente de confirmación de los fundadores (revisión F101).*
+  - (i) **D3.** Se puede **omitir anticipadamente** una instancia futura con una
+    acción explícita. Si se deshace la omisión, la instancia vuelve a **prevista o
+    pendiente según su fecha**, siempre que el ciclo de vida de la recurrencia lo
+    permita (D4).
+  - (ii) **D4.** Deshacer una omisión **no reactiva** una recurrencia finalizada a
+    mano ni archivada: en ese caso no está disponible, y lo cancelado sigue
+    cancelado. Esto se distingue de la **terminación automática**, que conserva
+    las obligaciones pendientes: con una recurrencia terminada sola, deshacer una
+    omisión sí está disponible.
   - (iii) Si se anula un movimiento después de archivar la recurrencia, la
     instancia pendiente que resulta se conserva con trazabilidad. Dónde se muestra
     lo decide ADR-a.
-  - (iv) **[DF]** Pausar un compromiso de N ocurrencias no mueve el calendario:
-    las ocurrencias del periodo pausado no se generan pero cuentan, y la fecha
-    final no cambia. Quien quiera conservar esas ocurrencias no pausa: las deja
-    pendientes o las omite una a una. La pausa nunca cambia en silencio el número
-    de ocurrencias. *Pendiente de confirmación de los fundadores (revisión F101).*
+  - (iv) **D5.** Pausar un compromiso de duración definida **consume las
+    posiciones del calendario original**: las ocurrencias del periodo pausado no se
+    generan pero cuentan, la fecha final no se extiende y reanudar no las recupera
+    automáticamente. La pausa nunca cambia en silencio el número de ocurrencias.
+    Además:
+    - una ocurrencia consumida durante una pausa **no equivale a una cuota
+      pagada**;
+    - **omitir tampoco equivale a conservar una obligación pendiente**;
+    - si la obligación sigue existiendo y aún no se ha pagado, **se conserva como
+      pendiente** cuando corresponda: pausar no es la herramienta para eso;
+    - **antes de pausar** un compromiso de duración definida, se explica el efecto
+      sobre las próximas ocurrencias y su fecha final;
+    - ADR-a resuelve su representación y trazabilidad, sin amortización ni gestión
+      de deuda.
   - Nada de amortización ni de saldos de deuda.
-- **F101-9 · Eliminar con historia [DF].** Equivale a **archivar** la recurrencia
+- **F101-9 · Eliminar con historia (D6).** Equivale a **archivar** la recurrencia
   y **cancelar** sus instancias sin resolver, con la misma confirmación que la
   finalización manual: se muestra la lista de lo que se cancela. Los movimientos
-  reales y sus vínculos históricos autorizados se conservan. *Pendiente de
-  confirmación de los fundadores (revisión F101).*
+  reales y sus vínculos históricos autorizados se conservan.
 - **F101-10 · Ingresos condicionales.** Se representa conceptualmente la
   **condición** de la que depende el ingreso (texto), su certeza y si el importe es
   **conocido, estimado o desconocido**. El calendario muestra la condición. Un
@@ -318,18 +339,18 @@ movimiento anulado o ya vinculado a otra instancia nunca es vinculable.
 
 Reconcilia las cuatro respuestas y la revisión F101 en una sola tabla. La
 implementación (fila o cálculo, identidad estable, representación de los estados)
-la fija ADR-a; aquí solo se fija el comportamiento. Las filas con **[DF]** están
-pendientes de confirmación de los fundadores (revisión F101).
+la fija ADR-a; aquí solo se fija el comportamiento. Las decisiones D1 a D7
+de los fundadores (revisión F101) están confirmadas.
 
 **Recurrencia.** El contexto (privada o compartida) no cambia nunca (F101-11).
 
 | Estado | Genera instancias nuevas | Cómo se llega | Cómo se sale |
 | --- | --- | --- | --- |
 | **Activa** | Sí, desde su fecha inicial o desde la reanudación | Crear; reanudar | Pausar; finalizar a mano; terminar sola; eliminar |
-| **Pausada** | No. Las ocurrencias del periodo pausado no se generan; en un compromiso de N ocurrencias cuentan igual y la fecha final no cambia **[DF]** (F101-8 iv) | Pausar; la meta de un aporte programado pasa a lograda o archivada **[DF en el disparador]** (F101-7) | Reanudar, solo con acción explícita y, en aportes, solo hacia una meta activa; finalizar a mano; eliminar |
+| **Pausada** | No. Las ocurrencias del periodo pausado no se generan; en un compromiso de N ocurrencias cuentan igual y la fecha final no cambia; reanudar no las recupera; ninguna equivale a una cuota pagada, y antes de pausar se explica el efecto sobre las próximas ocurrencias y la fecha final (D5, F101-8 iv) | Pausar; la meta de un aporte programado pasa a lograda o archivada (D7, F101-7) | Reanudar, solo con acción explícita y, en aportes, solo hacia una meta activa; finalizar a mano; eliminar |
 | **Finalizada · sola** | No | Pasa la fecha final o la última ocurrencia programada (Q13) | Ninguna |
 | **Finalizada · a mano** | No | Finalizar a mano, tras ver la lista de instancias que se cancelan y confirmar (Q18) | Ninguna |
-| **Archivada** | No | Eliminar con historia: se muestra la misma lista y se confirma **[DF]** (F101-9) | Ninguna |
+| **Archivada** | No | Eliminar con historia: se muestra la misma lista y se confirma (D6, F101-9) | Ninguna |
 
 Eliminar una recurrencia sin historia la borra. Con historia, la archiva (fila de
 arriba). En ningún caso cambia un movimiento real ni un vínculo histórico
@@ -344,22 +365,22 @@ autorizado.
 | Prevista | Se edita la regla | Prevista | Toma la versión nueva; sin duplicados (ADR-a) |
 | Pendiente | Se edita la regla | Pendiente | **No cambia**: conserva su versión (Q6) |
 | Pendiente | Confirmar o vincular | **Confirmada** | Un solo movimiento real compatible (F101-1), con los datos de su versión (F101-6); fecha efectiva hoy o anterior |
-| Prevista | Confirmar o vincular | **Confirmada** | **[DF]** Solo si la fecha efectiva es hoy o anterior (F101-5) |
+| Prevista | Confirmar o vincular | **Confirmada** | Solo si la fecha efectiva es hoy o anterior (D2, F101-5) |
 | Pendiente | Omitir | **Omitida** | No crea nada real |
-| Prevista | Omitir, con acción explícita | **Omitida** | **[DF]** (F101-8 i) |
-| Omitida | Deshacer, con la recurrencia activa, pausada o finalizada sola | Pendiente | Con su fecha prevista y su versión (como F101-4) |
-| Omitida | Deshacer, con la recurrencia finalizada a mano o archivada | — | **[DF]** No disponible; lo cancelado sigue cancelado (F101-8 ii) |
-| Confirmada | Anulación **económica** de su movimiento real (ADR-007; en aportes, ADR-010 y 22.13) | **Pendiente** | **[DF]** Aunque su fecha no haya llegado; conserva fecha prevista y versión (F101-4). Si la recurrencia ya está archivada, se conserva con trazabilidad (F101-8 iii) |
+| Prevista | Omitir, con acción explícita | **Omitida** | Omisión anticipada (D3, F101-8 i) |
+| Omitida | Deshacer, con la recurrencia activa, pausada o terminada sola | **Prevista o pendiente**, según su fecha | Con su versión; la terminación automática conserva las obligaciones pendientes (D3, D4) |
+| Omitida | Deshacer, con la recurrencia finalizada a mano o archivada | — | No disponible: no reactiva la recurrencia y lo cancelado sigue cancelado (D4, F101-8 ii) |
+| Confirmada | Anulación **económica** de su movimiento real (ADR-007; en aportes, ADR-010 y 22.13) | **Pendiente** | Aunque su fecha no haya llegado; conserva fecha prevista y versión (D1, F101-4). Si la recurrencia ya está archivada, se conserva con trazabilidad (F101-8 iii) |
 | Confirmada | Sustitución **técnica** auditada (Mover a Pareja y su Deshacer, ADR-001) | Confirmada | Sigue resuelta y no se puede volver a confirmar; el vínculo no pasa a otro contexto; mecanismo en ADR-a (F101-3) |
 | Prevista | Pausar | No se generan las del periodo pausado | Reanudar no las recupera (Q18) |
 | Pendiente | Pausar, terminar sola, o la meta del aporte deja de estar activa | Pendiente | Se conserva y sigue visible; un aporte no se confirma mientras la meta no esté activa (F101-7) |
-| Prevista o pendiente | Finalizar a mano, o eliminar con historia | **Cancelada** | Solo tras confirmar la lista (Q18; **[DF]** en eliminar, F101-9) |
+| Prevista o pendiente | Finalizar a mano, o eliminar con historia | **Cancelada** | Solo tras confirmar la lista (Q18; D6 en eliminar, F101-9) |
 | Confirmada, omitida o cancelada | Cualquier edición, pausa o finalización | Sin cambio | Ningún movimiento real cambia |
 
 **Cuestiones que la tabla deja a ADR-a.**
 
 - Cómo se representa «pendiente de resolución» cuando su fecha no ha llegado (F101-4).
-- Si las ocurrencias del periodo pausado existen como canceladas o no existen.
+- Si las ocurrencias del periodo pausado existen como canceladas o no existen, y su trazabilidad en compromisos de duración definida (D5), sin amortización ni gestión de deuda.
 - La identidad estable de una instancia cuando cambian la frecuencia o la fecha.
 - La regla quincenal de Q7.
 - El mecanismo de la sustitución técnica de F101-3 y su Deshacer.
@@ -522,8 +543,7 @@ original del redactor. Las respuestas y sus precisiones están en «Session
 
 Los importes de los escenarios son **ficticios**. «Ana» y «Beto» son personas
 hipotéticas, no el dataset dorado. Los estados y las transiciones son los de la
-tabla «Estados y transiciones» de Clarifications; lo marcado **[DF]** está
-pendiente de confirmación de los fundadores (revisión F101).
+tabla «Estados y transiciones» de Clarifications.
 
 ### User Story 1 - Configurar una recurrencia de gasto y verla prevista (Priority: P1)
 
@@ -574,11 +594,11 @@ incompatible, comprobar que el servidor rechaza el vínculo.
 6. **Given** que no aparece ninguna sugerencia, **When** Ana busca a mano un movimiento compatible y lo vincula, **Then** el resultado es el mismo que en el escenario 5.
 7. **Given** una instancia privada de Ana y un gasto compartido que ella puede ver, **When** intenta vincularlo, **Then** el servidor lo rechaza (privada con compartida); y ninguna sugerencia usa ni revela un movimiento privado de Beto.
 8. **Given** una instancia pendiente, **When** Ana la omite, **Then** no se crea nada real y la instancia queda omitida; mientras la recurrencia no esté finalizada a mano ni archivada, puede deshacerlo.
-9. **[DF]** **Given** una instancia confirmada, **When** se anula económicamente su movimiento real (ADR-007), **Then** la instancia vuelve a pendiente de resolución, con su fecha prevista y su versión, aunque esa fecha no haya llegado, con auditoría y sin vínculo a un movimiento anulado (F101-4).
+9. **Given** una instancia confirmada, **When** se anula económicamente su movimiento real (ADR-007), **Then** la instancia vuelve a pendiente de resolución, con su fecha prevista y su versión, aunque esa fecha no haya llegado, con auditoría y sin vínculo a un movimiento anulado (D1, F101-4).
 10. **Given** una instancia de gasto y una meta con reserva previa real, **When** Ana confirma abriendo Anotar, **Then** puede usar el mecanismo existente de Gasto con meta, con sus condiciones (28.10, ADR-010).
-11. **[DF]** **Given** una instancia prevista cuya fecha aún no llega, **When** Ana la confirma o la vincula, **Then** solo puede hacerlo con una fecha efectiva de hoy o anterior; un aporte, solo con fecha de hoy o pasada (004, FR-040) (F101-5).
+11. **Given** una instancia prevista cuya fecha aún no llega, **When** Ana la confirma o la vincula, **Then** solo puede hacerlo con una fecha efectiva de hoy o anterior; un aporte, solo con fecha de hoy o pasada (004, FR-040) (D2, F101-5).
 12. **Given** una instancia privada confirmada, **When** Ana mueve su gasto a Pareja (ADR-001), **Then** sigue habiendo una sola operación económica activa, la instancia sigue resuelta y no se puede volver a confirmar, la recurrencia sigue privada y la sustitución queda auditada (F101-3).
-13. **[DF]** **Given** una instancia prevista, **When** Ana la omite con una acción explícita, **Then** queda omitida sin esperar a su fecha (F101-8 i).
+13. **Given** una instancia prevista, **When** Ana la omite anticipadamente con una acción explícita, **Then** queda omitida sin esperar a su fecha; si después lo deshace, vuelve a prevista o pendiente según su fecha, siempre que la recurrencia no esté finalizada a mano ni archivada (D3, D4).
 
 ---
 
@@ -595,7 +615,7 @@ por fecha con su estado, y una confirmada abre su movimiento en Actividad.
 
 **Acceptance Scenarios**:
 
-1. **Given** instancias en varios estados, **When** Ana abre el calendario, **Then** ve cada una con su fecha prevista, nombre, importe (fijo, estimado, rango o desconocido) y estado, y puede confirmar, vincular u omitir las pendientes, y las previstas con las reglas de F101-5 y F101-8 (i) **[DF]**.
+1. **Given** instancias en varios estados, **When** Ana abre el calendario, **Then** ve cada una con su fecha prevista, nombre, importe (fijo, estimado, rango o desconocido) y estado, y puede confirmar, vincular u omitir las pendientes, y las previstas con las reglas de D2 y D3 (F101-5 y F101-8 i).
 2. **Given** la navegación de §15.3, **When** Ana busca el calendario, **Then** está como ruta hija de Plan, sin pestaña ni destino nuevo.
 3. **Given** el contexto Nosotros, **When** Beto abre el calendario, **Then** ve solo las recurrencias compartidas, nunca las privadas de Ana ni sus aportes programados, ni por totales ni por huecos.
 4. **Given** que los comps aprueban el total mensual de gastos previstos (Q15), **When** Ana lo ve, **Then** su rótulo dice exactamente qué incluye, está separado de ingresos y aportes, no trata un importe desconocido como cero y nunca se presenta como disponibilidad ni capacidad de pago.
@@ -663,7 +683,7 @@ propia persona y cambia `aporte_a_metas` de DEC-G04 igual que un aporte manual.
 1. **Given** un aporte programado previsto, **When** no se ha confirmado, **Then** la meta, «Tu disponible» y DEC-G04 no cambian, y el aporte previsto nunca se presenta como fondos reservados.
 2. **Given** una meta compartida, **When** Ana programa y confirma un aporte, **Then** solo aporta sus propios fondos (ADR-010), y para Beto ese aporte es indistinguible de un aporte manual equivalente: sin insignia, identificador, frecuencia ni procedencia, en vistas, exportación, errores o metadatos; Beto tampoco puede saber que la programación existe (F101-2).
 3. **Given** una obligación pagada a un tercero (p. ej., una cuota), **When** Ana configura su recurrencia, **Then** es una recurrencia de gasto, nunca de aporte a meta (28.10).
-4. **[DF en el disparador]** **Given** un aporte programado activo, **When** la meta pasa formalmente a lograda («Dar por lograda») o a archivada, **Then** la recurrencia se pausa; llegar al 100 % no basta (F101-7).
+4. **Given** un aporte programado activo, **When** la meta pasa formalmente a lograda («Dar por lograda») o a archivada, **Then** la recurrencia se pausa; llegar al 100 % no basta (D7, F101-7).
 5. **Given** instancias pendientes de una meta que ya no está activa, **When** Ana intenta confirmarlas o reanudar la recurrencia, **Then** no puede: las instancias se conservan, pero no se confirma ni se reanuda hacia una meta que no está activa.
 6. **Given** que Ana confirma un aporte mientras Beto da por lograda o archiva la meta, **When** el servidor procesa las dos, **Then** el estado de la meta y la autorización se revalidan en la misma operación que registra el aporte, y nunca queda un aporte en una meta que no lo admite.
 
@@ -685,7 +705,7 @@ pendientes.
 1. **Given** una recurrencia de N ocurrencias, **When** Ana la consulta, **Then** ve «cuota n de N» (o el texto que se apruebe, Q2), donde n es el número de la ocurrencia programada y no el de cuotas pagadas, y la fecha de la última. Si el compromiso solo tiene fecha final, no se inventa N.
 2. **Given** que llega la fecha de la última ocurrencia con otras anteriores aún pendientes, **When** la recurrencia termina sola, **Then** no genera más instancias y las pendientes anteriores siguen pendientes, visibles y confirmables.
 3. **Given** una recurrencia terminada sola, **When** Ana la consulta, **Then** se distingue de una finalizada a mano y nada la presenta como prueba de que una deuda está pagada.
-4. **[DF]** **Given** un compromiso de N ocurrencias, **When** Ana lo pausa y lo reanuda, **Then** el calendario no se mueve: las ocurrencias del periodo pausado no se generan pero cuentan, la fecha final y N no cambian (F101-8 iv).
+4. **Given** un compromiso de N ocurrencias, **When** Ana va a pausarlo, **Then** antes de confirmar se le explica el efecto sobre las próximas ocurrencias y la fecha final; al pausar y reanudar, las ocurrencias del periodo pausado se consumen sin generarse, la fecha final no se extiende, N no cambia, reanudar no las recupera y nada las presenta como cuotas pagadas (D5, F101-8 iv).
 
 ---
 
@@ -733,20 +753,20 @@ a mano con los mismos datos; tener presets no crea instancias ni cambia cifras.
 - Confirmar dos veces, o desde los dos teléfonos de la pareja a la vez, la misma instancia compartida: un solo movimiento real.
 - Vincular un movimiento ya vinculado, anulado o incompatible (otro tipo, otro contexto, otra meta u otro aportante): el servidor lo rechaza (F101-1).
 - La sugerencia de vínculo nunca usa ni muestra movimientos privados de la otra persona.
-- **[DF]** Anular económicamente el movimiento de una instancia confirmada: vuelve a pendiente de resolución, aunque su fecha no haya llegado (F101-4).
+- Anular económicamente el movimiento de una instancia confirmada: vuelve a pendiente de resolución, aunque su fecha no haya llegado (D1, F101-4).
 - Mover a Pareja, o deshacerlo, un gasto vinculado a una instancia privada: una sola operación económica activa, la instancia no vuelve a confirmarse y el vínculo no pasa a otro contexto (F101-3).
-- **[DF]** Confirmar antes de la fecha prevista: solo con fecha efectiva de hoy o anterior; la fecha prevista no cambia (F101-5).
+- Confirmar antes de la fecha prevista: solo con fecha efectiva de hoy o anterior; la fecha prevista no cambia (D2, F101-5).
 - La regla cambia después de generarse una instancia: confirmar usa los datos de la versión de la instancia (F101-6).
 - Editar la regla con instancias en todos los estados: solo cambian las previstas (Q6); las pendientes vencidas conservan su versión.
 - Editar la frecuencia o la fecha: ninguna fecha genera dos instancias (identidad estable, ADR-a).
 - Recurrencia mensual del día 31 y del 29 de febrero; quincenal en meses de 28 a 31 días (Q7).
 - Recurrencia con fecha inicial en el pasado: no crea movimientos reales retroactivos; las fechas pasadas quedan pendientes y la persona las confirma, vincula u omite.
-- Pausar y reanudar: las ocurrencias del periodo pausado no se generan y reanudar no las recupera; las pendientes anteriores a la pausa siguen. **[DF]** En un compromiso de N ocurrencias, cuentan igual (F101-8 iv).
+- Pausar y reanudar: las ocurrencias del periodo pausado no se generan y reanudar no las recupera; las pendientes anteriores a la pausa siguen. En un compromiso de duración definida, las ocurrencias del periodo pausado se consumen: cuentan para N, la fecha final no se extiende y no son cuotas pagadas; antes de pausar se explica el efecto (D5).
 - Terminación automática con pendientes anteriores: siguen pendientes (Q13).
-- Finalización manual con pendientes: se informa cuáles se cancelan y se pide confirmación (Q18). **[DF]** Después, deshacer una omisión no está disponible (F101-8 ii).
-- **[DF]** Eliminar con historia: se archiva y se cancelan las instancias sin resolver, con la misma lista y confirmación (F101-9).
+- Finalización manual con pendientes: se informa cuáles se cancelan y se pide confirmación (Q18). Después, deshacer una omisión no está disponible ni reactiva la recurrencia (D4); con una recurrencia terminada sola, sí (D3, D4).
+- Eliminar con historia: se archiva y se cancelan las instancias sin resolver, con la misma lista y confirmación (D6, F101-9).
 - Anular un movimiento después de archivar la recurrencia: la instancia pendiente se conserva con trazabilidad (F101-8 iii).
-- **[DF en el disparador]** Meta dada por lograda o archivada con un aporte programado activo: se pausa, sin reanudación automática ni hacia una meta inactiva; llegar al 100 % no basta (F101-7).
+- Meta dada por lograda o archivada con un aporte programado activo: se pausa, sin reanudación automática ni hacia una meta inactiva; llegar al 100 % no basta (D7, F101-7).
 - Confirmar un aporte mientras la otra persona logra o archiva la meta: se revalida en la misma operación (F101-7).
 - Cambiar de contexto una recurrencia: no se puede; se crea otra (F101-11).
 - Categoría de una recurrencia que deja de existir o se renombra.
@@ -761,8 +781,8 @@ a mano con los mismos datos; tener presets no crea instancias ni cambia cifras.
 
 ### Functional Requirements
 
-Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
-(revisión F101).
+Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadores
+(25 de noviembre de 2026); cada FR afectado cita la suya.
 
 #### Recurrencias (A.1, A.5; fila 3)
 
@@ -787,14 +807,14 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 - **FR-011**: Ninguna instancia prevista crea, modifica ni se cuenta como un movimiento real. Ninguna métrica de §5.1, ningún presupuesto (DEC-R01, ADR-004), Balance, Análisis ni DEC-G04 incluye nada previsto.
 - **FR-012**: Confirmar una instancia de **importe fijo** se hace en un toque con los **datos de la versión de la instancia**, y antes de guardar se puede abrir Anotar para cambiar el importe, la fecha efectiva, el pagador o el reparto. Confirmar una instancia de **importe estimado, en rango o desconocido** abre Anotar con el borrador rellenado con los datos de su versión (Q4 (c); F101-6).
 - **FR-012a**: Los datos de la versión de la instancia (importe, categoría, pagador y reparto) son los de la regla vigente cuando se generó o se le fijó la versión, no los de la regla actual; ADR-a conserva este contrato aunque calcule las ocurrencias futuras al vuelo (F101-6).
-- **FR-012b** **[DF]**: Una instancia prevista solo se confirma o se vincula con una fecha efectiva de hoy o anterior; los aportes, con la regla de la 004 (FR-040: hoy o pasado). La regla general de fechas futuras de los movimientos anotados a mano no cambia (16.13; 002, Q13) (F101-5).
+- **FR-012b**: Una instancia prevista solo se confirma o se vincula con una fecha efectiva de hoy o anterior; los aportes, con la regla de la 004 (FR-040: hoy o pasado). La regla general de fechas futuras de los movimientos anotados a mano no cambia (16.13; 002, Q13) (D2, F101-5).
 - **FR-013**: Confirmar crea **exactamente un** movimiento real del tipo de la recurrencia, de forma idempotente (ADR-013), y lo vincula 1:1 con la instancia.
 - **FR-014**: Antes de crear un movimiento, si existe uno real **compatible** (tabla «Compatibilidad de vínculos»), se ofrece vincularlo. La persona también puede buscar uno compatible a mano. Vincular no crea ningún movimiento; un movimiento real se vincula a una sola instancia y una instancia a uno solo (Q4 (b)).
 - **FR-014a**: Solo es compatible un movimiento del mismo tipo y del mismo contexto (privado con privado del mismo dueño; compartido con compartido del mismo grupo) y, en aportes, de la misma meta y el mismo aportante. Categoría, fecha e importe solo sirven para sugerir. La autorización y la compatibilidad se validan en el servidor; el algoritmo de búsqueda lo fija ADR-a (F101-1).
 - **FR-015**: Nunca se vincula automáticamente, y las sugerencias nunca usan información privada de la otra persona.
 - **FR-016**: La instancia guarda su **fecha prevista**; el movimiento real, su **fecha efectiva**. Son datos distintos y ninguno sobrescribe al otro.
-- **FR-017**: Omitir una instancia pendiente no crea nada real, y se puede deshacer mientras la recurrencia no esté finalizada a mano ni archivada (Q5; **[DF]** F101-8 ii). **[DF]** Una instancia prevista se puede omitir con una acción explícita (F101-8 i).
-- **FR-018** **[DF]**: Si se **anula económicamente** el movimiento real de una instancia confirmada (ADR-007; en aportes, ADR-010 y la 22.13), la instancia vuelve a **pendiente de resolución**, con su fecha prevista y su versión histórica, aunque esa fecha no haya llegado, con auditoría. Si la recurrencia ya está archivada, la instancia se conserva con trazabilidad (F101-4; F101-8 iii).
+- **FR-017**: Omitir una instancia pendiente no crea nada real. Una instancia prevista también se puede omitir anticipadamente con una acción explícita (D3). Deshacer una omisión devuelve la instancia a prevista o pendiente según su fecha, con su versión, si la recurrencia está activa, pausada o terminada sola; con la recurrencia finalizada a mano o archivada no está disponible y no la reactiva (D4). Omitir no equivale a conservar una obligación pendiente (D5).
+- **FR-018**: Si se **anula económicamente** el movimiento real de una instancia confirmada (ADR-007; en aportes, ADR-010 y la 22.13), la instancia vuelve a **pendiente de resolución**, con su fecha prevista y su versión histórica, aunque esa fecha no haya llegado, con auditoría. Si la recurrencia ya está archivada, la instancia se conserva con trazabilidad (D1, F101-4; F101-8 iii).
 - **FR-018a**: Una anulación **técnica** que forma parte de una sustitución auditada (Mover a Pareja y su Deshacer, ADR-001) no devuelve la instancia a pendiente ni traslada su vínculo a otro contexto. Invariantes: una sola operación económica activa por instancia; la recurrencia original sigue privada; vínculos y sustituciones auditados; ADR-001, ADR-010 y ADR-015 se respetan; ninguna función de MVP-1 ni de Planes se bloquea. El mecanismo lo fija ADR-a (F101-3).
 - **FR-019**: El movimiento real creado o vinculado se ve en Actividad como cualquier otro. El enlace a su instancia solo existe para quien tiene autorización sobre ella (N-6; F101-2). Confirmar una instancia de gasto conserva el mecanismo de Gasto con meta cuando hay una reserva previa real (28.10, ADR-010).
 
@@ -811,7 +831,7 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 - **FR-031**: Confirmar un aporte programado crea un aporte real en el ledger de la meta, idéntico en efecto a un aporte manual (DEC-G04), y nunca una fila en `transactions` (§7.3).
 - **FR-032**: Un aporte programado previsto no cambia la meta, «Tu disponible» ni ninguna cifra de DEC-G04, y nunca se presenta como fondos reservados.
 - **FR-033**: La programación es privada, también en una meta compartida. Para la otra persona, un aporte confirmado desde una programación es **indistinguible** de un aporte manual equivalente: sin insignia, identificador, frecuencia ni procedencia, en vistas, exportación, errores o metadatos. Se protege también la **existencia** de la programación (F101-2).
-- **FR-034** **[DF en el disparador]**: La recurrencia se pausa cuando la meta pasa **formalmente** a lograda («Dar por lograda», 22.15) o a archivada; llegar al 100 % no basta. Solo su propietaria la reanuda, con una acción explícita y solo hacia una meta activa (F101-7).
+- **FR-034**: La recurrencia se pausa cuando la meta pasa **formalmente** a lograda («Dar por lograda», 22.15) o a archivada; llegar al 100 % no basta. Solo su propietaria la reanuda, con una acción explícita y solo hacia una meta activa (D7, F101-7).
 - **FR-034a**: Mientras la meta no esté activa, sus instancias se conservan pero no se confirman. El estado de la meta y la autorización se revalidan en la misma operación que registra el aporte, con la concurrencia entre confirmar y lograr o archivar cubierta. ADR-010 y los estados de Metas no cambian (F101-7).
 
 #### Compromisos de duración definida (A.5; Q13)
@@ -819,14 +839,15 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 - **FR-035**: El número de ocurrencias cuenta las ocurrencias programadas, no las cuotas pagadas; «cuota n de N» numera ocurrencias.
 - **FR-036**: La terminación automática deja de generar instancias y no cancela ni oculta las pendientes anteriores.
 - **FR-037**: Una recurrencia terminada nunca se presenta como prueba de que una deuda está pagada. Sin amortización ni saldos de deuda.
-- **FR-038** **[DF]**: Pausar un compromiso de N ocurrencias no mueve el calendario: las ocurrencias del periodo pausado no se generan pero cuentan, la fecha final no cambia y la pausa nunca cambia en silencio N (F101-8 iv).
+- **FR-038**: Pausar un compromiso de N ocurrencias consume las posiciones del calendario original: las ocurrencias del periodo pausado no se generan pero cuentan para N, la fecha final no se extiende, reanudar no las recupera automáticamente y la pausa nunca cambia en silencio N. Una ocurrencia consumida durante una pausa no equivale a una cuota pagada (D5, F101-8 iv).
+- **FR-038a**: Antes de pausar un compromiso de duración definida se explica el efecto sobre las próximas ocurrencias y su fecha final, y se pide confirmación. Si una obligación sigue existiendo y aún no se ha pagado, se conserva como pendiente cuando corresponda: ni pausar ni omitir la conservan. ADR-a resuelve la representación y la trazabilidad, sin amortización ni gestión de deuda (D5).
 
 #### Calendario (A.4; 28.8; N-6)
 
 - **FR-040**: El calendario de lo previsto es una ruta hija de Plan, sin destino de navegación nuevo (§15.3; 22.5).
 - **FR-041**: En móvil es una lista agrupada por fecha con flechas de mes, sin cuadrícula; escritorio se decide con los comps (Q14). Muestra por defecto el mes actual y el siguiente.
 - **FR-042**: Cada instancia muestra fecha prevista, nombre, importe (fijo, estimado, rango o desconocido), estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, «cuota n de N». Si solo tiene fecha final, no se inventa N.
-- **FR-043**: Desde el calendario se confirma, vincula u omite una instancia pendiente; una prevista, solo con las reglas de FR-012b y FR-017 **[DF]**.
+- **FR-043**: Desde el calendario se confirma, vincula u omite una instancia pendiente; una prevista, solo con las reglas de FR-012b y FR-017.
 - **FR-044**: El calendario no muestra movimientos reales sin instancia: lo real vive en Actividad (16.8).
 
 #### Total de lo previsto (Q15; ADR-b)
@@ -857,7 +878,7 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 
 #### Ciclo de vida, exportación y borrado (Q18)
 
-- **FR-076** **[DF]**: Eliminar una recurrencia sin historia la borra. Con historia, la **archiva** y cancela sus instancias sin resolver, con la misma lista y confirmación que la finalización manual (FR-007). Los movimientos reales y sus vínculos históricos autorizados se conservan (F101-9).
+- **FR-076**: Eliminar una recurrencia sin historia la borra. Con historia, la **archiva** y cancela sus instancias sin resolver, con la misma lista y confirmación que la finalización manual (FR-007). Los movimientos reales y sus vínculos históricos autorizados se conservan (D6, F101-9).
 - **FR-077**: La salida y la expulsión de la pareja siguen **bloqueadas** por ADR-003 hasta que exista su ADR; esta spec no las implementa. Cuando existan, las recurrencias y los presets compartidos seguirán lo que ese ADR fije para los datos del grupo.
 - **FR-078**: La exportación (§15.5) y el borrado manual de cuenta (005) incluyen reglas, instancias con sus estados, sus vínculos autorizados y presets, con la nota del contrato de borrado por cada tabla nueva, y nunca revelan a la otra persona una programación privada (F101-2).
 
@@ -905,7 +926,7 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 - **SC-003**: Cero fugas: ninguna consulta, sugerencia de vínculo, aviso, exportación, error o metadato de la otra cuenta ni de una tercera devuelve dato alguno de una recurrencia, instancia, aporte programado o preset privado, **ni revela su existencia**; un aporte confirmado desde una programación privada es indistinguible de uno manual para la otra persona (pgTAP con tres cuentas; F101-2).
 - **SC-004**: Confirmar cuesta un toque desde el calendario o el aviso **solo** cuando la instancia es de importe fijo, nada cambió y no hay un movimiento compatible sugerido por resolver; el gasto habitual sin recurrencia ni preset sigue en mediana < 10 s en teléfono real (US-12).
 - **SC-005**: Los dos fundadores distinguen sin ayuda, en una prueba con sus propios datos, lo previsto de lo real en el calendario, y ninguno interpreta un ingreso previsto, un aporte programado o el total de previstos como dinero recibido, reservado o disponible.
-- **SC-006**: Las transiciones de la tabla «Estados y transiciones» se cumplen todas en las pruebas de dominio, incluidas pausa y reanudación, terminación sola con pendientes, finalización manual, archivo, anulación económica y sustitución técnica.
+- **SC-006**: Las transiciones de la tabla «Estados y transiciones» se cumplen todas en las pruebas de dominio, incluidas pausa y reanudación (también en compromisos de duración definida, con N y la fecha final intactos, D5), terminación sola con pendientes, finalización manual, archivo, omisión anticipada y su deshacer según el ciclo de vida (D3, D4), anulación económica y sustitución técnica.
 - **SC-007**: Ningún vínculo incompatible de la tabla «Compatibilidad de vínculos» se acepta en el servidor (integración y pgTAP).
 - **SC-008**: Sin scroll horizontal en 360, 390, 430, 1024 y 1440; CLS = 0 en las cargas con skeleton (§15.7).
 
@@ -922,7 +943,7 @@ Los FR marcados **[DF]** están pendientes de confirmación de los fundadores
 ## Lo que hace falta para pasar a Plan
 
 1. ~~Que los fundadores respondan Q1–Q19.~~ **Hecho** el 25 de noviembre de 2026 (Session 2026-11-25 · Clarify). Falta registrarlas como decisión del maestro §15.10, en un PR documental aparte.
-2. Que los fundadores confirmen los puntos **[DF]** de la revisión F101 (F101-4, F101-5, F101-7 en el disparador, F101-8 i, ii y iv, y F101-9).
+2. ~~Que los fundadores confirmen las decisiones D1 a D7 de la revisión F101.~~ **Hecho** el 25 de noviembre de 2026, con precisiones en D3, D4 y D5 («Precisiones de la revisión F101»).
 3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse.
 4. Que la revisión del PR de esta spec termine sin hallazgos abiertos.
 5. Que los fundadores aprueben los comps de diseño, incluida la decisión de Q15 entre el total de gastos previstos y ningún total.
