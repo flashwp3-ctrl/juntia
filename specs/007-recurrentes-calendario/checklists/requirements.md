@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-25
-**Updated**: 2026-11-25, tras Clarify
+**Updated**: 2026-11-25, tras Clarify y la revisión F101
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -42,6 +42,12 @@
   estados y privacidad lo fija ADR-b. También quedan para ADR-a la identidad
   estable de las instancias (FR-005), la regla quincenal (FR-009b, propuesta
   `[P]`) y si las ocurrencias de un periodo pausado existen como canceladas.
+- **Revisión F101 aplicada.** F101-1 a F101-12 se corrigieron en la spec. Los
+  puntos **[DF]** (F101-4, F101-5, el disparador de F101-7, F101-8 i, ii y iv,
+  y F101-9) están escritos con la opción recomendada, pero siguen pendientes de
+  confirmación de los fundadores. Esa confirmación es otra razón para no marcar
+  el ítem de criterios de aceptación. La tabla «Compatibilidad de vínculos» y la
+  tabla de estados dan criterio verificable a FR-014a, FR-017, FR-018 y FR-018a.
 - **Detalles de implementación.** La spec nombra `transactions`, el ledger de
   metas, `America/Bogota`, pgTAP y `src/lib/copy/es.ts` porque son contratos ya
   decididos del maestro, de ADR-011 y de CONVENTIONS, no elecciones nuevas
