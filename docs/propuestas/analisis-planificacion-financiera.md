@@ -2,7 +2,7 @@
 
 **Estado:** análisis del gestor, **para decisión de los fundadores** (25 de
 noviembre de 2026). Incluye las **respuestas propuestas de los fundadores (25 nov
-2026)** a las preguntas de §9 y la resolución de los hallazgos F98-1 a F98-12 de
+2026)** a las preguntas de §9 y la resolución de los hallazgos F98-1 a F98-14 de
 la revisión adversarial (§11). Las respuestas **todavía no son decisiones del
 maestro**: lo serán cuando un PR documental las registre en §15.10 (§10). **No es
 una decisión, no amplía el alcance y no es autoridad.** Analiza `docs/propuestas/planificacion-financiera-integral.md` (en
@@ -364,7 +364,7 @@ antes de la etapa Plan de la spec que lo necesita (`AGENTS.md` 17).
 | ADR-b | **Previsto frente a real en las métricas** | ¿Qué cifras pueden mezclar lo previsto y lo real, y con qué rótulo? Regla mínima: ninguna de las métricas de §5.1 ni de DEC-G04 incluye nunca algo previsto | R, P1 |
 | ADR-c | **Distribución mensual (ampliación de ADR-004)** | ¿El presupuesto integral es una capa nueva o extiende `budgets`? ¿Admite un total, ingresos y meses futuros? ¿Cómo evita contar dos veces una obligación recurrente que además tiene categoría presupuestada (B.1)? | P1 |
 | ADR-d | **Aportes programados y provisiones (ampliación de ADR-010)** | ¿Una provisión es una meta con vencimiento? ¿El aporte programado es solo una sugerencia que se confirma, nunca un asiento automático? ¿Cómo se cubre una obligación anual con la prima (B.3)? | R, P1 |
-| ADR-e | **Créditos y amortización** | El sistema v1: COP, tasa fija, cuota fija, método francés. La conversión de tasa efectiva anual a mensual y su redondeo, alineados con ADR-002. Seguros y cargos como componentes aparte. Abonos: reducción de plazo o de cuota. Titularidad legal frente a responsabilidad acordada. **Cómo se registra el pago de la cuota sin que el capital cuente como consumo** (choca con `gasto_consumo`, §5.1), y cómo se reclasifican de forma auditada y sin duplicar las cuotas históricas «sin desglosar» (F98-1). Que el simulador de amortización es aritmética determinista y no una proyección de la 22.9 (Q12; F98-3). El procedimiento de evidencia de §9, Q15 (F98-6) | D |
+| ADR-e | **Créditos y amortización** | El sistema v1: COP, tasa fija, cuota fija, método francés. La conversión de tasa efectiva anual a mensual y su redondeo, alineados con ADR-002. Seguros y cargos como componentes aparte. Abonos: reducción de plazo o de cuota. Titularidad legal frente a responsabilidad acordada. **Cómo se registra el pago de la cuota sin que el capital cuente como consumo** (choca con `gasto_consumo`, §5.1). **Evaluar si procede** vincular o reclasificar las cuotas históricas «sin desglosar» y, solo si procede y hay información suficiente, cómo hacerlo de forma auditada y sin duplicar; conservarlas sin desglosar sigue siendo válido (F98-1, F98-13). Que el simulador de amortización es aritmética determinista y no una proyección de la 22.9 (Q12; F98-3). El procedimiento de evidencia de §9, Q15 (F98-6) | D |
 | ADR-f | **Modelo de saldos de cuentas** | ¿Declarativo, derivado de movimientos o mixto con conciliación explícita (propuesta C.1)? ¿Cómo se corrige un saldo sin crear ingresos ni gastos ficticios? ¿Qué es una transferencia entre cuentas propias? **¿Cuál es la política de inferencia que exige DEC-R17** antes de mostrar algo «disponible»? | K, P2 |
 | ADR-g | **Privacidad de ingresos, cuentas, deudas, activos y escenarios** | Qué se comparte, ítem por ítem o por categoría. Si los agregados compartidos se calculan **solo con ítems compartidos**. La copropiedad y el porcentaje de participación. Si los escenarios son privados por defecto. Cómo evitar las fugas por resta, por indicadores y por diferencias entre escenarios (propuesta §8.5). Exportación y borrado de cuenta | P1 (ingresos), D, K, E |
 | ADR-h | **Frescura de los datos** (propuesta §8.3) | Estados «confirmado», «estimado» y «proyectado». La fecha de última actualización como dato obligatorio. Los umbrales de «desactualizado». Recordatorios solo dentro de la app. Cómo marca una proyección que usa datos viejos | K, E (y R para los estimados) |
@@ -475,7 +475,10 @@ razones:
    riesgo da tiempo a usar R y P1 con datos reales antes de modelar la posición.
 
 **El costo de este orden:** durante P1 la cuota del crédito figura entera, sin
-desglosar capital e interés. Es aceptable si se rotula así y si D lo reclasifica.
+desglosar capital e interés. Es aceptable si se rotula así (las cuatro condiciones
+de §9, Q8). D evalúa si procede vincular o reclasificar esas cuotas, pero no está
+obligada a hacerlo: conservarlas sin desglosar sigue siendo válido si no hay
+información suficiente para separar capital, intereses y seguros (F98-13).
 **El costo del orden de §8.2:** el presupuesto llega dos specs grandes más tarde,
 y la persona que solo quiere organizar el mes espera por módulos que no usa.
 
@@ -548,11 +551,26 @@ documentación activa al mismo tiempo:
    candidato de MVP-1 ni interferir con su gate.
 10. El gate de siete días de MVP-1 sigue intacto (24.10, 25.5).
 
+**Prerrequisitos para ejercer el paralelismo (F98-14).** ADR-012 §2 obliga a
+detenerse ante un conflicto entre documentos hasta que se fusione el PR de
+reconciliación. Por eso ninguna spec empieza su documentación en paralelo con
+otra hasta que se cumplan los cuatro:
+
+1. la decisión 28 está registrada en el maestro §15.10;
+2. la reconciliación normativa (ADR-012, `AGENTS.md` 14b y lo demás de la tabla
+   de abajo) está **fusionada**, aunque vaya en PR separados;
+3. está verificado cómo selecciona Spec Kit la spec activa (por rama o por
+   `SPECIFY_FEATURE`) y que los worktrees quedan aislados entre sí;
+4. se cumplen las condiciones previas de Q18.
+
+Este PR no hace ninguna de esas verificaciones: solo las deja como
+prerrequisitos.
+
 **Aplicación inmediata (secuencia propuesta):**
 
 | Momento | Planes (006) | Recurrentes (R) |
 | --- | --- | --- |
-| Ahora, durante el gate | Bloqueada por un gate externo (MVP-1), sin trabajo documental activo una vez cerrado lo pendiente | Primero se acepta este PR (#98) y después se registra la decisión 28. Solo entonces se adelanta **la documentación** de R: spec, ADR propuestos y diseño |
+| Ahora, durante el gate | Bloqueada por un gate externo (MVP-1), sin trabajo documental activo una vez cerrado lo pendiente | Primero se acepta este PR (#98) y se cumplen los cuatro prerrequisitos de arriba. Solo entonces se adelanta **la documentación** de R: spec, ADR propuestos y diseño |
 | Al declarar MVP-1 | **Precedencia:** completa Plan y Tasks | Si tiene documentación activa, **se pausa** durante esas dos etapas (condición 4) |
 | Planes en implementación | Implementación | Se reanuda la documentación |
 | Planes aceptada | — | Puede empezar su implementación, si sus dependencias están aceptadas (condición 6) |
@@ -561,9 +579,11 @@ Nada de esto autoriza código, migraciones ni despliegues durante el gate, ni
 rebajar ningún criterio de aceptación. El objetivo es aprovechar el tiempo, no
 reducir controles.
 
-**Documentos de autoridad que hay que reconciliar.** No se tocan en este PR: van
-en el PR de la decisión 28, después de aceptar el #98, como pide la tabla de
-ADR-012 §2 («un conflicto… se reconcilia por PR documental»).
+**Documentos de autoridad que hay que reconciliar.** No se tocan en este PR. Van
+en el PR de la decisión 28 o en PR propios, después de aceptar el #98, y **todos
+deben estar fusionados antes de ejercer el paralelismo** (prerrequisito 2), como
+pide la tabla de ADR-012 §2 («un conflicto… se reconcilia por PR documental»).
+La spec no avanza hasta que se fusiona el PR de reconciliación.
 
 | Documento | Qué dice hoy | Cómo se reconcilia |
 | --- | --- | --- |
@@ -712,8 +732,10 @@ la acepta si cumple **cuatro condiciones**:
 1. se identifica su limitación en las métricas de consumo: la cuota completa entra
    en `gasto_consumo`, y eso se dice donde aparece;
 2. Juntia no afirma qué parte es capital ni qué parte es interés;
-3. D analiza si conviene vincular o reclasificar los movimientos históricos (ADR-e).
-   Es una posibilidad pendiente de análisis, no una migración garantizada. Si se
+3. D evalúa si procede vincular o reclasificar los movimientos históricos (ADR-e).
+   Es una posibilidad pendiente de análisis, no una migración garantizada, y
+   conservarlos sin desglosar sigue siendo válido si no hay información suficiente
+   para separar capital, intereses y seguros. Si se
    hace, es auditada, no duplica nada y preserva los repartos, las aprobaciones,
    los usos de meta y la auditoría;
 4. ninguna reclasificación inventa intereses ni capital: lo que no se puede
@@ -760,7 +782,9 @@ aceptación de D, no una prueba de CI.
    - el mismo PR resuelve en el maestro las contradicciones N-1 y N-2 de §12 (§11
      «MVP-2» y «MVP-3») y registra la regla de §8.4;
    - el mismo PR, u otro propio, reconcilia ADR-012 §3.1 y `AGENTS.md` 14b según
-     la tabla de §8.4 (tocar `AGENTS.md` lanza CI);
+     la tabla de §8.4 (tocar `AGENTS.md` lanza CI). **Toda la reconciliación tiene
+     que estar fusionada antes de documentar dos specs en paralelo** (los cuatro
+     prerrequisitos de §8.4; ADR-012 §2);
    - el mismo PR crea en el backlog filas con los nombres provisionales elegidos
      (R, P1…), cada una con su origen («decisión 28.x»);
    - las filas 3, 4 y 7 se marcan «absorbida en R» (Q4 y Q17), sin borrarlas.
@@ -770,14 +794,14 @@ aceptación de D, no una prueba de CI.
    - nada se implementa antes de declarar MVP-1 (decisión 25.5), ni la spec
      siguiente antes de aceptar la anterior. La documentación de la siguiente
      puede adelantarse con las diez condiciones de §8.4 y la regla operativa de
-     §12, N-8.
+     §12, N-8, solo después de cumplir los cuatro prerrequisitos de §8.4.
 4. **La propuesta original no se modifica:** queda como registro de lo que
    pidieron los fundadores. Este análisis tampoco es autoridad. Si un documento
    posterior lo contradice, manda la decisión registrada.
 
 ---
 
-## 11. Hallazgos de la revisión adversarial (F98-1 a F98-12)
+## 11. Hallazgos de la revisión adversarial (F98-1 a F98-14)
 
 Hubo dos revisiones, las dos del 25 de noviembre de 2026:
 
@@ -802,6 +826,8 @@ nuevas y sin tocar el ledger de metas ni ADR-010.
 | F98-10 | N-8 no tenía regla operativa: al terminar el gate, Planes vuelve a documentación mientras R sigue en documentación | N-8 trae ahora la regla operativa:<br>- estados «documentación activa» y «documentación pausada»;<br>- precedencia de Planes;<br>- R se pausa durante el Plan y las Tasks de Planes y se reanuda cuando Planes pasa a implementación.<br>Los gates siguen siendo independientes por spec (ADR-012 §3.1) | §12, N-8; §8.4 |
 | F98-11 | La tabla de §4 quedó partida por bloques explicativos | Una sola tabla continua (R, P1, D, K, P2, E y S), con las explicaciones debajo | §4 |
 | F98-12 | Referencias desactualizadas | - El diagrama saca Planes de «Existe hoy».<br>- E separa la parte integral de D.4.<br>- El paso 2 de §10 ya no pide responder la Q8.<br>- N-4 dice que Q18 está pendiente de decisión formal.<br>- N-1 ya no dice que los presets están sin ubicar.<br>- La fila del backlog dice que deciden los fundadores, no el análisis | §5; §4; §10; §12; `docs/BACKLOG_MVP2.md` |
+| F98-13 | La reclasificación histórica de las cuotas «sin desglosar» seguía pareciendo obligatoria en ADR-e y en §8.1 | ADR-e y §8.1 dicen ahora que D **evalúa si procede** vincular o reclasificar. Conservar los movimientos sin desglosar sigue siendo válido si no hay información para separar capital, intereses y seguros (como en Q8) | §6, ADR-e; §8.1; §9, Q8 (condición 3) |
+| F98-14 | N-8 permitía empezar Recurrentes antes de fusionar la reconciliación normativa (ADR-012 §2) | Cuatro prerrequisitos antes de ejercer el paralelismo: la decisión 28 registrada; la reconciliación de ADR-012, `AGENTS.md` 14b y lo demás fusionada; verificado cómo elige Spec Kit la spec activa y que los worktrees están aislados; y las condiciones de Q18. Este PR no hace esas verificaciones | §8.4; §10; §12, N-8 |
 
 ---
 
@@ -819,7 +845,7 @@ decisión 28, no aquí.
 | N-5 | Q10: R y P1 como rutas hijas de Plan | «Plan» es el destino de presupuestos y «Planes» (006) vive en Actividad (spec 006, Q2 y Q3). El «plan del mes» de la primera versión de este análisis era un tercer uso de la palabra | **Encaminada** por la respuesta propuesta de Q19: se evita «plan del mes», y la preferencia inicial es «Distribución mensual», **sin cerrar**. El nombre se evalúa en la spec de P1 y en sus comps, en Yo y en Nosotros, y entra en el glosario cuando se apruebe. Dos cuidados para esa evaluación:<br>- «Mi presupuesto» y «Presupuesto mensual» pueden confundirse con los presupuestos por categoría de ADR-004;<br>- «Mi…» no se lee bien en Nosotros.<br>La idea del backlog de renombrar la pestaña «Plan» se sigue reconsiderando con evidencia |
 | N-6 | Q10: el calendario financiero (A.4) en Plan | La decisión 16.8 dejó el «calendario» de lo real en Actividad, con flechas de mes | No es una contradicción: Actividad sigue siendo lo real, y el calendario de R muestra solo lo previsto y su estado. La spec R debe decir cómo enlaza una instancia confirmada con su movimiento en Actividad |
 | N-7 | Q7 (ingreso privado en v1) frente a C.7 (flujo de un inmueble compartido) | El flujo de caja de un inmueble de los dos no se puede calcular sin un ingreso compartido | C.7 de un inmueble compartido depende de ADR-j, que debe escribirse antes de K. Hasta entonces, K solo puede mostrar el flujo de los inmuebles privados. De uno compartido, solo muestra lo que cada uno recibió efectivamente, nunca su derecho económico como si fuera un ingreso (F98-8) |
-| N-8 | Q18: la documentación de R durante el gate | La regla de «una spec a la vez» (propuesta §6). Hoy la spec 006 (Planes) está abierta: Specify y Clarify están hechos y los comps aprobados, pero no puede pasar a Plan hasta declarar MVP-1. Al terminar el gate, Planes vuelve a documentación (Plan y Tasks) mientras R puede seguir en documentación: serían dos specs en documentación a la vez | **Encaminada** por la respuesta propuesta de los fundadores (§8.4, diez condiciones), con la **regla operativa** de debajo de esta tabla (F98-10). **Queda pendiente** registrar la regla en la decisión 28 y reconciliar ADR-012 §3.1 y `AGENTS.md` 14b (tabla de §8.4) |
+| N-8 | Q18: la documentación de R durante el gate | La regla de «una spec a la vez» (propuesta §6). Hoy la spec 006 (Planes) está abierta: Specify y Clarify están hechos y los comps aprobados, pero no puede pasar a Plan hasta declarar MVP-1. Al terminar el gate, Planes vuelve a documentación (Plan y Tasks) mientras R puede seguir en documentación: serían dos specs en documentación a la vez | **Encaminada** por la respuesta propuesta de los fundadores (§8.4, diez condiciones), con la **regla operativa** de debajo de esta tabla (F98-10). **Queda pendiente** registrar la regla en la decisión 28 y fusionar la reconciliación de ADR-012 §3.1 y `AGENTS.md` 14b (tabla de §8.4). Sin los cuatro prerrequisitos de §8.4 (F98-14), no se ejerce el paralelismo |
 
 **Regla operativa de N-8 (F98-10).** Una spec en documentación está en uno de
 dos estados, y solo la documentación **activa** cuenta para el límite:
@@ -828,7 +854,8 @@ dos estados, y solo la documentación **activa** cuenta para el límite:
 - **pausada:** su PR abierto queda en borrador, sin commits ni revisiones, y los
   gates que ya mergeó se conservan.
 
-La secuencia es esta:
+La secuencia empieza solo cuando se cumplen los cuatro prerrequisitos de §8.4
+(F98-14). Hasta entonces, R no tiene documentación activa. Después:
 
 1. Durante el gate, Planes está bloqueada por un gate externo y R tiene la
    documentación activa.
