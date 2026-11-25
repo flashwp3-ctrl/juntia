@@ -1,6 +1,6 @@
 # ADR-012 — Adopción parcial de GitHub Spec Kit
 
-**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Enmienda:** §3.4, decisión de los fundadores tras las dos demostraciones del PR #9, 3 de noviembre de 2026 · **Nota:** §3.1 y `[V]` 4, gates por spec con dos specs en vuelo, 25 de noviembre de 2026 (maestro §15.10, decisión 28) · **Alcance:** P0, flujo de especificación de cada slice
+**Estado:** Aceptado por los fundadores, 3 de noviembre de 2026 (maestro §15.10, decisión 2) · **Origen:** preflight de ingeniería y dos ensayos en clones desechables, 3 de noviembre de 2026 · **Condiciones aplicadas:** segunda revisión del PR #7, 3 de noviembre de 2026 · **Enmienda:** §3.4, decisión de los fundadores tras las dos demostraciones del PR #9, 3 de noviembre de 2026 · **Nota:** §3.1 y `[V]` 4, gates por spec con dos specs en vuelo, 25 de noviembre de 2026 (maestro §15.10, decisión 28) · **`[V]` 4 verificado:** 25 de noviembre de 2026, con una condición de uso en `AGENTS.md` 14b (PR #100) · **Alcance:** P0, flujo de especificación de cada slice
 
 ## Contexto
 
@@ -456,7 +456,107 @@ Queda pendiente:
    ejecutándolo, cómo eligen los scripts de `.specify/scripts/` la spec activa
    (por la rama, por `SPECIFY_FEATURE` o por cualquier otro mecanismo que
    usen) y que dos worktrees, cada uno con su rama, no escriben en la spec del
-   otro. La salida se pega en el PR que la registre. **No está verificado.**
+   otro. La salida se pega en el PR que la registre.
+
+   **Verificado el 25 de noviembre de 2026** (PR #100), **con una condición de
+   uso** que recoge `AGENTS.md` 14b. La salida completa está en la descripción
+   de ese PR.
+
+   **Cómo se ejecutó.** Spec Kit v1.2.6 del repositorio, scripts `sh` en Git
+   Bash (Windows), sobre `main` en `9d44a5a`. Tres worktrees desechables fuera
+   del repositorio:
+   - `a`, en la rama `tmp/n8-a-006`, con la spec 006;
+   - `b`, en `tmp/n8-b-999`, con un commit local que añade una spec ficticia,
+     `specs/999-prueba/spec.md`;
+   - `c`, en `tmp/n8-sin-prefijo`.
+
+   Al terminar se borraron los tres worktrees y las tres ramas, y no se empujó
+   nada. En la salida, `$SP` es la carpeta de los worktrees.
+
+   **Mecanismo.** Se leyó en `common.sh` y se confirmó al ejecutarlo:
+   - `get_repo_root` sube desde el directorio actual hasta el primer
+     `.specify/`, así que la raíz es siempre el worktree desde el que se
+     ejecuta;
+   - `get_feature_paths` elige la carpeta de la spec en este orden:
+     1. `SPECIFY_FEATURE_DIRECTORY`; una ruta relativa se resuelve contra esa
+        raíz;
+     2. `.specify/feature.json` (`feature_directory`), que escribe
+        `speckit-specify` y que `.specify/.gitignore` ignora: es un archivo del
+        árbol de trabajo, uno por worktree;
+     3. si no hay ninguno de los dos, **error y exit 1**.
+
+   **No usa la rama** ni la carpeta más reciente de `specs/`. `SPECIFY_FEATURE`
+   solo cambia la etiqueta `BRANCH` de la salida, no la carpeta.
+
+   | # | Caso | Resultado |
+   | --- | --- | --- |
+   | 1 | Sin `feature.json` ni variables, en `a` y en `c` (rama sin prefijo numérico) | En los dos, `ERROR: Feature directory not found…` y exit 1. La rama no se usa, lleve número o no |
+   | 2 | Solo `SPECIFY_FEATURE=006-planes` | El mismo error, exit 1 |
+   | 3 | `SPECIFY_FEATURE_DIRECTORY=specs/006-planes`, con `--paths-only` | Resuelve `$SP/a/specs/006-planes`, exit 0, y **no** crea `feature.json`. Si además `SPECIFY_FEATURE=999-prueba`, la carpeta sigue siendo la 006 y solo `BRANCH` dice 999, **sin aviso** |
+   | 4 | Un `feature.json` distinto en cada worktree | `a` resuelve `$SP/a/specs/006-planes` y `b`, `$SP/b/specs/999-prueba`, también desde `b/src`. `git status --ignored` muestra `!! .specify/feature.json` |
+   | 5 | `setup-plan.sh --json` en `b`, que escribe | Crea `$SP/b/specs/999-prueba/plan.md`. En `a`, `git status` queda vacío y la huella SHA-1 de `specs/` es idéntica antes y después |
+   | 6 | En `b`, `SPECIFY_FEATURE_DIRECTORY` con la ruta **absoluta** de la 006 de `a` | `check-prerequisites.sh` resuelve en `a`, y `setup-plan.sh` **escribe `plan.md` en la spec 006 de `a`**, con exit 0 y sin aviso. Además guarda esa ruta absoluta en el `feature.json` de `b`: la siguiente ejecución en `b`, ya **sin** la variable, sigue apuntando a `a` |
+   | 7 | La misma variable, relativa (`specs/999-prueba`), en `c` | Se resuelve contra `c` (`$SP/c/specs/999-prueba`), no contra el worktree donde se fijó |
+   | 8 | `create-new-feature.sh --json --dry-run` | `a` propone `007-recurrentes`, y `b`, `1000-recurrentes`: el número sale del `specs/` del propio worktree, no de `main` ni de otras ramas |
+   | 9 | `check-prerequisites.sh --json` **sin** `--paths-only` | Falla porque falta `plan.md`, pero **ya ha reescrito** `feature.json`. `setup-tasks.sh` con `SPECIFY_FEATURE_NO_PERSIST=1` lo deja intacto |
+
+   Salida clave, recortada:
+
+   ```
+   # 1 · en a (rama tmp/n8-a-006), sin feature.json ni variables
+   $ bash .specify/scripts/bash/check-prerequisites.sh --json --paths-only
+   ERROR: Feature directory not found. Set SPECIFY_FEATURE_DIRECTORY or run the specify command to create .specify/feature.json.
+   [exit 1]
+
+   # 4 · cada worktree con su feature.json
+   (a) {"REPO_ROOT":"$SP/a","BRANCH":"006-planes","FEATURE_DIR":"$SP/a/specs/006-planes",…}
+   (b) {"REPO_ROOT":"$SP/b","BRANCH":"999-prueba","FEATURE_DIR":"$SP/b/specs/999-prueba",…}
+
+   # 5 · escribir en b no toca a
+   $ bash .specify/scripts/bash/setup-plan.sh --json            # en b
+   Copied plan template to $SP/b/specs/999-prueba/plan.md
+   $ git -C $SP/a status --short                                # sin salida
+   huella de A/specs antes:   20a7e216ed3977df4d239fd5ec9fc729ebeeaae6
+   huella de A/specs después: 20a7e216ed3977df4d239fd5ec9fc729ebeeaae6
+
+   # 6 · una ruta absoluta de otro worktree sí lo toca
+   $ SPECIFY_FEATURE_DIRECTORY=$SP/a/specs/006-planes bash .specify/scripts/bash/setup-plan.sh --json   # en b
+   Copied plan template to $SP/a/specs/006-planes/plan.md
+   [exit 0]
+   $ git -C $SP/a status --short
+   ?? specs/006-planes/plan.md
+   $ cat $SP/b/.specify/feature.json
+   {"feature_directory":"$SP/a/specs/006-planes"}
+   ```
+
+   **Conclusión.** Dos worktrees, cada uno con su rama, quedan aislados:
+   - la spec activa es de cada worktree, porque `feature.json` no se versiona
+     ni se comparte;
+   - un script que escribe solo toca el worktree desde el que se ejecuta;
+   - sin contexto, falla con error en vez de elegir una spec;
+   - la rama no interviene.
+
+   **El aislamiento se rompe en un caso, el 6:** una `SPECIFY_FEATURE_DIRECTORY`
+   absoluta que apunta a otro worktree hace que se escriba en esa spec sin
+   aviso, y el error queda guardado en `feature.json`. Hay además dos efectos
+   menores: `SPECIFY_FEATURE` puede contradecir la carpeta sin aviso (caso 3), y
+   el número de una spec nueva sale del `specs/` local (caso 8).
+
+   **Condición de uso, en `AGENTS.md` 14b** (mismo PR):
+   - la spec activa de un worktree es su `.specify/feature.json`;
+   - no se exportan `SPECIFY_FEATURE_DIRECTORY` ni `SPECIFY_FEATURE`; si hace
+     falta fijar la spec, se hace una vez, con ruta relativa
+     (`specs/NNN-nombre`) y en el propio comando;
+   - antes de una skill o un script de Spec Kit que escribe, se ejecuta
+     `check-prerequisites.sh --json --paths-only` y se comprueba que
+     `FEATURE_DIR` está dentro de `REPO_ROOT` y es la spec de la rama;
+   - el número de una spec nueva se asigna mirando `main` y los PR abiertos.
+
+   Es una regla de disciplina, como las barreras de §5: reduce el error
+   accidental, no lo impide. Un worktree nuevo no tiene `feature.json`. Por eso,
+   para retomar la 006 en el Plan, se fija una vez con
+   `SPECIFY_FEATURE_DIRECTORY=specs/006-planes`, y los scripts fallan con error
+   hasta que se fija.
 
 ## Dependencias
 

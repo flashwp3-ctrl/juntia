@@ -46,13 +46,33 @@ nombre de producto. Ninguna está abierta.
 
 | Paso | Spec (provisional) | Capacidades de la propuesta | Origen | Estado |
 | --- | --- | --- | --- | --- |
-| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3 y 28.6 | Sin abrir. Su documentación puede adelantarse durante el gate solo tras los cuatro prerrequisitos de la 28.19 (28.17), y se pausa durante el Plan y las Tasks de Planes (28.18) |
+| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3 y 28.6 | Sin abrir. Su documentación puede adelantarse durante el gate solo tras los cuatro prerrequisitos de la 28.19 (28.17; estado en la sección siguiente), y se pausa durante el Plan y las Tasks de Planes (28.18) |
 | 2 | **Presupuesto integral v1**, sin liquidez (P1) | B.1–B.4, B.6; C.9 solo teórico | Decisiones 28.3 y 28.7 | Sin abrir. Capa nueva; nombre preferido «Distribución mensual», **sin cerrar** |
 | 3 | **Créditos y deudas** (D) | C.5, C.6, simulador de amortización de un crédito | Decisiones 28.3, 28.10, 28.12, 28.14 y 28.15 | Sin abrir |
 | 4 | **Cuentas, activos y patrimonio** (K) | C.1, C.3, C.4, C.7, C.8 | Decisiones 28.3, 28.9 y 28.11 | Sin abrir |
 | 5 | **Flujo y liquidez** (P2) | B.7, C.2 | Decisión 28.3 | Sin abrir |
 | 6 | **Proyecciones y escenarios** (E) | D.1–D.3, D.4 integral, D.5–D.8 | Decisiones 28.3 y 28.12 | Sin abrir |
 | — | **Estadísticas y sugerencias** (S) | B.5; filas 5 y 6 | Decisión 28.3 (Q4) | Independiente; según la evidencia de uso |
+
+### Prerrequisitos de la decisión 28.19
+
+Estado a 25 de noviembre de 2026. **Este registro no abre la documentación de
+Recurrentes y calendario:** la abre la confirmación del gestor después del merge
+del PR #100.
+
+| # | Prerrequisito | Estado | Evidencia |
+| --- | --- | --- | --- |
+| 1 | La decisión 28 está registrada en el maestro §15.10 | Cumplido | PR #99, merge `9d44a5a` |
+| 2 | La reconciliación normativa está fusionada: la nota de ADR-012 (§3.1 y `[V]` 4), `AGENTS.md` 14b y este archivo | Cumplido | PR #99, mismo merge |
+| 3 | Está verificado cómo selecciona Spec Kit la spec activa y que los worktrees quedan aislados | Verificado, con una condición de uso en `AGENTS.md` 14b. Cuenta como cumplido con el merge del PR #100 | ADR-012, `[V]` 4: no se usa la rama, sino el `.specify/feature.json` de cada worktree. Una `SPECIFY_FEATURE_DIRECTORY` absoluta que apunta a otro worktree rompe el aislamiento, y eso lo cubre la condición de uso |
+| 4 | Se cumplen las condiciones previas de Q18 | Cumplido: las cuatro, en la tabla siguiente | Análisis §9, Q18 |
+
+| Condición de Q18 | Estado | Evidencia |
+| --- | --- | --- |
+| 1. Cerrar las decisiones del análisis | Cumplida | PR #98, merge `a8b91e1`, con los hallazgos F98-1 a F98-14 cerrados. Los fundadores respondieron Q1–Q19 y la regla de N-8 el mismo 25 de noviembre (maestro, decisión 28, preámbulo) |
+| 2. Registrarlas formalmente en el maestro | Cumplida | Decisión 28, filas 28.1 a 28.19, en el PR #99, merge `9d44a5a` |
+| 3. Completar el trabajo documental pendiente de Planes | Cumplida | En `specs/006-planes/spec.md`, «Lo que hace falta para pasar a Plan», los puntos 1 a 5 están hechos: decisión 27, ADR-014 y ADR-015 aceptados, PR #94, #95 y #96 mergeados, y comps aprobados (27.5). El 6, declarar MVP-1, no es documental. Lo que queda tampoco es documental pendiente: el Plan y las Tasks, que van después de declarar MVP-1, y las `[V]` de la implementación, que son las de `design-comps.md` (contraste del scrim y licencia de las fotos), las de ADR-014 (1 a 6) y las de ADR-015 (1 a 8). No hay ningún PR abierto sobre Planes |
+| 4. Resolver la tensión con «una spec a la vez» | Cumplida | La 28.18 sustituye esa regla de la propuesta §6 (análisis §12, N-8) |
 
 ## Deudas y límites conocidos aplazados a MVP-2
 
