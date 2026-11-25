@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-25
-**Updated**: 2026-11-25, tras Clarify y las rondas 1 y 2 de la revisión F101
+**Updated**: 2026-11-25, tras Clarify y las rondas 1 a 3 de la revisión F101
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -51,6 +51,8 @@
 - **Ronda 2 de la revisión aplicada.** F101-13 a F101-17 y el ajuste de FR-004
   se corrigieron sin decisiones nuevas de los fundadores; la tabla de estados se
   recorrió completa tras los cambios.
+- **Ronda 3 de la revisión aplicada.** F101-18 a F101-20, sin estados,
+  mecanismos ni funciones nuevos.
 - **Detalles de implementación.** La spec nombra `transactions`, el ledger de
   metas, `America/Bogota`, pgTAP y `src/lib/copy/es.ts` porque son contratos ya
   decididos del maestro, de ADR-011 y de CONVENTIONS, no elecciones nuevas
