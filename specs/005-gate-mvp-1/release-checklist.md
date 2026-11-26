@@ -6,6 +6,11 @@ del [plan](plan.md) y se firman en el PR C. Cada casilla lleva su evidencia (enl
 `evidence.md`, a `evidence/` o la salida resumida), **sin secretos ni datos personales**.
 Protocolos: [contracts/human-verifications.md](contracts/human-verifications.md).
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** Esta checklist
+> es de la **aceptación técnica** de MVP-1, que es su declaración. Lo que se hacía en el
+> paso 7 (§5, restauración real, y §8) se hace tras el paso 6 y antes de declarar. Los 7
+> días de uso son la validación por uso real, aplazada (30.6), y no tienen casilla aquí.
+
 **Privacidad (F85-6):** se aplica la regla única del [plan](plan.md), «PR C · Evidencia y
 cierre».
 
@@ -56,14 +61,14 @@ cierre».
 - [ ] **Regla escrita:** la vuelta atrás sin tocar la base solo vale entre despliegues sin
       migraciones intermedias; si hubo una, se decide antes (FR-064)
 
-## 5. Copias, restauración y migraciones (pasos 6–7)
+## 5. Copias, restauración y migraciones (paso 6 y antes de declarar; decisión 30)
 
 - [ ] 002-T097: hubo copia antes del primer movimiento real, o se registró que no y se
       hizo de inmediato, informando a los fundadores (FR-004)
 - [ ] **Cadencia escrita:** copia semanal los `________` y una antes de cada migración de
       producción. **Pérdida máxima aceptada: 7 días** (decisión de los fundadores, Q9).
       Dueño: `________`. Recordatorio: evento semanal en su calendario (FR-062)
-- [ ] **Restauración real** de la copia del final del periodo de uso, con el esquema de
+- [ ] **Restauración real** de una copia hecha tras el paso 6 y antes de declarar (decisión 30.5; antes, «del final del periodo de uso»), con el esquema de
       P0-3, en un PostgreSQL 17 limpio: invariantes verdes y manifiesto coincidente,
       incluidas las seis tablas de P0-3 (FR-061)
 - [ ] **Antes de cada migración de producción:** una copia y el «sí» de un fundador antes
@@ -89,7 +94,7 @@ cierre».
       definitivos, correo propio, apertura del registro y cierre de la enumeración por la
       API de Auth. **Revisión legal antes de abrir la app a terceros**
 
-## 8. Datos y registros (paso 7)
+## 8. Datos y registros (tras el paso 6, antes de declarar; decisión 30)
 
 - [ ] Tabla de idempotencia sin purga en MVP-1; tamaño medido: `____` filas, `____` MB; su
       revisión, en la lista de MVP-2 (FR-068, Q12)

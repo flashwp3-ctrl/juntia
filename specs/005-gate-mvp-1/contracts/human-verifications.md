@@ -169,6 +169,12 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 
 ### V13 · 7 días de uso diario y valoración (FR-080, FR-081, Q10) — paso 7
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** V13 es la
+> **validación por uso real**, que se conserva pero se aplaza (30.6): el periodo, D4 y la
+> valoración se hacen cuando se cumpla esa condición y no condicionan la declaración de
+> MVP-1, que es su aceptación técnica (30.5). «Antes del periodo» (FR-080) se rige por la
+> 30.7: hasta que los fundadores la confirmen, la sesión guiada sigue en el paso 6.
+
 - **Quién:** los dos.
 - **Antes del periodo:** la sesión guiada del escenario de pareja de §4, en móvil y en
   escritorio, con una meta individual y una compartida, aportes de los dos, un gasto con
@@ -190,6 +196,10 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   demás van a la lista de MVP-2 con dueño (FR-083).
 
 ### V14 · Copia y restauración real (FR-061, FR-062, Q9) — paso 7
+
+> **Enmienda del 25 de noviembre de 2026 (decisión 30.5).** V14 es de la aceptación
+> técnica: se hace después del paso 6 y antes de declarar, no al final del periodo de
+> uso, que queda aplazado. La 24.9 no cambia.
 
 - **Quién:** el fundador que tiene gpg y la copia, en su equipo, con el gestor
   acompañando sin ver la contraseña.

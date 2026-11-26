@@ -569,6 +569,21 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 **Purpose**: defectos, nunca funcionalidades. Cada corrección con su prueba en la capa más baja (FR-094; `docs/TESTING.md` §6). **Puede partirse en dos PR** si las correcciones tocan áreas que el selector clasifica distinto (Q1). Dos de los tres puntos de Q11 ya están corregidos en `main` (`829c420`, PR #74): aquí solo se confirman (research R8).
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** Después del
+> merge del PR documental de la decisión 30, y no antes, entra **un PR de código
+> acotado a C-1–C-7** del informe `corrida-completa.md` (PR #104), con los criterios
+> de la 30.3, pruebas de regresión específicas de cada defecto y evidencia nueva. Es la
+> única excepción a la congelación del gate (30.2):
+>
+> - sin migraciones ni cambios del modelo de datos;
+> - sin cambios de fórmulas financieras;
+> - sin cambios de cálculos, consultas, permisos ni filtros (C-2);
+> - sin tocar las validaciones del servidor (C-7);
+> - sin funcionalidades nuevas y sin S-1 a S-8.
+>
+> El informe del PR #104 no se edita. El merge de ese PR cambia el candidato (Phase 4).
+> Sus tareas las fija el brief de ese PR, no esta lista.
+
 **FR**: FR-032, FR-042, FR-053 (si falla), FR-067 (copy), FR-094 y los de cada hallazgo.
 
 ### Grupo 3A — pruebas primero (T056–T058 `[P]` al escribirlas; T059 sin `[P]` hasta conocer sus archivos, F86-3)
@@ -820,7 +835,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión.
   - Terminado cuando: los dos completan cada tarea sin ayuda, por escrito.
 
-- [ ] T093 [US5] **Humana (cada fundador)**: **V7 · US-12, mediana < 10 s**: grabación de pantalla durante al menos 10 gastos habituales reales; tiempo del toque en Anotar al aviso «Guardado». Puede hacerse durante el paso 7
+- [ ] T093 [US5] **Humana (cada fundador)**: **V7 · US-12, mediana < 10 s**: grabación de pantalla durante al menos 10 gastos habituales reales; tiempo del toque en Anotar al aviso «Guardado». Puede hacerse durante el paso 7. **Enmienda (decisión 30):** se hace en el paso 6, antes de declarar
   - Cumple: FR-055 (002-T087); SC-007.
   - Quién: cada fundador. Depende de: T076.
   - Evidencia: dispositivo (tabla de tiempos, mediana por persona y el método escrito).
@@ -831,6 +846,25 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 ## Phase 7: Siete días de uso diario (paso 7)
 
 **Purpose**: Q10 (opción a) con D4 (opción a): **despliegues de producción congelados** durante el periodo.
+
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** Esta fase se
+> parte en dos hitos. Las tareas conservan su número y su texto; cambia cuándo se hacen:
+>
+> | Tarea | Hito | Cuándo |
+> | --- | --- | --- |
+> | T092 (Phase 6), sesión guiada de §4 | Aceptación técnica, según la 30.7 | Paso 6. Si los fundadores confirman la 30.7, la cubren la corrida del PR #104 y la evidencia nueva de C-1–C-7 |
+> | T093 (Phase 6), V7 · US-12 | Aceptación técnica | Paso 6; ya no «durante el paso 7» |
+> | T097 · V14, copia y restauración real | Aceptación técnica | Tras el paso 6, antes de declarar; depende de T092 en lugar de T095 |
+> | T098 · registros de Vercel | Aceptación técnica | Tras el paso 6, sobre la última semana; depende de T092 en lugar de T095 |
+> | T099 · tabla de idempotencia | Aceptación técnica | Tras el paso 6; depende de T092 en lugar de T095 |
+> | T101 · lista de MVP-2 | Aceptación técnica | Con lo conocido al declarar, incluidas S-1 a S-8 como pendientes de valoración (30.8). Los fallos del periodo se añaden cuando ocurra |
+> | T102 · excepción de Android | Aceptación técnica | Sin cambio |
+> | T094, T095, T096 · periodo de 7 días con D4 | **Validación por uso real** | Aplazada (30.6) |
+> | T100 · V13, valoración en cuatro ejes | **Validación por uso real** | Tras el periodo, aplazada (30.6) |
+>
+> Las tareas de la validación por uso real no bloquean T103–T109. Cuando se cumpla la
+> condición de la 30.6, se ejecutan y su resultado se registra en un PR documental
+> posterior y en el maestro.
 
 - [ ] T094 **Humana (gestor)**: abrir el periodo: registrar en `evidence.md` la **fecha de inicio**, el commit desplegado y la congelación de despliegues. Si el periodo se reinicia, registrar la fecha nueva y el motivo
   - Cumple: FR-080, FR-081; D4.
@@ -850,7 +884,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión.
   - Terminado cuando: cada fallo tiene destino escrito.
 
-- [ ] T097 [US6] **Humana (el fundador con gpg, con el gestor sin ver la contraseña)**: **V14 · copia y restauración real** al final del periodo: `scripts/backup.sh` en modo producción; `scripts/restore-plain.sh` en un PostgreSQL 17 limpio de su equipo (Git Bash con el PostgreSQL 17 de PGDG o EDB si usa Windows; se instala ese día, antes de descifrar nada); `check-invariants.sql`; el manifiesto de recuentos y huellas, **incluidas las seis tablas de P0-3**. Y escribir en la checklist la **cadencia**: copia semanal (día fijo que eligen los fundadores) y una antes de cada migración de producción; **pérdida máxima aceptada, 7 días**; dueño; recordatorio semanal en su calendario
+- [ ] T097 [US6] **Humana (el fundador con gpg, con el gestor sin ver la contraseña)**: **V14 · copia y restauración real** al final del periodo (**enmienda, decisión 30:** tras el paso 6, antes de declarar): `scripts/backup.sh` en modo producción; `scripts/restore-plain.sh` en un PostgreSQL 17 limpio de su equipo (Git Bash con el PostgreSQL 17 de PGDG o EDB si usa Windows; se instala ese día, antes de descifrar nada); `check-invariants.sql`; el manifiesto de recuentos y huellas, **incluidas las seis tablas de P0-3**. Y escribir en la checklist la **cadencia**: copia semanal (día fijo que eligen los fundadores) y una antes de cada migración de producción; **pérdida máxima aceptada, 7 días**; dueño; recordatorio semanal en su calendario
   - Cumple: FR-061, FR-062, FR-065 (regla escrita); SC-009; Q9.
   - Quién: el fundador con gpg y el gestor. Depende de: T095.
   - Evidencia: revisión (manifiesto y log de la restauración, sin datos).
@@ -868,7 +902,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Evidencia: revisión (recuento y tamaño).
   - Terminado cuando: la casilla de la checklist §8 está llena y su revisión, en la lista de MVP-2.
 
-- [ ] T100 [US7] **Humana (cada fundador, por separado y sin leer la del otro)**: **V13 · valoración**: una nota en cada eje (uso diario, legibilidad, rapidez y carácter visual), las tres preguntas de §6.7 (qué es claro, qué impresiona, qué estorba) y la decisión «apruebo» o «no apruebo»
+- [ ] T100 [US7] **Humana (cada fundador, por separado y sin leer la del otro)**: **V13 · valoración**: una nota en cada eje (uso diario, legibilidad, rapidez y carácter visual), las tres preguntas de §6.7 (qué es claro, qué impresiona, qué estorba) y la decisión «apruebo» o «no apruebo». **Enmienda (decisión 30):** es de la validación por uso real, aplazada (30.6)
   - Cumple: FR-081; SC-011.
   - Quién: cada fundador. Depende de: T095.
   - Evidencia: revisión (las dos valoraciones en `evidence.md`, por rol).
@@ -898,7 +932,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - **FR-011**, la tabla de cobertura final;
   - **FR-030**, la tabla S1–S5; **FR-034**, los criterios del handoff;
   - **FR-056**, la tabla de CWV: cada métrica (LCP, INP, CLS) con qué se midió, dónde y con qué método; las filas del comparador rotuladas **«laboratorio · por fotogramas»** con el motor y su versión; LCP con mediana y máximo; lo no medible con «no medible en p75 real: motivo» (dos usuarios, sin medición de campo; RUM en MVP-2). **Ninguna cifra rotulada «p75»**;
-  - las fechas del periodo de uso (D4), las dos valoraciones (FR-081) y la lista de MVP-2 (FR-083);
+  - las fechas del periodo de uso (D4), las dos valoraciones (FR-081) y la lista de MVP-2 (FR-083). **Enmienda (decisión 30):** las fechas del periodo y las valoraciones se registran cuando ocurra la validación por uso real (30.6), en un PR documental posterior; no bloquean este PR;
   - la tabla **SC-001 a SC-012**, cada uno con su run o su salida.
   - Cumple: FR-002, FR-003, FR-011, FR-030, FR-034, FR-056, FR-081, FR-083; SC-003, SC-012 y todos los SC.
   - Quién: agente del PR C, con las salidas que da el gestor. Depende de: T101, T102.
@@ -939,7 +973,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 
 ## Phase 9: Declaración de MVP-1 (paso 9, fuera de esta spec)
 
-- [ ] T109 **Humana (gestor; los fundadores aprueban)**: el **PR documental de declaración** actualiza el estado del maestro, de `AGENTS.md` y de `CLAUDE.md` («MVP-1 declarado»), **solo si** los dos aprueban, no queda ningún fallo crítico abierto y la tabla de FR-002 no tiene filas abiertas. Toca `AGENTS.md` y `CLAUDE.md`, así que **lanza CI a propósito** (`AGENTS.md` 15a)
+- [ ] T109 **Humana (gestor; los fundadores aprueban)**: el **PR documental de declaración** (la **aceptación técnica** de MVP-1, decisión 30.5; no espera a T094–T096 ni a T100) actualiza el estado del maestro, de `AGENTS.md` y de `CLAUDE.md` («MVP-1 declarado»), **solo si** los dos aprueban, no queda ningún fallo crítico abierto y la tabla de FR-002 no tiene filas abiertas. Toca `AGENTS.md` y `CLAUDE.md`, así que **lanza CI a propósito** (`AGENTS.md` 15a)
   - Cumple: FR-082.
   - Quién: gestor; los dos. Depende de: T108.
   - Evidencia: revisión (el merge de ese PR).
@@ -1034,7 +1068,7 @@ Task: "T035 Test del workflow en tests/ci-workflow.test.ts"
 | 4 · Candidato | Phase 4 | T071–T075 | 5 | Gestor |
 | 5 · Despliegue y sondas | Phase 5 | T076–T080 | 5 | La dueña; gestor; fundador con gpg |
 | 6 · Verificaciones en producción | Phase 6 | T081–T093 | 13 | Fundadores; gestor |
-| 7 · Siete días de uso | Phase 7 | T094–T102 | 9 | Fundadores; gestor |
+| 7 · Siete días de uso (partida por la decisión 30: ver Phase 7) | Phase 7 | T094–T102 | 9 | Fundadores; gestor |
 | 8 · PR C | Phase 8 | T103–T108 | 6 | Agente; fundadores |
 | 9 · Declaración | Phase 9 | T109 | 1 | Gestor; fundadores |
 | **Total** | | **T001–T109** | **109** | |

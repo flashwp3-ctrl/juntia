@@ -25,7 +25,10 @@
 > congelado y siete días sin desplegar (decisión 25.5). La decisión 28.17 solo
 > autoriza, durante el gate, **documentación**: spec, ADR propuestos y diseño.
 > **Nada de esta spec se implementa, se migra ni se despliega antes de declarar
-> MVP-1**, y tampoco antes de que Planes (spec 006) esté aceptada (28.18). Este
+> MVP-1** (su aceptación técnica, maestro, decisión 30.5), y tampoco antes de que
+> Planes (spec 006) esté aceptada (28.18). Los siete días de uso real ya no preceden a
+> la declaración: se aplazan (30.6), y la congelación solo tiene la excepción acotada a
+> C-1–C-7 (30.2). Este
 > PR solo añade documentos dentro de `specs/007-recurrentes-calendario/`.
 >
 > **Desviación de la plantilla, a propósito.** Como en la 003 a la 006, la
@@ -1043,7 +1046,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 ## Assumptions
 
-- MVP-1 está declarado y Planes (006) aceptada antes de implementar esta spec (28.18); la spec 005 y sus excepciones siguen vigentes.
+- MVP-1 está declarado y Planes (006) aceptada antes de implementar esta spec (28.18); la spec 005 y sus excepciones siguen vigentes. Declarado quiere decir aceptado técnicamente (maestro, decisión 30.5).
 - Durante el gate, esta spec solo avanza en documentación: spec, ADR propuestos y diseño (28.17). Se pausa durante el Plan y las Tasks de Planes y se reanuda al mergear el PR de Tasks de Planes (28.18).
 - La pareja es de exactamente dos (§15.5); el modelo se escribe para N.
 - El ingreso real ya existe, solo privado (16.3; §7.3); esta spec no lo cambia.

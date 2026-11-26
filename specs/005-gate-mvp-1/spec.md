@@ -29,6 +29,22 @@
 > encargo pide que todo lo no decidido llegue a los fundadores. Se marcaron
 > `[NECESITA DECISIÓN]` en lugar de `[NEEDS CLARIFICATION]`; hoy están resueltas.
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** Tras la
+> corrida completa delegada en un agente (`corrida-completa.md`, PR #104), los
+> fundadores separaron dos hitos:
+>
+> - **Aceptación técnica de MVP-1**, que es lo que esta spec llama **«declarar
+>   MVP-1»**. Incluye la corrección de C-1 a C-7 en un PR de código acotado, con
+>   regresiones y evidencia nueva (la única excepción a la congelación, 30.2), y todas
+>   las demás verificaciones de esta spec, sin rebajar ninguna.
+> - **Validación por uso real**: los 7 días consecutivos de Q10, con D4, la
+>   valoración de FR-081 y SC-011. Se conserva, pero **se aplaza** (30.6).
+>
+> Donde esta spec pide los 7 días, la valoración tras el periodo o la congelación de
+> D4 **antes de declarar MVP-1**, rige la decisión 30. La corrida delegada y FR-080 se
+> rigen por la 30.7, que es una propuesta pendiente de los fundadores. El informe del
+> PR #104 se conserva como evidencia histórica, con sus FAIL.
+
 ### Fuentes que aplica
 
 | Fuente | Qué aporta a P0-4 |
@@ -98,7 +114,7 @@ sus opciones como historia; los requisitos citan la opción elegida.
 - Q7 → **(a)**: CLS fuera de Chromium con un comparador por fotogramas en WebKit y Firefox; si no es fiable, vuelve a los fundadores con «solo WebKit».
 - Q8 → **(a)**: la eliminación de cuenta y los pendientes de la decisión 16 aplican al lanzamiento público; en MVP-1, un procedimiento manual de eliminación ensayado en `juntia-dev`. Enmienda el §15.6.1 y la decisión 16.
 - Q9 → **(a)**: copia semanal, más una antes de cada migración de producción, más una restauración real con el esquema de P0-3 antes de declarar MVP-1; pérdida máxima aceptada, 7 días.
-- Q10 → **(a)**: escenario de pareja de §4 en móvil y escritorio, más 7 días consecutivos de uso diario real y notas separadas en cuatro ejes.
+- Q10 → **(a)**: escenario de pareja de §4 en móvil y escritorio, más 7 días consecutivos de uso diario real y notas separadas en cuatro ejes. **Enmendada el 25 nov 2026 (maestro, decisión 30):** los 7 días y las notas en cuatro ejes pasan a la validación por uso real, aplazada (30.5 y 30.6); el escenario de §4 se rige por la 30.7.
 - Q11 → **(a)**: entran el residuo de F13 al 200 %, la pérdida del monto al cruzar 768 px y el marco de foco si incumple el handoff; «Descartar» y el cierre con View Transition van a MVP-2; «Tu disponible · aportaste» se aprueba en la revisión de S5.
 - Q12 → **(a)**: sin purga de la tabla de idempotencia en MVP-1; se mide su tamaño y se revisa en MVP-2.
 
@@ -441,6 +457,12 @@ Tras 7 días consecutivos de uso diario real (Q10, opción a), cada fundador reg
 valoración; si los dos aprueban y no hay fallos críticos abiertos, el PR documental
 de cierre declara MVP-1.
 
+> **Enmienda del 25 de noviembre de 2026 (decisión 30).** La declaración es la
+> aceptación técnica: los dos aprueban sin fallos críticos abiertos (FR-082) después de
+> las verificaciones de esta spec, sin esperar al periodo de uso. El escenario 1 se rige
+> por la 30.7. El escenario 2, el periodo y su valoración, es la validación por uso real,
+> aplazada (30.6). El escenario 3 vale para los dos hitos.
+
 **Why this priority**: §11: «Solo aquí se declara MVP-1 lanzado».
 
 **Independent Test**: las dos valoraciones en `evidence.md` y el estado del maestro actualizado por un PR documental fusionado.
@@ -619,6 +641,17 @@ Cada requisito dice su **evidencia**:
   - **Evidencia:** el merge de ese PR.
 - **FR-083**: Los fallos no críticos que salgan del uso diario van a una **lista de MVP-2** con dueño. No bloquean la declaración si los dos lo aceptan por escrito. **Evidencia:** la lista.
 
+> **Enmienda del 25 de noviembre de 2026 (decisión 30).**
+>
+> - **FR-080:** se rige por la 30.7. Hasta que los fundadores confirmen esa propuesta,
+>   sigue exigiendo la sesión guiada de los dos para la aceptación técnica.
+> - **FR-081:** pasa a la validación por uso real, aplazada (30.6), y no condiciona la
+>   declaración.
+> - **FR-082:** «los dos aprueban» es la aprobación de la aceptación técnica, con las
+>   demás condiciones intactas.
+> - **FR-083:** la lista de MVP-2 se entrega con la declaración con lo que haya. Los
+>   fallos no críticos del periodo de uso se añaden cuando ese periodo ocurra.
+
 #### Pruebas y CI (ADR-011, `docs/TESTING.md`)
 
 - **FR-090**: P0-4 **no añade specs E2E** (Q3, opción a); el total sigue en 5 de un tope de 4–6. Las pruebas nuevas van en dominio, componentes o integración (FR-012) o son arneses de laboratorio fuera del gate de PR (`tests/evidence/`).
@@ -667,7 +700,7 @@ P0-4 no crea datos de producto. Sus entidades son registros de evidencia:
 - **SC-008**: **Cero datos ajenos** en la exportación real de cada fundador y cero importes, notas o tokens en la telemetría, los errores y los registros revisados.
 - **SC-009**: La **restauración real** de una copia con el esquema de P0-3 pasa las invariantes y coincide con el manifiesto de recuentos y huellas.
 - **SC-010**: S1–S5 tienen su fila de revisión **aprobada por los dos fundadores** en iPhone y en 1440, con y sin movimiento reducido.
-- **SC-011**: Los dos fundadores **aprueban por separado** uso diario, legibilidad, rapidez y carácter visual tras el periodo de uso de Q10, sin fallos críticos abiertos.
+- **SC-011**: Los dos fundadores **aprueban por separado** uso diario, legibilidad, rapidez y carácter visual tras el periodo de uso de Q10, sin fallos críticos abiertos. **Enmienda del 25 nov 2026 (decisión 30):** se mide en la validación por uso real, aplazada (30.6), y no condiciona la declaración de MVP-1.
 - **SC-012**: La tabla de Core Web Vitals **no contiene ninguna cifra rotulada «p75»** que no venga de medición de campo.
 
 ## Assumptions
@@ -827,6 +860,10 @@ MVP-1 se declara con el escenario de pareja completado por los dos en móvil y
 escritorio, con metas, sin fugas ni incoherencias (FR-080), con S1–S5 aprobadas
 (SC-010), con la aprobación separada de los dos (FR-081, FR-082) y con la checklist de
 release y exportación firmada (FR-069).
+
+> **Enmienda del 25 de noviembre de 2026 (decisión 30).** La declaración es la
+> aceptación técnica: FR-080 según la 30.7, SC-010, FR-082 y FR-069. FR-081 pasa a la
+> validación por uso real, aplazada (30.6).
 
 ## Specs E2E que añade P0-4
 

@@ -19,6 +19,11 @@
 > **Contexto de fase.** MVP-1 está en su gate (P0-4, spec 005): alcance congelado
 > y siete días sin desplegar (decisión 25.5). **Nada de esta spec se implementa ni
 > se despliega antes de declarar MVP-1.** Este PR solo añade documentos.
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30):** declarar
+> MVP-1 es su **aceptación técnica** (30.5). Los siete días de uso real ya no la
+> preceden: son la validación por uso real, aplazada hasta que existan Planes y la
+> planificación financiera que los fundadores necesitan (30.6). La congelación del
+> gate solo tiene la excepción acotada a C-1–C-7 (30.2).
 >
 > **Desviación de la plantilla, a propósito.** Como en la 003, la 004 y la 005, la
 > plantilla de Spec Kit limita a tres los `[NEEDS CLARIFICATION]`; aquí hubo veintitrés
@@ -666,7 +671,7 @@ Sara sube una foto de la playa a «Cartagena».
 
 ## Assumptions
 
-- MVP-1 está declarado antes de empezar a implementar; la spec 005 y sus excepciones siguen vigentes.
+- MVP-1 está declarado antes de empezar a implementar; la spec 005 y sus excepciones siguen vigentes. Declarado quiere decir aceptado técnicamente (maestro, decisión 30.5); la validación por uso real de MVP-1 no bloquea esta spec y se hace después (30.6).
 - La pareja es de exactamente dos (§15.5); el modelo se escribe para N como el resto del dominio.
 - Supabase sigue en plan Free (16.10) cuando se implemente; los límites de Storage se verifican entonces (ADR-014 `[V]`).
 - El repositorio es público (25.1): este documento no contiene datos reales ni secretos; los ejemplos son hipotéticos.
@@ -679,4 +684,4 @@ Sara sube una foto de la playa a «Cartagena».
 3. ~~Que la revisión del PR #94 termine sin hallazgos abiertos.~~ **Hecho:** cuatro rondas, F94-1 a F94-10 cerrados; mergeado el 25 de noviembre de 2026.
 4. ~~Que los fundadores confirmen la lectura de «le corresponde» de Q24.~~ **Hecho:** confirmada el 25 de noviembre de 2026, junto con el matiz de Balance.
 5. ~~Que los fundadores aprueben los comps de Claude Design.~~ **Hecho:** aprobados el 25 de noviembre de 2026 con los tres ajustes obligatorios hechos y la decisión sobre el total compartido en Yo tomada (decisión 27.5; `design-comps.md`). Las `[V]` de diseño que quedan (scrim con la foto clara y licencia de las fotos de muestra) pasan a la implementación.
-6. Que MVP-1 esté declarado (spec 005). **Es lo único que falta.**
+6. Que MVP-1 esté declarado (spec 005). **Es lo único que falta.** Desde la decisión 30 del maestro, «declarado» es la aceptación técnica de MVP-1 (30.5), que no espera a los siete días de uso real (30.6).
