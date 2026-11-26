@@ -67,7 +67,30 @@ formas**, y nada más:
 - Los importes son `bigint` en unidades menores y cruzan la frontera como texto
   (ADR-013 §4).
 
-**Combinaciones permitidas, por tipo de regla** (`check` en la versión):
+**Contrato de integridad** (F106-6). La base de datos rechaza cualquier
+combinación incompatible, venga por donde venga la escritura (ADR-013 §2.4). Este
+ADR fija **qué** se exige; el mecanismo físico lo fija el Plan, con ADR-013 y
+ADR-016, sin añadir columnas duplicadas:
+
+1. **Columnas exclusivas por `amount_kind`**, exigiendo de forma explícita las que
+   no pueden ser nulas, porque un `check` que se evalúa a `NULL` no rechaza la
+   fila:
+   - `fixed`: `amount_minor` no nulo; `amount_min_minor` y `amount_max_minor`
+     nulos;
+   - `range`: `amount_min_minor` y `amount_max_minor` no nulos, con mínimo <
+     máximo; `amount_minor` nulo;
+   - `unknown`: las tres nulas.
+2. **Compatibilidad entre el tipo de la regla y la versión.** El tipo (`kind`)
+   vive en `recurring_rules` y la versión en `recurring_rule_versions`. Un `check`
+   no puede leer otra tabla, así que el Plan elige el mecanismo (por ejemplo, un
+   trigger de la versión, como el de compatibilidad de vínculos de ADR-016 §11).
+3. **La certeza y el tipo de ingreso** son obligatorios en las versiones de un
+   ingreso y nulos en las de cualquier otro tipo.
+4. **La condición** es obligatoria solo en un ingreso condicional y nula en
+   cualquier otra versión.
+5. Las combinaciones permitidas son las de la tabla siguiente, y ninguna otra.
+
+**Combinaciones permitidas, por tipo de regla:**
 
 | Tipo de regla | Certeza | `amount_kind` permitido |
 | --- | --- | --- |
@@ -107,6 +130,11 @@ formas**, y nada más:
 Es la respuesta a la pregunta del análisis («¿qué cifras pueden mezclar lo
 previsto y lo real?»): **ninguna**.
 
+**Alcance de esta prohibición** (F106-7). Rige dentro del alcance de la spec 007.
+No sustituye lo que decidan, con su propia aprobación, specs posteriores como
+Flujo y liquidez (28.3). La protección de §5.1 y de DEC-G04 sí es permanente:
+ninguna de esas métricas incluye nunca nada previsto.
+
 - **Ninguna métrica de §5.1, de DEC-G04, de presupuestos (ADR-004), de Balance,
   de Análisis ni de Metas** incluye nada previsto. Lo garantiza ADR-016 §1 y se
   verifica como allí (`[V]` 1).
@@ -125,7 +153,19 @@ previsto y lo real?»): **ninguna**.
 
 ### 4. El total de gastos previstos, si Q15 se cierra en (b)
 
-**Una sola cifra por contexto y mes, calculada al leer, nunca guardada.**
+**Una sola cifra por contexto y mes, calculada al leer, nunca guardada.** Todo
+§4 a §6, y P1 a P3, están **condicionados a que los comps cierren Q15 en (b)**.
+
+**El total no calcula nada que ADR-016 ya resuelva** (F106-1, F106-2). Agrega la
+**proyección autorizada de instancias** de ADR-016: la misma lectura que usa el
+calendario, que ya entrega cada instancia con su **estado**, su **fecha prevista**
+y su **versión resueltos** por ADR-016 (§4, §5 y P7). El total **no selecciona
+ninguna versión ni ninguna fecha**: toma las de cada instancia tal como vienen. Así,
+una instancia con valores fijados desde su primer hecho usa esos valores aunque ya
+no tenga hechos vigentes (P7). Ejemplo: se omite y se deshace la del 10 de febrero
+de $100.000, y después la regla pasa al día 20 por $150.000. El total toma
+$100.000 el 10 de febrero, igual que el calendario. Una regla de una sola fecha
+con valores fijados cuenta en el mes de su fecha fijada.
 
 **Qué entra** (cada criterio, explícito en la consulta):
 
@@ -133,9 +173,20 @@ previsto y lo real?»): **ninguna**.
 | --- | --- |
 | Tipo | Solo reglas de **gasto**. Nunca ingresos ni aportes programados (condición 2) |
 | Contexto | En **Yo**, solo las reglas privadas de quien consulta (`owner_user_id = auth.uid()`). En **Nosotros**, solo las reglas compartidas de la pareja (`group_id` de la pareja activa). Nunca las dos juntas: no hay «total del hogar» (28.11). Ver P2 |
-| Mes | Las instancias cuya **fecha prevista** cae en el mes, en `America/Bogota`. Para una instancia con hechos, la fecha **fijada** (ADR-016 §2, P7) |
-| Estado | Según P1. Recomendación: solo las **sin resolver**: previstas y pendientes, incluidas las pendientes por D1 |
-| Excluidas siempre | Las confirmadas (ya son reales), las omitidas, las canceladas, las posiciones consumidas por una pausa y las que no pertenecen al calendario (ADR-016 §5, pasos 1, 2, 5 y 6) |
+| Mes | Las instancias cuya **fecha prevista resuelta** (la que entrega la proyección) cae en el mes, en `America/Bogota` |
+| Estado | Según P1 (abajo) |
+| Excluidas siempre | Las omitidas, las canceladas, las posiciones consumidas por una pausa y las que no pertenecen al calendario (ADR-016 §5, pasos 1, 2, 5 y 6) |
+
+**P1 y lo que cambia con cada opción** (F106-3):
+
+| | P1 (a), recomendada: por confirmar | P1 (b): todo el mes previsto |
+| --- | --- | --- |
+| Estados que entran | Previstas y pendientes, incluidas las pendientes por D1 y las que vuelven a pendiente por la excepción contextual de P6 (ADR-016 §9) | Además, las **confirmadas** |
+| Importe de una confirmada | No entra | Su **importe previsto histórico**, el de su versión fijada. **Nunca lo pagado**: el movimiento real no se lee |
+| Qué significa la cifra | Lo que queda por confirmar en el mes | Lo que estaba previsto para el mes, se haya confirmado o no |
+| Rótulo | Debe decir «por confirmar» (o el texto de los comps con ese sentido) | Debe decir que es lo previsto del mes **y que no es lo pagado** |
+| Ejemplo: Arriendo $800.000 confirmado, Internet $100.000 pendiente, Mercado $200.000 previsto | **$300.000** | **$1.100.000** |
+| Ausencia (`included_count = 0`) | Nada por confirmar ese mes, o nada registrado | Nada previsto ese mes, o nada registrado |
 
 **Qué devuelve.** No un número, sino una estructura que conserva lo que se sabe y
 lo que no:
@@ -143,68 +194,99 @@ lo que no:
 | Campo | Contenido |
 | --- | --- |
 | `included_count` | Cuántas instancias entran |
-| `fixed_minor` | Suma de los importes fijos |
-| `range_count`, `range_min_minor`, `range_max_minor` | Cuántas son estimados y la suma de sus mínimos y de sus máximos |
+| `fixed_count`, `fixed_minor` | Cuántas tienen importe fijo y su suma (F) |
+| `range_count`, `range_min_minor`, `range_max_minor` | Cuántas son estimados, y la suma de sus mínimos (Σmín) y de sus máximos (Σmáx) |
 | `unknown_count` | Cuántas no tienen importe. Hoy siempre 0 en gastos (§1); se devuelve igual |
-
-Las sumas son exactas, en `bigint` y sin redondeo, y salen como texto.
 
 **Reglas de presentación que no dependen de los comps:**
 
 1. **Ausencia no es cero** (condición 8). Si `included_count = 0`, no se muestra
-   ninguna cifra, sino una frase: no hay gastos previstos por confirmar ese mes, o
-   no hay recurrencias registradas en ese contexto. Nunca «$0».
-2. **Un estimado nunca se presenta como exacto.** Si hay rangos, la cifra es un
-   rango, o el importe fijo con el estimado aparte. Nunca un único número que
-   sume rangos.
+   ninguna cifra, sino una frase **neutra** («No hay gastos previstos por
+   confirmar este mes», o lo equivalente con P1 (b)). `included_count = 0` **no
+   prueba** que no haya recurrencias: decir «no hay recurrencias registradas» solo
+   está permitido si eso se comprobó aparte, con la misma autorización (F106-5 c).
+   Nunca «$0».
+2. **Un estimado nunca se presenta como exacto.** Si hay rangos, la cifra agregada
+   es un rango que **suma los fijos en los dos extremos**: mínimo = F + Σmín y
+   máximo = F + Σmáx (F106-5 b). O se muestran por separado los fijos y el
+   estimado. Nunca un único número que sume rangos.
 3. **Un desconocido nunca suma cero** (condición 4). Si `unknown_count > 0`, la
    cifra dice que es incompleta y cuántas faltan. Hoy no ocurre (§1).
 4. **Si solo se muestran los fijos, se dice** (condición 5), con cuántos estimados
-   quedan fuera.
+   quedan fuera. **Si no hay ningún fijo** (`fixed_count = 0`) y se muestran solo
+   los fijos, no se muestra «$0»: se dice que no hay importes fijos y cuántos
+   estimados se excluyeron (F106-5 a).
 5. **El rótulo dice exactamente qué incluye** (FR-045): que son gastos, de qué
-   contexto, de qué mes y en qué estados (por ejemplo, «por confirmar»). El texto
-   lo fijan los comps.
+   contexto, de qué mes y en qué estados, según P1. El texto lo fijan los comps.
 6. **Nunca junto a una cifra real** en una misma operación ni en una comparación
    (§3).
 
-**Lo que deciden los comps** (presentación, no arquitectura): si la cifra se
-enseña como un solo rango o como fijo y estimado por separado, el texto exacto del
-rótulo, y si se ve o no (Q15 (a) o (b)). La estructura de arriba admite las dos
-formas sin cambiar nada.
+**Lo que deciden los comps** (presentación, no arquitectura): si la cifra se ve o
+no (Q15 (a) o (b)); si se enseña como un solo rango o como fijos y estimado por
+separado; y el texto exacto del rótulo y de la ausencia. La estructura de arriba
+admite las dos formas sin cambiar nada.
 
 **Dónde se ve** (P3): recomendación, solo en la ruta de Recurrentes y en su
 calendario, junto a la lista de las instancias que suma.
 
-### 5. De dónde sale la cifra
+### 5. De dónde sale la cifra: importe y estado, cada uno por su lado (F106-1)
 
-- Es una **lectura** sobre las tablas `recurring_*` de ADR-016 y su función pura de
-  calendario. Va en una función de `public`, `security invoker` y con cuerpo SQL
+El total depende de dos cosas que tienen fuentes distintas:
+
+- **La procedencia del importe:** sale **solo de las versiones de las reglas
+  recurrentes** (`recurring_rule_versions`), a través de la versión resuelta de cada
+  instancia. Ningún importe del total viene de un movimiento real.
+- **La resolución del estado:** es la **proyección autorizada de instancias de
+  ADR-016**. Esa proyección depende, **indirectamente**, del movimiento efectivo:
+  para saber si una instancia está confirmada o es una pendiente por D1, ADR-016
+  §5 y §8 consultan si su movimiento efectivo está activo, porque una anulación
+  hecha desde Actividad no escribe nada en `recurring_*`. El total no repite esa
+  consulta: la recibe resuelta.
+
+**Prohibido**, expresamente:
+
+1. sumar importes de movimientos reales en el total;
+2. alimentar cualquier métrica real (§5.1, DEC-G04, presupuestos, Balance,
+   Análisis, Metas) con lo previsto;
+3. crear una **segunda función de estado**: el total usa la de ADR-016, nunca una
+   propia;
+4. tocar las escrituras de MVP-1 para mantener el total: el total no se guarda y
+   no necesita que nadie lo actualice.
+
+**La dependencia va en una sola dirección.** Recurrentes consulta el estado
+autorizado a través de ADR-016. **Las métricas reales nunca consultan
+Recurrentes.**
+
+- La lectura vive en una función de `public`, `security invoker` y con cuerpo SQL
   estándar, como el resto de lecturas de ADR-016 §11, sin `usage` sobre
   `juntia_data`.
-- Usa **la misma función de estado** que el calendario (ADR-016 §5): lo que el
-  total suma es exactamente lo que la lista muestra como prevista o pendiente en
-  ese mes y contexto. No hay una segunda definición de «qué está previsto».
-- Respeta la **regla de los hechos** y **P7**: una instancia con hechos usa su fecha
-  y su versión fijadas.
-- **No lee** `transactions`, `transaction_allocations`, `goal_ledger_entries`,
-  `budgets` ni ninguna vista de métricas, y **ninguna vista ni función de
-  métricas la usa** (`[V]` 1).
 - El dominio en TypeScript tiene el mismo cálculo, puro, para las pruebas de
   FR-090, contra la misma tabla de casos (`[V]` 4).
+- **Para el Plan** (no es una decisión nueva): la suma de `bigint` en Postgres
+  devuelve `numeric`. El acumulador se queda en `numeric`, sin convertirlo a
+  `bigint`. `SUM` sin filas devuelve `NULL`, y la función lo devuelve como
+  `included_count = 0` con las sumas a cero solo **dentro** de la estructura,
+  nunca como cifra visible (§4, regla 1). Se comprueba el desbordamiento. Todo se
+  transporta como texto (ADR-013 §4).
 
 ### 6. Privacidad (condición 8; F101-2; 28.11)
 
 - **Cada cifra se calcula solo con lo que su contexto autoriza**, con los filtros
-  explícitos de §4. La RLS es una defensa adicional, no el filtro (como ADR-015,
-  F94-3, y ADR-016 §7.6).
+  explícitos de §4 sobre la proyección autorizada de ADR-016. La RLS es una
+  defensa adicional, no el filtro (como ADR-015, F94-3, y ADR-016 §7.6).
 - **No hay ninguna cifra que incluya recurrencias privadas de las dos personas**,
   ni la privada de una con la compartida. Así no se puede deducir nada por
   diferencia: Beto puede ver su total de Yo y el de Nosotros, y ninguno de los dos
-  contiene nada de Ana privado. Por eso tampoco se puede restar uno de otro.
-- **Los recuentos** (`included_count`, `range_count`, `unknown_count`) siguen el
-  mismo filtro que las sumas: nunca cuentan nada que quien consulta no pueda ver.
+  contiene nada de Ana privado.
+- **Los recuentos** siguen el mismo filtro que las sumas: nunca cuentan nada que
+  quien consulta no pueda ver.
+- **Resolver el estado de una instancia compartida nunca requiere leer la
+  programación privada de Ana.** El movimiento efectivo de un vínculo a un gasto
+  compartido es el propio movimiento vinculado, sin cadena (ADR-016 §8). Por eso,
+  en la cadena de P6, el total de Nosotros es el mismo exista o no una recurrencia
+  privada de Ana vinculada originalmente al gasto.
 - **Los errores, los tiempos y los metadatos** no dependen de las reglas privadas
-  ajenas: la función no las lee.
+  ajenas: la lectura no las ve.
 - **La ausencia** se dice igual en Yo y en Nosotros (§4, regla 1), y nunca
   distingue entre «la otra persona no tiene nada» y «no te lo podemos mostrar».
 - Los aportes programados, que siempre son privados (Q12), no entran nunca.
@@ -225,30 +307,31 @@ calendario, junto a la lista de las instancias que suma.
 ## Alternativas consideradas
 
 1. **Guardar el total por mes.** Se desactualizaría con cada edición, pausa,
-   confirmación u omisión, y duplicaría la función de estado de ADR-016. Se calcula
-   al leer.
-2. **Un único número con el punto medio de los rangos.** Parece exacto y no lo es:
+   confirmación, omisión o anulación, y obligaría a tocar las escrituras de MVP-1
+   para mantenerlo. Se calcula al leer.
+2. **Una función de estado propia del total.** Duplicaría ADR-016 §5 y podría
+   divergir del calendario, sobre todo en D1, P6 y P7. El total consume la
+   proyección de ADR-016.
+3. **Un único número con el punto medio de los rangos.** Parece exacto y no lo es:
    contradice FR-022 y la condición 4 en su espíritu.
-3. **Tratar un desconocido como cero** o excluirlo en silencio. Contradice la
+4. **Tratar un desconocido como cero** o excluirlo en silencio. Contradice la
    condición 4.
-4. **Estimado de un solo valor.** La spec define «estimado con rango». Añadirlo
+5. **Estimado de un solo valor.** La spec define «estimado con rango». Añadirlo
    obligaría a explicar en el total qué parte es exacta.
-5. **Un total de Yo que incluya la parte propia de los gastos compartidos.** Mezcla
-   contextos, abre deducciones por diferencia y se parece a un «total del hogar».
-   Es la opción (b) de P2, que no se recomienda.
-6. **Incluir las confirmadas con su importe previsto.** Pondría en la misma cifra
-   lo ya pagado y lo que falta, y invitaría a leer «previsto frente a real». Es la
-   opción (b) de P1, que no se recomienda.
+6. **Una cifra personal combinada en Yo**: lo privado más la parte propia de los
+   gastos compartidos, sumado en un solo número (F106-4). Mezcla contextos, se
+   parece a un «total del hogar» (28.11) y exigiría una regla de reparto para lo
+   previsto que la spec no tiene. Es distinta de P2 (b), que enseña dos cifras
+   separadas y nunca sumadas.
 
 ## Consecuencias
 
 - §1 y §2 se aplican tanto si Q15 se cierra en (a) como en (b): son restricciones
-  de las versiones de ADR-016 (los `check` de §1) y reglas de presentación de cada
-  instancia.
+  de las versiones de ADR-016 y reglas de presentación de cada instancia.
 - §4 a §6 se construyen **solo si los comps aprueban (b)**. Con (a), no hay función
   de total ni nada que la consuma.
-- Ninguna tabla nueva y ningún cambio a ADR-016, ADR-004, ADR-010 ni ADR-013. Las
-  restricciones de §1 completan las que ADR-016 §11 ya prevé para
+- Ninguna tabla nueva y ningún cambio a ADR-016, ADR-004, ADR-010 ni ADR-013. El
+  contrato de §1 completa las restricciones que ADR-016 §11 ya prevé para
   `recurring_rule_versions`.
 - **Q15 no se cierra aquí.** Cuando los comps la cierren, la spec y la 29.4 se
   reconcilian en un PR documental aparte, como ADR-016.
@@ -256,45 +339,70 @@ calendario, junto a la lista de las instancias que suma.
 
 ## Verificación pendiente [V]
 
-1. **Lo previsto no toca lo real**, con los tres métodos de ADR-016 `[V]` P1
-   (`pg_depend`, `pg_proc.prosrc` y SC-001), incluida la función de total: ninguna
-   vista ni función de métricas depende de ella, y ella no lee ninguna tabla ni
-   vista de dinero real.
+1. **Dependencia en una sola dirección** (§5), con los tres métodos de ADR-016
+   `[V]` P1 (`pg_depend`, `pg_proc.prosrc` y SC-001):
+   - ninguna vista ni función de métricas reales depende de la función de total
+     ni de ninguna lectura de `recurring_*`;
+   - la función de total no suma ningún importe de `transactions` ni del ledger, y
+     no define su propio estado: lo toma de la proyección de ADR-016;
+   - SC-001 con y sin recurrencias, con instancias en todos los estados.
 2. **Privacidad del total** (pgTAP con tres cuentas, como FR-092 y SC-003):
    - el total y los recuentos de Yo de Beto, y los de Nosotros, son idénticos con
      y sin una recurrencia privada de Ana;
-   - una tercera cuenta no obtiene nada;
-   - ningún error ni metadato cambia.
-3. **Ausencia no es cero:** sin reglas, o con todas las instancias del mes
-   resueltas, la función devuelve `included_count = 0`, y la interfaz no muestra
-   ninguna cifra.
-4. **Cálculo gemelo** (dominio TS y SQL, la misma tabla de casos):
-   - fijos y rangos mezclados;
-   - una pendiente por D1 y una omisión deshecha con valores fijados (P7);
-   - una posición consumida por una pausa;
-   - una posición fuera del calendario;
+   - **la ausencia total** de gastos visibles para Beto (sin recurrencias propias
+     ni compartidas) da el mismo resultado con y sin recurrencias privadas de Ana;
+   - **la cadena de P6**: el total de Nosotros es idéntico con y sin una
+     recurrencia privada de Ana vinculada originalmente al gasto que después se
+     movió a Pareja, en cada paso de la cadena (ADR-016 §9);
+   - una tercera cuenta no obtiene nada, y ningún error ni metadato cambia.
+3. **Ausencia y presentación** (§4, reglas 1 a 4): con `included_count = 0`, la
+   función devuelve la estructura vacía y la interfaz no muestra ninguna cifra ni
+   afirma que no haya recurrencias si no se comprobó; con solo estimados y «solo
+   fijos», no aparece «$0».
+4. **Cálculo gemelo** (dominio TS y SQL, la misma tabla de casos), para P1 (a) y,
+   si se elige, para P1 (b):
+   - fijos y rangos mezclados, con el rango agregado F + Σmín a F + Σmáx;
+   - todos estimados (`fixed_count = 0`);
+   - una pendiente por D1;
+   - **P7**: omitida y deshecha del 10 de febrero ($100.000) y regla editada
+     después al día 20 ($150.000): cuenta $100.000 el 10 de febrero; y una regla de
+     una sola fecha con valores fijados, en el mes de su fecha fijada;
+   - **P6**: la instancia compartida que vuelve a pendiente tras el Deshacer;
+   - una posición consumida por una pausa y una fuera del calendario;
    - los límites de mes en `America/Bogota`;
-   - una confirmada, una omitida y una cancelada, que no entran.
-5. **Restricciones de §1:** se rechaza un gasto `unknown`, un ingreso fijo con
-   rango, un condicional sin condición, una condición en una regla no
-   condicional, un rango con mínimo ≥ máximo y cualquier importe ≤ 0 o que no sea
-   de pesos enteros.
-6. **Importes como texto** de ida y vuelta, también las sumas (ADR-013 §4), con
-   valores cerca del tope.
+   - omitidas y canceladas, que no entran nunca; confirmadas, que no entran con
+     (a) y entran con su importe previsto histórico con (b) (el ejemplo de $300.000
+     y $1.100.000).
+5. **Contrato de §1:** se rechazan, también por SQL directo:
+   - un gasto `unknown`;
+   - un ingreso fijo con rango;
+   - un condicional sin condición, y una condición en una versión no condicional;
+   - certeza o tipo de ingreso en una versión que no es de ingreso, o su ausencia
+     en una de ingreso;
+   - las columnas de importe que no corresponden a su `amount_kind`, y la falta de
+     las que sí;
+   - un rango con mínimo ≥ máximo;
+   - cualquier importe ≤ 0 o que no sea de pesos enteros;
+   - una versión incompatible con el tipo de su regla.
+6. **Importes como texto** de ida y vuelta, también las sumas, con valores cerca
+   del tope y el acumulador `numeric` (ADR-013 §4).
 7. **Copy:** ningún rótulo del total ni de un importe previsto usa las palabras
    prohibidas de BRAND §4 y GLOSSARY §9, ni las de DEC-R17 y DEC-G04.
 8. **Rendimiento:** el total del mes con el dataset del Plan, dentro de §15.7.
 
 ## Cuestiones para los fundadores `[P]`
 
+Las tres están **condicionadas a que los comps cierren Q15 en (b)**. Con (a), no
+aplican.
+
 | # | Cuestión | Opciones | Recomendación | Dónde |
 | --- | --- | --- | --- | --- |
-| P1 | Qué estados entran en el total | (a) solo las **sin resolver** del mes (previstas y pendientes, incluidas las pendientes por D1): es «lo que queda por confirmar»; (b) todas las del mes salvo las omitidas y las canceladas, con su importe previsto, también las ya confirmadas | (a): no pone en la misma cifra lo ya pagado y lo que falta, y no invita a «previsto frente a real» | §4 |
-| P2 | Qué contiene el total de Yo | (a) solo las recurrencias privadas de quien consulta; lo compartido, solo en Nosotros; (b) Yo enseña además, como cifra aparte y nunca sumada, el total de lo compartido | (a): un contexto, una cifra, como Actividad. Lo compartido ya está en Nosotros | §4; §6 |
-| P3 | Dónde se ve el total | (a) solo en la ruta de Recurrentes y su calendario, junto a la lista que suma; (b) también en el módulo de pendientes de Inicio (Q16), sin ninguna cifra real al lado | (a): lejos de las métricas reales de Inicio, cumple la condición 1 sin depender del diseño | §4 |
+| P1 | Qué estados entran en el total | (a) solo las **sin resolver** del mes (previstas y pendientes, incluidas las de D1 y las de la excepción de P6): «lo que queda por confirmar»; (b) además las confirmadas, con su **importe previsto histórico**, nunca con lo pagado, y con otro rótulo | (a): no pone en la misma cifra lo previsto ya cumplido y lo que falta, y no invita a leer «previsto frente a real» | §4 |
+| P2 | Qué contiene el total de Yo | (a) solo las recurrencias privadas de quien consulta, y lo compartido solo en Nosotros; (b) Yo enseña dos cifras separadas y nunca sumadas: la privada y la compartida de la pareja | (a), por simplicidad y coherencia de contexto: un contexto, una cifra, como Actividad. (b) no revela nada que Nosotros no muestre ya | §4 |
+| P3 | Dónde se ve el total | (a) solo en la ruta de Recurrentes y su calendario, junto a la lista que suma; (b) también en el módulo de pendientes de Inicio (Q16), sin ninguna cifra real al lado. Con (b), el total del mes no se puede confundir con el importe de las pendientes que muestra ese módulo | (a): lejos de las métricas reales de Inicio, cumple la condición 1 sin depender del diseño | §4 |
 
 **Para los comps** (presentación, no `[P]`): si se ve el total (Q15 (a) o (b));
-si se muestra como un rango o como fijo y estimado por separado; el texto del
+si se muestra como un rango o como fijos y estimado por separado; el texto del
 rótulo; y el texto de «importe desconocido» y de la ausencia.
 
 ## Referencias
