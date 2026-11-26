@@ -1,6 +1,6 @@
 # ADR-016 — Recurrencias e instancias previstas: modelo de dominio y datos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 3 tras la revisión F103 del PR #103). Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 4 tras la revisión F103 del PR #103). Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
 
 En este archivo `[P]` es una **propuesta** que necesita decisión de los
 fundadores y `[V]` una **verificación pendiente** (maestro §15.9). Los nombres
@@ -114,20 +114,24 @@ cálculo no puede reproducir. Hay tres:
 | **Cancelación** | La regla se finalizó a mano o se eliminó con historia (Q18, D6) | `cancelled_at` de la instancia |
 | **Vínculo** | La instancia se confirmó o se vinculó, aunque después su movimiento se anule (D1) | Una fila en `recurring_occurrence_links` |
 
-**Regla de los hechos.** El comportamiento de una instancia —su estado, su fecha,
-su versión, si una pausa la consume, si una edición la cambia— depende **solo** de
-sus hechos vigentes, **nunca de que exista o no una fila física**. La fila de
-`recurring_occurrences` es solo el contenedor de los hechos. Una fila sin ningún
-hecho vigente (por ejemplo, tras deshacer una omisión) se comporta exactamente
-igual que una instancia sin fila: dos recurrencias iguales se comportan igual
-aunque su historial de filas sea distinto. Así desaparecen las excepciones que
-dependían de la fila (F103-4, F103-10).
+**Regla de los hechos.** Lo que se decide de una instancia se separa en dos capas,
+cada una con una sola fuente:
 
-Mientras una instancia tiene un hecho vigente, su **fecha prevista y su versión
-quedan fijadas**: las que tenía cuando se registró el primer hecho vigente. Sin
-hechos, se calculan (§3 y §4). Un vínculo nunca deja de ser un hecho: una
-instancia que se confirmó una vez queda fijada para siempre, que es lo que pide D1
-(«conserva su fecha prevista y su versión»).
+1. **El estado** —omitida, cancelada, confirmada, pendiente, prevista o consumida
+   por una pausa— depende **solo de sus hechos vigentes** (§5). Una instancia sin
+   ningún hecho vigente, tenga fila o no, es prevista, pendiente o consumida según
+   su fecha y las pausas.
+2. **La fecha prevista y la versión** se **fijan al registrar el primer hecho** y,
+   con P7 (a), **no vuelven a cambiar nunca**, aunque ese hecho se deshaga (§6.4).
+   Sin ningún hecho registrado nunca, se calculan por la posición (§3 y §4).
+
+La fila de `recurring_occurrences` es el contenedor de las dos cosas: los hechos
+y, desde el primero, los valores fijados. Con P7 (a), la única diferencia de
+comportamiento entre dos recurrencias iguales es la que la persona causó al omitir:
+la ocurrencia omitida y deshecha conserva la fecha y la versión que tenía. Ninguna
+otra regla depende de que exista la fila (F103-4). Un vínculo nunca deja de ser un
+hecho: una instancia que se confirmó una vez queda fijada para siempre, que es lo
+que pide D1 («conserva su fecha prevista y su versión»).
 
 Por qué no (a), materializar un horizonte:
 
@@ -154,7 +158,7 @@ calcula y la función vuelve a comprobar.
 
 ### 3. Calendario, posiciones e identidad estable
 
-#### 3.1 Identidad y periodos
+#### 3.1 Identidad, origen y periodos
 
 La identidad de una instancia es **`(rule_id, position)`**: el número de la
 ocurrencia en el calendario de la regla, 1, 2, 3… La posición:
@@ -164,21 +168,30 @@ ocurrencia en el calendario de la regla, 1, 2, 3… La posición:
   renumera nada;
 - **nunca se reutiliza ni se renumera**.
 
-**Cada posición k corresponde a un solo periodo k** del calendario, y su fecha cae
-siempre dentro de él:
+**El origen es fijo; el día es editable** (F103-22). Cada regla tiene un **periodo
+de origen**, `origin_period_start`, que se fija al crearla y es inmutable. La
+rejilla de periodos sale del origen, de la unidad y del intervalo, y nunca de los
+días de una versión. Por eso una edición del día nunca vuelve a seleccionar el
+primer periodo.
 
-| `unit` | Periodo k |
-| --- | --- |
-| `month`, intervalo i | Los i meses que empiezan en el mes `anchor + (k−1)·i`; la fecha está en el primero |
-| `semimonth` | La mitad del mes (del 1 al 15, o del 16 al último) que le toca |
-| `week`, intervalo i | Las i semanas (de lunes a domingo) que empiezan en la semana de `anchor + (k−1)·i` semanas; la fecha está en la primera |
-| `day`, intervalo i | Los i días que empiezan en `anchor + (k−1)·i` días; la fecha es el primero |
-| `once` | Un único periodo, su fecha |
+| `unit` | Origen fijo | Periodo k | Lo editable (§3.4) |
+| --- | --- | --- | --- |
+| `month`, intervalo i | El mes inicial | Los i meses que empiezan en `origen + (k−1)·i` meses; la fecha está en el primero | `ref_day` |
+| `semimonth` | La mitad inicial (del 1 al 15, o del 16 al último) | La k-ésima mitad desde la inicial | Los dos días, dentro de P1 |
+| `week`, intervalo i | La semana inicial (de lunes a domingo) | Las i semanas que empiezan en `origen + (k−1)·i` semanas; la fecha está en la primera | El día de la semana |
+| `day`, intervalo i | El día inicial | Los i días que empiezan en `origen + (k−1)·i` días; la fecha es el primero | Nada del calendario |
+| `once` | — | Un único periodo, su fecha | **Excepción:** la fecha, solo sin hechos y > hoy |
 
-Como los periodos no se solapan y van en orden, **el orden por posición es el
-orden cronológico**, y el periodo que cubre una posición se sabe sin ningún otro
-cálculo. Lo único que una edición puede mover es el día **dentro del periodo**
-(§3.4), así que esta correspondencia nunca se rompe.
+**Al crear la regla**, el origen es el periodo de la **primera fecha ≥ la fecha
+inicial** que la persona elige, con los días elegidos. Ejemplo: una quincenal con
+los días 10 y 20 que empieza el 20 de enero tiene su origen en la segunda mitad de
+enero (posición 1: el 20 de enero). Si antes del 20 se cambia el 20 por el 18, la
+posición 1 pasa al **18 de enero**, en el mismo periodo, y no salta al 10 de
+febrero. Si el 18 ya hubiera pasado, rige la regla del periodo en curso (§3.4).
+
+Como los periodos no se solapan y van en orden, y toda fecha cae dentro de su
+periodo, **el orden por posición es el orden cronológico**, y el periodo que cubre
+una posición se sabe sin ningún otro cálculo.
 
 `recurring_occurrences` tiene `unique (rule_id, position)`: dos filas para la
 misma ocurrencia no pueden existir.
@@ -187,23 +200,26 @@ misma ocurrencia no pueden existir.
 
 El calendario de una regla se describe con:
 
-| Campo | Valores | Notas |
-| --- | --- | --- |
-| `unit` | `once`, `day`, `week`, `month`, `semimonth` | `once` es la regla de una sola fecha (Q11) |
-| `interval` | entero ≥ 1 | `week` 1 = semanal; `month` 1, 3, 6 y 12 = mensual, trimestral, semestral y anual; «personalizada» = cualquier `day`, `week` o `month` con N. `once` y `semimonth` solo admiten 1 |
-| `anchor_date` | fecha | Primera fecha del calendario; fija la rejilla de periodos (§3.1), que no se edita (§3.4) |
-| `ref_day` | 1–31 | En `month`: el día de `anchor_date`, conservado como **día de referencia** |
-| `semimonth_days` | dos días | Solo en `semimonth` (§3.3) |
-| `end_date` o `occurrence_count` | uno de los dos, o ninguno | Q13; nunca los dos a la vez |
+| Campo | Valores | Dónde vive | Notas |
+| --- | --- | --- | --- |
+| `unit` | `once`, `day`, `week`, `month`, `semimonth` | La regla, inmutable | `once` es la regla de una sola fecha (Q11) |
+| `interval` | entero ≥ 1 | La regla, inmutable | `week` 1 = semanal; `month` 1, 3, 6 y 12 = mensual, trimestral, semestral y anual; «personalizada» = cualquier `day`, `week` o `month` con N. `once` y `semimonth` solo admiten 1 |
+| `origin_period_start` | fecha | La regla, inmutable | El comienzo del periodo de origen (§3.1) |
+| `ref_day` | 1–31 | La versión | En `month`: el **día de referencia** |
+| `weekday` | 1–7 | La versión | En `week` |
+| `semimonth_days` | dos días | La versión | Solo en `semimonth` (§3.3) |
+| `once_date` | fecha | La versión | Solo en `once` |
+| `end_date` o `occurrence_count` | uno de los dos, o ninguno | La versión | Q13; nunca los dos a la vez |
 
-- **`month`.** La fecha de la posición n es el día `ref_day` del mes
-  `anchor + (n−1)·interval`; si ese día no existe en el mes, cae en el último día
-  del mes, y el día de referencia se conserva: 31 de enero → 28 de febrero → 31 de
-  marzo (29 de febrero en un año bisiesto). Un anual del 29 de febrero cae el 28 en
-  los años no bisiestos y el 29 en los bisiestos. `ref_day = 31` equivale a
-  «último día del mes».
-- **`day` y `week`.** `anchor + (n−1)·interval` días o semanas.
-- **`once`.** Una sola posición, en `anchor_date`.
+- **`month`.** La fecha de la posición n es el día `ref_day` del primer mes de su
+  periodo; si ese día no existe en el mes, cae en el último día del mes, y el día
+  de referencia se conserva: 31 de enero → 28 de febrero → 31 de marzo (29 de
+  febrero en un año bisiesto). Un anual del 29 de febrero cae el 28 en los años no
+  bisiestos y el 29 en los bisiestos. `ref_day = 31` equivale a «último día del
+  mes».
+- **`week`.** El `weekday` de la primera semana de su periodo. **`day`.** El primer
+  día de su periodo.
+- **`once`.** Una sola posición, en `once_date`.
 - Todas las fechas son `date` en `America/Bogota`, sin días hábiles ni festivos.
   «Hoy» es `(now() at time zone 'America/Bogota')::date`.
 - **Fin por N.** Con `occurrence_count` = N, solo existen las posiciones 1 a N.
@@ -222,8 +238,8 @@ con un `check` en la versión. Cada uno se ajusta con su día de referencia, per
 primero nunca se ajusta (todo mes tiene 15 días) y el segundo nunca baja de 28. La
 colisión no puede ocurrir, y ninguna fecha se mueve ni se pierde.
 
-Las posiciones se numeran en orden: (mes 1, día 1), (mes 1, día 2), (mes 2, día
-1)… a partir de la primera fecha ≥ `anchor_date`.
+Las posiciones se numeran en orden, una por mitad, **desde la mitad de origen**
+(§3.1): (primera mitad, día 1), (segunda mitad, día 2), (mes siguiente, día 1)…
 
 Alternativas descartadas:
 
@@ -233,7 +249,7 @@ Alternativas descartadas:
 - **Permitir cualquier par y avisar:** deja el caso abierto para la otra persona
   de una recurrencia compartida, que no eligió los días.
 
-#### 3.4 Editar una recurrencia: datos y día, nunca la unidad ni el intervalo `[P]` P2 (Q6, 29.3; FR-005)
+#### 3.4 Editar una recurrencia: datos y día, nunca la rejilla `[P]` P2 (Q6, 29.3; FR-005)
 
 Las rondas 1 y 2 admitían editar todo el calendario. Eso obligaba a cortar
 segmentos, fijar ranuras y calcular un límite inferior, y cada versión del
@@ -246,9 +262,11 @@ limitar los campos editables es una decisión de producto, y por eso es la `[P]`
 
 **`[P]` P2 · Qué se puede editar** (recomendada (a)):
 
-- (a) **dentro de una recurrencia se editan los datos, el día dentro de la misma
-  unidad e intervalo, N y la fecha final**. Cambiar la unidad o el intervalo es
-  **finalizar y crear otra**, en el flujo «Cambiar frecuencia» de abajo;
+- (a) **dentro de una recurrencia se editan los datos, el día dentro de su
+  periodo, N y la fecha final**. Cambiar la unidad, el intervalo o el origen es
+  **finalizar y crear otra**, en el flujo «Cambiar frecuencia» de abajo, con su
+  contrato completo. **Cambiar la frecuencia no traslada las pendientes** de la
+  regla anterior: se resuelven antes o se cancelan con ella;
 - (b) **edición libre** del calendario, con el modelo de segmentos y ranuras de la
   ronda 2. Se descarta por los hallazgos que abrió (Alternativas 3).
 
@@ -261,11 +279,10 @@ dentro de una recurrencia.
 | Campo | Editable | Notas |
 | --- | --- | --- |
 | Datos: importe, categoría, pagador, reparto, responsable, nombre, certeza, condición | Sí | Versión nueva (§4) |
-| Día dentro del periodo | Sí | `ref_day` en `month`; el día de la semana en `week`; los dos días en `semimonth`, con P1 |
+| Día dentro del periodo | Sí | Según la tabla de §3.1 |
 | Fecha de una regla `once` | Solo sin hechos y con la fecha nueva > hoy | Su único periodo es su fecha |
 | N y fecha final | Sí, con los límites de §6.1 | |
-| `unit`, `interval`, el mes o la semana de `anchor_date` | **No** | Cambian la rejilla de periodos: «Cambiar frecuencia» |
-| En `day` | Solo los datos | No tiene «día dentro del periodo» |
+| `unit`, `interval`, `origin_period_start` | **No** | Son la rejilla: «Cambiar frecuencia» |
 
 **Cómo se aplica una edición hecha el día E:**
 
@@ -274,21 +291,30 @@ dentro de una recurrencia.
    siempre un prefijo, también tras varias ediciones encadenadas. Las posiciones 1
    a c no cambian (Q6).
 2. **Datos.** La versión nueva rige **desde la posición c + 1**
-   (`effective_from_position`) para todas las posiciones > c **sin hechos**, sea
-   cual sea su fecha nueva (§4).
-3. **Día.** Las posiciones > c sin hechos toman el día nuevo **dentro de su propio
-   periodo**.
+   (`effective_from_position`) para todas las posiciones > c **sin valores
+   fijados** (§2), sea cual sea su fecha nueva (§4).
+3. **Día.** Las posiciones > c sin valores fijados toman el día nuevo **dentro de
+   su propio periodo**.
 4. **Regla del periodo en curso.** Si la posición c + 1 está en el periodo en curso
    y el día nuevo la pondría en una fecha ≤ E, **conserva su fecha anterior**, y el
    día nuevo rige desde la posición c + 2 (`day_from_position`). Sí toma los datos
    nuevos (punto 2). Así **una edición nunca crea una pendiente** ni mueve una
    instancia al pasado.
-5. **Posiciones con hechos.** Conservan su fecha y su versión (§2). Como su fecha
-   está dentro de su periodo, el orden no cambia.
+5. **Posiciones con valores fijados.** Conservan su fecha y su versión (§2). Como
+   su fecha está dentro de su periodo, el orden no cambia.
+6. **Una edición solo de datos no toca el calendario.** Hereda el día y el
+   `day_from_position` de la versión anterior, también si esta aplicó la regla del
+   periodo en curso: las fechas ya calculadas no cambian. El detalle, en el Plan.
+7. **Día y fecha final.** Si la regla tiene `end_date`, mover el día puede hacer que
+   una posición editable quede después o antes de `end_date`. Por ejemplo, una
+   mensual del día 10 con fin el 15 de marzo que pasa al día 20 pierde la de
+   marzo. La vista previa nombra las ocurrencias que **aparecen o desaparecen**,
+   como al cambiar N o la fecha final (§6.1), y se aplican sus mismos límites.
 
-Resultado: ningún periodo pierde su posición ni gana una segunda, ninguna
-obligación desaparece, todas las previstas editables reciben la edición (Q6), y no
-hace falta ningún límite inferior ni ranura.
+Resultado: ningún periodo pierde su posición ni gana una segunda (salvo por
+`end_date`, con vista previa), ninguna obligación desaparece en silencio, todas las
+previstas editables reciben la edición (Q6), y no hace falta ningún límite
+inferior ni ranura.
 
 **Los contraejemplos de las revisiones, con esta regla:**
 
@@ -298,26 +324,51 @@ hace falta ningún límite inferior ni ranura.
 | F103-2. Del 15 al 20, con la del 15 de noviembre ya pendiente | c = noviembre. La siguiente es el 20 de diciembre, sin un segundo noviembre |
 | F103-2. Del 31 al 15, editado el 5 de febrero con enero ya llegado | c = enero. Febrero → 15 de febrero (> E): febrero no se pierde |
 | F103-14. Del último día al 15, editado el 25 de febrero | c = enero. Febrero está en curso y el 15 ≤ E: conserva el 28 con los datos nuevos. Desde marzo, el 15 |
+| F103-22. Quincenal del 10 y el 20 que empieza el 20 de enero; antes del 18, el 20 pasa al 18 | La posición 1 queda el 18 de enero, en la mitad de origen |
 | F103-13 y F103-14. De semanal a mensual, o de mensual a diaria | No es una edición: «Cambiar frecuencia» |
 
-**Flujo «Cambiar frecuencia»** (dos reglas, una sola confirmación). Como el cambio
-de contexto de Q8 y F101-11:
+**Flujo «Cambiar frecuencia»: contrato** (F103-21). Para la persona es un solo paso;
+en el modelo, dos reglas. Es como el cambio de contexto de Q8 y F101-11.
 
-1. **La regla anterior se finaliza a mano** el día E, con Q18, D6 y P3: la
-   confirmación lista las instancias sin resolver que se cancelan, incluidas las
-   pendientes. Por eso el flujo invita a resolver antes las pendientes. Las
-   instancias con hechos se quedan en la regla anterior con su historia.
-2. **La regla nueva** tiene el mismo contexto y el mismo tipo, los datos que la
+1. **Atómico e idempotente.** Una sola función de escritura, con su clave de
+   idempotencia y la precondición de §7.1: la versión esperada de la regla
+   anterior y la lista exacta de las instancias que se cancelan. En la misma
+   transacción crea la regla nueva y finaliza (o elimina) la anterior. Si falla
+   crear, la anterior no queda finalizada; si falla finalizar, no se crea nada. Un
+   reintento con la misma clave devuelve el mismo resultado y nunca crea dos
+   reglas.
+2. **La regla anterior**, con la definición de **«historia» de §6.3** (basada en
+   filas, no en hechos vigentes):
+   - **con historia, se finaliza a mano** el día E, con Q18, D6 y P3. Una regla
+     con una omisión deshecha tiene historia: se finaliza y no se elimina, como
+     exige la protección de §12. La confirmación lista las instancias sin resolver
+     que se cancelan, **incluidas las pendientes**. Las pendientes no pasan a la
+     regla nueva: por eso el flujo invita a resolverlas antes. Las instancias con
+     hechos se quedan en la anterior con su historia;
+   - **sin historia, se elimina** (FR-076).
+3. **La regla nueva** tiene el mismo contexto y el mismo tipo, los datos que la
    persona confirme y el calendario nuevo.
-   - **Arranque por omisión:** la primera fecha del calendario nuevo en un periodo
-     posterior al de la posición c de la regla anterior, y nunca ≤ E. No nace
-     ninguna obligación retroactiva.
-   - **En un compromiso con N**, nace con N′ = N − c − el número de posiciones > c
-     de la anterior que conservan un hecho distinto de la cancelación. La vista
-     previa muestra N′ y la fecha de la última, y la persona la puede ajustar.
-3. **Sin historia** (c = 0 y ningún hecho), la regla anterior se **elimina** en
-   lugar de finalizarse (FR-076). Es lo mismo que editarla libremente, porque nada
-   de ella existía.
+   - **Límite entre frecuencias distintas.** Por omisión, su origen es el **primer
+     periodo del calendario nuevo que empieza en o después del fin del periodo de
+     la posición c de la regla anterior**, con su fecha > E. Ejemplo: de anual
+     (marzo) a mensual, editado en junio, con la de marzo ya llegada: el periodo
+     anual de marzo cubre hasta febrero, y la mensual empieza en marzo del año
+     siguiente. La persona puede elegir otro origen con una fecha > E. La vista
+     previa muestra lo que la regla anterior todavía cubre.
+   - **Lo que se conserva de la anterior** (confirmadas u omitidas por adelantado,
+     reabiertas por D1) se muestra **junto al calendario nuevo**, para que la
+     persona vea los solapes. No hay deduplicación semántica entre las dos reglas.
+   - **En un compromiso con N**, la nueva nace con N′ = N − c − el número de
+     posiciones > c de la anterior que conservan un hecho distinto de la
+     cancelación. La vista previa muestra N′ y la fecha de la última.
+     **Si N′ ≤ 0, no se crea la regla nueva**: el flujo lo explica, y solo se crea
+     si la persona amplía el compromiso de forma explícita. Nunca nace una regla
+     vacía ni una sin fin en silencio.
+   - **En un aporte programado**, crear la regla nueva respeta el estado de la meta
+     y D7: exige la meta **activa**, bloqueada en el orden de §14. Si la anterior
+     está pausada por `goal_inactive`, el flujo solo está disponible con la meta
+     otra vez activa, y es en sí la acción explícita que D7 pide para reanudar: no
+     sirve para saltarse la pausa.
 
 En el modelo son dos reglas independientes. La relación entre las dos solo queda en
 la auditoría. Las pausas de la anterior no pasan a la nueva.
@@ -340,16 +391,17 @@ con la versión vieja.
 
 | Instancia | Datos | Día |
 | --- | --- | --- |
-| Sin hechos vigentes, posición p | La última versión con `effective_from_position` ≤ p | El de la última versión con `day_from_position` ≤ p |
-| Con hechos vigentes (omitida, cancelada, confirmada o reabierta por D1) | La fijada al registrar el primer hecho vigente. **Nunca cambia**, aunque su fecha sea futura (F101-4) | Su fecha fijada |
+| Sin ningún hecho registrado nunca, posición p | La última versión con `effective_from_position` ≤ p | El de la última versión con `day_from_position` ≤ p |
+| Con valores fijados (desde su primer hecho: omisión, cancelación o vínculo) | La fijada al registrar el primer hecho. **Nunca cambia**, aunque su fecha sea futura (F101-4) y aunque el hecho se deshaga (P7 (a)) | Su fecha fijada |
 
 Una pendiente (p ≤ c en el momento de la edición) nunca recibe una edición posterior,
 porque la edición rige desde c + 1 (Q6, FR-004).
 
-Una omisión deshecha deja la instancia sin hechos: vuelve a la versión y a la fecha
-que le tocan por su posición, y una edición posterior la cambia como a cualquier
-prevista (Q6; §6.4 para la lectura de D3). Si se vuelve a omitir, se fijan los
-valores de ese momento (§5, registro de un hecho).
+Una omisión deshecha **conserva la fecha y la versión que tenía al omitirse** (P7
+(a), §6.4), y las ediciones posteriores no la cambian: es la lectura literal de D3
+(«con su versión»). Q6 no cambia por ello, porque una omitida no recibe ediciones
+y deshacer la omisión no la convierte en una prevista nueva, sino en la misma que
+se omitió.
 
 **Edición de la regla.** `recurring_rules.version` con `where version = $esperada`
 (ADR-013 §3.5; US4.3). Dos ediciones simultáneas de una recurrencia compartida
@@ -396,37 +448,40 @@ confirmada, una reabierta ni una cancelada.
 
 | Caso | Hechos | Pausa que cubre su fecha | Fin de la regla | Edición del día (§3.4) |
 | --- | --- | --- | --- | --- |
-| Prevista con una fila sin hechos (omisión deshecha) | Ninguno | Queda **consumida**, como si nunca hubiera tenido fila | No se genera | Recibe la fecha y la versión nuevas (Q6) |
+| Omisión deshecha (fila sin hechos vigentes) | Ninguno vigente; valores fijados (P7 (a)) | Queda **consumida** si su fecha fijada cae en la pausa, como cualquier otra sin hechos vigentes | No se genera si su posición queda fuera del calendario | Conserva su fecha y versión fijadas (P7 (a)) |
 | Omitida por adelantado | Omisión | Sigue **omitida**, no consumida. Deshacer sigue §6.4 | Sigue omitida | Conserva su fecha y versión |
 | Confirmada por adelantado | Vínculo | Sigue confirmada. Si se anula su movimiento durante la pausa, pasa a **pendiente** (D1) y se puede resolver | Igual | Conserva su fecha y versión |
 | Pendiente por D1 | Vínculo con movimiento anulado | Sigue **pendiente** y se puede confirmar, vincular u omitir, aunque la regla esté pausada | Sigue pendiente y resoluble (§6.6) | Conserva su fecha y versión |
 
+En la tabla de estados, «sin hechos» significa sin hechos **vigentes**; la fecha que
+se compara con hoy y con las pausas es la fijada, si la hay, o la calculada.
+
 **Columnas de `recurring_occurrences`** (de trabajo): `id`, `rule_id`, `position`,
 `planned_date`, `rule_version_id`, `skipped_at`, `skipped_by`, `cancelled_at`,
 `cancelled_by`, `cancel_reason` (`ended_manual | archived`), `created_at`,
-`created_by`. `position` es inmutable. `planned_date` y `rule_version_id` solo
-cambian cuando se registra un hecho en una fila que no tenía ninguno vigente.
-`cancelled_at` se fija una vez y no vuelve, y `skipped_at` se pone y se quita (D3)
-con auditoría. Un trigger rechaza cualquier otra transición (§12).
+`created_by`. `position`, `planned_date` y `rule_version_id` se escriben al crear la
+fila y **no cambian nunca** (P7 (a)). `cancelled_at` se fija una vez y no vuelve, y
+`skipped_at` se pone y se quita (D3) con auditoría. Un trigger rechaza cualquier
+otra transición (§12).
 
 **Registro de un hecho: una sola operación** (F103-16). Confirmar, vincular, omitir
 y cancelar registran su hecho con la **misma** operación interna, en la misma
 transacción que la acción y después de validarla (§7.3):
 
 1. **Si no hay fila**, se inserta con la fecha y la versión **actuales** de la
-   posición (las que calcula §4 en ese momento).
-2. **Si hay fila sin hechos vigentes** (por ejemplo, tras deshacer una omisión),
-   primero se **actualizan** su fecha y su versión a las actuales y después se
-   registra el hecho. Un `insert … on conflict do nothing` no basta: dejaría
-   fijados los valores viejos.
-3. **Si hay fila con hechos vigentes**, se conservan la fecha y la versión
-   fijadas, y solo se añade el hecho (por ejemplo, la omisión de una reabierta por
-   D1, o un vínculo nuevo que sustituye al antiguo).
+   posición (las que calcula §4 en ese momento): son los valores que quedan
+   fijados.
+2. **Si ya hay fila** (con hechos vigentes o con una omisión deshecha), se
+   conservan la fecha y la versión fijadas y solo se añade el hecho. Por ejemplo, la
+   omisión de una reabierta por D1, un vínculo nuevo que sustituye al antiguo o la
+   confirmación de una omisión deshecha.
 
-Ejemplo: omitir la posición del 10 de febrero (versión 1), deshacer la omisión,
-editar la regla (día 20, versión 2) y confirmar. La instancia queda fijada con el
-20 de febrero y la versión 2. Si después se anula su movimiento, vuelve a
-pendiente con el 20 de febrero y la versión 2 (D1).
+Ejemplo, con P7 (a): omitir la posición del 10 de febrero (versión 1), deshacer la
+omisión, editar la regla (día 20, versión 2) y confirmar. La instancia sigue con el
+10 de febrero y la versión 1, que es lo que tenía al omitirse; la edición no la
+alcanzó. Si después se anula su movimiento, vuelve a pendiente con los mismos
+valores (D1). Con P7 (b), el paso 2 actualizaría antes la fila sin hechos vigentes a
+la fecha y la versión actuales (el 20 de febrero y la versión 2).
 
 **Correspondencia con la tabla «Estados y transiciones» de la spec:**
 
@@ -457,7 +512,7 @@ deriva:
 | --- | --- | --- |
 | 1 | `lifecycle = archived` | **Archivada** |
 | 2 | `lifecycle = ended_manual` | **Finalizada · a mano** |
-| 3 | **Fin por N:** la fecha de la posición N es ≤ hoy | **Finalizada · sola**, también si estaba pausada (F101-15) |
+| 3 | **Fin por N:** la fecha de la posición N (la fijada, si la tiene) es ≤ hoy | **Finalizada · sola**, también si estaba pausada (F101-15) |
 | 3 | **Fin por fecha:** hoy > `end_date` | **Finalizada · sola**, también si estaba pausada |
 | 3 | **Una sola fecha:** su fecha es ≤ hoy | **Finalizada · sola** |
 | 4 | Tiene una pausa abierta | **Pausada** |
@@ -514,7 +569,8 @@ dure), `reason` (`manual | goal_inactive`), `created_by`, `ended_by`, con
   compartida, quedar posiciones y, en aportes, una meta **activa** en ese momento.
   Una meta archivada que vuelve a `active` (por `goal_void_reactivate`) **no
   reanuda** la recurrencia: su dueña la puede reanudar de forma explícita si la
-  meta está activa y quedan posiciones (F103-5).
+  meta está activa y quedan posiciones (F103-5). El estado de la meta se lee
+  bajo su bloqueo, en el orden de §14 (F103-23).
 
 #### 6.3 Posiciones consumidas, finalizar, archivar y eliminar
 
@@ -577,41 +633,46 @@ la spec 007 se reconcilia antes de Plan en cualquier caso (Consecuencias).
 
 #### 6.4 Deshacer una omisión: precedencia (D3, D4, D5; F101-14, F101-18, F101-21)
 
-Deshacer quita el hecho de omisión. Entran en juego **dos fechas**, que pueden no
-coincidir si la regla se editó mientras la instancia estaba omitida (F103-15):
+Deshacer quita el hecho de omisión. **Con P7 (a), la instancia recupera siempre la
+fecha y la versión que tenía al omitirse** (sus valores fijados, §2), y solo hay
+**una fecha** que evaluar: esa. La «fecha liberada» de la ronda 3 desaparece, y con
+ella la clase de problema de F103-15 y F103-20: una edición hecha mientras la
+instancia estaba omitida no la alcanza, así que deshacer no puede moverla a otra
+fecha, ni sacarla de una pausa, ni cambiar la fecha de la posición N.
 
-- **la fecha histórica**: la fijada cuando se omitió, que es la fecha que la
-  ocurrencia tenía mientras atravesaba lo que pasó después;
-- **la fecha liberada**: la que tendría sin la omisión. Es la fijada si conserva
-  otro hecho (un vínculo, D1); si no, la que le toca por su posición con el
-  calendario vigente (§4).
-
-Las dos están dentro del periodo de la posición (§3.1). Se evalúa, en este orden, y
-se detiene en la primera que se cumple:
+Se evalúa, en este orden, y se detiene en la primera que se cumple:
 
 1. **La recurrencia está finalizada a mano o archivada** → **no disponible**. No la
    reactiva, y lo cancelado sigue cancelado (D4). La interfaz lo dice antes de
    ofrecer la acción.
-2. **La fecha histórica o la liberada cae en cualquier intervalo pausado** del
-   historial, pasado o vigente (§6.2) → **no disponible**: la instancia sigue
-   omitida (D5; F101-14, F101-18). Basta con que lo haga **una** de las dos: así
-   ninguna recuperación se salta una pausa histórica por una edición posterior. Lo
-   decide el historial de la posición, no el estado actual de la regla: vale
-   aunque ya se haya reanudado o haya terminado sola.
+2. **Su fecha fijada cae en cualquier intervalo pausado** del historial, pasado o
+   vigente (§6.2) → **no disponible**: la instancia sigue omitida (D5; F101-14,
+   F101-18). Lo decide el historial de la posición, no el estado actual de la
+   regla: vale aunque ya se haya reanudado o haya terminado sola.
 3. **En otro caso**, se quita la omisión. Una reabierta por D1 vuelve a
-   **pendiente** (§5, paso 4), con su fecha y su versión fijadas. Sin otros hechos,
-   la instancia vuelve a **prevista o pendiente según su fecha liberada** (D3), con
-   la versión que le toca por su posición (§4).
+   **pendiente** (§5, paso 4). Sin otros hechos vigentes, la instancia vuelve a
+   **prevista o pendiente según su fecha fijada** (D3), con su versión fijada.
 
-**Lectura de «con su versión» (D3).** Sin otros hechos, la instancia deshecha
-recupera la versión que corresponde a **su posición**, no la que tenía al omitirse.
-Si la regla se editó mientras estaba omitida y la posición es posterior al corte de
-esa edición, los datos cambian **a propósito**. La razón: una instancia sin hechos
-es una prevista o una pendiente más, y Q6 dice que las previstas reciben la
-edición; conservar la versión vieja volvería a hacer depender el comportamiento de
-la fila (§2). Una pendiente (posición anterior al corte) no cambia, porque la
-edición no la alcanza. Esta lectura está en la lista de reconciliación de la spec
-(Consecuencias).
+**`[P]` P7 · Qué recupera Deshacer** (F103-20; lectura de D3, «con su versión»):
+
+- (a) **recomendada: la fecha y la versión históricas**, las que tenía al omitirse.
+  Es la lectura literal de D3. No cambia Q6, porque las omitidas no reciben
+  ediciones y deshacer devuelve la misma ocurrencia que se omitió, no una prevista
+  nueva. Si la fecha recuperada es futura y la regla se editó mientras tanto, la
+  instancia vuelve con los **datos anteriores** a la edición: la interfaz lo dice
+  al deshacer («Vuelve con los datos que tenía al omitirla»), y la persona puede
+  editar después el movimiento real al confirmar;
+- (b) los datos **actuales** de la posición (la lectura de la ronda 3), con dos
+  restricciones: la pausa se evalúa con la fecha histórica **y** con la nueva, y la
+  terminación de la regla se calcula como si la omisión no se hubiera deshecho
+  (para que no la reactive, F103-20). Añade casos en lugar de quitarlos, y está en
+  la lista de reconciliación de la spec.
+
+**El contraejemplo de F103-20, con (a).** Mensual, N = 2. La posición 2 (15 de
+enero) se omite por adelantado; el 2 de enero la regla pasa al día 25; el 15 de
+enero termina sola, porque su posición N tiene la fecha fijada del 15. El 17 se
+deshace la omisión: vuelve con el 15 de enero (≤ hoy) como **pendiente**, la fecha
+de la posición N no cambia y la regla **sigue finalizada · sola**.
 
 Una recurrencia terminada sola llega al paso 3 si la fecha no cayó en una pausa
 (D4: con la terminación automática sí está disponible). Una recurrencia pausada
@@ -662,11 +723,21 @@ Mensual del día 15, sin fin, que empieza el 15 de diciembre del año anterior.
 
 | Fecha | Operación | Resultado |
 | --- | --- | --- |
-| 1 de enero | Se omite por adelantado la posición del 15 de enero (fecha histórica: 15 de enero) | Omitida |
-| 2 de enero | Se pasa al día 25 (c = diciembre) | La omitida conserva el 15. Su fecha liberada sería el 25 de enero |
+| 1 de enero | Se omite por adelantado la posición del 15 de enero | Omitida, con el 15 de enero y la versión 1 fijados |
+| 2 de enero | Se pasa al día 25 (c = diciembre) | La omitida conserva el 15 y la versión 1 (P7 (a)). Febrero → 25 |
 | 5 de enero | Se pausa | — |
-| 20 de enero | Se reanuda (intervalo: 6 a 19 de enero) | El 25 de enero queda fuera de la pausa |
-| 21 de enero | Se deshace la omisión | **No disponible** (regla 2): la fecha histórica, el 15, cae en la pausa, aunque la liberada no |
+| 20 de enero | Se reanuda (intervalo: 6 a 19 de enero) | — |
+| 21 de enero | Se deshace la omisión | **No disponible** (regla 2): su fecha fijada, el 15, cae en la pausa |
+
+**Caso de prueba D, la omisión de la última posición** (F103-20; independiente).
+Mensual del día 15, N = 2, que empieza el 15 de diciembre del año anterior.
+
+| Fecha | Operación | Resultado |
+| --- | --- | --- |
+| 1 de enero | Se omite por adelantado la posición 2 (15 de enero) | Omitida, con el 15 de enero fijado |
+| 2 de enero | Se pasa al día 25 | La posición 2 conserva el 15 |
+| 15 de enero | — | **Finalizada · sola**: la posición N llegó |
+| 17 de enero | Se deshace la omisión | Disponible (regla 3). La posición 2 vuelve **pendiente** con el 15 de enero y la versión 1. La regla **sigue finalizada · sola** |
 
 **Casos límite** para la tabla compartida de SQL y TS (`[V]` P2):
 
@@ -1246,7 +1317,15 @@ compartida bloquea la pareja (F103-6), como `lock_planning_goal`.
 | **Vincular un gasto existente**, también si está financiado con meta | pareja si procede → regla → instancia → el gasto y su cadena, por `id` | **No bloquea la meta:** vincular no consume, aplica ni devuelve fondos y no lee el saldo. El gasto se bloquea después de la regla y nunca antes que una meta, así que no forma ciclo con `update_transaction` ni con `remove_goal_usage` |
 | **Vincular un aporte existente** | pareja si la meta es compartida → meta → regla → instancia | Mismo orden que confirmar un aporte, por ADR-d. Los asientos del ledger no se bloquean: son de solo inserción |
 | **Recorrer la cadena** (§8, §7.4 e) | Primero se lee **sin bloquear** para saber si toca algún gasto compartido (y, con él, la pareja). Después: pareja si procede → regla → las filas de la cadena por `id`. Bajo el bloqueo se vuelve a leer; si cambió, la operación falla con un error reintentable sin escribir nada | Mover a Pareja y su Deshacer bloquean pareja → gastos por `id`: el mismo orden |
-| **Omitir, deshacer, pausar, reanudar, editar, finalizar, archivar, eliminar** | pareja si la regla es compartida → regla → instancias | No tocan dinero |
+| **Omitir, deshacer, pausar, editar, finalizar, archivar, eliminar**, y **reanudar un gasto o un ingreso** | pareja si la regla es compartida → regla → instancias | No tocan dinero ni dependen del estado de una meta |
+| **Reanudar un aporte programado** (F103-23) | pareja si la meta es compartida → **meta** → regla | Reanudar exige la meta **activa** (§6.2; FR-034), y se comprueba bajo el bloqueo de la meta, no con una consulta sin bloquear, que abriría una carrera con «Dar por lograda» o archivar. El orden regla → meta formaría un ciclo con la pausa automática de ADR-d |
+| **Crear una recurrencia de aporte**, o sustituirla con «Cambiar frecuencia» (§3.4) | pareja si la meta es compartida → **meta** → regla anterior, si la hay | Exige la meta activa bajo su bloqueo; no sirve para saltarse una pausa `goal_inactive` (D7) |
+| **Pausa automática de ADR-d** al lograr o archivar la meta | pareja si la meta es compartida → meta → regla | El mismo prefijo que confirmar, vincular, crear y reanudar un aporte |
+
+**Regla para todo lo que depende del estado de una meta:** se bloquea la meta
+**antes** que la regla y se lee su estado **bajo ese bloqueo**. Así lograr o
+archivar (que bloquean pareja → meta) y cualquier operación de aporte se ordenan
+sin ciclos, y gana el orden efectivo (US6.6).
 
 Si ADR-d hace que lograr o archivar una meta escriba una pausa, esa función
 bloqueará pareja (si la meta es compartida) → meta → regla, el orden de la fila del
@@ -1324,7 +1403,7 @@ esto cambia ninguna función de MVP-1.
   | **P4** | Una fila nueva en la tabla de estados (posición consumida → pendiente) | Solo si se aprueba la recuperación |
   | **P5** | Decir que una reabierta de una recurrencia archivada o finalizada se puede resolver sin reactivarla | Si se aprueba la recomendación |
   | **P6** (C) | FR-018a dice que la sustitución técnica no devuelve la instancia a pendiente. C añade una excepción **contextual**: tras el Deshacer, la instancia **compartida** vinculada a T2 vuelve a pendiente, porque para su contexto el gasto salió. La instancia privada sigue el FR-018a tal cual | Si se aprueba C |
-  | **Lectura de D3** (§6.4) | «Con su versión», leído como la versión de su posición: los datos de una omisión deshecha pueden cambiar si la regla se editó mientras estaba omitida | Al aprobar este ADR; si los fundadores prefieren la versión de la omisión, se reabre §6.4 |
+  | **P7** (§6.4) | Con (a), ninguno: es la lectura literal de D3 («con su versión»). Con (b), D3 y FR-017 tienen que decir que una omisión deshecha toma los datos actuales de su posición, con las restricciones de pausa y terminación | Solo si se aprueba (b) |
 
 ## Verificación pendiente [V]
 
@@ -1381,6 +1460,9 @@ implementación. Son trece: C1 a C3 y P1 a P10.
     el cronológico, también tras ediciones del día y con posiciones fijadas
     (F103-13);
   - la regla del periodo en curso de §3.4 (F103-14);
+  - el **origen fijo** de §3.1 (F103-22): la quincenal del 10 y el 20 que empieza
+    el 20 de enero y pasa al 18 antes de esa fecha queda el 18 de enero; lo mismo
+    con el día de la semana en `week` y con `ref_day` en `month` cada i meses;
   - los casos límite de pausa de §6.4.
 - **P3. Ediciones sin duplicados ni pérdidas** (FR-005, SC-002). En integración,
   con instancias en todos los estados:
@@ -1393,9 +1475,24 @@ implementación. Son trece: C1 a C3 y P1 a P10.
   - **ediciones encadenadas** del día: el corte sigue siendo un prefijo (F103-13);
   - reducir N o la fecha final: rechazado por debajo de c o de una posición con
     hechos, y la regla termina sola si ya se cumplió (F103-13);
-  - el flujo «Cambiar frecuencia»: la anterior se finaliza con su lista, la nueva
-    no nace con ninguna pendiente retroactiva y N′ es el de §3.4; sin historia, la
-    anterior se elimina;
+  - el día y la fecha final (F103-22): mensual del día 10 con fin el 15 de marzo
+    que pasa al día 20; la vista previa nombra la de marzo, que desaparece;
+  - una edición solo de datos después de una que aplicó la regla del periodo en
+    curso: las fechas no cambian;
+  - el flujo «Cambiar frecuencia» (F103-21):
+    - la anterior se finaliza con su lista, pendientes incluidas, que no pasan a la
+      nueva; la nueva no nace con ninguna pendiente retroactiva;
+    - una regla con una omisión deshecha tiene historia: se finaliza, no se
+      elimina; sin historia, se elimina;
+    - N′ es el de §3.4, y con N′ ≤ 0 no se crea ninguna regla sin una ampliación
+      explícita;
+    - el límite entre frecuencias distintas (de anual a mensual) y la vista de lo
+      que la anterior conserva;
+    - **atomicidad e idempotencia**: un fallo al crear deja la anterior sin
+      finalizar, un fallo al finalizar no crea nada, un reintento no crea dos
+      reglas y una lista de cancelación obsoleta falla con `occurrenceChanged`;
+    - en un aporte, con la meta inactiva o con una pausa `goal_inactive`, el flujo
+      no está disponible;
   - el servidor rechaza cambiar la unidad o el intervalo como edición.
 - **P4. Equivalencia de F101-2** (29.9). Un aporte manual de Ana y el mismo aporte
   confirmado desde su recurrencia privada son indistinguibles para Beto en las
@@ -1425,15 +1522,16 @@ implementación. Son trece: C1 a C3 y P1 a P10.
   número de reglas del dataset del Plan, dentro de los umbrales de §15.7.
 - **P8. Las transiciones de la tabla de la spec** (SC-006), en dominio y pgTAP:
   - los cuatro casos de §5;
-  - el caso A de dos pausas, el caso B de terminación automática y el caso C de
-    edición durante una omisión de §6.4 (F103-15): no disponible por la fecha
-    histórica aunque la liberada no caiga en la pausa;
-  - la lectura de D3: una omisión deshecha sin otros hechos toma la versión de su
-    posición;
-  - el registro de un hecho de §5 (F103-16): omitir (10 de febrero, versión 1),
-    deshacer, editar (día 20, versión 2) y confirmar deja la instancia fijada con
-    el 20 de febrero y la versión 2; una anulación posterior la deja pendiente con
-    los mismos valores;
+  - los casos A (dos pausas), B (terminación automática), C (edición durante una
+    omisión, F103-15: no disponible por su fecha fijada) y D (omisión de la última
+    posición, F103-20: deshacer no reactiva la regla) de §6.4;
+  - P7 (a): una omisión deshecha recupera la fecha y la versión que tenía al
+    omitirse, y las ediciones posteriores no la cambian;
+  - el registro de un hecho de §5 (F103-16), con P7 (a): omitir (10 de febrero,
+    versión 1), deshacer, editar (día 20, versión 2) y confirmar deja la instancia
+    con el 10 de febrero y la versión 1; una anulación posterior la deja pendiente
+    con los mismos valores. Una posición sin fila que se confirma después de la
+    edición queda con el 20 y la versión 2;
   - la diferencia entre fin por N y fin por fecha de §6.1.
 - **P9. Concurrencia** (§14).
   - Confirmación simultánea desde las dos cuentas de la misma instancia
@@ -1446,6 +1544,9 @@ implementación. Son trece: C1 a C3 y P1 a P10.
     con meta mientras su dueña lo edita (`update_transaction`) o le quita el uso
     (`remove_goal_usage`), sin pareja que serialice: sin interbloqueo.
   - Vincular recorriendo una cadena mientras se hace Mover a Pareja o su Deshacer.
+  - **Reanudar un aporte contra lograr o archivar la meta** (F103-23), en los dos
+    órdenes: sin interbloqueo, y la reanudación falla si la meta ya no está activa
+    bajo su bloqueo. Lo mismo para crear o sustituir una recurrencia de aporte.
   - Con ADR-d, los tres órdenes de US6.6.
 - **P10. Compatibilidad en la base de datos.** Cada fila «No» de la tabla de
   compatibilidad de la spec la rechaza el trigger aunque se llame a la función de
@@ -1456,11 +1557,12 @@ implementación. Son trece: C1 a C3 y P1 a P10.
 | # | Cuestión | Opciones | Recomendación | Dónde |
 | --- | --- | --- | --- | --- |
 | P1 | Días de la quincenal (Q7, 29.5) | Primer día 1–15 y segundo 16–31; una instancia en la fecha coincidente; mover la segunda; cualquier par con aviso | Primer día 1–15 y segundo 16–31 (31 = último) | §3.3 |
-| P2 | **Qué se puede editar** de una recurrencia | (a) datos, el día dentro de la misma unidad e intervalo, N y la fecha final; cambiar la unidad o el intervalo es finalizar y crear otra («Cambiar frecuencia»); (b) edición libre del calendario | (a), con reconciliación de FR-005 | §3.4 |
+| P2 | **Qué se puede editar** de una recurrencia | (a) datos, el día dentro de su periodo (con el origen fijo), N y la fecha final; cambiar la unidad, el intervalo o el origen es «Cambiar frecuencia», con su contrato: atómico e idempotente, historia por filas, sin trasladar pendientes, N′ ≤ 0 sin regla nueva, solapes visibles y límite entre frecuencias; (b) edición libre del calendario | (a), con reconciliación de FR-005 | §3.4 |
 | P3 | Previstas al finalizar a mano o eliminar con historia | (a) cancelar todas en los compromisos con N o fecha final, y dejar de generar sin fin; (b) dejar de generar en todos; (c) cancelar las del horizonte por omisión, y todas en los finitos | (a); cualquier opción exige reconciliar la spec por la parte sin fin | §6.3 |
 | P4 | Recuperación manual excepcional (F101-18) | No existe (Anotar registra el pago; una recurrencia de una sola fecha representa la obligación); o una acción propia que deja la posición pendiente | No existe en v1 | §6.5 |
 | P5 | Pendiente de una recurrencia archivada o finalizada (F101-8 iii) | Visible en «Por confirmar» y en el calendario, y resoluble sin reactivar la regla; o solo en el detalle de la archivada | La primera | §6.6 |
 | P6 | **F101-19 (obligatoria):** el reemplazo compartido como candidato a un vínculo | A rechazar; B quitárselo a Ana; **C coexistir**; D bloquear Mover a Pareja | C, con sus consecuencias: obligaciones independientes, el riesgo de reponer dos veces tras anular T2, sugerencias que solo mitigan dentro del contexto, y la compartida en pendiente tras el Deshacer (excepción contextual a FR-018a), que se aprueba con C | §9 |
+| P7 | **Qué recupera Deshacer una omisión** (lectura de D3, F103-20) | (a) la fecha y la versión que tenía al omitirse, siempre; (b) los datos actuales de su posición, con la pausa evaluada en las dos fechas y la terminación calculada sin el deshacer | (a): lectura literal de D3; quita la fecha liberada y F103-20 | §6.4 |
 
 ## Referencias
 
