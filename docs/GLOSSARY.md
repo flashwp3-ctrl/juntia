@@ -266,14 +266,14 @@ declarar MVP-1 ni de que Planes esté aceptada (28.18).
 | --- | --- | --- |
 | Ruta de recurrencias | «Recurrentes» | Ruta hija de Plan (28.8); no es un destino nuevo de la navegación (§15.3) |
 | Recurrencia | «recurrencia» | La regla de un movimiento esperado. **Nunca crea por sí sola** un gasto, un ingreso ni un aporte real |
-| Instancia futura | «Prevista» («Prevista el 20 nov») | Lo previsto **no es real**: no cambia ninguna cifra ni consume presupuesto (A.2) |
+| Instancia prevista | «Prevista» («Prevista el 20 nov») | Es un **estado**: instancia sin resolver cuya fecha prevista aún no llegó y que no volvió a quedar pendiente (ADR-016 §5). No toda instancia con fecha futura está prevista: puede estar confirmada por adelantado (D2), por confirmar por D1 u omitida. Lo previsto **no es real**: no modifica cifras reales ni consume presupuesto (A.2; ADR-016; ADR-017 §3), aunque sí entra en el total de gastos previstos de Q15 (ADR-017 §4) |
 | Instancia pendiente de resolución | «Por confirmar» | **Estado** de la instancia: llegó su fecha, o volvió a quedar pendiente por D1 o por P6. No es una deuda ni algo atrasado (C-2) |
 | Rótulo del total de gastos previstos | «Gastos de {mes} sin confirmar · solo tuyos» · «· de la pareja» | «Sin confirmar» es del **rótulo**: el total suma las previstas y las por confirmar del mes (ADR-017 §4, P1(a)). La nota dice qué incluye y que **no es lo pagado ni dinero disponible** (P-3; DEC-R17) |
 | Instancia resuelta con un movimiento real | «Confirmada» | Confirmar crea el movimiento real **una vez**, o lo vincula. Nunca «pagada» (ADR-017 `[V]` 7; FR-037) |
 | Instancia omitida | «Omitida» | No crea nada real |
 | Instancia cancelada | «Cancelada» | Al finalizar a mano, cambiar frecuencia o eliminar con historia |
 | Estados de la recurrencia | «Activa», «En pausa», «Terminó», «Finalizada», «Archivada» | **«Terminó»** (sola, por fecha final o por número de ocurrencias) y **«Finalizada»** (a mano) se distinguen siempre. Una recurrencia terminada no prueba que una deuda esté pagada |
-| Posición en un compromiso con número de ocurrencias | «n de N» («7 de 24») | Forma neutra (C-5). n es la ocurrencia programada, **no** el número de cuotas pagadas; sin N, no se inventa |
+| Posición en un compromiso con número de ocurrencias | «n de N» («7 de 24») | Indicador neutro en **todos** los compromisos, sin excepción por tipo (C-5). «Cuota» puede ir en el **nombre** de una recurrencia («Cuota inicial del apartamento»), nunca en este indicador. n es la ocurrencia programada, **no** el número de cuotas pagadas; sin N, no se inventa |
 | Importe desconocido | «Importe desconocido» | Nunca $0 ni un guion (P-5; ADR-017 §1 y §2) |
 | Preset de captura | «Atajo» («Atajos») | Rellena el borrador de Anotar y nunca guarda solo. **No es una recurrencia**: no prevé nada (28.6) |
 

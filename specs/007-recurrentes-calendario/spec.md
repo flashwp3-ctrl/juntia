@@ -316,8 +316,8 @@ se cerró en (b) el 26 de noviembre de 2026 (29.14).
   reales.
 - **F101-12 · Ajustes menores.** Recuento de respuestas de la tabla de estados;
   ADR-010 y 22.13 en la anulación de aportes (FR-018); ADR-003 mantiene bloqueada
-  la salida de la pareja (FR-077); «cuota n de N» solo con un total de
-  ocurrencias (FR-042); tope bajo de presets fijado en el Plan (FR-075); alcance
+  la salida de la pareja (FR-077); «cuota n de N» (hoy «n de N», C-5) solo con un
+  total de ocurrencias (FR-042); tope bajo de presets fijado en el Plan (FR-075); alcance
   del toque único (SC-004).
 
 **Ronda 2 de la revisión (sobre `495eb69`).** Cierra F101-1, 2, 4, 5, 6, 9, 11 y
@@ -1088,7 +1088,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 #### Compromisos de duración definida (A.5; Q13)
 
-- **FR-035**: N cuenta las **posiciones programadas**, no las cuotas pagadas ni las instancias que realmente se generan: con pausas se generan menos de N (D5); «cuota n de N» numera posiciones.
+- **FR-035**: N cuenta las **posiciones programadas**, no las cuotas pagadas ni las instancias que realmente se generan: con pausas se generan menos de N (D5); el indicador «n de N» numera posiciones. Es el indicador neutro en **todos** los compromisos, sin excepción por tipo (C-5; 29.14): «cuota» puede ir en el **nombre** de una recurrencia («Cuota inicial del apartamento»), pero nunca en el indicador de posición.
 - **FR-036**: La terminación automática deja de generar instancias y no cancela ni oculta las pendientes anteriores. Ocurre desde activa o desde **pausada**, cuando se agotan las posiciones o se llega a la fecha final; una recurrencia que ya agotó sus posiciones no se puede reanudar (F101-15). Las posiciones consumidas no se materializan (ADR-016 §6.3).
 - **FR-037**: Una recurrencia terminada nunca se presenta como prueba de que una deuda está pagada. Sin amortización ni saldos de deuda.
 - **FR-038**: Pausar un compromiso de N ocurrencias consume las posiciones del calendario original: las ocurrencias del periodo pausado no se generan pero cuentan para N, la fecha final no se extiende, reanudar no las recupera automáticamente y solo se puede si quedan posiciones y no ha llegado la fecha final (F101-15) y la pausa nunca cambia en silencio N. Una ocurrencia consumida durante una pausa no equivale a una cuota pagada (D5, F101-8 iv).
@@ -1097,14 +1097,14 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 #### Calendario (A.4; 28.8; N-6)
 
 - **FR-040**: El calendario de lo previsto es una ruta hija de Plan, sin destino de navegación nuevo (§15.3; 22.5).
-- **FR-041**: En móvil es una lista agrupada por fecha con flechas de mes, sin cuadrícula; escritorio se decide con los comps (Q14). Muestra por defecto el mes actual y el siguiente.
-- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe según las formas y reglas de presentación de ADR-017 §1 y §2, estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, su posición «n de N» (por ejemplo, «7 de 24»; forma neutra aprobada en C-5, 29.14). Si solo tiene fecha final, no se inventa N.
+- **FR-041**: En móvil es una lista agrupada por fecha con flechas de mes, sin cuadrícula; en escritorio, lista ancha con panel (P-6; 29.14; Q14). Muestra por defecto el mes actual y el siguiente.
+- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe según las formas y reglas de presentación de ADR-017 §1 y §2, estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, su posición «n de N» (por ejemplo, «7 de 24»), el indicador neutro aprobado en C-5 (29.14) para todos los compromisos, sin excepción por tipo; «cuota» puede ir en el nombre de la recurrencia, nunca en este indicador. Si solo tiene fecha final, no se inventa N.
 - **FR-043**: Desde el calendario se confirma, vincula u omite una instancia pendiente; una prevista, solo con las reglas de FR-012b y FR-017.
 - **FR-044**: El calendario no muestra movimientos reales sin instancia: lo real vive en Actividad (16.8).
 
 #### Total de lo previsto (Q15; ADR-017)
 
-- **FR-045**: Hay un total mensual de **gastos previstos** (Q15 (b), cerrada con los comps el 26 de noviembre de 2026; 29.14), separado de ingresos y aportes programados, con un rótulo que dice exactamente qué incluye: el rótulo, con «sin confirmar», y la nota de los comps (P-3; C-2). Se presenta en la variante **b2**: los importes fijos y los estimados por separado, una sola variante para todos y sin configuración (P-2). Qué entra en el total, qué devuelve, cómo se presenta, dónde se ve y su privacidad son los de ADR-017 §4 a §6, con P1 (a), P2 (a) y P3 (a), decididas por los fundadores el 26 de noviembre de 2026 («Session 2026-11-26 · ADR-017») y en vigor desde el cierre de Q15.
+- **FR-045**: Hay un total mensual de **gastos previstos** (Q15 (b), cerrada con los comps el 26 de noviembre de 2026; 29.14), separado de ingresos y aportes programados, con un rótulo que dice exactamente qué incluye: «Gastos de {mes} sin confirmar · solo tuyos» en Yo y «Gastos de {mes} sin confirmar · de la pareja» en Nosotros, con sus dos notas aprobadas, «Previstos y por confirmar de tus gastos privados. No es lo pagado ni dinero disponible.» en Yo y «Previstos y por confirmar de los gastos compartidos. No es lo pagado ni dinero disponible.» en Nosotros (P-3; C-2; `design-comps.md`, P-3). Se presenta en la variante **b2**: los importes fijos y los estimados por separado, una sola variante para todos y sin configuración (P-2). Qué entra en el total, qué devuelve, cómo se presenta, dónde se ve y su privacidad son los de ADR-017 §4 a §6, con P1 (a), P2 (a) y P3 (a), decididas por los fundadores el 26 de noviembre de 2026 («Session 2026-11-26 · ADR-017») y en vigor desde el cierre de Q15.
 - **FR-046**: Ese total: nunca se mezcla con métricas de movimientos reales; nunca suma ingresos, gastos y aportes en una cifra neta; no presenta como seguros los ingresos condicionales; no trata importes desconocidos como cero; si solo cuenta importes fijos pendientes, lo dice; en Nosotros usa solo lo compartido autorizado y la ausencia no es cero. ADR-017 §7 dice dónde se cumple cada una.
 - **FR-047**: El total de lo previsto **no es liquidez ni disponibilidad**: nunca se calculan a partir de él excedentes, disponible, capacidad de pago ni previsto frente a real (DEC-R17; decisión 28, «Lo que no cambia»). El tratamiento de estimados, rangos, estados y privacidad lo fija ADR-017 (§1 a §6), y ninguna cifra mezcla lo previsto con lo real (ADR-017 §3).
 

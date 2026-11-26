@@ -121,10 +121,10 @@ de `use-write.ts`: guardando, éxito, rechazo confirmado y resultado desconocido
 | --- | --- | --- | --- |
 | **07·1 Lista de recurrencias** | Lista por tipo; Yo con las privadas propias y las de la pareja aparte, sin total ni recuento común; Nosotros solo lo compartido; estados de la regla; ruta hija de Plan | FR-002, FR-003, FR-040, FR-060 a FR-062; US1, US4.2; Q8, Q14 | ADR-016 §6.1 (estados derivados), §11 (privacidad); ADR-017 §6 |
 | **07·2 Crear una recurrencia** | Tipo; «Solo yo» por defecto y compartir como acción explícita; responsable distinto de quien paga; importe según el tipo y la certeza (fijo → fijo, estimado → rango, condicional → fijo, rango o desconocido); condición ≤ 140; ingreso solo en Yo; aporte siempre privado, solo fijo y con modo de aporte; contexto inmutable; frecuencias, quincenal 1–15 y 16–31, día de referencia; fin por fecha o por N; fecha inicial pasada | FR-001, FR-003, FR-008, FR-009 a FR-009b, FR-020, FR-023, FR-030, FR-060; US1.1, US1.4, US5.2, US6.3; Q7, Q8, Q9, Q10, Q11, Q13; 28.11 | ADR-016 §3.2, §3.3 (P1); ADR-017 §1 (combinaciones permitidas); ADR-018 §1 (P1(a), `funding_mode`) |
-| **07·3 Detalle de una recurrencia** | «Cuota n de N» solo con N; posiciones consumidas sin presentarlas como pagadas ni pendientes; terminó sola frente a finalizada; pendientes de una archivada o finalizada, visibles y resolubles; responsable y pagador; autoría en compartidas; no se edita una regla cerrada | FR-002, FR-018, FR-035 a FR-037, FR-042; US7.1 a US7.3, US7.5; Q13, F101-8 iii, F101-15 | ADR-016 §4, §6.1, §6.3, §6.6 (P5) |
+| **07·3 Detalle de una recurrencia** | «n de N» solo con N (C-5; el prompt decía «cuota n de N»); posiciones consumidas sin presentarlas como pagadas ni pendientes; terminó sola frente a finalizada; pendientes de una archivada o finalizada, visibles y resolubles; responsable y pagador; autoría en compartidas; no se edita una regla cerrada | FR-002, FR-018, FR-035 a FR-037, FR-042; US7.1 a US7.3, US7.5; Q13, F101-8 iii, F101-15 | ADR-016 §4, §6.1, §6.3, §6.6 (P5) |
 | **07·4 Editar** | Editables y de solo lectura según ADR-016 §3.4 («Qué es editable»): contexto, tipo, meta y frecuencia de solo lectura; modo del aporte editable; la fecha de una regla de una sola fecha solo sin hechos y posterior a hoy; vista previa; instancias que aparecen o desaparecen; límites al reducir N o la fecha final, con su error; omisiones con datos fijados; conflicto de versión | FR-003, FR-004, FR-005; US1.5, US4.3; Q6, P2, P7, F101-11 | ADR-016 §3.4 («Qué es editable», regla de una sola fecha, puntos 1 a 7), §4, §6.1 (límites al reducir), §7.1; ADR-018 §1 |
 | **07·5 Cambiar frecuencia** | Un solo paso, atómico e idempotente; con historia (por existencia de filas) se finaliza a mano y sin historia se elimina; origen de la nueva y por qué; lo que cubre la anterior junto al calendario nuevo, sin deduplicar; cancelación explícita de las sin resolver; N′ y el caso N′ ≤ 0; aporte con meta inactiva; estados de escritura | FR-005, FR-076; P2 | ADR-016 §3.4 («Flujo Cambiar frecuencia: contrato», 1 a 3), §6.3 («con historia»); ADR-018 §3.2 |
-| **07·6 Calendario** | Lista por fecha con flechas de mes en móvil, sin cuadrícula; mes actual y siguiente; formas del importe; condición; «cuota n de N»; acciones según el estado; sin movimientos reales sin instancia; escritorio en dos variantes; paso 4 de la cadena de P6 en Nosotros | FR-040 a FR-044, FR-022; US3.1 a US3.3, US3.5, US5.1, US5.5; Q14, N-6, F101-10 | ADR-017 §1 y §2; ADR-016 §5, §9 |
+| **07·6 Calendario** | Lista por fecha con flechas de mes en móvil, sin cuadrícula; mes actual y siguiente; formas del importe; condición; «n de N» (C-5); acciones según el estado; sin movimientos reales sin instancia; escritorio en dos variantes; paso 4 de la cadena de P6 en Nosotros | FR-040 a FR-044, FR-022; US3.1 a US3.3, US3.5, US5.1, US5.5; Q14, N-6, F101-10 | ADR-017 §1 y §2; ADR-016 §5, §9 |
 | **07·6 · Q15** | (a) sin total, completa y usable; (b) total de gastos sin resolver del mes por contexto, con rótulo exacto, solo en el calendario, en b1 y b2; ausencia sin cifra; casos solo fijos, solo estimados, D1 antes de su fecha, P6, consumidas por pausa y P7; `unknown_count` como contrato defensivo, sin comp | FR-045 a FR-047, FR-062; US3.4; Q15 | ADR-017 §3, §4 (P1(a), P2(a), P3(a), reglas 1 a 6, «Lo que deciden los comps»), §6, §7 |
 | **07·7 Por confirmar, Inicio y Plan** | Lista de por confirmar, incluidas las reabiertas por D1 y las de reglas archivadas; módulo de Inicio solo con pendientes, descartable, sin culpa y sin importes; recuentos de un solo contexto; comparación de Tomás en Yo y en Nosotros con y sin las programaciones privadas de Sara | FR-050, FR-051, FR-060 a FR-062, FR-018; US8; Q16, P3(a), F101-2 | ADR-016 §5 (paso 4), §6.6, §11; ADR-017 §4 («Dónde se ve»), §6 |
 | **07·8 Confirmar** | Precedencia: 1) rechazo si la instancia cambió (§7.1), sin crear nada; 2) sugerencias compatibles antes de crear, sin deduplicación automática; 3) toque único con importe fijo y certeza fija en ingresos, o borrador con los datos de la versión solo para estimado, desconocido o ingreso condicional; fecha efectiva ≤ hoy y fecha prevista aparte; Gasto con meta; comps de Internet con sugerencia y de instancia que cambió; estados de escritura; rechazos de ya resuelta y meta inactiva | SC-004; FR-012, FR-012a, FR-012b, FR-013, FR-014, FR-016, FR-019, FR-021; US2.1 a US2.6, US2.10, US2.11, US4.1, US4.4, US5.3, US5.4, US5.6; Q4, Q9, D2, F101-5, F101-6, F101-17 | ADR-016 §7.1 (`occurrenceChanged`), §7.2, §7.3 (`occurrenceAlreadyResolved`), §7.6; ADR-017 §2; ADR-018 §2, §4 (`goalNotOpen`) |
@@ -188,7 +188,7 @@ registrado en el maestro §15.10, decisión 29.14, y la spec 007 está reconcili
 | --- | --- | --- | --- | --- |
 | P-1 | **Q15: ¿existe el total de gastos previstos?** | Q15; 29.4; FR-045; ADR-017 §4 | (a) sin total, el respaldo; (b) con total, y entonces rigen P1(a), P2(a) y P3(a) de ADR-017 | **(b)**: «Q15(b): sí al total mensual de gastos previstos.» Entran en vigor P1(a), P2(a) y P3(a) de ADR-017 |
 | P-2 | Si Q15 es (b): un solo rango o fijos y estimado por separado | ADR-017 §4, «Lo que deciden los comps» | b1 · b2 | **b2**: «b2, con los importes fijos y estimados separados. Una sola variante para todos, sin configuración adicional.» |
-| P-3 | Si Q15 es (b): texto exacto del rótulo y de la ausencia | ADR-017 §4, reglas 1 y 5 | El que propongan los comps; la ausencia, sin cifra | «aprobamos el rótulo y la nota.» Son los de 07·6: «Gastos de {mes} sin confirmar · solo tuyos» o «· de la pareja», con su nota («Previstos y por confirmar de tus gastos privados. No es lo pagado ni dinero disponible.»), y la ausencia sin cifra («No hay gastos previstos por confirmar este mes.») |
+| P-3 | Si Q15 es (b): texto exacto del rótulo y de la ausencia | ADR-017 §4, reglas 1 y 5 | El que propongan los comps; la ausencia, sin cifra | «aprobamos el rótulo y la nota.» Son los de 07·6: «Gastos de {mes} sin confirmar · solo tuyos» o «· de la pareja», con sus dos notas: en Yo, «Previstos y por confirmar de tus gastos privados. No es lo pagado ni dinero disponible.», y en Nosotros, «Previstos y por confirmar de los gastos compartidos. No es lo pagado ni dinero disponible.» (como en `comps/07-06-p6.png`); y la ausencia sin cifra («No hay gastos previstos por confirmar este mes.») |
 | P-4 | Nombres visibles: ruta, instancia, estados de la instancia y de la regla, «cuota n de N» y el preset | Q2; FR-080 | Los de trabajo del prompt y las alternativas que proponga Claude Design | «P-4 / Q2: aprobamos los nombres propuestos.» Cierra Q2; están en `docs/GLOSSARY.md`. El preset es «Atajo»; la posición, «7 de 24» (C-5) |
 | P-5 | Texto de «importe desconocido» | ADR-017 §1 y §2 | Nunca $0 ni un guion | «importe desconocido, nunca $0.» |
 | P-6 | Escritorio del calendario | Q14 | (i) lista ancha con panel; (ii) cuadrícula mensual con lista | **(i)**: «lista ancha con panel en escritorio.» |
@@ -209,11 +209,11 @@ descarta algo que los comps enseñan, manda la decisión:
 - **07·6, Q15 (a) y b1:** quedan como contexto. Rige (b) en la variante b2.
 - **07·6, escritorio (ii), la cuadrícula mensual:** descartada (P-6).
 - **07·12b, la variante de C-6:** descartada (P-12 y C-6). Metas queda intacta.
-- **«cuota 7 de 24»:** los comps lo escriben así en la Cuota inicial del
-  apartamento, en varias pantallas (por ejemplo, 07·1, 07·3, 07·6 y 07·11). Con
-  C-5, la forma de la posición es
-  «7 de 24». La aprobación no dice si «cuota» se conserva en algún tipo de
-  compromiso, y este documento no lo decide.
+- **«cuota 7 de 24»:** los comps escriben así el indicador de posición de la Cuota
+  inicial del apartamento, en varias pantallas (por ejemplo, 07·1, 07·3, 07·6 y
+  07·11). Con C-5, el indicador es «7 de 24» en **todos** los compromisos, sin
+  excepción por tipo. «Cuota» puede ir en el **nombre** de una recurrencia
+  («Cuota inicial del apartamento»), pero nunca en el indicador de posición.
 - **Errata de 07·2f** (encontrada al registrar C-8): con «Empieza 12 ago 2026» y hoy
   14 de noviembre de 2026, el aviso dice «quedan por confirmar: **3** (12 sep, 12
   oct, 12 nov)», pero la fecha del 12 de agosto también pasó: el número exacto es
@@ -305,7 +305,15 @@ sección de los comps:
   SC-003);
 - que las cifras de Q15 (b) cuadren con los datos de ejemplo: Yo de Sara, entre
   $2.218.900 y $2.248.900; Nosotros antes del paso 3 de P6, entre $340.000 y
-  $400.000; Yo de Tomás, sin cifra;
+  $400.000; Yo de Tomás, sin cifra. Esas son las cifras en b1. En **b2**, la
+  variante aprobada, los tres momentos de P6 en Nosotros (07·6g a 6i) son:
+
+  | Momento | Fijos | Estimados |
+  | --- | --- | --- |
+  | Antes | $160.000 | $180.000–$240.000 |
+  | Vinculado | $95.000 | $180.000–$240.000 |
+  | Deshecho | $160.000 | $180.000–$240.000 |
+
 - que la variante (a) de Q15 sea completa y usable, no una versión recortada de la
   (b);
 - que ningún comp dé el toque único con una sugerencia compatible sin resolver, ni
