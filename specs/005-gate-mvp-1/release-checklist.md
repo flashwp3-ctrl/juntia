@@ -99,7 +99,10 @@ cierre».
 - [ ] Tabla de idempotencia sin purga en MVP-1; tamaño medido: `____` filas, `____` MB; su
       revisión, en la lista de MVP-2 (FR-068, Q12)
 - [ ] Registros de ejecución de Vercel de una semana: cero coincidencias de importes,
-      comercios, notas o tokens (se registran las búsquedas, no las líneas) (FR-013)
+      comercios, notas o tokens (se registran las búsquedas, no las líneas) (FR-013).
+      **Decisión 30:** una semana de uso en producción con actividad representativa;
+      versión que generó los registros: `____`; operaciones de esa semana: `____`. No vale
+      la corrida de `juntia-dev`; si no se puede acreditar, deciden los fundadores
 
 ## Firmas
 

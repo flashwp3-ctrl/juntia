@@ -465,7 +465,7 @@ de cierre declara MVP-1.
 
 **Why this priority**: §11: «Solo aquí se declara MVP-1 lanzado».
 
-**Independent Test**: las dos valoraciones en `evidence.md` y el estado del maestro actualizado por un PR documental fusionado.
+**Independent Test**: las dos valoraciones en `evidence.md` y el estado del maestro actualizado por un PR documental fusionado. **Enmienda (decisión 30):** para la declaración, la aprobación de los dos (FR-082) y el estado del maestro actualizado por el PR de declaración, que deja escrito que la validación por uso real sigue pendiente; las dos valoraciones llegan con esa validación (30.6) y SC-011 queda «Pendiente · validación por uso real (30.6)».
 
 **Acceptance Scenarios**:
 
@@ -525,7 +525,7 @@ Cada requisito dice su **evidencia**:
 - **FR-013**: **Ningún dato financiero ni personal sale a terceros por telemetría, errores ni registros** (§7.4). El gate comprueba tres cosas:
   - que la app no envía analítica;
   - que las respuestas de error no llevan importes ni notas;
-  - que los registros de ejecución de Vercel de una semana de uso no contienen importes, comercios, notas ni tokens.
+  - que los registros de ejecución de Vercel de una semana de uso no contienen importes, comercios, notas ni tokens. **Precisión (decisión 30):** es una semana de uso en producción con actividad representativa, antes de declarar; no los 7 días de la validación por uso real ni la corrida de `juntia-dev`. Se registran la versión, las operaciones y las búsquedas con sus coincidencias. Si no se puede acreditar, la excepción la deciden los fundadores.
   - **Evidencia:** revisión de código y de la red en la checklist de humo, más la revisión humana de los registros.
 - **FR-014**: Las comprobaciones de aislamiento de la superficie interna (001-T072, partes 1 y 2) se **repiten en producción** con el commit candidato: HTML, RSC, 404 y host no autorizado. Son controles de aislamiento y no admiten excepción (decisión 12). **Evidencia:** la salida de la sonda.
 - **FR-015**: Se comprueba que ninguna clave privilegiada está en variables `NEXT_PUBLIC_*` del despliegue de producción, y que las migraciones aplicadas en producción coinciden, una a una, con las del repositorio en el commit candidato. **Evidencia:** la salida de la comprobación, sin valores de claves.
@@ -705,7 +705,7 @@ P0-4 no crea datos de producto. Sus entidades son registros de evidencia:
 
 ## Assumptions
 
-- **P0-1, P0-2 y P0-3 están en producción** (`juntia-alpha.vercel.app`) y los fundadores las usan con datos reales; P0-3 se acepta antes de empezar P0-4 (FR-001).
+- **P0-1, P0-2 y P0-3 están en producción** (`juntia-alpha.vercel.app`) y los fundadores las usan con datos reales; P0-3 se acepta antes de empezar P0-4 (FR-001). **Nota (decisión 30):** el uso con datos reales es el contexto original de esta spec, no un requisito vigente para declarar MVP-1; el uso real que se exige es la validación aplazada (30.6). FR-001 (004-T084 y T085) no cambia.
 - **Los dos fundadores usan iPhone** y ninguno tiene Android (decisión 12); para el CLS en iPhone se consigue un Mac prestado (Q6, opción a).
 - **El catálogo, las pantallas y el dataset dorado** son los de la 004; P0-4 no añade pantallas.
 - **El job `e2e` partido en dos** lo entrega otra sesión antes del PR A; si no llega, la cláusula anticliquet sigue valiendo.

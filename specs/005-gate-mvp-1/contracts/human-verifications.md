@@ -111,7 +111,7 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   cierra una vez, sin doble animación ni pantalla en blanco, y el foco vuelve a la carta.
 - **Evidencia:** nota y dos fotogramas PNG (gesto y resultado).
 
-### V7 · US-12, mediana < 10 s (FR-055) — pasos 6 o 7
+### V7 · US-12, mediana < 10 s (FR-055) — paso 6 (decisión 30)
 
 - **Quién:** cada fundador.
 - **Pasos:** grabación de pantalla durante al menos 10 gastos habituales reales; tiempo
@@ -173,7 +173,10 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 > **validación por uso real**, que se conserva pero se aplaza (30.6): el periodo, D4 y la
 > valoración se hacen cuando se cumpla esa condición y no condicionan la declaración de
 > MVP-1, que es su aceptación técnica (30.5). «Antes del periodo» (FR-080) se rige por la
-> 30.7: hasta que los fundadores la confirmen, la sesión guiada sigue en el paso 6.
+> 30.7: hasta que los fundadores la confirmen, la sesión guiada sigue en el paso 6. Si la
+> confirman, el escenario humano completo se hace aquí, antes del periodo, y es
+> precondición para abrirlo (T094). La congelación, los fallos críticos y el reinicio de
+> los 7 días siguen la 25.5, no la excepción de C-1–C-7.
 
 - **Quién:** los dos.
 - **Antes del periodo:** la sesión guiada del escenario de pareja de §4, en móvil y en
@@ -195,7 +198,7 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   (dinero, privacidad, pérdida de datos o accesibilidad básica) impide aprobar; los
   demás van a la lista de MVP-2 con dueño (FR-083).
 
-### V14 · Copia y restauración real (FR-061, FR-062, Q9) — paso 7
+### V14 · Copia y restauración real (FR-061, FR-062, Q9) — tras el paso 6, antes de declarar (decisión 30.5)
 
 > **Enmienda del 25 de noviembre de 2026 (decisión 30.5).** V14 es de la aceptación
 > técnica: se hace después del paso 6 y antes de declarar, no al final del periodo de

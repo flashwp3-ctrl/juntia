@@ -265,11 +265,17 @@ fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
 >   código acotado a C-1–C-7 (30.2 y 30.3), con regresiones y evidencia nueva. Es el
 >   último PR de código antes del candidato. Cualquier otra corrección de código
 >   necesita una autorización expresa de los fundadores, registrada en el maestro (30.2).
-> - **Pasos 4 a 6**, sin cambios, sobre el candidato que incluye ese PR.
+>   Son siete correcciones de presentación y copy: si una exige cambiar una consulta
+>   financiera, un permiso o una validación del servidor, la sesión se detiene y pide
+>   esa autorización.
+> - **Pasos 4 a 6**, sin cambios, sobre el candidato que incluye ese PR. El paso 4 se
+>   ejecuta completo.
 > - **Paso 7, partido en dos.**
 >   - **Antes de declarar**, después del paso 6: la copia y la **restauración real**
->     (FR-061, V14), los registros de Vercel de la última semana (FR-013) y la tabla de
->     idempotencia (FR-068).
+>     (FR-061, V14), los registros de Vercel de una semana de uso en producción con
+>     actividad representativa (FR-013; versión, operaciones y búsquedas con sus
+>     coincidencias; no vale la corrida de `juntia-dev`, y si no se puede acreditar
+>     deciden los fundadores) y la tabla de idempotencia (FR-068).
 >   - **Validación por uso real**, aplazada (30.6): los 7 días con D4 y la valoración de
 >     FR-081.
 > - **Paso 8 (PR C) y paso 9 (declaración)**, con lo de la aceptación técnica. No esperan
@@ -349,6 +355,12 @@ con todas las casillas marcadas y firmada (FR-069), `states-matrix.md` final, la
 FR-002 (inventario heredado sin filas «abiertas»), FR-003 (salidas de tareas antiguas),
 FR-030 (S1–S5), FR-034 (criterios del handoff), FR-056 (CWV sin «p75») y SC-001 a SC-012,
 las dos valoraciones de FR-081 y la lista de MVP-2 de FR-083.
+
+> **Enmienda del 25 de noviembre de 2026 (decisión 30.5).** El PR C cierra la aceptación
+> técnica. SC-011 queda en la tabla con el estado «Pendiente · validación por uso real
+> (30.6)», fuera de lo que debe estar superado para cerrarlo; las valoraciones de FR-081
+> y las fechas del periodo llegan en un PR documental posterior, cuando ocurra. FR-002 y
+> SC-003, sin filas abiertas.
 
 **Formato:** solo `.md`, `.png` y `.txt` bajo `specs/` (`AGENTS.md` 15a).
 
