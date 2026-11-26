@@ -1,6 +1,6 @@
 // 004 PR C, T042 / FR-044, FR-071; US-5.2, US-6.1 — capa: componentes (Vitest + RTL).
 // Criterio literal (tasks.md, T042): «la fila de retiro nunca se presenta como ingreso (signo, ficha, etiqueta)». Y de
-// FR-044/FR-071: Actividad muestra los asientos de metas con su ficha, «Gasto {mes} $X · Apartado $Y» por separado (el
+// FR-044/FR-071: Actividad muestra los asientos de metas con su ficha, «Gasto de {mes} $X · Apartado $Y» por separado (el
 // apartado nunca entra en el total del gasto) y el filtro «Aportes».
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -40,7 +40,7 @@ function couple() {
 }
 
 describe("Actividad con asientos de metas (FR-044, FR-071)", () => {
-  it("Nosotros: «Gasto octubre $2.840.000 · Apartado $900.000» por separado y los aportes con «ahorro, no es consumo»", () => {
+  it("Nosotros: «Gasto de octubre $2.840.000 · Apartado $900.000» por separado y los aportes con «ahorro, no es consumo»", () => {
     couple();
     expect(screen.getByText(copy.goals.activity.spent("octubre"))).toBeTruthy();
     expect(screen.getByText("$2.840.000")).toBeTruthy();
@@ -49,6 +49,13 @@ describe("Actividad con asientos de metas (FR-044, FR-071)", () => {
     expect(screen.queryByText("$3.740.000")).toBeNull();
     expect(screen.getAllByText(copy.goals.activity.contribution("Japón")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(copy.goals.activity.contributionMeta("Sara"), { exact: false }).length).toBeGreaterThan(0);
+  });
+
+  // C-5 (maestro §15.10, decisión 30.3; corrida del PR #104, J-7): en Nosotros faltaba «de».
+  it("C-5: el resumen de Nosotros dice «Gasto de octubre», nunca «Gasto octubre»", () => {
+    couple();
+    expect(screen.getByText("Gasto de octubre")).toBeTruthy();
+    expect(screen.queryByText("Gasto octubre")).toBeNull();
   });
 
   it("filtro «Aportes»: solo los asientos de metas", async () => {

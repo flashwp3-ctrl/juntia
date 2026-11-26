@@ -32,6 +32,16 @@ describe("Actividad (T062)", () => {
     expect(summary.textContent).not.toContain("86.000");
   });
 
+  // C-2 (maestro §15.10, decisión 30.3; corrida del PR #104, J-6): Actividad en Yo lista solo los movimientos privados (las
+  // filas no cambian) y su encabezado lo dice; el consumo personal completo sigue en Inicio en Yo (003 FR-045).
+  it("C-2: el encabezado del resumen en Yo dice que son gastos privados, con el mismo total de privados", () => {
+    view();
+    const summary = screen.getByRole("region", { name: "Gastos privados de octubre" });
+    expect(summary.textContent).toMatch(/\$\s?412\.900/);
+    expect(screen.queryByText("Gasto de octubre")).toBeNull();
+    expect(rowLinks()).toHaveLength(9);
+  });
+
   it("agrupa por día, del más reciente al más antiguo, y cada fila enlaza a su detalle", () => {
     view();
     const days = screen.getAllByRole("heading", { level: 2 }).map(({ textContent }) => textContent);

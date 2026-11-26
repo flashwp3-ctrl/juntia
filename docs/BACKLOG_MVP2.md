@@ -124,6 +124,16 @@ congelación de C-1–C-7 y no se especifican sin una decisión de los fundadore
 | S-7 | Desactivar un presupuesto no pide confirmación | Es reversible y conserva el historial |
 | S-8 | Limitación de completitud y portabilidad de la exportación: los usos de meta compartida no permiten rehacer por aportante la parte de `gasto_financiado_con_meta` | No es un FAIL: 004 FR-080 no lo exige |
 
+**Defecto pendiente, no autorizado: la vista previa de «Mover a Pareja».** Se detectó al corregir C-1 en el PR #111. Los
+fundadores lo dejaron fuera de ese PR el 26 de noviembre de 2026, para una corrección posterior: «"Mover a Pareja"
+permanece fuera del alcance de este PR. Registra el defecto para una corrección posterior.».
+
+- **Dónde:** `src/features/expenses/reclassify-dialog.tsx`, `movePreview` (l.48–68).
+- **Qué pasa:** la última fila del ChangePreview tacha el saldo anterior (`abs(myBefore)`) bajo la etiqueta de la dirección
+  nueva (`owes(myAfter)`) cuando mover el gasto invierte la deuda. Si debías $50.000 y el gasto la invierte, se lee
+  «{pareja} te debe ~~$50.000~~ $40.000». Es el mismo patrón que C-1.
+- **Estado:** no forma parte de la excepción de la decisión 30.2 ni se corrige sin una autorización de los fundadores.
+
 ## Ideas sin decidir
 
 Ideas que salieron de Planes. Ninguna está decidida ni especificada, y cada una

@@ -11,7 +11,8 @@
 // bloquean las acciones hasta «Revisar», que pide la página otra vez (sin tiempo real, decisión 20.16); nunca se atribuye el
 // cambio a nadie ni se afirma que ya se ve lo último (lecciones de los PR B y C).
 import { useRouter } from "next/navigation";
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState, useTransition } from "react";
+import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { newIdempotencyKey } from "../idempotency";
 import { useWrite } from "@/features/shared/use-write";
@@ -31,10 +32,15 @@ type Props = { request: UsageRequestView; people: readonly GoalPerson[]; actions
 type Kind = "approve" | "reject" | "cancel";
 const ACTION: Record<Kind, WriteAction> = { approve: "approve_usage_request", reject: "reject_usage_request", cancel: "cancel_usage_request" };
 
-/** Lo que dice la tarjeta ante un rechazo confirmado (contracts/errors.md). */
+/**
+ * Lo que dice la tarjeta ante un rechazo confirmado (contracts/errors.md). C-7 (decisión 30.3; 004 US7.9): sin aportes
+ * suficientes, «Tus aportes cambiaron: ahora tienes $X en {meta}» solo con la cifra que trae el propio rechazo. Si no la trae
+ * (la aprobación no la envía), no se usa ninguna lectura anterior como cifra actual (F111-2): se pide revisar, y «Revisar»
+ * trae la tarjeta con lo disponible de ahora. El texto genérico de FundingLedger («Revisa los fondos…») no aplica aquí.
+ */
 export function requestRejection(error: WriteError, detail: WriteRejectionDetail | undefined, goalName: string) {
   switch (error) {
-    case "insufficientFunds": return detail?.availableMinor ? copy.goals.errors.fundsChanged(cop(detail.availableMinor), goalName) : copy.goalExpense.errors.allocation;
+    case "insufficientFunds": return detail?.availableMinor ? copy.goals.errors.fundsChanged(cop(detail.availableMinor), goalName) : copy.goals.errors.fundsChangedReview(goalName);
     case "versionConflict": return copy.goalExpense.errors.versionConflict;
     case "requestResolved": return copy.goalExpense.errors.resolved;
     case "requestGone": return copy.goalExpense.errors.requestGone;
@@ -46,6 +52,19 @@ export function requestRejection(error: WriteError, detail: WriteRejectionDetail
   }
 }
 
+type FundsState = { kind: "enough"; available: bigint; after: bigint } | { kind: "short"; available: bigint } | { kind: "unknown" };
+
+/**
+ * C-7 (F111-1): lo disponible leído de quien aprueba frente a lo pedido. Sin fila en `goal_member_balances`
+ * (`memberAvailableMinor = null`) es «unknown»: la ausencia no se trata como cero ni como suficiente.
+ */
+export function fundsState(request: Pick<UsageRequestView, "memberAvailableMinor" | "amountMinor">): FundsState {
+  if (request.memberAvailableMinor === null) return { kind: "unknown" };
+  const available = BigInt(request.memberAvailableMinor);
+  const after = available - BigInt(request.amountMinor);
+  return after < 0n ? { kind: "short", available } : { kind: "enough", available, after };
+}
+
 export function UsageRequestCard({ request, people, actions, compact = false }: Props) {
   const router = useRouter();
   const titleId = `${useId()}-solicitud`;
@@ -55,7 +74,6 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const role = me?.userId === request.requestedBy ? "requester" : me?.userId === request.memberUserId ? "member" : null;
   const keys = useRef<Partial<Record<Kind, string>>>({});
   const [done, setDone] = useState<RequestResult["status"] | null>(null);
-  const [blocked, setBlocked] = useState(false);
   const [kind, setKind] = useState<Kind>("approve");
   // Revisión del gestor del PR #69 (10): con un resultado desconocido, cerrar el aviso se confirma («¿Cerrar sin confirmar?»,
   // como las hojas de metas) y deja dicho que no se pudo confirmar; las acciones vuelven con la MISMA clave, así que repetirlas
@@ -63,8 +81,13 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [unconfirmed, setUnconfirmed] = useState(false);
 
+  // F111-14 y F111-18: los tipos cuya última intención recibió un rechazo confirmado. `run` es el único punto al que llega un
+  // envío que `useWrite` admite: ahí se quita la marca de ese tipo antes de enviar, y `onRejected` la vuelve a poner solo si
+  // ESTE envío recibe un rechazo confirmado. Así una marca vieja nunca sobrevive a un reenvío que acabe en `unknown`.
+  const rejectedKinds = useRef(new Set<Kind>());
   const run = useCallback((payload: RequestPayload & { kind: Kind }) => {
     const { kind: which, ...rest } = payload;
+    rejectedKinds.current.delete(which);
     return which === "approve" ? actions.approve(rest) : which === "reject" ? actions.reject(rest) : actions.cancel(rest);
   }, [actions]);
   const check = useCallback((input: { action: WriteAction; idempotencyKey: string }) => actions.check(input), [actions]);
@@ -76,28 +99,66 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
     annotate?.notify({ tone: "success", message });
     router.refresh();
   }, [annotate, request.goalName, router]);
-  const onRejected = useCallback((error: WriteError) => { if (error !== "sessionExpired") setBlocked(true); }, []);
+  // Tras «Revisar», la página trae la solicitud otra vez: con otra versión, estado o saldos, quien la pinta cambia su `key` y
+  // la tarjeta nace de nuevo, con claves nuevas y sin el bloqueo (UsageRequests y el detalle usan `requestKey`).
+  // F111-8: con los mismos valores la `key` no cambia y la tarjeta no renace. Por eso «Revisar» es una transición: el refresco
+  // y `review.count` se actualizan en la misma transición, así que la cuenta nueva se confirma junto con la lectura nueva
+  // (nunca antes, con la vieja a la vista). Un rechazo vale para la revisión en la que llegó (`rejectedAt`): al confirmarse
+  // una revisión posterior deja de pintarse y de bloquear. Nunca desbloquea un resultado desconocido: con `unknown`,
+  // «Revisar» no se ofrece y solo siguen reintentar, comprobar o cerrar con confirmación (F111-9).
+  // F111-14: tras una revisión solo se olvida la clave de una intención con RECHAZO CONFIRMADO (`rejectedKinds`): aprobar otra
+  // vez es una intención nueva. La clave de una intención sin resultado confirmado (`unknown`, aunque se haya cerrado el aviso
+  // con confirmación) se conserva siempre: repetirla es la misma intención (revisión del gestor del PR #69, 10).
+  const [refreshing, startRefresh] = useTransition();
+  const [review, setReview] = useState<{ count: number; rejectedAt: number | null; blocking: boolean }>({ count: 0, rejectedAt: null, blocking: false });
+  const keysAt = useRef(0);
+  const onRejected = useCallback((error: WriteError, payload: RequestPayload & { kind: Kind }) => {
+    rejectedKinds.current.add(payload.kind);
+    setReview((current) => ({ ...current, rejectedAt: current.count, blocking: error !== "sessionExpired" }));
+  }, []);
   const write = useWrite<RequestPayload & { kind: Kind }, RequestResult>({ action: ACTION[kind], run, check, onOk, onRejected });
-
-  // Tras «Revisar», la página trae la solicitud otra vez: con otra versión o estado, quien la pinta cambia su `key` y la
-  // tarjeta nace de nuevo, con claves nuevas y sin el bloqueo (UsageRequests y el detalle usan id, versión y estado).
+  const rejectedNow = write.state.phase === "rejected" && review.rejectedAt === review.count;
+  const blocked = rejectedNow && review.blocking;
 
   const send = (which: Kind) => {
+    if (refreshing) return;
+    if (keysAt.current !== review.count) {
+      for (const rejected of rejectedKinds.current) delete keys.current[rejected];
+      rejectedKinds.current.clear();
+      keysAt.current = review.count;
+    }
     keys.current[which] ??= newIdempotencyKey();
     setKind(which);
     void write.submit({ kind: which, idempotencyKey: keys.current[which]!, requestId: request.id, expectedVersion: request.version });
   };
 
   const status = done ?? request.status;
-  const busy = write.pending || write.locked;
+  // F111-9: durante el refresco de «Revisar» no hay acciones concurrentes.
+  const busy = write.pending || write.locked || refreshing;
   const amount = cop(request.amountMinor);
   const description = request.description ?? copy.goalExpense.request.expenseFallback;
-  const available = request.memberAvailableMinor ? BigInt(request.memberAvailableMinor) : null;
-  const after = available !== null ? available - BigInt(request.amountMinor) : null;
+  // C-7 (decisión 30.3; 004 US7.9; F111-1 y F111-2): lo disponible de quien aprueba, leído con la página, en tres estados.
+  // - «enough»: la vista previa «Tu disponible: $antes → $después» y «Aprobar».
+  // - «short»: «Tus aportes cambiaron: ahora tienes $X en {meta}», sin vista previa ni «Aprobar», con «Revisar».
+  // - «unknown» (sin fila en `goal_member_balances`): no se inventa una cifra ni se ofrece «Aprobar»; se pide revisar.
+  // Tras un rechazo, nada de esto: solo el aviso del rechazo con «Revisar». La aprobación sigue siendo explícita e idempotente,
+  // y el servidor valida igual al aprobar; aquí solo se decide qué se presenta como viable.
+  const funds = fundsState(request);
+  const pendingMember = role === "member" && status === "pending";
+  const usedSome = BigInt(request.usedMinor) > 0n;
+  // F111-9: «Revisar» va con la máquina de escritura. Se ofrece en reposo (insuficiente o indeterminado) y tras un rechazo
+  // confirmado; deshabilitado con una escritura pendiente o durante el refresco; nunca con un resultado desconocido o mientras
+  // se comprueba, porque un remontaje perdería la intención y su clave (use-write.ts, «unknown»).
+  const canReview = write.state.phase === "idle" || write.state.phase === "pending" || write.state.phase === "rejected";
+  const reviewButton = canReview ? (
+    <Button variant="secondary" icon="arrow-clockwise" className={`self-start ${wrapLabelMd}`} loading={refreshing} loadingLabel={copy.goalExpense.request.reviewing} disabled={write.pending || refreshing}
+      onClick={() => startRefresh(() => { router.refresh(); setReview((current) => ({ ...current, count: current.count + 1 })); })}>{copy.goalExpense.request.review}</Button>
+  ) : null;
 
   const badge = status === "pending" ? <ConfirmationBadge state="pending" name={member} />
     : status === "approved" ? <ConfirmationBadge state="approved" />
-      : status === "rejected" ? <ConfirmationBadge state="rejected" name={member} /> : null;
+      : status === "rejected" ? <ConfirmationBadge state="rejected" name={member} />
+        : status === "cancelled" ? <ConfirmationBadge state="cancelled" /> : null;
 
   const result = done === "approved" ? copy.goalExpense.request.approved(request.goalName)
     : done === "rejected" ? copy.goalExpense.request.rejected
@@ -114,10 +175,18 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
           {status === "pending" ? <p className="text-[0.875rem] font-semibold text-ink">{copy.goalExpense.request.expense(description, cop(request.transactionAmountMinor))}</p> : null}
           {request.splitLabel ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.split(request.splitLabel)}</p> : null}
           {BigInt(request.usedMinor) > 0n ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.used(requester, cop(request.usedMinor))}</p> : null}
-          {status === "pending" && available !== null && after !== null ? (
+          {pendingMember && !blocked && funds.kind !== "enough" ? (
+            <div data-funds={funds.kind} className="flex flex-col gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
+              <p className="flex items-start gap-2">
+                <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-ink-secondary" />
+                <span>{funds.kind === "short" ? copy.goals.errors.fundsChanged(cop(funds.available), request.goalName) : copy.goalExpense.request.fundsUnknown(request.goalName)}</span>
+              </p>
+              {reviewButton}
+            </div>
+          ) : pendingMember && !blocked && funds.kind === "enough" ? (
             <p className="text-[0.875rem] font-semibold text-ink tabular-nums">
-              <span className="sr-only">{copy.goalExpense.request.yoursLabel(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
-              <span aria-hidden="true">{copy.goalExpense.request.yours(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
+              <span className="sr-only">{copy.goalExpense.request.yoursLabel(request.goalName, cop(funds.available), cop(funds.after))}</span>
+              <span aria-hidden="true">{copy.goalExpense.request.yours(request.goalName, cop(funds.available), cop(funds.after))}</span>
             </p>
           ) : null}
           {status === "pending" ? <p className="text-[0.75rem] leading-[1.45] text-[var(--comp-field-muted-fg)]">{copy.goalExpense.request.rejectNote}</p> : null}
@@ -125,17 +194,18 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       ) : (
         <>
           {status === "pending" ? <p className="text-[0.875rem] text-ink">{copy.goalExpense.request.waiting(member)}</p> : null}
-          <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
+          <p className="text-[0.8125rem] text-ink-secondary">{status === "cancelled" ? copy.goalExpense.detail.asked(amount, member, request.goalName) : copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
           {status === "pending" ? <p className="text-[0.75rem] font-semibold text-ink-secondary">{copy.goalExpense.request.noExpiry}</p> : null}
         </>
       )}
       {status === "approved" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.approvedNote(member)}</p> : null}
-      {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.rejectedNote(member)}</p> : null}
+      {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.rejectedNote(member) : copy.goalExpense.detail.rejectedNoteNone(member)}</p> : null}
+      {status === "cancelled" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.cancelledNote : copy.goalExpense.detail.cancelledNoteNone}</p> : null}
       {result ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{result}</p> : null}
-      {write.state.phase === "rejected" ? (
+      {rejectedNow && write.state.phase === "rejected" ? (
         <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           <span>{requestRejection(write.state.error, write.state.detail, request.goalName)}</span>
-          {blocked ? <Button variant="secondary" icon="arrow-clockwise" className={wrapLabelMd} onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
+          {blocked ? reviewButton : null}
         </div>
       ) : null}
       {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirmingClose(true)} /> : null}
@@ -144,7 +214,7 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       {status === "pending" && !blocked && write.state.phase !== "unknown" ? (
         role === "member" ? (
           <div className="flex flex-wrap gap-2">
-            <Button icon="check" className={wrapLabelMd} loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>
+            {funds.kind !== "enough" ? null : <Button icon="check" className={wrapLabelMd} loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>}
             <Button variant="secondary" className={wrapLabelMd} loading={write.pending && kind === "reject"} loadingLabel={copy.goalExpense.request.rejecting} disabled={busy} onClick={() => send("reject")}>{copy.goalExpense.request.reject}</Button>
           </div>
         ) : role === "requester" ? (

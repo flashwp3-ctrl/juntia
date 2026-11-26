@@ -14,9 +14,10 @@ import { ContextProvider } from "@/components/shell/context-selector";
 import { ContextView } from "@/features/context/context-view";
 import type { SharedTransaction } from "@/lib/db/types";
 import { BalanceLine, CoupleHomeView, type CoupleMemberView } from "./couple-home-view";
+import { strikeFor } from "./balance-line";
 import { HomeView } from "./home-view";
 import { AnnotateProvider } from "@/features/expenses/annotate-provider";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 const idle = { create: vi.fn(), update: vi.fn(), voidTransaction: vi.fn() };
 // Como home.test.tsx: Inicio vive dentro del proveedor de Anotar (el bloque «Anotar gasto» y «Anotar el primero»).
@@ -77,6 +78,100 @@ describe("E5 con el saldo tachado (02·5; T041)", () => {
     const struck = screen.getByText("$429.900");
     expect(struck.closest("s, del")).not.toBeNull();
     expect(screen.getByText(copy.couple.home.owes("Tomás", "Sara")).closest("[data-balance-line]")?.textContent ?? "").toContain("$479.900");
+  });
+
+  // C-1 (maestro §15.10, decisión 30.3; corrida del PR #104, E-12b): «Ana le debe a Beto ~~$115.000~~ $85.000» se leía como
+  // si Ana hubiera debido 115.000. Criterio: si la deuda cambia de dirección, el anterior no se tacha bajo la dirección nueva.
+  it("C-1: si la deuda cambia de dirección, el saldo anterior no aparece tachado bajo la dirección nueva", () => {
+    const { rerender, container } = render(<BalanceLine balance={balance} members={members} />);
+    // Tomás paga 1.000.000 al 50/50: Sara pasa de cobrar 429.900 a deber 70.100.
+    const flipped = computeBalance([...beforeSettlement.expenses, { amount: moneyFromPesos(1000000n), payerUserId: "tomas", status: "active", allocations: [{ userId: "sara", amount: moneyFromPesos(500000n) }, { userId: "tomas", amount: moneyFromPesos(500000n) }] }], [], beforeSettlement.members);
+    act(() => rerender(<BalanceLine balance={flipped} members={members} />));
+    const line = screen.getByText(copy.couple.home.owes("Sara", "Tomás")).closest("[data-balance-line]");
+    expect(line?.textContent ?? "").toContain("$70.100");
+    expect(container.querySelector("s, del")).toBeNull();
+    expect(screen.queryByText("$429.900")).toBeNull();
+    // Un cambio posterior en la misma dirección sí tacha el anterior (E5 intacto): Sara paga 20.000 de Tomás.
+    const after = computeBalance([...beforeSettlement.expenses,
+      { amount: moneyFromPesos(1000000n), payerUserId: "tomas", status: "active", allocations: [{ userId: "sara", amount: moneyFromPesos(500000n) }, { userId: "tomas", amount: moneyFromPesos(500000n) }] },
+      { amount: moneyFromPesos(20000n), payerUserId: "sara", status: "active", allocations: [{ userId: "tomas", amount: moneyFromPesos(20000n) }] }], [], beforeSettlement.members);
+    act(() => rerender(<BalanceLine balance={after} members={members} />));
+    expect(screen.getByText("$70.100").closest("s, del")).not.toBeNull();
+    expect(screen.getByText(copy.couple.home.owes("Sara", "Tomás")).closest("[data-balance-line]")?.textContent ?? "").toContain("$50.100");
+  });
+
+  // F111-3 (revisión del PR #111): el tachado no puede llegar a pintarse ni un cuadro con la dirección equivocada. `Probe`, hermano
+  // posterior de BalanceLine, lee el DOM en su `useLayoutEffect`: es el DOM del primer commit de cada render, antes de cualquier
+  // efecto pasivo (un `useEffect` que limpiara el tachado llegaría tarde y la prueba lo vería).
+  describe("C-1 en el primer commit (F111-3)", () => {
+    const tomasPays = (pesos: bigint, toSara: bigint) => ({ amount: moneyFromPesos(pesos), payerUserId: "tomas", status: "active" as const, allocations: [{ userId: "sara", amount: moneyFromPesos(toSara) }, ...(pesos > toSara ? [{ userId: "tomas", amount: moneyFromPesos(pesos - toSara) }] : [])] });
+    const saraPays = (pesos: bigint, toTomas: bigint) => ({ amount: moneyFromPesos(pesos), payerUserId: "sara", status: "active" as const, allocations: [{ userId: "tomas", amount: moneyFromPesos(toTomas) }, ...(pesos > toTomas ? [{ userId: "sara", amount: moneyFromPesos(pesos - toTomas) }] : [])] });
+    const at = (...extra: ReturnType<typeof tomasPays>[]) => computeBalance([...beforeSettlement.expenses, ...extra], [], beforeSettlement.members);
+    function Probe({ commits }: { commits: { text: string; struck: string | null }[] }) {
+      useLayoutEffect(() => {
+        const line = document.querySelector("[data-balance-line]");
+        commits.push({ text: line?.textContent ?? "", struck: line?.querySelector("s, del")?.textContent ?? null });
+      });
+      return null;
+    }
+    const view = (value: ReturnType<typeof at>, commits: { text: string; struck: string | null }[]) => <><BalanceLine balance={value} members={members} /><Probe commits={commits} /></>;
+
+    it("misma dirección → dirección contraria: ningún commit pinta el tachado bajo la frase nueva", () => {
+      const commits: { text: string; struck: string | null }[] = [];
+      const { rerender } = render(view(at(), commits));
+      // Misma dirección: Sara paga 100.000 al 50/50 → Tomás le debe 479.900; se tacha 429.900 (E5).
+      act(() => rerender(view(at(saraPays(100000n, 50000n)), commits)));
+      expect(commits.at(-1)).toEqual(expect.objectContaining({ struck: "$429.900" }));
+      const from = commits.length;
+      // Dirección contraria: Tomás paga 1.100.000 al 50/50 → Sara le debe 70.100 a Tomás.
+      act(() => rerender(view(at(saraPays(100000n, 50000n), tomasPays(1100000n, 550000n)), commits)));
+      const after = commits.slice(from);
+      expect(after.length).toBeGreaterThan(0);
+      for (const commit of after) {
+        expect(commit.text).toContain(copy.couple.home.owes("Sara", "Tomás"));
+        expect(commit.struck).toBeNull();
+      }
+    });
+
+    it("deuda → «Al día» → deuda: el anterior se tacha junto a «Al día», nunca bajo la deuda nueva", () => {
+      const commits: { text: string; struck: string | null }[] = [];
+      const { rerender } = render(view(at(), commits));
+      // Tomás paga 429.900 que asume Sara: al día.
+      act(() => rerender(view(at(tomasPays(429900n, 429900n)), commits)));
+      expect(commits.at(-1)).toEqual({ text: expect.stringContaining(copy.couple.home.settled), struck: "$429.900" });
+      const from = commits.length;
+      // Tomás paga 100.000 que asume Sara: ahora Sara le debe a Tomás.
+      act(() => rerender(view(at(tomasPays(429900n, 429900n), tomasPays(100000n, 100000n)), commits)));
+      for (const commit of commits.slice(from)) {
+        expect(commit.text).toContain(copy.couple.home.owes("Sara", "Tomás"));
+        expect(commit.struck).toBeNull();
+      }
+    });
+
+    it("cambio de dirección y después otro en la misma dirección: el segundo tacha el anterior correcto", () => {
+      const commits: { text: string; struck: string | null }[] = [];
+      const { rerender } = render(view(at(), commits));
+      act(() => rerender(view(at(tomasPays(1000000n, 500000n)), commits)));
+      expect(commits.at(-1)?.struck).toBeNull();
+      const from = commits.length;
+      act(() => rerender(view(at(tomasPays(1000000n, 500000n), saraPays(20000n, 20000n)), commits)));
+      for (const commit of commits.slice(from)) {
+        expect(commit.text).toContain(copy.couple.home.owes("Sara", "Tomás"));
+        expect(commit.struck).toBe("$70.100");
+      }
+      expect(commits.at(-1)?.text).toContain("$50.100");
+    });
+
+    it("strikeFor: misma dirección tacha; dirección contraria no; «Al día» sí; desde «Al día» no", () => {
+      const ab = (amount: bigint) => ({ key: `a>b:${amount}`, direction: "a>b", amount: moneyFromPesos(amount) });
+      const ba = (amount: bigint) => ({ key: `b>a:${amount}`, direction: "b>a", amount: moneyFromPesos(amount) });
+      const settled = { key: "settled", direction: null, amount: null };
+      expect(strikeFor(ab(10n), ab(20n))).toEqual({ forKey: "a>b:20", amount: moneyFromPesos(10n) });
+      expect(strikeFor(ab(10n), ba(20n))).toBeNull();
+      expect(strikeFor(ab(10n), settled)).toEqual({ forKey: "settled", amount: moneyFromPesos(10n) });
+      expect(strikeFor(settled, ba(20n))).toBeNull();
+      expect(strikeFor(ab(10n), ab(10n))).toBeNull();
+    });
   });
 });
 
