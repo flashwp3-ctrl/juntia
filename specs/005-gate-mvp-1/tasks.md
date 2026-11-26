@@ -840,7 +840,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
   - Cumple: FR-080; V13 «Antes del periodo».
   - Quién: los dos. Depende de: T081–T091.
   - Evidencia: revisión.
-  - Terminado cuando: los dos completan cada tarea sin ayuda, por escrito.
+  - Terminado cuando: los dos completan cada tarea sin ayuda, por escrito. **Enmienda 30.7:** para la aceptación técnica, T092 se completa cuando se dispone de la corrida delegada del PR #104 y de la evidencia nueva de C-1–C-7. El escenario humano completo permanece pendiente como precondición de T094.
 
 - [ ] T093 [US5] **Humana (cada fundador)**: **V7 · US-12, mediana < 10 s**: grabación de pantalla durante al menos 10 gastos habituales reales; tiempo del toque en Anotar al aviso «Guardado». Puede hacerse durante el paso 7. **Enmienda (decisión 30):** se hace en el paso 6, antes de declarar
   - Cumple: FR-055 (002-T087); SC-007.
@@ -859,7 +859,7 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 >
 > | Tarea | Hito | Cuándo |
 > | --- | --- | --- |
-> | T092 (Phase 6), sesión guiada de §4 | Aceptación técnica, según la 30.7 (decidida el 26 nov 2026) | **Cubierta, solo para la aceptación técnica,** por la corrida del PR #104 y la evidencia nueva de C-1–C-7. El escenario humano completo pasa a ser precondición de T094 |
+> | T092 (Phase 6), sesión guiada de §4 | Aceptación técnica, según la 30.7 (decidida el 26 nov 2026) | **Se cubre, solo para la aceptación técnica,** por la corrida del PR #104 y la evidencia nueva de C-1–C-7. El escenario humano completo pasa a ser precondición de T094 |
 > | T093 (Phase 6), V7 · US-12 | Aceptación técnica | Paso 6; ya no «durante el paso 7» |
 > | T097 · V14, copia y restauración real | Aceptación técnica | Tras el paso 6 completado, antes de declarar; no depende de T095 |
 > | T098 · registros de Vercel | Aceptación técnica | Tras el paso 6, sobre una semana de uso en producción con actividad representativa (FR-013); no depende de T095 |
