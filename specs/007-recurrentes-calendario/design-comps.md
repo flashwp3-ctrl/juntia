@@ -59,7 +59,10 @@ coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
   de `recurrentes/`.
 - **Cada marco móvil mide 390 px de ancho y crece con su contenido**: una pantalla
   larga, o una hoja larga, se ve entera en lugar de cortada a 844 px. Los de
-  escritorio miden 1440 px. Cada pantalla está en claro y en oscuro.
+  escritorio miden 1440 px. Cada estado está en claro y en oscuro.
+- **Formato aceptado por los fundadores** (26 de noviembre de 2026): HTML con React,
+  con los ajustes por comentarios y no con edición directa. Aceptar el formato **no**
+  es aprobar visualmente los comps.
 - **Datos añadidos**, ficticios, para ilustrar los casos que pide el prompt y que sus
   datos de ejemplo no cubrían:
   - Mantenimiento de bicicleta: archivada, con una pendiente que reapareció por D1;
@@ -74,9 +77,17 @@ coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
 
   No cambian las cifras de Q15 del prompt.
 
-## Temas: qué está en los dos y qué se revisó en los dos
+## Anchos y temas: qué hay y qué se revisó
 
-Son dos cosas distintas, y aquí se separan (F114-9).
+**Anchos** (F114-13). Son tres afirmaciones distintas:
+
+- **cada sección** tiene representación móvil (390 px) y de escritorio (1440 px);
+- **cada estado** está en claro y en oscuro (abajo);
+- **no todos los estados** tienen su propio comp a 1440. El escritorio de cada
+  sección muestra su pantalla principal, o un estado representativo en Modal, y los
+  demás estados se ven a 390. No se duplican comps en escritorio.
+
+**Temas.** Son dos cosas distintas, y aquí se separan (F114-9).
 
 - **Está en los dos temas.** Desde la ronda 2 de la revisión del PR #114, todos los
   comps (cada pantalla y cada estado) están en claro y en oscuro. Lo comprueba un
@@ -95,8 +106,9 @@ Son dos cosas distintas, y aquí se separan (F114-9).
 
 ## Cobertura por pantalla
 
-Qué pide cada pantalla y de dónde sale. Todas van a 390 y 1440 px, en claro y en
-oscuro, con carga, vacío y error, y con contraste WCAG AA (FR-081; `AGENTS.md` 10 y
+Qué pide cada pantalla y de dónde sale. Cada sección tiene comps a 390 y a 1440 px;
+cada estado está en claro y en oscuro, pero no todos tienen su propio comp a 1440
+(«Anchos y temas», arriba). Incluyen carga, vacío y error, y contraste WCAG AA (FR-081; `AGENTS.md` 10 y
 11). Las escrituras de 07·5, 07·8 y 07·9 enseñan los cuatro estados del contrato
 de `use-write.ts`: guardando, éxito, rechazo confirmado y resultado desconocido con
 «Comprobar estado» y «Reintentar» sobre la misma intención idempotente (ADR-013).
@@ -204,7 +216,7 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
 No se dan por hechas; la aprobación visual tampoco las cierra. Además de las de cada
 sección de los comps:
 
-- revisión visual en oscuro de las pantallas que no lista «Temas» (arriba): 07·1,
+- revisión visual en oscuro de las pantallas que no lista «Anchos y temas» (arriba): 07·1,
   07·3, 07·4, 07·6, 07·7, 07·10, 07·12, 07·13, 07·14 y 07·15;
 - contraste WCAG AA de todo el texto y de lo previsto (por ejemplo, el contorno
   punteado y el importe secundario) en claro y en oscuro, y que lo previsto se
