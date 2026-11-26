@@ -34,6 +34,10 @@ se representa. La decisión 29.7 y la spec le delegan estas cuestiones:
 | 14 | RLS y privacidad de la existencia | F101-2; FR-061, FR-092 | §11 |
 | 15 | Exportación y borrado | Q18; FR-078 | §13 |
 
+**Nota del 26 de noviembre de 2026:** la parte compartida con ADR-d de la cuestión
+13, y todo lo que este ADR delega en ADR-d, lo resuelve ADR-018 (decisión 29.13;
+notas de §10 y §14).
+
 Lo que no se puede romper:
 
 - **Lo previsto no es real** (A.2). Ninguna métrica de §5.1, ningún presupuesto,
@@ -576,7 +580,8 @@ dure), `reason` (`manual | goal_inactive`), `created_by`, `ended_by`, con
   **trazabilidad** que piden D5 y F101-18: el estado de una posición depende de él,
   no del estado actual de la regla.
 - `reason = goal_inactive` es la pausa de un aporte programado cuya meta pasa a
-  lograda o archivada (D7). **Cómo y quién la escribe lo fija ADR-d** (§10).
+  lograda o archivada (D7). **Cómo y quién la escribe lo fija ADR-d** (§10). *(Nota del 26 de
+  noviembre de 2026: lo fija ADR-018 §3.)*
 - **Reanudar** exige una acción explícita de la dueña o de un integrante en una
   compartida, quedar posiciones y, en aportes, una meta **activa** en ese momento.
   Una meta archivada que vuelve a `active` (por `goal_void_reactivate`) **no
@@ -1144,6 +1149,12 @@ Este ADR fija para los aportes lo mismo que para el resto:
   descartan. Confirmar un aporte **nuevo** en una meta inactiva sigue prohibido en
   cualquier caso.
 
+**Nota del 26 de noviembre de 2026:** las cuestiones delegadas en esta sección
+quedan resueltas por ADR-018. La decisión 29.8 se cerró con P2(b), registrada en la
+decisión 29.13. Vincular un aporte histórico se rige por ADR-018 §6 y mantiene
+todas las condiciones de §7.4. Confirmar un aporte nuevo en una meta inactiva sigue
+prohibido.
+
 ### 11. Seguridad: tablas controladas, RLS y privacidad de la existencia (F101-2)
 
 **Tablas** (en `juntia_data`, controladas, RLS activada, sin privilegios de
@@ -1196,7 +1207,8 @@ eso:
 2. **Las funciones de MVP-1 y de Planes no leen estas tablas**: anular, editar,
    mover, liquidar, aportar, lograr o archivar no fallan ni cambian por la
    existencia de una recurrencia privada ajena. La pausa por meta inactiva (ADR-d)
-   tiene que cumplir esto también (§10).
+   tiene que cumplir esto también (§10). *(Nota del 26 de noviembre de 2026:
+   ADR-018 §3 lo cumple: el trigger de Metas no lee ni escribe recurrencias.)*
 3. **El movimiento creado al confirmar es idéntico al manual** (§7.3, paso 6):
    mismas columnas, misma auditoría visible, misma idempotencia de la escritura de
    dinero. La procedencia solo vive en las tablas de este ADR y en su auditoría
@@ -1372,6 +1384,34 @@ Si ADR-d hace que lograr o archivar una meta escriba una pausa, esa función
 bloqueará pareja (si la meta es compartida) → meta → regla, el orden de la fila del
 aporte.
 
+**Nota del 26 de noviembre de 2026 (ADR-018 §3 y §4).** No cambia ninguna decisión
+de este ADR. La tabla de arriba se conserva como registro, pero para las **reglas de
+aporte** dos de sus filas quedan sustituidas, y el contrato que consume el Plan es
+este:
+
+- **Fila «Omitir, deshacer, pausar, editar, finalizar, archivar, eliminar…»,
+  clasificada por dependencia efectiva, no por nombre:** en las reglas de aporte,
+  toda operación que escribe pausas o el ancla, depende del estado de la meta o
+  consulta el historial efectivo de pausas para decidir la elegibilidad de una
+  instancia sigue el orden pareja, si la meta es compartida → meta → regla →
+  instancia(s), cuando corresponda (ADR-018 §4 y Consecuencias). Esto incluye
+  Omitir y Deshacer cuando evalúan la elegibilidad (una posición sin hechos dentro
+  de una pausa ya está consumida y no es elegible, §5), y eliminar con historia
+  cuando equivale a archivar (§6.3). Las operaciones que no dependen de esos datos
+  conservan el orden aplicable de este ADR. «Cuando corresponda» significa que
+  pausar, reanudar, finalizar y archivar bloquean pareja → meta → regla, como dice
+  ADR-018 §4, y solo bloquean instancias las operaciones que las tocan.
+- **Razones de las filas «Confirmar un aporte», «Vincular un aporte existente» y
+  «Reanudar un aporte programado»:** citan la pausa que ADR-d podría escribir. El
+  orden de esas filas se mantiene, ahora por la regla de lo que depende del estado
+  de la meta (ADR-018 §4).
+- **Fila «Pausa automática de ADR-d al lograr o archivar la meta»:** describía una
+  posibilidad delegada que **no se eligió**, igual que el párrafo «Si ADR-d hace que
+  lograr o archivar una meta escriba una pausa…». ADR-018 la resolvió con un trigger
+  que solo registra la transición de la meta en su historia de estados, sin leer,
+  escribir ni bloquear recurrencias, con el orden pareja si la meta es compartida →
+  meta → inserción del evento. La pausa se deriva al leer (ADR-018 §3).
+
 Confirmar contra editar, pausar, finalizar o confirmar desde la otra cuenta se
 ordena por el bloqueo de la regla. Los reintentos por `40P01` o `40001` siguen
 ADR-013 §3.4, pero **no sustituyen al orden**: un interbloqueo es un error de
@@ -1438,6 +1478,10 @@ esto cambia ninguna función de MVP-1.
   maestro (29.11), como ADR-014 y ADR-015 con la decisión 27.3. Q15 y la decisión
   29.8 siguen abiertas. La tabla dice qué se tocó:
 
+  **Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+  decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+  P2(b), registrada en la decisión 29.13. Q15 sigue abierta.
+
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
   | **P1** | Precisión de Q7, «Colisión quincenal»: deja de ser una propuesta y pasa a regla (1–15 y 16–31). **FR-009b**: la regla concreta, en lugar de «la fija ADR-a» | **29.5**: la colisión quincenal deja de ser «propuesta `[P]` del redactor» |
@@ -1447,7 +1491,7 @@ esto cambia ninguna función de MVP-1.
   | **P5** | Tabla de estados, fila «Confirmada → anulación económica» (F101-8 iii), y **FR-018**: la pendiente que permanece o reaparece tras el archivo o la finalización sigue visible y resoluble sin reactivar la recurrencia, y no recupera las instancias canceladas | **29.11** |
   | **P6** (C) | **FR-014a** y **FR-018a**: la cuestión obligatoria de F101-19 resuelta (coexistencia, unicidad por contexto, riesgo de duplicación aceptado, sin deduplicación entre contextos ni avisos que revelen programaciones privadas). Tabla de estados, fila «Confirmada → sustitución técnica»: la excepción contextual (tras Deshacer, la instancia compartida vinculada al reemplazo vuelve a pendiente). Key Entities, «Trazabilidad privada» | **29.7**: F101-19 resuelta por ADR-016 |
   | **P7** (a) | **FR-004**: la excepción a Q6 (una omisión deshecha conserva su fecha y su versión, también ante ediciones posteriores). **FR-017**: Deshacer recupera la fecha y la versión históricas. Tabla de estados: filas «Prevista → Prevista al editar» y «Omitida → Deshacer… con su versión» | **29.3** (Q6): la excepción aprobada. **29.6** (D3): «con su versión» = la fecha y la versión históricas |
-  | Resto de ADR-016 | «Cuestiones que la tabla deja a ADR-a» y «Lo que hace falta para pasar a Plan», punto 3: ADR-a resuelto por ADR-016 | **29.7** y **29.10**: ADR-a aceptado; ADR-b y ADR-d siguen pendientes |
+  | Resto de ADR-016 | «Cuestiones que la tabla deja a ADR-a» y «Lo que hace falta para pasar a Plan», punto 3: ADR-a resuelto por ADR-016 | **29.7** y **29.10**: ADR-a aceptado; ADR-b y ADR-d siguen pendientes en ese momento (se resolvieron después con ADR-017, 29.12, y ADR-018, 29.13) |
 
 ## Verificación pendiente [V]
 
@@ -1592,7 +1636,8 @@ implementación. Son trece: C1 a C3 y P1 a P10.
   - **Reanudar un aporte contra lograr o archivar la meta** (F103-23), en los dos
     órdenes: sin interbloqueo, y la reanudación falla si la meta ya no está activa
     bajo su bloqueo. Lo mismo para crear o sustituir una recurrencia de aporte.
-  - Con ADR-d, los tres órdenes de US6.6.
+  - Con ADR-d, los tres órdenes de US6.6. *(Nota del 26 de noviembre de 2026: los
+    cubre ADR-018, `[V]` 5.)*
 - **P10. Compatibilidad en la base de datos.** Cada fila «No» de la tabla de
   compatibilidad de la spec la rechaza el trigger aunque se llame a la función de
   escritura directamente por SQL (SC-007).
@@ -1631,6 +1676,10 @@ transmitidas por el gestor. Se citan literalmente:
 Además: «No ampliar el alcance, no añadir mecanismos nuevos y no iniciar
 implementación». **Q15 y la decisión 29.8 permanecen abiertas.** La reconciliación
 de la spec 007 y del maestro va en un PR aparte (Consecuencias).
+
+**Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+P2(b), registrada en la decisión 29.13. Q15 sigue abierta. La reconciliación ya está hecha.
 
 ## Referencias
 

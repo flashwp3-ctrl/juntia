@@ -1,6 +1,6 @@
 # ADR-018 — Aportes programados: confirmación, pausa por meta inactiva y concurrencia
 
-**Estado:** **Propuesto** (26 de noviembre de 2026). **Los fundadores decidieron P1 (a) y P2 (b) el 26 de noviembre de 2026** («Decisiones de los fundadores»); con P2 (b) queda decidida la cuestión 29.8, cuyo cierre normativo se registra en el PR de reconciliación posterior. Sigue Propuesto hasta el GO de arquitectura y la revisión final de fidelidad. Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (26 de noviembre de 2026; maestro §15.10, decisión 29.13). Propuesto el 26 de noviembre de 2026; la revisión adversarial del PR #110 (F110-1 a F110-14) dio GO. **Los fundadores decidieron P1 (a) y P2 (b) el 26 de noviembre de 2026** («Decisiones de los fundadores»); con P2 (b) queda cerrada la cuestión 29.8 (29.13). La spec 007 y la decisión 29 están reconciliadas con él. Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
 
 En este archivo, las dos `[P]` (P1 y P2) **ya están decididas** por los
 fundadores (26 de noviembre de 2026); se conservan sus números como referencia, y
@@ -348,7 +348,9 @@ cumpla **todas** las condiciones de ADR-016 §7.4. El vínculo no crea un aporte
 nuevo, no modifica saldos, no mueve fondos y no reactiva la meta ni la recurrencia.
 Crear o confirmar aportes nuevos en una meta inactiva sigue prohibido. Con esta
 decisión queda decidida la cuestión 29.8; su cierre normativo se registra en el PR
-de reconciliación posterior (Consecuencias). El texto literal está en «Decisiones
+de reconciliación posterior (Consecuencias). *(Texto de la propuesta original. Nota
+del 26 de noviembre de 2026: esa reconciliación ya está hecha; la 29.8 se cerró en
+la decisión 29.13.)* El texto literal está en «Decisiones
 de los fundadores».
 
 Opciones que se plantearon:
@@ -414,10 +416,20 @@ pendientes que el sistema sabe cumplidas.
   reconciliación. Este PR no toca ADR-016.
 - ADR-016 no cambia: recibe la pausa derivada en su historial de pausas (§6.2), y
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
+- *Las dos viñetas anteriores son texto de la propuesta original.* **Nota del 26 de
+  noviembre de 2026:** la reconciliación ya está hecha (decisión 29.13, FR-034 de la
+  spec 007), y ADR-016 y ADR-017 llevan notas fechadas, que no cambian ninguna de
+  sus decisiones (lista completa en la tabla de reconciliación de abajo).
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
-- **La 29.8 queda decidida** con P2 (b). Su cierre normativo (spec 007 y maestro,
-  decisión 29) se registra en el PR de reconciliación posterior; este PR no toca la
-  spec ni el maestro.
+- **La 29.8 queda cerrada** con P2 (b) (29.13).
+- **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
+  posterior al PR #110, como el #105 y el #108. Qué se tocó:
+
+  | Decisión | Spec 007 | Maestro, decisión 29 | Otros |
+  | --- | --- | --- | --- |
+  | **P1** (a) | Precisión de Q12; **FR-030** | **29.13** | — |
+  | **P2** (b) | **F101-16**; «Cuestión para ADR-d o para los fundadores (29.8)»; **FR-034a** | **29.8** (cerrada) y **29.13** | — |
+  | Resto de ADR-018 | Status; fila y precisión de Q12; **F101-7**; «Cuestiones que la tabla dejaba a ADR-a» (concurrencia); **FR-034** (pausa y bloqueos, F110-12); **FR-034a** (concurrencia); casos límite de la meta lograda o archivada y de la confirmación concurrente; Key Entities; «Lo que hace falta para pasar a Plan», punto 3; las Sessions de ADR-016 y ADR-017 (nota de que la 29.8 se cerró después) | **29.7**, **29.10** (los tres ADR aceptados), **29.11** y **29.12** (notas de secuencia), cabecera de la 29 y «Lo que esta decisión no autoriza» | Notas fechadas del 26 de noviembre de 2026, sin cambiar decisiones: **ADR-016** en la tabla de cuestiones delegadas, §6.2, §10, §11, §14 (F110-12 y F112-8), `[V]` P9, Consecuencias, «Decisiones de los fundadores» y su tabla de reconciliación; **ADR-017** en §1 (importes de los aportes: ADR-018 §1), Consecuencias y «Decisiones de los fundadores» |
 
 ## Verificación pendiente [V]
 
@@ -530,7 +542,8 @@ cita literalmente:
 | P2 | **29.8:** vincular un aporte histórico a una meta inactiva | (b) se puede vincular un aporte histórico válido y no anulado de la misma meta y aportante, con todas las condiciones de ADR-016 §7.4, aunque la meta esté lograda o archivada; sin crear aportes, mover fondos ni reactivar nada | (a) no se puede; (c) como (b), solo si se registró antes de la primera inactivación posterior al ancla | §6; [V] 8 |
 
 **La 29.8 queda decidida** con P2 (b). Su cierre normativo, en la spec 007 y en la
-decisión 29, se registra en el PR de reconciliación posterior. Q15 sigue abierta.
+decisión 29, se registra en el PR de reconciliación posterior. *(Nota del 26 de
+noviembre de 2026: ya registrado en la decisión 29.13.)* Q15 sigue abierta.
 No se reabren ADR-016, ADR-017 ni las decisiones anteriores, y no se autoriza
 todavía el Plan ni la implementación. Se mantienen la precedencia de Planes, los
 gates independientes y las restricciones de N-8 (28.18).
@@ -538,7 +551,7 @@ gates independientes y las restricciones de N-8 (28.18).
 ## Referencias
 
 - `docs/JUNTIA_MASTER.md` §5.6 (DEC-G01 a DEC-G06), §15.4 (DEC-G04) y §15.10
-  (decisiones 22.13, 22.15, 29.7, 29.8, 29.9, 29.10, 29.11 y 29.12)
+  (decisiones 22.13, 22.15, 29.7, 29.8, 29.9, 29.10, 29.11, 29.12 y 29.13)
 - `specs/007-recurrentes-calendario/spec.md`: Q12, D7, F101-2, F101-7, F101-16,
   FR-030 a FR-034a y US6
 - `specs/004-presupuestos-y-metas/spec.md`, FR-040 (aportes de hoy o del pasado)

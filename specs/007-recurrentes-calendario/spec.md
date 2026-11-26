@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-25
 
-**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas y D1–D7 están registradas en el maestro §15.10, decisión 29. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19). **ADR-a está aceptado como ADR-016** (25 de noviembre de 2026; maestro §15.10, decisión 29.11), con las decisiones P1–P7 de los fundadores, reconciliadas en esta spec («Session 2026-11-25 · ADR-016»). **ADR-b está aceptado como ADR-017** (26 de noviembre de 2026; maestro §15.10, decisión 29.12), con las decisiones P1–P3 de los fundadores, condicionadas a que Q15 se cierre en (b); **Q15 sigue abierta** («Session 2026-11-26 · ADR-017»).
+**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas y D1–D7 están registradas en el maestro §15.10, decisión 29. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19). **ADR-a está aceptado como ADR-016** (25 de noviembre de 2026; maestro §15.10, decisión 29.11), con las decisiones P1–P7 de los fundadores, reconciliadas en esta spec («Session 2026-11-25 · ADR-016»). **ADR-b está aceptado como ADR-017** (26 de noviembre de 2026; maestro §15.10, decisión 29.12), con las decisiones P1–P3 de los fundadores, condicionadas a que Q15 se cierre en (b); **Q15 sigue abierta** («Session 2026-11-26 · ADR-017»). **ADR-d está aceptado como ADR-018** (26 de noviembre de 2026; decisión 29.13), con las decisiones P1(a) y P2(b) de los fundadores, y **la 29.8 queda cerrada** («Session 2026-11-26 · ADR-018»).
 
 **Input**: Descripción con que Alejandro invocó `/speckit-specify` el 25 de noviembre de 2026, redactada a partir de la decisión 28 (filas 28.6, 28.8, 28.9, 28.11, 28.13 y 28.17), la propuesta de los fundadores (bloque A, A.1 a A.5), el análisis (§4 fila «R», §6, §9 y §12 N-6) y `docs/BACKLOG_MVP2.md` (filas 3, 4 y 7):
 
@@ -90,7 +90,7 @@ escribe como **Propuesto** y se acepta antes de la etapa Plan (`AGENTS.md` 17).
 | Q9 | Quién confirma una instancia compartida | **(a)**: cualquiera de los dos; pagador y reparto de la versión de la instancia (F101-6), cambiables en Anotar antes de guardar |
 | Q10 | Ingresos variables | **(a)**: tipo (habitual o extraordinario) y certeza (fijo, estimado con rango, condicional, con su condición e importe conocido, estimado o desconocido, F101-10) |
 | Q11 | Previstos de una sola fecha | **(a)**: se admiten |
-| Q12 | Aportes programados · ADR-d | **(a), con precisiones** (abajo) |
+| Q12 | Aportes programados · ADR-d | **(a), con precisiones** (abajo). Tratamiento: ADR-018 («Session 2026-11-26 · ADR-018») |
 | Q13 | Compromisos de duración definida | **(a), con precisiones** (abajo) |
 | Q14 | Calendario | **(a)** en móvil (lista por fecha, flechas de mes, sin cuadrícula); escritorio con los comps; ruta hija de Plan |
 | Q15 | Cifras de lo previsto · ADR-b | **Abierta hasta los comps.** Se explora **(b)**, un total mensual de gastos previstos, con **(a)**, sin totales, como respaldo. No es una (b) cerrada. Condiciones abajo. Tratamiento: ADR-017 («Session 2026-11-26 · ADR-017») |
@@ -158,7 +158,9 @@ omisión se deshace, y las ediciones posteriores no la cambian.
 - La programación es **privada**, también cuando la meta es compartida. La otra
   persona solo ve los aportes confirmados, según el contrato existente.
 - La recurrencia se **pausa** cuando la meta se completa o se archiva, y no se
-  reanuda sin una acción explícita de su propietaria.
+  reanuda sin una acción explícita de su propietaria. Cómo se registra esa pausa y
+  cómo se reanuda: ADR-018 §3.
+- El importe y la confirmación de un aporte programado: ADR-018 §1 y §2 (P1(a)).
 - Un aporte previsto nunca representa fondos reservados ni modifica «Tu
   disponible».
 
@@ -273,7 +275,7 @@ comps.
   esté activa; no se reanuda hacia una meta que no está activa; el estado de la
   meta y la autorización se revalidan en la misma operación que registra el
   aporte, con la concurrencia entre confirmar y lograr o archivar cubierta.
-  ADR-010 y los estados de Metas no cambian.
+  ADR-010 y los estados de Metas no cambian. Mecanismo: ADR-018 §2 a §4.
 - **F101-8 · Casos de la tabla de estados.**
   - (i) **D3.** Se puede **omitir anticipadamente** una instancia futura con una
     acción explícita. Deshacer se rige por la precedencia de ADR-016 §6.4
@@ -320,7 +322,8 @@ comps.
 **Ronda 2 de la revisión (sobre `495eb69`).** Cierra F101-1, 2, 4, 5, 6, 9, 11 y
 12, y abre F101-13 a F101-17. Son correcciones directas: ninguna requiere decisión
 de los fundadores, y no reabren D1–D7. Fijan resultados funcionales y dejan la
-representación a ADR-a o ADR-d.
+representación a ADR-a o ADR-d. (Nota del 26 de noviembre de 2026: resuelta por
+ADR-016 y ADR-018.)
 
 - **F101-13 · Anulación económica después de una sustitución técnica.**
   Resultados de la cadena completa:
@@ -347,8 +350,8 @@ representación a ADR-a o ADR-d.
   - archivar sigue sus requisitos (22.15; 004, FR-040).
 
   Confirmar un aporte **nuevo** en una meta inactiva está prohibido. Si se puede
-  **vincular** un aporte histórico válido es una cuestión explícita para ADR-d o
-  para los fundadores.
+  **vincular** un aporte histórico válido lo decidieron los fundadores con P2(b) de
+  ADR-018 (§6): ver FR-034a. El orden de bloqueo y los resultados: ADR-018 §4.
 - **F101-17 · Ingreso condicional con importe conocido.** En ingresos, el toque
   único exige **certeza fija**. Un ingreso condicional abre el borrador y pide el
   importe recibido, aunque su importe previsto sea conocido.
@@ -448,12 +451,14 @@ de noviembre de 2026, con P1–P7).
 - El algoritmo de búsqueda de movimientos compatibles (F101-1) → ADR-016 §7.6.
 - **Obligatoria:** el reemplazo compartido de una sustitución técnica como candidato a un vínculo posterior (F101-19) → ADR-016 §9 (P6, opción C).
 - Cómo se guarda el historial de pausas de una ocurrencia, y si existe una recuperación manual excepcional (F101-18) → ADR-016 §6.2 y §6.5: no existe en v1 (P4).
-- La concurrencia entre confirmar un aporte y lograr o archivar la meta (F101-7, F101-16) → ADR-016 §10 y §14, en la parte que le toca. El resto, compartido con ADR-d, sigue pendiente.
+- La concurrencia entre confirmar un aporte y lograr o archivar la meta (F101-7, F101-16) → ADR-016 §10 y §14, en la parte que le toca, y ADR-018 §4 en la que compartía con ADR-d.
 - Además, ADR-016 §6.4 fija la precedencia de F101-21 y lo que recupera Deshacer una omisión (P7).
 
-**Cuestión para ADR-d o para los fundadores.** Si se puede vincular a una instancia
-un aporte histórico válido de una meta que ya no está activa. Crear aportes nuevos
-en ella sigue prohibido (F101-16).
+**Cuestión para ADR-d o para los fundadores (29.8): decidida.** Si se puede vincular
+a una instancia un aporte histórico válido de una meta que ya no está activa. La
+decidieron los fundadores el 26 de noviembre de 2026 con P2(b) de ADR-018 (§6;
+decisión 29.13): ver FR-034a. Crear aportes nuevos en ella sigue prohibido
+(F101-16).
 
 ### Session 2026-11-25 · ADR-016
 
@@ -476,7 +481,9 @@ reconciliados con ellas.
 | P7 | Qué recupera Deshacer una omisión | «Opción A. Aceptamos que una instancia conserve permanentemente la fecha y la versión fijadas, incluso después de deshacer una omisión y ante ediciones posteriores. Aprobamos expresamente esta excepción a Q6.» | Precisión de Q6; tabla de estados; FR-004; FR-017; Key Entities |
 
 Además: «No ampliar el alcance, no añadir mecanismos nuevos y no iniciar
-implementación». **Q15 y la cuestión de la decisión 29.8 siguen abiertas.**
+implementación». En el momento de aceptar ADR-016, Q15 y la cuestión de la
+decisión 29.8 seguían abiertas. La 29.8 se cerró después con ADR-018 («Session
+2026-11-26 · ADR-018»; decisión 29.13). **Q15 sigue abierta.**
 
 ### Session 2026-11-26 · ADR-017
 
@@ -507,7 +514,37 @@ está en ADR-017, «Decisiones de los fundadores (26 de noviembre de 2026)»:
 
 Las opciones (b) de P1, P2 y P3 quedan descartadas. **Q15 sigue abierta**: estas
 decisiones solo se aplican si se cierra en (b); con (a), no hay totales. La 29.8
-sigue abierta y ADR-d, pendiente.
+seguía abierta y ADR-d, pendiente; después se aceptó ADR-018 y se cerró la 29.8
+(«Session 2026-11-26 · ADR-018»).
+
+### Session 2026-11-26 · ADR-018
+
+ADR-d se escribió como ADR-018 (`docs/adr/ADR-018-aportes-programados.md`, PR #110),
+se revisó y se aceptó (maestro §15.10, decisión 29.13). Fija la confirmación y la
+privacidad de los aportes programados (§1, §2 y §5), la pausa por meta inactiva
+(§3) y la concurrencia con Metas (§4). Los fundadores decidieron sus dos
+propuestas el 26 de noviembre de 2026. Este es un **extracto literal de sus
+decisiones**, transmitidas por el gestor; el texto completo está en ADR-018,
+«Decisiones de los fundadores (26 de noviembre de 2026)»:
+
+> P1(a) — Aprobada. Los aportes programados tendrán exclusivamente un importe fijo. No se admiten rangos ni importes desconocidos. La aportante podrá modificar el importe efectivo mediante el borrador antes de confirmar, conforme a ADR-016.
+>
+> P2(b) — Aprobada. Se permite vincular un aporte histórico válido y no anulado a su instancia programada aunque la meta esté lograda o archivada, siempre que corresponda a la misma meta y a la misma aportante y cumpla todas las condiciones de ADR-016 §7.4.
+>
+> El vínculo no crea un aporte nuevo, no modifica saldos, no mueve fondos y no reactiva la meta ni la recurrencia.
+>
+> Crear o confirmar aportes nuevos en una meta inactiva sigue prohibido.
+>
+> Con P2(b) queda decidida la cuestión 29.8, cuyo cierre normativo deberá registrarse en el posterior PR de reconciliación.
+
+| # | Dónde se aplica en esta spec |
+| --- | --- |
+| P1(a) | Precisión de Q12; FR-030 |
+| P2(b) | F101-16; «Cuestión para ADR-d o para los fundadores (29.8)»; FR-034a |
+| Resto de ADR-018 | Precisión de Q12; F101-7; «Cuestiones que la tabla dejaba a ADR-a» (concurrencia); FR-034 (pausa y bloqueos, con F110-12); FR-034a (concurrencia) |
+
+P1(b), P2(a) y P2(c) quedan descartadas. **La 29.8 queda cerrada** (decisión
+29.13). Q15 sigue abierta.
 
 ### Lo que ya está decidido y esta spec no reabre
 
@@ -895,8 +932,8 @@ a mano con los mismos datos; tener presets no crea instancias ni cambia cifras.
 - Finalización manual con pendientes: se informa cuáles se cancelan y se pide confirmación (Q18); en compromisos con N o con fecha final, también todas las futuras (P3). Después, Deshacer una omisión no reactiva la recurrencia (D4); cuándo está disponible se rige por la precedencia de ADR-016 §6.4 (FR-017).
 - Eliminar con historia: se archiva y se cancelan las instancias sin resolver, con la misma lista y confirmación (D6, F101-9).
 - Anular un movimiento después de archivar la recurrencia: la instancia pendiente se conserva con trazabilidad (F101-8 iii).
-- Meta dada por lograda o archivada con un aporte programado activo: se pausa, sin reanudación automática ni hacia una meta inactiva; llegar al 100 % no basta (D7, F101-7).
-- Confirmar un aporte mientras la otra persona logra o archiva la meta: se revalida en la misma operación (F101-7).
+- Meta dada por lograda o archivada con un aporte programado activo: se pausa, sin reanudación automática ni hacia una meta inactiva; llegar al 100 % no basta (D7, F101-7). Cómo se registra la pausa, también si la meta se reactiva: ADR-018 §3.
+- Confirmar un aporte mientras la otra persona logra o archiva la meta: se revalida en la misma operación (F101-7); el orden y los resultados, en ADR-018 §4.
 - Cambiar de contexto una recurrencia: no se puede; se crea otra (F101-11).
 - Categoría de una recurrencia que deja de existir o se renombra.
 - Salida de la pareja: sigue bloqueada por ADR-003; esta spec no la implementa (FR-077).
@@ -915,7 +952,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 #### Recurrencias (A.1, A.5; fila 3)
 
-- **FR-001**: Una persona puede crear una recurrencia de **gasto**, **ingreso** o **aporte a meta** con nombre, tipo, importe (fijo, estimado con rango o, en ingresos condicionales, desconocido; Q10, F101-10; formas, combinaciones y contrato de integridad de ADR-017 §1), categoría cuando corresponda, fecha inicial, fecha final o número de ocurrencias opcionales (Q13), frecuencia (Q7), contexto, responsable y reparto cuando corresponda (Q8).
+- **FR-001**: Una persona puede crear una recurrencia de **gasto**, **ingreso** o **aporte a meta** con nombre, tipo, importe (fijo, estimado con rango o, en ingresos condicionales, desconocido; Q10, F101-10; formas, combinaciones y contrato de integridad de ADR-017 §1 y, en los aportes, ADR-018 §1), categoría cuando corresponda, fecha inicial, fecha final o número de ocurrencias opcionales (Q13), frecuencia (Q7), contexto, responsable y reparto cuando corresponda (Q8).
 - **FR-002**: Cada recurrencia tiene estado **activa**, **pausada**, **finalizada** (sola o a mano) o **archivada** (eliminada con historia), según la tabla «Estados y transiciones». Muestra su próxima fecha esperada.
 - **FR-003**: Una recurrencia de gasto es privada **o** de la pareja, nunca las dos (Q8), y **su contexto no cambia nunca**: para cambiarlo se crea una recurrencia nueva y se cierra la anterior (F101-11). Las de ingreso solo existen en Yo (28.9; §7.3). Las de aporte a meta son siempre privadas de quien aporta, también cuando la meta es compartida (Q12).
 - **FR-004**: Editar una recurrencia cambia solo sus instancias previstas (futuras sin resolver). Todas las instancias pendientes de resolución, vencidas o no (D1), conservan los datos y la versión de la regla que les correspondían; las confirmadas, omitidas y canceladas no cambian (Q6). Editar nunca cambia el contexto (FR-003). Hay versión y no hay sobrescritura silenciosa. Lo editable es lo que fija ADR-016 §3.4 (P2): los datos, el día dentro de su periodo, N y la fecha final; la unidad, el intervalo y el origen no se editan (FR-005). **Excepción a Q6 aprobada por los fundadores (P7):** una instancia con fecha y versión fijadas por una omisión, también si la omisión se deshizo, no cambia con ninguna edición posterior.
@@ -954,14 +991,14 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 - **FR-022**: Un ingreso previsto nunca se presenta como recibido, disponible ni seguro, un importe desconocido nunca se muestra como cero, y nada alimenta un «te alcanza» (DEC-R17; ADR-017 §1 a §3).
 - **FR-023**: Se admite un movimiento previsto de una sola fecha (Q11).
 
-#### Aportes programados (fila 7; ADR-d)
+#### Aportes programados (fila 7; ADR-018)
 
-- **FR-030**: Una recurrencia de aporte a meta pertenece a quien aporta y solo confirma aportes de sus propios fondos (ADR-010; Q12).
+- **FR-030**: Una recurrencia de aporte a meta pertenece a quien aporta y solo confirma aportes de sus propios fondos (ADR-010; Q12; ADR-018 §2). Su importe sigue ADR-018 §1 (P1(a)).
 - **FR-031**: Confirmar un aporte programado crea un aporte real en el ledger de la meta, idéntico en efecto a un aporte manual (DEC-G04), y nunca una fila en `transactions` (§7.3).
 - **FR-032**: Un aporte programado previsto no cambia la meta, «Tu disponible» ni ninguna cifra de DEC-G04, y nunca se presenta como fondos reservados.
 - **FR-033**: La programación es privada, también en una meta compartida. Para la otra persona, un aporte confirmado desde una programación es **indistinguible** de un aporte manual equivalente: sin insignia, identificador, frecuencia ni procedencia, en vistas, exportación, errores o metadatos. Se protege también la **existencia** de la programación (F101-2).
-- **FR-034**: La recurrencia se pausa cuando la meta pasa **formalmente** a lograda («Dar por lograda», 22.15) o a archivada; llegar al 100 % no basta. Solo su propietaria la reanuda, con una acción explícita y solo hacia una meta activa (D7, F101-7).
-- **FR-034a**: Mientras la meta no esté activa, sus instancias se conservan pero **no se confirma ningún aporte nuevo** (004, FR-040). Si se puede **vincular** a una instancia un aporte histórico válido, registrado cuando la meta estaba activa, no lo decide esta spec: es una cuestión explícita para ADR-d o para los fundadores, y la prohibición de crear aportes nuevos se mantiene. El estado de la meta y la autorización se revalidan en la misma operación que registra el aporte; según el orden efectivo, un aporte confirmado antes del cambio de estado es válido y se conserva, y uno posterior se rechaza y deja la instancia pendiente (US6.6; 22.15). ADR-010 y los estados de Metas no cambian (F101-7, F101-16).
+- **FR-034**: La recurrencia se pausa cuando la meta pasa **formalmente** a lograda («Dar por lograda», 22.15) o a archivada; llegar al 100 % no basta. Solo su propietaria la reanuda, con una acción explícita y solo hacia una meta activa (D7, F101-7). Cómo se deriva y se registra la pausa, también si la meta se reactiva: ADR-018 §3. En las reglas de aporte, pausar, reanudar, finalizar, archivar y Deshacer una omisión siguen el orden de bloqueo de ADR-018 §4 y leen el historial efectivo de pausas bajo esos bloqueos (ADR-018, Consecuencias; F110-12).
+- **FR-034a**: Mientras la meta no esté activa, sus instancias se conservan pero **no se confirma ningún aporte nuevo** (004, FR-040). Vincular a una instancia un aporte histórico válido de una meta lograda o archivada se rige por P2(b) de ADR-018 (§6), decidida por los fundadores el 26 de noviembre de 2026 (29.8, cerrada en la 29.13); la prohibición de crear o confirmar aportes nuevos se mantiene. El estado de la meta y la autorización se revalidan en la misma operación que registra el aporte; según el orden efectivo, un aporte confirmado antes del cambio de estado es válido y se conserva, y uno posterior se rechaza y deja la instancia pendiente (US6.6; 22.15; ADR-018 §4). ADR-010 y los estados de Metas no cambian (F101-7, F101-16).
 
 #### Compromisos de duración definida (A.5; Q13)
 
@@ -1039,9 +1076,9 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 - Grupos de más de dos (28.4).
 - Multimoneda (§3).
 
-### Key Entities *(conceptuales; la forma la fijan ADR-016 (ADR-a), ADR-017 (ADR-b, contrato de los importes), ADR-d y el Plan)*
+### Key Entities *(conceptuales; la forma la fijan ADR-016 (ADR-a), ADR-017 (ADR-b, contrato de los importes), ADR-018 (ADR-d) y el Plan)*
 
-- **Recurrencia**: regla de un movimiento esperado. Propietaria XOR pareja, **inmutable en su contexto** (los aportes, siempre propietaria), tipo (gasto, ingreso, aporte a meta), nombre, importe (fijo, estimado con rango o desconocido), tipo, certeza y condición en ingresos, categoría, meta (aportes), frecuencia con su **día de referencia**, fecha inicial, fecha final o número de ocurrencias, responsable, reparto, estado (activa, pausada, finalizada sola o a mano, archivada), versiones y auditoría.
+- **Recurrencia**: regla de un movimiento esperado. Propietaria XOR pareja, **inmutable en su contexto** (los aportes, siempre propietaria), tipo (gasto, ingreso, aporte a meta), nombre, importe (fijo, estimado con rango o desconocido; combinaciones permitidas en ADR-017 §1 y ADR-018 §1), tipo, certeza y condición en ingresos, categoría, meta (aportes), frecuencia con su **día de referencia**, fecha inicial, fecha final o número de ocurrencias, responsable, reparto, estado (activa, pausada, finalizada sola o a mano, archivada), versiones y auditoría.
 - **Instancia prevista**: una ocurrencia de la recurrencia, con identidad estable (la regla y la posición, ADR-016), **fecha prevista** (fijada para siempre desde su primer hecho, P7), número de ocurrencia, la **versión** de la regla que le corresponde (cuyos datos usa al confirmar, F101-6) y su estado (Q5 y tabla de estados). Nunca es un movimiento real (Q3).
 - **Vínculo instancia–movimiento real (ordinario)**: relación idempotente y auditada entre una instancia y un gasto, ingreso o aporte real, sujeta a la compatibilidad (F101-1). El vínculo **vigente** y el **estado del movimiento** son cosas distintas (ADR-016 §5 y §7.5): con el movimiento efectivo activo, la instancia está confirmada; con el movimiento anulado económicamente, el vínculo sigue vigente y la instancia está pendiente de resolución (D1). Una nueva confirmación o vinculación sustituye el vínculo anterior y conserva la historia autorizada. Cardinalidad: un movimiento tiene como mucho **un vínculo ordinario en toda su historia**, y una instancia, como mucho **un vínculo vigente**. La fecha efectiva se lee del movimiento. Solo es visible para quien tiene autorización sobre la instancia (F101-2).
 - **Trazabilidad privada de una sustitución técnica**: registro auditado de que, tras Mover a Pareja o su Deshacer, el movimiento activo de una instancia confirmada es el reemplazo (compartido o privado restaurado). **No es un vínculo ordinario ni cuenta como tal**: no está sujeta a la compatibilidad ni a la cardinalidad 1:1 del vínculo, es privada de quien tiene autorización sobre la instancia y la otra persona no puede descubrir con ella la recurrencia (F101-3, F101-13, F101-19). Si el reemplazo es candidato a un vínculo ordinario posterior, se permite y coexiste (P6; FR-014a). El modelo físico de las dos lo fija ADR-016 §7.5 y §8.
@@ -1089,7 +1126,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 1. ~~Que los fundadores respondan Q1–Q19.~~ **Hecho** el 25 de noviembre de 2026 (Session 2026-11-25 · Clarify). Registradas, con D1–D7, en el maestro §15.10, **decisión 29**, que también recoge lo que falta para pasar a Plan (29.10).
 2. ~~Que los fundadores confirmen las decisiones D1 a D7 de la revisión F101.~~ **Hecho** el 25 de noviembre de 2026, con precisiones en D3, D4 y D5 («Precisiones de la revisión F101»).
-3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse. **ADR-a: hecho**, aceptado como ADR-016 el 25 de noviembre de 2026, con P1–P7 (maestro §15.10, decisión 29.11). **ADR-b: hecho**, aceptado como ADR-017 el 26 de noviembre de 2026, con P1–P3 condicionadas a Q15 (b) (decisión 29.12). Falta **ADR-d**.
+3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse. **ADR-a: hecho**, aceptado como ADR-016 el 25 de noviembre de 2026, con P1–P7 (maestro §15.10, decisión 29.11). **ADR-b: hecho**, aceptado como ADR-017 el 26 de noviembre de 2026, con P1–P3 condicionadas a Q15 (b) (decisión 29.12). **ADR-d: hecho**, aceptado como ADR-018 el 26 de noviembre de 2026, con P1(a) y P2(b) (decisión 29.13).
 4. Que la revisión del PR de esta spec termine sin hallazgos abiertos.
 5. Que los fundadores aprueben los comps de diseño, incluida la decisión de Q15 entre el total de gastos previstos y ningún total.
 6. Que la secuencia de 28.17 y 28.18 permita la etapa Plan: durante el gate solo se adelanta la documentación de spec, ADR propuestos y diseño, y la documentación de esta spec se pausa mientras Planes hace su Plan y sus Tasks.
