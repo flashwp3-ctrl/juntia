@@ -1,9 +1,11 @@
 # ADR-016 — Recurrencias e instancias previstas: modelo de dominio y datos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 5 tras la revisión F103 del PR #103). Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 5 tras la revisión F103 del PR #103). **Los fundadores decidieron P1–P7 el 25 de noviembre de 2026** con las opciones recomendadas y las precisiones literales de «Decisiones de los fundadores». Pasa a Aceptado como ADR-014 y ADR-015: con el registro en el maestro, en el PR documental de reconciliación posterior a este. Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
 
-En este archivo `[P]` es una **propuesta** que necesita decisión de los
-fundadores y `[V]` una **verificación pendiente** (maestro §15.9). Los nombres
+En este archivo, `[V]` es una **verificación pendiente** (maestro §15.9). Las
+siete `[P]` de las rondas de revisión (P1–P7) ya **están decididas** por los
+fundadores (25 de noviembre de 2026); se conservan sus números como referencia, y
+las opciones descartadas quedan como contexto. Los nombres
 de tablas y columnas son de la capa de datos y de trabajo: los nombres visibles
 se deciden con los comps y entran en `docs/GLOSSARY.md` solo aprobados (spec 007,
 Q2). Las fechas y los importes de los ejemplos son **ficticios**; los ejemplos
@@ -24,7 +26,7 @@ se representa. La decisión 29.7 y la spec le delegan estas cuestiones:
 | 6 | Precedencia de Deshacer una omisión con varias pausas, con un caso de dos pausas | F101-21 (29.7) | §6.4 |
 | 7 | Recuperación manual excepcional distinta de la reanudación | F101-18 | §6.5 |
 | 8 | Dónde se muestra una pendiente de una recurrencia archivada | F101-8 iii | §6.6 |
-| 9 | Regla quincenal | Q7 `[P]` (29.5); FR-009b | §3.3 |
+| 9 | Regla quincenal | Q7 (29.5), decidida en P1; FR-009b | §3.3 |
 | 10 | Vínculo 1:1 idempotente, compatibilidad en el servidor y algoritmo de sugerencias | Q4 (29.2); F101-1; FR-013 a FR-016 | §7 |
 | 11 | Sustitución técnica (Mover a Pareja y su Deshacer) y su trazabilidad privada | F101-3, F101-13; FR-018a | §8 |
 | 12 | **Obligatoria:** el reemplazo compartido como candidato a un vínculo posterior | F101-19; FR-014a | §9 |
@@ -226,13 +228,14 @@ El calendario de una regla se describe con:
 - **Fin por fecha.** Con `end_date`, solo existen las posiciones con fecha ≤
   `end_date`.
 
-#### 3.3 Quincenal: dos días fijos sin colisión `[P]` (Q7; FR-009b)
+#### 3.3 Quincenal: dos días fijos sin colisión · P1 decidida (Q7; FR-009b)
 
 Quincenal son **dos días fijos del mes**, no «cada 14 días» (que es la
 personalizada «cada 2 semanas»). La spec deja la colisión a este ADR: con 30 y 31,
 los dos caerían el último día de febrero.
 
-**Recomendación `[P]` (la del redactor de la spec, 29.5):** al crearla, el primer
+**Decisión de los fundadores, P1 (25 de noviembre de 2026):** «días del 1 al 15 y
+del 16 al 31. Aprobada». Es la propuesta del redactor de la spec (29.5): al crearla, el primer
 día va del **1 al 15** y el segundo del **16 al 31** (31 = «último día»). Se valida
 con un `check` en la versión. Cada uno se ajusta con su día de referencia, pero el
 primero nunca se ajusta (todo mes tiene 15 días) y el segundo nunca baja de 28. La
@@ -249,7 +252,7 @@ Alternativas descartadas:
 - **Permitir cualquier par y avisar:** deja el caso abierto para la otra persona
   de una recurrencia compartida, que no eligió los días.
 
-#### 3.4 Editar una recurrencia: datos y día, nunca la rejilla `[P]` P2 (Q6, 29.3; FR-005)
+#### 3.4 Editar una recurrencia: datos y día, nunca la rejilla · P2 decidida (Q6, 29.3; FR-005)
 
 Las rondas 1 y 2 admitían editar todo el calendario. Eso obligaba a cortar
 segmentos, fijar ranuras y calcular un límite inferior, y cada versión del
@@ -258,19 +261,23 @@ prefijo y obligaciones retroactivas (F103-1, F103-2, F103-13 y F103-14). Esta
 versión **quita la causa**: limita lo que se puede editar para que la
 correspondencia posición ↔ periodo de §3.1 no se rompa nunca. Q6 no se reabre:
 decide **a qué instancias** afecta una edición, no qué campos son editables. Pero
-limitar los campos editables es una decisión de producto, y por eso es la `[P]` P2.
+limitar los campos editables es una decisión de producto, y por eso fue la P2.
 
-**`[P]` P2 · Qué se puede editar** (recomendada (a)):
+**P2 · Qué se puede editar.** **Decisión de los fundadores (25 de noviembre de
+2026): opción (a)**, «edición restringida y flujo atómico e idempotente de Cambiar
+frecuencia. Aprobada, incluyendo la cancelación explícita de las pendientes que no
+se trasladan». Opciones que se plantearon:
 
 - (a) **dentro de una recurrencia se editan los datos, el día dentro de su
   periodo, N y la fecha final**. Cambiar la unidad, el intervalo o el origen es
   **finalizar y crear otra**, en el flujo «Cambiar frecuencia» de abajo, con su
   contrato completo. **Cambiar la frecuencia no traslada las pendientes** de la
-  regla anterior: se resuelven antes o se cancelan con ella;
+  regla anterior: se resuelven antes o se **cancelan de forma explícita** con ella,
+  en la lista de la confirmación;
 - (b) **edición libre** del calendario, con el modelo de segmentos y ranuras de la
   ronda 2. Se descarta por los hallazgos que abrió (Alternativas 3).
 
-Con (a), la spec 007 se reconcilia antes de Plan (Consecuencias): FR-005 y el
+Con (a), elegida, la spec 007 se reconcilia antes de Plan (Consecuencias): FR-005 y el
 caso límite «Editar la frecuencia o la fecha» hablan de editar la frecuencia
 dentro de una recurrencia.
 
@@ -610,7 +617,10 @@ Tres cosas distintas, que no se mezclan (F103-12):
   versiones y pausas (§12). Las pendientes calculadas desaparecen con ella porque
   nunca fueron reales.
 
-**`[P]` P3 · Previstas al finalizar a mano o eliminar con historia.** La spec dice
+**P3 · Previstas al finalizar a mano o eliminar con historia.** **Decisión de los
+fundadores (25 de noviembre de 2026): opción (a)**, «cancelación de todas las
+futuras en compromisos finitos y cese de generación en recurrencias sin fin.
+Aprobada». La spec dice
 «Prevista → Cancelada». Cancelar es registrar un hecho por instancia, y cuántas
 previstas hay depende del tipo de compromiso:
 
@@ -620,7 +630,7 @@ previstas hay depende del tipo de compromiso:
 | Con fecha final | Finitas: hasta `end_date` |
 | Sin fin | Infinitas |
 
-- (a) **recomendada**: en los compromisos **con N o con fecha final**, se registra
+- (a) **elegida**: en los compromisos **con N o con fecha final**, se registra
   la cancelación de **todas** las previstas restantes; la confirmación las lista
   («Se cancelan las cuotas 7 a 12»). **Sin fin**, dejan de generarse sin
   materializarse, y la confirmación dice «No se crearán más desde el …». Cumple la
@@ -658,9 +668,13 @@ Se evalúa, en este orden, y se detiene en la primera que se cumple:
    **pendiente** (§5, paso 4). Sin otros hechos vigentes, la instancia vuelve a
    **prevista o pendiente según su fecha fijada** (D3), con su versión fijada.
 
-**`[P]` P7 · Qué recupera Deshacer** (F103-20; lectura de D3, «con su versión»):
+**P7 · Qué recupera Deshacer** (F103-20; lectura de D3, «con su versión»).
+**Decisión de los fundadores (25 de noviembre de 2026): opción (a)**. «Aceptamos que
+una instancia conserve permanentemente la fecha y la versión fijadas, incluso
+después de deshacer una omisión y ante ediciones posteriores. Aprobamos
+expresamente esta excepción a Q6». Opciones que se plantearon:
 
-- (a) **recomendada: la fecha y la versión históricas**, las que tenía al omitirse.
+- (a) **elegida: la fecha y la versión históricas**, las que tenía al omitirse.
   Es la lectura literal de D3. **Se aprueban dos comportamientos juntos** (F103-24):
   1. Deshacer recupera la fecha y la versión históricas;
   2. las ediciones posteriores **tampoco modifican** esa instancia, aunque vuelva a
@@ -673,7 +687,7 @@ Se evalúa, en este orden, y se detiene en la primera que se cumple:
   fecha recuperada es futura y la regla se editó mientras tanto, la instancia
   vuelve con los **datos anteriores** a la edición: la interfaz lo dice al deshacer
   («Vuelve con los datos que tenía al omitirla»), y la persona puede cambiar el
-  movimiento real al confirmar. Si se aprueba, la excepción se registra en la spec
+  movimiento real al confirmar. **Los fundadores la aprobaron expresamente**, y la excepción se registra en la spec
   y en el maestro (Consecuencias);
 - (b) los datos **actuales** de la posición (la lectura de la ronda 3), con dos
   restricciones: la pausa se evalúa con la fecha histórica **y** con la nueva, y la
@@ -759,9 +773,10 @@ Mensual del día 15, N = 2, que empieza el 15 de diciembre del año anterior.
 - pausar y reanudar el mismo día: intervalo vacío, nada consumido;
 - una posición el día después del inicio: consumida.
 
-#### 6.5 Recuperación manual excepcional `[P]` P4 (F101-18)
+#### 6.5 Recuperación manual excepcional · P4 decidida (F101-18)
 
-**Recomendación: no existe en v1.** Una posición consumida no se recupera. Si la
+**Decisión de los fundadores (25 de noviembre de 2026):** «sin recuperación manual
+excepcional en v1. Aprobada». **No existe en v1.** Una posición consumida no se recupera. Si la
 obligación de ese periodo sigue existiendo:
 
 - **Anotar** registra el movimiento real cuando se paga, pero **no recupera por sí
@@ -770,18 +785,24 @@ obligación de ese periodo sigue existiendo:
   **recurrencia de una sola fecha** (Q11), que sí la representa.
 
 Así D5 se mantiene sin excepciones: una pausa nunca recupera nada, y nada consumido
-se confunde con una cuota pendiente. La alternativa, si los fundadores la quieren,
+se confunde con una cuota pendiente. La alternativa descartada
 sería una acción distinta de reanudar, sobre una sola posición consumida, que
 registra un hecho nuevo («recuperada») y la deja pendiente con auditoría, sin
 cambiar N ni la fecha final. Añadiría un cuarto tipo de hecho y una fila a la tabla
 de estados de la spec, que habría que reconciliar.
 
-#### 6.6 Pendiente de una recurrencia archivada o finalizada a mano `[P]` P5 (F101-8 iii)
+#### 6.6 Pendiente de una recurrencia archivada o finalizada a mano · P5 decidida (F101-8 iii)
 
 Una instancia confirmada de una recurrencia ya archivada (o finalizada a mano)
 cuyo movimiento se anula económicamente vuelve a pendiente (D1, paso 4 de §5).
 
-**Recomendación:** se muestra en «Por confirmar» y en el calendario, en su fecha
+**Decisión de los fundadores (25 de noviembre de 2026):** «las pendientes legítimas
+que permanezcan o reaparezcan tras el archivo o la finalización siguen visibles y
+son resolubles sin reactivar la recurrencia. Esto no recupera las instancias
+canceladas durante la finalización». Es decir: una instancia cancelada al finalizar
+o archivar **sigue cancelada**; lo que sigue visible y resoluble son las
+pendientes que no se cancelaron (por ejemplo, las de una terminación automática) y
+las que reaparecen después (reabiertas por D1). Se muestra en «Por confirmar» y en el calendario, en su fecha
 prevista, con una marca de «recurrencia archivada» (o «finalizada»), y en el
 detalle de la recurrencia. Se puede **confirmar, vincular u omitir**, porque es una
 obligación real sin resolver. Las funciones de §7 lo permiten porque **validan la
@@ -1012,7 +1033,7 @@ las tablas de recurrencias, así que ningún error ni bloqueo depende de ellas. 
 vistas compartidas ya ocultan `moved_from_transaction_id` a quien no movió
 (`shared_payload`). Beto no puede descubrir la recurrencia a través de T2 (F101-2).
 
-### 9. F101-19 (obligatoria): el reemplazo compartido como candidato a un vínculo posterior `[P]` P6
+### 9. F101-19 (obligatoria): el reemplazo compartido como candidato a un vínculo posterior · P6 decidida
 
 **El caso.** Ana confirmó una instancia privada con T1 y lo movió a Pareja; T2 es
 el compartido. T2 es el movimiento efectivo de la instancia privada de Ana por la
@@ -1028,10 +1049,17 @@ no revela la recurrencia privada de Ana).
 | --- | --- | --- | --- | --- |
 | A. Rechazar: T2 no es vinculable mientras sea movimiento efectivo de otra instancia | Sí | Sí | **No** | Beto ve un gasto compartido, activo y compatible que no se puede vincular sin motivo visible. Excluirlo en silencio de las sugerencias y rechazarlo en la búsqueda revela que algo privado lo usa. Un error genérico también lo revela |
 | B. Permitir y quitárselo a Ana: el vínculo de Beto deja la instancia de Ana pendiente | Sí | Sí | Sí | Una acción de Beto cambia en silencio un estado privado de Ana, y no es una anulación económica: contradice D1 |
-| **C. Permitir y coexistir (recomendada)** | **Sí, por contexto** | **Sí** | **Sí** | Un mismo gasto real cumple una instancia privada de Ana (por trazabilidad) y una compartida (por vínculo ordinario). Son obligaciones independientes (abajo) |
+| **C. Permitir y coexistir (elegida)** | **Sí, por contexto** | **Sí** | **Sí** | Un mismo gasto real cumple una instancia privada de Ana (por trazabilidad) y una compartida (por vínculo ordinario). Son obligaciones independientes (abajo) |
 | D. Bloquear Mover a Pareja de un gasto vinculado | Sí | Sí | Sí | Contradice F101-3: ninguna función de MVP-1 se bloquea por un vínculo |
 
-**Recomendación: C.** Distingue tres niveles de unicidad, que no son lo mismo:
+**Decisión de los fundadores (25 de noviembre de 2026): opción C, coexistencia.**
+«Aceptamos expresamente el riesgo de duplicación semántica entre obligaciones
+independientes de distintos contextos. Priorizamos la privacidad, la unicidad de
+los vínculos ordinarios y la integridad del dinero real. Aceptamos también la
+excepción contextual tras Deshacer Mover a Pareja. No se introduce deduplicación
+entre contextos ni ningún aviso que revele programaciones privadas».
+
+C distingue tres niveles de unicidad, que no son lo mismo:
 
 1. **Unicidad del vínculo ordinario.** Un movimiento tiene como mucho un vínculo
    ordinario en toda su historia, y una instancia como mucho uno vigente (§7.5). La
@@ -1072,7 +1100,7 @@ Reglas de C:
   con T3. La compartida vuelve a **pendiente**, porque su movimiento efectivo es
   T2 —sin cadena, §8— y está anulado: para el contexto compartido, el gasto salió
   de él. **Esto no es una consecuencia de D1** (que habla de la anulación
-  económica): es parte de la opción C y **se aprueba con ella**. El vínculo de Beto
+  económica): es parte de la opción C y **los fundadores la aceptaron con ella**. El vínculo de Beto
   no es una operación dependiente que bloquee el Deshacer (ADR-001 punto 6; spec
   003, Q15; F101-3).
 - **Solo para Ana**, el detalle puede indicar que el gasto también cumple su
@@ -1405,20 +1433,24 @@ esto cambia ninguna función de MVP-1.
   lista de tablas controladas, como pide su texto.
 - El contrato de borrado de la 005 y `scope.sql` se amplían con las cinco tablas
   (§13).
-- **Reconciliación de la spec 007.** Toda `[P]` que los fundadores aprueben y que
-  cambie el comportamiento que la spec describe **obliga a reconciliar la spec 007
-  antes de la etapa Plan**, en un PR documental propio (ADR-012 §3.1: cada gate es
-  el merge de un PR documental). **Este PR no toca la spec ni la decisión 29**: las
-  `[P]` siguen pendientes. Lista:
+- **Reconciliación de la spec 007 y del maestro.** Las decisiones P1–P7 cambian o
+  concretan texto de la spec 007 y de la decisión 29. Se reconcilian **antes de la
+  etapa Plan**, en un **PR documental aparte, posterior a este** (ADR-012 §3.1: cada
+  gate es el merge de un PR documental). **Este PR no toca la spec ni el maestro.**
+  En ese PR, ADR-016 pasa a Aceptado con su registro en el maestro, como ADR-014 y
+  ADR-015 con la decisión 27.3. Q15 y la decisión 29.8 siguen abiertas y no se
+  tocan.
 
-  | `[P]` u otra lectura | Qué cambia en la spec | Cuándo hay que reconciliar |
+  | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
-  | **P2** (a) | FR-005 y el caso límite «Editar la frecuencia o la fecha» hablan de editar la frecuencia dentro de una recurrencia; con (a), cambiar unidad o intervalo es finalizar y crear otra. La tabla de estados no cambia | Si se aprueba (a) |
-  | **P3** | «Prevista → Cancelada» de la tabla de estados y FR-007, según la opción: (a) se cumple en los compromisos con N o con fecha final, y en los **sin fin** las previstas dejan de generarse sin cancelarse; (b) en ninguno se cancelan, solo dejan de generarse; (c) se cancelan solo hasta el horizonte por omisión en los sin fin, y las de después dejan de generarse. En todos los casos, la spec tiene que decir qué significa «cancelada» más allá de lo que se materializa | Con cualquier opción, por la parte sin fin |
-  | **P4** | Una fila nueva en la tabla de estados (posición consumida → pendiente) | Solo si se aprueba la recuperación |
-  | **P5** | Decir que una reabierta de una recurrencia archivada o finalizada se puede resolver sin reactivarla | Si se aprueba la recomendación |
-  | **P6** (C) | FR-018a dice que la sustitución técnica no devuelve la instancia a pendiente. C añade una excepción **contextual**: tras el Deshacer, la instancia **compartida** vinculada a T2 vuelve a pendiente, porque para su contexto el gasto salió. La instancia privada sigue el FR-018a tal cual | Si se aprueba C |
-  | **P7** (§6.4) | Con (a): una **excepción a Q6**. FR-004, la tabla «Estados y transiciones» (fila «Prevista → Prevista al editar») y el maestro (29.3) dicen que una omisión deshecha conserva la fecha y la versión históricas y que las ediciones posteriores no la cambian. Con (b): D3 y FR-017 tienen que decir que una omisión deshecha toma los datos actuales de su posición, con las restricciones de pausa y terminación | Con cualquiera de las dos, en el PR de reconciliación |
+  | **P1** | Precisión de Q7, «Colisión quincenal»: deja de ser una propuesta y pasa a regla (1–15 y 16–31). **FR-009b**: la regla concreta, en lugar de «la fija ADR-a» | **29.5**: la colisión quincenal deja de ser «propuesta `[P]` del redactor» |
+  | **P2** (a) | **FR-004**: lo editable (datos, día dentro de su periodo, N y fecha final). **FR-005** y el caso límite «Editar la frecuencia o la fecha»: cambiar la unidad o el intervalo es «Cambiar frecuencia» (finalizar y crear otra, atómico e idempotente, con la cancelación explícita de las pendientes que no se trasladan). Tabla «Estados y transiciones»: la fila «Prevista → Prevista al editar» se refiere a la edición del día y de los datos | **29.3**: cambiar la frecuencia es un flujo de dos reglas, no una edición |
+  | **P3** (a) | Tabla de estados, fila «Prevista o pendiente → Cancelada», y **FR-007** y **FR-076**: en compromisos con N o con fecha final se cancelan todas las futuras; en las recurrencias sin fin, las previstas dejan de generarse. Precisión de Q18, «Finalizar a mano» | **29.5** (precisiones de Q18): la misma lectura |
+  | **P4** | **FR-017** y la fila «Omitida → Deshacer… periodo pausado» de la tabla de estados: se quita «Si ADR-a contempla una recuperación manual excepcional…» y se dice que no existe en v1 | **29.6** (D5): la misma precisión |
+  | **P5** | Tabla de estados, fila «Confirmada → anulación económica» (F101-8 iii), y **FR-018**: la pendiente que permanece o reaparece tras el archivo o la finalización sigue visible y resoluble sin reactivar la recurrencia, y no recupera las instancias canceladas | **29.6**, o la fila que registre ADR-016 |
+  | **P6** (C) | **FR-014a** y **FR-018a**: la cuestión obligatoria de F101-19 resuelta (coexistencia, unicidad por contexto, riesgo de duplicación aceptado, sin deduplicación entre contextos ni avisos que revelen programaciones privadas). Tabla de estados, fila «Confirmada → sustitución técnica»: la excepción contextual (tras Deshacer, la instancia compartida vinculada al reemplazo vuelve a pendiente). Key Entities, «Trazabilidad privada» | **29.7**: F101-19 resuelta por ADR-016 |
+  | **P7** (a) | **FR-004**: la excepción a Q6 (una omisión deshecha conserva su fecha y su versión, también ante ediciones posteriores). **FR-017**: Deshacer recupera la fecha y la versión históricas. Tabla de estados: filas «Prevista → Prevista al editar» y «Omitida → Deshacer… con su versión» | **29.3** (Q6): la excepción aprobada. **29.6** (D3): «con su versión» = la fecha y la versión históricas |
+  | Resto de ADR-016 | «Cuestiones que la tabla deja a ADR-a» y «Lo que hace falta para pasar a Plan», punto 3: ADR-a resuelto por ADR-016 | **29.7** y **29.10**: ADR-a aceptado; ADR-b y ADR-d siguen pendientes |
 
 ## Verificación pendiente [V]
 
@@ -1584,17 +1616,24 @@ que el Plan concreta y prueba.
   fecha y la versión fijadas, también las de una omisión ya deshecha, para que el
   calendario se pueda reconstruir.
 
-## Cuestiones para los fundadores `[P]`
+## Decisiones de los fundadores (25 de noviembre de 2026)
 
-| # | Cuestión | Opciones | Recomendación | Dónde |
-| --- | --- | --- | --- | --- |
-| P1 | Días de la quincenal (Q7, 29.5) | Primer día 1–15 y segundo 16–31; una instancia en la fecha coincidente; mover la segunda; cualquier par con aviso | Primer día 1–15 y segundo 16–31 (31 = último) | §3.3 |
-| P2 | **Qué se puede editar** de una recurrencia | (a) datos, el día dentro de su periodo (con el origen fijo), N y la fecha final; cambiar la unidad, el intervalo o el origen es «Cambiar frecuencia», con su contrato: atómico e idempotente, historia por filas, sin trasladar pendientes, N′ ≤ 0 sin regla nueva, solapes visibles y límite entre frecuencias; (b) edición libre del calendario | (a), con reconciliación de FR-005 | §3.4 |
-| P3 | Previstas al finalizar a mano o eliminar con historia | (a) cancelar todas en los compromisos con N o fecha final, y dejar de generar sin fin; (b) dejar de generar en todos; (c) cancelar las del horizonte por omisión, y todas en los finitos | (a); cualquier opción exige reconciliar la spec por la parte sin fin | §6.3 |
-| P4 | Recuperación manual excepcional (F101-18) | No existe (Anotar registra el pago; una recurrencia de una sola fecha representa la obligación); o una acción propia que deja la posición pendiente | No existe en v1 | §6.5 |
-| P5 | Pendiente de una recurrencia archivada o finalizada (F101-8 iii) | Visible en «Por confirmar» y en el calendario, y resoluble sin reactivar la regla; o solo en el detalle de la archivada | La primera | §6.6 |
-| P6 | **F101-19 (obligatoria):** el reemplazo compartido como candidato a un vínculo | A rechazar; B quitárselo a Ana; **C coexistir**; D bloquear Mover a Pareja | C, con sus consecuencias: obligaciones independientes, el riesgo de reponer dos veces tras anular T2, sugerencias que solo mitigan dentro del contexto, y la compartida en pendiente tras el Deshacer (excepción contextual a FR-018a), que se aprueba con C | §9 |
-| P7 | **Qué recupera Deshacer una omisión** (lectura de D3, F103-20) | (a) la fecha y la versión que tenía al omitirse, siempre; (b) los datos actuales de su posición, con la pausa evaluada en las dos fechas y la terminación calculada sin el deshacer | (a): lectura literal de D3; quita la fecha liberada y F103-20. Incluye una excepción a Q6 y FR-004 (las ediciones posteriores no la cambian), que se reconcilia en la spec y en la 29.3 | §6.4 |
+Los fundadores aprobaron P1–P7 con las opciones recomendadas y estas precisiones,
+transmitidas por el gestor. Se citan literalmente:
+
+| # | Cuestión | Decisión, literal | Dónde |
+| --- | --- | --- | --- |
+| P1 | Días de la quincenal (Q7, 29.5) | «Días del 1 al 15 y del 16 al 31. Aprobada.» | §3.3 |
+| P2 | Qué se puede editar | «Opción A, edición restringida y flujo atómico e idempotente de Cambiar frecuencia. Aprobada, incluyendo la cancelación explícita de las pendientes que no se trasladan.» | §3.4 |
+| P3 | Previstas al finalizar a mano o eliminar con historia | «Opción A, cancelación de todas las futuras en compromisos finitos y cese de generación en recurrencias sin fin. Aprobada.» | §6.3 |
+| P4 | Recuperación manual excepcional (F101-18) | «Sin recuperación manual excepcional en v1. Aprobada.» | §6.5 |
+| P5 | Pendiente de una recurrencia archivada o finalizada (F101-8 iii) | «Las pendientes legítimas que permanezcan o reaparezcan tras el archivo o la finalización siguen visibles y son resolubles sin reactivar la recurrencia. Esto no recupera las instancias canceladas durante la finalización.» | §6.6 |
+| P6 | F101-19 (obligatoria) | «Opción C, coexistencia. Aceptamos expresamente el riesgo de duplicación semántica entre obligaciones independientes de distintos contextos. Priorizamos la privacidad, la unicidad de los vínculos ordinarios y la integridad del dinero real. Aceptamos también la excepción contextual tras Deshacer Mover a Pareja. No se introduce deduplicación entre contextos ni ningún aviso que revele programaciones privadas.» | §9 |
+| P7 | Qué recupera Deshacer una omisión | «Opción A. Aceptamos que una instancia conserve permanentemente la fecha y la versión fijadas, incluso después de deshacer una omisión y ante ediciones posteriores. Aprobamos expresamente esta excepción a Q6.» | §4, §6.4 |
+
+Además: «No ampliar el alcance, no añadir mecanismos nuevos y no iniciar
+implementación». **Q15 y la decisión 29.8 permanecen abiertas.** La reconciliación
+de la spec 007 y del maestro va en un PR aparte (Consecuencias).
 
 ## Referencias
 
