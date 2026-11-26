@@ -74,6 +74,25 @@ coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
 
   No cambian las cifras de Q15 del prompt.
 
+## Temas: qué está en los dos y qué se revisó en los dos
+
+Son dos cosas distintas, y aquí se separan (F114-9).
+
+- **Está en los dos temas.** Desde la ronda 2 de la revisión del PR #114, todos los
+  comps (cada pantalla y cada estado) están en claro y en oscuro. Lo comprueba un
+  recuento automático de los pies de las dos páginas: 61 en claro y 61 en oscuro en
+  la 11a, y 76 y 76 en la 11b, sin ningún comp de un solo tema.
+- **Se revisó visualmente en los dos temas**, mirando las capturas de `comps/`:
+  - 07·2: todos sus estados;
+  - 07·5: cancelación, rechazo y resultado desconocido;
+  - 07·8: rechazo, advertencia, resultado desconocido y borrador de un estimado;
+  - 07·9: rechazo genérico, resultado desconocido y la cadena de P6;
+  - 07·11: acciones destructivas.
+
+  Además, se midió el contraste de los botones primario, secundario y de peligro en
+  los dos temas: todos superan 4,5:1. En el resto de pantallas, la versión oscura
+  existe, pero su revisión visual queda como `[V]` (abajo).
+
 ## Cobertura por pantalla
 
 Qué pide cada pantalla y de dónde sale. Todas van a 390 y 1440 px, en claro y en
@@ -185,6 +204,8 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
 No se dan por hechas; la aprobación visual tampoco las cierra. Además de las de cada
 sección de los comps:
 
+- revisión visual en oscuro de las pantallas que no lista «Temas» (arriba): 07·1,
+  07·3, 07·4, 07·6, 07·7, 07·10, 07·12, 07·13, 07·14 y 07·15;
 - contraste WCAG AA de todo el texto y de lo previsto (por ejemplo, el contorno
   punteado y el importe secundario) en claro y en oscuro, y que lo previsto se
   distinga de lo real sin color;
