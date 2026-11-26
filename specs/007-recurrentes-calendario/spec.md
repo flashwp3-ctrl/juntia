@@ -481,8 +481,9 @@ ADR-b se escribió como ADR-017 (`docs/adr/ADR-017-importes-previstos-y-total-de
 PR #106), se revisó y se aceptó (maestro §15.10, decisión 29.12). Fija los importes
 previstos (§1 y §2), que ninguna cifra mezcla lo previsto con lo real (§3) y el
 tratamiento del total de gastos previstos **si** Q15 se cierra en (b) (§4 a §6).
-Los fundadores decidieron sus tres propuestas el 26 de noviembre de 2026. Su texto,
-transmitido por el gestor, se cita literalmente:
+Los fundadores decidieron sus tres propuestas el 26 de noviembre de 2026. Este es un
+**extracto literal de sus decisiones**, transmitidas por el gestor; el texto completo
+está en ADR-017, «Decisiones de los fundadores (26 de noviembre de 2026)»:
 
 > Aprobamos las tres opciones recomendadas de ADR-017:
 >
@@ -732,7 +733,7 @@ por fecha con su estado, y una confirmada abre su movimiento en Actividad.
 
 **Acceptance Scenarios**:
 
-1. **Given** instancias en varios estados, **When** Ana abre el calendario, **Then** ve cada una con su fecha prevista, nombre, importe (fijo, estimado, rango o desconocido) y estado, y puede confirmar, vincular u omitir las pendientes, y las previstas con las reglas de D2 y D3 (F101-5 y F101-8 i).
+1. **Given** instancias en varios estados, **When** Ana abre el calendario, **Then** ve cada una con su fecha prevista, nombre, importe según las formas y reglas de presentación de ADR-017 §1 y §2, y estado, y puede confirmar, vincular u omitir las pendientes, y las previstas con las reglas de D2 y D3 (F101-5 y F101-8 i).
 2. **Given** la navegación de §15.3, **When** Ana busca el calendario, **Then** está como ruta hija de Plan, sin pestaña ni destino nuevo.
 3. **Given** el contexto Nosotros, **When** Beto abre el calendario, **Then** ve solo las recurrencias compartidas, nunca las privadas de Ana ni sus aportes programados, ni por totales ni por huecos.
 4. **Given** que los comps aprueban el total mensual de gastos previstos (Q15), **When** Ana lo ve, **Then** su rótulo dice exactamente qué incluye, está separado de ingresos y aportes, no trata un importe desconocido como cero y nunca se presenta como disponibilidad ni capacidad de pago, con el tratamiento de ADR-017 §4 a §6 y las decisiones P1–P3 de los fundadores.
@@ -898,7 +899,7 @@ a mano con los mismos datos; tener presets no crea instancias ni cambia cifras.
 - Salida de la pareja: sigue bloqueada por ADR-003; esta spec no la implementa (FR-077).
 - Borrado de cuenta y exportación con reglas, instancias y sus estados, vínculos autorizados y presets (Q18), sin revelar programaciones privadas a la otra persona (F101-2).
 - Importe estimado o en rango al confirmar un gasto: se abre Anotar; en un ingreso estimado, condicional o de importe desconocido se exige el importe recibido.
-- Total de previstos con instancias de importe desconocido o en rango: nunca se cuentan como cero (Q15; ADR-017 §4, reglas de presentación).
+- Los importes desconocidos y los estimados con rango se presentan conforme a ADR-017 §2. El total de gastos previstos, si existe, se rige por ADR-017 §4; en v1 no admite gastos de importe desconocido (§1).
 - Nosotros sin recurrencias compartidas: se dice como ausencia, nunca $0 (FR-062). En el total, si existe, la ausencia sigue ADR-017 §4, regla 1.
 - Cambio de mes y de zona horaria: fechas en `America/Bogota` (§5.2).
 
@@ -930,7 +931,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 - **FR-010**: Una recurrencia genera instancias con los estados de Q5; su forma la fija ADR-016 (Q3): se calcula, y solo se guardan sus hechos, sin poner nada previsto en `transactions`.
 - **FR-011**: Ninguna instancia prevista crea, modifica ni se cuenta como un movimiento real. Ninguna métrica de §5.1, ningún presupuesto (DEC-R01, ADR-004), Balance, Análisis ni DEC-G04 incluye nada previsto.
-- **FR-012**: Confirmar una instancia de **importe fijo** se hace en un toque con los **datos de la versión de la instancia**, y antes de guardar se puede abrir Anotar para cambiar el importe, la fecha efectiva, el pagador o el reparto. En **ingresos**, el toque único exige **certeza fija**: no basta con que el importe sea conocido. Confirmar una instancia de **importe estimado, en rango o desconocido**, o un ingreso **condicional** aunque su importe sea conocido, abre Anotar con el borrador rellenado con los datos de su versión (Q4 (c); F101-6; F101-17).
+- **FR-012**: Confirmar una instancia de **importe fijo** se hace en un toque con los **datos de la versión de la instancia**, y antes de guardar se puede abrir Anotar para cambiar el importe, la fecha efectiva, el pagador o el reparto. En **ingresos**, el toque único exige **certeza fija**: no basta con que el importe sea conocido. Confirmar una instancia de **importe estimado con rango o desconocido** (ADR-016 §7.2; ADR-017 §2), o un ingreso **condicional** aunque su importe sea conocido, abre Anotar con el borrador rellenado con los datos de su versión (Q4 (c); F101-6; F101-17).
 - **FR-012a**: Los datos de la versión de la instancia (importe, categoría, pagador y reparto) son los de la versión que corresponde a su posición según ADR-016 §4 o, si tuvo un hecho, los de la versión histórica fijada desde su primer hecho; no los de la regla actual. Calcular una instancia no la materializa (ADR-016 §2; F101-6).
 - **FR-012b**: Una instancia prevista solo se confirma o se vincula con una fecha efectiva de hoy o anterior; los aportes, con la regla de la 004 (FR-040: hoy o pasado). La regla general de fechas futuras de los movimientos anotados a mano no cambia (16.13; 002, Q13) (D2, F101-5).
 - **FR-013**: Confirmar crea **exactamente un** movimiento real del tipo de la recurrencia, de forma idempotente (ADR-013), y lo vincula 1:1 con la instancia.
@@ -971,7 +972,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 - **FR-040**: El calendario de lo previsto es una ruta hija de Plan, sin destino de navegación nuevo (§15.3; 22.5).
 - **FR-041**: En móvil es una lista agrupada por fecha con flechas de mes, sin cuadrícula; escritorio se decide con los comps (Q14). Muestra por defecto el mes actual y el siguiente.
-- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe (fijo, estimado, rango o desconocido), estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, «cuota n de N». Si solo tiene fecha final, no se inventa N. El importe se muestra con las reglas de ADR-017 §2.
+- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe según las formas y reglas de presentación de ADR-017 §1 y §2, estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, «cuota n de N». Si solo tiene fecha final, no se inventa N.
 - **FR-043**: Desde el calendario se confirma, vincula u omite una instancia pendiente; una prevista, solo con las reglas de FR-012b y FR-017.
 - **FR-044**: El calendario no muestra movimientos reales sin instancia: lo real vive en Actividad (16.8).
 
@@ -1035,7 +1036,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 - Grupos de más de dos (28.4).
 - Multimoneda (§3).
 
-### Key Entities *(conceptuales; la forma la fijan ADR-016 (ADR-a), ADR-d y el Plan)*
+### Key Entities *(conceptuales; la forma la fijan ADR-016 (ADR-a), ADR-017 (ADR-b, contrato de los importes), ADR-d y el Plan)*
 
 - **Recurrencia**: regla de un movimiento esperado. Propietaria XOR pareja, **inmutable en su contexto** (los aportes, siempre propietaria), tipo (gasto, ingreso, aporte a meta), nombre, importe (fijo, estimado con rango o desconocido), tipo, certeza y condición en ingresos, categoría, meta (aportes), frecuencia con su **día de referencia**, fecha inicial, fecha final o número de ocurrencias, responsable, reparto, estado (activa, pausada, finalizada sola o a mano, archivada), versiones y auditoría.
 - **Instancia prevista**: una ocurrencia de la recurrencia, con identidad estable (la regla y la posición, ADR-016), **fecha prevista** (fijada para siempre desde su primer hecho, P7), número de ocurrencia, la **versión** de la regla que le corresponde (cuyos datos usa al confirmar, F101-6) y su estado (Q5 y tabla de estados). Nunca es un movimiento real (Q3).
@@ -1066,7 +1067,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
   Las verificaciones de producto de ADR-016 (P3, P5 y P9) concretan estas pruebas.
 - **SC-003**: Cero fugas: ninguna consulta, sugerencia de vínculo, aviso, exportación, error o metadato de la otra cuenta ni de una tercera devuelve dato alguno de una recurrencia, instancia, aporte programado o preset privado, **ni revela su existencia**; un aporte confirmado desde una programación privada es indistinguible de uno manual para la otra persona (pgTAP con tres cuentas; F101-2).
 - **SC-004**: Confirmar cuesta un toque desde el calendario o el aviso **solo** cuando la instancia es de importe fijo (en ingresos, además, de certeza fija; F101-17), nada cambió y no hay un movimiento compatible sugerido por resolver; el gasto habitual sin recurrencia ni preset sigue en mediana < 10 s en teléfono real (US-12).
-- **SC-005**: Los dos fundadores distinguen sin ayuda, en una prueba con sus propios datos, lo previsto de lo real en el calendario, y ninguno interpreta un ingreso previsto, un aporte programado o el total de previstos como dinero recibido, reservado o disponible.
+- **SC-005**: Los dos fundadores distinguen sin ayuda, en una prueba con sus propios datos, lo previsto de lo real en el calendario, y ninguno interpreta un ingreso previsto, un aporte programado o el total de previstos, si existe, como dinero recibido, reservado o disponible.
 - **SC-006**: Las transiciones de la tabla «Estados y transiciones» se cumplen todas en las pruebas de dominio, incluidas pausa y reanudación (también en compromisos de duración definida, con N y la fecha final intactos, D5), terminación sola con pendientes, finalización manual, archivo, omisión anticipada y su deshacer según el ciclo de vida (D3, D4), anulación económica y sustitución técnica.
 - **SC-007**: Ningún vínculo incompatible de la tabla «Compatibilidad de vínculos» se acepta en el servidor (integración y pgTAP).
 - **SC-008**: Sin scroll horizontal en 360, 390, 430, 1024 y 1440; CLS = 0 en las cargas con skeleton (§15.7).
