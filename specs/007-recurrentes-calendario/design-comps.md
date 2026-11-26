@@ -113,7 +113,7 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   total de P1(a) también debe decir «por confirmar» (ADR-017 §4), pero ese total
   incluye además las **previstas** futuras del mes. El prompt pide un rótulo que no
   los confunda («sin confirmar»). **Pregunta:** aprobar con los comps un texto
-  para cada uno, o cambiar el nombre de trabajo de la instancia vencida.
+  para cada uno, o cambiar el nombre de trabajo de la instancia pendiente de resolución.
 - **C-3 · Deshacer una confirmación o un vínculo.** La spec no dice si el toast de
   confirmar lleva «Deshacer». Si lo lleva, deshacer sería **anular** el movimiento
   creado, y la instancia volvería a por confirmar por D1, con su auditoría. Anotar

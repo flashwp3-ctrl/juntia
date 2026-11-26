@@ -342,7 +342,7 @@ manda la sección citada, no el resumen.
 >   - una instancia **con los valores fijados por P7**: suma el importe que tenía al
 >     omitirse, no el actual.
 >
->   Cuida que «Por confirmar» como nombre de las instancias vencidas y «sin
+>   Cuida que «Por confirmar» como nombre de las instancias pendientes de resolución y «sin
 >   confirmar» en el rótulo del total, que también incluye las previstas futuras, no
 >   se confundan: propón un rótulo que lo deje claro (C-2).
 >
