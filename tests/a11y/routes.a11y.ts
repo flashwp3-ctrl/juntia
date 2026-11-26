@@ -9,7 +9,7 @@
 // T051 / FR-067; SC-002 (002): el recorrido sale de tests/a11y/route-registry.ts. Con A11Y_JOB=app (job app) audita los
 // estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
 import { seedCouple, seedMovements, seedUser } from "../support/seed";
@@ -48,7 +48,8 @@ async function skeletonFrames(page: Page, scope: string) {
   }), [FRAMES, scope] as const);
 }
 
-// Perilla del Segmented: activa «Nosotros» y registra su x en cada cuadro, dentro de un único evaluate. Vuelve a «Yo».
+// Perilla del Segmented: activa «Nosotros» y registra su x en cada cuadro, dentro de un único evaluate. La vuelta a «Yo» la hace
+// `backToMe` cuando el cambio a «Nosotros» ya terminó (F111-12).
 async function knobFrames(page: Page) {
   return page.evaluate((frames) => new Promise<{ xs: number[] }>((resolve) => {
     const group = [...document.querySelectorAll<HTMLElement>('[data-context-selector] [role="radiogroup"]')].find((node) => node.getClientRects().length > 0)!;
@@ -58,10 +59,71 @@ async function knobFrames(page: Page) {
     const tick = () => {
       xs.push(Math.round(group.querySelector("[data-segmented-knob]")!.getBoundingClientRect().x * 100) / 100);
       if (xs.length < frames) requestAnimationFrame(tick);
-      else { group.querySelector<HTMLElement>('[data-value="me"]')!.click(); resolve({ xs }); }
+      else resolve({ xs });
     };
     requestAnimationFrame(tick);
   }), FRAMES);
+}
+
+/**
+ * F111-12 (PR aparte autorizado por los fundadores el 26 nov 2026; specs/005-gate-mvp-1/diagnostico-aviso-anotar.md). Antes,
+ * `knobFrames` volvía a «Yo» en cuanto terminaba de medir, con el cambio a «Nosotros» todavía en curso, y Anotar se abría
+ * mientras llegaba alguno de los dos `router.refresh()`: la hoja se volvía a pintar dentro de la ventana de medición y la
+ * prueba medía una transición que había provocado ella misma. Si la vuelta llegaba con la petición de «Nosotros» en vuelo, el
+ * orden de las respuestas decidía si había un segundo refresco, así que no había un punto de espera determinista.
+ * Ahora el viaje va por pasos: `knobFrames` mide la perilla igual; `settleContext(…, "us")` espera a que «Nosotros» termine;
+ * `backToMe` pulsa «Yo» (con el servidor ya en «Nosotros», la app siempre pide la página otra vez); y `settleContext(…, "me")`
+ * espera a que esa petición termine y «Yo» esté pintado. `trackRsc` numera las peticiones RSC en el orden en que empiezan y
+ * anota con qué cookie `juntia_context` salió cada una (la app la escribe justo antes de cada `router.refresh()` del cambio,
+ * context-view.tsx). Solo cambia CUÁNDO empieza la medición del aviso: `annotateFrames` y su aserción no cambian.
+ */
+type ContextValue = "me" | "us";
+function trackRsc(page: Page) {
+  const inFlight = new Set<Request>();
+  const order = new Map<Request, number>();
+  const cookies = new Map<number, ContextValue | null>();
+  const finished: { index: number; cookie: ContextValue | null }[] = [];
+  let next = 0;
+  const cookieOf = async (request: Request) => (/(?:^|;\s*)juntia_context=(me|us)(?:;|$)/.exec((await request.allHeaders()).cookie ?? "")?.[1] as ContextValue | undefined) ?? null;
+  const started = (request: Request) => {
+    if (request.headers().rsc !== "1") return;
+    const index = next++;
+    inFlight.add(request);
+    order.set(request, index);
+    void cookieOf(request).then((cookie) => cookies.set(index, cookie));
+  };
+  const done = async (request: Request) => {
+    if (!inFlight.has(request)) return;
+    finished.push({ index: order.get(request)!, cookie: await cookieOf(request) });
+    inFlight.delete(request);
+  };
+  page.on("request", started);
+  page.on("requestfinished", done);
+  page.on("requestfailed", done);
+  return {
+    /** Nada en vuelo, la cookie del documento en `target` y terminada una petición con esa cookie posterior a la última con la otra. */
+    settled: async (target: ContextValue) => {
+      if (inFlight.size > 0 || cookies.size < next) return false;
+      const cookie = await page.evaluate(() => /(?:^|;\s*)juntia_context=(me|us)(?:;|$)/.exec(document.cookie)?.[1] ?? null);
+      if (cookie !== target) return false;
+      const lastOther = Math.max(-1, ...[...cookies].filter(([, value]) => value !== null && value !== target).map(([index]) => index));
+      return finished.some((item) => item.cookie === target && item.index > lastOther);
+    },
+    /** Para diagnosticar un fallo: qué quedó en vuelo y con qué cookie salió y terminó cada petición. */
+    snapshot: () => ({ inFlight: [...inFlight].map((request) => new URL(request.url()).pathname), cookies: Object.fromEntries(cookies), finished, started: next }),
+    stop: () => { page.off("request", started); page.off("requestfinished", done); page.off("requestfailed", done); },
+  };
+}
+
+async function settleContext(page: Page, rsc: ReturnType<typeof trackRsc>, target: ContextValue) {
+  await expect.poll(() => rsc.settled(target), { message: `el cambio a ${target === "me" ? "«Yo»" : "«Nosotros»"} termina (su cookie, su RSC terminado y nada en vuelo)` }).toBe(true);
+  if (target === "me") await expect(page.locator('[data-context-view="me"]:visible').first()).toBeVisible();
+  await expect(page.locator("main [data-skeleton]:visible")).toHaveCount(0);
+}
+
+/** Vuelve a «Yo» con el mismo selector visible que usó `knobFrames`. */
+async function backToMe(page: Page) {
+  await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('[data-context-selector] [role="radiogroup"]')].find((node) => node.getClientRects().length > 0)!.querySelector<HTMLElement>('[data-value="me"]')!.click());
 }
 
 // Aviso de Anotar: lo abre su disparador visible y registra el rectángulo del diálogo o de la hoja en cada cuadro.
@@ -302,9 +364,15 @@ for (const colorScheme of THEMES) {
           // El selector existe en todas salvo /cuenta por debajo de 1280 (contracts/routes.md).
           const hasSelector = await page.locator("[data-context-selector][data-hydrated]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
           if (hasSelector) {
+            const rsc = trackRsc(page);
             const knob = await knobFrames(page);
             expect.soft(new Set(knob.xs).size, "posiciones distintas de la perilla").toBe(1);
             console.log(`${colorScheme} ${route} ${width}px: perilla ${knob.xs[0]} en ${knob.xs.length} cuadros, ${new Set(knob.xs).size} posición(es)`);
+            // F111-12: Anotar se abre cuando el viaje a «Nosotros» y de vuelta a «Yo» ya terminó.
+            await settleContext(page, rsc, "us");
+            await backToMe(page);
+            await settleContext(page, rsc, "me");
+            rsc.stop();
           } else {
             console.log(`${colorScheme} ${route} ${width}px: sin selector en este ancho`);
           }

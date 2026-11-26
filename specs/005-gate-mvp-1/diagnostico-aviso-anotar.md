@@ -65,12 +65,16 @@ redondea a entero: el alto natural es 701,59 y el mínimo queda en 702, así que
 0,41 px. Si no hay un render posterior dentro de la ventana, no se ve. El cambio de contexto provoca ese render. Coincide
 con las cifras (701,59 → 702,00, entero), pero no se instrumentó el efecto: confirmarlo es parte de la propuesta.
 
+> **Actualización del 26 nov 2026.** Instrumentado en el PR aparte: el mecanismo **queda confirmado por medición** (37 de 37 saltos en el cuadro en que `holdKey` fija `min-height` con `offsetHeight` 674 sobre un alto de 673,59). Ver «PR aparte de F111-12».
+
 **Lo que no está demostrado (F111-16).** Dos cosas quedan como hipótesis:
 
 - el mecanismo de `offsetHeight`;
 - que esperar a que termine el cambio de contexto antes de abrir Anotar elimine el fallo.
 
 Ninguna se ha probado: el arnés no instrumentó el efecto de `BottomSheet` ni corrió una variante con esa espera. Lo demostrado es la correlación con el paso de `knobFrames` y que `main` y el candidato dan lo mismo.
+
+> **Actualización del 26 nov 2026.** Las dos se midieron en el PR aparte. El mecanismo queda confirmado. Con la secuencia nueva, las series con más de un rectángulo son 0 de 192 en el arnés (`main` y candidato, CPU 1× y 6×). Ver «PR aparte de F111-12».
 
 **En resumen:** la causa parece mixta. El arnés mide un estado de transición que crea él mismo, y el producto tiene un ajuste
 subpíxel al volver a pintarse. No es un defecto de C-1 a C-7, ni una regresión.
@@ -87,6 +91,121 @@ subpíxel al volver a pintarse. No es un defecto de C-1 a C-7, ni una regresión
    está fuera de la excepción de la decisión 30.2: necesita autorización expresa.
 3. **Mientras tanto,** el paso 4 (CI sobre el candidato) dirá si el fallo aparece en el runner. Si aparece, es este mismo
    caso: no lo introduce el PR #111.
+
+## PR aparte de F111-12: instrumentación y aislamiento (26 de noviembre de 2026)
+
+**Autorización.** Los fundadores la dieron el 26 nov 2026 y está registrada en el maestro, decisión 30, «Ampliación de la
+excepción de 30.2: F111-12». Cubre dos cosas: aislar la prueba geométrica sin rebajar el criterio e instrumentar
+`BottomSheet` sin cambiar el producto. **No se cambió ningún archivo de producto.**
+
+### Instrumentación de `BottomSheet` (sin cambiar el producto)
+
+El arnés `tests/evidence/f111-12.capture.ts` registra en cada cuadro, junto al rectángulo de la hoja, tres datos del área
+con scroll de la hoja (el `body` de `BottomSheet`, la que fija `holdKey`): `style.minHeight`, `offsetHeight` y el alto
+fraccionario (`getBoundingClientRect().height`). Además, con un `MutationObserver`, anota en qué cuadro cambia `minHeight`.
+
+**Resultado** (`main`, CPU 6×, con el orden antiguo de la prueba —vuelta a «Yo» inmediata—, 48 series):
+
+| Medida | Resultado |
+| --- | --- |
+| Series con más de un rectángulo | 37 de 48 |
+| Saltos que ocurren en el mismo cuadro en que se fija `minHeight` | **37 de 37** |
+| Cuadros en que se fija `minHeight` sin salto | **0** |
+| Alto inicial del área fraccionario, con `offsetHeight` redondeado | 48 de 48: alto **673,59**, `offsetHeight` **674** |
+| Valor fijado | `min(674px, 100dvh - 96px)` |
+| Efecto | el área pasa de 673,59 a 674,00 y la hoja de 701,59 a 702,00: **+0,41 px**, con el borde superior de 142,41 a 142,00 |
+| `minHeight` al abrir la hoja | vacío en todas las series; se fija en un cuadro posterior (el 6.º o 7.º en los ejemplos) |
+
+**Conclusión: el mecanismo queda confirmado por medición.** El salto de 0,41 px es `holdKey`, que fija `minHeight` con
+`offsetHeight`, un entero redondeado (674) de un alto fraccionario (673,59). Ocurre cuando ese efecto corre por primera vez con
+la hoja ya montada, en un render de `BottomSheet` posterior a abrirla.
+
+**Lo que no está instrumentado (lectura del código).** Por qué `minHeight` no se fija al abrir. El `useLayoutEffect` corre en
+cada render de `BottomSheet`, pero el área vive dentro del Portal de Radix, que se monta en un commit posterior; mientras
+`body.current` es `null`, el efecto sale sin hacer nada. Así que `minHeight` se fija en el siguiente render de `BottomSheet`,
+y el cambio de contexto lo provoca dentro de la ventana de 10 cuadros. Es coherente con la medición, pero no se midió.
+
+**¿Es un defecto real del producto?** Es un ajuste de menos de medio píxel, sin animación, una sola vez por apertura y solo si
+la hoja se vuelve a pintar después de abrirse. No es perceptible. Pero es real: la hoja cambia de rectángulo sin que cambie
+su contenido. **No se corrige aquí** (la autorización no lo cubre). **Propuesta aparte, para que la autoricen los
+fundadores:** en `holdKey`, medir con el alto fraccionario (`getBoundingClientRect().height`) en vez de `offsetHeight`, o
+fijar `minHeight` también en el primer render con el área montada, para que volver a pintarse no mueva la hoja. Con esa
+corrección, la espera de la prueba seguiría siendo correcta: mide el estado estable.
+
+### Aislamiento de la prueba (sin rebajar el criterio)
+
+**Cambio en `tests/a11y/routes.a11y.ts`:**
+
+- Antes, `knobFrames` pulsaba «Nosotros», medía la perilla 10 cuadros y **volvía a «Yo» en el acto**. Después se abría Anotar
+  con el cambio de contexto en curso.
+- Si la vuelta llegaba con la petición de «Nosotros» en vuelo, el orden de las respuestas decidía si había un segundo refresco.
+  En una corrida de diagnóstico, 2 de 48 repeticiones a CPU 6× no tuvieron segundo refresco y la cookie se quedó en `us`. Por
+  eso no había un punto de espera determinista sin cambiar el orden.
+- **Ahora:** `knobFrames` mide la perilla igual y no vuelve a «Yo». `settleContext(…, "us")` espera a que «Nosotros» termine.
+  `backToMe` pulsa «Yo» (con el servidor ya en «Nosotros», la app siempre pide la página otra vez). `settleContext(…, "me")`
+  espera a que esa petición termine y «Yo» esté pintado. Después se mide el aviso igual que antes.
+- **`settleContext(objetivo)` espera a cuatro cosas:**
+  - ninguna petición RSC en vuelo;
+  - la cookie `juntia_context` del documento en el objetivo (la app la escribe justo antes de cada `router.refresh()` del
+    cambio);
+  - terminada una petición con esa cookie, posterior a la última con la otra;
+  - para «Yo», su vista pintada; en los dos casos, sin esqueleto en `main`.
+- Son aserciones web-first (`expect.poll` y `expect` sobre localizadores) con el tiempo por defecto: **sin `waitForTimeout`,
+  sin timeouts nuevos ni más altos.**
+
+**Por qué no rebaja el criterio:**
+
+- `annotateFrames` y su aserción (`new Set(notice.rects).size === 1` en 10 cuadros, contando desde el primer cuadro con la
+  hoja) no cambian. No se descarta ninguna medición, no hay tolerancia y no hay `skip`.
+- La perilla se mide igual (10 cuadros tras pulsar «Nosotros») y con la misma aserción.
+- Lo único que cambia es **cuándo** empieza la medición del aviso: con el contexto ya asentado, que es el estado que la prueba
+  quiere vigilar, en vez de en mitad de una transición que provoca la propia prueba.
+- La prueba sigue detectando un salto que el producto haga con el contexto asentado. Con el orden antiguo, el mismo salto de
+  `holdKey` aparece y la medición lo ve (37 de 48, arriba).
+
+### Evidencia, antes y después
+
+Arnés `tests/evidence/f111-12.capture.ts`, con `F111_12_KNOB=1`:
+
+- **Sin `F111_12_WAIT`:** el orden antiguo, con la vuelta a «Yo» inmediata.
+- **Con `F111_12_WAIT=1`:** la secuencia nueva, con las mismas funciones que la prueba (copiadas, para no importar el archivo
+  de pruebas).
+
+12 series por ruta (`/`, `/actividad`, `/metas` y `/balance`), a 390, en claro y con movimiento reducido. «Candidato» es la
+rama del PR #111 (`src/` de `80f8712`).
+
+| Código | CPU | Orden | Series | Con más de un rectángulo | Esperas sin cumplir |
+| --- | ---: | --- | ---: | ---: | ---: |
+| `main` | 6× | antiguo (instrumentado) | 48 | **37** | — |
+| `main` | 1× | nuevo | 48 | **0** | 0 |
+| `main` | 6× | nuevo | 48 | **0** | 0 |
+| candidato | 1× | nuevo | 48 | **0** | 0 |
+| candidato | 6× | nuevo | 48 | **0** | 0 |
+
+Las corridas del orden antiguo de la primera parte de este documento (26–30 de 48 con `knobFrames`) son coherentes con la
+fila de 37 de 48.
+
+**Lo que no vale como evidencia** (iteraciones del criterio de espera, que quedan aquí por transparencia):
+
+- Una versión que exigía un refresco de «Yo» tras la vuelta inmediata se colgó a CPU 6×, cuando no hubo segundo refresco.
+- Otra, con una expresión regular rota (`;s*` en vez de `;\s*`), no leía la cookie: sus 96 esperas fallaron y la medición siguió
+  tras el tiempo por defecto.
+- En la primera corrida de la versión final, una repetición a CPU 6× pulsó «Nosotros» antes de hidratar. Era un fallo del
+  arnés, que no esperaba `data-hydrated` como sí hace la prueba; está corregido y repetido (la fila «candidato · 6×»).
+
+Ninguna de esas corridas aparece en la tabla.
+
+**Qué significa que una corrida «pase» (F111-17).** Las corridas del arnés terminaron y escribieron sus series. «0» en la tabla
+es lo que midieron, **no** una prueba del gate. La prueba del gate es la suite axe; ver «Suite axe completa».
+
+### Suite axe completa (`npm run e2e:dev -- --project a11y`, contra juntia-dev; iteración, no CI)
+
+| Corrida | Resultado |
+| --- | --- |
+| **Antes** (`origin/main`, sin el cambio) | **125/125**. El fallo es intermitente: esta vez no apareció (24 de 24 «aviso en hoja, 1 rectángulo(s)»). En las rondas 1 a 3 del PR #111 falló 1, 4 y 2 veces por corrida |
+| **Después** (con el cambio) | **125/125**. Los 24 avisos dan 1 rectángulo y todas las esperas nuevas se cumplen. Duración: 7,4 min frente a 7,0 |
+
+Como el fallo es intermitente y la corrida de antes también pasó, **la suite completa sola no demuestra el arreglo**: solo que el cambio no rompe nada y que las esperas se cumplen en la suite real. La evidencia de la causa y del arreglo es la del arnés, arriba. El CI del paso 4 es el que cuenta.
 
 ## Lo que no se conserva en el repositorio
 
