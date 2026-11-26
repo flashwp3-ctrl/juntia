@@ -1,6 +1,6 @@
 # ADR-018 — Aportes programados: confirmación, pausa por meta inactiva y concurrencia
 
-**Estado:** **Propuesto** (26 de noviembre de 2026). **Los fundadores decidieron P1 (a) y P2 (b) el 26 de noviembre de 2026** («Decisiones de los fundadores»); con P2 (b) queda decidida la cuestión 29.8, cuyo cierre normativo se registra en el PR de reconciliación posterior. Sigue Propuesto hasta el GO de arquitectura y la revisión final de fidelidad. Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (26 de noviembre de 2026; maestro §15.10, decisión 29.13). Propuesto el 26 de noviembre de 2026; la revisión adversarial del PR #110 (F110-1 a F110-14) dio GO. **Los fundadores decidieron P1 (a) y P2 (b) el 26 de noviembre de 2026** («Decisiones de los fundadores»); con P2 (b) queda cerrada la cuestión 29.8 (29.13). La spec 007 y la decisión 29 están reconciliadas con él. Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
 
 En este archivo, las dos `[P]` (P1 y P2) **ya están decididas** por los
 fundadores (26 de noviembre de 2026); se conservan sus números como referencia, y
@@ -415,9 +415,15 @@ pendientes que el sistema sabe cumplidas.
 - ADR-016 no cambia: recibe la pausa derivada en su historial de pausas (§6.2), y
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
-- **La 29.8 queda decidida** con P2 (b). Su cierre normativo (spec 007 y maestro,
-  decisión 29) se registra en el PR de reconciliación posterior; este PR no toca la
-  spec ni el maestro.
+- **La 29.8 queda cerrada** con P2 (b) (29.13).
+- **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
+  posterior al PR #110, como el #105 y el #108. Qué se tocó:
+
+  | Decisión | Spec 007 | Maestro, decisión 29 | Otros |
+  | --- | --- | --- | --- |
+  | **P1** (a) | Precisión de Q12; **FR-030** | **29.13** | — |
+  | **P2** (b) | **F101-16**; «Cuestión para ADR-d o para los fundadores (29.8)»; **FR-034a** | **29.8** (cerrada) y **29.13** | — |
+  | Resto de ADR-018 | Status; fila y precisión de Q12; **F101-7**; «Cuestiones que la tabla dejaba a ADR-a» (concurrencia); **FR-034** (pausa y bloqueos, F110-12); **FR-034a** (concurrencia); casos límite de la meta lograda o archivada y de la confirmación concurrente; Key Entities; «Lo que hace falta para pasar a Plan», punto 3; las Sessions de ADR-016 y ADR-017 (nota de que la 29.8 se cerró después) | **29.7**, **29.10** (los tres ADR aceptados), **29.11** y **29.12** (notas de secuencia), cabecera de la 29 y «Lo que esta decisión no autoriza» | ADR-016 §14: nota del 26 de noviembre de 2026, sin cambiar decisiones (F110-12) |
 
 ## Verificación pendiente [V]
 

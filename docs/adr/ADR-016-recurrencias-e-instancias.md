@@ -1372,6 +1372,13 @@ Si ADR-d hace que lograr o archivar una meta escriba una pausa, esa función
 bloqueará pareja (si la meta es compartida) → meta → regla, el orden de la fila del
 aporte.
 
+**Nota del 26 de noviembre de 2026 (ADR-018 §4).** No cambia ninguna decisión de
+este ADR. En las **reglas de aporte**, pausar, finalizar y archivar dependen del
+estado de la meta (ADR-018 §3), así que siguen la «Regla para todo lo que depende del
+estado de una meta» de arriba: pareja si la meta es compartida → meta → regla. Las
+operaciones que consultan el historial efectivo de pausas para decidir si algo es
+elegible, como Deshacer una omisión (§6.4), lo leen bajo esos mismos bloqueos.
+
 Confirmar contra editar, pausar, finalizar o confirmar desde la otra cuenta se
 ordena por el bloqueo de la regla. Los reintentos por `40P01` o `40001` siguen
 ADR-013 §3.4, pero **no sustituyen al orden**: un interbloqueo es un error de
