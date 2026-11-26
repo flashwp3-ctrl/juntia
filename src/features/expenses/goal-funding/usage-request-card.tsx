@@ -12,6 +12,7 @@
 // cambio a nadie ni se afirma que ya se ve lo último (lecciones de los PR B y C).
 import { useRouter } from "next/navigation";
 import { useCallback, useId, useRef, useState } from "react";
+import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { newIdempotencyKey } from "../idempotency";
 import { useWrite } from "@/features/shared/use-write";
@@ -31,10 +32,19 @@ type Props = { request: UsageRequestView; people: readonly GoalPerson[]; actions
 type Kind = "approve" | "reject" | "cancel";
 const ACTION: Record<Kind, WriteAction> = { approve: "approve_usage_request", reject: "reject_usage_request", cancel: "cancel_usage_request" };
 
-/** Lo que dice la tarjeta ante un rechazo confirmado (contracts/errors.md). */
-export function requestRejection(error: WriteError, detail: WriteRejectionDetail | undefined, goalName: string) {
+/**
+ * Lo que dice la tarjeta ante un rechazo confirmado (contracts/errors.md). C-7 (decisión 30.3; 004 US7.9): sin aportes
+ * suficientes, «Tus aportes cambiaron: ahora tienes $X en {meta}». El disponible sale del rechazo; si el servidor no lo trae
+ * (la aprobación no lo envía), del que leyó la tarjeta cuando ya no alcanzaba; si lo leído alcanzaba, la cifra cambió después
+ * y se pide revisar. El texto genérico de FundingLedger («Revisa los fondos…») no aplica a una aprobación.
+ */
+export function requestRejection(error: WriteError, detail: WriteRejectionDetail | undefined, goalName: string, read?: { availableMinor: string | null; amountMinor: string }) {
   switch (error) {
-    case "insufficientFunds": return detail?.availableMinor ? copy.goals.errors.fundsChanged(cop(detail.availableMinor), goalName) : copy.goalExpense.errors.allocation;
+    case "insufficientFunds": {
+      if (detail?.availableMinor) return copy.goals.errors.fundsChanged(cop(detail.availableMinor), goalName);
+      if (read?.availableMinor && BigInt(read.availableMinor) < BigInt(read.amountMinor)) return copy.goals.errors.fundsChanged(cop(read.availableMinor), goalName);
+      return copy.goals.errors.fundsChangedReview(goalName);
+    }
     case "versionConflict": return copy.goalExpense.errors.versionConflict;
     case "requestResolved": return copy.goalExpense.errors.resolved;
     case "requestGone": return copy.goalExpense.errors.requestGone;
@@ -94,10 +104,15 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const description = request.description ?? copy.goalExpense.request.expenseFallback;
   const available = request.memberAvailableMinor ? BigInt(request.memberAvailableMinor) : null;
   const after = available !== null ? available - BigInt(request.amountMinor) : null;
+  // C-7 (decisión 30.3; 004 US7.9): con lo leído, lo disponible de quien aprueba ya no cubre lo pedido. No se presenta como
+  // viable: sin «$X → $0» ni «Aprobar»; se dice cuánto tiene. El servidor sigue validando igual al aprobar.
+  const short = role === "member" && status === "pending" && after !== null && after < 0n;
+  const usedSome = BigInt(request.usedMinor) > 0n;
 
   const badge = status === "pending" ? <ConfirmationBadge state="pending" name={member} />
     : status === "approved" ? <ConfirmationBadge state="approved" />
-      : status === "rejected" ? <ConfirmationBadge state="rejected" name={member} /> : null;
+      : status === "rejected" ? <ConfirmationBadge state="rejected" name={member} />
+        : status === "cancelled" ? <ConfirmationBadge state="cancelled" /> : null;
 
   const result = done === "approved" ? copy.goalExpense.request.approved(request.goalName)
     : done === "rejected" ? copy.goalExpense.request.rejected
@@ -114,7 +129,12 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
           {status === "pending" ? <p className="text-[0.875rem] font-semibold text-ink">{copy.goalExpense.request.expense(description, cop(request.transactionAmountMinor))}</p> : null}
           {request.splitLabel ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.split(request.splitLabel)}</p> : null}
           {BigInt(request.usedMinor) > 0n ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.used(requester, cop(request.usedMinor))}</p> : null}
-          {status === "pending" && available !== null && after !== null ? (
+          {short && available !== null ? (
+            <p data-funds-short="" className="flex items-start gap-2 rounded-[16px] bg-warning-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
+              <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-ink-secondary" />
+              <span>{copy.goals.errors.fundsChanged(cop(available), request.goalName)}</span>
+            </p>
+          ) : status === "pending" && available !== null && after !== null ? (
             <p className="text-[0.875rem] font-semibold text-ink tabular-nums">
               <span className="sr-only">{copy.goalExpense.request.yoursLabel(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
               <span aria-hidden="true">{copy.goalExpense.request.yours(request.goalName, cop(available), cop(after < 0n ? 0n : after))}</span>
@@ -125,16 +145,17 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       ) : (
         <>
           {status === "pending" ? <p className="text-[0.875rem] text-ink">{copy.goalExpense.request.waiting(member)}</p> : null}
-          <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
+          <p className="text-[0.8125rem] text-ink-secondary">{status === "cancelled" ? copy.goalExpense.detail.asked(amount, member, request.goalName) : copy.goalExpense.request.asks(amount, member, request.goalName)}</p>
           {status === "pending" ? <p className="text-[0.75rem] font-semibold text-ink-secondary">{copy.goalExpense.request.noExpiry}</p> : null}
         </>
       )}
       {status === "approved" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.approvedNote(member)}</p> : null}
-      {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{copy.goalExpense.detail.rejectedNote(member)}</p> : null}
+      {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.rejectedNote(member) : copy.goalExpense.detail.rejectedNoteNone(member)}</p> : null}
+      {status === "cancelled" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.cancelledNote : copy.goalExpense.detail.cancelledNoteNone}</p> : null}
       {result ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{result}</p> : null}
       {write.state.phase === "rejected" ? (
         <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
-          <span>{requestRejection(write.state.error, write.state.detail, request.goalName)}</span>
+          <span>{requestRejection(write.state.error, write.state.detail, request.goalName, { availableMinor: request.memberAvailableMinor, amountMinor: request.amountMinor })}</span>
           {blocked ? <Button variant="secondary" icon="arrow-clockwise" className={wrapLabelMd} onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button> : null}
         </div>
       ) : null}
@@ -144,7 +165,7 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       {status === "pending" && !blocked && write.state.phase !== "unknown" ? (
         role === "member" ? (
           <div className="flex flex-wrap gap-2">
-            <Button icon="check" className={wrapLabelMd} loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>
+            {short ? null : <Button icon="check" className={wrapLabelMd} loading={write.pending && kind === "approve"} loadingLabel={copy.goalExpense.request.approving} disabled={busy} onClick={() => send("approve")}>{copy.goalExpense.request.approve(amount)}</Button>}
             <Button variant="secondary" className={wrapLabelMd} loading={write.pending && kind === "reject"} loadingLabel={copy.goalExpense.request.rejecting} disabled={busy} onClick={() => send("reject")}>{copy.goalExpense.request.reject}</Button>
           </div>
         ) : role === "requester" ? (

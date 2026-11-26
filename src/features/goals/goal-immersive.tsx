@@ -112,7 +112,7 @@ export function GoalImmersive({ goal, members, entries, people, today, context, 
           {goal.status === "completed" ? (
             <p className="flex items-center gap-2 text-[0.875rem] font-semibold text-ink"><AppIcon name="flag-checkered" weight="fill" size={18} />{copy.goals.status.completed}</p>
           ) : active && reached(goal) ? (
-            <p className="flex flex-col gap-0.5 text-[0.875rem] text-ink"><span className="flex items-center gap-2 font-semibold"><AppIcon name="check-circle" weight="fill" size={18} className="text-saving" />{copy.goals.reached[context]}</span><span className="text-[0.8125rem] text-ink-secondary">{copy.goals.reachedHint}</span></p>
+            <p className="flex flex-col gap-0.5 text-[0.875rem] text-ink"><span className="flex items-center gap-2 font-semibold"><AppIcon name="check-circle" weight="fill" size={18} className="text-saving" />{copy.goals.reached[context]}</span><span className="text-[0.8125rem] text-ink-secondary">{copy.goals.reachedHint[context]}</span></p>
           ) : null}
           {surplus > 0n ? <p className="text-[0.8125rem] font-medium text-ink-secondary">{copy.goals.surplus(cop(surplus))}</p> : null}
           {pace.kind === "line" ? (

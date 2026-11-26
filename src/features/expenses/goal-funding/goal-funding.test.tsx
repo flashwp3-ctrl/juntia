@@ -21,10 +21,11 @@ import { GoalEntryRow } from "@/features/goals/goal-entry-row";
 import type { GoalEntryView, GoalPerson } from "@/features/goals/types";
 import { ConfirmationBadge } from "./confirmation-badge";
 import { FundingEffect } from "./funding-effect";
-import { UsageRequestCard } from "./usage-request-card";
+import { requestRejection, UsageRequestCard } from "./usage-request-card";
+import { ExpenseFundingDetail, ExpenseFundingProvider } from "./funding-context";
 import { FundedMoveNote, RemoveGoalUsage } from "./remove-usage";
 import { reactivationMessage } from "./reactivation";
-import type { FundingGoal, GoalFundingActions, SavedGoalExpense, UsageRequestView } from "./types";
+import type { ExpenseFundingView, FundingGoal, GoalFundingActions, SavedGoalExpense, UsageRequestView } from "./types";
 
 configure({ asyncUtilTimeout: 5000 });
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
@@ -540,5 +541,99 @@ describe("La tarjeta de solicitud con un resultado desconocido", { timeout: 1500
     await waitFor(() => expect(actions.approve).toHaveBeenCalledTimes(2));
     const [first, second] = vi.mocked(actions.approve).mock.calls.map(([payload]) => payload.idempotencyKey);
     expect(second).toBe(first);
+  });
+});
+
+// C-3, C-6 y C-7 (maestro §15.10, decisiones 30.2 y 30.3; corrida del PR #104, I-21b, I-17 e I-19). Solo presentación: los
+// datos son los que ya llegan del servidor (`expense_goal_funding`, `usage_requests`, `goal_member_balances`) y las
+// acciones se simulan; ni las lecturas ni las validaciones del servidor cambian.
+describe("C-3, C-6 y C-7: el estado mostrado de la financiación (decisión 30.3)", { timeout: 15000 }, () => {
+  const funding = (overrides: Partial<ExpenseFundingView> = {}): ExpenseFundingView => ({
+    goalId: JAPAN, goalName: "Japón", usedMinor: minor(1620000n), pendingMinor: "0", funded: true,
+    uses: [{ memberUserId: SARA, amountMinor: minor(1620000n) }], request: request({ status: "rejected", version: 2 }), ...overrides,
+  });
+  function Detail({ value, viewer = people }: { value: ExpenseFundingView; viewer?: GoalPerson[] }) {
+    return (
+      <AnnotateProvider actions={expenseActions()} context="us" today="2026-11-05" goalFunding={goalFunding()}>
+        <ExpenseFundingProvider byTransaction={{ [EXPENSE]: value }} people={viewer}><ExpenseFundingDetail transactionId={EXPENSE} version={3} /></ExpenseFundingProvider>
+      </AnnotateProvider>
+    );
+  }
+
+  it("C-3: con el uso aplicado, «Pagado con una meta · Japón» y CON META (sin cambios)", () => {
+    render(<Detail value={funding()} />);
+    expect(screen.getByRole("heading", { name: "Pagado con una meta · Japón" })).toBeTruthy();
+    expect(screen.getByText(copy.goalExpense.badge.funded)).toBeTruthy();
+  });
+
+  it("C-3: tras «Quitar el uso», el gasto queda «Pagado con dinero del mes» y la solicitud rechazada sigue como historial", () => {
+    render(<Detail value={funding({ funded: false, usedMinor: "0", uses: [], request: request({ status: "rejected", version: 2, usedMinor: "0" }) })} />);
+    expect(screen.getByRole("heading", { name: "Pagado con dinero del mes" })).toBeTruthy();
+    expect(screen.queryByText(/Pagado con una meta/)).toBeNull();
+    expect(screen.queryByText(copy.goalExpense.badge.funded)).toBeNull();
+    // El historial autorizado de la solicitud se conserva: Tomás no aprobó. Sin fondos usados, la nota no los menciona.
+    expect(screen.getByText("TOMÁS NO APROBÓ")).toBeTruthy();
+    expect(screen.getByText("Tomás no aprobó.")).toBeTruthy();
+    expect(screen.queryByText(/Solo cuentan los fondos ya usados/)).toBeNull();
+    expect(screen.queryByRole("button", { name: copy.goalExpense.remove.action })).toBeNull();
+  });
+
+  it("C-6: una solicitud cancelada se lee como cancelada, para quien pidió y para quien se pidió", () => {
+    const cancelled = request({ status: "cancelled", version: 2 });
+    const { unmount } = render(<Detail value={funding({ request: cancelled })} />);
+    expect(screen.getByText("SOLICITUD CANCELADA")).toBeTruthy();
+    expect(screen.getByText("La solicitud se canceló. Solo cuentan los fondos ya usados.")).toBeTruthy();
+    expect(screen.getByText("Pediste $1.380.000 de los aportes de Tomás en Japón")).toBeTruthy();
+    expect(screen.queryByText(/^Pides /)).toBeNull();
+    expect(screen.queryByText(copy.goalExpense.badge.pending("Tomás"))).toBeNull();
+    expect(screen.queryByRole("button", { name: copy.goalExpense.request.cancel })).toBeNull();
+    unmount();
+    render(<Detail value={funding({ request: cancelled })} viewer={tomasView} />);
+    expect(screen.getByText("SOLICITUD CANCELADA")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+  });
+
+  it("C-6: al cancelar desde la tarjeta, el badge pasa a «SOLICITUD CANCELADA»", async () => {
+    const user = userEvent.setup();
+    render(<UsageRequestCard request={request()} people={people} actions={goalFunding()} />);
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.cancel }));
+    expect(await screen.findByText("SOLICITUD CANCELADA")).toBeTruthy();
+    expect(screen.queryByText(copy.goalExpense.badge.pending("Tomás"))).toBeNull();
+  });
+
+  it("C-7: sin disponible suficiente, la aprobación no se presenta como viable: ni «$X → $0» ni «Aprobar»; sí el mensaje de US7.9", () => {
+    // Tomás retiró y le quedan 10.000; le piden 30.000 (la corrida, I-18 e I-19).
+    render(<UsageRequestCard request={request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) })} people={tomasView} actions={goalFunding()} />);
+    expect(screen.getByText("Tus aportes cambiaron: ahora tienes $10.000 en Japón.")).toBeTruthy();
+    expect(screen.queryByText(/Tu disponible en Japón/)).toBeNull();
+    expect(screen.queryByText(/→ \$0/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+    // Rechazar sigue disponible: el gasto sigue registrado y los aportes no cambian.
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.reject })).toBeTruthy();
+  });
+
+  it("C-7: con disponible en cero (I-27) tampoco hay «$0 → $0» junto a «Aprobar»", () => {
+    render(<UsageRequestCard request={request({ amountMinor: minor(50000n), memberAvailableMinor: "0" })} people={tomasView} actions={goalFunding()} />);
+    expect(screen.getByText("Tus aportes cambiaron: ahora tienes $0 en Japón.")).toBeTruthy();
+    expect(screen.queryByText(/\$0 → \$0/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+  });
+
+  it("C-7: si el servidor rechaza por fondos sin traer el disponible, nunca el texto genérico de FundingLedger", async () => {
+    const user = userEvent.setup();
+    const actions = goalFunding({ approve: vi.fn<GoalFundingActions["approve"]>(async () => ({ status: "rejected", error: "insufficientFunds" })) });
+    render(<UsageRequestCard request={request()} people={tomasView} actions={actions} />);
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
+    // Lo leído alcanzaba (5.220.000 para 1.380.000): la cifra cambió después; se pide revisar y «Revisar» trae la nueva.
+    expect(await screen.findByText("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.")).toBeTruthy();
+    expect(screen.queryByText(copy.goalExpense.errors.allocation)).toBeNull();
+    expect(screen.queryByText(copy.goalExpense.badge.approved)).toBeNull();
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.review })).toBeTruthy();
+  });
+
+  it("C-7: requestRejection usa el disponible del rechazo y, si no viene, el leído cuando ya no alcanzaba", () => {
+    expect(requestRejection("insufficientFunds", { availableMinor: minor(1000000n) }, "Japón")).toBe("Tus aportes cambiaron: ahora tienes $1.000.000 en Japón.");
+    expect(requestRejection("insufficientFunds", undefined, "Japón", { availableMinor: minor(10000n), amountMinor: minor(30000n) })).toBe("Tus aportes cambiaron: ahora tienes $10.000 en Japón.");
+    expect(requestRejection("insufficientFunds", undefined, "Japón", { availableMinor: null, amountMinor: minor(30000n) })).toBe("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.");
   });
 });

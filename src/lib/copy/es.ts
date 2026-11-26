@@ -5,6 +5,8 @@ export const copy = {
       notFound: "Esta meta no está disponible.", notOpen: "Esta meta no admite esta operación.",
       insufficient: (amount:string) => `Puedes retirar hasta ${amount}.`,
       fundsChanged: (amount:string,goal:string) => `Tus aportes cambiaron: ahora tienes ${amount} en ${goal}.`,
+      // C-7 (decisión 30.3): el servidor rechazó por fondos sin decir el disponible y lo leído alcanzaba; «Revisar» trae la cifra.
+      fundsChangedReview: (goal:string) => `Tus aportes en ${goal} cambiaron. Revisa cuánto tienes disponible.`,
       entryNotFound: "Este aporte no está disponible.", alreadyVoided: "Este aporte ya está anulado.",
       date: "Elige hoy o una fecha pasada, desde la creación de la meta.",
       cannotArchive: "Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.",
@@ -48,7 +50,8 @@ export const copy = {
       pastDue: (month: string) => `La fecha era ${month}`,
     },
     reached: { us: "Lo lograron", me: "Lo lograste" },
-    reachedHint: "Cuando quieran, pueden darla por lograda.",
+    // C-4 (decisión 30.3): en Yo, el singular, como «Lo lograste».
+    reachedHint: { us: "Cuando quieran, pueden darla por lograda.", me: "Cuando quieras, puedes darla por lograda." },
     surplus: (amount: string) => `${amount} por encima del objetivo`,
     status: { completed: "LOGRADA", archived: "ARCHIVADA" },
     pending: "Hay una solicitud de fondos pendiente.",
@@ -135,7 +138,8 @@ export const copy = {
       withdrawal: "Retiro de la meta", withdrawalMeta: (goal: string, name: string, reason: string | null) => [goal, reason, name].filter(Boolean).join(" · "),
       // T084 (8): el uso sí cuenta en el gasto del mes; la fila ya no dice «no es un gasto nuevo».
       usage: (goal: string) => `Uso de ${goal}`, usageMeta: (description: string) => description,
-      setAside: "Apartado", spent: (month: string) => `Gasto ${month}`, filter: "Aportes",
+      // C-5 (decisión 30.3): «Gasto de {mes}», como en Yo.
+      setAside: "Apartado", spent: (month: string) => `Gasto de ${month}`, filter: "Aportes",
     },
     home: {
       usSetAside: "Apartado para metas", usNote: "Son cosas distintas: no se suman.",
@@ -204,6 +208,8 @@ export const copy = {
     badge: {
       pending: (name: string) => `PENDIENTE DE ${name.toLocaleUpperCase("es")}`, approved: "APROBADO",
       rejected: (name: string) => `${name.toLocaleUpperCase("es")} NO APROBÓ`, failed: "NO SE REGISTRÓ", funded: "CON META",
+      // C-6 (decisión 30.3): la solicitud cancelada se dice como tal, igual que el rechazo.
+      cancelled: "SOLICITUD CANCELADA",
     },
     failed: "No se registró el gasto.",
     request: {
@@ -237,6 +243,14 @@ export const copy = {
       pending: (amount: string, name: string) => `${amount} pendientes de ${name}`,
       approvedNote: (name: string) => `${name} aprobó el uso de sus fondos.`,
       rejectedNote: (name: string) => `${name} no aprobó. Solo cuentan los fondos ya usados.`,
+      // C-3 y C-6 (decisión 30.3): sin fondos usados en el gasto (p. ej., tras quitar el uso), la nota no los menciona.
+      rejectedNoteNone: (name: string) => `${name} no aprobó.`,
+      cancelledNote: "La solicitud se canceló. Solo cuentan los fondos ya usados.",
+      cancelledNoteNone: "La solicitud se canceló.",
+      // C-6: lo que pidió quien mira, en pasado, cuando la solicitud se canceló.
+      asked: (amount: string, name: string, goal: string) => `Pediste ${amount} de los aportes de ${name} en ${goal}`,
+      // C-3 (decisión 30.3; 004 US8.2): sin uso aplicado, el gasto se pagó con dinero del mes; la solicitud queda como historial.
+      monthTitle: "Pagado con dinero del mes",
     },
     remove: {
       action: "Quitar el uso de la meta", title: "¿Quitar el uso de la meta?",
@@ -737,7 +751,9 @@ export const copy = {
     activeDescription: "Las metas y el plan de los dos llegan en una próxima versión. Los gastos compartidos ya están en Inicio y Actividad." },
   load: { error: { title: "No pudimos cargar tus movimientos", description: "Revisa tu conexión. Lo que ya estaba guardado sigue a salvo; sin conexión no podemos guardar nada nuevo." } },
   activity: {
-    spentIn: (month: string) => `Gasto de ${month}`,
+    // C-2 (decisión 30.3): Actividad en Yo lista solo los movimientos privados, y su resumen lo dice. El consumo personal
+    // completo (privados más la parte compartida) sigue en Inicio en Yo (003 FR-045).
+    spentIn: (month: string) => `Gastos privados de ${month}`,
     monthTitle: (month: string, year: string) => `${month} ${year}`,
     count: (count: number) => (count === 1 ? "1 movimiento" : `${count} movimientos`),
     previousMonth: (label: string) => `Mes anterior: ${label}`, nextMonth: (label: string) => `Mes siguiente: ${label}`,

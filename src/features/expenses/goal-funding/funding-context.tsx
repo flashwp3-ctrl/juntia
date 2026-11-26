@@ -68,11 +68,14 @@ export function ExpenseFundingDetail({ transactionId, version }: { transactionId
   const actions = useOptionalAnnotate()?.goalFunding ?? null;
   if (!funding) return null;
   const hasPending = funding.request?.status === "pending";
+  // C-3 (decisión 30.3; 004 US8.2): el título dice la financiación aplicada. Sin ningún uso vivo (p. ej., tras «Quitar el uso
+  // de la meta»), el gasto se pagó con dinero del mes; la solicitud, si la hubo, queda debajo como historial.
+  const title = funding.funded ? `${copy.goalExpense.detail.title} · ${funding.goalName}` : copy.goalExpense.detail.monthTitle;
   return (
-    <section aria-label={copy.goalExpense.detail.title} data-expense-funding="" className="flex flex-col gap-3 rounded-[var(--radius-lg)] border-[1.5px] border-border p-3.5">
+    <section aria-label={funding.funded ? copy.goalExpense.detail.title : copy.goalExpense.detail.monthTitle} data-expense-funding={funding.funded ? "goal" : "month"} className="flex flex-col gap-3 rounded-[var(--radius-lg)] border-[1.5px] border-border p-3.5">
       <div className="flex flex-wrap items-center gap-2">
         {funding.funded ? <ConfirmationBadge state="funded" /> : null}
-        <h3 className="text-[length:var(--body-m-size)] font-semibold text-ink">{copy.goalExpense.detail.title} · {funding.goalName}</h3>
+        <h3 className="text-[length:var(--body-m-size)] font-semibold text-ink">{title}</h3>
       </div>
       {funding.uses.length > 0 ? (
         <ul className="flex flex-col gap-1.5">

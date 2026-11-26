@@ -78,6 +78,26 @@ describe("E5 con el saldo tachado (02·5; T041)", () => {
     expect(struck.closest("s, del")).not.toBeNull();
     expect(screen.getByText(copy.couple.home.owes("Tomás", "Sara")).closest("[data-balance-line]")?.textContent ?? "").toContain("$479.900");
   });
+
+  // C-1 (maestro §15.10, decisión 30.3; corrida del PR #104, E-12b): «Ana le debe a Beto ~~$115.000~~ $85.000» se leía como
+  // si Ana hubiera debido 115.000. Criterio: si la deuda cambia de dirección, el anterior no se tacha bajo la dirección nueva.
+  it("C-1: si la deuda cambia de dirección, el saldo anterior no aparece tachado bajo la dirección nueva", () => {
+    const { rerender, container } = render(<BalanceLine balance={balance} members={members} />);
+    // Tomás paga 1.000.000 al 50/50: Sara pasa de cobrar 429.900 a deber 70.100.
+    const flipped = computeBalance([...beforeSettlement.expenses, { amount: moneyFromPesos(1000000n), payerUserId: "tomas", status: "active", allocations: [{ userId: "sara", amount: moneyFromPesos(500000n) }, { userId: "tomas", amount: moneyFromPesos(500000n) }] }], [], beforeSettlement.members);
+    act(() => rerender(<BalanceLine balance={flipped} members={members} />));
+    const line = screen.getByText(copy.couple.home.owes("Sara", "Tomás")).closest("[data-balance-line]");
+    expect(line?.textContent ?? "").toContain("$70.100");
+    expect(container.querySelector("s, del")).toBeNull();
+    expect(screen.queryByText("$429.900")).toBeNull();
+    // Un cambio posterior en la misma dirección sí tacha el anterior (E5 intacto): Sara paga 20.000 de Tomás.
+    const after = computeBalance([...beforeSettlement.expenses,
+      { amount: moneyFromPesos(1000000n), payerUserId: "tomas", status: "active", allocations: [{ userId: "sara", amount: moneyFromPesos(500000n) }, { userId: "tomas", amount: moneyFromPesos(500000n) }] },
+      { amount: moneyFromPesos(20000n), payerUserId: "sara", status: "active", allocations: [{ userId: "tomas", amount: moneyFromPesos(20000n) }] }], [], beforeSettlement.members);
+    act(() => rerender(<BalanceLine balance={after} members={members} />));
+    expect(screen.getByText("$70.100").closest("s, del")).not.toBeNull();
+    expect(screen.getByText(copy.couple.home.owes("Sara", "Tomás")).closest("[data-balance-line]")?.textContent ?? "").toContain("$50.100");
+  });
 });
 
 describe("Yo con la parte compartida (US-4.1, US-4.2)", () => {

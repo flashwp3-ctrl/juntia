@@ -490,6 +490,20 @@ describe("Meta inmersiva (US-4.5; FR-075–FR-077; SC-011)", () => {
     expect(screen.queryByRole("button", { name: copy.goals.immersive.withdraw })).toBeNull();
   });
 
+  // C-4 (maestro §15.10, decisión 30.3; corrida del PR #104, I-25b): la meta personal superada decía «Cuando quieran, pueden…».
+  it("C-4: meta personal superada en Yo, en singular; la compartida en Nosotros sigue en plural", () => {
+    media(true);
+    const over = bike({ balanceMinor: minor(3600000n), progressPercent: 120 });
+    const { unmount } = render(<GoalImmersive goal={over} members={[{ ...bikeMembers[0], contributedMinor: minor(3600000n), availableMinor: minor(3600000n) }]} entries={[]} people={people} today={TODAY} context="me" actions={actions()} />);
+    expect(screen.getByText("Lo lograste")).toBeTruthy();
+    expect(screen.getByText("Cuando quieras, puedes darla por lograda.")).toBeTruthy();
+    expect(screen.queryByText(/Cuando quieran|pueden darla/)).toBeNull();
+    unmount();
+    render(<GoalImmersive goal={japan({ balanceMinor: minor(18000000n), progressPercent: 100 })} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);
+    expect(screen.getByText("Lo lograron")).toBeTruthy();
+    expect(screen.getByText("Cuando quieran, pueden darla por lograda.")).toBeTruthy();
+  });
+
   it("aportar con `piggy-bank` y retirar con `arrow-u-up-left` en la meta activa", () => {
     media(true);
     render(<GoalImmersive goal={japan()} members={japanMembers} entries={[]} people={people} today={TODAY} context="us" actions={actions()} />);

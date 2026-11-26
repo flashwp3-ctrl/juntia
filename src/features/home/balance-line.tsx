@@ -25,12 +25,15 @@ function suggestion(balance: readonly MemberBalance[]) {
 export function BalanceLine({ balance, members }: { balance: readonly MemberBalance[]; members: readonly CoupleMemberView[] }) {
   const current = suggestion(balance);
   const key = current ? `${current.fromUserId}>${current.toUserId}:${current.amount.amountMinor}` : "settled";
-  const previous = useRef<{ key: string; amount: Money | null } | null>(null);
+  const direction = current ? `${current.fromUserId}>${current.toUserId}` : null;
+  const previous = useRef<{ key: string; direction: string | null; amount: Money | null } | null>(null);
   const [struck, setStruck] = useState<Money | null>(null);
   useEffect(() => {
     const last = previous.current;
-    if (last && last.key !== key && last.amount) setStruck(last.amount);
-    previous.current = { key, amount: current?.amount ?? null };
+    // C-1 (decisión 30.3): el anterior solo se tacha bajo la misma dirección, o junto a «Al día». Si la deuda cambió de
+    // dirección, ese monto era de la otra persona: no se pinta bajo la frase nueva.
+    if (last && last.key !== key) setStruck(last.amount && (direction === null || last.direction === direction) ? last.amount : null);
+    previous.current = { key, direction, amount: current?.amount ?? null };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo cuando cambia el saldo.
   }, [key]);
   const debtor = current ? members.find((member) => member.userId === current.fromUserId) : null;
