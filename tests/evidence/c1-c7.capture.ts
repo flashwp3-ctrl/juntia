@@ -13,7 +13,7 @@ import { moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { copy } from "../../src/lib/copy/es";
 import { cancelUsageRequest, createExpenseWithGoal, rejectUsageRequest, removeGoalUsage } from "../../src/lib/db/goal-usage";
-import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
+import { contributeToGoal, createGoal, voidGoalEntry, withdrawFromGoal } from "../../src/lib/db/goals";
 import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { createTransaction } from "../../src/lib/db/transactions";
 import { seedCouple, type SeededCouple, type SeededUser } from "../support/seed";
@@ -52,8 +52,8 @@ const equal = (pair: SeededCouple, total: bigint) => [{ userId: pair.sara.id, am
 async function sharedGoal(pair: SeededCouple, name: string, sara: bigint, tomas: bigint) {
   const goal = await createGoal(pair.sara.client, { idempotencyKey: key(), name, goalType: "travel", target: pesos(2000000n), targetMonth: null, context: "us" });
   await contributeToGoal(pair.sara.client, { idempotencyKey: key(), goalId: goal.id, amount: pesos(sara), entryDate: today(), fundingMode: "reserved" });
-  await contributeToGoal(pair.tomas.client, { idempotencyKey: key(), goalId: goal.id, amount: pesos(tomas), entryDate: today(), fundingMode: "transferred_declared" });
-  return goal;
+  const tomasEntry = await contributeToGoal(pair.tomas.client, { idempotencyKey: key(), goalId: goal.id, amount: pesos(tomas), entryDate: today(), fundingMode: "transferred_declared" });
+  return { ...goal, tomasEntryId: tomasEntry.id };
 }
 
 async function expenseWithGoal(pair: SeededCouple, goalId: string, description: string, total: bigint) {
@@ -156,6 +156,52 @@ for (const width of WIDTHS) {
     } else {
       await expect(approve).toHaveCount(0);
     }
+    await tomas.context.close();
+  });
+
+  // F111-1 (revisión del PR #111): Tomás anula su único aporte con la solicitud pendiente (la solicitud no reserva fondos,
+  // FR-053). Lo que la tarjeta lee de `goal_member_balances` en ese estado es lo que se captura; no se presupone.
+  test(`C-7 · F111-1 · Tomás anula su único aporte con la solicitud pendiente · ${width}`, async ({ browser, baseURL }, info) => {
+    test.skip(PHASE !== "despues", "Solo el después de la ronda 2");
+    const pair = await seedCouple({ index: info.parallelIndex });
+    const goal = await sharedGoal(pair, "Viaje ficticio", 300000n, 200000n);
+    await expenseWithGoal(pair, goal.id, "Pedir tras anular ficticio", 60000n);
+    await voidGoalEntry(pair.tomas.client, { idempotencyKey: key(), entryId: goal.tomasEntryId, reason: "void" });
+    const tomas = await open(browser, baseURL!, pair.tomas, "us", width);
+    await tomas.page.goto("/");
+    const card = tomas.page.locator("[data-usage-request]:visible").first();
+    await expect(card).toBeVisible();
+    await expect(card.getByRole("button", { name: /^Aprobar/ })).toHaveCount(0);
+    await card.scrollIntoViewIfNeeded();
+    await shot(tomas.page, "c7-f111-1-aporte-anulado-tomas", width);
+    await block(card, "c7-f111-1-aporte-anulado-tomas", width);
+    await tomas.context.close();
+  });
+
+  // F111-4: los fondos cambian DESPUÉS de cargar la tarjeta. Tomás la ve con 200.000 (alcanza para 30.000), retira 190.000 en
+  // otra sesión, pulsa «Aprobar»: el servidor rechaza sin cifra y la tarjeta pide revisar; «Revisar» trae los 10.000 de ahora.
+  test(`C-7 · F111-4 · los fondos cambian después de cargar la tarjeta · ${width}`, async ({ browser, baseURL }, info) => {
+    test.skip(PHASE !== "despues", "Solo el después de la ronda 2");
+    const pair = await seedCouple({ index: info.parallelIndex });
+    const goal = await sharedGoal(pair, "Viaje ficticio", 300000n, 200000n);
+    await expenseWithGoal(pair, goal.id, "Aprobar con fondos cambiados ficticio", 60000n);
+    const tomas = await open(browser, baseURL!, pair.tomas, "us", width);
+    await tomas.page.goto("/");
+    const card = tomas.page.locator("[data-usage-request]:visible").first();
+    const approve = card.getByRole("button", { name: /^Aprobar/ });
+    await expect(approve).toBeVisible();
+    await card.scrollIntoViewIfNeeded();
+    await block(card, "c7-f111-4-cargada-con-fondos-tomas", width);
+    await withdrawFromGoal(pair.tomas.client, { idempotencyKey: key(), goalId: goal.id, amount: pesos(190000n), entryDate: today(), reason: "Bajar fondos ficticio" });
+    await approve.click();
+    await expect(card.getByRole("alert")).toContainText(copy.goals.errors.fundsChangedReview("Viaje ficticio"));
+    await shot(tomas.page, "c7-f111-4-rechazo-sin-cifra-tomas", width);
+    await block(card, "c7-f111-4-rechazo-sin-cifra-tomas", width);
+    await card.getByRole("button", { name: copy.goalExpense.request.review }).click();
+    const fresh = tomas.page.locator("[data-usage-request]:visible").first();
+    await expect(fresh).toContainText(copy.goals.errors.fundsChanged("$10.000", "Viaje ficticio"));
+    await expect(fresh.getByRole("button", { name: /^Aprobar/ })).toHaveCount(0);
+    await block(fresh, "c7-f111-4-tras-revisar-tomas", width);
     await tomas.context.close();
   });
 }

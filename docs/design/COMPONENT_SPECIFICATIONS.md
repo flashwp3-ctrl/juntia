@@ -138,7 +138,9 @@ Saldo: Sara +429.900 y Tomás −429.900, así que **Tomás → Sara 429.900 · 
 - Validación: la suma de los fondos = importe usado (si no, Guardar se bloquea y se dice cuánto falta); el uso nunca supera el gasto. Badge «Pide aprobación» en la fila del otro integrante. Los fondos propios se aplican al registrar; los ajenos, solo al aprobar.
 
 ## ConfirmationBadge y solicitud pendiente  [P]
-- PENDIENTE DE {nombre} (neutro, borde punteado, hourglass) · APROBADO (savingSubtle, check-circle) · {nombre} NO APROBÓ (sunken, minus-circle, sin rojo) · NO SE REGISTRÓ (danger, solo errores del sistema) · CON META (savingSubtle, piggy-bank).
+- Seis estados: PENDIENTE DE {nombre} (neutro, borde punteado, hourglass) · APROBADO (savingSubtle, check-circle) · {nombre} NO APROBÓ (sunken, minus-circle, sin rojo) · SOLICITUD CANCELADA (sunken, x, sin rojo) · NO SE REGISTRÓ (danger, solo errores del sistema) · CON META (savingSubtle, piggy-bank).
+- SOLICITUD CANCELADA la añade el PR #111 (C-6, maestro §15.10, decisión 30.3), con la forma de NO APROBÓ. **Aprobada visualmente por los fundadores el 26 de noviembre de 2026**, con este texto:
+  > Aprobamos visualmente la variante «SOLICITUD CANCELADA» de ConfirmationBadge, conservando la anatomía, el tono neutro y el lenguaje visual del componente existente.
 - La tarjeta pendiente aclara que el gasto ya está registrado y que solo falta el uso de los fondos del otro; ofrece «Cancelar solicitud». No vence.
 
 ## PlanningNote (destinado neto)  [P]

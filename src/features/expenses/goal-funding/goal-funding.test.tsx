@@ -21,7 +21,7 @@ import { GoalEntryRow } from "@/features/goals/goal-entry-row";
 import type { GoalEntryView, GoalPerson } from "@/features/goals/types";
 import { ConfirmationBadge } from "./confirmation-badge";
 import { FundingEffect } from "./funding-effect";
-import { requestRejection, UsageRequestCard } from "./usage-request-card";
+import { fundsState, requestKey, requestRejection, UsageRequestCard } from "./usage-request-card";
 import { ExpenseFundingDetail, ExpenseFundingProvider } from "./funding-context";
 import { FundedMoveNote, RemoveGoalUsage } from "./remove-usage";
 import { reactivationMessage } from "./reactivation";
@@ -619,21 +619,88 @@ describe("C-3, C-6 y C-7: el estado mostrado de la financiación (decisión 30.3
     expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
   });
 
-  it("C-7: si el servidor rechaza por fondos sin traer el disponible, nunca el texto genérico de FundingLedger", async () => {
+  // F111-1: sin fila en `goal_member_balances` (p. ej., Tomás anuló su único aporte) lo disponible es indeterminado: ni una
+  // cifra inventada ni «Aprobar»; «Revisar» pide la página otra vez.
+  it("C-7: disponible indeterminado (null): sin vista previa, sin «$0» inventado, sin «Aprobar»; con «Revisar»", async () => {
     const user = userEvent.setup();
-    const actions = goalFunding({ approve: vi.fn<GoalFundingActions["approve"]>(async () => ({ status: "rejected", error: "insufficientFunds" })) });
-    render(<UsageRequestCard request={request()} people={tomasView} actions={actions} />);
-    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") }));
-    // Lo leído alcanzaba (5.220.000 para 1.380.000): la cifra cambió después; se pide revisar y «Revisar» trae la nueva.
-    expect(await screen.findByText("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.")).toBeTruthy();
-    expect(screen.queryByText(copy.goalExpense.errors.allocation)).toBeNull();
-    expect(screen.queryByText(copy.goalExpense.badge.approved)).toBeNull();
-    expect(screen.getByRole("button", { name: copy.goalExpense.request.review })).toBeTruthy();
+    render(<UsageRequestCard request={request({ memberAvailableMinor: null })} people={tomasView} actions={goalFunding()} />);
+    expect(screen.getByText("No pudimos confirmar cuánto tienes disponible en Japón. Revisa antes de aprobar.")).toBeTruthy();
+    expect(screen.queryByText(/Tu disponible en Japón/)).toBeNull();
+    expect(screen.queryByText(/\$0/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.reject })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.review }));
+    expect(router.refresh).toHaveBeenCalled();
   });
 
-  it("C-7: requestRejection usa el disponible del rechazo y, si no viene, el leído cuando ya no alcanzaba", () => {
+  // F111-2 (A y B): el rechazo por fondos sin cifra no convierte la lectura anterior en «ahora tienes $X», y la vista previa
+  // viable desaparece; «Revisar» trae la tarjeta otra vez, que nace con lo disponible de ahora (requestKey).
+  it("C-7: suficiente al cargar y cambia antes de aprobar: tras el rechazo, ni la cifra leída ni la vista previa; «Revisar» trae el estado nuevo", async () => {
+    const user = userEvent.setup();
+    const actions = goalFunding({ approve: vi.fn<GoalFundingActions["approve"]>(async () => ({ status: "rejected", error: "insufficientFunds" })) });
+    const loaded = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(100000n) });
+    const { rerender } = render(<UsageRequestCard key={requestKey(loaded)} request={loaded} people={tomasView} actions={actions} />);
+    expect(screen.getByText("Tu disponible en Japón: $100.000 → $70.000")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$30.000") }));
+    expect(await screen.findByText("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.")).toBeTruthy();
+    expect(screen.queryByText(/Tu disponible en Japón/)).toBeNull();
+    expect(screen.queryByText(/ahora tienes \$100\.000/)).toBeNull();
+    expect(screen.queryByText(copy.goalExpense.errors.allocation)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.review }));
+    expect(router.refresh).toHaveBeenCalled();
+    // La página vuelve con 10.000 disponibles: la tarjeta nace de nuevo con el mensaje de US7.9 y sin «Aprobar».
+    const refreshed = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) });
+    rerender(<UsageRequestCard key={requestKey(refreshed)} request={refreshed} people={tomasView} actions={actions} />);
+    expect(screen.getByText("Tus aportes cambiaron: ahora tienes $10.000 en Japón.")).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+  });
+
+  // F111-2 (C): insuficiente al cargar, «Revisar», y la página vuelve con fondos: «Aprobar» vuelve, explícito y con su clave.
+  it("C-7: insuficiente al cargar y luego aumenta: tras «Revisar», la vista previa y «Aprobar» vuelven", async () => {
+    const user = userEvent.setup();
+    const actions = goalFunding();
+    const short = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) });
+    const { rerender } = render(<UsageRequestCard key={requestKey(short)} request={short} people={tomasView} actions={actions} />);
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.review }));
+    expect(router.refresh).toHaveBeenCalled();
+    const enough = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(60000n) });
+    rerender(<UsageRequestCard key={requestKey(enough)} request={enough} people={tomasView} actions={actions} />);
+    expect(screen.getByText("Tu disponible en Japón: $60.000 → $30.000")).toBeTruthy();
+    expect(screen.queryByText(/Tus aportes cambiaron/)).toBeNull();
+    expect(actions.approve).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$30.000") }));
+    await waitFor(() => expect(actions.approve).toHaveBeenCalledTimes(1));
+    expect(actions.approve).toHaveBeenCalledWith(expect.objectContaining({ requestId: REQUEST, expectedVersion: 1 }));
+  });
+
+  it("C-7: requestRejection solo usa la cifra que trae el rechazo; sin ella, «Revisa…»", () => {
     expect(requestRejection("insufficientFunds", { availableMinor: minor(1000000n) }, "Japón")).toBe("Tus aportes cambiaron: ahora tienes $1.000.000 en Japón.");
-    expect(requestRejection("insufficientFunds", undefined, "Japón", { availableMinor: minor(10000n), amountMinor: minor(30000n) })).toBe("Tus aportes cambiaron: ahora tienes $10.000 en Japón.");
-    expect(requestRejection("insufficientFunds", undefined, "Japón", { availableMinor: null, amountMinor: minor(30000n) })).toBe("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.");
+    expect(requestRejection("insufficientFunds", undefined, "Japón")).toBe("Tus aportes en Japón cambiaron. Revisa cuánto tienes disponible.");
+  });
+
+  it("C-7: fundsState en sus tres estados", () => {
+    expect(fundsState({ memberAvailableMinor: minor(100000n), amountMinor: minor(30000n) })).toEqual({ kind: "enough", available: 10000000n, after: 7000000n });
+    expect(fundsState({ memberAvailableMinor: minor(30000n), amountMinor: minor(30000n) })).toEqual({ kind: "enough", available: 3000000n, after: 0n });
+    expect(fundsState({ memberAvailableMinor: minor(10000n), amountMinor: minor(30000n) })).toEqual({ kind: "short", available: 1000000n });
+    expect(fundsState({ memberAvailableMinor: null, amountMinor: minor(30000n) })).toEqual({ kind: "unknown" });
+  });
+
+  // F111-6: una solicitud pendiente sin uso propio aplicado (I-27) sigue viva: no es historial y conserva sus acciones.
+  it("C-3: sin uso aplicado y con una solicitud pendiente, «Pagado con dinero del mes» y la solicitud viva con sus acciones", () => {
+    const pending = request({ usedMinor: "0" });
+    const value = funding({ funded: false, usedMinor: "0", pendingMinor: pending.amountMinor, uses: [], request: pending });
+    const { unmount } = render(<Detail value={value} />);
+    expect(screen.getByRole("heading", { name: "Pagado con dinero del mes" })).toBeTruthy();
+    expect(screen.getByText(copy.goalExpense.badge.pending("Tomás"))).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.cancel })).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.goalExpense.remove.action })).toBeTruthy();
+    unmount();
+    render(<Detail value={value} viewer={tomasView} />);
+    expect(screen.getByRole("heading", { name: "Pagado con dinero del mes" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") })).toBeTruthy();
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.reject })).toBeTruthy();
   });
 });

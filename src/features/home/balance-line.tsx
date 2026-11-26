@@ -5,7 +5,7 @@
 // guardar un gasto compartido), el anterior se queda tachado junto al nuevo; no es movimiento, así que se ve igual con
 // movimiento reducido. La sugerencia es `settlementSuggestion` del dominio sobre las filas de `couple_balance`.
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Avatar } from "@/components/ui/avatar";
 import { initialOf } from "@/domain/account";
@@ -22,20 +22,33 @@ function suggestion(balance: readonly MemberBalance[]) {
   }
 }
 
+type Shown = { key: string; direction: string | null; amount: Money | null };
+/** El tachado y el saldo para el que vale: solo se pinta si `forKey` es el saldo que se está pintando. */
+type Struck = { forKey: string; amount: Money };
+
+/**
+ * C-1 (decisión 30.3): qué se tacha al pasar de `previous` a `next`. El anterior solo se tacha bajo la misma dirección (quién le
+ * debe a quién) o junto a «Al día». Si la deuda cambió de dirección, ese monto era de la otra persona: no se tacha.
+ */
+export function strikeFor(previous: Shown, next: Shown): Struck | null {
+  if (previous.key === next.key || !previous.amount) return null;
+  return next.direction === null || previous.direction === next.direction ? { forKey: next.key, amount: previous.amount } : null;
+}
+
 export function BalanceLine({ balance, members }: { balance: readonly MemberBalance[]; members: readonly CoupleMemberView[] }) {
   const current = suggestion(balance);
   const key = current ? `${current.fromUserId}>${current.toUserId}:${current.amount.amountMinor}` : "settled";
   const direction = current ? `${current.fromUserId}>${current.toUserId}` : null;
-  const previous = useRef<{ key: string; direction: string | null; amount: Money | null } | null>(null);
-  const [struck, setStruck] = useState<Money | null>(null);
-  useEffect(() => {
-    const last = previous.current;
-    // C-1 (decisión 30.3): el anterior solo se tacha bajo la misma dirección, o junto a «Al día». Si la deuda cambió de
-    // dirección, ese monto era de la otra persona: no se pinta bajo la frase nueva.
-    if (last && last.key !== key) setStruck(last.amount && (direction === null || last.direction === direction) ? last.amount : null);
-    previous.current = { key, direction, amount: current?.amount ?? null };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo cuando cambia el saldo.
-  }, [key]);
+  // F111-3: el tachado se decide durante el render (estado derivado del saldo anterior, sin efecto), así que el primer render
+  // con el saldo nuevo ya trae el tachado correcto o ninguno; y solo se pinta si es del saldo que se está pintando.
+  const [shown, setShown] = useState<Shown>({ key, direction, amount: current?.amount ?? null });
+  const [struck, setStruck] = useState<Struck | null>(null);
+  if (shown.key !== key) {
+    const next = { key, direction, amount: current?.amount ?? null };
+    setStruck(strikeFor(shown, next));
+    setShown(next);
+  }
+  const struckAmount = struck && struck.forKey === key ? struck.amount : null;
   const debtor = current ? members.find((member) => member.userId === current.fromUserId) : null;
   const creditor = current ? members.find((member) => member.userId === current.toUserId) : null;
   return (
@@ -56,12 +69,12 @@ export function BalanceLine({ balance, members }: { balance: readonly MemberBala
             <Avatar person={creditor.joinOrder} initial={initialOf(creditor.name)} size={24} />
           </span>
           <span className="text-[length:var(--body-m-size)] font-medium text-ink">{copy.couple.home.owes(debtor.name, creditor.name)}</span>
-          {struck ? <s className="text-[length:var(--body-m-size)] text-ink-secondary tabular-nums">{formatMoney(struck)}</s> : null}
+          {struckAmount ? <s className="text-[length:var(--body-m-size)] text-ink-secondary tabular-nums">{formatMoney(struckAmount)}</s> : null}
           <span className="text-[length:var(--money-m-fit)] leading-[var(--money-m-line)] font-semibold tracking-[var(--money-m-tracking)] text-ink tabular-nums">{formatMoney(current.amount)}</span>
         </p>
       ) : (
         <p className="text-[length:var(--body-m-size)] font-medium text-ink">
-          {struck ? <s className="mr-2 text-ink-secondary tabular-nums">{formatMoney(struck)}</s> : null}
+          {struckAmount ? <s className="mr-2 text-ink-secondary tabular-nums">{formatMoney(struckAmount)}</s> : null}
           {copy.couple.home.settled}
         </p>
       )}

@@ -229,6 +229,8 @@ export const copy = {
       yours: (goal: string, before: string, after: string) => `Tu disponible en ${goal}: ${before} → ${after}`,
       yoursLabel: (goal: string, before: string, after: string) => `Tu disponible en ${goal}: antes ${before}, después ${after}`,
       rejectNote: "Si rechazas, el gasto sigue registrado y tus aportes no cambian.",
+      // C-7 (F111-1): sin lectura de lo disponible de quien aprueba no se inventa una cifra ni se ofrece «Aprobar».
+      fundsUnknown: (goal: string) => `No pudimos confirmar cuánto tienes disponible en ${goal}. Revisa antes de aprobar.`,
       approve: (amount: string) => `Aprobar ${amount}`, approving: "Aprobando…", reject: "Rechazar", rejecting: "Rechazando…",
       approved: (goal: string) => `Aprobaste el uso de tus fondos en ${goal}.`,
       rejected: "Rechazaste la solicitud. El gasto sigue registrado y tus aportes no cambian.",
