@@ -122,9 +122,9 @@ manda la sección citada, no el resumen.
 > - **resultado desconocido**: se envió y no hubo respuesta (red caída o 15 s sin
 >   respuesta). **No se dice que no se guardó.** Texto de la app: «No pudimos
 >   confirmar si se hizo. No lo des por hecho: reintenta lo mismo sin riesgo o
->   comprueba el estado», con **«Comprobar estado»** («Comprobando…») y
->   **«Reintentar»**, que reenvían **la misma intención**, con la misma clave: no se
->   hace dos veces. Si al comprobar todavía no consta: «Todavía no consta.
+>   comprueba el estado», con **«Reintentar»**, que reenvía la carga
+>   original con **la misma clave** (no se hace dos veces), y **«Comprobar estado»**
+>   («Comprobando…»), que consulta el resultado de esa clave **sin reenviar** nada. Si al comprobar todavía no consta: «Todavía no consta.
 >   Reintentar es seguro: no se hace dos veces». Mientras está desconocido, la
 >   acción no se puede enviar de nuevo con otros datos.
 >
@@ -144,7 +144,8 @@ manda la sección citada, no el resumen.
 >
 > **Nombres de trabajo** (Q2; se deciden viendo los comps, propón alternativas si
 > alguno no se entiende): la ruta, **«Recurrentes»**; la instancia futura,
-> **«Prevista»**; la instancia cuya fecha llegó sin resolver, **«Por confirmar»**;
+> **«Prevista»**; la instancia pendiente de resolución, porque llegó su fecha o
+> porque volvió a quedar pendiente conforme a D1 o P6, **«Por confirmar»**;
 > la resuelta con un movimiento real, **«Confirmada»**; **«Omitida»**,
 > **«Cancelada»**. La recurrencia: **«Activa»**, **«En pausa»**, **«Terminó»**
 > (sola, por fecha final o por número de ocurrencias), **«Finalizada»** (a mano) y
@@ -347,10 +348,11 @@ manda la sección citada, no el resumen.
 >
 > **07·7 «Por confirmar», Inicio y Plan** (FR-050, FR-051; Q16; P3(a); ADR-016
 > §6.6; ADR-017 §6). Avisos solo dentro de la app, sin push ni correo.
-> - **Por confirmar**: la lista de instancias cuya fecha llegó sin resolver, de
->   cualquier mes, la más antigua primero, con sus acciones. Incluye las vueltas a
->   por confirmar por anulación, aunque su fecha sea futura (D1), y las de
->   recurrencias archivadas o terminadas. «Todo confirmado» como estado vacío, sin
+> - **Por confirmar**: la lista de instancias pendientes de resolución, porque llegó
+>   su fecha o porque volvieron a quedar pendientes conforme a D1 o P6, de cualquier
+>   mes, la más antigua primero, con sus acciones. Incluye las vueltas a por
+>   confirmar aunque su fecha sea futura, y las de recurrencias archivadas,
+>   finalizadas o terminadas. «Todo confirmado» como estado vacío, sin
 >   celebraciones exageradas.
 > - **Módulo de Inicio**: aparece **solo cuando hay instancias por confirmar**, es
 >   **descartable** y **sin culpa** («Tienes 3 por confirmar», nunca «Tienes 3 pagos
@@ -373,22 +375,25 @@ manda la sección citada, no el resumen.
 > **07·8 Confirmar** (SC-004; FR-012, FR-012a, FR-012b, FR-013, FR-014, FR-016,
 > FR-019, FR-021; ADR-016 §7.1 a §7.3 y §7.6; ADR-017 §2). Desde el calendario, Por
 > confirmar o el detalle. **Precedencia**, en este orden:
-> 1. **Si hay movimientos compatibles sugeridos** (ADR-016 §7.6; FR-014), se
->    ofrecen **antes de crear nada**: «¿Ya lo anotaste?», con las sugerencias y
+> 1. **¿Cambió la instancia?** Si su posición, su fecha prevista o su versión ya no
+>    son las que vio la persona, se **rechaza** sin crear nada (precondición de
+>    ADR-016 §7.1): «Esta instancia cambió. Revisa los datos nuevos», con
+>    «Revisar».
+> 2. Si no cambió, **¿hay movimientos compatibles sugeridos?** (ADR-016 §7.6;
+>    FR-014). Se ofrecen **antes de crear nada**: «¿Ya lo anotaste?», con las sugerencias y
 >    «Vincular». La persona puede vincular una, o seguir con «No, es otro pago»,
->    que lleva al paso 2 o 3: Juntia **no deduplica sola** ni impide registrar un
+>    que lleva al paso 3: Juntia **no deduplica sola** ni impide registrar un
 >    movimiento distinto.
-> 2. Si no hay sugerencias por resolver, **toque único** solo si se cumplen las
->    tres condiciones: **importe fijo**; en un ingreso, **certeza fija**; y la
->    instancia **sigue igual que cuando la vio la persona** (posición, fecha prevista
->    y versión; precondición de ADR-016 §7.1). El botón dice lo que crea («Confirmar
+> 3. Sin sugerencias por resolver, según el importe y la certeza (ADR-016 §7.2):
+>    **toque único** con **importe fijo** y, en un ingreso, **certeza fija**. El botón dice lo que crea («Confirmar
 >    gasto de $95.000»; en un ingreso fijo, el importe que se confirma como recibido:
 >    «Recibí $2.600.000»). Al lado, «Cambiar algo antes», que abre el borrador.
-> 3. En **cualquier otro caso**, el **borrador de Anotar** con los datos de la
->    **versión de la instancia** (FR-012a; la hoja de Anotar existente, con una
->    cabecera «De la recurrencia Servicios públicos · prevista el 25 nov»):
->    obligatorio para un **estimado**, un **ingreso condicional** (aunque su importe
->    se conozca) y un **importe desconocido**. En un ingreso, pide «¿Cuánto
+>    El **borrador de Anotar** con los datos de la **versión de la instancia**
+>    (FR-012a; la hoja de Anotar existente, con una cabecera «De la recurrencia
+>    Servicios públicos · prevista el 25 nov») es obligatorio **solo** para un
+>    **estimado**, un **importe desconocido** y un **ingreso condicional** (aunque su
+>    importe se conozca). Una instancia que cambió no llega aquí: se rechaza en el
+>    paso 1. En un ingreso, pide «¿Cuánto
 >    recibiste?»; en un estimado, propón si el campo de importe empieza **vacío**,
 >    con el rango como ayuda, para no rellenar un número que parezca exacto `[P]`.
 >    En lo compartido se pueden cambiar quién pagó y el reparto. Un gasto puede
@@ -428,7 +433,15 @@ manda la sección citada, no el resumen.
 > - con **fecha efectiva igual a hoy o anterior**;
 > - **sin un vínculo previo** y sin cumplir ya otra instancia del mismo contexto.
 >
-> Categoría, fecha e importe solo ordenan las sugerencias. **Nunca vincula solo.**
+> Son tres cosas distintas (ADR-016 §7.4 y §7.6):
+> - el **filtro duro** de §7.4, de arriba, vale para las sugerencias y para la
+>   búsqueda;
+> - las **sugerencias automáticas** se limitan además a una **ventana alrededor de
+>   la fecha prevista** (§7.6; no la calcules) y son **como mucho tres**, ordenadas
+>   por importe, categoría y cercanía a la fecha;
+> - la **búsqueda manual** no tiene ventana y va **paginada**.
+>
+> **Nunca vincula solo.**
 > Estados: sugerencias; sin sugerencias; búsqueda sin resultados; los cuatro estados
 > de escritura; éxito («Vinculado. No se creó ningún movimiento nuevo»); rechazo,
 > con el **error genérico** «Ese movimiento no se puede vincular a esta instancia»,
@@ -445,9 +458,12 @@ manda la sección citada, no el resumen.
 > 3. Tomás **vincula** ese gasto compartido a la instancia compartida de Plan de
 >    celular, **sin ninguna advertencia**: la vinculación es igual que cualquier
 >    otra.
-> 4. Sara **deshace** Mover a Pareja: su instancia privada sigue **confirmada**, con
->    su gasto privado restaurado, y la instancia **compartida** vuelve a **por
->    confirmar**.
+> 4. Sara **deshace** Mover a Pareja **dentro de los 60 s**, con el gasto en su
+>    versión 1, sin liquidaciones y con las demás condiciones de ADR-001 (ADR-016
+>    §9): su instancia privada sigue **confirmada**, con su gasto privado
+>    restaurado, y la instancia **compartida** vuelve a **por confirmar**. Que Tomás
+>    haya vinculado antes no bloquea ese Deshacer, pero tampoco amplía la ventana.
+>    Los tiempos de la cadena son ilustrativos.
 >
 > No crees pantallas nuevas para esto: son estados de 07·6, 07·9 y 07·13.
 >
@@ -470,8 +486,10 @@ manda la sección citada, no el resumen.
 > la regla se editó mientras estaba omitida, el aviso «Vuelve con los datos que tenía
 > al omitirla». **No hay recuperación manual** (P4; ADR-016 §6.5): si la obligación
 > sigue en pie, la ayuda sugiere anotarla o crear una recurrencia de una sola fecha.
-> **Antes de omitir** una instancia de una recurrencia archivada o finalizada, se
-> avisa de que esa omisión no se podrá deshacer (ADR-016 §6.6).
+> **Antes de omitir** una instancia de una recurrencia **finalizada a mano o
+> archivada**, se avisa de que esa omisión no se podrá deshacer (ADR-016 §6.6). No
+> se avisa en una que **terminó sola**: allí deshacer sigue disponible según los
+> pasos 2 a 4.
 >
 > **Comps obligatorios de 07·10** (con los datos de ejemplo):
 > - **Curso de inglés**, que **terminó sola**, con su omisión de octubre que **sí**
@@ -522,8 +540,10 @@ manda la sección citada, no el resumen.
 >   muestra aportes **confirmados**, sin procedencia: idéntica con y sin la
 >   programación de Sara. Cuando Sara confirma, Tomás ve un aporte de Sara igual a uno
 >   manual.
-> - **Confirmar**: toque único con el importe fijo («Aportar $300.000») y «Cambiar
->   algo antes», que abre el borrador del aporte para cambiar el importe, la fecha
+> - **Confirmar** sigue **toda** la precedencia de 07·8: primero el rechazo si la
+>   instancia cambió; después, las sugerencias de aportes manuales compatibles (de la
+>   misma meta y de Sara), con «No, es otro pago»; y solo entonces el toque único
+>   con el importe fijo («Aportar $300.000») y «Cambiar algo antes», que abre el borrador del aporte para cambiar el importe, la fecha
 >   (hoy o pasada) o el modo. Con los cuatro estados de escritura.
 > - **Meta lograda o archivada**: la programación queda **en pausa** con el motivo
 >   («En pausa: Portátil nuevo se dio por lograda»); no se reanuda sola. Las
