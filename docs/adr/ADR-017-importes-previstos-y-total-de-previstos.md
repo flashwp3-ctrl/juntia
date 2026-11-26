@@ -182,7 +182,7 @@ con valores fijados cuenta en el mes de su fecha fijada.
 | | P1 (a), recomendada: por confirmar | P1 (b): todo el mes previsto |
 | --- | --- | --- |
 | Estados que entran | Previstas y pendientes, incluidas las pendientes por D1 y las que vuelven a pendiente por la excepción contextual de P6 (ADR-016 §9) | Además, las **confirmadas** |
-| Importe de una confirmada | No entra | Su **importe previsto histórico**, el de su versión fijada. **Nunca lo pagado**: el movimiento real no se lee |
+| Importe de una confirmada | No entra | Su **importe previsto histórico**, el de su versión fijada. **Nunca lo pagado**: ningún importe del total procede del movimiento real (§5) |
 | Qué significa la cifra | Lo que queda por confirmar en el mes | Lo que estaba previsto para el mes, se haya confirmado o no |
 | Rótulo | Debe decir «por confirmar» (o el texto de los comps con ese sentido) | Debe decir que es lo previsto del mes **y que no es lo pagado** |
 | Ejemplo: Arriendo $800.000 confirmado, Internet $100.000 pendiente, Mercado $200.000 previsto | **$300.000** | **$1.100.000** |
@@ -399,7 +399,7 @@ aplican.
 | --- | --- | --- | --- | --- |
 | P1 | Qué estados entran en el total | (a) solo las **sin resolver** del mes (previstas y pendientes, incluidas las de D1 y las de la excepción de P6): «lo que queda por confirmar»; (b) además las confirmadas, con su **importe previsto histórico**, nunca con lo pagado, y con otro rótulo | (a): no pone en la misma cifra lo previsto ya cumplido y lo que falta, y no invita a leer «previsto frente a real» | §4 |
 | P2 | Qué contiene el total de Yo | (a) solo las recurrencias privadas de quien consulta, y lo compartido solo en Nosotros; (b) Yo enseña dos cifras separadas y nunca sumadas: la privada y la compartida de la pareja | (a), por simplicidad y coherencia de contexto: un contexto, una cifra, como Actividad. (b) no revela nada que Nosotros no muestre ya | §4 |
-| P3 | Dónde se ve el total | (a) solo en la ruta de Recurrentes y su calendario, junto a la lista que suma; (b) también en el módulo de pendientes de Inicio (Q16), sin ninguna cifra real al lado. Con (b), el total del mes no se puede confundir con el importe de las pendientes que muestra ese módulo | (a): lejos de las métricas reales de Inicio, cumple la condición 1 sin depender del diseño | §4 |
+| P3 | Dónde se ve el total | (a) solo en la ruta de Recurrentes y su calendario, junto a la lista que suma; (b) también en el módulo de pendientes de Inicio (Q16), sin ninguna cifra real al lado. Con (b), el total del mes no se puede presentar como si correspondiera exclusivamente a las instancias pendientes que muestra ese módulo | (a): lejos de las métricas reales de Inicio, cumple la condición 1 sin depender del diseño | §4 |
 
 **Para los comps** (presentación, no `[P]`): si se ve el total (Q15 (a) o (b));
 si se muestra como un rango o como fijos y estimado por separado; el texto del
