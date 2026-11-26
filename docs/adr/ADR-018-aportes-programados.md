@@ -114,9 +114,12 @@ Metas: solo anota lo que ya ocurre, también la reactivación de
 - **`goal_version` es el cursor** (F110-2): el `NEW.version` de la meta, que toda
   transición incrementa con la meta bloqueada. Es único y creciente por meta y no
   depende de relojes, así que ordena los eventos de forma determinista aunque dos
-  tengan el mismo instante. `occurred_at` (`clock_timestamp()` al insertar) solo da
-  la **fecha civil en Bogotá** del evento, que se usa para los intervalos de
-  ADR-016 §6.2 y nunca para ordenar.
+  tengan el mismo instante. Su autenticidad y su crecimiento estricto forman parte
+  del contrato de integridad de abajo (F110-9). `occurred_at` (`clock_timestamp()`
+  al insertar) solo da la **fecha civil en Bogotá** del evento, que se usa para los
+  intervalos de ADR-016 §6.2 y nunca para ordenar. Si el cambio de estado y la
+  inserción cruzan la medianoche, manda el instante de la inserción, que es
+  posterior al bloqueo de la meta (F110-10).
 - **No sabe nada de recurrencias**: no las lee ni las escribe. Su éxito o su fallo
   no dependen de que exista una programación privada, así que la operación de Metas
   no puede revelarla, ni por errores, ni por resultados, ni por la auditoría ni por
@@ -148,6 +151,33 @@ ADR-013. Este ADR fija las garantías:
 Al migrar, se siembra una fila por cada meta que ya esté lograda o archivada, con su
 `completed_at` o `archived_at` y su versión actual.
 
+**Contrato de integridad del cursor y del ancla** (F110-9). El diseño depende de dos
+invariantes: la versión de la meta crece de forma estricta en cada transición, y el
+ancla (§3.2) solo avanza por una creación o una reanudación legítima. Hoy
+`goals_guard_transition` no exige el incremento de versión (solo `version > 0`), y
+`juntia_writer` tiene `update` sobre `savings_goals`. Por eso se exige, con el
+mecanismo físico a cargo del Plan, sin cambiar las funciones de MVP-1 y sin
+abandonar el cursor:
+
+1. **Versión estrictamente creciente y auténtica en los eventos.** Un cambio de
+   `status` sin incremento de `version` se rechaza, y la transición no ocurre. Cada
+   evento lleva una `goal_version` mayor que la de cualquier evento anterior de la
+   misma meta (único por meta).
+2. **La versión de la meta no retrocede**, en ninguna actualización, ni invalida el
+   cursor.
+3. **El ancla solo existe en las reglas de aporte** y **solo avanza** por la creación
+   de la regla o por una reanudación válida (§3.2), nunca retrocede y nunca toma un
+   valor mayor que la versión actual de la meta.
+4. **La reanudación** exige la meta activa bajo su bloqueo y, en la misma
+   transacción, cierra la pausa (o materializa la derivada) y avanza el ancla.
+5. **Las escrituras incorrectas se rechazan sin alterar el historial**: un `update`
+   directo del ancla fuera de esas operaciones, un ancla que retrocede o que se
+   adelanta a la meta, o una transición sin incremento de versión.
+6. **Privilegios.** El trigger de Metas **no recibe ni necesita** ningún privilegio
+   sobre `recurring_*`. Las operaciones autorizadas de Recurrentes sí necesitan una
+   **vía protegida** para escribir el ancla: las funciones de crear y reanudar, con
+   la protección anterior; ninguna otra.
+
 #### 3.2 El ancla de cada regla y la pausa derivada (F110-1, F110-2, F110-5)
 
 Cada regla de aporte guarda un **ancla**, `goal_ack_version`: la versión de la meta
@@ -169,10 +199,27 @@ de la meta g:
    `goal_inactive` abierta, con `started_on` = la fecha civil de e en Bogotá;
 3. si r tiene una pausa manual abierta, esa pausa **ya cubre** la inactivación, y no
    se deriva ninguna otra: nunca hay dos pausas abiertas a la vez (ADR-016 §6.2);
-4. **solo mientras la regla está abierta.** La derivación ignora los eventos
-   posteriores al fin de la regla, sola o a mano, y una regla finalizada o archivada
-   no acumula pausas posteriores a su fin (F110-5). Finalizar o archivar una regla
-   pausada por la meta materializa esa pausa como cerrada, igual que reanudar (abajo).
+4. **El fin de la regla no cambia la derivación** (F110-5, F110-8). Hay que
+   distinguir dos cosas:
+   - **No se generan pausas que cuenten después del fin.** Una pausa derivada que
+     empezaría en la fecha del fin o después no afecta a nada: después del fin no hay
+     posiciones (ADR-016 §6.1 y §6.3), y el estado «Finalizada» o «Archivada»
+     prevalece sobre «Pausada» (ADR-016 §6.1). Cómo se representa ese límite en las
+     vistas y en la exportación lo decide el Plan, sin cambiar ADR-016 §6.2.
+   - **Las pausas anteriores al fin se conservan.** La terminación automática no
+     escribe nada (ADR-016 §6.1), así que una pausa derivada abierta antes sigue en
+     el historial efectivo, con las posiciones que consumió. Finalizar a mano,
+     archivar y «Cambiar frecuencia» **no son reanudar**: no materializan la pausa
+     como cerrada, no avanzan el ancla y la dejan abierta en el historial, igual que
+     ADR-016 deja abierta una pausa manual. Así ninguna de esas operaciones recupera
+     posiciones consumidas, y la lista de cancelación de ADR-016 §6.3 (P3) se calcula
+     sobre ese mismo historial efectivo.
+
+   Ejemplo: compromiso mensual del día 10 con N = 3 (enero a marzo). La meta se
+   inactiva el 20 de enero y no se reanuda. El 10 de marzo la regla termina sola: la
+   pausa derivada desde el 20 de enero se conserva, febrero y marzo siguen
+   consumidas y no reaparecen como pendientes, y deshacer una omisión de febrero
+   sigue sin estar disponible (ADR-016 §6.4, regla 2).
 
 Esa pausa entra en el **historial efectivo** de pausas de ADR-016 §6.2 como una
 más: la proyección de ADR-016 la usa para el estado de la regla (Pausada), para las
@@ -184,12 +231,25 @@ bloqueo (ADR-016 §6.2) y, en una sola transacción:
 
 - si había una pausa derivada abierta, la **materializa** como fila cerrada de
   `recurring_rule_pauses` (`reason = goal_inactive`, `started_on` derivado y
-  `ended_on` = hoy);
-- si había una pausa manual abierta, la cierra (`ended_on` = hoy). Esa pausa
-  cubría la inactivación, así que no se escribe ninguna fila `goal_inactive`;
+  `ended_on` = la fecha de la operación);
+- si había una pausa manual abierta, la cierra (`ended_on` = la fecha de la
+  operación). Esa pausa cubría la inactivación, así que no se escribe ninguna fila
+  `goal_inactive`;
 - **avanza el ancla** a la versión actual de la meta.
 
 Los eventos posteriores al ancla nueva pueden abrir una pausa nueva.
+
+**La fecha de la operación** (F110-10) de pausar, reanudar, finalizar y archivar una
+regla de aporte es la fecha civil en Bogotá de `clock_timestamp()` leída **después
+de obtener los bloqueos** de §4, nunca la de `now()`, que es el inicio de la
+transacción. Así es coherente con el orden efectivo: una reanudación siempre obtiene
+el bloqueo de la meta después de cualquier evento que haya visto, y su fecha nunca
+es anterior a la de esos eventos. Ejemplo: una reanudación empieza a las 23:59 y
+espera el bloqueo; a las 00:01 se inactiva la meta y a las 00:02 se reactiva; a las
+00:03 la reanudación obtiene el bloqueo. Su fecha es la del nuevo día, la pausa
+materializada empieza y termina ese día, y `ended_on` nunca queda antes de
+`started_on`. Las fechas efectivas de los aportes no cambian: siguen siendo las de
+la 004 (FR-040).
 
 **Consecuencias de la regla:**
 
@@ -292,9 +352,11 @@ Opciones:
 - **(c)** Como (b), pero solo si el aporte se **registró antes** de la inactivación
   (F110-6). Compara el instante de registro del asiento (`created_at`), no su
   fecha efectiva, porque `contribute_to_goal` admite fechas pasadas. La
-  inactivación es la **primera** posterior al ancla de la regla (§3.2). Los dos
-  instantes se escriben bajo el bloqueo de la meta, así que el mismo día decide su
-  orden.
+  inactivación es la **primera** posterior al ancla de la regla (§3.2): es un
+  criterio propio de (c), no una restricción de (b). Los dos instantes se escriben
+  bajo el bloqueo de la meta, así que el mismo día decide su orden; **si coinciden**,
+  el aporte no cuenta como anterior y (c) rechaza el vínculo. No se añaden columnas
+  al ledger.
 
 **Recomendación: (b).** El vínculo no tiene efecto económico, y el aporte, por
 definición, se creó con la meta activa (FR-040), así que la condición de (c) se
@@ -334,6 +396,12 @@ este ADR no la cierra.
 - **Exportación** (ADR-016 §13): el historial efectivo de pausas que se exporta
   incluye la pausa derivada abierta, aunque no tenga fila. Si se exporta la historia
   completa de estados de la meta lo decide el Plan.
+- **Para la reconciliación posterior** (F110-12): en las reglas de aporte, pausar,
+  finalizar y archivar pasan a depender de la meta (§4), y las operaciones que
+  consultan el historial efectivo para decidir si algo es elegible, como Deshacer
+  una omisión (ADR-016 §6.4), lo leen de forma consistente, bajo los bloqueos de §4.
+  La spec 007 y, si hace falta, una nota de ADR-016 §14 lo recogen en el PR de
+  reconciliación. Este PR no toca ADR-016.
 - ADR-016 no cambia: recibe la pausa derivada en su historial de pausas (§6.2), y
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
@@ -353,7 +421,11 @@ este ADR no la cierra.
      actualizar, borrar ni truncar eventos, y no se puede fabricar una inactivación
      histórica por ninguna función expuesta;
    - el dueño de la tabla sí puede borrar, para el borrado de cuenta;
-   - la siembra cubre las metas ya inactivas.
+   - la siembra cubre las metas ya inactivas;
+   - **pruebas negativas del cursor** (F110-9): una transición de estado sin
+     incremento de `version`, o una actualización que la hace retroceder, se rechaza
+     sin dejar evento ni cambiar la meta; dos eventos de la misma meta nunca
+     comparten `goal_version`.
 2. **Privacidad de Metas** (pgTAP con tres cuentas). Lograr, archivar y reactivar una
    meta compartida dan resultados, errores y auditoría idénticos con y sin una
    programación privada de Ana. `juntia_writer` no tiene ningún privilegio nuevo
@@ -376,8 +448,23 @@ este ADR no la cierra.
      inactivación ese día abre una pausa nueva; la pausa del mismo día consume cero
      posiciones; y el cambio de fecha en Bogotá alrededor de la medianoche;
    - eventos con el mismo `occurred_at` se ordenan por `goal_version`;
-   - una regla finalizada o archivada no acumula pausas posteriores a su fin
-     (F110-5);
+   - una regla finalizada o archivada no acumula pausas que cuenten después de su
+     fin (F110-5);
+   - **el caso B de ADR-016 §6.4 con una pausa `goal_inactive`** (F110-8): la regla
+     termina sola durante la pausa derivada; las posiciones sin hechos que cayeron en
+     ella siguen consumidas y no reaparecen como pendientes; una omitida dentro de la
+     pausa sigue sin poder deshacerse; y finalizar a mano o archivar una regla
+     pausada por la meta no recupera ninguna posición consumida ni cambia la lista
+     de cancelación;
+   - **la medianoche con espera real** (F110-10): una reanudación que espera de
+     verdad el bloqueo de la meta mientras otra transacción la inactiva y la
+     reactiva al otro lado de la medianoche en Bogotá. Se comprueban las fechas
+     (`started_on`, `ended_on` ≥ `started_on` y la fecha del evento), no solo el
+     cursor;
+   - **pruebas negativas del ancla** (F110-9): un `update` directo de
+     `goal_ack_version`, un ancla que retrocede, que supera la versión actual de la
+     meta o que se escribe en una regla que no es de aporte se rechazan sin alterar
+     el historial;
    - Deshacer una omisión respeta la pausa derivada (ADR-016 §6.4, regla 2).
 5. **Concurrencia** (ADR-016 `[V]` P9): los siete órdenes de §4, sin interbloqueos,
    en las dos cuentas, incluidas **pausar frente a inactivar** en los dos sentidos
@@ -385,13 +472,17 @@ este ADR no la cierra.
    transacción la inactiva o la reactiva (F110-2).
 6. **Confirmación:** fecha efectiva hoy o pasada; solo la dueña; meta activa bajo el
    bloqueo; `funding_mode` de la versión, y el cambiado en el borrador.
-7. **Restricciones de §1** según P1, también por SQL directo.
-8. **Si P2 es (b) o (c):** vincular un aporte no anulado de la misma meta y
+7. **Restricciones de §1** según P1, también por SQL directo, y **pruebas negativas
+   del ancla** (F110-9): `goal_ack_version` es obligatoria en las reglas de aporte y
+   nula en las demás, y solo la escriben las funciones de crear y reanudar.
+8. **Según P2.** Con (b) o (c), vincular un aporte no anulado de la misma meta y
    aportante funciona con la meta inactiva, y nunca crea un asiento. Se mantienen
    **todas** las condiciones de ADR-016 §7.4 (autorización previa, bloqueo,
-   precondición, compatibilidad, movimiento activo con fecha ≤ hoy y unicidad); P2
-   solo decide si se exige la meta activa. Con (c), además, el caso del mismo día y
-   un aporte con fecha pasada registrado después de la inactivación (§6).
+   precondición, compatibilidad, movimiento activo con fecha ≤ hoy y unicidad).
+   **Con (a)**, el vínculo con la meta inactiva se rechaza. **Con (c)**, además de lo
+   de (b), solo la condición temporal: un aporte registrado antes de la primera
+   inactivación posterior al ancla se acepta; uno registrado después, también con
+   fecha efectiva pasada, se rechaza; y a igualdad de instante, se rechaza (§6).
 
 ## Cuestiones para los fundadores `[P]`
 
