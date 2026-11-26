@@ -24,6 +24,13 @@ en dispositivo, corrige los defectos que salgan y registra la aprobación de los
 fundadores tras 7 días de uso. Se entrega en **tres PR (A, B y C)** (Q1, opción a), más
 el PR documental de declaración, que no es de esta spec.
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** Declarar
+> MVP-1 es su **aceptación técnica**. Antes de ella va un PR de código acotado a C-1–C-7,
+> con regresiones y evidencia nueva, como un PR B adicional (30.2). Los 7 días de uso
+> (paso 7, D4) y la valoración tras ellos son la **validación por uso real**, que se
+> conserva aplazada (30.6). Las demás tareas del paso 7 se adelantan a antes de la
+> declaración. El detalle está en la nota que sigue a la tabla de «Orden de ejecución».
+
 Enfoque, con el detalle y las alternativas en [research.md](research.md):
 
 - **PR A · pruebas y arneses.** Los huecos de FR-012 en dominio, componentes e
@@ -140,6 +147,8 @@ Ninguna pendiente en `docs/design/README.md`.
   alguno > 50 ms) con CPU 4×.
 - **Fila 21 · Periodo de uso de Q10 (D4, opción a):** despliegues de producción congelados
   durante los 7 días; un fallo crítico se corrige y los 7 días vuelven a empezar.
+  **Enmienda del 25 nov 2026 (decisiones 25.5 y 30):** la regla se aplica al periodo de
+  la validación por uso real, aplazada (30.6).
 - **Fila 22 · ADR-010, «los aportes no se borran» (revisión del PR #85, F85-8):**
   - ADR-010 y el maestro (DEC-G01..G06, decisión 22) dicen que el ledger de metas es de
     solo inserción y que una corrección es un asiento `void`;
@@ -235,7 +244,7 @@ entrada (FR-001) y lo que cada paso necesita del anterior:
 | **4** | **Commit candidato** = `main` tras el último PR de código. Sobre él, en serie (nunca en paralelo, porque dos `workflow_dispatch` sobre la misma rama se cancelan): (a) run completo con las cinco specs y el ensayo de restauración; (b) `@sweep`; (c) `release` completo, con WebKit | Gestor | Paso 3 | FR-010, FR-020, FR-040, FR-050–FR-054 |
 | **5** | **Despliegue y etiqueta** de producción del candidato (FR-022); sondas de FR-014 y FR-015 | Gestor con la dueña | Paso 4 en verde | Etiqueta `db-prod-*` o `release-mvp-1-*` (research R13) |
 | **6** | **Verificaciones en producción con el candidato**: humo de release (FR-021), S1–S5 final (FR-030), dispositivo (FR-044, FR-055, FR-070, FR-072), **Mac prestado** (FR-071), exportación (FR-060), recuperación (FR-063), vuelta atrás (FR-064) | Fundadores; gestor | Paso 5 | Filas de la checklist y de `evidence.md` |
-| **7** | **7 días consecutivos de uso diario real** (Q10); al final, copia semanal y **restauración real** (FR-061), registros de Vercel (FR-013), tamaño de la tabla de idempotencia (FR-068) | Fundadores; gestor | Paso 6 | Valoraciones separadas (FR-081) |
+| **7** | **Enmendado por la decisión 30** (nota tras la tabla). **7 días consecutivos de uso diario real** (Q10); al final, copia semanal y **restauración real** (FR-061), registros de Vercel (FR-013), tamaño de la tabla de idempotencia (FR-068) | Fundadores; gestor | Paso 6 | Valoraciones separadas (FR-081) |
 | **8** | **PR C** · evidencia y cierre, solo documentos | Agente; fundadores | Paso 7 | `evidence.md` y checklist firmadas |
 | **9** | PR documental de **declaración** de MVP-1 (fuera de esta spec, FR-082) | Gestor; fundadores | PR C mergeado, los dos aprueban | Estado del maestro, `AGENTS.md` y `CLAUDE.md` |
 
@@ -248,6 +257,36 @@ congelan**. Si aparece un fallo crítico (dinero, privacidad, pérdida de datos 
 accesibilidad básica), el periodo se para, se corrige en un PR B, el candidato nuevo pasa
 el paso 4 (y los pasos 5 y 6 que su cambio afecte) y **los 7 días vuelven a empezar**. Un
 fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
+
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** El orden pasa a
+> ser este:
+>
+> - **Paso 3, ampliado.** Después del merge del PR documental de la decisión 30, un PR de
+>   código acotado a C-1–C-7 (30.2 y 30.3), con regresiones y evidencia nueva. Es el
+>   último PR de código antes del candidato. Cualquier otra corrección de código
+>   necesita una autorización expresa de los fundadores, registrada en el maestro (30.2).
+>   Son siete correcciones de presentación y copy: si una exige cambiar una consulta
+>   financiera, un permiso o una validación del servidor, la sesión se detiene y pide
+>   esa autorización.
+> - **Pasos 4 a 6**, sin cambios, sobre el candidato que incluye ese PR. El paso 4 se
+>   ejecuta completo.
+> - **Paso 7, partido en dos.**
+>   - **Antes de declarar**, después del paso 6: la copia y la **restauración real**
+>     (FR-061, V14), los registros de Vercel de una semana de uso en producción con
+>     actividad representativa (FR-013; versión, operaciones y búsquedas con sus
+>     coincidencias; no vale la corrida de `juntia-dev`, y si no se puede acreditar
+>     deciden los fundadores) y la tabla de idempotencia (FR-068).
+>   - **Validación por uso real**, aplazada (30.6) hasta que Planes, Recurrentes y
+>     calendario y el Presupuesto integral v1 estén aceptados y en producción: los 7 días
+>     con D4 y la valoración de FR-081, con el escenario humano completo de §4 como
+>     precondición (T094).
+> - **Paso 8 (PR C) y paso 9 (declaración)**, con lo de la aceptación técnica. No esperan
+>   a la validación por uso real.
+> - **El resultado del periodo**, cuando ocurra, se registra en un PR documental
+>   posterior y en el maestro (30.6).
+>
+> La sesión guiada de FR-080 se rige por la 30.7 (decidida el 26 nov 2026): para la
+> aceptación técnica la sustituyen la corrida del PR #104 y la evidencia nueva de C-1–C-7.
 
 El ensayo del borrado de cuenta (FR-067) puede hacerse en cualquier momento después del
 PR A; no depende del candidato porque corre en `juntia-dev`.
@@ -319,6 +358,12 @@ con todas las casillas marcadas y firmada (FR-069), `states-matrix.md` final, la
 FR-002 (inventario heredado sin filas «abiertas»), FR-003 (salidas de tareas antiguas),
 FR-030 (S1–S5), FR-034 (criterios del handoff), FR-056 (CWV sin «p75») y SC-001 a SC-012,
 las dos valoraciones de FR-081 y la lista de MVP-2 de FR-083.
+
+> **Enmienda del 25 de noviembre de 2026 (decisión 30.5).** El PR C cierra la aceptación
+> técnica. SC-011 queda en la tabla con el estado «Pendiente · validación por uso real
+> (30.6)», fuera de lo que debe estar superado para cerrarlo; las valoraciones de FR-081
+> y las fechas del periodo llegan en un PR documental posterior, cuando ocurra. FR-002 y
+> SC-003, sin filas abiertas.
 
 **Formato:** solo `.md`, `.png` y `.txt` bajo `specs/` (`AGENTS.md` 15a).
 
@@ -402,15 +447,15 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 | Teclado nativo, safe areas, horizontal | FR-044 | Cada fundador | 0b y 6 | Capturas PNG; filas de dispositivo |
 | VoiceOver (Anotar, Inicio, Balance, una meta) y contraste en los dos temas | FR-070 | Un fundador con VoiceOver; los dos con contraste | 0b y 6 | Notas por pantalla; capturas |
 | Back-swipe de iOS frente al cierre de la meta inmersiva | FR-070 | Los dos | 6 | Nota y clip fuera del repo; fotogramas PNG |
-| US-12: mediana < 10 s con ≥ 10 gastos habituales | FR-055 | Cada fundador | 6 o 7 | Tabla de tiempos por grabación |
+| US-12: mediana < 10 s con ≥ 10 gastos habituales | FR-055 | Cada fundador | 6 (antes de declarar; decisión 30) | Tabla de tiempos por grabación |
 | Tema entre dispositivos sin parpadeo | FR-072 | Un fundador | 6 | Nota con los dos dispositivos |
 | **CLS en iPhone con el Mac prestado** | FR-071 | Un fundador con el Mac; el gestor prepara el grabador | 6 | Salida del grabador por ruta (`.txt`) y captura de Timelines |
 | Exportación JSON y CSV con datos reales | FR-060 | Cada fundador | 6 | Recuentos por tipo, sin contenido |
 | Recuperación de acceso | FR-063 | Cada fundador | 6 | Fecha y resultado; límite de envío copiado del panel |
 | Vuelta atrás de un despliegue | FR-064 | Dueña de Vercel con el gestor | 6 | Identificadores de despliegue antes y después |
-| **7 días consecutivos de uso diario**, con despliegues congelados (D4) | FR-080, FR-081 | Los dos | 7 | Valoración de cada uno, por separado |
-| **Restauración real** de la copia con el esquema de P0-3 | FR-061 | Un fundador, en su equipo, con el gestor | 7 | Manifiesto y log de `restore-plain.sh`, sin datos |
-| Registros de Vercel de una semana | FR-013 | Dueña de Vercel, o el gestor con su «sí» y solo lectura | 7 | Búsquedas hechas y su resultado, sin pegar líneas con datos |
+| **7 días consecutivos de uso diario**, con despliegues congelados (D4) | FR-080, FR-081 | Los dos | Validación por uso real, aplazada (decisión 30.6); FR-080 según la 30.7 | Valoración de cada uno, por separado |
+| **Restauración real** de la copia con el esquema de P0-3 | FR-061 | Un fundador, en su equipo, con el gestor | Tras el paso 6, antes de declarar (decisión 30.5) | Manifiesto y log de `restore-plain.sh`, sin datos |
+| Registros de Vercel de una semana | FR-013 | Dueña de Vercel, o el gestor con su «sí» y solo lectura | Tras el paso 6, antes de declarar (decisión 30.5) | Búsquedas hechas y su resultado, sin pegar líneas con datos |
 | Ensayo del borrado de cuenta | FR-067 | Gestor, en `juntia-dev` | Tras el PR A | Recuentos antes y después |
 
 ## Dónde se mide cada criterio de éxito
@@ -423,11 +468,11 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 | SC-004 | `@sweep` del candidato | Paso 4b; A (casos), B (correcciones) |
 | SC-005 | Tramos `cls-*` (Chromium, 40 + 10 cargas por ruta), `webkit-cls-*` y `firefox-cls-*` (comparador) | A (arneses); paso 4c |
 | SC-006 | Tramo `lab-interaction` (INP) | A; paso 4c |
-| SC-007 | iPhone de cada fundador | Paso 6–7 |
-| SC-008 | Exportación real; red de la checklist de humo; registros de Vercel | Pasos 6–7 |
-| SC-009 | Restauración real | Paso 7 |
+| SC-007 | iPhone de cada fundador | Paso 6 (decisión 30) |
+| SC-008 | Exportación real; red de la checklist de humo; registros de Vercel | Paso 6 y antes de declarar (decisión 30) |
+| SC-009 | Restauración real | Tras el paso 6, antes de declarar (decisión 30.5) |
 | SC-010 | Tabla S1–S5 | Pasos 0b y 6 |
-| SC-011 | Valoraciones de FR-081 | Paso 7; C |
+| SC-011 | Valoraciones de FR-081 | Validación por uso real, aplazada (decisión 30.6) |
 | SC-012 | Tabla de CWV (FR-056): «laboratorio» con mediana y máximo, nunca «p75» | C |
 
 ## Riesgos
@@ -448,8 +493,8 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
   WebKit».
 - **El Mac es prestado y se usa una vez.** Si el CLS en iPhone sale distinto de 0, B
   corrige y hace falta el Mac otra vez. Se pide para el paso 6 con margen de una semana.
-- **Un fallo crítico durante los 7 días** reinicia el periodo (D4, opción a): puede
-  alargar P0-4 una semana o más.
+- **Un fallo crítico durante los 7 días** (validación por uso real, aplazada por la decisión 30.6) reinicia el periodo (D4, opción a): puede
+  alargar esa validación una semana o más.
 - **Concurrencia de `workflow_dispatch`.** Dos lanzamientos sobre la misma rama se
   cancelan (grupo `ci-<ref>`). Los runs del paso 4 van en serie.
 - **`juntia-dev` compartido.** Un solo agente a la vez (decisión 18); la siembra de
@@ -551,6 +596,8 @@ historia.
 
 - **Decidido** (fundadores, 18 nov 2026): opción **(a)**. Despliegues congelados durante
   el periodo; si hay un fallo crítico, se corrige y los 7 días vuelven a empezar.
+- **Enmienda del 25 nov 2026 (decisiones 25.5 y 30):** el periodo es el de la validación
+  por uso real, aplazada (30.6). Ya no precede a la declaración de MVP-1.
 
 - **Contexto:** Q10 pide 7 días consecutivos de uso diario real antes de aprobar, sin
   decir sobre qué versión. Un fallo crítico durante el periodo obliga a corregir y

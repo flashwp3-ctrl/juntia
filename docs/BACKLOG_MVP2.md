@@ -10,7 +10,9 @@ su fila en el mapa de `AGENTS.md` §2b se añade en un PR aparte (tocar `AGENTS.
 lanza CI).
 
 **Nada de esta lista se implementa ni se despliega antes de declarar MVP-1**
-(spec 005; decisión 25.5).
+(spec 005; decisión 25.5). Desde la decisión 30 (25 de noviembre de 2026),
+declarar MVP-1 es su **aceptación técnica** (30.5); la validación por uso real de
+siete días se aplaza (30.6) y está abajo, en «Validación por uso real de MVP-1».
 
 **MVP-2 y la hoja de ruta posterior a MVP-1 están decididos** (maestro §15.10,
 decisión 28, 25 de noviembre de 2026). MVP-2 = Planes + Recurrentes y calendario
@@ -89,6 +91,38 @@ Recurrentes, como spec 007 (PR #101, merge `a2204ef`).
 | Purga de la tabla de idempotencia (medir y revisar) | Decisión 24.12 |
 | Revisión de la excepción de CLS por fuentes tardías | Decisión 26.1 |
 | Revisión de la excepción del GoalStack a 390 con la precarga de F02 | Decisión 25.4 |
+
+## Validación por uso real de MVP-1
+
+Los siete días consecutivos de uso diario real de la 24.10, con las reglas de la
+25.5 y la valoración en cuatro ejes (spec 005, V13, FR-081 y SC-011). **No se
+eliminan: se aplazan** hasta que existan Planes y las funcionalidades de
+planificación financiera que los fundadores necesitan para usar Juntia con sus
+propios datos (decisión 30.6). No bloquean la declaración de MVP-1 ni la
+implementación de Planes.
+
+| Tema | Estado | Origen |
+| --- | --- | --- |
+| Momento de inicio del periodo | **Decidido** el 26 nov 2026: cuando Planes (006), Recurrentes y calendario (007) y el Presupuesto integral v1 estén aceptados y en producción | Decisión 30.6 |
+| Escenario de §4 por los dos fundadores con sus datos reales | **Decidido** el 26 nov 2026: se ejecuta completo antes del periodo, como precondición de T094 | Decisión 30.7 |
+
+## Pendientes de valoración de la corrida de MVP-1 (S-1 a S-8)
+
+Sugerencias de la corrida completa de MVP-1 (`specs/005-gate-mvp-1/corrida-completa.md`,
+PR #104, «Sugerencias de usabilidad»). **Pendientes de valoración futura**
+(decisión 30.8): no están autorizadas, no forman parte de la excepción a la
+congelación de C-1–C-7 y no se especifican sin una decisión de los fundadores.
+
+| # | Sugerencia | Nota |
+| --- | --- | --- |
+| S-1 | El registro borra la contraseña escrita tras un error de validación | — |
+| S-2 | En la liquidación, el tope y la fecha futura se avisan solo al enviar; el botón sigue habilitado | — |
+| S-3 | Abrir por URL una meta personal desde Nosotros muestra «No encontramos esta meta…» sin ofrecer «Cambiar a Yo» | El mensaje es correcto por privacidad |
+| S-4 | «Rechazar» y «Cancelar solicitud» no piden confirmación y no se pueden deshacer | — |
+| S-5 | Balance en Yo no trae un botón para cambiar a Nosotros | — |
+| S-6 | Cambiar de Yo a Nosotros tarda unos 1,3 s en mostrar los datos | Es el F02 ya registrado (decisión 24.4), no un hallazgo nuevo |
+| S-7 | Desactivar un presupuesto no pide confirmación | Es reversible y conserva el historial |
+| S-8 | Limitación de completitud y portabilidad de la exportación: los usos de meta compartida no permiten rehacer por aportante la parte de `gasto_financiado_con_meta` | No es un FAIL: 004 FR-080 no lo exige |
 
 ## Ideas sin decidir
 

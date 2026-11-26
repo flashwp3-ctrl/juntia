@@ -90,12 +90,17 @@ Estados: **salida real** (con enlace), **necesita ejecución** (dueño y paso de
 
 ### 1. Filas del «Inventario de verificaciones heredadas» (spec 005)
 
+> **Enmienda del 25 de noviembre de 2026 (decisión 30).** T102 conserva su número y el
+> rótulo «paso 7», pero es de la **aceptación técnica**: se cierra antes de declarar, no
+> en el periodo de uso aplazado. Vale para todas las filas de esta sección y de la
+> siguiente que citan «T102 (paso 7)».
+
 Las filas que la spec agrupa con estados distintos se separan (002-T086, 002-T101/T103/T105, 003-T073/T074, 004-T084/T085).
 
 | Fila | Estado | Dueño y paso (de 005 tasks.md) | Salida o motivo |
 | --- | --- | --- | --- |
 | 002-T086 · teclado nativo, iPhone | necesita ejecución | Cada fundador · T007 (paso 0b), T083 (paso 6) | Aplazada (19.1): `specs/002-cuentas-y-gastos-privados/evidence.md` §T086 |
-| 002-T086 · teclado nativo, Android con teclado de terceros | EXCEPCIÓN APROBADA | Los dos · T102 (paso 7, registra la prórroga más allá de MVP-1) | `specs/002-cuentas-y-gastos-privados/evidence.md` §T086 y §T096; `docs/JUNTIA_MASTER.md:1061` (19.2); Q6 (c) |
+| 002-T086 · teclado nativo, Android con teclado de terceros | EXCEPCIÓN APROBADA | Los dos · T102 (paso 7, registra la prórroga más allá de MVP-1; de la aceptación técnica según la decisión 30) | `specs/002-cuentas-y-gastos-privados/evidence.md` §T086 y §T096; `docs/JUNTIA_MASTER.md:1061` (19.2); Q6 (c) |
 | 002-T087 · US-12 < 10 s en teléfono | necesita ejecución | Cada fundador · T093 (paso 6, puede ir en el 7) | Aplazada (19.1): 002 evidence §T087 |
 | 002-T089 (001-T073) · contraste en iPhone | necesita ejecución | Fundadores · T008 (paso 0b), T084 (paso 6) | Aplazada (19.1): 002 evidence §T089 |
 | 002-T090 (001-T074) · sombras en Android | EXCEPCIÓN APROBADA | Los dos · T102 (paso 7) | 002 evidence §T090 (cinco datos, 6 nov 2026); maestro 19.2 |
@@ -600,6 +605,12 @@ sistema, fecha y commit desplegado.
 
 ## Periodo de uso (D4)
 
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** El periodo es
+> el de la validación por uso real, aplazada hasta que Planes, Recurrentes y calendario y
+> el Presupuesto integral v1 estén aceptados y en producción (30.6). Esta sección y «Valoraciones» se
+> llenan cuando ocurra, en un PR documental posterior; no condicionan la declaración de
+> MVP-1.
+
 Llenan T094–T096.
 
 ## Aprobaciones de los fundadores en el PR B (T067)
@@ -619,6 +630,12 @@ Llenan T011, T055 y T101.
 ## SC-001 a SC-012
 
 Llena T103.
+
+> **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30.5).** SC-011 se
+> mantiene en la tabla con el estado «Pendiente · validación por uso real (30.6)». No es
+> una excepción ni una prueba superada: solo cambia su momento, y queda fuera de lo que
+> debe estar superado para cerrar el PR C y declarar MVP-1. FR-002 y SC-003 siguen sin
+> filas abiertas.
 
 | SC | Run o salida | Estado |
 | --- | --- | --- |

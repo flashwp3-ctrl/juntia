@@ -508,6 +508,13 @@ JWT; concurrencia de aceptación en integración.
 - **FR-044**: Inicio en Nosotros según 04·1 INICIO · NOSOTROS: número héroe del gasto compartido del mes, saldo POR SALDAR con «Ver balance», en qué se fue y recientes, sin los bloques de metas (P0-3) ni «apartaron» (P0-3).
 - **FR-045**: Inicio en Yo según 04·1 INICIO · YO: `gasto_consumo` de Yo (privados + parte) con «Solo tuyos» y «Tu parte compartida», y las filas compartidas con «Compartido · tu parte» (DEC-G04; US-4).
 - **FR-046**: Actividad en Nosotros con gastos compartidos y liquidaciones, filtros, buscador y flechas de mes como en P0-1; tabla de escritorio con «Pagó · Reparto» y panel de detalle con «A quién le corresponde» (04·1, 04·7).
+
+> **Precisión del 25 de noviembre de 2026 (maestro §15.10, decisión 30.3, C-2).** Esta
+> spec no decía qué muestra Actividad en Yo. Los fundadores lo fijaron: Inicio en Yo
+> conserva el consumo personal completo (FR-045), y Actividad en Yo muestra
+> **exclusivamente los movimientos privados**, con un encabezado que dice
+> inequívocamente que son gastos privados. No cambian los cálculos, las consultas, los
+> permisos ni los filtros.
 - **FR-047**: Balance: pantalla propia en móvil (desde Inicio) y destino del rail y del sidebar desde 1024, además del módulo de Inicio; estados por saldar, al día, sin gastos compartidos, cargando y error (§15.3; 04·2; RESPONSIVE).
 - **FR-048**: Metas y Plan en Nosotros siguen con su estado provisional hasta P0-3, sin cifras.
 - **FR-049**: Ninguna pantalla de P0-2 muestra presupuesto, «restante», «excedido», «te alcanza» ni límite cero (DEC-R01; DEC-R17).
