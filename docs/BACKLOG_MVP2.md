@@ -17,9 +17,10 @@ decisión 28, 25 de noviembre de 2026). MVP-2 = Planes + Recurrentes y calendari
 + Presupuesto integral v1 (28.2). Orden: Planes → Recurrentes y calendario →
 Presupuesto integral v1 → Créditos y deudas → Cuentas, activos y patrimonio →
 Flujo y liquidez → Proyecciones y escenarios; estadísticas y sugerencias es
-independiente (28.3). Planes conserva su número y su nombre (spec 006). Las specs
-nuevas posteriores tienen nombres provisionales y ninguna tiene número: cada una
-lo recibe al abrirse, de una en una. Como máximo una spec en implementación y otra
+independiente (28.3). Planes conserva su número y su nombre (spec 006).
+Recurrentes y calendario tiene el número 007; las demás specs posteriores siguen
+sin numerar hasta que se abran conforme a 28.18, y conservan nombres
+provisionales. Como máximo una spec en implementación y otra
 en documentación activa (28.18), solo cuando se cumplan los cuatro prerrequisitos
 de la 28.19.
 
@@ -40,13 +41,15 @@ absorbidas no se borran: conservan su origen.
 
 ## Hoja de ruta de la planificación financiera (decisión 28)
 
-Nombres provisionales, **sin número de spec**. La letra es la etiqueta de trabajo
-del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §4), no un
-nombre de producto. Ninguna está abierta.
+Recurrentes y calendario tiene el número 007; las demás specs posteriores siguen
+sin numerar hasta que se abran conforme a 28.18, con nombres provisionales. La
+letra es la etiqueta de trabajo del análisis
+(`docs/propuestas/analisis-planificacion-financiera.md` §4), no un nombre de
+producto. Solo Recurrentes y calendario está abierta.
 
 | Paso | Spec (provisional) | Capacidades de la propuesta | Origen | Estado |
 | --- | --- | --- | --- | --- |
-| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3 y 28.6 | Sin abrir. Su documentación puede adelantarse durante el gate solo tras los cuatro prerrequisitos de la 28.19 (28.17; estado en la sección siguiente), y se pausa durante el Plan y las Tasks de Planes (28.18) |
+| 1 | **Recurrentes y calendario** (R) | A.1–A.5; filas 3, 4 y 7 | Decisiones 28.3, 28.6 y 29 | **Abierta como spec `specs/007-recurrentes-calendario/`**, en documentación activa durante el gate (28.17; prerrequisitos de la 28.19 en la sección siguiente). Specify y Clarify hechos: Q1–Q19 y D1–D7 respondidas el 25 nov 2026 (PR #101, merge `a2204ef`) y registradas en la decisión 29 del maestro. **Q15 sigue abierta** hasta los comps (29.4). Para pasar a Plan faltan ADR-a, ADR-b y ADR-d, el prompt de diseño y los comps (29.10). Se pausa durante el Plan y las Tasks de Planes, y no se implementa hasta que Planes esté aceptada (28.18) |
 | 2 | **Presupuesto integral v1**, sin liquidez (P1) | B.1–B.4, B.6; C.9 solo teórico | Decisiones 28.3 y 28.7 | Sin abrir. Capa nueva; nombre preferido «Distribución mensual», **sin cerrar** |
 | 3 | **Créditos y deudas** (D) | C.5, C.6, simulador de amortización de un crédito | Decisiones 28.3, 28.10, 28.12, 28.14 y 28.15 | Sin abrir |
 | 4 | **Cuentas, activos y patrimonio** (K) | C.1, C.3, C.4, C.7, C.8 | Decisiones 28.3, 28.9 y 28.11 | Sin abrir |
@@ -56,16 +59,16 @@ nombre de producto. Ninguna está abierta.
 
 ### Prerrequisitos de la decisión 28.19
 
-Estado a 25 de noviembre de 2026. Este PR (#100) registra la evidencia de los
-prerrequisitos pendientes. Tras su merge, una vez satisfechos los cuatro
-prerrequisitos de la decisión 28.19 y con la confirmación de los fundadores,
-podrá comenzar exclusivamente la documentación de Recurrentes.
+Estado a 25 de noviembre de 2026. **Los cuatro prerrequisitos están cumplidos.**
+El PR #100, que registró la evidencia de los que faltaban, se fusionó en
+`8dc2dda`. Con la confirmación de los fundadores se abrió la documentación de
+Recurrentes, como spec 007 (PR #101, merge `a2204ef`).
 
 | # | Prerrequisito | Estado | Evidencia |
 | --- | --- | --- | --- |
 | 1 | La decisión 28 está registrada en el maestro §15.10 | Cumplido | PR #99, merge `9d44a5a` |
 | 2 | La reconciliación normativa está fusionada: la nota de ADR-012 (§3.1 y `[V]` 4), `AGENTS.md` 14b y este archivo | Cumplido | PR #99, mismo merge |
-| 3 | Está verificado cómo selecciona Spec Kit la spec activa y que los worktrees quedan aislados | Verificado, con condiciones de uso, para Spec Kit v1.2.6 y Git Bash en Windows. Cuenta como cumplido con el merge del PR #100 | ADR-012, `[V]` 4. Cada worktree conserva su propio contexto de spec por defecto, pero Spec Kit no aísla las escrituras: `SPECIFY_INIT_DIR`, una `SPECIFY_FEATURE_DIRECTORY` absoluta o con `..`, o un `feature.json` mal escrito llevan la escritura a otro worktree, igual que ejecutar desde el worktree equivocado. Lo cubren las condiciones de uso y las comprobaciones, que reciben el worktree, la rama y la spec asignados (resumen en `AGENTS.md` 14b). La invocación de `speckit-specify` dentro del procedimiento de spec nueva no está ensayada, porque solo la hace una persona; queda rodeada de comprobaciones antes y después |
+| 3 | Está verificado cómo selecciona Spec Kit la spec activa y que los worktrees quedan aislados | Cumplido: verificado, con condiciones de uso, para Spec Kit v1.2.6 y Git Bash en Windows (PR #100, merge `8dc2dda`) | ADR-012, `[V]` 4. Cada worktree conserva su propio contexto de spec por defecto, pero Spec Kit no aísla las escrituras: `SPECIFY_INIT_DIR`, una `SPECIFY_FEATURE_DIRECTORY` absoluta o con `..`, o un `feature.json` mal escrito llevan la escritura a otro worktree, igual que ejecutar desde el worktree equivocado. Lo cubren las condiciones de uso y las comprobaciones, que reciben el worktree, la rama y la spec asignados (resumen en `AGENTS.md` 14b). La primera invocación real de `/speckit-specify` con el procedimiento aprobado, hecha por una persona y rodeada de comprobaciones antes y después, está documentada en el PR #101 (merge `a2204ef`). Es un uso documentado, no una garantía de aislamiento: las condiciones de uso y las comprobaciones siguen siendo obligatorias en cada operación |
 | 4 | Se cumplen las condiciones previas de Q18 | Cumplido: las cuatro, en la tabla siguiente | Análisis §9, Q18 |
 
 | Condición de Q18 | Estado | Evidencia |
