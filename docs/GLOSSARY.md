@@ -253,6 +253,30 @@ Fuente de todas las filas: spec 004, `data-model.md` §§2–9 y `contracts/data
 | Métricas mensuales | `metric_months` | Las cinco métricas DEC-G04, en una lectura consistente |
 | Meta reactivada | `reactivated_goals`, `reactivate` | Fondos devueltos al quitar o anular un uso archivado |
 
+### Nombres visibles aprobados por la 007 (decisión 29.14)
+
+Fuente de todas las filas: los comps de la spec 007, aprobados por los fundadores
+el 26 de noviembre de 2026 («P-4 / Q2: aprobamos los nombres propuestos»; maestro
+§15.10, decisión 29.14; `specs/007-recurrentes-calendario/design-comps.md`). Son
+**nombres de interfaz**: los identificadores de código los fija el Plan de la 007,
+y entran aquí con su fila cuando se aprueben. Nada de esto se implementa antes de
+declarar MVP-1 ni de que Planes esté aceptada (28.18).
+
+| Término | String de interfaz | Precisión |
+| --- | --- | --- |
+| Ruta de recurrencias | «Recurrentes» | Ruta hija de Plan (28.8); no es un destino nuevo de la navegación (§15.3) |
+| Recurrencia | «recurrencia» | La regla de un movimiento esperado. **Nunca crea por sí sola** un gasto, un ingreso ni un aporte real |
+| Instancia futura | «Prevista» («Prevista el 20 nov») | Lo previsto **no es real**: no cambia ninguna cifra ni consume presupuesto (A.2) |
+| Instancia pendiente de resolución | «Por confirmar» | **Estado** de la instancia: llegó su fecha, o volvió a quedar pendiente por D1 o por P6. No es una deuda ni algo atrasado (C-2) |
+| Rótulo del total de gastos previstos | «Gastos de {mes} sin confirmar · solo tuyos» · «· de la pareja» | «Sin confirmar» es del **rótulo**: el total suma las previstas y las por confirmar del mes (ADR-017 §4, P1(a)). La nota dice qué incluye y que **no es lo pagado ni dinero disponible** (P-3; DEC-R17) |
+| Instancia resuelta con un movimiento real | «Confirmada» | Confirmar crea el movimiento real **una vez**, o lo vincula. Nunca «pagada» (ADR-017 `[V]` 7; FR-037) |
+| Instancia omitida | «Omitida» | No crea nada real |
+| Instancia cancelada | «Cancelada» | Al finalizar a mano, cambiar frecuencia o eliminar con historia |
+| Estados de la recurrencia | «Activa», «En pausa», «Terminó», «Finalizada», «Archivada» | **«Terminó»** (sola, por fecha final o por número de ocurrencias) y **«Finalizada»** (a mano) se distinguen siempre. Una recurrencia terminada no prueba que una deuda esté pagada |
+| Posición en un compromiso con número de ocurrencias | «n de N» («7 de 24») | Forma neutra (C-5). n es la ocurrencia programada, **no** el número de cuotas pagadas; sin N, no se inventa |
+| Importe desconocido | «Importe desconocido» | Nunca $0 ni un guion (P-5; ADR-017 §1 y §2) |
+| Preset de captura | «Atajo» («Atajos») | Rellena el borrador de Anotar y nunca guarda solo. **No es una recurrencia**: no prevé nada (28.6) |
+
 - Un término de negocio nuevo entra al código **con su fila aquí**, no después.
 - Si el maestro o un documento de `docs/design/` ya da un identificador, se usa
   **tal cual**; este glosario no renombra nada.

@@ -13,7 +13,7 @@ tamaño, conviene repartirlo en dos archivos, como allí: **«11a Recurrentes
 
 **Resultado (26 de noviembre de 2026):** tras el GO de la revisión del PR #113 y con
 el conector ya operativo, Claude Code generó los comps en ese proyecto, en dos
-páginas. Están **sin aprobación visual**. Dónde están, cómo se hicieron y las `[V]`
+páginas. Los fundadores los **aprobaron** ese mismo día (maestro §15.10, decisión 29.14). Dónde están, cómo se hicieron y las `[V]`
 abiertas: `design-comps.md`.
 
 **Jerarquía** (`AGENTS.md` §2). De mayor a menor:

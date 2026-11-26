@@ -1,6 +1,6 @@
 # ADR-017 — Importes previstos y tratamiento del total de gastos previstos
 
-**Estado:** **Aceptado** (26 de noviembre de 2026; maestro §15.10, decisión 29.12). Propuesto el 25 de noviembre de 2026; la revisión adversarial del PR #106 (F106-1 a F106-9) dio GO. **Los fundadores decidieron P1–P3 el 26 de noviembre de 2026**, con las opciones (a), **condicionadas a que Q15 se cierre en (b)** tras revisar y aprobar los comps; (a), sin totales, se mantiene como respaldo («Decisiones de los fundadores»). La spec 007 y la decisión 29 están reconciliadas con él. Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6). **No cierra Q15**, que sigue abierta hasta los comps (29.4). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6), y sus `[V]` siguen pendientes · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (26 de noviembre de 2026; maestro §15.10, decisión 29.12). Propuesto el 25 de noviembre de 2026; la revisión adversarial del PR #106 (F106-1 a F106-9) dio GO. **Los fundadores decidieron P1–P3 el 26 de noviembre de 2026**, con las opciones (a), **condicionadas a que Q15 se cierre en (b)** tras revisar y aprobar los comps; (a), sin totales, se mantiene como respaldo («Decisiones de los fundadores»). La spec 007 y la decisión 29 están reconciliadas con él. Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6). **No cierra Q15**, que sigue abierta hasta los comps (29.4). *(Nota del 26 de noviembre de 2026: Q15 se cerró en (b), variante b2, al aprobar los fundadores los comps, decisión 29.14; P1–P3 están en vigor.)* No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6), y sus `[V]` siguen pendientes · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
 
 En este archivo, las tres `[P]` (P1–P3) **ya están decididas** por los fundadores
 (26 de noviembre de 2026), condicionadas a Q15 (b); se conservan sus números como
@@ -27,6 +27,8 @@ decisión 29 delegan en este ADR dos cosas:
 que tendría que cumplir **si** los comps aprueban la opción (b). Con (a), el
 respaldo, no se construye nada de §4 a §6, y §1 y §2 siguen valiendo para las
 instancias.
+
+**Nota del 26 de noviembre de 2026 (decisión 29.14):** los fundadores aprobaron los comps y **cerraron Q15 en (b)**, con la variante **b2**: los importes fijos y los estimados por separado. P1(a), P2(a) y P3(a) entran en vigor; esta nota no cambia ninguna decisión del ADR, y sus `[V]` siguen pendientes.
 
 Las **ocho condiciones de los fundadores** para el total (precisión de Q15) son el
 marco. Este ADR las cita y dice dónde se cumple cada una (§7):
@@ -159,6 +161,7 @@ ninguna de esas métricas incluye nunca nada previsto.
 
 **Una sola cifra por contexto y mes, calculada al leer, nunca guardada.** Todo
 §4 a §6, y P1 a P3, están **condicionados a que los comps cierren Q15 en (b)**.
+*(Nota del 26 de noviembre de 2026: los comps la cerraron en (b), decisión 29.14.)*
 
 **El total no calcula nada que ADR-016 ya resuelva** (F106-1, F106-2). Agrega la
 **proyección autorizada de instancias** de ADR-016: la misma lectura que usa el
@@ -352,6 +355,8 @@ Recurrentes.**
   decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
   P2(b), registrada en la decisión 29.13. Q15 sigue abierta.
 
+  **Nota del 26 de noviembre de 2026 (decisión 29.14):** los fundadores aprobaron los comps y **cerraron Q15 en (b)**, con la variante **b2**: los importes fijos y los estimados por separado. P1(a), P2(a) y P3(a) entran en vigor; esta nota no cambia ninguna decisión del ADR, y sus `[V]` siguen pendientes.
+
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
   | **P1** (a) | **FR-045** y **US3.4**, que remiten a §4 a §6 y a la cita literal («Session 2026-11-26 · ADR-017») | **29.12** |
@@ -447,14 +452,22 @@ precedencia de Planes y las restricciones de N-8 (28.18).
 decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
 P2(b), registrada en la decisión 29.13. Q15 sigue abierta. ADR-d se aceptó como ADR-018.
 
+**Nota del 26 de noviembre de 2026 (decisión 29.14):** los fundadores aprobaron los comps y **cerraron Q15 en (b)**, con la variante **b2**: los importes fijos y los estimados por separado. P1(a), P2(a) y P3(a) entran en vigor; esta nota no cambia ninguna decisión del ADR, y sus `[V]` siguen pendientes.
+
 **Para los comps** (presentación, no `[P]`): si se ve el total (Q15 (a) o (b));
 si se muestra como un rango o como fijos y estimado por separado; el texto del
 rótulo; y el texto de «importe desconocido» y de la ausencia.
 
+*Nota del 26 de noviembre de 2026 (29.14):* los comps lo decidieron. Hay total
+(Q15 (b)), con los fijos y el estimado por separado (b2); el rótulo y la nota
+son los de los comps, con «sin confirmar» (P-3 y C-2); y un importe desconocido
+nunca es $0 (P-5). El detalle está en
+`specs/007-recurrentes-calendario/design-comps.md`.
+
 ## Referencias
 
 - `docs/JUNTIA_MASTER.md` §2.4 (DEC-R17), §5.1, §5.2, §15.4 (DEC-G04) y §15.10
-  (decisiones 20.8, 28.11, 29.4, 29.7, 29.10 y 29.11)
+  (decisiones 20.8, 28.11, 29.4, 29.7, 29.10, 29.11 y 29.14)
 - `specs/007-recurrentes-calendario/spec.md`: precisión de Q15, Q10, F101-10,
   F101-17, FR-001, FR-012, FR-020 a FR-022, FR-042, FR-045 a FR-047, FR-082 y
   FR-090 a FR-092
