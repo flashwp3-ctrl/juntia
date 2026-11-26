@@ -1,13 +1,10 @@
 # Comps de diseño · 007 Recurrentes y calendario
 
-**Estado: pendientes.** Todavía no hay comps (26 de noviembre de 2026). El prompt de
-`design-prompt.md` está listo para pegar en Claude Design (ronda 2, tras la
-revisión F113), pero el conector rechazó la sesión de Claude Code: hace falta que
-un fundador inicie sesión (`/design-login`) o que pegue el prompt a mano en el
-proyecto `caabf357-a0df-4048-886f-8c46c8979c5a`, como se hizo con Planes. **No se
-generan hasta el GO de la revisión del PR.** Cuando existan, este documento dirá
-dónde están, los ajustes que pidan los fundadores y las `[V]` que deje Claude
-Design, con el mismo esquema que `specs/006-planes/design-comps.md`.
+**Estado: propuestas `[P]`, sin aprobación visual** (26 de noviembre de 2026). Los
+comps existen desde el 26 de noviembre de 2026. Salen del prompt de
+`design-prompt.md`, en su versión con GO de la revisión del PR #113, y no deciden el
+alcance. Pasar a la etapa Plan exige que los fundadores los aprueben y cierren Q15
+(abajo). Este documento sigue el esquema de `specs/006-planes/design-comps.md`.
 
 **Jerarquía** (`AGENTS.md` §2). De mayor a menor:
 
@@ -28,23 +25,90 @@ para pasar a Plan», punto 5; decisión 29.10). Ni la aprobación de los comps n
 documento autorizan el Plan ni la implementación: siguen la precedencia de Planes y
 N-8 (28.18).
 
-## Dónde estarán
+## Dónde están
 
-Nombres de trabajo, a confirmar al crearlos:
+Están en el proyecto de Claude Design `caabf357-a0df-4048-886f-8c46c8979c5a`
+(«Juntia: Responsive design y design system»), el mismo de Planes, repartidos en dos
+páginas:
 
 | Archivo | Pantallas |
 | --- | --- |
-| «11a Recurrentes 07-1-07-7» | 07·1 Lista · 07·2 Crear · 07·3 Detalle · 07·4 Editar · 07·5 Cambiar frecuencia · 07·6 Calendario y Q15 · 07·7 Por confirmar, Inicio y Plan |
-| «11b Recurrentes 07-8-07-15» | 07·8 Confirmar · 07·9 Vincular · 07·10 Omitir y deshacer · 07·11 Ciclo de vida · 07·12 Aportes programados · 07·13 Actividad · 07·14 Presets · 07·15 Vacíos y límites |
+| «Juntia DS v1 - 11a Recurrentes 07-1-07-7.html» | 07·1 Lista · 07·2 Crear · 07·3 Detalle · 07·4 Editar · 07·5 Cambiar frecuencia · 07·6 Calendario y Q15 · 07·7 Por confirmar, Inicio y Plan |
+| «Juntia DS v1 - 11b Recurrentes 07-8-07-15.html» | 07·8 Confirmar · 07·9 Vincular y la cadena de P6 · 07·10 Omitir y deshacer · 07·11 Ciclo de vida · 07·12 Aportes programados · 07·13 Actividad · 07·14 Atajos (presets) · 07·15 Vacíos y límites |
 
-Los comps viven en Claude Design y no se copian al repositorio. Sus cifras son
-hipotéticas (`design-prompt.md`, «Datos de ejemplo») y pueden no coincidir con las
-de los escenarios de la spec: las pruebas usan las de la spec.
+Las dos páginas comparten el código de la carpeta `recurrentes/` del proyecto: los
+tokens de I2, copiados de `src/styles/tokens.css`, los componentes, los datos de
+ejemplo y una sección por pantalla. Cada sección lleva sus notas «Lo que proponemos»
+`[P]` y «Por verificar y reglas que aplica» `[V]`.
+
+Los comps viven en Claude Design, como los de Planes. A diferencia de Planes, hay
+una **captura PNG por sección** en `comps/` (de `07-01.png` a `07-15.png`), para
+revisarlos sin acceso al proyecto. Son capturas a escala 1, comprimidas con paleta.
+No sustituyen a los comps: si difieren, mandan los del proyecto.
+Sus cifras son hipotéticas (`design-prompt.md`, «Datos de ejemplo») y pueden no
+coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
+
+## Cómo se hicieron, y en qué se diferencian de los de Planes
+
+- **Los escribió Claude Code** con el conector de Claude Design, a partir del prompt,
+  una vez que los fundadores iniciaron sesión. No los generó el asistente de Claude
+  Design, como en Planes.
+- **Son páginas HTML con React** (`.html` y la carpeta `recurrentes/`), no `.dc.html`.
+  Se pueden ver y comentar en Claude Design, pero sus textos no se editan con clic en
+  el editor de componentes. Un ajuste se pide por comentario o se hace en el código
+  de `recurrentes/`.
+- **Cada marco móvil mide 390 px de ancho y crece con su contenido**: una pantalla
+  larga, o una hoja larga, se ve entera en lugar de cortada a 844 px. Los de
+  escritorio miden 1440 px. Cada estado está en claro y en oscuro.
+- **Formato aceptado por los fundadores** (26 de noviembre de 2026): HTML con React,
+  con los ajustes por comentarios y no con edición directa. Aceptar el formato **no**
+  es aprobar visualmente los comps.
+- **Datos añadidos**, ficticios, para ilustrar los casos que pide el prompt y que sus
+  datos de ejemplo no cubrían:
+  - Mantenimiento de bicicleta: archivada, con una pendiente que reapareció por D1;
+  - Clases de natación: sin historia;
+  - Clases de piano: N′ = 0;
+  - Revista digital: finalizada a mano;
+  - Bono de mitad de año: una sola fecha ya confirmada;
+  - la pausa del 3 de junio al 28 de julio de la Cuota inicial;
+  - la cuota 12, omitida por adelantado;
+  - las omisiones de Peluquería en agosto y diciembre;
+  - los gastos sugeridos en 07·9.
+
+  No cambian las cifras de Q15 del prompt.
+
+## Anchos y temas: qué hay y qué se revisó
+
+**Anchos** (F114-13). Son tres afirmaciones distintas:
+
+- **cada sección** tiene representación móvil (390 px) y de escritorio (1440 px);
+- **cada estado** está en claro y en oscuro (abajo);
+- **no todos los estados** tienen su propio comp a 1440. El escritorio de cada
+  sección muestra su pantalla principal, o un estado representativo en Modal, y los
+  demás estados se ven a 390. No se duplican comps en escritorio.
+
+**Temas.** Son dos cosas distintas, y aquí se separan (F114-9).
+
+- **Está en los dos temas.** Desde la ronda 2 de la revisión del PR #114, todos los
+  comps (cada pantalla y cada estado) están en claro y en oscuro. Lo comprueba un
+  recuento automático de los pies de las dos páginas: 61 en claro y 61 en oscuro en
+  la 11a, y 76 y 76 en la 11b, sin ningún comp de un solo tema.
+- **Se revisó visualmente en los dos temas**, mirando las capturas de `comps/`:
+  - 07·2: todos sus estados;
+  - 07·5: cancelación, rechazo y resultado desconocido;
+  - 07·8: rechazo, advertencia, resultado desconocido y borrador de un estimado;
+  - 07·9: rechazo genérico, resultado desconocido y la cadena de P6;
+  - 07·11: acciones destructivas.
+
+  Además, se midió el contraste de los botones primario, secundario y de peligro en
+  los dos temas: todos superan 4,5:1. En el resto de pantallas, la versión oscura
+  existe, pero su revisión visual queda como `[V]` (abajo).
 
 ## Cobertura por pantalla
 
-Qué pide cada pantalla y de dónde sale. Todas van a 390 y 1440 px, en claro y en
-oscuro, con carga, vacío y error, y con contraste WCAG AA (FR-081; `AGENTS.md` 10 y
+Qué pide cada pantalla y de dónde sale. Cada sección tiene comps a 390 y a 1440 px;
+cada estado está en claro y en oscuro, pero no todos tienen su propio comp a 1440
+(«Anchos y temas», arriba). Incluyen carga, vacío y error, y contraste WCAG AA (FR-081; `AGENTS.md` 10 y
 11). Las escrituras de 07·5, 07·8 y 07·9 enseñan los cuatro estados del contrato
 de `use-write.ts`: guardando, éxito, rechazo confirmado y resultado desconocido con
 «Comprobar estado» y «Reintentar» sobre la misma intención idempotente (ADR-013).
@@ -147,10 +211,13 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   **Pregunta:** ¿basta con el aviso, o hace falta un límite? Un límite sería un
   cambio de spec.
 
-## Verificaciones `[V]` para cuando existan los comps
+## Verificaciones `[V]` abiertas
 
-No se dan por hechas; la aprobación visual tampoco las cierra:
+No se dan por hechas; la aprobación visual tampoco las cierra. Además de las de cada
+sección de los comps:
 
+- revisión visual en oscuro de las pantallas que no lista «Anchos y temas» (arriba): 07·1,
+  07·3, 07·4, 07·6, 07·7, 07·10, 07·12, 07·13, 07·14 y 07·15;
 - contraste WCAG AA de todo el texto y de lo previsto (por ejemplo, el contorno
   punteado y el importe secundario) en claro y en oscuro, y que lo previsto se
   distinga de lo real sin color;
