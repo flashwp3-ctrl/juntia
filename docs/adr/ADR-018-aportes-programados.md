@@ -493,8 +493,9 @@ pendientes que el sistema sabe cumplidas.
    **todas** las condiciones de ADR-016 §7.4 (autorización previa, bloqueo,
    precondición, compatibilidad, movimiento activo con fecha ≤ hoy y unicidad): un
    aporte anulado, de otra meta o de otra persona se rechaza. Confirmar un aporte
-   **nuevo** en esa meta sigue fallando (`goalNotOpen`). No hay ninguna condición
-   temporal: la de (c) se descartó.
+   **nuevo** en esa meta sigue fallando (`goalNotOpen`). No se exige ninguna
+   condición temporal adicional respecto a la inactivación de la meta: la de (c) se
+   descartó. Se mantienen todas las condiciones de ADR-016 §7.4.
 
 ## Decisiones de los fundadores (26 de noviembre de 2026)
 
