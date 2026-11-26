@@ -1,6 +1,6 @@
 # ADR-016 — Recurrencias e instancias previstas: modelo de dominio y datos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 4 tras la revisión F103 del PR #103). Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 5 tras la revisión F103 del PR #103). Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
 
 En este archivo `[P]` es una **propuesta** que necesita decisión de los
 fundadores y `[V]` una **verificación pendiente** (maestro §15.9). Los nombres
@@ -398,10 +398,11 @@ Una pendiente (p ≤ c en el momento de la edición) nunca recibe una edición p
 porque la edición rige desde c + 1 (Q6, FR-004).
 
 Una omisión deshecha **conserva la fecha y la versión que tenía al omitirse** (P7
-(a), §6.4), y las ediciones posteriores no la cambian: es la lectura literal de D3
-(«con su versión»). Q6 no cambia por ello, porque una omitida no recibe ediciones
-y deshacer la omisión no la convierte en una prevista nueva, sino en la misma que
-se omitió.
+(a), §6.4), y las ediciones posteriores **tampoco la cambian**, aunque vuelva a
+ser una prevista. Es la lectura literal de D3 («con su versión»), pero **es una
+excepción a Q6 y a FR-004**, que dicen que una edición cambia todas las previstas.
+Por eso P7 (a) aprueba dos comportamientos a la vez y obliga a reconciliar la spec
+y la decisión 29.3 (§6.4; Consecuencias).
 
 **Edición de la regla.** `recurring_rules.version` con `where version = $esperada`
 (ADR-013 §3.5; US4.3). Dos ediciones simultáneas de una recurrencia compartida
@@ -471,10 +472,14 @@ transacción que la acción y después de validarla (§7.3):
 1. **Si no hay fila**, se inserta con la fecha y la versión **actuales** de la
    posición (las que calcula §4 en ese momento): son los valores que quedan
    fijados.
-2. **Si ya hay fila** (con hechos vigentes o con una omisión deshecha), se
-   conservan la fecha y la versión fijadas y solo se añade el hecho. Por ejemplo, la
-   omisión de una reabierta por D1, un vínculo nuevo que sustituye al antiguo o la
+2. **Si hay fila sin hechos vigentes** (una omisión deshecha), se conservan la
+   fecha y la versión fijadas y solo se añade el hecho. Por ejemplo, la
    confirmación de una omisión deshecha.
+3. **Si hay fila con hechos vigentes**, se conservan la fecha y la versión fijadas
+   y solo se añade el hecho. Por ejemplo, la omisión de una reabierta por D1 o un
+   vínculo nuevo que sustituye al antiguo.
+
+Ninguno de los tres casos actualiza una fecha ni una versión ya escritas (§12).
 
 Ejemplo, con P7 (a): omitir la posición del 10 de febrero (versión 1), deshacer la
 omisión, editar la regla (día 20, versión 2) y confirmar. La instancia sigue con el
@@ -656,12 +661,20 @@ Se evalúa, en este orden, y se detiene en la primera que se cumple:
 **`[P]` P7 · Qué recupera Deshacer** (F103-20; lectura de D3, «con su versión»):
 
 - (a) **recomendada: la fecha y la versión históricas**, las que tenía al omitirse.
-  Es la lectura literal de D3. No cambia Q6, porque las omitidas no reciben
-  ediciones y deshacer devuelve la misma ocurrencia que se omitió, no una prevista
-  nueva. Si la fecha recuperada es futura y la regla se editó mientras tanto, la
-  instancia vuelve con los **datos anteriores** a la edición: la interfaz lo dice
-  al deshacer («Vuelve con los datos que tenía al omitirla»), y la persona puede
-  editar después el movimiento real al confirmar;
+  Es la lectura literal de D3. **Se aprueban dos comportamientos juntos** (F103-24):
+  1. Deshacer recupera la fecha y la versión históricas;
+  2. las ediciones posteriores **tampoco modifican** esa instancia, aunque vuelva a
+     estar prevista.
+
+  El segundo es una **excepción a Q6 y a FR-004** («la edición cambia las
+  previstas»). Ejemplo ficticio: se omite la del 10 de febrero (versión 1), se
+  deshace y la regla pasa al día 20 (versión 2). La instancia sigue el 10 de
+  febrero con la versión 1; según Q6 iría al 20 de febrero con la versión 2. Si la
+  fecha recuperada es futura y la regla se editó mientras tanto, la instancia
+  vuelve con los **datos anteriores** a la edición: la interfaz lo dice al deshacer
+  («Vuelve con los datos que tenía al omitirla»), y la persona puede cambiar el
+  movimiento real al confirmar. Si se aprueba, la excepción se registra en la spec
+  y en el maestro (Consecuencias);
 - (b) los datos **actuales** de la posición (la lectura de la ronda 3), con dos
   restricciones: la pausa se evalúa con la fecha histórica **y** con la nueva, y la
   terminación de la regla se calcula como si la omisión no se hubiera deshecho
@@ -841,9 +854,10 @@ Una función por tipo de recurrencia, que en una sola transacción:
    movimiento, su auditoría y su efecto en las cifras son idénticos a los de uno
    anotado a mano (FR-071, FR-031, F101-2);
 7. **solo entonces** registra el hecho con la operación única de §5 («Registro de
-   un hecho»): inserta la fila o actualiza la que no tenía hechos, fijando la fecha
-   y la versión actuales, e inserta el vínculo (§7.5) y su auditoría (§12). Omitir
-   y cancelar usan la misma operación.
+   un hecho»): sin fila, la inserta con la fecha y la versión actuales; con fila,
+   tenga o no hechos vigentes, conserva la fecha y la versión fijadas. Después
+   inserta el vínculo (§7.5) y su auditoría (§12). Omitir y cancelar usan la misma
+   operación.
 
 Si cualquier paso falla, **todo revierte**: el movimiento, la idempotencia interior
 y la exterior, la fila y el vínculo (`[V]` C2). Reintentar con la misma clave
@@ -1186,7 +1200,8 @@ eso:
   claves son por actor, así que no revelan nada a la otra persona.
 - **Privilegios de `juntia_writer`:** `insert` en las cinco tablas; `update` por
   columnas (`lifecycle` y sus fechas; `ended_on` y `ended_by` de una pausa;
-  `skipped_*`, `cancelled_*`, `planned_date` y `rule_version_id` de una instancia;
+  `skipped_*` y `cancelled_*` de una instancia, **nunca** `planned_date` ni
+  `rule_version_id`, que se escriben solo al insertar la fila (P7 (a));
   `superseded_at` de un vínculo); **`delete` solo sobre `recurring_rules`**; ningún
   `delete` sobre las otras cuatro.
 - **Triggers de transición** en las cuatro tablas hijas: rechazan cualquier
@@ -1403,7 +1418,7 @@ esto cambia ninguna función de MVP-1.
   | **P4** | Una fila nueva en la tabla de estados (posición consumida → pendiente) | Solo si se aprueba la recuperación |
   | **P5** | Decir que una reabierta de una recurrencia archivada o finalizada se puede resolver sin reactivarla | Si se aprueba la recomendación |
   | **P6** (C) | FR-018a dice que la sustitución técnica no devuelve la instancia a pendiente. C añade una excepción **contextual**: tras el Deshacer, la instancia **compartida** vinculada a T2 vuelve a pendiente, porque para su contexto el gasto salió. La instancia privada sigue el FR-018a tal cual | Si se aprueba C |
-  | **P7** (§6.4) | Con (a), ninguno: es la lectura literal de D3 («con su versión»). Con (b), D3 y FR-017 tienen que decir que una omisión deshecha toma los datos actuales de su posición, con las restricciones de pausa y terminación | Solo si se aprueba (b) |
+  | **P7** (§6.4) | Con (a): una **excepción a Q6**. FR-004, la tabla «Estados y transiciones» (fila «Prevista → Prevista al editar») y el maestro (29.3) dicen que una omisión deshecha conserva la fecha y la versión históricas y que las ediciones posteriores no la cambian. Con (b): D3 y FR-017 tienen que decir que una omisión deshecha toma los datos actuales de su posición, con las restricciones de pausa y terminación | Con cualquiera de las dos, en el PR de reconciliación |
 
 ## Verificación pendiente [V]
 
@@ -1491,8 +1506,9 @@ implementación. Son trece: C1 a C3 y P1 a P10.
     - **atomicidad e idempotencia**: un fallo al crear deja la anterior sin
       finalizar, un fallo al finalizar no crea nada, un reintento no crea dos
       reglas y una lista de cancelación obsoleta falla con `occurrenceChanged`;
-    - en un aporte, con la meta inactiva o con una pausa `goal_inactive`, el flujo
-      no está disponible;
+    - en un aporte, los dos escenarios de §3.4: con la meta inactiva, el flujo no
+      está disponible; con la meta otra vez activa tras una pausa
+      `goal_inactive`, la dueña puede usarlo y la regla nueva nace activa;
   - el servidor rechaza cambiar la unidad o el intervalo como edición.
 - **P4. Equivalencia de F101-2** (29.9). Un aporte manual de Ana y el mismo aporte
   confirmado desde su recurrencia privada son indistinguibles para Beto en las
@@ -1552,6 +1568,22 @@ implementación. Son trece: C1 a C3 y P1 a P10.
   compatibilidad de la spec la rechaza el trigger aunque se llame a la función de
   escritura directamente por SQL (SC-007).
 
+## Pendiente para el Plan
+
+No son decisiones nuevas: son puntos que este ADR deja definidos en lo esencial y
+que el Plan concreta y prueba.
+
+- **«Cambiar frecuencia» con c = 0** (§3.4): la regla anterior sin historia se
+  elimina; el Plan fija el arranque por omisión de la nueva cuando la anterior
+  todavía no había llegado a su primera fecha.
+- **N′ = 0** (§3.4): la persona confirma expresamente que el resultado es
+  finalizar la anterior **sin** regla nueva, o amplía el compromiso.
+- **Eliminar una regla sin historia** (§6.3, FR-076): la vista previa nombra las
+  pendientes calculadas que desaparecen con ella.
+- **Exportación con P7 (a)** (§13, FR-078): las instancias exportadas incluyen la
+  fecha y la versión fijadas, también las de una omisión ya deshecha, para que el
+  calendario se pueda reconstruir.
+
 ## Cuestiones para los fundadores `[P]`
 
 | # | Cuestión | Opciones | Recomendación | Dónde |
@@ -1562,7 +1594,7 @@ implementación. Son trece: C1 a C3 y P1 a P10.
 | P4 | Recuperación manual excepcional (F101-18) | No existe (Anotar registra el pago; una recurrencia de una sola fecha representa la obligación); o una acción propia que deja la posición pendiente | No existe en v1 | §6.5 |
 | P5 | Pendiente de una recurrencia archivada o finalizada (F101-8 iii) | Visible en «Por confirmar» y en el calendario, y resoluble sin reactivar la regla; o solo en el detalle de la archivada | La primera | §6.6 |
 | P6 | **F101-19 (obligatoria):** el reemplazo compartido como candidato a un vínculo | A rechazar; B quitárselo a Ana; **C coexistir**; D bloquear Mover a Pareja | C, con sus consecuencias: obligaciones independientes, el riesgo de reponer dos veces tras anular T2, sugerencias que solo mitigan dentro del contexto, y la compartida en pendiente tras el Deshacer (excepción contextual a FR-018a), que se aprueba con C | §9 |
-| P7 | **Qué recupera Deshacer una omisión** (lectura de D3, F103-20) | (a) la fecha y la versión que tenía al omitirse, siempre; (b) los datos actuales de su posición, con la pausa evaluada en las dos fechas y la terminación calculada sin el deshacer | (a): lectura literal de D3; quita la fecha liberada y F103-20 | §6.4 |
+| P7 | **Qué recupera Deshacer una omisión** (lectura de D3, F103-20) | (a) la fecha y la versión que tenía al omitirse, siempre; (b) los datos actuales de su posición, con la pausa evaluada en las dos fechas y la terminación calculada sin el deshacer | (a): lectura literal de D3; quita la fecha liberada y F103-20. Incluye una excepción a Q6 y FR-004 (las ediciones posteriores no la cambian), que se reconcilia en la spec y en la 29.3 | §6.4 |
 
 ## Referencias
 
