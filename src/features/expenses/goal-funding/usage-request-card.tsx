@@ -81,8 +81,13 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [unconfirmed, setUnconfirmed] = useState(false);
 
+  // F111-14 y F111-18: los tipos cuya última intención recibió un rechazo confirmado. `run` es el único punto al que llega un
+  // envío que `useWrite` admite: ahí se quita la marca de ese tipo antes de enviar, y `onRejected` la vuelve a poner solo si
+  // ESTE envío recibe un rechazo confirmado. Así una marca vieja nunca sobrevive a un reenvío que acabe en `unknown`.
+  const rejectedKinds = useRef(new Set<Kind>());
   const run = useCallback((payload: RequestPayload & { kind: Kind }) => {
     const { kind: which, ...rest } = payload;
+    rejectedKinds.current.delete(which);
     return which === "approve" ? actions.approve(rest) : which === "reject" ? actions.reject(rest) : actions.cancel(rest);
   }, [actions]);
   const check = useCallback((input: { action: WriteAction; idempotencyKey: string }) => actions.check(input), [actions]);
@@ -107,7 +112,6 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const [refreshing, startRefresh] = useTransition();
   const [review, setReview] = useState<{ count: number; rejectedAt: number | null; blocking: boolean }>({ count: 0, rejectedAt: null, blocking: false });
   const keysAt = useRef(0);
-  const rejectedKinds = useRef(new Set<Kind>());
   const onRejected = useCallback((error: WriteError, payload: RequestPayload & { kind: Kind }) => {
     rejectedKinds.current.add(payload.kind);
     setReview((current) => ({ ...current, rejectedAt: current.count, blocking: error !== "sessionExpired" }));

@@ -818,6 +818,35 @@ describe("«Revisar» con la máquina de escritura (F111-8, F111-9)", { timeout:
     expect(second).toBe(first);
   });
 
+  // F111-18 (revisión del PR #111, ronda 4): un rechazo confirmado que no bloquea (`sessionExpired`) marca el tipo; si el
+  // reenvío con la misma clave acaba en `unknown`, esa marca vieja no puede borrar la clave tras una revisión.
+  it("F111-18: «Rechazar» sessionExpired → reenvío unknown → cerrar con confirmación → refresco idéntico → «Revisar» → los tres envíos con K1", async () => {
+    const user = userEvent.setup();
+    const reject = vi.fn<GoalFundingActions["reject"]>()
+      .mockResolvedValueOnce({ status: "rejected", error: "sessionExpired" })
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValueOnce({ status: "ok", value: { requestId: REQUEST, status: "rejected" } });
+    const short = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) });
+    const page = harness(short, goalFunding({ reject }));
+    // 1. «Rechazar» con K1 → sesión caducada (rechazo confirmado que no bloquea): «Rechazar» sigue ofrecido.
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.reject }));
+    expect(await screen.findByText(copy.errors.sessionExpired)).toBeTruthy();
+    // 2. «Rechazar» otra vez con K1 → desconocido.
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.reject }));
+    // 3. Cerrar con confirmación (pide la página: refresco idéntico) y «Revisar» con una lectura idéntica.
+    await user.click(await screen.findByRole("button", { name: copy.writes.dismiss }));
+    const confirm = await screen.findByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(confirm).getByRole("button", { name: copy.writes.close.confirm }));
+    await page.respond(short);
+    await user.click(await screen.findByRole("button", { name: copy.goalExpense.request.review }));
+    await page.respond(short);
+    // 4. «Rechazar»: la misma intención, todavía con K1.
+    await user.click(await screen.findByRole("button", { name: copy.goalExpense.request.reject }));
+    await waitFor(() => expect(reject).toHaveBeenCalledTimes(3));
+    const keys = reject.mock.calls.map(([payload]) => payload.idempotencyKey);
+    expect(new Set(keys).size).toBe(1);
+  });
+
   it("F111-9: con un resultado desconocido de «Rechazar», sin «Revisar»; solo las vías de recuperación, con la misma clave", async () => {
     const user = userEvent.setup();
     const reject = vi.fn<GoalFundingActions["reject"]>(async () => ({ status: "unknown" }));
