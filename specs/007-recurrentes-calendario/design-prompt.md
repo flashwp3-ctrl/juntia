@@ -1,5 +1,12 @@
 # Prompt para Claude Design · 007 Recurrentes y calendario
 
+> **Nota del 26 de noviembre de 2026 (decisión 29.14).** Este encabezado y el
+> prompt describen el **estado anterior a la generación de los comps**: que no había
+> comps, que Q15 estaba abierta y que los nombres eran de trabajo. Es histórico y
+> no se reescribe. Lo vigente: los fundadores aprobaron los comps y cerraron Q15 en
+> (b), variante b2; los nombres están aprobados y en `docs/GLOSSARY.md`; C-1 a C-8
+> están respondidas. Ver el maestro §15.10, decisión 29.14, y `design-comps.md`.
+
 **Estado:** listo para pegar (26 de noviembre de 2026), **ronda 2** tras la
 revisión F113. No se generaron los comps desde Claude Code: el conector de Claude
 Design rechazó la sesión, y hay que volver a iniciarla con `/design-login` o pegar
@@ -13,7 +20,7 @@ tamaño, conviene repartirlo en dos archivos, como allí: **«11a Recurrentes
 
 **Resultado (26 de noviembre de 2026):** tras el GO de la revisión del PR #113 y con
 el conector ya operativo, Claude Code generó los comps en ese proyecto, en dos
-páginas. Están **sin aprobación visual**. Dónde están, cómo se hicieron y las `[V]`
+páginas. Los fundadores los **aprobaron** ese mismo día (maestro §15.10, decisión 29.14). Dónde están, cómo se hicieron y las `[V]`
 abiertas: `design-comps.md`.
 
 **Jerarquía** (`AGENTS.md` §2). De mayor a menor:

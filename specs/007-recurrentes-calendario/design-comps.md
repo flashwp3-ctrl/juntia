@@ -1,10 +1,13 @@
 # Comps de diseño · 007 Recurrentes y calendario
 
-**Estado: propuestas `[P]`, sin aprobación visual** (26 de noviembre de 2026). Los
-comps existen desde el 26 de noviembre de 2026. Salen del prompt de
-`design-prompt.md`, en su versión con GO de la revisión del PR #113, y no deciden el
-alcance. Pasar a la etapa Plan exige que los fundadores los aprueben y cierren Q15
-(abajo). Este documento sigue el esquema de `specs/006-planes/design-comps.md`.
+**Estado: aprobados** el 26 de noviembre de 2026 por los dos fundadores, que
+hicieron la evaluación visual ese día (maestro §15.10, decisión 29.14; su texto,
+literal, en «Aprobación de los fundadores»). **Q15 se cerró en (b)**, con la
+variante b2; P-1 a P-14 quedan decididas y C-1 a C-8, respondidas. Los comps salen
+del prompt de `design-prompt.md`, en su versión con GO de la revisión del PR #113,
+tuvieron el GO de la revisión del PR #114 y no deciden el alcance. La aprobación
+visual **no verifica** las `[V]` de abajo, que siguen abiertas. Este documento
+sigue el esquema de `specs/006-planes/design-comps.md`.
 
 **Jerarquía** (`AGENTS.md` §2). De mayor a menor:
 
@@ -16,14 +19,14 @@ alcance. Pasar a la etapa Plan exige que los fundadores los aprueben y cierren Q
 4. la spec 007;
 5. los comps.
 
-Todo lo que salga de los comps es **propuesta** `[P]` hasta que los fundadores lo
-aprueben viendo las pantallas (FR-082; maestro §15.9). Los comps **no deciden el
-alcance**, y **un comp no modifica un ADR**, ni la spec, ni una decisión: si un comp
-contradice algo de más arriba, se corrige el comp. Pasar a la etapa Plan exige que
-los fundadores aprueben los comps, **con el cierre de Q15** («Lo que hace falta
-para pasar a Plan», punto 5; decisión 29.10). Ni la aprobación de los comps ni este
-documento autorizan el Plan ni la implementación: siguen la precedencia de Planes y
-N-8 (28.18).
+Lo que salía de los comps era **propuesta** `[P]` hasta que los fundadores lo
+aprobaran viendo las pantallas (FR-082; maestro §15.9), y lo aprobaron el 26 de
+noviembre de 2026 (29.14). Los comps **no deciden el alcance**, y **un comp no
+modifica un ADR**, ni la spec, ni una decisión: si un comp contradice algo de más
+arriba, manda lo de arriba. Con la aprobación y el cierre de Q15 queda cumplido el
+punto 5 de «Lo que hace falta para pasar a Plan» (decisión 29.10). Ni la aprobación
+de los comps ni este documento autorizan el Plan, las Tasks ni la implementación:
+siguen la precedencia de MVP-1, de Planes y de N-8 (28.18).
 
 ## Dónde están
 
@@ -62,7 +65,8 @@ coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
   escritorio miden 1440 px. Cada estado está en claro y en oscuro.
 - **Formato aceptado por los fundadores** (26 de noviembre de 2026): HTML con React,
   con los ajustes por comentarios y no con edición directa. Aceptar el formato **no**
-  es aprobar visualmente los comps.
+  es aprobar visualmente los comps: la aprobación visual llegó después, el mismo
+  día (29.14).
 - **Datos añadidos**, ficticios, para ilustrar los casos que pide el prompt y que sus
   datos de ejemplo no cubrían:
   - Mantenimiento de bicicleta: archivada, con una pendiente que reapareció por D1;
@@ -117,10 +121,10 @@ de `use-write.ts`: guardando, éxito, rechazo confirmado y resultado desconocido
 | --- | --- | --- | --- |
 | **07·1 Lista de recurrencias** | Lista por tipo; Yo con las privadas propias y las de la pareja aparte, sin total ni recuento común; Nosotros solo lo compartido; estados de la regla; ruta hija de Plan | FR-002, FR-003, FR-040, FR-060 a FR-062; US1, US4.2; Q8, Q14 | ADR-016 §6.1 (estados derivados), §11 (privacidad); ADR-017 §6 |
 | **07·2 Crear una recurrencia** | Tipo; «Solo yo» por defecto y compartir como acción explícita; responsable distinto de quien paga; importe según el tipo y la certeza (fijo → fijo, estimado → rango, condicional → fijo, rango o desconocido); condición ≤ 140; ingreso solo en Yo; aporte siempre privado, solo fijo y con modo de aporte; contexto inmutable; frecuencias, quincenal 1–15 y 16–31, día de referencia; fin por fecha o por N; fecha inicial pasada | FR-001, FR-003, FR-008, FR-009 a FR-009b, FR-020, FR-023, FR-030, FR-060; US1.1, US1.4, US5.2, US6.3; Q7, Q8, Q9, Q10, Q11, Q13; 28.11 | ADR-016 §3.2, §3.3 (P1); ADR-017 §1 (combinaciones permitidas); ADR-018 §1 (P1(a), `funding_mode`) |
-| **07·3 Detalle de una recurrencia** | «Cuota n de N» solo con N; posiciones consumidas sin presentarlas como pagadas ni pendientes; terminó sola frente a finalizada; pendientes de una archivada o finalizada, visibles y resolubles; responsable y pagador; autoría en compartidas; no se edita una regla cerrada | FR-002, FR-018, FR-035 a FR-037, FR-042; US7.1 a US7.3, US7.5; Q13, F101-8 iii, F101-15 | ADR-016 §4, §6.1, §6.3, §6.6 (P5) |
+| **07·3 Detalle de una recurrencia** | «n de N» solo con N (C-5; el prompt decía «cuota n de N»); posiciones consumidas sin presentarlas como pagadas ni pendientes; terminó sola frente a finalizada; pendientes de una archivada o finalizada, visibles y resolubles; responsable y pagador; autoría en compartidas; no se edita una regla cerrada | FR-002, FR-018, FR-035 a FR-037, FR-042; US7.1 a US7.3, US7.5; Q13, F101-8 iii, F101-15 | ADR-016 §4, §6.1, §6.3, §6.6 (P5) |
 | **07·4 Editar** | Editables y de solo lectura según ADR-016 §3.4 («Qué es editable»): contexto, tipo, meta y frecuencia de solo lectura; modo del aporte editable; la fecha de una regla de una sola fecha solo sin hechos y posterior a hoy; vista previa; instancias que aparecen o desaparecen; límites al reducir N o la fecha final, con su error; omisiones con datos fijados; conflicto de versión | FR-003, FR-004, FR-005; US1.5, US4.3; Q6, P2, P7, F101-11 | ADR-016 §3.4 («Qué es editable», regla de una sola fecha, puntos 1 a 7), §4, §6.1 (límites al reducir), §7.1; ADR-018 §1 |
 | **07·5 Cambiar frecuencia** | Un solo paso, atómico e idempotente; con historia (por existencia de filas) se finaliza a mano y sin historia se elimina; origen de la nueva y por qué; lo que cubre la anterior junto al calendario nuevo, sin deduplicar; cancelación explícita de las sin resolver; N′ y el caso N′ ≤ 0; aporte con meta inactiva; estados de escritura | FR-005, FR-076; P2 | ADR-016 §3.4 («Flujo Cambiar frecuencia: contrato», 1 a 3), §6.3 («con historia»); ADR-018 §3.2 |
-| **07·6 Calendario** | Lista por fecha con flechas de mes en móvil, sin cuadrícula; mes actual y siguiente; formas del importe; condición; «cuota n de N»; acciones según el estado; sin movimientos reales sin instancia; escritorio en dos variantes; paso 4 de la cadena de P6 en Nosotros | FR-040 a FR-044, FR-022; US3.1 a US3.3, US3.5, US5.1, US5.5; Q14, N-6, F101-10 | ADR-017 §1 y §2; ADR-016 §5, §9 |
+| **07·6 Calendario** | Lista por fecha con flechas de mes en móvil, sin cuadrícula; mes actual y siguiente; formas del importe; condición; «n de N» (C-5); acciones según el estado; sin movimientos reales sin instancia; escritorio en dos variantes; paso 4 de la cadena de P6 en Nosotros | FR-040 a FR-044, FR-022; US3.1 a US3.3, US3.5, US5.1, US5.5; Q14, N-6, F101-10 | ADR-017 §1 y §2; ADR-016 §5, §9 |
 | **07·6 · Q15** | (a) sin total, completa y usable; (b) total de gastos sin resolver del mes por contexto, con rótulo exacto, solo en el calendario, en b1 y b2; ausencia sin cifra; casos solo fijos, solo estimados, D1 antes de su fecha, P6, consumidas por pausa y P7; `unknown_count` como contrato defensivo, sin comp | FR-045 a FR-047, FR-062; US3.4; Q15 | ADR-017 §3, §4 (P1(a), P2(a), P3(a), reglas 1 a 6, «Lo que deciden los comps»), §6, §7 |
 | **07·7 Por confirmar, Inicio y Plan** | Lista de por confirmar, incluidas las reabiertas por D1 y las de reglas archivadas; módulo de Inicio solo con pendientes, descartable, sin culpa y sin importes; recuentos de un solo contexto; comparación de Tomás en Yo y en Nosotros con y sin las programaciones privadas de Sara | FR-050, FR-051, FR-060 a FR-062, FR-018; US8; Q16, P3(a), F101-2 | ADR-016 §5 (paso 4), §6.6, §11; ADR-017 §4 («Dónde se ve»), §6 |
 | **07·8 Confirmar** | Precedencia: 1) rechazo si la instancia cambió (§7.1), sin crear nada; 2) sugerencias compatibles antes de crear, sin deduplicación automática; 3) toque único con importe fijo y certeza fija en ingresos, o borrador con los datos de la versión solo para estimado, desconocido o ingreso condicional; fecha efectiva ≤ hoy y fecha prevista aparte; Gasto con meta; comps de Internet con sugerencia y de instancia que cambió; estados de escritura; rechazos de ya resuelta y meta inactiva | SC-004; FR-012, FR-012a, FR-012b, FR-013, FR-014, FR-016, FR-019, FR-021; US2.1 a US2.6, US2.10, US2.11, US4.1, US4.4, US5.3, US5.4, US5.6; Q4, Q9, D2, F101-5, F101-6, F101-17 | ADR-016 §7.1 (`occurrenceChanged`), §7.2, §7.3 (`occurrenceAlreadyResolved`), §7.6; ADR-017 §2; ADR-018 §2, §4 (`goalNotOpen`) |
@@ -137,30 +141,92 @@ previsto frente a real, ingreso compartido, push y correo, grupos de más de dos
 (spec, «Fuera de alcance»). La exportación y el borrado (FR-078) no tienen pantalla
 nueva: siguen los de MVP-1.
 
-## Lo que se aprueba viendo los comps `[P]`
+## Aprobación de los fundadores (26 de noviembre de 2026)
 
-| # | Qué | Origen | Opciones que muestran los comps |
-| --- | --- | --- | --- |
-| P-1 | **Q15: ¿existe el total de gastos previstos?** | Q15; 29.4; FR-045; ADR-017 §4 | (a) sin total, el respaldo; (b) con total, y entonces rigen P1(a), P2(a) y P3(a) de ADR-017 |
-| P-2 | Si Q15 es (b): un solo rango o fijos y estimado por separado | ADR-017 §4, «Lo que deciden los comps» | b1 · b2 |
-| P-3 | Si Q15 es (b): texto exacto del rótulo y de la ausencia | ADR-017 §4, reglas 1 y 5 | El que propongan los comps; la ausencia, sin cifra |
-| P-4 | Nombres visibles: ruta, instancia, estados de la instancia y de la regla, «cuota n de N» y el preset | Q2; FR-080 | Los de trabajo del prompt y las alternativas que proponga Claude Design. Entran en `docs/GLOSSARY.md` solo aprobados |
-| P-5 | Texto de «importe desconocido» | ADR-017 §1 y §2 | Nunca $0 ni un guion |
-| P-6 | Escritorio del calendario | Q14 | (i) lista ancha con panel; (ii) cuadrícula mensual con lista |
-| P-7 | Cómo se reparten lista, calendario y «Por confirmar» dentro de la ruta | 28.8; Q16 | La que propongan los comps |
-| P-8 | Lenguaje visual de lo previsto frente a lo real | A.2; FR-011; handoff (proyecciones punteadas) | El que propongan los comps, constante en todas las pantallas |
-| P-9 | Textos de la vista previa de la pausa de un compromiso finito | FR-038a; ADR-016 §6.3 | El que propongan los comps |
-| P-10 | Módulo de Inicio: forma y qué significa descartarlo | Q16; FR-050 | Ver C-4 |
-| P-11 | Fila de presets en Anotar | US9.3; US-12 | La que propongan los comps, sin pasos nuevos |
-| P-12 | La programación en el detalle de una meta | Q12; 28.8 | Metas intacta (base) o la variante de C-6 en Yo de la dueña |
-| P-13 | Importe vacío en el borrador de un estimado | FR-012; ADR-017 §2 | Vacío con el rango como ayuda, o el que propongan los comps |
-| P-14 | «Deshacer» en el toast tras confirmar | Ver C-3 | Con o sin, según C-3 |
+Los dos fundadores hicieron la evaluación visual de los comps el 26 de noviembre de
+2026, con el GO de la revisión del PR #114, y el gestor transmitió su texto. Está
+registrado en el maestro §15.10, decisión 29.14, y la spec 007 está reconciliada
+(«Session 2026-11-26 · Comps»). Texto literal:
 
-## Cuestiones para los fundadores que revela el diseño
+> Estamos de acuerdo con las recomendaciones, con las siguientes precisiones:
+>
+> Q15 y propuestas P-1 a P-14
+>
+> * Q15(b): sí al total mensual de gastos previstos.
+> * P-2: b2, con los importes fijos y estimados separados. Una sola variante para todos, sin configuración adicional.
+> * P-3: aprobamos el rótulo y la nota.
+> * P-4 / Q2: aprobamos los nombres propuestos.
+> * P-5: importe desconocido, nunca $0.
+> * P-6: lista ancha con panel en escritorio.
+> * P-7 a P-11: aprobados tal como están en los comps.
+> * P-12: variante base, mantener Metas intacta.
+> * P-13: importe vacío con el rango como ayuda.
+> * P-14: Deshacer durante 6 segundos, conforme a C-3.
+>
+> C-1 a C-8
+>
+> * C-1: Inicio lleva a Por confirmar. No se confirma directamente desde Inicio ni se muestran allí importes previstos.
+> * C-2: mantener «Por confirmar» como estado y «sin confirmar» en el rótulo del total.
+> * C-3: Deshacer durante 6 segundos después de confirmar, no después de vincular. Debe contemplar gastos, ingresos y aportes, respetando el contrato de anulación correspondiente, las autorizaciones y la concurrencia. La instancia vuelve a Por confirmar conforme a D1. No se elimina la auditoría ni se amplían permisos.
+> * C-4: descarte individual hasta que otra instancia autorizada del contexto correspondiente pase a Por confirmar. No puede revelar indirectamente programaciones privadas de la otra persona.
+> * C-5: «7 de 24» como forma neutra.
+> * C-6: mantener Metas intacta.
+> * C-7: descartamos el badge en la pestaña Plan.
+> * C-8: aviso previo con el número exacto de instancias pendientes, sin límite funcional arbitrario. Se conserva el modelo de cálculo de ADR-016, sin crear movimientos reales ni materializar instancias innecesariamente.
+>
+> Mantener abiertas todas las verificaciones [V].
+>
+> Registrar las decisiones en un PR exclusivamente documental, reconciliando la spec, el maestro, GLOSSARY, design-comps y los demás documentos que corresponda. No modificar ADR aceptados fuera de su procedimiento.
+>
+> No iniciar Plan, Tasks ni implementación. Se mantiene la precedencia de MVP-1, Planes y N-8.
+>
+> Enviar el nuevo PR a revisión adversarial independiente antes de fusionarlo.
 
-El prompt **no las cierra**: pide que los comps las enseñen. Ninguna cambia una
-decisión de la 28 o la 29 ni un ADR. Si una respuesta ampliara el alcance, va a la
-spec o al ADR que corresponda antes del Plan, no a un comp.
+## Propuestas `[P]`: decididas
+
+| # | Qué | Origen | Opciones que mostraban los comps | Decisión (29.14) |
+| --- | --- | --- | --- | --- |
+| P-1 | **Q15: ¿existe el total de gastos previstos?** | Q15; 29.4; FR-045; ADR-017 §4 | (a) sin total, el respaldo; (b) con total, y entonces rigen P1(a), P2(a) y P3(a) de ADR-017 | **(b)**: «Q15(b): sí al total mensual de gastos previstos.» Entran en vigor P1(a), P2(a) y P3(a) de ADR-017 |
+| P-2 | Si Q15 es (b): un solo rango o fijos y estimado por separado | ADR-017 §4, «Lo que deciden los comps» | b1 · b2 | **b2**: «b2, con los importes fijos y estimados separados. Una sola variante para todos, sin configuración adicional.» |
+| P-3 | Si Q15 es (b): texto exacto del rótulo y de la ausencia | ADR-017 §4, reglas 1 y 5 | El que propongan los comps; la ausencia, sin cifra | «aprobamos el rótulo y la nota.» Son los de 07·6: «Gastos de {mes} sin confirmar · solo tuyos» o «· de la pareja», con sus dos notas: en Yo, «Previstos y por confirmar de tus gastos privados. No es lo pagado ni dinero disponible.», y en Nosotros, «Previstos y por confirmar de los gastos compartidos. No es lo pagado ni dinero disponible.» (como en `comps/07-06-p6.png`); y la ausencia sin cifra («No hay gastos previstos por confirmar este mes.») |
+| P-4 | Nombres visibles: ruta, instancia, estados de la instancia y de la regla, «cuota n de N» y el preset | Q2; FR-080 | Los de trabajo del prompt y las alternativas que proponga Claude Design | «P-4 / Q2: aprobamos los nombres propuestos.» Cierra Q2; están en `docs/GLOSSARY.md`. El preset es «Atajo»; la posición, «7 de 24» (C-5) |
+| P-5 | Texto de «importe desconocido» | ADR-017 §1 y §2 | Nunca $0 ni un guion | «importe desconocido, nunca $0.» |
+| P-6 | Escritorio del calendario | Q14 | (i) lista ancha con panel; (ii) cuadrícula mensual con lista | **(i)**: «lista ancha con panel en escritorio.» |
+| P-7 | Cómo se reparten lista, calendario y «Por confirmar» dentro de la ruta | 28.8; Q16 | La que propongan los comps | «aprobados tal como están en los comps.» |
+| P-8 | Lenguaje visual de lo previsto frente a lo real | A.2; FR-011; handoff (proyecciones punteadas) | El que propongan los comps, constante en todas las pantallas | Ídem |
+| P-9 | Textos de la vista previa de la pausa de un compromiso finito | FR-038a; ADR-016 §6.3 | El que propongan los comps | Ídem |
+| P-10 | Módulo de Inicio: forma y qué significa descartarlo | Q16; FR-050 | Ver C-4 | Ídem, con la respuesta a C-4 |
+| P-11 | Fila de presets en Anotar | US9.3; US-12 | La que propongan los comps, sin pasos nuevos | Ídem |
+| P-12 | La programación en el detalle de una meta | Q12; 28.8 | Metas intacta (base) o la variante de C-6 en Yo de la dueña | **Base**: «variante base, mantener Metas intacta.» |
+| P-13 | Importe vacío en el borrador de un estimado | FR-012; ADR-017 §2 | Vacío con el rango como ayuda, o el que propongan los comps | «importe vacío con el rango como ayuda.» |
+| P-14 | «Deshacer» en el toast tras confirmar | Ver C-3 | Con o sin, según C-3 | **Con**: «Deshacer durante 6 segundos, conforme a C-3.» |
+
+## Lo que la aprobación cambia respecto a los comps
+
+Los fundadores no pidieron ajustes, y los comps no se rehacen. Donde una decisión
+descarta algo que los comps enseñan, manda la decisión:
+
+- **07·6, Q15 (a) y b1:** quedan como contexto. Rige (b) en la variante b2.
+- **07·6, escritorio (ii), la cuadrícula mensual:** descartada (P-6).
+- **07·12b, la variante de C-6:** descartada (P-12 y C-6). Metas queda intacta.
+- **«cuota 7 de 24»:** los comps escriben así el indicador de posición de la Cuota
+  inicial del apartamento, en varias pantallas (por ejemplo, 07·1, 07·3, 07·6 y
+  07·11). Con C-5, el indicador es «7 de 24» en **todos** los compromisos, sin
+  excepción por tipo. «Cuota» puede ir en el **nombre** de una recurrencia
+  («Cuota inicial del apartamento»), pero nunca en el indicador de posición.
+- **Errata de 07·2f** (encontrada al registrar C-8): con «Empieza 12 ago 2026» y hoy
+  14 de noviembre de 2026, el aviso dice «quedan por confirmar: **3** (12 sep, 12
+  oct, 12 nov)», pero la fecha del 12 de agosto también pasó: el número exacto es
+  **4**. C-8 pide el número exacto, así que la implementación cuenta el 12 de
+  agosto. El comp no se corrige en esta aprobación.
+
+## Cuestiones para los fundadores que revela el diseño: respondidas
+
+El prompt **no las cerraba**: pedía que los comps las enseñaran. Los fundadores las
+respondieron el 26 de noviembre de 2026 (29.14). Se conserva cada pregunta tal como
+se planteó, con su respuesta literal debajo. Ninguna respuesta cambia una decisión
+de la 28 o la 29 ni un ADR; lo que necesita detalle técnico queda para el Plan, y
+si exigiera cambiar un contrato aceptado, irá a un ADR antes del Plan.
 
 - **C-1 · Confirmar «desde el aviso» sin mostrar importes en Inicio.** SC-004 dice
   que confirmar cuesta un toque «desde el calendario o el aviso», y Q4 exige, en un
@@ -171,6 +237,7 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   la entrada «Por confirmar» de Recurrentes, y no el módulo de Inicio? Si los
   fundadores quisieran confirmar desde Inicio, el módulo tendría que mostrar el
   importe de cada instancia, y eso pide revisar FR-050.
+  **Respuesta (29.14):** «Inicio lleva a Por confirmar. No se confirma directamente desde Inicio ni se muestran allí importes previstos.» «El aviso» de SC-004 es la entrada «Por confirmar» de Recurrentes. Spec: SC-004 y FR-050. Como en 07·7.
 - **C-2 · «Por confirmar» significa dos cosas.** Como nombre de trabajo (Q2),
   «Por confirmar» es la instancia pendiente de resolución, porque llegó su fecha o
   porque volvió a quedar pendiente conforme a D1 o P6. El rótulo del
@@ -178,6 +245,7 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   incluye además las **previstas** futuras del mes. El prompt pide un rótulo que no
   los confunda («sin confirmar»). **Pregunta:** aprobar con los comps un texto
   para cada uno, o cambiar el nombre de trabajo de la instancia pendiente de resolución.
+  **Respuesta (29.14):** «mantener «Por confirmar» como estado y «sin confirmar» en el rótulo del total.» Spec: Q2 y FR-045; `docs/GLOSSARY.md`. Como en 07·6.
 - **C-3 · Deshacer una confirmación o un vínculo.** La spec no dice si el toast de
   confirmar lleva «Deshacer». Si lo lleva, deshacer sería **anular** el movimiento
   creado, y la instancia volvería a por confirmar por D1, con su auditoría. Anotar
@@ -186,15 +254,18 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   nada: ningún comp puede interpretar «Deshacer un vínculo» como anular un
   movimiento que ya existía. Si quitar un vínculo es posible, y cómo, no lo dice la
   spec. **Pregunta:** ¿con o sin Deshacer en cada caso? Queda abierta.
+  **Respuesta (29.14):** «Deshacer durante 6 segundos después de confirmar, no después de vincular. Debe contemplar gastos, ingresos y aportes, respetando el contrato de anulación correspondiente, las autorizaciones y la concurrencia. La instancia vuelve a Por confirmar conforme a D1. No se elimina la auditoría ni se amplían permisos.» Spec: FR-013a. Como en 07·8i (con Deshacer) y 07·9 (sin Deshacer tras vincular). **Para el Plan:** cómo cumple cada anulación sus autorizaciones y su concurrencia, sin cambiar ADR-016 ni ADR-018 (spec, «Session 2026-11-26 · Comps»).
 - **C-4 · Qué es «descartable» en el módulo de Inicio.** Q16 lo pide descartable,
   pero no dice hasta cuándo. Propuesta del prompt `[P]`: se oculta para quien lo
   descarta hasta que otra instancia pase a por confirmar, y cada persona descarta
   el suyo. **Pregunta:** confirmarlo o elegir otra regla. Si guardar el descarte
   necesita datos nuevos, lo decide el Plan.
+  **Respuesta (29.14):** «descarte individual hasta que otra instancia autorizada del contexto correspondiente pase a Por confirmar. No puede revelar indirectamente programaciones privadas de la otra persona.» Spec: FR-050. **Para el Plan:** dónde se guarda el descarte.
 - **C-5 · «Cuota n de N» fuera de las deudas.** FR-042 y US7.1 dicen «cuota n de
   N» (o el texto que se apruebe, Q2). Para una suscripción con fin, «cuota» suena a
   deuda. El prompt pide también una forma neutra («7 de 24»). **Pregunta:** cuál se
   usa, y si depende del tipo.
+  **Respuesta (29.14):** ««7 de 24» como forma neutra.» Spec: US7.1 y FR-042; `docs/GLOSSARY.md`. Ver «Lo que la aprobación cambia respecto a los comps».
 - **C-6 · La programación en el detalle de una meta.** La spec pone Recurrentes
   como ruta hija de Plan (28.8) y no dice si la meta muestra su aporte programado.
   Mostrarlo toca una pantalla de MVP-1. El prompt deja **Metas intacta** como
@@ -202,18 +273,22 @@ spec o al ADR que corresponda antes del Plan, no a un comp.
   detalle de la meta muestra su programación con el badge PRIVADO y un enlace a
   Recurrentes; en Nosotros y para la otra persona, nada. **Pregunta:** ¿la base o la
   variante?
+  **Respuesta (29.14):** «mantener Metas intacta.» Con P-12: el detalle de una meta no muestra su aporte programado. La variante de 07·12b queda descartada.
 - **C-7 · Badge en la pestaña Plan.** La navegación de §15.3 no gana destinos
   (28.8). Un recuento sobre la pestaña Plan no es un destino, pero cambia la barra.
   El prompt no lo pide salvo como `[P]` aparte. **Pregunta:** ¿se descarta?
+  **Respuesta (29.14):** «descartamos el badge en la pestaña Plan.» La barra de §15.3 no cambia. Ningún comp lo mostraba.
 - **C-8 · Cuántas fechas pasadas crea una fecha inicial antigua.** La spec dice que
   las fechas pasadas quedan por confirmar, sin límite. Una regla con fecha inicial de
   hace un año crea doce por confirmar. El prompt solo pide avisar de cuántas son.
   **Pregunta:** ¿basta con el aviso, o hace falta un límite? Un límite sería un
   cambio de spec.
+  **Respuesta (29.14):** «aviso previo con el número exacto de instancias pendientes, sin límite funcional arbitrario. Se conserva el modelo de cálculo de ADR-016, sin crear movimientos reales ni materializar instancias innecesariamente.» Spec: casos límite («Recurrencia con fecha inicial en el pasado»). Ver la errata de 07·2f abajo. **Para el Plan:** cómo se cuenta sin materializar.
 
 ## Verificaciones `[V]` abiertas
 
-No se dan por hechas; la aprobación visual tampoco las cierra. Además de las de cada
+No se dan por hechas; la aprobación visual del 26 de noviembre de 2026 tampoco las
+cierra («Mantener abiertas todas las verificaciones [V]», 29.14). Además de las de cada
 sección de los comps:
 
 - revisión visual en oscuro de las pantallas que no lista «Anchos y temas» (arriba): 07·1,
@@ -230,7 +305,15 @@ sección de los comps:
   SC-003);
 - que las cifras de Q15 (b) cuadren con los datos de ejemplo: Yo de Sara, entre
   $2.218.900 y $2.248.900; Nosotros antes del paso 3 de P6, entre $340.000 y
-  $400.000; Yo de Tomás, sin cifra;
+  $400.000; Yo de Tomás, sin cifra. Esas son las cifras en b1. En **b2**, la
+  variante aprobada, los tres momentos de P6 en Nosotros (07·6g a 6i) son:
+
+  | Momento | Fijos | Estimados |
+  | --- | --- | --- |
+  | Antes | $160.000 | $180.000–$240.000 |
+  | Vinculado | $95.000 | $180.000–$240.000 |
+  | Deshecho | $160.000 | $180.000–$240.000 |
+
 - que la variante (a) de Q15 sea completa y usable, no una versión recortada de la
   (b);
 - que ningún comp dé el toque único con una sugerencia compatible sin resolver, ni
@@ -241,10 +324,15 @@ sección de los comps:
   hacen a 390 y 1440, y no verifican los demás anchos;
 - que el texto al 200 % y los nombres de 60 caracteres no rompan las filas a 390.
 
-## Al aprobarlos
+## Al aprobarlos: hecho
 
-En el PR documental que registre la aprobación, como hizo Planes en el #96: este
-documento pasa a «aprobados» con los archivos y los ajustes; Q15 se cierra en la
-spec y en la decisión 29 (29.4); los nombres aprobados entran en
-`docs/GLOSSARY.md` (Q2); y las respuestas a C-1 a C-8 se registran donde
-correspondan, sin cambiar un ADR aceptado sin su propio procedimiento.
+En el PR documental que registra la aprobación, como hizo Planes en el #96:
+
+- este documento pasa a «aprobados», con el texto literal y cada `[P]` y cada C
+  decididas;
+- Q15 se cierra en la spec y en la decisión 29 (29.4 y la nueva 29.14), y entran en
+  vigor P1–P3 de ADR-017, que solo lleva una nota fechada, sin cambiar decisiones;
+- los nombres aprobados entran en `docs/GLOSSARY.md` (Q2);
+- las respuestas a C-1 a C-8 se registran en la spec, sin cambiar un ADR aceptado;
+  lo que necesita detalle técnico (C-3, C-4 y C-8) queda para el Plan;
+- `docs/BACKLOG_MVP2.md` registra el diseño aprobado.
