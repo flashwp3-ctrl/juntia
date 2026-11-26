@@ -1144,6 +1144,12 @@ Este ADR fija para los aportes lo mismo que para el resto:
   descartan. Confirmar un aporte **nuevo** en una meta inactiva sigue prohibido en
   cualquier caso.
 
+**Nota del 26 de noviembre de 2026:** las cuestiones delegadas en esta sección
+quedan resueltas por ADR-018. La decisión 29.8 se cerró con P2(b), registrada en la
+decisión 29.13. Vincular un aporte histórico se rige por ADR-018 §6 y mantiene
+todas las condiciones de §7.4. Confirmar un aporte nuevo en una meta inactiva sigue
+prohibido.
+
 ### 11. Seguridad: tablas controladas, RLS y privacidad de la existencia (F101-2)
 
 **Tablas** (en `juntia_data`, controladas, RLS activada, sin privilegios de
@@ -1372,12 +1378,23 @@ Si ADR-d hace que lograr o archivar una meta escriba una pausa, esa función
 bloqueará pareja (si la meta es compartida) → meta → regla, el orden de la fila del
 aporte.
 
-**Nota del 26 de noviembre de 2026 (ADR-018 §4).** No cambia ninguna decisión de
-este ADR. En las **reglas de aporte**, pausar, finalizar y archivar dependen del
-estado de la meta (ADR-018 §3), así que siguen la «Regla para todo lo que depende del
-estado de una meta» de arriba: pareja si la meta es compartida → meta → regla. Las
-operaciones que consultan el historial efectivo de pausas para decidir si algo es
-elegible, como Deshacer una omisión (§6.4), lo leen bajo esos mismos bloqueos.
+**Nota del 26 de noviembre de 2026 (ADR-018 §3 y §4).** No cambia ninguna decisión
+de este ADR. La tabla de arriba se conserva como registro, pero para las **reglas de
+aporte** dos de sus filas quedan sustituidas, y el contrato que consume el Plan es
+este:
+
+- **Fila «Omitir, deshacer, pausar, editar, finalizar, archivar, eliminar…»:** en
+  las reglas de aporte, pausar, finalizar y archivar dependen del estado de la meta
+  (ADR-018 §3), igual que las operaciones que consultan el historial efectivo de
+  pausas para decidir si algo es elegible, como Deshacer una omisión (§6.4). Todas
+  siguen el orden de ADR-018 §4: pareja si la meta es compartida → meta → regla →
+  instancia, y leen el historial bajo esos bloqueos.
+- **Fila «Pausa automática de ADR-d al lograr o archivar la meta»:** describía una
+  posibilidad delegada que **no se eligió**, igual que el párrafo «Si ADR-d hace que
+  lograr o archivar una meta escriba una pausa…». ADR-018 la resolvió con un trigger
+  que solo registra la transición de la meta en su historia de estados, sin leer,
+  escribir ni bloquear recurrencias, con el orden pareja si la meta es compartida →
+  meta → inserción del evento. La pausa se deriva al leer (ADR-018 §3).
 
 Confirmar contra editar, pausar, finalizar o confirmar desde la otra cuenta se
 ordena por el bloqueo de la regla. Los reintentos por `40P01` o `40001` siguen
@@ -1454,7 +1471,7 @@ esto cambia ninguna función de MVP-1.
   | **P5** | Tabla de estados, fila «Confirmada → anulación económica» (F101-8 iii), y **FR-018**: la pendiente que permanece o reaparece tras el archivo o la finalización sigue visible y resoluble sin reactivar la recurrencia, y no recupera las instancias canceladas | **29.11** |
   | **P6** (C) | **FR-014a** y **FR-018a**: la cuestión obligatoria de F101-19 resuelta (coexistencia, unicidad por contexto, riesgo de duplicación aceptado, sin deduplicación entre contextos ni avisos que revelen programaciones privadas). Tabla de estados, fila «Confirmada → sustitución técnica»: la excepción contextual (tras Deshacer, la instancia compartida vinculada al reemplazo vuelve a pendiente). Key Entities, «Trazabilidad privada» | **29.7**: F101-19 resuelta por ADR-016 |
   | **P7** (a) | **FR-004**: la excepción a Q6 (una omisión deshecha conserva su fecha y su versión, también ante ediciones posteriores). **FR-017**: Deshacer recupera la fecha y la versión históricas. Tabla de estados: filas «Prevista → Prevista al editar» y «Omitida → Deshacer… con su versión» | **29.3** (Q6): la excepción aprobada. **29.6** (D3): «con su versión» = la fecha y la versión históricas |
-  | Resto de ADR-016 | «Cuestiones que la tabla deja a ADR-a» y «Lo que hace falta para pasar a Plan», punto 3: ADR-a resuelto por ADR-016 | **29.7** y **29.10**: ADR-a aceptado; ADR-b y ADR-d siguen pendientes |
+  | Resto de ADR-016 | «Cuestiones que la tabla deja a ADR-a» y «Lo que hace falta para pasar a Plan», punto 3: ADR-a resuelto por ADR-016 | **29.7** y **29.10**: ADR-a aceptado; ADR-b y ADR-d siguen pendientes en ese momento (se resolvieron después con ADR-017, 29.12, y ADR-018, 29.13) |
 
 ## Verificación pendiente [V]
 

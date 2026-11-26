@@ -348,7 +348,9 @@ cumpla **todas** las condiciones de ADR-016 §7.4. El vínculo no crea un aporte
 nuevo, no modifica saldos, no mueve fondos y no reactiva la meta ni la recurrencia.
 Crear o confirmar aportes nuevos en una meta inactiva sigue prohibido. Con esta
 decisión queda decidida la cuestión 29.8; su cierre normativo se registra en el PR
-de reconciliación posterior (Consecuencias). El texto literal está en «Decisiones
+de reconciliación posterior (Consecuencias). *(Texto de la propuesta original. Nota
+del 26 de noviembre de 2026: esa reconciliación ya está hecha; la 29.8 se cerró en
+la decisión 29.13.)* El texto literal está en «Decisiones
 de los fundadores».
 
 Opciones que se plantearon:
@@ -414,6 +416,10 @@ pendientes que el sistema sabe cumplidas.
   reconciliación. Este PR no toca ADR-016.
 - ADR-016 no cambia: recibe la pausa derivada en su historial de pausas (§6.2), y
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
+- *Las dos viñetas anteriores son texto de la propuesta original.* **Nota del 26 de
+  noviembre de 2026:** la reconciliación ya está hecha (decisión 29.13, FR-034 de la
+  spec 007), y ADR-016 lleva notas fechadas en §10 y §14, que no cambian ninguna de
+  sus decisiones.
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
 - **La 29.8 queda cerrada** con P2 (b) (29.13).
 - **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
@@ -536,7 +542,8 @@ cita literalmente:
 | P2 | **29.8:** vincular un aporte histórico a una meta inactiva | (b) se puede vincular un aporte histórico válido y no anulado de la misma meta y aportante, con todas las condiciones de ADR-016 §7.4, aunque la meta esté lograda o archivada; sin crear aportes, mover fondos ni reactivar nada | (a) no se puede; (c) como (b), solo si se registró antes de la primera inactivación posterior al ancla | §6; [V] 8 |
 
 **La 29.8 queda decidida** con P2 (b). Su cierre normativo, en la spec 007 y en la
-decisión 29, se registra en el PR de reconciliación posterior. Q15 sigue abierta.
+decisión 29, se registra en el PR de reconciliación posterior. *(Nota del 26 de
+noviembre de 2026: ya registrado en la decisión 29.13.)* Q15 sigue abierta.
 No se reabren ADR-016, ADR-017 ni las decisiones anteriores, y no se autoriza
 todavía el Plan ni la implementación. Se mantienen la precedencia de Planes, los
 gates independientes y las restricciones de N-8 (28.18).
