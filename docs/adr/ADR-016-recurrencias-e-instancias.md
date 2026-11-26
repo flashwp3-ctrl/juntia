@@ -1,6 +1,6 @@
 # ADR-016 — Recurrencias e instancias previstas: modelo de dominio y datos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026; ronda 5 tras la revisión F103 del PR #103). **Los fundadores decidieron P1–P7 el 25 de noviembre de 2026** con las opciones recomendadas y las precisiones literales de «Decisiones de los fundadores». Pasa a Aceptado como ADR-014 y ADR-015: con el registro en el maestro, en el PR documental de reconciliación posterior a este. Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (25 de noviembre de 2026; maestro §15.10, decisión 29.11). Propuesto el 25 de noviembre de 2026; la revisión adversarial del PR #103 (F103-1 a F103-26) dio GO en `51038c8`. **Los fundadores decidieron P1–P7 el 25 de noviembre de 2026** con las opciones recomendadas y las precisiones literales de «Decisiones de los fundadores». La spec 007 y la decisión 29 están reconciliadas con ellas. No se implementa antes de declarar MVP-1, y sus `[V]` siguen pendientes. Es el candidato **ADR-a** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), «Cuestiones que la tabla deja a ADR-a», FR-005, FR-009b, FR-010, FR-012a, FR-014a, FR-017, FR-018a, FR-036 y FR-038a; maestro §15.10, decisiones 29.3, 29.5, 29.6 y 29.7 · **Alcance:** MVP-2
 
 En este archivo, `[V]` es una **verificación pendiente** (maestro §15.9). Las
 siete `[P]` de las rondas de revisión (P1–P7) ya **están decididas** por los
@@ -274,11 +274,11 @@ se trasladan». Opciones que se plantearon:
   contrato completo. **Cambiar la frecuencia no traslada las pendientes** de la
   regla anterior: se resuelven antes o se **cancelan de forma explícita** con ella,
   en la lista de la confirmación;
-- (b) **edición libre** del calendario, con el modelo de segmentos y ranuras de la
+- (b) **descartada**: **edición libre** del calendario, con el modelo de segmentos y ranuras de la
   ronda 2. Se descarta por los hallazgos que abrió (Alternativas 3).
 
-Con (a), elegida, la spec 007 se reconcilia antes de Plan (Consecuencias): FR-005 y el
-caso límite «Editar la frecuencia o la fecha» hablan de editar la frecuencia
+Con (a), elegida, la spec 007 se reconcilió (Consecuencias): FR-005 y el
+caso límite «Editar la frecuencia o la fecha» hablaban de editar la frecuencia
 dentro de una recurrencia.
 
 **Qué es editable**, mientras la regla está abierta (activa o pausada):
@@ -636,15 +636,14 @@ previstas hay depende del tipo de compromiso:
   materializarse, y la confirmación dice «No se crearán más desde el …». Cumple la
   spec al pie de la letra donde es finito, y no inventa un horizonte donde no lo
   es;
-- (b) en todos los casos, dejan de generarse sin materializarse. Es la propuesta de
+- (b) **descartada**: en todos los casos, dejan de generarse sin materializarse. Es la propuesta de
   la ronda 1. Más simple, pero en un compromiso con N las cuotas restantes no se
   ven como canceladas;
-- (c) en todos los casos se cancelan las del horizonte por omisión del calendario
+- (c) **descartada**: en todos los casos se cancelan las del horizonte por omisión del calendario
   (este mes y el siguiente), y en los finitos, todas. Añade un horizonte arbitrario
   a la regla sin fin.
 
-En ninguna de las tres la spec se cumple tal cual en las recurrencias **sin fin**:
-la spec 007 se reconcilia antes de Plan en cualquier caso (Consecuencias).
+Con (a), la spec 007 se reconcilió en el PR de aceptación de este ADR (Consecuencias).
 
 #### 6.4 Deshacer una omisión: precedencia (D3, D4, D5; F101-14, F101-18, F101-21)
 
@@ -687,13 +686,12 @@ expresamente esta excepción a Q6». Opciones que se plantearon:
   fecha recuperada es futura y la regla se editó mientras tanto, la instancia
   vuelve con los **datos anteriores** a la edición: la interfaz lo dice al deshacer
   («Vuelve con los datos que tenía al omitirla»), y la persona puede cambiar el
-  movimiento real al confirmar. **Los fundadores la aprobaron expresamente**, y la excepción se registra en la spec
+  movimiento real al confirmar. **Los fundadores la aprobaron expresamente**, y la excepción quedó registrada en la spec
   y en el maestro (Consecuencias);
-- (b) los datos **actuales** de la posición (la lectura de la ronda 3), con dos
+- (b) **descartada**: los datos **actuales** de la posición (la lectura de la ronda 3), con dos
   restricciones: la pausa se evalúa con la fecha histórica **y** con la nueva, y la
   terminación de la regla se calcula como si la omisión no se hubiera deshecho
-  (para que no la reactive, F103-20). Añade casos en lugar de quitarlos, y está en
-  la lista de reconciliación de la spec.
+  (para que no la reactive, F103-20). Añadía casos en lugar de quitarlos.
 
 **El contraejemplo de F103-20, con (a).** Mensual, N = 2. La posición 2 (15 de
 enero) se omite por adelantado; el 2 de enero la regla pasa al día 25; el 15 de
@@ -810,7 +808,7 @@ instancia por sus hechos, no por si la regla sigue generando**: la operación no
 reactiva la regla ni genera ninguna otra posición. Si se omite, esa omisión no se
 puede deshacer (D4, regla 1 de §6.4), y la interfaz lo dice **antes** de omitir.
 
-La alternativa es mostrarla solo en el detalle de la recurrencia archivada, que la
+La alternativa, **descartada**, era mostrarla solo en el detalle de la recurrencia archivada, que la
 esconde justo cuando hay algo que resolver.
 
 ### 7. Operar sobre una instancia: precondición, confirmar y vincular (Q4, 29.2; F101-1, F101-5, F101-6, F101-17)
@@ -1433,13 +1431,12 @@ esto cambia ninguna función de MVP-1.
   lista de tablas controladas, como pide su texto.
 - El contrato de borrado de la 005 y `scope.sql` se amplían con las cinco tablas
   (§13).
-- **Reconciliación de la spec 007 y del maestro.** Las decisiones P1–P7 cambian o
-  concretan texto de la spec 007 y de la decisión 29. Se reconcilian **antes de la
-  etapa Plan**, en un **PR documental aparte, posterior a este** (ADR-012 §3.1: cada
-  gate es el merge de un PR documental). **Este PR no toca la spec ni el maestro.**
-  En ese PR, ADR-016 pasa a Aceptado con su registro en el maestro, como ADR-014 y
-  ADR-015 con la decisión 27.3. Q15 y la decisión 29.8 siguen abiertas y no se
-  tocan.
+- **Reconciliación de la spec 007 y del maestro: hecha.** Las decisiones P1–P7
+  cambian o concretan texto de la spec 007 y de la decisión 29. Se reconciliaron en
+  el PR documental posterior al PR #103 (ADR-012 §3.1: cada gate es el merge de un
+  PR documental), el mismo en que ADR-016 pasó a Aceptado con su registro en el
+  maestro (29.11), como ADR-014 y ADR-015 con la decisión 27.3. Q15 y la decisión
+  29.8 siguen abiertas. La tabla dice qué se tocó:
 
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
