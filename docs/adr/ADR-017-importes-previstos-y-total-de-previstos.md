@@ -1,6 +1,6 @@
 # ADR-017 — Importes previstos y tratamiento del total de gastos previstos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026). **Los fundadores decidieron P1–P3 el 26 de noviembre de 2026**, con las opciones (a), **condicionadas a que Q15 se cierre en (b)** tras revisar y aprobar los comps; (a), sin totales, se mantiene como respaldo («Decisiones de los fundadores»). Pasa a Aceptado con su registro en el maestro, en un PR de reconciliación posterior, como ADR-016 con el PR #105. Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). **No cierra Q15**, que sigue abierta hasta los comps (29.4). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
+**Estado:** **Aceptado** (26 de noviembre de 2026; maestro §15.10, decisión 29.12). Propuesto el 25 de noviembre de 2026; la revisión adversarial del PR #106 (F106-1 a F106-9) dio GO. **Los fundadores decidieron P1–P3 el 26 de noviembre de 2026**, con las opciones (a), **condicionadas a que Q15 se cierre en (b)** tras revisar y aprobar los comps; (a), sin totales, se mantiene como respaldo («Decisiones de los fundadores»). La spec 007 y la decisión 29 están reconciliadas con él. **Q15 sigue abierta.** No se implementa antes de declarar MVP-1, y sus `[V]` siguen pendientes. Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). **No cierra Q15**, que sigue abierta hasta los comps (29.4). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
 
 En este archivo, las tres `[P]` (P1–P3) **ya están decididas** por los fundadores
 (26 de noviembre de 2026), condicionadas a Q15 (b); se conservan sus números como
@@ -339,17 +339,17 @@ Recurrentes.**
 - **Q15 no se cierra aquí.** Las decisiones P1–P3 están condicionadas a que Q15 se
   cierre en (b) tras revisar y aprobar los comps; si el total no puede
   comunicarse con claridad, se mantiene (a), sin totales.
-- **Reconciliación de la spec 007 y del maestro.** Va en un **PR documental
-  aparte, posterior a este**, como el #105 para ADR-016. En él ADR-017 pasa a
-  Aceptado con su registro en el maestro. **Este PR no toca la spec ni el
-  maestro.** Q15 (29.4) y la 29.8 siguen abiertas.
+- **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
+  posterior al PR #106, como el #105 para ADR-016. En él ADR-017 pasó a Aceptado
+  con su registro en el maestro (29.12). Q15 (29.4) y la 29.8 siguen abiertas. La
+  tabla dice qué se tocó:
 
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
-  | **P1** (a) | Precisión de Q15 y **FR-045** y **FR-046**: si Q15 se cierra en (b), el total incluye solo los gastos previstos y pendientes de confirmar, incluidas las reaperturas por D1 y la excepción contextual de P6. US3.4 | **29.4** (tratamiento de estados); fila nueva de registro de ADR-017 |
-  | **P2** (a) | Precisión de Q15 («en Nosotros, solo información compartida autorizada») y **FR-046**: en Yo, solo los gastos privados previstos propios; lo compartido, solo en Nosotros. **FR-062** | **29.4** (privacidad); fila de registro |
-  | **P3** (a) | **FR-045** y **FR-050**: el total solo en Recurrentes y su calendario; Inicio conserva las métricas reales y el aviso «Por confirmar», sin importes previstos | **29.4**; fila de registro |
-  | Resto de ADR-017 | §1 y §2 (importes): **FR-001**, **FR-020** a **FR-022** y **FR-042**; §3: **FR-047**; «Lo que hace falta para pasar a Plan», punto 3: ADR-b aceptado | **29.7** (lo que tocaba a ADR-b, resuelto) y **29.10** (ADR-b hecho; falta ADR-d) |
+  | **P1** (a) | **FR-045** y **US3.4**, que remiten a §4 a §6 y a la cita literal («Session 2026-11-26 · ADR-017») | **29.12** |
+  | **P2** (a) | **FR-045** y **FR-062** | **29.12** |
+  | **P3** (a) | **FR-045** y **FR-050**: el módulo de Inicio no incorpora importes previstos | **29.12** |
+  | Resto de ADR-017 | Status; precisión de Q15 y su fila de Clarifications; **FR-001**, **FR-020** a **FR-022** y **FR-042** (§1 y §2); **FR-046** (§7); **FR-047** (§1 a §6 y §3); casos límite del total y de Nosotros sin recurrencias; «Lo que hace falta para pasar a Plan», punto 3: ADR-b aceptado | **29.4** (tratamiento definido por ADR-017; la fila sigue abierta), **29.7** (lo de ADR-b, resuelto), **29.10** (falta ADR-d), cabecera de la 29 y «Lo que esta decisión no autoriza» |
 
 ## Verificación pendiente [V]
 

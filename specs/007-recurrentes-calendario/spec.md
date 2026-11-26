@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-25
 
-**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas y D1–D7 están registradas en el maestro §15.10, decisión 29. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19). **ADR-a está aceptado como ADR-016** (25 de noviembre de 2026; maestro §15.10, decisión 29.11), con las decisiones P1–P7 de los fundadores, reconciliadas en esta spec («Session 2026-11-25 · ADR-016»).
+**Status**: Draft · Specify y Clarify hechos. Los fundadores respondieron Q1–Q19 el 25 de noviembre de 2026: aceptaron las recomendaciones salvo Q4, Q6 y Q15, que cambian, y precisaron Q7, Q12, Q13, Q17 y Q18. **Q15 no está cerrada**: el total de gastos previstos se explora en los comps, con «sin totales» como respaldo. Las respuestas y D1–D7 están registradas en el maestro §15.10, decisión 29. La revisión adversarial F101 se aplicó, y los fundadores confirmaron sus siete decisiones (D1 a D7) el 25 de noviembre de 2026, con precisiones en D3, D4 y D5. Spec abierta por el procedimiento de spec nueva de ADR-012 (`[V]` 4, condición 6) con la documentación de Recurrentes autorizada durante el gate de MVP-1 (maestro §15.10, decisiones 28.17 a 28.19). **ADR-a está aceptado como ADR-016** (25 de noviembre de 2026; maestro §15.10, decisión 29.11), con las decisiones P1–P7 de los fundadores, reconciliadas en esta spec («Session 2026-11-25 · ADR-016»). **ADR-b está aceptado como ADR-017** (26 de noviembre de 2026; maestro §15.10, decisión 29.12), con las decisiones P1–P3 de los fundadores, condicionadas a que Q15 se cierre en (b); **Q15 sigue abierta** («Session 2026-11-26 · ADR-017»).
 
 **Input**: Descripción con que Alejandro invocó `/speckit-specify` el 25 de noviembre de 2026, redactada a partir de la decisión 28 (filas 28.6, 28.8, 28.9, 28.11, 28.13 y 28.17), la propuesta de los fundadores (bloque A, A.1 a A.5), el análisis (§4 fila «R», §6, §9 y §12 N-6) y `docs/BACKLOG_MVP2.md` (filas 3, 4 y 7):
 
@@ -90,7 +90,7 @@ escribe como **Propuesto** y se acepta antes de la etapa Plan (`AGENTS.md` 17).
 | Q12 | Aportes programados · ADR-d | **(a), con precisiones** (abajo) |
 | Q13 | Compromisos de duración definida | **(a), con precisiones** (abajo) |
 | Q14 | Calendario | **(a)** en móvil (lista por fecha, flechas de mes, sin cuadrícula); escritorio con los comps; ruta hija de Plan |
-| Q15 | Cifras de lo previsto · ADR-b | **Abierta hasta los comps.** Se explora **(b)**, un total mensual de gastos previstos, con **(a)**, sin totales, como respaldo. No es una (b) cerrada. Condiciones abajo |
+| Q15 | Cifras de lo previsto · ADR-b | **Abierta hasta los comps.** Se explora **(b)**, un total mensual de gastos previstos, con **(a)**, sin totales, como respaldo. No es una (b) cerrada. Condiciones abajo. Tratamiento: ADR-017 («Session 2026-11-26 · ADR-017») |
 | Q16 | Avisos dentro de la app | **(a)**: «Por confirmar» en la ruta de Recurrentes y módulo en Inicio con pendientes; sin push ni correo |
 | Q17 | Presets de captura | **Recomendación aceptada, con precisiones** (abajo) |
 | Q18 | Ciclo de vida | **(a), con precisiones** (abajo) |
@@ -178,7 +178,7 @@ diga exactamente qué incluye. Condiciones:
 - los ingresos condicionales no se presentan como seguros;
 - un importe desconocido no se trata como cero;
 - si solo se cuentan importes fijos pendientes de confirmar, se dice;
-- ADR-b define el tratamiento de estimados, rangos, estados y privacidad;
+- ADR-b define el tratamiento de estimados, rangos, estados y privacidad: lo fija **ADR-017** (§1 a §6), con P1–P3 condicionadas a que Q15 se cierre en (b), y ADR-017 §7 dice dónde se cumple cada una de estas condiciones;
 - no se calculan excedentes, disponibilidad financiera, capacidad de pago ni
   previsto frente a real;
 - en Nosotros, solo información compartida autorizada; la ausencia no es cero.
@@ -475,6 +475,36 @@ reconciliados con ellas.
 Además: «No ampliar el alcance, no añadir mecanismos nuevos y no iniciar
 implementación». **Q15 y la cuestión de la decisión 29.8 siguen abiertas.**
 
+### Session 2026-11-26 · ADR-017
+
+ADR-b se escribió como ADR-017 (`docs/adr/ADR-017-importes-previstos-y-total-de-previstos.md`,
+PR #106), se revisó y se aceptó (maestro §15.10, decisión 29.12). Fija los importes
+previstos (§1 y §2), que ninguna cifra mezcla lo previsto con lo real (§3) y el
+tratamiento del total de gastos previstos **si** Q15 se cierra en (b) (§4 a §6).
+Los fundadores decidieron sus tres propuestas el 26 de noviembre de 2026. Su texto,
+transmitido por el gestor, se cita literalmente:
+
+> Aprobamos las tres opciones recomendadas de ADR-017:
+>
+> * P1(a): el total mensual incluye exclusivamente los gastos previstos y pendientes de confirmar, incluidas las reaperturas por D1 y la excepción contextual de P6.
+> * P2(a): en Yo se muestran únicamente los gastos privados previstos propios. Los gastos compartidos se muestran exclusivamente en Nosotros.
+> * P3(a): el total se muestra únicamente en Recurrentes y su calendario. Inicio conserva las métricas reales y el aviso «Por confirmar», sin incorporar importes previstos.
+>
+> Las tres decisiones quedan condicionadas a que Q15 se cierre en (b) tras revisar y aprobar los comps.
+>
+> Q15 permanece abierta. Si el total no puede comunicarse de manera clara, mantenemos (a), sin totales, como respaldo.
+
+| # | Dónde se aplica en esta spec |
+| --- | --- |
+| P1 (a) | FR-045; US3.4 |
+| P2 (a) | FR-045; FR-062 |
+| P3 (a) | FR-045; FR-050 |
+| Resto de ADR-017 | Precisión de Q15; FR-001; FR-020 a FR-022; FR-042; FR-046; FR-047; casos límite |
+
+Las opciones (b) de P1, P2 y P3 quedan descartadas. **Q15 sigue abierta**: estas
+decisiones solo se aplican si se cierra en (b); con (a), no hay totales. La 29.8
+sigue abierta y ADR-d, pendiente.
+
 ### Lo que ya está decidido y esta spec no reabre
 
 - **Lo previsto no es real.** La existencia de una recurrencia no crea ingresos,
@@ -705,7 +735,7 @@ por fecha con su estado, y una confirmada abre su movimiento en Actividad.
 1. **Given** instancias en varios estados, **When** Ana abre el calendario, **Then** ve cada una con su fecha prevista, nombre, importe (fijo, estimado, rango o desconocido) y estado, y puede confirmar, vincular u omitir las pendientes, y las previstas con las reglas de D2 y D3 (F101-5 y F101-8 i).
 2. **Given** la navegación de §15.3, **When** Ana busca el calendario, **Then** está como ruta hija de Plan, sin pestaña ni destino nuevo.
 3. **Given** el contexto Nosotros, **When** Beto abre el calendario, **Then** ve solo las recurrencias compartidas, nunca las privadas de Ana ni sus aportes programados, ni por totales ni por huecos.
-4. **Given** que los comps aprueban el total mensual de gastos previstos (Q15), **When** Ana lo ve, **Then** su rótulo dice exactamente qué incluye, está separado de ingresos y aportes, no trata un importe desconocido como cero y nunca se presenta como disponibilidad ni capacidad de pago.
+4. **Given** que los comps aprueban el total mensual de gastos previstos (Q15), **When** Ana lo ve, **Then** su rótulo dice exactamente qué incluye, está separado de ingresos y aportes, no trata un importe desconocido como cero y nunca se presenta como disponibilidad ni capacidad de pago, con el tratamiento de ADR-017 §4 a §6 y las decisiones P1–P3 de los fundadores.
 5. **Given** un ingreso condicional, **When** Ana lo ve en el calendario, **Then** ve la condición de la que depende (F101-10).
 
 ---
@@ -868,8 +898,8 @@ a mano con los mismos datos; tener presets no crea instancias ni cambia cifras.
 - Salida de la pareja: sigue bloqueada por ADR-003; esta spec no la implementa (FR-077).
 - Borrado de cuenta y exportación con reglas, instancias y sus estados, vínculos autorizados y presets (Q18), sin revelar programaciones privadas a la otra persona (F101-2).
 - Importe estimado o en rango al confirmar un gasto: se abre Anotar; en un ingreso estimado, condicional o de importe desconocido se exige el importe recibido.
-- Total de previstos con instancias de importe desconocido o en rango: nunca se cuentan como cero (Q15).
-- Nosotros sin recurrencias compartidas: «no hay ninguna registrada», nunca $0.
+- Total de previstos con instancias de importe desconocido o en rango: nunca se cuentan como cero (Q15; ADR-017 §4, reglas de presentación).
+- Nosotros sin recurrencias compartidas: se dice como ausencia, nunca $0 (FR-062). En el total, si existe, la ausencia sigue ADR-017 §4, regla 1.
 - Cambio de mes y de zona horaria: fechas en `America/Bogota` (§5.2).
 
 ## Requirements *(mandatory)*
@@ -881,7 +911,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 #### Recurrencias (A.1, A.5; fila 3)
 
-- **FR-001**: Una persona puede crear una recurrencia de **gasto**, **ingreso** o **aporte a meta** con nombre, tipo, importe (fijo, estimado con rango o, en ingresos condicionales, desconocido; Q10, F101-10), categoría cuando corresponda, fecha inicial, fecha final o número de ocurrencias opcionales (Q13), frecuencia (Q7), contexto, responsable y reparto cuando corresponda (Q8).
+- **FR-001**: Una persona puede crear una recurrencia de **gasto**, **ingreso** o **aporte a meta** con nombre, tipo, importe (fijo, estimado con rango o, en ingresos condicionales, desconocido; Q10, F101-10; formas, combinaciones y contrato de integridad de ADR-017 §1), categoría cuando corresponda, fecha inicial, fecha final o número de ocurrencias opcionales (Q13), frecuencia (Q7), contexto, responsable y reparto cuando corresponda (Q8).
 - **FR-002**: Cada recurrencia tiene estado **activa**, **pausada**, **finalizada** (sola o a mano) o **archivada** (eliminada con historia), según la tabla «Estados y transiciones». Muestra su próxima fecha esperada.
 - **FR-003**: Una recurrencia de gasto es privada **o** de la pareja, nunca las dos (Q8), y **su contexto no cambia nunca**: para cambiarlo se crea una recurrencia nueva y se cierra la anterior (F101-11). Las de ingreso solo existen en Yo (28.9; §7.3). Las de aporte a meta son siempre privadas de quien aporta, también cuando la meta es compartida (Q12).
 - **FR-004**: Editar una recurrencia cambia solo sus instancias previstas (futuras sin resolver). Todas las instancias pendientes de resolución, vencidas o no (D1), conservan los datos y la versión de la regla que les correspondían; las confirmadas, omitidas y canceladas no cambian (Q6). Editar nunca cambia el contexto (FR-003). Hay versión y no hay sobrescritura silenciosa. Lo editable es lo que fija ADR-016 §3.4 (P2): los datos, el día dentro de su periodo, N y la fecha final; la unidad, el intervalo y el origen no se editan (FR-005). **Excepción a Q6 aprobada por los fundadores (P7):** una instancia con fecha y versión fijadas por una omisión, también si la omisión se deshizo, no cambia con ninguna edición posterior.
@@ -896,7 +926,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 - **FR-009a**: Una fecha mensual (y trimestral, semestral o anual) que no existe en un mes cae en el último día de ese mes, y el **día de referencia** original se conserva para los meses siguientes (31 de enero → 28 o 29 de febrero → 31 de marzo).
 - **FR-009b**: Los dos días de una quincenal nunca generan dos instancias en la misma fecha; al crearla, y también al editar los días, el primer día va del 1 al 15 y el segundo del 16 al 31, donde 31 es «último día» (P1; ADR-016 §3.3 y §3.4).
 
-#### Lo previsto frente a lo real (A.2; ADR-a, ADR-b)
+#### Lo previsto frente a lo real (A.2; ADR-016, ADR-017)
 
 - **FR-010**: Una recurrencia genera instancias con los estados de Q5; su forma la fija ADR-016 (Q3): se calcula, y solo se guardan sus hechos, sin poner nada previsto en `transactions`.
 - **FR-011**: Ninguna instancia prevista crea, modifica ni se cuenta como un movimiento real. Ninguna métrica de §5.1, ningún presupuesto (DEC-R01, ADR-004), Balance, Análisis ni DEC-G04 incluye nada previsto.
@@ -915,9 +945,9 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 #### Ingresos variables (A.3)
 
-- **FR-020**: Un ingreso previsto lleva un tipo (habitual o extraordinario), una certeza (fijo, estimado con rango mínimo–máximo o condicional) y, si es condicional, el texto de la **condición** de la que depende; su importe puede ser **conocido, estimado o desconocido** (Q10; F101-10). No hay motor de condiciones: el formato lo deciden el ADR y el diseño.
-- **FR-021**: Al confirmar un ingreso estimado, condicional (aunque su importe previsto sea conocido) o de importe desconocido se abre el borrador y se exige el importe efectivamente recibido; solo en un ingreso de **certeza fija** basta la confirmación explícita del importe mostrado (Q4; F101-17).
-- **FR-022**: Un ingreso previsto nunca se presenta como recibido, disponible ni seguro, un importe desconocido nunca se muestra como cero, y nada alimenta un «te alcanza» (DEC-R17).
+- **FR-020**: Un ingreso previsto lleva un tipo (habitual o extraordinario), una certeza (fijo, estimado con rango mínimo–máximo o condicional) y, si es condicional, el texto de la **condición** de la que depende; su importe puede ser **conocido, estimado o desconocido** (Q10; F101-10). No hay motor de condiciones: el contrato lo fija ADR-017 §1 y el formato visible, el diseño.
+- **FR-021**: Al confirmar un ingreso estimado, condicional (aunque su importe previsto sea conocido) o de importe desconocido se abre el borrador y se exige el importe efectivamente recibido; solo en un ingreso de **certeza fija** basta la confirmación explícita del importe mostrado (Q4; F101-17; ADR-016 §7.2; ADR-017 §2).
+- **FR-022**: Un ingreso previsto nunca se presenta como recibido, disponible ni seguro, un importe desconocido nunca se muestra como cero, y nada alimenta un «te alcanza» (DEC-R17; ADR-017 §1 a §3).
 - **FR-023**: Se admite un movimiento previsto de una sola fecha (Q11).
 
 #### Aportes programados (fila 7; ADR-d)
@@ -941,26 +971,26 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 - **FR-040**: El calendario de lo previsto es una ruta hija de Plan, sin destino de navegación nuevo (§15.3; 22.5).
 - **FR-041**: En móvil es una lista agrupada por fecha con flechas de mes, sin cuadrícula; escritorio se decide con los comps (Q14). Muestra por defecto el mes actual y el siguiente.
-- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe (fijo, estimado, rango o desconocido), estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, «cuota n de N». Si solo tiene fecha final, no se inventa N.
+- **FR-042**: Cada instancia muestra fecha prevista, nombre, importe (fijo, estimado, rango o desconocido), estado, la condición en ingresos condicionales y, **solo cuando el compromiso tiene un total de ocurrencias**, «cuota n de N». Si solo tiene fecha final, no se inventa N. El importe se muestra con las reglas de ADR-017 §2.
 - **FR-043**: Desde el calendario se confirma, vincula u omite una instancia pendiente; una prevista, solo con las reglas de FR-012b y FR-017.
 - **FR-044**: El calendario no muestra movimientos reales sin instancia: lo real vive en Actividad (16.8).
 
-#### Total de lo previsto (Q15; ADR-b)
+#### Total de lo previsto (Q15; ADR-017)
 
-- **FR-045**: Se **explora en los comps** un total mensual de **gastos previstos**, separado de ingresos y aportes programados, con un rótulo que diga exactamente qué incluye. Si no se puede comunicar con claridad sin ampliar el alcance, no hay totales (Q15 (a)).
-- **FR-046**: Si existe, ese total: nunca se mezcla con métricas de movimientos reales; nunca suma ingresos, gastos y aportes en una cifra neta; no presenta como seguros los ingresos condicionales; no trata importes desconocidos como cero; si solo cuenta importes fijos pendientes, lo dice; en Nosotros usa solo lo compartido autorizado y la ausencia no es cero.
-- **FR-047**: El total de lo previsto **no es liquidez ni disponibilidad**: nunca se calculan a partir de él excedentes, disponible, capacidad de pago ni previsto frente a real (DEC-R17; decisión 28, «Lo que no cambia»). El tratamiento de estimados, rangos, estados y privacidad lo fija ADR-b.
+- **FR-045**: Se **explora en los comps** un total mensual de **gastos previstos**, separado de ingresos y aportes programados, con un rótulo que diga exactamente qué incluye. Si no se puede comunicar con claridad sin ampliar el alcance, no hay totales (Q15 (a)). Si Q15 se cierra en (b), qué entra en el total, qué devuelve, cómo se presenta, dónde se ve y su privacidad son los de ADR-017 §4 a §6, con P1 (a), P2 (a) y P3 (a), decididas por los fundadores el 26 de noviembre de 2026 («Session 2026-11-26 · ADR-017»).
+- **FR-046**: Si existe, ese total: nunca se mezcla con métricas de movimientos reales; nunca suma ingresos, gastos y aportes en una cifra neta; no presenta como seguros los ingresos condicionales; no trata importes desconocidos como cero; si solo cuenta importes fijos pendientes, lo dice; en Nosotros usa solo lo compartido autorizado y la ausencia no es cero. ADR-017 §7 dice dónde se cumple cada una.
+- **FR-047**: El total de lo previsto **no es liquidez ni disponibilidad**: nunca se calculan a partir de él excedentes, disponible, capacidad de pago ni previsto frente a real (DEC-R17; decisión 28, «Lo que no cambia»). El tratamiento de estimados, rangos, estados y privacidad lo fija ADR-017 (§1 a §6), y ninguna cifra mezcla lo previsto con lo real (ADR-017 §3).
 
 #### Avisos (28.8)
 
-- **FR-050**: Los avisos de instancias por confirmar son solo dentro de la app: una entrada «Por confirmar» con su número en la ruta de Recurrentes y un módulo en Inicio cuando hay pendientes, sin culpa y descartable (Q16). Sin push ni correo.
+- **FR-050**: Los avisos de instancias por confirmar son solo dentro de la app: una entrada «Por confirmar» con su número en la ruta de Recurrentes y un módulo en Inicio cuando hay pendientes, sin culpa y descartable (Q16). Sin push ni correo. El módulo de Inicio no incorpora importes previstos: el total, si existe, solo se muestra en Recurrentes y su calendario (P3 (a); ADR-017 §4).
 - **FR-051**: Un aviso nunca cuenta ni revela instancias privadas de la otra persona.
 
 #### Privacidad (28.11; §2.3.6; §7.4)
 
 - **FR-060**: Todo es privado por defecto; nada se comparte sin una acción explícita.
 - **FR-061**: Ninguna vista, aviso, sugerencia de vínculo, agregado, error, metadato o exportación de la otra persona revela recurrencias, instancias, aportes programados o presets privados, ni su existencia (F101-2).
-- **FR-062**: Sin «total del hogar». En Nosotros, la ausencia de recurrencias compartidas se dice como ausencia, no como cero.
+- **FR-062**: Sin «total del hogar». En Nosotros, la ausencia de recurrencias compartidas se dice como ausencia, no como cero. Si existe el total, en Yo solo incluye los gastos privados previstos propios, y lo compartido solo se muestra en Nosotros (P2 (a); ADR-017 §4 y §6).
 
 #### Presets de captura (fila 4; 28.6; Q17)
 
@@ -1055,7 +1085,7 @@ Las decisiones D1 a D7 de la revisión F101 están confirmadas por los fundadore
 
 1. ~~Que los fundadores respondan Q1–Q19.~~ **Hecho** el 25 de noviembre de 2026 (Session 2026-11-25 · Clarify). Registradas, con D1–D7, en el maestro §15.10, **decisión 29**, que también recoge lo que falta para pasar a Plan (29.10).
 2. ~~Que los fundadores confirmen las decisiones D1 a D7 de la revisión F101.~~ **Hecho** el 25 de noviembre de 2026, con precisiones en D3, D4 y D5 («Precisiones de la revisión F101»).
-3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse. **ADR-a: hecho**, aceptado como ADR-016 el 25 de noviembre de 2026, con P1–P7 (maestro §15.10, decisión 29.11). Faltan **ADR-b** y **ADR-d**.
+3. Que **ADR-a** (recurrencias y movimientos previstos: forma e identidad de la instancia, representación de «pendiente de resolución», edición sin duplicados, regla quincenal, compatibilidad y búsqueda de vínculos, sustitución técnica), **ADR-b** (previsto frente a real en las métricas y el total de Q15) y **ADR-d** (aportes programados, ampliación de ADR-010, con la concurrencia de F101-7), en lo que afecta a esta spec, se escriban como **Propuestos** y se acepten, con el número que les toque al abrirse. **ADR-a: hecho**, aceptado como ADR-016 el 25 de noviembre de 2026, con P1–P7 (maestro §15.10, decisión 29.11). **ADR-b: hecho**, aceptado como ADR-017 el 26 de noviembre de 2026, con P1–P3 condicionadas a Q15 (b) (decisión 29.12). Falta **ADR-d**.
 4. Que la revisión del PR de esta spec termine sin hallazgos abiertos.
 5. Que los fundadores aprueben los comps de diseño, incluida la decisión de Q15 entre el total de gastos previstos y ningún total.
 6. Que la secuencia de 28.17 y 28.18 permita la etapa Plan: durante el gate solo se adelanta la documentación de spec, ADR propuestos y diseño, y la documentación de esta spec se pausa mientras Planes hace su Plan y sus Tasks.
