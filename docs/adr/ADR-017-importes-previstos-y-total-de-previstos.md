@@ -1,9 +1,10 @@
 # ADR-017 — Importes previstos y tratamiento del total de gastos previstos
 
-**Estado:** **Propuesto** (25 de noviembre de 2026). Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). **No cierra Q15**, que sigue abierta hasta los comps (29.4). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (25 de noviembre de 2026). **Los fundadores decidieron P1–P3 el 26 de noviembre de 2026**, con las opciones (a), **condicionadas a que Q15 se cierre en (b)** tras revisar y aprobar los comps; (a), sin totales, se mantiene como respaldo («Decisiones de los fundadores»). Pasa a Aceptado con su registro en el maestro, en un PR de reconciliación posterior, como ADR-016 con el PR #105. Es el candidato **ADR-b** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). **No cierra Q15**, que sigue abierta hasta los comps (29.4). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), precisión de Q15, Q10, F101-10, F101-17, FR-020 a FR-022, FR-042 y FR-045 a FR-047; maestro §15.10, decisiones 29.4, 29.7 y 29.10; ADR-016 · **Alcance:** MVP-2
 
-En este archivo `[P]` es una **propuesta** que necesita decisión de los
-fundadores, `[V]` una **verificación pendiente** (maestro §15.9) y **«comps»**
+En este archivo, las tres `[P]` (P1–P3) **ya están decididas** por los fundadores
+(26 de noviembre de 2026), condicionadas a Q15 (b); se conservan sus números como
+referencia, y las opciones descartadas quedan como contexto. `[V]` una **verificación pendiente** (maestro §15.9) y **«comps»**
 una decisión de presentación que se toma viendo las pantallas (FR-082), no de
 arquitectura. Los nombres de columnas y funciones son de trabajo; los nombres
 visibles se deciden con los comps y entran en `docs/GLOSSARY.md` solo aprobados
@@ -172,14 +173,14 @@ con valores fijados cuenta en el mes de su fecha fijada.
 | Criterio | Regla |
 | --- | --- |
 | Tipo | Solo reglas de **gasto**. Nunca ingresos ni aportes programados (condición 2) |
-| Contexto | En **Yo**, solo las reglas privadas de quien consulta (`owner_user_id = auth.uid()`). En **Nosotros**, solo las reglas compartidas de la pareja (`group_id` de la pareja activa). Nunca las dos juntas: no hay «total del hogar» (28.11). Ver P2 |
+| Contexto | En **Yo**, solo las reglas privadas de quien consulta (`owner_user_id = auth.uid()`). En **Nosotros**, solo las reglas compartidas de la pareja (`group_id` de la pareja activa). Nunca las dos juntas: no hay «total del hogar» (28.11). P2 (a), decidida |
 | Mes | Las instancias cuya **fecha prevista resuelta** (la que entrega la proyección) cae en el mes, en `America/Bogota` |
-| Estado | Según P1 (abajo) |
+| Estado | Según P1 (a), decidida (abajo) |
 | Excluidas siempre | Las omitidas, las canceladas, las posiciones consumidas por una pausa y las que no pertenecen al calendario (ADR-016 §5, pasos 1, 2, 5 y 6) |
 
-**P1 y lo que cambia con cada opción** (F106-3):
+**P1 y lo que cambia con cada opción** (F106-3). **Decidida: (a)**, condicionada a Q15 (b). (b) queda descartada y se conserva como contexto:
 
-| | P1 (a), recomendada: por confirmar | P1 (b): todo el mes previsto |
+| | P1 (a), **decidida**: por confirmar | P1 (b), **descartada**: todo el mes previsto |
 | --- | --- | --- |
 | Estados que entran | Previstas y pendientes, incluidas las pendientes por D1 y las que vuelven a pendiente por la excepción contextual de P6 (ADR-016 §9) | Además, las **confirmadas** |
 | Importe de una confirmada | No entra | Su **importe previsto histórico**, el de su versión fijada. **Nunca lo pagado**: ningún importe del total procede del movimiento real (§5) |
@@ -202,7 +203,7 @@ lo que no:
 
 1. **Ausencia no es cero** (condición 8). Si `included_count = 0`, no se muestra
    ninguna cifra, sino una frase **neutra** («No hay gastos previstos por
-   confirmar este mes», o lo equivalente con P1 (b)). `included_count = 0` **no
+   confirmar este mes»). `included_count = 0` **no
    prueba** que no haya recurrencias: decir «no hay recurrencias registradas» solo
    está permitido si eso se comprobó aparte, con la misma autorización (F106-5 c).
    Nunca «$0».
@@ -217,7 +218,7 @@ lo que no:
    los fijos, no se muestra «$0»: se dice que no hay importes fijos y cuántos
    estimados se excluyeron (F106-5 a).
 5. **El rótulo dice exactamente qué incluye** (FR-045): que son gastos, de qué
-   contexto, de qué mes y en qué estados, según P1. El texto lo fijan los comps.
+   contexto, de qué mes y en qué estados, según P1 (a): «por confirmar». El texto lo fijan los comps.
 6. **Nunca junto a una cifra real** en una misma operación ni en una comparación
    (§3).
 
@@ -226,8 +227,10 @@ no (Q15 (a) o (b)); si se enseña como un solo rango o como fijos y estimado por
 separado; y el texto exacto del rótulo y de la ausencia. La estructura de arriba
 admite las dos formas sin cambiar nada.
 
-**Dónde se ve** (P3): recomendación, solo en la ruta de Recurrentes y en su
-calendario, junto a la lista de las instancias que suma.
+**Dónde se ve** (P3 (a), decidida, condicionada a Q15 (b)): **solo** en la ruta de
+Recurrentes y en su calendario, junto a la lista de las instancias que suma. Inicio
+conserva las métricas reales y el aviso «Por confirmar», sin incorporar importes
+previstos.
 
 ### 5. De dónde sale la cifra: importe y estado, cada uno por su lado (F106-1)
 
@@ -321,7 +324,7 @@ Recurrentes.**
 6. **Una cifra personal combinada en Yo**: lo privado más la parte propia de los
    gastos compartidos, sumado en un solo número (F106-4). Mezcla contextos, se
    parece a un «total del hogar» (28.11) y exigiría una regla de reparto para lo
-   previsto que la spec no tiene. Es distinta de P2 (b), que enseña dos cifras
+   previsto que la spec no tiene. Es distinta de P2 (b), descartada, que enseña dos cifras
    separadas y nunca sumadas.
 
 ## Consecuencias
@@ -333,9 +336,20 @@ Recurrentes.**
 - Ninguna tabla nueva y ningún cambio a ADR-016, ADR-004, ADR-010 ni ADR-013. El
   contrato de §1 completa las restricciones que ADR-016 §11 ya prevé para
   `recurring_rule_versions`.
-- **Q15 no se cierra aquí.** Cuando los comps la cierren, la spec y la 29.4 se
-  reconcilian en un PR documental aparte, como ADR-016.
-- Si los fundadores cambian alguna `[P]`, se refleja aquí antes de aceptar el ADR.
+- **Q15 no se cierra aquí.** Las decisiones P1–P3 están condicionadas a que Q15 se
+  cierre en (b) tras revisar y aprobar los comps; si el total no puede
+  comunicarse con claridad, se mantiene (a), sin totales.
+- **Reconciliación de la spec 007 y del maestro.** Va en un **PR documental
+  aparte, posterior a este**, como el #105 para ADR-016. En él ADR-017 pasa a
+  Aceptado con su registro en el maestro. **Este PR no toca la spec ni el
+  maestro.** Q15 (29.4) y la 29.8 siguen abiertas.
+
+  | Decisión | Spec 007 | Maestro, decisión 29 |
+  | --- | --- | --- |
+  | **P1** (a) | Precisión de Q15 y **FR-045** y **FR-046**: si Q15 se cierra en (b), el total incluye solo los gastos previstos y pendientes de confirmar, incluidas las reaperturas por D1 y la excepción contextual de P6. US3.4 | **29.4** (tratamiento de estados); fila nueva de registro de ADR-017 |
+  | **P2** (a) | Precisión de Q15 («en Nosotros, solo información compartida autorizada») y **FR-046**: en Yo, solo los gastos privados previstos propios; lo compartido, solo en Nosotros. **FR-062** | **29.4** (privacidad); fila de registro |
+  | **P3** (a) | **FR-045** y **FR-050**: el total solo en Recurrentes y su calendario; Inicio conserva las métricas reales y el aviso «Por confirmar», sin importes previstos | **29.4**; fila de registro |
+  | Resto de ADR-017 | §1 y §2 (importes): **FR-001**, **FR-020** a **FR-022** y **FR-042**; §3: **FR-047**; «Lo que hace falta para pasar a Plan», punto 3: ADR-b aceptado | **29.7** (lo que tocaba a ADR-b, resuelto) y **29.10** (ADR-b hecho; falta ADR-d) |
 
 ## Verificación pendiente [V]
 
@@ -359,8 +373,8 @@ Recurrentes.**
    función devuelve la estructura vacía y la interfaz no muestra ninguna cifra ni
    afirma que no haya recurrencias si no se comprobó; con solo estimados y «solo
    fijos», no aparece «$0».
-4. **Cálculo gemelo** (dominio TS y SQL, la misma tabla de casos), para P1 (a) y,
-   si se elige, para P1 (b):
+4. **Cálculo gemelo** (dominio TS y SQL, la misma tabla de casos), para P1 (a),
+   la decidida:
    - fijos y rangos mezclados, con el rango agregado F + Σmín a F + Σmáx;
    - todos estimados (`fixed_count = 0`);
    - una pendiente por D1;
@@ -370,9 +384,8 @@ Recurrentes.**
    - **P6**: la instancia compartida que vuelve a pendiente tras el Deshacer;
    - una posición consumida por una pausa y una fuera del calendario;
    - los límites de mes en `America/Bogota`;
-   - omitidas y canceladas, que no entran nunca; confirmadas, que no entran con
-     (a) y entran con su importe previsto histórico con (b) (el ejemplo de $300.000
-     y $1.100.000).
+   - omitidas, canceladas y confirmadas, que no entran (en el ejemplo de §4, el
+     total es $300.000).
 5. **Contrato de §1:** se rechazan, también por SQL directo:
    - un gasto `unknown`;
    - un ingreso fijo con rango;
@@ -390,16 +403,37 @@ Recurrentes.**
    prohibidas de BRAND §4 y GLOSSARY §9, ni las de DEC-R17 y DEC-G04.
 8. **Rendimiento:** el total del mes con el dataset del Plan, dentro de §15.7.
 
-## Cuestiones para los fundadores `[P]`
+## Decisiones de los fundadores (26 de noviembre de 2026)
 
-Las tres están **condicionadas a que los comps cierren Q15 en (b)**. Con (a), no
-aplican.
+Los fundadores aprobaron P1–P3 con las opciones recomendadas. Su texto,
+transmitido por el gestor, se cita literalmente:
 
-| # | Cuestión | Opciones | Recomendación | Dónde |
+> Aprobamos las tres opciones recomendadas de ADR-017:
+>
+> * P1(a): el total mensual incluye exclusivamente los gastos previstos y pendientes de confirmar, incluidas las reaperturas por D1 y la excepción contextual de P6.
+> * P2(a): en Yo se muestran únicamente los gastos privados previstos propios. Los gastos compartidos se muestran exclusivamente en Nosotros.
+> * P3(a): el total se muestra únicamente en Recurrentes y su calendario. Inicio conserva las métricas reales y el aviso «Por confirmar», sin incorporar importes previstos.
+>
+> Las tres decisiones quedan condicionadas a que Q15 se cierre en (b) tras revisar y aprobar los comps.
+>
+> Q15 permanece abierta. Si el total no puede comunicarse de manera clara, mantenemos (a), sin totales, como respaldo.
+>
+> Registra literalmente estas decisiones en ADR-017, marca las alternativas descartadas y prepara el delta para la revisión final de fidelidad.
+>
+> No se reabre ADR-016, no se resuelve ADR-d ni la decisión 29.8 y no se autoriza todavía Plan ni implementación.
+>
+> Mantener la precedencia de Planes y las restricciones de N-8.
+
+| # | Cuestión | Decidida, condicionada a Q15 (b) | Descartada | Dónde |
 | --- | --- | --- | --- | --- |
-| P1 | Qué estados entran en el total | (a) solo las **sin resolver** del mes (previstas y pendientes, incluidas las de D1 y las de la excepción de P6): «lo que queda por confirmar»; (b) además las confirmadas, con su **importe previsto histórico**, nunca con lo pagado, y con otro rótulo | (a): no pone en la misma cifra lo previsto ya cumplido y lo que falta, y no invita a leer «previsto frente a real» | §4 |
-| P2 | Qué contiene el total de Yo | (a) solo las recurrencias privadas de quien consulta, y lo compartido solo en Nosotros; (b) Yo enseña dos cifras separadas y nunca sumadas: la privada y la compartida de la pareja | (a), por simplicidad y coherencia de contexto: un contexto, una cifra, como Actividad. (b) no revela nada que Nosotros no muestre ya | §4 |
-| P3 | Dónde se ve el total | (a) solo en la ruta de Recurrentes y su calendario, junto a la lista que suma; (b) también en el módulo de pendientes de Inicio (Q16), sin ninguna cifra real al lado. Con (b), el total del mes no se puede presentar como si correspondiera exclusivamente a las instancias pendientes que muestra ese módulo | (a): lejos de las métricas reales de Inicio, cumple la condición 1 sin depender del diseño | §4 |
+| P1 | Qué estados entran en el total | (a) solo las **sin resolver** del mes: previstas y pendientes de confirmar, incluidas las reaperturas por D1 y las de la excepción contextual de P6 | (b) además las confirmadas, con su importe previsto histórico | §4 |
+| P2 | Qué contiene el total de Yo | (a) solo los gastos privados previstos propios; lo compartido, solo en Nosotros | (b) dos cifras separadas en Yo, la privada y la compartida, nunca sumadas | §4 |
+| P3 | Dónde se ve el total | (a) solo en Recurrentes y su calendario; Inicio conserva las métricas reales y el aviso «Por confirmar», sin importes previstos | (b) también en el módulo de pendientes de Inicio | §4 |
+
+**Q15 sigue abierta.** Si los comps no la cierran en (b), estas decisiones no se
+aplican y rige (a), sin totales. No se reabre ADR-016, no se resuelve ADR-d ni la
+29.8, y no se autoriza todavía el Plan ni la implementación. Se mantienen la
+precedencia de Planes y las restricciones de N-8 (28.18).
 
 **Para los comps** (presentación, no `[P]`): si se ve el total (Q15 (a) o (b));
 si se muestra como un rango o como fijos y estimado por separado; el texto del
