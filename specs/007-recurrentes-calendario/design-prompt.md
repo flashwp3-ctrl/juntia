@@ -11,6 +11,11 @@ procedimiento que siguió Planes (`specs/006-planes/design-prompt.md`). Por su
 tamaño, conviene repartirlo en dos archivos, como allí: **«11a Recurrentes
 07-1-07-7»** y **«11b Recurrentes 07-8-07-15»** (nombres de trabajo).
 
+**Resultado (26 de noviembre de 2026):** tras el GO de la revisión del PR #113 y con
+el conector ya operativo, Claude Code generó los comps en ese proyecto, en dos
+páginas. Están **sin aprobación visual**. Dónde están, cómo se hicieron y las `[V]`
+abiertas: `design-comps.md`.
+
 **Jerarquía** (`AGENTS.md` §2). De mayor a menor:
 
 1. el maestro y sus decisiones (§15, en especial las decisiones 28 y 29);
