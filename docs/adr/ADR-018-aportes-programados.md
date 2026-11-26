@@ -418,8 +418,8 @@ pendientes que el sistema sabe cumplidas.
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
 - *Las dos viñetas anteriores son texto de la propuesta original.* **Nota del 26 de
   noviembre de 2026:** la reconciliación ya está hecha (decisión 29.13, FR-034 de la
-  spec 007), y ADR-016 lleva notas fechadas en §10 y §14, que no cambian ninguna de
-  sus decisiones.
+  spec 007), y ADR-016 y ADR-017 llevan notas fechadas, que no cambian ninguna de
+  sus decisiones (lista completa en la tabla de reconciliación de abajo).
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
 - **La 29.8 queda cerrada** con P2 (b) (29.13).
 - **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
@@ -429,7 +429,7 @@ pendientes que el sistema sabe cumplidas.
   | --- | --- | --- | --- |
   | **P1** (a) | Precisión de Q12; **FR-030** | **29.13** | — |
   | **P2** (b) | **F101-16**; «Cuestión para ADR-d o para los fundadores (29.8)»; **FR-034a** | **29.8** (cerrada) y **29.13** | — |
-  | Resto de ADR-018 | Status; fila y precisión de Q12; **F101-7**; «Cuestiones que la tabla dejaba a ADR-a» (concurrencia); **FR-034** (pausa y bloqueos, F110-12); **FR-034a** (concurrencia); casos límite de la meta lograda o archivada y de la confirmación concurrente; Key Entities; «Lo que hace falta para pasar a Plan», punto 3; las Sessions de ADR-016 y ADR-017 (nota de que la 29.8 se cerró después) | **29.7**, **29.10** (los tres ADR aceptados), **29.11** y **29.12** (notas de secuencia), cabecera de la 29 y «Lo que esta decisión no autoriza» | ADR-016 §14: nota del 26 de noviembre de 2026, sin cambiar decisiones (F110-12) |
+  | Resto de ADR-018 | Status; fila y precisión de Q12; **F101-7**; «Cuestiones que la tabla dejaba a ADR-a» (concurrencia); **FR-034** (pausa y bloqueos, F110-12); **FR-034a** (concurrencia); casos límite de la meta lograda o archivada y de la confirmación concurrente; Key Entities; «Lo que hace falta para pasar a Plan», punto 3; las Sessions de ADR-016 y ADR-017 (nota de que la 29.8 se cerró después) | **29.7**, **29.10** (los tres ADR aceptados), **29.11** y **29.12** (notas de secuencia), cabecera de la 29 y «Lo que esta decisión no autoriza» | Notas fechadas del 26 de noviembre de 2026, sin cambiar decisiones: **ADR-016** en la tabla de cuestiones delegadas, §6.2, §10, §11, §14 (F110-12 y F112-8), `[V]` P9, Consecuencias, «Decisiones de los fundadores» y su tabla de reconciliación; **ADR-017** en §1 (importes de los aportes: ADR-018 §1), Consecuencias y «Decisiones de los fundadores» |
 
 ## Verificación pendiente [V]
 
@@ -551,7 +551,7 @@ gates independientes y las restricciones de N-8 (28.18).
 ## Referencias
 
 - `docs/JUNTIA_MASTER.md` §5.6 (DEC-G01 a DEC-G06), §15.4 (DEC-G04) y §15.10
-  (decisiones 22.13, 22.15, 29.7, 29.8, 29.9, 29.10, 29.11 y 29.12)
+  (decisiones 22.13, 22.15, 29.7, 29.8, 29.9, 29.10, 29.11, 29.12 y 29.13)
 - `specs/007-recurrentes-calendario/spec.md`: Q12, D7, F101-2, F101-7, F101-16,
   FR-030 a FR-034a y US6
 - `specs/004-presupuestos-y-metas/spec.md`, FR-040 (aportes de hoy o del pasado)

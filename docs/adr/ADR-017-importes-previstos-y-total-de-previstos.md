@@ -101,6 +101,9 @@ ADR-016, sin añadir columnas duplicadas:
 | Ingreso | condicional | `fixed`, `range` o `unknown` (conocido, estimado o desconocido; F101-10) |
 | Aporte a meta | — | Lo fija ADR-d. Este ADR solo exige que no sea `unknown` |
 
+**Nota del 26 de noviembre de 2026:** lo delegado en ADR-d sobre los importes de
+los aportes lo resuelve ADR-018 §1 (P1(a); decisión 29.13).
+
 - Un ingreso también lleva su **tipo**, habitual o extraordinario (Q10).
 - Un ingreso condicional lleva **siempre** el texto de su **condición**:
   obligatorio, con espacios recortados, de 1 a 140 caracteres. Ninguna otra regla
@@ -342,7 +345,12 @@ Recurrentes.**
 - **Reconciliación de la spec 007 y del maestro: hecha**, en el PR documental
   posterior al PR #106, como el #105 para ADR-016. En él ADR-017 pasó a Aceptado
   con su registro en el maestro (29.12). Q15 (29.4) y la 29.8 siguen abiertas. La
-  tabla dice qué se tocó:
+  tabla dice qué se tocó (su fila «Resto de ADR-017» dice que faltaba ADR-d en ese
+  momento):
+
+  **Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+  decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+  P2(b), registrada en la decisión 29.13. Q15 sigue abierta.
 
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
@@ -434,6 +442,10 @@ transmitido por el gestor, se cita literalmente:
 aplican y rige (a), sin totales. No se reabre ADR-016, no se resuelve ADR-d ni la
 29.8, y no se autoriza todavía el Plan ni la implementación. Se mantienen la
 precedencia de Planes y las restricciones de N-8 (28.18).
+
+**Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+P2(b), registrada en la decisión 29.13. Q15 sigue abierta. ADR-d se aceptó como ADR-018.
 
 **Para los comps** (presentación, no `[P]`): si se ve el total (Q15 (a) o (b));
 si se muestra como un rango o como fijos y estimado por separado; el texto del

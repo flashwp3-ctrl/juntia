@@ -322,7 +322,8 @@ comps.
 **Ronda 2 de la revisión (sobre `495eb69`).** Cierra F101-1, 2, 4, 5, 6, 9, 11 y
 12, y abre F101-13 a F101-17. Son correcciones directas: ninguna requiere decisión
 de los fundadores, y no reabren D1–D7. Fijan resultados funcionales y dejan la
-representación a ADR-a o ADR-d.
+representación a ADR-a o ADR-d. (Nota del 26 de noviembre de 2026: resuelta por
+ADR-016 y ADR-018.)
 
 - **F101-13 · Anulación económica después de una sustitución técnica.**
   Resultados de la cadena completa:

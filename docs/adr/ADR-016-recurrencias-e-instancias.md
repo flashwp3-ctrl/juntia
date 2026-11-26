@@ -34,6 +34,10 @@ se representa. La decisión 29.7 y la spec le delegan estas cuestiones:
 | 14 | RLS y privacidad de la existencia | F101-2; FR-061, FR-092 | §11 |
 | 15 | Exportación y borrado | Q18; FR-078 | §13 |
 
+**Nota del 26 de noviembre de 2026:** la parte compartida con ADR-d de la cuestión
+13, y todo lo que este ADR delega en ADR-d, lo resuelve ADR-018 (decisión 29.13;
+notas de §10 y §14).
+
 Lo que no se puede romper:
 
 - **Lo previsto no es real** (A.2). Ninguna métrica de §5.1, ningún presupuesto,
@@ -576,7 +580,8 @@ dure), `reason` (`manual | goal_inactive`), `created_by`, `ended_by`, con
   **trazabilidad** que piden D5 y F101-18: el estado de una posición depende de él,
   no del estado actual de la regla.
 - `reason = goal_inactive` es la pausa de un aporte programado cuya meta pasa a
-  lograda o archivada (D7). **Cómo y quién la escribe lo fija ADR-d** (§10).
+  lograda o archivada (D7). **Cómo y quién la escribe lo fija ADR-d** (§10). *(Nota del 26 de
+  noviembre de 2026: lo fija ADR-018 §3.)*
 - **Reanudar** exige una acción explícita de la dueña o de un integrante en una
   compartida, quedar posiciones y, en aportes, una meta **activa** en ese momento.
   Una meta archivada que vuelve a `active` (por `goal_void_reactivate`) **no
@@ -1202,7 +1207,8 @@ eso:
 2. **Las funciones de MVP-1 y de Planes no leen estas tablas**: anular, editar,
    mover, liquidar, aportar, lograr o archivar no fallan ni cambian por la
    existencia de una recurrencia privada ajena. La pausa por meta inactiva (ADR-d)
-   tiene que cumplir esto también (§10).
+   tiene que cumplir esto también (§10). *(Nota del 26 de noviembre de 2026:
+   ADR-018 §3 lo cumple: el trigger de Metas no lee ni escribe recurrencias.)*
 3. **El movimiento creado al confirmar es idéntico al manual** (§7.3, paso 6):
    mismas columnas, misma auditoría visible, misma idempotencia de la escritura de
    dinero. La procedencia solo vive en las tablas de este ADR y en su auditoría
@@ -1383,12 +1389,22 @@ de este ADR. La tabla de arriba se conserva como registro, pero para las **regla
 aporte** dos de sus filas quedan sustituidas, y el contrato que consume el Plan es
 este:
 
-- **Fila «Omitir, deshacer, pausar, editar, finalizar, archivar, eliminar…»:** en
-  las reglas de aporte, pausar, finalizar y archivar dependen del estado de la meta
-  (ADR-018 §3), igual que las operaciones que consultan el historial efectivo de
-  pausas para decidir si algo es elegible, como Deshacer una omisión (§6.4). Todas
-  siguen el orden de ADR-018 §4: pareja si la meta es compartida → meta → regla →
-  instancia, y leen el historial bajo esos bloqueos.
+- **Fila «Omitir, deshacer, pausar, editar, finalizar, archivar, eliminar…»,
+  clasificada por dependencia efectiva, no por nombre:** en las reglas de aporte,
+  toda operación que escribe pausas o el ancla, depende del estado de la meta o
+  consulta el historial efectivo de pausas para decidir la elegibilidad de una
+  instancia sigue el orden pareja, si la meta es compartida → meta → regla →
+  instancia(s), cuando corresponda (ADR-018 §4 y Consecuencias). Esto incluye
+  Omitir y Deshacer cuando evalúan la elegibilidad (una posición sin hechos dentro
+  de una pausa ya está consumida y no es elegible, §5), y eliminar con historia
+  cuando equivale a archivar (§6.3). Las operaciones que no dependen de esos datos
+  conservan el orden aplicable de este ADR. «Cuando corresponda» significa que
+  pausar, reanudar, finalizar y archivar bloquean pareja → meta → regla, como dice
+  ADR-018 §4, y solo bloquean instancias las operaciones que las tocan.
+- **Razones de las filas «Confirmar un aporte», «Vincular un aporte existente» y
+  «Reanudar un aporte programado»:** citan la pausa que ADR-d podría escribir. El
+  orden de esas filas se mantiene, ahora por la regla de lo que depende del estado
+  de la meta (ADR-018 §4).
 - **Fila «Pausa automática de ADR-d al lograr o archivar la meta»:** describía una
   posibilidad delegada que **no se eligió**, igual que el párrafo «Si ADR-d hace que
   lograr o archivar una meta escriba una pausa…». ADR-018 la resolvió con un trigger
@@ -1461,6 +1477,10 @@ esto cambia ninguna función de MVP-1.
   PR documental), el mismo en que ADR-016 pasó a Aceptado con su registro en el
   maestro (29.11), como ADR-014 y ADR-015 con la decisión 27.3. Q15 y la decisión
   29.8 siguen abiertas. La tabla dice qué se tocó:
+
+  **Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+  decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+  P2(b), registrada en la decisión 29.13. Q15 sigue abierta.
 
   | Decisión | Spec 007 | Maestro, decisión 29 |
   | --- | --- | --- |
@@ -1616,7 +1636,8 @@ implementación. Son trece: C1 a C3 y P1 a P10.
   - **Reanudar un aporte contra lograr o archivar la meta** (F103-23), en los dos
     órdenes: sin interbloqueo, y la reanudación falla si la meta ya no está activa
     bajo su bloqueo. Lo mismo para crear o sustituir una recurrencia de aporte.
-  - Con ADR-d, los tres órdenes de US6.6.
+  - Con ADR-d, los tres órdenes de US6.6. *(Nota del 26 de noviembre de 2026: los
+    cubre ADR-018, `[V]` 5.)*
 - **P10. Compatibilidad en la base de datos.** Cada fila «No» de la tabla de
   compatibilidad de la spec la rechaza el trigger aunque se llame a la función de
   escritura directamente por SQL (SC-007).
@@ -1655,6 +1676,10 @@ transmitidas por el gestor. Se citan literalmente:
 Además: «No ampliar el alcance, no añadir mecanismos nuevos y no iniciar
 implementación». **Q15 y la decisión 29.8 permanecen abiertas.** La reconciliación
 de la spec 007 y del maestro va en un PR aparte (Consecuencias).
+
+**Nota del 26 de noviembre de 2026:** en el momento de aceptar este ADR, Q15 y la
+decisión 29.8 seguían abiertas. La 29.8 se cerró posteriormente con ADR-018,
+P2(b), registrada en la decisión 29.13. Q15 sigue abierta. La reconciliación ya está hecha.
 
 ## Referencias
 
