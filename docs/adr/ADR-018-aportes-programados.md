@@ -1,9 +1,10 @@
 # ADR-018 — Aportes programados: confirmación, pausa por meta inactiva y concurrencia
 
-**Estado:** **Propuesto** (26 de noviembre de 2026). Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
+**Estado:** **Propuesto** (26 de noviembre de 2026). **Los fundadores decidieron P1 (a) y P2 (b) el 26 de noviembre de 2026** («Decisiones de los fundadores»); con P2 (b) queda decidida la cuestión 29.8, cuyo cierre normativo se registra en el PR de reconciliación posterior. Sigue Propuesto hasta el GO de arquitectura y la revisión final de fidelidad. Es el candidato **ADR-d** del análisis (`docs/propuestas/analisis-planificacion-financiera.md` §6), con el número que le toca al abrirse (maestro §15.10, decisión 29.10). Se acepta antes de la etapa Plan de la spec 007 (`AGENTS.md` 17). No se implementa antes de declarar MVP-1 ni antes de que Planes (spec 006) esté aceptada (28.18, condición 6) · **Origen:** especificación 007 (`specs/007-recurrentes-calendario/spec.md`), Q12, D7, F101-2, F101-7, F101-16, FR-030 a FR-034a y US6; maestro §15.10, decisiones 29.7, 29.8, 29.9 y 29.10; ADR-016 §6.2, §10 y §14; ADR-017 §1 · **Alcance:** MVP-2
 
-En este archivo `[P]` es una **propuesta** que necesita decisión de los
-fundadores y `[V]` una **verificación pendiente** (maestro §15.9). Los nombres de
+En este archivo, las dos `[P]` (P1 y P2) **ya están decididas** por los
+fundadores (26 de noviembre de 2026); se conservan sus números como referencia, y
+las opciones descartadas quedan como contexto. `[V]` una **verificación pendiente** (maestro §15.9). Los nombres de
 tablas, columnas y funciones son de trabajo. Las fechas de los ejemplos son
 **ficticias**.
 
@@ -18,13 +19,13 @@ meta → regla (§14). ADR-017 (aceptado) fija que un aporte nunca tiene importe
 
 | # | Cuestión delegada | Origen | Dónde se resuelve |
 | --- | --- | --- | --- |
-| 1 | `amount_kind` y modo de financiación de los aportes | ADR-017 §1; ADR-016 §10 | §1 (P1) |
+| 1 | `amount_kind` y modo de financiación de los aportes | ADR-017 §1; ADR-016 §10 | §1 (P1 (a), decidida) |
 | 2 | Confirmación: crea el aporte real, solo del propio aportante y solo con la meta activa | Q12; FR-030, FR-031, FR-034a; 004, FR-040 | §2 |
 | 3 | Privacidad: la programación es privada y el aporte confirmado es indistinguible del manual | Q12; F101-2; FR-033; 29.9 | §2 y §5 |
 | 4 | Cómo y quién escribe la pausa `goal_inactive` (D7), sin dar a `juntia_writer` acceso a recurrencias privadas ni revelar su existencia desde Metas | ADR-016 §6.2 y §10; F101-7 | §3 |
 | 5 | Una meta reactivada no reanuda la recurrencia | F103-5; ADR-016 §6.2 | §3 |
 | 6 | Concurrencia con lograr y archivar, y la carrera entre reanudar y lograr | F101-7, F101-16; US6.6; ADR-016 §14 | §4 |
-| 7 | **29.8:** vincular un aporte histórico a una meta inactiva | 29.8; FR-034a | §6 (P2, sin cerrar) |
+| 7 | **29.8:** vincular un aporte histórico a una meta inactiva | 29.8; FR-034a | §6 (P2 (b), decidida) |
 
 Lo que no cambia: ADR-010, los estados y las transiciones de Metas
 (`goals_guard_transition`, `goal_void_reactivate`), y ninguna función de MVP-1.
@@ -46,16 +47,16 @@ modificarlo):
 
 ### 1. Importe y modo de financiación de un aporte programado
 
-- **Importe:** según P1. Recomendación: **solo `fixed`**. Un aporte programado es
-  una decisión propia de cuánto apartar; con un importe fijo, el toque único de
-  ADR-016 §7.2 funciona sin abrir el borrador. Con P1 (b), un rango abriría el
-  borrador al confirmar, como un gasto estimado. En ningún caso `unknown`
-  (ADR-017 §1).
+- **Importe: solo `fixed`** (P1 (a), decidida). Un aporte programado no admite
+  rangos ni importes desconocidos (ADR-017 §1). Con un importe fijo, el toque único
+  de ADR-016 §7.2 funciona sin abrir el borrador, y la aportante puede cambiar el
+  importe efectivo en el borrador antes de confirmar, conforme a ADR-016. P1 (b),
+  fijo o estimado con rango, queda descartada.
 - **Modo de financiación:** la versión de la regla guarda el `funding_mode` que
   usará el aporte (`reserved` o `transferred_declared`, los mismos de la 004). Es
   un dato editable de la versión (ADR-016 §4), no un dato del calendario. El
   borrador de confirmación permite cambiarlo antes de guardar.
-- La compatibilidad de la versión con la regla (aporte ⇒ `fixed` o lo que diga P1,
+- La compatibilidad de la versión con la regla (aporte ⇒ `fixed`,
   `funding_mode` obligatorio, nada de certeza ni condición) entra en el contrato de
   integridad de ADR-017 §1, con el mismo mecanismo que elija el Plan.
 
@@ -289,8 +290,8 @@ compartida):
 | 2 de junio | Ana reanuda, con la meta activa | Se escribe la pausa cerrada del 10 de marzo al 2 de junio y avanza el ancla. La posición del 5 de junio se genera |
 
 Una meta lograda no vuelve a `active`: su regla queda pausada hasta que la dueña la
-finalice. Sus pendientes anteriores se conservan (ADR-016 §5), y si se pueden
-vincular depende de P2.
+finalice. Sus pendientes anteriores se conservan (ADR-016 §5), y se les puede
+vincular un aporte histórico válido según P2 (b) (§6).
 
 **Nadie más escribe en la regla.** `juntia_writer`, en la sesión de quien logra o
 archiva la meta, no lee ni escribe recurrencias.
@@ -333,23 +334,33 @@ se crea uno en una meta que no lo admite (US6.6).
   tiempos y auditoría son idénticos con y sin programaciones privadas (`[V]` 2).
 - El aporte confirmado es indistinguible del manual (§2).
 
-### 6. Vincular un aporte histórico a una meta inactiva (29.8) `[P]` P2
+### 6. Vincular un aporte histórico a una meta inactiva (29.8) · P2 decidida
 
 **La cuestión** (29.8; FR-034a). Ana hizo un aporte manual cuando la meta estaba
 activa y no lo vinculó a su instancia. La meta pasa a lograda o archivada. ¿Puede
 vincular después ese aporte a la instancia pendiente? **Crear** un aporte nuevo en
 una meta inactiva sigue prohibido en cualquier caso (004, FR-040; F101-16).
 
-Opciones:
+**Decisión de los fundadores (26 de noviembre de 2026): (b).** Se permite vincular
+un aporte histórico válido y no anulado a su instancia programada aunque la meta
+esté lograda o archivada, siempre que sea de la misma meta y la misma aportante y
+cumpla **todas** las condiciones de ADR-016 §7.4. El vínculo no crea un aporte
+nuevo, no modifica saldos, no mueve fondos y no reactiva la meta ni la recurrencia.
+Crear o confirmar aportes nuevos en una meta inactiva sigue prohibido. Con esta
+decisión queda decidida la cuestión 29.8; su cierre normativo se registra en el PR
+de reconciliación posterior (Consecuencias). El texto literal está en «Decisiones
+de los fundadores».
 
-- **(a) No se puede vincular** mientras la meta no esté activa. Vincular añadiría a
+Opciones que se plantearon:
+
+- **(a), descartada. No se puede vincular** mientras la meta no esté activa. Vincular añadiría a
   §7.4 de ADR-016 la condición «meta activa». La instancia se puede omitir o queda
   pendiente.
-- **(b) Se puede vincular un aporte ya existente**, válido y no anulado, de la misma
+- **(b), decidida. Se puede vincular un aporte ya existente**, válido y no anulado, de la misma
   meta y la misma aportante (la compatibilidad de ADR-016 §7.4), aunque la meta ya
   no esté activa. No crea dinero ni mueve fondos: solo reconoce que la obligación
   se cumplió cuando la meta estaba activa.
-- **(c)** Como (b), pero solo si el aporte se **registró antes** de la inactivación
+- **(c), descartada.** Como (b), pero solo si el aporte se **registró antes** de la inactivación
   (F110-6). Compara el instante de registro del asiento (`created_at`), no su
   fecha efectiva, porque `contribute_to_goal` admite fechas pasadas. La
   inactivación es la **primera** posterior al ancla de la regla (§3.2): es un
@@ -358,11 +369,10 @@ Opciones:
   el aporte no cuenta como anterior y (c) rechaza el vínculo. No se añaden columnas
   al ledger.
 
-**Recomendación: (b).** El vínculo no tiene efecto económico, y el aporte, por
-definición, se creó con la meta activa (FR-040), así que la condición de (c) se
+Por qué (b), como se recomendó: el vínculo no tiene efecto económico, y el aporte,
+por definición, se creó con la meta activa (FR-040), así que la condición de (c) se
 cumple siempre salvo en reactivaciones, donde no añade protección. (a) dejaría
-pendientes que el sistema sabe cumplidas. **Esta decisión es de los fundadores**:
-este ADR no la cierra.
+pendientes que el sistema sabe cumplidas.
 
 ## Alternativas consideradas
 
@@ -405,7 +415,9 @@ este ADR no la cierra.
 - ADR-016 no cambia: recibe la pausa derivada en su historial de pausas (§6.2), y
   `reason = goal_inactive` se escribe como ya preveía, por la dueña.
 - Las restricciones de §1 completan el contrato de ADR-017 §1.
-- **La 29.8 sigue abierta** hasta que los fundadores decidan P2.
+- **La 29.8 queda decidida** con P2 (b). Su cierre normativo (spec 007 y maestro,
+  decisión 29) se registra en el PR de reconciliación posterior; este PR no toca la
+  spec ni el maestro.
 
 ## Verificación pendiente [V]
 
@@ -472,24 +484,55 @@ este ADR no la cierra.
    transacción la inactiva o la reactiva (F110-2).
 6. **Confirmación:** fecha efectiva hoy o pasada; solo la dueña; meta activa bajo el
    bloqueo; `funding_mode` de la versión, y el cambiado en el borrador.
-7. **Restricciones de §1** según P1, también por SQL directo, y **pruebas negativas
+7. **Restricciones de §1** (P1 (a): solo `fixed`; un rango o un `unknown` en una regla de aporte se rechaza), también por SQL directo, y **pruebas negativas
    del ancla** (F110-9): `goal_ack_version` es obligatoria en las reglas de aporte y
    nula en las demás, y solo la escriben las funciones de crear y reanudar.
-8. **Según P2.** Con (b) o (c), vincular un aporte no anulado de la misma meta y
-   aportante funciona con la meta inactiva, y nunca crea un asiento. Se mantienen
+8. **P2 (b):** vincular un aporte histórico válido y no anulado de la misma meta y
+   aportante funciona con la meta lograda o archivada, y **no** crea un asiento, no
+   cambia saldos ni la meta, no reactiva la meta ni la recurrencia. Se mantienen
    **todas** las condiciones de ADR-016 §7.4 (autorización previa, bloqueo,
-   precondición, compatibilidad, movimiento activo con fecha ≤ hoy y unicidad).
-   **Con (a)**, el vínculo con la meta inactiva se rechaza. **Con (c)**, además de lo
-   de (b), solo la condición temporal: un aporte registrado antes de la primera
-   inactivación posterior al ancla se acepta; uno registrado después, también con
-   fecha efectiva pasada, se rechaza; y a igualdad de instante, se rechaza (§6).
+   precondición, compatibilidad, movimiento activo con fecha ≤ hoy y unicidad): un
+   aporte anulado, de otra meta o de otra persona se rechaza. Confirmar un aporte
+   **nuevo** en esa meta sigue fallando (`goalNotOpen`). No hay ninguna condición
+   temporal: la de (c) se descartó.
 
-## Cuestiones para los fundadores `[P]`
+## Decisiones de los fundadores (26 de noviembre de 2026)
 
-| # | Cuestión | Opciones | Recomendación | Dónde |
+Los fundadores aprobaron P1 (a) y P2 (b). Su texto, transmitido por el gestor, se
+cita literalmente:
+
+> Decisiones de los fundadores — ADR-018
+>
+> P1(a) — Aprobada. Los aportes programados tendrán exclusivamente un importe fijo. No se admiten rangos ni importes desconocidos. La aportante podrá modificar el importe efectivo mediante el borrador antes de confirmar, conforme a ADR-016.
+>
+> P2(b) — Aprobada. Se permite vincular un aporte histórico válido y no anulado a su instancia programada aunque la meta esté lograda o archivada, siempre que corresponda a la misma meta y a la misma aportante y cumpla todas las condiciones de ADR-016 §7.4.
+>
+> El vínculo no crea un aporte nuevo, no modifica saldos, no mueve fondos y no reactiva la meta ni la recurrencia.
+>
+> Crear o confirmar aportes nuevos en una meta inactiva sigue prohibido.
+>
+> Con P2(b) queda decidida la cuestión 29.8, cuyo cierre normativo deberá registrarse en el posterior PR de reconciliación.
+>
+> Registra literalmente estas decisiones y marca las alternativas descartadas.
+>
+> Completa las correcciones F110-8 a F110-10 y las precisiones F110-11 y F110-12, sin cambiar la arquitectura propuesta.
+>
+> ADR-018 permanece Propuesto hasta obtener el GO arquitectónico y la revisión final de fidelidad.
+>
+> No se reabren ADR-016, ADR-017 ni las decisiones anteriores. Q15 sigue abierta y no se autoriza todavía Plan ni implementación.
+>
+> Mantener la precedencia de Planes, los gates independientes y las restricciones de N-8.
+
+| # | Cuestión | Decidida | Descartadas | Dónde |
 | --- | --- | --- | --- | --- |
-| P1 | Importe de un aporte programado | (a) solo fijo; (b) fijo o estimado con rango. Nunca desconocido (ADR-017 §1) | (a): un aporte es una decisión propia, y el toque único funciona sin abrir el borrador | §1 |
-| P2 | **29.8:** vincular un aporte histórico a una meta inactiva | (a) no se puede; (b) se puede vincular un aporte existente, no anulado, de la misma meta y aportante; (c) como (b), solo si se registró antes de la primera inactivación posterior al ancla | (b): no tiene efecto económico y no deja pendientes que ya se cumplieron. Crear aportes nuevos sigue prohibido. (c) exige comparar instantes de registro (§6) | §6 |
+| P1 | Importe de un aporte programado | (a) solo fijo; sin rangos ni importes desconocidos; el importe efectivo se puede cambiar en el borrador antes de confirmar (ADR-016) | (b) fijo o estimado con rango | §1; [V] 7 |
+| P2 | **29.8:** vincular un aporte histórico a una meta inactiva | (b) se puede vincular un aporte histórico válido y no anulado de la misma meta y aportante, con todas las condiciones de ADR-016 §7.4, aunque la meta esté lograda o archivada; sin crear aportes, mover fondos ni reactivar nada | (a) no se puede; (c) como (b), solo si se registró antes de la primera inactivación posterior al ancla | §6; [V] 8 |
+
+**La 29.8 queda decidida** con P2 (b). Su cierre normativo, en la spec 007 y en la
+decisión 29, se registra en el PR de reconciliación posterior. Q15 sigue abierta.
+No se reabren ADR-016, ADR-017 ni las decisiones anteriores, y no se autoriza
+todavía el Plan ni la implementación. Se mantienen la precedencia de Planes, los
+gates independientes y las restricciones de N-8 (28.18).
 
 ## Referencias
 
