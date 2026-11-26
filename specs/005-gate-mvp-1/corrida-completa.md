@@ -19,21 +19,23 @@ no se corrige nada: solo se prueba y se documenta.
 
 **En números:**
 
-- 142 filas: **119 PASS · 7 FAIL · 4 BLOQUEADO · 12 NO PROBADO**. Los FAIL son los siete hallazgos C-1 a C-7, todos de
+- 143 filas: **120 PASS · 7 FAIL · 4 BLOQUEADO · 12 NO PROBADO**. Los FAIL son los siete hallazgos C-1 a C-7, todos de
   presentación o copy.
-- Ocho sugerencias de usabilidad (S-1 a S-8), que no son fallos.
-- Matriz de privacidad de 240 peticiones (HTML, RSC y RSC de prefetch), sin fugas.
+- Siete sugerencias de usabilidad (S-1 a S-7) y una limitación de la exportación (S-8), que no son fallos.
+- Matriz de privacidad de la ronda 3: **144 casos** (2 cuentas × 2 contextos × 12 rutas × 3 canales: HTML, RSC y RSC de
+  prefetch), 144 respuestas inspeccionadas y 240 peticiones HTTP (96 son redirecciones de `_rsc`). Sin fugas en las
+  marcas incluidas, que se enumeran en la [matriz](#matriz-de-privacidad-f104-5-f104-13-y-f104-14).
 
 ## Entorno
 
 | Dato | Valor |
 | --- | --- |
-| Fechas | Ronda 1: 25 de noviembre de 2026, 19:10–20:30. Ronda 2: 25 de noviembre, 21:35–22:05 (America/Bogota) |
+| Fechas | 25 de noviembre de 2026 (America/Bogota). Ronda 1: 19:10–20:30. Ronda 2: 21:35–22:05. Ronda 3: 22:40–23:20 |
 | Commit probado | `b2f2f907f996e218b38398854bcc5c68c8d4b20b` (`main`, merge del PR #102), sin cambios locales, en las dos rondas |
 | App | `next build` + `next start` (build de producción) en `http://localhost:3400` |
 | Base de datos y Auth | **juntia-dev**. Producción no se tocó |
 | Cuentas | `corrida-ana-…@seed.test` (Ana, propietaria) y `corrida-beto-…@seed.test` (Beto). Credenciales solo en un archivo local ignorado por git |
-| Datos | Solo ficticios. Los de la ronda 2 empiezan por «R2» o «Zq» |
+| Datos | Solo ficticios. Los de las rondas 2 y 3 empiezan por «R2» o «Zq» |
 | Navegadores | Chromium de Playwright (`playwright-cli` 0.1.23), con una sesión aislada por cuenta, para las acciones, las capturas y las peticiones de la matriz. Navegador integrado de Claude (Chromium) para la revisión visual de Ana a 1440 y 390 px |
 | Configuración de Auth | Sin cambios. No se envió ningún correo |
 
@@ -48,8 +50,8 @@ no se corrige nada: solo se prueba y se documenta.
 Todas las operaciones funcionales (anotar, editar, invitar, liquidar, aportar, aprobar, exportar…) se hicieron con
 sesiones de usuario en la app, nunca con la clave de servicio. Las exportaciones del anexo también son de usuario.
 
-**Capturas.** 108 PNG en [`evidence/corrida-completa/`](evidence/corrida-completa/) (7,2 MB; la mayor, 165 KB). Las de
-la ronda 2 empiezan por `r2-`. La revisión de privacidad de las capturas está en el
+**Capturas.** 112 PNG en [`evidence/corrida-completa/`](evidence/corrida-completa/) (7,5 MB; la mayor, 165 KB). Las de
+la ronda 2 empiezan por `r2-` y las de la ronda 3 por `r3-`. La revisión de privacidad de las capturas está en el
 [anexo B](#anexo-b--privacidad-de-las-capturas).
 
 ## Método y capas
@@ -58,7 +60,7 @@ la ronda 2 empiezan por `r2-`. La revisión de privacidad de las capturas está 
 | --- | --- | --- |
 | Recorrido funcional móvil | Todos los flujos a **390 px** con las dos cuentas | Lista de comprobación |
 | Revisión de escritorio | Composición a **1440 px** (sidebar, Balance como destino, tabla con panel, diálogos) y, en la ronda 2, anotar, liquidar y aportar a 1440 | Bloque M |
-| Matriz de privacidad | Peticiones con la sesión de cada usuario | [Matriz](#matriz-de-privacidad-f104-5) |
+| Matriz de privacidad | Peticiones con la sesión de cada usuario (ronda 3) | [Matriz](#matriz-de-privacidad-f104-5-f104-13-y-f104-14) |
 | Pruebas automatizadas previas | No se ejecutaron aquí. Se citan como referencia de lo NO PROBADO | Columna «Evidencia» |
 | Pendiente, fuera de esta corrida | 360, 430, 768 y 1024 px; texto al 200 %; teclado completo; movimiento reducido más allá del cambio de contexto; VoiceOver; dispositivo real; red lenta y listas largas | Bloque N y [última sección](#qué-cubre-esta-corrida-y-qué-se-acredita-en-otro-sitio) |
 
@@ -73,13 +75,13 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | # | Comprobación | Estado | Evidencia |
 | --- | --- | --- | --- |
 | A-1 | Registro con un correo fuera de la lista permitida: «Verifica tu correo» con texto neutro | PASS | `a1-registro-no-permitido-390`. Lectura de Auth: 0 de 1.590 usuarios con ese correo |
-| A-2 | Ese registro no envía correo | NO PROBADO | No hay registro de envíos accesible; el hook de la lista permitida lo cubre `supabase/tests/09_allowlist.test.sql` |
+| A-2 | Ese registro no envía correo | NO PROBADO | No hay registro de envíos accesible. Cobertura **parcial**: `supabase/tests/09_allowlist.test.sql` l.8–15 prueba que el hook rechaza el correo (403), no que no salga ningún correo |
 | A-3 | Registro con un correo permitido y verificación por enlace | BLOQUEADO | SMTP aplazado; los `@seed.test` no reciben correo |
 | A-4 | Contraseña incorrecta: «Correo o contraseña incorrectos.» sin decir cuál falló | PASS | `a2-contrasena-incorrecta-390` |
 | A-5 | Primera entrada (A6) «Hola, Ana», sin pedir presupuesto | PASS | `a3-primera-entrada-390` |
 | A-6 | Recuperar acceso: aviso uniforme con un correo sin cuenta | PASS | `a4-recuperar-uniforme-390`. 0 usuarios con ese correo |
 | A-7a | Enlace de recuperación válido → «Crea una contraseña nueva» con sesión abierta | PASS | Enlace generado por administración, no recibido por correo |
-| A-7b | Cambiar la contraseña, entrar con la nueva y rechazar un enlace caducado o reutilizado | NO PROBADO | `tests/integration/confirm-code.test.ts`, `tests/integration/auth.test.ts`; el flujo con correo, solo en el job `e2e` (`@mail`) |
+| A-7b | Cambiar la contraseña, entrar con la nueva y rechazar un enlace caducado o reutilizado | NO PROBADO | `tests/e2e/access-account.e2e.ts` l.184–225 (`@mail`, solo en el job `e2e` del CI): recuperación uniforme, enlace caducado, contraseña nueva en A5 y acceso |
 | A-8 | Cambiar la contraseña desde Seguridad y sesión | BLOQUEADO | Enviaría un correo (cupo de 2 por hora y SMTP aplazado) |
 | A-9 | Cerrar sesión: aviso; `/cuenta` lleva a Entrar y, al entrar, vuelve a `/cuenta` | PASS | `a5-sesion-cerrada-390` |
 
@@ -125,7 +127,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | D-10 | «Salir de la pareja» es solo una nota | PASS | `d5-aceptada-390` |
 | D-11a | Con la pareja completa no se ofrece invitar | PASS | `d5-aceptada-390` |
 | D-11b | Un tercero no puede entrar a la pareja | NO PROBADO | `supabase/tests/10_couple.test.sql` (l.30 «tercero no acepta», l.50 «exactamente dos integrantes»), `10a_couple_tables.test.sql` |
-| D-12 | B, que es integrante y no propietario, no tiene controles para invitar, regenerar ni anular | PASS | `r2-d-beto-sin-invitar-390`. En servidor: `10_couple.test.sql` l.31–32 (un no propietario no anula ni regenera) |
+| D-12 | B, que es integrante y no propietario, no tiene controles para invitar, regenerar ni anular | PASS | `r2-d-beto-sin-invitar-390`. Comprobado solo en la interfaz: no localicé una prueba de servidor para un integrante que no es propietario (`10_couple.test.sql` l.31–32 prueba a un tercero ajeno a la pareja) |
 | D-13 | Una cuenta con un correo distinto del invitado no puede aceptar | NO PROBADO | `10_couple.test.sql` l.29–30 (JT104 sin enumerar) |
 | D-14 | Invitación caducada | NO PROBADO | `10_couple.test.sql` l.66–73 (preview y aceptación vencidas) |
 
@@ -160,9 +162,9 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | F-2 | Importe y pagador fijos; ChangePreview correcto (saldo 100.000 → 130.000) | PASS | `f1-mover-a3-preview-390` |
 | F-3 | Confirmar → «Movido a Pareja. Beto ahora le debe $140.000 a Ana.» con Deshacer unos 6 s | PASS | `f3-toast-deshacer-390` |
 | F-4 | Deshacer → «Volvió a Yo.»; sale de Nosotros y vuelve a Yo | PASS | `f3-tras-deshacer-390` |
-| F-5 | B no recibe ni el privado anulado ni el devuelto | PASS | [Matriz](#matriz-de-privacidad-f104-5) y búsqueda de las descripciones en el HTML de B |
+| F-5 | B no recibe ni el privado anulado ni el devuelto | PASS | Ronda 1: descripciones buscadas en el HTML de B (Inicio, Actividad, Balance; Yo y Nosotros). Ronda 3: el movimiento devuelto por Deshacer («Helado…», descripción e id) en la matriz, en los tres canales |
 | F-6 | Un gasto pagado con meta personal no se puede mover: «No se puede mover este gasto…» | PASS | `r2-i-no-se-puede-mover-390` |
-| F-7 | Deshacer Mover a Pareja después de una edición o una liquidación (FR-034) | NO PROBADO | La ventana de 6 s no da tiempo en la UI. `supabase/tests/11_shared_money.test.sql` l.103 y l.118 (JT117) |
+| F-7 | Deshacer Mover a Pareja después de una edición o una liquidación (FR-034) | NO PROBADO | La ventana de 6 s no da tiempo en la UI. Cobertura **parcial**: `supabase/tests/11_shared_money.test.sql` l.103 (ventana vencida) y l.118 (liquidación posterior). No localicé una prueba con una edición posterior |
 
 ### G. Balance y liquidaciones
 
@@ -191,7 +193,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | H-5 | Editar con historial (autor, de y a) | PASS | `h6-conflicto-presupuesto-390` |
 | H-6 | Conflicto: «Ana cambió este presupuesto. Ahora el límite es $200.000.», sin sobrescribir | PASS | `h6-conflicto-presupuesto-390` |
 | H-7 | Desactivar: el gasto sigue y no aparece límite cero | PASS | `h7-desactivado-390` |
-| H-8 | El presupuesto personal de A no le llega a B, ni en Yo ni en Nosotros | PASS | `h8-presupuesto-personal-ana-390`. Búsqueda en el HTML de B: «40.000» ausente |
+| H-8 | El presupuesto personal de A no le llega a B, ni en Yo ni en Nosotros | PASS | `h8-presupuesto-personal-ana-390`. Ronda 1: «40.000» ausente del HTML de B. Ronda 3: límites únicos 97.531 (A) y 64.297 (B), formateados y en unidades menores, en los tres canales de la matriz. El id del presupuesto no se incluyó (no es visible en la app) |
 
 ### I. Metas
 
@@ -204,7 +206,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | I-5 | US-19: A 300.000 (apartado) + B 200.000 (transferencia declarada) = 50 %, con autor | PASS | `i4-meta-compartida-aportes-beto-390` |
 | I-6 | Metas · Yo de B: compartidas aparte con «Tu disponible» | PASS | `i5-metas-yo-beto-tu-disponible-390` |
 | I-7 | Deshacer un aporte (DESHECHO) y anular otro (ANULADO) | PASS | `i6-aporte-toast-390`, `i6-aporte-anulado-390` |
-| I-8 | Anular un aporte cuyos fondos ya se usaron: «Anular aporte» no se ofrece | PASS | `r2-i-anular-aporte-usado-390`. En servidor: `13_goals.test.sql` l.46 |
+| I-8 | Anular un aporte cuyos fondos ya se usaron: «Anular aporte» no se ofrece | PASS | `r2-i-anular-aporte-usado-390`. Comprobado solo en la interfaz: no localicé una prueba de servidor que rechace anular un aporte consumido (`13_goals.test.sql` l.46 prueba que se puede anular uno disponible) |
 | I-9 | Retiro con motivo, «Retiro de la meta» | PASS | — |
 | I-10 | Retiro mayor que lo disponible → «Puedes retirar hasta $250.000» | PASS | `i8-retiro-mayor-390` |
 | I-11 | En la meta compartida solo se retira lo propio (tope 200.000) | PASS | — |
@@ -221,12 +223,12 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | I-21b | Estado que muestra el gasto después de quitar el uso | FAIL ([C-3](#c-3--tras-quitar-el-uso-el-gasto-sigue-diciendo-pagado-con-una-meta--media)) | `i11-quitar-uso-detalle-390` |
 | I-22 | Eliminar un gasto financiado: el aviso lo explica y los fondos vuelven (120.000 → 200.000) | PASS | `r2-i-eliminar-gasto-financiado-390` |
 | I-23 | Bajar el gasto por debajo de lo financiado → «Primero quita el uso de la meta o usa menos.» | PASS | `r2-i-reducir-bajo-financiado-390` |
-| I-24 | Quitar el uso de una meta personal y después mover a Pareja: se mueve y los fondos vuelven | PASS | `r2-i-no-se-puede-mover-390` |
+| I-24 | Quitar el uso de una meta personal y después mover a Pareja: disponible de Bicicleta 200.000 → 170.000 con el gasto → 200.000 al quitar el uso; luego se mueve a Nosotros («movido desde Yo») | PASS | [Anexo A](#anexo-a--movimientos-de-la-corrida), fila 22. El rechazo previo a quitar el uso, en `r2-i-no-se-puede-mover-390` |
 | I-25a | Meta superada: excedente neutro y «Dar por lograda» manual | PASS | `i12-meta-superada-390` |
 | I-25b | Texto de la meta personal superada | FAIL ([C-4](#c-4--meta-personal-superada-con-texto-de-pareja--baja)) | `i12-meta-superada-390` |
 | I-26 | Archivar con fondos está bloqueado; sin fondos, «Meta archivada: queda de solo lectura con su historial.» | PASS | `i13-archivar-con-fondos-resultado-390` |
-| I-27 | Archivar con una solicitud pendiente y saldo cero | NO PROBADO | No se puede aislar en la UI (una solicitud pendiente exige fondos). No encontré una prueba específica; `13_goals.test.sql` l.33 cubre «no archivar con fondos» |
-| I-28 | US-22: la meta personal de A no le llega a B | PASS | [Matriz](#matriz-de-privacidad-f104-5) |
+| I-27 | Archivar con una solicitud pendiente y saldo cero (FR-033). Meta compartida «ZqArchivarPendiente»: solo aporta B (50.000); A anota un gasto de 50.000 y pide los 50.000 de B, sin fondos propios; B retira sus 50.000 (lo pendiente no reserva fondos). La meta queda en $0 con «Hay una solicitud de fondos pendiente.». Ni B ni A pueden archivar: «Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.», y la meta sigue activa al recargar | PASS | `r3-i27-gasto-pide-beto-390`, `r3-i27-saldo-cero-pendiente-390`, `r3-i27-archivar-beto-390`, `r3-i27-archivar-ana-390` |
+| I-28 | US-22: las metas personales de cada uno no le llegan al otro | PASS | Matriz, ronda 3: meta de A (nombre, objetivo, aporte en los dos formatos e id) frente a B, y meta de B (ídem) frente a A, en los tres canales |
 
 ### J. Inicio, Análisis y DEC-G04
 
@@ -245,7 +247,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | # | Comprobación | Estado | Evidencia |
 | --- | --- | --- | --- |
 | K-1 | La hoja dice qué incluye, qué no y que no sirve para restaurar | PASS | `k1-exportar-hoja-390` |
-| K-2 | JSON y CSV de las dos cuentas descargan con los mismos recuentos por tipo; importes como texto en unidades menores; 0 UUID | PASS | [Comprobaciones verificables](#comprobaciones-verificables-f104-9) |
+| K-2 | JSON y CSV de las dos cuentas descargan con los mismos recuentos por tipo; importes como texto en unidades menores; 0 UUID | PASS | `k1-exportar-listo-json-390`; [comprobaciones verificables](#comprobaciones-verificables-f104-9) |
 | K-3 | El export de cada uno no tiene nada privado del otro; no incluye eliminados ni deshechos | PASS | Ídem |
 
 ### L. Privacidad entre los dos
@@ -253,9 +255,9 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | # | Comprobación | Estado | Evidencia |
 | --- | --- | --- | --- |
 | L-1 | B busca en Actividad textos privados de A → «Nada coincide» | PASS | `l1-beto-busca-privado-ana-390` |
-| L-2 | Matriz actor × contexto × ruta × canal: 240 peticiones, 0 fugas | PASS | [Matriz](#matriz-de-privacidad-f104-5) |
-| L-3 | En Nosotros, ninguno recibe sus propios privados (003 FR-037–041) | PASS | Ídem |
-| L-4 | El selector de metas de Anotar en Nosotros no consulta metas personales (004 FR-085) | PASS | Ídem |
+| L-2 | Matriz actor × contexto × ruta × canal, ronda 3: 144 casos, 0 fugas en las marcas incluidas (gasto privado, meta personal y presupuesto personal de cada uno, y el movimiento devuelto por Deshacer de A) | PASS | [Matriz](#matriz-de-privacidad-f104-5-f104-13-y-f104-14) |
+| L-3 | En Nosotros, ninguno recibe sus propias marcas privadas (003 FR-037–041) | PASS | Ídem |
+| L-4 | El selector de metas de Anotar en Nosotros no carga metas personales (004 FR-085), probado con A y con B; en Yo, cada uno sí ve la suya | PASS | Ídem |
 | L-5 | Exportes cruzados limpios | PASS | K-3 |
 
 ### M. Escritorio y accesibilidad (revisión, no barrido)
@@ -267,7 +269,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | M-3 | 1440: Actividad en tabla con «Pagó · Reparto» y panel | PASS | `m2-actividad-tabla-panel-1440` |
 | M-4 | 1440: Anotar como diálogo, también con N; anotar y guardar | PASS | `m7-anotar-dialogo-1440`, `r2-m-anotar-guardado-1440` |
 | M-5 | 1440: liquidar (375.500 tras 10.000) y aportar (Viaje 180.000 → 190.000) | PASS | `r2-m-liquidar-hoja-1440`, `r2-m-balance-tras-liquidar-1440`, `r2-m-aporte-dialogo-1440`, `r2-m-meta-tras-aporte-1440` |
-| M-6 | 1440: Metas, Plan y Análisis con composición de escritorio | PASS | `m4-metas-nosotros-1440`, `m4-metas-yo-1440`, `m5-plan-nosotros-1440` |
+| M-6 | 1440: Metas, Plan y Análisis con composición de escritorio | PASS | `m4-metas-nosotros-1440`, `m4-metas-yo-1440`, `m5-plan-nosotros-1440`, `m6-analisis-nosotros-1440` |
 | M-7 | Movimiento reducido en el cambio Yo → Nosotros: `getAnimations()` en curso = 0 a los 120 ms y a la hoja de Anotar; anuncio «Ahora ves: Nosotros» | PASS | `n1-reduced-motion-cambio-nosotros-390` |
 | M-8 | 360, 430, 768 y 1024 px; texto al 200 %; teclado completo; resto de movimiento reducido | NO PROBADO | Barrido `@sweep` y evidencia de la 005 (`specs/005-gate-mvp-1/evidence.md`) |
 
@@ -278,7 +280,8 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | N-1 | US-12, mediana < 10 s en teléfono real (V7) | BLOQUEADO | Necesita a una persona con su teléfono |
 | N-2 | iPhone: F02, teclado y safe areas, VoiceOver y back-swipe (V1, V4, V5, V6) | BLOQUEADO | Necesita un dispositivo real |
 | N-3 | Borrado manual de cuenta | NO PROBADO | Fuera del recorrido de usuario, con evidencia administrativa en 005-T039 (`contracts/account-deletion.md`). La nota de la app pasa (B-4) |
-| N-4 | Red lenta, errores de red y listas largas | NO PROBADO | `tests/evidence/release-long-lists.capture.ts`; capturas de 005-T027 y T054 |
+| N-4a | Listas largas | NO PROBADO | `tests/evidence/release-long-lists.capture.ts`; capturas de 005-T027 y T054 |
+| N-4b | Errores de red y red lenta | NO PROBADO | `tests/e2e/annotate.e2e.ts` l.390 (respuesta perdida, Reintentar con la misma clave); estados de error de las rutas en `tests/evidence/home-states.capture.ts` l.80 |
 
 ## Hallazgos (FAIL)
 
@@ -341,7 +344,7 @@ En Nosotros falta «de». Capturas `m2-actividad-tabla-panel-1440` y `c8-activid
   - Además, la cancelación no pidió confirmación (S-4).
 - **Captura.** `r2-i-solicitud-cancelada-390`.
 
-### C-7 · Aprobar sin fondos suficientes: vista previa engañosa y error genérico — baja
+### C-7 · Aprobar sin fondos suficientes: vista previa engañosa y error genérico — media
 
 - **Pasos.**
   1. A pide 30.000 de B en «R2 aprobar tras retiro».
@@ -352,6 +355,8 @@ En Nosotros falta «de». Capturas `m2-actividad-tabla-panel-1440` y `c8-activid
   - Nada cambia: la meta y el saldo siguen igual.
   - Pero, antes de aprobar, la tarjeta dice «Tu disponible en Viaje ficticio: $10.000 → $0», como si cupiera.
   - El error es genérico: «Revisa los fondos: deben sumar el uso y estar disponibles por aportante. · Revisar».
+- **Severidad media**, como C-1 y C-3: la vista previa da a entender que la operación es viable. Se repite en I-27,
+  donde B ve «$0 → $0» junto a «Aprobar $50.000» (`r3-i27-archivar-beto-390`, al fondo).
 - **Capturas.** `r2-i-aprobar-sin-fondos-antes-390`, `r2-i-aprobar-sin-fondos-390`.
 
 ## Sugerencias de usabilidad (no son fallos)
@@ -367,50 +372,101 @@ En Nosotros falta «de». Capturas `m2-actividad-tabla-panel-1440` y `c8-activid
   24.4), no un hallazgo nuevo. Además, 1,3 s medidos en localhost contra una base remota en São Paulo no son una medición
   de Core Web Vitals ni de dispositivo.
 - **S-7 · Desactivar un presupuesto no pide confirmación.** Es reversible y conserva el historial.
-- **S-8 · La exportación no atribuye los usos de meta compartida por aportante.** En `goal_entries`, los usos tienen
-  `person` vacío. Con la exportación sola no se puede rehacer la parte de `gasto_financiado_con_meta` que corresponde a
-  cada uno.
+- **S-8 · Limitación de completitud y portabilidad de la exportación**, pendiente de decisión de los fundadores. En
+  `goal_entries`, los usos de meta compartida tienen `person` vacío, así que con la exportación sola no se puede rehacer
+  la parte de `gasto_financiado_con_meta` de cada aportante. No es un FAIL: 004 FR-080 no exige reconstruir DEC-G04
+  desde la exportación.
 
-## Matriz de privacidad (F104-5)
+## Matriz de privacidad (F104-5, F104-13 y F104-14)
+
+La matriz vigente es la de la **ronda 3**, que sustituye a la de la ronda 2. En la ronda 2 había 120 casos (2 × 2 × 10 ×
+3, no 240 como se escribió) y tres huecos: no tenía presupuestos, ni la meta de Beto, ni el movimiento devuelto por
+Deshacer, y no contaba las peticiones HTTP.
 
 **Método.**
 
-- **Quién pide.** Cada usuario, con su propia sesión, pide cada ruta en los dos contextos (cookie `juntia_context`
-  `me` o `us`) por tres canales: HTML, RSC (`RSC: 1`) y RSC de prefetch (`RSC: 1` + `Next-Router-Prefetch: 1`),
-  siguiendo la redirección de `_rsc` de Next 16.4.
-- **Qué se busca.** En el cuerpo de cada respuesta, cuatro marcas de cada dato privado: descripción, importe formateado,
-  importe en unidades menores e id. Los datos son privados creados con cifras únicas:
-  - Ana: un gasto `ZqPrivAna` de 13.579 y la meta `ZqMetaAna` (objetivo 7.531.000, aporte 86.420).
-  - Beto: un gasto `ZqPrivBeto` de 24.681.
-- **Rutas.** `/`, `/actividad?mes=2026-11`, `/actividad?mes=2027-01`, `/metas`, `/plan`, `/plan/analisis`, `/balance`,
-  `/cuenta/privacidad`, el detalle del gasto privado del otro y el detalle de la meta privada de Ana.
+- **Quién pide.** Cada usuario, con su sesión, pide cada ruta en los dos contextos (cookie `juntia_context` `me` o `us`)
+  por tres canales:
+  - HTML;
+  - RSC (`RSC: 1`);
+  - RSC de prefetch (`RSC: 1` + `Next-Router-Prefetch: 1`).
+- **Redirecciones.** Next 16.4 contesta `307` a toda petición con `_rsc` y redirige a su propia clave. El script sigue
+  esa redirección a mano y cuenta cada salto.
+- **Rutas (12).**
+  - `/`, `/actividad?mes=2026-11`, `/actividad?mes=2027-01`, `/metas`, `/plan`, `/plan/analisis`, `/balance` y
+    `/cuenta/privacidad`.
+  - El detalle del gasto privado del otro y el de su meta personal.
+  - Un detalle de gasto y uno de meta con **ids inexistentes**, como comparación.
+- **Marcas buscadas en el cuerpo de cada respuesta.** Son datos privados creados con cifras únicas.
 
-| Actor | Peticiones | Respuestas | Fugas de lo privado del otro | Lo propio en Nosotros | Control positivo (lo propio en Yo) |
-| --- | ---: | --- | ---: | ---: | --- |
-| Ana | 60 | 20 HTML, 20 RSC y 20 de prefetch, todas 200 con su tipo correcto | 0 | 0 | Aparece en 11 respuestas (HTML, RSC y prefetch) |
-| Beto | 60 | Ídem | 0 | 0 | Aparece en 10 respuestas (HTML y RSC) |
+| Objeto | Ana | Beto |
+| --- | --- | --- |
+| Gasto privado | `ZqPrivAna`, 13.579, 1357900 e id | `ZqPrivBeto`, 24.681, 2468100 e id |
+| Meta personal | `ZqMetaAna`, objetivo 7.531.000, aporte 86.420 y 8642000, e id | `ZqMetaBeto`, objetivo 6.420.000, aporte 31.415 y 3141500, e id |
+| Presupuesto personal | Salud, 97.531 y 9753100 (sin id: no aparece en la app) | Hogar, 64.297 y 6429700 (ídem) |
+| Movimiento devuelto por Deshacer | «Helado mover y deshacer» e id (sin importe: 15.000 coincide con otras cifras) | — |
 
-**Ids que vuelven en la ruta pedida.** Al pedir `/actividad/<id privado del otro>` o `/metas/<id de la meta de Ana>`, el
-HTML contiene ese id porque está en la propia URL pedida. La respuesta no contiene la descripción, el importe ni las
-unidades menores, y la página dice «No encontramos…». No se cuenta como fuga.
+**Recuento (registro conservado en local).**
 
-**Selector de metas en Anotar desde Nosotros (FR-085).**
+| Actor | Casos | Respuestas inspeccionadas | Peticiones HTTP | Fugas de lo del otro | Lo propio en Nosotros |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Ana | 72 (24 HTML, 24 RSC y 24 de prefetch, todas 200 y con su tipo) | 72 | 120 (72 + 48 redirecciones `307`) | 0 | 0 |
+| Beto | 72 (ídem) | 72 | 120 (ídem) | 0 | 0 |
+| **Total** | **144** | **144** | **240** | **0** | **0** |
 
-- Se cambió a Nosotros con el selector de la UI, se abrió Anotar y se eligió «Con una meta», interceptando todas las
-  respuestas de `localhost`.
-- El diálogo solo lista «Viaje ficticio · Saldo $180.000».
-- Ni el DOM ni la única petición (un POST de 442 B) contienen el nombre, el id ni las cifras de las metas personales de
-  Ana.
+**Qué sostiene cada PASS.**
 
-Observación: si la cookie dice `us` pero la UI quedó en Yo, el diálogo se abre en Yo y lista las metas personales de la
-propia Ana. Es su propio dato y en el contexto que se ve, así que no es una fuga.
+| Fila | Marcas | Canales |
+| --- | --- | --- |
+| F-5 | Movimiento devuelto por Deshacer, descripción e id, frente a Beto | HTML, RSC y prefetch |
+| H-8 | Presupuestos personales, importes (sin id) | HTML, RSC y prefetch |
+| I-28 | Metas personales de los dos, todas sus marcas | HTML, RSC y prefetch |
+| L-2 | Todas las de la tabla de marcas | HTML, RSC y prefetch |
+| L-3 | Lo propio en Nosotros, todas las marcas | HTML, RSC y prefetch |
+
+Lo que no tiene marca en la matriz no está cubierto por ella. Por ejemplo, la meta compartida y los gastos compartidos
+son visibles para los dos a propósito.
+
+**Control positivo y el canal de prefetch.**
+
+- **En Yo**, las marcas propias aparecen en HTML y en RSC: el gasto, la meta, el presupuesto y, en Ana, el «Helado».
+  Eso demuestra que la búsqueda detecta los datos cuando viajan.
+- **En prefetch** no apareció ninguna marca, tampoco las propias en Yo. Las respuestas de prefetch de estas rutas no
+  llevan datos de usuario. Por tanto, en ese canal solo se concluye que esas respuestas no contienen las marcas; no
+  hay control positivo que valide la detección. En la ronda 2 una respuesta de prefetch de Ana sí llevó marcas propias;
+  la ronda 3 no lo reprodujo.
+
+**Ids que vuelven en la ruta pedida.**
+
+- Al pedir el detalle de un gasto o de una meta del otro, el id aparece en los tres canales dentro de los **parámetros de
+  ruta serializados** de Next: `["children",{"s":{"n":"id","t":"d","k":"<id>"}…`, en el payload RSC y en el
+  `self.__next_f` del HTML. No aparecen la descripción, el importe ni las unidades menores.
+- Con un **id inexistente** la respuesta es igual: el mismo eco en los mismos sitios y la misma página «No
+  encontramos…». Un objeto privado ajeno no se distingue de uno que no existe, así que la respuesta no revela si existe.
+
+**Selector de metas en Anotar desde Nosotros (FR-085).** Probado con las dos cuentas. Se cambió a Nosotros con el
+selector de la UI, se abrió Anotar y se eligió «Con una meta», interceptando las respuestas de `localhost`.
+
+- **Ana:** el diálogo lista solo «Viaje ficticio». Ni el DOM ni la red (un POST de 442 B) contienen nombre, id ni cifras
+  de sus metas personales.
+- **Beto:** solo «Viaje ficticio». Ni el DOM ni la red (un POST de 643 B, más un chunk y una navegación previa)
+  contienen `ZqMetaBeto` ni sus cifras.
+- **Control en Yo:** el diálogo de Beto lista «ZqMetaBeto · Saldo $31.415».
+- La meta compartida en $0 de I-27 no aparece porque no tiene saldo.
+- **Observación.** Si la cookie dice `us` pero la UI quedó en Yo, el diálogo se abre en Yo y lista las metas personales
+  de la propia persona. Es su propio dato y en el contexto que se ve, así que no es una fuga.
 
 **Búsqueda y exportación.** L-1 y K-3.
 
-**Lo que no se inspeccionó.** Las rutas de Mi cuenta distintas de Privacidad, las respuestas de las acciones de
-escritura y la cuenta de un tercero ajeno a la pareja. Esas capas las cubren el pgTAP de RLS
-(`supabase/tests/03_views.test.sql`, `13a_goal_tables.test.sql`) y las pruebas de prefetch de las specs E2E 3, 4 y 5
-(`tests/support/rsc-capture.ts`, `tests/e2e/access-account.e2e.ts` «Nosotros no lleva datos privados…»).
+**Lo que no se inspeccionó.**
+
+- Las rutas de Mi cuenta distintas de Privacidad.
+- Las respuestas de las acciones de escritura, salvo las del selector.
+- La cuenta de un tercero ajeno a la pareja.
+
+Esas capas las cubren el pgTAP de RLS (`supabase/tests/03_views.test.sql`, `13a_goal_tables.test.sql`) y las pruebas
+de prefetch de las specs E2E 3, 4 y 5 (`tests/support/rsc-capture.ts`; `tests/e2e/access-account.e2e.ts` l.264,
+«Nosotros no lleva datos privados…»).
 
 ## Comprobaciones verificables (F104-9)
 
@@ -422,9 +478,10 @@ escritura y la cuenta de un tercero ajeno a la pareja. Esas capas las cubren el 
 | G-5 | Saldo 85.000 → (35.000) → 50.000 → Deshacer → 85.000 → (35.000) → 50.000. Historial: «Ana → Beto · Anulada · $35.000» y «Ana → Beto · Liquidado · $35.000» |
 | I-20 | Disponible de B 60.000 → 30.000; una sola fila «Uso · R2 aprobar tras retiro» nueva; saldo 360.000 antes y después |
 | I-26 | Tras retirar 120.000: «Meta archivada: queda de solo lectura con su historial.» y la meta en «Archivadas» con $0 |
-| K-2 | Ana: JSON y CSV con 21 movimientos, 2 liquidaciones, 4 metas, 20 entradas de meta, 4 solicitudes y 5 presupuestos (56 filas). Beto: 17, 2, 1, 11, 4 y 4 (39 filas). JSON = CSV en las dos cuentas. 40 columnas en el CSV. 0 UUID |
+| K-2 | Exportación de la ronda 2. Ana: JSON y CSV con 21 movimientos, 2 liquidaciones, 4 metas, 20 entradas de meta, 4 solicitudes y 5 presupuestos (56 filas). Beto: 17, 2, 1, 11, 4 y 4 (39 filas). JSON = CSV en las dos cuentas. 40 columnas en el CSV. 0 UUID |
 | K-3 | Buscando 13 marcas: Ana contiene sus privados y ninguno de Beto; Beto contiene «Farmacia privada» y «ZqPrivBeto», y nada de Ana. No aparecen «Almuerzo», «Cine para deshacer» ni «Taxi solo de Beto» (eliminados o deshechos). «Casco» solo aparece como uso anulado de la meta propia de Ana |
-| F-5, I-28, L-2 | Matriz: 240 peticiones, 0 fugas |
+| F-5, H-8, I-28, L-2, L-3 | Matriz de la ronda 3: 144 casos, 144 respuestas, 240 peticiones HTTP, 0 fugas en las marcas incluidas |
+| I-27 | Meta en $0 con «Hay una solicitud de fondos pendiente.»; archivar como B y como A → «Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.»; al recargar la meta sigue activa |
 | M-1 | `scrollWidth` = ancho del viewport en las 32 combinaciones (390/390 y 1440/1440) |
 | M-7 | `prefers-reduced-motion: reduce` = true; `document.getAnimations()` en curso = 0 a los 120 ms del cambio y con la hoja de Anotar abierta; región viva «Ahora ves: Nosotros» |
 | Saldo final | Desde la exportación de Ana: 1.011.001 pagado − 660.501 de parte + 35.000 enviado − 10.000 recibido = **375.500** a favor de Ana, igual a lo que muestra Balance |
@@ -462,7 +519,8 @@ Ana.**
 | 21 | R2 aprobar tras retiro | 60.000 | Ana | 30.000 / 30.000 | +30.000 | 360.000 |
 | 22 | R2 personal con meta, luego movido | 30.000 | Ana | 15.000 / 15.000 | +15.000 | 375.000 |
 | 23 | R2 escritorio anotar | 21.000 | Ana | 10.500 / 10.500 | +10.500 | 385.500 |
-| 24 | Liquidación Beto → Ana | 10.000 | — | — | −10.000 | **375.500** (final) |
+| 24 | Liquidación Beto → Ana | 10.000 | — | — | −10.000 | **375.500** (fin de la ronda 2) |
+| 25 | Zq gasto pide a Beto (I-27; uso de la meta pedido a Beto y pendiente) | 50.000 | Ana | 25.000 / 25.000 | +25.000 | **400.500** (fin de la ronda 3, visto en Balance) |
 
 ### A.2 · Metas: aportes, retiros y usos por aportante
 
@@ -482,6 +540,9 @@ Ana.**
 | | Uso Cena rechazada (reparto 30.000 / 30.000) | 30.000 | 30.000 pedidos | rechazado; el uso de Ana se quitó después |
 | | Uso «R2 solicitud a cancelar» (20.000 / 20.000) | 20.000 | 20.000 pedidos | cancelado; el uso de Ana sigue |
 | | Uso «R2 aprobar tras retiro» (30.000 / 30.000) | 30.000 | 30.000 | aprobado al segundo intento |
+| ZqArchivarPendiente (compartida, ronda 3) | Aporte / retiro «Zq dejar en cero» | — | 50.000 / 50.000 | activos; saldo 0 |
+| | Uso «Zq gasto pide a Beto» | — | 50.000 pedidos | pendiente, sin aplicar |
+| ZqMetaBeto (personal de Beto, ronda 3) | Aporte | — | 31.415 | activo |
 
 ### A.3 · DEC-G04 a partir de estos datos
 
@@ -489,14 +550,14 @@ Ana.**
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Yo de Ana, fin de la ronda 1 | 605.000 = privados 140.000 (Taxi 45.000 + Helado 15.000 + Casco 80.000) + partes 465.000 (filas 1, 2, 3, 9, 11, 12, 15 y 16) | 670.000 (250.000 + 300.000 + 120.000) | 170.000 (50.000 + 120.000) | 180.000 (Casco 80.000 + Tiquetes 100.000 de Ana) | **925.000** |
 | Nosotros, fin de la ronda 1 | 890.000 (filas 1, 2, 3, 9, 11, 12, 15 y 16) | 500.000 | 0 | 200.000 (Tiquetes) | **1.190.000** |
-| Nosotros, final | 1.271.001 (+ filas 17–23) | 560.000 | 90.000 | 280.000 (Tiquetes 200.000 + R2 cancelar 20.000 + R2 aprobar 60.000) | **1.461.001** |
+| Nosotros, fin de la ronda 2 | 1.271.001 (+ filas 17–23) | 560.000 | 90.000 | 280.000 (Tiquetes 200.000 + R2 cancelar 20.000 + R2 aprobar 60.000) | **1.461.001** |
 
-La cifra de Yo de la ronda 1 ya no se reproduce hoy en la app, porque en la ronda 2 se eliminó el gasto «Casco»; se
+La ronda 3 añade en Nosotros 50.000 de gasto, 50.000 de aportes y 50.000 de retiros, y ningún uso aplicado; no se volvió a medir DEC-G04 después de ella. La cifra de Yo de la ronda 1 ya no se reproduce hoy en la app, porque en la ronda 2 se eliminó el gasto «Casco»; se
 documenta tal como se midió.
 
 ## Anexo B · Privacidad de las capturas
 
-Un subagente de revisión abrió una por una las 108 capturas: las 92 de la ronda 1 en una pasada y las 16 `r2-` en otra.
+Un subagente de revisión abrió una por una las 108 capturas de las rondas 1 y 2 (las 92 de la ronda 1 en una pasada y las 16 `r2-` en otra), y el agente de la corrida abrió las 4 `r3-`.
 El agente de la corrida vio además, durante el trabajo, unas 25 de ellas. En ninguna aparecen:
 
 - contraseñas, claves, tokens completos de invitación o recuperación, JWT ni cookies;
