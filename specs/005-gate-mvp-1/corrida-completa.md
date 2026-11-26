@@ -31,7 +31,7 @@ no se corrige nada: solo se prueba y se documenta.
 | Dato | Valor |
 | --- | --- |
 | Fechas | 25 de noviembre de 2026 (America/Bogota). Ronda 1: 19:10–20:30. Ronda 2: 21:35–22:05. Ronda 3: 22:40–23:20 |
-| Commit probado | `b2f2f907f996e218b38398854bcc5c68c8d4b20b` (`main`, merge del PR #102), sin cambios locales, en las dos rondas |
+| Commit probado | `b2f2f907f996e218b38398854bcc5c68c8d4b20b` (`main`, merge del PR #102), sin cambios locales, en las tres rondas |
 | App | `next build` + `next start` (build de producción) en `http://localhost:3400` |
 | Base de datos y Auth | **juntia-dev**. Producción no se tocó |
 | Cuentas | `corrida-ana-…@seed.test` (Ana, propietaria) y `corrida-beto-…@seed.test` (Beto). Credenciales solo en un archivo local ignorado por git |
@@ -81,7 +81,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | A-5 | Primera entrada (A6) «Hola, Ana», sin pedir presupuesto | PASS | `a3-primera-entrada-390` |
 | A-6 | Recuperar acceso: aviso uniforme con un correo sin cuenta | PASS | `a4-recuperar-uniforme-390`. 0 usuarios con ese correo |
 | A-7a | Enlace de recuperación válido → «Crea una contraseña nueva» con sesión abierta | PASS | Enlace generado por administración, no recibido por correo |
-| A-7b | Cambiar la contraseña, entrar con la nueva y rechazar un enlace caducado o reutilizado | NO PROBADO | `tests/e2e/access-account.e2e.ts` l.184–225 (`@mail`, solo en el job `e2e` del CI): recuperación uniforme, enlace caducado, contraseña nueva en A5 y acceso |
+| A-7b | Cambiar la contraseña, entrar con la nueva y rechazar un enlace caducado o reutilizado | NO PROBADO | `tests/e2e/access-account.e2e.ts` l.184–225 (`@mail`, solo en el job `e2e` del CI): recuperación uniforme, enlace caducado, contraseña nueva en A5 y acceso. No cubre la reutilización de un enlace ya consumido |
 | A-8 | Cambiar la contraseña desde Seguridad y sesión | BLOQUEADO | Enviaría un correo (cupo de 2 por hora y SMTP aplazado) |
 | A-9 | Cerrar sesión: aviso; `/cuenta` lleva a Entrar y, al entrar, vuelve a `/cuenta` | PASS | `a5-sesion-cerrada-390` |
 
@@ -206,7 +206,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | I-5 | US-19: A 300.000 (apartado) + B 200.000 (transferencia declarada) = 50 %, con autor | PASS | `i4-meta-compartida-aportes-beto-390` |
 | I-6 | Metas · Yo de B: compartidas aparte con «Tu disponible» | PASS | `i5-metas-yo-beto-tu-disponible-390` |
 | I-7 | Deshacer un aporte (DESHECHO) y anular otro (ANULADO) | PASS | `i6-aporte-toast-390`, `i6-aporte-anulado-390` |
-| I-8 | Anular un aporte cuyos fondos ya se usaron: «Anular aporte» no se ofrece | PASS | `r2-i-anular-aporte-usado-390`. Comprobado solo en la interfaz: no localicé una prueba de servidor que rechace anular un aporte consumido (`13_goals.test.sql` l.46 prueba que se puede anular uno disponible) |
+| I-8 | Anular un aporte cuyos fondos ya se usaron: «Anular aporte» no se ofrece | PASS | `r2-i-anular-aporte-usado-390`. Comprobado en la interfaz. Cobertura adicional en pgTAP: `13a_goal_tables.test.sql`, l.22–30, rechaza directamente la anulación de un aporte consumido (JT220). No se localizó una prueba específica del recorrido mediante la RPC pública |
 | I-9 | Retiro con motivo, «Retiro de la meta» | PASS | — |
 | I-10 | Retiro mayor que lo disponible → «Puedes retirar hasta $250.000» | PASS | `i8-retiro-mayor-390` |
 | I-11 | En la meta compartida solo se retira lo propio (tope 200.000) | PASS | — |
@@ -217,7 +217,7 @@ Estados: **PASS**, **FAIL** (enlaza su hallazgo), **BLOQUEADO** (no se puede hac
 | I-16 | La creadora cancela una solicitud pendiente: sale de Actividad y del Inicio de B; la meta no recibe los fondos de B | PASS | — |
 | I-17 | La tarjeta de la solicitud cancelada en el detalle del gasto | FAIL ([C-6](#c-6--la-solicitud-cancelada-se-sigue-leyendo-como-pendiente--media)) | `r2-i-solicitud-cancelada-390` |
 | I-18 | Aprobar después de que bajen los fondos (B se queda con 10.000 y le piden 30.000): se rechaza y no cambia nada | PASS | `r2-i-aprobar-sin-fondos-390` |
-| I-19 | Texto y vista previa de esa aprobación sin fondos | FAIL ([C-7](#c-7--aprobar-sin-fondos-suficientes-vista-previa-engañosa-y-error-genérico--baja)) | `r2-i-aprobar-sin-fondos-antes-390`, `r2-i-aprobar-sin-fondos-390` |
+| I-19 | Texto y vista previa de esa aprobación sin fondos | FAIL ([C-7](#c-7--aprobar-sin-fondos-suficientes-vista-previa-engañosa-y-error-genérico--media)) | `r2-i-aprobar-sin-fondos-antes-390`, `r2-i-aprobar-sin-fondos-390` |
 | I-20 | Doble toque en Aprobar: el uso se aplica una sola vez (disponible de B 60.000 → 30.000) | PASS | — |
 | I-21a | Quitar el uso: los fondos vuelven (270.000 → 300.000) y `gasto_financiado_con_meta` lo excluye (US8.5) | PASS | Análisis Nosotros: 280.000 financiados sin los 30.000 quitados |
 | I-21b | Estado que muestra el gasto después de quitar el uso | FAIL ([C-3](#c-3--tras-quitar-el-uso-el-gasto-sigue-diciendo-pagado-con-una-meta--media)) | `i11-quitar-uso-detalle-390` |
@@ -431,8 +431,7 @@ son visibles para los dos a propósito.
 
 - **En Yo**, las marcas propias aparecen en HTML y en RSC: el gasto, la meta, el presupuesto y, en Ana, el «Helado».
   Eso demuestra que la búsqueda detecta los datos cuando viajan.
-- **En prefetch** no apareció ninguna marca, tampoco las propias en Yo. Las respuestas de prefetch de estas rutas no
-  llevan datos de usuario. Por tanto, en ese canal solo se concluye que esas respuestas no contienen las marcas; no
+- **En prefetch** no apareció ninguna marca, tampoco las propias en Yo. Por tanto, en ese canal solo se concluye que esas respuestas no contienen las marcas; no
   hay control positivo que valide la detección. En la ronda 2 una respuesta de prefetch de Ana sí llevó marcas propias;
   la ronda 3 no lo reprodujo.
 
@@ -484,12 +483,13 @@ de prefetch de las specs E2E 3, 4 y 5 (`tests/support/rsc-capture.ts`; `tests/e2
 | I-27 | Meta en $0 con «Hay una solicitud de fondos pendiente.»; archivar como B y como A → «Para archivar, la meta debe estar sin fondos y sin solicitudes pendientes.»; al recargar la meta sigue activa |
 | M-1 | `scrollWidth` = ancho del viewport en las 32 combinaciones (390/390 y 1440/1440) |
 | M-7 | `prefers-reduced-motion: reduce` = true; `document.getAnimations()` en curso = 0 a los 120 ms del cambio y con la hoja de Anotar abierta; región viva «Ahora ves: Nosotros» |
-| Saldo final | Desde la exportación de Ana: 1.011.001 pagado − 660.501 de parte + 35.000 enviado − 10.000 recibido = **375.500** a favor de Ana, igual a lo que muestra Balance |
+| Saldo al finalizar la ronda 2 | Desde la exportación de Ana de la ronda 2: 1.011.001 pagado − 660.501 de parte + 35.000 enviado − 10.000 recibido = **375.500** a favor de Ana, igual a lo que muestra Balance |
 
 ## Anexo A · Movimientos de la corrida
 
-Los datos salen de la exportación de usuario del estado final y del registro de la corrida para lo que la exportación no
-guarda: eliminados, deshechos, ediciones y liquidaciones anuladas. Importes en pesos. **Saldo positivo: Beto le debe a
+Las filas 1–24 salen de la exportación de usuario de la ronda 2 y del registro de la corrida para lo que la
+exportación no guarda: eliminados, deshechos, ediciones y liquidaciones anuladas. La fila 25 sale del registro de la
+ronda 3 y del saldo visto en Balance; no hay exportación posterior. Importes en pesos. **Saldo positivo: Beto le debe a
 Ana.**
 
 ### A.1 · Gastos compartidos, liquidaciones y saldo, en orden
