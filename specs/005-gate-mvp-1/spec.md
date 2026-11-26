@@ -42,7 +42,8 @@
 >
 > Donde esta spec pide los 7 días, la valoración tras el periodo o la congelación de
 > D4 **antes de declarar MVP-1**, rige la decisión 30. La corrida delegada y FR-080 se
-> rigen por la 30.7, que es una propuesta pendiente de los fundadores. El informe del
+> rigen por la 30.7, decidida el 26 nov 2026: la corrida sustituye la sesión guiada solo
+> para la aceptación técnica, y el escenario humano completo es precondición de T094. El informe del
 > PR #104 se conserva como evidencia histórica, con sus FAIL.
 
 ### Fuentes que aplica
@@ -643,8 +644,13 @@ Cada requisito dice su **evidencia**:
 
 > **Enmienda del 25 de noviembre de 2026 (decisión 30).**
 >
-> - **FR-080:** se rige por la 30.7. Hasta que los fundadores confirmen esa propuesta,
->   sigue exigiendo la sesión guiada de los dos para la aceptación técnica.
+> - **FR-080:** se rige por la 30.7, decidida el 26 nov 2026. **Exclusivamente para la
+>   aceptación técnica**, la sesión guiada se sustituye por la corrida delegada del PR #104
+>   y la evidencia nueva de C-1–C-7, con las diferencias de cobertura aceptadas. El
+>   escenario humano completo se ejecuta antes del periodo de uso real, como precondición
+>   de T094. No acredita ninguna otra verificación humana ni de dispositivo, ni sustituye
+>   SC-012 de 002–004, 004-T084, SC-010 ni FR-082. (Mientras fue propuesta, FR-080
+>   seguía exigiendo la sesión guiada.)
 > - **FR-081:** pasa a la validación por uso real, aplazada (30.6), y no condiciona la
 >   declaración.
 > - **FR-082:** «los dos aprueban» es la aprobación de la aceptación técnica, con las
@@ -705,7 +711,7 @@ P0-4 no crea datos de producto. Sus entidades son registros de evidencia:
 
 ## Assumptions
 
-- **P0-1, P0-2 y P0-3 están en producción** (`juntia-alpha.vercel.app`) y los fundadores las usan con datos reales; P0-3 se acepta antes de empezar P0-4 (FR-001). **Nota (decisión 30):** el uso con datos reales es el contexto original de esta spec, no un requisito vigente para declarar MVP-1; el uso real que se exige es la validación aplazada (30.6). FR-001 (004-T084 y T085) no cambia.
+- **P0-1, P0-2 y P0-3 están en producción** (`juntia-alpha.vercel.app`) y los fundadores las usan con datos reales; P0-3 se acepta antes de empezar P0-4 (FR-001). **Nota (decisión 30):** el uso diario continuado con datos reales durante siete días es la validación aplazada (30.6). Esto no modifica las verificaciones individuales que requieren cuentas, dispositivos o movimientos reales para la aceptación técnica. FR-001 (004-T084 y T085) no cambia.
 - **Los dos fundadores usan iPhone** y ninguno tiene Android (decisión 12); para el CLS en iPhone se consigue un Mac prestado (Q6, opción a).
 - **El catálogo, las pantallas y el dataset dorado** son los de la 004; P0-4 no añade pantallas.
 - **El job `e2e` partido en dos** lo entrega otra sesión antes del PR A; si no llega, la cláusula anticliquet sigue valiendo.

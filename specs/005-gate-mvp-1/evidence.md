@@ -606,7 +606,8 @@ sistema, fecha y commit desplegado.
 ## Periodo de uso (D4)
 
 > **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** El periodo es
-> el de la validación por uso real, aplazada (30.6). Esta sección y «Valoraciones» se
+> el de la validación por uso real, aplazada hasta que Planes, Recurrentes y calendario y
+> el Presupuesto integral v1 estén aceptados y en producción (30.6). Esta sección y «Valoraciones» se
 > llenan cuando ocurra, en un PR documental posterior; no condicionan la declaración de
 > MVP-1.
 

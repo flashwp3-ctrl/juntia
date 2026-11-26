@@ -172,10 +172,12 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 > **Enmienda del 25 de noviembre de 2026 (maestro §15.10, decisión 30).** V13 es la
 > **validación por uso real**, que se conserva pero se aplaza (30.6): el periodo, D4 y la
 > valoración se hacen cuando se cumpla esa condición y no condicionan la declaración de
-> MVP-1, que es su aceptación técnica (30.5). «Antes del periodo» (FR-080) se rige por la
-> 30.7: hasta que los fundadores la confirmen, la sesión guiada sigue en el paso 6. Si la
-> confirman, el escenario humano completo se hace aquí, antes del periodo, y es
-> precondición para abrirlo (T094). La congelación, los fallos críticos y el reinicio de
+> MVP-1, que es su aceptación técnica (30.5). El periodo empieza cuando Planes,
+> Recurrentes y calendario y el Presupuesto integral v1 estén aceptados y en producción
+> (30.6, decidida el 26 nov 2026). «Antes del periodo» (FR-080) se rige por la 30.7,
+> decidida ese mismo día: para la aceptación técnica, la sesión guiada la sustituyen la
+> corrida del PR #104 y la evidencia nueva de C-1–C-7, y el escenario humano completo se
+> hace aquí, antes del periodo, como precondición para abrirlo (T094). La congelación, los fallos críticos y el reinicio de
 > los 7 días siguen la 25.5, no la excepción de C-1–C-7.
 
 - **Quién:** los dos.

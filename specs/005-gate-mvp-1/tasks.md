@@ -577,8 +577,9 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 >
 > - sin migraciones ni cambios del modelo de datos;
 > - sin cambios de fórmulas financieras;
-> - sin cambios de cálculos, consultas, permisos ni filtros (C-2);
-> - sin tocar las validaciones del servidor (C-7);
+> - sin cambios de cálculos, consultas, permisos, filtros ni validaciones del servidor,
+>   en ninguna de las siete correcciones (el texto de los fundadores los nombra en C-2 y
+>   C-7; la prohibición vale para todas);
 > - sin funcionalidades nuevas y sin S-1 a S-8.
 >
 > Son **siete correcciones de presentación y copy**. **Regla de parada:** si una
@@ -858,21 +859,21 @@ El contrato completo es [contracts/account-deletion.md](contracts/account-deleti
 >
 > | Tarea | Hito | Cuándo |
 > | --- | --- | --- |
-> | T092 (Phase 6), sesión guiada de §4 | Aceptación técnica, según la 30.7 | Paso 6. Si los fundadores confirman la 30.7, la cubren la corrida del PR #104 y la evidencia nueva de C-1–C-7 |
+> | T092 (Phase 6), sesión guiada de §4 | Aceptación técnica, según la 30.7 (decidida el 26 nov 2026) | **Cubierta, solo para la aceptación técnica,** por la corrida del PR #104 y la evidencia nueva de C-1–C-7. El escenario humano completo pasa a ser precondición de T094 |
 > | T093 (Phase 6), V7 · US-12 | Aceptación técnica | Paso 6; ya no «durante el paso 7» |
 > | T097 · V14, copia y restauración real | Aceptación técnica | Tras el paso 6 completado, antes de declarar; no depende de T095 |
 > | T098 · registros de Vercel | Aceptación técnica | Tras el paso 6, sobre una semana de uso en producción con actividad representativa (FR-013); no depende de T095 |
 > | T099 · tabla de idempotencia | Aceptación técnica | Tras el paso 6 completado; no depende de T095 |
 > | T101 · lista de MVP-2 | Aceptación técnica | Tras T097–T099 y T102, con lo conocido al declarar, incluidas S-1 a S-8 como pendientes de valoración (30.8); no depende de T100. Los fallos del periodo se añaden cuando ocurra |
 > | T102 · excepción de Android | Aceptación técnica | Sin cambio |
-> | T094, T095, T096 · periodo de 7 días con D4 | **Validación por uso real** | Aplazada (30.6) |
+> | T094, T095, T096 · periodo de 7 días con D4 | **Validación por uso real** | Aplazada (30.6) hasta que Planes, Recurrentes y calendario y el Presupuesto integral v1 estén aceptados y en producción |
 > | T100 · V13, valoración en cuatro ejes | **Validación por uso real** | Tras el periodo, aplazada (30.6) |
 >
 > Las tareas de la validación por uso real no bloquean T103–T109. Cuando se cumpla la
 > condición de la 30.6, se ejecutan y su resultado se registra en un PR documental
 > posterior y en el maestro.
 
-- [ ] T094 **Humana (gestor)**: abrir el periodo: registrar en `evidence.md` la **fecha de inicio**, el commit desplegado y la congelación de despliegues. Si el periodo se reinicia, registrar la fecha nueva y el motivo. **Enmienda (decisión 30):** se abre cuando se cumple la condición de la 30.6. Si los fundadores confirman la 30.7, tiene además como **precondición** que se haya ejecutado el escenario humano de §4 trasladado a V13 («Antes del periodo»). La congelación, los fallos críticos y el reinicio siguen la 25.5 (T096) y no son la excepción de C-1–C-7
+- [ ] T094 **Humana (gestor)**: abrir el periodo: registrar en `evidence.md` la **fecha de inicio**, el commit desplegado y la congelación de despliegues. Si el periodo se reinicia, registrar la fecha nueva y el motivo. **Enmienda (decisión 30):** se abre cuando Planes, Recurrentes y calendario y el Presupuesto integral v1 estén aceptados y en producción (30.6). **Precondición** (30.7, decidida el 26 nov 2026): que los dos hayan ejecutado el escenario humano completo de §4 trasladado a V13 («Antes del periodo»). La congelación, los fallos críticos y el reinicio siguen la 25.5 (T096) y no son la excepción de C-1–C-7
   - Cumple: FR-080, FR-081; D4.
   - Quién: gestor. Depende de: T092.
   - Evidencia: revisión.
@@ -1028,7 +1029,7 @@ Dos puntos del desglose obligaban a decidir algo que la spec, el plan y sus cont
 - **Phase 5 → 6 → 7 → 8 → 9**, en orden. Un fallo crítico en cualquier día de 7 activa T096 (que depende de T094), vuelve a 3 y a 4 completo, y repite T094 y T095 (D4; F86-1).
 - **Enmienda del 25 de noviembre de 2026 (maestro, decisión 30).** Desde el paso 6 hay dos ramas:
   - **Aceptación técnica:** Phase 5 → 6 → T097, T098, T099 y T102 → T101 → Phase 8 (T103–T108) → Phase 9 (T109). No depende de T094–T096 ni de T100.
-  - **Validación por uso real**, aplazada (30.6): T094 → T095 → T100, con T096 si hay un fallo crítico (25.5), y su resultado en un PR documental posterior. Empieza después de la declaración, cuando se cumpla la condición de la 30.6.
+  - **Validación por uso real**, aplazada (30.6): T094 → T095 → T100, con T096 si hay un fallo crítico (25.5), y su resultado en un PR documental posterior. Empieza después de la declaración, cuando Planes, Recurrentes y calendario y el Presupuesto integral v1 estén aceptados y en producción (30.6), con el escenario humano completo de §4 como precondición de T094 (30.7).
 
 ### User Story Dependencies
 

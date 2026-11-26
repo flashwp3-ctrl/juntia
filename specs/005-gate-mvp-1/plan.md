@@ -276,14 +276,17 @@ fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
 >     actividad representativa (FR-013; versión, operaciones y búsquedas con sus
 >     coincidencias; no vale la corrida de `juntia-dev`, y si no se puede acreditar
 >     deciden los fundadores) y la tabla de idempotencia (FR-068).
->   - **Validación por uso real**, aplazada (30.6): los 7 días con D4 y la valoración de
->     FR-081.
+>   - **Validación por uso real**, aplazada (30.6) hasta que Planes, Recurrentes y
+>     calendario y el Presupuesto integral v1 estén aceptados y en producción: los 7 días
+>     con D4 y la valoración de FR-081, con el escenario humano completo de §4 como
+>     precondición (T094).
 > - **Paso 8 (PR C) y paso 9 (declaración)**, con lo de la aceptación técnica. No esperan
 >   a la validación por uso real.
 > - **El resultado del periodo**, cuando ocurra, se registra en un PR documental
 >   posterior y en el maestro (30.6).
 >
-> La sesión guiada de FR-080 se rige por la 30.7.
+> La sesión guiada de FR-080 se rige por la 30.7 (decidida el 26 nov 2026): para la
+> aceptación técnica la sustituyen la corrida del PR #104 y la evidencia nueva de C-1–C-7.
 
 El ensayo del borrado de cuenta (FR-067) puede hacerse en cualquier momento después del
 PR A; no depende del candidato porque corre en `juntia-dev`.

@@ -103,8 +103,8 @@ implementación de Planes.
 
 | Tema | Estado | Origen |
 | --- | --- | --- |
-| Momento de inicio del periodo | **Abierto.** Propuesta `[P]` pendiente de los fundadores: cuando estén aceptadas y en producción Planes (006), Recurrentes y calendario (007) y el Presupuesto integral v1 | Decisión 30.6 |
-| Escenario de §4 por los dos fundadores con sus datos reales | Depende de la propuesta `[P]` de la 30.7 | Decisión 30.7 |
+| Momento de inicio del periodo | **Decidido** el 26 nov 2026: cuando Planes (006), Recurrentes y calendario (007) y el Presupuesto integral v1 estén aceptados y en producción | Decisión 30.6 |
+| Escenario de §4 por los dos fundadores con sus datos reales | **Decidido** el 26 nov 2026: se ejecuta completo antes del periodo, como precondición de T094 | Decisión 30.7 |
 
 ## Pendientes de valoración de la corrida de MVP-1 (S-1 a S-8)
 
