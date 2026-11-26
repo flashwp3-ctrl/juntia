@@ -41,7 +41,10 @@ tokens de I2, copiados de `src/styles/tokens.css`, los componentes, los datos de
 ejemplo y una sección por pantalla. Cada sección lleva sus notas «Lo que proponemos»
 `[P]` y «Por verificar y reglas que aplica» `[V]`.
 
-Los comps viven en Claude Design y no se copian al repositorio, como los de Planes.
+Los comps viven en Claude Design, como los de Planes. A diferencia de Planes, hay
+una **captura PNG por sección** en `comps/` (de `07-01.png` a `07-15.png`), para
+revisarlos sin acceso al proyecto. Son capturas a escala 1, comprimidas con paleta.
+No sustituyen a los comps: si difieren, mandan los del proyecto.
 Sus cifras son hipotéticas (`design-prompt.md`, «Datos de ejemplo») y pueden no
 coincidir con las de los escenarios de la spec: las pruebas usan las de la spec.
 
