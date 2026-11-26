@@ -81,7 +81,12 @@ for (const width of WIDTHS) {
     await page.keyboard.press("Enter");
     await expect(sheet).toBeHidden();
     await expect(page.getByRole("status").filter({ hasText: copy.annotate.saved.expense })).toBeVisible();
-    if (width === 390) await expect(page.locator("[data-balance-line]:visible")).toContainText(copy.couple.home.owes("Sara", "Tomás"));
+    // F111-10: la captura espera, en los dos tamaños, a que Inicio pinte el saldo nuevo con el componente de cada viewport
+    // (390: la línea de saldo; 1440: el módulo de Balance, ambos en `[data-balance-line]`) y el gasto de $586.400.
+    await expect(page.locator("[data-counting-amount]:visible")).toHaveAttribute("data-counting-amount", "$586.400");
+    const line = page.locator("[data-balance-line]:visible");
+    await expect(line).toContainText(copy.couple.home.owes("Sara", "Tomás"));
+    await expect(line).toContainText("$106.800");
     await shot(page, "c1-inicio-nosotros-tomas", width);
     await context.close();
   });
@@ -194,7 +199,7 @@ for (const width of WIDTHS) {
     await block(card, "c7-f111-4-cargada-con-fondos-tomas", width);
     await withdrawFromGoal(pair.tomas.client, { idempotencyKey: key(), goalId: goal.id, amount: pesos(190000n), entryDate: today(), reason: "Bajar fondos ficticio" });
     await approve.click();
-    await expect(card.getByRole("alert")).toContainText(copy.goals.errors.fundsChangedReview("Viaje ficticio"));
+    await expect(card.getByRole("alert")).toContainText("Tus aportes en Viaje ficticio cambiaron. Revisa cuánto tienes disponible.");
     await shot(tomas.page, "c7-f111-4-rechazo-sin-cifra-tomas", width);
     await block(card, "c7-f111-4-rechazo-sin-cifra-tomas", width);
     await card.getByRole("button", { name: copy.goalExpense.request.review }).click();

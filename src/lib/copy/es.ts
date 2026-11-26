@@ -234,7 +234,7 @@ export const copy = {
       approve: (amount: string) => `Aprobar ${amount}`, approving: "Aprobando…", reject: "Rechazar", rejecting: "Rechazando…",
       approved: (goal: string) => `Aprobaste el uso de tus fondos en ${goal}.`,
       rejected: "Rechazaste la solicitud. El gasto sigue registrado y tus aportes no cambian.",
-      review: "Revisar",
+      review: "Revisar", reviewing: "Revisando…",
       expenseFallback: "Gasto",
       closedUnconfirmed: "No pudimos confirmar si se guardó. Revisa el estado de la solicitud antes de volver a intentarlo.",
     },

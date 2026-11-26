@@ -56,6 +56,7 @@ cambiar. Con la corrección pasan todas.
 | `goalExpense.detail.rejectedNoteNone` | — | {nombre} no aprobó. |
 | `goals.errors.fundsChangedReview` | — | Tus aportes en {meta} cambiaron. Revisa cuánto tienes disponible. |
 | `goalExpense.request.fundsUnknown` (ronda 2, F111-1) | — | No pudimos confirmar cuánto tienes disponible en {meta}. Revisa antes de aprobar. |
+| `goalExpense.request.reviewing` (ronda 3, F111-8) | — | Revisando… |
 
 «Tus aportes cambiaron: ahora tienes $X en {meta}.» ya existía (`goals.errors.fundsChanged`) y es el texto de 004 US7.9.
 
@@ -76,7 +77,9 @@ cambiar. Con la corrección pasan todas.
   PR. Los escenarios F111-1 y F111-4 corren solo en el «después». Build de producción (`next build`) servido en `http://localhost:3400`, Chromium de Playwright y movimiento reducido.
 - **A 390 la barra inferior fija tapa parte de la página completa.** Por eso C-3, C-6 y C-7 llevan además una captura del
   bloque (`-bloque`), donde la barra puede tapar el pie del bloque. A 1440 todo queda a la vista.
-- **Recuento:** 56 PNG: 24 de «antes» (de la primera ronda, con el código de `main`) y 32 de «después», recapturados en la ronda 2.
+- **Recuento:** 56 PNG.
+  - 24 de «antes», con el código de `main`. Son de la primera ronda, salvo C-1, que se recapturó en la ronda 3 (F111-10).
+  - 32 de «después», recapturados en la ronda 3.
 - Ninguna captura contiene contraseñas, tokens, cookies, correos, la referencia del proyecto ni datos reales.
 
 ## Ronda 2 · revisión adversarial del PR #111 (F111-1 a F111-7)
@@ -97,6 +100,47 @@ no cambian `approve_usage_request`, `funding-load.ts`, las consultas, SQL ni las
 **Las regresiones nuevas fallan sin la corrección.** Con `balance-line.tsx` y `usage-request-card.tsx` como en la primera
 ronda, fallan las 8 que exigen el comportamiento nuevo: las 4 de F111-3 y las 4 de F111-1 y F111-2. La de
 `requestRejection` y la de C-3 con solicitud pendiente pasan en las dos versiones: vigilan lo que no debe cambiar.
+
+## Ronda 3 · revisión adversarial del PR #111 (F111-8 a F111-13)
+
+La ronda 2 (`c9fb422`) recibió NO-GO por F111-8 a F111-10 y pidió dos diagnósticos. Todo se resolvió en el cliente y en
+los arneses: no cambian SQL, consultas, permisos, validaciones, fórmulas, `useWrite`, «Mover a Pareja» ni la hoja de Anotar.
+
+| Hallazgo | Cambio | Prueba | Captura |
+| --- | --- | --- | --- |
+| F111-8 («Revisar» con la misma `key`) | `usage-request-card.tsx`: «Revisar» es una transición (`useTransition`). `router.refresh()` y `review.count` se actualizan en la misma transición, así que la cuenta nueva se confirma con la lectura nueva, nunca antes. Un rechazo vale para la revisión en la que llegó (`rejectedAt`): tras la siguiente deja de pintarse y de bloquear, aunque los valores sean idénticos. Las claves anteriores se olvidan (`keysAt`): aprobar otra vez es una intención nueva y explícita. Sin `useEffect` | `goal-funding.test.tsx`, «F111-8: suficiente → rechazo por fondos → la revisión devuelve exactamente lo mismo → “Aprobar” vuelve…». El refresco simulado suspende como Next hasta que llega la «respuesta». Mientras tanto, el rechazo sigue a la vista y no hay «Aprobar»; después, «Aprobar» vuelve y la segunda aprobación lleva otra clave | — |
+| F111-9 («Revisar» y la máquina de escritura) | «Revisar» se ofrece en reposo (insuficiente o indeterminado) y tras un rechazo confirmado. Está deshabilitado con una escritura pendiente y durante el refresco, y **no se ofrece** con un resultado desconocido o mientras se comprueba. Durante el refresco, «Aprobar» y «Rechazar» están deshabilitados y `send` no envía. `useWrite` no cambia | `goal-funding.test.tsx`: «durante el refresco…» (ni aprobación ni rechazo adicional, un solo `refresh`), «con una escritura pendiente (promesa controlada)…» y «con un resultado desconocido de “Rechazar”, sin “Revisar”…» (reintentar con la misma clave) | — |
+| F111-10 (C-1 a 1440) | `tests/evidence/c1-c7.capture.ts` espera, en los dos tamaños, el héroe con $586.400 y `[data-balance-line]` visible (la línea a 390, el módulo a 1440) con «Sara le debe a Tomás» y $106.800. Sin cambios de producto | Arnés | `c1-inicio-nosotros-tomas-antes-1440` (con `src/` de `main`) y `-despues-1440`, recapturados. A 1440 el módulo de Balance ya muestra el estado final y no tacha ni antes ni después |
+| F111-11 (diagnóstico de las 2 E2E) | Arnés `tests/evidence/f111-11.capture.ts` (`F111_11=1`): 5 flujos concurrentes de cada E2E, con trace por flujo | — | Ver «F111-11» abajo |
+| F111-12 (diagnóstico de axe) | Arnés `tests/evidence/f111-12.capture.ts` y documento [`diagnostico-aviso-anotar.md`](diagnostico-aviso-anotar.md). No se corrige nada | — | — |
+| F111-13 | Descripción del PR con el inventario final | — | — |
+
+**Las regresiones nuevas fallan sin la corrección.** Con `usage-request-card.tsx` como en `c9fb422`, fallan las 4 de
+F111-8 y F111-9.
+
+### F111-11 · Diagnóstico de las dos E2E que fallaron en `e2e:dev` completo
+
+- **Qué fallaba:**
+  - «gasto con meta en dos sesiones» (`goals.e2e.ts:271`): el aviso «Aprobaste el uso de tus fondos en Japón.» no apareció en 5 s (l.375), antes de que la prueba leyera el estado de la solicitud.
+  - «Cambiar Yo/Nosotros» (`couple-settle.e2e.ts:71`): la URL de Actividad no llegó en 5 s (l.115).
+  - Ninguna de las dos guardó trace, porque la configuración no lo pide y `e2e:dev` no admite `--trace`.
+- **Reproducción dirigida:** `F111_11=1 npm run e2e:dev -- tests/evidence/f111-11.capture.ts`.
+  - Cada flujo con su pareja, 5 a la vez, como los 5 workers de la suite, y trace por flujo.
+  - **Aprobar:** Tomás aprueba 30.000 con fondos suficientes desde Inicio en Nosotros. Se mide del clic al aviso y se lee el estado final con `usageRequests` (sesión de Sara).
+  - **Navegar:** Sara pulsa Actividad en la navegación desde Inicio en Nosotros. Se mide del clic a la URL.
+- **Resultado: dos corridas del arnés.** Registro por flujo en el log de cada corrida y en `test-results/f111-11/f111-11.jsonl` de la segunda, guardados en local.
+  - **Primera corrida.**
+    - **Aprobar:** 5/5 con el estado final `approved` y el aviso en 264, 300, 899, 918 y 1.423 ms.
+    - **Navegar:** 5/5, con la URL en 103, 471, 1.592, 1.639 y 1.672 ms.
+  - **Segunda corrida.**
+    - **Aprobar:** 5/5 con el estado final `approved`, y el aviso en 940, 944 y 2.998 ms y en **7.641 y 9.149 ms**: dos por encima de los 5 s de la E2E. Solo se registró un POST, el del flujo 4 (aviso a 940 ms), y su respuesta terminó a los 8.281 ms. Esa cifra es el fin del stream (la Server Action, con `revalidatePath`, envía también el árbol RSC), no el momento del resultado. Los demás POST no llegaron a registrarse antes de escribir la línea.
+    - **Navegar:** 5/5, con la URL en 63 a 118 ms.
+  - En una corrida previa del arnés, que se colgó por un `textContent()` sin límite del propio arnés (ya corregido), la instantánea de un flujo mostró la aprobación aplicada: la meta bajó de $500.000 a $440.000.
+- **Lectura.**
+  - **«gasto con meta en dos sesiones»:** la aprobación **se completa tarde**, no se rechaza, no queda desconocida y no se completa sin aviso. Las 10 aprobaciones terminaron en `approved`, y el aviso llegó siempre, en dos casos después de los 5 s (7,6 y 9,1 s). Con 5 aprobaciones concurrentes contra juntia-dev, el resultado de la Server Action tarda a veces más de 5 s: es latencia del entorno, no un cambio de comportamiento. Las cifras salen de la tarjeta y de la lectura final, no de un tiempo de red medido de forma fiable. El camino de éxito (`onOk`, `setDone`, `annotate.notify` y `router.refresh`) no cambió en este PR.
+  - **«Cambiar Yo/Nosotros»:** con 5 flujos concurrentes no se reproduce (63–1.672 ms). El fallo de la suite fue con 5 workers que ejecutaban todas las E2E.
+  - No se subió ningún timeout. Es iteración contra dev, no evidencia de CI: lo decide el paso 4.
+- **Traces:** `trace-aprobar-{0..4}.zip` y `trace-actividad-{0..4}.zip` de la segunda corrida, en local. No se suben porque llevan las cookies de sesión de las cuentas sembradas.
 
 ## Defecto registrado fuera de alcance: «Mover a Pareja»
 

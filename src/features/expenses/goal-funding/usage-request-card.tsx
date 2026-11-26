@@ -11,7 +11,7 @@
 // bloquean las acciones hasta «Revisar», que pide la página otra vez (sin tiempo real, decisión 20.16); nunca se atribuye el
 // cambio a nadie ni se afirma que ya se ve lo último (lecciones de los PR B y C).
 import { useRouter } from "next/navigation";
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState, useTransition } from "react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { newIdempotencyKey } from "../idempotency";
@@ -74,7 +74,6 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const role = me?.userId === request.requestedBy ? "requester" : me?.userId === request.memberUserId ? "member" : null;
   const keys = useRef<Partial<Record<Kind, string>>>({});
   const [done, setDone] = useState<RequestResult["status"] | null>(null);
-  const [blocked, setBlocked] = useState(false);
   const [kind, setKind] = useState<Kind>("approve");
   // Revisión del gestor del PR #69 (10): con un resultado desconocido, cerrar el aviso se confirma («¿Cerrar sin confirmar?»,
   // como las hojas de metas) y deja dicho que no se pudo confirmar; las acciones vuelven con la MISMA clave, así que repetirlas
@@ -95,20 +94,33 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
     annotate?.notify({ tone: "success", message });
     router.refresh();
   }, [annotate, request.goalName, router]);
-  const onRejected = useCallback((error: WriteError) => { if (error !== "sessionExpired") setBlocked(true); }, []);
+  // Tras «Revisar», la página trae la solicitud otra vez: con otra versión, estado o saldos, quien la pinta cambia su `key` y
+  // la tarjeta nace de nuevo, con claves nuevas y sin el bloqueo (UsageRequests y el detalle usan `requestKey`).
+  // F111-8: con los mismos valores la `key` no cambia y la tarjeta no renace. Por eso «Revisar» es una transición: el refresco
+  // y `review.count` se actualizan en la misma transición, así que la cuenta nueva se confirma junto con la lectura nueva
+  // (nunca antes, con la vieja a la vista). Un rechazo vale para la revisión en la que llegó (`rejectedAt`): al confirmarse
+  // una revisión posterior deja de pintarse y de bloquear, y las claves de antes se olvidan (`keysAt`): aprobar otra vez es
+  // una intención nueva y explícita. Nunca desbloquea un resultado desconocido: con `unknown`, «Revisar» no se ofrece y solo
+  // siguen reintentar, comprobar o cerrar con confirmación (F111-9).
+  const [refreshing, startRefresh] = useTransition();
+  const [review, setReview] = useState<{ count: number; rejectedAt: number | null; blocking: boolean }>({ count: 0, rejectedAt: null, blocking: false });
+  const keysAt = useRef(0);
+  const onRejected = useCallback((error: WriteError) => setReview((current) => ({ ...current, rejectedAt: current.count, blocking: error !== "sessionExpired" })), []);
   const write = useWrite<RequestPayload & { kind: Kind }, RequestResult>({ action: ACTION[kind], run, check, onOk, onRejected });
-
-  // Tras «Revisar», la página trae la solicitud otra vez: con otra versión o estado, quien la pinta cambia su `key` y la
-  // tarjeta nace de nuevo, con claves nuevas y sin el bloqueo (UsageRequests y el detalle usan id, versión y estado).
+  const rejectedNow = write.state.phase === "rejected" && review.rejectedAt === review.count;
+  const blocked = rejectedNow && review.blocking;
 
   const send = (which: Kind) => {
+    if (refreshing) return;
+    if (keysAt.current !== review.count) { keys.current = {}; keysAt.current = review.count; }
     keys.current[which] ??= newIdempotencyKey();
     setKind(which);
     void write.submit({ kind: which, idempotencyKey: keys.current[which]!, requestId: request.id, expectedVersion: request.version });
   };
 
   const status = done ?? request.status;
-  const busy = write.pending || write.locked;
+  // F111-9: durante el refresco de «Revisar» no hay acciones concurrentes.
+  const busy = write.pending || write.locked || refreshing;
   const amount = cop(request.amountMinor);
   const description = request.description ?? copy.goalExpense.request.expenseFallback;
   // C-7 (decisión 30.3; 004 US7.9; F111-1 y F111-2): lo disponible de quien aprueba, leído con la página, en tres estados.
@@ -120,7 +132,14 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   const funds = fundsState(request);
   const pendingMember = role === "member" && status === "pending";
   const usedSome = BigInt(request.usedMinor) > 0n;
-  const review = <Button variant="secondary" icon="arrow-clockwise" className={`self-start ${wrapLabelMd}`} onClick={() => router.refresh()}>{copy.goalExpense.request.review}</Button>;
+  // F111-9: «Revisar» va con la máquina de escritura. Se ofrece en reposo (insuficiente o indeterminado) y tras un rechazo
+  // confirmado; deshabilitado con una escritura pendiente o durante el refresco; nunca con un resultado desconocido o mientras
+  // se comprueba, porque un remontaje perdería la intención y su clave (use-write.ts, «unknown»).
+  const canReview = write.state.phase === "idle" || write.state.phase === "pending" || write.state.phase === "rejected";
+  const reviewButton = canReview ? (
+    <Button variant="secondary" icon="arrow-clockwise" className={`self-start ${wrapLabelMd}`} loading={refreshing} loadingLabel={copy.goalExpense.request.reviewing} disabled={write.pending || refreshing}
+      onClick={() => startRefresh(() => { router.refresh(); setReview((current) => ({ ...current, count: current.count + 1 })); })}>{copy.goalExpense.request.review}</Button>
+  ) : null;
 
   const badge = status === "pending" ? <ConfirmationBadge state="pending" name={member} />
     : status === "approved" ? <ConfirmationBadge state="approved" />
@@ -148,7 +167,7 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
                 <AppIcon name="warning-circle" weight="bold" size={18} className="mt-px shrink-0 text-ink-secondary" />
                 <span>{funds.kind === "short" ? copy.goals.errors.fundsChanged(cop(funds.available), request.goalName) : copy.goalExpense.request.fundsUnknown(request.goalName)}</span>
               </p>
-              {review}
+              {reviewButton}
             </div>
           ) : pendingMember && !blocked && funds.kind === "enough" ? (
             <p className="text-[0.875rem] font-semibold text-ink tabular-nums">
@@ -169,10 +188,10 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
       {status === "rejected" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.rejectedNote(member) : copy.goalExpense.detail.rejectedNoteNone(member)}</p> : null}
       {status === "cancelled" && !done ? <p className="text-[0.8125rem] text-ink-secondary">{usedSome ? copy.goalExpense.detail.cancelledNote : copy.goalExpense.detail.cancelledNoteNone}</p> : null}
       {result ? <p role="status" className="text-[0.8125rem] font-semibold text-ink">{result}</p> : null}
-      {write.state.phase === "rejected" ? (
+      {rejectedNow && write.state.phase === "rejected" ? (
         <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-danger-subtle px-3.5 py-3 text-[0.8125rem] leading-[1.45] font-medium text-ink">
           <span>{requestRejection(write.state.error, write.state.detail, request.goalName)}</span>
-          {blocked ? review : null}
+          {blocked ? reviewButton : null}
         </div>
       ) : null}
       {write.state.phase === "unknown" ? <WriteUnknown checking={write.state.checking} notFound={write.state.notFound} onRetry={() => void write.retry()} onCheck={() => void write.checkStatus()} onDismiss={() => setConfirmingClose(true)} /> : null}

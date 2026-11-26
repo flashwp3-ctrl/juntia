@@ -11,6 +11,7 @@
 // Japón 9.720.000; `ticketsApproved`: 8.340.000, Tomás 3.840.000). Bicicleta de ruta, personal de Sara, 1.050.000.
 import { act, configure, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Suspense, useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/copy/es";
 import { AnnotateProvider, useAnnotate } from "../annotate-provider";
@@ -702,5 +703,107 @@ describe("C-3, C-6 y C-7: el estado mostrado de la financiación (decisión 30.3
     expect(screen.getByRole("heading", { name: "Pagado con dinero del mes" })).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.goalExpense.request.approve("$1.380.000") })).toBeTruthy();
     expect(screen.getByRole("button", { name: copy.goalExpense.request.reject })).toBeTruthy();
+  });
+});
+
+// F111-8 y F111-9 (revisión del PR #111, ronda 2). «Revisar» es una transición: `router.refresh()` de Next vuelve a pedir el
+// RSC y la tarjeta conserva lo que pinta hasta que llega. Aquí el refresco simulado hace lo mismo: dentro de la transición
+// actualiza `Page`, que se suspende hasta que la prueba resuelve la «respuesta» (`respond`) con los datos que elija.
+describe("«Revisar» con la máquina de escritura (F111-8, F111-9)", { timeout: 15000 }, () => {
+  type PageState = { request: UsageRequestView; waiting: Promise<void> | null; next: UsageRequestView | null };
+  function harness(initial: UsageRequestView, actions: GoalFundingActions) {
+    let respond: (next: UsageRequestView) => void = () => {};
+    const control: { setPage: (update: (state: PageState) => PageState) => void } = { setPage: () => {} };
+    const setPage = (update: (state: PageState) => PageState) => control.setPage(update);
+    const arrived = new WeakSet<Promise<void>>();
+    function Page() {
+      const [state, set] = useState<PageState>({ request: initial, waiting: null, next: null });
+      useLayoutEffect(() => { control.setPage = set; }, [set]);
+      if (state.waiting && !arrived.has(state.waiting)) throw state.waiting;
+      const shown = state.waiting && state.next ? state.next : state.request;
+      return <UsageRequestCard key={requestKey(shown)} request={shown} people={tomasView} actions={actions} />;
+    }
+    router.refresh.mockImplementation(() => {
+      let resolve: () => void = () => {};
+      const waiting = new Promise<void>((done) => { resolve = done; });
+      const slot: { next: UsageRequestView | null } = { next: null };
+      respond = (next) => { slot.next = next; arrived.add(waiting); setPage((state) => ({ ...state, next })); resolve(); };
+      setPage((state) => ({ ...state, waiting, next: slot.next }));
+    });
+    render(<Suspense fallback={<p>cargando</p>}><Page /></Suspense>);
+    return { respond: (next: UsageRequestView) => act(async () => { respond(next); }) };
+  }
+  afterEach(() => router.refresh.mockReset());
+
+  it("F111-8: suficiente → rechazo por fondos → la revisión devuelve exactamente lo mismo → «Aprobar» vuelve, explícito y con otra clave", async () => {
+    const user = userEvent.setup();
+    const approve = vi.fn<GoalFundingActions["approve"]>().mockResolvedValueOnce({ status: "rejected", error: "insufficientFunds" }).mockResolvedValueOnce({ status: "ok", value: { requestId: REQUEST, status: "approved" } });
+    const loaded = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(100000n) });
+    const page = harness(loaded, goalFunding({ approve }));
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.approve("$30.000") }));
+    expect(await screen.findByText(copy.goals.errors.fundsChangedReview("Japón"))).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.review }));
+    // Mientras llega la lectura, el rechazo sigue a la vista y no hay «Aprobar».
+    expect(screen.getByText(copy.goals.errors.fundsChangedReview("Japón"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Aprobar/ })).toBeNull();
+    // La lectura nueva es idéntica: misma versión, mismo estado y mismo disponible (la `key` no cambia).
+    await page.respond(request({ amountMinor: minor(30000n), memberAvailableMinor: minor(100000n) }));
+    const again = await screen.findByRole("button", { name: copy.goalExpense.request.approve("$30.000") });
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText("Tu disponible en Japón: $100.000 → $70.000")).toBeTruthy();
+    expect(approve).toHaveBeenCalledTimes(1);
+    await user.click(again);
+    await waitFor(() => expect(approve).toHaveBeenCalledTimes(2));
+    const [first, second] = approve.mock.calls.map(([payload]) => payload.idempotencyKey);
+    expect(second).not.toBe(first);
+  });
+
+  it("F111-9: durante el refresco, «Revisar» está deshabilitado y no hay aprobación ni rechazo adicional", async () => {
+    const user = userEvent.setup();
+    const actions = goalFunding();
+    const short = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) });
+    const page = harness(short, actions);
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.review }));
+    const reviewing = screen.getByRole("button", { name: new RegExp(copy.goalExpense.request.reviewing) });
+    expect(reviewing.getAttribute("aria-disabled")).toBe("true");
+    const reject = screen.getByRole("button", { name: copy.goalExpense.request.reject });
+    expect(reject.getAttribute("aria-disabled")).toBe("true");
+    await user.click(reject);
+    await user.click(reviewing);
+    expect(actions.reject).not.toHaveBeenCalled();
+    expect(actions.approve).not.toHaveBeenCalled();
+    expect(router.refresh).toHaveBeenCalledTimes(1);
+    await page.respond(short);
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.reject }).getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("F111-9: con una escritura pendiente (promesa controlada), «Revisar» está deshabilitado y no refresca", async () => {
+    const user = userEvent.setup();
+    let finish: (value: Awaited<ReturnType<GoalFundingActions["reject"]>>) => void = () => {};
+    const reject = vi.fn<GoalFundingActions["reject"]>(() => new Promise((resolve) => { finish = resolve; }));
+    render(<UsageRequestCard request={request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) })} people={tomasView} actions={goalFunding({ reject })} />);
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.reject }));
+    const review = screen.getByRole("button", { name: copy.goalExpense.request.review });
+    expect(review.getAttribute("aria-disabled")).toBe("true");
+    await user.click(review);
+    expect(router.refresh).not.toHaveBeenCalled();
+    await act(async () => { finish({ status: "ok", value: { requestId: REQUEST, status: "rejected" } }); });
+    expect(reject).toHaveBeenCalledTimes(1);
+  });
+
+  it("F111-9: con un resultado desconocido de «Rechazar», sin «Revisar»; solo las vías de recuperación, con la misma clave", async () => {
+    const user = userEvent.setup();
+    const reject = vi.fn<GoalFundingActions["reject"]>(async () => ({ status: "unknown" }));
+    render(<UsageRequestCard request={request({ amountMinor: minor(30000n), memberAvailableMinor: null })} people={tomasView} actions={goalFunding({ reject })} />);
+    expect(screen.getByRole("button", { name: copy.goalExpense.request.review })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.reject }));
+    await screen.findByRole("button", { name: copy.writes.dismiss });
+    expect(screen.queryByRole("button", { name: copy.goalExpense.request.review })).toBeNull();
+    expect(screen.queryByRole("button", { name: copy.goalExpense.request.reject })).toBeNull();
+    await user.click(screen.getByRole("button", { name: copy.writes.retry }));
+    await waitFor(() => expect(reject).toHaveBeenCalledTimes(2));
+    const [first, second] = reject.mock.calls.map(([payload]) => payload.idempotencyKey);
+    expect(second).toBe(first);
+    expect(router.refresh).not.toHaveBeenCalled();
   });
 });
