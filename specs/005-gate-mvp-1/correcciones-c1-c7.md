@@ -115,6 +115,15 @@ los arneses: no cambian SQL, consultas, permisos, validaciones, fórmulas, `useW
 | F111-12 (diagnóstico de axe) | Arnés `tests/evidence/f111-12.capture.ts` y documento [`diagnostico-aviso-anotar.md`](diagnostico-aviso-anotar.md). No se corrige nada | — | — |
 | F111-13 | Descripción del PR con el inventario final | — | — |
 
+## Ronda 4 · revisión adversarial del PR #111 (F111-14 a F111-17)
+
+| Hallazgo | Cambio | Prueba |
+| --- | --- | --- |
+| F111-14 (idempotencia) | `usage-request-card.tsx`: tras una revisión solo se olvidan las claves de intenciones con **rechazo confirmado** (`rejectedKinds`, que se llena en `onRejected` con el `kind` de la carga). La clave de una intención sin resultado confirmado se conserva aunque el aviso se haya cerrado con confirmación; sin escritura previa, la clave nace al enviar. `useTransition`, `useWrite`, el servidor y las consultas no cambian | `goal-funding.test.tsx`, «F111-14: “Rechazar” desconocido → cerrar con confirmación → refresco idéntico → “Revisar” → “Rechazar” repite la MISMA clave». Falla con la tarjeta de `415de83` (K2 en lugar de K1) y pasa con la corrección. Se conserva «F111-8: …» (clave nueva tras un rechazo confirmado) |
+| F111-15 | Este documento, F111-11: condiciones del diagnóstico de navegación frente al fallo original | — |
+| F111-16 | `diagnostico-aviso-anotar.md`: el mecanismo de `offsetHeight` y que esperar a que termine el contexto elimine el fallo quedan como **hipótesis no demostradas** | — |
+| F111-17 | Este documento y `diagnostico-aviso-anotar.md`: «2/2» de un arnés de diagnóstico es «terminó», no «cumple el gate» | — |
+
 **Las regresiones nuevas fallan sin la corrección.** Con `usage-request-card.tsx` como en `c9fb422`, fallan las 4 de
 F111-8 y F111-9.
 
@@ -139,6 +148,11 @@ F111-8 y F111-9.
 - **Lectura.**
   - **«gasto con meta en dos sesiones»:** la aprobación **se completa tarde**, no se rechaza, no queda desconocida y no se completa sin aviso. Las 10 aprobaciones terminaron en `approved`, y el aviso llegó siempre, en dos casos después de los 5 s (7,6 y 9,1 s). Con 5 aprobaciones concurrentes contra juntia-dev, el resultado de la Server Action tarda a veces más de 5 s: es latencia del entorno, no un cambio de comportamiento. Las cifras salen de la tarjeta y de la lectura final, no de un tiempo de red medido de forma fiable. El camino de éxito (`onOk`, `setDone`, `annotate.notify` y `router.refresh`) no cambió en este PR.
   - **«Cambiar Yo/Nosotros»:** con 5 flujos concurrentes no se reproduce (63–1.672 ms). El fallo de la suite fue con 5 workers que ejecutaban todas las E2E.
+  - **Diferencia de condiciones (F111-15).** El diagnóstico de navegación **no reproduce las condiciones del fallo original**:
+    - **Fallo original** (`couple-settle.e2e.ts`, l.108–115): Sara en **Yo**, a **1440 px**, con la captura RSC de `tests/support/rsc-capture.ts` activa (`page.route` y `route.fetch()`), desde Inicio con sus privados.
+    - **Diagnóstico:** Sara en **Nosotros**, a **390 px** y **sin** captura RSC.
+    - Por eso, que el diagnóstico no lo reproduzca no descarta una causa ligada a Yo, al ancho de escritorio o a la intercepción de RSC. En `e2e:dev` completo sobre `415de83`, la E2E pasó (40/40), y también aislada en la ronda 2.
+- **Qué significan los «2/2» de los arneses de diagnóstico (F111-17).** Que las pruebas **instrumentadas terminaron** y escribieron sus registros, **no** que se cumplan los criterios del gate: el arnés de F111-11 «pasa» aunque un aviso tarde 9,1 s, porque mide y no exige. Lo mismo vale para las 8 corridas de `f111-12.capture.ts`.
   - No se subió ningún timeout. Es iteración contra dev, no evidencia de CI: lo decide el paso 4.
 - **Traces:** `trace-aprobar-{0..4}.zip` y `trace-actividad-{0..4}.zip` de la segunda corrida, en local. No se suben porque llevan las cookies de sesión de las cuentas sembradas.
 

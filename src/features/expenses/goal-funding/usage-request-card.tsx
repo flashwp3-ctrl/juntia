@@ -99,20 +99,30 @@ export function UsageRequestCard({ request, people, actions, compact = false }: 
   // F111-8: con los mismos valores la `key` no cambia y la tarjeta no renace. Por eso «Revisar» es una transición: el refresco
   // y `review.count` se actualizan en la misma transición, así que la cuenta nueva se confirma junto con la lectura nueva
   // (nunca antes, con la vieja a la vista). Un rechazo vale para la revisión en la que llegó (`rejectedAt`): al confirmarse
-  // una revisión posterior deja de pintarse y de bloquear, y las claves de antes se olvidan (`keysAt`): aprobar otra vez es
-  // una intención nueva y explícita. Nunca desbloquea un resultado desconocido: con `unknown`, «Revisar» no se ofrece y solo
-  // siguen reintentar, comprobar o cerrar con confirmación (F111-9).
+  // una revisión posterior deja de pintarse y de bloquear. Nunca desbloquea un resultado desconocido: con `unknown`,
+  // «Revisar» no se ofrece y solo siguen reintentar, comprobar o cerrar con confirmación (F111-9).
+  // F111-14: tras una revisión solo se olvida la clave de una intención con RECHAZO CONFIRMADO (`rejectedKinds`): aprobar otra
+  // vez es una intención nueva. La clave de una intención sin resultado confirmado (`unknown`, aunque se haya cerrado el aviso
+  // con confirmación) se conserva siempre: repetirla es la misma intención (revisión del gestor del PR #69, 10).
   const [refreshing, startRefresh] = useTransition();
   const [review, setReview] = useState<{ count: number; rejectedAt: number | null; blocking: boolean }>({ count: 0, rejectedAt: null, blocking: false });
   const keysAt = useRef(0);
-  const onRejected = useCallback((error: WriteError) => setReview((current) => ({ ...current, rejectedAt: current.count, blocking: error !== "sessionExpired" })), []);
+  const rejectedKinds = useRef(new Set<Kind>());
+  const onRejected = useCallback((error: WriteError, payload: RequestPayload & { kind: Kind }) => {
+    rejectedKinds.current.add(payload.kind);
+    setReview((current) => ({ ...current, rejectedAt: current.count, blocking: error !== "sessionExpired" }));
+  }, []);
   const write = useWrite<RequestPayload & { kind: Kind }, RequestResult>({ action: ACTION[kind], run, check, onOk, onRejected });
   const rejectedNow = write.state.phase === "rejected" && review.rejectedAt === review.count;
   const blocked = rejectedNow && review.blocking;
 
   const send = (which: Kind) => {
     if (refreshing) return;
-    if (keysAt.current !== review.count) { keys.current = {}; keysAt.current = review.count; }
+    if (keysAt.current !== review.count) {
+      for (const rejected of rejectedKinds.current) delete keys.current[rejected];
+      rejectedKinds.current.clear();
+      keysAt.current = review.count;
+    }
     keys.current[which] ??= newIdempotencyKey();
     setKind(which);
     void write.submit({ kind: which, idempotencyKey: keys.current[which]!, requestId: request.id, expectedVersion: request.version });

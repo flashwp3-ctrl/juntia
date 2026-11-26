@@ -48,6 +48,8 @@ Arnés `tests/evidence/f111-12.capture.ts`. Corre con `F111_12=1 npm run e2e:dev
 `/balance`, candidato, CPU 6×, serie 2: cinco cuadros con 701,59 y cinco con 702,00. Sin el paso previo, la hoja se queda
 en 701,59 los 10 cuadros.
 
+**Qué significa que una corrida «pase» (F111-17).** Las 8 corridas de `f111-12.capture.ts` terminaron y escribieron sus series. Eso dice que la instrumentación funcionó, **no** que se cumpla la aserción del gate: el arnés mide y no exige un único rectángulo.
+
 ## Clasificación
 
 - **No lo causa el PR #111.** Se reproduce igual con `src/` de `main` (26 y 30 de 48) y con el candidato (28 y 29 de 48).
@@ -57,18 +59,25 @@ en 701,59 los 10 cuadros.
 - **Y hay un efecto real del producto, mínimo:** la hoja sí cambia de rectángulo, aunque menos de medio píxel y sin
   animación. No es un salto perceptible ni un movimiento con movimiento reducido. Pero existe: una aserción estricta lo ve.
 
-**Hipótesis del mecanismo, no demostrada.** `BottomSheet` (`src/components/ui/bottom-sheet.tsx`, l.128–142, `holdKey`)
+**Hipótesis del mecanismo, no demostrada (F111-16).** `BottomSheet` (`src/components/ui/bottom-sheet.tsx`, l.128–142, `holdKey`)
 fija en un `useLayoutEffect` sin dependencias, en cada render, `minHeight = min(${offsetHeight}px, max)`. `offsetHeight`
 redondea a entero: el alto natural es 701,59 y el mínimo queda en 702, así que la hoja anclada abajo sube su borde
 0,41 px. Si no hay un render posterior dentro de la ventana, no se ve. El cambio de contexto provoca ese render. Coincide
 con las cifras (701,59 → 702,00, entero), pero no se instrumentó el efecto: confirmarlo es parte de la propuesta.
 
-**En resumen:** la causa es mixta. El arnés mide un estado de transición que crea él mismo, y el producto tiene un ajuste
+**Lo que no está demostrado (F111-16).** Dos cosas quedan como hipótesis:
+
+- el mecanismo de `offsetHeight`;
+- que esperar a que termine el cambio de contexto antes de abrir Anotar elimine el fallo.
+
+Ninguna se ha probado: el arnés no instrumentó el efecto de `BottomSheet` ni corrió una variante con esa espera. Lo demostrado es la correlación con el paso de `knobFrames` y que `main` y el candidato dan lo mismo.
+
+**En resumen:** la causa parece mixta. El arnés mide un estado de transición que crea él mismo, y el producto tiene un ajuste
 subpíxel al volver a pintarse. No es un defecto de C-1 a C-7, ni una regresión.
 
 ## Propuesta para los fundadores (PR aparte, si la autorizan)
 
-1. **Arnés (recomendado).** En `routes.a11y.ts`, después de `knobFrames`, esperar a que el cambio de vuelta a «Yo» termine
+1. **Arnés (recomendado; que elimine el fallo es una hipótesis no demostrada, F111-16).** En `routes.a11y.ts`, después de `knobFrames`, esperar a que el cambio de vuelta a «Yo» termine
    antes de abrir Anotar (por ejemplo, con una aserción web-first sobre el contexto ya aplicado), sin tocar la tolerancia
    ni la aserción. Así se mide el estado estable que la prueba quiere vigilar. Es un cambio de pruebas, pero toca una
    prueba del gate: necesita autorización.

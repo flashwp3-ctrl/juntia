@@ -791,6 +791,33 @@ describe("«Revisar» con la máquina de escritura (F111-8, F111-9)", { timeout:
     expect(reject).toHaveBeenCalledTimes(1);
   });
 
+  // F111-14 (revisión del PR #111, ronda 3): la revisión solo olvida claves de intenciones con rechazo confirmado. Un
+  // «Rechazar» sin resultado confirmado, cerrado con confirmación, conserva su clave tras un refresco y una revisión con datos
+  // idénticos (el contrato de la revisión del gestor del PR #69, 10).
+  it("F111-14: «Rechazar» desconocido → cerrar con confirmación → refresco idéntico → «Revisar» → «Rechazar» repite la MISMA clave", async () => {
+    const user = userEvent.setup();
+    const reject = vi.fn<GoalFundingActions["reject"]>()
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValueOnce({ status: "ok", value: { requestId: REQUEST, status: "rejected" } });
+    const short = request({ amountMinor: minor(30000n), memberAvailableMinor: minor(10000n) });
+    const page = harness(short, goalFunding({ reject }));
+    // 1-2. Fondos insuficientes; «Rechazar» con K1 vuelve desconocido.
+    await user.click(screen.getByRole("button", { name: copy.goalExpense.request.reject }));
+    // 3. Se cierra el aviso con confirmación: la tarjeta vuelve a reposo y pide la página otra vez (refresco idéntico).
+    await user.click(await screen.findByRole("button", { name: copy.writes.dismiss }));
+    const confirm = await screen.findByRole("alertdialog", { name: copy.writes.close.title });
+    await user.click(within(confirm).getByRole("button", { name: copy.writes.close.confirm }));
+    await page.respond(short);
+    // 4-5. «Revisar» con una lectura idéntica.
+    await user.click(await screen.findByRole("button", { name: copy.goalExpense.request.review }));
+    await page.respond(short);
+    // 6. «Rechazar» otra vez: la misma intención, con K1.
+    await user.click(await screen.findByRole("button", { name: copy.goalExpense.request.reject }));
+    await waitFor(() => expect(reject).toHaveBeenCalledTimes(2));
+    const [first, second] = reject.mock.calls.map(([payload]) => payload.idempotencyKey);
+    expect(second).toBe(first);
+  });
+
   it("F111-9: con un resultado desconocido de «Rechazar», sin «Revisar»; solo las vías de recuperación, con la misma clave", async () => {
     const user = userEvent.setup();
     const reject = vi.fn<GoalFundingActions["reject"]>(async () => ({ status: "unknown" }));
