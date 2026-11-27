@@ -299,15 +299,12 @@ for (const colorScheme of THEMES) {
         if (isProduct) {
           // Hidratado: los manejadores de React ya están. El selector existe en el DOM en todas las rutas de producto.
           await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
-          // El selector existe en todas salvo /cuenta por debajo de 1280 (contracts/routes.md).
-          const hasSelector = await page.locator("[data-context-selector][data-hydrated]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
-          if (hasSelector) {
-            const knob = await knobFrames(page);
-            expect.soft(new Set(knob.xs).size, "posiciones distintas de la perilla").toBe(1);
-            console.log(`${colorScheme} ${route} ${width}px: perilla ${knob.xs[0]} en ${knob.xs.length} cuadros, ${new Set(knob.xs).size} posición(es)`);
-          } else {
-            console.log(`${colorScheme} ${route} ${width}px: sin selector en este ancho`);
-          }
+          // F111-12 (PR aparte autorizado por los fundadores el 26 nov 2026; specs/005-gate-mvp-1/diagnostico-aviso-anotar.md):
+          // el aviso de Anotar se mide PRIMERO, con la página en reposo, y la perilla después. Antes, el aviso se medía justo
+          // después de knobFrames, que deja en curso el cambio Nosotros → Yo (uno o dos router.refresh()): la hoja se volvía a
+          // pintar dentro de la ventana de medición y la prueba medía una transición que provocaba ella misma. Las dos
+          // mediciones y sus aserciones no cambian; solo el orden, para que ninguna mida la transición de la otra. Tras el
+          // aviso, a una ruta de producto ya no le queda ninguna comprobación que dependa del contexto.
           // /cuenta por debajo de 1024 es una pantalla apilada sin barra: no tiene disparador visible (FR-033).
           const hasTrigger = await page.locator("[data-annotate-trigger]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
           if (hasTrigger) {
@@ -319,6 +316,17 @@ for (const colorScheme of THEMES) {
             await expect(page.getByRole("dialog")).toHaveCount(0);
           } else {
             console.log(`${colorScheme} ${route} ${width}px: sin disparador visible de Anotar`);
+          }
+          // El selector existe en todas salvo /cuenta por debajo de 1280 (contracts/routes.md).
+          const hasSelector = await page.locator("[data-context-selector][data-hydrated]").evaluateAll((nodes) => nodes.some((node) => node.getClientRects().length > 0));
+          if (hasSelector) {
+            const knob = await knobFrames(page);
+            expect.soft(new Set(knob.xs).size, "posiciones distintas de la perilla").toBe(1);
+            console.log(`${colorScheme} ${route} ${width}px: perilla ${knob.xs[0]} en ${knob.xs.length} cuadros, ${new Set(knob.xs).size} posición(es)`);
+            // La vuelta a «Yo» quedó aplicada en el selector visible (también en /cuenta, que no monta ContextView).
+            await expect(page.locator('[data-context-selector] [role="radio"][data-value="me"]:visible').first()).toHaveAttribute("aria-checked", "true");
+          } else {
+            console.log(`${colorScheme} ${route} ${width}px: sin selector en este ancho`);
           }
         }
   
