@@ -103,6 +103,18 @@ describe("ReturnFocusToRow (F117-8)", () => {
     expect(document.activeElement).toBe(field);
   });
 
+  it("F117-9: con un Skeleton visible que no desaparece y sin fila, pasados los 15 s el foco va al título y la espera termina", () => {
+    const title = heading();
+    main.append(title, skeleton());
+    closeDetail();
+    advance(15_000);
+    expect(document.activeElement).toBe(document.body);
+    advance(2500);
+    expect(document.activeElement).toBe(title);
+    // Sin fotogramas pendientes: el bucle de requestAnimationFrame ha parado.
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("si la fila no está, el foco va al título y no a body", () => {
     const title = heading();
     main.append(title);

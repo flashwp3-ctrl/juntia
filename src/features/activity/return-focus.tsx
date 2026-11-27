@@ -41,12 +41,12 @@ export function ReturnFocusToRow() {
       const row = [...document.querySelectorAll<HTMLElement>(`main a[data-transaction-id="${id}"], main a[data-settlement-id="${id}"]`)]
         .find((node) => visible(node) && !node.closest("aside"));
       if (row && place(row)) return;
-      if (loading()) {
+      // Ronda 4 (F117-9): la cuenta de 2 s solo se reinicia dentro del presupuesto de 15 s. Con un Skeleton que no desaparece,
+      // pasados los 15 s se cuenta desde ese momento, el foco va al título y la espera termina (sin más fotogramas).
+      if (loading() && now - started < LOADING_MAX_MS) {
         loadedAt = null;
-        if (now - started < LOADING_MAX_MS) {
-          frame = requestAnimationFrame(attempt);
-          return;
-        }
+        frame = requestAnimationFrame(attempt);
+        return;
       }
       loadedAt ??= now;
       if (now - loadedAt < SETTLE_MS) {
