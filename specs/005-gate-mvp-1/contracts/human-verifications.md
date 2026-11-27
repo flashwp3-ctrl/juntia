@@ -9,6 +9,10 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 
 - **Dónde:** en producción, con las cuentas reales, salvo que la fila diga `juntia-dev`.
   Solo se escriben datos reales legítimos: nada de gastos de prueba en producción.
+  **Única excepción (maestro, decisión 30, nota del 27 nov 2026; F118-1):** la sesión
+  concentrada de FR-013 (T098), acotada a las dos cuentas de prueba dedicadas y a
+  operaciones funcionales con sesiones normales de usuario. No es una autorización
+  general para escribir datos de prueba en producción.
 - **Cada fila de dispositivo** registra: fecha, rol («fundador 1», «fundador 2», «la
   dueña», «el gestor»), modelo de iPhone, versión de iOS, navegador y su versión, commit
   desplegado (lo enseña el panel de Vercel o la etiqueta), resultado y evidencia.
@@ -191,6 +195,20 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   para, se corrige en un PR B, el candidato nuevo pasa el paso 4 y **los 7 días vuelven
   a empezar** desde el día del nuevo despliegue. El gestor registra en `evidence.md` la
   fecha de inicio de cada periodo y, si lo hubo, el motivo del reinicio.
+- **Revisión repetida de FR-013 (maestro, decisión 30, nota del 27 nov 2026; F118-4):**
+  la validación exige también su salida. Las búsquedas de T098 se hacen sobre ventanas
+  que, entre todas, cubren los 7 días. Cada ventana es compatible con la retención
+  efectiva de los registros de Vercel: en Hobby, 1 hora, según https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby;
+  la suscripción real la comprueba la dueña (F118-6). El límite de 4.000 filas es un
+  antecedente: figuraba en la documentación de enero de 2026 y ya no figura en las
+  páginas actuales (F118-9). Los límites efectivos de volumen se comprueban antes de
+  cada revisión. Cada ventana se revisa con margen antes de que expire; si pudo
+  truncarse, no está cubierta. Una revisión
+  diaria no basta. Antes de abrir el periodo (T094) se acredita un procedimiento viable
+  para cubrir los 7 días completos. Solo se guardan recuentos y resultados. El
+  resultado es PASS, FAIL o NO VERIFICADO, como en T098. Si queda alguna ventana sin
+  cubrir, el resultado es NO VERIFICADO y se consulta a los fundadores. Una coincidencia es una fuga de privacidad: un fallo crítico que activa T096
+  y el reinicio. No bloquea la aceptación técnica.
 - **Al final, cada fundador por separado y sin leer la del otro:**
   - una nota en cada eje: uso diario, legibilidad, rapidez y carácter visual;
   - las tres preguntas de §6.7: qué es claro, qué impresiona, qué estorba;

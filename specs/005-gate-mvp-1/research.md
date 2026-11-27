@@ -364,7 +364,21 @@ nada.
   de producción de Vercel (sin valores), por la dueña en el panel o por el gestor con el
   conector de Vercel en solo lectura y su «sí». Esperado: ninguna clave secreta de
   Supabase con prefijo `NEXT_PUBLIC_`.
-- **Registros de Vercel (FR-013):** una semana de registros de ejecución, buscando
+- **Registros de Vercel (FR-013):** **enmendado el 27 de noviembre de 2026** (maestro,
+  decisión 30): para la aceptación técnica, los registros son los de la ventana de una
+  sesión concentrada en producción que ejecuta un agente con dos cuentas de prueba
+  dedicadas, y la revisión se repite durante la validación por uso real. Cada revisión
+  registra el commit candidato y el identificador del despliegue, el inicio y el fin de
+  la ventana, que los registros disponibles la cubren, las operaciones y los errores
+  controlados, las búsquedas con sus recuentos y el resultado: PASS, FAIL o NO
+  VERIFICADO. Una consulta vacía o una ventana sin acreditar no es PASS (F118-2). Con
+  la retención de Hobby (1 hora, según https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby), la revisión se hace
+  por bloques o ventanas, con margen antes de que expiren, comprobando antes los límites
+  efectivos de volumen; una ventana que pudo truncarse no está cubierta (F118-6 y F118-9;
+  las 4.000 filas son un antecedente de la documentación de enero de 2026 que ya no
+  figura en las páginas actuales). Lo que sigue
+  describía la semana de registros, y las búsquedas no cambian: una semana de registros
+  de ejecución, buscando
   patrones de importes (`\$\s?\d`, `amount`, `_minor`), notas, correos y tokens
   (`eyJ`, `sb_secret`, `Bearer`). Se registran las búsquedas y su número de
   coincidencias, **nunca las líneas**. Si hay coincidencias, es un defecto de privacidad

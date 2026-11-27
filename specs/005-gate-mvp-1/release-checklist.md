@@ -98,11 +98,30 @@ cierre».
 
 - [ ] Tabla de idempotencia sin purga en MVP-1; tamaño medido: `____` filas, `____` MB; su
       revisión, en la lista de MVP-2 (FR-068, Q12)
-- [ ] Registros de ejecución de Vercel de una semana: cero coincidencias de importes,
-      comercios, notas o tokens (se registran las búsquedas, no las líneas) (FR-013).
-      **Decisión 30:** una semana de uso en producción con actividad representativa;
-      versión que generó los registros: `____`; operaciones de esa semana: `____`. No vale
-      la corrida de `juntia-dev`; si no se puede acreditar, deciden los fundadores
+- [ ] Registros de ejecución de Vercel de la sesión concentrada en producción: cero
+      coincidencias de importes, comercios, notas o tokens (se registran las búsquedas,
+      no las líneas) (FR-013). **Decisión 30, nota del 27 de noviembre de 2026:** la
+      sesión la ejecuta un agente con dos cuentas de prueba dedicadas, tras el paso 6, y
+      recorre las operaciones de la corrida completa con errores controlados, solo con
+      sesiones normales de usuario de esas dos cuentas (F118-1). Se registra (F118-2):
+      commit candidato: `____`; identificador del despliegue: `____`; inicio y fin de la
+      ventana: `____`; los registros disponibles cubren toda la ventana: sí / no;
+      operaciones y errores controlados ejecutados: `____`; búsquedas y recuentos: `____`;
+      resultado: PASS / FAIL / NO VERIFICADO. Una consulta vacía o una ventana sin
+      acreditar es NO VERIFICADO y esta casilla no se marca. Revisión por bloques
+      mientras se ejecuta la sesión (F118-6 y F118-9; retención de Hobby: 1 hora, según
+      https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby; la suscripción real la comprueba la dueña;
+      las 4.000 filas son un antecedente de enero de 2026 que ya no figura en las páginas
+      actuales). Límites efectivos de volumen comprobados antes de la revisión: `____`.
+      Cada bloque se revisa con margen antes de que expire; un bloque que pudo
+      truncarse no está cubierto. Bloques (ventana, recuentos, resultado): `____`. Los bloques cubren la
+      ventana completa sin huecos: sí / no. La sesión es PASS solo si todos los bloques
+      son PASS y la cubren entera. Cronología (F118-5): orden
+      efectivo de la sesión, T097 y T099: `____`; la copia restaurada contiene los datos
+      de la sesión: sí / no; la medición de idempotencia incluye sus operaciones: sí / no.
+      No vale la corrida de `juntia-dev`. La revisión se repite durante la
+      validación por uso real (30.6), fuera de esta checklist. *Constancia:* hasta el
+      27 de noviembre pedía una semana de uso en producción con actividad representativa
 
 ## Firmas
 
