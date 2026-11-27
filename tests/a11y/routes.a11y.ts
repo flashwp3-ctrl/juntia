@@ -724,54 +724,121 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
         detail: [{ selector: "[data-transaction-detail]", text: formatMoney(extreme.amount), label: "el detalle", panel: true }] }] });
   });
 
-  // Defecto A (luz verde del gestor, 27 nov 2026): con la ventana en `xl` y Actividad en una columna (raíz al 200 % a 1280 y
-  // 1440), el detalle ocupa la columna y se cierra con su × (la cabecera móvil de «volver» sigue ligada a `max-xl`). Con teclado:
-  // se abre desde la fila, la × se alcanza con Tab y tiene nombre accesible, mide al menos 44 × 44, al cerrarla se vuelve a la
-  // lista (ningún estado sin salida) y el foco vuelve a la fila. A 1280 al 100 %, la misma comprobación con el panel, como hoy.
-  test("Actividad en una columna con la ventana en xl: el detalle se cierra con la × por teclado, con nombre, 44 px, vuelta a la lista y foco en la fila", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+  // Defecto A (luz verde del gestor, 27 nov 2026) y devolución del foco (fundadores, «opcion 1», 27 nov 2026). El detalle de
+  // Actividad se abre desde su fila con Enter y se cierra con teclado: la × del panel (1280 y 1440 al 100 %) o de la columna
+  // (raíz al 200 % a 1280 y 1440: Actividad en una columna con la ventana en `xl`), o «Volver» por debajo de 1280 (390). En cada
+  // caso: la salida se alcanza con Tab, tiene nombre accesible y mide al menos 44 × 44; al cerrar vuelve la lista (ningún estado
+  // sin salida) y el foco está en la fila de ESE movimiento, por su id, con el anillo visible (`:focus-visible`). En Yo (gasto
+  // extremo), en Nosotros (gasto extremo y liquidación con nombres de 60) y con aportes a metas en la lista (gasto compartido).
+  const CLOSE_CASES = [{ width: 1280, root: "" }, { width: 1440, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }, { width: 390, root: "" }];
+  async function closeWithKeyboard(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; month: string; targets: readonly { id: string; kind: "transaction" | "settlement"; label: string }[]; name: string }) {
+    const { browser, baseURL, user, scope, month, targets, name } = options;
+    for (const { width, root } of CLOSE_CASES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width, height: 900 } });
+      const host = new URL(baseURL).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: scope, domain: host, path: "/" }]);
+      await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), scope);
+      const page = await context.newPage();
+      for (const target of targets) {
+        const label = `${name} · ${target.label} · ${width}px${root ? " · raíz 200 %" : ""}`;
+        const rowSelector = `main a[data-${target.kind}-id="${target.id}"]`;
+        await page.goto(`/actividad?mes=${month}`);
+        const row = page.locator(rowSelector).filter({ visible: true }).first();
+        await expect(row, `${label}: la fila está en la lista`).toBeVisible();
+        await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+        await twoFrames(page);
+        const twoColumns = !root && width >= 1280;
+        expect.soft((await tableFit(page)).columns, `${label}: la disposición de partida`).toBe(twoColumns ? GRID_AT[width] : null);
+        await row.focus();
+        await page.keyboard.press("Enter");
+        await page.waitForURL(new RegExp(`/actividad/${target.id}`));
+        await expect(page.getByRole("link", { name: width >= 1280 ? copy.detail.close : copy.detail.back, exact: true }).filter({ visible: true }), `${label}: el detalle está abierto`).toHaveCount(1);
+        // La navegación en el cliente conserva el estilo de la raíz; si no, la prueba no mediría lo que dice.
+        expect(await page.evaluate(() => document.documentElement.style.fontSize), `${label}: la raíz sigue igual`).toBe(root);
+        await twoFrames(page);
+        const entry = await page.evaluate(() => { const node = document.activeElement; return `${node?.tagName.toLowerCase()} «${(node?.getAttribute("aria-label") ?? node?.textContent ?? "").trim().slice(0, 30)}»`; });
+        expect.soft((await tableFit(page)).columns, `${label}: con el detalle abierto, ${twoColumns ? "la rejilla de hoy" : "una columna"}`).toBe(twoColumns ? GRID_AT[width] : null);
+        const exitName = width >= 1280 ? copy.detail.close : copy.detail.back;
+        const exit = page.getByRole("link", { name: exitName, exact: true }).filter({ visible: true });
+        await expect(exit, `${label}: hay una salida visible, «${exitName}»`).toHaveCount(1);
+        let reached = false;
+        for (let step = 0; step < 80 && !reached; step += 1) {
+          await page.keyboard.press("Tab");
+          reached = await exit.evaluate((node) => node === document.activeElement);
+        }
+        expect(reached, `${label}: «${exitName}» se alcanza con Tab`).toBe(true);
+        const box = (await exit.boundingBox())!;
+        expect.soft(Math.min(box.width, box.height), `${label}: «${exitName}» mide al menos 44 × 44`).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press("Enter");
+        await page.waitForURL((url) => url.pathname === "/actividad");
+        await expect(page.locator(rowSelector).filter({ visible: true }).first(), `${label}: al cerrar, la lista vuelve`).toBeVisible();
+        const focusOnRow = async () => page.evaluate((selector) => {
+          const node = document.activeElement as HTMLElement | null;
+          return { onRow: Boolean(node?.matches(selector)), visible: Boolean(node?.matches(":focus-visible")), tag: node?.tagName.toLowerCase() ?? "nada" };
+        }, rowSelector);
+        await expect.poll(async () => (await focusOnRow()).onRow, { message: `${label}: el foco vuelve a la fila de ${target.label}`, timeout: 3000 }).toBe(true).catch(() => undefined);
+        const focus = await focusOnRow();
+        console.log(`${label}: ${twoColumns ? "rejilla" : "una columna"}; al abrir, foco en ${entry}; «${exitName}» ${Math.round(box.width)}×${Math.round(box.height)}; al cerrar, foco en ${focus.tag}${focus.onRow ? " (la fila)" : ""}${focus.visible ? ", visible" : ""}`);
+        expect.soft(focus.onRow, `${label}: el foco vuelve a la fila de ${target.label}`).toBe(true);
+        expect.soft(focus.visible, `${label}: con el anillo de foco visible`).toBe(true);
+      }
+      await context.close();
+    }
+  }
+
+  test("Actividad: el detalle se cierra por teclado (× del panel, × en una columna al 200 % y «Volver» a 390) y el foco vuelve a su fila, en Yo, Nosotros y con aportes", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(240_000);
+    checkLengths();
     const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
     const [extreme] = await seedMovements(user, "extreme");
-    const month = extreme.transactionDate.slice(0, 7);
-    for (const { width, root } of [{ width: 1280, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }]) {
-      const label = `cerrar el detalle · ${width}px${root ? " · raíz 200 %" : ""}`;
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user, scope: "me", month: extreme.transactionDate.slice(0, 7), name: "Yo", targets: [{ id: extreme.id, kind: "transaction", label: "gasto extremo" }] });
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    await updateDisplayName(pair.sara.client, NAME_SARA);
+    await updateDisplayName(pair.tomas.client, NAME_TOMAS);
+    const half = moneyFromPesos(499_999_999n);
+    const shared = await createSharedExpense(pair.sara.client, {
+      idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: todayInBogota(), description: LONG_DESCRIPTION,
+      payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+    });
+    const settlement = await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
+    const month = todayInBogota().slice(0, 7);
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", month, name: "Nosotros", targets: [{ id: shared.id, kind: "transaction", label: "gasto extremo" }, { id: settlement.id, kind: "settlement", label: "liquidación" }] });
+    const max = moneyFromPesos(999_999_999n);
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: GOAL_NAME, goalType: "travel", target: max, targetMonth: null, context: "us" });
+    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
+    const [recent] = await seedSharedMovements(pair, "recent");
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", month, name: "Con aportes", targets: [{ id: recent.id, kind: "transaction", label: "gasto compartido junto a los aportes" }] });
+  });
+
+  // Devolución del foco, destino de reserva: si la fila ya no existe al volver a la lista (aquí, porque el movimiento se eliminó
+  // desde su detalle), el foco va al título de Actividad, visible, y nunca a `body`. A 1280 con el panel y a 390.
+  test("Actividad: al eliminar un movimiento desde su detalle, el foco va al título de Actividad y no a body", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const seeded = await seedMovements(user, "recent");
+    const victims = seeded.filter((row) => row.type === "expense").slice(0, 2);
+    for (const [index, width] of [1280, 390].entries()) {
+      const victim = victims[index];
+      const label = `eliminar desde el detalle · ${width}px`;
       const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width, height: 900 } });
       const host = new URL(baseURL!).hostname;
       await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }]);
       await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
       const page = await context.newPage();
-      await page.goto(`/actividad?mes=${month}`);
-      await expect(page.getByText(formatMoney(extreme.amount)).filter({ visible: true }).first()).toBeVisible();
-      await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
-      await twoFrames(page);
-      expect.soft((await tableFit(page)).columns, `${label}: la disposición de partida`).toBe(root ? null : GRID_AT[width]);
-      const row = page.locator(`main a[data-transaction-id="${extreme.id}"]`).filter({ visible: true }).first();
+      await page.goto(`/actividad?mes=${victim.transactionDate.slice(0, 7)}`);
+      const row = page.locator(`main a[data-transaction-id="${victim.id}"]`).filter({ visible: true }).first();
       await row.focus();
       await page.keyboard.press("Enter");
-      await page.waitForURL(new RegExp(`/actividad/${extreme.id}`));
-      await expect(page.locator("main [data-transaction-detail]").filter({ visible: true }).first()).toBeVisible();
-      // La navegación en el cliente conserva el estilo de la raíz; si no, la prueba no mediría lo que dice.
-      expect(await page.evaluate(() => document.documentElement.style.fontSize), `${label}: la raíz sigue al 200 %`).toBe(root);
-      await twoFrames(page);
-      const layout = await tableFit(page);
-      expect.soft(layout.columns, `${label}: con el detalle abierto, ${root ? "una columna" : "la rejilla de hoy"}`).toBe(root ? null : GRID_AT[width]);
-      const close = page.getByRole("link", { name: copy.detail.close }).filter({ visible: true });
-      await expect(close, `${label}: hay una × visible con nombre «${copy.detail.close}»`).toHaveCount(1);
-      let reached = false;
-      for (let step = 0; step < 80 && !reached; step += 1) {
-        await page.keyboard.press("Tab");
-        reached = await close.evaluate((node) => node === document.activeElement);
-      }
-      expect(reached, `${label}: la × se alcanza con Tab`).toBe(true);
-      const box = (await close.boundingBox())!;
-      console.log(`${label}: rejilla ${layout.columns ?? "una columna"}; × de ${Math.round(box.width)}×${Math.round(box.height)}`);
-      expect.soft(Math.min(box.width, box.height), `${label}: la × mide al menos 44 × 44`).toBeGreaterThanOrEqual(44);
-      await page.keyboard.press("Enter");
-      await page.waitForURL((url) => !url.pathname.includes(extreme.id));
-      await expect(page.locator(`main a[data-transaction-id="${extreme.id}"]`).filter({ visible: true }).first(), `${label}: al cerrar, la lista vuelve`).toBeVisible();
-      await page.waitForTimeout(1000);
-      const focus = await page.evaluate((id) => { const node = document.activeElement; return { onRow: Boolean(node?.closest(`[data-transaction-id="${id}"]`)), tag: node?.tagName.toLowerCase(), name: (node?.getAttribute("aria-label") ?? node?.textContent ?? "").trim().slice(0, 40) }; }, extreme.id);
-      console.log(`${label}: foco tras cerrar en ${focus.tag} «${focus.name}»`);
-      expect.soft(focus.onRow, `${label}: el foco vuelve a la fila`).toBe(true);
+      await page.waitForURL(new RegExp(`/actividad/${victim.id}`));
+      await page.getByRole("button", { name: copy.remove.action.expense }).filter({ visible: true }).first().click();
+      await page.getByRole("alertdialog").or(page.getByRole("dialog")).getByRole("button", { name: copy.remove.confirm, exact: true }).click();
+      await page.waitForURL((url) => url.pathname === "/actividad");
+      await expect(page.locator(`main a[data-transaction-id="${victim.id}"]`), `${label}: la fila ya no está`).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? "nada"), { message: `${label}: el foco sale de body`, timeout: 5000 }).not.toBe("body").catch(() => undefined);
+      const focus = await page.evaluate(() => { const node = document.activeElement as HTMLElement | null; return { tag: node?.tagName.toLowerCase() ?? "nada", text: (node?.textContent ?? "").trim().slice(0, 30), visible: node ? node.getClientRects().length > 0 : false }; });
+      console.log(`${label}: al volver, foco en ${focus.tag} «${focus.text}»`);
+      expect.soft(focus.tag, `${label}: el foco no queda en body`).not.toBe("body");
+      expect.soft(focus.tag, `${label}: el foco va al título de Actividad`).toBe("h1");
+      expect.soft(focus.visible, `${label}: el destino está a la vista`).toBe(true);
       await context.close();
     }
   });
