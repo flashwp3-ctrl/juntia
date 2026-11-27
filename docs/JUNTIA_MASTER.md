@@ -1536,7 +1536,7 @@ Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de 
 1. Análisis en Nosotros a 320 px con la raíz al 200 %: el documento medía 326 (≤ 320).
 2. La hoja M3 «Invitar a mi pareja» a 390 px al 200 %: el título quedaba bajo la ×.
 
-**Límite:** solo esos dos fallos, cada uno en un PR aparte y en Draft, con la causa demostrada antes de corregir y las condiciones del 27 de noviembre.
+**Límite:** solo esos dos fallos, los dos en un PR aparte, el #119 (en Draft), con un commit por defecto, con la causa demostrada antes de corregir y las condiciones del 27 de noviembre.
 
 - **Análisis:** el enfoque de filas en dos líneas con una container query y roles ARIA explícitos lo aprobó el gestor.
 - **M3:** como en local no fallaba (pasaba por 1,2 px), el gestor aprobó seguir con la causa medida. También aprobó la opción (a), que cambia la estimación del ancho del título en `SheetTitle` por una tabla de Brygada 1918 500 medida sobre la fuente real, con un 2 % de margen entre plataformas. `SheetTitle` es un componente compartido, y la condición es que nada cambie al 100 % en las hojas que lo usan.

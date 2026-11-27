@@ -98,3 +98,36 @@ columna central: `min(1.4375rem, 100cqi / --title-em)`.
 **Regresión** (`tests/a11y/routes.a11y.ts`, `@sweep`): en las 11 hojas, a 320, 360 y 390 al 200 %, la palabra más ancha del título
 cabe en su columna con un 2 % de holgura (`SHEET_TITLE_MARGIN`). Sin la corrección falla en «Invitar» y en «Anotar», en los tres
 anchos. La prueba de CI («texto al 200 %: M3…») queda como estaba.
+
+## Ronda 2 de la revisión (F119-1 a F119-5)
+
+La revisión adversarial aceptó el alcance, el enfoque de Análisis, los roles, la tabla `BRYGADA_500` y las reducciones de −1,3 % y
+−1,5 %. Los hallazgos eran de las pruebas, la evidencia y la documentación, y **no cambia el comportamiento del producto**: en
+`src/lib/text-fit.ts` solo cambia el comentario del margen.
+
+- **F119-1: el margen no se pide dos veces.** El 2 % lo reserva la estimación, así que la prueba no lo vuelve a exigir sobre el
+  ancho renderizado.
+  - **Estimación, sin navegador** (`src/lib/text-fit.test.ts`): para los 14 títulos, `sheetTitleEm` ≥ ancho real de referencia ×
+    1,02. El ancho de referencia es el de Brygada 500 con el tracking, medido en el DOM (caso 10).
+  - **Regresión negativa:** `longestWordEm` no llega a ese margen para «Invitar» ni para «Anotar». Sin la corrección
+    (`sheetTitleEm` = `longestWordEm`), falla en «Invitar a mi pareja» y «Anotar gasto».
+  - **Geometría real** (`routes.a11y.ts`): en las 14 hojas, a 320, 360 y 390 al 200 %, la palabra más ancha ≤ su columna (sin
+    ×1,02), ninguna línea sale de la columna, el título no se recorta y no solapa botones. En local pasa también sin la corrección,
+    porque el fallo necesita el pintado más ancho de CI; por eso la regresión negativa es la de la estimación.
+- **F119-2: las 14 variantes.** `sheetCases` suma «Editar ingreso», «Enlace nuevo» (con una invitación pendiente) y «Editar meta».
+  - Al 100 %, 0 diferencias en 98 medidas.
+  - Al 200 %, las tres nuevas crecen: +2,3 %, +6,4 % y +2,1 %, con una holgura mínima del 2,14 % y sin recortes.
+- **F119-3: el 2 % es un margen empírico provisional.** La medida de la diferencia entre plataformas es indirecta: la tabla de
+  Análisis es Onest, con otros rellenos y otro reparto de columnas.
+  - `measureSheetTitle` espera a `document.fonts.ready` y comprueba Brygada 1918 500 antes de medir.
+  - La prueba de geometría deja en sus anotaciones las métricas de cada título (fuente cargada, palabra, columna y holgura). Así,
+    el primer CI que la corra registra la medida directa en su plataforma.
+- **F119-4: Análisis con seis meses extremos.** Prueba nueva: mayo a septiembre de 2026 con 1 a 5 gastos de 999.999.998 (hasta
+  $4.999.999.990), más el octubre dorado. Exige los seis meses, en orden, con su mes y su importe completos calculados de las
+  fixtures, en los 7 anchos y al 200 %; y que la tabla cerrada quede oculta con la container query activa.
+  - **Sin la corrección**, falla también a 390 al 200 %: documento de 418 y tabla de 378,5 px. Es lo que un umbral fijo no habría
+    cubierto.
+  - **Con la corrección**, el documento es igual a la ventana en todos los casos.
+- **Sobre la semántica:** `ariaSnapshot` calcula los roles desde el DOM. No equivale a comprobar lo que anuncia VoiceOver, ni el
+  árbol real de WebKit, que Playwright no expone. En Chromium, el árbol real (CDP) se comprobó aparte.
+- **F119-5:** la nota del maestro dice ahora «los dos en un PR aparte, el #119, con un commit por defecto», sin tocar el literal.
