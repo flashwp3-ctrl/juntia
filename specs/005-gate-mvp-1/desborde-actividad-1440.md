@@ -278,6 +278,11 @@ no se cambia.
     Después, 0 fechas cortadas.
 
   Las filas en vuelo de Inicio (`pending-home`) usan el mismo componente.
+- **Ronda 4 (F117-10), solo evidencia.** El arnés comprueba el recorte en los ancestros de **cada** fragmento del texto y mide la
+  **fila en vuelo** (`pending="saving"`: se retiene la Server Action de Anotar y la fila queda en «Guardando…»), en los 10
+  casos. Frente a la base: **0 diferencias al 100 %** en 152 filas, contando la fila en vuelo. Al 200 % cambian solo las 14 filas
+  cuya fecha se cortaba (las 13 de antes, más la fila en vuelo a 390). Después: 0 fechas cortadas y «Guardando…» entero en las 10
+  combinaciones (71,8 px al 100 % y 143,6 px al 200 %), antes y después. No se cambia el producto.
 - **Regresión.** Inicio exige la fecha de las filas privadas a partir de las fixtures, y Actividad en Yo, la fecha de cada fila
   sembrada. Sin la corrección, las dos fallan a 390 al 200 %.
 

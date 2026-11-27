@@ -300,10 +300,26 @@ test("7 · Actividad: el contenedor entre 1024 y 1440 al 100 %", async ({ browse
 });
 
 // Ronda 3, fecha privada de ExpenseRow (autorizada el 27 nov 2026, «dale la opcion 1»): la geometría de cada ExpenseRow visible
-// en las pantallas que lo usan (Inicio en Yo sin pareja y con pareja, y la lista por días de Actividad en Yo), en los 7 anchos al
-// 100 % y a 390, 1280 y 1440 con la raíz al 200 %. Por fila: alto de la fila y de la línea de meta, y caja de «Solo tú» y de la
-// fecha (geometría del texto) con su recorte. Se escribe en `test-results/d117/expenserow-{D117_TAG}.json` para comparar el antes
-// y el después. Las filas en vuelo (pending-home) son el mismo componente; solo existen mientras se guarda.
+// en las pantallas que lo usan (Inicio en Yo sin pareja y con pareja, la lista por días de Actividad en Yo y, ronda 4 (F117-10),
+// la fila en vuelo de Inicio, `pending="saving"`, con «Guardando…»), en los 7 anchos al 100 % y a 390, 1280 y 1440 con la raíz al
+// 200 %. Por fila: alto de la fila y de la línea de meta, y caja de «Solo tú», de la fecha y de «Guardando…» (geometría del
+// texto) con su recorte, comprobado en los ancestros de CADA fragmento (F117-10). Se escribe en
+// `test-results/d117/expenserow-{D117_TAG}.json` para comparar el antes y el después.
+// Abre Anotar con la tecla N, escribe el monto y elige la primera categoría (como `fillAnnotate` de tests/support/states.ts).
+async function annotateHeld(page: Page) {
+  await page.route("**/*", (route) => (route.request().method() === "POST" && "next-action" in route.request().headers() ? undefined : route.fallback()));
+  await expect(page.locator("[data-context-selector][data-hydrated]").first()).toBeAttached();
+  await page.locator("body").focus();
+  await page.keyboard.press("n");
+  const sheet = page.getByRole("dialog", { name: copy.annotate.title.expense });
+  await expect(sheet.getByRole("textbox", { name: copy.annotate.amount })).toBeFocused();
+  await page.keyboard.type("45000");
+  await sheet.getByRole("radiogroup", { name: copy.annotate.category }).getByRole("radio").first().click();
+  await sheet.getByRole("button", { name: /^Guardar/ }).click();
+  await expect(sheet).toBeHidden();
+  await expect(page.locator("[data-pending='saving']:visible")).toHaveCount(1);
+}
+
 test("8 · ExpenseRow: geometría de la fecha privada en todas sus pantallas", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("expenserow"));
   test.setTimeout(600_000);
@@ -312,49 +328,59 @@ test("8 · ExpenseRow: geometría de la fecha privada en todas sus pantallas", a
   const pair = await seedCouple({ index: info.parallelIndex });
   await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
   const out: object[] = [];
-  for (const [screen, user, path] of [["Inicio · sin pareja", solo, "/"], ["Actividad · Yo", solo, "/actividad"], ["Inicio · Yo con pareja", pair.sara, "/"]] as const) {
+  const screens = [["Inicio · sin pareja", solo, "/", false], ["Actividad · Yo", solo, "/actividad", false], ["Inicio · Yo con pareja", pair.sara, "/", false], ["Inicio · fila en vuelo", solo, "/", true]] as const;
+  for (const [screen, user, path, inFlight] of screens) {
     const { context, page } = await open(browser, baseURL!, user, "me", "light");
     await page.goto(path);
     await expect(page.locator("main a.row-stack[data-transaction-id]").filter({ visible: true }).first()).toBeVisible();
+    if (inFlight) await annotateHeld(page);
     for (const [width, scale] of [...[360, 390, 430, 768, 1024, 1280, 1440].map((value) => [value, ""] as const), [390, "200%"], [1280, "200%"], [1440, "200%"]] as const) {
       await page.setViewportSize({ width, height: 900 });
       await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-      const rows = await page.evaluate((onlyYou) => [...document.querySelectorAll<HTMLElement>("main a.row-stack[data-transaction-id], main div.row-stack[data-transaction-id]")]
-        .filter((row) => row.getClientRects().length > 0 && row.querySelector("svg") && (row.textContent ?? "").includes(onlyYou))
+      const rows = await page.evaluate(({ onlyYou, saving, inFlight }) => [...document.querySelectorAll<HTMLElement>("main a.row-stack[data-transaction-id], main div.row-stack[data-transaction-id]")]
+        .filter((row) => row.getClientRects().length > 0 && row.querySelector("svg") && (row.textContent ?? "").includes(onlyYou) && (row.dataset.pending === "saving") === inFlight)
         .map((row) => {
           const meta = [...row.querySelectorAll<HTMLElement>("span")].find((node) => node.textContent?.includes(onlyYou) && node.querySelector("svg"))!;
           const walker = document.createTreeWalker(meta, NodeFilter.SHOW_TEXT);
           const nodes: { node: Text; start: number }[] = [];
           let all = "";
           for (let node = walker.nextNode(); node; node = walker.nextNode()) { nodes.push({ node: node as Text, start: all.length }); all += (node as Text).data; }
+          // La caja de un trozo del texto y si está recortado: cada fragmento (cada nodo de texto que toca) frente a los ancestros
+          // con overflow de SU propio padre, hasta la fila (F117-10; antes se miraban solo los del primer nodo de la línea).
           const box = (from: number, to: number) => {
+            if (from < 0) return null;
+            let clipped = false;
             const rects = nodes.filter(({ node, start }) => start < to && start + node.data.length > from).flatMap(({ node, start }) => {
               const range = document.createRange();
               range.setStart(node, Math.max(0, from - start));
               range.setEnd(node, Math.min(node.data.length, to - start));
-              return [...range.getClientRects()].filter((rect) => rect.width > 0);
+              const own = [...range.getClientRects()].filter((rect) => rect.width > 0);
+              for (const rect of own) {
+                for (let parent = node.parentElement; parent && parent !== row; parent = parent.parentElement) {
+                  const css = getComputedStyle(parent);
+                  if (css.overflowX === "visible" && css.overflowY === "visible") continue;
+                  const b = parent.getBoundingClientRect();
+                  if (rect.left < b.left - 0.5 || rect.right > b.right + 0.5) clipped = true;
+                }
+              }
+              return own;
             });
             if (!rects.length) return null;
             const left = Math.min(...rects.map((r) => r.left)), right = Math.max(...rects.map((r) => r.right)), top = Math.min(...rects.map((r) => r.top));
-            // Recortado: alguna parte fuera de un ancestro con overflow (también la elipsis).
-            let clipped = false;
-            for (let parent = nodes[0].node.parentElement; parent && parent !== row; parent = parent.parentElement) {
-              const css = getComputedStyle(parent);
-              if (css.overflowX === "visible" && css.overflowY === "visible") continue;
-              const b = parent.getBoundingClientRect();
-              if (left < b.left - 0.5 || right > b.right + 0.5) clipped = true;
-            }
             return { left: Math.round(left * 10) / 10, top: Math.round(top * 10) / 10, width: Math.round((right - left) * 10) / 10, clipped };
           };
-          const dateStart = all.indexOf("·") >= 0 ? all.indexOf("·") + 1 : all.length;
-          const dateText = all.slice(dateStart).replace(/ ·$/, "").trim();
+          // La fecha: lo que va entre el primer «·» y el final, sin «Guardando…» ni su «·» de enlace.
+          const withoutPending = all.includes(saving) ? all.slice(0, all.indexOf(saving)) : all;
+          const dateStart = withoutPending.indexOf("·") + 1;
+          const dateText = withoutPending.slice(dateStart).replace(/\s*·\s*$/, "").trim();
           const dateFrom = all.indexOf(dateText, dateStart);
           return {
-            id: row.dataset.transactionId, row: Math.round(row.getBoundingClientRect().height * 10) / 10, meta: Math.round(meta.getBoundingClientRect().height * 10) / 10,
+            id: row.dataset.transactionId, pending: row.dataset.pending ?? null, row: Math.round(row.getBoundingClientRect().height * 10) / 10, meta: Math.round(meta.getBoundingClientRect().height * 10) / 10,
             onlyYou: box(all.indexOf(onlyYou), all.indexOf(onlyYou) + onlyYou.length), date: dateText, dateBox: box(dateFrom, dateFrom + dateText.length),
+            saving: all.includes(saving) ? box(all.indexOf(saving), all.indexOf(saving) + saving.length) : null,
           };
-        }), copy.row.onlyYou);
+        }), { onlyYou: copy.row.onlyYou, saving: copy.row.pending.saving, inFlight });
       out.push({ screen, width, scale: scale || "100%", rows });
     }
     await context.close();
