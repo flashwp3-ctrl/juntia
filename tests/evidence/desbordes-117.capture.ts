@@ -14,6 +14,8 @@ import { todayInBogota } from "../../src/domain/transactions";
 import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
 import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { createTransaction } from "../../src/lib/db/transactions";
+import { updateDisplayName } from "../../src/lib/db/profile";
+import { registerSettlement } from "../../src/lib/db/settlements";
 import { seedCouple, seedMovements, seedSharedMovements, type SeededUser } from "../support/seed";
 
 test.skip(process.env.D117 !== "1", "Solo a mano: D117=1");
@@ -42,7 +44,17 @@ async function measure(page: Page, texts: readonly string[]) {
     const aside = [...document.querySelectorAll<HTMLElement>("main aside")].find((node) => node.getClientRects().length > 0) ?? null;
     const asideRect = aside?.getBoundingClientRect() ?? null;
     const tables = [...document.querySelectorAll<HTMLTableElement>("main table")].filter((node) => node.getClientRects().length > 0)
-      .map((table) => ({ table: Math.round(table.getBoundingClientRect().width), column: Math.round((table.closest(".min-w-0") ?? table.parentElement!).getBoundingClientRect().width) }));
+      .map((table) => ({
+        table: Math.round(table.getBoundingClientRect().width), column: Math.round((table.closest(".min-w-0") ?? table.parentElement!).getBoundingClientRect().width),
+        layout: getComputedStyle(table).tableLayout,
+        // Cada fila: su tipo, el ancho de cada celda y, en cada celda, el ancho del contenido más ancho que no se recorta.
+        rows: [...table.querySelectorAll("tbody tr")].slice(0, 12).map((row) => ({
+          kind: row.hasAttribute("data-goal-row") ? "meta (colSpan)" : row.querySelector("[data-goal-entry]") ? "meta" : "movimiento",
+          text: (row.textContent ?? "").trim().slice(0, 40),
+          cells: [...row.children].map((cell) => Math.round(cell.getBoundingClientRect().width * 100) / 100),
+          widest: [...row.children].map((cell) => Math.max(0, ...[...cell.querySelectorAll<HTMLElement>("*")].map((node) => node.scrollWidth))),
+        })),
+      }));
     const found = needles.flatMap((needle) => [...document.querySelectorAll<HTMLElement>("main *")]
       .filter((node) => node.getClientRects().length > 0 && [...node.childNodes].some((child) => child.nodeType === 3 && (child.textContent ?? "").includes(needle)))
       .map((node) => {
@@ -121,6 +133,31 @@ test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL 
         await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
         log("actividad-nosotros", view, colorScheme, width, {}, await measure(page, [amount]));
       }
+    }
+    await context.close();
+  }
+});
+
+test("2b · Actividad en Nosotros: una liquidación con los nombres más largos (60)", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("liquidacion"));
+  test.setTimeout(600_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  await updateDisplayName(pair.sara.client, "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A");
+  await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverri Olarte B");
+  const half = moneyFromPesos(50_000n);
+  await createSharedExpense(pair.sara.client, {
+    idempotencyKey: key(), amount: moneyFromPesos(100_000n), categoryId: "home", transactionDate: today(), description: "Gasto corto",
+    payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+  });
+  await registerSettlement(pair.tomas.client, { idempotencyKey: key(), amount: moneyFromPesos(20_000n), settlementDate: today(), note: null });
+  for (const colorScheme of THEMES) {
+    const { context, page } = await open(browser, baseURL!, pair.sara, "us", colorScheme);
+    await page.goto("/actividad");
+    await expect(page.getByText("$20.000").filter({ visible: true }).first()).toBeVisible();
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      log("liquidacion-nombres-largos", "lista", colorScheme, width, {}, await measure(page, ["$20.000", "$100.000"]));
     }
     await context.close();
   }

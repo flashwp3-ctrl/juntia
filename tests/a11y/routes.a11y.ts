@@ -9,11 +9,16 @@
 // T051 / FR-067; SC-002 (002): el recorrido sale de tests/a11y/route-registry.ts. Con A11Y_JOB=app (job app) audita los
 // estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
-import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { expect, test, type Browser, type Page } from "@playwright/test";
 import { formatMoney, moneyFromPesos } from "../../src/domain/money";
+import { todayInBogota } from "../../src/domain/transactions";
+import { updateDisplayName } from "../../src/lib/db/profile";
+import { registerSettlement } from "../../src/lib/db/settlements";
+import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
-import { seedCouple, seedMovements, seedSharedMovements, seedUser } from "../support/seed";
+import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUser } from "../support/seed";
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
@@ -466,6 +471,8 @@ const overflow = (page: Page) => page.evaluate(() => {
     });
   return { doc, dialogs };
 });
+// La descripción máxima (140 caracteres) de los datos extremos, la misma de `seedMovements(user, "extreme")`.
+const LONG_DESCRIPTION = "Remodelación completa del apartamento con muebles nuevos, electrodomésticos, pintura, pisos y el trasteo de todo lo que había en él".padEnd(140, ".");
 const twoFrames = (page: Page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
 /**
@@ -640,6 +647,61 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       }
       await context.close();
     }
+  });
+
+  /**
+   * PR #117, ampliación del 27 nov 2026, puntos 2 y 3: Actividad en Nosotros con datos extremos, en los siete anchos y los dos
+   * temas, en la lista y con el panel de detalle abierto. Sin scroll horizontal; desde 1280, la tabla dentro de su columna; y
+   * todos los importes del `main` enteros, dentro de la ventana y fuera de debajo del panel (`moneyOnScreen`).
+   */
+  async function sweepUsActivity(browser: Browser, baseURL: string, user: SeededUser, detailId: string, waitFor: string, name: string) {
+    for (const colorScheme of THEMES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
+      const host = new URL(baseURL).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "us", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+      const page = await context.newPage();
+      for (const [view, path] of [["lista", "/actividad"], ["panel de detalle abierto", `/actividad/${detailId}`]] as const) {
+        await page.goto(path);
+        await expect(page.getByText(waitFor).filter({ visible: true }).first()).toBeVisible();
+        for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
+          await page.setViewportSize({ width, height: 900 });
+          await twoFrames(page);
+          const result = await moneyOnScreen(page);
+          const table = await page.evaluate(() => {
+            const node = [...document.querySelectorAll<HTMLTableElement>("main table")].find((item) => item.getClientRects().length > 0) ?? null;
+            const column = node?.closest(".min-w-0") ?? null;
+            return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null };
+          });
+          const label = `${name} · ${view} · ${colorScheme} · ${width}px`;
+          console.log(`${label}: documento ${result.scrollWidth}/${result.clientWidth}; tabla ${table.table ?? "—"} en columna ${table.column ?? "—"}; importes ${result.amounts}${result.problems.length ? `; ${result.problems.join(" · ")}` : ""}`);
+          expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+          if (width >= 1280) {
+            expect.soft(table.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
+            expect.soft(table.table ?? Infinity, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(table.column ?? 0);
+          }
+          expect.soft(result.amounts, `${label}: hay importes a la vista`).toBeGreaterThan(0);
+          expect.soft(result.problems, `${label}: importes enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
+        }
+      }
+      await context.close();
+    }
+  }
+
+  // Punto 2: la tabla de Actividad en Nosotros. Con layout automático, la primera celda pedía el ancho de la descripción de 140
+  // caracteres (1058,81 px) o del texto de una liquidación entre los dos nombres de 60, y la tabla salía de su columna: documento
+  // 1568 a 1280 y el importe de 999.999.998 fuera de la ventana.
+  test("Actividad en Nosotros con datos extremos: gasto compartido de 140 caracteres y liquidación con nombres de 60, siete anchos, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    await updateDisplayName(pair.sara.client, "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A");
+    await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverri Olarte B");
+    const half = moneyFromPesos(499_999_999n);
+    const extreme = await createSharedExpense(pair.sara.client, {
+      idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: todayInBogota(), description: LONG_DESCRIPTION,
+      payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+    });
+    await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
+    await sweepUsActivity(browser, baseURL!, pair.sara, extreme.id, formatMoney(moneyFromPesos(999_999_998n)), "Actividad en Nosotros");
   });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
