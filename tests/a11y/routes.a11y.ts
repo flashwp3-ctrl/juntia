@@ -13,7 +13,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
-import { seedCouple, seedMovements, seedUser } from "../support/seed";
+import { seedCouple, seedMovements, seedSharedMovements, seedUser } from "../support/seed";
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
@@ -468,6 +468,36 @@ const overflow = (page: Page) => page.evaluate(() => {
 });
 const twoFrames = (page: Page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
+/**
+ * PR #117 (maestro, decisión 30): cada importe visible del `main` (un texto con «$» y dígitos), entero y a la vista. Para cada
+ * uno: si lo recorta un ancestro con overflow (también la elipsis), si se sale de la ventana y si queda debajo del panel de detalle
+ * de Actividad (el `aside` visible, cuando el importe no está dentro de él). Los textos solo para lectores de pantalla
+ * (sr-only, 1 px) no cuentan. No basta el ancho del documento: un importe puede quedar tapado sin crear scroll.
+ */
+const moneyOnScreen = (page: Page) => page.evaluate(() => {
+  const root = document.documentElement;
+  const aside = [...document.querySelectorAll<HTMLElement>("main aside")].find((node) => node.getClientRects().length > 0) ?? null;
+  const panel = aside?.getBoundingClientRect() ?? null;
+  const amounts = [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getClientRects().length > 0
+    && node.getBoundingClientRect().width > 1 && [...node.childNodes].some((child) => child.nodeType === 3 && /\$\s?\d/.test(child.textContent ?? "")));
+  const problems = amounts.flatMap((node) => {
+    const rect = node.getBoundingClientRect();
+    const text = (node.textContent ?? "").trim().slice(0, 60);
+    const found: string[] = [];
+    if (node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflow !== "visible") found.push(`«${text}» recortado`);
+    for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const style = getComputedStyle(parent);
+      const box = parent.getBoundingClientRect();
+      if (box.width <= 1) break;
+      if ((style.overflowX !== "visible" || style.overflow !== "visible") && (rect.right > box.right + 1 || rect.left < box.left - 1)) { found.push(`«${text}» recortado por ${parent.tagName.toLowerCase()}`); break; }
+    }
+    if (rect.right > root.clientWidth + 1) found.push(`«${text}» fuera de la ventana (${Math.round(rect.right)})`);
+    if (panel && !aside!.contains(node) && rect.right > panel.left + 1 && rect.left < panel.right && rect.bottom > panel.top && rect.top < panel.bottom) found.push(`«${text}» debajo del panel de detalle`);
+    return found;
+  });
+  return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, amounts: amounts.length, problems };
+});
+
 if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // (a) Los estados del registro que abren una hoja o un diálogo, el acceso A1–A6 y la invitación sin sesión.
   const TEXT_200 = ["A1", "A2", "A3", "A4", "A5", "A6", "M5 sin sesión", "Anotar E1 gasto", "Anotar E2 detalles", "Edición", "Diálogo de eliminar",
@@ -573,6 +603,41 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       const { doc } = await overflow(page);
       console.log(`Actividad con datos extremos · 200 % · ${colorScheme} · 390: ${doc.scrollWidth}/${doc.clientWidth}`);
       expect.soft(doc.scrollWidth, `200 % · ${colorScheme} · 390: sin scroll horizontal`).toBeLessThanOrEqual(doc.clientWidth);
+      await context.close();
+    }
+  });
+
+  // PR #117, ampliación del 27 nov 2026 (maestro, decisión 30), punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz
+  // al 200 %, «Ver todo» empujaba el documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el
+  // importe de la parte. Regresión: en los siete anchos (100 %) y a 390 con la raíz al 200 %, en los dos temas, sin scroll
+  // horizontal, «Compartido · tu parte» entero y todos los importes enteros y a la vista.
+  test("Inicio en Yo con la parte compartida: siete anchos y raíz al 200 % a 390, sin desbordar y con los importes enteros", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+    for (const colorScheme of THEMES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 390, height: 900 } });
+      const host = new URL(baseURL!).hostname;
+      await context.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
+      const page = await context.newPage();
+      await page.goto("/");
+      await expect(page.getByText(copy.row.sharedPart("").trim(), { exact: false }).filter({ visible: true }).first()).toBeVisible();
+      const cases = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), { width: 390, root: "200%" }];
+      for (const { width, root } of cases) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+        await twoFrames(page);
+        const label = `Inicio en Yo · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
+        const result = await moneyOnScreen(page);
+        const parts = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main span")]
+          .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && (node.textContent ?? "").startsWith("Compartido · tu parte"))
+          .map((node) => ({ text: node.textContent ?? "", cut: node.scrollWidth > node.clientWidth + 1 || (node.parentElement ? node.getBoundingClientRect().right > node.parentElement.getBoundingClientRect().right + 1 && getComputedStyle(node.parentElement).overflow !== "visible" : false) })));
+        console.log(`${label}: documento ${result.scrollWidth}/${result.clientWidth}; importes ${result.amounts}; «tu parte» ${parts.length}${result.problems.length ? `; ${result.problems.join(" · ")}` : ""}`);
+        expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+        expect.soft(result.problems, `${label}: importes enteros y a la vista`).toEqual([]);
+        expect.soft(parts.length, `${label}: hay filas con «Compartido · tu parte»`).toBeGreaterThan(0);
+        for (const part of parts) expect.soft(part.cut, `${label}: «${part.text}» sin recortar`).toBe(false);
+      }
       await context.close();
     }
   });
