@@ -224,6 +224,43 @@ no se cambia.
   - Eliminar desde el detalle lleva el foco al título (sin la corrección, a `body`).
   - El foco al abrir el detalle no cambia: queda en `body`, antes y después. El detalle no tiene Escape.
 
+## Ronda 3 de la revisión (F117-5 a F117-8)
+
+- **F117-5 · la rejilla antes de 1280.** La container query de 59.5rem, sola, abría la rejilla entre 1024 y 1279, porque ahí la
+  barra lateral es estrecha.
+  - **Medición** (arnés, caso `contenedor`):
+
+    | Ancho al 100 % | Barra | Contenedor | Antes (`c33ace3`) | Después |
+    | ---: | ---: | --- | --- | --- |
+    | 1024 | 51 | 892 px (55,75 rem) | una columna | una columna |
+    | 1100 | 51 | 968 px (60,5 rem) | **`536px 400px`, tabla** | una columna, «Volver» |
+    | 1200 | 51 | 1068 px (66,75 rem) | **`636px 400px`, tabla** | una columna, «Volver» |
+    | 1279 | 51 | 1136 px (71 rem) | **`704px 400px`, tabla** | una columna, «Volver» |
+    | 1280 | 211 | 952 px (59,5 rem) | `520px 400px` | `520px 400px`, × |
+    | 1440 | 211 | 1112 px (69,5 rem) | `680px 400px` | `680px 400px`, × |
+
+  - **Corrección.** Dos columnas solo con `xl` **y** el contenedor de al menos 59.5rem, en la rejilla, la tabla, la lista por
+    días, la lista con el detalle abierto, el `sticky` y `PickPanel`. Al 200 % sigue siendo una columna.
+  - **Pruebas.** Los recorridos suman 1100, 1200 y 1279, y la salida del detalle debe ser coherente con la ventana. Sin la
+    corrección, fallan los cuatro.
+- **F117-6 · opacidad.** `rowTexts` usa la opacidad efectiva de todos los ancestros. Una prueba con casos sintéticos
+  (ancestro opaco, signo oculto, ancho cero, borde izquierdo, elipsis, bajo el panel; y, en sentido contrario, símbolo y dígitos
+  partidos y la copia sr-only) falla sin la corrección por el caso del ancestro opaco.
+- **F117-7 · Inicio desde las fixtures.** Los 5 recientes se calculan de las fechas sembradas.
+  - **Seguros y empatados:** los que entran seguro se exigen por id. De los empatados en la fecha del quinto, cuyo orden decide la
+    consulta, se exigen exactamente los que faltan hasta 5.
+  - **Fechas:** se calculan de las fechas sembradas.
+  - **Comprobación:** con un sabotaje (`RECENT = 4`), la prueba anterior pasa y esta falla.
+  - **Hallazgo fuera de alcance:** la fecha de las filas **privadas** («Solo tú · 23 nov», `ExpenseRow`) se corta con la elipsis
+    a 390 al 200 %. Se comunicó al gestor (regla de parada). Hasta su decisión se mide y se registra sin aserción.
+- **F117-8 · la espera del foco.**
+  - Solo cuenta una carga **visible**.
+  - La cuenta de 2 s empieza de nuevo si vuelve a verse una carga.
+  - El foco se da por puesto solo si el destino es `document.activeElement`.
+  - **Pruebas de componente** (`return-focus.test.tsx`): sin la corrección fallan la carga tardía y el Skeleton oculto. La del
+    control enfocado pasa antes y después, porque ya se respetaba, y queda como guarda.
+
 ### Fuera de alcance
 
-`BottomSheet`, la pantalla de Metas, otras pantallas con rejilla de lista y panel, y el foco al abrir el detalle.
+`BottomSheet`, la pantalla de Metas, otras pantallas con rejilla de lista y panel, el foco al abrir el detalle y, pendiente de
+decisión, la fecha de las filas privadas de Inicio al 200 %.
