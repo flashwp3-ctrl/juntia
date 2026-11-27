@@ -600,6 +600,9 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
             expect.soft(item.clipped, `${label}: «${item.text}» sin recortar`).toBe(false);
             expect.soft(item.right, `${label}: «${item.text}» dentro de la ventana`).toBeLessThanOrEqual(result.clientWidth);
           }
+          // Ampliación del 27 nov 2026: no basta el ancho del documento; ningún importe del `main` queda debajo del panel de detalle.
+          const screen = await moneyOnScreen(page);
+          expect.soft(screen.problems, `${label}: importes enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
         }
       }
       // Texto al 200 % a 390: el escalado se mantiene y la lista no desborda.
