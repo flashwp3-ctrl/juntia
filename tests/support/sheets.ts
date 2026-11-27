@@ -69,14 +69,44 @@ export async function openSheet(browser: Browser, baseURL: string, item: SheetCa
 }
 
 /**
- * El título de SheetTitle del diálogo abierto, con Brygada 1918 500 ya cargada (F119-3: `document.fonts.ready` y su comprobación):
- * tamaño de letra, ancho de su columna (el contenedor `@container`), la palabra más ancha medida en el DOM (geometría del texto),
- * la caja del título y, para la geometría real (F119-1): cuántas líneas del título salen de su columna, si el título se recorta y
- * cuántos botones del diálogo solapa.
+ * PR 119, ronda 3 (F119-6): ¿está cargada de verdad la fuente con la que se pinta un texto? `document.fonts.check()` no sirve:
+ * devuelve `true` también para una familia que no existe (MDN, FontFaceSet.check). Aquí, (1) la familia primaria del texto debe ser
+ * la de `--font-brygada` (la que expone next/font), y (2) `document.fonts.load()` con esa familia, ese peso, ese tamaño y ese
+ * texto debe devolver al menos un `FontFace`, todos con `status === "loaded"`, y alguno que cubra ese peso. Con una familia que no
+ * existe, `load()` devuelve `[]` y el resultado es «no cargada».
  */
-export const measureSheetTitle = (page: Page, title: string) => page.evaluate(async (name) => {
+export const fontLoaded = (page: Page, font: { family: string; weight: string; size: string; text: string }) => page.evaluate(async ({ family, weight, size, text }) => {
+  const unquote = (value: string) => value.trim().replace(/^["']|["']$/g, "");
+  const primary = unquote(family.split(",")[0]);
+  const expected = unquote(getComputedStyle(document.documentElement).getPropertyValue("--font-brygada").split(",")[0]);
+  const faces = await document.fonts.load(`${weight} ${size} "${primary}"`, text);
+  const covers = (range: string) => {
+    const [low, high = low] = range.split(/\s+/).map(Number);
+    return Number(weight) >= low && Number(weight) <= high;
+  };
+  const loaded = primary === expected && faces.length > 0 && faces.every((face) => face.status === "loaded") && faces.some((face) => covers(face.weight));
+  return { family: primary, expected, faces: faces.map((face) => `${face.family} ${face.weight} ${face.status}`), loaded };
+}, font);
+
+/**
+ * El título de SheetTitle del diálogo abierto, con su fuente comprobada como cargada (F119-6, `fontLoaded`): tamaño de letra,
+ * ancho de su columna (el contenedor `@container`), la palabra más ancha medida en el DOM (geometría del texto), la caja del título
+ * y, para la geometría real (F119-1): cuántas líneas del título salen de su columna, si el título se recorta y cuántos botones del
+ * diálogo solapa.
+ */
+export async function measureSheetTitle(page: Page, title: string) {
+  const style = await page.evaluate((name) => {
+    const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2, [role='dialog'] h3")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+    const css = getComputedStyle(heading);
+    return { family: css.fontFamily, weight: css.fontWeight, size: css.fontSize, text: heading.textContent ?? "" };
+  }, title);
+  const font = await fontLoaded(page, style);
+  const metrics = await measureTitleGeometry(page, title);
+  return { ...metrics, fontLoaded: font.loaded, fontFamily: font.family, fontFaces: font.faces };
+}
+
+const measureTitleGeometry = (page: Page, title: string) => page.evaluate(async (name) => {
   await document.fonts.ready;
-  const fontLoaded = document.fonts.check('500 16px "Brygada 1918"');
   const dialog = [...document.querySelectorAll<HTMLElement>("[role='dialog']")].find((node) => node.getClientRects().length > 0 && node.querySelector("h1, h2, h3")?.textContent === name)!;
   const heading = dialog.querySelector<HTMLElement>("h1, h2, h3")!;
   const column = heading.parentElement!.getBoundingClientRect();
@@ -96,7 +126,7 @@ export const measureSheetTitle = (page: Page, title: string) => page.evaluate(as
   const overButtons = [...dialog.querySelectorAll("button")].filter((button) => button.getClientRects().length > 0 && lines.some((line) => meets(line, button.getBoundingClientRect()))).length;
   const box = heading.getBoundingClientRect();
   const r = (value: number) => Math.round(value * 100) / 100;
-  return { fontLoaded, fontSize: r(parseFloat(getComputedStyle(heading).fontSize)), titleEm: heading.style.getPropertyValue("--title-em"), column: r(column.width), word: widest.word, wordWidth: r(widest.width),
+  return { fontSize: r(parseFloat(getComputedStyle(heading).fontSize)), titleEm: heading.style.getPropertyValue("--title-em"), column: r(column.width), word: widest.word, wordWidth: r(widest.width),
     linesOutside, clipped: heading.scrollWidth > heading.clientWidth + 1, overButtons,
     box: [r(box.left), r(box.top), r(box.width), r(box.height)], root: parseFloat(getComputedStyle(document.documentElement).fontSize) };
 }, title);

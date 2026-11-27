@@ -560,6 +560,34 @@ test("12 · Análisis: la tabla de cifras exactas, geometría y árbol de accesi
   await context.close();
 });
 
+// PR 119, ronda 3 (F119-6): qué familia expone el título de una hoja, qué vale `--font-brygada` y qué devuelve
+// `document.fonts.load` con esa familia y con una inexistente (frente a `document.fonts.check`, que da `true` para familias que no
+// existen).
+test("13 · Fuentes: la familia real del título de una hoja y document.fonts.load", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("fuentes"));
+  test.setTimeout(300_000);
+  const solo = await seedUser({ role: "fuentes", index: info.parallelIndex });
+  const { context, page } = await open(browser, baseURL!, solo, "me", "light");
+  await page.goto("/cuenta/pareja");
+  await page.getByRole("button", { name: copy.couple.none.invite }).click();
+  await expect(page.getByRole("dialog", { name: copy.couple.invite.title })).toBeVisible();
+  const report = await page.evaluate(async () => {
+    const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0)!;
+    const css = getComputedStyle(heading);
+    const variable = getComputedStyle(document.documentElement).getPropertyValue("--font-brygada");
+    const describe = (faces: FontFace[]) => faces.map((face) => ({ family: face.family, weight: face.weight, style: face.style, status: face.status }));
+    const primary = css.fontFamily.split(",")[0].trim();
+    return {
+      fontFamily: css.fontFamily, fontWeight: css.fontWeight, fontSize: css.fontSize, variable,
+      load: describe(await document.fonts.load(`${css.fontWeight} ${css.fontSize} ${primary}`, heading.textContent ?? "")),
+      loadMissing: describe(await document.fonts.load(`500 16px "Familia Inexistente 119"`, "Invitar")),
+      checkMissing: document.fonts.check(`500 16px "Familia Inexistente 119"`),
+    };
+  });
+  console.log(`fuentes: ${JSON.stringify(report)}`);
+  await context.close();
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
