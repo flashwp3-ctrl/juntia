@@ -94,11 +94,55 @@ En `evidence/actividad-1440/`, datos ficticios:
 - `antes-panel-abierto-light-1440` y `despues-panel-abierto-light-1440`;
 - `antes-lista-dark-1280` y `despues-lista-dark-1280`.
 
-## Observaciones fuera de alcance (no corregidas)
+## Ampliación del 27 nov 2026: tres casos más
 
-- **La tabla de Actividad en Nosotros** (`couple-activity-view.tsx`) y las filas de metas en la tabla (`goal-entry-cells.tsx`)
-  tienen el mismo patrón: layout automático con la descripción `truncate`. No hay datos extremos de Nosotros en las pruebas, y
-  no se ha medido. Si se quiere corregir, necesita su propia autorización.
-- **Inicio en Yo al 200 % a 390 desborda** («Yo con la parte compartida · 200 %», de `tests/a11y/couple-shared.a11y.ts`:
-  434/390). Se salen «Compartido · tu parte $…» y «Ver todo». Es previo: con `activity-view.tsx` de la base falla igual. Es
-  ajeno a esta corrección.
+Los fundadores ampliaron el PR #117 el 27 nov 2026 (maestro, decisión 30, «Ampliación del alcance del PR #117»). Antes eran
+observaciones fuera de alcance. Cada caso tiene su commit. En los puntos 2 y 3 el defecto se demostró antes de tocar el producto,
+con el arnés `tests/evidence/desbordes-117.capture.ts` (`D117=1`, `D117_CASES=inicio,nosotros,liquidacion,metas`), que mide el
+documento, cada tabla con el ancho de cada celda y, para cada importe, si está recortado, fuera de la ventana o **debajo del
+panel de detalle**. Todas las regresiones nuevas usan `moneyOnScreen` (`tests/a11y/routes.a11y.ts`), que revisa todos los
+importes visibles del `main`: no basta el ancho del documento.
+
+### 1. Inicio en Yo a 390 con texto al 200 % (`home-view.tsx`)
+
+- **Causa.** La cabecera «Recientes · Ver todo» era una fila flex sin salto: al 200 % pedía 394 px en un hueco de 310 y «Ver
+  todo» llegaba hasta 434 de 390 (documento 434/390). En la línea «Compartido · tu parte $X · fecha», todo iba en un solo
+  `truncate`: la elipsis cortaba el importe de la parte, al 200 % a 390 **y también a 360 al 100 %**.
+- **Corrección.** La cabecera pasa a `flex-wrap` («Ver todo» baja de línea si no cabe). En la línea de la parte, «Compartido ·
+  tu parte $X» va en su propio `span` que nunca se recorta, y solo la fecha conserva la elipsis.
+- **Regresión.** «Inicio en Yo con la parte compartida: siete anchos y raíz al 200 % a 390…»: falla sin la corrección y pasa con
+  ella.
+
+### 2. La tabla de Actividad en Nosotros (`couple-activity-view.tsx`): reproducido
+
+- **Causa.** La misma que en Yo. La primera celda de las filas de gasto y de liquidación es `truncate` en una tabla con layout
+  automático. Con un gasto compartido de 999.999.998 y la descripción de 140 caracteres, la primera celda pedía 1058,81 px: la
+  tabla medía **1282 px en una columna de 520/680**, el documento **1570** a 1280 y 1440, y `$999.999.998` y `$20.000` quedaban
+  **fuera de la ventana**. Una liquidación entre los dos nombres de 60, sola, también desborda: tabla de 1117 y documento
+  1405/1280.
+- **Corrección.** `w-full max-w-0` en la primera celda de las dos filas, como en Yo.
+- **Regresión.** «Actividad en Nosotros con datos extremos: gasto compartido de 140 caracteres y liquidación con nombres de
+  60…»: sin la corrección falla (1570/1280 y 1570/1440, tabla 1282, importes fuera de la ventana, en los dos temas y las dos
+  vistas). Con ella pasa: tabla 520/520 y 680/680.
+
+### 3. Filas de aportes a metas dentro de Actividad (`goal-entry-cells.tsx`)
+
+- **Nosotros: reproducido.** El título en una línea (`truncate`) de una meta de 60 caracteres hacía medir la tabla **834 px
+  en una columna de 520/680**. El documento **no** desbordaba (1280/1280 y 1440/1440), pero con el panel abierto
+  `+$999.999.999`, `−$999.999.998` y otros importes quedaban **debajo del panel**. Es el caso que el ancho del documento no ve.
+- **Corrección.** `w-full max-w-0` en la primera celda de la fila de meta.
+- **Regresión.** «Actividad en Nosotros con aportes a metas extremos…» (meta de 60 caracteres, dos aportes de 999.999.999 y un
+  retiro de 999.999.998 con motivo de 140): sin la corrección falla («la tabla cabe en su columna» y «debajo del panel»); con
+  ella pasa (520/520 y 680/680, ningún importe tapado).
+- **Yo: no reproducido.** En Yo, el asiento de meta ocupa la fila entera (`colSpan`) y no ensancha la tabla: con los mismos
+  datos, en los siete anchos, los dos temas, la lista y el panel, ningún importe se recorta, se sale ni queda tapado. **No se
+  cambia nada.**
+
+### La regresión de Actividad en Yo, reforzada
+
+La regresión original medía el ancho del documento y el importe extremo. Ahora suma `moneyOnScreen`. Con `activity-view.tsx`
+de la base, a 1280 y 1440, `$999.999.999`, `$50.000`, `+$86.000` y otros quedan debajo del panel; con la corrección, ninguno.
+
+### Fuera de alcance
+
+`BottomSheet` y la pantalla de Metas. No apareció ningún defecto nuevo fuera de los tres casos.

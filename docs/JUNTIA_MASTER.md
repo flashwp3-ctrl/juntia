@@ -1420,6 +1420,33 @@ Los fundadores la tomaron el 25 de noviembre de 2026 sobre el informe de la **co
 
 **No cubre** consultas financieras, permisos, filtros, validaciones, fórmulas ni el servidor (si la corrección los exigiera, se aplica la regla de parada de 30.2), ni la corrección de `BottomSheet` de F111-12, que sigue necesitando su propia autorización.
 
+**Ampliación del alcance del PR #117 (27 de noviembre de 2026).** El gestor transmitió la autorización expresa de los fundadores. Su texto literal:
+
+> Sí, autorizamos ampliar el alcance del PR #117, manteniendo las condiciones y la regla de parada de la decisión 30.2.
+> El alcance adicional queda limitado a:
+> 1. Corregir el desbordamiento demostrado de Inicio en Yo, a 390 px con texto al 200 %, incluyendo «Compartido · tu parte» y «Ver todo».
+> 2. Investigar y reproducir el posible desbordamiento de la tabla de Actividad en Nosotros.
+> 3. Investigar y reproducir el posible desbordamiento de las filas de aportes a metas dentro de Actividad.
+> En los puntos 2 y 3, demostrar el defecto antes de modificar el producto. Si no se reproduce, documentar el resultado y no introducir cambios preventivos innecesarios.
+> Condiciones:
+> * Solo cambios de presentación estrictamente necesarios.
+> * Mantener el diseño aprobado y sus tokens.
+> * No reducir tipografías ni ocultar contenido financiero.
+> * Todos los dígitos, signos e importes deben permanecer visibles.
+> * No utilizar overflow-x-hidden global ni enmascarar el defecto mediante recortes.
+> * Conservar el escalado al 200 %, la accesibilidad y el comportamiento responsive.
+> * Verificar que los importes de la tabla no quedan ocultos detrás del panel de detalle. No basta con comprobar el ancho del documento.
+> * Añadir regresiones específicas que fallen antes de la corrección y pasen después, con datos extremos, los siete anchos y los dos temas según corresponda.
+> * No modificar consultas, permisos, filtros, validaciones, fórmulas, contratos financieros, modelo de datos ni servidor.
+> * Mantener intactos los umbrales y exigencias del gate.
+> Registrar esta ampliación expresa en la decisión 30 del maestro. Separar las correcciones en commits identificables dentro del mismo PR #117 para facilitar la revisión adversarial.
+> BottomSheet continúa fuera de alcance. No se autoriza una auditoría general de diseño ni otras mejoras de presentación.
+> Aplicar la regla de parada si aparecen defectos adicionales fuera de estos tres casos.
+> Mantener el PR en Draft hasta completar las correcciones, las verificaciones locales y el brief consolidado para GPT. No lanzar CI todavía.
+> El barrido completo del paso 4b sigue siendo obligatorio sobre el candidato definitivo de MVP-1.
+
+Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de Actividad**, no a la pantalla de Metas. **Límite:** esta ampliación no cubre otros desbordamientos ni otras pantallas; un defecto nuevo fuera de los tres casos se detiene y se notifica. Tampoco cambia lo que la ampliación anterior no cubre. El resultado de cada caso (causa demostrada o «no reproducido») está en `specs/005-gate-mvp-1/desborde-actividad-1440.md`.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».
