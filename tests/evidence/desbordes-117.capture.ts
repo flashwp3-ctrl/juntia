@@ -258,6 +258,45 @@ test("6 · Actividad: tres formas del 200 % en escritorio", async ({ browser, ba
   }
 });
 
+// Ronda 3 (F117-5): el ancho real del contenedor `@container/actividad` (el abuelo del `aside` del panel) y la disposición de
+// Actividad entre 1024 y 1440 al 100 %, con la lista y con el detalle abierto: navegación, `main`, contenedor, rejilla, tabla, y la
+// visibilidad de la × del detalle y de la cabecera móvil «Volver».
+test("7 · Actividad: el contenedor entre 1024 y 1440 al 100 %", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("contenedor"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  const [first] = await seedMovements(pair.sara, "extreme");
+  const { context, page } = await open(browser, baseURL!, pair.sara, "me", "light");
+  for (const [view, path] of [["lista", "/actividad"], ["detalle abierto", `/actividad/${first.id}`]] as const) {
+    await page.goto(path);
+    await expect(page.getByText(formatMoney(MAX)).filter({ visible: true }).first()).toBeVisible();
+    for (const width of [1024, 1100, 1200, 1279, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const layout = await page.evaluate(() => {
+        const visible = (node: Element | null | undefined) => Boolean(node && node.getClientRects().length > 0);
+        const main = document.querySelector("main")!;
+        const aside = main.querySelector("aside");
+        const grid = aside?.parentElement ?? null;
+        const container = grid?.parentElement ?? null;
+        const links = [...document.querySelectorAll<HTMLElement>("a")];
+        return {
+          nav: [...document.querySelectorAll("nav")].filter(visible).map((node) => Math.round(node.getBoundingClientRect().width)),
+          main: Math.round(main.getBoundingClientRect().width), container: container ? Math.round(container.getBoundingClientRect().width) : null,
+          containerRem: container ? Math.round((container.getBoundingClientRect().width / parseFloat(getComputedStyle(document.documentElement).fontSize)) * 100) / 100 : null,
+          grid: grid && getComputedStyle(grid).display === "grid" ? getComputedStyle(grid).gridTemplateColumns : "una columna",
+          table: [...main.querySelectorAll("table")].some(visible), dayList: [...main.querySelectorAll("a[data-transaction-id]")].filter((node) => visible(node) && !node.closest("table") && !node.closest("aside")).length,
+          close: links.some((node) => node.textContent?.includes("Cerrar detalle") && visible(node)), back: links.some((node) => node.textContent?.includes("Volver a Actividad") && visible(node)),
+          document: document.documentElement.scrollWidth,
+        };
+      });
+      console.log(JSON.stringify({ case: "contenedor", view, width, ...layout }));
+      if (process.env.D117_SHOT && (width === 1200 || width === 1279)) await page.screenshot({ path: `test-results/d117/${process.env.D117_SHOT}-contenedor-${view.replace(" ", "-")}-${width}.png`, animations: "disabled" });
+    }
+  }
+  await context.close();
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);

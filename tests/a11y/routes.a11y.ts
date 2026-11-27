@@ -641,7 +641,8 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // cambio de ancho: sin scroll horizontal; con la tabla visible, la tabla dentro de su columna; cada fila sembrada, localizada por
   // su id, presente y con cada texto esperado (el importe con su signo) entero, en la ventana por los dos bordes y fuera de debajo
   // del panel, según la geometría del texto (`rowTexts`, F117-1); y la red general de `moneyOnScreen`.
-  const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
+  // Ronda 3 (F117-5): también 1100, 1200 y 1279, donde la barra lateral es estrecha y el contenedor ya mide más de 59.5rem.
+  const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1100, 1200, 1279, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
   // `opened`: la vista tiene un movimiento elegido; en una columna solo se ve su detalle, y las filas de la lista se exigen solo
   // cuando la lista está a la vista (con la rejilla). `detail`: textos del propio detalle (a pantalla completa o en el panel),
   // comprobados en todos los anchos y escalas.
@@ -684,6 +685,11 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
             } else {
               expect.soft(fit.columns, `${label}: Actividad va en una columna`).toBeNull();
               expect.soft(fit.table, `${label}: en una columna, la lista por días y no la tabla`).toBeNull();
+            }
+            // F117-5: la salida del detalle va con la ventana (`xl`), como hoy: la × desde 1280, «Volver» por debajo.
+            if (view.opened) {
+              const exits = await page.evaluate((names) => names.map((name) => [...document.querySelectorAll("a")].some((node) => node.textContent?.trim() === name && node.getClientRects().length > 0)), [copy.detail.close, copy.detail.back]);
+              expect.soft(exits, `${label}: ${width >= 1280 ? "la × y no «Volver»" : "«Volver» y no la ×"}`).toEqual(width >= 1280 ? [true, false] : [false, true]);
             }
           }
           if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
@@ -730,7 +736,7 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // caso: la salida se alcanza con Tab, tiene nombre accesible y mide al menos 44 × 44; al cerrar vuelve la lista (ningún estado
   // sin salida) y el foco está en la fila de ESE movimiento, por su id, con el anillo visible (`:focus-visible`). En Yo (gasto
   // extremo), en Nosotros (gasto extremo y liquidación con nombres de 60) y con aportes a metas en la lista (gasto compartido).
-  const CLOSE_CASES = [{ width: 1280, root: "" }, { width: 1440, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }, { width: 390, root: "" }];
+  const CLOSE_CASES = [{ width: 1280, root: "" }, { width: 1440, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }, { width: 1200, root: "" }, { width: 390, root: "" }];
   async function closeWithKeyboard(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; month: string; targets: readonly { id: string; kind: "transaction" | "settlement"; label: string }[]; name: string }) {
     const { browser, baseURL, user, scope, month, targets, name } = options;
     for (const { width, root } of CLOSE_CASES) {
