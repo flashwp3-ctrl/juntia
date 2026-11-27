@@ -11,7 +11,8 @@
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
 import { randomUUID } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { formatMoney, moneyFromPesos } from "../../src/domain/money";
+import { sharedOctober2026 } from "../../src/domain/golden/october-2026";
+import { formatMoney, moneyFromPesos, type Money } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
 import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
 import { updateDisplayName } from "../../src/lib/db/profile";
@@ -506,6 +507,78 @@ const moneyOnScreen = (page: Page) => page.evaluate(() => {
   return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, amounts: amounts.length, problems };
 });
 
+/**
+ * PR #117, ronda 2 (F117-1): un texto que debe verse entero en una fila sembrada, localizada por su id (`selector`, p. ej.
+ * `[data-transaction-id="…"]`; la fila es su `tr` o el propio elemento; se ignora el panel de detalle).
+ */
+type RowText = { selector: string; text: string; label: string };
+/**
+ * Para cada `RowText`: cuántas filas visibles tiene, cuántas apariciones del texto completo (signo incluido) hay en ellas, aunque
+ * esté repartido entre varios elementos, y los problemas de cada aparición según la GEOMETRÍA del texto (`Range.getClientRects`),
+ * no la de su elemento: cada trozo sin caja visible (ancho 0, `visibility`, `opacity: 0`), fuera de la ventana por cualquiera de
+ * los dos bordes, recortado por un ancestro con overflow (también la elipsis) o debajo del panel de detalle. Las copias solo para
+ * lectores de pantalla (sr-only) no cuentan como aparición visual.
+ */
+const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list) => {
+  const root = document.documentElement;
+  const aside = [...document.querySelectorAll<HTMLElement>("main aside")].find((node) => node.getClientRects().length > 0) ?? null;
+  const panel = aside?.getBoundingClientRect() ?? null;
+  const srOnly = (start: Element | null) => {
+    for (let node = start; node && node !== document.body; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.clip === "rect(0px, 0px, 0px, 0px)" || style.clipPath.startsWith("inset(50%")) return true;
+    }
+    return false;
+  };
+  return list.map(({ selector, text, label }) => {
+    const rows = [...new Set([...document.querySelectorAll<HTMLElement>(`main ${selector}`)]
+      .filter((node) => node.getClientRects().length > 0 && !node.closest("aside"))
+      .map((node) => node.closest("tr") ?? node))];
+    const occurrences: string[][] = [];
+    for (const row of rows) {
+      const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+      const nodes: { node: Text; start: number }[] = [];
+      let all = "";
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) { nodes.push({ node: node as Text, start: all.length }); all += (node as Text).data; }
+      for (let index = all.indexOf(text); index >= 0; index = all.indexOf(text, index + 1)) {
+        const end = index + text.length;
+        const pieces = nodes.filter(({ node, start }) => start < end && start + node.data.length > index);
+        if (pieces.some(({ node }) => srOnly(node.parentElement))) continue;
+        const problems: string[] = [];
+        for (const { node, start } of pieces) {
+          const range = document.createRange();
+          range.setStart(node, Math.max(0, index - start));
+          range.setEnd(node, Math.min(node.data.length, end - start));
+          const piece = range.toString();
+          if (!piece.trim()) continue;
+          const style = getComputedStyle(node.parentElement!);
+          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0.5 && rect.height > 0.5);
+          if (rects.length === 0 || style.visibility !== "visible" || Number(style.opacity) === 0) { problems.push(`«${piece}» sin caja visible`); continue; }
+          for (const rect of rects) {
+            if (rect.left < -0.5 || rect.right > root.clientWidth + 0.5) problems.push(`«${piece}» fuera de la ventana (${Math.round(rect.left)}–${Math.round(rect.right)} de ${root.clientWidth})`);
+            if (panel && !aside!.contains(node) && rect.right > panel.left + 0.5 && rect.left < panel.right - 0.5 && rect.bottom > panel.top + 0.5 && rect.top < panel.bottom - 0.5) problems.push(`«${piece}» debajo del panel de detalle`);
+            for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+              const box = parent.getBoundingClientRect();
+              const css = getComputedStyle(parent);
+              if (css.overflowX === "visible" && css.overflowY === "visible") continue;
+              if (rect.left < box.left - 0.5 || rect.right > box.right + 0.5) { problems.push(`«${piece}» recortado por ${parent.tagName.toLowerCase()}`); break; }
+            }
+          }
+        }
+        occurrences.push(problems);
+      }
+    }
+    return { label, text, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
+  });
+}, items);
+
+/** La tabla visible del `main` y su columna (el contenedor `.min-w-0` de la lista). */
+const tableFit = (page: Page) => page.evaluate(() => {
+  const node = [...document.querySelectorAll<HTMLTableElement>("main table")].find((item) => item.getClientRects().length > 0) ?? null;
+  const column = node?.closest(".min-w-0") ?? null;
+  return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null };
+});
+
 if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // (a) Los estados del registro que abren una hoja o un diálogo, el acceso A1–A6 y la invitación sin sesión.
   const TEXT_200 = ["A1", "A2", "A3", "A4", "A5", "A6", "M5 sin sesión", "Anotar E1 gasto", "Anotar E2 detalles", "Edición", "Diálogo de eliminar",
@@ -557,169 +630,155 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
     });
   }
 
-  // Desbordamiento de Actividad con datos extremos a 1440 (PR aparte autorizado por los fundadores el 26 nov 2026; maestro,
-  // decisión 30): con layout automático, la celda de la descripción medía lo que la descripción de 140 caracteres en una línea y la
-  // tabla salía de su columna (1511 px de documento a 1440). Regresión: en los siete anchos y los dos temas, en la lista y con el
-  // panel de detalle abierto, sin scroll horizontal; desde 1280, la tabla dentro de su columna; y el importe extremo entero, sin
-  // recortar ni un dígito ni el signo. Y con la raíz al 200 % a 390, sin scroll horizontal.
-  test("Actividad con datos extremos: siete anchos, dos temas, lista y panel de detalle abierto, sin desbordar y con el importe entero", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
-    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A" });
-    const [extreme] = await seedMovements(user, "extreme");
-    const amount = formatMoney(moneyFromPesos(999_999_999n));
-    const month = extreme.transactionDate.slice(0, 7);
-    for (const colorScheme of THEMES) {
-      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
-      const host = new URL(baseURL!).hostname;
-      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
-      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
-      const page = await context.newPage();
-      for (const [view, path] of [["lista", `/actividad?mes=${month}`], ["panel de detalle abierto", `/actividad/${extreme.id}?mes=${month}`]] as const) {
-        await page.goto(path);
-        await expect(page.getByText(amount).filter({ visible: true }).first()).toBeVisible();
-        for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
-          await page.setViewportSize({ width, height: 900 });
-          await twoFrames(page);
-          const result = await page.evaluate((text) => {
-            const root = document.documentElement;
-            const table = [...document.querySelectorAll<HTMLTableElement>("main table")].find((node) => node.getClientRects().length > 0) ?? null;
-            const column = table?.closest(".min-w-0") ?? null;
-            const amounts = [...document.querySelectorAll<HTMLElement>("main *")]
-              .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && (node.textContent ?? "").includes(text))
-              .map((node) => ({ text: (node.textContent ?? "").trim(), clipped: node.scrollWidth > node.clientWidth + 1, right: Math.round(node.getBoundingClientRect().right) }));
-            return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, table: table ? Math.round(table.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null, amounts };
-          }, amount.replace(/^[−-]/, ""));
-          const label = `${view} · ${colorScheme} · ${width}px`;
-          console.log(`Actividad con datos extremos · ${label}: documento ${result.scrollWidth}/${result.clientWidth}; tabla ${result.table ?? "—"} en columna ${result.column ?? "—"}; importe ${result.amounts.map((item) => `«${item.text}» hasta ${item.right}`).join(", ")}`);
-          expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
-          if (width >= 1280) {
-            expect.soft(result.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
-            expect.soft(result.table ?? Infinity, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(result.column ?? 0);
-          }
-          expect.soft(result.amounts.length, `${label}: el importe extremo está a la vista`).toBeGreaterThan(0);
-          for (const item of result.amounts) {
-            expect.soft(item.clipped, `${label}: «${item.text}» sin recortar`).toBe(false);
-            expect.soft(item.right, `${label}: «${item.text}» dentro de la ventana`).toBeLessThanOrEqual(result.clientWidth);
-          }
-          // Ampliación del 27 nov 2026: no basta el ancho del documento; ningún importe del `main` queda debajo del panel de detalle.
-          const screen = await moneyOnScreen(page);
-          expect.soft(screen.problems, `${label}: importes enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
-        }
-      }
-      // Texto al 200 % a 390: el escalado se mantiene y la lista no desborda.
-      await page.goto(`/actividad?mes=${month}`);
-      await page.setViewportSize({ width: 390, height: 900 });
-      await expect(page.getByText(amount).filter({ visible: true }).first()).toBeVisible();
-      await root200(page);
-      await twoFrames(page);
-      const { doc } = await overflow(page);
-      console.log(`Actividad con datos extremos · 200 % · ${colorScheme} · 390: ${doc.scrollWidth}/${doc.clientWidth}`);
-      expect.soft(doc.scrollWidth, `200 % · ${colorScheme} · 390: sin scroll horizontal`).toBeLessThanOrEqual(doc.clientWidth);
-      await context.close();
-    }
-  });
-
-  // PR #117, ampliación del 27 nov 2026 (maestro, decisión 30), punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz
-  // al 200 %, «Ver todo» empujaba el documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el
-  // importe de la parte. Regresión: en los siete anchos (100 %) y a 390 con la raíz al 200 %, en los dos temas, sin scroll
-  // horizontal, «Compartido · tu parte» entero y todos los importes enteros y a la vista.
-  test("Inicio en Yo con la parte compartida: siete anchos y raíz al 200 % a 390, sin desbordar y con los importes enteros", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
-    const pair = await seedCouple({ index: testInfo.parallelIndex });
-    await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
-    for (const colorScheme of THEMES) {
-      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 390, height: 900 } });
-      const host = new URL(baseURL!).hostname;
-      await context.addCookies([...pair.sara.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
-      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
-      const page = await context.newPage();
-      await page.goto("/");
-      await expect(page.getByText(copy.row.sharedPart("").trim(), { exact: false }).filter({ visible: true }).first()).toBeVisible();
-      const cases = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), { width: 390, root: "200%" }];
-      for (const { width, root } of cases) {
-        await page.setViewportSize({ width, height: 900 });
-        await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
-        await twoFrames(page);
-        const label = `Inicio en Yo · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
-        const result = await moneyOnScreen(page);
-        const parts = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main span")]
-          .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && (node.textContent ?? "").startsWith("Compartido · tu parte"))
-          .map((node) => ({ text: node.textContent ?? "", cut: node.scrollWidth > node.clientWidth + 1 || (node.parentElement ? node.getBoundingClientRect().right > node.parentElement.getBoundingClientRect().right + 1 && getComputedStyle(node.parentElement).overflow !== "visible" : false) })));
-        console.log(`${label}: documento ${result.scrollWidth}/${result.clientWidth}; importes ${result.amounts}; «tu parte» ${parts.length}${result.problems.length ? `; ${result.problems.join(" · ")}` : ""}`);
-        expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
-        expect.soft(result.problems, `${label}: importes enteros y a la vista`).toEqual([]);
-        expect.soft(parts.length, `${label}: hay filas con «Compartido · tu parte»`).toBeGreaterThan(0);
-        for (const part of parts) expect.soft(part.cut, `${label}: «${part.text}» sin recortar`).toBe(false);
-      }
-      await context.close();
-    }
-  });
-
-  /**
-   * PR #117, ampliación del 27 nov 2026, puntos 2 y 3: Actividad en Nosotros con datos extremos, en los siete anchos y los dos
-   * temas, en la lista y con el panel de detalle abierto. Sin scroll horizontal; desde 1280, la tabla dentro de su columna; y
-   * todos los importes del `main` enteros, dentro de la ventana y fuera de debajo del panel (`moneyOnScreen`).
-   */
-  async function sweepUsActivity(browser: Browser, baseURL: string, user: SeededUser, detailId: string, waitFor: string, name: string) {
+  // PR #117 (maestro, decisión 30; autorizaciones del 26 y del 27 nov 2026). Las cuatro regresiones de desbordamiento con datos
+  // extremos comparten este recorrido: los dos temas; cada vista; los siete anchos al 100 % y, con la raíz al 200 %, 390, 1280 y
+  // 1440 (F117-2: al 200 % la barra lateral y los márgenes en rem crecen y el panel no). En cada combinación, después de cada
+  // cambio de ancho: sin scroll horizontal; con la tabla visible, la tabla dentro de su columna; cada fila sembrada, localizada por
+  // su id, presente y con cada texto esperado (el importe con su signo) entero, en la ventana por los dos bordes y fuera de debajo
+  // del panel, según la geometría del texto (`rowTexts`, F117-1); y la red general de `moneyOnScreen`.
+  const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
+  // `listFrom`: desde qué ancho la vista enseña la lista junto al detalle (por debajo, el detalle ocupa la pantalla).
+  type SweepView = { name: string; path: string; listFrom?: number };
+  async function sweepRows(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; views: readonly SweepView[]; waitFor: string; expected: (page: Page) => Promise<RowText[]>; name: string; table: boolean }) {
+    const { browser, baseURL, user, scope, views, waitFor, expected, name, table } = options;
     for (const colorScheme of THEMES) {
       const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
       const host = new URL(baseURL).hostname;
-      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "us", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
-      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "us"));
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: scope, domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
+      await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), scope);
       const page = await context.newPage();
-      for (const [view, path] of [["lista", "/actividad"], ["panel de detalle abierto", `/actividad/${detailId}`]] as const) {
-        await page.goto(path);
+      for (const view of views) {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto(view.path);
         await expect(page.getByText(waitFor).filter({ visible: true }).first()).toBeVisible();
-        for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
+        const items = await expected(page);
+        expect(items.length, `${name} · ${view.name}: hay filas sembradas que comprobar`).toBeGreaterThan(0);
+        for (const { width, root } of SWEEP_CASES) {
           await page.setViewportSize({ width, height: 900 });
+          await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
           await twoFrames(page);
-          const result = await moneyOnScreen(page);
-          const table = await page.evaluate(() => {
-            const node = [...document.querySelectorAll<HTMLTableElement>("main table")].find((item) => item.getClientRects().length > 0) ?? null;
-            const column = node?.closest(".min-w-0") ?? null;
-            return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null };
-          });
-          const label = `${name} · ${view} · ${colorScheme} · ${width}px`;
-          console.log(`${label}: documento ${result.scrollWidth}/${result.clientWidth}; tabla ${table.table ?? "—"} en columna ${table.column ?? "—"}; importes ${result.amounts}${result.problems.length ? `; ${result.problems.join(" · ")}` : ""}`);
-          expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
-          if (width >= 1280) {
-            expect.soft(table.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
-            expect.soft(table.table ?? Infinity, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(table.column ?? 0);
+          const label = `${name} · ${view.name} · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
+          const money = await moneyOnScreen(page);
+          const fit = await tableFit(page);
+          const rows = await rowTexts(page, items);
+          const missing = (width >= (view.listFrom ?? 0) ? rows : []).filter((row) => row.rows === 0 || row.occurrences === 0).map((row) => `«${row.text}» (${row.label})`);
+          const problems = rows.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
+          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${rows.length - missing.length}/${rows.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
+          expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
+          if (table && width >= 1280) expect.soft(fit.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
+          if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
+          for (const row of width >= (view.listFrom ?? 0) ? rows : []) {
+            expect.soft(row.rows, `${label}: la fila de ${row.label} está a la vista`).toBeGreaterThan(0);
+            expect.soft(row.occurrences, `${label}: «${row.text}» completo en la fila de ${row.label}`).toBeGreaterThan(0);
+            expect.soft(row.problems, `${label}: «${row.text}» de ${row.label} entero, en la ventana y fuera de debajo del panel`).toEqual([]);
           }
-          expect.soft(result.amounts, `${label}: hay importes a la vista`).toBeGreaterThan(0);
-          expect.soft(result.problems, `${label}: importes enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
+          expect.soft(money.problems, `${label}: importes del main enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
         }
       }
       await context.close();
     }
   }
+  const expenseText = (row: { type: string; amount: Money }) => `${row.type === "income" ? "+" : ""}${formatMoney(row.amount)}`;
+  const short = (text: string | null | undefined) => (text ?? "").slice(0, 24);
+  // F117-4: las longitudes de los datos extremos, comprobadas (el máximo del esquema: 140 de descripción, 60 de nombre y de meta).
+  const NAME_SARA = "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A";
+  const NAME_TOMAS = "Juan Sebastián de la Santísima Trinidad Echeverría Olarte JB";
+  const GOAL_NAME = "Viaje largo a Japón con toda la familia y los abuelos en 202";
+  const checkLengths = () => {
+    expect(LONG_DESCRIPTION.length, "descripción extrema").toBe(140);
+    for (const value of [NAME_SARA, NAME_TOMAS, GOAL_NAME]) expect(value.length, `«${value}»`).toBe(60);
+  };
+
+  // Desbordamiento de Actividad en Yo con datos extremos (autorización del 26 nov 2026): con layout automático, la celda de la
+  // descripción medía lo que la descripción de 140 caracteres en una línea y la tabla salía de su columna (documento de 1511 a
+  // 1280 y 1440, importes debajo del panel). Cada fila sembrada, por su id, con su importe y su signo.
+  test("Actividad con datos extremos: siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel de detalle abierto, sin desbordar y con cada importe entero", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const seeded = await seedMovements(user, "extreme");
+    const [extreme] = seeded;
+    const month = extreme.transactionDate.slice(0, 7);
+    const items = seeded.map((row) => ({ selector: `[data-transaction-id="${row.id}"]`, text: expenseText(row), label: short(row.description) }));
+    await sweepRows({ browser, baseURL: baseURL!, user, scope: "me", name: "Actividad en Yo", table: true, waitFor: formatMoney(extreme.amount), expected: async () => items,
+      views: [{ name: "lista", path: `/actividad?mes=${month}` }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}?mes=${month}`, listFrom: 1280 }] });
+  });
+
+  // Ampliación del 27 nov 2026, punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz al 200 %, «Ver todo» empujaba el
+  // documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el importe de la parte. Las filas que
+  // Inicio enseña (las 5 recientes) se toman al cargar a 1440; en cada ancho, cada una con su importe completo y, las compartidas,
+  // con «Compartido · tu parte $X» y su fecha enteros (F117-3).
+  test("Inicio en Yo con la parte compartida: siete anchos y 200 % a 390, 1280 y 1440, dos temas, con «tu parte», su fecha y los importes enteros", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    const [shared, own] = await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+    const candidates = [
+      ...shared.map((row, index) => {
+        const golden = sharedOctober2026[index];
+        const part = golden.allocations.find((allocation) => allocation.userId === "sara")!.amount;
+        return { id: row.id, shared: true, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part))] };
+      }),
+      ...own.map((row) => ({ id: row.id, shared: false, label: short(row.description), texts: [expenseText(row)] })),
+    ];
+    const expected = async (page: Page) => {
+      const present = await page.evaluate((ids) => ids.flatMap((id) => {
+        const node = [...document.querySelectorAll<HTMLElement>(`main [data-transaction-id="${id}"]`)].find((item) => item.getClientRects().length > 0);
+        if (!node) return [];
+        const date = [...node.querySelectorAll<HTMLElement>("span")].find((item) => item.children.length === 0 && (item.textContent ?? "").startsWith("· "));
+        return [{ id, date: date?.textContent ?? null }];
+      }), candidates.map(({ id }) => id));
+      const visible = candidates.filter(({ id }) => present.some((item) => item.id === id));
+      expect(visible.filter((item) => item.shared).length, "Inicio en Yo: hay filas con «Compartido · tu parte»").toBeGreaterThan(0);
+      return visible.flatMap((item) => {
+        const date = present.find((entry) => entry.id === item.id)!.date;
+        if (item.shared) expect(date, `Inicio en Yo: la fila compartida ${item.label} lleva su fecha`).not.toBeNull();
+        return [...item.texts, ...(item.shared && date ? [date] : [])].map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label }));
+      });
+    };
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", table: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
+  });
 
   // Punto 2: la tabla de Actividad en Nosotros. Con layout automático, la primera celda pedía el ancho de la descripción de 140
   // caracteres (1058,81 px) o del texto de una liquidación entre los dos nombres de 60, y la tabla salía de su columna: documento
-  // 1568 a 1280 y el importe de 999.999.998 fuera de la ventana.
-  test("Actividad en Nosotros con datos extremos: gasto compartido de 140 caracteres y liquidación con nombres de 60, siete anchos, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+  // 1570 a 1280 y el importe de 999.999.998 fuera de la ventana. El gasto y la liquidación, cada uno por su id.
+  test("Actividad en Nosotros con datos extremos: gasto compartido de 140 caracteres y liquidación con nombres de 60, siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
     const pair = await seedCouple({ index: testInfo.parallelIndex });
-    await updateDisplayName(pair.sara.client, "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A");
-    await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverri Olarte B");
+    await updateDisplayName(pair.sara.client, NAME_SARA);
+    await updateDisplayName(pair.tomas.client, NAME_TOMAS);
     const half = moneyFromPesos(499_999_999n);
     const extreme = await createSharedExpense(pair.sara.client, {
       idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: todayInBogota(), description: LONG_DESCRIPTION,
       payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
     });
-    await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
-    await sweepUsActivity(browser, baseURL!, pair.sara, extreme.id, formatMoney(moneyFromPesos(999_999_998n)), "Actividad en Nosotros");
+    const settlement = await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
+    const items = [
+      { selector: `[data-transaction-id="${extreme.id}"]`, text: formatMoney(moneyFromPesos(999_999_998n)), label: "gasto extremo" },
+      { selector: `[data-settlement-id="${settlement.id}"]`, text: formatMoney(moneyFromPesos(20_000n)), label: "liquidación con nombres de 60" },
+    ];
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Actividad en Nosotros", table: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, listFrom: 1280 }] });
   });
 
   // Punto 3: las filas de aportes a metas dentro de Actividad en Nosotros. El título en una línea de una meta de 60 caracteres
   // hacía medir la tabla 834 px en una columna de 520/680; sin scroll del documento, pero con el panel abierto los importes
-  // quedaban debajo de él. En Yo no se reproduce: allí el asiento de meta ocupa la fila entera (`colSpan`) y no ensancha la tabla.
-  test("Actividad en Nosotros con aportes a metas extremos: meta de 60 caracteres, aportes de 999.999.999 y retiro con motivo de 140, siete anchos, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+  // quedaban debajo de él. Cada asiento por su id: los DOS aportes de +$999.999.999 y el retiro de −$999.999.998, con su signo; y
+  // los gastos compartidos del mes. En Yo no se reproduce: allí el asiento de meta ocupa la fila entera (`colSpan`).
+  test("Actividad en Nosotros con aportes a metas extremos: meta de 60 caracteres, aportes de 999.999.999 y retiro con motivo de 140, siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
     const pair = await seedCouple({ index: testInfo.parallelIndex });
     const max = moneyFromPesos(999_999_999n);
-    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: "Viaje largo a Japón con toda la familia y los abuelos en 202", goalType: "travel", target: max, targetMonth: null, context: "us" });
-    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
-    await contributeToGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "transferred_declared" });
-    await withdrawFromGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(999_999_998n), entryDate: todayInBogota(), reason: LONG_DESCRIPTION });
-    const [shared] = await seedSharedMovements(pair, "recent");
-    await sweepUsActivity(browser, baseURL!, pair.sara, shared.id, formatMoney(max), "Aportes a metas en Nosotros");
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: GOAL_NAME, goalType: "travel", target: max, targetMonth: null, context: "us" });
+    const fromSara = await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
+    const fromTomas = await contributeToGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "transferred_declared" });
+    const withdrawal = await withdrawFromGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(999_999_998n), entryDate: todayInBogota(), reason: LONG_DESCRIPTION });
+    const shared = await seedSharedMovements(pair, "recent");
+    const items = [
+      { selector: `[data-entry-id="${fromSara.id}"]`, text: `+${formatMoney(max)}`, label: "aporte de Sara" },
+      { selector: `[data-entry-id="${fromTomas.id}"]`, text: `+${formatMoney(max)}`, label: "aporte de Tomás" },
+      { selector: `[data-entry-id="${withdrawal.id}"]`, text: `−${formatMoney(moneyFromPesos(999_999_998n))}`, label: "retiro" },
+      ...shared.map((row, index) => ({ selector: `[data-transaction-id="${row.id}"]`, text: formatMoney(sharedOctober2026[index].amount), label: short(sharedOctober2026[index].description) })),
+    ];
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Aportes a metas en Nosotros", table: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${shared[0].id}`, listFrom: 1280 }] });
   });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {

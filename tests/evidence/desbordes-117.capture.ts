@@ -112,6 +112,68 @@ test("1 · Inicio en Yo a 390 con texto al 200 %", async ({ browser, baseURL }, 
   }
 });
 
+// Ronda 2 (F117-3): la fecha de la línea «Compartido · tu parte $X · fecha». Para cada fila compartida: el ancho de la fecha
+// frente al de su texto (lo que se ve), si comparte línea con «tu parte» y cuántas líneas ocupa la línea entera.
+test("1b · Inicio en Yo: la fecha de la parte compartida a 360, 390 y al 200 %", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("fecha"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+  const { context, page } = await open(browser, baseURL!, pair.sara, "me", "light");
+  await page.goto("/");
+  await expect(page.getByText("Compartido · tu parte", { exact: false }).filter({ visible: true }).first()).toBeVisible();
+  for (const [width, scale] of [[360, ""], [390, ""], [430, ""], [390, "200%"], [1280, "200%"], [1440, "200%"]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const dates = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("main [data-shared-part] span")]
+      .filter((node) => node.children.length === 0 && (node.textContent ?? "").startsWith("· ") && node.getClientRects().length > 0)
+      .map((node) => {
+        const part = node.previousElementSibling as HTMLElement;
+        const line = node.parentElement!;
+        const lineHeight = parseFloat(getComputedStyle(line).lineHeight);
+        return { date: node.textContent, visible: Math.round(node.clientWidth), needs: node.scrollWidth, sameLine: Math.abs(part.getBoundingClientRect().top - node.getBoundingClientRect().top) < 2, lines: Math.round(line.getBoundingClientRect().height / lineHeight) };
+      }));
+    console.log(JSON.stringify({ case: "fecha", width, scale: scale || "100%", dates }));
+    if (process.env.D117_SHOT) {
+      await page.locator("#home-recent").scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `test-results/d117/${process.env.D117_SHOT}-fecha-${width}-${scale ? "200" : "100"}.png`, animations: "disabled" });
+    }
+  }
+  await context.close();
+});
+
+// Ronda 2 (F117-2): de dónde sale el ancho de la columna de la lista en Actividad con la raíz al 200 % a 1280 y 1440. Mide el
+// ancho de la navegación lateral, el padding del `main`, la rejilla lista/panel (columnas y hueco) y la tabla.
+test("4 · Actividad al 200 % en escritorio: la rejilla del shell", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("shell200"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  const [first] = await seedMovements(pair.sara, "extreme");
+  const { context, page } = await open(browser, baseURL!, pair.sara, "me", "light");
+  for (const [view, path] of [["lista", "/actividad"], ["panel abierto", `/actividad/${first.id}`]] as const) {
+    await page.goto(path);
+    await expect(page.getByText(formatMoney(MAX)).filter({ visible: true }).first()).toBeVisible();
+    for (const [width, scale] of [[1280, ""], [1280, "200%"], [1440, ""], [1440, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const shell = await page.evaluate(() => {
+        const visible = (node: Element) => node.getClientRects().length > 0;
+        const main = document.querySelector("main")!;
+        const nav = [...document.querySelectorAll("nav")].filter(visible).map((node) => Math.round(node.getBoundingClientRect().width));
+        const table = [...main.querySelectorAll("table")].find(visible) ?? null;
+        const grid = table ? (() => { for (let node = table.parentElement; node && node !== main; node = node.parentElement) { const style = getComputedStyle(node); if (style.display === "grid") return { columns: style.gridTemplateColumns, gap: style.columnGap, width: Math.round(node.getBoundingClientRect().width) }; } return null; })() : null;
+        const css = getComputedStyle(main);
+        return { main: Math.round(main.getBoundingClientRect().width), mainPadding: `${css.paddingLeft} ${css.paddingRight}`, nav, grid, table: table ? Math.round(table.getBoundingClientRect().width) : null, column: table ? Math.round((table.closest(".min-w-0") ?? table.parentElement!).getBoundingClientRect().width) : null, document: document.documentElement.scrollWidth };
+      });
+      console.log(JSON.stringify({ case: "shell200", view, width, scale: scale || "100%", ...shell }));
+      if (process.env.D117_SHOT && scale) await page.screenshot({ path: `test-results/d117/${process.env.D117_SHOT}-shell200-${view.replace(" ", "-")}-${width}.png`, animations: "disabled" });
+    }
+  }
+  await context.close();
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
@@ -143,7 +205,7 @@ test("2b · Actividad en Nosotros: una liquidación con los nombres más largos 
   test.setTimeout(600_000);
   const pair = await seedCouple({ index: info.parallelIndex });
   await updateDisplayName(pair.sara.client, "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A");
-  await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverri Olarte B");
+  await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverría Olarte JB");
   const half = moneyFromPesos(50_000n);
   await createSharedExpense(pair.sara.client, {
     idempotencyKey: key(), amount: moneyFromPesos(100_000n), categoryId: "home", transactionDate: today(), description: "Gasto corto",
