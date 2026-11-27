@@ -9,12 +9,15 @@ import { useEffect, useRef } from "react";
 import { copy } from "@/lib/copy/es";
 
 const DETAIL = /^\/actividad\/([^/]+)$/;
-// La lista del mes llega del servidor tras la navegación. Mientras se ve su Skeleton («Cargando movimientos»), se espera sin
-// decidir (hasta 15 s, por si la carga no termina); con la lista ya pintada, hasta 2 s más a la fila antes de ir al título.
+// La lista del mes llega del servidor tras la navegación. Mientras se VE su Skeleton («Cargando movimientos»), se espera sin
+// decidir (hasta 15 s desde el cierre, por si la carga no termina); cuando deja de verse, hasta 2 s más a la fila antes de ir al
+// título. Ronda 3 (F117-8): si vuelve a verse una carga, la cuenta de esos 2 s empieza de nuevo al terminar; un Skeleton oculto no
+// cuenta; y el foco solo se da por puesto si el destino es de verdad `document.activeElement`.
 const LOADING_MAX_MS = 15_000;
 const SETTLE_MS = 2000;
 
-const loading = () => [...document.querySelectorAll<HTMLElement>('main [aria-busy="true"]')].some((node) => (node.textContent ?? "").includes(copy.activity.loading));
+const visible = (node: Element) => node.getClientRects().length > 0;
+const loading = () => [...document.querySelectorAll<HTMLElement>('main [aria-busy="true"]')].some((node) => visible(node) && (node.textContent ?? "").includes(copy.activity.loading));
 const unfocused = () => !document.activeElement || document.activeElement === document.body || document.activeElement === document.documentElement;
 
 export function ReturnFocusToRow() {
@@ -28,28 +31,32 @@ export function ReturnFocusToRow() {
     const started = performance.now();
     let loadedAt: number | null = null;
     let frame = 0;
+    const place = (target: HTMLElement) => {
+      target.focus({ focusVisible: true } as FocusOptions);
+      return document.activeElement === target;
+    };
     const attempt = () => {
       if (!unfocused()) return;
       const now = performance.now();
       const row = [...document.querySelectorAll<HTMLElement>(`main a[data-transaction-id="${id}"], main a[data-settlement-id="${id}"]`)]
-        .find((node) => node.getClientRects().length > 0 && !node.closest("aside"));
-      if (row) {
-        row.focus({ focusVisible: true } as FocusOptions);
-        return;
-      }
-      if (loading() && now - started < LOADING_MAX_MS) {
-        frame = requestAnimationFrame(attempt);
-        return;
+        .find((node) => visible(node) && !node.closest("aside"));
+      if (row && place(row)) return;
+      if (loading()) {
+        loadedAt = null;
+        if (now - started < LOADING_MAX_MS) {
+          frame = requestAnimationFrame(attempt);
+          return;
+        }
       }
       loadedAt ??= now;
       if (now - loadedAt < SETTLE_MS) {
         frame = requestAnimationFrame(attempt);
         return;
       }
-      const heading = [...document.querySelectorAll<HTMLElement>("main h1")].find((node) => node.getClientRects().length > 0);
+      const heading = [...document.querySelectorAll<HTMLElement>("main h1")].find(visible);
       if (heading) {
         if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
-        heading.focus({ focusVisible: true } as FocusOptions);
+        place(heading);
       }
     };
     frame = requestAnimationFrame(attempt);
