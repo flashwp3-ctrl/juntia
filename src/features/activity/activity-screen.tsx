@@ -40,7 +40,7 @@ type ActivityScreenProps = {
 
 function PickPanel() {
   return (
-    <div className="hidden flex-col items-start gap-3 rounded-[var(--radius-xl)] border-[length:var(--border-strong)] border-dashed border-border-emphasis p-6 xl:flex">
+    <div className="hidden flex-col items-start gap-3 rounded-[var(--radius-xl)] border-[length:var(--border-strong)] border-dashed border-border-emphasis p-6 @min-[59.5rem]/actividad:flex">
       <AppIcon name="receipt" weight="duotone" size={28} className="text-ink-secondary" />
       <p className="font-serif text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.detail.pick.title}</p>
       <p className="text-[length:var(--body-m-size)] text-ink-secondary">{copy.detail.pick.description}</p>
@@ -51,9 +51,11 @@ function PickPanel() {
 export function ActivityScreen({ server, data, today, selectedId, detail, mobileHeader, couple, goals, goalPeople, listMonth }: ActivityScreenProps) {
   const opened = Boolean(detail);
   const layout = (list: ReactNode) => (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-8">
-      <div className={`min-w-0 ${opened ? "max-xl:hidden" : ""}`}>{list}</div>
-      <aside aria-label={copy.detail.panel} className="xl:sticky xl:top-10 xl:mt-8">{detail ?? <PickPanel />}</aside>
+    <div className="@container/actividad">
+      <div className="@min-[59.5rem]/actividad:grid @min-[59.5rem]/actividad:grid-cols-[minmax(0,1fr)_400px] @min-[59.5rem]/actividad:items-start @min-[59.5rem]/actividad:gap-8">
+        <div className={`min-w-0 ${opened ? "@max-[59.5rem]/actividad:hidden" : ""}`}>{list}</div>
+        <aside aria-label={copy.detail.panel} className="@min-[59.5rem]/actividad:sticky @min-[59.5rem]/actividad:top-10 @min-[59.5rem]/actividad:mt-8">{detail ?? <PickPanel />}</aside>
+      </div>
     </div>
   );
   const list = !data ? null : data.ok

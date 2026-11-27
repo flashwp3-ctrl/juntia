@@ -153,7 +153,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         <ExitState icon="magnifying-glass" title={copy.activity.noResults.title} description={copy.activity.noResults.description} actions={<Button variant="secondary" onClick={filters.clear} stableWidth>{copy.activity.noResults.clear}</Button>} />
       ) : (
         <>
-          <div className="flex flex-col gap-4 xl:hidden">
+          <div className="flex flex-col gap-4 @min-[59.5rem]/actividad:hidden">
             {[...days].map(([date, dayItems]) => {
               const label = dayLabel(date, today);
               const spent = dayItems.reduce((sum, item) => (item.kind === "expense" ? sum + item.row.amount.amountMinor : sum), 0n);
@@ -177,7 +177,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
               );
             })}
           </div>
-          <table className="hidden w-full border-collapse text-left xl:table">
+          <table className="hidden w-full border-collapse text-left @min-[59.5rem]/actividad:table">
             <caption className="sr-only">{copy.activity.table.caption}</caption>
             <thead>
               <tr className={overline}>

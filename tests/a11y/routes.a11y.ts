@@ -572,11 +572,16 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
   });
 }, items);
 
-/** La tabla visible del `main` y su columna (el contenedor `.min-w-0` de la lista). */
+/**
+ * La tabla visible del `main` y su columna (el contenedor `.min-w-0` de la lista); y la rejilla lista/panel de Actividad (el padre
+ * del `aside` del panel): sus columnas si es una rejilla, `null` si Actividad va en una columna (defecto A).
+ */
 const tableFit = (page: Page) => page.evaluate(() => {
   const node = [...document.querySelectorAll<HTMLTableElement>("main table")].find((item) => item.getClientRects().length > 0) ?? null;
   const column = node?.closest(".min-w-0") ?? null;
-  return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null };
+  const grid = document.querySelector("main aside")?.parentElement ?? null;
+  const columns = grid && getComputedStyle(grid).display === "grid" ? getComputedStyle(grid).gridTemplateColumns : null;
+  return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null, columns };
 });
 
 if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
@@ -637,11 +642,14 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // su id, presente y con cada texto esperado (el importe con su signo) entero, en la ventana por los dos bordes y fuera de debajo
   // del panel, según la geometría del texto (`rowTexts`, F117-1); y la red general de `moneyOnScreen`.
   const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
-  // `listFrom`: desde qué ancho la vista enseña la lista junto al detalle (por debajo, el detalle ocupa la pantalla).
-  // `detail`: textos del propio detalle (a pantalla completa o en el panel), comprobados en todos los anchos.
-  type SweepView = { name: string; path: string; listFrom?: number; detail?: RowText[] };
-  async function sweepRows(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; views: readonly SweepView[]; waitFor: string; expected: (page: Page) => Promise<RowText[]>; name: string; table: boolean }) {
-    const { browser, baseURL, user, scope, views, waitFor, expected, name, table } = options;
+  // `opened`: la vista tiene un movimiento elegido; en una columna solo se ve su detalle, y las filas de la lista se exigen solo
+  // cuando la lista está a la vista (con la rejilla). `detail`: textos del propio detalle (a pantalla completa o en el panel),
+  // comprobados en todos los anchos y escalas.
+  type SweepView = { name: string; path: string; opened?: boolean; detail?: RowText[] };
+  // Defecto A: al 100 %, desde 1280, la rejilla de hoy, exacta; por debajo de 1280 y con la raíz al 200 %, una columna.
+  const GRID_AT: Record<number, string> = { 1280: "520px 400px", 1440: "680px 400px" };
+  async function sweepRows(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; views: readonly SweepView[]; waitFor: string; expected: (page: Page) => Promise<RowText[]>; name: string; actividad: boolean }) {
+    const { browser, baseURL, user, scope, views, waitFor, expected, name, actividad } = options;
     for (const colorScheme of THEMES) {
       const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
       const host = new URL(baseURL).hostname;
@@ -661,13 +669,23 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
           const label = `${name} · ${view.name} · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
           const money = await moneyOnScreen(page);
           const fit = await tableFit(page);
-          const checked = [...(width >= (view.listFrom ?? 0) ? items : []), ...(view.detail ?? [])];
+          const listShown = !view.opened || fit.columns !== null;
+          const checked = [...(listShown ? items : []), ...(view.detail ?? [])];
           const rows = await rowTexts(page, checked);
           const missing = rows.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
           const problems = rows.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
-          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${rows.length - missing.length}/${rows.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
+          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${rows.length - missing.length}/${rows.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
           expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
-          if (table && width >= 1280) expect.soft(fit.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
+          if (actividad) {
+            const twoColumns = !root && width >= 1280;
+            if (twoColumns) {
+              expect.soft(fit.columns, `${label}: la rejilla lista/panel de hoy`).toBe(GRID_AT[width]);
+              expect.soft(fit.table, `${label}: la tabla existe desde 1280 al 100 %`).not.toBeNull();
+            } else {
+              expect.soft(fit.columns, `${label}: Actividad va en una columna`).toBeNull();
+              expect.soft(fit.table, `${label}: en una columna, la lista por días y no la tabla`).toBeNull();
+            }
+          }
           if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
           for (const row of rows) {
             expect.soft(row.rows, `${label}: la fila de ${row.label} está a la vista`).toBeGreaterThan(0);
@@ -701,8 +719,61 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
     const [extreme] = seeded;
     const month = extreme.transactionDate.slice(0, 7);
     const items = seeded.map((row) => ({ selector: `[data-transaction-id="${row.id}"]`, text: expenseText(row), label: short(row.description) }));
-    await sweepRows({ browser, baseURL: baseURL!, user, scope: "me", name: "Actividad en Yo", table: true, waitFor: formatMoney(extreme.amount), expected: async () => items,
-      views: [{ name: "lista", path: `/actividad?mes=${month}` }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}?mes=${month}`, listFrom: 1280 }] });
+    await sweepRows({ browser, baseURL: baseURL!, user, scope: "me", name: "Actividad en Yo", actividad: true, waitFor: formatMoney(extreme.amount), expected: async () => items,
+      views: [{ name: "lista", path: `/actividad?mes=${month}` }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}?mes=${month}`, opened: true,
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(extreme.amount), label: "el detalle", panel: true }] }] });
+  });
+
+  // Defecto A (luz verde del gestor, 27 nov 2026): con la ventana en `xl` y Actividad en una columna (raíz al 200 % a 1280 y
+  // 1440), el detalle ocupa la columna y se cierra con su × (la cabecera móvil de «volver» sigue ligada a `max-xl`). Con teclado:
+  // se abre desde la fila, la × se alcanza con Tab y tiene nombre accesible, mide al menos 44 × 44, al cerrarla se vuelve a la
+  // lista (ningún estado sin salida) y el foco vuelve a la fila. A 1280 al 100 %, la misma comprobación con el panel, como hoy.
+  test("Actividad en una columna con la ventana en xl: el detalle se cierra con la × por teclado, con nombre, 44 px, vuelta a la lista y foco en la fila", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const [extreme] = await seedMovements(user, "extreme");
+    const month = extreme.transactionDate.slice(0, 7);
+    for (const { width, root } of [{ width: 1280, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }]) {
+      const label = `cerrar el detalle · ${width}px${root ? " · raíz 200 %" : ""}`;
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width, height: 900 } });
+      const host = new URL(baseURL!).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }]);
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
+      const page = await context.newPage();
+      await page.goto(`/actividad?mes=${month}`);
+      await expect(page.getByText(formatMoney(extreme.amount)).filter({ visible: true }).first()).toBeVisible();
+      await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+      await twoFrames(page);
+      expect.soft((await tableFit(page)).columns, `${label}: la disposición de partida`).toBe(root ? null : GRID_AT[width]);
+      const row = page.locator(`main a[data-transaction-id="${extreme.id}"]`).filter({ visible: true }).first();
+      await row.focus();
+      await page.keyboard.press("Enter");
+      await page.waitForURL(new RegExp(`/actividad/${extreme.id}`));
+      await expect(page.locator("main [data-transaction-detail]").filter({ visible: true }).first()).toBeVisible();
+      // La navegación en el cliente conserva el estilo de la raíz; si no, la prueba no mediría lo que dice.
+      expect(await page.evaluate(() => document.documentElement.style.fontSize), `${label}: la raíz sigue al 200 %`).toBe(root);
+      await twoFrames(page);
+      const layout = await tableFit(page);
+      expect.soft(layout.columns, `${label}: con el detalle abierto, ${root ? "una columna" : "la rejilla de hoy"}`).toBe(root ? null : GRID_AT[width]);
+      const close = page.getByRole("link", { name: copy.detail.close }).filter({ visible: true });
+      await expect(close, `${label}: hay una × visible con nombre «${copy.detail.close}»`).toHaveCount(1);
+      let reached = false;
+      for (let step = 0; step < 80 && !reached; step += 1) {
+        await page.keyboard.press("Tab");
+        reached = await close.evaluate((node) => node === document.activeElement);
+      }
+      expect(reached, `${label}: la × se alcanza con Tab`).toBe(true);
+      const box = (await close.boundingBox())!;
+      console.log(`${label}: rejilla ${layout.columns ?? "una columna"}; × de ${Math.round(box.width)}×${Math.round(box.height)}`);
+      expect.soft(Math.min(box.width, box.height), `${label}: la × mide al menos 44 × 44`).toBeGreaterThanOrEqual(44);
+      await page.keyboard.press("Enter");
+      await page.waitForURL((url) => !url.pathname.includes(extreme.id));
+      await expect(page.locator(`main a[data-transaction-id="${extreme.id}"]`).filter({ visible: true }).first(), `${label}: al cerrar, la lista vuelve`).toBeVisible();
+      await page.waitForTimeout(1000);
+      const focus = await page.evaluate((id) => { const node = document.activeElement; return { onRow: Boolean(node?.closest(`[data-transaction-id="${id}"]`)), tag: node?.tagName.toLowerCase(), name: (node?.getAttribute("aria-label") ?? node?.textContent ?? "").trim().slice(0, 40) }; }, extreme.id);
+      console.log(`${label}: foco tras cerrar en ${focus.tag} «${focus.name}»`);
+      expect.soft(focus.onRow, `${label}: el foco vuelve a la fila`).toBe(true);
+      await context.close();
+    }
   });
 
   // Ampliación del 27 nov 2026, punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz al 200 %, «Ver todo» empujaba el
@@ -735,7 +806,7 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
         return [...item.texts, ...(item.shared && date ? [date] : [])].map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label }));
       });
     };
-    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", table: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", actividad: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
   });
 
   // Punto 2: la tabla de Actividad en Nosotros. Con layout automático, la primera celda pedía el ancho de la descripción de 140
@@ -756,8 +827,8 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       { selector: `[data-transaction-id="${extreme.id}"]`, text: formatMoney(moneyFromPesos(999_999_998n)), label: "gasto extremo" },
       { selector: `[data-settlement-id="${settlement.id}"]`, text: formatMoney(moneyFromPesos(20_000n)), label: "liquidación con nombres de 60" },
     ];
-    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Actividad en Nosotros", table: true, waitFor: items[0].text, expected: async () => items,
-      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, listFrom: 1280,
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Actividad en Nosotros", actividad: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, opened: true,
         // Defecto B: el reparto del detalle, las dos partes de 499.999.999 enteras en todos los anchos, también a 390 al 200 %.
         detail: [{ selector: "[data-transaction-detail]", text: formatMoney(moneyFromPesos(499_999_999n)), label: "el reparto del detalle", panel: true, count: 2 }] }] });
   });
@@ -781,8 +852,9 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       { selector: `[data-entry-id="${withdrawal.id}"]`, text: `−${formatMoney(moneyFromPesos(999_999_998n))}`, label: "retiro" },
       ...shared.map((row, index) => ({ selector: `[data-transaction-id="${row.id}"]`, text: formatMoney(sharedOctober2026[index].amount), label: short(sharedOctober2026[index].description) })),
     ];
-    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Aportes a metas en Nosotros", table: true, waitFor: items[0].text, expected: async () => items,
-      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${shared[0].id}`, listFrom: 1280 }] });
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Aportes a metas en Nosotros", actividad: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${shared[0].id}`, opened: true,
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(sharedOctober2026[0].amount), label: "el detalle", panel: true }] }] });
   });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {

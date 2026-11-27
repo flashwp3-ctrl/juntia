@@ -214,6 +214,50 @@ test("5 · Detalle de un gasto compartido al 200 %", async ({ browser, baseURL }
   }
 });
 
+// Ronda 2, defecto A: tres formas de llevar el texto al 200 % en Actividad a 1280 y 1440, con el panel abierto. (a) La de la
+// suite: `html { font-size: 200% }`. (b) El ajuste de tamaño de letra del navegador: tamaño por defecto de 32 px (CDP
+// `Page.setFontSizes`), que también mueve los cortes en rem de las media queries. (c) El zoom del navegador al 200 %: la ventana
+// CSS es la mitad (640 / 720) con DPR 2. Mide la navegación, la rejilla, la tabla o la lista y el documento.
+test("6 · Actividad: tres formas del 200 % en escritorio", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("zoom200"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  const [first] = await seedMovements(pair.sara, "extreme");
+  for (const mode of ["raíz 200 %", "letra del navegador 32 px", "zoom 200 %"] as const) {
+    for (const width of [1280, 1440]) {
+      const zoom = mode === "zoom 200 %";
+      const browserContext = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width: zoom ? width / 2 : width, height: zoom ? 450 : 900 }, deviceScaleFactor: zoom ? 2 : 1 });
+      await browserContext.addCookies([...pair.sara.cookies, { name: "juntia_context", value: "me", domain: "localhost", path: "/" }]);
+      await browserContext.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
+      const page = await browserContext.newPage();
+      if (mode === "letra del navegador 32 px") {
+        const cdp = await browserContext.newCDPSession(page);
+        await cdp.send("Page.enable");
+        await cdp.send("Page.setFontSizes", { fontSizes: { standard: 32, fixed: 26 } });
+      }
+      await page.goto(`/actividad/${first.id}`);
+      await expect(page.getByText(formatMoney(MAX)).filter({ visible: true }).first()).toBeVisible();
+      if (mode === "raíz 200 %") await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const shell = await page.evaluate(() => {
+        const visible = (node: Element) => node.getClientRects().length > 0;
+        const main = document.querySelector("main")!;
+        const grid = [...main.querySelectorAll<HTMLElement>("div")].find((node) => getComputedStyle(node).display === "grid" && node.querySelector(":scope > aside"));
+        return {
+          rootFont: getComputedStyle(document.documentElement).fontSize, viewport: document.documentElement.clientWidth, document: document.documentElement.scrollWidth,
+          nav: [...document.querySelectorAll("nav")].filter(visible).map((node) => `${Math.round(node.getBoundingClientRect().width)}×${Math.round(node.getBoundingClientRect().height)}`),
+          main: Math.round(main.getBoundingClientRect().width), grid: grid ? getComputedStyle(grid).gridTemplateColumns : "sin rejilla (una columna)",
+          table: [...main.querySelectorAll("table")].some(visible), listVisible: [...main.querySelectorAll("[data-transaction-id]")].filter((node) => !node.closest("aside") && visible(node)).length,
+          detail: [...main.querySelectorAll("[data-transaction-detail]")].some(visible),
+        };
+      });
+      console.log(JSON.stringify({ case: "zoom200", mode, width, ...shell }));
+      if (process.env.D117_SHOT) await page.screenshot({ path: `test-results/d117/${process.env.D117_SHOT}-zoom200-${mode.replace(/[^a-z0-9]+/gi, "-")}-${width}.png`, animations: "disabled" });
+      await browserContext.close();
+    }
+  }
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);

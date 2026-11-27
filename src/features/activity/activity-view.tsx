@@ -166,7 +166,7 @@ function DayList({ rows, month, today, selectedId, pending, goals, people }: { r
   // 004 PR D (T064; FR-071): CON META en un privado pagado con una meta personal.
   const funding = useFundingLookup();
   return (
-    <div className="flex flex-col gap-4 xl:hidden">
+    <div className="flex flex-col gap-4 @min-[59.5rem]/actividad:hidden">
       {days(rows, goals).map(({ date, transactions, goals: dayGoals }) => {
         const label = dayLabel(date, today);
         // F51-2: el subtotal del día solo suma lo confirmado; las filas en vuelo o sin confirmar se listan, pero no cuentan.
@@ -200,7 +200,7 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
   const highlightId = useHighlightId();
   const cell = "border-b-[length:var(--border-hairline)] border-border py-0";
   return (
-    <table className="hidden w-full border-collapse text-left xl:table">
+    <table className="hidden w-full border-collapse text-left @min-[59.5rem]/actividad:table">
       <caption className="sr-only">{copy.activity.table.caption}</caption>
       <thead>
         <tr className={overline}>
