@@ -29,8 +29,12 @@ const BRYGADA_500: Record<string, number> = {"0":0.594,"1":0.5,"2":0.593,"3":0.5
 /** El `tracking-[-0.015em]` de SheetTitle: cada letra avanza 0,015 em menos. */
 export const SHEET_TITLE_TRACKING_EM = -0.015;
 /**
- * Margen sobre el ancho estimado: la diferencia medida entre el pintado local (Windows) y el de CI (Linux), ~2 %
- * (la tabla de Análisis a 320 al 200 %: 286 px en CI, 280,6 en local, +1,9 %). No cubre nada más: la tabla es la de la fuente real.
+ * Margen sobre el ancho estimado, para la diferencia de pintado entre plataformas. Es un margen EMPÍRICO PROVISIONAL (PR 119,
+ * F119-3): la única medida de esa diferencia es indirecta, la tabla de Análisis a 320 al 200 % (286 px en CI, 280,6 en local,
+ * +1,9 %), que es otra tipografía (Onest) con rellenos y reparto de columnas propios. La prueba «hojas con SheetTitle al 200 %…»
+ * de `tests/a11y/routes.a11y.ts` deja en sus anotaciones las métricas reales de cada título (fuente cargada, palabra, columna y
+ * holgura), y el primer CI que la corra acreditará o corregirá este 2 % con la medida directa. No cubre nada más: la tabla es la
+ * de la fuente real.
  */
 export const SHEET_TITLE_MARGIN = 0.02;
 /**

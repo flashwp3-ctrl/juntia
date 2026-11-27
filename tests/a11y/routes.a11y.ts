@@ -25,7 +25,6 @@ import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUs
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { measureSheetTitle, openSheet, sheetCases } from "../support/sheets";
-import { SHEET_TITLE_MARGIN } from "../../src/lib/text-fit";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
@@ -973,12 +972,17 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
 
   // PR del paso 4b (autorizado el 27 nov 2026; maestro, decisión 30): el título de las hojas (SheetTitle) se ajusta al 200 % a la
   // palabra más ancha. Con la estimación por clases de letra, «Invitar» quedaba con un 1,8 % de holgura y en CI, donde el texto
-  // se pinta ~2 % más ancho, salía de su columna y quedaba bajo la × (M3). Regresión: en cada hoja que lo lleva, a 320, 360 y
-  // 390 con la raíz al 200 %, la palabra más ancha del título, medida en el DOM, cabe en su columna con la holgura entre
-  // plataformas (`SHEET_TITLE_MARGIN`, 2 %).
-  test("hojas con SheetTitle al 200 % a 320, 360 y 390: la palabra más ancha del título cabe en su columna con un 2 % de holgura", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
-    test.setTimeout(300_000);
+  // se pinta ~2 % más ancho, salía de su columna y quedaba bajo la × (M3).
+  // Ronda 2 (F119-1): el margen entre plataformas ya lo reserva la estimación (`sheetTitleEm`, comprobada sin navegador en
+  // `src/lib/text-fit.test.ts`, con la regresión negativa de la estimación anterior). Aquí, la geometría REAL en la plataforma que
+  // corre la prueba, sin volver a pedir el margen: en las 14 hojas, a 320, 360 y 390 con la raíz al 200 % y con Brygada 500
+  // cargada, la palabra más ancha cabe en su columna, ninguna línea del título sale de ella, el título no se recorta y no solapa
+  // ningún botón del diálogo. F119-3: las métricas de cada título (fuente cargada, palabra, columna y holgura) quedan en las
+  // anotaciones de la prueba, para que el informe de CI registre las de su plataforma.
+  test("hojas con SheetTitle al 200 % a 320, 360 y 390: el título cabe en su columna, sin recorte y sin solapar botones", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(400_000);
     const cases = await sheetCases(testInfo.parallelIndex);
+    expect(cases.length, "las 14 variantes de título de SheetTitle").toBe(14);
     for (const item of cases) {
       const { context, page } = await openSheet(browser, baseURL!, item);
       for (const width of [320, 360, 390]) {
@@ -987,8 +991,15 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
         await twoFrames(page);
         const title = await measureSheetTitle(page, item.title);
         const label = `«${item.title}» · ${width}px · 200 %`;
-        console.log(`${label}: ${title.fontSize} px; «${title.word}» ${title.wordWidth} en una columna de ${title.column} (holgura ${((title.column / title.wordWidth - 1) * 100).toFixed(2)} %)`);
-        expect.soft(title.wordWidth * (1 + SHEET_TITLE_MARGIN), `${label}: «${title.word}» cabe en su columna con un ${SHEET_TITLE_MARGIN * 100} % de holgura`).toBeLessThanOrEqual(title.column);
+        const slack = ((title.column / title.wordWidth - 1) * 100).toFixed(2);
+        const metrics = `${label}: Brygada 500 ${title.fontLoaded ? "cargada" : "SIN CARGAR"}; ${title.fontSize} px; «${title.word}» ${title.wordWidth} px en una columna de ${title.column} (holgura ${slack} %)`;
+        console.log(metrics);
+        testInfo.annotations.push({ type: "SheetTitle", description: metrics });
+        expect.soft(title.fontLoaded, `${label}: Brygada 1918 500 cargada antes de medir`).toBe(true);
+        expect.soft(title.wordWidth, `${label}: «${title.word}» cabe en su columna`).toBeLessThanOrEqual(title.column);
+        expect.soft(title.linesOutside, `${label}: ninguna línea del título sale de su columna`).toBe(0);
+        expect.soft(title.clipped, `${label}: el título no se recorta`).toBe(false);
+        expect.soft(title.overButtons, `${label}: el título no solapa ningún botón`).toBe(0);
       }
       await context.close();
     }
