@@ -98,11 +98,15 @@ cierre».
 
 - [ ] Tabla de idempotencia sin purga en MVP-1; tamaño medido: `____` filas, `____` MB; su
       revisión, en la lista de MVP-2 (FR-068, Q12)
-- [ ] Registros de ejecución de Vercel de una semana: cero coincidencias de importes,
-      comercios, notas o tokens (se registran las búsquedas, no las líneas) (FR-013).
-      **Decisión 30:** una semana de uso en producción con actividad representativa;
-      versión que generó los registros: `____`; operaciones de esa semana: `____`. No vale
-      la corrida de `juntia-dev`; si no se puede acreditar, deciden los fundadores
+- [ ] Registros de ejecución de Vercel de la sesión concentrada en producción: cero
+      coincidencias de importes, comercios, notas o tokens (se registran las búsquedas,
+      no las líneas) (FR-013). **Decisión 30, nota del 27 de noviembre de 2026:** la
+      sesión la ejecuta un agente con dos cuentas de prueba dedicadas, tras el paso 6, y
+      recorre las operaciones de la corrida completa con errores provocados; versión que
+      generó los registros: `____`; ventana de la sesión: `____`; operaciones ejecutadas:
+      `____`. No vale la corrida de `juntia-dev`. La revisión se repite durante la
+      validación por uso real (30.6), fuera de esta checklist. *Constancia:* hasta el
+      27 de noviembre pedía una semana de uso en producción con actividad representativa
 
 ## Firmas
 

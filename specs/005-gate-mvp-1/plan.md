@@ -272,10 +272,14 @@ fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
 >   ejecuta completo.
 > - **Paso 7, partido en dos.**
 >   - **Antes de declarar**, después del paso 6: la copia y la **restauración real**
->     (FR-061, V14), los registros de Vercel de una semana de uso en producción con
->     actividad representativa (FR-013; versión, operaciones y búsquedas con sus
->     coincidencias; no vale la corrida de `juntia-dev`, y si no se puede acreditar
->     deciden los fundadores) y la tabla de idempotencia (FR-068).
+>     (FR-061, V14), los registros de Vercel de la sesión concentrada en producción
+>     (FR-013; versión, operaciones y búsquedas con sus coincidencias; no vale la
+>     corrida de `juntia-dev`) y la tabla de idempotencia (FR-068). **Enmienda del 27 de
+>     noviembre de 2026** (maestro, decisión 30): la semana de registros se sustituye,
+>     solo para la aceptación técnica, por una sesión concentrada que ejecuta un agente
+>     con dos cuentas de prueba dedicadas; la revisión se repite durante los 7 días de
+>     la validación por uso real. Hasta entonces pedía una semana de uso en producción
+>     con actividad representativa.
 >   - **Validación por uso real**, aplazada (30.6) hasta que Planes, Recurrentes y
 >     calendario y el Presupuesto integral v1 estén aceptados y en producción: los 7 días
 >     con D4 y la valoración de FR-081, con el escenario humano completo de §4 como
@@ -455,7 +459,7 @@ está en [contracts/human-verifications.md](contracts/human-verifications.md).
 | Vuelta atrás de un despliegue | FR-064 | Dueña de Vercel con el gestor | 6 | Identificadores de despliegue antes y después |
 | **7 días consecutivos de uso diario**, con despliegues congelados (D4) | FR-080, FR-081 | Los dos | Validación por uso real, aplazada (decisión 30.6); FR-080 según la 30.7 | Valoración de cada uno, por separado |
 | **Restauración real** de la copia con el esquema de P0-3 | FR-061 | Un fundador, en su equipo, con el gestor | Tras el paso 6, antes de declarar (decisión 30.5) | Manifiesto y log de `restore-plain.sh`, sin datos |
-| Registros de Vercel de una semana | FR-013 | Dueña de Vercel, o el gestor con su «sí» y solo lectura | Tras el paso 6, antes de declarar (decisión 30.5) | Búsquedas hechas y su resultado, sin pegar líneas con datos |
+| Registros de Vercel de la sesión concentrada en producción (decisión 30, nota del 27 nov 2026; antes, de una semana) | FR-013 | La sesión, un agente con dos cuentas de prueba dedicadas; la revisión, la dueña de Vercel, o el gestor con su «sí» y solo lectura | Tras el paso 6, antes de declarar (decisión 30.5); la revisión se repite en la validación por uso real (30.6) | Versión, operaciones y búsquedas hechas con su resultado, sin pegar líneas con datos |
 | Ensayo del borrado de cuenta | FR-067 | Gestor, en `juntia-dev` | Tras el PR A | Recuentos antes y después |
 
 ## Dónde se mide cada criterio de éxito
