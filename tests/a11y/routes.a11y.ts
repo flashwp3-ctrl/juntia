@@ -511,7 +511,7 @@ const moneyOnScreen = (page: Page) => page.evaluate(() => {
  * PR #117, ronda 2 (F117-1): un texto que debe verse entero en una fila sembrada, localizada por su id (`selector`, p. ej.
  * `[data-transaction-id="…"]`; la fila es su `tr` o el propio elemento; se ignora el panel de detalle).
  */
-type RowText = { selector: string; text: string; label: string };
+type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number };
 /**
  * Para cada `RowText`: cuántas filas visibles tiene, cuántas apariciones del texto completo (signo incluido) hay en ellas, aunque
  * esté repartido entre varios elementos, y los problemas de cada aparición según la GEOMETRÍA del texto (`Range.getClientRects`),
@@ -530,9 +530,9 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
     }
     return false;
   };
-  return list.map(({ selector, text, label }) => {
+  return list.map(({ selector, text, label, panel: inPanel, count = 1 }) => {
     const rows = [...new Set([...document.querySelectorAll<HTMLElement>(`main ${selector}`)]
-      .filter((node) => node.getClientRects().length > 0 && !node.closest("aside"))
+      .filter((node) => node.getClientRects().length > 0 && (inPanel || !node.closest("aside")))
       .map((node) => node.closest("tr") ?? node))];
     const occurrences: string[][] = [];
     for (const row of rows) {
@@ -568,7 +568,7 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
         occurrences.push(problems);
       }
     }
-    return { label, text, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
+    return { label, text, count, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
   });
 }, items);
 
@@ -638,7 +638,8 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // del panel, según la geometría del texto (`rowTexts`, F117-1); y la red general de `moneyOnScreen`.
   const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
   // `listFrom`: desde qué ancho la vista enseña la lista junto al detalle (por debajo, el detalle ocupa la pantalla).
-  type SweepView = { name: string; path: string; listFrom?: number };
+  // `detail`: textos del propio detalle (a pantalla completa o en el panel), comprobados en todos los anchos.
+  type SweepView = { name: string; path: string; listFrom?: number; detail?: RowText[] };
   async function sweepRows(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; views: readonly SweepView[]; waitFor: string; expected: (page: Page) => Promise<RowText[]>; name: string; table: boolean }) {
     const { browser, baseURL, user, scope, views, waitFor, expected, name, table } = options;
     for (const colorScheme of THEMES) {
@@ -660,16 +661,17 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
           const label = `${name} · ${view.name} · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
           const money = await moneyOnScreen(page);
           const fit = await tableFit(page);
-          const rows = await rowTexts(page, items);
-          const missing = (width >= (view.listFrom ?? 0) ? rows : []).filter((row) => row.rows === 0 || row.occurrences === 0).map((row) => `«${row.text}» (${row.label})`);
+          const checked = [...(width >= (view.listFrom ?? 0) ? items : []), ...(view.detail ?? [])];
+          const rows = await rowTexts(page, checked);
+          const missing = rows.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
           const problems = rows.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
           console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${rows.length - missing.length}/${rows.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
           expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
           if (table && width >= 1280) expect.soft(fit.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
           if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
-          for (const row of width >= (view.listFrom ?? 0) ? rows : []) {
+          for (const row of rows) {
             expect.soft(row.rows, `${label}: la fila de ${row.label} está a la vista`).toBeGreaterThan(0);
-            expect.soft(row.occurrences, `${label}: «${row.text}» completo en la fila de ${row.label}`).toBeGreaterThan(0);
+            expect.soft(row.occurrences, `${label}: «${row.text}» completo en ${row.label}`).toBeGreaterThanOrEqual(row.count);
             expect.soft(row.problems, `${label}: «${row.text}» de ${row.label} entero, en la ventana y fuera de debajo del panel`).toEqual([]);
           }
           expect.soft(money.problems, `${label}: importes del main enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
@@ -755,7 +757,9 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       { selector: `[data-settlement-id="${settlement.id}"]`, text: formatMoney(moneyFromPesos(20_000n)), label: "liquidación con nombres de 60" },
     ];
     await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Actividad en Nosotros", table: true, waitFor: items[0].text, expected: async () => items,
-      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, listFrom: 1280 }] });
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, listFrom: 1280,
+        // Defecto B: el reparto del detalle, las dos partes de 499.999.999 enteras en todos los anchos, también a 390 al 200 %.
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(moneyFromPesos(499_999_999n)), label: "el reparto del detalle", panel: true, count: 2 }] }] });
   });
 
   // Punto 3: las filas de aportes a metas dentro de Actividad en Nosotros. El título en una línea de una meta de 60 caracteres

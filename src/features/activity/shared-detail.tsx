@@ -67,10 +67,13 @@ export function SharedDetail({ expense, members, closeHref }: { expense: SharedT
         <h3 id={owedId} className="text-[length:var(--overline-size)] font-semibold tracking-[var(--overline-tracking)] uppercase text-ink-secondary">{copy.shared.detail.owed}</h3>
         <ul className="flex flex-col gap-1.5">
           {ordered.map((member) => (
-            <li key={member.userId} className="flex min-h-10 items-center gap-2.5">
+            // PR #117, defecto B (autorizado el 27 nov 2026; maestro, decisión 30): con el texto al 200 % a 360–430, avatar, nombre de
+            // 60 e importe pedían 441–458 px en una línea de 280–350 y el documento medía 498. Como en `Fact`: la fila envuelve y el
+            // importe, entero, baja alineado a la derecha; a tamaño normal sigue en la misma línea.
+            <li key={member.userId} className="flex min-h-10 flex-wrap items-center gap-x-2.5 gap-y-1">
               <Avatar person={member.joinOrder} initial={initialOf(member.name)} size={24} />
               <span className="flex-1 text-[length:var(--body-m-size)] font-medium text-ink">{member.name}</span>
-              <span className="text-[length:var(--body-m-size)] font-semibold text-ink tabular-nums">{formatMoney(partOf(member.userId))}</span>
+              <span className="ml-auto text-[length:var(--body-m-size)] font-semibold whitespace-nowrap text-ink tabular-nums">{formatMoney(partOf(member.userId))}</span>
             </li>
           ))}
         </ul>

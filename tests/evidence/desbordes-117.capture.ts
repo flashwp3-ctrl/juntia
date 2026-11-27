@@ -174,6 +174,46 @@ test("4 · Actividad al 200 % en escritorio: la rejilla del shell", async ({ bro
   await context.close();
 });
 
+// Ronda 2, defecto B (autorizado el 27 nov 2026): el detalle de un gasto compartido a pantalla completa con la raíz al 200 %.
+// Con los nombres de 60 y el reparto de 499.999.999: el documento y, por cada bloque del detalle con un importe, su ancho frente
+// al del artículo y el de cada hijo (avatar, nombre, importe), con su ancho mínimo de contenido.
+test("5 · Detalle de un gasto compartido al 200 %", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("detalle"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex });
+  await updateDisplayName(pair.sara.client, "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A");
+  await updateDisplayName(pair.tomas.client, "Juan Sebastián de la Santísima Trinidad Echeverría Olarte JB");
+  const half = moneyFromPesos(499_999_999n);
+  const extreme = await createSharedExpense(pair.sara.client, {
+    idempotencyKey: key(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: today(), description: LONG,
+    payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+  });
+  for (const colorScheme of THEMES) {
+    const { context, page } = await open(browser, baseURL!, pair.sara, "us", colorScheme);
+    await page.goto(`/actividad/${extreme.id}`);
+    await expect(page.locator("[data-transaction-detail]").first()).toBeVisible();
+    for (const [width, scale] of [[360, ""], [390, ""], [360, "200%"], [390, "200%"], [430, "200%"], [768, "200%"], [1024, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const detail = await page.evaluate(() => {
+        const article = [...document.querySelectorAll<HTMLElement>("[data-transaction-detail]")].find((node) => node.getClientRects().length > 0)!;
+        const box = article.getBoundingClientRect();
+        const wide = [...article.querySelectorAll<HTMLElement>("li, dl > div, p, h2")].filter((node) => node.getBoundingClientRect().right > box.right + 1 || node.scrollWidth > node.clientWidth + 1)
+          .map((node) => ({ tag: node.tagName.toLowerCase(), text: (node.textContent ?? "").trim().slice(0, 40), right: Math.round(node.getBoundingClientRect().right), scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
+            children: [...node.children].map((child) => `${child.tagName.toLowerCase()} ${Math.round(child.getBoundingClientRect().width)} (${getComputedStyle(child).flex})`) }));
+        return { document: document.documentElement.scrollWidth, article: Math.round(box.width), articleRight: Math.round(box.right), wide };
+      });
+      console.log(JSON.stringify({ case: "detalle-compartido", colorScheme, width, scale: scale || "100%", ...detail }));
+      if (process.env.D117_SHOT && scale && width === 390) {
+        await page.getByText("A quién le corresponde", { exact: false }).first().scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `test-results/d117/${process.env.D117_SHOT}-detalle-${colorScheme}-390-200.png`, animations: "disabled" });
+      }
+    }
+    await context.close();
+  }
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
