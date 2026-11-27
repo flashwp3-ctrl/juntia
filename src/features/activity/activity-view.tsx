@@ -221,7 +221,11 @@ function Table({ rows, month, today, selectedId, pending, goals, people }: { row
           return (
             // E5: la fila nueva se resalta también en la tabla de escritorio, como ExpenseRow.
             <tr key={transaction.id} data-new={transaction.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
-              <td className={`${cell} rounded-l-[14px]`}>
+              {/* Desbordamiento a 1440 con datos extremos (PR autorizado el 26 nov 2026; maestro, decisión 30): con layout automático, el
+                  ancho mínimo de esta celda era el de la descripción en una línea (1001 px con 140 caracteres) y la tabla salía de su
+                  columna. `max-w-0` deja que la descripción se recorte con su elipsis (ya era `truncate`); `w-full` le da a esta columna
+                  el espacio que sobra, así que la fecha y el importe (`whitespace-nowrap`) conservan su ancho de contenido entero. */}
+              <td className={`${cell} w-full max-w-0 rounded-l-[14px]`}>
                 {savingOf(pending, transaction.id) ? (
                   <span data-pending="saving" aria-busy="true" data-transaction-id={transaction.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                     <CategoryIcon kind="category" category={transaction.categoryId} size="sm" />

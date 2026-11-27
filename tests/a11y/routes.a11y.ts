@@ -10,6 +10,7 @@
 // estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
 import { expect, test, type Page } from "@playwright/test";
+import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
 import { seedCouple, seedMovements, seedUser } from "../support/seed";
@@ -517,6 +518,64 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       await context.close();
     });
   }
+
+  // Desbordamiento de Actividad con datos extremos a 1440 (PR aparte autorizado por los fundadores el 26 nov 2026; maestro,
+  // decisión 30): con layout automático, la celda de la descripción medía lo que la descripción de 140 caracteres en una línea y la
+  // tabla salía de su columna (1511 px de documento a 1440). Regresión: en los siete anchos y los dos temas, en la lista y con el
+  // panel de detalle abierto, sin scroll horizontal; desde 1280, la tabla dentro de su columna; y el importe extremo entero, sin
+  // recortar ni un dígito ni el signo. Y con la raíz al 200 % a 390, sin scroll horizontal.
+  test("Actividad con datos extremos: siete anchos, dos temas, lista y panel de detalle abierto, sin desbordar y con el importe entero", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A" });
+    const [extreme] = await seedMovements(user, "extreme");
+    const amount = formatMoney(moneyFromPesos(999_999_999n));
+    const month = extreme.transactionDate.slice(0, 7);
+    for (const colorScheme of THEMES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
+      const host = new URL(baseURL!).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
+      const page = await context.newPage();
+      for (const [view, path] of [["lista", `/actividad?mes=${month}`], ["panel de detalle abierto", `/actividad/${extreme.id}?mes=${month}`]] as const) {
+        await page.goto(path);
+        await expect(page.getByText(amount).filter({ visible: true }).first()).toBeVisible();
+        for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
+          await page.setViewportSize({ width, height: 900 });
+          await twoFrames(page);
+          const result = await page.evaluate((text) => {
+            const root = document.documentElement;
+            const table = [...document.querySelectorAll<HTMLTableElement>("main table")].find((node) => node.getClientRects().length > 0) ?? null;
+            const column = table?.closest(".min-w-0") ?? null;
+            const amounts = [...document.querySelectorAll<HTMLElement>("main *")]
+              .filter((node) => node.getClientRects().length > 0 && node.children.length === 0 && (node.textContent ?? "").includes(text))
+              .map((node) => ({ text: (node.textContent ?? "").trim(), clipped: node.scrollWidth > node.clientWidth + 1, right: Math.round(node.getBoundingClientRect().right) }));
+            return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, table: table ? Math.round(table.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null, amounts };
+          }, amount.replace(/^[−-]/, ""));
+          const label = `${view} · ${colorScheme} · ${width}px`;
+          console.log(`Actividad con datos extremos · ${label}: documento ${result.scrollWidth}/${result.clientWidth}; tabla ${result.table ?? "—"} en columna ${result.column ?? "—"}; importe ${result.amounts.map((item) => `«${item.text}» hasta ${item.right}`).join(", ")}`);
+          expect.soft(result.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(result.clientWidth);
+          if (width >= 1280) {
+            expect.soft(result.table, `${label}: la tabla existe desde 1280`).not.toBeNull();
+            expect.soft(result.table ?? Infinity, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(result.column ?? 0);
+          }
+          expect.soft(result.amounts.length, `${label}: el importe extremo está a la vista`).toBeGreaterThan(0);
+          for (const item of result.amounts) {
+            expect.soft(item.clipped, `${label}: «${item.text}» sin recortar`).toBe(false);
+            expect.soft(item.right, `${label}: «${item.text}» dentro de la ventana`).toBeLessThanOrEqual(result.clientWidth);
+          }
+        }
+      }
+      // Texto al 200 % a 390: el escalado se mantiene y la lista no desborda.
+      await page.goto(`/actividad?mes=${month}`);
+      await page.setViewportSize({ width: 390, height: 900 });
+      await expect(page.getByText(amount).filter({ visible: true }).first()).toBeVisible();
+      await root200(page);
+      await twoFrames(page);
+      const { doc } = await overflow(page);
+      console.log(`Actividad con datos extremos · 200 % · ${colorScheme} · 390: ${doc.scrollWidth}/${doc.clientWidth}`);
+      expect.soft(doc.scrollWidth, `200 % · ${colorScheme} · 390: sin scroll horizontal`).toBeLessThanOrEqual(doc.clientWidth);
+      await context.close();
+    }
+  });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
     const entry = e2eEntries.find((item) => item.state === "Anotar E1 gasto")!;
