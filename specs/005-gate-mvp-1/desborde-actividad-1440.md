@@ -216,6 +216,8 @@ no se cambia.
   - **Cuándo actúa:** al pasar de `/actividad/{id}` a `/actividad`, y solo si nadie tiene el foco.
   - **Adónde lleva el foco:** a la fila de ese movimiento, por su id, con el anillo visible.
   - **Si la fila ya no existe**, al título de Actividad.
+  - **Mientras la lista carga** (su Skeleton, «Cargando movimientos»), espera sin decidir, hasta 15 s. Con la lista pintada,
+    espera 2 s más a la fila antes de ir al título. En el barrido completo, con juntia-dev lento, la lista tardó más de 5 s.
 - **Regresiones.**
   - Cierre por teclado en Yo, Nosotros (gasto y liquidación) y con aportes, a 1280 y 1440 con panel, al 200 % en una columna y a
     390 con «Volver»: 20/20 (0/20 sin la corrección).
