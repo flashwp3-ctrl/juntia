@@ -27,7 +27,7 @@ Arnés `tests/evidence/f111-12.capture.ts`. Corre con `F111_12=1 npm run e2e:dev
   ruta.
 - **Variables:**
   - `F111_12_CPU`: ralentización de CPU por CDP, para simular la carga de 8 workers.
-  - `F111_12_KNOB=1`: antes de medir hace lo mismo que `knobFrames` («Nosotros» 10 cuadros y vuelta a «Yo»).
+  - `F111_12_KNOB=1`: antes de medir hace lo mismo que `knobFrames` («Nosotros» 10 cuadros y vuelta a «Yo»). *(Histórico: variables del arnés en el PR #111. El arnés vigente usa `F111_12_ORDER`, `F111_12_CPU` y `F111_12_COUPLE`; ver «PR aparte de F111-12».)*
   - `F111_12_LABEL`: el nombre de la corrida.
 - **Candidato:** la rama del PR #111. **`main`:** los mismos archivos de `src/` que `main` (`git checkout main -- src`),
   con el mismo arnés.
@@ -65,7 +65,7 @@ redondea a entero: el alto natural es 701,59 y el mínimo queda en 702, así que
 0,41 px. Si no hay un render posterior dentro de la ventana, no se ve. El cambio de contexto provoca ese render. Coincide
 con las cifras (701,59 → 702,00, entero), pero no se instrumentó el efecto: confirmarlo es parte de la propuesta.
 
-> **Actualización del 26 nov 2026.** Instrumentado en el PR aparte: el mecanismo **queda confirmado por medición** (37 de 37 saltos en el cuadro en que `holdKey` fija `min-height` con `offsetHeight` 674 sobre un alto de 673,59). Ver «PR aparte de F111-12».
+> **Nota histórica de la ronda 1 del PR #116 (26 nov 2026), superada (F116-6).** Decía que el mecanismo «quedaba confirmado por medición». La ronda 2 lo precisa: lo **medido** es que todos los saltos caen en el cuadro en que cambia `min-height`; que lo haga `holdKey` con `offsetHeight` es una **inferencia** por lectura del código. Ver «PR aparte de F111-12», «Instrumentación de `BottomSheet`».
 
 **Lo que no está demostrado (F111-16).** Dos cosas quedan como hipótesis:
 
@@ -74,7 +74,7 @@ con las cifras (701,59 → 702,00, entero), pero no se instrumentó el efecto: c
 
 Ninguna se ha probado: el arnés no instrumentó el efecto de `BottomSheet` ni corrió una variante con esa espera. Lo demostrado es la correlación con el paso de `knobFrames` y que `main` y el candidato dan lo mismo.
 
-> **Actualización del 26 nov 2026.** Las dos se midieron en el PR aparte. El mecanismo queda confirmado. Con la secuencia nueva, las series con más de un rectángulo son 0 de 192 en el arnés (`main` y candidato, CPU 1× y 6×). Ver «PR aparte de F111-12».
+> **Nota histórica de la ronda 1 del PR #116 (26 nov 2026), superada (F116-6).** Decía que el mecanismo «quedaba confirmado» y que las «0 de 192» series eran de la secuencia nueva. Esa secuencia era la espera por red (con `F111_12_KNOB` y `F111_12_WAIT`), que la revisión descartó (F116-1 y F116-2) y ya no existe. La ronda 2 cambia el orden de la prueba y el arnés usa `F111_12_ORDER`. Lo vigente está en «PR aparte de F111-12».
 
 **En resumen:** la causa parece mixta. El arnés mide un estado de transición que crea él mismo, y el producto tiene un ajuste
 subpíxel al volver a pintarse. No es un defecto de C-1 a C-7, ni una regresión.
@@ -166,7 +166,7 @@ Desaparecen `trackRsc`, `settleContext` y `backToMe`: **no hay esperas de red ni
 **Por qué es legítimo y no rebaja el criterio:**
 
 - Las dos mediciones (perilla y aviso), sus 10 cuadros y sus aserciones (`new Set(…).size === 1`) son las mismas. No se
-  descarta ninguna medición, no hay tolerancia, `skip`, timeouts nuevos ni reintentos.
+  descarta ninguna medición, no hay tolerancia, `skip` ni reintentos, y **no se aumentan los timeouts del gate** (F116-7).
 - Solo cambia el orden: el aviso se mide en el estado base, como pide el comentario de la propia prueba («los momentos de
   motion de las rutas de producto se miden en su estado base»). Antes, la prueba medía el aviso en mitad de una transición
   que provocaba ella misma.
@@ -207,6 +207,11 @@ En el orden nuevo, la comprobación de «Yo» se cumplió en las 144 repeticione
   - La versión con esperas de red, ya retirada: 0 de 192 en `main` y en `80f8712`.
   - Iteraciones descartadas de aquella espera: una se colgaba, otra tenía una expresión regular rota y otra pulsaba antes de
     hidratar.
+
+**Límites del arnés (F116-7).**
+
+- **Timeout.** El arnés es opt-in y no forma parte del gate. Su `test.setTimeout` pasa de 15 a 20 min porque recarga la ruta en cada repetición. Ningún timeout del gate aumenta.
+- **Contexto del navegador.** El arnés reutiliza el mismo contexto entre repeticiones: recargar la ruta **no equivale** a un contexto nuevo con cookies y almacenamiento limpios, que es lo que tiene cada caso de la suite.
 
 **Qué significa que una corrida del arnés «pase» (F111-17).** Que terminó y escribió sus series. Las cifras son lo medido, no
 una prueba del gate. La prueba del gate es la suite axe.
