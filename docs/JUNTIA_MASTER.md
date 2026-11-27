@@ -1477,6 +1477,60 @@ Esta decisión no ejecuta nada: la eliminación ocurre en su momento, con sus ap
 
 **Ampliación de la excepción de 30.2: F111-12 (26 de noviembre de 2026).** El gestor transmitió la autorización de los fundadores («Sí, autorizado»), que se registra así: «Los fundadores autorizan el 26-nov-2026 un PR aparte para F111-12: aislar la prueba geométrica del aviso de Anotar sin rebajar el criterio, e instrumentar BottomSheet sin cambiar el producto». F111-12 es el fallo intermitente «rectángulos distintos del aviso» de `tests/a11y/routes.a11y.ts`, que la revisión del PR de 30.2 (PR #111) dejó fuera de su alcance (`specs/005-gate-mvp-1/diagnostico-aviso-anotar.md`). La autorización cubre solo esto: la prueba deja de medir el aviso durante el cambio de contexto que ella misma provoca, sin cambiar la medición, la aserción ni la tolerancia, y se mide `BottomSheet` desde un arnés de laboratorio. **No cubre** cambios en `BottomSheet`, en la hoja de Anotar ni en otro código de producto, el servidor, las consultas o `useWrite`, ni en otras pruebas, ni subir tolerancias o timeouts. Si la medición confirma un defecto del producto, su corrección necesita otra autorización expresa.
 
+**Ampliación de la excepción de 30.2: desbordamiento de Actividad a 1440 px (26 de noviembre de 2026).** El gestor transmitió la autorización de los fundadores, cuya respuesta literal es «Sí, autorizado». Contestaban a la propuesta de un PR independiente y acotado que corrigiera el desbordamiento horizontal de «Actividad con datos extremos» a 1440 px, en el que la tabla «Movimientos del mes» llega a 1511 px. El barrido local de la revisión del PR de F111-12 (PR #116) lo encontró, y es previo a ese PR. **La autorización cubre solo esto:**
+
+- cambios de presentación estrictamente necesarios para que la tabla de Actividad no desborde, con la causa demostrada antes de corregir;
+- una regresión específica con datos extremos, en los dos temas, en los siete anchos y con el panel de detalle abierto.
+
+**Condiciones:** no rediseñar Actividad; no ocultar el desbordamiento (nada de `overflow-x-hidden` global) ni recortar cifras, de modo que todos los dígitos y signos de los importes queden a la vista; no reducir la tipografía y mantener el escalado al 200 %; conservar el comportamiento responsive, la accesibilidad y el panel de detalle; y pasar por una revisión adversarial independiente antes del merge.
+
+**No cubre** consultas financieras, permisos, filtros, validaciones, fórmulas ni el servidor (si la corrección los exigiera, se aplica la regla de parada de 30.2), ni la corrección de `BottomSheet` de F111-12, que sigue necesitando su propia autorización.
+
+**Ampliación del alcance del PR #117 (27 de noviembre de 2026).** El gestor transmitió la autorización expresa de los fundadores. Su texto literal:
+
+> Sí, autorizamos ampliar el alcance del PR #117, manteniendo las condiciones y la regla de parada de la decisión 30.2.
+> El alcance adicional queda limitado a:
+> 1. Corregir el desbordamiento demostrado de Inicio en Yo, a 390 px con texto al 200 %, incluyendo «Compartido · tu parte» y «Ver todo».
+> 2. Investigar y reproducir el posible desbordamiento de la tabla de Actividad en Nosotros.
+> 3. Investigar y reproducir el posible desbordamiento de las filas de aportes a metas dentro de Actividad.
+> En los puntos 2 y 3, demostrar el defecto antes de modificar el producto. Si no se reproduce, documentar el resultado y no introducir cambios preventivos innecesarios.
+> Condiciones:
+> * Solo cambios de presentación estrictamente necesarios.
+> * Mantener el diseño aprobado y sus tokens.
+> * No reducir tipografías ni ocultar contenido financiero.
+> * Todos los dígitos, signos e importes deben permanecer visibles.
+> * No utilizar overflow-x-hidden global ni enmascarar el defecto mediante recortes.
+> * Conservar el escalado al 200 %, la accesibilidad y el comportamiento responsive.
+> * Verificar que los importes de la tabla no quedan ocultos detrás del panel de detalle. No basta con comprobar el ancho del documento.
+> * Añadir regresiones específicas que fallen antes de la corrección y pasen después, con datos extremos, los siete anchos y los dos temas según corresponda.
+> * No modificar consultas, permisos, filtros, validaciones, fórmulas, contratos financieros, modelo de datos ni servidor.
+> * Mantener intactos los umbrales y exigencias del gate.
+> Registrar esta ampliación expresa en la decisión 30 del maestro. Separar las correcciones en commits identificables dentro del mismo PR #117 para facilitar la revisión adversarial.
+> BottomSheet continúa fuera de alcance. No se autoriza una auditoría general de diseño ni otras mejoras de presentación.
+> Aplicar la regla de parada si aparecen defectos adicionales fuera de estos tres casos.
+> Mantener el PR en Draft hasta completar las correcciones, las verificaciones locales y el brief consolidado para GPT. No lanzar CI todavía.
+> El barrido completo del paso 4b sigue siendo obligatorio sobre el candidato definitivo de MVP-1.
+
+Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de Actividad**, no a la pantalla de Metas. **Límite:** esta ampliación no cubre otros desbordamientos ni otras pantallas; un defecto nuevo fuera de los tres casos se detiene y se notifica. Tampoco cambia lo que la ampliación anterior no cubre. El resultado de cada caso (causa demostrada o «no reproducido») está en `specs/005-gate-mvp-1/desborde-actividad-1440.md`.
+
+**Ampliaciones de la ronda 2 del PR #117 (27 de noviembre de 2026).** La revisión adversarial del PR (ronda 1, NO-GO por las pruebas) pidió medir el 200 % también a 1280 y 1440. Esa medición destapó dos defectos previos fuera de los tres casos, y la regla de parada se aplicó. El gestor transmitió dos autorizaciones expresas de los fundadores.
+
+- **A y B.** Respuesta literal: «Sí, autorizado, corrige A y B en el #117».
+  - **A** es Actividad con la raíz al 200 % a 1280 y 1440: la columna de la lista se quedaba en 160/320 px junto al panel de 400.
+  - **B** es el reparto del detalle de un gasto compartido al 200 % a 360–430.
+  - **Condiciones:** un commit por defecto; para A, un cambio mínimo sin rediseñar el shell, con el enfoque revisado y aprobado por el gestor antes de implementarlo (una container query de Actividad con corte en 59.5rem, idéntica al 100 %); y todas las condiciones del 27 de noviembre.
+- **Devolución del foco al cerrar el detalle de Actividad.** Respuesta literal: «opcion 1». Al cerrar el detalle con la ×, el foco caía en `body`, también en el diseño de hoy.
+  - **Límite:** solo la devolución del foco al cerrar el detalle de Actividad, en Yo y Nosotros, con la × y con «Volver» por debajo de 1280.
+  - **Cómo:** solo lógica de cliente en Actividad. Si la fila ya no existe, el foco va a un destino visible, nunca a `body`.
+  - **Fuera de alcance:** el servidor, las consultas, las rutas, el shell y cualquier otro comportamiento de navegación.
+
+- **La fecha privada de `ExpenseRow` (ronda 3).** Respuesta literal: «dale la opcion 1». Al exigir las fechas de Inicio a partir de las fixtures (F117-7), apareció que la elipsis de «Solo tú · fecha» cortaba la fecha a 390 con la raíz al 200 %. `ExpenseRow` es un componente compartido (`src/components/ui/expense-row.tsx`).
+  - **Límite:** solo la fecha de esa línea, con la misma técnica que F117-3: va entera y baja de línea si no cabe, sin elipsis.
+  - **Sin cambiar** la tipografía, los tokens ni nada más del componente.
+  - **Comprobación pedida:** todas las pantallas que lo usan, sin ningún cambio al 100 % y con la fecha entera al 200 %.
+
+**Estas ampliaciones no cubren** `BottomSheet`, otras pantallas con rejilla de lista y panel, el foco al abrir el detalle (no cambia: queda en `body`, como antes) ni el método de la suite para el 200 % (`font-size: 200%` en la raíz), que se mantiene. Un defecto nuevo fuera de A, B y el foco se detiene y se notifica.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».

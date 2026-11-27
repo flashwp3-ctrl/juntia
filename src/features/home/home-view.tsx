@@ -54,9 +54,14 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
       <span className={`grid size-10 place-items-center rounded-[12px] ${tileBg[row.categoryId]}`}><AppIcon name={categories[row.categoryId].icon} weight="duotone" size={20} className={categoryFg[row.categoryId]} /></span>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{title}</span>
-        <span className="flex min-w-0 items-center gap-1 text-[0.75rem] leading-[1.35] text-ink-secondary">
+        {/* PR #117 (ampliación del 27 nov 2026; maestro, decisión 30): con un solo `truncate`, al 200 % la elipsis ocultaba el
+            importe de «tu parte». Ahora «Compartido · tu parte $X» nunca se recorta (si no cabe, salta de línea). La fecha ocupa
+            su ancho natural (sin `flex-1 basis-0`, que la dejaba en 2 px a 360 sin saltar; ronda 2, F117-3): sigue en la misma
+            línea si cabe y, si no, baja entera a la siguiente; solo se recortaría si ni sola cupiera en la línea. */}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.75rem] leading-[1.35] text-ink-secondary">
           <AppIcon name="users-three" size={12} className="shrink-0" />
-          <span className="truncate"><span>{copy.row.sharedPart(formatMoney(row.myPart))}</span>{` · ${date}`}</span>
+          <span className="max-w-full">{copy.row.sharedPart(formatMoney(row.myPart))}</span>
+          <span className="min-w-0 truncate">{`· ${date}`}</span>
         </span>
       </span>
       <span className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
@@ -147,7 +152,9 @@ export function HomeView({ rows, month, today, shared, goals }: HomeViewProps) {
         {goals ? <GoalsModule goals={goals} context="me" today={today} /> : null}
         </div>
         <section aria-labelledby="home-recent" className="flex flex-col gap-1 lg:@min-[55.75rem]/home:order-1">
-          <div className="flex items-baseline justify-between gap-3 pb-1">
+          {/* PR #117 (ampliación del 27 nov 2026): con el texto al 200 %, «Recientes» y «Ver todo» no caben en una línea; la fila
+              salta de línea en vez de empujar «Ver todo» fuera de la pantalla. A tamaño normal no cambia. */}
+          <div className="flex flex-wrap items-baseline justify-between gap-3 pb-1">
             <h2 id="home-recent" className="font-serif text-balance text-[length:var(--title-m-size)] leading-[var(--title-m-line)] font-medium text-ink">{copy.home.recentTitle}</h2>
             <Link href={`/actividad?mes=${month}`} className="inline-flex min-h-11 items-center text-[length:var(--label-m-size)] font-semibold text-ink underline underline-offset-4"><StableLabel text={copy.home.seeAll} /></Link>
           </div>

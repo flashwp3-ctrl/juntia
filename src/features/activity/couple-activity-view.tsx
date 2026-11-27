@@ -153,7 +153,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
         <ExitState icon="magnifying-glass" title={copy.activity.noResults.title} description={copy.activity.noResults.description} actions={<Button variant="secondary" onClick={filters.clear} stableWidth>{copy.activity.noResults.clear}</Button>} />
       ) : (
         <>
-          <div className="flex flex-col gap-4 xl:hidden">
+          <div className="flex flex-col gap-4 xl:@min-[59.5rem]/actividad:hidden">
             {[...days].map(([date, dayItems]) => {
               const label = dayLabel(date, today);
               const spent = dayItems.reduce((sum, item) => (item.kind === "expense" ? sum + item.row.amount.amountMinor : sum), 0n);
@@ -177,7 +177,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
               );
             })}
           </div>
-          <table className="hidden w-full border-collapse text-left xl:table">
+          <table className="hidden w-full border-collapse text-left xl:@min-[59.5rem]/actividad:table">
             <caption className="sr-only">{copy.activity.table.caption}</caption>
             <thead>
               <tr className={overline}>
@@ -196,7 +196,10 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                   return (
                     <tr key={item.row.id} className={item.row.id === selectedId ? "bg-sunken" : "hover:bg-sunken"}>
                       {/* PR D (T062): la liquidación lleva a su detalle, con «Anular»; anulada, sigue en el historial y lo dice. */}
-                      <td className={`${cell} rounded-l-[14px]`}>
+                      {/* PR #117 (ampliación del 27 nov 2026; maestro, decisión 30): como en la tabla de Yo, con layout automático la primera celda pedía
+                        el ancho de su título en una línea (`truncate`) y la tabla salía de su columna, hasta quedar debajo del panel. `max-w-0`
+                        deja recortar el título con su elipsis y `w-full` da a esta columna lo que sobra; fecha e importe conservan su ancho. */}
+                      <td className={`${cell} w-full max-w-0 rounded-l-[14px]`}>
                         <Link href={detailHref(item.row.id, month)} aria-current={item.row.id === selectedId ? "page" : undefined} data-settlement-id={item.row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                           <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-border-emphasis text-ink"><AppIcon name="arrows-left-right" size={15} /></span>
                           <span className={`truncate ${item.row.status === "voided" ? "line-through" : ""}`}>{copy.shared.row.settlementTitle(memberName(members, item.row.fromUserId), memberName(members, item.row.toUserId))}</span>
@@ -212,7 +215,7 @@ export function CoupleActivityView({ expenses, settlements, month, today, naviga
                 const current = row.id === selectedId;
                 return (
                   <tr key={row.id} data-new={row.id === highlightId ? "" : undefined} className={`group ${current ? "bg-sunken" : "hover:bg-sunken"} data-[new]:motion-safe:animate-[row-new_1.2s_ease-out] data-[new]:motion-reduce:bg-saving-subtle`}>
-                    <td className={`${cell} rounded-l-[14px]`}>
+                    <td className={`${cell} w-full max-w-0 rounded-l-[14px]`}>
                       <Link href={detailHref(row.id, month)} aria-current={current ? "page" : undefined} data-transaction-id={row.id} className="flex min-h-[54px] items-center gap-3.5 pl-3 text-[0.9375rem] font-semibold text-ink">
                         <CategoryIcon kind="category" category={row.categoryId} size="sm" />
                         <span className="truncate">{row.description ?? copy.categories[row.categoryId]}</span>

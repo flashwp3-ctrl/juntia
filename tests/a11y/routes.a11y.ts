@@ -9,10 +9,19 @@
 // T051 / FR-067; SC-002 (002): el recorrido sale de tests/a11y/route-registry.ts. Con A11Y_JOB=app (job app) audita los
 // estados sin sesión; con A11Y_JOB=e2e (job e2e, con Supabase en el runner) los que necesitan sesión de usuario o de
 // recuperación, con una cuenta sembrada (T049), y los que necesitan la respuesta real de Auth. Dos temas, 390 y 1440.
-import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { expect, test, type Browser, type Page } from "@playwright/test";
+import { sharedOctober2026 } from "../../src/domain/golden/october-2026";
+import { formatMoney, moneyFromPesos, type Money } from "../../src/domain/money";
+import { todayInBogota } from "../../src/domain/transactions";
+import { dayLabel } from "../../src/lib/format";
+import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
+import { updateDisplayName } from "../../src/lib/db/profile";
+import { registerSettlement } from "../../src/lib/db/settlements";
+import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { copy } from "../../src/lib/copy/es";
 import { analyzeAtRest } from "../support/a11y";
-import { seedCouple, seedMovements, seedUser } from "../support/seed";
+import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUser } from "../support/seed";
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
@@ -465,7 +474,119 @@ const overflow = (page: Page) => page.evaluate(() => {
     });
   return { doc, dialogs };
 });
+// La descripción máxima (140 caracteres) de los datos extremos, la misma de `seedMovements(user, "extreme")`.
+const LONG_DESCRIPTION = "Remodelación completa del apartamento con muebles nuevos, electrodomésticos, pintura, pisos y el trasteo de todo lo que había en él".padEnd(140, ".");
 const twoFrames = (page: Page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+/**
+ * PR #117 (maestro, decisión 30): cada importe visible del `main` (un texto con «$» y dígitos), entero y a la vista. Para cada
+ * uno: si lo recorta un ancestro con overflow (también la elipsis), si se sale de la ventana y si queda debajo del panel de detalle
+ * de Actividad (el `aside` visible, cuando el importe no está dentro de él). Los textos solo para lectores de pantalla
+ * (sr-only, 1 px) no cuentan. No basta el ancho del documento: un importe puede quedar tapado sin crear scroll.
+ */
+const moneyOnScreen = (page: Page) => page.evaluate(() => {
+  const root = document.documentElement;
+  const aside = [...document.querySelectorAll<HTMLElement>("main aside")].find((node) => node.getClientRects().length > 0) ?? null;
+  const panel = aside?.getBoundingClientRect() ?? null;
+  const amounts = [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getClientRects().length > 0
+    && node.getBoundingClientRect().width > 1 && [...node.childNodes].some((child) => child.nodeType === 3 && /\$\s?\d/.test(child.textContent ?? "")));
+  const problems = amounts.flatMap((node) => {
+    const rect = node.getBoundingClientRect();
+    const text = (node.textContent ?? "").trim().slice(0, 60);
+    const found: string[] = [];
+    if (node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflow !== "visible") found.push(`«${text}» recortado`);
+    for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const style = getComputedStyle(parent);
+      const box = parent.getBoundingClientRect();
+      if (box.width <= 1) break;
+      if ((style.overflowX !== "visible" || style.overflow !== "visible") && (rect.right > box.right + 1 || rect.left < box.left - 1)) { found.push(`«${text}» recortado por ${parent.tagName.toLowerCase()}`); break; }
+    }
+    if (rect.right > root.clientWidth + 1) found.push(`«${text}» fuera de la ventana (${Math.round(rect.right)})`);
+    if (panel && !aside!.contains(node) && rect.right > panel.left + 1 && rect.left < panel.right && rect.bottom > panel.top && rect.top < panel.bottom) found.push(`«${text}» debajo del panel de detalle`);
+    return found;
+  });
+  return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, amounts: amounts.length, problems };
+});
+
+/**
+ * PR #117, ronda 2 (F117-1): un texto que debe verse entero en una fila sembrada, localizada por su id (`selector`, p. ej.
+ * `[data-transaction-id="…"]`; la fila es su `tr` o el propio elemento; se ignora el panel de detalle).
+ */
+type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number };
+/**
+ * Para cada `RowText`: cuántas filas visibles tiene, cuántas apariciones del texto completo (signo incluido) hay en ellas, aunque
+ * esté repartido entre varios elementos, y los problemas de cada aparición según la GEOMETRÍA del texto (`Range.getClientRects`),
+ * no la de su elemento: cada trozo sin caja visible (ancho 0, `visibility`, `opacity: 0`), fuera de la ventana por cualquiera de
+ * los dos bordes, recortado por un ancestro con overflow (también la elipsis) o debajo del panel de detalle. Las copias solo para
+ * lectores de pantalla (sr-only) no cuentan como aparición visual.
+ */
+const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list) => {
+  const root = document.documentElement;
+  const aside = [...document.querySelectorAll<HTMLElement>("main aside")].find((node) => node.getClientRects().length > 0) ?? null;
+  const panel = aside?.getBoundingClientRect() ?? null;
+  const srOnly = (start: Element | null) => {
+    for (let node = start; node && node !== document.body; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.clip === "rect(0px, 0px, 0px, 0px)" || style.clipPath.startsWith("inset(50%")) return true;
+    }
+    return false;
+  };
+  return list.map(({ selector, text, label, panel: inPanel, count = 1 }) => {
+    const rows = [...new Set([...document.querySelectorAll<HTMLElement>(`main ${selector}`)]
+      .filter((node) => node.getClientRects().length > 0 && (inPanel || !node.closest("aside")))
+      .map((node) => node.closest("tr") ?? node))];
+    const occurrences: string[][] = [];
+    for (const row of rows) {
+      const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+      const nodes: { node: Text; start: number }[] = [];
+      let all = "";
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) { nodes.push({ node: node as Text, start: all.length }); all += (node as Text).data; }
+      for (let index = all.indexOf(text); index >= 0; index = all.indexOf(text, index + 1)) {
+        const end = index + text.length;
+        const pieces = nodes.filter(({ node, start }) => start < end && start + node.data.length > index);
+        if (pieces.some(({ node }) => srOnly(node.parentElement))) continue;
+        const problems: string[] = [];
+        for (const { node, start } of pieces) {
+          const range = document.createRange();
+          range.setStart(node, Math.max(0, index - start));
+          range.setEnd(node, Math.min(node.data.length, end - start));
+          const piece = range.toString();
+          if (!piece.trim()) continue;
+          const style = getComputedStyle(node.parentElement!);
+          // F117-6: la opacidad efectiva, producto de la del padre y la de todos sus ancestros (una fila con `opacity: 0` también oculta).
+          let opacity = 1;
+          for (let parent: Element | null = node.parentElement; parent; parent = parent.parentElement) opacity *= Number(getComputedStyle(parent).opacity);
+          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0.5 && rect.height > 0.5);
+          if (rects.length === 0 || style.visibility !== "visible" || opacity < 0.01) { problems.push(`«${piece}» sin caja visible`); continue; }
+          for (const rect of rects) {
+            if (rect.left < -0.5 || rect.right > root.clientWidth + 0.5) problems.push(`«${piece}» fuera de la ventana (${Math.round(rect.left)}–${Math.round(rect.right)} de ${root.clientWidth})`);
+            if (panel && !aside!.contains(node) && rect.right > panel.left + 0.5 && rect.left < panel.right - 0.5 && rect.bottom > panel.top + 0.5 && rect.top < panel.bottom - 0.5) problems.push(`«${piece}» debajo del panel de detalle`);
+            for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+              const box = parent.getBoundingClientRect();
+              const css = getComputedStyle(parent);
+              if (css.overflowX === "visible" && css.overflowY === "visible") continue;
+              if (rect.left < box.left - 0.5 || rect.right > box.right + 0.5) { problems.push(`«${piece}» recortado por ${parent.tagName.toLowerCase()}`); break; }
+            }
+          }
+        }
+        occurrences.push(problems);
+      }
+    }
+    return { label, text, count, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
+  });
+}, items);
+
+/**
+ * La tabla visible del `main` y su columna (el contenedor `.min-w-0` de la lista); y la rejilla lista/panel de Actividad (el padre
+ * del `aside` del panel): sus columnas si es una rejilla, `null` si Actividad va en una columna (defecto A).
+ */
+const tableFit = (page: Page) => page.evaluate(() => {
+  const node = [...document.querySelectorAll<HTMLTableElement>("main table")].find((item) => item.getClientRects().length > 0) ?? null;
+  const column = node?.closest(".min-w-0") ?? null;
+  const grid = document.querySelector("main aside")?.parentElement ?? null;
+  const columns = grid && getComputedStyle(grid).display === "grid" ? getComputedStyle(grid).gridTemplateColumns : null;
+  return { table: node ? Math.round(node.getBoundingClientRect().width) : null, column: column ? Math.round(column.getBoundingClientRect().width) : null, columns };
+});
 
 if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // (a) Los estados del registro que abren una hoja o un diálogo, el acceso A1–A6 y la invitación sin sesión.
@@ -517,6 +638,336 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       await context.close();
     });
   }
+
+  // PR #117 (maestro, decisión 30; autorizaciones del 26 y del 27 nov 2026). Las cuatro regresiones de desbordamiento con datos
+  // extremos comparten este recorrido: los dos temas; cada vista; los siete anchos al 100 % y, con la raíz al 200 %, 390, 1280 y
+  // 1440 (F117-2: al 200 % la barra lateral y los márgenes en rem crecen y el panel no). En cada combinación, después de cada
+  // cambio de ancho: sin scroll horizontal; con la tabla visible, la tabla dentro de su columna; cada fila sembrada, localizada por
+  // su id, presente y con cada texto esperado (el importe con su signo) entero, en la ventana por los dos bordes y fuera de debajo
+  // del panel, según la geometría del texto (`rowTexts`, F117-1); y la red general de `moneyOnScreen`.
+  // Ronda 3 (F117-5): también 1100, 1200 y 1279, donde la barra lateral es estrecha y el contenedor ya mide más de 59.5rem.
+  const SWEEP_CASES = [...[360, 390, 430, 768, 1024, 1100, 1200, 1279, 1280, 1440].map((width) => ({ width, root: "" })), ...[390, 1280, 1440].map((width) => ({ width, root: "200%" }))];
+  // `opened`: la vista tiene un movimiento elegido; en una columna solo se ve su detalle, y las filas de la lista se exigen solo
+  // cuando la lista está a la vista (con la rejilla). `detail`: textos del propio detalle (a pantalla completa o en el panel),
+  // comprobados en todos los anchos y escalas.
+  type SweepView = { name: string; path: string; opened?: boolean; detail?: RowText[] };
+  // Defecto A: al 100 %, desde 1280, la rejilla de hoy, exacta; por debajo de 1280 y con la raíz al 200 %, una columna.
+  const GRID_AT: Record<number, string> = { 1280: "520px 400px", 1440: "680px 400px" };
+  async function sweepRows(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; views: readonly SweepView[]; waitFor: string; expected: (page: Page) => Promise<RowText[]>; name: string; actividad: boolean }) {
+    const { browser, baseURL, user, scope, views, waitFor, expected, name, actividad } = options;
+    for (const colorScheme of THEMES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", colorScheme, viewport: { width: 1440, height: 900 } });
+      const host = new URL(baseURL).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: scope, domain: host, path: "/" }, { name: "juntia_theme", value: colorScheme, domain: host, path: "/" }]);
+      await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), scope);
+      const page = await context.newPage();
+      for (const view of views) {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto(view.path);
+        await expect(page.getByText(waitFor).filter({ visible: true }).first()).toBeVisible();
+        const items = await expected(page);
+        expect(items.length, `${name} · ${view.name}: hay filas sembradas que comprobar`).toBeGreaterThan(0);
+        for (const { width, root } of SWEEP_CASES) {
+          await page.setViewportSize({ width, height: 900 });
+          await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+          await twoFrames(page);
+          const label = `${name} · ${view.name} · ${colorScheme} · ${width}px${root ? " · raíz 200 %" : ""}`;
+          const money = await moneyOnScreen(page);
+          const fit = await tableFit(page);
+          const listShown = !view.opened || fit.columns !== null;
+          const checked = [...(listShown ? items : []), ...(view.detail ?? [])];
+          const rows = await rowTexts(page, checked);
+          const asserted = rows;
+          const missing = asserted.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
+          const problems = asserted.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
+          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${asserted.length - missing.length}/${asserted.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
+          expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
+          if (actividad) {
+            const twoColumns = !root && width >= 1280;
+            if (twoColumns) {
+              expect.soft(fit.columns, `${label}: la rejilla lista/panel de hoy`).toBe(GRID_AT[width]);
+              expect.soft(fit.table, `${label}: la tabla existe desde 1280 al 100 %`).not.toBeNull();
+            } else {
+              expect.soft(fit.columns, `${label}: Actividad va en una columna`).toBeNull();
+              expect.soft(fit.table, `${label}: en una columna, la lista por días y no la tabla`).toBeNull();
+            }
+            // F117-5: la salida del detalle va con la ventana (`xl`), como hoy: la × desde 1280, «Volver» por debajo.
+            if (view.opened) {
+              const exits = await page.evaluate((names) => names.map((name) => [...document.querySelectorAll("a")].some((node) => node.textContent?.trim() === name && node.getClientRects().length > 0)), [copy.detail.close, copy.detail.back]);
+              expect.soft(exits, `${label}: ${width >= 1280 ? "la × y no «Volver»" : "«Volver» y no la ×"}`).toEqual(width >= 1280 ? [true, false] : [false, true]);
+            }
+          }
+          if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
+          for (const row of asserted) {
+            expect.soft(row.rows, `${label}: la fila de ${row.label} está a la vista`).toBeGreaterThan(0);
+            expect.soft(row.occurrences, `${label}: «${row.text}» completo en ${row.label}`).toBeGreaterThanOrEqual(row.count);
+            expect.soft(row.problems, `${label}: «${row.text}» de ${row.label} entero, en la ventana y fuera de debajo del panel`).toEqual([]);
+          }
+          expect.soft(money.problems, `${label}: importes del main enteros, en la ventana y fuera de debajo del panel`).toEqual([]);
+        }
+      }
+      await context.close();
+    }
+  }
+  const expenseText = (row: { type: string; amount: Money }) => `${row.type === "income" ? "+" : ""}${formatMoney(row.amount)}`;
+  const short = (text: string | null | undefined) => (text ?? "").slice(0, 24);
+  // F117-4: las longitudes de los datos extremos, comprobadas (el máximo del esquema: 140 de descripción, 60 de nombre y de meta).
+  const NAME_SARA = "María Fernanda de los Ángeles Restrepo Villegas de la Cruz A";
+  const NAME_TOMAS = "Juan Sebastián de la Santísima Trinidad Echeverría Olarte JB";
+  const GOAL_NAME = "Viaje largo a Japón con toda la familia y los abuelos en 202";
+  const checkLengths = () => {
+    expect(LONG_DESCRIPTION.length, "descripción extrema").toBe(140);
+    for (const value of [NAME_SARA, NAME_TOMAS, GOAL_NAME]) expect(value.length, `«${value}»`).toBe(60);
+  };
+
+  // Desbordamiento de Actividad en Yo con datos extremos (autorización del 26 nov 2026): con layout automático, la celda de la
+  // descripción medía lo que la descripción de 140 caracteres en una línea y la tabla salía de su columna (documento de 1511 a
+  // 1280 y 1440, importes debajo del panel). Cada fila sembrada, por su id, con su importe y su signo.
+  test("Actividad con datos extremos: siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel de detalle abierto, sin desbordar y con cada importe entero", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const seeded = await seedMovements(user, "extreme");
+    const [extreme] = seeded;
+    const month = extreme.transactionDate.slice(0, 7);
+    // El importe y la fecha de cada fila (ExpenseRow en la lista por días; su celda en la tabla), de las fechas sembradas.
+    const today = todayInBogota();
+    const items = seeded.flatMap((row) => [expenseText(row), dayLabel(row.transactionDate, today)].map((text) => ({ selector: `[data-transaction-id="${row.id}"]`, text, label: short(row.description) })));
+    await sweepRows({ browser, baseURL: baseURL!, user, scope: "me", name: "Actividad en Yo", actividad: true, waitFor: formatMoney(extreme.amount), expected: async () => items,
+      views: [{ name: "lista", path: `/actividad?mes=${month}` }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}?mes=${month}`, opened: true,
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(extreme.amount), label: "el detalle", panel: true }] }] });
+  });
+
+  // Defecto A (luz verde del gestor, 27 nov 2026) y devolución del foco (fundadores, «opcion 1», 27 nov 2026). El detalle de
+  // Actividad se abre desde su fila con Enter y se cierra con teclado: la × del panel (1280 y 1440 al 100 %) o de la columna
+  // (raíz al 200 % a 1280 y 1440: Actividad en una columna con la ventana en `xl`), o «Volver» por debajo de 1280 (390). En cada
+  // caso: la salida se alcanza con Tab, tiene nombre accesible y mide al menos 44 × 44; al cerrar vuelve la lista (ningún estado
+  // sin salida) y el foco está en la fila de ESE movimiento, por su id, con el anillo visible (`:focus-visible`). En Yo (gasto
+  // extremo), en Nosotros (gasto extremo y liquidación con nombres de 60) y con aportes a metas en la lista (gasto compartido).
+  const CLOSE_CASES = [{ width: 1280, root: "" }, { width: 1440, root: "" }, { width: 1280, root: "200%" }, { width: 1440, root: "200%" }, { width: 1200, root: "" }, { width: 390, root: "" }];
+  async function closeWithKeyboard(options: { browser: Browser; baseURL: string; user: SeededUser; scope: "me" | "us"; month: string; targets: readonly { id: string; kind: "transaction" | "settlement"; label: string }[]; name: string }) {
+    const { browser, baseURL, user, scope, month, targets, name } = options;
+    for (const { width, root } of CLOSE_CASES) {
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width, height: 900 } });
+      const host = new URL(baseURL).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: scope, domain: host, path: "/" }]);
+      await context.addInitScript((value) => window.localStorage.setItem("juntia:context", value), scope);
+      const page = await context.newPage();
+      for (const target of targets) {
+        const label = `${name} · ${target.label} · ${width}px${root ? " · raíz 200 %" : ""}`;
+        const rowSelector = `main a[data-${target.kind}-id="${target.id}"]`;
+        await page.goto(`/actividad?mes=${month}`);
+        const row = page.locator(rowSelector).filter({ visible: true }).first();
+        await expect(row, `${label}: la fila está en la lista`).toBeVisible();
+        await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+        await twoFrames(page);
+        const twoColumns = !root && width >= 1280;
+        expect.soft((await tableFit(page)).columns, `${label}: la disposición de partida`).toBe(twoColumns ? GRID_AT[width] : null);
+        await row.focus();
+        await page.keyboard.press("Enter");
+        await page.waitForURL(new RegExp(`/actividad/${target.id}`));
+        await expect(page.getByRole("link", { name: width >= 1280 ? copy.detail.close : copy.detail.back, exact: true }).filter({ visible: true }), `${label}: el detalle está abierto`).toHaveCount(1);
+        // La navegación en el cliente conserva el estilo de la raíz; si no, la prueba no mediría lo que dice.
+        expect(await page.evaluate(() => document.documentElement.style.fontSize), `${label}: la raíz sigue igual`).toBe(root);
+        await twoFrames(page);
+        const entry = await page.evaluate(() => { const node = document.activeElement; return `${node?.tagName.toLowerCase()} «${(node?.getAttribute("aria-label") ?? node?.textContent ?? "").trim().slice(0, 30)}»`; });
+        expect.soft((await tableFit(page)).columns, `${label}: con el detalle abierto, ${twoColumns ? "la rejilla de hoy" : "una columna"}`).toBe(twoColumns ? GRID_AT[width] : null);
+        const exitName = width >= 1280 ? copy.detail.close : copy.detail.back;
+        const exit = page.getByRole("link", { name: exitName, exact: true }).filter({ visible: true });
+        await expect(exit, `${label}: hay una salida visible, «${exitName}»`).toHaveCount(1);
+        let reached = false;
+        for (let step = 0; step < 80 && !reached; step += 1) {
+          await page.keyboard.press("Tab");
+          reached = await exit.evaluate((node) => node === document.activeElement);
+        }
+        expect(reached, `${label}: «${exitName}» se alcanza con Tab`).toBe(true);
+        const box = (await exit.boundingBox())!;
+        expect.soft(Math.min(box.width, box.height), `${label}: «${exitName}» mide al menos 44 × 44`).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press("Enter");
+        await page.waitForURL((url) => url.pathname === "/actividad");
+        await expect(page.locator(rowSelector).filter({ visible: true }).first(), `${label}: al cerrar, la lista vuelve`).toBeVisible();
+        const focusOnRow = async () => page.evaluate((selector) => {
+          const node = document.activeElement as HTMLElement | null;
+          return { onRow: Boolean(node?.matches(selector)), visible: Boolean(node?.matches(":focus-visible")), tag: node?.tagName.toLowerCase() ?? "nada" };
+        }, rowSelector);
+        await expect.poll(async () => (await focusOnRow()).onRow, { message: `${label}: el foco vuelve a la fila de ${target.label}`, timeout: 3000 }).toBe(true).catch(() => undefined);
+        const focus = await focusOnRow();
+        console.log(`${label}: ${twoColumns ? "rejilla" : "una columna"}; al abrir, foco en ${entry}; «${exitName}» ${Math.round(box.width)}×${Math.round(box.height)}; al cerrar, foco en ${focus.tag}${focus.onRow ? " (la fila)" : ""}${focus.visible ? ", visible" : ""}`);
+        expect.soft(focus.onRow, `${label}: el foco vuelve a la fila de ${target.label}`).toBe(true);
+        expect.soft(focus.visible, `${label}: con el anillo de foco visible`).toBe(true);
+      }
+      await context.close();
+    }
+  }
+
+  test("Actividad: el detalle se cierra por teclado (× del panel, × en una columna al 200 % y «Volver» a 390) y el foco vuelve a su fila, en Yo, Nosotros y con aportes", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(240_000);
+    checkLengths();
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const [extreme] = await seedMovements(user, "extreme");
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user, scope: "me", month: extreme.transactionDate.slice(0, 7), name: "Yo", targets: [{ id: extreme.id, kind: "transaction", label: "gasto extremo" }] });
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    await updateDisplayName(pair.sara.client, NAME_SARA);
+    await updateDisplayName(pair.tomas.client, NAME_TOMAS);
+    const half = moneyFromPesos(499_999_999n);
+    const shared = await createSharedExpense(pair.sara.client, {
+      idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: todayInBogota(), description: LONG_DESCRIPTION,
+      payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+    });
+    const settlement = await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
+    const month = todayInBogota().slice(0, 7);
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", month, name: "Nosotros", targets: [{ id: shared.id, kind: "transaction", label: "gasto extremo" }, { id: settlement.id, kind: "settlement", label: "liquidación" }] });
+    const max = moneyFromPesos(999_999_999n);
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: GOAL_NAME, goalType: "travel", target: max, targetMonth: null, context: "us" });
+    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
+    const [recent] = await seedSharedMovements(pair, "recent");
+    await closeWithKeyboard({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", month, name: "Con aportes", targets: [{ id: recent.id, kind: "transaction", label: "gasto compartido junto a los aportes" }] });
+  });
+
+  // Devolución del foco, destino de reserva: si la fila ya no existe al volver a la lista (aquí, porque el movimiento se eliminó
+  // desde su detalle), el foco va al título de Actividad, visible, y nunca a `body`. A 1280 con el panel y a 390.
+  test("Actividad: al eliminar un movimiento desde su detalle, el foco va al título de Actividad y no a body", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const user = await seedUser({ role: "actividad-extremos", index: testInfo.parallelIndex, displayName: NAME_SARA });
+    const seeded = await seedMovements(user, "recent");
+    const victims = seeded.filter((row) => row.type === "expense").slice(0, 2);
+    for (const [index, width] of [1280, 390].entries()) {
+      const victim = victims[index];
+      const label = `eliminar desde el detalle · ${width}px`;
+      const context = await browser.newContext({ baseURL, reducedMotion: "reduce", viewport: { width, height: 900 } });
+      const host = new URL(baseURL!).hostname;
+      await context.addCookies([...user.cookies.map((cookie) => ({ ...cookie, domain: host })), { name: "juntia_context", value: "me", domain: host, path: "/" }]);
+      await context.addInitScript(() => window.localStorage.setItem("juntia:context", "me"));
+      const page = await context.newPage();
+      await page.goto(`/actividad?mes=${victim.transactionDate.slice(0, 7)}`);
+      const row = page.locator(`main a[data-transaction-id="${victim.id}"]`).filter({ visible: true }).first();
+      await row.focus();
+      await page.keyboard.press("Enter");
+      await page.waitForURL(new RegExp(`/actividad/${victim.id}`));
+      await page.getByRole("button", { name: copy.remove.action.expense }).filter({ visible: true }).first().click();
+      await page.getByRole("alertdialog").or(page.getByRole("dialog")).getByRole("button", { name: copy.remove.confirm, exact: true }).click();
+      await page.waitForURL((url) => url.pathname === "/actividad");
+      await expect(page.locator(`main a[data-transaction-id="${victim.id}"]`), `${label}: la fila ya no está`).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? "nada"), { message: `${label}: el foco sale de body`, timeout: 5000 }).not.toBe("body").catch(() => undefined);
+      const focus = await page.evaluate(() => { const node = document.activeElement as HTMLElement | null; return { tag: node?.tagName.toLowerCase() ?? "nada", text: (node?.textContent ?? "").trim().slice(0, 30), visible: node ? node.getClientRects().length > 0 : false }; });
+      console.log(`${label}: al volver, foco en ${focus.tag} «${focus.text}»`);
+      expect.soft(focus.tag, `${label}: el foco no queda en body`).not.toBe("body");
+      expect.soft(focus.tag, `${label}: el foco va al título de Actividad`).toBe("h1");
+      expect.soft(focus.visible, `${label}: el destino está a la vista`).toBe(true);
+      await context.close();
+    }
+  });
+
+  // Ronda 3 (F117-6) y F117-1: la comprobación `rowTexts` frente a casos sintéticos, sin servidor. Cada fila lleva su id y el
+  // importe «+$999.999.999». Deben dar problema: un ancestro con `opacity: 0`, el signo oculto aparte, un importe de ancho cero,
+  // uno fuera por el borde izquierdo, uno recortado por la elipsis y uno debajo del panel. No deben darlo: el símbolo y los dígitos
+  // en elementos distintos, ni la copia solo para lectores de pantalla junto a uno visible. Y la fila ausente cuenta como ausente.
+  test("rowTexts: detecta importes ocultos por un ancestro, partidos, de ancho cero, fuera por la izquierda, recortados o bajo el panel", { tag: "@sweep" }, async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setContent(`<!doctype html><html><body style="margin:0;font:16px sans-serif">
+      <main style="display:grid;grid-template-columns:400px 300px;gap:20px;padding:0 20px">
+        <div>
+          <div data-transaction-id="ok">Bien <span>+$</span><span>999.999.999</span></div>
+          <div data-transaction-id="sr">Bien <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">+$999.999.999</span><span>+$999.999.999</span></div>
+          <div style="opacity:0"><div data-transaction-id="opaco">Oculto <span>+$999.999.999</span></div></div>
+          <div data-transaction-id="signo">Signo <span style="visibility:hidden">+</span><span>$999.999.999</span></div>
+          <div data-transaction-id="cero">Cero <span style="display:inline-block;width:0;overflow:hidden;white-space:nowrap">+$999.999.999</span></div>
+          <div data-transaction-id="izquierda" style="position:relative;left:-400px">Izquierda +$999.999.999</div>
+          <div data-transaction-id="elipsis" style="width:60px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">+$999.999.999</div>
+          <div data-transaction-id="panel" style="position:relative;left:330px">Panel +$999.999.999</div>
+        </div>
+        <aside style="height:400px">detalle</aside>
+      </main></body></html>`);
+    const ids = ["ok", "sr", "opaco", "signo", "cero", "izquierda", "elipsis", "panel", "ausente"];
+    const results = await rowTexts(page, ids.map((id) => ({ selector: `[data-transaction-id="${id}"]`, text: "+$999.999.999", label: id })));
+    const verdict = Object.fromEntries(results.map((row) => [row.label, row.rows === 0 ? "ausente" : row.occurrences === 0 ? "sin texto" : row.problems.length ? `problema: ${row.problems.join(" · ")}` : "bien"]));
+    console.log(`rowTexts, casos sintéticos: ${JSON.stringify(verdict)}`);
+    expect.soft(verdict.ok, "símbolo y dígitos en elementos distintos").toBe("bien");
+    expect.soft(verdict.sr, "copia para lectores de pantalla junto a uno visible").toBe("bien");
+    for (const id of ["opaco", "signo", "cero", "izquierda", "elipsis", "panel"]) expect.soft(verdict[id], `${id}: da problema`).toMatch(/^problema/);
+    expect.soft(verdict.ausente, "la fila ausente").toBe("ausente");
+  });
+
+  // Ampliación del 27 nov 2026, punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz al 200 %, «Ver todo» empujaba el
+  // documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el importe de la parte.
+  // Ronda 3 (F117-7): lo esperado sale de las FIXTURES, no del DOM. Inicio enseña los 5 movimientos más recientes; con las fechas
+  // sembradas se ordenan y se separan los que entran seguro (fecha posterior a la del quinto) de los empatados en esa fecha, cuyo
+  // orden lo decide la consulta, no las fixtures. En cada ancho se exigen, por id, los seguros y, de los empatados, exactamente
+  // los que faltan hasta 5, siempre los mismos que al cargar. De cada uno: el importe; si es compartido, «Compartido · tu parte
+  // $X» y «· fecha»; si es privado, la fecha. La fecha se calcula de la sembrada (`dayLabel` con el hoy de Bogotá).
+  test("Inicio en Yo con la parte compartida: siete anchos y 200 % a 390, 1280 y 1440, dos temas, con «tu parte», su fecha y los importes enteros", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    const [shared, own] = await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+    const today = todayInBogota();
+    const candidates = [
+      ...shared.map((row, index) => {
+        const golden = sharedOctober2026[index];
+        const part = golden.allocations.find((allocation) => allocation.userId === "sara")!.amount;
+        return { id: row.id, date: row.transactionDate, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part)), `· ${dayLabel(row.transactionDate, today)}`] };
+      }),
+      ...own.map((row) => ({ id: row.id, date: row.transactionDate, label: short(row.description), texts: [expenseText(row), dayLabel(row.transactionDate, today)] })),
+    ].sort((x, y) => (x.date === y.date ? 0 : x.date > y.date ? -1 : 1));
+    const cut = candidates[4].date;
+    const certain = candidates.filter((item) => item.date > cut);
+    const tied = candidates.filter((item) => item.date === cut);
+    expect([...certain, ...tied].some((item) => item.texts.length === 3 && item.texts[1].startsWith(copy.row.sharedPart("").trim())), "Inicio en Yo: las fixtures dan filas compartidas entre las recientes").toBe(true);
+    const expected = async (page: Page) => {
+      // De los empatados, los que la consulta puso en Inicio: tienen que ser exactamente los que faltan hasta 5.
+      const shown = await page.evaluate((ids) => ids.filter((id) => [...document.querySelectorAll(`main [data-transaction-id="${id}"]`)].some((node) => node.getClientRects().length > 0)), tied.map(({ id }) => id));
+      console.log(`Inicio en Yo, según las fixtures: seguros ${certain.map((item) => item.label).join(", ")}; empatados el ${cut}: ${tied.map((item) => item.label).join(", ")} (se ven ${shown.length} de ${5 - certain.length})`);
+      expect(shown.length, `Inicio en Yo: de los empatados el ${cut}, los que faltan hasta 5`).toBe(5 - certain.length);
+      // La fecha de las filas privadas («Solo tú · 23 nov», ExpenseRow) también se exige: al 200 % a 390 la cortaba la elipsis
+      // (corrección autorizada el 27 nov 2026, «dale la opcion 1»).
+      return [...certain, ...tied.filter(({ id }) => shown.includes(id))].flatMap((item) => item.texts.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label })));
+    };
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", actividad: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
+  });
+
+  // Punto 2: la tabla de Actividad en Nosotros. Con layout automático, la primera celda pedía el ancho de la descripción de 140
+  // caracteres (1058,81 px) o del texto de una liquidación entre los dos nombres de 60, y la tabla salía de su columna: documento
+  // 1570 a 1280 y el importe de 999.999.998 fuera de la ventana. El gasto y la liquidación, cada uno por su id.
+  test("Actividad en Nosotros con datos extremos: gasto compartido de 140 caracteres y liquidación con nombres de 60, siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    await updateDisplayName(pair.sara.client, NAME_SARA);
+    await updateDisplayName(pair.tomas.client, NAME_TOMAS);
+    const half = moneyFromPesos(499_999_999n);
+    const extreme = await createSharedExpense(pair.sara.client, {
+      idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: todayInBogota(), description: LONG_DESCRIPTION,
+      payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+    });
+    const settlement = await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
+    const items = [
+      { selector: `[data-transaction-id="${extreme.id}"]`, text: formatMoney(moneyFromPesos(999_999_998n)), label: "gasto extremo" },
+      { selector: `[data-settlement-id="${settlement.id}"]`, text: formatMoney(moneyFromPesos(20_000n)), label: "liquidación con nombres de 60" },
+    ];
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Actividad en Nosotros", actividad: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}`, opened: true,
+        // Defecto B: el reparto del detalle, las dos partes de 499.999.999 enteras en todos los anchos, también a 390 al 200 %.
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(moneyFromPesos(499_999_999n)), label: "el reparto del detalle", panel: true, count: 2 }] }] });
+  });
+
+  // Punto 3: las filas de aportes a metas dentro de Actividad en Nosotros. El título en una línea de una meta de 60 caracteres
+  // hacía medir la tabla 834 px en una columna de 520/680; sin scroll del documento, pero con el panel abierto los importes
+  // quedaban debajo de él. Cada asiento por su id: los DOS aportes de +$999.999.999 y el retiro de −$999.999.998, con su signo; y
+  // los gastos compartidos del mes. En Yo no se reproduce: allí el asiento de meta ocupa la fila entera (`colSpan`).
+  test("Actividad en Nosotros con aportes a metas extremos: meta de 60 caracteres, aportes de 999.999.999 y retiro con motivo de 140, siete anchos y 200 % a 390, 1280 y 1440, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    checkLengths();
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    const max = moneyFromPesos(999_999_999n);
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: GOAL_NAME, goalType: "travel", target: max, targetMonth: null, context: "us" });
+    const fromSara = await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
+    const fromTomas = await contributeToGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "transferred_declared" });
+    const withdrawal = await withdrawFromGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(999_999_998n), entryDate: todayInBogota(), reason: LONG_DESCRIPTION });
+    const shared = await seedSharedMovements(pair, "recent");
+    const items = [
+      { selector: `[data-entry-id="${fromSara.id}"]`, text: `+${formatMoney(max)}`, label: "aporte de Sara" },
+      { selector: `[data-entry-id="${fromTomas.id}"]`, text: `+${formatMoney(max)}`, label: "aporte de Tomás" },
+      { selector: `[data-entry-id="${withdrawal.id}"]`, text: `−${formatMoney(moneyFromPesos(999_999_998n))}`, label: "retiro" },
+      ...shared.map((row, index) => ({ selector: `[data-transaction-id="${row.id}"]`, text: formatMoney(sharedOctober2026[index].amount), label: short(sharedOctober2026[index].description) })),
+    ];
+    await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Aportes a metas en Nosotros", actividad: true, waitFor: items[0].text, expected: async () => items,
+      views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${shared[0].id}`, opened: true,
+        detail: [{ selector: "[data-transaction-detail]", text: formatMoney(sharedOctober2026[0].amount), label: "el detalle", panel: true }] }] });
+  });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
     const entry = e2eEntries.find((item) => item.state === "Anotar E1 gasto")!;
