@@ -124,6 +124,30 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     expect.soft(narrow.scrollWidth, "320px · 200 %: sin scroll horizontal").toBeLessThanOrEqual(narrow.clientWidth);
     expect.soft(narrow.clipped, "320px · 200 %: sin texto cortado").toEqual([]);
     await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+    // PR del paso 4b (autorizado el 27 nov 2026; maestro, decisión 30): la tabla de cifras exactas cabe en su `figure` y cada
+    // importe se ve entero (geometría de su texto: dentro del `figure` y de la ventana, sin recortar), en los 7 anchos al 100 % y a
+    // 320, 360 y 390 con la raíz al 200 %, donde las filas pasan a dos líneas si no caben.
+    for (const [width, root] of [...[360, 390, 430, 768, 1024, 1280, 1440].map((value) => [value, ""] as const), [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const fit = await region(page, copy.analysis.chapters.compared).getByRole("table", { name: copy.analysis.compared.table }).evaluate((table) => {
+        const figure = table.closest("figure")!.getBoundingClientRect();
+        const amounts = [...table.querySelectorAll("tbody td")].map((cell) => {
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          const text = range.getBoundingClientRect();
+          return { text: (cell.textContent ?? "").trim(), whole: text.width > 0 && text.left >= figure.left - 0.5 && text.right <= figure.right + 0.5 && text.right <= document.documentElement.clientWidth + 0.5 && cell.scrollWidth <= cell.clientWidth + 1 };
+        });
+        return { table: Math.round(table.getBoundingClientRect().width * 100) / 100, figure: Math.round(figure.width * 100) / 100, amounts };
+      });
+      const label = `cifras exactas · ${width}px${root ? " · 200 %" : ""}`;
+      console.log(`${label}: tabla ${fit.table} en un figure de ${fit.figure}; importes ${fit.amounts.map((item) => `${item.text}${item.whole ? "" : " (cortado)"}`).join(", ")}`);
+      expect.soft(fit.table, `${label}: la tabla cabe en su figure`).toBeLessThanOrEqual(fit.figure);
+      expect.soft(fit.amounts.length, `${label}: hay importes`).toBeGreaterThan(0);
+      for (const item of fit.amounts) expect.soft(item.whole, `${label}: «${item.text}» entero, dentro del figure y de la ventana`).toBe(true);
+    }
+    await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     await context.close();
     const me = await signedContext(browser, baseURL!, pair.sara, "light", "me");
     await me.page.goto(OCTOBER);

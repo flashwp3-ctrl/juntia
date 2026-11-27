@@ -22,7 +22,7 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
   const id = useId();
   const max = months.reduce((top, item) => (BigInt(item.spentMinor) > top ? BigInt(item.spentMinor) : top), 0n);
   return (
-    <figure className="flex flex-col gap-3">
+    <figure className="@container/cifras flex flex-col gap-3">
       <div aria-hidden="true" className="flex h-[176px] items-end gap-2 border-b-[length:var(--border-hairline)] border-border">
         {months.map((item, index) => {
           const current = item.month === selected;
@@ -62,19 +62,24 @@ export function MonthChart({ months, selected, waiting = false }: { months: read
         {open ? copy.analysis.compared.hide : copy.analysis.compared.show}
         <AppIcon name="caret-right" weight="bold" size={14} className={`motion-safe:transition-transform motion-safe:duration-[var(--duration-quick)] ${open ? "rotate-90" : ""}`} />
       </button>
-      <table id={`${id}-figures`} hidden={!open} className="w-full border-collapse text-left text-[0.8125rem] leading-[1.45]">
+      {/* PR del paso 4b (autorizado el 27 nov 2026; maestro, decisión 30): a 320 con la raíz al 200 %, el `figure` mide 240 px y
+          la tabla pedía 281 (el mes no baja de «Octubre» y el importe va entero en una línea): el documento medía 321 (326 en CI).
+          Por debajo de 17rem de `figure` (solo con el texto ampliado: al 100 % mide 17,5rem o más), cada fila es una línea
+          flexible: el mes y el importe en la misma línea si caben y, si no, el importe entero en la siguiente, alineado a la
+          derecha. Los roles explícitos conservan la semántica de tabla aunque cambie el `display` (WebKit la pierde sin ellos). */}
+      <table id={`${id}-figures`} hidden={!open} role="table" className="w-full border-collapse text-left text-[0.8125rem] leading-[1.45] @max-[17rem]/cifras:block">
         <caption className="sr-only">{copy.analysis.compared.table}</caption>
-        <thead>
-          <tr className={overline}>
-            <th scope="col" className="pb-2 font-semibold">{copy.analysis.compared.month}</th>
-            <th scope="col" className="pb-2 text-right font-semibold">{copy.analysis.compared.amount}</th>
+        <thead role="rowgroup" className="@max-[17rem]/cifras:block">
+          <tr role="row" className={`${overline} @max-[17rem]/cifras:flex @max-[17rem]/cifras:justify-between`}>
+            <th scope="col" role="columnheader" className="pb-2 font-semibold">{copy.analysis.compared.month}</th>
+            <th scope="col" role="columnheader" className="pb-2 text-right font-semibold">{copy.analysis.compared.amount}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup" className="@max-[17rem]/cifras:block">
           {months.map((item) => (
-            <tr key={item.month} className="border-t-[length:var(--border-hairline)] border-border">
-              <th scope="row" className={`py-2 pr-3 ${item.month === selected ? "font-semibold text-ink" : "font-normal text-ink-secondary"}`}>{monthTitle(item.month)}</th>
-              <td className="py-2 text-right font-semibold whitespace-nowrap text-ink tabular-nums">{money(BigInt(item.spentMinor))}</td>
+            <tr key={item.month} role="row" className="border-t-[length:var(--border-hairline)] border-border @max-[17rem]/cifras:flex @max-[17rem]/cifras:flex-wrap @max-[17rem]/cifras:items-baseline">
+              <th scope="row" role="rowheader" className={`py-2 pr-3 ${item.month === selected ? "font-semibold text-ink" : "font-normal text-ink-secondary"}`}>{monthTitle(item.month)}</th>
+              <td role="cell" className="py-2 text-right font-semibold whitespace-nowrap text-ink tabular-nums @max-[17rem]/cifras:ml-auto">{money(BigInt(item.spentMinor))}</td>
             </tr>
           ))}
         </tbody>

@@ -20,6 +20,7 @@ import { registerSettlement } from "../../src/lib/db/settlements";
 import { copy } from "../../src/lib/copy/es";
 import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUser } from "../support/seed";
 import { measureSheetTitle, openSheet, sheetCases } from "../support/sheets";
+import { measureFigures, openFigures } from "../support/figures";
 
 test.skip(process.env.D117 !== "1", "Solo a mano: D117=1");
 test.describe.configure({ mode: "serial" });
@@ -526,6 +527,37 @@ test("11 · SheetTitle: el título de cada hoja en todos los anchos", async ({ b
   await mkdir("test-results/d117", { recursive: true });
   await writeFile(`test-results/d117/sheettitles-${process.env.D117_TAG ?? "medida"}.json`, JSON.stringify(out, null, 1));
   console.log(`sheettitles: ${cases.length} hojas, ${out.length} medidas`);
+});
+
+// PR del paso 4b, Análisis: la tabla «Ver cifras exactas» (`month-chart.tsx`) abierta, en los 7 anchos al 100 % y a 320, 360 y 390
+// con la raíz al 200 %: documento, `figure`, tabla, y la caja de cada fila y de cada celda; y su árbol de accesibilidad
+// (`ariaSnapshot`). Escribe `test-results/d117/cifras-{D117_TAG}-{navegador}.json` para comparar el antes y el después, también en
+// WebKit (arnés `tests/evidence/cifras-webkit.capture.ts`).
+test("12 · Análisis: la tabla de cifras exactas, geometría y árbol de accesibilidad", async ({ browser, baseURL, browserName }, info) => {
+  test.skip(!CASES.includes("cifras"));
+  test.setTimeout(300_000);
+  const pair = await seedCouple({ index: info.parallelIndex, golden: true });
+  const { context, page } = await open(browser, baseURL!, pair.sara, "us", "light");
+  await openFigures(page);
+  const out = await measureFigures(page);
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/cifras-${process.env.D117_TAG ?? "medida"}-${browserName}.json`, JSON.stringify(out, null, 1));
+  console.log(`cifras (${browserName}): ${out.length} medidas`);
+  // El árbol de accesibilidad REAL del navegador (CDP, solo Chromium): `ariaSnapshot` calcula los roles desde el DOM. Roles y
+  // nombres de los nodos de la tabla, a 390 al 100 % y a 320, 360 y 390 al 200 %.
+  if (browserName === "chromium") {
+    const cdp = await context.newCDPSession(page);
+    for (const [width, scale] of [[390, ""], [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const { nodes } = await cdp.send("Accessibility.getFullAXTree") as { nodes: { role?: { value: string }; name?: { value: string }; ignored: boolean }[] };
+      const roles = ["table", "row", "rowheader", "columnheader", "cell", "rowgroup", "LayoutTable", "LayoutTableRow", "LayoutTableCell"];
+      const table = nodes.filter((node) => !node.ignored && roles.includes(node.role?.value ?? "")).map((node) => `${node.role!.value} «${node.name?.value ?? ""}»`);
+      console.log(`árbol real (CDP) · ${width}px${scale ? " · 200 %" : ""}: ${table.join(" | ")}`);
+    }
+  }
+  await context.close();
 });
 
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
