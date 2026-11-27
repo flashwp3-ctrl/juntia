@@ -109,7 +109,8 @@ importes visibles del `main`: no basta el ancho del documento.
   todo» llegaba hasta 434 de 390 (documento 434/390). En la línea «Compartido · tu parte $X · fecha», todo iba en un solo
   `truncate`: la elipsis cortaba el importe de la parte, al 200 % a 390 **y también a 360 al 100 %**.
 - **Corrección.** La cabecera pasa a `flex-wrap` («Ver todo» baja de línea si no cabe). En la línea de la parte, «Compartido ·
-  tu parte $X» va en su propio `span` que nunca se recorta, y solo la fecha conserva la elipsis.
+  tu parte $X» va en su propio `span` que nunca se recorta, y solo la fecha conserva la elipsis. En la ronda 2 (F117-3), la
+  fecha deja de recortarse: baja entera de línea si no cabe.
 - **Regresión.** «Inicio en Yo con la parte compartida: siete anchos y raíz al 200 % a 390…»: falla sin la corrección y pasa con
   ella.
 
@@ -143,6 +144,84 @@ importes visibles del `main`: no basta el ancho del documento.
 La regresión original medía el ancho del documento y el importe extremo. Ahora suma `moneyOnScreen`. Con `activity-view.tsx`
 de la base, a 1280 y 1440, `$999.999.999`, `$50.000`, `+$86.000` y otros quedan debajo del panel; con la corrección, ninguno.
 
+## Ronda 2 de la revisión (F117-1 a F117-4) y defectos A, B y foco
+
+La revisión adversarial de la ronda 1 dio NO-GO por las pruebas, no por el producto. Las correcciones de la ronda 2:
+
+- **F117-1 · comprobación de importes.** `rowTexts` (`tests/a11y/routes.a11y.ts`) localiza cada fila sembrada **por su id**
+  (`data-transaction-id`, `data-settlement-id`, `data-entry-id`). En cada ancho y vista exige el texto completo del importe,
+  con su signo, aunque esté repartido entre varios elementos. Y comprueba, por la geometría del propio texto
+  (`Range.getClientRects`), cuatro cosas:
+  - que cada trozo tiene una caja visible;
+  - que no se sale por ninguno de los dos bordes;
+  - que no lo recorta ningún ancestro;
+  - que no queda debajo del panel.
+
+  `moneyOnScreen` se mantiene como red general.
+- **F117-2 · el 200 % también en escritorio.** Los cuatro recorridos suman la raíz al 200 % a 390, 1280 y 1440. Al medirlo
+  aparecieron los defectos A y B (abajo).
+- **F117-3 · la fecha de «tu parte».** Con `flex-1 basis-0`, la fecha se quedaba con lo que sobraba en la línea, sin saltar a
+  la siguiente: 2 de 46 px a 360, 8–26 de 46 a 390 y 9 de 93 a 1280 al 200 %.
+  - **Corrección:** la fecha va con su ancho natural y, si no cabe, baja entera (46/46 y 93/93).
+  - **Cambio visible:** a 390, las filas compartidas de Inicio ocupan una línea más (`despues-fecha-390-100`).
+- **F117-4 · longitudes.** El nombre de Tomás tiene ahora 60 caracteres, y las pruebas comprueban 140, 60 y 60.
+
+### Hallazgo: tres formas del 200 % (arnés, caso `zoom200`)
+
+Actividad con el panel abierto y datos extremos, antes de corregir A:
+
+| Forma del 200 % | Ancho | Navegación | `main` | Rejilla | Documento |
+| --- | ---: | --- | ---: | --- | ---: |
+| `html { font-size: 200% }` (la de la suite) | 1280 | lateral, 459 px | 624 | `160px 400px` | **1405** |
+| `html { font-size: 200% }` | 1440 | lateral, 459 px | 784 | `320px 400px` | **1565** |
+| Tamaño de letra del navegador a 32 px (CDP `Page.setFontSizes`) | 1280 / 1440 | inferior | 1112 | una columna | 1280 / 1440 |
+| Zoom del navegador al 200 % (ventana CSS de 640 / 720, DPR 2) | 1280 / 1440 | inferior | 600 / 680 | una columna | 640 / 720 |
+
+Los cortes de las media queries (`xl` = 80rem) se miden con el tamaño de letra **inicial**, no con el de `html`. Por eso, con
+el ajuste de letra del navegador o con el zoom, los cortes se mueven y Actividad ya iba en una columna sin desbordar. **El
+defecto A solo aparece con el método de la suite** (o con una hoja de estilo de usuario que haga lo mismo). El método de la suite
+no se cambia.
+
+### Defecto A: Actividad al 200 % en 1280 y 1440 (`activity-screen.tsx`, `activity-view.tsx`, `couple-activity-view.tsx`)
+
+- **Causa.** Al 200 %, la navegación lateral (211 → 459 px) y el hueco (32 → 64) crecen en rem, y el panel sigue en 400. La
+  columna de la lista se queda en 160 px (1280) o 320 px (1440). Ninguna tabla cabe ahí (mínimo de 560 a 808 px al 200 %), y el
+  total del mes y los filtros quedaban bajo el panel.
+- **Corrección.** El enfoque lo aprobó el gestor antes de implementarlo. Actividad decide entre «tabla + panel» y una columna
+  (lista por días o, con un movimiento elegido, su detalle) con una container query: `@container/actividad`, corte en 59.5rem
+  (el `main` mide 952 px a 1280 al 100 %).
+  - **Al 100 %**, la decisión es idéntica a la de hoy.
+  - **Al 200 %**, 59.5rem son 1904 px, así que Actividad va en una columna.
+  - **No se tocan** el shell, la tabla, el detalle ni los tokens.
+- **Regresión.**
+  - Al 100 % desde 1280, los recorridos afirman la rejilla exacta de hoy, con la tabla: `520px 400px` a 1280 y `680px 400px` a
+    1440.
+  - Por debajo de 1280 y al 200 %, afirman «una columna» sin tabla.
+  - En la vista de lista se exigen todas las filas por id en todos los anchos y escalas. En la vista con detalle se exige el
+    detalle con su importe, y las filas solo cuando la lista está a la vista.
+
+### Defecto B: el reparto del detalle compartido al 200 % (`shared-detail.tsx`)
+
+- **Causa.** En «A quién le corresponde», cada fila (avatar, nombre de 60 e importe) iba en una línea flex sin salto. Al 200 %
+  pedía 441–458 px en un artículo de 280–350, y el documento medía 498 a 360, 390 y 430. Los importes de 499.999.999 llegaban
+  hasta 481.
+- **Corrección.** Como en `Fact`: la fila envuelve y el importe, entero, baja alineado a la derecha.
+- **Regresión.** La vista con el detalle comprueba las dos partes del reparto en todos los anchos.
+
+### Foco al cerrar el detalle (`return-focus.tsx` en el layout de Actividad)
+
+- **Causa.** El enlace que cierra el detalle desaparece al navegar y el foco caía en `body`, también en el diseño de hoy a 1280
+  al 100 % y con «Volver» a 390.
+- **Corrección.** `ReturnFocusToRow` está en el layout de Actividad, que sigue montado entre la lista y el detalle.
+  - **Cuándo actúa:** al pasar de `/actividad/{id}` a `/actividad`, y solo si nadie tiene el foco.
+  - **Adónde lleva el foco:** a la fila de ese movimiento, por su id, con el anillo visible.
+  - **Si la fila ya no existe**, al título de Actividad.
+- **Regresiones.**
+  - Cierre por teclado en Yo, Nosotros (gasto y liquidación) y con aportes, a 1280 y 1440 con panel, al 200 % en una columna y a
+    390 con «Volver»: 20/20 (0/20 sin la corrección).
+  - Eliminar desde el detalle lleva el foco al título (sin la corrección, a `body`).
+  - El foco al abrir el detalle no cambia: queda en `body`, antes y después. El detalle no tiene Escape.
+
 ### Fuera de alcance
 
-`BottomSheet` y la pantalla de Metas. No apareció ningún defecto nuevo fuera de los tres casos.
+`BottomSheet`, la pantalla de Metas, otras pantallas con rejilla de lista y panel, y el foco al abrir el detalle.

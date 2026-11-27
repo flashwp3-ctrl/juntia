@@ -1447,6 +1447,19 @@ Los fundadores la tomaron el 25 de noviembre de 2026 sobre el informe de la **co
 
 Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de Actividad**, no a la pantalla de Metas. **Límite:** esta ampliación no cubre otros desbordamientos ni otras pantallas; un defecto nuevo fuera de los tres casos se detiene y se notifica. Tampoco cambia lo que la ampliación anterior no cubre. El resultado de cada caso (causa demostrada o «no reproducido») está en `specs/005-gate-mvp-1/desborde-actividad-1440.md`.
 
+**Ampliaciones de la ronda 2 del PR #117 (27 de noviembre de 2026).** La revisión adversarial del PR (ronda 1, NO-GO por las pruebas) pidió medir el 200 % también a 1280 y 1440. Esa medición destapó dos defectos previos fuera de los tres casos, y la regla de parada se aplicó. El gestor transmitió dos autorizaciones expresas de los fundadores.
+
+- **A y B.** Respuesta literal: «Sí, autorizado, corrige A y B en el #117».
+  - **A** es Actividad con la raíz al 200 % a 1280 y 1440: la columna de la lista se quedaba en 160/320 px junto al panel de 400.
+  - **B** es el reparto del detalle de un gasto compartido al 200 % a 360–430.
+  - **Condiciones:** un commit por defecto; para A, un cambio mínimo sin rediseñar el shell, con el enfoque revisado y aprobado por el gestor antes de implementarlo (una container query de Actividad con corte en 59.5rem, idéntica al 100 %); y todas las condiciones del 27 de noviembre.
+- **Devolución del foco al cerrar el detalle de Actividad.** Respuesta literal: «opcion 1». Al cerrar el detalle con la ×, el foco caía en `body`, también en el diseño de hoy.
+  - **Límite:** solo la devolución del foco al cerrar el detalle de Actividad, en Yo y Nosotros, con la × y con «Volver» por debajo de 1280.
+  - **Cómo:** solo lógica de cliente en Actividad. Si la fila ya no existe, el foco va a un destino visible, nunca a `body`.
+  - **Fuera de alcance:** el servidor, las consultas, las rutas, el shell y cualquier otro comportamiento de navegación.
+
+**Estas ampliaciones no cubren** `BottomSheet`, otras pantallas con rejilla de lista y panel, el foco al abrir el detalle (no cambia: queda en `body`, como antes) ni el método de la suite para el 200 % (`font-size: 200%` en la raíz), que se mantiene. Un defecto nuevo fuera de A, B y el foco se detiene y se notifica.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».
