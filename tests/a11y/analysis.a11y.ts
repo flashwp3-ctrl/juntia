@@ -229,6 +229,7 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
       }, expected);
       const label = `seis meses extremos · ${width}px${root ? " · 200 %" : ""}`;
       console.log(`${label}: documento ${seen.document}/${seen.limit}; tabla ${seen.table} en un figure de ${seen.figure}; filas ${seen.count}; ${seen.rows.filter((row) => !row.monthWhole || !row.amountWhole).map((row) => `${row.month} ${row.amount} cortado`).join(", ") || "todo entero"}`);
+      expect.soft(seen.document, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(seen.limit);
       expect.soft(seen.count, `${label}: los seis meses`).toBe(expected.length);
       expect.soft(seen.table, `${label}: la tabla cabe en su figure`).toBeLessThanOrEqual(seen.figure);
       for (const row of seen.rows) {
@@ -236,9 +237,17 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
         expect.soft(row.amountWhole, `${label}: «${row.amount}» de ${row.month} entero, dentro del figure y de la ventana`).toBe(true);
       }
     }
-    // Al 200 % (container query activa, a 390), cerrar la tabla la oculta.
-    await region(page, copy.analysis.chapters.compared).getByRole("button", { name: copy.analysis.compared.hide }).click();
-    await expect(table, "390 · 200 %: la tabla cerrada se oculta").toBeHidden();
+    // Al 200 % (container query activa, a 390), cerrar la tabla la oculta. F119-7: la tabla se localiza por el id que controla el
+    // botón (`aria-controls`), no por su rol: una tabla oculta no tiene rol accesible y `getByRole` no la encontraría aunque siguiera
+    // pintada.
+    const toggle = region(page, copy.analysis.chapters.compared).getByRole("button", { name: copy.analysis.compared.hide });
+    const controlled = await toggle.getAttribute("aria-controls");
+    expect(controlled, "el botón dice qué tabla controla").toBeTruthy();
+    const byId = page.locator(`[id="${controlled}"]`);
+    await expect(byId, "390 · 200 %: la tabla está a la vista antes de cerrar").toBeVisible();
+    await toggle.click();
+    await expect(byId, "390 · 200 %: la tabla cerrada se oculta").toBeHidden();
+    await expect(byId, "390 · 200 %: la tabla cerrada sigue en el DOM, con hidden").toHaveAttribute("hidden", "");
     await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     await context.close();
   });
