@@ -55,12 +55,13 @@ function SharedPartItem({ row, today }: { row: SharedPartRow; today: string }) {
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{title}</span>
         {/* PR #117 (ampliación del 27 nov 2026; maestro, decisión 30): con un solo `truncate`, al 200 % la elipsis ocultaba el
-            importe de «tu parte». Ahora «Compartido · tu parte $X» nunca se recorta (si no cabe, salta de línea) y solo la fecha
-            se recorta: a tamaño normal sigue en la misma línea, como antes; si no queda sitio, baja a la siguiente. */}
+            importe de «tu parte». Ahora «Compartido · tu parte $X» nunca se recorta (si no cabe, salta de línea). La fecha ocupa
+            su ancho natural (sin `flex-1 basis-0`, que la dejaba en 2 px a 360 sin saltar; ronda 2, F117-3): sigue en la misma
+            línea si cabe y, si no, baja entera a la siguiente; solo se recortaría si ni sola cupiera en la línea. */}
         <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-[0.75rem] leading-[1.35] text-ink-secondary">
           <AppIcon name="users-three" size={12} className="shrink-0" />
           <span className="max-w-full">{copy.row.sharedPart(formatMoney(row.myPart))}</span>
-          <span className="min-w-0 flex-1 basis-0 truncate">{`· ${date}`}</span>
+          <span className="min-w-0 truncate">{`· ${date}`}</span>
         </span>
       </span>
       <span className="text-right text-[length:var(--money-s-size)] leading-[var(--money-s-line)] font-semibold whitespace-nowrap text-expense">{formatMoney(row.amount)}</span>
