@@ -512,8 +512,7 @@ const moneyOnScreen = (page: Page) => page.evaluate(() => {
  * PR #117, ronda 2 (F117-1): un texto que debe verse entero en una fila sembrada, localizada por su id (`selector`, p. ej.
  * `[data-transaction-id="…"]`; la fila es su `tr` o el propio elemento; se ignora el panel de detalle).
  */
-// `observe`: se mide y se registra, sin aserción (un defecto fuera de alcance, pendiente de decisión).
-type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number; observe?: boolean };
+type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number };
 /**
  * Para cada `RowText`: cuántas filas visibles tiene, cuántas apariciones del texto completo (signo incluido) hay en ellas, aunque
  * esté repartido entre varios elementos, y los problemas de cada aparición según la GEOMETRÍA del texto (`Range.getClientRects`),
@@ -532,7 +531,7 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
     }
     return false;
   };
-  return list.map(({ selector, text, label, panel: inPanel, count = 1, observe = false }) => {
+  return list.map(({ selector, text, label, panel: inPanel, count = 1 }) => {
     const rows = [...new Set([...document.querySelectorAll<HTMLElement>(`main ${selector}`)]
       .filter((node) => node.getClientRects().length > 0 && (inPanel || !node.closest("aside")))
       .map((node) => node.closest("tr") ?? node))];
@@ -573,7 +572,7 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
         occurrences.push(problems);
       }
     }
-    return { label, text, count, observe, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
+    return { label, text, count, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
   });
 }, items);
 
@@ -678,11 +677,10 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
           const listShown = !view.opened || fit.columns !== null;
           const checked = [...(listShown ? items : []), ...(view.detail ?? [])];
           const rows = await rowTexts(page, checked);
-          const observed = rows.filter((row) => row.observe).flatMap((row) => row.problems.map((problem) => `${problem} (${row.label}, observado)`));
-          const asserted = rows.filter((row) => !row.observe);
+          const asserted = rows;
           const missing = asserted.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
           const problems = asserted.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
-          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${asserted.length - missing.length}/${asserted.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}${observed.length ? `; OBSERVADO SIN ASERCIÓN: ${observed.join(" · ")}` : ""}`);
+          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${asserted.length - missing.length}/${asserted.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
           expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
           if (actividad) {
             const twoColumns = !root && width >= 1280;
@@ -731,7 +729,9 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
     const seeded = await seedMovements(user, "extreme");
     const [extreme] = seeded;
     const month = extreme.transactionDate.slice(0, 7);
-    const items = seeded.map((row) => ({ selector: `[data-transaction-id="${row.id}"]`, text: expenseText(row), label: short(row.description) }));
+    // El importe y la fecha de cada fila (ExpenseRow en la lista por días; su celda en la tabla), de las fechas sembradas.
+    const today = todayInBogota();
+    const items = seeded.flatMap((row) => [expenseText(row), dayLabel(row.transactionDate, today)].map((text) => ({ selector: `[data-transaction-id="${row.id}"]`, text, label: short(row.description) })));
     await sweepRows({ browser, baseURL: baseURL!, user, scope: "me", name: "Actividad en Yo", actividad: true, waitFor: formatMoney(extreme.amount), expected: async () => items,
       views: [{ name: "lista", path: `/actividad?mes=${month}` }, { name: "panel de detalle abierto", path: `/actividad/${extreme.id}?mes=${month}`, opened: true,
         detail: [{ selector: "[data-transaction-detail]", text: formatMoney(extreme.amount), label: "el detalle", panel: true }] }] });
@@ -901,25 +901,22 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       ...shared.map((row, index) => {
         const golden = sharedOctober2026[index];
         const part = golden.allocations.find((allocation) => allocation.userId === "sara")!.amount;
-        return { id: row.id, date: row.transactionDate, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part)), `· ${dayLabel(row.transactionDate, today)}`], observe: [] as string[] };
+        return { id: row.id, date: row.transactionDate, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part)), `· ${dayLabel(row.transactionDate, today)}`] };
       }),
-      ...own.map((row) => ({ id: row.id, date: row.transactionDate, label: short(row.description), texts: [expenseText(row)], observe: [dayLabel(row.transactionDate, today)] })),
+      ...own.map((row) => ({ id: row.id, date: row.transactionDate, label: short(row.description), texts: [expenseText(row), dayLabel(row.transactionDate, today)] })),
     ].sort((x, y) => (x.date === y.date ? 0 : x.date > y.date ? -1 : 1));
     const cut = candidates[4].date;
     const certain = candidates.filter((item) => item.date > cut);
     const tied = candidates.filter((item) => item.date === cut);
-    expect([...certain, ...tied].some((item) => item.texts.length === 3), "Inicio en Yo: las fixtures dan filas compartidas entre las recientes").toBe(true);
+    expect([...certain, ...tied].some((item) => item.texts.length === 3 && item.texts[1].startsWith(copy.row.sharedPart("").trim())), "Inicio en Yo: las fixtures dan filas compartidas entre las recientes").toBe(true);
     const expected = async (page: Page) => {
       // De los empatados, los que la consulta puso en Inicio: tienen que ser exactamente los que faltan hasta 5.
       const shown = await page.evaluate((ids) => ids.filter((id) => [...document.querySelectorAll(`main [data-transaction-id="${id}"]`)].some((node) => node.getClientRects().length > 0)), tied.map(({ id }) => id));
       console.log(`Inicio en Yo, según las fixtures: seguros ${certain.map((item) => item.label).join(", ")}; empatados el ${cut}: ${tied.map((item) => item.label).join(", ")} (se ven ${shown.length} de ${5 - certain.length})`);
       expect(shown.length, `Inicio en Yo: de los empatados el ${cut}, los que faltan hasta 5`).toBe(5 - certain.length);
-      // La fecha de las filas PRIVADAS («Solo tú · 23 nov», ExpenseRow) se corta al 200 % a 390: defecto fuera de alcance, comunicado
-      // al gestor (regla de parada). Se mide y se registra sin aserción hasta su decisión.
-      return [...certain, ...tied.filter(({ id }) => shown.includes(id))].flatMap((item) => [
-        ...item.texts.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label })),
-        ...item.observe.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label, observe: true })),
-      ]);
+      // La fecha de las filas privadas («Solo tú · 23 nov», ExpenseRow) también se exige: al 200 % a 390 la cortaba la elipsis
+      // (corrección autorizada el 27 nov 2026, «dale la opcion 1»).
+      return [...certain, ...tied.filter(({ id }) => shown.includes(id))].flatMap((item) => item.texts.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label })));
     };
     await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", actividad: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
   });

@@ -58,11 +58,17 @@ export function ExpenseRow({ transaction, href, dateLabel, isNew = false, pendin
       <span aria-hidden="true" className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[0.9375rem] leading-[1.3] font-semibold text-ink">{title}</span>
         {/* Sobre el fondo savingSubtle de la fila nueva, la meta pasa a tinta (text.secondary da 4,38:1 en claro). */}
-        <span className="flex min-w-0 items-center gap-1 text-[0.75rem] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
-          <AppIcon name="lock-simple" size={12} className="shrink-0" />
-          <span className="truncate">{copy.row.onlyYou} · {dateLabel}{pendingLabel ? " ·" : ""}</span>
+        {/* PR #117 (autorizado el 27 nov 2026, «dale la opcion 1»; maestro, decisión 30): con un solo `truncate`, al 200 % a 390 la
+            elipsis cortaba la fecha («Solo tú · 2…»). Como en la parte compartida de Inicio (F117-3): «Solo tú» y «· fecha» van
+            aparte; la fecha ocupa su ancho natural y, si no cabe, baja entera a la siguiente línea (solo se recortaría si ni sola
+            cupiera). A tamaño normal, en la misma línea y con la misma geometría que antes: el hueco tras el icono y antes de la
+            etiqueta de guardado sigue siendo de 4 px (margen, no `gap`), y entre «Solo tú» y «·» va el mismo espacio, sin cortar. */}
+        <span className="flex min-w-0 flex-wrap items-center text-[0.75rem] leading-[1.35] text-ink-secondary group-hover:text-ink group-aria-[current=page]:text-ink group-data-[new]:text-ink">
+          <AppIcon name="lock-simple" size={12} className="mr-1 shrink-0" />
+          <span className="max-w-full">{copy.row.onlyYou}{"\u00a0"}</span>
+          <span className="min-w-0 truncate">· {dateLabel}{pendingLabel ? " ·" : ""}</span>
           {pendingLabel ? (
-            <span data-pending-label="" className="flex shrink-0 items-center gap-1 font-semibold text-pending">
+            <span data-pending-label="" className="ml-1 flex shrink-0 items-center gap-1 font-semibold text-pending">
               <AppIcon name="hourglass-medium" size={12} className="shrink-0" />
               {pendingLabel}
             </span>

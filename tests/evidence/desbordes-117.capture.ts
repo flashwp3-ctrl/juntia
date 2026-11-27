@@ -8,6 +8,7 @@
 // solo con `D117=1 npm run e2e:dev -- tests/evidence/desbordes-117.capture.ts` (y `D117_CASES=inicio,nosotros,metas`), contra
 // juntia-dev; no es una prueba ni evidencia de CI. Cada línea JSON es una medición.
 import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
@@ -16,7 +17,8 @@ import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { createTransaction } from "../../src/lib/db/transactions";
 import { updateDisplayName } from "../../src/lib/db/profile";
 import { registerSettlement } from "../../src/lib/db/settlements";
-import { seedCouple, seedMovements, seedSharedMovements, type SeededUser } from "../support/seed";
+import { copy } from "../../src/lib/copy/es";
+import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUser } from "../support/seed";
 
 test.skip(process.env.D117 !== "1", "Solo a mano: D117=1");
 test.describe.configure({ mode: "serial" });
@@ -295,6 +297,71 @@ test("7 · Actividad: el contenedor entre 1024 y 1440 al 100 %", async ({ browse
     }
   }
   await context.close();
+});
+
+// Ronda 3, fecha privada de ExpenseRow (autorizada el 27 nov 2026, «dale la opcion 1»): la geometría de cada ExpenseRow visible
+// en las pantallas que lo usan (Inicio en Yo sin pareja y con pareja, y la lista por días de Actividad en Yo), en los 7 anchos al
+// 100 % y a 390, 1280 y 1440 con la raíz al 200 %. Por fila: alto de la fila y de la línea de meta, y caja de «Solo tú» y de la
+// fecha (geometría del texto) con su recorte. Se escribe en `test-results/d117/expenserow-{D117_TAG}.json` para comparar el antes
+// y el después. Las filas en vuelo (pending-home) son el mismo componente; solo existen mientras se guarda.
+test("8 · ExpenseRow: geometría de la fecha privada en todas sus pantallas", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("expenserow"));
+  test.setTimeout(600_000);
+  const solo = await seedUser({ role: "expenserow", index: info.parallelIndex });
+  await seedMovements(solo, "recent");
+  const pair = await seedCouple({ index: info.parallelIndex });
+  await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+  const out: object[] = [];
+  for (const [screen, user, path] of [["Inicio · sin pareja", solo, "/"], ["Actividad · Yo", solo, "/actividad"], ["Inicio · Yo con pareja", pair.sara, "/"]] as const) {
+    const { context, page } = await open(browser, baseURL!, user, "me", "light");
+    await page.goto(path);
+    await expect(page.locator("main a.row-stack[data-transaction-id]").filter({ visible: true }).first()).toBeVisible();
+    for (const [width, scale] of [...[360, 390, 430, 768, 1024, 1280, 1440].map((value) => [value, ""] as const), [390, "200%"], [1280, "200%"], [1440, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const rows = await page.evaluate((onlyYou) => [...document.querySelectorAll<HTMLElement>("main a.row-stack[data-transaction-id], main div.row-stack[data-transaction-id]")]
+        .filter((row) => row.getClientRects().length > 0 && row.querySelector("svg") && (row.textContent ?? "").includes(onlyYou))
+        .map((row) => {
+          const meta = [...row.querySelectorAll<HTMLElement>("span")].find((node) => node.textContent?.includes(onlyYou) && node.querySelector("svg"))!;
+          const walker = document.createTreeWalker(meta, NodeFilter.SHOW_TEXT);
+          const nodes: { node: Text; start: number }[] = [];
+          let all = "";
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) { nodes.push({ node: node as Text, start: all.length }); all += (node as Text).data; }
+          const box = (from: number, to: number) => {
+            const rects = nodes.filter(({ node, start }) => start < to && start + node.data.length > from).flatMap(({ node, start }) => {
+              const range = document.createRange();
+              range.setStart(node, Math.max(0, from - start));
+              range.setEnd(node, Math.min(node.data.length, to - start));
+              return [...range.getClientRects()].filter((rect) => rect.width > 0);
+            });
+            if (!rects.length) return null;
+            const left = Math.min(...rects.map((r) => r.left)), right = Math.max(...rects.map((r) => r.right)), top = Math.min(...rects.map((r) => r.top));
+            // Recortado: alguna parte fuera de un ancestro con overflow (también la elipsis).
+            let clipped = false;
+            for (let parent = nodes[0].node.parentElement; parent && parent !== row; parent = parent.parentElement) {
+              const css = getComputedStyle(parent);
+              if (css.overflowX === "visible" && css.overflowY === "visible") continue;
+              const b = parent.getBoundingClientRect();
+              if (left < b.left - 0.5 || right > b.right + 0.5) clipped = true;
+            }
+            return { left: Math.round(left * 10) / 10, top: Math.round(top * 10) / 10, width: Math.round((right - left) * 10) / 10, clipped };
+          };
+          const dateStart = all.indexOf("·") >= 0 ? all.indexOf("·") + 1 : all.length;
+          const dateText = all.slice(dateStart).replace(/ ·$/, "").trim();
+          const dateFrom = all.indexOf(dateText, dateStart);
+          return {
+            id: row.dataset.transactionId, row: Math.round(row.getBoundingClientRect().height * 10) / 10, meta: Math.round(meta.getBoundingClientRect().height * 10) / 10,
+            onlyYou: box(all.indexOf(onlyYou), all.indexOf(onlyYou) + onlyYou.length), date: dateText, dateBox: box(dateFrom, dateFrom + dateText.length),
+          };
+        }), copy.row.onlyYou);
+      out.push({ screen, width, scale: scale || "100%", rows });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/expenserow-${process.env.D117_TAG ?? "medida"}.json`, JSON.stringify(out, null, 1));
+  console.log(`expenserow: ${out.length} combinaciones, ${out.reduce((sum, item) => sum + (item as { rows: unknown[] }).rows.length, 0)} filas medidas`);
 });
 
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
