@@ -27,7 +27,10 @@ export function GoalEntryCells({ entry, people, dateLabel }: Props) {
   const who = personName(people, entry.memberUserId ?? entry.createdBy);
   return (
     <tr data-goal-row="" data-goal-entry={entry.kind} data-entry-id={entry.id}>
-      <td className={`${cell} rounded-l-[14px]`}>
+      {/* PR #117 (ampliación del 27 nov 2026; maestro, decisión 30, punto 3): con layout automático, el título en una línea
+          (`truncate`) de una meta de 60 caracteres pedía su ancho entero y la tabla de Nosotros salía de su columna, con los importes
+          debajo del panel de detalle. Como en las filas de gasto: `max-w-0` deja recortar el título y `w-full` le da lo que sobra. */}
+      <td className={`${cell} w-full max-w-0 rounded-l-[14px]`}>
         <span className="flex min-h-[54px] items-center gap-3.5 pl-3">
           <span data-goal-chip="" aria-hidden="true" className={`grid size-8 shrink-0 place-items-center rounded-full ${chip.className}`}>
             <AppIcon name={chip.icon} weight="duotone" size={16} />

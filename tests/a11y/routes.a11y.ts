@@ -13,6 +13,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { formatMoney, moneyFromPesos } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
+import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
 import { updateDisplayName } from "../../src/lib/db/profile";
 import { registerSettlement } from "../../src/lib/db/settlements";
 import { createSharedExpense } from "../../src/lib/db/shared-expenses";
@@ -702,6 +703,20 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
     });
     await registerSettlement(pair.tomas.client, { idempotencyKey: randomUUID(), amount: moneyFromPesos(20_000n), settlementDate: todayInBogota(), note: null });
     await sweepUsActivity(browser, baseURL!, pair.sara, extreme.id, formatMoney(moneyFromPesos(999_999_998n)), "Actividad en Nosotros");
+  });
+
+  // Punto 3: las filas de aportes a metas dentro de Actividad en Nosotros. El título en una línea de una meta de 60 caracteres
+  // hacía medir la tabla 834 px en una columna de 520/680; sin scroll del documento, pero con el panel abierto los importes
+  // quedaban debajo de él. En Yo no se reproduce: allí el asiento de meta ocupa la fila entera (`colSpan`) y no ensancha la tabla.
+  test("Actividad en Nosotros con aportes a metas extremos: meta de 60 caracteres, aportes de 999.999.999 y retiro con motivo de 140, siete anchos, dos temas, lista y panel", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    const pair = await seedCouple({ index: testInfo.parallelIndex });
+    const max = moneyFromPesos(999_999_999n);
+    const goal = await createGoal(pair.sara.client, { idempotencyKey: randomUUID(), name: "Viaje largo a Japón con toda la familia y los abuelos en 202", goalType: "travel", target: max, targetMonth: null, context: "us" });
+    await contributeToGoal(pair.sara.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "reserved" });
+    await contributeToGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: max, entryDate: todayInBogota(), fundingMode: "transferred_declared" });
+    await withdrawFromGoal(pair.tomas.client, { idempotencyKey: randomUUID(), goalId: goal.id, amount: moneyFromPesos(999_999_998n), entryDate: todayInBogota(), reason: LONG_DESCRIPTION });
+    const [shared] = await seedSharedMovements(pair, "recent");
+    await sweepUsActivity(browser, baseURL!, pair.sara, shared.id, formatMoney(max), "Aportes a metas en Nosotros");
   });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {
