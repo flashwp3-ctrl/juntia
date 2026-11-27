@@ -102,9 +102,16 @@ cierre».
       coincidencias de importes, comercios, notas o tokens (se registran las búsquedas,
       no las líneas) (FR-013). **Decisión 30, nota del 27 de noviembre de 2026:** la
       sesión la ejecuta un agente con dos cuentas de prueba dedicadas, tras el paso 6, y
-      recorre las operaciones de la corrida completa con errores provocados; versión que
-      generó los registros: `____`; ventana de la sesión: `____`; operaciones ejecutadas:
-      `____`. No vale la corrida de `juntia-dev`. La revisión se repite durante la
+      recorre las operaciones de la corrida completa con errores controlados, solo con
+      sesiones normales de usuario de esas dos cuentas (F118-1). Se registra (F118-2):
+      commit candidato: `____`; identificador del despliegue: `____`; inicio y fin de la
+      ventana: `____`; los registros disponibles cubren toda la ventana: sí / no;
+      operaciones y errores controlados ejecutados: `____`; búsquedas y recuentos: `____`;
+      resultado: PASS / FAIL / NO VERIFICADO. Una consulta vacía o una ventana sin
+      acreditar es NO VERIFICADO y esta casilla no se marca. Cronología (F118-5): orden
+      efectivo de la sesión, T097 y T099: `____`; la copia restaurada contiene los datos
+      de la sesión: sí / no; la medición de idempotencia incluye sus operaciones: sí / no.
+      No vale la corrida de `juntia-dev`. La revisión se repite durante la
       validación por uso real (30.6), fuera de esta checklist. *Constancia:* hasta el
       27 de noviembre pedía una semana de uso en producción con actividad representativa
 

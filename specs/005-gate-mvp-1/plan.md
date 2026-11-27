@@ -277,7 +277,9 @@ fallo no crítico va a la lista de MVP-2 (FR-083), sin despliegue.
 >     corrida de `juntia-dev`) y la tabla de idempotencia (FR-068). **Enmienda del 27 de
 >     noviembre de 2026** (maestro, decisión 30): la semana de registros se sustituye,
 >     solo para la aceptación técnica, por una sesión concentrada que ejecuta un agente
->     con dos cuentas de prueba dedicadas; la revisión se repite durante los 7 días de
+>     con dos cuentas de prueba dedicadas, solo con operaciones funcionales y sesiones
+>     normales de usuario (límites, registro y resultado PASS, FAIL o NO VERIFICADO en
+>     esa nota y en T098); la revisión se repite durante los 7 días de
 >     la validación por uso real. Hasta entonces pedía una semana de uso en producción
 >     con actividad representativa.
 >   - **Validación por uso real**, aplazada (30.6) hasta que Planes, Recurrentes y

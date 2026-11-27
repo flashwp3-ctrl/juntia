@@ -367,7 +367,11 @@ nada.
 - **Registros de Vercel (FR-013):** **enmendado el 27 de noviembre de 2026** (maestro,
   decisión 30): para la aceptación técnica, los registros son los de la ventana de una
   sesión concentrada en producción que ejecuta un agente con dos cuentas de prueba
-  dedicadas, y la revisión se repite durante la validación por uso real. Lo que sigue
+  dedicadas, y la revisión se repite durante la validación por uso real. Cada revisión
+  registra el commit candidato y el identificador del despliegue, el inicio y el fin de
+  la ventana, que los registros disponibles la cubren, las operaciones y los errores
+  controlados, las búsquedas con sus recuentos y el resultado: PASS, FAIL o NO
+  VERIFICADO. Una consulta vacía o una ventana sin acreditar no es PASS (F118-2). Lo que sigue
   describía la semana de registros, y las búsquedas no cambian: una semana de registros
   de ejecución, buscando
   patrones de importes (`\$\s?\d`, `amount`, `_minor`), notas, correos y tokens
