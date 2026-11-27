@@ -1458,6 +1458,11 @@ Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de 
   - **Cómo:** solo lógica de cliente en Actividad. Si la fila ya no existe, el foco va a un destino visible, nunca a `body`.
   - **Fuera de alcance:** el servidor, las consultas, las rutas, el shell y cualquier otro comportamiento de navegación.
 
+- **La fecha privada de `ExpenseRow` (ronda 3).** Respuesta literal: «dale la opcion 1». Al exigir las fechas de Inicio a partir de las fixtures (F117-7), apareció que la elipsis de «Solo tú · fecha» cortaba la fecha a 390 con la raíz al 200 %. `ExpenseRow` es un componente compartido (`src/components/ui/expense-row.tsx`).
+  - **Límite:** solo la fecha de esa línea, con la misma técnica que F117-3: va entera y baja de línea si no cabe, sin elipsis.
+  - **Sin cambiar** la tipografía, los tokens ni nada más del componente.
+  - **Comprobación pedida:** todas las pantallas que lo usan, sin ningún cambio al 100 % y con la fecha entera al 200 %.
+
 **Estas ampliaciones no cubren** `BottomSheet`, otras pantallas con rejilla de lista y panel, el foco al abrir el detalle (no cambia: queda en `body`, como antes) ni el método de la suite para el 200 % (`font-size: 200%` en la raíz), que se mantiene. Un defecto nuevo fuera de A, B y el foco se detiene y se notifica.
 
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.

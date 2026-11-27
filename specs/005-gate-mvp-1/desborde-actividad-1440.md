@@ -251,8 +251,9 @@ no se cambia.
     consulta, se exigen exactamente los que faltan hasta 5.
   - **Fechas:** se calculan de las fechas sembradas.
   - **Comprobación:** con un sabotaje (`RECENT = 4`), la prueba anterior pasa y esta falla.
-  - **Hallazgo fuera de alcance:** la fecha de las filas **privadas** («Solo tú · 23 nov», `ExpenseRow`) se corta con la elipsis
-    a 390 al 200 %. Se comunicó al gestor (regla de parada). Hasta su decisión se mide y se registra sin aserción.
+  - **Hallazgo:** la fecha de las filas **privadas** («Solo tú · 23 nov», `ExpenseRow`) se cortaba con la elipsis a 390 al 200 %.
+    Se aplicó la regla de parada, y los fundadores autorizaron corregirla («dale la opcion 1»): ver abajo. Ahora la fecha privada
+    también se exige.
 - **F117-8 · la espera del foco.**
   - Solo cuenta una carga **visible**.
   - La cuenta de 2 s empieza de nuevo si vuelve a verse una carga.
@@ -260,7 +261,26 @@ no se cambia.
   - **Pruebas de componente** (`return-focus.test.tsx`): sin la corrección fallan la carga tardía y el Skeleton oculto. La del
     control enfocado pasa antes y después, porque ya se respetaba, y queda como guarda.
 
+### La fecha privada de `ExpenseRow` (`src/components/ui/expense-row.tsx`)
+
+- **Causa.** «Solo tú · fecha» iba en un solo `truncate`. A 390 con la raíz al 200 %, la elipsis cortaba la fecha en las tres
+  pantallas que usan el componente: Inicio en Yo sin pareja (5 de 5 filas), Inicio en Yo con pareja (2 de 2) y la lista por días
+  de Actividad en Yo (6 de 9).
+- **Corrección.** La misma que F117-3: «Solo tú» y «· fecha» van aparte, la línea envuelve y la fecha baja entera si no cabe.
+  Para no mover nada al 100 %:
+  - el hueco tras el icono y antes de la etiqueta de guardado sigue siendo de 4 px (margen en lugar de `gap`);
+  - entre «Solo tú» y «·» va el mismo espacio, sin cortar (U+00A0).
+- **Geometría antes y después** (arnés, caso `expenserow`: 142 filas por pasada en los 7 anchos al 100 % y a 390, 1280 y 1440
+  al 200 %):
+  - **al 100 %, 0 diferencias** en el alto de la fila y de la línea de meta, y en la posición y el ancho de «Solo tú» y de la
+    fecha (±0,5 px);
+  - **al 200 %**, solo cambian las 13 filas cuya fecha se cortaba (todas a 390): la fecha baja entera y la fila crece 27,8 px.
+    Después, 0 fechas cortadas.
+
+  Las filas en vuelo de Inicio (`pending-home`) usan el mismo componente.
+- **Regresión.** Inicio exige la fecha de las filas privadas a partir de las fixtures, y Actividad en Yo, la fecha de cada fila
+  sembrada. Sin la corrección, las dos fallan a 390 al 200 %.
+
 ### Fuera de alcance
 
-`BottomSheet`, la pantalla de Metas, otras pantallas con rejilla de lista y panel, el foco al abrir el detalle y, pendiente de
-decisión, la fecha de las filas privadas de Inicio al 200 %.
+`BottomSheet`, la pantalla de Metas, otras pantallas con rejilla de lista y panel, y el foco al abrir el detalle.
