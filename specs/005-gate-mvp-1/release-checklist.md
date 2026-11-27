@@ -108,7 +108,13 @@ cierre».
       ventana: `____`; los registros disponibles cubren toda la ventana: sí / no;
       operaciones y errores controlados ejecutados: `____`; búsquedas y recuentos: `____`;
       resultado: PASS / FAIL / NO VERIFICADO. Una consulta vacía o una ventana sin
-      acreditar es NO VERIFICADO y esta casilla no se marca. Cronología (F118-5): orden
+      acreditar es NO VERIFICADO y esta casilla no se marca. Revisión por bloques
+      mientras se ejecuta la sesión (F118-6; retención de Hobby: 1 hora y 4.000 filas,
+      según la página de límites de Vercel; la suscripción real la comprueba la dueña).
+      Cada bloque se revisa con margen antes de que expire, sin alcanzar el límite de
+      filas. Bloques (ventana, recuentos, resultado): `____`. Los bloques cubren la
+      ventana completa sin huecos: sí / no. La sesión es PASS solo si todos los bloques
+      son PASS y la cubren entera. Cronología (F118-5): orden
       efectivo de la sesión, T097 y T099: `____`; la copia restaurada contiene los datos
       de la sesión: sí / no; la medición de idempotencia incluye sus operaciones: sí / no.
       No vale la corrida de `juntia-dev`. La revisión se repite durante la

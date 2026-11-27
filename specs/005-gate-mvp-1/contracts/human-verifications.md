@@ -197,10 +197,14 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
   fecha de inicio de cada periodo y, si lo hubo, el motivo del reinicio.
 - **Revisión repetida de FR-013 (maestro, decisión 30, nota del 27 nov 2026; F118-4):**
   la validación exige también su salida. Las búsquedas de T098 se hacen sobre ventanas
-  que cubren los 7 días. Antes de abrir el periodo (T094) se comprueba la retención
-  efectiva de los registros de Vercel; si no cubre los 7 días, la revisión es diaria y
-  guarda solo recuentos y resultados. El resultado es PASS, FAIL o NO VERIFICADO, como
-  en T098. Una coincidencia es una fuga de privacidad: un fallo crítico que activa T096
+  que, entre todas, cubren los 7 días. Cada ventana es compatible con la retención
+  efectiva de los registros de Vercel: en Hobby, 1 hora y 4.000 filas según la página de
+  límites de Vercel, y la suscripción real la comprueba la dueña (F118-6). Cada ventana
+  se revisa con margen antes de que expire y comprueba el límite de filas. Una revisión
+  diaria no basta. Antes de abrir el periodo (T094) se acredita un procedimiento viable
+  para cubrir los 7 días completos. Solo se guardan recuentos y resultados. El
+  resultado es PASS, FAIL o NO VERIFICADO, como en T098. Si queda alguna ventana sin
+  cubrir, el resultado es NO VERIFICADO y se consulta a los fundadores. Una coincidencia es una fuga de privacidad: un fallo crítico que activa T096
   y el reinicio. No bloquea la aceptación técnica.
 - **Al final, cada fundador por separado y sin leer la del otro:**
   - una nota en cada eje: uso diario, legibilidad, rapidez y carácter visual;

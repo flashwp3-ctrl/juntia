@@ -371,7 +371,9 @@ nada.
   registra el commit candidato y el identificador del despliegue, el inicio y el fin de
   la ventana, que los registros disponibles la cubren, las operaciones y los errores
   controlados, las búsquedas con sus recuentos y el resultado: PASS, FAIL o NO
-  VERIFICADO. Una consulta vacía o una ventana sin acreditar no es PASS (F118-2). Lo que sigue
+  VERIFICADO. Una consulta vacía o una ventana sin acreditar no es PASS (F118-2). Con
+  la retención de Hobby (1 hora y 4.000 filas, según la página de límites de Vercel),
+  la revisión se hace por bloques o ventanas, con margen antes de que expiren (F118-6). Lo que sigue
   describía la semana de registros, y las búsquedas no cambian: una semana de registros
   de ejecución, buscando
   patrones de importes (`\$\s?\d`, `amount`, `_minor`), notas, correos y tokens
