@@ -552,8 +552,11 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
           const piece = range.toString();
           if (!piece.trim()) continue;
           const style = getComputedStyle(node.parentElement!);
+          // F117-6: la opacidad efectiva, producto de la del padre y la de todos sus ancestros (una fila con `opacity: 0` también oculta).
+          let opacity = 1;
+          for (let parent: Element | null = node.parentElement; parent; parent = parent.parentElement) opacity *= Number(getComputedStyle(parent).opacity);
           const rects = [...range.getClientRects()].filter((rect) => rect.width > 0.5 && rect.height > 0.5);
-          if (rects.length === 0 || style.visibility !== "visible" || Number(style.opacity) === 0) { problems.push(`«${piece}» sin caja visible`); continue; }
+          if (rects.length === 0 || style.visibility !== "visible" || opacity < 0.01) { problems.push(`«${piece}» sin caja visible`); continue; }
           for (const rect of rects) {
             if (rect.left < -0.5 || rect.right > root.clientWidth + 0.5) problems.push(`«${piece}» fuera de la ventana (${Math.round(rect.left)}–${Math.round(rect.right)} de ${root.clientWidth})`);
             if (panel && !aside!.contains(node) && rect.right > panel.left + 0.5 && rect.left < panel.right - 0.5 && rect.bottom > panel.top + 0.5 && rect.top < panel.bottom - 0.5) problems.push(`«${piece}» debajo del panel de detalle`);
@@ -847,6 +850,36 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       expect.soft(focus.visible, `${label}: el destino está a la vista`).toBe(true);
       await context.close();
     }
+  });
+
+  // Ronda 3 (F117-6) y F117-1: la comprobación `rowTexts` frente a casos sintéticos, sin servidor. Cada fila lleva su id y el
+  // importe «+$999.999.999». Deben dar problema: un ancestro con `opacity: 0`, el signo oculto aparte, un importe de ancho cero,
+  // uno fuera por el borde izquierdo, uno recortado por la elipsis y uno debajo del panel. No deben darlo: el símbolo y los dígitos
+  // en elementos distintos, ni la copia solo para lectores de pantalla junto a uno visible. Y la fila ausente cuenta como ausente.
+  test("rowTexts: detecta importes ocultos por un ancestro, partidos, de ancho cero, fuera por la izquierda, recortados o bajo el panel", { tag: "@sweep" }, async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setContent(`<!doctype html><html><body style="margin:0;font:16px sans-serif">
+      <main style="display:grid;grid-template-columns:400px 300px;gap:20px;padding:0 20px">
+        <div>
+          <div data-transaction-id="ok">Bien <span>+$</span><span>999.999.999</span></div>
+          <div data-transaction-id="sr">Bien <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">+$999.999.999</span><span>+$999.999.999</span></div>
+          <div style="opacity:0"><div data-transaction-id="opaco">Oculto <span>+$999.999.999</span></div></div>
+          <div data-transaction-id="signo">Signo <span style="visibility:hidden">+</span><span>$999.999.999</span></div>
+          <div data-transaction-id="cero">Cero <span style="display:inline-block;width:0;overflow:hidden;white-space:nowrap">+$999.999.999</span></div>
+          <div data-transaction-id="izquierda" style="position:relative;left:-400px">Izquierda +$999.999.999</div>
+          <div data-transaction-id="elipsis" style="width:60px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">+$999.999.999</div>
+          <div data-transaction-id="panel" style="position:relative;left:330px">Panel +$999.999.999</div>
+        </div>
+        <aside style="height:400px">detalle</aside>
+      </main></body></html>`);
+    const ids = ["ok", "sr", "opaco", "signo", "cero", "izquierda", "elipsis", "panel", "ausente"];
+    const results = await rowTexts(page, ids.map((id) => ({ selector: `[data-transaction-id="${id}"]`, text: "+$999.999.999", label: id })));
+    const verdict = Object.fromEntries(results.map((row) => [row.label, row.rows === 0 ? "ausente" : row.occurrences === 0 ? "sin texto" : row.problems.length ? `problema: ${row.problems.join(" · ")}` : "bien"]));
+    console.log(`rowTexts, casos sintéticos: ${JSON.stringify(verdict)}`);
+    expect.soft(verdict.ok, "símbolo y dígitos en elementos distintos").toBe("bien");
+    expect.soft(verdict.sr, "copia para lectores de pantalla junto a uno visible").toBe("bien");
+    for (const id of ["opaco", "signo", "cero", "izquierda", "elipsis", "panel"]) expect.soft(verdict[id], `${id}: da problema`).toMatch(/^problema/);
+    expect.soft(verdict.ausente, "la fila ausente").toBe("ausente");
   });
 
   // Ampliación del 27 nov 2026, punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz al 200 %, «Ver todo» empujaba el
