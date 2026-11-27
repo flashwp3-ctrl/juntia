@@ -14,6 +14,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { sharedOctober2026 } from "../../src/domain/golden/october-2026";
 import { formatMoney, moneyFromPesos, type Money } from "../../src/domain/money";
 import { todayInBogota } from "../../src/domain/transactions";
+import { dayLabel } from "../../src/lib/format";
 import { contributeToGoal, createGoal, withdrawFromGoal } from "../../src/lib/db/goals";
 import { updateDisplayName } from "../../src/lib/db/profile";
 import { registerSettlement } from "../../src/lib/db/settlements";
@@ -511,7 +512,8 @@ const moneyOnScreen = (page: Page) => page.evaluate(() => {
  * PR #117, ronda 2 (F117-1): un texto que debe verse entero en una fila sembrada, localizada por su id (`selector`, p. ej.
  * `[data-transaction-id="…"]`; la fila es su `tr` o el propio elemento; se ignora el panel de detalle).
  */
-type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number };
+// `observe`: se mide y se registra, sin aserción (un defecto fuera de alcance, pendiente de decisión).
+type RowText = { selector: string; text: string; label: string; panel?: boolean; count?: number; observe?: boolean };
 /**
  * Para cada `RowText`: cuántas filas visibles tiene, cuántas apariciones del texto completo (signo incluido) hay en ellas, aunque
  * esté repartido entre varios elementos, y los problemas de cada aparición según la GEOMETRÍA del texto (`Range.getClientRects`),
@@ -530,7 +532,7 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
     }
     return false;
   };
-  return list.map(({ selector, text, label, panel: inPanel, count = 1 }) => {
+  return list.map(({ selector, text, label, panel: inPanel, count = 1, observe = false }) => {
     const rows = [...new Set([...document.querySelectorAll<HTMLElement>(`main ${selector}`)]
       .filter((node) => node.getClientRects().length > 0 && (inPanel || !node.closest("aside")))
       .map((node) => node.closest("tr") ?? node))];
@@ -571,7 +573,7 @@ const rowTexts = (page: Page, items: readonly RowText[]) => page.evaluate((list)
         occurrences.push(problems);
       }
     }
-    return { label, text, count, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
+    return { label, text, count, observe, rows: rows.length, occurrences: occurrences.length, problems: occurrences.flat() };
   });
 }, items);
 
@@ -676,9 +678,11 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
           const listShown = !view.opened || fit.columns !== null;
           const checked = [...(listShown ? items : []), ...(view.detail ?? [])];
           const rows = await rowTexts(page, checked);
-          const missing = rows.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
-          const problems = rows.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
-          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${rows.length - missing.length}/${rows.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}`);
+          const observed = rows.filter((row) => row.observe).flatMap((row) => row.problems.map((problem) => `${problem} (${row.label}, observado)`));
+          const asserted = rows.filter((row) => !row.observe);
+          const missing = asserted.filter((row) => row.rows === 0 || row.occurrences < row.count).map((row) => `«${row.text}» (${row.label})`);
+          const problems = asserted.flatMap((row) => row.problems.map((problem) => `${problem} (${row.label})`));
+          console.log(`${label}: documento ${money.scrollWidth}/${money.clientWidth}; rejilla ${fit.columns ?? "una columna"}; tabla ${fit.table ?? "—"} en columna ${fit.column ?? "—"}; textos ${asserted.length - missing.length}/${asserted.length}${missing.length ? `; faltan ${missing.join(", ")}` : ""}${[...problems, ...money.problems].length ? `; ${[...problems, ...money.problems].join(" · ")}` : ""}${observed.length ? `; OBSERVADO SIN ASERCIÓN: ${observed.join(" · ")}` : ""}`);
           expect.soft(money.scrollWidth, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(money.clientWidth);
           if (actividad) {
             const twoColumns = !root && width >= 1280;
@@ -696,7 +700,7 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
             }
           }
           if (fit.table !== null) expect.soft(fit.table, `${label}: la tabla cabe en su columna`).toBeLessThanOrEqual(fit.column ?? 0);
-          for (const row of rows) {
+          for (const row of asserted) {
             expect.soft(row.rows, `${label}: la fila de ${row.label} está a la vista`).toBeGreaterThan(0);
             expect.soft(row.occurrences, `${label}: «${row.text}» completo en ${row.label}`).toBeGreaterThanOrEqual(row.count);
             expect.soft(row.problems, `${label}: «${row.text}» de ${row.label} entero, en la ventana y fuera de debajo del panel`).toEqual([]);
@@ -883,34 +887,39 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   });
 
   // Ampliación del 27 nov 2026, punto 1: Inicio en Yo con la parte compartida. A 390 con la raíz al 200 %, «Ver todo» empujaba el
-  // documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el importe de la parte. Las filas que
-  // Inicio enseña (las 5 recientes) se toman al cargar a 1440; en cada ancho, cada una con su importe completo y, las compartidas,
-  // con «Compartido · tu parte $X» y su fecha enteros (F117-3).
+  // documento a 434 px y la elipsis de la línea «Compartido · tu parte $X · fecha» ocultaba el importe de la parte.
+  // Ronda 3 (F117-7): lo esperado sale de las FIXTURES, no del DOM. Inicio enseña los 5 movimientos más recientes; con las fechas
+  // sembradas se ordenan y se separan los que entran seguro (fecha posterior a la del quinto) de los empatados en esa fecha, cuyo
+  // orden lo decide la consulta, no las fixtures. En cada ancho se exigen, por id, los seguros y, de los empatados, exactamente
+  // los que faltan hasta 5, siempre los mismos que al cargar. De cada uno: el importe; si es compartido, «Compartido · tu parte
+  // $X» y «· fecha»; si es privado, la fecha. La fecha se calcula de la sembrada (`dayLabel` con el hoy de Bogotá).
   test("Inicio en Yo con la parte compartida: siete anchos y 200 % a 390, 1280 y 1440, dos temas, con «tu parte», su fecha y los importes enteros", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     const pair = await seedCouple({ index: testInfo.parallelIndex });
     const [shared, own] = await Promise.all([seedSharedMovements(pair, "recent"), seedMovements(pair.sara, "recent")]);
+    const today = todayInBogota();
     const candidates = [
       ...shared.map((row, index) => {
         const golden = sharedOctober2026[index];
         const part = golden.allocations.find((allocation) => allocation.userId === "sara")!.amount;
-        return { id: row.id, shared: true, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part))] };
+        return { id: row.id, date: row.transactionDate, label: short(golden.description), texts: [formatMoney(golden.amount), copy.row.sharedPart(formatMoney(part)), `· ${dayLabel(row.transactionDate, today)}`], observe: [] as string[] };
       }),
-      ...own.map((row) => ({ id: row.id, shared: false, label: short(row.description), texts: [expenseText(row)] })),
-    ];
+      ...own.map((row) => ({ id: row.id, date: row.transactionDate, label: short(row.description), texts: [expenseText(row)], observe: [dayLabel(row.transactionDate, today)] })),
+    ].sort((x, y) => (x.date === y.date ? 0 : x.date > y.date ? -1 : 1));
+    const cut = candidates[4].date;
+    const certain = candidates.filter((item) => item.date > cut);
+    const tied = candidates.filter((item) => item.date === cut);
+    expect([...certain, ...tied].some((item) => item.texts.length === 3), "Inicio en Yo: las fixtures dan filas compartidas entre las recientes").toBe(true);
     const expected = async (page: Page) => {
-      const present = await page.evaluate((ids) => ids.flatMap((id) => {
-        const node = [...document.querySelectorAll<HTMLElement>(`main [data-transaction-id="${id}"]`)].find((item) => item.getClientRects().length > 0);
-        if (!node) return [];
-        const date = [...node.querySelectorAll<HTMLElement>("span")].find((item) => item.children.length === 0 && (item.textContent ?? "").startsWith("· "));
-        return [{ id, date: date?.textContent ?? null }];
-      }), candidates.map(({ id }) => id));
-      const visible = candidates.filter(({ id }) => present.some((item) => item.id === id));
-      expect(visible.filter((item) => item.shared).length, "Inicio en Yo: hay filas con «Compartido · tu parte»").toBeGreaterThan(0);
-      return visible.flatMap((item) => {
-        const date = present.find((entry) => entry.id === item.id)!.date;
-        if (item.shared) expect.soft(date, `Inicio en Yo: la fila compartida ${item.label} lleva su fecha`).not.toBeNull();
-        return [...item.texts, ...(item.shared && date ? [date] : [])].map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label }));
-      });
+      // De los empatados, los que la consulta puso en Inicio: tienen que ser exactamente los que faltan hasta 5.
+      const shown = await page.evaluate((ids) => ids.filter((id) => [...document.querySelectorAll(`main [data-transaction-id="${id}"]`)].some((node) => node.getClientRects().length > 0)), tied.map(({ id }) => id));
+      console.log(`Inicio en Yo, según las fixtures: seguros ${certain.map((item) => item.label).join(", ")}; empatados el ${cut}: ${tied.map((item) => item.label).join(", ")} (se ven ${shown.length} de ${5 - certain.length})`);
+      expect(shown.length, `Inicio en Yo: de los empatados el ${cut}, los que faltan hasta 5`).toBe(5 - certain.length);
+      // La fecha de las filas PRIVADAS («Solo tú · 23 nov», ExpenseRow) se corta al 200 % a 390: defecto fuera de alcance, comunicado
+      // al gestor (regla de parada). Se mide y se registra sin aserción hasta su decisión.
+      return [...certain, ...tied.filter(({ id }) => shown.includes(id))].flatMap((item) => [
+        ...item.texts.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label })),
+        ...item.observe.map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label, observe: true })),
+      ]);
     };
     await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "me", name: "Inicio en Yo", actividad: false, waitFor: copy.row.sharedPart("").trim(), expected, views: [{ name: "Inicio", path: "/" }] });
   });
