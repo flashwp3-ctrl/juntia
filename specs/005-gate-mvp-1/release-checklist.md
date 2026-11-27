@@ -109,10 +109,12 @@ cierre».
       operaciones y errores controlados ejecutados: `____`; búsquedas y recuentos: `____`;
       resultado: PASS / FAIL / NO VERIFICADO. Una consulta vacía o una ventana sin
       acreditar es NO VERIFICADO y esta casilla no se marca. Revisión por bloques
-      mientras se ejecuta la sesión (F118-6; retención de Hobby: 1 hora y 4.000 filas,
-      según la página de límites de Vercel; la suscripción real la comprueba la dueña).
-      Cada bloque se revisa con margen antes de que expire, sin alcanzar el límite de
-      filas. Bloques (ventana, recuentos, resultado): `____`. Los bloques cubren la
+      mientras se ejecuta la sesión (F118-6 y F118-9; retención de Hobby: 1 hora, según
+      https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby; la suscripción real la comprueba la dueña;
+      las 4.000 filas son un antecedente de enero de 2026 que ya no figura en las páginas
+      actuales). Límites efectivos de volumen comprobados antes de la revisión: `____`.
+      Cada bloque se revisa con margen antes de que expire; un bloque que pudo
+      truncarse no está cubierto. Bloques (ventana, recuentos, resultado): `____`. Los bloques cubren la
       ventana completa sin huecos: sí / no. La sesión es PASS solo si todos los bloques
       son PASS y la cubren entera. Cronología (F118-5): orden
       efectivo de la sesión, T097 y T099: `____`; la copia restaurada contiene los datos

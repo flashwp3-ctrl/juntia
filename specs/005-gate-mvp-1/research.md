@@ -372,8 +372,11 @@ nada.
   la ventana, que los registros disponibles la cubren, las operaciones y los errores
   controlados, las búsquedas con sus recuentos y el resultado: PASS, FAIL o NO
   VERIFICADO. Una consulta vacía o una ventana sin acreditar no es PASS (F118-2). Con
-  la retención de Hobby (1 hora y 4.000 filas, según la página de límites de Vercel),
-  la revisión se hace por bloques o ventanas, con margen antes de que expiren (F118-6). Lo que sigue
+  la retención de Hobby (1 hora, según https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby), la revisión se hace
+  por bloques o ventanas, con margen antes de que expiren, comprobando antes los límites
+  efectivos de volumen; una ventana que pudo truncarse no está cubierta (F118-6 y F118-9;
+  las 4.000 filas son un antecedente de la documentación de enero de 2026 que ya no
+  figura en las páginas actuales). Lo que sigue
   describía la semana de registros, y las búsquedas no cambian: una semana de registros
   de ejecución, buscando
   patrones de importes (`\$\s?\d`, `amount`, `_minor`), notas, correos y tokens

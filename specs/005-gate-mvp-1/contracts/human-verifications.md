@@ -198,9 +198,12 @@ respuestas Q4, Q6, Q9 y Q10. Los pasos (0b, 6, 7) son los del orden de ejecució
 - **Revisión repetida de FR-013 (maestro, decisión 30, nota del 27 nov 2026; F118-4):**
   la validación exige también su salida. Las búsquedas de T098 se hacen sobre ventanas
   que, entre todas, cubren los 7 días. Cada ventana es compatible con la retención
-  efectiva de los registros de Vercel: en Hobby, 1 hora y 4.000 filas según la página de
-  límites de Vercel, y la suscripción real la comprueba la dueña (F118-6). Cada ventana
-  se revisa con margen antes de que expire y comprueba el límite de filas. Una revisión
+  efectiva de los registros de Vercel: en Hobby, 1 hora, según https://vercel.com/docs/logs/runtime#limits y https://vercel.com/docs/plans/hobby;
+  la suscripción real la comprueba la dueña (F118-6). El límite de 4.000 filas es un
+  antecedente: figuraba en la documentación de enero de 2026 y ya no figura en las
+  páginas actuales (F118-9). Los límites efectivos de volumen se comprueban antes de
+  cada revisión. Cada ventana se revisa con margen antes de que expire; si pudo
+  truncarse, no está cubierta. Una revisión
   diaria no basta. Antes de abrir el periodo (T094) se acredita un procedimiento viable
   para cubrir los 7 días completos. Solo se guardan recuentos y resultados. El
   resultado es PASS, FAIL o NO VERIFICADO, como en T098. Si queda alguna ventana sin
