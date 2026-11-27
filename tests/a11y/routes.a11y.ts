@@ -869,7 +869,7 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
       expect(visible.filter((item) => item.shared).length, "Inicio en Yo: hay filas con «Compartido · tu parte»").toBeGreaterThan(0);
       return visible.flatMap((item) => {
         const date = present.find((entry) => entry.id === item.id)!.date;
-        if (item.shared) expect(date, `Inicio en Yo: la fila compartida ${item.label} lleva su fecha`).not.toBeNull();
+        if (item.shared) expect.soft(date, `Inicio en Yo: la fila compartida ${item.label} lleva su fecha`).not.toBeNull();
         return [...item.texts, ...(item.shared && date ? [date] : [])].map((text) => ({ selector: `[data-transaction-id="${item.id}"]`, text, label: item.label }));
       });
     };
