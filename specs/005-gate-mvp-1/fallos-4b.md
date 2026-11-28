@@ -186,7 +186,5 @@ freno, 40 de 40 visibles.
 
 **Ni de `ExpenseRow` ni de `SheetTitle`.** Corrección, solo en la prueba: el localizador se acota al grupo «Estado de la pareja».
 
-**El mismo patrón en otras pruebas** (solo informativo; no se tocan):
-
-- `couple.a11y.ts:84` y `:122`, justo tras `goto`;
-- `couple.a11y.ts:144`, `:162` y `:174`, tras una interacción, con menos exposición.
+**El mismo patrón en otras pruebas.** Tratado: `:60`, `:84` y `:122` de `couple.a11y.ts`, acotados al grupo de estado (decisión del
+gestor). Los demás no se tocan, porque tienen menos exposición (`:144`, `:162` y `:174`, tras una interacción) o ninguna.
