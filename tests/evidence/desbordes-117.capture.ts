@@ -588,6 +588,35 @@ test("13 · Fuentes: la familia real del título de una hoja y document.fonts.lo
   await context.close();
 });
 
+// Diagnóstico del fallo de `couple.a11y.ts:53` en el 4b sobre a21b1a9 («SOLO TÚ» resuelto a 2 elementos): justo después de
+// `page.goto("/cuenta/pareja")`, cuántos «SOLO TÚ» hay en el DOM (visibles u ocultos) y, para cada uno, qué ancestro lo oculta
+// (p. ej. el `<div hidden id="S:…">` del streaming de React con el `loading.tsx` de (app)). 20 cargas, con la CPU frenada ×6
+// (CDP) para parecerse a un runner de CI cargado.
+test("14 · Mi pareja: los «SOLO TÚ» del DOM justo después de cargar", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("solotu"));
+  test.setTimeout(600_000);
+  const solo = await seedUser({ role: "solotu", index: info.parallelIndex });
+  const { context, page } = await open(browser, baseURL!, solo, "me", "light");
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.SOLOTU_RATE ?? 6) });
+  const tally: Record<string, number> = {};
+  for (let run = 0; run < Number(process.env.SOLOTU_RUNS ?? 20); run += 1) {
+    await page.goto("/cuenta/pareja");
+    const found = await page.evaluate((text) => [...document.querySelectorAll("span")].filter((node) => node.children.length === 0 ? node.textContent === text : [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent === text))
+      .map((node) => {
+        let hiddenBy = "visible";
+        for (let parent: Element | null = node; parent; parent = parent.parentElement) {
+          if (parent.hasAttribute("hidden") || getComputedStyle(parent).display === "none") { hiddenBy = `${parent.tagName.toLowerCase()}${parent.id ? "#" + parent.id : ""}${parent.hasAttribute("hidden") ? "[hidden]" : ""}.${String(parent.getAttribute("class") ?? "").split(" ").slice(0, 3).join(".")}`; break; }
+        }
+        return hiddenBy;
+      }), copy.couple.status.solo);
+    const key = `${found.length} · ${found.join(" | ")}`;
+    tally[key] = (tally[key] ?? 0) + 1;
+  }
+  console.log(`solotu: ${JSON.stringify(tally)}`);
+  await context.close();
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
