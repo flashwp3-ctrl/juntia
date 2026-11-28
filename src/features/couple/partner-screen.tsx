@@ -283,7 +283,7 @@ function InviteSheet({ mode, open, pair, onClose, view, actions }: SheetProps) {
   return (
     <>
       <Container open={open} onOpenChange={(next) => { if (!next) requestClose(); }} title={title} bare>
-        <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center">
+        <div className="@container/sheethead grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-y-2 [&>:last-child]:col-start-3">
           <span />
           <SheetTitle>{title}</SheetTitle>
           <button type="button" onClick={requestClose} aria-label={copy.primitives.close} aria-disabled={inFlight || undefined} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken aria-disabled:bg-sunken aria-disabled:text-ink-secondary aria-disabled:shadow-none">

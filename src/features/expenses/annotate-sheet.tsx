@@ -705,7 +705,7 @@ export default function AnnotateSheet({ open, mode, idempotencyKey, today, actio
         <>
           {/* 02·5 con la × a la DERECHA: decisión de los fundadores (UX lote 1) que sustituye a la comp 02·5, que la ponía a la
               izquierda. Título serif al centro; la columna izquierda equilibra el encabezado. */}
-          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
+          <div className="@container/sheethead grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 [&>:last-child]:col-start-3">
             <span />
             <SheetTitle>{title}</SheetTitle>
             {closeButton}

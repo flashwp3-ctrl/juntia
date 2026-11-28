@@ -54,14 +54,19 @@ export async function sheetCases(index: number): Promise<SheetCase[]> {
       await page.waitForURL(/\/actividad\/[^/?]+/);
       await click(page, copy.detail.edit, true);
     } },
-    { title: copy.couple.invite.regenerateTitle, user: inviting, scope: "me", path: "/cuenta/pareja", open: (page) => click(page, copy.couple.pending.regenerate) },
+    // «Enlace nuevo» genera el enlace al abrirse: se espera a que esté (su campo) para medir siempre el mismo estado de la hoja (F120-1).
+    { title: copy.couple.invite.regenerateTitle, user: inviting, scope: "me", path: "/cuenta/pareja", open: async (page) => {
+      await click(page, copy.couple.pending.regenerate);
+      await expect(page.getByRole("textbox", { name: copy.couple.invite.link })).toBeVisible();
+    } },
     { title: copy.goals.sheet.editTitle, user: pair.sara, scope: "us", path: `/metas/${japan}`, open: (page) => click(page, copy.goals.immersive.edit) },
   ];
 }
 
-/** Abre el caso en un contexto nuevo y espera al diálogo con su título. */
-export async function openSheet(browser: Browser, baseURL: string, item: SheetCase) {
-  const { context, page } = await signedContext(browser, baseURL, item.user, "light", item.scope);
+/** Abre el caso en un contexto nuevo, en el tema pedido (claro por defecto), y espera al diálogo con su título. */
+export async function openSheet(browser: Browser, baseURL: string, item: SheetCase, colorScheme: "light" | "dark" = "light") {
+  const { context, page } = await signedContext(browser, baseURL, item.user, colorScheme, item.scope);
+  await context.addCookies([{ name: "juntia_theme", value: colorScheme, domain: new URL(baseURL).hostname, path: "/" }]);
   await page.goto(item.path);
   await item.open(page);
   await expect(page.getByRole("dialog", { name: item.title })).toBeVisible();

@@ -110,7 +110,7 @@ export function SettleSheet({ open, onClose, debtor, creditor, pending, today, i
   const message = invalid ?? (write.state.phase === "rejected" ? rejectedMessage(write.state.error) : null);
   const body = (
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-4">
-      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
+      <div className="@container/sheethead grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 [&>:last-child]:col-start-3">
         <span />
         <SheetTitle>{copy.balance.settle.title}</SheetTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.annotate.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">

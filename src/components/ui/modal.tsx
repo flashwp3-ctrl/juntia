@@ -57,10 +57,18 @@ export const DialogTitle = Dialog.Title;
  * que cabe entera su palabra más larga; a la escala normal ese tope no se alcanza y mide 23 px como antes. PR del paso 4b: el ancho
  * de cada palabra sale de la tabla de Brygada 1918 500 medida sobre la fuente real, con el tracking del título; continuación (Linux):
  * cada palabra, con una reserva de 0,6 px por letra para el redondeo por glifo, debe caber en la columna (`sheetTitleSize`).
+ *
+ * F120-1 (adaptación de la cabecera autorizada el 28 nov 2026 y enfoque aprobado, «Sí, aprobado»; maestro, decisión 30): con el
+ * texto ampliado, el título ya no se achica entre los controles. La cabecera que lo contiene se marca como contenedor
+ * `@container/sheethead` y, cuando mide menos de 16.5rem (solo con el texto ampliado: al 100 % mide 17.5rem o más; al 200 %, 14.88rem
+ * como mucho), el título baja a su propia fila, la 2, a todo el ancho, y crece hasta el tope (1,4375rem, 46 px al 200 %) en varias
+ * líneas si hace falta. Los controles se quedan en la fila 1: la cabecera fija su último hijo, la ×, en la columna 3
+ * (`[&>:last-child]:col-start-3`). El DOM, el orden de teclado y el único `Dialog.Title` no cambian. La reserva por letra sigue como
+ * red de seguridad: a 320 al 200 %, «presupuesto» y «liquidación» no caben a 46 px en una línea y manda la fórmula.
  */
 export function SheetTitle({ children }: { children: string }) {
   return (
-    <div className="@container min-w-0">
+    <div className="@container min-w-0 @max-[16.5rem]/sheethead:col-span-3 @max-[16.5rem]/sheethead:row-start-2">
       <Dialog.Title className="text-center font-serif text-[length:var(--title-size)] leading-[1.04] font-medium tracking-[-0.015em] text-balance" style={{ "--title-size": sheetTitleSize(children) } as CSSProperties}>{children}</Dialog.Title>
     </div>
   );
