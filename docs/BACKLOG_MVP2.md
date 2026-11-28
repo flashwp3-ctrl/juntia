@@ -91,6 +91,7 @@ Recurrentes, como spec 007 (PR #101, merge `a2204ef`).
 | Purga de la tabla de idempotencia (medir y revisar) | Decisión 24.12 |
 | Revisión de la excepción de CLS por fuentes tardías | Decisión 26.1 |
 | Revisión de la excepción del GoalStack a 390 con la precarga de F02 | Decisión 25.4 |
+| **Defecto de diseño pendiente de valoración, «cabecera de las hojas a 320 al 200 %».** Con la rejilla `2.75rem · 1fr · 2.75rem` de las hojas (corrección 5 del PR B), a 320 con la raíz al 200 % la columna del título mide 32 px, y `SheetTitle` queda entre 4,5 y 10 px para que su palabra más ancha quepa entera (entre 5,5 y 11 px antes de la reserva por letra de Linux). Es una limitación **previa** del diseño aprobado. La reserva no la empeora en lo legible: sin ella, en Linux el título se corta. No hay nada autorizado; resolverlo pediría otro reparto de la cabecera a ese ancho, que sería rediseño | Decisión 30, continuación del PR #119 (paso 4b sobre `a21b1a9`) |
 
 ## Validación por uso real de MVP-1
 

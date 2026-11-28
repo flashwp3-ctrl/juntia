@@ -131,3 +131,62 @@ La revisión adversarial aceptó el alcance, el enfoque de Análisis, los roles,
 - **Sobre la semántica:** `ariaSnapshot` calcula los roles desde el DOM. No equivale a comprobar lo que anuncia VoiceOver, ni el
   árbol real de WebKit, que Playwright no expone. En Chromium, el árbol real (CDP) se comprobó aparte.
 - **F119-5:** la nota del maestro dice ahora «los dos en un PR aparte, el #119, con un commit por defecto», sin tocar el literal.
+
+## Continuación: el paso 4b sobre `a21b1a9` (159/161)
+
+### 1. `SheetTitle` en CI Linux
+
+**Medida directa** (las 42 anotaciones de «hojas con SheetTitle al 200 %…» del run 46098875205):
+
+- en las 42, la fuente está cargada y el tamaño de letra y la columna son idénticos a los locales;
+- lo que cambia es el ancho pintado, y la diferencia es **por letra**: entre −0,42 y **+0,547 px**, a cualquier tamaño de 6 a 42 px;
+- como razón va de 0,96 a 1,15, así que no es un porcentaje.
+
+Es el redondeo del avance de cada glifo a píxeles enteros de Chromium con FreeType en Linux.
+
+**En CI no cabían 16 de 42:**
+
+- **Reales, con más de 0,5 px de exceso:**
+  - «liquidación» y «Registrar» a 320 (+4,02 y +3,02) y a 360 (+2,77 y +2,78);
+  - «presupuesto» a 390 (+2,09) y a 360 (+0,95);
+  - «Exportar» a 360 (+1,94);
+  - «Retirar» a 360 (+0,77).
+- **De redondeo**, entre +0,02 y +0,19 a 320: Editar, Exportar, Anotar, Enlace y Nueva.
+
+**Corrección (opción B).** `sheetTitleSize` (`src/lib/text-fit.ts`) da a `SheetTitle` `min(1.4375rem, calc((100cqi −
+letras·0,6px) / em), …)`, con un término por palabra. El `em` es la suma de avances de Brygada 500 menos el tracking, sin el 2 %, y
+0,6 px por letra cubre el máximo medido (0,547). La reserva va en px porque el redondeo es por píxel del dispositivo. Al 100 % manda
+el tope.
+
+**Medición** (arnés, caso 11; `a21b1a9` frente a la corrección):
+
+- **Al 100 %:** 0 diferencias en 98 medidas.
+- **Al 200 %:** bajan entre −0,8 % y −4,6 % a 390, entre −1,6 % y −7,5 % a 360, y entre −3,8 % y −19,1 % a 320. La tabla hoja por
+  hoja está en el brief.
+
+**Regresiones** (`src/lib/text-fit.test.ts`, 89 pruebas):
+
+- en las 42 combinaciones, cada palabra cabe a su ancho real más 0,6 px por letra;
+- el peor caso medido en Linux (ancho local + 0,547 px por letra) también cabe;
+- con la fórmula del #119 no cabía en 16;
+- sin la reserva fallan las 42 del peor caso.
+
+La de geometría real (`routes.a11y.ts`) no cambia.
+
+**Limitación previa a 320 al 200 %.** La columna del título mide 32 px (corrección 5), y los títulos quedan entre 4,5 y 10 px. Sin la
+reserva, en Linux se cortan. Está en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración.
+
+### 2. «SOLO TÚ» resuelto a 2 elementos (`couple.a11y.ts:53`)
+
+**Qué pasa.** El snapshot de CI tiene una sola copia accesible. La otra es la copia oculta del streaming de React (`<div hidden
+id="S:0">`, por `src/app/(app)/loading.tsx`), que `getByText` sin filtro de visibilidad cuenta según el momento.
+
+**Evidencia local** (arnés, caso 14): con la CPU ×10, 30 de 40 cargas tienen la pastilla solo dentro de `S:0` justo tras `goto`. Sin
+freno, 40 de 40 visibles.
+
+**Ni de `ExpenseRow` ni de `SheetTitle`.** Corrección, solo en la prueba: el localizador se acota al grupo «Estado de la pareja».
+
+**El mismo patrón en otras pruebas** (solo informativo; no se tocan):
+
+- `couple.a11y.ts:84` y `:122`, justo tras `goto`;
+- `couple.a11y.ts:144`, `:162` y `:174`, tras una interacción, con menos exposición.

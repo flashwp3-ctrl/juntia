@@ -1542,6 +1542,18 @@ Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de 
 - **M3:** como en local no fallaba (pasaba por 1,2 px), el gestor aprobó seguir con la causa medida. También aprobó la opción (a), que cambia la estimación del ancho del título en `SheetTitle` por una tabla de Brygada 1918 500 medida sobre la fuente real, con un 2 % de margen entre plataformas. `SheetTitle` es un componente compartido, y la condición es que nada cambie al 100 % en las hojas que lo usan.
 - **No cubre** `BottomSheet`, el shell, `longestWordEm` (tarjetas de meta y acceso) ni otras pantallas. Un defecto nuevo fuera de estos dos se detiene y se notifica.
 
+**Continuación del PR #119 (27 de noviembre de 2026).** El paso 4b sobre `a21b1a9` (el merge del #119) dio 159/161: dos fallos.
+
+1. **La geometría real de `SheetTitle` en CI Linux:** el redondeo por glifo de FreeType pinta cada palabra hasta 0,547 px más por letra, y el 2 % del #119 no lo cubría.
+2. **El localizador «SOLO TÚ» de `couple.a11y.ts`:** contaba la copia oculta del streaming de React.
+
+El gestor aprobó corregir los dos, **dentro de la misma autorización** («Sí, autorizado, corrige los dos en un PR aparte»), como continuación de la corrección de M3, en otro PR aparte y sin ampliar el alcance:
+
+- en `SheetTitle`, la opción B: una reserva de 0,6 px por letra en lugar del 2 %;
+- en la prueba, el localizador acotado al grupo de estado.
+
+**Lo que queda registrado:** los títulos de 4,5 a 10 px a 320 al 200 % son una limitación **previa** del diseño aprobado (corrección 5). Está en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración, sin autorizar nada.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».
