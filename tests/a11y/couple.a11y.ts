@@ -57,7 +57,10 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     {
       const { context, page } = await signedContext(browser, baseURL!, solo);
       await page.goto("/cuenta/pareja");
-      await expect(page.getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
+      // Paso 4b sobre a21b1a9: `getByText` sin acotar contaba también la copia oculta del streaming de React (el `<div hidden
+      // id="S:…">` de la carga bajo `(app)/loading.tsx`) y, según el momento, resolvía a 2 elementos. Se busca en el grupo
+      // «Estado de la pareja», que solo existe en la copia accesible.
+      await expect(page.getByRole("group", { name: copy.couple.status.label(copy.couple.none.title) }).getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
       await sweep(page, "Mi pareja M2");
       await largeText(page, "Mi pareja M2");
       await page.getByRole("button", { name: copy.couple.none.invite }).click();
