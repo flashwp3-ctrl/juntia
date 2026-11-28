@@ -1554,6 +1554,28 @@ El gestor aprobó corregir los dos, **dentro de la misma autorización** («Sí,
 
 **Lo que queda registrado:** los títulos de 4,5 a 10 px a 320 al 200 % son una limitación **previa** del diseño aprobado (corrección 5). Está en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración, sin autorizar nada.
 
+**Adaptación de la cabecera de los diálogos, F120-1 (28 de noviembre de 2026).** La revisión adversarial del PR #120 (F120-1, alta) señaló que el título se achicaba al ampliar el texto: «Crear presupuesto» pasaba de 23 px a 11,55 px a 360 y a 16,86 px a 390 al 200 %. Eso no acredita FR-042 ni WCAG 1.4.4. Se aplicó la regla de parada. El gestor transmitió la autorización de los fundadores, cuyo texto literal es:
+
+> Sí, autorizamos la adaptación localizada de la cabecera de los diálogos para resolver F120-1 dentro del PR #120.
+> Condiciones:
+>
+> * Con texto al 100 %, conservar exactamente el diseño actual de las 14 variantes, acreditado mediante comparación visual y geométrica en los siete anchos y ambos temas.
+> * Cuando el texto ampliado no quepa entre los controles, permitir que el título ocupe una fila independiente debajo de ellos.
+> * Al 200 %, permitir el crecimiento efectivo del título hasta su tamaño tipográfico ampliado normal (46 px), admitiendo varias líneas. No resolver nuevamente el problema reduciendo la tipografía.
+> * Conservar los botones, sus funciones, objetivos táctiles, orden de teclado, foco y semántica accesible. Mantener un único título accesible.
+> * Preferir una solución CSS basada en el espacio disponible, sin detección del sistema operativo ni dependencias innecesarias de JavaScript.
+> * Limitar los cambios a la cabecera de las hojas y sus consumidores estrictamente necesarios. No modificar BottomSheet, shell, contenido de formularios, consultas, permisos, fórmulas ni servidor.
+> * Presentar primero el enfoque técnico y las capturas comparativas, especialmente a 320, 360 y 390 al 200 %, para su aprobación antes de implementar.
+> * Incorporar una regresión que falle con la implementación anterior y compruebe el crecimiento efectivo del texto, además de la ausencia de recortes y solapamientos.
+> * Evaluar si la reserva por letra sigue siendo necesaria con la nueva distribución. No conservar complejidad innecesaria ni retirarla sin evidencia.
+> * Mantener la regla de parada y la revisión adversarial independiente de GPT.
+>
+> Registrar esta autorización en la decisión 30. Corregir también F120-2, F120-3 y F120-4.
+> Mantener el PR en Draft. No lanzar CI hasta aprobar el enfoque, implementar la corrección y superar la revisión adversarial.
+> No ampliar el alcance a otras mejoras de diseño. El objetivo sigue siendo cerrar MVP-1.
+
+**Límite:** solo la cabecera de las hojas que llevan `SheetTitle` y sus consumidores estrictamente necesarios, dentro del PR #120. El enfoque se presenta antes de implementarlo.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».
