@@ -210,7 +210,7 @@ un corte único y la reserva conservada. Las dos respuestas están en el maestro
   100 %.
 - **Los controles:** `[&>:last-child]:col-start-3` deja la × en la columna 3, y Mi pareja suma `gap-y-2`. Ninguna de las dos
   clases hace nada con una sola fila.
-- **Lo que no cambia:** el DOM, el orden de teclado y el único `Dialog.Title`.
+- **Lo que no cambia:** el DOM (y con él el orden de los enfocables) y el único `Dialog.Title`.
 
 **La reserva por letra, conservada.** Con el título en su fila, la fórmula solo manda a 320 al 200 %: «presupuesto» a 41,24 px y
 «liquidación» a 45,06 px. Sin la reserva, «presupuesto» iría a 42,4 px, y con el peor caso medido en Linux (+0,547 px × 11 letras)
@@ -222,7 +222,8 @@ mediría unos 245 px en una fila de 240.
   espaciador o icono, título y primer campo, ±0,5 px) y **0 píxeles distintos** en las 196 capturas de la cabecera.
 - **Al 200 %, a 320, 360 y 390:** 39 de 42 combinaciones a 46 px, y las 3 restantes (a 320) a lo que da la fórmula.
 - **Regresión `@sweep`** (`routes.a11y.ts`): comprueba que el título crece, que va en su fila, que no hay recortes ni solapes, los
-  controles de 88 px y en su sitio, un solo `Dialog.Title` y el orden de teclado. Con la implementación anterior falla en las 42
+  controles de 88 px y en su sitio, un solo `Dialog.Title` y que los enfocables del diálogo, en orden del DOM, sean los mismos que al
+  100 % (un inventario, no una navegación real con Tab; el teclado y el foco siguen en las verificaciones del gate). Con la implementación anterior falla en las 42
   combinaciones.
 - **Iconos** (caso 17): la × (16×16) y el icono de la meta (22×22) no cambian. Que vayan en px fijos y no crezcan al 200 % es una
   observación previa, registrada en `docs/BACKLOG_MVP2.md`.

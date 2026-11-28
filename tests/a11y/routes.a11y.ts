@@ -1021,8 +1021,9 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
   // 360 y 390 con la raíz al 200 %, (1) el título crece: mide lo que da `sheetTitleFontPx` con el ancho de su fila (46 px, el tope,
   // donde cabe; la fórmula a 320 para «presupuesto» y «liquidación»); (2) está en su fila, debajo de la × y del espaciador o el icono;
   // (3) sin recortes ni solapes; (4) los controles, intactos: la × a la derecha de la cabecera y de 88 × 88 (2.75rem), y el
-  // espaciador o el icono de 88 de ancho; (5) un solo Dialog.Title, el que nombra al diálogo; (6) el orden de teclado del diálogo,
-  // el mismo que al 100 %. Con la implementación anterior falla: el título se quedaba entre los controles, a 4,5–42 px.
+  // espaciador o el icono de 88 de ancho; (5) un solo Dialog.Title, el que nombra al diálogo; (6) el inventario de enfocables del
+  // diálogo (visibles, tabIndex ≥ 0 y no deshabilitados) en orden del DOM, el mismo que al 100 %. No es una navegación real con
+  // Tab: acredita que la adaptación no añade, quita ni reordena enfocables. El teclado y el foco siguen en las verificaciones del gate. Con la implementación anterior falla: el título se quedaba entre los controles, a 4,5–42 px.
   test("hojas con SheetTitle al 200 % a 320, 360 y 390: el título crece en su propia fila, debajo de los controles, sin recortes y con los controles intactos", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
     test.setTimeout(300_000);
     const cases = await sheetCases(testInfo.parallelIndex);
@@ -1065,7 +1066,7 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
         expect.soft([Math.round(header.closeW), Math.round(header.closeH), Math.round(header.leadW)], `${label}: la × de 88 × 88 y el espaciador o el icono de 88`).toEqual([88, 88, 88]);
         expect.soft(Math.abs(header.closeRight - header.headerRight), `${label}: la × a la derecha de la cabecera`).toBeLessThanOrEqual(0.5);
         expect.soft([header.titles, header.labelledBy], `${label}: un solo Dialog.Title, el que nombra al diálogo`).toEqual([1, true]);
-        expect.soft(await tabOrder(page, item.title), `${label}: el orden de teclado del diálogo, el mismo que al 100 %`).toEqual(order100);
+        expect.soft(await tabOrder(page, item.title), `${label}: los enfocables del diálogo en orden del DOM, los mismos que al 100 %`).toEqual(order100);
       }
       await context.close();
     }

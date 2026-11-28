@@ -1544,15 +1544,15 @@ Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de 
 
 **Continuación del PR #119 (27 de noviembre de 2026).** El paso 4b sobre `a21b1a9` (el merge del #119) dio 159/161: dos fallos.
 
-1. **La geometría real de `SheetTitle` en CI Linux:** el redondeo por glifo de FreeType pinta cada palabra hasta 0,547 px más por letra, y el 2 % del #119 no lo cubría.
-2. **El localizador «SOLO TÚ» de `couple.a11y.ts`:** contaba la copia oculta del streaming de React.
+1. **La geometría real de `SheetTitle` en CI Linux:** lo medido es que, con la misma letra y la misma columna, Linux pinta cada palabra entre −0,42 y +0,547 px más **por letra**, y el 2 % del #119 no lo cubría. Que la causa sea el redondeo por glifo de FreeType es una hipótesis fuertemente respaldada, no demostrada glifo a glifo; los 0,6 px son una reserva empírica.
+2. **El localizador «SOLO TÚ» de `couple.a11y.ts`:** lo observado en local es que contaba dos elementos y que la copia que sobraba estaba en el `<div hidden id="S:0">` del streaming de React. Que en CI pasara lo mismo es la explicación probable; el snapshot de CI muestra una sola copia accesible.
 
 El gestor aprobó corregir los dos, **dentro de la misma autorización** («Sí, autorizado, corrige los dos en un PR aparte»), como continuación de la corrección de M3, en otro PR aparte y sin ampliar el alcance:
 
 - en `SheetTitle`, la opción B: una reserva de 0,6 px por letra en lugar del 2 %;
 - en la prueba, el localizador acotado al grupo de estado.
 
-**Lo que queda registrado:** los títulos de 4,5 a 10 px a 320 al 200 % son una limitación **previa** del diseño aprobado (corrección 5). Está en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración, sin autorizar nada.
+**Lo que queda registrado:** los títulos de 4,5 a 10 px a 320 al 200 % eran una limitación **previa** del diseño aprobado (corrección 5), registrada en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración. **Resuelto por F120-1** (abajo), **pendiente de acreditación en CI**.
 
 **Adaptación de la cabecera de los diálogos, F120-1 (28 de noviembre de 2026).** La revisión adversarial del PR #120 (F120-1, alta) señaló que el título se achicaba al ampliar el texto: «Crear presupuesto» pasaba de 23 px a 11,55 px a 360 y a 16,86 px a 390 al 200 %. Eso no acredita FR-042 ni WCAG 1.4.4. Se aplicó la regla de parada. El gestor transmitió la autorización de los fundadores, cuyo texto literal es:
 
