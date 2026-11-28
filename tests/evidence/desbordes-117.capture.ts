@@ -680,6 +680,42 @@ test("16 · Cabecera de las hojas: capturas y medidas del título", async ({ bro
   console.log(`capturas-cabecera (${tag}): ${out.length}`);
 });
 
+// F120-1, pregunta del gestor: el tamaño REAL de los iconos de la cabecera (el `svg` de la × y el del icono de la meta) y de sus
+// cajas, en px, a 390 al 100 % y a 320, 360 y 390 al 200 %, con el código que haya (la base o el prototipo). Y el tamaño de la
+// captura que hace el caso 16 (la caja de la cabecera + 8 px por lado), para ver si la diferencia es de la captura o del icono.
+test("17 · Cabecera de las hojas: tamaño de los iconos y de los botones", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("iconos"));
+  test.setTimeout(900_000);
+  const wanted = ["Crear presupuesto", "Registrar liquidación", "Invitar a mi pareja", "Anotar gasto", "Nueva meta"];
+  const cases = (await sheetCases(info.parallelIndex)).filter((item) => wanted.includes(item.title));
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const [width, scale] of [[390, ""], [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      out.push({ title: item.title, width, scale: scale || "100%", ...(await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const header = heading.parentElement!.parentElement!;
+        const r = (rect: DOMRect) => `${Math.round(rect.width * 10) / 10}×${Math.round(rect.height * 10) / 10}`;
+        const box = header.getBoundingClientRect();
+        return {
+          header: r(box), shot: `${Math.round(Math.min(window.innerWidth, box.width + 16))}×${Math.round(box.height + 16)}`,
+          children: [...header.children].filter((child) => child !== heading.parentElement).map((child) => {
+            const svg = child.querySelector("svg");
+            return { tag: child.tagName.toLowerCase(), box: r(child.getBoundingClientRect()), svg: svg ? r(svg.getBoundingClientRect()) : "—", svgAttr: svg ? `${svg.getAttribute("width")}×${svg.getAttribute("height")}` : "—" };
+          }),
+        };
+      }, item.title)) });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/iconos-${process.env.D117_TAG ?? "medida"}.json`, JSON.stringify(out, null, 1));
+  console.log(`iconos: ${out.length}`);
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
