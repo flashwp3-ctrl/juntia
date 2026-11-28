@@ -617,6 +617,69 @@ test("14 · Mi pareja: los «SOLO TÚ» del DOM justo después de cargar", async
   await context.close();
 });
 
+// F120-1 (adaptación autorizada el 28 nov 2026; antes de implementar): el ancho de la cabecera de cada hoja (la rejilla
+// `2.75rem · 1fr · 2.75rem` que contiene a SheetTitle), en px y en rem de la raíz, en los anchos 320–1440 al 100 % y al 200 %, y lo
+// que necesitaría el título a su tope (1,4375rem) en una fila propia o entre los controles. Para elegir el corte de la container query.
+test("15 · Cabecera de las hojas: ancho en rem al 100 % y al 200 %", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("cabecera"));
+  test.setTimeout(900_000);
+  const cases = await sheetCases(info.parallelIndex);
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const scale of ["", "200%"]) for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      out.push({ title: item.title, width, scale: scale || "100%", ...(await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const header = heading.parentElement!.parentElement!;
+        const root = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const r = (value: number) => Math.round(value * 100) / 100;
+        return { header: r(header.getBoundingClientRect().width), headerRem: r(header.getBoundingClientRect().width / root), column: r(heading.parentElement!.getBoundingClientRect().width), gap: getComputedStyle(header).columnGap, fontSize: parseFloat(getComputedStyle(heading).fontSize) };
+      }, item.title)) });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile("test-results/d117/cabecera.json", JSON.stringify(out, null, 1));
+  console.log(`cabecera: ${out.length} medidas`);
+});
+
+// F120-1, enfoque (antes de implementar): capturas y medidas de la cabecera de hojas representativas, a 390 al 100 % y a 320, 360
+// y 390 al 200 %, con el código que haya (la base o el prototipo). D117_TAG nombra la pasada.
+test("16 · Cabecera de las hojas: capturas y medidas del título", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("capturas-cabecera"));
+  test.setTimeout(900_000);
+  const wanted = ["Crear presupuesto", "Registrar liquidación", "Invitar a mi pareja", "Anotar gasto", "Nueva meta"];
+  const cases = (await sheetCases(info.parallelIndex)).filter((item) => wanted.includes(item.title));
+  const tag = process.env.D117_TAG ?? "medida";
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const [width, scale] of [[390, ""], [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const title = await measureSheetTitle(page, item.title);
+      const header = await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const box = heading.parentElement!.parentElement!.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(heading);
+        return { box: [box.left, box.top, box.width, box.height].map((v) => Math.round(v)), lines: [...range.getClientRects()].filter((rect) => rect.width > 0).length };
+      }, item.title);
+      out.push({ title: item.title, width, scale: scale || "100%", fontSize: title.fontSize, word: title.word, wordWidth: title.wordWidth, column: title.column, lines: header.lines, linesOutside: title.linesOutside, clipped: title.clipped, overButtons: title.overButtons, header: header.box });
+      const [x, y, w, h] = header.box;
+      await page.screenshot({ path: `test-results/d117/${tag}-${item.title.replace(/\s+/g, "-")}-${width}-${scale ? "200" : "100"}.png`, clip: { x: Math.max(0, x - 8), y: Math.max(0, y - 8), width: Math.min(width - Math.max(0, x - 8), w + 16), height: h + 16 }, animations: "disabled" });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/capturas-cabecera-${tag}.json`, JSON.stringify(out, null, 1));
+  console.log(`capturas-cabecera (${tag}): ${out.length}`);
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);
