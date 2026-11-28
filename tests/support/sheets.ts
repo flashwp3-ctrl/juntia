@@ -126,7 +126,7 @@ const measureTitleGeometry = (page: Page, title: string) => page.evaluate(async 
   const overButtons = [...dialog.querySelectorAll("button")].filter((button) => button.getClientRects().length > 0 && lines.some((line) => meets(line, button.getBoundingClientRect()))).length;
   const box = heading.getBoundingClientRect();
   const r = (value: number) => Math.round(value * 100) / 100;
-  return { fontSize: r(parseFloat(getComputedStyle(heading).fontSize)), titleEm: heading.style.getPropertyValue("--title-em"), column: r(column.width), word: widest.word, wordWidth: r(widest.width),
+  return { fontSize: r(parseFloat(getComputedStyle(heading).fontSize)), titleSize: heading.style.getPropertyValue("--title-size"), column: r(column.width), word: widest.word, wordWidth: r(widest.width),
     linesOutside, clipped: heading.scrollWidth > heading.clientWidth + 1, overButtons,
     box: [r(box.left), r(box.top), r(box.width), r(box.height)], root: parseFloat(getComputedStyle(document.documentElement).fontSize) };
 }, title);
