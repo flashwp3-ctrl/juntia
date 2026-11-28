@@ -588,6 +588,171 @@ test("13 · Fuentes: la familia real del título de una hoja y document.fonts.lo
   await context.close();
 });
 
+// Diagnóstico del fallo de `couple.a11y.ts:53` en el 4b sobre a21b1a9 («SOLO TÚ» resuelto a 2 elementos): justo después de
+// `page.goto("/cuenta/pareja")`, cuántos «SOLO TÚ» hay en el DOM (visibles u ocultos) y, para cada uno, qué ancestro lo oculta
+// (p. ej. el `<div hidden id="S:…">` del streaming de React con el `loading.tsx` de (app)). 20 cargas, con la CPU frenada ×6
+// (CDP) para parecerse a un runner de CI cargado.
+test("14 · Mi pareja: los «SOLO TÚ» del DOM justo después de cargar", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("solotu"));
+  test.setTimeout(600_000);
+  const solo = await seedUser({ role: "solotu", index: info.parallelIndex });
+  const { context, page } = await open(browser, baseURL!, solo, "me", "light");
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.SOLOTU_RATE ?? 6) });
+  const tally: Record<string, number> = {};
+  for (let run = 0; run < Number(process.env.SOLOTU_RUNS ?? 20); run += 1) {
+    await page.goto("/cuenta/pareja");
+    const found = await page.evaluate((text) => [...document.querySelectorAll("span")].filter((node) => node.children.length === 0 ? node.textContent === text : [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent === text))
+      .map((node) => {
+        let hiddenBy = "visible";
+        for (let parent: Element | null = node; parent; parent = parent.parentElement) {
+          if (parent.hasAttribute("hidden") || getComputedStyle(parent).display === "none") { hiddenBy = `${parent.tagName.toLowerCase()}${parent.id ? "#" + parent.id : ""}${parent.hasAttribute("hidden") ? "[hidden]" : ""}.${String(parent.getAttribute("class") ?? "").split(" ").slice(0, 3).join(".")}`; break; }
+        }
+        return hiddenBy;
+      }), copy.couple.status.solo);
+    const key = `${found.length} · ${found.join(" | ")}`;
+    tally[key] = (tally[key] ?? 0) + 1;
+  }
+  console.log(`solotu: ${JSON.stringify(tally)}`);
+  await context.close();
+});
+
+// F120-1 (adaptación autorizada el 28 nov 2026; antes de implementar): el ancho de la cabecera de cada hoja (la rejilla
+// `2.75rem · 1fr · 2.75rem` que contiene a SheetTitle), en px y en rem de la raíz, en los anchos 320–1440 al 100 % y al 200 %, y lo
+// que necesitaría el título a su tope (1,4375rem) en una fila propia o entre los controles. Para elegir el corte de la container query.
+test("15 · Cabecera de las hojas: ancho en rem al 100 % y al 200 %", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("cabecera"));
+  test.setTimeout(900_000);
+  const cases = await sheetCases(info.parallelIndex);
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const scale of ["", "200%"]) for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      out.push({ title: item.title, width, scale: scale || "100%", ...(await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const header = heading.parentElement!.parentElement!;
+        const root = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const r = (value: number) => Math.round(value * 100) / 100;
+        return { header: r(header.getBoundingClientRect().width), headerRem: r(header.getBoundingClientRect().width / root), column: r(heading.parentElement!.getBoundingClientRect().width), gap: getComputedStyle(header).columnGap, fontSize: parseFloat(getComputedStyle(heading).fontSize) };
+      }, item.title)) });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile("test-results/d117/cabecera.json", JSON.stringify(out, null, 1));
+  console.log(`cabecera: ${out.length} medidas`);
+});
+
+// F120-1, enfoque (antes de implementar): capturas y medidas de la cabecera de hojas representativas, a 390 al 100 % y a 320, 360
+// y 390 al 200 %, con el código que haya (la base o el prototipo). D117_TAG nombra la pasada.
+test("16 · Cabecera de las hojas: capturas y medidas del título", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("capturas-cabecera"));
+  test.setTimeout(900_000);
+  const wanted = ["Crear presupuesto", "Registrar liquidación", "Invitar a mi pareja", "Anotar gasto", "Nueva meta"];
+  const cases = (await sheetCases(info.parallelIndex)).filter((item) => wanted.includes(item.title));
+  const tag = process.env.D117_TAG ?? "medida";
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const [width, scale] of [[390, ""], [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const title = await measureSheetTitle(page, item.title);
+      const header = await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const box = heading.parentElement!.parentElement!.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(heading);
+        return { box: [box.left, box.top, box.width, box.height].map((v) => Math.round(v)), lines: [...range.getClientRects()].filter((rect) => rect.width > 0).length };
+      }, item.title);
+      out.push({ title: item.title, width, scale: scale || "100%", fontSize: title.fontSize, word: title.word, wordWidth: title.wordWidth, column: title.column, lines: header.lines, linesOutside: title.linesOutside, clipped: title.clipped, overButtons: title.overButtons, header: header.box });
+      const [x, y, w, h] = header.box;
+      await page.screenshot({ path: `test-results/d117/${tag}-${item.title.replace(/\s+/g, "-")}-${width}-${scale ? "200" : "100"}.png`, clip: { x: Math.max(0, x - 8), y: Math.max(0, y - 8), width: Math.min(width - Math.max(0, x - 8), w + 16), height: h + 16 }, animations: "disabled" });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/capturas-cabecera-${tag}.json`, JSON.stringify(out, null, 1));
+  console.log(`capturas-cabecera (${tag}): ${out.length}`);
+});
+
+// F120-1, pregunta del gestor: el tamaño REAL de los iconos de la cabecera (el `svg` de la × y el del icono de la meta) y de sus
+// cajas, en px, a 390 al 100 % y a 320, 360 y 390 al 200 %, con el código que haya (la base o el prototipo). Y el tamaño de la
+// captura que hace el caso 16 (la caja de la cabecera + 8 px por lado), para ver si la diferencia es de la captura o del icono.
+test("17 · Cabecera de las hojas: tamaño de los iconos y de los botones", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("iconos"));
+  test.setTimeout(900_000);
+  const wanted = ["Crear presupuesto", "Registrar liquidación", "Invitar a mi pareja", "Anotar gasto", "Nueva meta"];
+  const cases = (await sheetCases(info.parallelIndex)).filter((item) => wanted.includes(item.title));
+  const out: object[] = [];
+  for (const item of cases) {
+    const { context, page } = await openSheet(browser, baseURL!, item);
+    for (const [width, scale] of [[390, ""], [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((value) => { document.documentElement.style.fontSize = value; }, scale);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      out.push({ title: item.title, width, scale: scale || "100%", ...(await page.evaluate((name) => {
+        const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+        const header = heading.parentElement!.parentElement!;
+        const r = (rect: DOMRect) => `${Math.round(rect.width * 10) / 10}×${Math.round(rect.height * 10) / 10}`;
+        const box = header.getBoundingClientRect();
+        return {
+          header: r(box), shot: `${Math.round(Math.min(window.innerWidth, box.width + 16))}×${Math.round(box.height + 16)}`,
+          children: [...header.children].filter((child) => child !== heading.parentElement).map((child) => {
+            const svg = child.querySelector("svg");
+            return { tag: child.tagName.toLowerCase(), box: r(child.getBoundingClientRect()), svg: svg ? r(svg.getBoundingClientRect()) : "—", svgAttr: svg ? `${svg.getAttribute("width")}×${svg.getAttribute("height")}` : "—" };
+          }),
+        };
+      }, item.title)) });
+    }
+    await context.close();
+  }
+  await mkdir("test-results/d117", { recursive: true });
+  await writeFile(`test-results/d117/iconos-${process.env.D117_TAG ?? "medida"}.json`, JSON.stringify(out, null, 1));
+  console.log(`iconos: ${out.length}`);
+});
+
+// F120-1, identidad al 100 % (condición de los fundadores): en las 14 hojas, los 7 anchos y los dos temas, con el texto al 100 %,
+// la caja de la cabecera, de la ×, del espaciador o del icono, del título y del primer campo del diálogo, y una captura de la cabecera
+// (su caja + 8 px). Escribe `test-results/d117/identidad-{D117_TAG}/` (JSON y PNG) para compararlos píxel a píxel con la base.
+test("18 · Cabecera de las hojas: identidad al 100 % (geometría y captura)", async ({ browser, baseURL }, info) => {
+  test.skip(!CASES.includes("identidad"));
+  test.setTimeout(1_800_000);
+  const tag = process.env.D117_TAG ?? "medida";
+  const dir = `test-results/d117/identidad-${tag}`;
+  await mkdir(dir, { recursive: true });
+  const cases = await sheetCases(info.parallelIndex);
+  const out: object[] = [];
+  for (const colorScheme of ["light", "dark"] as const) {
+    for (const [index, item] of cases.entries()) {
+      const { context, page } = await openSheet(browser, baseURL!, item, colorScheme);
+      for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+        const geometry = await page.evaluate((name) => {
+          const heading = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].find((node) => node.getClientRects().length > 0 && node.textContent === name)!;
+          const dialog = heading.closest<HTMLElement>("[role='dialog']")!;
+          const header = heading.parentElement!.parentElement!;
+          const r = (el: Element | null) => (el ? [...Object.values(el.getBoundingClientRect().toJSON()).slice(0, 4)].map((v) => Math.round((v as number) * 100) / 100) : null);
+          const field = [...dialog.querySelectorAll<HTMLElement>("input, textarea, select, [role='radio'], [role='textbox']")].find((node) => node.getClientRects().length > 0 && !header.contains(node)) ?? null;
+          return { header: r(header), close: r(header.lastElementChild), lead: r(header.firstElementChild), titleBox: r(heading), field: r(field), fieldName: field?.getAttribute("aria-label") ?? field?.getAttribute("name") ?? field?.tagName.toLowerCase() ?? null };
+        }, item.title);
+        const [x, y, w, h] = geometry.header!;
+        const file = `${dir}/${colorScheme}-${String(index).padStart(2, "0")}-${width}.png`;
+        await page.screenshot({ path: file, clip: { x: Math.max(0, Math.floor(x) - 8), y: Math.max(0, Math.floor(y) - 8), width: Math.min(width - Math.max(0, Math.floor(x) - 8), Math.ceil(w) + 16), height: Math.ceil(h) + 16 }, animations: "disabled" });
+        out.push({ colorScheme, title: item.title, width, ...geometry, file });
+      }
+      await context.close();
+    }
+  }
+  await writeFile(`${dir}/geometria.json`, JSON.stringify(out, null, 1));
+  console.log(`identidad (${tag}): ${out.length} medidas y capturas`);
+});
+
 test("2 · Actividad en Nosotros con datos extremos", async ({ browser, baseURL }, info) => {
   test.skip(!CASES.includes("nosotros"));
   test.setTimeout(600_000);

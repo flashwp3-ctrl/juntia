@@ -34,7 +34,7 @@ export function GoalSheetFrame({ open, title, icon, onClose, phase, onRetry, chi
   };
   const body = (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
+      <div className="@container/sheethead grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 [&>:last-child]:col-start-3">
         <span aria-hidden="true" className="grid size-11 place-items-center rounded-full bg-saving-subtle text-saving"><AppIcon name={icon} weight="duotone" size={22} /></span>
         <SheetTitle>{title}</SheetTitle>
         <button type="button" onClick={() => requestClose(false)} aria-label={copy.primitives.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">

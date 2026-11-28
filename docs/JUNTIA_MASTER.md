@@ -1542,6 +1542,45 @@ Precisión del gestor: el punto 3 se refiere a las filas de aportes **dentro de 
 - **M3:** como en local no fallaba (pasaba por 1,2 px), el gestor aprobó seguir con la causa medida. También aprobó la opción (a), que cambia la estimación del ancho del título en `SheetTitle` por una tabla de Brygada 1918 500 medida sobre la fuente real, con un 2 % de margen entre plataformas. `SheetTitle` es un componente compartido, y la condición es que nada cambie al 100 % en las hojas que lo usan.
 - **No cubre** `BottomSheet`, el shell, `longestWordEm` (tarjetas de meta y acceso) ni otras pantallas. Un defecto nuevo fuera de estos dos se detiene y se notifica.
 
+**Continuación del PR #119 (27 de noviembre de 2026).** El paso 4b sobre `a21b1a9` (el merge del #119) dio 159/161: dos fallos.
+
+1. **La geometría real de `SheetTitle` en CI Linux:** lo medido es que, con la misma letra y la misma columna, Linux pinta cada palabra entre −0,42 y +0,547 px más **por letra**, y el 2 % del #119 no lo cubría. Que la causa sea el redondeo por glifo de FreeType es una hipótesis fuertemente respaldada, no demostrada glifo a glifo; los 0,6 px son una reserva empírica.
+2. **El localizador «SOLO TÚ» de `couple.a11y.ts`:** lo observado en local es que contaba dos elementos y que la copia que sobraba estaba en el `<div hidden id="S:0">` del streaming de React. Que en CI pasara lo mismo es la explicación probable; el snapshot de CI muestra una sola copia accesible.
+
+El gestor aprobó corregir los dos, **dentro de la misma autorización** («Sí, autorizado, corrige los dos en un PR aparte»), como continuación de la corrección de M3, en otro PR aparte y sin ampliar el alcance:
+
+- en `SheetTitle`, la opción B: una reserva de 0,6 px por letra en lugar del 2 %;
+- en la prueba, el localizador acotado al grupo de estado.
+
+**Lo que queda registrado:** los títulos de 4,5 a 10 px a 320 al 200 % eran una limitación **previa** del diseño aprobado (corrección 5), registrada en `docs/BACKLOG_MVP2.md` como defecto de diseño pendiente de valoración. **Resuelto por F120-1** (abajo), **pendiente de acreditación en CI**.
+
+**Adaptación de la cabecera de los diálogos, F120-1 (28 de noviembre de 2026).** La revisión adversarial del PR #120 (F120-1, alta) señaló que el título se achicaba al ampliar el texto: «Crear presupuesto» pasaba de 23 px a 11,55 px a 360 y a 16,86 px a 390 al 200 %. Eso no acredita FR-042 ni WCAG 1.4.4. Se aplicó la regla de parada. El gestor transmitió la autorización de los fundadores, cuyo texto literal es:
+
+> Sí, autorizamos la adaptación localizada de la cabecera de los diálogos para resolver F120-1 dentro del PR #120.
+> Condiciones:
+>
+> * Con texto al 100 %, conservar exactamente el diseño actual de las 14 variantes, acreditado mediante comparación visual y geométrica en los siete anchos y ambos temas.
+> * Cuando el texto ampliado no quepa entre los controles, permitir que el título ocupe una fila independiente debajo de ellos.
+> * Al 200 %, permitir el crecimiento efectivo del título hasta su tamaño tipográfico ampliado normal (46 px), admitiendo varias líneas. No resolver nuevamente el problema reduciendo la tipografía.
+> * Conservar los botones, sus funciones, objetivos táctiles, orden de teclado, foco y semántica accesible. Mantener un único título accesible.
+> * Preferir una solución CSS basada en el espacio disponible, sin detección del sistema operativo ni dependencias innecesarias de JavaScript.
+> * Limitar los cambios a la cabecera de las hojas y sus consumidores estrictamente necesarios. No modificar BottomSheet, shell, contenido de formularios, consultas, permisos, fórmulas ni servidor.
+> * Presentar primero el enfoque técnico y las capturas comparativas, especialmente a 320, 360 y 390 al 200 %, para su aprobación antes de implementar.
+> * Incorporar una regresión que falle con la implementación anterior y compruebe el crecimiento efectivo del texto, además de la ausencia de recortes y solapamientos.
+> * Evaluar si la reserva por letra sigue siendo necesaria con la nueva distribución. No conservar complejidad innecesaria ni retirarla sin evidencia.
+> * Mantener la regla de parada y la revisión adversarial independiente de GPT.
+>
+> Registrar esta autorización en la decisión 30. Corregir también F120-2, F120-3 y F120-4.
+> Mantener el PR en Draft. No lanzar CI hasta aprobar el enfoque, implementar la corrección y superar la revisión adversarial.
+> No ampliar el alcance a otras mejoras de diseño. El objetivo sigue siendo cerrar MVP-1.
+
+**Límite:** solo la cabecera de las hojas que llevan `SheetTitle` y sus consumidores estrictamente necesarios, dentro del PR #120. El enfoque se presenta antes de implementarlo.
+
+**Aprobación del enfoque de F120-1 (28 de noviembre de 2026).** Los fundadores lo aprobaron con la respuesta literal «Sí, aprobado». Respondían a: «¿Aprueban el enfoque, con el corte único y conservando la reserva por letra?». El enfoque aprobado:
+
+- **Corte único:** la cabecera de las hojas pasa a ser `@container/sheethead`, y cuando mide menos de `16.5rem` (solo con el texto ampliado) el título baja a su propia fila, debajo de los controles, y crece hasta su tope.
+- **Reserva por letra:** se conserva como red de seguridad a 320 al 200 %, con su justificación en el código y en la especificación.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».

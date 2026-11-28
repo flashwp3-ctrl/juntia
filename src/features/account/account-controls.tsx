@@ -189,7 +189,7 @@ export function ExportEntry() {
           (COMPONENT_SPECIFICATIONS §BottomSheet: gesto, ×, Escape o scrim). */}
       <BottomSheet open={open} onOpenChange={(next) => { setOpen(next); if (!next) reset(); }} title={copy.account.export.title} onCloseAutoFocus={returnFocus} bare adaptive>
         <div className="flex flex-col gap-4 max-md:pb-[calc(20px+env(safe-area-inset-bottom))]">
-          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
+          <div className="@container/sheethead grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 [&>:last-child]:col-start-3">
             <span />
             <SheetTitle>{copy.account.export.title}</SheetTitle>
             <button type="button" onClick={() => { setOpen(false); reset(); }} aria-label={copy.account.export.close} className="grid size-11 place-items-center rounded-[13px] bg-raised text-ink shadow-raised hover:bg-sunken">

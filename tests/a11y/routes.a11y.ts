@@ -25,6 +25,7 @@ import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUs
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
 import { fontLoaded, measureSheetTitle, openSheet, sheetCases } from "../support/sheets";
+import { sheetTitleFontPx } from "../../src/lib/text-fit";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
@@ -1010,6 +1011,62 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
         expect.soft(title.linesOutside, `${label}: ninguna línea del título sale de su columna`).toBe(0);
         expect.soft(title.clipped, `${label}: el título no se recorta`).toBe(false);
         expect.soft(title.overButtons, `${label}: el título no solapa ningún botón`).toBe(0);
+      }
+      await context.close();
+    }
+  });
+
+  // F120-1 (adaptación de la cabecera autorizada el 28 nov 2026 y enfoque aprobado; maestro, decisión 30): con el texto ampliado,
+  // el título de las hojas ya no se achica entre los controles; baja a su propia fila y crece. Regresión: en las 14 hojas, a 320,
+  // 360 y 390 con la raíz al 200 %, (1) el título crece: mide lo que da `sheetTitleFontPx` con el ancho de su fila (46 px, el tope,
+  // donde cabe; la fórmula a 320 para «presupuesto» y «liquidación»); (2) está en su fila, debajo de la × y del espaciador o el icono;
+  // (3) sin recortes ni solapes; (4) los controles, intactos: la × a la derecha de la cabecera y de 88 × 88 (2.75rem), y el
+  // espaciador o el icono de 88 de ancho; (5) un solo Dialog.Title, el que nombra al diálogo; (6) el inventario de enfocables del
+  // diálogo (visibles, tabIndex ≥ 0 y no deshabilitados) en orden del DOM, el mismo que al 100 %. No es una navegación real con
+  // Tab: acredita que la adaptación no añade, quita ni reordena enfocables. El teclado y el foco siguen en las verificaciones del gate. Con la implementación anterior falla: el título se quedaba entre los controles, a 4,5–42 px.
+  test("hojas con SheetTitle al 200 % a 320, 360 y 390: el título crece en su propia fila, debajo de los controles, sin recortes y con los controles intactos", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    test.setTimeout(300_000);
+    const cases = await sheetCases(testInfo.parallelIndex);
+    expect(cases.length, "las 14 variantes de título de SheetTitle").toBe(14);
+    const tabOrder = (page: Page, title: string) => page.evaluate((name) => {
+      const dialog = [...document.querySelectorAll<HTMLElement>("[role='dialog']")].find((node) => node.getClientRects().length > 0 && node.querySelector("h1, h2")?.textContent === name)!;
+      return [...dialog.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, [tabindex]")]
+        .filter((node) => node.getClientRects().length > 0 && node.tabIndex >= 0 && !(node as HTMLButtonElement).disabled)
+        .map((node) => node.getAttribute("aria-label") ?? node.getAttribute("name") ?? (node.textContent ?? "").trim().slice(0, 30));
+    }, title);
+    for (const item of cases) {
+      const { context, page } = await openSheet(browser, baseURL!, item);
+      await page.setViewportSize({ width: 390, height: 900 });
+      await twoFrames(page);
+      const order100 = await tabOrder(page, item.title);
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await root200(page);
+        await twoFrames(page);
+        const label = `«${item.title}» · ${width}px · 200 %`;
+        const title = await measureSheetTitle(page, item.title);
+        const header = await page.evaluate((name) => {
+          const headings = [...document.querySelectorAll<HTMLElement>("[role='dialog'] h1, [role='dialog'] h2")].filter((node) => node.getClientRects().length > 0 && node.textContent === name);
+          const heading = headings[0];
+          const dialog = heading.closest<HTMLElement>("[role='dialog']")!;
+          const box = heading.parentElement!.parentElement!.getBoundingClientRect();
+          const close = heading.parentElement!.parentElement!.lastElementChild!.getBoundingClientRect();
+          const lead = heading.parentElement!.parentElement!.firstElementChild!.getBoundingClientRect();
+          const text = heading.getBoundingClientRect();
+          return { titles: headings.length, labelledBy: dialog.getAttribute("aria-labelledby") === heading.id, headerWidth: box.width, headerRight: box.right, closeRight: close.right, closeW: close.width, closeH: close.height, closeBottom: close.bottom, leadW: lead.width, leadBottom: lead.top + Math.max(lead.height, 0), titleTop: text.top };
+        }, item.title);
+        // Lo que cabe en una fila del ancho entero de la cabecera: no depende de dónde esté hoy el título.
+        const expected = sheetTitleFontPx(item.title, header.headerWidth, 32);
+        console.log(`${label}: título ${title.fontSize} px (esperado ${Math.round(expected * 100) / 100}, cabecera de ${Math.round(header.headerWidth)}) en una columna de ${title.column}; arriba en ${Math.round(header.titleTop)}, × hasta ${Math.round(header.closeBottom)}`);
+        expect.soft(title.fontSize, `${label}: el título crece hasta lo que cabe en su fila (${Math.round(expected * 100) / 100} px)`).toBeCloseTo(expected, 1);
+        if (expected >= 46) expect.soft(title.fontSize, `${label}: el título llega al tope, 46 px`).toBe(46);
+        expect.soft(header.titleTop, `${label}: el título está en su fila, debajo de la ×`).toBeGreaterThanOrEqual(header.closeBottom - 0.5);
+        expect.soft(header.titleTop, `${label}: y debajo del espaciador o el icono`).toBeGreaterThanOrEqual(header.leadBottom - 0.5);
+        expect.soft([title.linesOutside, title.clipped, title.overButtons], `${label}: sin líneas fuera, sin recorte y sin solapar botones`).toEqual([0, false, 0]);
+        expect.soft([Math.round(header.closeW), Math.round(header.closeH), Math.round(header.leadW)], `${label}: la × de 88 × 88 y el espaciador o el icono de 88`).toEqual([88, 88, 88]);
+        expect.soft(Math.abs(header.closeRight - header.headerRight), `${label}: la × a la derecha de la cabecera`).toBeLessThanOrEqual(0.5);
+        expect.soft([header.titles, header.labelledBy], `${label}: un solo Dialog.Title, el que nombra al diálogo`).toEqual([1, true]);
+        expect.soft(await tabOrder(page, item.title), `${label}: los enfocables del diálogo en orden del DOM, los mismos que al 100 %`).toEqual(order100);
       }
       await context.close();
     }
