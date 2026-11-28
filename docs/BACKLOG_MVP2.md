@@ -92,6 +92,7 @@ Recurrentes, como spec 007 (PR #101, merge `a2204ef`).
 | Revisión de la excepción de CLS por fuentes tardías | Decisión 26.1 |
 | Revisión de la excepción del GoalStack a 390 con la precarga de F02 | Decisión 25.4 |
 | **Defecto de diseño pendiente de valoración, «cabecera de las hojas a 320 al 200 %».** Con la rejilla `2.75rem · 1fr · 2.75rem` de las hojas (corrección 5 del PR B), a 320 con la raíz al 200 % la columna del título mide 32 px, y `SheetTitle` queda entre 4,5 y 10 px para que su palabra más ancha quepa entera (entre 5,5 y 11 px antes de la reserva por letra de Linux). Es una limitación **previa** del diseño aprobado. La reserva no la empeora en lo legible: sin ella, en Linux el título se corta. No hay nada autorizado; resolverlo pediría otro reparto de la cabecera a ese ancho, que sería rediseño | Decisión 30, continuación del PR #119 (paso 4b sobre `a21b1a9`) |
+| **Observación previa, pendiente de valoración: «iconos de la cabecera de las hojas en px fijos».** Los iconos de la cabecera de las hojas (el `svg` de la × y el icono de la meta) van en px fijos (`AppIcon` con `size={16}` y `size={22}`). Con el texto al 200 % no crecen, mientras su botón pasa de 44 a 88 px. Es igual en todas las hojas, y la adaptación de F120-1 no lo cambia. No hay nada autorizado | PR #120, revisión de F120-1 (medición del caso 17 del arnés) |
 
 ## Validación por uso real de MVP-1
 

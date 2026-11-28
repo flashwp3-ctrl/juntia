@@ -1576,6 +1576,11 @@ El gestor aprobó corregir los dos, **dentro de la misma autorización** («Sí,
 
 **Límite:** solo la cabecera de las hojas que llevan `SheetTitle` y sus consumidores estrictamente necesarios, dentro del PR #120. El enfoque se presenta antes de implementarlo.
 
+**Aprobación del enfoque de F120-1 (28 de noviembre de 2026).** Los fundadores lo aprobaron con la respuesta literal «Sí, aprobado». Respondían a: «¿Aprueban el enfoque, con el corte único y conservando la reserva por letra?». El enfoque aprobado:
+
+- **Corte único:** la cabecera de las hojas pasa a ser `@container/sheethead`, y cuando mide menos de `16.5rem` (solo con el texto ampliado) el título baja a su propia fila, debajo de los controles, y crece hasta su tope.
+- **Reserva por letra:** se conserva como red de seguridad a 320 al 200 %, con su justificación en el código y en la especificación.
+
 **Lo que esta decisión no autoriza.** Ningún código fuera del PR de 30.2, ni ese PR antes del merge de este. Ni migraciones, ni cambios del modelo de datos o de las fórmulas financieras, ni funcionalidades nuevas, ni S-1 a S-8. No declara MVP-1: la declaración sigue siendo el PR de 005-T109, con todas sus condiciones. No rebaja ninguna verificación, umbral ni revisión adversarial. No cierra ningún `[V]` y no da por hecha la entrada al gate (FR-001: 004-T084 y T085), que no cambia. No reescribe el informe del PR #104.
 
 **Lo que no cambia.** La 24.9 (copia semanal, pérdida máxima de 7 días y restauración real antes de declarar), la 24.6 y la excepción de Android, las demás filas de las decisiones 24 y 25, las decisiones 26 a 29, el spike de precios tras cuatro semanas de uso estable (§11) y todo lo de la decisión 28, «Lo que no cambia».

@@ -192,3 +192,37 @@ freno, 40 de 40 visibles.
 
 **El mismo patrón en otras pruebas.** Tratado: `:60`, `:84` y `:122` de `couple.a11y.ts`, acotados al grupo de estado (decisión del
 gestor). Los demás no se tocan, porque tienen menos exposición (`:144`, `:162` y `:174`, tras una interacción) o ninguna.
+
+## F120-1: la cabecera de las hojas con el texto ampliado
+
+**El problema.** La revisión del #120 señaló que, con la reserva por letra, el título se achicaba al ampliar el texto: «Crear
+presupuesto» pasaba de 23 px a 11,55 px a 360 y a 16,86 px a 390 al 200 %. Eso no acredita FR-042 ni WCAG 1.4.4.
+
+**Autorización y enfoque.** Los fundadores autorizaron adaptar la cabecera (28 nov 2026) y aprobaron el enfoque («Sí, aprobado»):
+un corte único y la reserva conservada. Las dos respuestas están en el maestro, decisión 30.
+
+**Implementación.**
+
+- **Las cabeceras:** las de las 6 consumidoras de `SheetTitle` pasan a ser `@container/sheethead`.
+- **El título:** en `SheetTitle`, con la cabecera por debajo de `16.5rem`, el título ocupa la fila 2 a todo el ancho y crece hasta
+  el tope (46 px al 200 %), en varias líneas si hace falta.
+- **El corte:** la cabecera mide 17.5rem o más al 100 % y 14.88rem como mucho al 200 % (arnés, caso 15), así que nunca se activa al
+  100 %.
+- **Los controles:** `[&>:last-child]:col-start-3` deja la × en la columna 3, y Mi pareja suma `gap-y-2`. Ninguna de las dos
+  clases hace nada con una sola fila.
+- **Lo que no cambia:** el DOM, el orden de teclado y el único `Dialog.Title`.
+
+**La reserva por letra, conservada.** Con el título en su fila, la fórmula solo manda a 320 al 200 %: «presupuesto» a 41,24 px y
+«liquidación» a 45,06 px. Sin la reserva, «presupuesto» iría a 42,4 px, y con el peor caso medido en Linux (+0,547 px × 11 letras)
+mediría unos 245 px en una fila de 240.
+
+**Evidencia.**
+
+- **Identidad al 100 %** (caso 18; las 14 hojas, los 7 anchos y los dos temas): 0 diferencias de geometría (cabecera, ×,
+  espaciador o icono, título y primer campo, ±0,5 px) y **0 píxeles distintos** en las 196 capturas de la cabecera.
+- **Al 200 %, a 320, 360 y 390:** 39 de 42 combinaciones a 46 px, y las 3 restantes (a 320) a lo que da la fórmula.
+- **Regresión `@sweep`** (`routes.a11y.ts`): comprueba que el título crece, que va en su fila, que no hay recortes ni solapes, los
+  controles de 88 px y en su sitio, un solo `Dialog.Title` y el orden de teclado. Con la implementación anterior falla en las 42
+  combinaciones.
+- **Iconos** (caso 17): la × (16×16) y el icono de la meta (22×22) no cambian. Que vayan en px fijos y no crezcan al 200 % es una
+  observación previa, registrada en `docs/BACKLOG_MVP2.md`.
