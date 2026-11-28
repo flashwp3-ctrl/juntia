@@ -64,8 +64,10 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     {
       const { context, page } = await signedContext(browser, baseURL!, solo);
       await page.goto("/cuenta/pareja");
-      // Paso 4b sobre a21b1a9: `getByText` sin acotar contaba también la copia oculta del streaming de React (el `<div hidden
-      // id="S:…">` de la carga bajo `(app)/loading.tsx`) y, según el momento, resolvía a 2 elementos. Se busca en el grupo
+      // Paso 4b sobre a21b1a9: en CI, `getByText` sin acotar resolvió a 2 elementos. Mecanismo OBSERVADO en local (arnés, caso
+      // 14): justo tras `goto`, con la CPU frenada, la pastilla está a menudo solo dentro de la copia oculta del streaming de React
+      // (`<div hidden id="S:0">`, por `(app)/loading.tsx`), que `getByText` también cuenta. Explicación PROBABLE del duplicado
+      // exacto de CI (la visible y una oculta a la vez), que no se reprodujo en local: ese mismo streaming. Se busca en el grupo
       // «Estado de la pareja», que solo existe en la copia accesible.
       await expect(page.getByRole("group", { name: copy.couple.status.label(copy.couple.none.title) }).getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
       await sweep(page, "Mi pareja M2");

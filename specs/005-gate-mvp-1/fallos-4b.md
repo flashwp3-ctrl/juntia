@@ -142,7 +142,7 @@ La revisión adversarial aceptó el alcance, el enfoque de Análisis, los roles,
 - lo que cambia es el ancho pintado, y la diferencia es **por letra**: entre −0,42 y **+0,547 px**, a cualquier tamaño de 6 a 42 px;
 - como razón va de 0,96 a 1,15, así que no es un porcentaje.
 
-Es el redondeo del avance de cada glifo a píxeles enteros de Chromium con FreeType en Linux.
+**Explicación (F120-2):** es una **hipótesis técnica fuertemente respaldada** por esas 42 medidas de palabras completas, **no demostrada glifo a glifo**: Chromium con FreeType en Linux redondea el avance de cada glifo a píxeles enteros.
 
 **En CI no cabían 16 de 42:**
 
@@ -155,8 +155,8 @@ Es el redondeo del avance de cada glifo a píxeles enteros de Chromium con FreeT
 
 **Corrección (opción B).** `sheetTitleSize` (`src/lib/text-fit.ts`) da a `SheetTitle` `min(1.4375rem, calc((100cqi −
 letras·0,6px) / em), …)`, con un término por palabra. El `em` es la suma de avances de Brygada 500 menos el tracking, sin el 2 %, y
-0,6 px por letra cubre el máximo medido (0,547). La reserva va en px porque el redondeo es por píxel del dispositivo. Al 100 % manda
-el tope.
+0,6 px por letra es una **reserva empírica** que cubre el máximo medido (0,547), **no una garantía universal**. La reserva va en px
+porque, según esa hipótesis, el redondeo es por píxel del dispositivo. Al 100 % manda el tope.
 
 **Medición** (arnés, caso 11; `a21b1a9` frente a la corrección):
 
@@ -178,8 +178,12 @@ reserva, en Linux se cortan. Está en `docs/BACKLOG_MVP2.md` como defecto de dis
 
 ### 2. «SOLO TÚ» resuelto a 2 elementos (`couple.a11y.ts:53`)
 
-**Qué pasa.** El snapshot de CI tiene una sola copia accesible. La otra es la copia oculta del streaming de React (`<div hidden
-id="S:0">`, por `src/app/(app)/loading.tsx`), que `getByText` sin filtro de visibilidad cuenta según el momento.
+**Qué pasa (F120-3).** En CI, `getByText` resolvió a 2 elementos, y el snapshot de CI tiene una sola copia accesible.
+
+- **Mecanismo observado en local:** la copia oculta del streaming de React (`<div hidden id="S:0">`, por
+  `src/app/(app)/loading.tsx`), que `getByText` sin filtro de visibilidad cuenta según el momento.
+- **Explicación probable del duplicado exacto de CI** (la visible y una oculta a la vez): ese mismo streaming. No se reprodujo en
+  local.
 
 **Evidencia local** (arnés, caso 14): con la CPU ×10, 30 de 40 cargas tienen la pastilla solo dentro de `S:0` justo tras `goto`. Sin
 freno, 40 de 40 visibles.

@@ -28,12 +28,14 @@ const BRYGADA_500: Record<string, number> = {"0":0.594,"1":0.5,"2":0.593,"3":0.5
 /** El `tracking-[-0.015em]` de SheetTitle: cada letra avanza 0,015 em menos. */
 export const SHEET_TITLE_TRACKING_EM = -0.015;
 /**
- * Reserva por letra para el pintado entre plataformas (continuación del PR 119; maestro, decisión 30). La diferencia NO es un
- * porcentaje: en CI Linux, Chromium (FreeType con hinting) redondea el avance de cada glifo a píxeles enteros. Medida directa en las
- * 42 anotaciones de la prueba «hojas con SheetTitle al 200 %…» del run 46098875205 (14 hojas × 320, 360 y 390 al 200 %): con el
- * mismo tamaño de letra y la misma columna que en local, la diferencia Linux − local va de −0,42 a +0,547 px POR LETRA, a cualquier
- * tamaño (de 6 a 42 px); como razón, de 0,96 a 1,15, así que un margen del 2 % no la cubre. 0,6 px cubre el máximo medido. Va en px
- * a propósito: el redondeo es por píxel del dispositivo, no escala con la letra. Sustituye al 2 % empírico provisional del PR 119.
+ * Reserva por letra para el pintado entre plataformas (continuación del PR 119; maestro, decisión 30). Medida directa en las 42
+ * anotaciones de la prueba «hojas con SheetTitle al 200 %…» del run 46098875205 (14 hojas × 320, 360 y 390 al 200 %): con el mismo
+ * tamaño de letra y la misma columna que en local, la diferencia Linux − local del ancho de la PALABRA COMPLETA va de −0,42 a
+ * +0,547 px por letra, a cualquier tamaño (de 6 a 42 px); como razón, de 0,96 a 1,15, así que un margen porcentual no la cubre.
+ * Explicación (F120-2): es una HIPÓTESIS TÉCNICA fuertemente respaldada por esas 42 medidas de palabras completas, no demostrada
+ * glifo a glifo, que Chromium con FreeType en Linux redondea el avance de cada glifo a píxeles enteros. 0,6 px es una RESERVA
+ * EMPÍRICA que cubre el máximo medido (0,547), no una garantía universal para cualquier fuente, plataforma o tamaño. Va en px porque,
+ * según esa hipótesis, el redondeo es por píxel del dispositivo y no escala con la letra. Sustituye al 2 % empírico del PR 119.
  */
 export const SHEET_TITLE_GLYPH_RESERVE_PX = 0.6;
 /** El tope del título de las hojas: 1,4375rem (23 px a la escala por defecto). */
