@@ -7,11 +7,18 @@
 // temas de M6 y M7, que no caben en el registro (route-registry.ts) porque /invitacion ya está en él sin sesión (M5).
 // Regla 10 de tasks.md: lo que necesita sesión o Auth va en un describe que se salta salvo con A11Y_JOB=e2e; M5 (sin
 // sesión, sin red de Auth) corre en el job app. Ninguna espera fija; movimiento reducido por defecto (ADR-011 §6).
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { copy } from "../../src/lib/copy/es";
 import { seedCoupleState, seedInvitation, seedUser } from "../support/seed";
 import { axe, largeText, signedContext, sweep, tabTo, target44 } from "../support/a11y";
 import { THEMES } from "./route-registry";
+
+/**
+ * El grupo accesible «Estado de la pareja: …» de CoupleStatus, sea cual sea su título (paso 4b sobre a21b1a9): solo existe en la
+ * copia accesible, no en la copia oculta del streaming de React. La etiqueta («Estado de la pareja: ») no lleva caracteres
+ * especiales de expresión regular.
+ */
+const statusGroup = (page: Page) => page.getByRole("group", { name: new RegExp(`^${copy.couple.status.label("")}`) });
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
 const M5_TOKEN = "A".repeat(43);
@@ -81,7 +88,9 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
       await seedCoupleState(user, state, index);
       const { context, page } = await signedContext(browser, baseURL!, user);
       await page.goto("/cuenta/pareja");
-      await expect(page.getByText(state === "active" ? copy.couple.status.active : copy.couple.status.pending)).toBeVisible();
+      // Como en la línea de «SOLO TÚ» (paso 4b sobre a21b1a9): dentro del grupo de estado, que solo existe en la copia accesible y no
+      // en la copia oculta del streaming de React. El título del grupo cambia con el estado; se ata por su etiqueta.
+      await expect(statusGroup(page).getByText(state === "active" ? copy.couple.status.active : copy.couple.status.pending)).toBeVisible();
       await sweep(page, `Mi pareja ${state}`);
       await largeText(page, `Mi pareja ${state}`);
       await context.close();
@@ -119,7 +128,7 @@ if (JOB === "e2e") test.describe("Mi pareja e invitación con sesión", () => {
     const { context, page } = await signedContext(browser, baseURL!, sara);
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/cuenta/pareja");
-    await expect(page.getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
+    await expect(statusGroup(page).getByText(copy.couple.status.solo, { exact: true })).toBeVisible();
     await target44(page, copy.couple.none.invite);
 
     // Crear invitación sin ratón.
