@@ -5,7 +5,12 @@
 // 200 %, teclado y 44 px) lleva @sweep y lo lanza el gestor a mano. Necesita la pareja dorada (octubre con presupuestos de
 // Nosotros, aportes a Japón y los gastos privados de Sara) sembrada por la base y las funciones reales, que el registro de una
 // sola cuenta no siembra: va aquí, solo con A11Y_JOB=e2e, y cada título termina en «con sesión».
+import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { sharedOctober2026 } from "../../src/domain/golden/october-2026";
+import { formatMoney, moneyFromPesos } from "../../src/domain/money";
+import { monthTitle } from "../../src/lib/format";
+import { createSharedExpense } from "../../src/lib/db/shared-expenses";
 import { copy } from "../../src/lib/copy/es";
 import { axe, largeText, overflow, signedContext, sweep, tabTo, target44 } from "../support/a11y";
 import { seedCouple } from "../support/seed";
@@ -124,6 +129,30 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     expect.soft(narrow.scrollWidth, "320px · 200 %: sin scroll horizontal").toBeLessThanOrEqual(narrow.clientWidth);
     expect.soft(narrow.clipped, "320px · 200 %: sin texto cortado").toEqual([]);
     await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+    // PR del paso 4b (autorizado el 27 nov 2026; maestro, decisión 30): la tabla de cifras exactas cabe en su `figure` y cada
+    // importe se ve entero (geometría de su texto: dentro del `figure` y de la ventana, sin recortar), en los 7 anchos al 100 % y a
+    // 320, 360 y 390 con la raíz al 200 %, donde las filas pasan a dos líneas si no caben.
+    for (const [width, root] of [...[360, 390, 430, 768, 1024, 1280, 1440].map((value) => [value, ""] as const), [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const fit = await region(page, copy.analysis.chapters.compared).getByRole("table", { name: copy.analysis.compared.table }).evaluate((table) => {
+        const figure = table.closest("figure")!.getBoundingClientRect();
+        const amounts = [...table.querySelectorAll("tbody td")].map((cell) => {
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          const text = range.getBoundingClientRect();
+          return { text: (cell.textContent ?? "").trim(), whole: text.width > 0 && text.left >= figure.left - 0.5 && text.right <= figure.right + 0.5 && text.right <= document.documentElement.clientWidth + 0.5 && cell.scrollWidth <= cell.clientWidth + 1 };
+        });
+        return { table: Math.round(table.getBoundingClientRect().width * 100) / 100, figure: Math.round(figure.width * 100) / 100, amounts };
+      });
+      const label = `cifras exactas · ${width}px${root ? " · 200 %" : ""}`;
+      console.log(`${label}: tabla ${fit.table} en un figure de ${fit.figure}; importes ${fit.amounts.map((item) => `${item.text}${item.whole ? "" : " (cortado)"}`).join(", ")}`);
+      expect.soft(fit.table, `${label}: la tabla cabe en su figure`).toBeLessThanOrEqual(fit.figure);
+      expect.soft(fit.amounts.length, `${label}: hay importes`).toBeGreaterThan(0);
+      for (const item of fit.amounts) expect.soft(item.whole, `${label}: «${item.text}» entero, dentro del figure y de la ventana`).toBe(true);
+    }
+    await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     await context.close();
     const me = await signedContext(browser, baseURL!, pair.sara, "light", "me");
     await me.page.goto(OCTOBER);
@@ -148,6 +177,78 @@ if (JOB === "e2e") test.describe("Análisis (004, PR E)", () => {
     await expect(region(page, copy.analysis.chapters.setAside).getByRole("definition").last()).toHaveText("$3.740.000");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: copy.analysis.note.how })).toHaveAttribute("aria-expanded", "false");
+    await context.close();
+  });
+  // PR 119, ronda 2 (F119-4): la tabla de cifras exactas con varios meses y agregados extremos. A la pareja dorada (octubre:
+  // $2.840.000 en seis gastos compartidos) se le suman cinco meses, de mayo a septiembre de 2026, con 1, 2, 3, 4 y 5 gastos
+  // compartidos de 999.999.998 cada uno: hasta $4.999.999.990 en un mes. Análisis enseña hasta seis meses con gasto (HISTORY), así
+  // que se esperan los seis, en orden, con su mes y su importe completos calculados de las fixtures. En los 7 anchos al 100 % y a
+  // 320, 360 y 390 al 200 %: cada fila esperada con su mes y su importe enteros (dentro del figure y de la ventana, sin recortar) y
+  // la tabla dentro de su figure. Y al 200 %, con la container query activa, al cerrar la tabla queda oculta.
+  test("cifras exactas con seis meses y agregados extremos: cada mes y su importe enteros en los 7 anchos y al 200 %, y la tabla cerrada se oculta · con sesión", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    test.slow();
+    const pair = await seedCouple({ index: testInfo.parallelIndex, golden: true });
+    const half = moneyFromPesos(499_999_999n);
+    const extra = [["2026-05", 1], ["2026-06", 2], ["2026-07", 3], ["2026-08", 4], ["2026-09", 5]] as const;
+    for (const [month, count] of extra) {
+      for (let item = 0; item < count; item += 1) {
+        await createSharedExpense(pair.sara.client, {
+          idempotencyKey: randomUUID(), amount: moneyFromPesos(999_999_998n), categoryId: "home", transactionDate: `${month}-1${item}`, description: `Extremo ${month} ${item + 1}`,
+          payerUserId: pair.sara.id, splitMode: "equal", splitPercents: null, allocations: [{ userId: pair.sara.id, amount: half }, { userId: pair.tomas.id, amount: half }],
+        });
+      }
+    }
+    const october = sharedOctober2026.reduce((sum, row) => sum + row.amount.amountMinor, 0n);
+    const expected = [...extra.map(([month, count]) => ({ month, minor: 99_999_999_800n * BigInt(count) })), { month: "2026-10", minor: october }]
+      .map(({ month, minor }) => ({ month: monthTitle(month), amount: formatMoney({ amountMinor: minor, currency: "COP" }) }));
+    const { context, page } = await signedContext(browser, baseURL!, pair.sara, "light", "us");
+    await page.goto(OCTOBER);
+    await usReady(page);
+    await openFigures(page);
+    const table = region(page, copy.analysis.chapters.compared).getByRole("table", { name: copy.analysis.compared.table });
+    for (const [width, root] of [...[360, 390, 430, 768, 1024, 1280, 1440].map((value) => [value, ""] as const), [320, "200%"], [360, "200%"], [390, "200%"]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, root);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const seen = await table.evaluate((node, rows) => {
+        const figure = node.closest("figure")!.getBoundingClientRect();
+        const limit = document.documentElement.clientWidth;
+        const whole = (element: Element | null, text: string) => {
+          if (!element || (element.textContent ?? "").trim() !== text) return false;
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          const rects = [...range.getClientRects()].filter((rect) => rect.width > 0);
+          return rects.length > 0 && rects.every((rect) => rect.left >= figure.left - 0.5 && rect.right <= figure.right + 0.5 && rect.right <= limit + 0.5) && (element as HTMLElement).scrollWidth <= (element as HTMLElement).clientWidth + 1;
+        };
+        const body = [...node.querySelectorAll("tbody tr")];
+        return {
+          table: Math.round(node.getBoundingClientRect().width * 100) / 100, figure: Math.round(figure.width * 100) / 100, document: document.documentElement.scrollWidth, limit,
+          rows: rows.map((row, index) => ({ ...row, monthWhole: whole(body[index]?.querySelector("th") ?? null, row.month), amountWhole: whole(body[index]?.querySelector("td") ?? null, row.amount) })),
+          count: body.length,
+        };
+      }, expected);
+      const label = `seis meses extremos · ${width}px${root ? " · 200 %" : ""}`;
+      console.log(`${label}: documento ${seen.document}/${seen.limit}; tabla ${seen.table} en un figure de ${seen.figure}; filas ${seen.count}; ${seen.rows.filter((row) => !row.monthWhole || !row.amountWhole).map((row) => `${row.month} ${row.amount} cortado`).join(", ") || "todo entero"}`);
+      expect.soft(seen.document, `${label}: sin scroll horizontal`).toBeLessThanOrEqual(seen.limit);
+      expect.soft(seen.count, `${label}: los seis meses`).toBe(expected.length);
+      expect.soft(seen.table, `${label}: la tabla cabe en su figure`).toBeLessThanOrEqual(seen.figure);
+      for (const row of seen.rows) {
+        expect.soft(row.monthWhole, `${label}: «${row.month}» entero, en su sitio`).toBe(true);
+        expect.soft(row.amountWhole, `${label}: «${row.amount}» de ${row.month} entero, dentro del figure y de la ventana`).toBe(true);
+      }
+    }
+    // Al 200 % (container query activa, a 390), cerrar la tabla la oculta. F119-7: la tabla se localiza por el id que controla el
+    // botón (`aria-controls`), no por su rol: una tabla oculta no tiene rol accesible y `getByRole` no la encontraría aunque siguiera
+    // pintada.
+    const toggle = region(page, copy.analysis.chapters.compared).getByRole("button", { name: copy.analysis.compared.hide });
+    const controlled = await toggle.getAttribute("aria-controls");
+    expect(controlled, "el botón dice qué tabla controla").toBeTruthy();
+    const byId = page.locator(`[id="${controlled}"]`);
+    await expect(byId, "390 · 200 %: la tabla está a la vista antes de cerrar").toBeVisible();
+    await toggle.click();
+    await expect(byId, "390 · 200 %: la tabla cerrada se oculta").toBeHidden();
+    await expect(byId, "390 · 200 %: la tabla cerrada sigue en el DOM, con hidden").toHaveAttribute("hidden", "");
+    await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
     await context.close();
   });
 });

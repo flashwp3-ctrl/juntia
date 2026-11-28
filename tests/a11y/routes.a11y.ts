@@ -24,6 +24,7 @@ import { analyzeAtRest } from "../support/a11y";
 import { seedCouple, seedMovements, seedSharedMovements, seedUser, type SeededUser } from "../support/seed";
 import { runnerSql } from "../integration/support/sql";
 import { openWithSession, reach, targetPath } from "../support/states";
+import { fontLoaded, measureSheetTitle, openSheet, sheetCases } from "../support/sheets";
 import { appEntries, e2eEntries, routeArea, routeAreaFilter, THEMES } from "./route-registry";
 
 const JOB = process.env.A11Y_JOB === "e2e" ? "e2e" : "app";
@@ -967,6 +968,51 @@ if (JOB === "e2e") test.describe("005 · barrido de PR A (T020)", () => {
     await sweepRows({ browser, baseURL: baseURL!, user: pair.sara, scope: "us", name: "Aportes a metas en Nosotros", actividad: true, waitFor: items[0].text, expected: async () => items,
       views: [{ name: "lista", path: "/actividad" }, { name: "panel de detalle abierto", path: `/actividad/${shared[0].id}`, opened: true,
         detail: [{ selector: "[data-transaction-detail]", text: formatMoney(sharedOctober2026[0].amount), label: "el detalle", panel: true }] }] });
+  });
+
+  // PR del paso 4b (autorizado el 27 nov 2026; maestro, decisión 30): el título de las hojas (SheetTitle) se ajusta al 200 % a la
+  // palabra más ancha. Con la estimación por clases de letra, «Invitar» quedaba con un 1,8 % de holgura y en CI, donde el texto
+  // se pinta ~2 % más ancho, salía de su columna y quedaba bajo la × (M3).
+  // Ronda 2 (F119-1): el margen entre plataformas ya lo reserva la estimación (`sheetTitleEm`, comprobada sin navegador en
+  // `src/lib/text-fit.test.ts`, con la regresión negativa de la estimación anterior). Aquí, la geometría REAL en la plataforma que
+  // corre la prueba, sin volver a pedir el margen: en las 14 hojas, a 320, 360 y 390 con la raíz al 200 % y con Brygada 500
+  // cargada (F119-6: la familia del título es la de --font-brygada y document.fonts.load() devuelve su FontFace cargado; no
+  // document.fonts.check(), que acepta familias inexistentes), la palabra más ancha cabe en su columna, ninguna línea del título sale de ella, el título no se recorta y no solapa
+  // ningún botón del diálogo. F119-3: las métricas de cada título (fuente cargada, palabra, columna y holgura) quedan en las
+  // anotaciones de la prueba, para que el informe de CI registre las de su plataforma.
+  test("hojas con SheetTitle al 200 % a 320, 360 y 390: el título cabe en su columna, sin recorte y sin solapar botones", { tag: "@sweep" }, async ({ browser, baseURL }, testInfo) => {
+    // F119-8: 300 s, como antes; la prueba entera tarda unos 43 s en local con las 14 hojas.
+    test.setTimeout(300_000);
+    const cases = await sheetCases(testInfo.parallelIndex);
+    expect(cases.length, "las 14 variantes de título de SheetTitle").toBe(14);
+    let negativeChecked = false;
+    for (const item of cases) {
+      const { context, page } = await openSheet(browser, baseURL!, item);
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await root200(page);
+        await twoFrames(page);
+        const title = await measureSheetTitle(page, item.title);
+        const label = `«${item.title}» · ${width}px · 200 %`;
+        const slack = ((title.column / title.wordWidth - 1) * 100).toFixed(2);
+        const metrics = `${label}: familia «${title.fontFamily}» ${title.fontLoaded ? "cargada" : "SIN CARGAR"} (${title.fontFaces.join(", ") || "ningún FontFace"}); ${title.fontSize} px; «${title.word}» ${title.wordWidth} px en una columna de ${title.column} (holgura ${slack} %)`;
+        console.log(metrics);
+        testInfo.annotations.push({ type: "SheetTitle", description: metrics });
+        expect.soft(title.fontLoaded, `${label}: la familia del título es la de --font-brygada y su FontFace de ese peso está cargado`).toBe(true);
+        if (!negativeChecked) {
+          // F119-6, comprobación negativa: con una familia que no existe, `fontLoaded` dice «no cargada» (document.fonts.check() decía que sí).
+          const missing = await fontLoaded(page, { family: "\"Familia Inexistente 119\", serif", weight: "500", size: "23px", text: item.title });
+          expect(missing.loaded, "una familia inexistente no cuenta como cargada").toBe(false);
+          expect(missing.faces, "document.fonts.load() no devuelve ningún FontFace para una familia inexistente").toEqual([]);
+          negativeChecked = true;
+        }
+        expect.soft(title.wordWidth, `${label}: «${title.word}» cabe en su columna`).toBeLessThanOrEqual(title.column);
+        expect.soft(title.linesOutside, `${label}: ninguna línea del título sale de su columna`).toBe(0);
+        expect.soft(title.clipped, `${label}: el título no se recorta`).toBe(false);
+        expect.soft(title.overButtons, `${label}: el título no solapa ningún botón`).toBe(0);
+      }
+      await context.close();
+    }
   });
 
   test("Anotar con un monto escrito, de 390 a 1024 px y vuelta: el monto sigue en el campo (Q11; R8)", { tag: "@sweep" }, async ({ page: base, browser, baseURL }, testInfo) => {

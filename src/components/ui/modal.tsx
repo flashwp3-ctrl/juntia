@@ -8,7 +8,7 @@ import * as m from "motion/react-m";
 import { AnimatePresence, useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 import { copy } from "@/lib/copy/es";
-import { longestWordEm } from "@/lib/text-fit";
+import { sheetTitleEm } from "@/lib/text-fit";
 import { dialog } from "@/lib/motion/tokens";
 import { Button } from "./button";
 
@@ -54,12 +54,14 @@ export const DialogTitle = Dialog.Title;
  * 005 · PR B (corrección 5, FR-042): el título centrado de las hojas con la × a la derecha (02·5 y las que la siguen), en la
  * columna central de una rejilla `2.75rem · 1fr · 2.75rem`. Con el texto al 200 % su palabra más larga («Editar», «Invitar»,
  * «Exportar») no cabía en esa columna y quedaba bajo la ×. Como el título de las tarjetas de meta (F79-2), no pasa del tamaño en
- * que cabe entera su palabra más larga; a la escala normal ese tope no se alcanza y mide 23 px como antes.
+ * que cabe entera su palabra más larga; a la escala normal ese tope no se alcanza y mide 23 px como antes. PR del paso 4b: el ancho
+ * de esa palabra sale de la tabla de Brygada 1918 500 medida sobre la fuente real, con el tracking del título y un 2 % de margen
+ * entre plataformas (`sheetTitleEm`), no de la estimación por clases de letra.
  */
 export function SheetTitle({ children }: { children: string }) {
   return (
     <div className="@container min-w-0">
-      <Dialog.Title className="text-center font-serif text-[min(1.4375rem,calc(100cqi/var(--title-em)))] leading-[1.04] font-medium tracking-[-0.015em] text-balance" style={{ "--title-em": longestWordEm(children) } as CSSProperties}>{children}</Dialog.Title>
+      <Dialog.Title className="text-center font-serif text-[min(1.4375rem,calc(100cqi/var(--title-em)))] leading-[1.04] font-medium tracking-[-0.015em] text-balance" style={{ "--title-em": sheetTitleEm(children) } as CSSProperties}>{children}</Dialog.Title>
     </div>
   );
 }
